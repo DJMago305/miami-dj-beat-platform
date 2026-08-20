@@ -507,6 +507,60 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
 .topbar,.settings-panel,.stream,.composer,.hint{position:relative;z-index:1}
 .stream{background:none;border-left:0}
 
+/* ═══ ESCENARIO DE OPERACION ══════════════════════════════════════════
+   Ocupa el lado derecho -- el sitio que deja libre la transcripcion cuando
+   el avatar manda. Los simbolos llegan DESDE EL FONDO: empiezan pequenos y
+   translucidos, como si el cable de la red los trajera al frente, y al
+   terminar se alejan igual. */
+.opera{
+  position:absolute; top:96px; bottom:96px;
+  right:max(16px, calc(50% - 460px - 248px)); width:232px;
+  display:none; flex-direction:column; gap:12px; z-index:2;
+  pointer-events:none; opacity:0; transition:opacity .4s ease;
+}
+@media (min-width:1400px){ .opera{display:flex} }
+.opera.viva{opacity:1}
+.opera-tit{
+  font-family:var(--mono); font-size:10px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--gold-2); text-shadow:var(--sombra-texto);
+}
+.opera-piezas{display:flex; flex-direction:column; gap:14px; align-items:center; justify-content:center; flex:1}
+
+.op-sim{
+  width:88px; height:88px; border-radius:22px; display:grid; place-items:center;
+  border:1.5px solid rgba(212,175,55,.34); background:rgba(212,175,55,.07);
+  color:var(--gold-2);
+  animation:op-viene .9s cubic-bezier(.2,.9,.3,1) both;
+}
+.op-sim svg{width:40px; height:40px}
+.op-sim .op-eti{
+  position:absolute; margin-top:112px; font-family:var(--mono); font-size:9.5px;
+  letter-spacing:.10em; text-transform:uppercase; color:var(--muted); white-space:nowrap;
+}
+/* VIENE del fondo: pequeno, borroso y lejos -> grande, nitido y delante. */
+@keyframes op-viene{
+  0%  {transform:scale(.35) translateZ(0); opacity:0; filter:blur(6px)}
+  60% {opacity:1; filter:blur(0)}
+  100%{transform:scale(1); opacity:1; filter:blur(0)}
+}
+/* SE ALEJA: al reves, y se pierde en la red. */
+.opera.cerrando .op-sim{animation:op-se-va .8s cubic-bezier(.6,0,.8,.2) both}
+@keyframes op-se-va{
+  0%  {transform:scale(1); opacity:1; filter:blur(0)}
+  100%{transform:scale(.28); opacity:0; filter:blur(7px)}
+}
+.op-sim.hecho{
+  border-color:rgba(62,203,127,.55); background:rgba(62,203,127,.10); color:#3ecb7f;
+  box-shadow:0 0 26px rgba(62,203,127,.28);
+}
+.op-sim.buscando{animation:op-viene .9s cubic-bezier(.2,.9,.3,1) both, op-late 1.6s ease-in-out .9s infinite}
+@keyframes op-late{50%{box-shadow:0 0 26px rgba(212,175,55,.34)}}
+@media (prefers-reduced-motion:reduce){
+  .op-sim,.opera.cerrando .op-sim{animation:none!important}
+}
+/* Mientras ELIXIS trabaja, el chat se retira. Vuelve al terminar. */
+.trabajando .stream{opacity:.18; transition:opacity .45s ease}
+
 /* ═══ LAS DOS VENTANAS LATERALES ══════════════════════════════════════
    Viven en los margenes que deja la columna de lectura (920px centrados),
    asi que no le quitan ni un pixel a la conversacion. Por debajo de 1240px
@@ -809,6 +863,15 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
     <div class="lado-h">Transcripción</div>
     <div class="lado-cuerpo" id="palabraCuerpo"></div>
   </aside>
+
+  <!-- ═══ ESCENARIO DE OPERACION ═══ Cuando ELIXIS trabaja, sus simbolos
+       VIENEN DEL FONDO de la red hacia el frente, se quedan mientras dura la
+       tarea, y al terminar se alejan otra vez. Mientras tanto el chat se
+       retira. -->
+  <div class="opera" id="opera" aria-hidden="true">
+    <div class="opera-tit" id="operaTit"></div>
+    <div class="opera-piezas" id="operaPiezas"></div>
+  </div>
 
   <main class="stream" id="stream" aria-live="polite"></main>
 
@@ -1445,6 +1508,80 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
     }
   }catch(e){}
 
+
+  /* ═══ EL ESCENARIO DE OPERACION ════════════════════════════════════
+     Cuando ELIXIS trabaja, sus simbolos vienen del fondo de la red al frente;
+     al terminar se alejan y vuelve el chat.
+
+     HONESTIDAD DE TIEMPOS: mientras la peticion viaja NO se sabe que
+     herramienta va a usar -- eso solo llega con la respuesta. Asi que durante
+     la espera se muestra un simbolo GENERICO de busqueda, no uno inventado, y
+     los simbolos reales aparecen cuando el backend confirma cuales corrio. */
+  var opera = document.getElementById("opera");
+  var operaTit = document.getElementById("operaTit");
+  var operaPiezas = document.getElementById("operaPiezas");
+
+  var S = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'>";
+  var SIMBOLOS = {
+    buscando:                 S + "<circle cx='11' cy='11' r='7'/><path d='M21 21l-4-4'/></svg>",
+    enviar_sms:               S + "<rect x='2.5' y='5' width='19' height='14' rx='2.5'/><path d='m3 7 9 6 9-6'/></svg>",
+    buscar_cliente:           S + "<circle cx='12' cy='8' r='3.5'/><path d='M5 20a7 7 0 0 1 14 0'/></svg>",
+    consultar_finanzas:       S + "<path d='M12 2v20'/><path d='M17 6.5c0-1.9-2.2-3-5-3s-5 1.1-5 3 2.2 2.6 5 3.2 5 1.3 5 3.3-2.2 3-5 3-5-1.1-5-3'/></svg>",
+    consultar_agenda_artista: S + "<rect x='3' y='5' width='18' height='16' rx='2.5'/><path d='M16 3v4M8 3v4M3 11h18'/></svg>",
+    registrar_evento_agenda:  S + "<rect x='3' y='5' width='18' height='16' rx='2.5'/><path d='M16 3v4M8 3v4M3 11h18M12 14v4M10 16h4'/></svg>",
+    consultar_catalogo_precios: S + "<path d='M20.6 13.4 12 22l-9-9V4a1 1 0 0 1 1-1h8z'/><circle cx='7.5' cy='7.5' r='1.2'/></svg>",
+    generar_cotizacion_evento: S + "<path d='M6 2h9l5 5v15H6z'/><path d='M15 2v5h5M9 13h6M9 17h4'/></svg>",
+    crear_nota_lead:          S + "<path d='M12 20h9'/><path d='M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z'/></svg>"
+  };
+  var ETIQUETAS = {
+    buscando:"Conectando", enviar_sms:"Mensaje", buscar_cliente:"Cliente",
+    consultar_finanzas:"Finanzas", consultar_agenda_artista:"Agenda",
+    registrar_evento_agenda:"Agenda", consultar_catalogo_precios:"Precios",
+    generar_cotizacion_evento:"Cotización", crear_nota_lead:"Nota"
+  };
+
+  function pieza(clave, hecho){
+    var d = document.createElement("div");
+    d.className = "op-sim" + (hecho ? " hecho" : " buscando");
+    d.innerHTML = (SIMBOLOS[clave] || SIMBOLOS.buscando) +
+                  "<span class='op-eti'>" + (ETIQUETAS[clave] || clave) + "</span>";
+    return d;
+  }
+
+  function abrirOpera(titulo){
+    if(!opera) return;
+    document.body.classList.add("trabajando");   /* el chat se retira */
+    opera.classList.remove("cerrando");
+    opera.classList.add("viva");
+    opera.setAttribute("aria-hidden", "false");
+    operaTit.textContent = titulo || "Trabajando";
+    operaPiezas.innerHTML = "";
+    operaPiezas.appendChild(pieza("buscando", false));
+  }
+
+  function mostrarEnOpera(lista){
+    if(!opera || !lista || !lista.length) return;
+    operaTit.textContent = "Trayendo datos";
+    operaPiezas.innerHTML = "";
+    lista.forEach(function(h, i){
+      var d = pieza(h.nombre, h.ok !== false);
+      d.style.animationDelay = (i * 140) + "ms";
+      operaPiezas.appendChild(d);
+    });
+  }
+
+  /* Se aleja y devuelve el protagonismo al chat. */
+  function cerrarOpera(){
+    if(!opera) return;
+    opera.classList.add("cerrando");
+    setTimeout(function(){
+      opera.classList.remove("viva", "cerrando");
+      opera.setAttribute("aria-hidden", "true");
+      operaPiezas.innerHTML = "";
+      document.body.classList.remove("trabajando");
+    }, 850);
+  }
+
   async function askElixis(message){
     var url = functionUrl();
     if(!url){
@@ -1454,6 +1591,7 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
     showTyping();
     retirarPie();
     abrirLados();
+    abrirOpera("Conectando");
     transcribir("yo", message);
     try{
       var res = await fetch(url, {
@@ -1476,6 +1614,14 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
          el backend. Sin este campo, la ventana estaria adivinando. */
       if(data.herramientas_usadas) dibujarProceso(data.herramientas_usadas);
       if(data.modo) pintarModo(data.modo, data.modo_pct);
+      /* Los simbolos reales solo cuando el backend confirma cuales corrio.
+         Se quedan un momento a la vista y luego se alejan. */
+      if(data.herramientas_usadas && data.herramientas_usadas.length){
+        mostrarEnOpera(data.herramientas_usadas);
+        setTimeout(cerrarOpera, 2600);
+      } else {
+        cerrarOpera();
+      }
       /* Si en este turno quedo un SMS en cola, la tarjeta sale justo debajo de
          lo que dijo ELIXIS, para que la decision este donde esta el contexto. */
       if(data.sms_pendiente) addSmsCard(data.sms_pendiente);
