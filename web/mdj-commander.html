@@ -668,11 +668,9 @@
         $('#cmdSend').onclick=sendText;
         $('#cmdText').addEventListener('keydown',function(e){if(e.key==='Enter')sendText();});
       } else {
-        var greet;
-        if(!state.introDone){state.introDone=true;
-          greet='<div class="cmd-prompt" style="font-size:16px;line-height:1.4">'+T('Hola, soy ','Hi, I\'m ')+'<b style="color:var(--gold2)">'+AGENT+'</b>'+T(', tu agente ejecutivo.','— your executive agent.')+'</div>'+
-                '<div class="cmd-prompt" style="margin-top:2px">'+T('¿Qué necesitas que haga?','What would you like me to do?')+'</div>';
-        } else { greet='<div class="cmd-prompt">'+T('¿Qué necesitas que haga?','What would you like me to do?')+'</div>'; }
+        /* El saludo "Hola, soy ELIXIS, tu agente ejecutivo / Que necesitas que
+           haga?" se elimino por decision del PO. La cara ya dice quien es. */
+        var greet='';
         v.innerHTML='<div class="pad fade-anim">'+avatarHTML+'<div id="cmdBody"></div></div>';
         body=$('#cmdBody');
         body.innerHTML=greet+
