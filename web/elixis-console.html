@@ -333,12 +333,34 @@
    se abren -- para que se lea como la misma energia. */
 .face-stage::after{
   content:""; position:absolute; left:50%; top:50%;
-  width:210px; height:210px; transform:translate(-50%,-50%);
+  /* MEDIDA RELATIVA, no fija. Con 210px clavados la bola ocupaba el 14,6% del
+     ancho en un monitor de 1440, cuando en el telefono ocupaba el 44%: un
+     tercio de la presencia, y por eso el centro se leia vacio. Ahora crece
+     con la pantalla, con tope para que no se desborde en un ultrapanoramico. */
+  width:clamp(210px,30vw,460px); height:clamp(210px,30vw,460px);
+  transform:translate(-50%,-50%);
   border-radius:50%; pointer-events:none;
   background:radial-gradient(circle,
-    rgba(212,175,55,.20) 0%, rgba(212,175,55,.075) 44%, transparent 70%);
+    rgba(212,175,55,.26) 0%, rgba(212,175,55,.10) 44%, transparent 70%);
   animation:fenix-respira 4.6s ease-in-out infinite;
 }
+/* Aro que se abre en bucle: da MOVIMIENTO CONSTANTE y ancla la zona incluso
+   con la conversacion vacia. Sin el, un monitor grande parece averiado antes
+   de que nadie escriba. */
+.face-stage::before{
+  content:""; position:absolute; left:50%; top:50%;
+  width:clamp(210px,30vw,460px); height:clamp(210px,30vw,460px);
+  margin:0; border-radius:50%; pointer-events:none;
+  border:1.5px solid rgba(212,175,55,.30); opacity:0;
+  animation:fenix-aro 4.6s cubic-bezier(.15,.6,.35,1) infinite;
+}
+@keyframes fenix-aro{
+  0%  {transform:translate(-50%,-50%) scale(.72); opacity:.34}
+  100%{transform:translate(-50%,-50%) scale(1.7); opacity:0}
+}
+.face-stage.thinking::before,
+.face-stage.speaking::before{border-color:rgba(212,175,55,.52);animation-duration:2.1s}
+@media (prefers-reduced-motion:reduce){ .face-stage::before{animation:none} }
 .face-stage.thinking::after,
 .face-stage.speaking::after{
   background:radial-gradient(circle,
