@@ -46,32 +46,56 @@ h1{margin:0;font-size:clamp(24px,4vw,34px);font-weight:800;letter-spacing:-.03em
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px}
 .panel h2{margin:0 0 14px;font-size:12px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
 
-/* ── Avatar + anillo holográfico ── */
+/* ── Avatar: figura recortada sobre el campo reactivo ──
+   Sin círculo, como el diseño del COMMANDER: el anillo es el campo de
+   energía y ELIXIS está DELANTE, no encerrado dentro. */
 .stage{display:flex;flex-direction:column;gap:16px;align-items:center;text-align:center;padding:8px 0 4px}
 
-.avatar{position:relative;width:240px;height:240px;flex:none;display:grid;place-items:center}
-#audioVisualizerRing{position:absolute;inset:0;width:240px;height:240px;pointer-events:none}
+.avatar{position:relative;width:260px;height:286px;flex:none;--aura:70,82,99}
 
-.avatar-core{
-  position:relative;z-index:1;
-  width:138px;height:138px;border-radius:50%;
-  background:radial-gradient(circle at 34% 28%,#232C3A,#11161D 70%);
-  border:2px solid var(--line);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
-  transition:border-color .2s ease, box-shadow .2s ease;
+#audioVisualizerRing{
+  position:absolute;left:50%;top:14px;transform:translateX(-50%);
+  width:240px;height:240px;pointer-events:none;z-index:1;
 }
-.avatar-mark{
-  font-family:var(--sans);font-size:13px;font-weight:800;letter-spacing:.22em;
-  color:var(--ink-2);padding-left:.22em;
-}
-.avatar-state{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;color:var(--muted)}
 
-body.is-listening .avatar-core{border-color:var(--live);box-shadow:0 0 22px -4px rgba(76,195,138,.55)}
-body.is-listening .avatar-mark{color:#BFEBD5}
-body.is-thinking  .avatar-core{border-color:var(--info);box-shadow:0 0 22px -4px rgba(85,180,216,.55)}
-body.is-thinking  .avatar-mark{color:#C2E6F4}
-body.is-speaking  .avatar-core{border-color:var(--accent);box-shadow:0 0 30px -3px rgba(224,163,69,.7)}
-body.is-speaking  .avatar-mark{color:#FFE0AE}
+/* halo bajo los pies: crece y cambia de color con el estado */
+.avatar-glow{
+  position:absolute;left:50%;bottom:16%;transform:translateX(-50%);
+  width:62%;height:34%;z-index:2;border-radius:50%;
+  background:radial-gradient(closest-side, rgba(var(--aura),.55), transparent 72%);
+  filter:blur(12px);opacity:.55;transition:opacity .35s ease, width .35s ease, background .35s ease;
+}
+
+/* La figura cabe DENTRO del aro, no lo tapa: el anillo tiene que leerse
+   entero alrededor de ELIXIS, que es lo que lo convierte en campo de energía
+   y no en un adorno a medio ver. */
+.avatar-fig{
+  position:absolute;left:0;bottom:30px;width:100%;height:196px;z-index:3;
+  object-fit:contain;object-position:center bottom;
+  filter:drop-shadow(0 12px 26px rgba(0,0,0,.75));
+  animation:respirar 5.6s ease-in-out infinite;
+}
+@keyframes respirar{50%{transform:translateY(-3px) scale(1.008)}}
+
+.avatar-tag{
+  position:absolute;left:0;right:0;bottom:0;z-index:4;
+  display:flex;align-items:center;justify-content:center;gap:9px;
+}
+.avatar-tag b{font-size:12.5px;font-weight:800;letter-spacing:.2em;color:var(--ink-2);padding-left:.2em}
+.avatar-tag span{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:var(--muted)}
+
+body.is-listening .avatar{--aura:76,195,138}
+body.is-thinking  .avatar{--aura:85,180,216}
+body.is-speaking  .avatar{--aura:224,163,69}
+body.is-listening .avatar-glow,
+body.is-thinking  .avatar-glow{opacity:.9;width:88%}
+body.is-speaking  .avatar-glow{opacity:1;width:96%}
+body.is-listening .avatar-tag b{color:#BFEBD5}
+body.is-thinking  .avatar-tag b{color:#C2E6F4}
+body.is-speaking  .avatar-tag b{color:#FFE0AE}
+/* al hablar, la figura acompaña el ritmo */
+body.is-speaking .avatar-fig{animation:hablar 1.1s ease-in-out infinite}
+@keyframes hablar{25%{transform:translateY(-2px)}60%{transform:translateY(1px) scale(1.006)}}
 
 .state{font-size:17px;font-weight:650;letter-spacing:-.01em;min-height:1.5em}
 .state small{display:block;font-weight:400;font-size:12.5px;color:var(--muted);letter-spacing:0}
@@ -156,10 +180,9 @@ select:focus-visible{outline:2px solid var(--info);outline-offset:2px}
       <div class="stage">
         <div class="avatar" id="avatar">
           <canvas id="audioVisualizerRing" width="240" height="240" aria-hidden="true"></canvas>
-          <div class="avatar-core">
-            <div class="avatar-mark">ELIXIS</div>
-            <div class="avatar-state" id="orbGlyph">OFF</div>
-          </div>
+          <div class="avatar-glow" aria-hidden="true"></div>
+          <img class="avatar-fig" src="./assets/elixis-avatar.webp" alt="ELIXIS" decoding="async">
+          <div class="avatar-tag"><b>ELIXIS</b><span id="orbGlyph">OFF</span></div>
         </div>
         <div class="state" id="stateText">Desconectado<small id="stateHint">Pulsa Conectar y concede el micrófono.</small></div>
 
