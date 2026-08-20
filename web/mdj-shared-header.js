@@ -476,8 +476,7 @@
         window.__mdjSesionHook = true;
         supa.auth.onAuthStateChange(function (_e, ses) {
           _mdjHaySesion = !!ses; _mdjSlotRuns = 0;
-          setTimeout(mdjAssertNavSlots, 40);
-          setTimeout(mdjAssertNavSlots, 500);
+          mdjAssertNavSlots();                  // una sola pasada, ver arriba
         });
       }
     } catch (e) {}
@@ -1328,10 +1327,45 @@
     if (_mdjSlotObs) { try { _mdjSlotObs.disconnect(); } catch (e) {} _mdjSlotObs = null; }
   }
 
+  /* ── VIGILANTE RETIRADO · directiva del PO ─────────────────────────────────
+     Este MutationObserver existia porque el marcado estatico de #mainNav habia
+     derivado a cinco variantes: 42 de las 43 paginas nacian con 8, 10 o 12
+     puestos, 25 con STAFF dentro del DOM y 22 en ingles, y el observador las
+     reparaba EN VIVO. Esa reparacion continua era la fuente del temblor.
+
+     Canonizado el HTML de las 43 paginas —nueve puestos identicos, sin STAFF y
+     sin ingles— ya no hay nada que vigilar: el DOM nace correcto. Se desactiva
+     la instalacion y NO se borra la funcion: quitar el `return` la reactiva. */
   function mdjWatchNavSlots() {
-    MDJ_RIELES.forEach(mdjWatchOne);
-    MDJ_RIELES_MUERTOS.forEach(mdjWatchOne);   // vigilar que no resuciten
+    return;                     // canonizado en el HTML: sin vigilancia continua
   }
+
+  /* ── UNA REACCION, NO UN RELOJ ─────────────────────────────────────────────
+     Al retirar la cadena de temporizadores aparecio una regresion real, cazada
+     por la suite: en el perfil con sesion de artista salia la barra PUBLICA y la
+     franja no se montaba. Motivo: la tabla del rol necesita
+     `data-mdj-nav-role`, que se escribe DESPUES de que la sesion resuelva, y sin
+     reintentos nadie volvia a aplicarla.
+
+     La solucion no es reponer los relojes —eran la fuente del temblor— sino
+     escuchar el UNICO evento que importa: que el rol aparezca. Se observa un
+     solo atributo de <body>, jamas los hijos de #mainNav, y en cuanto el rol
+     tiene valor se aplica la tabla UNA vez y el observador se desconecta. */
+  (function mdjEsperarRol() {
+    try {
+      if (!window.MutationObserver || !document.body) return;
+      var rolYa = (document.body.getAttribute('data-mdj-nav-role') || '').trim();
+      if (rolYa) return;                       // ya estaba: nada que esperar
+      var obs = new MutationObserver(function () {
+        var r = (document.body.getAttribute('data-mdj-nav-role') || '').trim();
+        if (!r) return;
+        obs.disconnect();
+        _mdjSlotRuns = 0;
+        mdjAssertNavSlots();
+      });
+      obs.observe(document.body, { attributes: true, attributeFilter: ['data-mdj-nav-role'] });
+    } catch (eRol) { void eRol; }
+  })();
   function mdjWatchOne(idRiel) {
     var nav = document.getElementById(idRiel);
     if (!nav || nav.__mdjSlotWatch) return;
@@ -1374,9 +1408,10 @@
       window.__mdjSlotAuthHook = true;
       supa.auth.onAuthStateChange(function () {
         _mdjSlotRuns = 0;                       // el cambio de sesión reabre el cupo
-        setTimeout(mdjAssertNavSlots, 60);
-        setTimeout(mdjAssertNavSlots, 400);
-        setTimeout(mdjAssertNavSlots, 1200);
+        /* UNA sola pasada. Esta cadena reescribia el riel TRES veces por cada
+           cambio de sesion; con el HTML ya canonico basta aplicar la tabla del
+           rol una vez. */
+        mdjAssertNavSlots();
       });
       supa.auth.getSession().then(function () {
         _mdjSlotRuns = 0;
@@ -3213,7 +3248,24 @@
   }
 
   /** Invitado: mantiene la 8.ª celda (nav mdj-mainnav-flex en tabla) sin quitar el nodo. */
+  /* ── EL RIEL MAESTRO TIENE UN SOLO DUEÑO ───────────────────────────────────
+     Tras canonizar el HTML de las 43 paginas y retirar el observador, se vio que
+     ese observador tambien era EL ULTIMO EN ESCRIBIR: vencia a seis pasadas
+     heredadas que aun rotulaban #mainNav con «MI PORTAL» y «CASH FLOW». Sin el,
+     en account-settings ganaba la vieja.
+
+     Los rotulos de #mainNav los fija AHORA la tabla canonica y nadie mas. Este
+     ayudante permite que cada pasada heredada siga sirviendo a sus rieles
+     legitimos (#owner-tabs, .header-actions) sin contaminar la barra maestra. */
+  function mdjEnRielMaestro(el) {
+    try {
+      var n = document.getElementById('mainNav');
+      return !!(n && el && n.contains(el));
+    } catch (eRM) { return false; }
+  }
+
   function mdjResetMainNavPortalGuestSlot() {
+    return;   /* NEUTRALIZADA: el puesto 8 de #mainNav lo fija la tabla canonica */
     var link = document.getElementById('mainNav-mi-portal-link');
     if (!link) return;
     link.className = 'mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest';
@@ -3227,7 +3279,7 @@
     link.removeAttribute('data-i18n');
     try {
       var rawLang = document.documentElement && String(document.documentElement.lang || '').toLowerCase();
-      link.textContent = rawLang.indexOf('es') === 0 ? 'MI PORTAL' : 'MY PORTAL';
+      link.textContent = 'MI PERFIL';
     } catch (e) {
       link.textContent = 'MY PORTAL';
     }
@@ -3312,6 +3364,7 @@
 
   /** Mientras llega el perfil: oculto pero ocupa columna (tabla v2). */
   function mdjEnsureMiPortalHydratingPlaceholder() {
+    return;   /* NEUTRALIZADA: el estatico canonico ya trae el puesto 8 */
     var nav = document.getElementById('mainNav');
     if (!nav) return;
     var existing = document.getElementById('mainNav-mi-portal-link');
@@ -3326,7 +3379,7 @@
       existing.style.removeProperty('display');
       existing.style.pointerEvents = 'none';
       existing.style.visibility = 'hidden';
-      existing.textContent = 'MI PORTAL';
+      existing.textContent = 'MI PERFIL';
       return;
     }
     if (mdjIsBuyerJourneyPage()) {
@@ -3347,7 +3400,7 @@
     link.style.removeProperty('display');
     link.style.pointerEvents = 'none';
     link.style.visibility = 'hidden';
-    link.textContent = 'MI PORTAL';
+    link.textContent = 'MI PERFIL';
     nav.appendChild(link);
   }
 
@@ -3420,6 +3473,9 @@
   }
 
   function mdjApplyMiPortalLinkLabel(el) {
+    /* Guarda por ELEMENTO, no global: esta rutina tambien rotula el CTA de
+       .header-actions, que sigue siendo suyo. Solo se aparta del riel maestro. */
+    if (mdjEnRielMaestro(el)) return;
     if (!el) return;
     try {
       if (window.i18n && typeof window.i18n.t === 'function') {
@@ -3427,7 +3483,7 @@
         if (tx) el.textContent = tx;
       } else {
         var rawLang = document.documentElement && String(document.documentElement.lang || '').toLowerCase();
-        el.textContent = rawLang.indexOf('es') === 0 ? 'MI PORTAL' : 'MY PORTAL';
+        el.textContent = 'MI PERFIL';
       }
     } catch (err) { /* ignore */ }
     try {
@@ -4946,7 +5002,12 @@
             /* Flujo de caja: reveal at slot 5 (after SHOP, before CONFIG).
                mdjApplyFlowMainNavLink(false) runs at line ~2686 before this guard,
                so we run AFTER it and override. */
-            if (window.location.pathname.indexOf('account-settings') !== -1) {
+            /* NEUTRALIZADA para el riel maestro (directiva del PO). Esta rama
+               reinsertaba CASH FLOW JUSTO DESPUES DE SHOP dentro de #mainNav
+               —insertBefore(_flowEl, _shopEl.nextSibling)—, y era la causa del
+               orden descuadrado en account-settings: Cash Flow acababa en el
+               puesto 9. El orden lo fija ahora la tabla canonica del rol. */
+            if (false && window.location.pathname.indexOf('account-settings') !== -1) {
               var _oNavF = document.getElementById('mainNav');
               var _flowEl = _oNavF && (
                 document.getElementById('mainNav-flow-link') ||
@@ -4957,7 +5018,7 @@
                 _flowEl.href = _fUid
                   ? './dj-dashboard.html?tab=flow&id=' + encodeURIComponent(_fUid)
                   : './dj-dashboard.html?tab=flow';
-                _flowEl.textContent = 'CASH FLOW';
+                if (!mdjEnRielMaestro(_flowEl)) _flowEl.textContent = 'CASH FLOW';   /* el riel maestro lo rotula la tabla canonica */
                 _flowEl.removeAttribute('data-i18n');
                 _flowEl.classList.remove('mdj-mainnav-reserved-slot');
                 _flowEl.removeAttribute('aria-hidden');
@@ -5488,6 +5549,13 @@
 
   /* Devuelve true cuando flowLink ya existe y fue procesado */
   function reorderOwnerMenu() {
+    /* NEUTRALIZADA para el riel maestro (directiva del PO). Esta rutina heredada
+       trabajaba integramente sobre #mainNav: ocultaba MI PERFIL y DJ TOOLS con
+       !important en linea y reordenaba CASH FLOW. Con el HTML ya canonico y la
+       tabla del rol como unica autoridad su trabajo sobra, y era quien
+       descuadraba el orden en account-settings.
+       Devuelve true = «ya procesado», que es exactamente lo que ahora ocurre. */
+    return true;
     if (document.body && document.body.classList.contains('mdj-from-profile') &&
         window.location.pathname.indexOf('account-settings.html') !== -1) {
       if (typeof window.mdjEnsureAccountSettingsOwnerStripNav === 'function') {
@@ -5512,7 +5580,7 @@
       flowLink.href = _flowUid
         ? './dj-dashboard.html?tab=flow&id=' + encodeURIComponent(_flowUid)
         : './dj-dashboard.html?tab=flow';
-      flowLink.textContent = 'CASH FLOW';
+      if (!mdjEnRielMaestro(flowLink)) flowLink.textContent = 'CASH FLOW';   /* idem */
       flowLink.removeAttribute('data-i18n');
       flowLink.removeAttribute('aria-hidden');
       flowLink.removeAttribute('tabindex');
