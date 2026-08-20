@@ -116,33 +116,43 @@
      un radar que sale del centro; el resplandor y su tamano NO son una
      animacion fija: los mueve la amplitud real de la voz (--pulso), de tu
      microfono mientras escuchas y de la pista de ELIXIS mientras habla. */
+  /* EN ACTIVO EL AMARILLO NO ES SOLIDO. El disco desaparece y lo que queda
+     son AROS DE ENERGIA latiendo alrededor del fenix: el relleno se sustituye
+     por un halo radial que respira con la voz. Energia, no boton. */
   .nav-orb.live{
-    box-shadow:0 6px 18px var(--gold-glow),
-      0 0 calc(14px + var(--pulso,0) * 40px) rgba(212,175,55,calc(.35 + var(--pulso,0) * .5));
-    /* La escala la pone el bucle en JS: transform:scale(calc(...)) con una
-       variable dentro salia identidad, medido en el navegador. */
+    background:radial-gradient(circle,
+      rgba(212,175,55,calc(.10 + var(--pulso,0) * .26)) 0%,
+      rgba(212,175,55,calc(.04 + var(--pulso,0) * .10)) 52%,
+      transparent 70%);
+    box-shadow:0 0 calc(12px + var(--pulso,0) * 38px) rgba(212,175,55,calc(.26 + var(--pulso,0) * .44));
+    /* La escala la pone el bucle en JS: scale(calc(...)) con una variable
+       dentro salia identidad, medido en el navegador. */
   }
-  .nav-orb.live::before,.nav-orb.live::after{
+  /* Tres aros desfasados un tercio de ciclo: se lee como energia continua y
+     no como un solo latido. */
+  .nav-orb.live::before,.nav-orb.live::after,.nav-orb.live .orb-aro{
     content:"";position:absolute;inset:0;border-radius:50%;pointer-events:none;
     border:2px solid var(--gold2);opacity:0;
     animation:orbe-radar 1.9s cubic-bezier(.15,.6,.35,1) infinite;
   }
-  .nav-orb.live::after{animation-delay:.95s}
+  .nav-orb.live::after{animation-delay:.63s}
+  .nav-orb .orb-aro{display:none}
+  .nav-orb.live .orb-aro{display:block;animation-delay:1.26s}
   @keyframes orbe-radar{
     0%  {transform:scale(1);   opacity:calc(.22 + var(--pulso,0) * .58)}
     100%{transform:scale(2.35);opacity:0}
   }
   /* El oro es la homogeneidad de la marca y manda siempre. Escuchar y hablar
-     NO se distinguen por color -- eso rompia la identidad -- sino por
-     INTENSIDAD: escuchando el radar es tenue y el resplandor corto; hablando
-     se abre del todo. Misma luz, distinta fuerza. */
-  .nav-orb.live.rx::before,.nav-orb.live.rx::after{
+     NO se distinguen por color sino por INTENSIDAD: escuchando los aros son
+     tenues y lentos; hablando se abren del todo. Misma luz, distinta fuerza. */
+  .nav-orb.live.rx::before,.nav-orb.live.rx::after,.nav-orb.live.rx .orb-aro{
     border-color:var(--gold);
     animation-duration:2.6s;
   }
   .nav-orb.live.rx{
-    box-shadow:0 6px 18px var(--gold-glow),
-      0 0 calc(10px + var(--pulso,0) * 26px) rgba(212,175,55,calc(.22 + var(--pulso,0) * .38));
+    background:radial-gradient(circle,
+      rgba(212,175,55,calc(.06 + var(--pulso,0) * .18)) 0%, transparent 68%);
+    box-shadow:0 0 calc(8px + var(--pulso,0) * 24px) rgba(212,175,55,calc(.16 + var(--pulso,0) * .30));
   }
 
   /* headings / text */
@@ -626,7 +636,7 @@
       ['decisions',T('Decisiones','Decisions'),'decisions'],['more',T('Más','More'),'more']];
     n.innerHTML='';
     items.forEach(function(it){
-      if(it[0]==='__center__'){var c=el('button','navb center','<div class="nav-orb"><img src="'+LOGO+'" alt=""><span class="orb-mic">'+svg('mic')+'</span></div>');c.onclick=function(){
+      if(it[0]==='__center__'){var c=el('button','navb center','<div class="nav-orb"><img src="'+LOGO+'" alt=""><span class="orb-mic">'+svg('mic')+'</span><i class="orb-aro"></i></div>');c.onclick=function(){
           /* El branding ES el boton. Si no estas en Comando, te lleva alli;
              si ya estas, abre la conversacion. Asi sigue sirviendo de vuelta
              a casa y ademas es lo que enciende la voz. */
