@@ -61,10 +61,6 @@
   }
 
   /* faux status bar */
-  .statusbar{height:calc(22px + var(--sat));padding:var(--sat) 22px 0;display:flex;align-items:center;justify-content:space-between;
-    font-size:13px;font-weight:600;flex:none;letter-spacing:.02em}
-  .statusbar .sb-r{display:flex;align-items:center;gap:6px}
-  .statusbar svg{width:16px;height:12px}
 
   /* top bar */
   .topbar{height:var(--top-h);flex:none;display:flex;align-items:center;gap:10px;padding:0 14px;border-bottom:1px solid var(--line);position:relative;z-index:5}
@@ -297,14 +293,8 @@
 
 <div class="stage">
   <div class="device" id="device">
-    <div class="statusbar">
-      <span id="clock">9:41</span>
-      <span class="sb-r">
-        <svg viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="4" width="3" height="8" rx="1"/><rect x="10" y="1" width="3" height="11" rx="1" opacity=".9"/><rect x="15" y="1" width="3" height="11" rx="1" opacity=".4"/></svg>
-        <svg viewBox="0 0 18 12" fill="currentColor"><path d="M9 2.5c2.4 0 4.6.9 6.2 2.4l-1 1.1A7.4 7.4 0 0 0 9 4.9c-2 0-3.8.8-5.2 2.1l-1-1.1A9 9 0 0 1 9 2.5zM9 6c1.3 0 2.5.5 3.4 1.3l-1 1.1c-.6-.6-1.5-.9-2.4-.9s-1.8.3-2.4.9l-1-1.1C6.5 6.5 7.7 6 9 6zm0 3.2 1.4 1.5H7.6z"/></svg>
-        <svg viewBox="0 0 26 12" fill="none"><rect x="1" y="1" width="21" height="10" rx="2.5" stroke="currentColor" opacity=".5"/><rect x="3" y="3" width="16" height="6" rx="1" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity=".5"/></svg>
-      </span>
-    </div>
+    <!-- La barra de estado falsa (9:41, cobertura, wifi, bateria) se elimino:
+         en un movil real la pinta el sistema encima. Era teatro de prototipo. -->
     <div id="offlineBanner"></div>
     <div class="topbar" id="topbar"></div>
     <div class="app-scroll" id="view"></div>
@@ -482,41 +472,12 @@
     screen:'command', params:{}, stack:[], online:true, voiceMode:'voice',
     avatar:'idle', missionCreated:false, decisionReady:false,
   };
-  var MISSION={id:'MIS-2026-0821-001', client:'Mojitos Calle 8', url:'mojitoscalle8.com',
-    title:{es:'Analizar mojitoscalle8.com y preparar propuesta comercial',en:'Analyze mojitoscalle8.com and prepare commercial proposal'},
-    started:'10:42 AM', progress:0, status:'pending', priority:'HIGH',
-    steps:[
-      {t:{es:'Escaneando sitio web',en:'Scanning website'},ag:'Web Analysis Agent',time:'10:42',st:'pend'},
-      {t:{es:'Analizando arquitectura',en:'Analyzing architecture'},ag:'Web Analysis Agent',time:'10:43',st:'pend'},
-      {t:{es:'Auditando seguridad',en:'Auditing security'},ag:'Security Agent',time:'10:44',st:'pend'},
-      {t:{es:'Analizando rendimiento y SEO',en:'Analyzing performance & SEO'},ag:'Web Analysis Agent',time:'10:45',st:'pend'},
-      {t:{es:'Detectando oportunidades',en:'Detecting opportunities'},ag:'Strategy Agent',time:'10:46',st:'pend'},
-      {t:{es:'Preparando propuesta',en:'Preparing proposal'},ag:'Finance Agent',time:'10:47',st:'pend'},
-      {t:{es:'Redactando informe ejecutivo',en:'Drafting executive report'},ag:'Document Agent',time:'10:48',st:'pend'}
-    ]};
-  var CRITICALS=[
-    {es:'No cuenta con Portal de Eventos',en:'No Events Portal'},
-    {es:'Tiempo de carga elevado (4.8s)',en:'High load time (4.8s)'},
-    {es:'Sin reservas / pasarela VIP online',en:'No online VIP reservations'},
-    {es:'SEO básico no optimizado',en:'Basic, unoptimized SEO'},
-    {es:'Integración social limitada',en:'Limited social integration'},
-    {es:'Sin sistema de suscripciones',en:'No subscription system'}
-  ];
-  var NOTIFS=[
-    {lvl:'critical',ico:'warn',t:{es:'Agente necesita aprobación',en:'Agent needs approval'},d:{es:'Propuesta Mojitos Calle 8 lista para revisar',en:'Mojitos Calle 8 proposal ready to review'},time:'10:58 AM',act:'decision'},
-    {lvl:'important',ico:'dollar',t:{es:'Pago pendiente',en:'Pending payment'},d:{es:'Factura #1042 vence en 2 días',en:'Invoice #1042 due in 2 days'},time:'10:30 AM'},
-    {lvl:'important',ico:'mail',t:{es:'Cliente respondió',en:'Client replied'},d:{es:'Sundowners Key Largo confirmó fecha',en:'Sundowners Key Largo confirmed date'},time:'09:50 AM'},
-    {lvl:'info',ico:'calendar',t:{es:'Evento mañana',en:'Event tomorrow'},d:{es:'Sundowners Key Largo · 7:00 PM',en:'Sundowners Key Largo · 7:00 PM'},time:'09:12 AM'},
-    {lvl:'info',ico:'check',t:{es:'7 tareas rutinarias completadas',en:'7 routine tasks completed'},d:{es:'Agrupadas · sin acción requerida',en:'Grouped · no action needed'},time:'08:40 AM'}
-  ];
-  var CLIENTS=[
-    {n:'Mojitos Calle 8',co:'Little Havana',st:'opportunity',last:{es:'Análisis completado',en:'Analysis completed'},val:'$2,500'},
-    {n:'Sundowners Key Largo',co:'Venue',st:'active',last:{es:'Fecha confirmada',en:'Date confirmed'},val:'$4,800'},
-    {n:'Brickell Rooftop',co:'Corporate',st:'active',last:{es:'Propuesta enviada',en:'Proposal sent'},val:'$6,200'},
-    {n:'Wynwood Art Bar',co:'Nightlife',st:'lead',last:{es:'Primer contacto',en:'First contact'},val:'$1,900'}
-  ];
+  var MISSION=null;
+  var CRITICALS=[];
+  var NOTIFS=[];
+  var CLIENTS=[];
   var AGENTS=[
-    {n:'Web Analysis Agent',ms:{es:'Análisis de sitios web',en:'Website analysis'},task:{es:'Analizando mojitoscalle8.com',en:'Analyzing mojitoscalle8.com'},st:'run',health:98},
+    {n:'Web Analysis Agent',ms:{es:'Análisis de sitios web',en:'Website analysis'},task:{es:'En espera',en:'Idle'},st:'run',health:98},
     {n:'Finance Agent',ms:{es:'Finanzas y propuestas',en:'Finance & proposals'},task:{es:'Calculando propuesta',en:'Computing proposal'},st:'run',health:99},
     {n:'Security Agent',ms:{es:'Auditoría de seguridad',en:'Security audit'},task:{es:'En espera',en:'Idle'},st:'idle',health:100},
     {n:'Email Agent',ms:{es:'Correos y envíos',en:'Email & delivery'},task:{es:'En espera',en:'Idle'},st:'idle',health:97},
@@ -531,16 +492,8 @@
     ['agents','Agent Performance',{es:'Rendimiento de agentes',en:'Agent performance'}],
     ['radar','Operations Report',{es:'Operaciones y misiones',en:'Operations & missions'}],
     ['clients','Client Analysis',{es:'Análisis de clientes',en:'Client analysis'}]];
-  var DOCS=[['doc','Propuesta Mojitos Calle 8.pdf','PDF','2.4 MB'],['doc','Contrato Sundowners.docx','DOCX','88 KB'],
-    ['dollar','Factura #1042.pdf','PDF','120 KB'],['reports','Informe Ejecutivo Agosto.xlsx','XLSX','340 KB']];
-  var HISTORY=[
-    {ico:'check',t:{es:'Misión completada · Mojitos Calle 8',en:'Mission completed · Mojitos Calle 8'},time:'10:58 AM',c:'green'},
-    {ico:'reports',t:{es:'Informe ejecutivo generado',en:'Executive report generated'},time:'10:57 AM',c:'gold'},
-    {ico:'dollar',t:{es:'Propuesta $2,500 preparada',en:'$2,500 proposal prepared'},time:'10:55 AM',c:'gold'},
-    {ico:'command',t:{es:'Orden por voz recibida',en:'Voice order received'},time:'10:42 AM',c:'cyan'},
-    {ico:'mail',t:{es:'Email enviado a Brickell Rooftop',en:'Email sent to Brickell Rooftop'},time:'09:20 AM',c:'muted'},
-    {ico:'calendar',t:{es:'Recordatorio · Evento Sundowners',en:'Reminder · Sundowners event'},time:'08:40 AM',c:'muted'}
-  ];
+  var DOCS=[];
+  var HISTORY=[];
 
   var userGestured=false;
   document.addEventListener('pointerdown',function(){userGestured=true;},true);
@@ -651,7 +604,7 @@
     $('#voClose').onclick=closeVoice;
     // simulate transcription then respond contextually
     voiceTimer=setTimeout(function(){
-      var demo=contextual? contextualPrompt() : 'Analiza la web mojitoscalle8.com, dime qué le falta y prepárame una propuesta comercial.';
+      var demo=contextualPrompt();
       typeInto('#voText',demo,function(){
         setTimeout(function(){
           if(contextual){ $('#voText').innerHTML='<b style="color:var(--text)">'+esc(demo)+'</b><br><span style="color:var(--gold)">'+contextualAnswer()+'</span>';
@@ -662,16 +615,8 @@
     },1400);
   }
   function closeVoice(){if(voiceTimer){clearTimeout(voiceTimer);voiceTimer=null;}$('#voiceOv').classList.remove('open');if(!$('#sheet').classList.contains('open'))$('#scrim').classList.remove('open');}
-  function contextualPrompt(){
-    if(state.screen==='decisionDetail')return T('¿Por qué recomendamos $2,500?','Why do we recommend $2,500?');
-    if(state.screen==='radar'||state.screen==='mission')return T('¿Cuánto falta para terminar?','How much is left?');
-    return T('¿Qué tengo pendiente hoy?','What is pending today?');
-  }
-  function contextualAnswer(){
-    if(state.screen==='decisionDetail')return T('Por alcance, complejidad y valor de negocio: portal de eventos, reservas VIP y SEO. ~2–3 semanas.','Scope, complexity and business value: events portal, VIP reservations and SEO. ~2–3 weeks.');
-    if(state.screen==='radar'||state.screen==='mission')return T('Va al '+MISSION.progress+'%. Quedan rendimiento y redacción del informe.','At '+MISSION.progress+'%. Performance and report drafting remain.');
-    return T('Una decisión requiere tu aprobación: la propuesta de Mojitos Calle 8.','One decision needs your approval: the Mojitos Calle 8 proposal.');
-  }
+  function contextualPrompt(){ return T('¿Qué tengo pendiente hoy?','What is pending today?'); }
+  function contextualAnswer(){ return ''; }
   function wf(n){var s='';for(var i=0;i<n;i++)s+='<i style="animation-delay:'+(i*0.05)+'s"></i>';return s;}
   function typeInto(sel,text,done){var e=$(sel);if(!e)return;e.innerHTML='';var i=0;e.style.color='var(--text)';(function tick(){if(i<=text.length){e.textContent=text.slice(0,i);i+=2;setTimeout(tick,22);}else if(done)done();})();}
 
@@ -751,8 +696,9 @@
   function vCaption(st){
     if(st==='speaking'){
       if(state.agentLine==='real'&&state.agentReply)return esc(state.agentReply).replace(/\n/g,'<br>');
-      if(state.agentLine==='ack')return T('Entendido. Voy a analizar <b>mojitoscalle8.com</b> y prepararte una propuesta. La pongo en marcha ahora.','Got it. I\'ll analyze <b>mojitoscalle8.com</b> and prepare you a proposal. Starting it now.');
-      if(state.agentLine==='done')return T('Ya corre en segundo plano; te aviso al terminar. ¿Algo más?','It\'s running in the background; I\'ll notify you when it\'s done. Anything else?');
+      /* Las respuestas enlatadas se eliminaron: con voz real, poner palabras
+         en boca de ELIXIS que el no ha pensado es ventriloquia. Solo queda la
+         despedida, que es de la interfaz y no del agente. */
       if(state.agentLine==='bye')return T('Hasta luego. Aquí estaré cuando me necesites.','See you. I\'ll be here whenever you need me.');
       return '…';
     }
@@ -767,11 +713,13 @@
   }
   function wireVoice(st){ var mic=$('#vMic');if(mic)mic.onclick=endVoice; }
   function exampleChips(){
-    var ex=[T('Analiza mojitoscalle8.com','Analyze mojitoscalle8.com'),T('¿Qué tengo pendiente hoy?','What\'s pending today?'),T('Muéstrame los pagos atrasados','Show overdue payments'),T('Genera un flyer para Sundowners','Generate a flyer for Sundowners')];
+    /* Comandos que ELIXIS puede contestar de verdad contra la base de datos.
+       Los de antes pedian por un cliente inventado. */
+    var ex=[T('¿Qué tengo pendiente hoy?','What is pending today?'),T('¿Cuánto facturamos este mes?','How much did we bill this month?'),T('Muéstrame los pagos atrasados','Show overdue payments'),T('¿Cuánto cobramos por una boda?','What do we charge for a wedding?')];
     return '<div class="sec-h" style="justify-content:center;margin-top:22px">'+T('Comandos de ejemplo','Example commands')+'</div><div class="chips">'+ex.map(function(x){return '<button class="chip" data-chip="'+esc(x)+'">'+esc(x)+'</button>';}).join('')+'</div>';
   }
   function setAvatar(s){state.avatar=s;if(state.screen==='command')render();}
-  function demoOrder(){return T('Analiza la web mojitoscalle8.com, dime qué le falta y prepárame una propuesta comercial.','Analyze mojitoscalle8.com, tell me what it\'s missing and prepare me a commercial proposal.');}
+  function demoOrder(){ return ''; }
   /* ═══════════════════════════════════════════════════════════════════
      MOTOR DE VOZ EN TIEMPO REAL (FÉNIX)
 
@@ -965,14 +913,7 @@
       speakReal(reply);
     });
   }
-  function agentRespondAndCreate(){
-    state.agentLine='ack';state.avatar='speaking';render();
-    MISSION.status='running';MISSION.progress=8;state.missionCreated=true;runMissionProgress();haptic('double');
-    toast(T('Misión creada · '+MISSION.id,'Mission created · '+MISSION.id),'target');
-    setTimeout(function(){ if(state.avatar!=='speaking')return; state.agentLine='done';render();
-      setTimeout(function(){ if(state.avatar==='speaking'){state.agentLine=null;state.avatar='listening';render();} },2800);
-    },3200);
-  }
+  function agentRespondAndCreate(){ /* creaba una mision falsa y hacia hablar a ELIXIS con frases escritas a mano */ }
   function endVoice(){
     if(_rec){try{_rec.stop();}catch(_){}}
     RT.stop(true);                 /* cierra el canal y liquida el consumo */
@@ -982,62 +923,16 @@
     setTimeout(function(){ state.avatar='idle';state.agentLine=null;render(); },1400);
   }
   var missionIv=null;
-  function runMissionProgress(){
-    if(missionIv)return;
-    var i=0;
-    missionIv=setInterval(function(){
-      i++;MISSION.progress=Math.min(100,8+Math.round(i*7.7));
-      var doneCount=Math.min(MISSION.steps.length, Math.floor(MISSION.progress/100*MISSION.steps.length)+0);
-      MISSION.steps.forEach(function(s,idx){ s.st= idx<doneCount?'done': idx===doneCount?'run':'pend'; });
-      if(state.screen==='radar'||state.screen==='mission')render();
-      if(MISSION.progress>=100){clearInterval(missionIv);missionIv=null;MISSION.steps.forEach(function(s){s.st='done';});MISSION.status='completed';state.decisionReady=true;
-        haptic('double');renderNav();
-        toast(T('Misión completada · propuesta lista','Mission completed · proposal ready'),'check');
-        if(state.screen==='radar'||state.screen==='mission')render();
-      }
-    },900);
-  }
+  function runMissionProgress(){ /* la mision de demostracion se elimino */ }
 
   /* RADAR */
   SCREENS.radar=function(v){
-    renderTopbar({title:T('RADAR DE MISIÓN','MISSION RADAR'),sub:T('Tu estudio trabajando por ti','Your studio working for you'),
-      right:'<button class="icon-btn" id="goNotif">'+svg('bell')+(unread()?'<span style="position:absolute;top:8px;right:8px;width:8px;height:8px;border-radius:50%;background:var(--red)"></span>':'')+'</button>'});
-    var pct=MISSION.status==='pending'?0:MISSION.progress;
-    var tab=state.params.tab||'active';
-    var mActive = MISSION.status==='running'||MISSION.status==='pending';
-    v.innerHTML='<div class="pad fade-anim">'+
-      '<div class="radar-wrap"><svg viewBox="0 0 200 200">'+
-        '<circle cx="100" cy="100" r="92" fill="none" stroke="var(--line)" stroke-width="1"/>'+
-        '<circle cx="100" cy="100" r="66" fill="none" stroke="var(--line)" stroke-width="1"/>'+
-        '<circle cx="100" cy="100" r="40" fill="none" stroke="var(--line)" stroke-width="1"/>'+
-        '<g class="radar-sweep"><path d="M100 100 L100 8 A92 92 0 0 1 168 40 Z" fill="url(#rg)" opacity=".35"/></g>'+
-        '<defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--gold)"/><stop offset="1" stop-color="transparent"/></linearGradient></defs>'+
-        '<circle cx="100" cy="100" r="80" fill="none" stroke="var(--gold)" stroke-width="5" stroke-linecap="round" stroke-dasharray="'+(Math.PI*2*80)+'" stroke-dashoffset="'+(Math.PI*2*80*(1-pct/100))+'" transform="rotate(-90 100 100)" style="transition:stroke-dashoffset .6s ease"/>'+
-        '<circle cx="146" cy="60" r="3" fill="var(--cyan)"/><circle cx="52" cy="130" r="3" fill="var(--green)"/><circle cx="150" cy="140" r="2.5" fill="var(--gold)"/>'+
-      '</svg><div class="radar-center"><b>'+pct+'<span style="font-size:20px">%</span></b><span>'+(MISSION.status==='completed'?T('COMPLETADA','COMPLETED'):MISSION.status==='running'?T('EN PROGRESO','IN PROGRESS'):T('SIN MISIÓN','NO MISSION'))+'</span></div></div>'+
-      '<div class="tabs" id="radarTabs">'+
-        ['active,'+T('ACTIVAS','ACTIVE'),'queue,'+T('EN COLA','QUEUED'),'done,'+T('COMPLETADAS','DONE'),'error,ERROR'].map(function(x){var p=x.split(',');return '<button class="'+(tab===p[0]?'on':'')+'" data-tab="'+p[0]+'">'+p[1]+'</button>';}).join('')+
-      '</div>'+
-      '<div id="radarList"></div></div>';
-    $('#goNotif').onclick=function(){go('notifications');};
-    document.querySelectorAll('#radarTabs [data-tab]').forEach(function(b){b.onclick=function(){go('radar',{tab:b.getAttribute('data-tab')},true);};});
-    var list=$('#radarList');
-    if(tab==='active'){
-      if(!state.missionCreated){list.innerHTML='<div class="empty">'+svg('target','width="30" style="opacity:.4;margin:0 auto 10px"')+'<br>'+T('No hay misiones activas. Da una orden desde Comando.','No active missions. Give an order from Command.')+'</div>';}
-      else { list.innerHTML=missionCardHtml()+'<div class="sec-h">'+T('Pipeline','Pipeline')+' '+badge('demo','DEMO')+'</div><div class="card">'+MISSION.steps.map(stepHtml).join('')+'</div>'; $('#mCard').onclick=function(){go('mission',{id:MISSION.id});}; }
-    } else if(tab==='done'){
-      list.innerHTML= MISSION.status==='completed'? missionCardHtml(true) : '<div class="empty">'+T('Aún nada completado.','Nothing completed yet.')+'</div>';
-      var mc=$('#mCard');if(mc)mc.onclick=function(){go('mission',{id:MISSION.id});};
-    } else if(tab==='queue'){ list.innerHTML='<div class="card"><div class="lrow"><span class="l-ico">'+svg('mail')+'</span><div><div class="l-t">'+T('Campaña email venues','Venues email campaign')+'</div><div class="l-s">'+T('En cola · Email Agent','Queued · Email Agent')+'</div></div><span class="l-r badge b-muted">QUEUED</span></div></div>'; }
-    else { list.innerHTML='<div class="empty">'+T('Sin errores. Todo en orden.','No errors. All good.')+'</div>'; }
+    renderTopbar({title:T('RADAR','RADAR')});
+    /* Vaciada a proposito: lo que habia aqui eran datos inventados sobre un
+       cliente que no existe. Un vacio honesto vale mas que un tablero que miente. */
+    v.innerHTML='<div class="pad fade-anim"><div class="empty">'+T('El radar está limpio. Cuando ELIXIS tenga trabajo en marcha, lo verás aquí.','The radar is clear. When ELIXIS has work running, you will see it here.')+'</div></div>';
   };
-  function missionCardHtml(done){
-    return '<div class="card tap" id="mCard"><div class="row" style="gap:10px;margin-bottom:8px"><span class="badge '+(done?'b-green':'b-cyan')+'">'+(done?T('COMPLETADA','COMPLETED'):T('ACTIVA','ACTIVE'))+'</span><span class="badge b-demo">DEMO</span><span class="l-r chev" style="margin-left:auto">'+svg('chev','width="18"')+'</span></div>'+
-      '<div style="font-size:15px;font-weight:700">'+esc(MISSION.title[lang]||MISSION.title.es)+'</div>'+
-      '<div class="mono" style="font-size:11px;color:var(--faint);margin:6px 0 10px">ID: '+MISSION.id+' · '+T('Inicio','Start')+' '+MISSION.started+'</div>'+
-      '<div class="row" style="justify-content:space-between;font-size:12px;margin-bottom:5px"><span class="muted">'+T('Progreso','Progress')+'</span><b>'+MISSION.progress+'%</b></div>'+
-      '<div class="progress"><i style="width:'+MISSION.progress+'%"></i></div></div>';
-  }
+  function missionCardHtml(){ return ''; }
   function stepHtml(s){
     var ic=s.st==='done'?'check':s.st==='run'?'<span class="spin">'+svg('scan','width="16"')+'</span>':null;
     var icoInner = s.st==='done'?svg('check','width="16"'):s.st==='run'?'<span class="spin">'+svg('scan','width="16"')+'</span>':svg('target','width="15"');
@@ -1046,82 +941,27 @@
 
   /* MISSION DETAIL */
   SCREENS.mission=function(v){
-    renderTopbar({back:true,title:T('Detalle de Misión','Mission Detail'),right:'<button class="icon-btn" id="mAsk">'+svg('mic')+'</button>'});
-    v.innerHTML='<div class="pad screen-anim">'+
-      '<div class="row" style="gap:8px;margin-bottom:8px"><span class="badge '+(MISSION.status==='completed'?'b-green':'b-cyan')+'">'+(MISSION.status==='completed'?T('COMPLETADA','COMPLETED'):T('EN PROGRESO','RUNNING'))+'</span><span class="badge b-red">'+MISSION.priority+' PRIORITY</span></div>'+
-      '<div class="large-title" style="font-size:21px">'+esc(MISSION.title[lang]||MISSION.title.es)+'</div>'+
-      '<div class="card" style="margin-top:12px"><dl class="kv">'+
-        '<dt>'+T('Objetivo','Objective')+'</dt><dd>'+T('Diagnóstico + propuesta','Diagnosis + proposal')+'</dd>'+
-        '<dt>'+T('Ordenada por','Ordered by')+'</dt><dd>Gerardo (Owner)</dd>'+
-        '<dt>'+T('Agentes','Agents')+'</dt><dd>Web · Security · Finance · Doc</dd>'+
-        '<dt>'+T('Inicio','Start')+'</dt><dd>'+MISSION.started+'</dd>'+
-        '<dt>'+T('Duración','Duration')+'</dt><dd>~16 min</dd>'+
-        '<dt>'+T('Riesgo','Risk')+'</dt><dd><span class="badge b-green" style="padding:1px 7px">'+T('BAJO','LOW')+'</span></dd>'+
-      '</dl><hr class="hr"><div class="row" style="justify-content:space-between;font-size:12px;margin-bottom:5px"><span class="muted">'+T('Progreso','Progress')+'</span><b>'+MISSION.progress+'%</b></div><div class="progress"><i style="width:'+MISSION.progress+'%"></i></div></div>'+
-      '<div class="sec-h">'+T('Actividad','Activity')+'</div><div class="card">'+MISSION.steps.map(stepHtml).join('')+'</div>'+
-      '<div class="btn-col" style="margin-top:16px">'+
-        '<div style="display:flex;gap:10px"><button class="btn" id="mPause">'+svg('pause')+' '+T('Pausar','Pause')+'</button><button class="btn" id="mPrio">'+svg('flag')+' '+T('Prioridad','Priority')+'</button></div>'+
-        '<button class="btn danger" id="mCancel">'+T('Cancelar misión','Cancel mission')+'</button></div>'+
-      '</div>';
-    $('#mAsk').onclick=function(){openVoice(true);};
-    $('#mPause').onclick=function(){toast(T('Misión pausada (demo)','Mission paused (demo)'),'pause');};
-    $('#mPrio').onclick=function(){toast(T('Prioridad actualizada (demo)','Priority updated (demo)'),'flag');};
-    $('#mCancel').onclick=function(){confirmAction({ico:'warn',danger:true,title:T('¿Cancelar misión?','Cancel mission?'),body:T('El trabajo en progreso se detendrá.','Work in progress will stop.'),risk:'MEDIUM',ok:T('Cancelar misión','Cancel mission'),onOk:function(){toast(T('Misión cancelada (demo)','Mission cancelled (demo)'));back();}});};
+    renderTopbar({title:T('MISIÓN','MISSION')});
+    /* Vaciada a proposito: lo que habia aqui eran datos inventados sobre un
+       cliente que no existe. Un vacio honesto vale mas que un tablero que miente. */
+    v.innerHTML='<div class="pad fade-anim"><div class="empty">'+T('No hay ninguna misión en curso.','No mission in progress.')+'</div></div>';
   };
 
   /* DECISIONS */
   SCREENS.decisions=function(v){
     renderTopbar({title:T('DECISIONES','DECISIONS')});
-    var tab=state.params.tab||'pending';
-    var pend = state.decisionReady;
-    v.innerHTML='<div class="pad fade-anim">'+
-      '<div class="tabs">'+['pending,'+T('PENDIENTES','PENDING'),'approved,'+T('APROBADAS','APPROVED'),'rejected,'+T('RECHAZADAS','REJECTED')].map(function(x){var p=x.split(',');return '<button class="'+(tab===p[0]?'on':'')+'" data-dt="'+p[0]+'">'+p[1]+'</button>';}).join('')+'</div>'+
-      '<div id="decList"></div></div>';
-    document.querySelectorAll('[data-dt]').forEach(function(b){b.onclick=function(){go('decisions',{tab:b.getAttribute('data-dt')},true);};});
-    var list=$('#decList');
-    if(tab==='pending'){
-      list.innerHTML= pend? decisionCard() : '<div class="empty">'+T('No hay decisiones pendientes. Cuando un agente termine, aparecerá aquí.','No pending decisions. When an agent finishes, it appears here.')+'</div>';
-      var d=$('#decCard');if(d)d.onclick=function(){go('decisionDetail',{id:'DEC-Mojitos'});};
-    } else if(tab==='approved'){ list.innerHTML=state.decisionApproved? '<div class="card"><div class="row" style="gap:8px;margin-bottom:6px"><span class="badge b-green">'+T('APROBADA','APPROVED')+'</span></div><b>'+T('Propuesta Web — Mojitos Calle 8','Web Proposal — Mojitos Calle 8')+'</b><div class="muted" style="font-size:13px;margin-top:4px">$2,500 · '+T('Enviada al cliente (demo)','Sent to client (demo)')+'</div></div>' : '<div class="empty">'+T('Nada aprobado aún.','Nothing approved yet.')+'</div>'; }
-    else { list.innerHTML='<div class="empty">'+T('Nada rechazado.','Nothing rejected.')+'</div>'; }
+    /* Vaciada a proposito: lo que habia aqui eran datos inventados sobre un
+       cliente que no existe. Un vacio honesto vale mas que un tablero que miente. */
+    v.innerHTML='<div class="pad fade-anim"><div class="empty">'+T('Todavía no hay decisiones que aprobar.','No decisions to approve yet.')+'</div></div>';
   };
-  function decisionCard(){
-    return '<div class="card tap" id="decCard"><div class="row" style="gap:8px;margin-bottom:8px"><span class="badge b-red">HIGH</span><span class="badge b-magenta">'+svg('sparkle','width="10"')+' AI</span><span class="l-r chev" style="margin-left:auto">'+svg('chev','width="18"')+'</span></div>'+
-      '<b style="font-size:16px">'+T('Propuesta Web — Mojitos Calle 8','Web Proposal — Mojitos Calle 8')+'</b>'+
-      '<div class="row" style="justify-content:space-between;margin-top:10px"><div><div class="mono" style="font-size:10px;color:var(--faint)">'+T('RECOMENDACIÓN IA','AI RECOMMENDATION')+'</div><div style="font-size:20px;font-weight:800;color:var(--gold)">$2,500</div></div>'+
-      '<div style="text-align:right"><div class="mono" style="font-size:10px;color:var(--faint)">'+T('IMPACTO','IMPACT')+'</div><div style="font-size:13px">'+T('Oportunidad comercial','Commercial opportunity')+'</div></div></div>'+
-      '<button class="btn gold sm" style="width:100%;margin-top:14px;min-height:46px">'+T('Revisar','Review')+'</button></div>';
-  }
+  function decisionCard(){ /* Mostraba una propuesta a un cliente inventado. */ return ''; }
 
   /* DECISION DETAIL / HANDOFF */
   SCREENS.decisionDetail=function(v){
-    renderTopbar({back:true,title:T('Decisión Ejecutiva','Executive Decision'),right:'<button class="icon-btn" id="ddAsk">'+svg('mic')+'</button>'});
-    v.innerHTML='<div class="pad screen-anim">'+
-      '<div style="text-align:center;margin:6px 0 14px">'+
-        '<div class="badge b-green" style="margin-bottom:10px">'+svg('check','width="12"')+' '+T('MISIÓN COMPLETADA','MISSION COMPLETED')+'</div>'+
-        '<div class="muted" style="font-size:12px">'+T('Análisis completo de','Full analysis of')+'</div>'+
-        '<div style="font-size:24px;font-weight:800;letter-spacing:-.01em">Mojitos Calle 8</div>'+
-        '<div class="mono" style="font-size:12px;color:var(--gold)">'+MISSION.url+'</div></div>'+
-      '<div class="card"><div class="sec-h" style="margin-top:0;color:var(--red)">'+T('Puntos críticos detectados','Critical points detected')+'</div><ul class="bul">'+
-        CRITICALS.map(function(c){return '<li>'+esc(c[lang]||c.es)+'</li>';}).join('')+'</ul></div>'+
-      '<div class="card"><div class="sec-h" style="margin-top:0">'+T('Propuesta comercial sugerida','Suggested commercial proposal')+' '+badge('demo','DEMO')+'</div>'+
-        '<div class="price">$2,500 <small>USD</small></div>'+
-        '<div class="muted" style="font-size:13.5px;margin-top:6px">'+T('Implementación completa · Plazo estimado 2–3 semanas','Full implementation · Estimated 2–3 weeks')+'</div>'+
-        '<div class="row" style="gap:8px;margin-top:10px"><span class="badge b-green">'+T('CONFIANZA','CONFIDENCE')+' 92%</span></div>'+
-        '<button class="btn ghost sm" id="whyPrice" style="width:100%;margin-top:12px;justify-content:space-between">'+T('¿Por qué $2,500?','Why $2,500?')+' '+svg('chev','width="16"')+'</button></div>'+
-      '<div class="btn-col" style="margin-top:16px">'+
-        '<button class="btn gold" id="ddSend">'+svg('mail')+' '+T('Enviar propuesta por email','Send proposal by email')+'</button>'+
-        '<button class="btn" id="ddDesk">'+svg('desktop')+' '+T('Revisar en el escritorio','Review on desktop')+'</button>'+
-        '<div style="display:flex;gap:10px"><button class="btn" id="ddEdit">'+svg('edit')+' '+T('Editar','Edit')+'</button><button class="btn danger" id="ddReject">'+T('Rechazar','Reject')+'</button></div>'+
-      '</div>'+
-      '<div class="conf-note">'+T('Modo demostración. Ninguna acción se ejecuta sobre sistemas reales; los envíos muestran “Demo send completed”.','Demo mode. No action runs on real systems; sends show “Demo send completed”.')+'</div>'+
-      '</div>';
-    $('#ddAsk').onclick=function(){openVoice(true);};
-    $('#whyPrice').onclick=whyPriceSheet;
-    $('#ddSend').onclick=sendProposalPreview;
-    $('#ddDesk').onclick=function(){confirmAction({ico:'desktop',title:T('Enviar al Studio Desktop','Send to Studio Desktop'),body:T('El expediente se abrirá en el Workspace Multi-Pantalla para revisión visual con los “ojos del agente”.','The file opens in the Multi-Display Workspace for visual review with the “agent\'s eyes”.'),ok:T('Enviar al escritorio','Send to desktop'),onOk:function(){haptic('light');toast(T('Enviado al Studio Workspace (demo)','Sent to Studio Workspace (demo)'),'desktop');go('studio');}});};
-    $('#ddEdit').onclick=function(){toast(T('Editor de propuesta no disponible en demo','Proposal editor not available in demo'),'edit');};
-    $('#ddReject').onclick=function(){confirmAction({danger:true,ico:'warn',title:T('¿Rechazar propuesta?','Reject proposal?'),body:T('Se marcará como rechazada.','It will be marked as rejected.'),ok:T('Rechazar','Reject'),onOk:function(){state.decisionReady=false;toast(T('Propuesta rechazada (demo)','Proposal rejected (demo)'));renderNav();tabTo('decisions');}});};
+    renderTopbar({title:T('DECISIÓN','DECISION')});
+    /* Vaciada a proposito: lo que habia aqui eran datos inventados sobre un
+       cliente que no existe. Un vacio honesto vale mas que un tablero que miente. */
+    v.innerHTML='<div class="pad fade-anim"><div class="empty">'+T('Esta decisión ya no existe.','This decision no longer exists.')+'</div></div>';
   };
   function whyPriceSheet(){
     openSheet('<div class="sheet-grip"></div><h3>'+T('¿Por qué $2,500?','Why $2,500?')+'</h3>'+
@@ -1134,19 +974,7 @@
       '<button class="btn gold" style="margin-top:16px" onclick="void 0" id="wpClose">'+T('Entendido','Got it')+'</button>');
     $('#wpClose').onclick=closeSheet;
   }
-  function sendProposalPreview(){
-    openSheet('<div class="sheet-grip"></div><h3>'+T('Vista previa del email','Email preview')+'</h3>'+
-      '<div class="card" style="margin-top:10px"><dl class="kv"><dt>'+T('Para','To')+'</dt><dd>info@mojitoscalle8.com</dd><dt>'+T('Asunto','Subject')+'</dt><dd>'+T('Propuesta web · Mojitos Calle 8','Web proposal · Mojitos Calle 8')+'</dd></dl><hr class="hr">'+
-      '<p style="font-size:13.5px;color:var(--muted);margin:0">'+T('Estimado equipo de Mojitos Calle 8, tras analizar su sitio detectamos 6 oportunidades clave. Adjuntamos una propuesta de implementación completa por $2,500 USD (2–3 semanas)…','Dear Mojitos Calle 8 team, after analyzing your site we found 6 key opportunities. Attached is a full implementation proposal for $2,500 USD (2–3 weeks)…')+'</p></div>'+
-      '<div class="badge b-amber" style="margin:12px 0">MEDIUM RISK · '+T('acción externa','external action')+'</div>'+
-      '<div class="btn-col"><button class="btn gold" id="epConfirm">'+svg('face')+' '+T('Confirmar envío · Face ID','Confirm send · Face ID')+'</button><button class="btn ghost" id="epCancel">'+T('Cancelar','Cancel')+'</button></div>');
-    $('#epCancel').onclick=closeSheet;
-    $('#epConfirm').onclick=function(){closeSheet;$('#scrim').classList.remove('open');$('#sheet').classList.remove('open');
-      state.decisionApproved=true;state.decisionReady=false;haptic('strong');renderNav();
-      toast(T('Demo send completed · propuesta enviada','Demo send completed · proposal sent'),'check');
-      setTimeout(function(){go('decisions',{tab:'approved'},true);},400);
-    };
-  }
+  function sendProposalPreview(){ /* Previsualizaba un correo a un cliente inventado. */ return ''; }
 
   /* NOTIFICATIONS */
   SCREENS.notifications=function(v){
@@ -1169,50 +997,38 @@
 
   /* HISTORY */
   SCREENS.history=function(v){
-    renderTopbar({back:true,title:T('Historial','History')});
-    var f=state.params.f||'today';
-    v.innerHTML='<div class="pad screen-anim">'+
-      '<div class="cmd-input" style="margin-top:0"><input id="histSearch" placeholder="'+T('Busca: “Lo que hicimos con Mojitos”','Search: “What we did with Mojitos”')+'"><button class="send" id="histGo">'+svg('search','width="18"')+'</button></div>'+
-      '<div class="tabs" style="margin-top:12px">'+['today,'+T('HOY','TODAY'),'week,'+T('SEMANA','WEEK'),'month,'+T('MES','MONTH'),'all,ALL'].map(function(x){var p=x.split(',');return '<button class="'+(f===p[0]?'on':'')+'" data-hf="'+p[0]+'">'+p[1]+'</button>';}).join('')+'</div>'+
-      '<div class="card">'+HISTORY.map(function(e){return '<div class="lrow"><span class="l-ico" style="color:var(--'+e.c+')">'+svg(e.ico)+'</span><div class="l-t" style="font-weight:600;flex:1;font-size:13.5px">'+esc(e.t[lang]||e.t.es)+'</div><span class="pl-time">'+e.time+'</span></div>';}).join('')+'</div></div>';
-    document.querySelectorAll('[data-hf]').forEach(function(b){b.onclick=function(){go('history',{f:b.getAttribute('data-hf')},true);};});
-    $('#histGo').onclick=function(){var q=$('#histSearch').value.trim();if(q)toast(T('Buscando: ','Searching: ')+'“'+q+'” '+T('(IA interpreta)','(AI interprets)'),'search');};
+    renderTopbar({title:T('HISTORIAL','HISTORY')});
+    /* Vaciada a proposito: lo que habia aqui eran datos inventados sobre un
+       cliente que no existe. Un vacio honesto vale mas que un tablero que miente. */
+    v.innerHTML='<div class="pad fade-anim"><div class="empty">'+T('Todavía no hay historial.','No history yet.')+'</div></div>';
   };
 
   /* REPORTS */
   SCREENS.reports=function(v){
-    renderTopbar({back:true,title:T('Reportes','Reports')});
-    v.innerHTML='<div class="pad screen-anim">'+REPORTS.map(function(r){return '<button class="card tap" style="width:100%;text-align:left;display:block" data-rep="'+esc(r[1])+'"><div class="row"><span class="l-ico">'+svg(r[0])+'</span><div style="flex:1"><div class="l-t">'+r[1]+'</div><div class="l-s">'+esc(r[2][lang]||r[2].es)+'</div></div>'+svg('chev','width="18" class="chev"')+'</div></button>';}).join('')+'</div>';
-    document.querySelectorAll('[data-rep]').forEach(function(b){b.onclick=function(){go('reportDetail',{name:b.getAttribute('data-rep')});};});
+    renderTopbar({title:T('INFORMES','REPORTS')});
+    /* Vaciada a proposito: lo que habia aqui eran datos inventados sobre un
+       cliente que no existe. Un vacio honesto vale mas que un tablero que miente. */
+    v.innerHTML='<div class="pad fade-anim"><div class="empty">'+T('Todavía no hay informes.','No reports yet.')+'</div></div>';
   };
   SCREENS.reportDetail=function(v){
-    renderTopbar({back:true,title:esc(state.params.name||'Report')});
-    v.innerHTML='<div class="pad screen-anim"><div class="badge b-demo" style="margin-bottom:12px">DEMO · '+T('vista simplificada','simplified view')+'</div>'+
-      '<div class="stat-3 card"><div><div class="s-v" style="color:var(--gold)">32</div><div class="s-l">'+T('Misiones hoy','Missions today')+'</div></div><div><div class="s-v" style="color:var(--amber)">7</div><div class="s-l">'+T('Pendientes','Pending')+'</div></div><div><div class="s-v" style="color:var(--green)">28</div><div class="s-l">'+T('Completadas','Completed')+'</div></div></div>'+
-      '<div class="card"><p class="muted" style="margin:0;font-size:13.5px">'+T('El reporte completo con gráficas y desglose se revisa mejor en el escritorio.','The full report with charts and breakdown is best reviewed on desktop.')+'</p></div>'+
-      '<button class="btn" style="margin-top:14px" id="rOpen">'+svg('desktop')+' Open on Desktop</button></div>';
-    $('#rOpen').onclick=function(){toast(T('Enviado al escritorio (demo)','Sent to desktop (demo)'),'desktop');};
+    renderTopbar({title:T('INFORME','REPORT')});
+    /* Vaciada a proposito: lo que habia aqui eran datos inventados sobre un
+       cliente que no existe. Un vacio honesto vale mas que un tablero que miente. */
+    v.innerHTML='<div class="pad fade-anim"><div class="empty">'+T('Este informe no existe.','This report does not exist.')+'</div></div>';
   };
 
   /* DOCUMENTS */
   SCREENS.documents=function(v){
-    renderTopbar({back:true,title:T('Documentos','Documents')});
-    v.innerHTML='<div class="pad screen-anim"><div class="card">'+DOCS.map(function(d,i){return '<button class="lrow tap" style="width:100%;text-align:left" data-doc="'+i+'"><span class="l-ico">'+svg(d[0])+'</span><div style="flex:1"><div class="l-t">'+esc(d[1])+'</div><div class="l-s">'+d[2]+' · '+d[3]+'</div></div>'+svg('chev','width="18" class="chev"')+'</button>';}).join('')+'</div></div>';
-    document.querySelectorAll('[data-doc]').forEach(function(b){b.onclick=function(){go('documentDetail',{i:+b.getAttribute('data-doc')});};});
+    renderTopbar({title:T('DOCUMENTOS','DOCUMENTS')});
+    /* Vaciada a proposito: lo que habia aqui eran datos inventados sobre un
+       cliente que no existe. Un vacio honesto vale mas que un tablero que miente. */
+    v.innerHTML='<div class="pad fade-anim"><div class="empty">'+T('Todavía no hay documentos.','No documents yet.')+'</div></div>';
   };
   SCREENS.documentDetail=function(v){
-    var d=DOCS[state.params.i||0];
-    renderTopbar({back:true,title:'Document AI'});
-    v.innerHTML='<div class="pad screen-anim">'+
-      '<div class="card"><div class="row" style="gap:12px"><span class="l-ico" style="width:46px;height:46px">'+svg(d[0])+'</span><div><div class="l-t" style="font-size:15px">'+esc(d[1])+'</div><div class="l-s">'+d[2]+' · '+d[3]+' · 21 Ago 2026</div></div></div></div>'+
-      '<div class="card"><div class="sec-h" style="margin-top:0">'+svg('sparkle','width="12"')+' '+T('Resumen IA','AI summary')+' '+badge('magenta','AI')+'</div>'+
-      '<p style="margin:0;font-size:13.5px;color:var(--muted)">'+T('Propuesta de implementación web para Mojitos Calle 8 por $2,500 USD, alcance de 2–3 semanas, con portal de eventos y reservas VIP.','Web implementation proposal for Mojitos Calle 8 for $2,500 USD, 2–3 week scope, with events portal and VIP reservations.')+'</p>'+
-      '<hr class="hr"><div class="sec-h" style="margin-top:0">'+T('Puntos importantes','Key points')+'</div><ul class="bul" style="--x:0">'+CRITICALS.slice(0,3).map(function(c){return '<li>'+esc(c[lang]||c.es)+'</li>';}).join('')+'</ul></div>'+
-      '<div class="btn-col" style="margin-top:14px"><button class="btn gold" id="docAsk">'+svg('mic')+' '+T('Preguntar sobre este documento','Ask about this document')+'</button>'+
-      '<div style="display:flex;gap:10px"><button class="btn" id="docSum">'+T('Resumir','Summarize')+'</button><button class="btn" id="docDesk">'+svg('desktop')+' Desktop</button></div></div></div>';
-    $('#docAsk').onclick=function(){openVoice(true);};
-    $('#docSum').onclick=function(){toast(T('Resumen generado (demo)','Summary generated (demo)'),'sparkle');};
-    $('#docDesk').onclick=function(){toast(T('Enviado al escritorio (demo)','Sent to desktop (demo)'),'desktop');};
+    renderTopbar({title:T('DOCUMENTO','DOCUMENT')});
+    /* Vaciada a proposito: lo que habia aqui eran datos inventados sobre un
+       cliente que no existe. Un vacio honesto vale mas que un tablero que miente. */
+    v.innerHTML='<div class="pad fade-anim"><div class="empty">'+T('Este documento no existe.','This document does not exist.')+'</div></div>';
   };
 
   /* CLIENTS */
@@ -1333,8 +1149,6 @@
   }
 
   /* clock */
-  function tick(){var d=new Date();var h=d.getHours(),m=('0'+d.getMinutes()).slice(-2);$('#clock').textContent=(h%12||12)+':'+m;}
-  tick();setInterval(tick,20000);
 
   /* splash → auth → command */
   $('#splashLogo').src=LOGO;
