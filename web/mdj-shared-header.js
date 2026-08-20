@@ -385,6 +385,7 @@
      que otros pases reponen. Se consulta en vivo y se recuerda. */
   var _mdjHaySesion = null;                       // null = aún no se sabe
   var _mdjOrigenBuscador = null;                  // hueco del buscador antes de moverlo
+  var _mdjRotuloBuscador = null;                  // su rotulo original, para devolverlo
   function mdjRefrescarSesion() {
     var supa = (typeof window.getSupabaseClient === 'function') ? window.getSupabaseClient() : null;
     if (!supa) return;
@@ -778,6 +779,15 @@
       var envoltura = document.querySelector('#mainHeader .header-search-wrap');
       if (envoltura) {
         _mdjOrigenBuscador = { padre: envoltura.parentNode, siguiente: envoltura.nextSibling };
+        /* Dentro de la franja el rotulo es solo «Search» (orden del PO): el texto
+           largo «Buscar DJs, tienda, cursos, reservas…» tapaba la lupa. Se guarda
+           el original porque el mismo campo vuelve a la cabecera al desmontar. */
+        var campo = envoltura.querySelector('input');
+        if (campo) {
+          _mdjRotuloBuscador = campo.getAttribute('placeholder');
+          campo.setAttribute('placeholder', 'Search');
+          campo.removeAttribute('data-i18n-placeholder');   // que el pase de idioma no lo devuelva
+        }
         caja.appendChild(envoltura);
       }
 
@@ -824,6 +834,11 @@
          escuchas, no una copia. */
       var envoltura = caja.querySelector('.header-search-wrap');
       if (envoltura) {
+        var campoVuelta = envoltura.querySelector('input');
+        if (campoVuelta && _mdjRotuloBuscador != null) {
+          campoVuelta.setAttribute('placeholder', _mdjRotuloBuscador);
+          _mdjRotuloBuscador = null;
+        }
         if (_mdjOrigenBuscador && _mdjOrigenBuscador.padre && _mdjOrigenBuscador.padre.isConnected) {
           _mdjOrigenBuscador.padre.insertBefore(envoltura, _mdjOrigenBuscador.siguiente || null);
         } else {

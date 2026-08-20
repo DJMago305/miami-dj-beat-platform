@@ -4768,8 +4768,19 @@ body.mdj-perfil-estacion .dj-hero-inset { transform: translateY(30px); }
 }
 /* «Bien claro dentro»: el rotulo sube de .55 a .82 — sobre el fondo reforzado de
    la franja se lee sin pelear con la foto del hero. */
+/* El rotulo arranca DESPUES de la lupa. El campo traia 12px de sangria y la lupa
+   vive en left:16px con 18 de ancho, asi que el texto se le montaba encima. */
+#mdj-flotante-visitante .header-smart-search {
+  padding-left: 44px !important;
+}
+/* Claro pero suave: no compite con los rotulos de la barra. */
 #mdj-flotante-visitante .header-smart-search::placeholder {
-  color: rgba(255, 255, 255, .92) !important;
+  color: rgba(255, 255, 255, .62) !important;
+  letter-spacing: .04em;
+}
+/* Al ir a escribir, el rotulo se va: el campo queda limpio. */
+#mdj-flotante-visitante .header-smart-search:focus::placeholder {
+  color: transparent !important;
 }
 /* El sello y la lupa se apoyan sobre la foto: una sombra corta los separa del
    fondo sin ensuciar el dibujo. */
