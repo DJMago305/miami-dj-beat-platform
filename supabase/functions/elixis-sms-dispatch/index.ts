@@ -124,12 +124,41 @@ serve(async (req: Request) => {
             return json({ ok: false, error: "sms_failed", detalle: r.status }, 502);
         }
 
-        const twSid = String((cuerpo as Record<string, unknown>)?.sid ?? "");
+        const c = cuerpo as Record<string, unknown>;
+        const twSid = String(c?.sid ?? "");
+        // ACEPTADO NO ES ENTREGADO. Twilio responde 200 en cuanto se hace cargo
+        // del mensaje: su `status` sale como queued/accepted, y la entrega real
+        // ocurre despues. Si el numero no esta verificado (cuenta de prueba) o
+        // el trafico no esta registrado en A2P 10DLC, Twilio ACEPTA y luego la
+        // operadora lo descarta -- y nadie se entera.
+        const estadoTw = String(c?.status ?? "");
+        // Twilio devuelve error_code aunque el HTTP sea 200 cuando ya sabe que
+        // fallara. Si viene, esto NO es un envio: es un fallo con buena cara.
+        const errCode = c?.error_code ?? null;
+        const errMsg = String(c?.error_message ?? "");
+
+        if (errCode) {
+            await ADMIN.rpc("elixis_sms_cerrar", {
+                p_id: id, p_por: gate.userId, p_estado: "fallido",
+                p_error: `twilio ${errCode}: ${errMsg}`.slice(0, 400), p_sid: twSid,
+            });
+            console.error(`[elixis-sms-dispatch] Twilio acepto con error ${errCode}: ${errMsg}`);
+            return json({ ok: false, error: "sms_failed", detalle: errCode }, 502);
+        }
+
         await ADMIN.rpc("elixis_sms_cerrar", {
             p_id: id, p_por: gate.userId, p_estado: "enviado", p_sid: twSid,
         });
-        console.log(`[elixis-sms-dispatch] enviado · id=${id} · por=${gate.userId} · sid=${twSid}`);
-        return json({ ok: true, estado: "enviado", destinatario: fila.destinatario_nombre }, 200);
+        console.log(`[elixis-sms-dispatch] aceptado · id=${id} · por=${gate.userId} · sid=${twSid} · estado=${estadoTw}`);
+        // Se devuelve lo que Twilio dice de verdad, para que la pantalla no
+        // prometa una entrega que todavia no ha ocurrido.
+        return json({
+            ok: true,
+            estado: "aceptado",
+            estado_operadora: estadoTw || "queued",
+            sid: twSid,
+            destinatario: fila.destinatario_nombre,
+        }, 200);
     } catch (err) {
         console.error("[elixis-sms-dispatch] red:", err);
         await ADMIN.rpc("elixis_sms_cerrar", {

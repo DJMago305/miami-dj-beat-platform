@@ -1035,7 +1035,17 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
   var userName = "";
   var userRole = "";
   var LOGIN_URL = "./login.html?next=elixis-console.html";
-  function goLogin(){ try{ window.location.replace(LOGIN_URL); }catch(e){} }
+  /* SACA A TODA LA VENTANA, no solo al iframe. La consola vive dentro de
+     staff.html; si el login se cargara aqui dentro, quedaria una sesion
+     cerrada por dentro y el portal abierto por fuera -- y el usuario viendo un
+     formulario de acceso incrustado en su propio panel. Vale igual para el 401:
+     si la sesion muere, muere para toda la ventana. */
+  function goLogin(){
+    try{
+      if(window.top && window.top !== window.self){ window.top.location.replace(LOGIN_URL); return; }
+    }catch(e){ /* otro origen: se navega aqui y al menos no se queda colgado */ }
+    try{ window.location.replace(LOGIN_URL); }catch(e){}
+  }
 
   function showGreeting(){
     var first = userName ? userName.split(" ")[0] : "";
@@ -1081,13 +1091,19 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
       });
     }catch(e){}
   }
-  var logoutBtn = document.getElementById("logoutBtn");
-  if(logoutBtn){
-    logoutBtn.addEventListener("click", async function(){
-      try{ if(supa) await supa.auth.signOut(); }catch(e){}
-      accessToken = null; goLogin();
-    });
+  /* CERRAR SESION, una sola vez y compartido. Lo llaman el boton del riel y el
+     de la cabecera: dos accesos, UNA logica. Si se duplicara, el dia que haya
+     que anadir algo al cierre -- cortar la voz, liquidar la cuota -- se
+     arreglaria uno y se olvidaria el otro. */
+  async function cerrarSesion(){
+    try{ RT.stop(true); }catch(e){}     /* corta la voz y liquida el consumo */
+    try{ stopAudio(); }catch(e){}
+    try{ if(supa) await supa.auth.signOut(); }catch(e){}
+    accessToken = null;
+    goLogin();
   }
+  var logoutBtn = document.getElementById("logoutBtn");
+  if(logoutBtn) logoutBtn.addEventListener("click", cerrarSesion);
   FACE.iniciar();
   initAuth();
 
@@ -1161,7 +1177,12 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
             card.classList.remove("resuelta");
             return;
           }
-          cerrar(accion === "enviar" ? "✓ Enviado a "+(d.destinatario||sms.destinatario) : "Cancelado. No salió nada.");
+          /* NO se dice "Enviado": Twilio ACEPTA el mensaje y la entrega ocurre
+             despues. Prometer una entrega que aun no ha pasado es la clase de
+             mentira que este panel existe para evitar. */
+          cerrar(accion === "enviar"
+            ? "✓ Aceptado por la operadora · " + (d.destinatario || sms.destinatario)
+            : "Cancelado. No salió nada.");
           /* La ventana del proceso solo puede decir ENVIADO cuando el
              despachador lo confirma. Hasta aqui era "en cola", que es la
              verdad: encolar no es enviar. */
@@ -1385,7 +1406,10 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
     if(!escenaSms) return;
     escenaSms.classList.add("enviado");
     var c = escenaSms.querySelector(".pz-cartel");
-    if(c) c.textContent = "Enviado";
+    /* "En manos de la operadora" y no "Enviado": es lo unico que se sabe con
+       certeza en ese momento. La entrega la confirma la operadora despues, y
+       hoy nadie nos la cuenta. */
+    if(c) c.textContent = "En manos de la operadora";
     escenaSms = null;
   }
   function marcarSmsCancelado(){
@@ -1586,12 +1610,20 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
     });
   })();
 
+  /* SALIR CIERRA SESION, por decision del PO. Antes navegaba a staff.html --
+     el MISMO destino que el puesto "Staff" de la tira, o sea dos puertas a lo
+     mismo. Ahora hace lo que dice su nombre. */
   var salirBtn = document.getElementById("salirBtn");
-  if (salirBtn) salirBtn.addEventListener("click", function () {
-    var destino = "./staff.html";
-    try { if (window.top && window.top !== window.self) { window.top.location.href = destino; return; } } catch (e) {}
-    window.location.href = destino;
-  });
+  if (salirBtn) {
+    salirBtn.title = "Cerrar sesión";
+    salirBtn.setAttribute("aria-label", "Cerrar sesión");
+    salirBtn.addEventListener("click", function () {
+      /* Si esta dentro del portal, la salida tiene que sacar a TODA la ventana:
+         cerrar sesion y dejar el login dentro del iframe seria un portal con la
+         sesion cerrada por dentro y abierta por fuera. */
+      cerrarSesion();
+    });
+  }
 
   var cfgRiel = document.getElementById("cfgRiel");
   var cfgItems = document.getElementById("cfgItems");
