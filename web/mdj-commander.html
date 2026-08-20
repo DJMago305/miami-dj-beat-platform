@@ -91,8 +91,36 @@
   .navb.on::before{content:"";position:absolute;top:0;width:26px;height:2.5px;border-radius:0 0 3px 3px;background:var(--gold)}
   .navb .nb-badge{position:absolute;top:8px;right:calc(50% - 20px);min-width:15px;height:15px;border-radius:8px;background:var(--red);color:#fff;font-size:9px;display:grid;place-items:center;padding:0 3px;font-weight:700}
   .navb.center{flex:0 0 64px}
-  .nav-orb{width:88px;height:88px;margin-top:-34px;border-radius:50%;background:linear-gradient(180deg,var(--gold2),var(--gold));display:grid;place-items:center;box-shadow:0 8px 22px var(--gold-glow),0 0 0 5px var(--bg)}
+  .nav-orb{position:relative;width:88px;height:88px;margin-top:-34px;border-radius:50%;background:linear-gradient(180deg,var(--gold2),var(--gold));display:grid;place-items:center;box-shadow:0 8px 22px var(--gold-glow),0 0 0 5px var(--bg)}
   .nav-orb img{width:76px;height:76px}
+
+  /* ── MODO AGENTE: el branding como fuente de energia ──────────────
+     En sesion viva el fenix deja de ser un boton y emite. Los anillos son
+     un radar que sale del centro; el resplandor y su tamano NO son una
+     animacion fija: los mueve la amplitud real de la voz (--pulso), de tu
+     microfono mientras escuchas y de la pista de ELIXIS mientras habla. */
+  .nav-orb.live{
+    box-shadow:0 8px 22px var(--gold-glow),0 0 0 5px var(--bg),
+      0 0 calc(16px + var(--pulso,0) * 46px) rgba(212,175,55,calc(.35 + var(--pulso,0) * .5));
+    /* La escala la pone el bucle en JS: transform:scale(calc(...)) con una
+       variable dentro salia identidad, medido en el navegador. */
+  }
+  .nav-orb.live::before,.nav-orb.live::after{
+    content:"";position:absolute;inset:0;border-radius:50%;pointer-events:none;
+    border:2px solid var(--gold2);opacity:0;
+    animation:orbe-radar 1.9s cubic-bezier(.15,.6,.35,1) infinite;
+  }
+  .nav-orb.live::after{animation-delay:.95s}
+  @keyframes orbe-radar{
+    0%  {transform:scale(1);   opacity:calc(.20 + var(--pulso,0) * .55)}
+    100%{transform:scale(2.35);opacity:0}
+  }
+  /* Escuchando el radar es verde: la energia viene de ti, no de el. */
+  .nav-orb.live.rx::before,.nav-orb.live.rx::after{border-color:var(--green)}
+  .nav-orb.live.rx{
+    box-shadow:0 8px 22px var(--gold-glow),0 0 0 5px var(--bg),
+      0 0 calc(16px + var(--pulso,0) * 46px) rgba(62,207,142,calc(.35 + var(--pulso,0) * .5));
+  }
 
   /* headings / text */
   .large-title{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:4px 0 2px}
@@ -756,6 +784,7 @@
      ═══════════════════════════════════════════════════════════════════ */
   var RT = (function(){
     var pc=null, dc=null, mic=null, spk=null;
+    var ac=null, sink=null, anMic=null, anRem=null, buf=null, rafPulso=0;
     var sesion=null, nivelBloque=0, hb=0, t0=0;
     var hablando=false;
 
@@ -766,6 +795,55 @@
       return accion ? u + (u.indexOf('?')===-1?'?':'&') + 'action=' + accion : u;
     }
     function usados(){ return t0 ? Math.max(0, Math.round((Date.now()-t0)/1000)) : 0; }
+
+    /* ── Fuente de energia del branding ──────────────────────────────
+       Un sumidero mudo mantiene el grafo bombeando sin emitir sonido; sin
+       el, algunos navegadores no alimentan un analizador que no llega al
+       destino y el orbe se queda plano. */
+    function orbe(){ return document.querySelector('.nav-orb'); }
+    function analizador(stream){
+      if(!ac){
+        var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return null;
+        ac=new AC(); sink=ac.createGain(); sink.gain.value=0; sink.connect(ac.destination);
+        buf=new Uint8Array(256);
+      }
+      try{
+        var an=ac.createAnalyser(); an.fftSize=512; an.smoothingTimeConstant=0.72;
+        ac.createMediaStreamSource(stream).connect(an); an.connect(sink);
+        return an;
+      }catch(e){ return null; }
+    }
+    function nivel(an){
+      if(!an||!buf) return 0;
+      an.getByteTimeDomainData(buf);
+      var s=0; for(var i=0;i<buf.length;i++){ var v=(buf[i]-128)/128; s+=v*v; }
+      return Math.min(1, Math.sqrt(s/buf.length)*3.2);
+    }
+    var pulso=0;
+    function latir(){
+      var o=orbe();
+      if(o){
+        var an = hablando ? (anRem||anMic) : anMic;
+        var objetivo = nivel(an);
+        pulso += (objetivo - pulso) * 0.3;
+        if(pulso < 0.002) pulso = 0;
+        o.style.setProperty('--pulso', pulso.toFixed(3));
+        o.style.transform = 'scale(' + (1 + pulso * 0.09).toFixed(4) + ')';
+        o.classList.toggle('rx', !hablando);
+      }
+      rafPulso = requestAnimationFrame(latir);
+    }
+    function encender(){
+      var o=orbe(); if(o){ o.classList.add('live'); o.classList.add('rx'); }
+      if(!rafPulso) rafPulso = requestAnimationFrame(latir);
+    }
+    function apagar(){
+      if(rafPulso){ cancelAnimationFrame(rafPulso); rafPulso=0; }
+      var o=orbe(); if(o){ o.classList.remove('live','rx');
+        o.style.removeProperty('--pulso'); o.style.removeProperty('transform'); }
+      pulso=0; anMic=null; anRem=null;
+      if(ac){ try{ ac.close(); }catch(e){} ac=null; sink=null; }
+    }
 
     /* Herramientas: ELIXIS pide, el navegador ejecuta CON el JWT del usuario.
        El candado de cada función sigue mandando. */
@@ -855,13 +933,18 @@
 
       pc = new RTCPeerConnection();
       spk = _voiceEl();                       /* reusa el elemento ya "armado" */
-      pc.ontrack = function(ev){ try{ spk.srcObject = ev.streams[0]; spk.play(); }catch(_){ } };
+      pc.ontrack = function(ev){
+        try{ spk.srcObject = ev.streams[0]; spk.play(); }catch(_){ }
+        anRem = analizador(ev.streams[0]);   /* la voz de ELIXIS mueve el orbe */
+      };
       mic.getAudioTracks().forEach(function(t){ pc.addTrack(t, mic); });
+      anMic = analizador(mic);               /* tu voz lo mueve mientras escucha */
 
       dc = pc.createDataChannel('oai-events');
       dc.onopen = function(){
         linea(T('Canal de voz conectado. Habla con normalidad.','Voice channel connected. Speak normally.'),'sys');
         rotulo(T('Te escucho','Listening'));
+        encender();                          /* modo agente: el fenix emite */
         setAvatar('listening'); haptic('light');
       };
       dc.onmessage = function(ev){ var m; try{ m=JSON.parse(ev.data); }catch(_){ return; } evento(m); };
@@ -924,6 +1007,7 @@
       if(mic){ mic.getTracks().forEach(function(t){ try{ t.stop(); }catch(_){ } }); mic=null; }
       if(spk){ try{ spk.pause(); spk.srcObject=null; }catch(_){ } }
       hablando=false;
+      apagar();
       linea(T('Canal de voz cerrado.','Voice channel closed.'),'sys');
       rotulo('');
       if(!silencioso) setAvatar('idle');
