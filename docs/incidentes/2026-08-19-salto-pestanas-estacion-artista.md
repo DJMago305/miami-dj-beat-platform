@@ -157,3 +157,50 @@ El campo de reseña tenía `maxlength="500"`, que da 341 px frente a los 252 de 
 | modelos de caja coincidentes | no | no | **sí** |
 
 Opiniones queda en 260 px constantes con 40, 120, 174, 300, 500 y 900 caracteres.
+
+---
+
+## 9 · Addendum · Temblor lateral del menú (auditoría del primer pintado)
+
+**Precisión del PO.** El escalón Inicio↔MI PERFIL es lógico y no se discute. Lo intolerable son los **brincos laterales, jalones y temblores de milisegundos al cambiar de pestaña**, y el **encogimiento y estirado al restaurar**.
+
+### Por qué la auditoría anterior no lo vio
+
+Midió el estado **asentado**. Ahí todo salía idéntico —las cinco vistas de la estación en `x=257`, las dos públicas en `x=305`, cero movimiento tardío— y el defecto vive **antes de asentarse**.
+
+### Causa raíz
+
+Se auditó el marcado **estático** de cada página, que es lo que el navegador pinta antes de que el guion normalice:
+
+| página | puestos estáticos | rótulos |
+|---|---|---|
+| `dj-profile` · `dj-dashboard` · `account-settings` | **12** | SCHEDULE, Cash Flow, MI PORTAL, **STAFF** |
+| `academia` | **10** | **en inglés**: Home, Services, Jobs, MY PORTAL, STAFF |
+| `dj-tools` | **8** | — |
+| `index` · `jobs` | **8** | MI PORTAL |
+| **estado final, todas** | **9** | — |
+
+La barra nacía con **8, 10 o 12** rótulos —algunos en otro idioma, y con **STAFF dentro del DOM de un artista**— y el guion la reescribía a 9. Como el riel va **centrado**, cualquier cambio de ancho desplaza **todos** los rótulos a la vez: ese es el jalón lateral, y al restaurar, el encogimiento y estirado.
+
+Es exactamente lo que el propio archivo ya advertía: *«#mainNav se declara a mano en 44 páginas y había derivado a 5 variantes»*.
+
+### Solución
+
+No se reescribe el marcado de siete páginas —cirugía mayor, riesgo alto—: **se impide que el estado intermedio llegue a verse**.
+
+- Se ocultan los **hijos** del riel, nunca la caja: la cabecera conserva alto y fondo, y no se mueve nada.
+- El guion revela la barra **solo cuando la sesión ya resolvió**, porque la tabla depende de ella. Revelar antes mostraría la pública y acto seguido la de estación — el mismo jalón por otra puerta.
+- **Vigilante en CSS puro:** a los 700 ms la barra aparece sí o sí, aunque el guion falle o no llegue a ejecutarse. **Nunca puede quedarse invisible.**
+
+### Verificación
+
+| comprobación | resultado |
+|---|---|
+| con `mdj-nav-lista` | `visibility: visible`, animación `none` — revelado instantáneo |
+| sin la clase | vigilante armado: `mdj-revelar-riel 0.7s` |
+| caja del riel | alto 72, `y=0` — **no se mueve** |
+| estado asentado | 9 puestos, rótulos correctos, sin STAFF |
+
+### Límite honesto de esta verificación
+
+Las herramientas de medición corren **después** del evento `load`: puedo demostrar que el estado intermedio **no puede pintarse** (los hijos nacen ocultos y solo se revelan ya asentados), y que el vigilante impide el peor caso, pero **no puedo filmar los primeros 100 ms** para mostrarlo. La confirmación final es la auditoría física del PO.

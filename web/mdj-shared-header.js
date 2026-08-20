@@ -1313,6 +1313,14 @@
     if (_mdjSlotRuns++ > MDJ_SLOT_MAX) { mdjStopWatch(); return; }
     _mdjSlotLock = true;
     try { MDJ_RIELES.forEach(function (id) { mdjNormalizeMainNavSlots(id); }); } catch (e) {}
+    /* ANTI-TEMBLOR: revelar el riel solo cuando la tabla ya es la definitiva. Se
+       exige sesion RESUELTA porque la tabla cambia con ella —publica o de
+       estacion—, y revelar antes mostraria la publica y acto seguido la otra:
+       justo el jalon que se quiere evitar. Si la sesion tarda, el vigilante de
+       700ms de la hoja revela igualmente; nunca queda invisible. */
+    try {
+      if (_mdjHaySesion !== null) document.documentElement.classList.add('mdj-nav-lista');
+    } catch (eRev) { void eRev; }
     setTimeout(function () { _mdjSlotLock = false; }, 0);   // clave: liberar en la siguiente vuelta
   }
 

@@ -4901,3 +4901,38 @@ html body #mainHeader#mainHeader.header.mdj-header-unified #mainNav#mainNav > a[
      como «el marcador corrido hacia la izquierda». */
   transform: none !important;
 }
+
+
+/* ═══ EL RIEL NO SE PINTA HASTA ESTAR ASENTADO · anti-temblor ═════════════════
+   Auditado en el marcado ESTATICO de cada pagina, que es lo que se ve en el
+   primer pintado antes de que el guion normalice:
+
+     dj-profile · agenda · config   12 puestos (SCHEDULE, Cash Flow, MI PORTAL, STAFF)
+     academia                       10 puestos y EN INGLES (Home, Services, Jobs)
+     dj-tools                        8 puestos
+     index · jobs                    8 puestos (MI PORTAL)
+     estado final, todas             9 puestos
+
+   Es decir: la barra nacia con 8, 10 o 12 rotulos —algunos en otro idioma, y con
+   STAFF dentro del DOM de un artista— y el guion la reescribia a 9. Como va
+   centrada, cualquier cambio de ancho desplaza TODOS los rotulos a la vez: eso
+   es el jalon lateral, y al restaurar, el encogimiento y estirado.
+
+   No se toca el marcado de siete paginas —cirugia mayor y arriesgada—: se impide
+   que ese estado intermedio llegue a verse. Se ocultan los HIJOS, nunca la caja,
+   asi la cabecera conserva su alto y su fondo y no se mueve nada.
+
+   El vigilante es CSS puro: pasados 700ms la barra aparece SI O SI, aunque el
+   guion falle o no llegue a ejecutarse. Nunca puede quedarse invisible. */
+#mainHeader.header.mdj-header-unified #mainNav > * {
+  visibility: hidden;
+  animation: mdj-revelar-riel 0s linear 700ms forwards;
+}
+@keyframes mdj-revelar-riel { to { visibility: visible; } }
+
+/* Cuando el guion confirma que la tabla ya es la definitiva, se revela al
+   instante y se cancela el vigilante. */
+html.mdj-nav-lista #mainHeader.header.mdj-header-unified #mainNav > * {
+  visibility: visible;
+  animation: none;
+}
