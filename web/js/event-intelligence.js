@@ -8,10 +8,21 @@
 
 import { getDJLogisticsAdvice } from '../dj-logistics-engine.js';
 
-/* Se inyecta desde fuera; nunca literal: este archivo se sirve publico. */
-const FORECAST_API_KEY = (typeof window !== 'undefined' && window.OPENWEATHER_API_KEY)
-    ? String(window.OPENWEATHER_API_KEY).trim() : '';
+/* La clave ya no vive en el navegador: la lleva mdj-weather. */
 
+/* ── PUENTE AL TIEMPO ────────────────────────────────────────────────
+   La clave YA NO viaja al navegador: vive solo en la funcion mdj-weather.
+   Antes estaba incrustada aqui y este archivo se sirve publico, asi que
+   cualquiera la leia. Una variable de navegador la habria sacado de git
+   pero no de la vista. */
+function mdjPuenteClima(params) {
+    var base = (typeof window !== 'undefined' && typeof window.mdbSupabaseFunctionUrl === 'function')
+        ? window.mdbSupabaseFunctionUrl('mdj-weather') : '';
+    if (!base) return '';
+    var u = new URL(base);
+    Object.keys(params).forEach(function (k) { u.searchParams.set(k, params[k]); });
+    return u.toString();
+}
 export async function runEventIntelligenceSweep() {
     console.log("🔍 [Intelligence] Executing Future Event Sweep via Supabase...");
 
@@ -66,7 +77,9 @@ export async function runEventIntelligenceSweep() {
 async function analyzeEventWeather(event) {
     try {
         // Fetch 5-Day Forecast (Not Current)
-        const response = await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${event.latitude}&lon=${event.longitude}&appid=${FORECAST_API_KEY}&units=imperial&lang=es`);
+        const urlPronostico = mdjPuenteClima({ recurso: 'forecast', lat: event.latitude, lon: event.longitude, units: 'imperial', lang: 'es' });
+        if (!urlPronostico) { console.warn('[intelligence] Puente del tiempo no disponible.'); return null; }
+        const response = await fetch(urlPronostico);
 
         if (!response.ok) throw new Error("Forecast API failed");
         const forecastData = await response.json();

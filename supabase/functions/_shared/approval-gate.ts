@@ -10,6 +10,9 @@ const REGISTERED_READ_TOOLS = new Set([
     // "approval_required" y ELIXIS lo contaba como "requiere aprobacion del
     // sistema". Solo lee nombre/telefono de un cliente ya existente.
     "buscar_cliente",
+    // consultar_musica: lee el catalogo publico de Apple Music a traves del
+    // puente mdj-music. No toca datos del negocio ni de clientes.
+    "consultar_musica",
 ]);
 const REGISTERED_WRITE_TOOLS = new Set([
     "crear_nota_lead",

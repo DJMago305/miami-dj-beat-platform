@@ -1,3 +1,17 @@
+/* ── PUENTE AL TIEMPO ────────────────────────────────────────────────
+   La clave YA NO viaja al navegador: vive solo en la funcion mdj-weather.
+   Antes estaba incrustada aqui y este archivo se sirve publico, asi que
+   cualquiera la leia. Una variable de navegador la habria sacado de git
+   pero no de la vista. */
+function mdjPuenteClima(params) {
+    var base = (typeof window !== 'undefined' && typeof window.mdbSupabaseFunctionUrl === 'function')
+        ? window.mdbSupabaseFunctionUrl('mdj-weather') : '';
+    if (!base) return '';
+    var u = new URL(base);
+    Object.keys(params).forEach(function (k) { u.searchParams.set(k, params[k]); });
+    return u.toString();
+}
+
 // 🛰️ WEATHER GEO-ENGINE: Satélite Nominatim + API OpenWeatherMap
 // Conecta el Dashboard directamente a las coordenadas del operador y devuelve Clima Profesional VIP.
 
@@ -22,9 +36,8 @@ const WeatherGeoEngine = {
     fetchProfessionalWeather: async function(lat, lon, realCityName) {
         // La clave se inyecta desde fuera; NUNCA se escribe aqui: este archivo
         // se sirve publico. Sin clave no se llama a la API.
-        const API_KEY = (window.OPENWEATHER_API_KEY || '').trim();
-        if (!API_KEY) { console.warn('[weather-engine] Sin OPENWEATHER_API_KEY; no se consulta el tiempo.'); return null; }
-        const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=imperial&lang=es`;
+        const url = mdjPuenteClima({ recurso: 'weather', lat: lat, lon: lon, units: 'imperial', lang: 'es' });
+        if (!url) { console.warn('[weather-engine] Puente no disponible.'); return null; }
         
         try {
             const res = await fetch(url);
