@@ -2067,6 +2067,7 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
      resto. Antes se reponian con textContent y un emoji, lo que borraba el
      SVG del boton en cuanto terminabas de dictar. */
   var MIC_LINEA = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z'/><path d='M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8'/></svg>";
+  var MIC_TECLADO = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><rect x='2' y='6' width='20' height='12' rx='2.5'/><path d='M6 10h.01M10 10h.01M14 10h.01M18 10h.01M6 14h12'/></svg>";
   var MIC_PARAR = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='6' y='6' width='12' height='12' rx='2.5'/></svg>";
   var settingsBtn = document.getElementById("settingsBtn");
   var settingsPanel = document.getElementById("settingsPanel");
@@ -2118,6 +2119,10 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
   }
   // Voz PREMIUM (OpenAI vía elixis-tts) — natural o nada; NUNCA voz robótica del navegador.
   async function speak(text){
+    /* SILENCIO EN MODO ESCRITURA. Si estas tecleando, las respuestas se leen,
+       no se oyen: una voz saliendo mientras escribes es ruido, no compania.
+       La voz es del modo conversacion. */
+    if(!document.body.classList.contains("modo-voz")) return;
     if(!voiceOn) return;
     var clean = cleanForSpeech(text);
     if(!clean) return;
@@ -2185,7 +2190,7 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
   var rec = null, listening = false;
   function stopListening(){
     listening = false;
-    if(micBtn){ micBtn.classList.remove("listening"); micBtn.innerHTML = MIC_LINEA; }
+    if(micBtn){ micBtn.classList.remove("listening"); micBtn.innerHTML = MIC_LINEA; micBtn.title = "Hablar con ELIXIS"; }
   }
   /* ═══ MODO ONLINE — LA SESION NO SE CORTA SOLA ══════════════════════
      Antes era pulsar-y-hablar: continuous=false y onend apagaba. Hablabas unos
@@ -2252,17 +2257,26 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
        ya gobierna la voz: insignia -> mini -> texto. */
     micBtn.addEventListener("click", async function(){
       /* ¿Apagar? Se cierra lo que este abierto, sea cual sea. */
+      /* ═══ CONMUTADOR DE MODO ═══ Micrófono = entra en conversacion.
+         Teclado = vuelve a escribir. Un solo boton, dos caras: el simbolo dice
+         a donde vas, no donde estas. */
       if(RT.activa() || sesionVoz){
         sesionVoz = false;
         try{ RT.stop(true); }catch(e){}
         try{ rec.stop(); }catch(e){}
+        stopAudio();            /* escribiendo NO se escucha voz */
         stopListening();
+        salirModoVoz();         /* el rostro se retira, el chat vuelve al centro */
+        micBtn.innerHTML = MIC_LINEA;
+        micBtn.title = "Hablar con ELIXIS";
         pintarVoz(null);        /* la pastilla vuelve a decir el modo */
         return;
       }
       stopAudio();         // no escucharse a sí mismo
       entrarModoVoz();     /* el avatar toma la pantalla */
-      micBtn.classList.add("listening"); micBtn.innerHTML = MIC_PARAR;
+      micBtn.classList.add("listening");
+      micBtn.innerHTML = MIC_TECLADO;      /* ahora lleva a modo escritura */
+      micBtn.title = "Volver a escribir";
       pintarVoz("conectando…");
       try{
         await RT.start();
