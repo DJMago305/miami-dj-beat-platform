@@ -1657,6 +1657,22 @@
     i.value=''; i.style.height='auto';
     startUnderstanding(txt);
   }
+  /* Repinta SOLO la escena -- clase del escenario y color de la red -- sin
+     reconstruir la vista. Hace falta porque al llegar la respuesta se cambiaba
+     state.avatar a 'speaking' pero no se repintaba nada: mountFX vive dentro
+     de render(), asi que FX.hue se quedaba clavado en el 'magenta' de
+     'understanding' PARA SIEMPRE despues del primer mensaje, y la escena
+     seguia diciendo "pensando" mientras ELIXIS ya habia contestado.
+     No se llama a render() a proposito: reconstruiria el compositor y borraria
+     lo que el Capitan pueda estar escribiendo mientras espera. */
+  function pintarEscena(st){
+    var stage=document.getElementById('avatarStage');
+    if(stage){
+      var voice = state.voiceMode!=='text' && VCONVO.indexOf(st)>=0;
+      stage.className='avatar-stage '+st+(voice?' big':'');
+    }
+    mountFX(document.getElementById('avatarFX'), st);
+  }
   function startUnderstanding(text){
     /* Lo que escribe el Capitan tambien va a la conversacion: un chat en el
        que solo se ve una de las dos voces no es un chat. */
@@ -1665,6 +1681,7 @@
     askElixis(text).then(function(r){
       if(!r||!r.reply) return; /* 401 ya redirigió al login */
       state.agentReply=r.reply; state.agentLine='real'; state.avatar='speaking';
+      pintarEscena('speaking');      /* la red vuelve al oro */
       decir('elixis', r.reply);
       /* La constitucion: ELIXIS solo ENCOLA. Aqui aparece el borrador para que
          lo apruebes tu. El envio real lo hace otra funcion que ELIXIS ni
