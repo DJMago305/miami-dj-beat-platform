@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>ELIXIS · Laboratorio de Voz — Miami DJ Beat</title>
+
+<!-- Mismo patrón que el resto del sitio: supabase-js + config (única fuente de URL/llave pública) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
+<script>
+    /* FIX-LEGACY-SUPABASE-01 · el respaldo entra cuando falta la global */
+    if (!window.supabase || typeof window.supabase.createClient !== "function") {
+        document.write('<script src="./vendor/supabase-js-2.112.3.legacy.js?v=20260818-safari-legacy"><\/script>');
+    }
+</script>
+<script src="./supabase-config.js"></script>
+
+<style>
+:root{
+  --bg:#0C0F13; --panel:#141922; --panel-2:#1B212C; --line:#28303C;
+  --ink:#E9EDF3; --ink-2:#A7B2C0; --muted:#6E7A8A;
+  --accent:#E0A345;           /* ámbar ELIXIS */
+  --live:#4CC38A; --warn:#E0A345; --bad:#E0685C; --info:#55B4D8;
+  --mono: ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+  --sans: ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink); font-family:var(--sans);
+  font-size:15px; line-height:1.55; min-height:100vh;
+  padding:28px 20px 60px; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1000px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+
+header{display:flex;flex-direction:column;gap:6px;padding-bottom:18px;border-bottom:1px solid var(--line)}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+h1{margin:0;font-size:clamp(24px,4vw,34px);font-weight:800;letter-spacing:-.03em}
+.sub{margin:0;color:var(--ink-2);font-size:14.5px}
+.who{font-family:var(--mono);font-size:12px;color:var(--muted)}
+
+.grid{display:grid;grid-template-columns:1.15fr .85fr;gap:18px}
+@media (max-width:840px){.grid{grid-template-columns:1fr}}
+
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px}
+.panel h2{margin:0 0 14px;font-size:12px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
+
+/* ── Estado + medidor ── */
+.stage{display:flex;flex-direction:column;gap:16px;align-items:center;text-align:center;padding:8px 0 4px}
+.orb{
+  width:104px;height:104px;border-radius:50%;flex:none;
+  background:radial-gradient(circle at 35% 30%,#2A3342,#161C25);
+  border:2px solid var(--line); position:relative;
+  display:grid;place-items:center; transition:border-color .18s ease, box-shadow .18s ease;
+}
+.orb::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:1px solid transparent;transition:border-color .18s ease}
+.orb .glyph{font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--muted)}
+body.is-listening .orb{border-color:var(--live);box-shadow:0 0 0 6px rgba(76,195,138,.10)}
+body.is-thinking  .orb{border-color:var(--info);box-shadow:0 0 0 6px rgba(85,180,216,.10)}
+body.is-speaking  .orb{border-color:var(--accent);box-shadow:0 0 0 6px rgba(224,163,69,.12)}
+
+.state{font-size:17px;font-weight:650;letter-spacing:-.01em;min-height:1.5em}
+.state small{display:block;font-weight:400;font-size:12.5px;color:var(--muted);letter-spacing:0}
+
+.meter{width:100%;max-width:320px;height:6px;border-radius:99px;background:var(--panel-2);overflow:hidden;border:1px solid var(--line)}
+.meter i{display:block;height:100%;width:0%;background:var(--live);transition:width .07s linear}
+.meter-label{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.06em}
+
+.controls{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center}
+button{
+  font-family:var(--sans);font-size:14px;font-weight:650;letter-spacing:-.01em;
+  padding:10px 20px;border-radius:9px;border:1px solid var(--line);
+  background:var(--panel-2);color:var(--ink);cursor:pointer;transition:background .15s,border-color .15s;
+}
+button:hover:not(:disabled){background:#232B37;border-color:#3A4552}
+button:disabled{opacity:.4;cursor:not-allowed}
+button.primary{background:var(--accent);border-color:var(--accent);color:#171200}
+button.primary:hover:not(:disabled){background:#EDB158;border-color:#EDB158}
+button:focus-visible{outline:2px solid var(--info);outline-offset:2px}
+select{
+  font-family:var(--sans);font-size:13px;padding:9px 12px;border-radius:9px;
+  background:var(--panel-2);color:var(--ink);border:1px solid var(--line);
+}
+select:focus-visible{outline:2px solid var(--info);outline-offset:2px}
+
+/* ── Preflight ── */
+.checks{display:flex;flex-direction:column;gap:1px}
+.check{display:grid;grid-template-columns:20px 1fr auto;gap:11px;align-items:center;
+  padding:10px 0;border-bottom:1px solid #1F2631;font-size:13.5px}
+.check:last-child{border-bottom:0}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--muted);justify-self:center}
+.dot.ok{background:var(--live)} .dot.bad{background:var(--bad)} .dot.wait{background:var(--warn)}
+.check .val{font-family:var(--mono);font-size:11.5px;color:var(--muted);text-align:right}
+
+/* ── Transcripción + log ── */
+.transcript{
+  background:var(--panel-2);border:1px solid var(--line);border-radius:10px;
+  padding:14px;min-height:150px;max-height:270px;overflow-y:auto;
+  display:flex;flex-direction:column;gap:9px;font-size:14.5px;
+}
+.line-agent{color:var(--ink)}
+.line-agent b{color:var(--accent);font-weight:700}
+.line-sys{color:var(--muted);font-size:12.5px;font-family:var(--mono)}
+
+.log{
+  background:#0A0D11;border:1px solid var(--line);border-radius:10px;padding:12px;
+  max-height:210px;overflow-y:auto;font-family:var(--mono);font-size:11.5px;line-height:1.65;color:var(--ink-2);
+}
+.log div{white-space:pre-wrap;word-break:break-word}
+.log .t{color:var(--muted)}
+.log .e{color:var(--bad)}
+.log .g{color:var(--live)}
+.log .a{color:var(--accent)}
+
+.lat{display:flex;gap:22px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;color:var(--ink-2);
+  padding-top:12px;margin-top:12px;border-top:1px solid var(--line)}
+.lat b{color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums}
+
+.note{font-size:12.5px;color:var(--muted);line-height:1.6;margin:14px 0 0}
+.note code{font-family:var(--mono);font-size:11.5px;background:var(--panel-2);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">FÉNIX AI · Paso 2 — Laboratorio aislado</div>
+    <h1>Laboratorio de voz de ELIXIS</h1>
+    <p class="sub">Arnés de pruebas para el canal de voz en tiempo real. Verifica el candado JWT, la captura de micrófono y la latencia real de conversación.</p>
+    <div class="who" id="who">Verificando sesión…</div>
+  </header>
+
+  <div class="grid">
+
+    <!-- ── Escenario ── -->
+    <div class="panel">
+      <h2>Canal de voz</h2>
+      <div class="stage">
+        <div class="orb"><span class="glyph" id="orbGlyph">OFF</span></div>
+        <div class="state" id="stateText">Desconectado<small id="stateHint">Pulsa Conectar y concede el micrófono.</small></div>
+
+        <div class="meter" aria-hidden="true"><i id="micBar"></i></div>
+        <div class="meter-label" id="micLabel">MICRÓFONO · INACTIVO</div>
+
+        <div class="controls">
+          <button class="primary" id="connectBtn" disabled>Conectar</button>
+          <button id="disconnectBtn" disabled>Cortar</button>
+          <select id="voiceSel" aria-label="Voz de ELIXIS">
+            <option value="">Voz por defecto (ash)</option>
+            <option value="ash">ash</option>
+            <option value="cedar">cedar</option>
+            <option value="marin">marin</option>
+            <option value="verse">verse</option>
+            <option value="sage">sage</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="lat">
+        <span>Último turno <b id="latLast">—</b></span>
+        <span>Mejor <b id="latBest">—</b></span>
+        <span>Turnos <b id="latCount">0</b></span>
+      </div>
+    </div>
+
+    <!-- ── Preflight ── -->
+    <div class="panel">
+      <h2>Verificación previa</h2>
+      <div class="checks">
+        <div class="check"><i class="dot" id="d-sdk"></i><span>SDK de Supabase cargado</span><span class="val" id="v-sdk">…</span></div>
+        <div class="check"><i class="dot" id="d-jwt"></i><span>Sesión JWT válida</span><span class="val" id="v-jwt">…</span></div>
+        <div class="check"><i class="dot" id="d-role"></i><span>Rol autorizado</span><span class="val" id="v-role">…</span></div>
+        <div class="check"><i class="dot" id="d-fn"></i><span>Función alcanzable</span><span class="val" id="v-fn">…</span></div>
+        <div class="check"><i class="dot" id="d-rtc"></i><span>WebRTC disponible</span><span class="val" id="v-rtc">…</span></div>
+        <div class="check"><i class="dot" id="d-mic"></i><span>Micrófono concedido</span><span class="val" id="v-mic">…</span></div>
+      </div>
+      <p class="note">El candado real vive en el servidor (<code>elixis-realtime-session</code>). Esta columna solo anticipa el resultado: aunque la saltaras, la Edge Function rechaza sin <code>Bearer</code> y rol autorizado.</p>
+    </div>
+  </div>
+
+  <!-- ── Transcripción ── -->
+  <div class="panel">
+    <h2>Transcripción de ELIXIS</h2>
+    <div class="transcript" id="transcript" aria-live="polite">
+      <div class="line-sys">Sin sesión activa.</div>
+    </div>
+    <p class="note">Solo se transcribe lo que dice ELIXIS. La transcripción de tu voz está apagada a propósito: enciende un STT en paralelo que cuesta aparte. Para el idioma basta con oír en cuál te responde.</p>
+  </div>
+
+  <!-- ── Diagnóstico ── -->
+  <div class="panel">
+    <h2>Diagnóstico</h2>
+    <div class="log" id="log"></div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var FN_NAME = "elixis-realtime-session";
+  var LOGIN_URL = "./login.html?next=elixis-voice-lab.html";
+
+  var el = function(id){ return document.getElementById(id); };
+  var supa = (typeof window.getSupabaseClient === "function") ? window.getSupabaseClient() : null;
+
+  var accessToken = null, userRole = "", userName = "";
+  var pc = null, dc = null, localStream = null, audioEl = null;
+  var audioCtx = null, analyser = null, meterRAF = 0;
+  var agentLine = null;
+  var turnStart = 0, latBest = 0, latCount = 0;
+
+  // ── Log ────────────────────────────────────────────────────────────
+  function log(msg, cls){
+    var d = document.createElement("div");
+    var t = new Date().toLocaleTimeString("es-ES",{hour12:false});
+    d.innerHTML = '<span class="t">'+t+'</span>  <span class="'+(cls||"")+'">'+
+                  String(msg).replace(/[<>&]/g,function(c){return {"<":"&lt;",">":"&gt;","&":"&amp;"}[c];})+'</span>';
+    var box = el("log"); box.appendChild(d); box.scrollTop = box.scrollHeight;
+  }
+
+  function mark(id, state, value){
+    var dot = el("d-"+id); if(dot){ dot.className = "dot " + (state||""); }
+    var val = el("v-"+id); if(val && value !== undefined){ val.textContent = value; }
+  }
+
+  function setState(text, hint, cls, glyph){
+    el("stateText").firstChild.nodeValue = text;
+    el("stateHint").textContent = hint || "";
+    el("orbGlyph").textContent = glyph || "OFF";
+    document.body.className = cls ? ("is-"+cls) : "";
+  }
+
+  function addAgentLine(){
+    var box = el("transcript");
+    var p = document.createElement("div");
+    p.className = "line-agent";
+    p.innerHTML = "<b>ELIXIS:</b> ";
+    box.appendChild(p); box.scrollTop = box.scrollHeight;
+    return p;
+  }
+  function addSysLine(text){
+    var box = el("transcript");
+    var p = document.createElement("div");
+    p.className = "line-sys"; p.textContent = text;
+    box.appendChild(p); box.scrollTop = box.scrollHeight;
+  }
+
+  // ── Preflight: sesión y rol ────────────────────────────────────────
+  function functionUrl(){
+    if(typeof window.mdbSupabaseFunctionUrl === "function"){
+      return window.mdbSupabaseFunctionUrl(FN_NAME) || null;
+    }
+    return null;
+  }
+
+  async function initAuth(){
+    mark("sdk", supa ? "ok" : "bad", supa ? "listo" : "ausente");
+    if(!supa){
+      el("who").textContent = "supabase-config.js no cargó — recarga la página.";
+      log("SDK de Supabase ausente. No se puede continuar.", "e");
+      return;
+    }
+
+    var session = null;
+    try{
+      var r = await supa.auth.getSession();
+      session = (r && r.data) ? r.data.session : null;
+    }catch(e){ /* cae al goLogin de abajo */ }
+
+    if(!session || !session.access_token){
+      mark("jwt","bad","sin sesión");
+      log("Sin sesión activa → redirigiendo al login.", "e");
+      try{ window.location.replace(LOGIN_URL); }catch(e){}
+      return;
+    }
+
+    accessToken = session.access_token;
+    mark("jwt","ok","válida");
+    log("Sesión JWT verificada en el navegador.", "g");
+
+    try{
+      var pr = await supa.from("dj_profiles")
+        .select("stage_name,dj_name,full_name,role")
+        .eq("user_id", session.user.id).maybeSingle();
+      var p = (pr && pr.data) ? pr.data : {};
+      userName = String(p.stage_name || p.dj_name || p.full_name || "").trim();
+      userRole = String(p.role || "").toLowerCase().trim();
+    }catch(e){}
+
+    var allowed = ["owner","admin","manager","seller"];
+    var ok = allowed.indexOf(userRole) !== -1;
+    mark("role", ok ? "ok" : "bad", userRole || "sin rol");
+    el("who").textContent = (userName || "usuario") + " · rol " + (userRole || "—");
+
+    if(!ok){
+      log("Rol '" + (userRole||"sin rol") + "' fuera de la lista autorizada. El servidor devolvería 403.", "e");
+      setState("Sin acceso", "El laboratorio de voz es owner/staff por ahora.", "", "403");
+    }
+
+    // Función alcanzable
+    var url = functionUrl();
+    mark("fn", url ? "ok" : "bad", url ? "resuelta" : "no resuelta");
+    if(url) log("Endpoint: " + url);
+
+    // WebRTC
+    var hasRTC = typeof window.RTCPeerConnection === "function" &&
+                 !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+    mark("rtc", hasRTC ? "ok" : "bad", hasRTC ? "soportado" : "no soportado");
+    if(!hasRTC) log("Este navegador no soporta WebRTC o getUserMedia.", "e");
+
+    mark("mic","wait","pendiente");
+
+    if(ok && url && hasRTC){
+      el("connectBtn").disabled = false;
+      setState("Listo para conectar", "Pulsa Conectar y concede el micrófono.", "", "IDLE");
+    }
+
+    try{
+      supa.auth.onAuthStateChange(function(_ev, s){
+        accessToken = s ? s.access_token : null;
+        if(!accessToken){ disconnect(); try{ window.location.replace(LOGIN_URL); }catch(e){} }
+      });
+    }catch(e){}
+  }
+
+  // ── Medidor de micrófono ───────────────────────────────────────────
+  function startMeter(stream){
+    try{
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if(!AC) return;
+      audioCtx = new AC();
+      var src = audioCtx.createMediaStreamSource(stream);
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 512;
+      src.connect(analyser);
+      var buf = new Uint8Array(analyser.frequencyBinCount);
+      var bar = el("micBar");
+      (function tick(){
+        analyser.getByteTimeDomainData(buf);
+        var peak = 0;
+        for(var i=0;i<buf.length;i++){
+          var v = Math.abs(buf[i]-128)/128;
+          if(v > peak) peak = v;
+        }
+        bar.style.width = Math.min(100, Math.round(peak*180)) + "%";
+        meterRAF = requestAnimationFrame(tick);
+      })();
+      el("micLabel").textContent = "MICRÓFONO · CAPTURANDO";
+    }catch(e){ log("Medidor de micrófono no disponible: " + e.message, "e"); }
+  }
+  function stopMeter(){
+    if(meterRAF){ cancelAnimationFrame(meterRAF); meterRAF = 0; }
+    if(audioCtx){ try{ audioCtx.close(); }catch(e){} audioCtx = null; }
+    el("micBar").style.width = "0%";
+    el("micLabel").textContent = "MICRÓFONO · INACTIVO";
+  }
+
+  // ── Latencia ───────────────────────────────────────────────────────
+  function noteLatency(){
+    if(!turnStart) return;
+    var ms = Date.now() - turnStart;
+    turnStart = 0;
+    latCount++;
+    if(!latBest || ms < latBest) latBest = ms;
+    el("latLast").textContent = ms + " ms";
+    el("latBest").textContent = latBest + " ms";
+    el("latCount").textContent = String(latCount);
+    log("Turno respondido en " + ms + " ms", ms < 900 ? "g" : "a");
+  }
+
+  // ── Eventos del DataChannel ────────────────────────────────────────
+  function onEvent(msg){
+    switch(msg.type){
+      case "session.created":
+      case "session.updated":
+        log("Sesión Realtime: " + msg.type, "g");
+        break;
+
+      case "input_audio_buffer.speech_started":
+        setState("Te escucho", "Habla con normalidad; puedes hacer pausas.", "listening", "RX");
+        break;
+
+      case "input_audio_buffer.speech_stopped":
+        turnStart = Date.now();
+        setState("Pensando", "Turno cerrado, esperando respuesta.", "thinking", "···");
+        break;
+
+      case "response.output_audio_transcript.delta":
+        if(!agentLine){
+          noteLatency();
+          agentLine = addAgentLine();
+          setState("ELIXIS habla", "Puedes interrumpirlo cuando quieras.", "speaking", "TX");
+        }
+        agentLine.appendChild(document.createTextNode(msg.delta || ""));
+        el("transcript").scrollTop = el("transcript").scrollHeight;
+        break;
+
+      case "response.done":
+        agentLine = null;
+        setState("Escuchando", "Sesión abierta. Habla cuando quieras.", "listening", "RX");
+        break;
+
+      case "error":
+        log("Error de sesión: " + JSON.stringify(msg.error || msg), "e");
+        break;
+    }
+  }
+
+  // ── Conectar ───────────────────────────────────────────────────────
+  async function connect(){
+    el("connectBtn").disabled = true;
+    setState("Conectando", "Negociando el canal de voz…", "thinking", "···");
+    el("transcript").innerHTML = "";
+
+    var url = functionUrl();
+    if(!url){ log("No se pudo resolver la URL de la función.", "e"); el("connectBtn").disabled = false; return; }
+
+    var voice = el("voiceSel").value;
+    if(voice) url += (url.indexOf("?") === -1 ? "?" : "&") + "voice=" + encodeURIComponent(voice);
+
+    try{
+      // 1 · Micrófono
+      try{
+        localStream = await navigator.mediaDevices.getUserMedia({
+          audio:{ echoCancellation:true, noiseSuppression:true, autoGainControl:true }
+        });
+      }catch(e){
+        mark("mic","bad","denegado");
+        log("Micrófono denegado o no disponible: " + e.name, "e");
+        setState("Sin micrófono", "Concede el permiso en el navegador y reintenta.", "", "MIC");
+        el("connectBtn").disabled = false;
+        return;
+      }
+      mark("mic","ok","concedido");
+      log("Micrófono concedido.", "g");
+      startMeter(localStream);
+
+      // 2 · Peer connection
+      pc = new RTCPeerConnection();
+      audioEl = document.createElement("audio");
+      audioEl.autoplay = true;
+      pc.ontrack = function(ev){ audioEl.srcObject = ev.streams[0]; };
+      localStream.getAudioTracks().forEach(function(t){ pc.addTrack(t, localStream); });
+
+      dc = pc.createDataChannel("oai-events");
+      dc.onopen = function(){
+        log("DataChannel abierto.", "g");
+        el("disconnectBtn").disabled = false;
+        setState("Escuchando", "Sesión abierta. Habla cuando quieras.", "listening", "RX");
+        addSysLine("Canal de voz conectado. Puedes hablar con normalidad.");
+      };
+      dc.onmessage = function(ev){
+        var msg; try{ msg = JSON.parse(ev.data); }catch(e){ return; }
+        onEvent(msg);
+      };
+
+      pc.onconnectionstatechange = function(){
+        if(!pc) return;
+        log("Estado de conexión: " + pc.connectionState);
+        if(["failed","disconnected","closed"].indexOf(pc.connectionState) !== -1) disconnect();
+      };
+
+      // 3 · Oferta SDP → nuestra Edge Function (nunca directo a OpenAI)
+      var offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      log("Oferta SDP creada (" + offer.sdp.length + " bytes). Enviando al candado…");
+
+      var headers = { "Content-Type":"application/sdp" };
+      var pub = window.MDB_SUPABASE_ANON_KEY || "";
+      if(pub) headers.apikey = pub;
+      headers.Authorization = "Bearer " + accessToken;
+
+      var res = await fetch(url, { method:"POST", headers: headers, body: offer.sdp });
+
+      if(res.status === 401){
+        log("401 — el servidor rechazó el token. Redirigiendo al login.", "e");
+        try{ window.location.replace(LOGIN_URL); }catch(e){}
+        return;
+      }
+      if(res.status === 403){
+        var d403 = {}; try{ d403 = await res.json(); }catch(e){}
+        log("403 — rol no autorizado" + (d403.detail ? " (" + d403.detail + ")" : "") + ".", "e");
+        setState("Sin acceso", "El laboratorio de voz es owner/staff por ahora.", "", "403");
+        cleanup(); return;
+      }
+      if(res.status === 429){
+        var d429 = {}; try{ d429 = await res.json(); }catch(e){}
+        log("429 — límite alcanzado: " + (d429.error || "cuota") + ". Espera y reintenta.", "e");
+        setState("Límite alcanzado", "Tope de sesiones por hora. Es el candado de presupuesto.", "", "429");
+        cleanup(); return;
+      }
+      if(!res.ok){
+        var body = ""; try{ body = await res.text(); }catch(e){}
+        log("Fallo " + res.status + ": " + body.slice(0,300), "e");
+        setState("Error de conexión", "Revisa el diagnóstico.", "", "ERR");
+        cleanup(); return;
+      }
+
+      var answerSdp = await res.text();
+      log("Respuesta SDP recibida (" + answerSdp.length + " bytes).", "g");
+      await pc.setRemoteDescription({ type:"answer", sdp: answerSdp });
+      log("Peer connection establecida.", "g");
+
+    }catch(err){
+      log("Excepción al conectar: " + (err && err.message ? err.message : err), "e");
+      setState("Error de conexión", "Revisa el diagnóstico.", "", "ERR");
+      cleanup();
+    }
+  }
+
+  // ── Cortar ─────────────────────────────────────────────────────────
+  function cleanup(){
+    stopMeter();
+    if(dc){ try{ dc.close(); }catch(e){} dc = null; }
+    if(pc){ try{ pc.close(); }catch(e){} pc = null; }
+    if(localStream){ localStream.getTracks().forEach(function(t){ try{ t.stop(); }catch(e){} }); localStream = null; }
+    if(audioEl){ try{ audioEl.pause(); audioEl.srcObject = null; }catch(e){} audioEl = null; }
+    agentLine = null; turnStart = 0;
+    el("connectBtn").disabled = false;
+    el("disconnectBtn").disabled = true;
+  }
+
+  function disconnect(){
+    cleanup();
+    setState("Desconectado", "Sesión cerrada.", "", "OFF");
+    log("Sesión cerrada.");
+    addSysLine("Canal de voz cerrado.");
+  }
+
+  el("connectBtn").addEventListener("click", connect);
+  el("disconnectBtn").addEventListener("click", disconnect);
+  window.addEventListener("beforeunload", cleanup);
+
+  log("Laboratorio de voz iniciado.");
+  initAuth();
+})();
+</script>
+</body>
+</html>
