@@ -4718,6 +4718,13 @@ body.mdj-perfil-estacion #booth-hero-container {
   margin-top: 84px !important;
 }
 
+/* CONFIG · la fila «SETTINGS» nacia en y=136, dentro de la banda de la franja
+   (96→168), y quedaba pisada por la marca: medido, 30px de solape horizontal.
+   .acct-body traia 52px de relleno superior; se le suma la banda para que el
+   contenido arranque en 188, con 20 de aire. Anclado a la banda de cabecera
+   —determinista— y no al alto de la ventana. */
+body.mdj-perfil-estacion .acct-body { padding-top: 104px !important; }
+
 #mdj-flotante-visitante .mdj-flotante-marca {
   display: inline-flex;
   align-items: center;

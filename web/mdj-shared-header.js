@@ -79,7 +79,7 @@
     { s: 1, key: 'nav-home',       nav: 'home',      href: './index.html',        txt: 'Inicio' },
     { s: 2, key: 'nav-academia',   nav: 'academia',  href: './academia.html',     txt: 'Academia' },
     { s: 3, key: null,             nav: 'agenda',    href: './staff-agenda.html', txt: 'Agenda' },
-    { s: 4, key: 'nav-config',     nav: 'config',    href: './account-settings.html', txt: '⚙ Config',
+    { s: 4, key: 'nav-config',     nav: 'config',    href: './account-settings.html', txt: '⚙️ Config',
       id: 'mainNav-config-link', cls: 'mdj-config-mainnav' },
     { s: 5, key: 'nav-tools',      nav: 'tools',     href: './dj-tools.html',     txt: 'DJ Tools' },
     { s: 6, key: null,             nav: 'flow',      href: './staff-agenda.html?tab=flow', txt: 'Cash Flow' },
@@ -114,11 +114,15 @@
      public). No se reimplementa su logica: el puesto delega el clic en el boton
      que ya existe en #owner-tabs, que sigue en el DOM aunque este oculto. Asi la
      franja se queda congelada e intacta, como exige .cursorrules. */
+  /* La tuerca lleva SELECTOR DE VARIACION (U+FE0F), igual que la barra de Inicio.
+     Sin el, el sistema la dibuja como glifo de texto y no como emoji: medido a
+     igual cuerpo de letra, 14.8px de ancho frente a los 22.8 de la publica. Se
+     copia el glifo que ya usa la plataforma, no se inventa un tamaño. */
   var MDJ_NAV_SLOTS_ARTISTA = [
     { s: 1,  key: 'nav-home',       nav: 'home',      href: './index.html', txt: 'Inicio' },
     { s: 2,  key: 'nav-academia',   nav: 'academia',  href: './academia.html?mdj_nav=profile', txt: 'Academia' },
     { s: 3,  key: null,             nav: 'agenda',    href: './dj-dashboard.html?mdj_nav=profile', txt: 'Agenda' },
-    { s: 4,  key: 'nav-config',     nav: 'config',    href: './account-settings.html?mdj_nav=profile', txt: '⚙ Config',
+    { s: 4,  key: 'nav-config',     nav: 'config',    href: './account-settings.html?mdj_nav=profile', txt: '⚙️ Config',
       id: 'mainNav-config-link', cls: 'mdj-config-mainnav' },
     { s: 5,  key: 'nav-tools',      nav: 'tools',     href: './dj-tools.html?mdj_nav=profile', txt: 'DJ Tools' },
     { s: 6,  key: null,             nav: 'flow',      href: '#', txt: 'Cash Flow',      tab: 'flow' },
