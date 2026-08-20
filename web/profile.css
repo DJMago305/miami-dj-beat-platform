@@ -650,3 +650,31 @@ body.dj-profile-fusion #owner-actions-card {
 @supports not (height: 1lh) {
   #pub-bio { height: 257px; }
 }
+
+
+/* ═══ MARCO INTERIOR DEL COMENTARIO · orden del PO ════════════════════════════
+   La reseña arrastraba UNA CAPA MAS que la Bio: el carrusel le añadia 24px de
+   relleno lateral ANTES de los 28 de la tarjeta, asi que su caja empezaba en
+   x=372 mientras el texto de la Bio empieza en 347. Ese desnivel es el «borde de
+   mas» dentro del recuadro. Se retira el relleno lateral del carrusel y las dos
+   piezas quedan alineadas al mismo margen. */
+.reviews-carousel,
+.reviews-carousel.reviews-carousel--hero {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* ═══ APROVECHAR LA PANTALLA · escritorio, portatil y tableta ═════════════════
+   Medido a 1990px: .dj-body estaba topado en max-width 1400px y ademas con una
+   rejilla de columnas FIJAS (908px 420px), asi que aunque se ensanchara el tope
+   el sobrante no se usaba. Resultado: ~295px muertos a cada lado.
+   Se libera el tope al ancho real de la ventana —dejando 24px de aire por lado,
+   el mismo que ya usaba— y la columna principal pasa a fluida, conservando el
+   raíl derecho en los 420px para los que fue diseñado.
+   Solo de tableta hacia arriba: el movil conserva su disposicion. */
+@media (min-width: 768px) {
+  .dj-profile .dj-body {
+    max-width: calc(100vw - 48px) !important;
+    grid-template-columns: minmax(0, 1fr) 420px !important;
+  }
+}
