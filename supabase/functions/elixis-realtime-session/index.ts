@@ -28,7 +28,15 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // NO usar gpt-4o-realtime-preview: está deprecado, es más caro que el GA y usa
 // la interfaz beta, incompatible con la forma de sesión que arma esta función.
 // Bajar al mini es cambiar el secreto ELIXIS_REALTIME_MODEL, sin tocar código.
-const MODEL = Deno.env.get("ELIXIS_REALTIME_MODEL") ?? "gpt-realtime-2.1";
+const FLAGSHIP_MODEL = Deno.env.get("ELIXIS_REALTIME_MODEL")      ?? "gpt-realtime-2.1";
+const MINI_MODEL     = Deno.env.get("ELIXIS_REALTIME_MODEL_MINI") ?? "gpt-realtime-mini";
+
+// Bloque que se reserva por sesion. Al cerrar se liquida y se devuelve lo no
+// usado, asi que un bloque grande no cuesta nada... salvo si el navegador
+// desaparece: ahi se cobra entero. 15 min es el equilibrio entre no cortar una
+// conversacion y no regalar media hora cuando alguien cierra de golpe.
+const RESERVE_SECONDS   = 900;
+const MIN_GRANT_SECONDS = 60;
 
 // Voz por defecto: la misma identidad sonora que ya tiene ELIXIS en elixis-tts
 // ("ash" — masculina, cálida). Que la voz no cambie entre el modo texto+TTS y
@@ -50,12 +58,15 @@ const ADMIN = createClient(
     { auth: { persistSession: false, autoRefreshToken: false } },
 );
 
-// Roles con acceso al laboratorio de voz.
-// NOTA DELIBERADA: los artistas NO están en esta lista todavía. La voz en tiempo
-// real quema saldo por segundo y el medidor de cuota es el PASO 4. Abrir la
-// puerta a artistas antes de tener el bucket es exactamente el riesgo de margen
-// que levantó la evaluación de costos. Se añade 'artist' cuando el medidor viva.
-const ALLOWED_ROLES = new Set(["owner", "admin", "manager", "seller"]);
+// Roles con acceso al laboratorio de voz. Los artistas entran desde que existe
+// el medidor (paso 4), pero el rol solo abre la puerta: quien decide si hay voz
+// es el saldo en elixis_voice_quotas. Sin fila de cuota no hay voz.
+const ALLOWED_ROLES = new Set(["owner", "admin", "manager", "seller", "artist"]);
+
+// El fallo del medidor no puede dejar sin voz a quien opera el negocio, pero
+// tampoco puede regalar voz de pago. Por eso: si la RPC falla, owner/staff
+// pasan y los artistas no.
+const STAFF_ROLES = new Set(["owner", "admin", "manager", "seller"]);
 
 type Gate =
     | { ok: true; userId: string; role: string; name: string }
@@ -109,6 +120,8 @@ function buildCorsHeaders(req: Request): Record<string, string> {
     return {
         "Access-Control-Allow-Origin": allowed,
         "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+        // Sin esto el navegador recibe las cabeceras pero JS no puede leerlas.
+        "Access-Control-Expose-Headers": "x-elixis-session, x-elixis-tier, x-elixis-granted-seconds",
         "Vary": "Origin",
     };
 }
@@ -238,6 +251,41 @@ serve(async (req: Request) => {
         );
     }
 
+    const url = new URL(req.url);
+    const action = (url.searchParams.get("action") ?? "").toLowerCase();
+
+    // ── Liquidacion y latido ─────────────────────────────────────────────
+    // Viven aqui y no en una funcion aparte para no duplicar candado y CORS.
+    if (action === "settle" || action === "heartbeat") {
+        const sessionId = url.searchParams.get("session") ?? "";
+        if (!sessionId) return json({ ok: false, error: "missing_session" }, 400);
+
+        // La sesion tiene que ser TUYA. La RPC no comprueba el dueno, asi que
+        // sin esto cualquiera autenticado podria cerrar la sesion de otro.
+        const { data: own } = await ADMIN
+            .from("elixis_voice_sessions").select("user_id").eq("id", sessionId).maybeSingle();
+        if (!own || own.user_id !== gate.userId) {
+            return json({ ok: false, error: "session_not_yours" }, 403);
+        }
+
+        if (action === "heartbeat") {
+            const { data } = await ADMIN.rpc("elixis_voice_heartbeat", { p_session: sessionId });
+            return json({ ok: true, alive: data === true }, 200);
+        }
+
+        const used = Math.max(0, parseInt(url.searchParams.get("used") ?? "0", 10) || 0);
+        const { data, error } = await ADMIN.rpc("elixis_voice_settle", {
+            p_session: sessionId, p_used: used,
+        });
+        if (error) {
+            console.error("[elixis-realtime-session] settle:", error.message);
+            return json({ ok: false, error: "settle_failed" }, 500);
+        }
+        const row = Array.isArray(data) ? data[0] : data;
+        return json({ ok: true, billed_seconds: row?.billed_seconds ?? used,
+                      refunded_seconds: row?.refunded_seconds ?? 0 }, 200);
+    }
+
     const apiKey = Deno.env.get("OPENAI_API_KEY") ?? "";
     if (!apiKey) {
         console.error("[elixis-realtime-session] OPENAI_API_KEY no configurada");
@@ -259,13 +307,53 @@ serve(async (req: Request) => {
     }
 
     // ── Voz opcional (?voice=) validada contra la lista blanca ──
-    const requested = new URL(req.url).searchParams.get("voice")?.toLowerCase().trim();
+    const requested = url.searchParams.get("voice")?.toLowerCase().trim();
     const voice = requested && ALLOWED_VOICES.has(requested) ? requested : DEFAULT_VOICE;
+
+    // ── MEDIDOR — cadena de degradacion insignia → mini → texto ──────────
+    const isStaff = STAFF_ROLES.has(gate.role);
+    let model = FLAGSHIP_MODEL;
+    let tier = "flagship";
+    let sessionId: string | null = null;
+    let granted = RESERVE_SECONDS;
+
+    const { data: resData, error: resErr } = await ADMIN.rpc("elixis_voice_reserve", {
+        p_user: gate.userId,
+        p_seconds: RESERVE_SECONDS,
+        p_min_seconds: MIN_GRANT_SECONDS,
+        p_voice: voice,
+    });
+
+    if (resErr) {
+        // Fallo del medidor: el negocio no se para, pero la voz de pago no se regala.
+        console.error("[elixis-realtime-session] reserve:", resErr.message);
+        if (!isStaff) {
+            return json({ ok: false, error: "quota_unavailable", fallback_to_text: true }, 503);
+        }
+        console.warn("[elixis-realtime-session] medidor caido; se deja pasar a staff");
+    } else {
+        const r = Array.isArray(resData) ? resData[0] : resData;
+        if (!r?.allowed) {
+            const reason = String(r?.reason ?? "quota_exhausted");
+            // 402: no es un error tuyo ni nuestro, es que se acabo el saldo.
+            return json({
+                ok: false,
+                error: reason,                       // quota_exhausted | safety_cap_reached | no_quota
+                fallback_to_text: r?.fallback_to_text !== false,
+                remaining_flagship: r?.remaining_flagship ?? 0,
+                remaining_mini: r?.remaining_mini ?? 0,
+            }, 402);
+        }
+        tier = String(r.tier ?? "flagship");
+        model = tier === "mini" ? MINI_MODEL : FLAGSHIP_MODEL;
+        sessionId = r.session_id ?? null;
+        granted = Number(r.granted_seconds ?? RESERVE_SECONDS);
+    }
 
     // ── Configuración de sesión ──
     const sessionConfig = {
         type: "realtime",
-        model: MODEL,
+        model,
         instructions: buildInstructions(gate.name, gate.role),
         audio: {
             input: {
@@ -308,20 +396,34 @@ serve(async (req: Request) => {
             console.error(
                 `[elixis-realtime-session] OpenAI ${upstream.status} · user=${gate.userId} · ${answer.slice(0, 500)}`,
             );
+            // La sesion nunca llego a existir: no se le puede cobrar al usuario.
+            if (sessionId) {
+                await ADMIN.rpc("elixis_voice_settle", { p_session: sessionId, p_used: 0 })
+                    .catch(() => {});
+            }
             return json({ ok: false, error: "voice_upstream_error", detail: upstream.status }, 502);
         }
 
         // Traza para forense de costos. Sin PII: solo id interno, rol y modelo.
         console.log(
-            `[elixis-realtime-session] sesión abierta · user=${gate.userId} · rol=${gate.role} · modelo=${MODEL} · voz=${voice}`,
+            `[elixis-realtime-session] sesión abierta · user=${gate.userId} · rol=${gate.role} · nivel=${tier} · modelo=${model} · voz=${voice} · concedido=${granted}s`,
         );
 
         return new Response(answer, {
             status: 200,
-            headers: { ...cors, "Content-Type": "application/sdp" },
+            headers: {
+                ...cors,
+                "Content-Type": "application/sdp",
+                "x-elixis-session": sessionId ?? "",
+                "x-elixis-tier": tier,
+                "x-elixis-granted-seconds": String(granted),
+            },
         });
     } catch (err) {
         console.error("[elixis-realtime-session] fallo de red hacia OpenAI:", err);
+        if (sessionId) {
+            await ADMIN.rpc("elixis_voice_settle", { p_session: sessionId, p_used: 0 }).catch(() => {});
+        }
         return json({ ok: false, error: "voice_unreachable" }, 502);
     }
 });

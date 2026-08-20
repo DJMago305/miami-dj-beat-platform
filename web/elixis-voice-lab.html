@@ -184,6 +184,8 @@ select:focus-visible{outline:2px solid var(--info);outline-offset:2px}
         <span>Último turno <b id="latLast">—</b></span>
         <span>Mejor <b id="latBest">—</b></span>
         <span>Turnos <b id="latCount">0</b></span>
+        <span>Nivel <b id="meterTier">—</b></span>
+        <span>Bloque <b id="meterLeft">—</b></span>
       </div>
     </div>
 
@@ -234,6 +236,9 @@ select:focus-visible{outline:2px solid var(--info);outline-offset:2px}
   var audioCtx = null, analyser = null, meterRAF = 0;
   var agentLine = null;
   var turnStart = 0, latBest = 0, latCount = 0;
+  // Medidor: la sesion de cuota es distinta de la sesion de voz.
+  var meterSession = null, meterTier = "", meterGranted = 0;
+  var meterStartedAt = 0, hbTimer = 0, capTimer = 0, warnTimer = 0;
 
   // ── Log ────────────────────────────────────────────────────────────
   function log(msg, cls){
@@ -537,6 +542,79 @@ select:focus-visible{outline:2px solid var(--info);outline-offset:2px}
              setMode:setMode, stop:stop };
   })();
 
+  // ── Medidor de consumo ─────────────────────────────────────────────
+  function meterUrl(action, extra){
+    var base = functionUrl();
+    if(!base) return null;
+    var u = base + (base.indexOf("?") === -1 ? "?" : "&") + "action=" + action;
+    if(extra) u += extra;
+    return u;
+  }
+
+  function meterHeaders(){
+    var h = {};
+    var pub = window.MDB_SUPABASE_ANON_KEY || "";
+    if(pub) h.apikey = pub;
+    h.Authorization = "Bearer " + accessToken;
+    return h;
+  }
+
+  function usedSeconds(){
+    return meterStartedAt ? Math.max(0, Math.round((Date.now() - meterStartedAt)/1000)) : 0;
+  }
+
+  function startMeter(sessionId, tier, granted){
+    meterSession = sessionId || null;
+    meterTier = tier || "";
+    meterGranted = granted || 0;
+    meterStartedAt = Date.now();
+
+    el("meterTier").textContent = meterTier === "mini" ? "mini" : (meterTier || "—");
+    el("meterLeft").textContent = meterGranted ? Math.round(meterGranted/60) + " min" : "—";
+
+    if(!meterSession) return;   // staff con el medidor caido: sin sesion que liquidar
+
+    // Latido: sin el, el barrendero da la sesion por abandonada y la cobra entera.
+    hbTimer = setInterval(function(){
+      var u = meterUrl("heartbeat", "&session=" + encodeURIComponent(meterSession));
+      if(u) fetch(u, { method:"POST", headers: meterHeaders() }).catch(function(){});
+    }, 4*60*1000);
+
+    if(meterGranted > 0){
+      // Aviso a falta de un minuto, corte al agotarse el bloque concedido.
+      if(meterGranted > 70){
+        warnTimer = setTimeout(function(){
+          addSysLine("Queda un minuto de este bloque. Al agotarse, la sesión se cierra sola.");
+        }, (meterGranted - 60) * 1000);
+      }
+      capTimer = setTimeout(function(){
+        addSysLine("Bloque agotado. Cerrando sesión y liquidando el consumo.");
+        disconnect();
+      }, meterGranted * 1000);
+    }
+  }
+
+  // keepalive: la liquidacion sale aunque se cierre la pestana en ese instante.
+  function settleMeter(){
+    if(hbTimer){ clearInterval(hbTimer); hbTimer = 0; }
+    if(capTimer){ clearTimeout(capTimer); capTimer = 0; }
+    if(warnTimer){ clearTimeout(warnTimer); warnTimer = 0; }
+    if(!meterSession) { meterStartedAt = 0; return; }
+
+    var u = meterUrl("settle", "&session=" + encodeURIComponent(meterSession) + "&used=" + usedSeconds());
+    var s = meterSession;
+    meterSession = null; meterStartedAt = 0;
+    if(u){
+      fetch(u, { method:"POST", headers: meterHeaders(), keepalive: true })
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if(d && d.ok) log("Consumo liquidado: " + d.billed_seconds + "s cobrados, " + d.refunded_seconds + "s devueltos.", "g");
+        })
+        .catch(function(){ log("No se pudo liquidar la sesión " + s + "; el barrendero la cerrará.", "e"); });
+    }
+    el("meterLeft").textContent = "—";
+  }
+
   // ── Latencia ───────────────────────────────────────────────────────
   function noteLatency(){
     if(!turnStart) return;
@@ -676,6 +754,18 @@ select:focus-visible{outline:2px solid var(--info);outline-offset:2px}
         setState("Sin acceso", "El laboratorio de voz es owner/staff por ahora.", "", "403");
         cleanup(); return;
       }
+      if(res.status === 402){
+        var d402 = {}; try{ d402 = await res.json(); }catch(e){}
+        var motivo = d402.error === "safety_cap_reached"
+          ? "Tope técnico de seguridad alcanzado (fusible anti-bucle, no es saldo)."
+          : d402.error === "no_quota"
+            ? "Esta cuenta no tiene bolsa de voz asignada."
+            : "Se agotaron las bolsas de voz insignia y mini de este periodo.";
+        log("402 — " + motivo, "e");
+        addSysLine(motivo + (d402.fallback_to_text ? " Puedes seguir por texto sin límite." : ""));
+        setState("Sin saldo de voz", d402.fallback_to_text ? "Continúa por texto, sin límite." : "", "", "402");
+        cleanup(); return;
+      }
       if(res.status === 429){
         var d429 = {}; try{ d429 = await res.json(); }catch(e){}
         log("429 — límite alcanzado: " + (d429.error || "cuota") + ". Espera y reintenta.", "e");
@@ -688,6 +778,13 @@ select:focus-visible{outline:2px solid var(--info);outline-offset:2px}
         setState("Error de conexión", "Revisa el diagnóstico.", "", "ERR");
         cleanup(); return;
       }
+
+      startMeter(
+        res.headers.get("x-elixis-session"),
+        res.headers.get("x-elixis-tier"),
+        parseInt(res.headers.get("x-elixis-granted-seconds") || "0", 10)
+      );
+      log("Medidor: nivel " + (meterTier || "?") + ", bloque de " + Math.round(meterGranted/60) + " min.", "g");
 
       var answerSdp = await res.text();
       log("Respuesta SDP recibida (" + answerSdp.length + " bytes).", "g");
@@ -703,6 +800,7 @@ select:focus-visible{outline:2px solid var(--info);outline-offset:2px}
 
   // ── Cortar ─────────────────────────────────────────────────────────
   function cleanup(){
+    settleMeter();
     VIZ.stop();
     if(dc){ try{ dc.close(); }catch(e){} dc = null; }
     if(pc){ try{ pc.close(); }catch(e){} pc = null; }
