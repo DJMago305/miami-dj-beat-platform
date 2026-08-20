@@ -662,7 +662,7 @@
       if(state.voiceMode==='text'){
         v.innerHTML='<div class="pad fade-anim">'+avatarHTML+'<div id="cmdBody"></div></div>';
         body=$('#cmdBody');
-        body.innerHTML='<div class="mic-wrap"><div class="mic-side" data-vm="voice"><button class="icon-btn">'+svg('mic')+'</button>VOZ</div>'+
+        body.innerHTML='<div class="mic-wrap"><div class="mic-side" data-vm="voice"><button class="icon-btn">'+svg('mic')+'</button></div>'+
           '<div class="mic-side on" data-vm="text"><button class="icon-btn">'+svg('keyboard')+'</button>TEXTO</div></div>'+
           '<div class="cmd-input"><input id="cmdText" placeholder="'+T('Escribe tu comando…','Type your command…')+'" autocomplete="off"><button class="send" id="cmdSend">'+svg('send','width="18"')+'</button></div>'+exampleChips();
         $('#cmdSend').onclick=sendText;
@@ -674,7 +674,7 @@
         v.innerHTML='<div class="pad fade-anim">'+avatarHTML+'<div id="cmdBody"></div></div>';
         body=$('#cmdBody');
         body.innerHTML=greet+
-          '<div class="mic-wrap"><div class="mic-side '+(state.voiceMode==='voice'?'on':'')+'" data-vm="voice"><button class="icon-btn">'+svg('mic')+'</button>VOZ</div>'+
+          '<div class="mic-wrap"><div class="mic-side '+(state.voiceMode==='voice'?'on':'')+'" data-vm="voice"><button class="icon-btn">'+svg('mic')+'</button></div>'+
           '<button class="mic" id="micBtn">'+svg('mic')+'</button>'+
           '<div class="mic-side" data-vm="text"><button class="icon-btn">'+svg('keyboard')+'</button>TEXTO</div></div>'+exampleChips();
         $('#micBtn').onclick=function(){ if(!state.online){toast(T('Sin conexión · orden guardada como borrador','Offline · order saved as draft'),'warn');return;} startListening(); };
@@ -711,10 +711,10 @@
   }
   function wireVoice(st){ var mic=$('#vMic');if(mic)mic.onclick=endVoice; }
   function exampleChips(){
-    /* Comandos que ELIXIS puede contestar de verdad contra la base de datos.
-       Los de antes pedian por un cliente inventado. */
-    var ex=[T('¿Qué tengo pendiente hoy?','What is pending today?'),T('¿Cuánto facturamos este mes?','How much did we bill this month?'),T('Muéstrame los pagos atrasados','Show overdue payments'),T('¿Cuánto cobramos por una boda?','What do we charge for a wedding?')];
-    return '<div class="sec-h" style="justify-content:center;margin-top:22px">'+T('Comandos de ejemplo','Example commands')+'</div><div class="chips">'+ex.map(function(x){return '<button class="chip" data-chip="'+esc(x)+'">'+esc(x)+'</button>';}).join('')+'</div>';
+    /* Los chips de "comandos de ejemplo" eran andamio de prototipo: servian
+       para ensenar que se le podia pedir cuando ELIXIS todavia no respondia.
+       Con voz y texto reales sobran, y ocupaban el sitio de la conversacion. */
+    return '';
   }
   function setAvatar(s){state.avatar=s;if(state.screen==='command')render();}
   function demoOrder(){ return ''; }
