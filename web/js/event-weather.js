@@ -19,7 +19,8 @@ function mdjOpenWeatherApiKey() {
     if (typeof window !== 'undefined' && window.OPENWEATHER_API_KEY && String(window.OPENWEATHER_API_KEY).trim()) {
         return String(window.OPENWEATHER_API_KEY).trim();
     }
-    return 'dd8223bfcc6f68da9fc28ca245fe0201';
+    /* Sin reserva a proposito: un literal aqui es un secreto publicado. */
+    return '';
 }
 
 let currentDuration = 220;

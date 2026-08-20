@@ -5,11 +5,22 @@ const REGISTERED_READ_TOOLS = new Set([
     "consultar_finanzas",
     "consultar_agenda_artista",
     "consultar_catalogo_precios",
+    // buscar_cliente estaba marcado como lectura libre en elixis-chat pero
+    // NUNCA se registro aqui, asi que el porton lo negaba con
+    // "approval_required" y ELIXIS lo contaba como "requiere aprobacion del
+    // sistema". Solo lee nombre/telefono de un cliente ya existente.
+    "buscar_cliente",
 ]);
 const REGISTERED_WRITE_TOOLS = new Set([
     "crear_nota_lead",
     "registrar_evento_agenda",
     "generar_cotizacion_evento",
+    // enviar_sms solo ENCOLA un borrador; no sale nada al mundo. El envio real
+    // lo hace elixis-sms-dispatch, que exige owner/staff y una fila ya en cola,
+    // y que el modelo no tiene en su inventario. Sin registrarlo aqui, el
+    // porton lo negaba por "unregistered_tool" y la tarjeta de aprobacion no
+    // llegaba a aparecer nunca.
+    "enviar_sms",
 ]);
 
 export type ApprovalMode = "read" | "write";

@@ -8,7 +8,9 @@
 
 import { getDJLogisticsAdvice } from '../dj-logistics-engine.js';
 
-const FORECAST_API_KEY = 'dd8223bfcc6f68da9fc28ca245fe0201'; // Free tier supports 5-day / 3-hour forecast
+/* Se inyecta desde fuera; nunca literal: este archivo se sirve publico. */
+const FORECAST_API_KEY = (typeof window !== 'undefined' && window.OPENWEATHER_API_KEY)
+    ? String(window.OPENWEATHER_API_KEY).trim() : '';
 
 export async function runEventIntelligenceSweep() {
     console.log("🔍 [Intelligence] Executing Future Event Sweep via Supabase...");

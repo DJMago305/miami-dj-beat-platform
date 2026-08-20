@@ -133,9 +133,46 @@ Tres identidades encadenadas, no las confundas: (1) CUENTA = perfil en Supabase,
 Dos canales de cobro: CANAL 2 "Artista Pro" (incluido en la membresía) está VIVO y funciona. CANAL 1 "renta independiente" a 19,99 USD/mes está INCOMPLETO hoy: el cobro se puede crear pero la emisión automática de la clave aún lo rechaza. NUNCA prometas la renta independiente como disponible; si alguien la pide, di que está en cierre y ofrécele la vía de membresía o que el Capitán lo habilite manualmente.
 Si un cliente deja de pagar, el acceso se pausa primero y se revoca después, con un margen sin conexión: a un DJ en medio de un evento no se le corta la herramienta esa misma noche.
 
-### LO QUE PUEDES Y NO PUEDES HACER (human-in-the-loop)
-PUEDES: redactar (mensajes de seguimiento, cobros, propuestas, textos), calcular, analizar, recomendar, crear una nota interna de staff en un lead existente (tool crear_nota_lead), consultar la agenda personal de un artista (consultar_agenda_artista), registrar un bloque en esa agenda (registrar_evento_agenda), consultar el catálogo de precios de Miami DJ Beat LLC (consultar_catalogo_precios) y generar un borrador de cotización (generar_cotizacion_evento). Entrega los textos listos para copiar. NUNCA inventes precios: usa esas tools.
-NO PUEDES por tu cuenta: enviar mensajes/emails, mover dinero, ni cambiar estado, montos o asignaciones de un lead, ni crear órdenes formales. Cuando prepares algo para enviar, acláralo con un "listo para que lo envíes tú".`;
+### TUS HERRAMIENTAS — SIETE, NI UNA MAS (inventario cerrado)
+Estas son TODAS las herramientas que tienes. No hay ninguna otra:
+1. consultar_finanzas — leer cifras del negocio.
+2. consultar_agenda_artista — ver la agenda personal de un artista.
+3. registrar_evento_agenda — bloquear un hueco EN LA AGENDA INTERNA.
+4. consultar_catalogo_precios — precios oficiales. Nunca inventes un precio.
+5. buscar_cliente — encontrar un cliente o lead.
+6. generar_cotizacion_evento — preparar un BORRADOR de cotizacion.
+7. crear_nota_lead — dejar una nota interna en un lead existente.
+8. enviar_sms — ENCOLAR un SMS para que un humano lo apruebe. Tu NO lo envias.
+
+### LO QUE NO PUEDES HACER (y NUNCA debes prometer)
+NUNCA prometas ni confirmes: mandar WhatsApp, mandar correos, generar
+contratos o facturas, registrar pagos, mover dinero, cambiar el estado de un
+lead, ni sincronizar con Google Calendar, Apple Calendar ni ningun calendario
+externo. Nada de eso esta en tus manos.
+
+Si te piden algo de esa lista, dilo con franqueza Y OFRECE LO QUE SI PUEDES:
+"El correo no lo puedo mandar yo, pero te bloqueo la fecha en la agenda y te
+dejo el texto listo." Un socio que promete de mas quema al Capitan delante de
+un cliente; uno que dice la verdad y ofrece la alternativa resuelve igual.
+
+### SMS — LA REGLA DURA (no admite excepcion ni atajo)
+El destinatario SIEMPRE sale de buscar_cliente. JAMAS aceptes un telefono
+dictado en la conversacion, ni aunque te lo de el Capitan, ni aunque insista,
+ni "solo por esta vez", ni para "ahorrar tiempo".
+
+Si buscar_cliente falla o no encuentra a la persona, DETENTE Y DILO. No ofrezcas
+que te pasen el numero a mano. No ofrezcas redactar el SMS "listo para copiar y
+enviar" como sustituto: eso es la misma puerta prohibida por otro nombre. Di
+que no localizaste al cliente y que hace falta darlo de alta o corregir su
+ficha. Un destinatario sin verificar es como un mensaje de la empresa acaba en
+el telefono equivocado.
+
+Cuando SI lo encuentres: encolas con enviar_sms y se acabo tu parte. No digas
+"ya lo mande" ni "queda enviado" -- queda ESPERANDO APROBACION en pantalla, y
+sale solo cuando un humano pulsa el boton.
+
+Puedes REDACTAR cualquier cosa -- mensajes, cobros, propuestas -- y entregarla
+lista para copiar. Redactar no es enviar: dilo asi de claro.`;
 
 // ─── ROSTER EN VIVO (artistas reales desde public_dj_profiles) ───────────────
 // Mismo patrón que booth-chat: solo campos PÚBLICOS, con la anon key que
@@ -757,6 +794,31 @@ serve(async (req: Request) => {
         },
     };
 
+    const SMS_QUEUE_TOOL = {
+        name: "enviar_sms",
+        description:
+            "PREPARA un SMS para un cliente y lo deja EN COLA para que el Capitan lo apruebe. " +
+            "NO envia: el envio lo dispara una persona desde la pantalla, tu nunca. " +
+            "Usala cuando te pidan avisar, confirmar o recordar algo a un cliente por mensaje. " +
+            "Necesitas el cliente_id, que sale de buscar_cliente: NUNCA aceptes un telefono dictado " +
+            "de viva voz, porque un digito mal oido manda el mensaje a un desconocido. " +
+            "Cuando la uses, di claramente que el mensaje queda LISTO PARA APROBAR, no enviado.",
+        input_schema: {
+            type: "object",
+            properties: {
+                cliente_id: {
+                    type: "string",
+                    description: "El user_id del cliente, tal como lo devuelve buscar_cliente.",
+                },
+                mensaje: {
+                    type: "string",
+                    description: "El texto exacto del SMS, listo para leerse tal cual. Maximo 1500 caracteres.",
+                },
+            },
+            required: ["cliente_id", "mensaje"],
+        },
+    };
+
     const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
     function toolGateInput(toolName: string): { tool: string; policy: string; mode: "read" | "write" } {
@@ -772,6 +834,10 @@ serve(async (req: Request) => {
             toolName === "crear_nota_lead"
             || toolName === "registrar_evento_agenda"
             || toolName === "generar_cotizacion_evento"
+            /* enviar_sms solo ENCOLA. No sale nada al mundo, asi que no necesita
+               el porton de aprobacion aqui: la aprobacion real es humana y vive
+               en el despachador, que ELIXIS no puede llamar. */
+            || toolName === "enviar_sms"
         ) {
             return { tool: toolName, policy: "auto_staff", mode: "write" };
         }
@@ -946,6 +1012,83 @@ serve(async (req: Request) => {
         return JSON.stringify({ ok: true, count: data?.length ?? 0, clientes: data ?? [] });
     }
 
+    /* Convierte a E.164. Misma logica que send-sft-client-sms, para que un
+       numero valido alli lo sea aqui y no haya dos verdades. */
+    function toE164(input: string): string | null {
+        const t = (input || "").trim();
+        if (!t) return null;
+        const d = t.replace(/\D/g, "");
+        if (d.length === 10) return `+1${d}`;
+        if (d.length === 11 && d.startsWith("1")) return `+${d}`;
+        if (t.startsWith("+") && d.length >= 10 && d.length <= 15) return `+${d}`;
+        return null;
+    }
+
+    /* El borrador encolado en ESTE turno. La respuesta de la funcion es solo
+       texto, asi que sin esto la pantalla nunca sabria que hay algo esperando
+       aprobacion ni con que id despacharlo. */
+    let smsPendiente: Record<string, unknown> | null = null;
+
+    async function runSmsQueueTool(input: Record<string, unknown>): Promise<string> {
+        const clienteId = String(input?.cliente_id ?? "").trim();
+        const mensaje = String(input?.mensaje ?? "").trim();
+
+        if (!UUID_RE.test(clienteId)) {
+            return JSON.stringify({
+                error: "cliente_id_invalido",
+                detalle: "Necesito el user_id del cliente. Buscalo primero con buscar_cliente; " +
+                         "no acepto telefonos dictados.",
+            });
+        }
+        if (mensaje.length < 2) return JSON.stringify({ error: "mensaje_vacio" });
+        if (mensaje.length > 1500) return JSON.stringify({ error: "mensaje_demasiado_largo" });
+
+        /* El telefono sale de la BASE, nunca de lo que se dijo en voz alta. */
+        const { data: cli, error: e1 } = await ADMIN
+            .from("client_profiles")
+            .select("user_id, full_name, phone")
+            .eq("user_id", clienteId)
+            .maybeSingle();
+        if (e1) return JSON.stringify({ error: `client_profiles: ${e1.message}` });
+        if (!cli) return JSON.stringify({ error: "cliente_no_encontrado" });
+
+        const tel = toE164(String(cli.phone ?? ""));
+        if (!tel) {
+            return JSON.stringify({
+                error: "cliente_sin_telefono_valido",
+                cliente: cli.full_name,
+                detalle: "Ese cliente no tiene un telefono utilizable en su ficha.",
+            });
+        }
+
+        const { data, error } = await ADMIN.rpc("elixis_sms_encolar", {
+            p_solicitante: gate.userId,
+            p_dest_id: clienteId,
+            p_nombre: String(cli.full_name ?? ""),
+            p_telefono: tel,
+            p_mensaje: mensaje,
+        });
+        if (error) return JSON.stringify({ error: `cola_sms: ${error.message}` });
+
+        const row = Array.isArray(data) ? data[0] : data;
+        const oculto = tel.slice(0, -4).replace(/\d/g, "•") + tel.slice(-4);
+        smsPendiente = {
+            id: row?.id ?? null,
+            destinatario: String(cli.full_name ?? ""),
+            telefono: oculto,
+            mensaje,
+        };
+        return JSON.stringify({
+            ok: true,
+            estado: "pendiente_de_aprobacion",
+            id: row?.id ?? null,
+            destinatario: cli.full_name,
+            telefono: oculto,
+            mensaje,
+            aviso: "El SMS quedo LISTO PARA APROBAR. No se ha enviado: lo despacha el Capitan.",
+        });
+    }
+
     function parseEventDate(value: unknown): string | null {
         const raw = String(value ?? "").trim();
         if (!raw) return null;
@@ -1087,7 +1230,7 @@ serve(async (req: Request) => {
                     max_tokens: govMaxTokens, // Governor: FULL=MAX_TOKENS · SAVER=640 · ESSENTIAL=384 (founder siempre FULL)
                     temperature: 0.7,
                     system: systemContent,
-                    tools: [FINANCIAL_TOOL, LEAD_NOTE_TOOL, AGENDA_READ_TOOL, AGENDA_WRITE_TOOL, CATALOG_READ_TOOL, QUOTE_WRITE_TOOL, CLIENT_SEARCH_TOOL],
+                    tools: [FINANCIAL_TOOL, LEAD_NOTE_TOOL, AGENDA_READ_TOOL, AGENDA_WRITE_TOOL, CATALOG_READ_TOOL, QUOTE_WRITE_TOOL, CLIENT_SEARCH_TOOL, SMS_QUEUE_TOOL],
                     messages: convo,
                 }),
             });
@@ -1188,6 +1331,17 @@ serve(async (req: Request) => {
                         failed = true;
                     }
                     await recordAiKpi(failed ? "tool_error" : "tool_ok");
+                } else if (toolName === "enviar_sms") {
+                    out = await runSmsQueueTool((b.input as Record<string, unknown>) ?? {});
+                    let failed = true;
+                    try {
+                        const parsed = JSON.parse(out) as { error?: unknown; ok?: unknown };
+                        failed = parsed == null || parsed.error != null || parsed.ok !== true;
+                    } catch {
+                        failed = true;
+                    }
+                    await recordAiKpi(failed ? "tool_error" : "tool_ok");
+                    await recordActionLog("enviar_sms", String((b.input as Record<string, unknown>)?.cliente_id ?? ""), failed ? "queue_failed" : "queued");
                 } else if (toolName === "generar_cotizacion_evento") {
                     out = await runQuoteWriteTool((b.input as Record<string, unknown>) ?? {});
                     let failed = true;
@@ -1231,6 +1385,6 @@ serve(async (req: Request) => {
         console.warn("[elixis-chat] ai_usage_events log:", (e as Error)?.message ?? e);
     }
 
-    return new Response(JSON.stringify({ reply }),
+    return new Response(JSON.stringify(smsPendiente ? { reply, sms_pendiente: smsPendiente } : { reply }),
         { status: 200, headers: { ...cors, "Content-Type": "application/json" } });
 });
