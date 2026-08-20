@@ -58,10 +58,53 @@
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     -webkit-font-smoothing:antialiased;
   }
+  .consola-shell{display:flex;height:100svh;overflow:hidden}
+
+  /* ═══ RIEL — medidas COPIADAS de #staff-side3, no elegidas ═══════════
+     250px abierto / 60px contraido / transicion .18s / etiquetas fuera al
+     contraer / grupos en acordeon. Se copia el patron, no se reinventa. */
+  .cfg-riel{
+    width:250px;flex:none;background:#0a0e16;border-right:1px solid var(--line);
+    overflow-y:auto;overflow-x:hidden;padding:10px 0 44px;transition:width .18s ease;
+  }
+  .cfg-riel.contraido{width:60px}
+  .cfg-top{display:flex;align-items:center;gap:11px;padding:2px 14px 12px}
+  .cfg-contraer{
+    display:flex;align-items:center;justify-content:center;width:36px;height:34px;flex:none;
+    background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:8px;
+    color:var(--gold);cursor:pointer;
+  }
+  .cfg-contraer svg{width:17px;height:17px}
+  .cfg-marca{font-size:13px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+  .cfg-riel.contraido .cfg-marca{display:none}
+  .cfg-riel.contraido .cfg-top{justify-content:center;padding-left:0;padding-right:0}
+
+  .cfg-grupo{
+    display:flex;align-items:center;gap:11px;width:100%;padding:11px 16px;
+    background:none;border:0;color:var(--text);font:inherit;font-size:13px;
+    cursor:pointer;text-align:left;
+  }
+  .cfg-grupo:hover{background:rgba(255,255,255,.04)}
+  .cfg-grupo svg{width:18px;height:18px;flex:none;color:var(--gold-2)}
+  .cfg-grupo .cfg-tx{flex:1}
+  .cfg-grupo .cfg-flecha{width:14px;height:14px;transition:transform .18s ease;opacity:.6}
+  .cfg-grupo.abierto .cfg-flecha{transform:rotate(90deg)}
+  .cfg-riel.contraido .cfg-tx,
+  .cfg-riel.contraido .cfg-flecha{display:none}
+  .cfg-riel.contraido .cfg-grupo{justify-content:center;gap:0;padding-left:0;padding-right:0}
+
+  .cfg-cuerpo{max-height:0;overflow:hidden;transition:max-height .22s ease;padding:0 16px}
+  .cfg-grupo.abierto + .cfg-cuerpo{max-height:420px;padding-bottom:12px}
+  .cfg-riel.contraido .cfg-cuerpo{display:none}
+
+  .cfg-fila{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:12.5px;color:var(--muted)}
+  .cfg-fila .punto{width:7px;height:7px;border-radius:50%;flex:none;background:#3ecb7f;box-shadow:0 0 7px #3ecb7f}
+  .cfg-fila.humana .punto{background:var(--gold);box-shadow:0 0 7px var(--gold)}
+  .cfg-nota{font-size:11px;line-height:1.5;color:var(--muted);opacity:.7;padding:6px 0 2px}
   .app{
     max-width:860px;
     margin:0 auto;
-    height:100svh;
+    flex:1;min-width:0;height:100%;
     display:flex;
     flex-direction:column;
     position:relative;
@@ -404,7 +447,11 @@
 .lado-izq{left:max(16px, calc(50% - 460px - 248px)); transform:translateX(-14px)}
 .lado-der{right:max(16px, calc(50% - 460px - 248px)); transform:translateX(14px)}
 .lado.abierta{opacity:1; transform:translateX(0)}
-@media (min-width:1240px){ .lado{display:flex} }
+/* El umbral sube de 1240 a 1400: el riel se lleva 250px, y con el antiguo
+   las dos ventanas PISABAN la columna de lectura por los dos lados -- medido,
+   no supuesto. Aqui solo aparecen cuando de verdad hay sitio para las tres
+   piezas sin que ninguna invada a otra. */
+@media (min-width:1400px){ .lado{display:flex} }
 
 .lado-h{
   font-family:var(--mono); font-size:10px; letter-spacing:.16em;
@@ -481,6 +528,11 @@
 /* A 1440px las burbujas se pegaban a los bordes y la lectura se rompia. La
    columna se acota y se centra -- la red sigue ocupando el ancho completo. */
 .stream > *, .composer{max-width:920px;width:100%;margin-left:auto;margin-right:auto}
+/* Con las ventanas abiertas, la LECTURA cede sitio en vez de solaparse: se
+   queda con lo que sobra despues de darles su ancho a las dos. */
+@media (min-width:1400px){
+  .stream > *, .composer{max-width:min(920px, calc(100% - 528px))}
+}
 .composer{box-sizing:content-box}
 
 /* Burbujas translucidas: oro para el Capitan, cian para ELIXIS. El
@@ -590,7 +642,23 @@
 </style>
 </head>
 <body>
-<div class="app">
+<div class="consola-shell">
+
+  <!-- ═══ RIEL DE CONFIGURACIONES ═══ Copia del patron real de la plataforma
+       (#staff-side3 en staff.html): 250px abierto, 60px contraido, las
+       etiquetas desaparecen y los grupos van en acordeon. Vive FUERA de las
+       tres zonas para no tapar el proceso ni la transcripcion. -->
+  <aside class="cfg-riel" id="cfgRiel" aria-label="Configuraciones de ELIXIS y permisos">
+    <div class="cfg-top">
+      <button type="button" class="cfg-contraer" id="cfgContraer" title="Contraer / expandir" aria-label="Contraer o expandir el panel" aria-expanded="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+      </button>
+      <span class="cfg-marca">ELIXIS</span>
+    </div>
+    <div class="cfg-items" id="cfgItems"></div>
+  </aside>
+
+  <div class="app">
   <header class="topbar">
     <div class="brand">
       <img class="logo" src="./assets/branding/fenix-emblem-160.png" alt="FÉNIX AI">
@@ -645,6 +713,7 @@
     <button id="send" aria-label="Enviar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg></button>
   </footer>
   <div class="hint">ELIXIS · Miami DJ Beat LLC — responde con Claude. Enter envía · Shift+Enter salto de línea.</div>
+  </div>
 </div>
 
 <script>
@@ -1054,6 +1123,95 @@
     procesoCuerpo.scrollTop = procesoCuerpo.scrollHeight;
   }
 
+
+  /* ═══ RIEL DE CONFIGURACIONES Y PERMISOS ═══════════════════════════
+     Los controles se MUEVEN aqui, no se copian: el selector de voz sigue
+     siendo el mismo nodo, con sus mismos oyentes, solo que colgado de otro
+     sitio. Duplicarlo habria dejado dos mandos para lo mismo. */
+  var cfgRiel = document.getElementById("cfgRiel");
+  var cfgItems = document.getElementById("cfgItems");
+  var cfgContraer = document.getElementById("cfgContraer");
+
+  var ICO_AJUSTES = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='3'/><path d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z'/></svg>";
+  var ICO_ESCUDO  = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z'/><path d='M9 12l2 2 4-4'/></svg>";
+  var ICO_FLECHA  = "<svg class='cfg-flecha' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m9 18 6-6-6-6'/></svg>";
+
+  /* Lo que ELIXIS puede hacer, leido del porton real (approval-gate.ts). Es
+     una FICHA, no un mando: los permisos viven en el servidor y no se cambian
+     desde aqui. Decirlo evita que parezca que tocando algo se abre una puerta. */
+  var PERMISOS = [
+    ["Consultar finanzas", "lee"], ["Consultar agenda", "lee"],
+    ["Consultar precios", "lee"], ["Buscar clientes", "lee"],
+    ["Dejar notas en leads", "escribe"], ["Bloquear la agenda", "escribe"],
+    ["Preparar cotizaciones", "escribe"], ["Enviar SMS", "humana"]
+  ];
+
+  function grupo(id, icono, titulo){
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "cfg-grupo"; b.setAttribute("data-g", id);
+    b.innerHTML = icono + "<span class='cfg-tx'>" + titulo + "</span>" + ICO_FLECHA;
+    return b;
+  }
+
+  (function montarRiel(){
+    if(!cfgItems) return;
+
+    /* CONFIGURACIONES — se traga el contenido del panel del engranaje. */
+    var gCfg = grupo("cfg", ICO_AJUSTES, "Configuraciones");
+    var cCfg = document.createElement("div"); cCfg.className = "cfg-cuerpo";
+    var viejo = document.getElementById("settingsPanel");
+    if(viejo){
+      while(viejo.firstChild) cCfg.appendChild(viejo.firstChild);  /* MOVER, no clonar */
+      viejo.remove();
+    }
+    cfgItems.appendChild(gCfg); cfgItems.appendChild(cCfg);
+
+    /* PERMISOS — ficha de solo lectura. */
+    var gPer = grupo("per", ICO_ESCUDO, "Permisos");
+    var cPer = document.createElement("div"); cPer.className = "cfg-cuerpo";
+    PERMISOS.forEach(function(p){
+      var f = document.createElement("div");
+      f.className = "cfg-fila" + (p[1] === "humana" ? " humana" : "");
+      f.innerHTML = "<span class='punto'></span>";
+      f.appendChild(document.createTextNode(p[0]));
+      cPer.appendChild(f);
+    });
+    var nota = document.createElement("div");
+    nota.className = "cfg-nota";
+    nota.textContent = "Ficha de solo lectura. Los permisos viven en el servidor; enviar SMS exige siempre tu aprobación en pantalla.";
+    cPer.appendChild(nota);
+    cfgItems.appendChild(gPer); cfgItems.appendChild(cPer);
+
+    /* ACORDEON: uno abierto a la vez, como en el riel de staff. */
+    cfgItems.querySelectorAll(".cfg-grupo").forEach(function(g){
+      g.addEventListener("click", function(){
+        var abrir = !g.classList.contains("abierto");
+        cfgItems.querySelectorAll(".cfg-grupo").forEach(function(x){ x.classList.remove("abierto"); });
+        if(abrir) g.classList.add("abierto");
+        if(cfgRiel.classList.contains("contraido")) alternarRiel();   /* contraido no se puede leer */
+      });
+    });
+    gCfg.classList.add("abierto");
+  })();
+
+  function alternarRiel(){
+    if(!cfgRiel) return;
+    var contraido = cfgRiel.classList.toggle("contraido");
+    if(cfgContraer) cfgContraer.setAttribute("aria-expanded", String(!contraido));
+    try{ localStorage.setItem("elixis_riel_contraido", contraido ? "1" : "0"); }catch(e){}
+  }
+  if(cfgContraer) cfgContraer.addEventListener("click", alternarRiel);
+  /* El patron de staff.html NO recuerda el estado y vuelve a abierto en cada
+     recarga. Aqui si se recuerda: es un anadido consciente, no una copia. */
+  try{
+    if(localStorage.getItem("elixis_riel_contraido") === "1" && cfgRiel){
+      cfgRiel.style.transition = "none";
+      cfgRiel.classList.add("contraido");
+      if(cfgContraer) cfgContraer.setAttribute("aria-expanded", "false");
+      setTimeout(function(){ cfgRiel.style.transition = ""; }, 60);
+    }
+  }catch(e){}
+
   async function askElixis(message){
     var url = functionUrl();
     if(!url){
@@ -1232,16 +1390,22 @@
   }
 
   // Selector de voz — persiste en localStorage y se envía a elixis-tts
-  if(settingsBtn && settingsPanel){
+  /* Ya NO se exige settingsPanel: el riel se lo lleva por delante antes de
+     que este bloque corra, asi que pedirlo dejaba al engranaje sin oyente. */
+  if(settingsBtn){
     settingsBtn.addEventListener("click", function(e){
       e.stopPropagation();
-      settingsPanel.hidden = !settingsPanel.hidden;
+      /* Su panel propio ya no existe: sus controles VIVEN en el riel. El
+         engranaje pasa a ser un atajo -- abre el riel y despliega
+         Configuraciones -- para que no haya dos mandos para lo mismo.
+         Queda pendiente de decision del PO si este boton se retira de la
+         cabecera; hasta entonces, atajo. */
+      if(cfgRiel && cfgRiel.classList.contains("contraido")) alternarRiel();
+      var g = cfgItems && cfgItems.querySelector('.cfg-grupo[data-g="cfg"]');
+      if(g && !g.classList.contains("abierto")) g.click();
     });
-    document.addEventListener("click", function(e){
-      if(!settingsPanel.hidden && !settingsPanel.contains(e.target) && e.target !== settingsBtn){
-        settingsPanel.hidden = true;
-      }
-    });
+    /* El cierre por clic fuera se retira con el panel: el riel no se cierra
+       solo, se contrae con su boton, igual que en staff.html. */
   }
   if(voiceSelect){
     voiceSelect.addEventListener("change", function(){
