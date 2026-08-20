@@ -110,6 +110,64 @@ begin
 end;
 $fn$;
 
+-- ── AUDITORIA ──────────────────────────────────────────────────────────────
+-- Un SMS a un cliente es irreversible: una vez sale, salio. El rastro de quien
+-- lo pidio, quien lo aprobo y que decidio Twilio no puede depender de que
+-- nadie se acuerde de escribirlo. Lo escribe la base, en cada cambio de estado.
+create table if not exists public.elixis_sms_audit (
+    id          bigserial   primary key,
+    sms_id      uuid        not null,
+    estado_ant  text,
+    estado_nue  text        not null,
+    actor       uuid,
+    telefono    text,
+    twilio_sid  text,
+    error       text,
+    en          timestamptz not null default now()
+);
+
+create index if not exists elixis_sms_audit_sms_idx
+    on public.elixis_sms_audit (sms_id, en desc);
+
+create or replace function public.elixis_sms_auditar()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $fn$
+begin
+    -- Solo interesa el cambio de estado: un UPDATE que no lo mueve no es un
+    -- hecho auditable, es ruido.
+    if TG_OP = 'INSERT' or NEW.estado is distinct from OLD.estado then
+        insert into public.elixis_sms_audit
+               (sms_id, estado_ant, estado_nue, actor, telefono, twilio_sid, error)
+        values (NEW.id,
+                case when TG_OP = 'INSERT' then null else OLD.estado end,
+                NEW.estado,
+                coalesce(NEW.resuelto_por, NEW.solicitado_por),
+                NEW.telefono, NEW.twilio_sid, NEW.error);
+    end if;
+    return NEW;
+end;
+$fn$;
+
+drop trigger if exists elixis_sms_audit_trg on public.elixis_sms_pending;
+create trigger elixis_sms_audit_trg
+    after insert or update on public.elixis_sms_pending
+    for each row execute function public.elixis_sms_auditar();
+
+alter table public.elixis_sms_audit enable row level security;
+drop policy if exists elixis_sms_audit_staff on public.elixis_sms_audit;
+-- Solo owner/admin/manager leen el rastro. Y NADIE lo escribe ni lo borra con
+-- su propio JWT: un registro de auditoria que se puede editar no sirve de nada.
+create policy elixis_sms_audit_staff on public.elixis_sms_audit
+    for select to authenticated using (
+        exists (select 1 from public.dj_profiles p
+                 where p.user_id = auth.uid()
+                   and lower(coalesce(p.role,'')) in ('owner','admin','manager'))
+    );
+revoke insert, update, delete on public.elixis_sms_audit from authenticated, anon;
+
 -- ── RLS: cada quien ve lo suyo; owner/staff ven la cola entera ─────────────
 alter table public.elixis_sms_pending enable row level security;
 
@@ -140,7 +198,8 @@ commit;
 -- La tabla existe, el check de E.164 muerde y la cola arranca vacia.
 select
   (select count(*) from public.elixis_sms_pending)                        as en_cola,
-  (select count(*) from information_schema.columns
-    where table_name='elixis_sms_pending' and table_schema='public')      as columnas,
+  (select count(*) from public.elixis_sms_audit)                          as auditoria,
+  (select count(*) from pg_trigger
+    where tgname = 'elixis_sms_audit_trg')                                as trigger_puesto,
   '+13055551234' ~ '^\+[1-9][0-9]{1,14}$'                                 as acepta_e164_bueno,
-  '3055551234'   ~ '^\+[1-9][0-9]{1,14}$'                                 as acepta_sin_prefijo;
+  '3055551234'   ~ '^\+[1-9][0-9]{1,14}$'                                 as rechaza_sin_prefijo;

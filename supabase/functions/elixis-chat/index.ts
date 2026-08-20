@@ -1008,6 +1008,11 @@ serve(async (req: Request) => {
         return null;
     }
 
+    /* El borrador encolado en ESTE turno. La respuesta de la funcion es solo
+       texto, asi que sin esto la pantalla nunca sabria que hay algo esperando
+       aprobacion ni con que id despacharlo. */
+    let smsPendiente: Record<string, unknown> | null = null;
+
     async function runSmsQueueTool(input: Record<string, unknown>): Promise<string> {
         const clienteId = String(input?.cliente_id ?? "").trim();
         const mensaje = String(input?.mensaje ?? "").trim();
@@ -1051,6 +1056,12 @@ serve(async (req: Request) => {
 
         const row = Array.isArray(data) ? data[0] : data;
         const oculto = tel.slice(0, -4).replace(/\d/g, "•") + tel.slice(-4);
+        smsPendiente = {
+            id: row?.id ?? null,
+            destinatario: String(cli.full_name ?? ""),
+            telefono: oculto,
+            mensaje,
+        };
         return JSON.stringify({
             ok: true,
             estado: "pendiente_de_aprobacion",
@@ -1358,6 +1369,6 @@ serve(async (req: Request) => {
         console.warn("[elixis-chat] ai_usage_events log:", (e as Error)?.message ?? e);
     }
 
-    return new Response(JSON.stringify({ reply }),
+    return new Response(JSON.stringify(smsPendiente ? { reply, sms_pendiente: smsPendiente } : { reply }),
         { status: 200, headers: { ...cors, "Content-Type": "application/json" } });
 });

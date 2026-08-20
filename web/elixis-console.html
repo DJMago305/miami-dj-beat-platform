@@ -311,6 +311,44 @@
   .composer      {grid-area:composer}
   .hint          {grid-area:hint}
 }
+
+/* ═══ TARJETA DE APROBACION DE SMS ══════════════════════════════════════
+   Un SMS a un cliente es irreversible, asi que la decision tiene que verse
+   y tomarse a mano. La tarjeta muestra a quien va (con el telefono tapado
+   salvo los ultimos cuatro), el texto exacto que saldra, y dos salidas.
+   Mientras despacha, los dos botones se bloquean: un doble clic nervioso no
+   puede mandar el mensaje dos veces. */
+.sms-card{
+  border:1px solid var(--gold);border-radius:14px;background:var(--panel);
+  padding:16px 16px 14px;margin:4px 0;display:flex;flex-direction:column;gap:12px;
+  box-shadow:0 8px 26px rgba(0,0,0,.35);
+}
+.sms-card .sms-h{
+  display:flex;align-items:center;gap:8px;font-family:var(--mono);
+  font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);
+}
+.sms-card .sms-dest{font-size:14px;color:var(--text)}
+.sms-card .sms-dest b{color:var(--text)}
+.sms-card .sms-tel{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
+.sms-card .sms-msg{
+  background:var(--bg);border:1px solid var(--line-soft);border-radius:10px;
+  padding:12px 13px;font-size:14.5px;line-height:1.5;color:var(--text);
+  white-space:pre-wrap;word-break:break-word;
+}
+.sms-card .sms-acc{display:flex;gap:9px;flex-wrap:wrap}
+.sms-card button{
+  font:inherit;font-size:13.5px;font-weight:650;border-radius:10px;
+  padding:10px 16px;border:1px solid var(--line);cursor:pointer;
+  background:var(--user);color:var(--text);transition:opacity .15s,transform .1s;
+}
+.sms-card button:active{transform:scale(.98)}
+.sms-card button[disabled]{opacity:.45;cursor:not-allowed}
+.sms-card .sms-ok{
+  background:linear-gradient(180deg,#3ecf8e,#2ea56f);border:none;color:#062016;
+}
+.sms-card .sms-estado{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.sms-card.resuelta{border-color:var(--line)}
+.sms-card.resuelta .sms-acc{display:none}
 </style>
 </head>
 <body>
@@ -512,6 +550,70 @@
       .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
       .replace(/(^|[^*])\*([^*]+)\*(?!\*)/g, "$1<em>$2</em>");
   }
+  /* Pinta el borrador y cablea las dos salidas. El envio real NO pasa por
+     ELIXIS: va directo a elixis-sms-dispatch, que exige rol owner/staff y solo
+     acepta una fila que ya estaba en cola. */
+  function addSmsCard(sms){
+    if(!sms || !sms.id) return;
+    var row = el("div","row elixis");
+    row.appendChild(el("div","ava elixis","E"));
+    var wrap = el("div");
+    var card = el("div","sms-card");
+    card.innerHTML =
+      '<div class="sms-h">✉︎ SMS listo para aprobar</div>' +
+      '<div class="sms-dest">Para <b>'+esc(sms.destinatario||"(sin nombre)")+'</b> ' +
+        '<span class="sms-tel">'+esc(sms.telefono||"")+'</span></div>' +
+      '<div class="sms-msg"></div>' +
+      '<div class="sms-acc">' +
+        '<button class="sms-ok" data-a="enviar">Aprobar y enviar</button>' +
+        '<button data-a="cancelar">Cancelar</button>' +
+      '</div>' +
+      '<div class="sms-estado"></div>';
+    card.querySelector(".sms-msg").textContent = sms.mensaje || "";
+    wrap.appendChild(card); row.appendChild(wrap);
+    stream.appendChild(row); stream.scrollTop = stream.scrollHeight;
+
+    var estado = card.querySelector(".sms-estado");
+    var botones = card.querySelectorAll("button");
+
+    function cerrar(txt, clase){
+      estado.textContent = txt;
+      card.classList.add("resuelta");
+      if(clase) card.classList.add(clase);
+    }
+
+    card.querySelectorAll("button").forEach(function(b){
+      b.addEventListener("click", async function(){
+        var accion = b.getAttribute("data-a");
+        botones.forEach(function(x){ x.disabled = true; });   /* nada de doble clic */
+        estado.textContent = accion === "enviar" ? "Enviando…" : "Cancelando…";
+        var base = (typeof window.mdbSupabaseFunctionUrl === "function")
+          ? window.mdbSupabaseFunctionUrl("elixis-sms-dispatch") : null;
+        if(!base){ cerrar("No pude ubicar el despachador."); return; }
+        var url = base + (base.indexOf("?")===-1?"?":"&") + "id=" + encodeURIComponent(sms.id)
+                + (accion === "cancelar" ? "&accion=cancelar" : "");
+        try{
+          var res = await fetch(url, { method:"POST", headers: invokeHeaders() });
+          var d = {}; try{ d = await res.json(); }catch(_){}
+          if(res.status === 401){ goLogin(); return; }
+          if(res.status === 403){ cerrar("Tu cuenta no puede enviar SMS de la empresa."); return; }
+          if(res.status === 409){ cerrar("Este mensaje ya estaba resuelto ("+(d.estado||"?")+")."); return; }
+          if(!res.ok || d.ok !== true){
+            cerrar("No se pudo "+(accion==="enviar"?"enviar":"cancelar")+". Inténtalo de nuevo.");
+            botones.forEach(function(x){ x.disabled = false; });
+            card.classList.remove("resuelta");
+            return;
+          }
+          cerrar(accion === "enviar" ? "✓ Enviado a "+(d.destinatario||sms.destinatario) : "Cancelado. No salió nada.");
+        }catch(e){
+          cerrar("Sin conexión con el despachador.");
+          botones.forEach(function(x){ x.disabled = false; });
+          card.classList.remove("resuelta");
+        }
+      });
+    });
+  }
+
   function addRow(role, text){
     var row = el("div", "row " + role);
     var ava = el("div", "ava " + (role === "user" ? "me" : "elixis"), role === "user" ? "TÚ" : "E");
@@ -591,6 +693,9 @@
         return;
       }
       addRow("elixis", data.reply);
+      /* Si en este turno quedo un SMS en cola, la tarjeta sale justo debajo de
+         lo que dijo ELIXIS, para que la decision este donde esta el contexto. */
+      if(data.sms_pendiente) addSmsCard(data.sms_pendiente);
       speak(data.reply);
       history.push({ role:"user", content:message });
       history.push({ role:"assistant", content:data.reply });
