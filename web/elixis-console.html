@@ -44,6 +44,7 @@
     --user:#1b2029;
     --danger:#e0654f;
     --radius:16px;
+  --gold-glow:rgba(212,175,55,.32);
   }
   *{box-sizing:border-box}
   html,body{height:100%}
@@ -264,6 +265,25 @@
     .model-badge{display:none}
     .wordmark{font-size:22px}
   }
+
+/* ═══ EL ROSTRO DE ELIXIS ═══════════════════════════════════════════════
+   Traido del MDJ COMMANDER, que es la version de movil. Solo viaja la CARA
+   y sus estados: la figura recortada sobre el campo de particulas vivo, sin
+   circulo que la encierre. El motor de voz y la carroceria del movil se
+   quedan alli. Aqui los estados los mueve el ciclo que ya tenia la consola. */
+.face-stage{position:relative;width:min(260px,64vw);height:236px;margin:14px auto 6px;flex:none}
+.face-fx{position:absolute;inset:0;width:100%;height:100%;z-index:1}
+.face-glow{position:absolute;left:50%;bottom:6%;transform:translateX(-50%);width:70%;height:40%;z-index:2;
+  background:radial-gradient(closest-side,var(--gold-glow),transparent 72%);filter:blur(11px);opacity:.55;
+  transition:opacity .45s ease,width .45s ease,background .45s ease}
+.face-fig{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;z-index:3;
+  filter:drop-shadow(0 10px 26px rgba(0,0,0,.7));animation:face-respira 5.6s ease-in-out infinite}
+@keyframes face-respira{50%{transform:translateY(-3px) scale(1.008)}}
+.face-stage.thinking .face-glow{opacity:1;width:86%;background:radial-gradient(closest-side,rgba(199,123,255,.42),transparent 72%)}
+.face-stage.speaking .face-glow{opacity:1;width:92%}
+.face-stage.speaking .face-fig{animation:face-habla 1.1s ease-in-out infinite}
+@keyframes face-habla{25%{transform:translateY(-2px)}60%{transform:translateY(1px) scale(1.006)}}
+@media (prefers-reduced-motion:reduce){.face-fig{animation:none!important}}
 </style>
 </head>
 <body>
@@ -296,6 +316,12 @@
     <button id="logoutBtn" class="logout-btn" type="button">Cerrar sesión</button>
   </div>
 
+  <div class="face-stage" id="faceStage" aria-hidden="true">
+    <canvas class="face-fx" id="faceFX"></canvas>
+    <div class="face-glow"></div>
+    <img class="face-fig" src="./assets/elixis-avatar.webp" alt="" decoding="async">
+  </div>
+
   <main class="stream" id="stream" aria-live="polite"></main>
 
   <footer class="composer">
@@ -309,6 +335,69 @@
 <script>
 (function(){
   "use strict";
+  /* ── Campo de particulas del rostro ────────────────────────────────
+     Portado del COMMANDER. Dibuja la red viva detras de la figura y
+     responde al estado. NO trae motor de voz: aqui los estados los marca
+     el ciclo de chat que la consola ya tenia. */
+  var FACE = (function(){
+    var cv=null, ctx=null, W=0, H=0, pts=null, raf=0;
+    var intensidad=0.7, objetivo=0.7, tono='gold', modo='idle';
+    var reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    var MAPA = { idle:[0.7,'gold'], thinking:[2.1,'magenta'], speaking:[1.5,'gold'] };
+
+    function color(a){ return tono==='magenta' ? 'rgba(199,123,255,'+a+')' : 'rgba(212,175,55,'+a+')'; }
+    function medir(){
+      if(!cv) return;
+      var r=cv.getBoundingClientRect(), dpr=Math.min(2, window.devicePixelRatio||1);
+      W=Math.max(60,r.width); H=Math.max(60,r.height);
+      cv.width=W*dpr; cv.height=H*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+    }
+    function pintar(){
+      if(!ctx || !cv || !document.body.contains(cv)) return;
+      intensidad += (objetivo-intensidad)*0.05;
+      var inten=intensidad;
+      ctx.clearRect(0,0,W,H);
+      for(var i=0;i<pts.length;i++){
+        var p=pts[i]; p.x+=p.vx*inten; p.y+=p.vy*inten;
+        if(p.x<-4)p.x+=W+8; if(p.x>W+4)p.x-=W+8;
+        if(p.y<-4)p.y+=H+8; if(p.y>H+4)p.y-=H+8;
+      }
+      var D=Math.min(W,H)*0.46;
+      for(var i=0;i<pts.length;i++) for(var j=i+1;j<pts.length;j++){
+        var a=pts[i], b=pts[j], dx=a.x-b.x, dy=a.y-b.y, d=Math.sqrt(dx*dx+dy*dy);
+        if(d<D){ ctx.strokeStyle=color((1-d/D)*0.26*Math.min(1.7,inten)); ctx.lineWidth=.7;
+          ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); }
+      }
+      for(var i=0;i<pts.length;i++){
+        var p=pts[i], pr=p.r+Math.sin(Date.now()/600+p.ph)*.3;
+        ctx.fillStyle=color(.6); ctx.beginPath(); ctx.arc(p.x,p.y,Math.max(.4,pr),0,6.283); ctx.fill();
+      }
+    }
+    function bucle(){ pintar(); raf=requestAnimationFrame(bucle); }
+
+    function iniciar(){
+      cv=document.getElementById('faceFX');
+      if(!cv) return;
+      ctx=cv.getContext('2d'); medir();
+      pts=[]; for(var i=0;i<28;i++) pts.push({
+        x:Math.random()*W, y:Math.random()*H,
+        vx:(Math.random()-.5)*.32, vy:(Math.random()-.5)*.32,
+        r:Math.random()*1.5+.7, ph:Math.random()*6.28 });
+      if(reduce){ pintar(); return; }   /* sin bucle si pidieron menos movimiento */
+      if(!raf) bucle();
+      window.addEventListener('resize', medir);
+    }
+    function estado(m){
+      if(modo===m) return;
+      modo=m;
+      var v=MAPA[m]||MAPA.idle; objetivo=v[0]; tono=v[1];
+      var st=document.getElementById('faceStage');
+      if(st) st.className='face-stage'+(m==='idle'?'':' '+m);
+      if(reduce) pintar();
+    }
+    return { iniciar:iniciar, estado:estado };
+  })();
+
   var stream = document.getElementById("stream");
   var input  = document.getElementById("input");
   var sendBtn= document.getElementById("send");
@@ -377,6 +466,7 @@
       accessToken = null; goLogin();
     });
   }
+  FACE.iniciar();
   initAuth();
 
   // ── Render helpers ─────────────────────────────────
@@ -415,6 +505,7 @@
     b.parentElement.parentElement.classList.add("elixis","error");
   }
   function showTyping(){
+    FACE.estado("thinking");          /* el rostro piensa mientras ELIXIS elabora */
     var row = el("div","row elixis");
     row.id = "typingRow";
     row.appendChild(el("div","ava elixis","E"));
@@ -428,6 +519,7 @@
     stream.scrollTop = stream.scrollHeight;
   }
   function hideTyping(){
+    FACE.estado("idle");
     var r = document.getElementById("typingRow");
     if(r) r.remove();
   }
@@ -564,6 +656,10 @@
         var el = _voiceEl();
         try{ el.pause(); }catch(e){}
         el.src = URL.createObjectURL(blob);
+        /* El rostro habla exactamente mientras suena el audio, ni antes ni
+           despues: se engancha al elemento, no a un temporizador. */
+        el.onplaying = function(){ FACE.estado("speaking"); };
+        el.onended = el.onpause = function(){ FACE.estado("idle"); };
         el.play().catch(function(){});
       }
     }catch(e){ /* natural-o-nada: sin voz robótica */ }
