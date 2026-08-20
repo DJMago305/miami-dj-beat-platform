@@ -1028,6 +1028,14 @@ serve(async (req: Request) => {
        texto, asi que sin esto la pantalla nunca sabria que hay algo esperando
        aprobacion ni con que id despacharlo. */
     let smsPendiente: Record<string, unknown> | null = null;
+    /* FASE 1 — LA FUENTE DE VERDAD. Que herramientas corrio ELIXIS en este
+       turno. El navegador no tenia forma de saberlo: toolName solo vivia
+       dentro del bucle para elegir handler y registrar en servidor, y la
+       respuesta salia con { reply } a secas. Sin esto, cualquier animacion
+       del proceso estaria ADIVINANDO lo que dibuja.
+       Solo el NOMBRE y si salio bien: los argumentos llevan datos de
+       clientes y no salen de aqui. */
+    const herramientasUsadas: Array<{ nombre: string; ok: boolean }> = [];
 
     async function runSmsQueueTool(input: Record<string, unknown>): Promise<string> {
         const clienteId = String(input?.cliente_id ?? "").trim();
@@ -1355,6 +1363,19 @@ serve(async (req: Request) => {
                 } else {
                     out = JSON.stringify({ error: "herramienta desconocida", requires_approval: true });
                 }
+                /* Mismo criterio que ya usan las ramas para recordAiKpi: hay
+                   fallo si el resultado trae `error`, o si trae `ok` y no es
+                   true. Un solo punto de anotacion en vez de tocar las ocho
+                   ramas, para que este cambio sea de verdad aditivo. */
+                let okHerramienta: boolean;
+                try {
+                    const pr = JSON.parse(out) as { error?: unknown; ok?: unknown };
+                    okHerramienta = pr != null && pr.error == null && (pr.ok === undefined || pr.ok === true);
+                } catch {
+                    okHerramienta = false;
+                }
+                if (toolName) herramientasUsadas.push({ nombre: toolName, ok: okHerramienta });
+
                 results.push({ type: "tool_result", tool_use_id: b.id, content: out });
             }
             convo.push({ role: "user", content: results });
@@ -1385,6 +1406,11 @@ serve(async (req: Request) => {
         console.warn("[elixis-chat] ai_usage_events log:", (e as Error)?.message ?? e);
     }
 
-    return new Response(JSON.stringify(smsPendiente ? { reply, sms_pendiente: smsPendiente } : { reply }),
+    /* La forma anterior se conserva intacta: quien solo lea `reply` o
+       `sms_pendiente` sigue funcionando igual. El campo nuevo se anade y ya. */
+    const cuerpo: Record<string, unknown> = { reply };
+    if (smsPendiente) cuerpo.sms_pendiente = smsPendiente;
+    if (herramientasUsadas.length) cuerpo.herramientas_usadas = herramientasUsadas;
+    return new Response(JSON.stringify(cuerpo),
         { status: 200, headers: { ...cors, "Content-Type": "application/json" } });
 });

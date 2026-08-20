@@ -173,20 +173,41 @@
     display:flex;align-items:center;justify-content:center;
     transition:transform .12s, opacity .15s;
   }
+  #send svg,.mic-btn svg{width:21px;height:21px;display:block}
+  /* El boton de enviar deja de ser un bloque de oro solido: en el diseno
+     nuevo nada pesa mas que la red que pasa por detras. */
+  #send{background:rgba(212,175,55,.18);border:1.6px solid rgba(212,175,55,.5);color:var(--gold-2);
+    border-radius:24px;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
+  .mic-btn{background:rgba(20,24,30,.18);border:1.6px solid rgba(255,255,255,.20);
+    border-radius:24px;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
   #send:hover{transform:translateY(-1px)}
   #send:active{transform:translateY(0)}
   #send:disabled{opacity:.4;cursor:not-allowed;transform:none}
   #send:focus-visible,#input:focus-visible{outline:2px solid var(--gold-2);outline-offset:2px}
 
+  /* Se retira en cuanto ya sabes el atajo: util la primera vez, ruido a
+     partir de la segunda. Colapsa en vez de esconderse para no dejar hueco. */
+  .hint.aprendido{
+    opacity:0;max-height:0;padding-top:0;padding-bottom:0;overflow:hidden;
+    transition:opacity .4s ease, max-height .4s ease, padding .4s ease;
+  }
   .hint{
+    max-height:60px;transition:opacity .4s ease, max-height .4s ease, padding .4s ease;
     text-align:center;font-size:11px;color:#5b616b;padding:0 16px 10px;
   }
   /* voz — botones */
   .icon-btn{
-    flex:none;width:38px;height:38px;border-radius:10px;cursor:pointer;
-    border:1px solid var(--line-soft);background:var(--panel-2);color:var(--gold-2);
-    font-size:16px;display:flex;align-items:center;justify-content:center;transition:.15s;
+    /* Eran 38px pegados, con emoji y poco contraste: de un vistazo no se
+       distinguian uno de otro. Mas tamano, mas aire y un trazo que si se lee
+       sobre el fondo negro. */
+    flex:none;width:42px;height:42px;border-radius:12px;cursor:pointer;
+    border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.05);
+    color:#cbd1da;
+    display:flex;align-items:center;justify-content:center;transition:.15s;
   }
+  .icon-btn svg{width:20px;height:20px;display:block}
+  .icon-btn.off{color:var(--danger);border-color:rgba(224,101,79,.4)}
+  .status{gap:12px}
   .icon-btn:hover{border-color:var(--line)}
   .icon-btn.off{color:#5f656e;opacity:.75}
   .mic-btn{
@@ -290,27 +311,237 @@
    ELIXIS arrinconado arriba. En rejilla, la cara ocupa su propia columna y
    respira, y el chat -- que es lo provisional mientras la voz manda -- se va
    al lado derecho. Por debajo de 900px vuelve a apilarse como estaba. */
+/* ═══ TRANSPORTE DEL DISENO DE FENIX ════════════════════════════════
+   Antes esto era una rejilla de dos columnas: la cara en una caja a la
+   izquierda y el chat arrinconado a la derecha. Se sustituye por el diseno
+   del centro de comando movil: la red a SANGRE por detras de todo, y la
+   conversacion y el compositor FLOTANDO encima. Es la misma pieza, no un
+   parecido -- mismos colores, misma translucidez, mismas medidas.
+   La cabecera no se toca. */
+.app{position:relative}
 @media (min-width:900px){
-  .app{
-    max-width:1180px;
-    display:grid;
-    grid-template-columns:minmax(300px,440px) 1fr;
-    grid-template-rows:auto auto 1fr auto auto;
-    grid-template-areas:
-      "top      top"
-      "settings settings"
-      "face     chat"
-      "face     composer"
-      "face     hint";
-    column-gap:8px;
-  }
-  .topbar        {grid-area:top}
-  .settings-panel{grid-area:settings}
-  .face-stage    {grid-area:face; align-self:center; width:min(400px,90%); height:min(430px,52vh); margin:0 auto}
-  .stream        {grid-area:chat; border-left:1px solid var(--line-soft)}
-  .composer      {grid-area:composer}
-  .hint          {grid-area:hint}
+  .app{max-width:none}
 }
+/* La red deja de vivir en una caja y pasa a ser el fondo de la pagina. */
+.face-stage{
+  position:absolute; inset:0; width:100%; height:100%; margin:0;
+  z-index:0; pointer-events:none;
+}
+.face-fx{opacity:.85}
+/* El rostro se retira mientras se escribe -- igual que en el telefono, donde
+   el avatar se va en modo escritura y vuelve cuando ELIXIS habla. Ademas
+   evita que la figura se estire a pantalla completa. */
+.face-fig{
+  inset:auto; left:50%; top:50%;
+  transform:translate(-50%,-50%);
+  width:min(300px,42vw); height:min(340px,46vh);
+  opacity:0; transition:opacity .5s ease;
+}
+.face-glow{opacity:0}
+.face-stage.thinking .face-fig,
+.face-stage.speaking .face-fig{opacity:1}
+.face-stage.speaking .face-glow{opacity:.9}
+
+/* BOLA DE ENERGIA: la fuente que late en el centro cuando el rostro no esta.
+   Mismo lenguaje que el orbe del telefono -- halo radial de oro y aros que
+   se abren -- para que se lea como la misma energia. */
+.face-stage::after{
+  content:""; position:absolute; left:50%; top:50%;
+  /* MEDIDA RELATIVA, no fija. Con 210px clavados la bola ocupaba el 14,6% del
+     ancho en un monitor de 1440, cuando en el telefono ocupaba el 44%: un
+     tercio de la presencia, y por eso el centro se leia vacio. Ahora crece
+     con la pantalla, con tope para que no se desborde en un ultrapanoramico. */
+  width:clamp(210px,30vw,460px); height:clamp(210px,30vw,460px);
+  transform:translate(-50%,-50%);
+  border-radius:50%; pointer-events:none;
+  background:radial-gradient(circle,
+    rgba(212,175,55,.26) 0%, rgba(212,175,55,.10) 44%, transparent 70%);
+  animation:fenix-respira 4.6s ease-in-out infinite;
+}
+/* Aro que se abre en bucle: da MOVIMIENTO CONSTANTE y ancla la zona incluso
+   con la conversacion vacia. Sin el, un monitor grande parece averiado antes
+   de que nadie escriba. */
+.face-stage::before{
+  content:""; position:absolute; left:50%; top:50%;
+  width:clamp(210px,30vw,460px); height:clamp(210px,30vw,460px);
+  margin:0; border-radius:50%; pointer-events:none;
+  border:1.5px solid rgba(212,175,55,.30); opacity:0;
+  animation:fenix-aro 4.6s cubic-bezier(.15,.6,.35,1) infinite;
+}
+@keyframes fenix-aro{
+  0%  {transform:translate(-50%,-50%) scale(.72); opacity:.34}
+  100%{transform:translate(-50%,-50%) scale(1.7); opacity:0}
+}
+.face-stage.thinking::before,
+.face-stage.speaking::before{border-color:rgba(212,175,55,.52);animation-duration:2.1s}
+@media (prefers-reduced-motion:reduce){ .face-stage::before{animation:none} }
+.face-stage.thinking::after,
+.face-stage.speaking::after{
+  background:radial-gradient(circle,
+    rgba(212,175,55,.34) 0%, rgba(212,175,55,.13) 44%, transparent 72%);
+  animation-duration:2.1s;
+}
+@keyframes fenix-respira{
+  0%,100%{transform:translate(-50%,-50%) scale(1)}
+  50%    {transform:translate(-50%,-50%) scale(1.08)}
+}
+@media (prefers-reduced-motion:reduce){ .face-stage::after{animation:none} }
+
+/* Todo lo demas flota POR ENCIMA de la red. */
+.topbar,.settings-panel,.stream,.composer,.hint{position:relative;z-index:1}
+.stream{background:none;border-left:0}
+
+/* ═══ LAS DOS VENTANAS LATERALES ══════════════════════════════════════
+   Viven en los margenes que deja la columna de lectura (920px centrados),
+   asi que no le quitan ni un pixel a la conversacion. Por debajo de 1240px
+   no hay margen que ocupar y se retiran: apretarlas seria peor que no
+   tenerlas. */
+.lado{
+  position:absolute; top:96px; bottom:96px; width:232px;
+  display:none; flex-direction:column; gap:10px; z-index:1;
+  pointer-events:none; opacity:0; transition:opacity .45s ease, transform .45s ease;
+}
+.lado-izq{left:max(16px, calc(50% - 460px - 248px)); transform:translateX(-14px)}
+.lado-der{right:max(16px, calc(50% - 460px - 248px)); transform:translateX(14px)}
+.lado.abierta{opacity:1; transform:translateX(0)}
+@media (min-width:1240px){ .lado{display:flex} }
+
+.lado-h{
+  font-family:var(--mono); font-size:10px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--muted); padding-left:2px; flex:none;
+}
+.lado-cuerpo{
+  flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:9px;
+  scrollbar-width:none;
+}
+.lado-cuerpo::-webkit-scrollbar{display:none}
+
+/* ── Derecha: la palabra ── */
+.tl{
+  font-size:12.5px; line-height:1.45; padding:8px 10px; border-radius:11px;
+  -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px);
+  text-shadow:0 1px 3px rgba(0,0,0,.85);
+}
+.tl b{display:block; font-family:var(--mono); font-size:9.5px; letter-spacing:.14em;
+  text-transform:uppercase; opacity:.72; margin-bottom:3px; font-weight:600}
+.tl-espera{
+  font-size:12px; line-height:1.5; color:var(--muted); opacity:.62;
+  padding:10px 2px; text-shadow:0 1px 3px rgba(0,0,0,.85);
+}
+.tl.yo{background:rgba(212,175,55,.13); border:1px solid rgba(212,175,55,.34); color:#f0e6cc}
+.tl.el{background:rgba(63,185,230,.10); border:1px solid rgba(63,185,230,.30); color:#dcecf4}
+
+/* ── Izquierda: el proceso ── */
+.pz{
+  border:1px solid rgba(255,255,255,.12); border-radius:13px; padding:11px 12px;
+  background:rgba(20,24,30,.20);
+  -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px);
+  display:flex; flex-direction:column; gap:9px;
+}
+.pz-n{font-family:var(--mono); font-size:10.5px; letter-spacing:.10em;
+  text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:7px}
+.pz-n .punto{width:7px;height:7px;border-radius:50%;background:var(--muted);flex:none}
+.pz.ok .pz-n .punto{background:#3ecb7f;box-shadow:0 0 8px #3ecb7f}
+.pz.mal .pz-n .punto{background:var(--danger);box-shadow:0 0 8px var(--danger)}
+
+/* El SOBRE y la chispa que lo alcanza. La energia recorre un circuito y el
+   simbolo se enciende AL LLEGAR -- mismo lenguaje que los pulsos del fondo. */
+.pz-escena{position:relative; height:74px; display:grid; place-items:center}
+.pz-hilo{position:absolute; left:8px; right:8px; top:50%; height:1px;
+  background:linear-gradient(90deg,transparent,rgba(212,175,55,.45),transparent)}
+.pz-chispa{
+  position:absolute; top:50%; left:8px; width:7px; height:7px; margin-top:-3.5px;
+  border-radius:50%; background:#fff4d0; box-shadow:0 0 12px 3px rgba(244,201,93,.85);
+  animation:pz-viaja 1.5s cubic-bezier(.4,0,.6,1) forwards;
+}
+@keyframes pz-viaja{
+  0%  {left:8px;  opacity:0}
+  12% {opacity:1}
+  88% {opacity:1}
+  100%{left:calc(50% - 3.5px); opacity:0}
+}
+.pz-simbolo{
+  position:relative; z-index:1; width:42px; height:42px; color:var(--muted);
+  display:grid; place-items:center; border-radius:12px;
+  border:1px solid rgba(255,255,255,.14); background:rgba(0,0,0,.34);
+  transition:color .4s ease, border-color .4s ease, box-shadow .4s ease;
+}
+.pz-simbolo svg{width:22px;height:22px}
+.pz.encendido .pz-simbolo{
+  color:var(--gold-2); border-color:rgba(212,175,55,.6);
+  box-shadow:0 0 22px rgba(212,175,55,.45), inset 0 0 14px rgba(212,175,55,.18);
+}
+.pz-cartel{
+  font-family:var(--mono); font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+  text-align:center; color:var(--muted); opacity:0; transition:opacity .4s ease .2s;
+}
+.pz.encendido .pz-cartel{opacity:1}
+.pz.enviado .pz-cartel{color:#3ecb7f}
+@media (prefers-reduced-motion:reduce){ .pz-chispa{animation:none;opacity:0} }
+/* A 1440px las burbujas se pegaban a los bordes y la lectura se rompia. La
+   columna se acota y se centra -- la red sigue ocupando el ancho completo. */
+.stream > *, .composer{max-width:920px;width:100%;margin-left:auto;margin-right:auto}
+.composer{box-sizing:content-box}
+
+/* Burbujas translucidas: oro para el Capitan, cian para ELIXIS. El
+   desenfoque es minimo A PROPOSITO -- uno fuerte convierte la red en papilla
+   y lo que se quiere es verla pasar por detras. La lectura la sostiene la
+   sombra del propio texto. */
+/* ANCHO DE LAS BURBUJAS. El 78% del CSS original se resolvia contra el
+   envoltorio, que a su vez se encoge a su contenido: circular. Con texto largo
+   colaba, pero con "hola" colapsaba a una letra por linea. El tope pasa al
+   ENVOLTORIO, que si tiene de que agarrarse -- la fila mide 920px fijos -- y la
+   burbuja llena lo que le den. */
+.row > div{min-width:0}
+.row > div:not(.ava){max-width:min(78%,620px)}
+.bubble{max-width:100%}
+.sms-card{min-width:min(100%,300px)}
+
+.row.elixis .bubble,
+.row.user .bubble{
+  -webkit-backdrop-filter:blur(2px) saturate(150%);
+  backdrop-filter:blur(2px) saturate(150%);
+  box-shadow:0 8px 22px rgba(0,0,0,.30);
+  text-shadow:0 1px 3px rgba(0,0,0,.85), 0 0 12px rgba(0,0,0,.6);
+  border-radius:17px;
+}
+.row.elixis .bubble{
+  background:rgba(63,185,230,.12);
+  border:1px solid rgba(63,185,230,.34);
+  border-top-left-radius:5px;
+}
+.row.user .bubble{
+  background:rgba(212,175,55,.16);
+  border:1px solid rgba(212,175,55,.46);
+  border-top-right-radius:5px;
+}
+
+/* En el telefono no hay iniciales ni rotulos sobre cada burbuja: el color ya
+   dice quien habla. Se ocultan, no se borran -- volver atras es una linea. */
+.ava,.name{display:none}
+
+/* COMPOSITOR FLOTANTE: el contenedor no pinta nada, es aire. Lo que flota es
+   el campo. */
+.composer{
+  background:none; border-top:0;
+  padding:10px 16px calc(18px + env(safe-area-inset-bottom));
+  pointer-events:none;
+}
+.composer > *{pointer-events:auto}
+#input{
+  background:rgba(20,24,30,.18);
+  -webkit-backdrop-filter:blur(2px) saturate(150%);
+  backdrop-filter:blur(2px) saturate(150%);
+  border:1.6px solid rgba(255,255,255,.20);
+  border-radius:24px; padding:14px 18px;
+  box-shadow:0 8px 24px rgba(0,0,0,.34);
+  text-shadow:0 1px 3px rgba(0,0,0,.85), 0 0 12px rgba(0,0,0,.6);
+}
+#input:focus{
+  border-color:rgba(212,175,55,.58);
+  background:rgba(24,29,36,.26);
+}
+#input::placeholder{text-shadow:0 1px 3px rgba(0,0,0,.85)}
 
 /* ═══ TARJETA DE APROBACION DE SMS ══════════════════════════════════════
    Un SMS a un cliente es irreversible, asi que la decision tiene que verse
@@ -319,19 +550,26 @@
    Mientras despacha, los dos botones se bloquean: un doble clic nervioso no
    puede mandar el mensaje dos veces. */
 .sms-card{
-  border:1px solid var(--gold);border-radius:14px;background:var(--panel);
+  /* Misma familia translucida que las burbujas, pero en AMBAR: no es una
+     respuesta, es una DECISION que espera por ti. Se lee distinta a proposito
+     y la red se ve pasar por detras, como todo lo demas. */
+  border:1.6px solid rgba(232,178,58,.46);border-radius:17px;
+  background:rgba(232,178,58,.12);
+  -webkit-backdrop-filter:blur(2px) saturate(150%);
+  backdrop-filter:blur(2px) saturate(150%);
   padding:16px 16px 14px;margin:4px 0;display:flex;flex-direction:column;gap:12px;
   box-shadow:0 8px 26px rgba(0,0,0,.35);
+  text-shadow:0 1px 3px rgba(0,0,0,.85);
 }
 .sms-card .sms-h{
   display:flex;align-items:center;gap:8px;font-family:var(--mono);
-  font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);
+  font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#e8b23a;
 }
 .sms-card .sms-dest{font-size:14px;color:var(--text)}
 .sms-card .sms-dest b{color:var(--text)}
 .sms-card .sms-tel{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
 .sms-card .sms-msg{
-  background:var(--bg);border:1px solid var(--line-soft);border-radius:10px;
+  background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.10);border-radius:11px;
   padding:12px 13px;font-size:14.5px;line-height:1.5;color:var(--text);
   white-space:pre-wrap;word-break:break-word;
 }
@@ -362,8 +600,8 @@
       </div>
     </div>
     <div class="status">
-      <button class="icon-btn" id="voiceToggle" aria-label="Voz de ELIXIS" title="Voz de ELIXIS: activada">🔊</button>
-      <button class="icon-btn" id="settingsBtn" aria-label="Elegir voz" title="Elegir voz">⚙️</button>
+      <button class="icon-btn" id="voiceToggle" aria-label="Voz de ELIXIS" title="Voz de ELIXIS: activada"><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M11 5 6 9H2v6h4l5 4z'/><path d='M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13'/></svg></button>
+      <button class="icon-btn" id="settingsBtn" aria-label="Elegir voz" title="Elegir voz"><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg></button>
       <span class="model-badge">Claude · Haiku 4.5</span>
       <span class="pill" id="statusPill"><i class="dot"></i> En línea</span>
     </div>
@@ -384,15 +622,27 @@
   <div class="face-stage" id="faceStage" aria-hidden="true">
     <canvas class="face-fx" id="faceFX"></canvas>
     <div class="face-glow"></div>
-    <img class="face-fig" src="./assets/elixis-avatar.webp?v=20260820-rostro" alt="" decoding="async">
+    <img class="face-fig" src="./assets/elixis-avatar.webp?v=20260820b-rostro" alt="" decoding="async">
   </div>
+
+  <!-- ═══ LAS DOS VENTANAS ═══ Dos oficios distintos, no un espejo:
+       la izquierda ensena EL PROCESO (que esta haciendo ELIXIS por dentro),
+       la derecha LA PALABRA (lo que se dijo). En reposo, cerradas. -->
+  <aside class="lado lado-izq" id="ladoProceso" aria-label="Proceso de ELIXIS" aria-hidden="true">
+    <div class="lado-h">Proceso</div>
+    <div class="lado-cuerpo" id="procesoCuerpo"></div>
+  </aside>
+  <aside class="lado lado-der" id="ladoPalabra" aria-label="Transcripción" aria-hidden="true">
+    <div class="lado-h">Transcripción</div>
+    <div class="lado-cuerpo" id="palabraCuerpo"></div>
+  </aside>
 
   <main class="stream" id="stream" aria-live="polite"></main>
 
   <footer class="composer">
-    <button id="mic" class="mic-btn" aria-label="Hablar con ELIXIS" title="Hablar (dictado por voz)">🎤</button>
+    <button id="mic" class="mic-btn" aria-label="Hablar con ELIXIS" title="Hablar (dictado por voz)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/></svg></button>
     <textarea id="input" placeholder="Escribe o dicta a ELIXIS, Capitán…" rows="1" aria-label="Mensaje para ELIXIS"></textarea>
-    <button id="send" aria-label="Enviar">➤</button>
+    <button id="send" aria-label="Enviar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg></button>
   </footer>
   <div class="hint">ELIXIS · Miami DJ Beat LLC — responde con Claude. Enter envía · Shift+Enter salto de línea.</div>
 </div>
@@ -427,10 +677,10 @@
         if(p.x<-4)p.x+=W+8; if(p.x>W+4)p.x-=W+8;
         if(p.y<-4)p.y+=H+8; if(p.y>H+4)p.y-=H+8;
       }
-      var D=Math.min(W,H)*0.46;
+      var D=Math.min(W,H)*0.34;   /* a sangre, un alcance de .46 unia media pantalla */
       for(var i=0;i<pts.length;i++) for(var j=i+1;j<pts.length;j++){
         var a=pts[i], b=pts[j], dx=a.x-b.x, dy=a.y-b.y, d=Math.sqrt(dx*dx+dy*dy);
-        if(d<D){ ctx.strokeStyle=color((1-d/D)*0.26*Math.min(1.7,inten)); ctx.lineWidth=.7;
+        if(d<D){ ctx.strokeStyle=color((1-d/D)*(1-d/D)*0.62*Math.min(1.7,inten)); ctx.lineWidth=.9;
           ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); }
       }
       for(var i=0;i<pts.length;i++){
@@ -444,7 +694,10 @@
       cv=document.getElementById('faceFX');
       if(!cv) return;
       ctx=cv.getContext('2d'); medir();
-      pts=[]; for(var i=0;i<28;i++) pts.push({
+      /* La densidad depende del AREA: 28 puntos llenaban una caja de 400px,
+         pero sobre un monitor entero dejaban la red casi vacia. */
+      var objetivo = Math.max(28, Math.min(78, Math.round((W*H)/16000)));
+      pts=[]; for(var i=0;i<objetivo;i++) pts.push({
         x:Math.random()*W, y:Math.random()*H,
         vx:(Math.random()-.5)*.32, vy:(Math.random()-.5)*.32,
         r:Math.random()*1.5+.7, ph:Math.random()*6.28 });
@@ -605,6 +858,10 @@
             return;
           }
           cerrar(accion === "enviar" ? "✓ Enviado a "+(d.destinatario||sms.destinatario) : "Cancelado. No salió nada.");
+          /* La ventana del proceso solo puede decir ENVIADO cuando el
+             despachador lo confirma. Hasta aqui era "en cola", que es la
+             verdad: encolar no es enviar. */
+          if(accion === "enviar"){ marcarSmsEnviado(); } else { marcarSmsCancelado(); }
         }catch(e){
           cerrar("Sin conexión con el despachador.");
           botones.forEach(function(x){ x.disabled = false; });
@@ -670,6 +927,133 @@
     return h;
   }
 
+
+  /* ═══ LAS DOS VENTANAS ═════════════════════════════════════════════
+     Izquierda EL PROCESO, derecha LA PALABRA. Se abren cuando ELIXIS se
+     activa y se quedan abiertas mientras haya conversacion. */
+  var ladoProceso = document.getElementById("ladoProceso");
+  var ladoPalabra = document.getElementById("ladoPalabra");
+  var procesoCuerpo = document.getElementById("procesoCuerpo");
+  var palabraCuerpo = document.getElementById("palabraCuerpo");
+
+  /* MODO VOZ. La ventana de la derecha NO duplica el chat: si estas
+     escribiendo, lo que dijo cada uno ya esta en el centro y repetirlo al lado
+     es ruido. Solo se convierte en transcripcion cuando la conversacion es
+     HABLADA -- ahi si hace falta un registro escrito de lo que se dijo, porque
+     no existe en ningun otro sitio. Mientras tanto, espera. */
+  var modoVoz = false;
+
+  function ponerPalabraEnEspera(){
+    if(!palabraCuerpo) return;
+    palabraCuerpo.innerHTML = "";
+    var d = document.createElement("div");
+    d.className = "tl-espera";
+    d.textContent = "En espera. Cuando hables con ELIXIS, lo dicho queda aquí por escrito.";
+    palabraCuerpo.appendChild(d);
+  }
+  function entrarModoVoz(){
+    if(modoVoz) return;
+    modoVoz = true;
+    if(palabraCuerpo) palabraCuerpo.innerHTML = "";   /* fuera el cartel de espera */
+  }
+  function salirModoVoz(){
+    if(!modoVoz) return;
+    modoVoz = false;
+    ponerPalabraEnEspera();
+  }
+
+  function abrirLados(){
+    [ladoProceso, ladoPalabra].forEach(function(l){
+      if(!l) return;
+      l.classList.add("abierta");
+      l.setAttribute("aria-hidden","false");
+    });
+    if(!modoVoz && palabraCuerpo && !palabraCuerpo.children.length) ponerPalabraEnEspera();
+  }
+
+  /* LA PALABRA: transcripcion breve. No repite el chat entero -- recorta,
+     porque una ventana lateral con parrafos completos no se lee de un
+     vistazo, que es justo para lo que sirve. */
+  function transcribir(quien, texto){
+    if(!palabraCuerpo || !texto) return;
+    if(!modoVoz) return;          /* escribiendo: el centro ya lo dice */
+    var d = document.createElement("div");
+    d.className = "tl " + (quien === "yo" ? "yo" : "el");
+    var t = String(texto).replace(/\s+/g, " ").trim();
+    if(t.length > 150) t = t.slice(0, 149) + "…";
+    var e = document.createElement("b");
+    e.textContent = quien === "yo" ? "Capitán" : "ELIXIS";
+    d.appendChild(e);
+    d.appendChild(document.createTextNode(t));
+    palabraCuerpo.appendChild(d);
+    palabraCuerpo.scrollTop = palabraCuerpo.scrollHeight;
+  }
+
+  /* EL PROCESO. Por ahora SOLO enviar_sms tiene escena propia: es la unica
+     que se ha validado de punta a punta. Las otras siete se anuncian con su
+     nombre y si salieron bien -- honesto y sin simbolo inventado. Cada una
+     ira ganando su escena cuando el PO la apruebe. */
+  var SOBRE = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><rect x='2.5' y='5' width='19' height='14' rx='2.5'/><path d='m3 7 9 6 9-6'/></svg>";
+  var NOMBRES = {
+    consultar_finanzas:"Consultó finanzas", consultar_agenda_artista:"Consultó agenda",
+    consultar_catalogo_precios:"Consultó precios", buscar_cliente:"Buscó al cliente",
+    crear_nota_lead:"Dejó nota en el lead", registrar_evento_agenda:"Bloqueó la agenda",
+    generar_cotizacion_evento:"Preparó cotización", enviar_sms:"Dejó un SMS en cola"
+  };
+
+  function piezaSimple(h){
+    var d = document.createElement("div");
+    d.className = "pz " + (h.ok ? "ok" : "mal");
+    var n = document.createElement("div");
+    n.className = "pz-n";
+    var p = document.createElement("span"); p.className = "punto";
+    n.appendChild(p);
+    n.appendChild(document.createTextNode(NOMBRES[h.nombre] || h.nombre));
+    d.appendChild(n);
+    return d;
+  }
+
+  /* La escena del SMS: la chispa recorre el circuito, el sobre se enciende al
+     llegar, y el cartel dice LA VERDAD -- en cola no es enviado. Solo pasa a
+     ENVIADO cuando el despachador confirma. */
+  var escenaSms = null;
+  function piezaSms(h){
+    var d = piezaSimple(h);
+    var esc = document.createElement("div");
+    esc.className = "pz-escena";
+    esc.innerHTML = "<div class='pz-hilo'></div><div class='pz-chispa'></div>" +
+                    "<div class='pz-simbolo'>" + SOBRE + "</div>";
+    var cartel = document.createElement("div");
+    cartel.className = "pz-cartel";
+    cartel.textContent = "En cola · espera aprobación";
+    d.appendChild(esc); d.appendChild(cartel);
+    setTimeout(function(){ d.classList.add("encendido"); }, 1450);
+    escenaSms = d;
+    return d;
+  }
+
+  function marcarSmsEnviado(){
+    if(!escenaSms) return;
+    escenaSms.classList.add("enviado");
+    var c = escenaSms.querySelector(".pz-cartel");
+    if(c) c.textContent = "Enviado";
+    escenaSms = null;
+  }
+  function marcarSmsCancelado(){
+    if(!escenaSms) return;
+    var c = escenaSms.querySelector(".pz-cartel");
+    if(c) c.textContent = "Cancelado";
+    escenaSms = null;
+  }
+
+  function dibujarProceso(lista){
+    if(!procesoCuerpo || !lista || !lista.length) return;
+    lista.forEach(function(h){
+      procesoCuerpo.appendChild(h.nombre === "enviar_sms" ? piezaSms(h) : piezaSimple(h));
+    });
+    procesoCuerpo.scrollTop = procesoCuerpo.scrollHeight;
+  }
+
   async function askElixis(message){
     var url = functionUrl();
     if(!url){
@@ -677,6 +1061,9 @@
       return;
     }
     showTyping();
+    retirarPie();
+    abrirLados();
+    transcribir("yo", message);
     try{
       var res = await fetch(url, {
         method:"POST",
@@ -693,6 +1080,10 @@
         return;
       }
       addRow("elixis", data.reply);
+      transcribir("elixis", data.reply);
+      /* FASE 1 en accion: esto es lo que ELIXIS hizo de verdad, reportado por
+         el backend. Sin este campo, la ventana estaria adivinando. */
+      if(data.herramientas_usadas) dibujarProceso(data.herramientas_usadas);
       /* Si en este turno quedo un SMS en cola, la tarjeta sale justo debajo de
          lo que dijo ELIXIS, para que la decision este donde esta el contexto. */
       if(data.sms_pendiente) addSmsCard(data.sms_pendiente);
@@ -708,6 +1099,30 @@
   }
 
   // ── Send flow ──────────────────────────────────────
+  /* Teclear a mano saca del modo voz. Se escucha keydown y no input a
+     proposito: el dictado rellena el campo por codigo y eso no dispara
+     keydown, asi que hablar no se confunde con escribir. */
+  (function(){
+    var campo = document.getElementById("input");
+    if(campo) campo.addEventListener("keydown", function(e){
+      if(e.key && e.key.length === 1) salirModoVoz();
+    });
+  })();
+
+  /* El atajo se aprende una vez. Se recuerda entre sesiones para que no
+     reaparezca cada vez que abres la consola. */
+  function retirarPie(){
+    var h = document.querySelector(".hint");
+    if(h) h.classList.add("aprendido");
+    try{ localStorage.setItem("elixis_pie_aprendido", "1"); }catch(e){}
+  }
+  try{
+    if(localStorage.getItem("elixis_pie_aprendido") === "1"){
+      var _h = document.querySelector(".hint");
+      if(_h){ _h.classList.add("aprendido"); _h.style.transition = "none"; }
+    }
+  }catch(e){}
+
   function send(){
     if(busy) return;
     var msg = (input.value || "").trim();
@@ -735,10 +1150,19 @@
   // ── VOZ DE SALIDA — TTS del navegador (gratis) ─────
   var voiceToggle = document.getElementById("voiceToggle");
   var micBtn = document.getElementById("mic");
+  /* Los dos estados del dictado, en trazo de linea del mismo banco que el
+     resto. Antes se reponian con textContent y un emoji, lo que borraba el
+     SVG del boton en cuanto terminabas de dictar. */
+  var MIC_LINEA = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z'/><path d='M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8'/></svg>";
+  var MIC_PARAR = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='6' y='6' width='12' height='12' rx='2.5'/></svg>";
   var settingsBtn = document.getElementById("settingsBtn");
   var settingsPanel = document.getElementById("settingsPanel");
   var voiceSelect = document.getElementById("voiceSelect");
   var voiceOn = true;
+  /* Trazos de linea, no emoji. Se reponian con textContent y un emoji, lo
+     que habria borrado el SVG del boton al silenciar. */
+  var ICO_ALTAVOZ = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M11 5 6 9H2v6h4l5 4z'/><path d='M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13'/></svg>";
+  var ICO_MUDO    = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M11 5 6 9H2v6h4l5 4z'/><path d='m16 9 5 6M21 9l-5 6'/></svg>";
   var esVoice = null;
   var synth = window.speechSynthesis || null;
   var selectedVoice = "ash";
@@ -800,14 +1224,14 @@
   if(voiceToggle){
     voiceToggle.addEventListener("click", function(){
       voiceOn = !voiceOn;
-      voiceToggle.textContent = voiceOn ? "🔊" : "🔇";
+      voiceToggle.innerHTML = voiceOn ? ICO_ALTAVOZ : ICO_MUDO;
       voiceToggle.classList.toggle("off", !voiceOn);
       voiceToggle.title = voiceOn ? "Voz de ELIXIS: activada" : "Voz de ELIXIS: silenciada";
       if(!voiceOn){ stopAudio(); }
     });
   }
 
-  // Selector de voz (⚙️) — persiste en localStorage y se envía a elixis-tts
+  // Selector de voz — persiste en localStorage y se envía a elixis-tts
   if(settingsBtn && settingsPanel){
     settingsBtn.addEventListener("click", function(e){
       e.stopPropagation();
@@ -831,7 +1255,7 @@
   var rec = null, listening = false;
   function stopListening(){
     listening = false;
-    if(micBtn){ micBtn.classList.remove("listening"); micBtn.textContent = "🎤"; }
+    if(micBtn){ micBtn.classList.remove("listening"); micBtn.innerHTML = MIC_LINEA; }
   }
   if(SR && micBtn){
     rec = new SR();
@@ -853,8 +1277,9 @@
       if(listening){ try{ rec.stop(); }catch(e){} stopListening(); return; }
       try{
         stopAudio();   // no escucharse a sí mismo
+        entrarModoVoz();   /* hablando: la ventana derecha pasa a transcribir */
         rec.start(); listening = true;
-        micBtn.classList.add("listening"); micBtn.textContent = "⏹";
+        micBtn.classList.add("listening"); micBtn.innerHTML = MIC_PARAR;
       }catch(e){ stopListening(); }
     });
   } else if(micBtn){
