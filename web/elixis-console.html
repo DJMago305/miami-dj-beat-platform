@@ -343,9 +343,9 @@
 .face-fig{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;z-index:3;
   filter:drop-shadow(0 10px 26px rgba(0,0,0,.7));animation:face-respira 5.6s ease-in-out infinite}
 @keyframes face-respira{50%{transform:translateY(-3px) scale(1.008)}}
-.face-stage.thinking .face-glow{opacity:1;width:86%;background:radial-gradient(closest-side,rgba(199,123,255,.42),transparent 72%)}
-.face-stage.speaking .face-glow{opacity:1;width:92%}
-.face-stage.speaking .face-fig{animation:face-habla 1.1s ease-in-out infinite}
+body.modo-voz .face-stage.thinking .face-glow{opacity:1;width:86%;background:radial-gradient(closest-side,rgba(199,123,255,.42),transparent 72%)}
+body.modo-voz .face-stage.speaking .face-glow{opacity:1;width:92%}
+body.modo-voz .face-stage.speaking .face-fig{animation:face-habla 1.1s ease-in-out infinite}
 @keyframes face-habla{25%{transform:translateY(-2px)}60%{transform:translateY(1px) scale(1.006)}}
 @media (prefers-reduced-motion:reduce){.face-fig{animation:none!important}}
 
@@ -384,9 +384,14 @@
   opacity:0; transition:opacity .5s ease;
 }
 .face-glow{opacity:0}
-.face-stage.thinking .face-fig,
-.face-stage.speaking .face-fig{opacity:1}
-.face-stage.speaking .face-glow{opacity:.9}
+/* EL ROSTRO ES DE LA VOZ. Escribiendo NO aparece -- igual que en el telefono,
+   donde el avatar se retira en modo escritura. Ahi manda la red y la bola de
+   energia; una cara mirandote mientras tecleas no aporta nada y estorba a la
+   lectura. Solo con la voz encendida vuelve, y solo cuando ELIXIS piensa o
+   habla. El resplandor de la base va con el. */
+body.modo-voz .face-stage.thinking .face-fig,
+body.modo-voz .face-stage.speaking .face-fig{opacity:1}
+body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
 
 /* BOLA DE ENERGIA: la fuente que late en el centro cuando el rostro no esta.
    Mismo lenguaje que el orbe del telefono -- halo radial de oro y aros que
@@ -693,12 +698,13 @@
   <div class="face-stage" id="faceStage" aria-hidden="true">
     <canvas class="face-fx" id="faceFX"></canvas>
     <div class="face-glow"></div>
-    <!-- onerror: si el retrato no carga por lo que sea -- cache envenenado,
-         asset movido, red caida -- el elemento se RETIRA. Ya se vio tres veces
-         el recuadro roto de Safari flotando en medio del chat, y un hueco
-         limpio siempre es mejor que un icono de error animandose. -->
-    <img class="face-fig" src="./assets/elixis-avatar.webp?v=20260820b-rostro" alt="" decoding="async"
-         onerror="this.remove()">
+    <!-- SE CURA SOLO. Probado: la misma imagen pedida con un parametro nuevo
+         carga (407x518), y con el testigo de la pagina falla -- o sea, cache
+         envenenado, no un archivo roto. Asi que al primer fallo se reintenta
+         UNA vez saltandose la cache; si tambien falla, el elemento se retira.
+         Un hueco limpio es mejor que el recuadro roto de Safari animandose en
+         mitad del chat, que ya se vio tres veces. -->
+    <img class="face-fig" alt="" decoding="async" data-reintentos="0">
   </div>
 
   <!-- ═══ LAS DOS VENTANAS ═══ Dos oficios distintos, no un espejo:
@@ -1031,11 +1037,13 @@
   function entrarModoVoz(){
     if(modoVoz) return;
     modoVoz = true;
+    document.body.classList.add("modo-voz");   /* y con el, vuelve el rostro */
     if(palabraCuerpo) palabraCuerpo.innerHTML = "";   /* fuera el cartel de espera */
   }
   function salirModoVoz(){
     if(!modoVoz) return;
     modoVoz = false;
+    document.body.classList.remove("modo-voz");   /* escribiendo, el rostro se va */
     ponerPalabraEnEspera();
   }
 
@@ -1136,6 +1144,30 @@
      Los controles se MUEVEN aqui, no se copian: el selector de voz sigue
      siendo el mismo nodo, con sus mismos oyentes, solo que colgado de otro
      sitio. Duplicarlo habria dejado dos mandos para lo mismo. */
+  /* ═══ EL RETRATO SE CURA SOLO ═══════════════════════════════════════
+     Diagnosticado, no supuesto: la imagen falla SOLO durante la carga de la
+     pagina, y la misma URL pedida un segundo despues entra sin problema
+     (407x518, comprobado). No es un archivo roto ni cache envenenado: es que
+     el servidor local de desarrollo -- python3 -m http.server, de un solo
+     hilo -- se atraganta con la rafaga de peticiones del arranque, y la
+     imagen es la que pierde la carrera.
+     Por eso el reintento va CON ESPERA: reintentar al instante caia dentro
+     del mismo atasco. Dos intentos separados; si aun asi falla, el elemento
+     se retira -- un hueco limpio es mejor que el recuadro roto de Safari
+     animandose en mitad del chat, que ya se vio tres veces. */
+  (function retratoResistente(){
+    var img = document.querySelector(".face-fig");
+    if(!img) return;
+    var RUTA = "./assets/elixis-avatar.webp?v=20260820b-rostro";
+    img.addEventListener("error", function(){
+      var n = Number(img.dataset.reintentos || 0);
+      if(n >= 2){ img.remove(); return; }       /* hueco limpio, nunca el icono roto */
+      img.dataset.reintentos = String(n + 1);
+      setTimeout(function(){ img.src = RUTA + "&r=" + Date.now(); }, 400 + n * 800);
+    });
+    img.src = RUTA;      /* la fuente se pone DESDE AQUI, no en el HTML */
+  })();
+
   var cfgRiel = document.getElementById("cfgRiel");
   var cfgItems = document.getElementById("cfgItems");
   var cfgContraer = document.getElementById("cfgContraer");
