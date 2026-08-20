@@ -1643,6 +1643,299 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
     }, 850);
   }
 
+
+  /* ═══ MOTOR DE VOZ REALTIME — TRANSPORTADO DESDE EL TELEFONO ═══════
+     El PO lo pidio aqui con razon: es el motor que SE CALIBRA A SU TONO y que
+     ayer dejo de hacer caso al televisor. El reconocimiento del navegador no
+     sabe hacer eso. Este habla con OpenAI Realtime por WebRTC via
+     elixis-realtime-session, que ya vive en produccion con su candado RBAC y
+     su medidor de cuota.
+
+     Se TRANSPORTA el motor tal cual -- misma pieza, no una copia reescrita --
+     y se adapta solo donde tocaba la carcasa del telefono. Ese es el unico
+     trabajo del adaptador de aqui abajo: traducir cuatro llamadas.
+     El telefono decia `orbe`, `setAvatar`, `state` y `decir`; aqui eso es el
+     boton del microfono, FACE, un estado propio y addRow. */
+  var AGENT = "ELIXIS";
+  function T(es){ return es; }                 /* la consola es solo en espanol */
+  function haptic(){}                          /* no hay vibracion en un Mac */
+  function toast(txt){ addError(txt); }        /* los avisos van al hilo */
+  var state = { agentReply:null, agentLine:null, online:true };
+
+  /* El "orbe" del telefono es aqui el boton del microfono: mismo papel --
+     enciende, apaga y late con la voz. */
+  function orbe(){ return document.getElementById("mic"); }
+
+  /* Los estados del telefono son mas finos que los de esta cara. Se mapean en
+     vez de inventarle estados nuevos a FACE. */
+  var MAPA_ESTADO = {
+    listening:"idle", transcribing:"thinking", understanding:"thinking",
+    executing:"thinking", speaking:"speaking", confirmation:"idle", idle:"idle"
+  };
+  var _rtFila = null;
+  function setAvatar(e){
+    try{ FACE.estado(MAPA_ESTADO[e] || "idle"); }catch(_){}
+    var st = document.querySelector(".face-stage");
+    if(st) st.className = "face-stage " + (MAPA_ESTADO[e] || "idle");
+  }
+  /* Lo que se dice por voz entra al hilo Y a la transcripcion, igual que lo
+     escrito: la conversacion es una sola aunque cambie el canal. */
+  function decir(quien, texto){
+    if(!texto) return;
+    addRow(quien === "yo" ? "user" : "elixis", texto);
+    try{ transcribir(quien === "yo" ? "yo" : "elixis", texto); }catch(_){}
+  }
+
+  var RT = (function(){
+    var pc=null, dc=null, mic=null, spk=null;
+    var ac=null, sink=null, anMic=null, anRem=null, buf=null, rafPulso=0;
+    var sesion=null, nivelBloque=0, hb=0, t0=0;
+    var hablando=false;
+
+    function fnUrl(accion){
+      if(!window.mdbSupabaseFunctionUrl) return null;
+      var u = window.mdbSupabaseFunctionUrl('elixis-realtime-session');
+      if(!u) return null;
+      return accion ? u + (u.indexOf('?')===-1?'?':'&') + 'action=' + accion : u;
+    }
+    function usados(){ return t0 ? Math.max(0, Math.round((Date.now()-t0)/1000)) : 0; }
+
+    /* ── Fuente de energia del branding ──────────────────────────────
+       Un sumidero mudo mantiene el grafo bombeando sin emitir sonido; sin
+       el, algunos navegadores no alimentan un analizador que no llega al
+       destino y el orbe se queda plano. */
+    function orbe(){ return document.querySelector('.nav-orb'); }
+    function analizador(stream){
+      if(!ac){
+        var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return null;
+        ac=new AC(); sink=ac.createGain(); sink.gain.value=0; sink.connect(ac.destination);
+        buf=new Uint8Array(256);
+      }
+      try{
+        var an=ac.createAnalyser(); an.fftSize=512; an.smoothingTimeConstant=0.72;
+        ac.createMediaStreamSource(stream).connect(an); an.connect(sink);
+        return an;
+      }catch(e){ return null; }
+    }
+    function nivel(an){
+      if(!an||!buf) return 0;
+      an.getByteTimeDomainData(buf);
+      var s=0; for(var i=0;i<buf.length;i++){ var v=(buf[i]-128)/128; s+=v*v; }
+      return Math.min(1, Math.sqrt(s/buf.length)*3.2);
+    }
+    var pulso=0, vivo=false;
+    function latir(){
+      var o=orbe();
+      if(o){
+        /* La barra inferior se vuelve a dibujar cuando cambia el estado, y el
+           orbe pasa a ser OTRO elemento. Si solo se marcara al encender, la
+           clase se perderia en el primer redibujado y el radar se apagaria
+           solo. Se reafirma cada frame: sale barato y no se pierde nunca. */
+        if(vivo && !o.classList.contains('live')) o.classList.add('live');
+        var an = hablando ? (anRem||anMic) : anMic;
+        var objetivo = nivel(an);
+        pulso += (objetivo - pulso) * 0.3;
+        if(pulso < 0.002) pulso = 0;
+        o.style.setProperty('--pulso', pulso.toFixed(3));
+        o.style.transform = 'scale(' + (1 + pulso * 0.09).toFixed(4) + ')';
+        /* La opacidad respira con la voz: en silencio se atenua, en los picos
+           se enciende del todo. Es lo que le da la pulsacion al boton. */
+        o.style.opacity = (0.62 + pulso * 0.38).toFixed(3);
+        o.classList.toggle('rx', !hablando);
+      }
+      rafPulso = requestAnimationFrame(latir);
+    }
+    function encender(){
+      vivo=true;
+      var o=orbe(); if(o){ o.classList.add('live','rx'); }
+      if(!rafPulso) rafPulso = requestAnimationFrame(latir);
+    }
+    function apagar(){
+      vivo=false;
+      if(rafPulso){ cancelAnimationFrame(rafPulso); rafPulso=0; }
+      var o=orbe(); if(o){ o.classList.remove('live','rx');
+        o.style.removeProperty('--pulso'); o.style.removeProperty('transform');
+        o.style.removeProperty('opacity'); }
+      pulso=0; anMic=null; anRem=null;
+      if(ac){ try{ ac.close(); }catch(e){} ac=null; sink=null; }
+    }
+
+    /* Herramientas: ELIXIS pide, el navegador ejecuta CON el JWT del usuario.
+       El candado de cada función sigue mandando. */
+    async function accion(nombre, cuerpo){
+      var u = fnUrl(nombre);
+      if(!u) return { ok:false, motivo:'fallo' };
+      try{
+        var r = await fetch(u,{ method:'POST', headers:_invokeHeaders(), body:JSON.stringify(cuerpo) });
+        var d={}; try{ d=await r.json(); }catch(_){}
+        if(r.status===401||r.status===403) return { ok:false, motivo:'sin_acceso' };
+        if(!r.ok) return { ok:false, motivo:'fallo' };
+        return d;
+      }catch(e){ return { ok:false, motivo:'fallo' }; }
+    }
+
+    async function herramienta(item){
+      setAvatar('executing');
+      var args={}; try{ args=JSON.parse(item.arguments||'{}'); }catch(_){}
+      var out;
+      if(item.name==='consultar_elixis')      out = await accion('consultar',     { pregunta:String(args.pregunta||'') });
+      else if(item.name==='recordar')         out = await accion('memory_write',  { clave:String(args.clave||''), hecho:String(args.hecho||'') });
+      else if(item.name==='olvidar')          out = await accion('memory_forget', { clave:String(args.clave||'') });
+      else                                    out = { ok:false, motivo:'herramienta_desconocida' };
+
+      if(!dc || dc.readyState!=='open') return;
+      dc.send(JSON.stringify({ type:'conversation.item.create',
+        item:{ type:'function_call_output', call_id:item.call_id, output:JSON.stringify(out) } }));
+      dc.send(JSON.stringify({ type:'response.create' }));   /* sin esto se queda mudo */
+    }
+
+    function linea(txt, cls){
+      var c=document.getElementById('convo'); if(!c) return null;
+      var d=document.createElement('div'); d.className=cls||'line';
+      if(cls==='sys') d.textContent=txt; else d.innerHTML='<b>'+AGENT+':</b> '+esc(txt);
+      c.appendChild(d); c.scrollTop=c.scrollHeight; return d;
+    }
+    function rotulo(t){ var e=document.getElementById('convoState'); if(e) e.textContent=t||''; }
+
+    function evento(m){
+      switch(m.type){
+        case 'input_audio_buffer.speech_started':
+          hablando=false; state.agentReply=null; state.agentLine=null;
+          rotulo(T('Te escucho','Listening'));
+          setAvatar('listening'); break;
+
+        case 'input_audio_buffer.speech_stopped':
+          rotulo(T('Pensando','Thinking'));
+          setAvatar('understanding'); break;
+
+        case 'response.output_audio_transcript.delta':
+          if(!hablando){ hablando=true; state.agentReply=''; state.agentLine='real';
+            RT._fila = linea('', 'line'); rotulo(T('Hablando','Speaking')); }
+          state.agentReply += (m.delta||'');
+          if(RT._fila) RT._fila.innerHTML='<b>'+AGENT+':</b> '+esc(state.agentReply);
+          var c=document.getElementById('convo'); if(c) c.scrollTop=c.scrollHeight;
+          setAvatar('speaking'); break;
+
+        case 'response.done':
+          /* Las llamadas a herramienta viajan DENTRO de response.done. Si se
+             cierra el turno aquí sin mirarlas, la consulta no sale nunca. */
+          var salida = (m.response && m.response.output) || [];
+          var llamadas = salida.filter(function(i){ return i && i.type==='function_call'; });
+          if(llamadas.length){ llamadas.forEach(herramienta); break; }
+          hablando=false; RT._fila=null; rotulo(T('Te escucho','Listening'));
+          setAvatar('listening'); break;
+
+        case 'error':
+          toast(T('Error en el canal de voz','Voice channel error'),'warn'); break;
+      }
+    }
+
+    async function start(){
+      if(pc) return;
+      var url = fnUrl(null);
+      if(!url){ toast(T('No pude ubicar el servidor de voz','Voice server not found'),'warn'); return; }
+      url += (url.indexOf('?')===-1?'?':'&') + 'voice=' + (localStorage.getItem('elixis_voice')||'ash')
+           + '&vad=' + (localStorage.getItem('elixis_vad')||'medium');
+
+      setAvatar('understanding');
+      try{
+        mic = await navigator.mediaDevices.getUserMedia({
+          audio:{ echoCancellation:true, noiseSuppression:true, autoGainControl:true } });
+      }catch(e){
+        toast(T('Necesito permiso de micrófono','Microphone permission needed'),'warn');
+        setAvatar('idle'); return;
+      }
+
+      pc = new RTCPeerConnection();
+      spk = _voiceEl();                       /* reusa el elemento ya "armado" */
+      pc.ontrack = function(ev){
+        try{ spk.srcObject = ev.streams[0]; spk.play(); }catch(_){ }
+        anRem = analizador(ev.streams[0]);   /* la voz de ELIXIS mueve el orbe */
+      };
+      mic.getAudioTracks().forEach(function(t){ pc.addTrack(t, mic); });
+      anMic = analizador(mic);               /* tu voz lo mueve mientras escucha */
+
+      dc = pc.createDataChannel('oai-events');
+      dc.onopen = function(){
+        linea(T('Canal de voz conectado. Habla con normalidad.','Voice channel connected. Speak normally.'),'sys');
+        rotulo(T('Te escucho','Listening'));
+        encender();                          /* modo agente: el fenix emite */
+        setAvatar('listening'); haptic('light');
+      };
+      dc.onmessage = function(ev){ var m; try{ m=JSON.parse(ev.data); }catch(_){ return; } evento(m); };
+      pc.onconnectionstatechange = function(){
+        if(pc && ['failed','disconnected','closed'].indexOf(pc.connectionState)!==-1) stop(true);
+      };
+
+      var offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+
+      var h = _invokeHeaders(); h['Content-Type']='application/sdp';
+      var res;
+      try{ res = await fetch(url,{ method:'POST', headers:h, body:offer.sdp }); }
+      catch(e){ toast(T('No pude conectar la voz','Could not connect voice'),'warn'); stop(true); return; }
+
+      if(res.status===401){ _goLogin(); return; }
+      if(res.status===402){
+        var q={}; try{ q=await res.json(); }catch(_){}
+        toast(q.error==='safety_cap_reached'
+          ? T('Tope técnico alcanzado','Technical cap reached')
+          : T('Sin saldo de voz · continúa por texto','Out of voice credit · continue by text'),'warn');
+        state.voiceMode='text'; stop(true); return;
+      }
+      if(res.status===403){ toast(T('Esta cuenta no tiene acceso de voz','No voice access for this account'),'warn'); stop(true); return; }
+      if(res.status===429){ toast(T('Demasiadas sesiones · espera un momento','Too many sessions · wait a moment'),'warn'); stop(true); return; }
+      if(!res.ok){ toast(T('La voz no está disponible ahora','Voice unavailable right now'),'warn'); stop(true); return; }
+
+      sesion     = res.headers.get('x-elixis-session');
+      nivelBloque= parseInt(res.headers.get('x-elixis-granted-seconds')||'0',10);
+      t0         = Date.now();
+
+      await pc.setRemoteDescription({ type:'answer', sdp: await res.text() });
+
+      /* El latido evita que el barrendero dé la sesión por abandonada y la
+         cobre entera. */
+      if(sesion){
+        hb = setInterval(function(){
+          var u = fnUrl('heartbeat'); if(!u) return;
+          fetch(u + '&session=' + encodeURIComponent(sesion), { method:'POST', headers:_invokeHeaders() }).catch(function(){});
+        }, 4*60*1000);
+      }
+    }
+
+    /* keepalive: la liquidación sale aunque se cierre la pestaña. Sin esto se
+       le cobra al cliente el bloque entero en vez de lo que habló. */
+    function liquidar(){
+      if(hb){ clearInterval(hb); hb=0; }
+      if(!sesion) { t0=0; return; }
+      var u = fnUrl('settle');
+      var s = sesion; sesion=null;
+      var seg = usados(); t0=0;
+      if(u) fetch(u + '&session=' + encodeURIComponent(s) + '&used=' + seg,
+                  { method:'POST', headers:_invokeHeaders(), keepalive:true }).catch(function(){});
+    }
+
+    function stop(silencioso){
+      liquidar();
+      if(dc){ try{ dc.close(); }catch(_){ } dc=null; }
+      if(pc){ try{ pc.close(); }catch(_){ } pc=null; }
+      if(mic){ mic.getTracks().forEach(function(t){ try{ t.stop(); }catch(_){ } }); mic=null; }
+      if(spk){ try{ spk.pause(); spk.srcObject=null; }catch(_){ } }
+      hablando=false;
+      apagar();
+      linea(T('Canal de voz cerrado.','Voice channel closed.'),'sys');
+      rotulo('');
+      /* Al colgar, el tablero se despide del avatar y vuelve al chat: es el
+         estado natural del agente, no una pantalla vacia esperando. */
+      state.voiceMode='text';
+      state.avatar='idle';
+      render();
+    }
+
+    window.addEventListener('beforeunload', liquidar);
+    return { start:start, stop:stop, activa:function(){ return !!pc; } };
+  })();
+
   async function askElixis(message){
     var url = functionUrl();
     if(!url){
@@ -1930,19 +2223,32 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
         try{ rec.start(); }catch(e){ /* ya arrancado: no pasa nada */ }
       }, 250);
     };
-    micBtn.addEventListener("click", function(){
-      if(sesionVoz){
+    /* ═══ EL BOTON ENCIENDE REALTIME, NO EL DEL NAVEGADOR ══════════════
+       Realtime es el motor que se calibra al tono del Capitan y aguanta el
+       ruido de fondo. El del navegador queda de RESERVA: si no hay cuota, si
+       falla el canal o si el navegador no lo soporta, la conversacion sigue
+       con el barato en vez de quedarse muda. Misma cadena de degradacion que
+       ya gobierna la voz: insignia -> mini -> texto. */
+    micBtn.addEventListener("click", async function(){
+      /* ¿Apagar? Se cierra lo que este abierto, sea cual sea. */
+      if(RT.activa() || sesionVoz){
         sesionVoz = false;
+        try{ RT.stop(true); }catch(e){}
         try{ rec.stop(); }catch(e){}
         stopListening();
         return;
       }
+      stopAudio();         // no escucharse a sí mismo
+      entrarModoVoz();     /* el avatar toma la pantalla */
+      micBtn.classList.add("listening"); micBtn.innerHTML = MIC_PARAR;
       try{
-        stopAudio();       // no escucharse a sí mismo
-        entrarModoVoz();   /* el avatar toma la pantalla y la derecha transcribe */
+        await RT.start();
+        if(RT.activa()) return;        /* Realtime al mando */
+      }catch(e){ /* cae a la reserva */ }
+      /* RESERVA: el reconocimiento del navegador. */
+      try{
         sesionVoz = true;
         rec.start(); listening = true;
-        micBtn.classList.add("listening"); micBtn.innerHTML = MIC_PARAR;
       }catch(e){ sesionVoz = false; stopListening(); }
     });
   } else if(micBtn){
