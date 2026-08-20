@@ -119,8 +119,8 @@
             }, 2800);
         })();
     </script>
-    <link rel="stylesheet" href="./styles.css?v=20260820-estaciones-final" />
-    <link rel="stylesheet" href="./header-unified.css?v=20260820-estaciones-final" />
+    <link rel="stylesheet" href="./styles.css?v=20260820-estaciones-r3" />
+    <link rel="stylesheet" href="./header-unified.css?v=20260820-estaciones-r3" />
     <link rel="stylesheet" href="./profile.css?v=20260513-reviews-carousel" />
     <style id="mdj-qr-view-header-shield">
         /* Blindaje definitivo: especificidad mayor que #mainHeader.header.mdj-header-unified { display:flex !important } en header-unified.css */
@@ -5617,7 +5617,12 @@
                         /* Cash Flow en perfil (misma UX que copia de referencia ?tab=flow); dashboard sigue en dj-dashboard?tab=flow vía header. */
                         setTimeout(function () { switchProfileTab('flow'); }, 300);
                     } else if (tabFromUrl === 'sft') {
-                        switchProfileTab('sft');
+                        /* Los 300ms NO son adorno: sus vecinos 'public' y 'flow' los
+                           llevan, y sin ellos el conmutador corre antes de que la
+                           maquinaria de pestañas este lista y no hace nada. Medido:
+                           con ?tab=sft la vista se quedaba en tab-public, mientras
+                           que llamar a switchProfileTab('sft') a mano si conmutaba. */
+                        setTimeout(function () { switchProfileTab('sft'); }, 300);
                         if (
                             window._mdjSftProAllowed &&
                             window.currentDJData &&
@@ -14293,7 +14298,7 @@
     <script defer src="./monetization.js?v=20260422-sft-math"></script>
 
     <script defer src="./header-smart-search.js?v=20260415-CORE-CONNECTIONS"></script>
-    <script defer src="./mdj-shared-header.js?v=20260820-estaciones-final"></script>
+    <script defer src="./mdj-shared-header.js?v=20260820-estaciones-r3"></script>
   <script defer src="./mdj-owner-tabs-marquee.js?v=20260818-nav-canonico"></script>
   <script defer src="./mdj-social-bar.js?v=20260819-social-contact-only"></script>
   <!-- Cart pill: badge + redirect to rentals (no heavy scripts needed here) -->

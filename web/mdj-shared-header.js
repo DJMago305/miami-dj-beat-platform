@@ -217,6 +217,22 @@
   }
   window.mdjEnEstacionDeTrabajo = mdjEnEstacionDeTrabajo;
 
+  /* DESTINO DE UN PUESTO. Los puestos-PESTAÑA (Cash Flow, SoundForTips) traen
+     href '#' porque dentro del perfil conmutan sin navegar. Fuera del perfil ese
+     '#' dejaba el clic muerto: medido en dj-tools.html, pulsarlos solo añadia '#'
+     a la URL. Fuera se les da destino real —el perfil con la pestaña pedida—, que
+     dj-profile.html ya sabe leer de ?tab=.
+     'public' queda fuera: MI PERFIL tiene su propio resolvedor, que ademas le
+     añade el id del artista. */
+  function mdjHrefDeSlot(def) {
+    try {
+      if (!def || !def.tab || def.tab === 'public') return def && def.href;
+      var pagina = String(window.location.pathname || '').split('/').pop().toLowerCase();
+      if (pagina === 'dj-profile.html') return def.href;
+      return './dj-profile.html?mdj_nav=profile&tab=' + encodeURIComponent(def.tab);
+    } catch (eH) { return def && def.href; }
+  }
+
   function mdjEsDuenoDelPerfil() {
     try {
       var pagina = String(window.location.pathname || '').split('/').pop().toLowerCase();
@@ -857,7 +873,7 @@
 
     function crear(def) {
       var a = document.createElement('a');
-      a.setAttribute('href', def.href);
+      a.setAttribute('href', mdjHrefDeSlot(def));
       /* Sin clave no se pone data-i18n: un key inexistente hace que el pase de
          i18n deje el rótulo vacío. */
       if (def.key) a.setAttribute('data-i18n', def.key);
@@ -899,7 +915,7 @@
           el.textContent = def.txt;
           if (sepPrevio) el.insertBefore(sepPrevio, el.firstChild);
         }
-        if (def.href && el.tagName === 'A') el.setAttribute('href', def.href);
+        if (def.href && el.tagName === 'A') el.setAttribute('href', mdjHrefDeSlot(def));
         /* Puestos que son PESTAÑA de la propia vista, no pagina. No se
            reimplementa el conmutador: se delega el clic en el boton que ya existe
            en #owner-tabs, que sigue en el DOM aunque la franja este oculta. Asi la
