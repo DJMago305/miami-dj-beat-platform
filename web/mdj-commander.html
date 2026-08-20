@@ -175,14 +175,9 @@
   }
   .cmd-input textarea:focus{outline:none;border-color:var(--gold);background:var(--elev2)}
   .cmd-input textarea::placeholder{color:var(--faint)}
-  .cmd-input .send{
-    width:48px;height:48px;flex:none;border-radius:50%;
-    background:linear-gradient(180deg,var(--gold2),var(--gold));color:#1a1405;
-    display:grid;place-items:center;box-shadow:0 4px 14px var(--gold-glow);
-    transition:opacity .18s ease, transform .12s ease;
-  }
-  .cmd-input .send:active{transform:scale(.94)}
-  .cmd-input .send[disabled]{opacity:.3;box-shadow:none}
+  /* Sin boton de enviar: Enter manda en escritorio y el teclado tactil trae
+     su propia tecla de enviar (enterkeyhint). Una flecha ahi solo anadia
+     ruido y quitaba ancho al campo. */
 
   /* ── Mensajes: columna de trabajo, no lista plana ── */
   .escritura .convo .line{
@@ -648,7 +643,7 @@
 
   /* ───── demo data ───── */
   var state={
-    screen:'command', params:{}, stack:[], online:true, voiceMode:'text',
+    screen:'command', params:{}, stack:[], online:true, voiceMode:'text', chat:[],
     avatar:'idle', missionCreated:false, decisionReady:false,
   };
   var MISSION=null;
@@ -886,7 +881,12 @@
   var VCONVO=['listening','transcribing','understanding','confirmation','speaking','executing'];
   SCREENS.command=function(v){
     var st=state.avatar;
-    var voice=VCONVO.indexOf(st)>=0;
+    /* El diseno lo manda el MODO, no el estado del avatar. Antes bastaba con
+       que ELIXIS se pusiera a pensar para que la pantalla saltara al diseno
+       inmersivo de voz -- y se llevaba el compositor por delante en mitad de
+       una frase escrita. Escribiendo se escribe; los estados del avatar solo
+       animan el fondo. */
+    var voice = state.voiceMode!=='text' && VCONVO.indexOf(st)>=0;
     renderTopbar({title:'MDJ COMMANDER', right: voice
       ? '<button class="icon-btn" id="voiceEnd" title="Terminar">'+svg('close')+'</button>'
       : '<button class="modo-btn'+(state.voiceMode==='text'?' on':'')+'" id="modoBtn" title="'+(state.voiceMode==='text'?T('Volver a voz','Back to voice'):T('Escribir','Write'))+'">'+svg(state.voiceMode==='text'?'mic':'keyboard')+'</button>'+
@@ -915,12 +915,11 @@
             '<textarea id="cmdText" rows="1" placeholder="'+T('Escribe a ELIXIS…','Write to ELIXIS…')+'" '+
               'enterkeyhint="send" inputmode="text" autocapitalize="sentences" '+
               'autocorrect="on" spellcheck="true" autocomplete="off"></textarea>'+
-            '<button class="send" id="cmdSend" disabled>'+svg('send','width="20"')+'</button></div>';
-        var ta=$('#cmdText'), btn=$('#cmdSend');
+            '</div>';
+        var ta=$('#cmdText');
         function crecer(){ ta.style.height='auto'; ta.style.height=Math.min(ta.scrollHeight,152)+'px'; }
-        function listo(){ btn.disabled = !ta.value.trim(); }
-        ta.addEventListener('input',function(){ crecer(); listo(); });
-        btn.onclick=function(){ sendText(); crecer(); listo(); };
+        function listo(){}
+        ta.addEventListener('input', crecer);
         ta.addEventListener('keydown',function(e){
           /* Escritorio: Enter envia, Shift+Enter salta de linea -- lo que
              espera cualquiera que venga de ChatGPT o Cursor. En movil el
@@ -981,6 +980,7 @@
       document.querySelectorAll('[data-chip]').forEach(function(b){b.onclick=function(){state.voiceMode='text';state.avatar='idle';render();setTimeout(function(){var i=$('#cmdText');if(i){i.value=b.getAttribute('data-chip');i.focus();}},60);};});
     }
     mountFX($('#avatarFX'), st);
+    pintarChat();     /* el DOM se acaba de reconstruir: se repone la conversacion */
   };
   function vStatus(st){
     var m={listening:['d-red',T('En conversación · escuchando','In conversation · listening')],
@@ -1015,6 +1015,29 @@
     return '';
   }
   function setAvatar(s){state.avatar=s;if(state.screen==='command')render();}
+
+  /* La conversacion se guarda en state.chat y se REPINTA tras cada render.
+     Antes se pegaba directamente al DOM, y como startUnderstanding() llama a
+     render() justo despues, el mensaje recien escrito se borraba al enviarlo.
+     El estado es la fuente; el DOM, un reflejo. */
+  function pintarChat(){
+    var c=document.getElementById('convo'); if(!c) return;
+    c.innerHTML='';
+    for(var i=0;i<state.chat.length;i++){
+      var m=state.chat[i];
+      var d=document.createElement('div');
+      d.className = m.q==='yo' ? 'yo' : (m.q==='sys' ? 'sys' : 'line');
+      d.textContent = m.t;
+      c.appendChild(d);
+    }
+    c.scrollTop=c.scrollHeight;
+  }
+  function decir(quien, texto){
+    if(!texto) return;
+    state.chat.push({q:quien, t:texto});
+    if(state.chat.length>200) state.chat.splice(0, state.chat.length-200);
+    pintarChat();
+  }
   function demoOrder(){ return ''; }
   /* ═══════════════════════════════════════════════════════════════════
      MOTOR DE VOZ EN TIEMPO REAL (FÉNIX)
@@ -1299,26 +1322,17 @@
     /* Se vacia y se encoge ANTES de enviar: en un chat, el campo que se queda
        con lo que acabas de mandar es un error que se nota en el primer uso. */
     i.value=''; i.style.height='auto';
-    var b=$('#cmdSend'); if(b) b.disabled=true;
     startUnderstanding(txt);
   }
   function startUnderstanding(text){
     /* Lo que escribe el Capitan tambien va a la conversacion: un chat en el
        que solo se ve una de las dos voces no es un chat. */
-    (function(){
-      var c=document.getElementById('convo'); if(!c) return;
-      var d=document.createElement('div'); d.className='yo'; d.textContent=text;
-      c.appendChild(d); c.scrollTop=c.scrollHeight;
-    })();
+    decir('yo', text);
     state.avatar='understanding';state.agentReply=null;render();haptic('light');
     askElixis(text).then(function(reply){
       if(!reply) return; /* 401 ya redirigió al login */
       state.agentReply=reply; state.agentLine='real'; state.avatar='speaking';
-      (function(){
-        var c=document.getElementById('convo'); if(!c) return;
-        var d=document.createElement('div'); d.className='line'; d.textContent=reply;
-        c.appendChild(d); c.scrollTop=c.scrollHeight;
-      })();
+      decir('elixis', reply);
       speakReal(reply);
     });
   }
