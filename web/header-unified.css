@@ -4832,3 +4832,20 @@ body.mdj-perfil-estacion #booth-hero-container {
      junto al logo y se saldria de la franja. */
   #mdj-flotante-visitante .header-search-wrap { flex: 1 1 auto; }
 }
+
+
+/* ── LA MARCA DEL PUESTO ACTIVO SE ALINEA CON SU PALABRA, NO CON SU CELDA ──────
+   La regla base —.nav a.active::after { left:0; width:100% }— subraya la celda
+   entera, y la celda incluye el separador de delante. Medido en Agenda: la celda
+   iba de 280 a 427 y el subrayado con ella, mientras la palabra empezaba en 324.
+   La marca sobresalia 44px por la izquierda de la pestaña señalada.
+
+   Se descuenta el ancho exacto del separador en SUS MISMAS unidades, no con un
+   numero fijo: 1.05rem de margen a cada lado (la regla de arriba) mas el glifo
+   «/», que mide medio eme. El primer puesto no lleva separador, asi que queda
+   fuera del selector y conserva su 100%. */
+html body #mainHeader#mainHeader.header.mdj-header-unified #mainNav#mainNav > a[data-mdj-slot]:not([data-mdj-slot="1"]).active::after {
+  left: auto !important;
+  right: 0 !important;
+  width: calc(100% - 2.1rem - .5em) !important;
+}
