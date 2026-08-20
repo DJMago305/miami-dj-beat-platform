@@ -381,7 +381,11 @@
 body.modo-voz .face-stage.thinking .face-glow{opacity:1;width:86%;background:radial-gradient(closest-side,rgba(199,123,255,.42),transparent 72%)}
 body.modo-voz .face-stage.speaking .face-glow{opacity:1;width:92%}
 body.modo-voz .face-stage.speaking .face-fig{animation:face-habla 1.1s ease-in-out infinite}
-@keyframes face-habla{25%{transform:translateY(-2px)}60%{transform:translateY(1px) scale(1.006)}}
+/* SIN SALTOS. Antes subia y bajaba (translateY) mientras hablaba y el PO lo
+   vio como un tic: un rostro que bota distrae y parece un error. Ahora solo
+   respira -- un cambio de escala minimo, imperceptible como movimiento pero
+   suficiente para que no parezca una foto congelada. */
+@keyframes face-habla{50%{transform:scale(1.012)}}   /* el centrado ya no vive aqui */
 @media (prefers-reduced-motion:reduce){.face-fig{animation:none!important}}
 
 /* ═══ ESCRITORIO: la cara a la izquierda, la conversacion a la derecha ═══
@@ -413,8 +417,11 @@ body.modo-voz .face-stage.speaking .face-fig{animation:face-habla 1.1s ease-in-o
   /* Sin borde ni fondo: el retrato flota sobre la red, no vive en un marco.
      El recuadro que se veia era el hueco del <img> roto, no un estilo. */
   border:0; background:none; outline:0;
-  inset:auto; left:50%; top:50%;
-  transform:translate(-50%,-50%);
+  /* CENTRADO SIN TRANSFORM. Antes se centraba con translate(-50%,-50%) y la
+     animacion de hablar PISABA ese transform: el rostro se iba a la esquina
+     inferior derecha en cuanto ELIXIS abria la boca. Con inset:0 + margin:auto
+     el centrado es del layout, y el transform queda libre para animar. */
+  inset:0; margin:auto;
   width:min(300px,42vw); height:min(340px,46vh);
   opacity:0; transition:opacity .5s ease;
 }
@@ -424,8 +431,17 @@ body.modo-voz .face-stage.speaking .face-fig{animation:face-habla 1.1s ease-in-o
    energia; una cara mirandote mientras tecleas no aporta nada y estorba a la
    lectura. Solo con la voz encendida vuelve, y solo cuando ELIXIS piensa o
    habla. El resplandor de la base va con el. */
-body.modo-voz .face-stage.thinking .face-fig,
-body.modo-voz .face-stage.speaking .face-fig{opacity:1}
+/* EL AVATAR MANDA. En modo voz esta SIEMPRE, no aparece y desaparece segun
+   lo que ELIXIS este haciendo: el protagonista de la pantalla no parpadea.
+   Y crece -- en voz la conversacion es hablada, asi que el sitio es suyo. */
+body.modo-voz .face-fig{
+  opacity:1;
+  width:min(430px,46vw); height:min(540px,62vh);
+}
+/* Escribiendo, las burbujas mandan. Hablando, se retiran a un segundo plano
+   para no competir con el rostro: siguen ahi, pero no gritan. */
+body.modo-voz .stream{opacity:.5; transition:opacity .5s ease}
+body.modo-voz .stream:hover{opacity:1}
 body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
 
 /* BOLA DE ENERGIA: la fuente que late en el centro cuando el rostro no esta.
@@ -624,18 +640,25 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
 }
 .composer > *{pointer-events:auto}
 #input{
-  background:rgba(20,24,30,.18);
-  -webkit-backdrop-filter:blur(2px) saturate(150%);
-  backdrop-filter:blur(2px) saturate(150%);
-  border:1.6px solid rgba(255,255,255,.20);
+  /* TRANSPARENCIA TOTAL POR DENTRO. Ni relleno ni desenfoque: el campo es
+     solo su contorno y la red se ve entera a traves. La lectura la sostiene
+     la sombra del texto, no un fondo. */
+  background:transparent;
+  -webkit-backdrop-filter:none;backdrop-filter:none;
+  border:1.6px solid rgba(255,255,255,.22);
   border-radius:24px; padding:14px 18px;
-  box-shadow:0 8px 24px rgba(0,0,0,.34);
+  box-shadow:none;
   text-shadow:0 1px 3px rgba(0,0,0,.85), 0 0 12px rgba(0,0,0,.6);
 }
 #input:focus{
-  border-color:rgba(212,175,55,.58);
-  background:rgba(24,29,36,.26);
+  /* Al escribir tampoco se rellena: solo se enciende el contorno en oro. */
+  border-color:rgba(212,175,55,.72);
+  background:transparent;
 }
+/* En modo dia el texto es oscuro sobre papel: la sombra negra sobraria. */
+:root[data-tema="claro"] #input,
+:root[data-tema="claro"] #input::placeholder{text-shadow:none}
+:root[data-tema="claro"] #input{border-color:rgba(0,0,0,.22)}
 #input::placeholder{text-shadow:0 1px 3px rgba(0,0,0,.85)}
 
 /* ═══ TARJETA DE APROBACION DE SMS ══════════════════════════════════════
@@ -1604,30 +1627,62 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
     listening = false;
     if(micBtn){ micBtn.classList.remove("listening"); micBtn.innerHTML = MIC_LINEA; }
   }
+  /* ═══ MODO ONLINE — LA SESION NO SE CORTA SOLA ══════════════════════
+     Antes era pulsar-y-hablar: continuous=false y onend apagaba. Hablabas unos
+     segundos, terminaba la frase y habia que volver a tocar el boton. Eso no es
+     una conversacion.
+     Ahora la sesion la abre y la cierra SOLO el boton. Cada frase se manda y se
+     sigue escuchando. El navegador corta el reconocimiento por su cuenta cada
+     pocos segundos aunque pidas continuous -- por eso onend REARRANCA mientras
+     la sesion siga abierta, en vez de apagar. */
+  var sesionVoz = false;
   if(SR && micBtn){
     rec = new SR();
     rec.lang = "es-ES";
     rec.interimResults = true;
-    rec.continuous = false;
+    rec.continuous = true;
     rec.onresult = function(e){
-      var txt = "";
-      for(var i=0;i<e.results.length;i++){ txt += e.results[i][0].transcript; }
-      input.value = txt; autogrow();
-      if(e.results[e.results.length-1].isFinal){
-        stopListening();
-        if((input.value||"").trim()) send();
+      /* Mientras ELIXIS habla se IGNORA lo que entre: si no, se transcribe a
+         si mismo y se contesta solo. Se ignora en vez de parar el micro para
+         no encender y apagar el reconocimiento cada dos por tres. */
+      if(currentAudio && !currentAudio.paused && !currentAudio.ended) return;
+      var interino = "", firme = "";
+      for(var i = e.resultIndex; i < e.results.length; i++){
+        var t = e.results[i][0].transcript;
+        if(e.results[i].isFinal) firme += t; else interino += t;
+      }
+      if(interino){ input.value = interino; autogrow(); }
+      if(firme.trim()){
+        input.value = firme.trim(); autogrow();
+        send();            /* se manda Y SE SIGUE ESCUCHANDO */
       }
     };
-    rec.onerror = function(){ stopListening(); };
-    rec.onend = function(){ stopListening(); };
+    rec.onerror = function(ev){
+      /* "no-speech" y "aborted" son normales en una sesion larga: no la matan. */
+      if(ev && (ev.error === "no-speech" || ev.error === "aborted")) return;
+      sesionVoz = false; stopListening();
+    };
+    rec.onend = function(){
+      if(!sesionVoz){ stopListening(); return; }
+      setTimeout(function(){
+        if(!sesionVoz) return;
+        try{ rec.start(); }catch(e){ /* ya arrancado: no pasa nada */ }
+      }, 250);
+    };
     micBtn.addEventListener("click", function(){
-      if(listening){ try{ rec.stop(); }catch(e){} stopListening(); return; }
+      if(sesionVoz){
+        sesionVoz = false;
+        try{ rec.stop(); }catch(e){}
+        stopListening();
+        return;
+      }
       try{
-        stopAudio();   // no escucharse a sí mismo
-        entrarModoVoz();   /* hablando: la ventana derecha pasa a transcribir */
+        stopAudio();       // no escucharse a sí mismo
+        entrarModoVoz();   /* el avatar toma la pantalla y la derecha transcribe */
+        sesionVoz = true;
         rec.start(); listening = true;
         micBtn.classList.add("listening"); micBtn.innerHTML = MIC_PARAR;
-      }catch(e){ stopListening(); }
+      }catch(e){ sesionVoz = false; stopListening(); }
     });
   } else if(micBtn){
     micBtn.style.display = "none";   // navegador sin reconocimiento de voz
