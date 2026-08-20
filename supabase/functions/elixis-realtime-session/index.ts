@@ -82,6 +82,9 @@ const MAX_SDP_BYTES = 32_768; // una oferta SDP real ronda los 4 KB
 
 // ─── CANDADO RBAC — mismo contrato que elixis-chat ───────────────────────────
 const SUPABASE_URL_FALLBACK = "https://hkuvuqupbxwkiykxvqdr.supabase.co";
+// Llave PUBLICA (safe for browser), la misma de web/supabase-config.js. Solo se
+// usa como apikey del salto interno hacia elixis-orchestrator.
+const PUBLISHABLE_KEY = "sb_publishable_IMhi16lHj2dAk51AdUOK8w_U7s89-Ff";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const ADMIN = createClient(
     Deno.env.get("SUPABASE_URL") || SUPABASE_URL_FALLBACK,
@@ -318,6 +321,54 @@ serve(async (req: Request) => {
 
     const url = new URL(req.url);
     const action = (url.searchParams.get("action") ?? "").toLowerCase();
+
+    // ── Handoff al cerebro de accion ─────────────────────────────────────
+    // Va por el SERVIDOR, no por el navegador. El navegador llamando a
+    // elixis-orchestrator choca con la lista CORS de esa funcion, que no
+    // conoce el puerto del laboratorio: el fetch revienta y ELIXIS reporta
+    // "la consulta fallo" sin que nada este roto de verdad. Servidor a
+    // servidor no hay CORS que valga, y de paso el puerto deja de importar.
+    // El JWT del usuario se REENVIA tal cual, asi que el candado de
+    // elixis-chat sigue decidiendo quien puede ver que.
+    if (action === "consultar") {
+        let q: { pregunta?: string } = {};
+        try { q = await req.json(); } catch { /* cuerpo vacio */ }
+        const pregunta = String(q.pregunta ?? "").trim();
+        if (!pregunta) return json({ ok: false, error: "missing_pregunta" }, 400);
+
+        const base = (Deno.env.get("SUPABASE_URL") || SUPABASE_URL_FALLBACK).replace(/\/$/, "");
+        const anon = Deno.env.get("SUPABASE_ANON_KEY")
+            || Deno.env.get("SUPABASE_PUBLISHABLE_KEY")
+            || PUBLISHABLE_KEY;
+
+        try {
+            const r = await fetch(`${base}/functions/v1/elixis-orchestrator`, {
+                method: "POST",
+                headers: {
+                    Authorization: req.headers.get("Authorization") ?? "",
+                    apikey: anon,
+                    "Content-Type": "application/json",
+                    "X-MDJ-Source": "elixis-voice",
+                },
+                body: JSON.stringify({ message: pregunta }),
+            });
+            const payload = await r.json().catch(() => ({}));
+
+            if (r.status === 401 || r.status === 403) {
+                return json({ ok: false, motivo: "sin_acceso",
+                    detalle: "Esta cuenta no tiene permiso para consultar datos del negocio." }, 200);
+            }
+            if (!r.ok || !payload?.reply) {
+                console.error(`[elixis-realtime-session] consultar ${r.status}:`, JSON.stringify(payload).slice(0, 400));
+                return json({ ok: false, motivo: "fallo",
+                    detalle: `El especialista respondió ${r.status}.` }, 200);
+            }
+            return json({ ok: true, respuesta: payload.reply }, 200);
+        } catch (err) {
+            console.error("[elixis-realtime-session] consultar, red:", err);
+            return json({ ok: false, motivo: "fallo", detalle: "No se pudo alcanzar al especialista." }, 200);
+        }
+    }
 
     // ── Memoria ──────────────────────────────────────────────────────────
     // Mismo candado que todo lo demas. La memoria es POR CUENTA: el user_id

@@ -641,33 +641,16 @@ select:focus-visible{outline:2px solid var(--info);outline-offset:2px}
   async function pedirDatos(pregunta){
     setState("Consultando datos", "ELIXIS está mirando la base de datos.", "thinking", "DB");
     addSysLine("Consulta a los datos del negocio: " + (pregunta || "(sin pregunta)"));
+    // El salto a elixis-chat lo hace el SERVIDOR. Si lo hiciera el navegador
+    // chocaria con la lista CORS del orquestador, que no conoce este puerto.
+    var u = meterUrl("consultar", "");
+    if(!u) return { ok:false, motivo:"fallo", detalle:"no se pudo resolver la función" };
     try{
-      var url = (typeof window.mdbSupabaseFunctionUrl === "function")
-        ? window.mdbSupabaseFunctionUrl("elixis-orchestrator") : null;
-      if(!url) throw new Error("no se pudo resolver elixis-orchestrator");
-
-      var res = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          apikey: window.MDB_SUPABASE_ANON_KEY || "",
-          Authorization: "Bearer " + accessToken
-        },
-        body: JSON.stringify({ message: pregunta })
-      });
-      var data = {}; try{ data = await res.json(); }catch(e){}
-
-      if(res.status === 401 || res.status === 403){
-        // Los artistas no consultan finanzas ni leads: es el limite de datos,
-        // no una averia. Se le dice al modelo para que lo explique hablando.
-        return { ok:false, motivo:"sin_acceso",
-                 detalle:"Esta cuenta no tiene permiso para consultar datos del negocio." };
-      }
-      if(!res.ok || !data.reply){
-        return { ok:false, motivo:"fallo",
-                 detalle:"No se pudo consultar la base de datos en este momento." };
-      }
-      return { ok:true, respuesta: data.reply };
+      var h = meterHeaders(); h["Content-Type"] = "application/json";
+      var res = await fetch(u, { method:"POST", headers:h, body: JSON.stringify({ pregunta: pregunta }) });
+      var d = {}; try{ d = await res.json(); }catch(e){}
+      if(!res.ok) return { ok:false, motivo:"fallo", detalle:"el puente respondió " + res.status };
+      return d;
     }catch(err){
       return { ok:false, motivo:"fallo", detalle: String((err && err.message) || err) };
     }
