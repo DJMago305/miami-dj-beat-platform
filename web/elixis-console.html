@@ -410,6 +410,10 @@
 }
 .tl b{display:block; font-family:var(--mono); font-size:9.5px; letter-spacing:.14em;
   text-transform:uppercase; opacity:.72; margin-bottom:3px; font-weight:600}
+.tl-espera{
+  font-size:12px; line-height:1.5; color:var(--muted); opacity:.62;
+  padding:10px 2px; text-shadow:0 1px 3px rgba(0,0,0,.85);
+}
 .tl.yo{background:rgba(212,175,55,.13); border:1px solid rgba(212,175,55,.34); color:#f0e6cc}
 .tl.el{background:rgba(63,185,230,.10); border:1px solid rgba(63,185,230,.30); color:#dcecf4}
 
@@ -908,12 +912,39 @@
   var procesoCuerpo = document.getElementById("procesoCuerpo");
   var palabraCuerpo = document.getElementById("palabraCuerpo");
 
+  /* MODO VOZ. La ventana de la derecha NO duplica el chat: si estas
+     escribiendo, lo que dijo cada uno ya esta en el centro y repetirlo al lado
+     es ruido. Solo se convierte en transcripcion cuando la conversacion es
+     HABLADA -- ahi si hace falta un registro escrito de lo que se dijo, porque
+     no existe en ningun otro sitio. Mientras tanto, espera. */
+  var modoVoz = false;
+
+  function ponerPalabraEnEspera(){
+    if(!palabraCuerpo) return;
+    palabraCuerpo.innerHTML = "";
+    var d = document.createElement("div");
+    d.className = "tl-espera";
+    d.textContent = "En espera. Cuando hables con ELIXIS, lo dicho queda aquí por escrito.";
+    palabraCuerpo.appendChild(d);
+  }
+  function entrarModoVoz(){
+    if(modoVoz) return;
+    modoVoz = true;
+    if(palabraCuerpo) palabraCuerpo.innerHTML = "";   /* fuera el cartel de espera */
+  }
+  function salirModoVoz(){
+    if(!modoVoz) return;
+    modoVoz = false;
+    ponerPalabraEnEspera();
+  }
+
   function abrirLados(){
     [ladoProceso, ladoPalabra].forEach(function(l){
       if(!l) return;
       l.classList.add("abierta");
       l.setAttribute("aria-hidden","false");
     });
+    if(!modoVoz && palabraCuerpo && !palabraCuerpo.children.length) ponerPalabraEnEspera();
   }
 
   /* LA PALABRA: transcripcion breve. No repite el chat entero -- recorta,
@@ -921,6 +952,7 @@
      vistazo, que es justo para lo que sirve. */
   function transcribir(quien, texto){
     if(!palabraCuerpo || !texto) return;
+    if(!modoVoz) return;          /* escribiendo: el centro ya lo dice */
     var d = document.createElement("div");
     d.className = "tl " + (quien === "yo" ? "yo" : "el");
     var t = String(texto).replace(/\s+/g, " ").trim();
@@ -1042,6 +1074,16 @@
   }
 
   // ── Send flow ──────────────────────────────────────
+  /* Teclear a mano saca del modo voz. Se escucha keydown y no input a
+     proposito: el dictado rellena el campo por codigo y eso no dispara
+     keydown, asi que hablar no se confunde con escribir. */
+  (function(){
+    var campo = document.getElementById("input");
+    if(campo) campo.addEventListener("keydown", function(e){
+      if(e.key && e.key.length === 1) salirModoVoz();
+    });
+  })();
+
   function send(){
     if(busy) return;
     var msg = (input.value || "").trim();
@@ -1192,6 +1234,7 @@
       if(listening){ try{ rec.stop(); }catch(e){} stopListening(); return; }
       try{
         stopAudio();   // no escucharse a sí mismo
+        entrarModoVoz();   /* hablando: la ventana derecha pasa a transcribir */
         rec.start(); listening = true;
         micBtn.classList.add("listening"); micBtn.innerHTML = MIC_PARAR;
       }catch(e){ stopListening(); }
