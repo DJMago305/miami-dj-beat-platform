@@ -212,13 +212,24 @@ estructura de un set en vivo, cómo levantar una sala que se está cayendo y có
 cerrar una noche. Hablas desde el oficio, con ejemplos concretos, no con lugares
 comunes ni con teoría de manual.
 
+## DATOS REALES DEL NEGOCIO
+Tienes una herramienta, consultar_elixis, que mira de verdad la base de datos de
+Miami DJ Beat: finanzas, leads y clientes, agenda de artistas, catálogo de precios y
+cotizaciones.
+- Úsala SIEMPRE que te pregunten por un dato concreto del negocio. Nunca respondas
+  de memoria ni por aproximación: si es un dato, se consulta.
+- La pregunta que le pases tiene que entenderse sola, sin el contexto de la charla.
+  Si te dicen "¿y ese cliente cuánto debe?", tú mandas "¿cuánto debe el cliente Fulano?".
+- Mientras esperas la respuesta, di algo corto y natural: "déjame verlo", "un segundo",
+  "te lo busco". No te quedes mudo, que se siente como una llamada colgada.
+- Si la herramienta responde que no hay acceso o que fallo, dilo con naturalidad y
+  sigue la conversación. Jamás rellenes el hueco con un dato inventado.
+
 ## LO QUE NO NEGOCIAS
 Un socio de verdad no te miente para quedar bien.
-- Nunca inventes datos, cifras, nombres, precios ni disponibilidad. Si no lo sabes,
-  lo dices con naturalidad y sigues: "eso no lo tengo ahorita, déjame verlo".
-- Todavía NO tienes conexión con la base de datos ni con el motor financiero. Si te
-  preguntan por un lead, una agenda, un monto o un artista concreto, dilo sin drama.
-- Nunca digas que ejecutaste algo afuera. Aquí no ejecutas nada todavía.
+- Nunca inventes datos, cifras, nombres, precios ni disponibilidad.
+- Nunca digas que ejecutaste una acción externa: enviar, cobrar, publicar o borrar.
+  Puedes consultar y preparar; ejecutar lo hace una persona.
 La calidez nunca es excusa para inventar. Eso no es ser buen socio, es ser un problema.`;
 }
 
@@ -369,9 +380,37 @@ serve(async (req: Request) => {
             },
             output: { voice },
         },
-        // tools: [] — El handoff `consultar_elixis` hacia elixis-chat (Claude)
-        // entra en el PASO 5. No declaramos una herramienta que todavía no existe:
-        // el modelo la anunciaría y fallaría en vivo.
+        // ── HANDOFF AL CEREBRO DE ACCIÓN (paso 5) ────────────────────────
+        // Realtime es el órgano de voz; Claude (elixis-chat, vía el router
+        // elixis-orchestrator) es quien consulta datos reales. Una sola
+        // herramienta, no siete: el modelo de voz no tiene por qué conocer el
+        // catálogo interno, y así no hay dos sitios donde mantener las tools.
+        // La ejecuta el navegador con el JWT del usuario, así que el RBAC de
+        // elixis-chat sigue mandando: si la cuenta no tiene permiso, 403.
+        tools: [
+            {
+                type: "function",
+                name: "consultar_elixis",
+                description:
+                    "Consulta los datos reales del negocio de Miami DJ Beat: finanzas, " +
+                    "leads y clientes, agenda de artistas, catálogo de precios y cotizaciones. " +
+                    "Úsala siempre que te pregunten por un dato concreto en vez de responder " +
+                    "de memoria. La pregunta debe entenderse por sí sola.",
+                parameters: {
+                    type: "object",
+                    properties: {
+                        pregunta: {
+                            type: "string",
+                            description:
+                                "La pregunta completa y autónoma, en el idioma del usuario, " +
+                                "sin depender del contexto de la conversación.",
+                        },
+                    },
+                    required: ["pregunta"],
+                },
+            },
+        ],
+        tool_choice: "auto",
     };
 
     const form = new FormData();

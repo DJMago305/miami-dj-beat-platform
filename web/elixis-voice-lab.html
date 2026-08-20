@@ -142,9 +142,9 @@ select:focus-visible{outline:2px solid var(--info);outline-offset:2px}
 <div class="wrap">
 
   <header>
-    <div class="eyebrow">FÉNIX AI · Pasos 2–3 — Laboratorio aislado</div>
+    <div class="eyebrow">FÉNIX AI · Pasos 2–5 — Laboratorio aislado</div>
     <h1>Laboratorio de voz de ELIXIS</h1>
-    <p class="sub">Arnés de pruebas para el canal de voz en tiempo real. Verifica el candado JWT, la captura de micrófono y la latencia real de conversación.</p>
+    <p class="sub">Arnés de pruebas para el canal de voz en tiempo real. Verifica el candado JWT, la captura de micrófono, la latencia real y el handoff a los datos del negocio.</p>
     <div class="who" id="who">Verificando sesión…</div>
   </header>
 
@@ -628,6 +628,62 @@ select:focus-visible{outline:2px solid var(--info);outline-offset:2px}
     log("Turno respondido en " + ms + " ms", ms < 900 ? "g" : "a");
   }
 
+  // ── HANDOFF AL CEREBRO DE ACCIÓN ───────────────────────────────────
+  // Realtime pide el dato; Claude lo busca. La llamada sale del navegador con
+  // TU JWT, así que el candado de elixis-chat sigue mandando: la voz no abre
+  // ninguna puerta que el texto tuviera cerrada.
+  async function runToolCall(item){
+    agentLine = null;
+    setState("Consultando datos", "ELIXIS está mirando la base de datos.", "thinking", "DB");
+
+    var args = {};
+    try{ args = JSON.parse(item.arguments || "{}"); }catch(e){}
+    var pregunta = String(args.pregunta || "").trim();
+    addSysLine("Consulta a los datos del negocio: " + (pregunta || "(sin pregunta)"));
+    log("Herramienta " + item.name + " → " + pregunta, "a");
+
+    var t0 = Date.now(), output;
+    try{
+      var url = (typeof window.mdbSupabaseFunctionUrl === "function")
+        ? window.mdbSupabaseFunctionUrl("elixis-orchestrator") : null;
+      if(!url) throw new Error("no se pudo resolver elixis-orchestrator");
+
+      var res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: window.MDB_SUPABASE_ANON_KEY || "",
+          Authorization: "Bearer " + accessToken
+        },
+        body: JSON.stringify({ message: pregunta })
+      });
+      var data = {}; try{ data = await res.json(); }catch(e){}
+
+      if(res.status === 401 || res.status === 403){
+        // Los artistas no consultan finanzas ni leads: es el limite de datos,
+        // no una averia. Se le dice al modelo para que lo explique hablando.
+        output = { ok:false, motivo:"sin_acceso",
+                   detalle:"Esta cuenta no tiene permiso para consultar datos del negocio." };
+      } else if(!res.ok || !data.reply){
+        output = { ok:false, motivo:"fallo",
+                   detalle:"No se pudo consultar la base de datos en este momento." };
+      } else {
+        output = { ok:true, respuesta: data.reply };
+      }
+    }catch(err){
+      output = { ok:false, motivo:"fallo", detalle: String((err && err.message) || err) };
+    }
+
+    log("Consulta resuelta en " + (Date.now()-t0) + " ms", output.ok ? "g" : "e");
+
+    if(!dc || dc.readyState !== "open"){ log("Canal cerrado; no se pudo devolver el resultado.", "e"); return; }
+    dc.send(JSON.stringify({
+      type: "conversation.item.create",
+      item: { type: "function_call_output", call_id: item.call_id, output: JSON.stringify(output) }
+    }));
+    dc.send(JSON.stringify({ type: "response.create" }));   // sin esto se queda mudo
+  }
+
   // ── Eventos del DataChannel ────────────────────────────────────────
   function onEvent(msg){
     switch(msg.type){
@@ -664,6 +720,15 @@ select:focus-visible{outline:2px solid var(--info);outline-offset:2px}
         break;
 
       case "response.done":
+        // Las llamadas a herramienta llegan DENTRO de response.done. Si se
+        // reseteara el estado antes de mirarlas, el turno se cerraria y la
+        // consulta nunca saldria.
+        var salida = (msg.response && msg.response.output) || [];
+        var llamadas = salida.filter(function(i){ return i && i.type === "function_call"; });
+        if(llamadas.length){
+          llamadas.forEach(runToolCall);
+          break;
+        }
         agentLine = null;
         setState("Escuchando", "Sesión abierta. Habla cuando quieras.", "listening", "RX");
         break;
