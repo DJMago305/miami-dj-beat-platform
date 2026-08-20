@@ -631,6 +631,10 @@
              si ya estas, abre la conversacion. Asi sigue sirviendo de vuelta
              a casa y ademas es lo que enciende la voz. */
           if(state.screen!=='command'){ tabTo('command'); return; }
+          /* Mismo boton, dos toques: el fenix enciende y el fenix cuelga. No
+             hace falta un boton de colgar aparte -- el simbolo ya te dice en
+             que estado estas (microfono = apagado, fenix = en sesion). */
+          if(RT.activa()){ RT.stop(); haptic('light'); return; }
           if(!state.online){ toast(T('Sin conexión · orden guardada como borrador','Offline · order saved as draft'),'warn'); return; }
           startListening();
         };n.appendChild(c);return;}
