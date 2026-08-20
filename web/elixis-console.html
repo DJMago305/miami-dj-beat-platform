@@ -446,8 +446,16 @@ body.modo-voz .face-fig{
 }
 /* Escribiendo, las burbujas mandan. Hablando, se retiran a un segundo plano
    para no competir con el rostro: siguen ahi, pero no gritan. */
-body.modo-voz .stream{opacity:.5; transition:opacity .5s ease}
+/* CON EL AVATAR ACTIVO, LA DERECHA SOBRA. Transcribe lo mismo que ya esta en
+   el centro: dos chats para una sola conversacion. Se retira -- el hilo se
+   sigue registrando por dentro, solo deja de ocupar pantalla. */
+body.modo-voz .lado-der{opacity:0; pointer-events:none}
+
+/* Y la conversacion se va A LA IZQUIERDA: el centro es del rostro. */
+body.modo-voz .stream > *{margin-left:0; margin-right:auto; max-width:min(420px,34vw)}
+body.modo-voz .stream{opacity:.62; transition:opacity .5s ease}
 body.modo-voz .stream:hover{opacity:1}
+body.modo-voz .composer{max-width:min(560px,46vw); margin-left:0; margin-right:auto}
 body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
 
 /* BOLA DE ENERGIA: la fuente que late en el centro cuando el rostro no esta.
@@ -1679,9 +1687,20 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
       if(currentAudio && !currentAudio.paused && !currentAudio.ended) return;
       var interino = "", firme = "";
       for(var i = e.resultIndex; i < e.results.length; i++){
-        var t = e.results[i][0].transcript;
-        if(e.results[i].isFinal) firme += t; else interino += t;
+        var alt = e.results[i][0];
+        /* LA TELE DE FONDO. El PO comprobo que el micro recoge un podcast y lo
+           transcribe como si fuera el. No hay forma de saber QUIEN habla, pero
+           la voz lejana llega con confianza baja: se descarta lo que no llegue
+           claro. No es infalible -- es lo que se puede hacer desde el
+           navegador -- y por eso el envio real sigue exigiendo un boton. */
+        if(e.results[i].isFinal && typeof alt.confidence === "number" && alt.confidence > 0 && alt.confidence < 0.6) continue;
+        if(e.results[i].isFinal) firme += alt.transcript; else interino += alt.transcript;
       }
+      /* Fragmentos sueltos de una palabra suelen ser ruido de fondo, no una
+         orden. Se ignoran salvo que sean respuestas cortas legitimas. */
+      var CORTAS = ["si","sí","no","dale","para","espera","gracias","ok","vale"];
+      if(firme.trim() && firme.trim().split(/\s+/).length === 1
+         && CORTAS.indexOf(firme.trim().toLowerCase()) === -1) firme = "";
       if(interino){ input.value = interino; autogrow(); }
       if(firme.trim()){
         input.value = firme.trim(); autogrow();
