@@ -91,8 +91,8 @@
   .navb.on::before{content:"";position:absolute;top:0;width:26px;height:2.5px;border-radius:0 0 3px 3px;background:var(--gold)}
   .navb .nb-badge{position:absolute;top:8px;right:calc(50% - 20px);min-width:15px;height:15px;border-radius:8px;background:var(--red);color:#fff;font-size:9px;display:grid;place-items:center;padding:0 3px;font-weight:700}
   .navb.center{flex:0 0 64px}
-  .nav-orb{width:52px;height:52px;margin-top:-18px;border-radius:50%;background:linear-gradient(180deg,var(--gold2),var(--gold));display:grid;place-items:center;box-shadow:0 8px 22px var(--gold-glow),0 0 0 5px var(--bg)}
-  .nav-orb img{width:30px;height:30px}
+  .nav-orb{width:88px;height:88px;margin-top:-34px;border-radius:50%;background:linear-gradient(180deg,var(--gold2),var(--gold));display:grid;place-items:center;box-shadow:0 8px 22px var(--gold-glow),0 0 0 5px var(--bg)}
+  .nav-orb img{width:50px;height:50px}
 
   /* headings / text */
   .large-title{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:4px 0 2px}
@@ -562,7 +562,14 @@
       ['decisions',T('Decisiones','Decisions'),'decisions'],['more',T('Más','More'),'more']];
     n.innerHTML='';
     items.forEach(function(it){
-      if(it[0]==='__center__'){var c=el('button','navb center','<div class="nav-orb"><img src="'+LOGO+'" alt=""></div>');c.onclick=function(){tabTo('command');};n.appendChild(c);return;}
+      if(it[0]==='__center__'){var c=el('button','navb center','<div class="nav-orb"><img src="'+LOGO+'" alt=""></div>');c.onclick=function(){
+          /* El branding ES el boton. Si no estas en Comando, te lleva alli;
+             si ya estas, abre la conversacion. Asi sigue sirviendo de vuelta
+             a casa y ademas es lo que enciende la voz. */
+          if(state.screen!=='command'){ tabTo('command'); return; }
+          if(!state.online){ toast(T('Sin conexión · orden guardada como borrador','Offline · order saved as draft'),'warn'); return; }
+          startListening();
+        };n.appendChild(c);return;}
       var on=(it[0]==='command'&&state.screen==='command')||(it[0]==='radar'&&(state.screen==='radar'||state.screen==='mission'))||(it[0]==='decisions'&&state.screen.indexOf('decision')===0)||(it[0]==='more'&&false);
       var badge=it[0]==='decisions'&&state.decisionReady?'<span class="nb-badge">1</span>':'';
       var b=el('button','navb'+(on?' on':''),svg(it[0]==='more'?'more':it[0])+'<span>'+it[1]+'</span>'+badge);
@@ -678,8 +685,8 @@
              retiraron por decision del PO: la pantalla es la presencia de
              ELIXIS, no un panel de mandos. El conmutador a texto sigue vivo
              en el modo texto, para no dejar a nadie atrapado. */
-          '<div class="mic-wrap"><button class="mic" id="micBtn">'+svg('mic')+'</button></div>';
-        $('#micBtn').onclick=function(){ if(!state.online){toast(T('Sin conexión · orden guardada como borrador','Offline · order saved as draft'),'warn');return;} startListening(); };
+          '';   /* El microfono del centro era placeholder. El boton pasa a ser
+                     el branding del centro de la barra inferior. */
       }
       document.querySelectorAll('[data-vm]').forEach(function(b){b.onclick=function(){state.voiceMode=b.getAttribute('data-vm');setAvatar('idle');};});
       document.querySelectorAll('[data-chip]').forEach(function(b){b.onclick=function(){state.voiceMode='text';state.avatar='idle';render();setTimeout(function(){var i=$('#cmdText');if(i){i.value=b.getAttribute('data-chip');i.focus();}},60);};});
