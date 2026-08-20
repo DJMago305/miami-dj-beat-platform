@@ -47,6 +47,37 @@ const ALLOWED_VOICES = new Set([
 ]);
 
 const OPENAI_REALTIME_URL = "https://api.openai.com/v1/realtime/calls";
+
+// ─── DETECCION DE TURNO ──────────────────────────────────────────────────────
+// "low" hace que ELIXIS espere mucho antes de dar el turno por cerrado. Es
+// ideal en silencio, y pesimo con una television de fondo: la voz del televisor
+// es voz humana, el clasificador cree que alguien sigue hablando, y con "low"
+// espera todavia mas. Por eso el valor por defecto sube a "medium" y ademas se
+// puede cambiar POR SESION desde la pagina (?vad=), para afinarlo con el ruido
+// real puesto en vez de a ciegas.
+const DEFAULT_EAGERNESS = Deno.env.get("ELIXIS_VAD_EAGERNESS") ?? "medium";
+const ALLOWED_EAGERNESS = new Set(["auto", "low", "medium", "high"]);
+
+// MODO ESTRICTO — contra ruido ambiental que HABLA (una television al fondo).
+// semantic_vad clasifica por significado y no tiene umbral: si oye voz humana,
+// la trata como turno del usuario, y con interrupt_response eso corta a ELIXIS
+// a media palabra. server_vad decide por ENERGIA, asi que un umbral alto
+// ignora lo que suena mas flojo que la voz de quien tiene el microfono cerca.
+// Es el unico mando real que existe contra una tele de fondo.
+const STRICT_TURN_DETECTION = {
+    type: "server_vad",
+    threshold: Number(Deno.env.get("ELIXIS_VAD_THRESHOLD") ?? "0.72"),
+    prefix_padding_ms: 300,
+    silence_duration_ms: 700,
+    create_response: true,
+    interrupt_response: true,
+};
+
+// Filtra el audio ANTES del detector de turnos. near_field es para microfono
+// cercano (auriculares, el del portatil si hablas de frente) y ayuda a que el
+// sonido lejano —una tele al fondo— no cuente como turno.
+const NOISE_REDUCTION = Deno.env.get("ELIXIS_NOISE_REDUCTION") ?? "near_field";
+const ALLOWED_NOISE = new Set(["near_field", "far_field", "off"]);
 const MAX_SDP_BYTES = 32_768; // una oferta SDP real ronda los 4 KB
 
 // ─── CANDADO RBAC — mismo contrato que elixis-chat ───────────────────────────
@@ -173,7 +204,13 @@ async function safetyIdentifier(userId: string): Promise<string> {
 // el owner y el DJ son DOS cuentas distintas, y ELIXIS no debe hablarle a un
 // artista como si fuera el dueño ni al revés. La identidad la pone el candado,
 // no el modelo.
-function buildInstructions(name: string, role: string): string {
+// Presupuesto de contexto para la memoria. No es una cifra caprichosa:
+// Realtime relee TODO el contexto en cada turno, asi que cada caracter que se
+// inyecta aqui se paga muchas veces a lo largo de una conversacion.
+const MEMORY_MAX_FACTS = 40;
+const MEMORY_MAX_CHARS = 4000;
+
+function buildInstructions(name: string, role: string, memoria: string): string {
     const first = String(name || "").trim().split(/\s+/)[0] || "";
     const esOwner = role === "owner";
     const trato = esOwner
@@ -225,6 +262,23 @@ cotizaciones.
 - Si la herramienta responde que no hay acceso o que fallo, dilo con naturalidad y
   sigue la conversación. Jamás rellenes el hueco con un dato inventado.
 
+## LO QUE RECUERDAS
+${memoria || "Todavía no tienes recuerdos guardados de esta persona."}
+
+Tienes dos herramientas para tu memoria:
+- recordar(clave, hecho): guarda algo que valga la pena para la próxima vez —
+  preferencias, decisiones tomadas, cómo le gusta trabajar, datos estables de
+  su negocio. La clave es un identificador corto y estable ("musica_bodas",
+  "horario_preferido"); si vuelves a usar la misma clave, pisas el valor viejo
+  en vez de acumular dos verdades que se contradigan.
+- olvidar(clave): borra un recuerdo cuando deje de ser cierto o te lo pidan.
+
+Guarda poco y bueno. Un hecho por frase, y solo lo que seguirá importando dentro
+de un mes. No guardes el detalle de la charla ni cosas que puedes consultar con
+consultar_elixis: para eso está la base de datos. Guardar de más te vuelve lento
+y caro; guardar lo justo te vuelve un socio que se acuerda.
+Cuando guardes algo, dilo de pasada y sigue: "me lo apunto". Sin ceremonia.
+
 ## LO QUE NO NEGOCIAS
 Un socio de verdad no te miente para quedar bien.
 - Nunca inventes datos, cifras, nombres, precios ni disponibilidad.
@@ -264,6 +318,40 @@ serve(async (req: Request) => {
 
     const url = new URL(req.url);
     const action = (url.searchParams.get("action") ?? "").toLowerCase();
+
+    // ── Memoria ──────────────────────────────────────────────────────────
+    // Mismo candado que todo lo demas. La memoria es POR CUENTA: el user_id
+    // sale del JWT verificado, nunca del cuerpo de la peticion, asi que nadie
+    // puede escribir en la memoria de otro aunque lo intente.
+    if (action === "memory_write" || action === "memory_forget") {
+        let mem: { clave?: string; hecho?: string } = {};
+        try { mem = await req.json(); } catch { /* cuerpo vacio */ }
+        const clave = String(mem.clave ?? "").trim();
+        if (!clave) return json({ ok: false, error: "missing_clave" }, 400);
+
+        if (action === "memory_forget") {
+            const { data, error } = await ADMIN.rpc("elixis_memory_forget", {
+                p_user: gate.userId, p_clave: clave,
+            });
+            if (error) {
+                console.error("[elixis-realtime-session] memory_forget:", error.message);
+                return json({ ok: false, error: "memory_failed" }, 500);
+            }
+            return json({ ok: true, borrado: data === true }, 200);
+        }
+
+        const { data, error } = await ADMIN.rpc("elixis_memory_write", {
+            p_user: gate.userId, p_clave: clave,
+            p_hecho: String(mem.hecho ?? ""), p_origen: "conversacion",
+        });
+        if (error) {
+            console.error("[elixis-realtime-session] memory_write:", error.message);
+            return json({ ok: false, error: "memory_failed" }, 500);
+        }
+        const row = Array.isArray(data) ? data[0] : data;
+        return json({ ok: row?.ok === true, motivo: row?.motivo ?? "desconocido",
+                      total: row?.total ?? 0 }, 200);
+    }
 
     // ── Liquidacion y latido ─────────────────────────────────────────────
     // Viven aqui y no en una funcion aparte para no duplicar candado y CORS.
@@ -321,6 +409,13 @@ serve(async (req: Request) => {
     const requested = url.searchParams.get("voice")?.toLowerCase().trim();
     const voice = requested && ALLOWED_VOICES.has(requested) ? requested : DEFAULT_VOICE;
 
+    // ── Detección de turno, ajustable por sesión ──
+    const vadReq = url.searchParams.get("vad")?.toLowerCase().trim();
+    const estricto = vadReq === "estricto";
+    const eagerness = vadReq && ALLOWED_EAGERNESS.has(vadReq) ? vadReq : DEFAULT_EAGERNESS;
+    const nrReq = url.searchParams.get("nr")?.toLowerCase().trim();
+    const nrMode = nrReq && ALLOWED_NOISE.has(nrReq) ? nrReq : NOISE_REDUCTION;
+
     // ── MEDIDOR — cadena de degradacion insignia → mini → texto ──────────
     const isStaff = STAFF_ROLES.has(gate.role);
     let model = FLAGSHIP_MODEL;
@@ -361,22 +456,44 @@ serve(async (req: Request) => {
         granted = Number(r.granted_seconds ?? RESERVE_SECONDS);
     }
 
+    // ── Memoria del usuario, con presupuesto de contexto ──
+    // Si la memoria falla, la sesion sigue: quedarse sin voz por no poder
+    // recordar seria un mal negocio.
+    let memoria = "";
+    try {
+        const { data: facts } = await ADMIN.rpc("elixis_memory_recall", {
+            p_user: gate.userId, p_limit: MEMORY_MAX_FACTS,
+        });
+        if (Array.isArray(facts) && facts.length) {
+            const lineas: string[] = [];
+            let usados = 0;
+            for (const f of facts) {
+                const linea = `- ${f.hecho}`;
+                if (usados + linea.length > MEMORY_MAX_CHARS) break;
+                lineas.push(linea);
+                usados += linea.length;
+            }
+            memoria = lineas.join("\n");
+            console.log(`[elixis-realtime-session] memoria · ${lineas.length}/${facts.length} hechos · ${usados} chars`);
+        }
+    } catch (err) {
+        console.error("[elixis-realtime-session] memoria no disponible:", err);
+    }
+
     // ── Configuración de sesión ──
     const sessionConfig = {
         type: "realtime",
         model,
-        instructions: buildInstructions(gate.name, gate.role),
+        instructions: buildInstructions(gate.name, gate.role, memoria),
         audio: {
             input: {
-                turn_detection: {
+                turn_detection: estricto ? STRICT_TURN_DETECTION : {
                     type: "semantic_vad",
-                    // "low" = espera más antes de dar el turno por terminado.
-                    // Es lo que permite que el Capitán dude, respire y diga "eh…"
-                    // sin que ELIXIS le corte la frase.
-                    eagerness: "low",
+                    eagerness,                 // ver DEFAULT_EAGERNESS arriba
                     create_response: true,
-                    interrupt_response: true, // barge-in: el usuario manda
+                    interrupt_response: true,  // barge-in: el usuario manda
                 },
+                ...(nrMode === "off" ? {} : { noise_reduction: { type: nrMode } }),
             },
             output: { voice },
         },
@@ -407,6 +524,34 @@ serve(async (req: Request) => {
                         },
                     },
                     required: ["pregunta"],
+                },
+            },
+            {
+                type: "function",
+                name: "recordar",
+                description:
+                    "Guarda un hecho breve sobre esta persona o su forma de trabajar, para " +
+                    "recordarlo en próximas conversaciones. Usa la misma clave para actualizar " +
+                    "un hecho que cambió. No lo uses para datos consultables de la base.",
+                parameters: {
+                    type: "object",
+                    properties: {
+                        clave: { type: "string", description: "Identificador corto y estable, en minúsculas." },
+                        hecho: { type: "string", description: "El hecho en una frase, máximo 300 caracteres." },
+                    },
+                    required: ["clave", "hecho"],
+                },
+            },
+            {
+                type: "function",
+                name: "olvidar",
+                description: "Borra un recuerdo guardado que dejó de ser cierto o que te piden olvidar.",
+                parameters: {
+                    type: "object",
+                    properties: {
+                        clave: { type: "string", description: "La clave del recuerdo a borrar." },
+                    },
+                    required: ["clave"],
                 },
             },
         ],
@@ -445,7 +590,7 @@ serve(async (req: Request) => {
 
         // Traza para forense de costos. Sin PII: solo id interno, rol y modelo.
         console.log(
-            `[elixis-realtime-session] sesión abierta · user=${gate.userId} · rol=${gate.role} · nivel=${tier} · modelo=${model} · voz=${voice} · concedido=${granted}s`,
+            `[elixis-realtime-session] sesión abierta · user=${gate.userId} · rol=${gate.role} · nivel=${tier} · modelo=${model} · voz=${voice} · vad=${estricto ? "estricto" : eagerness} · nr=${nrMode} · concedido=${granted}s`,
         );
 
         return new Response(answer, {

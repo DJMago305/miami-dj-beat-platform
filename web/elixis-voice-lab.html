@@ -142,9 +142,9 @@ select:focus-visible{outline:2px solid var(--info);outline-offset:2px}
 <div class="wrap">
 
   <header>
-    <div class="eyebrow">FÉNIX AI · Pasos 2–5 — Laboratorio aislado</div>
+    <div class="eyebrow">FÉNIX AI · Pasos 2–6 — Laboratorio aislado</div>
     <h1>Laboratorio de voz de ELIXIS</h1>
-    <p class="sub">Arnés de pruebas para el canal de voz en tiempo real. Verifica el candado JWT, la captura de micrófono, la latencia real y el handoff a los datos del negocio.</p>
+    <p class="sub">Arnés de pruebas para el canal de voz en tiempo real. Verifica el candado JWT, el micrófono, la latencia real, el handoff a los datos del negocio y la memoria persistente.</p>
     <div class="who" id="who">Verificando sesión…</div>
   </header>
 
@@ -169,6 +169,12 @@ select:focus-visible{outline:2px solid var(--info);outline-offset:2px}
         <div class="controls">
           <button class="primary" id="connectBtn" disabled>Conectar</button>
           <button id="disconnectBtn" disabled>Cortar</button>
+          <select id="vadSel" aria-label="Detección de turno">
+            <option value="medium">Turno: normal</option>
+            <option value="estricto">Turno: estricto (TV o gente al fondo)</option>
+            <option value="high">Turno: rápido</option>
+            <option value="low">Turno: paciente (silencio total)</option>
+          </select>
           <select id="voiceSel" aria-label="Voz de ELIXIS">
             <option value="">Voz por defecto (ash)</option>
             <option value="ash">ash</option>
@@ -632,17 +638,9 @@ select:focus-visible{outline:2px solid var(--info);outline-offset:2px}
   // Realtime pide el dato; Claude lo busca. La llamada sale del navegador con
   // TU JWT, así que el candado de elixis-chat sigue mandando: la voz no abre
   // ninguna puerta que el texto tuviera cerrada.
-  async function runToolCall(item){
-    agentLine = null;
+  async function pedirDatos(pregunta){
     setState("Consultando datos", "ELIXIS está mirando la base de datos.", "thinking", "DB");
-
-    var args = {};
-    try{ args = JSON.parse(item.arguments || "{}"); }catch(e){}
-    var pregunta = String(args.pregunta || "").trim();
     addSysLine("Consulta a los datos del negocio: " + (pregunta || "(sin pregunta)"));
-    log("Herramienta " + item.name + " → " + pregunta, "a");
-
-    var t0 = Date.now(), output;
     try{
       var url = (typeof window.mdbSupabaseFunctionUrl === "function")
         ? window.mdbSupabaseFunctionUrl("elixis-orchestrator") : null;
@@ -662,19 +660,67 @@ select:focus-visible{outline:2px solid var(--info);outline-offset:2px}
       if(res.status === 401 || res.status === 403){
         // Los artistas no consultan finanzas ni leads: es el limite de datos,
         // no una averia. Se le dice al modelo para que lo explique hablando.
-        output = { ok:false, motivo:"sin_acceso",
-                   detalle:"Esta cuenta no tiene permiso para consultar datos del negocio." };
-      } else if(!res.ok || !data.reply){
-        output = { ok:false, motivo:"fallo",
-                   detalle:"No se pudo consultar la base de datos en este momento." };
-      } else {
-        output = { ok:true, respuesta: data.reply };
+        return { ok:false, motivo:"sin_acceso",
+                 detalle:"Esta cuenta no tiene permiso para consultar datos del negocio." };
       }
+      if(!res.ok || !data.reply){
+        return { ok:false, motivo:"fallo",
+                 detalle:"No se pudo consultar la base de datos en este momento." };
+      }
+      return { ok:true, respuesta: data.reply };
     }catch(err){
-      output = { ok:false, motivo:"fallo", detalle: String((err && err.message) || err) };
+      return { ok:false, motivo:"fallo", detalle: String((err && err.message) || err) };
+    }
+  }
+
+  async function memoria(accion, cuerpo, etiqueta){
+    setState("Anotando", "ELIXIS está guardando lo que importa.", "thinking", "MEM");
+    addSysLine(etiqueta);
+    var u = meterUrl(accion, "");
+    if(!u) return { ok:false, motivo:"fallo", detalle:"no se pudo resolver la función" };
+    try{
+      var h = meterHeaders(); h["Content-Type"] = "application/json";
+      var res = await fetch(u, { method:"POST", headers:h, body: JSON.stringify(cuerpo) });
+      var d = {}; try{ d = await res.json(); }catch(e){}
+      if(!res.ok) return { ok:false, motivo:"fallo", detalle:"no se pudo guardar" };
+      if(d.motivo === "memoria_llena"){
+        return { ok:false, motivo:"memoria_llena",
+                 detalle:"La memoria está llena (200 hechos). Hay que borrar alguno antes de guardar más." };
+      }
+      return d.ok === false ? { ok:false, motivo: d.motivo || "fallo" }
+                            : { ok:true, total: d.total, borrado: d.borrado };
+    }catch(err){
+      return { ok:false, motivo:"fallo", detalle: String((err && err.message) || err) };
+    }
+  }
+
+  // ── HANDOFF Y MEMORIA ──────────────────────────────────────────────
+  // Realtime pide; el navegador ejecuta CON TU JWT. El candado de cada
+  // función sigue mandando: la voz no abre ninguna puerta que el texto
+  // tuviera cerrada, y la memoria se escribe siempre en la cuenta del que
+  // habla, nunca en la de otro.
+  async function runToolCall(item){
+    agentLine = null;
+    var args = {};
+    try{ args = JSON.parse(item.arguments || "{}"); }catch(e){}
+    log("Herramienta " + item.name + " → " + (item.arguments || ""), "a");
+
+    var t0 = Date.now(), output;
+    if(item.name === "consultar_elixis"){
+      output = await pedirDatos(String(args.pregunta || "").trim());
+    } else if(item.name === "recordar"){
+      output = await memoria("memory_write",
+        { clave: String(args.clave || ""), hecho: String(args.hecho || "") },
+        "Recordando: " + String(args.hecho || ""));
+    } else if(item.name === "olvidar"){
+      output = await memoria("memory_forget",
+        { clave: String(args.clave || "") },
+        "Olvidando: " + String(args.clave || ""));
+    } else {
+      output = { ok:false, motivo:"herramienta_desconocida", detalle: item.name };
     }
 
-    log("Consulta resuelta en " + (Date.now()-t0) + " ms", output.ok ? "g" : "e");
+    log((item.name) + " resuelta en " + (Date.now()-t0) + " ms", output.ok ? "g" : "e");
 
     if(!dc || dc.readyState !== "open"){ log("Canal cerrado; no se pudo devolver el resultado.", "e"); return; }
     dc.send(JSON.stringify({
@@ -748,8 +794,12 @@ select:focus-visible{outline:2px solid var(--info);outline-offset:2px}
     var url = functionUrl();
     if(!url){ log("No se pudo resolver la URL de la función.", "e"); el("connectBtn").disabled = false; return; }
 
+    var q = [];
     var voice = el("voiceSel").value;
-    if(voice) url += (url.indexOf("?") === -1 ? "?" : "&") + "voice=" + encodeURIComponent(voice);
+    if(voice) q.push("voice=" + encodeURIComponent(voice));
+    var vad = el("vadSel").value;
+    if(vad) q.push("vad=" + encodeURIComponent(vad));
+    if(q.length) url += (url.indexOf("?") === -1 ? "?" : "&") + q.join("&");
 
     try{
       // 1 · Micrófono
@@ -850,6 +900,7 @@ select:focus-visible{outline:2px solid var(--info);outline-offset:2px}
         parseInt(res.headers.get("x-elixis-granted-seconds") || "0", 10)
       );
       log("Medidor: nivel " + (meterTier || "?") + ", bloque de " + Math.round(meterGranted/60) + " min.", "g");
+      log("Detección de turno: " + el("vadSel").options[el("vadSel").selectedIndex].textContent + ".", "a");
 
       var answerSdp = await res.text();
       log("Respuesta SDP recibida (" + answerSdp.length + " bytes).", "g");
