@@ -4668,6 +4668,27 @@ body.mdj-perfil-visitante #mainHeader {
   pointer-events: auto;
 }
 
+/* EL AIRE TAMBIEN EN EL CONTENEDOR, PARA >=1001px. Auditado a varias anchuras:
+   a 885px el riel conservaba sus 26px, pero a 1440 el primer puesto salia en x=6,
+   casi tocando el borde. La causa es una regla dentro de @media (min-width:1001px)
+   sobre `.header-nav .container > #mainNav` con margin-left:0 y width:100%
+   !important, cuyo selector lleva SIETE clases frente a las seis del de abajo: me
+   gana por especificidad, no por orden.
+   Pelear especificidad seria una carrera sin fin. El aire se pone en el
+   CONTENEDOR, que es quien manda sobre el ancho a todas las anchuras, y el riel
+   lo hereda sin discutir. */
+@media (min-width: 1001px) {
+  /* Dos reglas con !important ponen aqui padding-left:0 — la general y la del
+     modo artista, que gana por llevar una clase de mas en el body. Se igualan
+     ambas anadiendo html+body y la propia clase, que es lo minimo para mandar
+     sin abrir otra carrera de especificidad. */
+  html body #mainHeader.header.mdj-header-unified .header-nav .container,
+  html body.mdj-artist-header-mode #mainHeader.header.mdj-header-unified .header-nav .container {
+    padding-left: 26px !important;
+    padding-right: 26px !important;
+  }
+}
+
 /* AIRE EN LOS EXTREMOS DEL RIEL. Medido a 1703px: 6.8px de margen a la izquierda
    y CERO a la derecha; al desplazar hasta el final la ultima pestaña quedaba
    pegada al borde de la pantalla. Se le da el mismo aire a los dos lados, y
