@@ -375,6 +375,9 @@
    el avatar se va en modo escritura y vuelve cuando ELIXIS habla. Ademas
    evita que la figura se estire a pantalla completa. */
 .face-fig{
+  /* Sin borde ni fondo: el retrato flota sobre la red, no vive en un marco.
+     El recuadro que se veia era el hueco del <img> roto, no un estilo. */
+  border:0; background:none; outline:0;
   inset:auto; left:50%; top:50%;
   transform:translate(-50%,-50%);
   width:min(300px,42vw); height:min(340px,46vh);
@@ -690,7 +693,12 @@
   <div class="face-stage" id="faceStage" aria-hidden="true">
     <canvas class="face-fx" id="faceFX"></canvas>
     <div class="face-glow"></div>
-    <img class="face-fig" src="./assets/elixis-avatar.webp?v=20260820b-rostro" alt="" decoding="async">
+    <!-- onerror: si el retrato no carga por lo que sea -- cache envenenado,
+         asset movido, red caida -- el elemento se RETIRA. Ya se vio tres veces
+         el recuadro roto de Safari flotando en medio del chat, y un hueco
+         limpio siempre es mejor que un icono de error animandose. -->
+    <img class="face-fig" src="./assets/elixis-avatar.webp?v=20260820b-rostro" alt="" decoding="async"
+         onerror="this.remove()">
   </div>
 
   <!-- ═══ LAS DOS VENTANAS ═══ Dos oficios distintos, no un espejo:
