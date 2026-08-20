@@ -1683,6 +1683,20 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
   function toast(txt){ addError(txt); }        /* los avisos van al hilo */
   var state = { agentReply:null, agentLine:null, online:true };
 
+  /* LAS DOS QUE FALTABAN. El motor las llama con guion bajo porque asi se
+     llaman en el telefono; aqui existen con otro nombre. Sin estos dos
+     puentes, RT.start() reventaba en su primera linea con ReferenceError y
+     la sesion caia a la reserva SIN DECIR POR QUE. */
+  function _invokeHeaders(){ return invokeHeaders(); }
+  function _goLogin(){ return goLogin(); }
+  /* El telefono repinta toda la vista al colgar. Aqui no hay que repintar
+     nada: basta con devolver la escena a reposo. Sin este puente, stop()
+     reventaba en su ultima linea y la sesion se quedaba a medio cerrar. */
+  function render(){
+    try{ setAvatar("idle"); }catch(_){}
+    try{ salirModoVoz(); }catch(_){}
+  }
+
   /* El "orbe" del telefono es aqui el boton del microfono: mismo papel --
      enciende, apaga y late con la voz. */
   function orbe(){ return document.getElementById("mic"); }
@@ -2278,15 +2292,24 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
       micBtn.innerHTML = MIC_TECLADO;      /* ahora lleva a modo escritura */
       micBtn.title = "Volver a escribir";
       pintarVoz("conectando…");
+      var motivo = null;
       try{
         await RT.start();
         if(RT.activa()){ pintarVoz("Realtime"); return; }   /* el casi humano */
-      }catch(e){ /* cae a la reserva */ }
+        motivo = "el canal no llegó a abrirse";
+      }catch(e){
+        motivo = (e && e.message) ? e.message : String(e);
+      }
+      /* NO SE TRAGA EL FALLO. Un motor que degrada en silencio parece que
+         funciona: el PO estuvo hablando con la reserva creyendo que era
+         Realtime. Si cae, se dice y se dice por que. */
+      if(motivo) console.warn("[voz] Realtime no arrancó:", motivo);
       /* RESERVA: el reconocimiento del navegador. */
       try{
         sesionVoz = true;
         rec.start(); listening = true;
         pintarVoz("Reserva");
+        if(motivo) addError("Realtime no arrancó (" + motivo + "). Sigo con el motor de reserva.");
       }catch(e){ sesionVoz = false; stopListening(); pintarVoz(null); }
     });
   } else if(micBtn){
