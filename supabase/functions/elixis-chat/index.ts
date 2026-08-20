@@ -133,7 +133,7 @@ Tres identidades encadenadas, no las confundas: (1) CUENTA = perfil en Supabase,
 Dos canales de cobro: CANAL 2 "Artista Pro" (incluido en la membresía) está VIVO y funciona. CANAL 1 "renta independiente" a 19,99 USD/mes está INCOMPLETO hoy: el cobro se puede crear pero la emisión automática de la clave aún lo rechaza. NUNCA prometas la renta independiente como disponible; si alguien la pide, di que está en cierre y ofrécele la vía de membresía o que el Capitán lo habilite manualmente.
 Si un cliente deja de pagar, el acceso se pausa primero y se revoca después, con un margen sin conexión: a un DJ en medio de un evento no se le corta la herramienta esa misma noche.
 
-### TUS HERRAMIENTAS — SIETE, NI UNA MAS (inventario cerrado)
+### TUS HERRAMIENTAS — NUEVE, NI UNA MAS (inventario cerrado)
 Estas son TODAS las herramientas que tienes. No hay ninguna otra:
 1. consultar_finanzas — leer cifras del negocio.
 2. consultar_agenda_artista — ver la agenda personal de un artista.
@@ -143,6 +143,8 @@ Estas son TODAS las herramientas que tienes. No hay ninguna otra:
 6. generar_cotizacion_evento — preparar un BORRADOR de cotizacion.
 7. crear_nota_lead — dejar una nota interna en un lead existente.
 8. enviar_sms — ENCOLAR un SMS para que un humano lo apruebe. Tu NO lo envias.
+9. consultar_musica — catalogo REAL de Apple Music: lo mas escuchado ahora y
+   busqueda de temas y artistas.
 
 ### DE MUSICA SI SABES, Y MUCHO
 Eres productor y DJ, no un administrativo. Sabes leer una pista y decir que
@@ -157,11 +159,19 @@ Si te piden un set para una fiesta, PREGUNTA lo que de verdad cambia el
 resultado -- publico, edades, tipo de evento, duracion, hora -- y despues
 proponlo por bloques con su logica: apertura, subida, pico, bajada, cierre.
 
-⚠️ TU LIMITE, Y LO DICES SIN QUE TE LO PREGUNTEN: no tienes acceso a internet.
-Puedes hablar de clasicos y de lo que funciona desde siempre, pero NO conoces
-las listas de esta semana ni los estrenos recientes. Si te piden lo que suena
-AHORA, dilo con franqueza y ofrece lo que si sabes. Inventarse un top 10 actual
-es exactamente la clase de mentira que quema al Capitan delante de un cliente.
+PARA LO QUE SUENA AHORA, MIRA -- NO ADIVINES. Tienes consultar_musica, que
+consulta el catalogo REAL de Apple Music. Usala siempre que hables de lo que
+esta sonando esta semana, de un artista concreto o de si un tema existe.
+Inventarse un top 10 o un titulo es la clase de mentira que quema al Capitan
+delante de un cliente: si no vino en el resultado, no existe para esa
+respuesta.
+
+Tu criterio de DJ no lo sustituye la lista: el catalogo te dice que suena, y TU
+decides que entra en el set, en que bloque y por que. Una lista pegada tal cual
+no es un set.
+
+⚠️ Sigues SIN acceso general a internet: solo musica. De noticias, del tiempo o
+de cualquier otra cosa de fuera, no tienes forma de saber. Dilo con franqueza.
 
 ### LO QUE NO PUEDES HACER (y NUNCA debes prometer)
 NUNCA prometas ni confirmes: mandar WhatsApp, mandar correos, generar
@@ -746,6 +756,84 @@ serve(async (req: Request) => {
         },
     };
 
+    const MUSIC_TOOL = {
+        name: "consultar_musica",
+        description:
+            "Consulta el catalogo REAL de Apple Music. Uselo cuando haga falta saber que suena AHORA " +
+            "o comprobar un tema o artista concreto -- para armar un set, proponer repertorio o " +
+            "confirmar que una cancion existe. NO inventes titulos ni posiciones de lista: si no " +
+            "aparecen en el resultado, no existen para esta respuesta.",
+        input_schema: {
+            type: "object",
+            properties: {
+                recurso: {
+                    type: "string",
+                    enum: ["charts", "buscar"],
+                    description: "charts = lo mas escuchado ahora. buscar = un tema o artista concreto.",
+                },
+                q: {
+                    type: "string",
+                    description: "Solo con recurso=buscar: nombre del tema o del artista.",
+                },
+                limite: {
+                    type: "number",
+                    description: "Cuantos resultados, de 1 a 25. Por defecto 10.",
+                },
+            },
+            required: ["recurso"],
+        },
+    };
+
+    /* El puente mdj-music guarda la credencial de Apple: aqui solo se le pide.
+       Se RECORTA lo que vuelve -- titulo, artista, album, genero y duracion --
+       porque la respuesta cruda de Apple trae decenas de campos por tema
+       (portadas, previews, ISRC...) y todo eso acabaria en el contexto del
+       modelo pagandose por ficha sin aportar nada a un set. */
+    async function runMusicTool(input: Record<string, unknown>): Promise<string> {
+        const recurso = input?.recurso === "buscar" ? "buscar" : "charts";
+        const limite = Math.min(25, Math.max(1, Number(input?.limite) || 10));
+        const base = (Deno.env.get("SUPABASE_URL") ?? "").replace(/\/$/, "");
+        if (!base) return JSON.stringify({ error: "sin_servidor" });
+
+        const u = new URL(`${base}/functions/v1/mdj-music`);
+        u.searchParams.set("recurso", recurso);
+        u.searchParams.set("limite", String(limite));
+        if (recurso === "buscar") {
+            const q = String(input?.q ?? "").trim();
+            if (q.length < 2) return JSON.stringify({ error: "falta que buscar" });
+            u.searchParams.set("q", q);
+        }
+
+        try {
+            const res = await fetch(u.toString(), { headers: { Origin: "https://miamidjbeat.com" } });
+            if (!res.ok) return JSON.stringify({ error: "catalogo_no_disponible", estado: res.status });
+            const d = await res.json();
+            const cortar = (arr: unknown[]) =>
+                (arr ?? []).slice(0, limite).map((x) => {
+                    const a = (x as Record<string, Record<string, unknown>>)?.attributes ?? {};
+                    return {
+                        tema: a.name, artista: a.artistName, album: a.albumName,
+                        genero: Array.isArray(a.genreNames) ? a.genreNames[0] : undefined,
+                        anio: typeof a.releaseDate === "string" ? a.releaseDate.slice(0, 4) : undefined,
+                        duracion_s: typeof a.durationInMillis === "number" ? Math.round(a.durationInMillis / 1000) : undefined,
+                    };
+                });
+
+            if (recurso === "charts") {
+                const lista = d?.results?.songs?.[0]?.data ?? [];
+                return JSON.stringify({ ok: true, fuente: "Apple Music · EE.UU.", canciones: cortar(lista) });
+            }
+            return JSON.stringify({
+                ok: true, fuente: "Apple Music",
+                canciones: cortar(d?.results?.songs?.data ?? []),
+                artistas: (d?.results?.artists?.data ?? []).slice(0, 5)
+                    .map((x: Record<string, Record<string, unknown>>) => x?.attributes?.name),
+            });
+        } catch (_) {
+            return JSON.stringify({ error: "catalogo_inalcanzable" });
+        }
+    }
+
     const QUOTE_WRITE_TOOL = {
         name: "generar_cotizacion_evento",
         description:
@@ -846,6 +934,7 @@ serve(async (req: Request) => {
             || toolName === "consultar_agenda_artista"
             || toolName === "consultar_catalogo_precios"
             || toolName === "buscar_cliente"
+            || toolName === "consultar_musica"
         ) {
             return { tool: toolName, policy: "none", mode: "read" };
         }
@@ -1257,7 +1346,7 @@ serve(async (req: Request) => {
                     max_tokens: govMaxTokens, // Governor: FULL=MAX_TOKENS · SAVER=640 · ESSENTIAL=384 (founder siempre FULL)
                     temperature: 0.7,
                     system: systemContent,
-                    tools: [FINANCIAL_TOOL, LEAD_NOTE_TOOL, AGENDA_READ_TOOL, AGENDA_WRITE_TOOL, CATALOG_READ_TOOL, QUOTE_WRITE_TOOL, CLIENT_SEARCH_TOOL, SMS_QUEUE_TOOL],
+                    tools: [FINANCIAL_TOOL, LEAD_NOTE_TOOL, AGENDA_READ_TOOL, AGENDA_WRITE_TOOL, CATALOG_READ_TOOL, QUOTE_WRITE_TOOL, CLIENT_SEARCH_TOOL, SMS_QUEUE_TOOL, MUSIC_TOOL],
                     messages: convo,
                 }),
             });
@@ -1347,6 +1436,11 @@ serve(async (req: Request) => {
                     } catch {
                         failed = true;
                     }
+                    await recordAiKpi(failed ? "tool_error" : "tool_ok");
+                } else if (toolName === "consultar_musica") {
+                    out = await runMusicTool((b.input as Record<string, unknown>) ?? {});
+                    let failed = true;
+                    try { failed = (JSON.parse(out) as { ok?: unknown })?.ok !== true; } catch { failed = true; }
                     await recordAiKpi(failed ? "tool_error" : "tool_ok");
                 } else if (toolName === "buscar_cliente") {
                     out = await runClientSearchTool((b.input as Record<string, unknown>) ?? {});
