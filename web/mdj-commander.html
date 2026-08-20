@@ -772,18 +772,183 @@
   }
   function setAvatar(s){state.avatar=s;if(state.screen==='command')render();}
   function demoOrder(){return T('Analiza la web mojitoscalle8.com, dime qué le falta y prepárame una propuesta comercial.','Analyze mojitoscalle8.com, tell me what it\'s missing and prepare me a commercial proposal.');}
+  /* ═══════════════════════════════════════════════════════════════════
+     MOTOR DE VOZ EN TIEMPO REAL (FÉNIX)
+
+     Sustituye al ciclo viejo — SpeechRecognition del navegador -> texto ->
+     elixis-orchestrator -> elixis-tts — que medía entre 1 y 2,8 segundos por
+     turno y no permitía interrumpir. Ahora el audio va y viene por WebRTC
+     contra elixis-realtime-session: 171-364 ms medidos, y se le puede cortar
+     a media frase.
+
+     La CARA no se toca. Este motor solo mueve setAvatar() y state.agentReply,
+     que es lo que la carrocería ya sabía leer.
+     ═══════════════════════════════════════════════════════════════════ */
+  var RT = (function(){
+    var pc=null, dc=null, mic=null, spk=null;
+    var sesion=null, nivelBloque=0, hb=0, t0=0;
+    var hablando=false;
+
+    function fnUrl(accion){
+      if(!window.mdbSupabaseFunctionUrl) return null;
+      var u = window.mdbSupabaseFunctionUrl('elixis-realtime-session');
+      if(!u) return null;
+      return accion ? u + (u.indexOf('?')===-1?'?':'&') + 'action=' + accion : u;
+    }
+    function usados(){ return t0 ? Math.max(0, Math.round((Date.now()-t0)/1000)) : 0; }
+
+    /* Herramientas: ELIXIS pide, el navegador ejecuta CON el JWT del usuario.
+       El candado de cada función sigue mandando. */
+    async function accion(nombre, cuerpo){
+      var u = fnUrl(nombre);
+      if(!u) return { ok:false, motivo:'fallo' };
+      try{
+        var r = await fetch(u,{ method:'POST', headers:_invokeHeaders(), body:JSON.stringify(cuerpo) });
+        var d={}; try{ d=await r.json(); }catch(_){}
+        if(r.status===401||r.status===403) return { ok:false, motivo:'sin_acceso' };
+        if(!r.ok) return { ok:false, motivo:'fallo' };
+        return d;
+      }catch(e){ return { ok:false, motivo:'fallo' }; }
+    }
+
+    async function herramienta(item){
+      setAvatar('executing');
+      var args={}; try{ args=JSON.parse(item.arguments||'{}'); }catch(_){}
+      var out;
+      if(item.name==='consultar_elixis')      out = await accion('consultar',     { pregunta:String(args.pregunta||'') });
+      else if(item.name==='recordar')         out = await accion('memory_write',  { clave:String(args.clave||''), hecho:String(args.hecho||'') });
+      else if(item.name==='olvidar')          out = await accion('memory_forget', { clave:String(args.clave||'') });
+      else                                    out = { ok:false, motivo:'herramienta_desconocida' };
+
+      if(!dc || dc.readyState!=='open') return;
+      dc.send(JSON.stringify({ type:'conversation.item.create',
+        item:{ type:'function_call_output', call_id:item.call_id, output:JSON.stringify(out) } }));
+      dc.send(JSON.stringify({ type:'response.create' }));   /* sin esto se queda mudo */
+    }
+
+    function evento(m){
+      switch(m.type){
+        case 'input_audio_buffer.speech_started':
+          hablando=false; state.agentReply=null; state.agentLine=null;
+          setAvatar('listening'); break;
+
+        case 'input_audio_buffer.speech_stopped':
+          setAvatar('understanding'); break;
+
+        case 'response.output_audio_transcript.delta':
+          if(!hablando){ hablando=true; state.agentReply=''; state.agentLine='real'; }
+          state.agentReply += (m.delta||'');
+          setAvatar('speaking'); break;
+
+        case 'response.done':
+          /* Las llamadas a herramienta viajan DENTRO de response.done. Si se
+             cierra el turno aquí sin mirarlas, la consulta no sale nunca. */
+          var salida = (m.response && m.response.output) || [];
+          var llamadas = salida.filter(function(i){ return i && i.type==='function_call'; });
+          if(llamadas.length){ llamadas.forEach(herramienta); break; }
+          hablando=false; setAvatar('listening'); break;
+
+        case 'error':
+          toast(T('Error en el canal de voz','Voice channel error'),'warn'); break;
+      }
+    }
+
+    async function start(){
+      if(pc) return;
+      var url = fnUrl(null);
+      if(!url){ toast(T('No pude ubicar el servidor de voz','Voice server not found'),'warn'); return; }
+      url += (url.indexOf('?')===-1?'?':'&') + 'voice=' + (localStorage.getItem('elixis_voice')||'ash')
+           + '&vad=' + (localStorage.getItem('elixis_vad')||'medium');
+
+      setAvatar('understanding');
+      try{
+        mic = await navigator.mediaDevices.getUserMedia({
+          audio:{ echoCancellation:true, noiseSuppression:true, autoGainControl:true } });
+      }catch(e){
+        toast(T('Necesito permiso de micrófono','Microphone permission needed'),'warn');
+        setAvatar('idle'); return;
+      }
+
+      pc = new RTCPeerConnection();
+      spk = _voiceEl();                       /* reusa el elemento ya "armado" */
+      pc.ontrack = function(ev){ try{ spk.srcObject = ev.streams[0]; spk.play(); }catch(_){ } };
+      mic.getAudioTracks().forEach(function(t){ pc.addTrack(t, mic); });
+
+      dc = pc.createDataChannel('oai-events');
+      dc.onopen = function(){ setAvatar('listening'); haptic('light'); };
+      dc.onmessage = function(ev){ var m; try{ m=JSON.parse(ev.data); }catch(_){ return; } evento(m); };
+      pc.onconnectionstatechange = function(){
+        if(pc && ['failed','disconnected','closed'].indexOf(pc.connectionState)!==-1) stop(true);
+      };
+
+      var offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+
+      var h = _invokeHeaders(); h['Content-Type']='application/sdp';
+      var res;
+      try{ res = await fetch(url,{ method:'POST', headers:h, body:offer.sdp }); }
+      catch(e){ toast(T('No pude conectar la voz','Could not connect voice'),'warn'); stop(true); return; }
+
+      if(res.status===401){ _goLogin(); return; }
+      if(res.status===402){
+        var q={}; try{ q=await res.json(); }catch(_){}
+        toast(q.error==='safety_cap_reached'
+          ? T('Tope técnico alcanzado','Technical cap reached')
+          : T('Sin saldo de voz · continúa por texto','Out of voice credit · continue by text'),'warn');
+        state.voiceMode='text'; stop(true); return;
+      }
+      if(res.status===403){ toast(T('Esta cuenta no tiene acceso de voz','No voice access for this account'),'warn'); stop(true); return; }
+      if(res.status===429){ toast(T('Demasiadas sesiones · espera un momento','Too many sessions · wait a moment'),'warn'); stop(true); return; }
+      if(!res.ok){ toast(T('La voz no está disponible ahora','Voice unavailable right now'),'warn'); stop(true); return; }
+
+      sesion     = res.headers.get('x-elixis-session');
+      nivelBloque= parseInt(res.headers.get('x-elixis-granted-seconds')||'0',10);
+      t0         = Date.now();
+
+      await pc.setRemoteDescription({ type:'answer', sdp: await res.text() });
+
+      /* El latido evita que el barrendero dé la sesión por abandonada y la
+         cobre entera. */
+      if(sesion){
+        hb = setInterval(function(){
+          var u = fnUrl('heartbeat'); if(!u) return;
+          fetch(u + '&session=' + encodeURIComponent(sesion), { method:'POST', headers:_invokeHeaders() }).catch(function(){});
+        }, 4*60*1000);
+      }
+    }
+
+    /* keepalive: la liquidación sale aunque se cierre la pestaña. Sin esto se
+       le cobra al cliente el bloque entero en vez de lo que habló. */
+    function liquidar(){
+      if(hb){ clearInterval(hb); hb=0; }
+      if(!sesion) { t0=0; return; }
+      var u = fnUrl('settle');
+      var s = sesion; sesion=null;
+      var seg = usados(); t0=0;
+      if(u) fetch(u + '&session=' + encodeURIComponent(s) + '&used=' + seg,
+                  { method:'POST', headers:_invokeHeaders(), keepalive:true }).catch(function(){});
+    }
+
+    function stop(silencioso){
+      liquidar();
+      if(dc){ try{ dc.close(); }catch(_){ } dc=null; }
+      if(pc){ try{ pc.close(); }catch(_){ } pc=null; }
+      if(mic){ mic.getTracks().forEach(function(t){ try{ t.stop(); }catch(_){ } }); mic=null; }
+      if(spk){ try{ spk.pause(); spk.srcObject=null; }catch(_){ } }
+      hablando=false;
+      if(!silencioso) setAvatar('idle');
+    }
+
+    window.addEventListener('beforeunload', liquidar);
+    return { start:start, stop:stop, activa:function(){ return !!pc; } };
+  })();
+
   /* continuous dialogue: the agent keeps listening & answering until the human ends it */
   function startListening(){
-    state.agentLine=null;state.agentReply=null;setAvatar('listening');haptic('light');
-    if(_cvAudio){try{_cvAudio.pause();}catch(_){}}
-    var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-    if(!SR){ toast(T('Tu navegador no soporta dictado por voz','Voice input not supported'),'warn'); return; }
-    try{
-      _rec = new SR(); _rec.lang='es-ES'; _rec.interimResults=true; _rec.continuous=false;
-      _rec.onresult=function(e){ var t=''; for(var i=0;i<e.results.length;i++)t+=e.results[i][0].transcript; var cap=$('#voiceCaption'); if(cap)cap.textContent=t; if(e.results[e.results.length-1].isFinal){ startTranscribe(t); } };
-      _rec.onerror=function(){}; _rec.onend=function(){};
-      _rec.start();
-    }catch(e){}
+    /* Antes: dictado del navegador. Ahora: canal de voz en tiempo real.
+       La diferencia que se nota es que ahora se le puede interrumpir. */
+    state.agentLine=null; state.agentReply=null;
+    RT.start();
   }
   function startTranscribe(text){
     state.avatar='transcribing';render();
@@ -810,6 +975,7 @@
   }
   function endVoice(){
     if(_rec){try{_rec.stop();}catch(_){}}
+    RT.stop(true);                 /* cierra el canal y liquida el consumo */
     if(_cvAudio){try{_cvAudio.pause();}catch(_){}}
     if(state.avatar==='idle'){render();return;}
     state.agentLine='bye';state.avatar='speaking';render();haptic('light');
