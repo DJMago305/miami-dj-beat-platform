@@ -232,6 +232,7 @@
     <script defer src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script defer src="./flow-handler.js?v=202605131800-fase-b-statement"></script>
+    <script defer src="./libro-operaciones-widget.js?v=202608210900-fase-2a"></script>
 
     <!-- Open Graph / Meta sharing -->
     <meta property="og:type" content="website">
@@ -3085,6 +3086,8 @@
             <a href="./dj-tools.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-tools">DJ Tools</a>
             <button type="button" class="dj-tab-btn" data-tab="flow" data-i18n="flow-dash" id="dj-tab-flow-btn"
                 onclick="mdjFlowTabClick(event)">CASH FLOW <span class="dj-tab-lock-icon" aria-hidden="true" style="display:none;">🔒</span></button>
+            <button type="button" class="dj-tab-btn" data-tab="libro" id="dj-tab-libro-btn"
+                style="display:none;" onclick="mdjLibroTabClick(event)">LIBRO</button>
             <button type="button" class="dj-tab-btn active" data-tab="public" data-i18n="menu-account"
                 onclick="switchProfileTab('public')">Mi Perfil</button>
             <a href="./admin-dashboard.html" class="dj-tab-btn dj-tab-btn--staff-only" data-mdj-nav="staff" data-i18n="nav-staff">STAFF</a>
@@ -5466,6 +5469,14 @@
                     flowProReq.style.display = 'none';
                 }
 
+                // Libro de Operaciones IA (Fase 2A): escribir es solo del dueño de ESTE perfil —
+                // mismo criterio que Cash Flow. Nunca visible para un visitante ni para otro artista.
+                window._libroTabAllowed = !!isOwner;
+                const libroTabBtn = document.getElementById('dj-tab-libro-btn') || document.querySelector('button[data-tab="libro"]');
+                if (libroTabBtn) {
+                    libroTabBtn.style.display = isOwner ? 'inline-block' : 'none';
+                }
+
                 const params = new URLSearchParams(window.location.search);
                 const tabFromUrl = params.get('tab');
                 if ((tabFromUrl === 'flow' || tabFromUrl === 'sft') && !isOwner) {
@@ -6569,6 +6580,10 @@
             </div>
         </div>
     </div>
+
+    <!-- Libro de Operaciones IA — Fase 2A: escribir es solo del dueño de este perfil. -->
+    <div id="tab-libro" class="dj-panel serato-pane"></div>
+
     <script>
         if (typeof window.mdjSftClearTabBootChrome !== 'function') {
             window.mdjSftClearTabBootChrome = function mdjSftClearTabBootChrome() {
@@ -6889,6 +6904,10 @@
             if (tab === 'flow' && !window._flowTabAllowed) {
                 tab = 'public';
             }
+            // Libro de Operaciones IA: escribir es solo del dueño de este perfil.
+            if (tab === 'libro' && !window._libroTabAllowed) {
+                tab = 'public';
+            }
             // FLOW: nunca redirigir a Shop; dueño siempre puede ver la pestaña (LITE/PRO).
             // Lógica de Pestañas Principales
             document.querySelectorAll('.dj-panel').forEach(p => p.classList.remove('active'));
@@ -7077,6 +7096,96 @@
             border: 1px solid rgba(255, 255, 255, 0.05);
             border-radius: 20px;
             overflow: hidden;
+        }
+
+        /* Libro de Operaciones IA — Fase 2A */
+        .libro-widget {
+            max-width: 640px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+        .libro-lede {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14.5px;
+            margin: 0 0 20px;
+        }
+        .libro-legal-notice {
+            background: #111114;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-left: 3px solid #c99f4c;
+            border-radius: 10px;
+            padding: 16px 18px;
+            margin-bottom: 22px;
+            font-size: 13.5px;
+            color: rgba(255, 255, 255, 0.75);
+        }
+        .libro-legal-notice p {
+            font-style: italic;
+            margin: 8px 0;
+        }
+        .libro-legal-notice--pending {
+            border-left-color: #c1595a;
+        }
+        .libro-legal-check {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+        .libro-form {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .libro-form label {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.65);
+        }
+        .libro-form input,
+        .libro-form textarea {
+            background: #111114;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 8px;
+            padding: 10px 12px;
+            color: #fff;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        .libro-hint {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 11.5px;
+        }
+        .libro-form button[type="submit"] {
+            background: #c99f4c;
+            color: #100c02;
+            border: none;
+            border-radius: 8px;
+            padding: 12px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .libro-form button[type="submit"]:disabled {
+            opacity: 0.6;
+            cursor: default;
+        }
+        .libro-status {
+            margin-top: 16px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 13.5px;
+        }
+        .libro-status.success {
+            background: rgba(95, 174, 130, 0.12);
+            color: #5fae82;
+        }
+        .libro-status.error {
+            background: rgba(193, 89, 90, 0.12);
+            color: #c1595a;
         }
 
         .flow-table {
