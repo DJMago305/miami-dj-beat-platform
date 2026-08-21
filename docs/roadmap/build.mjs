@@ -1332,6 +1332,17 @@ ${html.slice(html.indexOf("<style>"), html.indexOf("</style>") + 8)}
     transition:background .15s,border-color .15s}
   .rm-cerrar:hover{background:rgba(197,160,89,.10);border-color:rgba(197,160,89,.62)}
   body.con-menu .rm-cerrar{display:none}
+  /* El sol comparte molde con la X, pero NO se oculta nunca: lo necesita
+     tanto el staff como el artista o el cliente. Cuando hay menu se corre a
+     la izquierda para ocupar el hueco que deja la X. */
+  .rm-tema{position:fixed;top:16px;right:60px;z-index:9999;width:34px;height:34px;
+    display:flex;align-items:center;justify-content:center;background:transparent;
+    border:1px solid rgba(197,160,89,.28);border-radius:999px;
+    font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;
+    font-size:16px;line-height:1;cursor:pointer;padding:0;
+    transition:background .15s,border-color .15s}
+  .rm-tema:hover{background:rgba(197,160,89,.10);border-color:rgba(197,160,89,.62)}
+  body.con-menu .rm-tema{right:18px}
 
   /* MENU — SOLO para sesiones de staff. road-map.html es PUBLICA: la ve un
      cliente o un artista para entender la plataforma, y ensenarle AGENDA,
@@ -1363,6 +1374,9 @@ ${html.slice(html.indexOf("<style>"), html.indexOf("</style>") + 8)}
 </style>
 
 <nav class="rm-menu" id="rmMenu" aria-label="Menu"></nav>
+
+<button type="button" class="rm-tema" data-mdj-tema-toggle
+        aria-label="Modo dia o noche" title="Modo dia o noche">&#9728;&#65039;</button>
 
 <a class="rm-cerrar" href="./staff.html?vista=miperfil"
    aria-label="Cerrar y volver a Mi Perfil" title="Cerrar">&times;</a>
@@ -1417,10 +1431,11 @@ ${capsPub}
           else if (rol === 'manager' || rol === 'management') ruta = 'manager';
           else if (rol === 'seller') ruta = 'vendedor';
           else if (rol) ruta = 'artista';
-          /* El menu solo existe para staff. Un cliente o un artista NO ve la
-             estructura interna: para ellos esto sigue siendo el recorrido
-             publico de siempre, con su boton de cerrar. */
-          if (['owner','admin','manager','management','seller'].indexOf(rol) >= 0) pintaMenu();
+          /* CADA PERFIL VE SU PARTE (PO). No es que el artista vea el menu del
+             staff -- eso seria exponerle la estructura interna. Es que cada rol
+             recibe EL SUYO: staff el de staff, artista y cliente los 8 slots
+             canonicos con su destino. Sin sesion no hay menu. */
+          pintaMenu(rol);
         }
       }
     }catch(e){}
@@ -1428,23 +1443,48 @@ ${capsPub}
     pinta();
   })();
 
-  /* Rotulos y destinos COPIADOS de staffTopnavHtml() en staff.html. No se
-     inventa ninguno: si alli cambian, aqui hay que traerlos igual. */
-  function pintaMenu(){
+  /* Rotulos y destinos COPIADOS: los de staff de staffTopnavHtml() en
+     staff.html; los de artista y cliente de los 8 slots canonicos de #mainNav,
+     con CONFIG y MI PERFIL resueltos por rol igual que hace
+     mdj-shared-header.js. No se inventa ninguno. */
+  function pintaMenu(rol){
     var m = document.getElementById('rmMenu');
     if (!m || m.classList.contains('on')) return;
-    m.innerHTML =
-      '<a href="./index.html">Inicio</a>' +
-      '<a href="./academia.html">Academia</a>' +
-      '<a href="./staff.html?vista=agenda">Agenda</a>' +
-      '<a href="./account-settings.html">\u2699 Config</a>' +
-      '<a href="./dj-tools.html">DJ Tools</a>' +
-      '<a href="./staff.html?vista=cashflow">Cash Flow</a>' +
-      '<a href="./staff.html?vista=miperfil">Mi Perfil</a>' +
-      '<a href="./staff.html?vista=gobernanza">Staff</a>' +
-      '<a href="./staff.html?vista=elixis">F\u00e9nix AI</a>' +
-      '<a href="./road-map.html" class="aqui" aria-current="page">MRM IA</a>' +
-      '<button type="button" class="tema" data-mdj-tema-toggle aria-label="Modo dia o noche" title="Modo dia o noche">\u2600\ufe0f</button>';
+    var esStaff = ['owner','admin','manager','management','seller'].indexOf(rol) >= 0;
+    if (!esStaff && !rol) return;                 // sin sesion, sin menu
+    var aqui = '<a href="./road-map.html" class="aqui" aria-current="page">MRM IA</a>';
+
+    if (esStaff) {
+      m.innerHTML =
+        '<a href="./index.html">Inicio</a>' +
+        '<a href="./academia.html">Academia</a>' +
+        '<a href="./staff.html?vista=agenda">Agenda</a>' +
+        '<a href="./account-settings.html">\u2699 Config</a>' +
+        '<a href="./dj-tools.html">DJ Tools</a>' +
+        '<a href="./staff.html?vista=cashflow">Cash Flow</a>' +
+        '<a href="./staff.html?vista=miperfil">Mi Perfil</a>' +
+        '<a href="./staff.html?vista=gobernanza">Staff</a>' +
+        '<a href="./staff.html?vista=elixis">F\u00e9nix AI</a>' + aqui;
+    } else {
+      /* Los 8 slots canonicos. CONFIG y MI PERFIL cambian de destino, nunca de
+         rotulo: "MI PERFIL" es la etiqueta unica del slot 8 para todos. */
+      var esArtista = (rol !== 'cliente' && rol !== 'client');
+      var config  = esArtista ? './account-settings.html' : './client-account.html';
+      var miPerfil = esArtista ? './dj-profile.html' : './client-portal.html';
+      m.innerHTML =
+        '<a href="./index.html">Inicio</a>' +
+        '<a href="./rentals.html">Servicios</a>' +
+        '<a href="./events.html">Eventos</a>' +
+        '<a href="./shop.html">Shop</a>' +
+        '<a href="' + config + '">\u2699 Config</a>' +
+        '<a href="./jobs.html">Trabajos</a>' +
+        '<a href="./contact.html">Contacto</a>' +
+        '<a href="' + miPerfil + '">Mi Perfil</a>' + aqui;
+    }
+    /* El sol NO va aqui dentro. El menu solo existe para staff, asi que un
+       artista o un cliente se quedaba sin poder cambiar el tema. Dia y noche
+       no es estructura interna: es una preferencia de pantalla y la tiene
+       cualquiera. Vive fuera, en la esquina, siempre visible. */
     m.classList.add('on');
     document.body.classList.add('con-menu');
   }
