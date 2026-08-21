@@ -38,18 +38,30 @@
       window.navigator.standalone === true;
   }
 
+  // Estos textos los lee el CLIENTE, no un tecnico. La plataforma es ES/EN y
+  // un cliente en ingles con un iPhone estaba leyendo instrucciones en espanol.
+  function t(clave, respaldo) {
+    try {
+      if (window.i18n && typeof window.i18n.t === "function") {
+        var v = window.i18n.t(clave);
+        if (v && v !== clave) return v;
+      }
+    } catch (_) {}
+    return respaldo;
+  }
+
   function porQueNoSePuede() {
-    if (!("serviceWorker" in navigator)) return "Este navegador no admite avisos.";
+    if (!("serviceWorker" in navigator)) return t("push-sin-soporte", "Este navegador no admite avisos.");
     if (!("PushManager" in window)) {
-      if (esIOS()) return "En iPhone hace falta iOS 16.4 o mas nuevo.";
-      return "Este navegador no admite avisos.";
+      if (esIOS()) return t("push-ios-viejo", "En iPhone hace falta iOS 16.4 o mas nuevo.");
+      return t("push-sin-soporte", "Este navegador no admite avisos.");
     }
     if (esIOS() && !enPantallaDeInicio()) {
-      return "En iPhone: toca Compartir y luego «Anadir a pantalla de inicio». Desde ahi ya puedes activar los avisos.";
+      return t("push-ios-pantalla-inicio", "En iPhone: toca Compartir y luego \u00ABAnadir a pantalla de inicio\u00BB. Desde ahi ya puedes activar los avisos.");
     }
-    if (!VAPID_PUBLICA) return "Falta configurar la clave publica de avisos.";
+    if (!VAPID_PUBLICA) return t("push-sin-clave", "Los avisos no estan configurados todavia.");
     if (Notification.permission === "denied") {
-      return "Bloqueaste los avisos para este sitio. Hay que reactivarlos en los ajustes del navegador.";
+      return t("push-bloqueado", "Bloqueaste los avisos para este sitio. Hay que reactivarlos en los ajustes del navegador.");
     }
     return null;
   }
@@ -59,7 +71,7 @@
     if (impedimento) return { ok: false, motivo: impedimento };
 
     var permiso = await Notification.requestPermission();
-    if (permiso !== "granted") return { ok: false, motivo: "El cliente no dio permiso." };
+    if (permiso !== "granted") return { ok: false, motivo: t("push-sin-permiso", "No diste permiso para recibir avisos.") };
 
     var reg = await navigator.serviceWorker.register("/sw-push.js", { scope: "/" });
     await navigator.serviceWorker.ready;
@@ -85,7 +97,7 @@
         agente: navigator.userAgent.slice(0, 200),
       }),
     });
-    if (!r.ok) return { ok: false, motivo: "No se pudo guardar el dispositivo (" + r.status + ")." };
+    if (!r.ok) return { ok: false, motivo: t("push-no-guardado", "No se pudo registrar este dispositivo.") + " (" + r.status + ")" };
     return { ok: true };
   }
 
