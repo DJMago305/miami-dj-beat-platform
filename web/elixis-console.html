@@ -28,9 +28,38 @@
     }
 })();
 </script>
+<script>
+  /* EMPOTRADO O SUELTO. La consola se abre de dos formas:
+       · dentro del marco de staff.html -> el menu de arriba YA da Mi Perfil,
+         Staff y Fenix AI, asi que la tira de cuentas de abajo sobra.
+       · suelta, desde account-settings, admin-dashboard, dj-dashboard y
+         staff-admin -> ahi la tira es la UNICA salida y debe quedarse.
+     Se marca en <html> antes de pintar para que no haya parpadeo. */
+  try{ if(window.top !== window.self) document.documentElement.setAttribute('data-empotrado','1'); }
+  catch(e){ document.documentElement.setAttribute('data-empotrado','1'); }
+</script>
 <script src="./supabase-config.js"></script>
 
 <style>
+    /* ver la nota junto a <nav class="cuentas"> */
+    :root[data-empotrado="1"] .cuentas{display:none !important;}
+    /* EMPOTRADA: la consola va a PANTALLA COMPLETA bajo el menu de staff.html.
+       Encima flota la marca de Miami DJ Beat, en la franja de arriba a la
+       izquierda. Asi que solo esquivan las piezas de ESE lado; el chat y la red
+       siguen a sangre, que es lo que hace que la estacion se sienta inmersiva.
+       El valor es la altura de esa banda (58px) mas un respiro. */
+    /* El sol de la consola se retira cuando va empotrada: el menu de arriba ya
+       lleva el suyo, y ademas ES EL BUENO -- difunde el tema a los cuatro
+       marcos. Suelta se queda, que alli es el unico. */
+    :root[data-empotrado="1"] #temaBtn{display:none !important;}
+    /* EMPOTRADA: la consola CONSERVA su propio lockup -- es la identidad de la
+       estacion. Quien no aparece aqui es la marca de la plataforma: staff.html
+       la retira en esta vista para que no compitan (decision del PO tras
+       probarlo al reves).
+       Como no hay nada flotando encima, las piezas suben pegadas al menu. */
+    :root[data-empotrado="1"] .topbar{margin-top:6px;}
+    :root[data-empotrado="1"] .cfg-riel{padding-top:10px;}
+    :root[data-empotrado="1"] .lado-izq{top:88px;}
   /* MODO DIA. El oro baja a bronce: el oro claro sobre papel blanco se lee
      gris. Mismo criterio que en el movil, distintos nombres de token porque
      esta consola tiene los suyos. */
@@ -849,6 +878,10 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
          inventan: "Mi Perfil", "Staff", "Fénix AI". Ojo -- la vista interna de
          Staff se llama `gobernanza`, pero el rotulo visible es Staff y es el
          rotulo el que manda. -->
+    <!-- Se oculta cuando la consola va dentro del marco de staff.html: alli el
+         menu de arriba ya lleva Mi Perfil, Staff y Fenix AI, y tenerlo dos
+         veces es la redundancia que la ley prohibe. Suelta SIGUE siendo la
+         unica salida, por eso no se borra. -->
     <nav class="cuentas" id="cuentas" aria-label="Cuentas">
       <a href="./staff.html?vista=miperfil" data-vista="miperfil">Mi Perfil</a>
       <!-- STAFF NO ESTA AQUI A PROPOSITO. Se inyecta por codigo solo si el rol

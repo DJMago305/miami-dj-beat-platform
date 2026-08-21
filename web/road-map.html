@@ -1,28 +1,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Road Map IA — MIAMI DJ BEAT LLC</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
-<script>
-    /* FIX-LEGACY-SUPABASE-01 (2026-08-19) · el respaldo entra cuando falta la
-       LIBRERIA, no cuando falta la sintaxis.
-       Antes la puerta era una sonda de `?.` y `??`. Eso solo cubre el motor que no
-       sabe parsear: si el bundle del CDN muere por CUALQUIER otra razon —una v2 mas
-       nueva con sintaxis que el motor no soporta, red caida, TLS, bloqueo— la sonda
-       pasa, el respaldo NO se inyecta y la pagina se queda sin cliente Supabase.
-       Sin cliente no hay sesion, y el guard del perfil expulsa al login: ese era el
-       rebote en Mac antiguas. Ahora se pregunta lo unico que importa, si la libreria
-       esta aqui. En un navegador moderno no hace nada, porque ya esta.
-       El CDN ademas se clava a 2.112.3, la misma version que la copia vendorizada:
-       `@2` era flotante y podia cambiar bajo nuestros pies sin tocar el repo. */
-(function () {
-    var mdjLibAusente = !(window.supabase &&
-        typeof window.supabase.createClient === 'function');
-    if (mdjLibAusente) {
-        document.write('<script src="./vendor/supabase-js-2.112.3.legacy.js?v=20260818-safari-legacy"><\/script>');
-    }
-})();
-</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="./supabase-config.js"></script>
+<!-- Motor de dia/noche. Sin el, el sol del menu queda PINTADO PERO MUERTO:
+     escucha [data-mdj-tema-toggle], el mismo enganche que usan
+     admin-dashboard, account-settings y dj-dashboard. -->
+<script src="./js/mdj-tema-portal.js"></script>
 <style>
 :root{
   --ground:#f2f4f8;--panel:#fff;--panel2:#f7f8fb;--rail:#eceff4;--line:#dbdfe8;--edge:#c6ccd8;
@@ -300,18 +284,94 @@ section.on>.cap-head{background:linear-gradient(90deg,var(--gold-a16),transparen
   .rm-open h1{font:800 clamp(30px,5vw,46px)/1.04 system-ui,sans-serif;letter-spacing:-.024em;margin:12px 0 14px}
   .rm-open p{color:var(--soft);font-size:17px;max-width:70ch}
   .rm-who{display:flex;gap:8px;flex-wrap:wrap;margin:26px 0 0}
-  .rm-deck{position:sticky;top:0;z-index:20;max-width:900px;margin:26px auto 0;padding:10px 13px;
-    background:var(--panel);border:1px solid var(--line);border-radius:10px;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+  /* BARRA DE MANDOS (PO 2026-08-21). Sube y se pega debajo del menu, y pierde
+     el panel: TRANSPARENTE, como el resto de la plataforma. Lo que se ve son
+     las teclas, no la caja que las contiene. */
+  .rm-deck{position:sticky;top:0;z-index:20;max-width:900px;margin:18px auto 0;
+    padding:10px 4px;background:transparent;border:0;border-radius:0;
+    display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  body.con-menu .rm-deck{top:72px;margin-top:14px}
+
+  /* TECLAS DE ORDENADOR. No es un boton plano: es una tecla.
+       . el degradado la ilumina por arriba, como una superficie curva
+       . el filo claro de arriba es el reflejo de la luz
+       . el borde inferior oscuro y la sombra dura de 2px son el CANTO: lo que
+         le da altura y la despega del fondo
+       . al pulsarla BAJA 2px y pierde el canto, o sea que se hunde de verdad */
+  .rm-deck button{
+    font:inherit;cursor:pointer;color:var(--ink,#e8eaed);
+    padding:9px 15px;border-radius:9px;
+    background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.025));
+    border:1px solid rgba(255,255,255,.13);
+    border-bottom-color:rgba(0,0,0,.55);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.17), 0 2px 0 rgba(0,0,0,.5), 0 5px 12px rgba(0,0,0,.34);
+    transition:transform .08s ease, box-shadow .08s ease, background .18s ease}
+  .rm-deck button:hover:not(:disabled){background:linear-gradient(180deg, rgba(255,255,255,.15), rgba(255,255,255,.05))}
+  .rm-deck button:active:not(:disabled){transform:translateY(2px);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.09), 0 1px 4px rgba(0,0,0,.3)}
+  .rm-deck button:disabled{opacity:.42;cursor:default;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.06), 0 1px 0 rgba(0,0,0,.4)}
+  /* La tecla principal, en oro: es la que invita a empezar. */
+  .rm-deck .play{color:#15110a;font-weight:800;letter-spacing:.02em;
+    background:linear-gradient(180deg, #e8c987, #c5a059);
+    border-color:rgba(255,255,255,.28);border-bottom-color:rgba(90,66,16,.9);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.5), 0 2px 0 rgba(90,66,16,.85), 0 6px 14px rgba(197,160,89,.24)}
+  .rm-deck .play:hover{background:linear-gradient(180deg, #f0d79c, #d0ac62)}
+  .rm-deck .play:active{box-shadow:inset 0 1px 0 rgba(255,255,255,.35), 0 2px 6px rgba(197,160,89,.2)}
+  /* Las flechas, cuadradas: una tecla de direccion no es un boton alargado. */
+  .rm-deck #prev,.rm-deck #next{width:42px;padding:9px 0;text-align:center;font-size:15px}
+  .rm-deck .pos{font-family:var(--mono,ui-monospace,monospace);font-size:12px;
+    color:var(--faint,#7b828e);font-variant-numeric:tabular-nums;padding:0 4px}
+  .rm-deck .cap{flex:1 1 260px;min-width:0}
+  .rm-deck .cap b{display:block;font-size:13.5px}
+  .rm-deck .cap span{font-size:12.5px;color:var(--soft,#9aa2ae)}
   .chapter{max-width:900px;margin:44px auto 0}
   .chapter.hide{display:none}
+
+  /* CERRAR (PO 2026-08-21). MRM no tenia ninguna salida: se entraba y solo
+     quedaba el boton atras del navegador. Vuelve a MI PERFIL.
+     Mismo simbolo que usa toda la plataforma para cerrar. */
+  .rm-cerrar{position:fixed;top:16px;right:18px;z-index:9999;width:34px;height:34px;
+    display:flex;align-items:center;justify-content:center;background:transparent;
+    border:1px solid rgba(197,160,89,.28);border-radius:999px;color:#e8c987;
+    font-size:22px;line-height:1;cursor:pointer;padding:0;text-decoration:none;
+    transition:background .15s,border-color .15s}
+  .rm-cerrar:hover{background:rgba(197,160,89,.10);border-color:rgba(197,160,89,.62)}
+  body.con-menu .rm-cerrar{display:none}
+
+  /* MENU — SOLO para sesiones de staff. road-map.html es PUBLICA: la ve un
+     cliente o un artista para entender la plataforma, y ensenarle AGENDA,
+     CASH FLOW o STAFF seria exponer la estructura interna del negocio.
+     Nace VACIO y solo se rellena si el rol es staff.
+     Valores copiados de .staff-topnav en staff.html: misma tipografia, misma
+     calibracion fluida, mismo reparto. Una funcion, un patron. */
+  .rm-menu{display:none}
+  .rm-menu.on{
+    display:flex;align-items:center;justify-content:safe center;gap:0;
+    position:sticky;top:0;z-index:50;height:72px;padding:0 clamp(12px,2vw,32px) 6px;
+    background:var(--bg,#0b0d12);overflow-x:auto;overflow-y:hidden;
+    scrollbar-width:thin;overscroll-behavior-x:contain}
+  .rm-menu a,.rm-menu button{
+    background:none;border:0;text-decoration:none;color:rgba(255,255,255,.88);
+    font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+    font-size:clamp(13px, calc(1.58vw - 3.2px), 20px);font-weight:800;
+    letter-spacing:clamp(1px, calc(0.48vw - 5.0px), 2.8px);
+    text-transform:uppercase;cursor:pointer;white-space:nowrap;flex-shrink:0;
+    display:flex;align-items:center;padding:4px clamp(4px,0.45vw,7px) 8px;
+    position:relative;transition:color .2s ease}
+  .rm-menu a+a::before,.rm-menu a+button::before{
+    content:"/";color:rgba(197,160,89,.4);font-weight:500;margin-right:.68em;line-height:1}
+  .rm-menu a:hover{color:rgba(255,255,255,.98)}
+  .rm-menu a.aqui{color:var(--gold,#d4af37);border-bottom:2px solid var(--gold,#d4af37)}
+  /* El sol es un EMOJI: hereda Inter del menu y saldria monocromo. */
+  .rm-menu .tema{font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;
+    letter-spacing:0;text-transform:none;font-size:clamp(15px,1.25vw,19px);line-height:1}
 </style>
 
-<div class="rm-open">
-  <p class="eyebrow">MIAMI DJ BEAT LLC · Road Map IA</p>
-  <h1>Cómo funciona esta plataforma</h1>
-  <p>Humanos y agentes de inteligencia artificial trabajando en equipo: las personas deciden, los agentes preparan el terreno. Este recorrido te enseña la parte que te toca a ti — y lo conduce el propio sistema, que es la mejor forma de demostrar que funciona.</p>
-  <div class="rm-who" id="rmWho"></div>
-</div>
+<nav class="rm-menu" id="rmMenu" aria-label="Menu"></nav>
+
+<a class="rm-cerrar" href="./staff.html?vista=miperfil"
+   aria-label="Cerrar y volver a Mi Perfil" title="Cerrar">&times;</a>
 
 <div class="rm-deck">
   <button class="play" id="play">▶&nbsp; Recorrido</button>
@@ -320,6 +380,14 @@ section.on>.cap-head{background:linear-gradient(90deg,var(--gold-a16),transparen
   <span class="pos" id="pos">— / 0</span>
   <span class="cap" id="cap"><b>Tu recorrido</b><span>Pulsa Recorrido y te lo explico paso a paso.</span></span>
 </div>
+
+<div class="rm-open">
+  <p class="eyebrow">MIAMI DJ BEAT LLC · Road Map IA</p>
+  <h1>Cómo funciona esta plataforma</h1>
+  <p>Humanos y agentes de inteligencia artificial trabajando en equipo: las personas deciden, los agentes preparan el terreno. Este recorrido te enseña la parte que te toca a ti — y lo conduce el propio sistema, que es la mejor forma de demostrar que funciona.</p>
+  <div class="rm-who" id="rmWho"></div>
+</div>
+
 
     <section class="chapter" id="cap-1" data-aud="cliente artista vendedor manager owner">
       <div class="cap-head"><span class="cap-n">Capítulo 1</span><h2>El ecosistema en una vista</h2></div>
@@ -603,12 +671,37 @@ section.on>.cap-head{background:linear-gradient(90deg,var(--gold-a16),transparen
           else if (rol === 'manager' || rol === 'management') ruta = 'manager';
           else if (rol === 'seller') ruta = 'vendedor';
           else if (rol) ruta = 'artista';
+          /* El menu solo existe para staff. Un cliente o un artista NO ve la
+             estructura interna: para ellos esto sigue siendo el recorrido
+             publico de siempre, con su boton de cerrar. */
+          if (['owner','admin','manager','management','seller'].indexOf(rol) >= 0) pintaMenu();
         }
       }
     }catch(e){}
     if (AUD.indexOf(ruta) < 0) ruta = 'cliente';
     pinta();
   })();
+
+  /* Rotulos y destinos COPIADOS de staffTopnavHtml() en staff.html. No se
+     inventa ninguno: si alli cambian, aqui hay que traerlos igual. */
+  function pintaMenu(){
+    var m = document.getElementById('rmMenu');
+    if (!m || m.classList.contains('on')) return;
+    m.innerHTML =
+      '<a href="./index.html">Inicio</a>' +
+      '<a href="./academia.html">Academia</a>' +
+      '<a href="./staff.html?vista=agenda">Agenda</a>' +
+      '<a href="./account-settings.html">⚙ Config</a>' +
+      '<a href="./dj-tools.html">DJ Tools</a>' +
+      '<a href="./staff.html?vista=cashflow">Cash Flow</a>' +
+      '<a href="./staff.html?vista=miperfil">Mi Perfil</a>' +
+      '<a href="./staff.html?vista=gobernanza">Staff</a>' +
+      '<a href="./staff.html?vista=elixis">Fénix AI</a>' +
+      '<a href="./road-map.html" class="aqui" aria-current="page">MRM IA</a>' +
+      '<button type="button" class="tema" data-mdj-tema-toggle aria-label="Modo dia o noche" title="Modo dia o noche">☀️</button>';
+    m.classList.add('on');
+    document.body.classList.add('con-menu');
+  }
 
   var i=-1, t=null, run=false;
   function lista(){ return [].slice.call(document.querySelectorAll('.chapter:not(.hide)')); }

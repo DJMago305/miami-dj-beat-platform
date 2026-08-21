@@ -46,6 +46,15 @@
     :root{ --gold:#c5a059; --gold-lt:#e8c987; --bg:#050810; --panel:#0b0f18; --line:rgba(255,255,255,.10); }
     *{box-sizing:border-box;}
     /* El portal tiene su PROPIA topbar: anula el padding-top del header fijo del sitio (styles.css) que dejaba un hueco negro arriba. */
+    /* El hueco de la barra vertical se reserva SIEMPRE. Sin esto, una vista alta
+       la hace aparecer, la ventana pierde ~15px de ancho y el menu entero se
+       desliza; al volver a una vista corta, se desliza de vuelta. Medido: cada
+       pestana se movia 8px en cada cambio. */
+    html{scrollbar-gutter:stable;}
+    /* La marca escala con la pantalla igual que el menu. Antes era fija: en
+       1920 las letras salian a 93px de ancho, diminutas al lado de un menu de
+       20px. Una sola variable manda sobre la banda y sobre las dos piezas. */
+    :root{--flota-h:clamp(54px, 4.3vw, 82px);}
     body{margin:0;padding:0 !important;background:var(--bg);color:#e8eaed;
       font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
       min-height:100vh;display:flex;flex-direction:column;}
@@ -59,16 +68,112 @@
       flex:0 0 84px;height:84px;min-height:84px;max-height:84px;
       padding:0 22px;background:linear-gradient(180deg,#0a0e16,#070a11);
       border-bottom:1px solid var(--line);flex-wrap:nowrap;}
+    /* Flota SOBRE el contenido y no ocupa altura: por eso el menu queda arriba
+       del todo. `pointer-events:none` en el contenedor para no tapar clics del
+       menu; se devuelven solo a los hijos. */
+    /* Flota SOBRE EL CONTENIDO, por DEBAJO del menu: el menu es el protagonista
+       arriba y no se le pisa. En y=0 se superponia con "INICIO / ACADEMIA".
+       El 72px es la altura exacta de .staff-topnav. */
+    /* Flota bajo el menu, en una banda propia y TRANSPARENTE: ni fondo, ni
+       degradado, ni borde -- que es lo pesado que se quiso quitar de los 84px.
+       Sigue siendo absoluta (no empuja al menu, que manda arriba), pero el
+       casco reserva su altura mas abajo para que no tape texto: flotar no
+       puede significar taparle al Capitan lo que tiene que leer. */
+    .staff-flota{position:absolute;top:72px;left:0;right:0;z-index:6;display:flex;
+      align-items:center;gap:10px;height:var(--flota-h);padding:0 clamp(12px,2vw,22px);
+      background:transparent;pointer-events:none;}
+    .staff-flota > *{pointer-events:auto;}
+    /* Gobernanza tiene su propio casco; la ficha, su propio contenedor de
+       scroll. Cada uno reserva la banda donde de verdad empieza su contenido.
+       Se probo ponerlo en main.staff-main y NO movia nada: quien posiciona no
+       es main. */
+    .staff-shell{padding-top:var(--flota-h);}
+    /* MISMO PAR que el perfil de artista y la portada: el ave + las letras.
+       Los dos lienzos son 1920x1920 pero la TINTA no llena lo mismo: el ave usa
+       el 85.5% del alto y las letras solo el 48.7% -- el resto es relleno
+       transparente. Por eso los <img> miden mas que la banda y llevan margen
+       negativo: lo que sobresale no pinta nada.
+       La proporcion se copia de dj-profile.html, donde la tinta de las letras
+       mide 2.1x la del ave (134px vs 64px). Aqui: ave 26px, letras 54px. */
+    /* Especificidad subida a proposito: .staff-brand .mk (misma fuerza, definida
+       despues) mandaba 34px fijos y pisaba esta regla. */
+    .staff-flota .staff-brand .mk{height:clamp(28px,2.1vw,42px);width:auto;flex:none;display:block;}
+    /* El envoltorio RECORTA el relleno transparente en vez de dejarlo desbordar.
+       Con margen negativo el <img> de 111px se metia dentro del menu (medido:
+       aparecia en y=46, con la barra en y=72). Este es el mismo patron que
+       .brand-letters-wrapper usa en index.html y en dj-profile.html. */
+    .staff-flota .tx-wrap{height:clamp(50px,3.9vw,76px);overflow:hidden;display:flex;
+      align-items:center;flex:none;pointer-events:none;}
+    /* COMPENSACION OPTICA. La tinta del PNG no esta centrada en su lienzo: va
+       de 241 a 1175 sobre 1920, o sea 241px de margen arriba y 744 abajo. El
+       envoltorio centra la CAJA, asi que las letras quedaban 14.6px MAS ARRIBA
+       que el buscador y el horizonte se veia escalonado.
+       Medido, no ajustado a ojo: (708 - 960) * 111/1920 = -14.6px. */
+    .staff-flota .tx-wrap .tx-png{height:clamp(103px,8vw,156px);width:auto;display:block;flex:none;
+      /* La compensacion optica ahora es PROPORCIONAL, no un valor fijo: la
+         tinta esta descentrada (708 frente a 960 sobre 1920), o sea el 13.125%
+         de la altura. En porcentaje, translateY se mide sobre el propio
+         elemento, asi que sigue clavada aunque la marca escale. */
+      transform:translateY(13.125%);}
+    /* `margin-left:auto` lo empuja al extremo derecho sin tocar el reparto de
+       lo que ya hay a la izquierda. */
+    .staff-buscar{margin-left:auto;flex:0 1 320px;min-width:0;position:relative;}
+    /* COPIA LITERAL del buscador de la cuenta de artista.
+       Valores tomados de styles.css: `#mainHeader .header-smart-search` (el tema
+       oscuro) y su variante de escritorio en @media (min-width:1001px). No se
+       inventa nada: mismo fondo translucido, mismo borde dorado, misma pildora,
+       misma lupa y mismas medidas.
+       Se selecciona por ID DENTRO de la banda porque header-smart-search.js
+       inyecta su propia hoja con `#header-smart-search` (1-0-0) y una clase
+       sola no le gana. Asi no hay que tocar el archivo compartido, que lo
+       usan otras paginas. */
+    .staff-flota #header-smart-search{width:100%;min-height:32px;height:32px;max-height:32px;
+      box-sizing:border-box;-webkit-appearance:none;appearance:none;
+      background:rgba(8,7,6,.55);color:#f0f0f0;
+      border:1px solid rgba(197,160,89,.28);border-radius:999px;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.06), 0 2px 12px rgba(0,0,0,.25);
+      padding:4px 12px 4px 40px;font-size:12px;line-height:1.2;font-family:inherit;outline:none;}
+    .staff-flota #header-smart-search::placeholder{color:#777;}
+    .staff-flota #header-smart-search:focus{outline:none;border-color:var(--gold);
+      box-shadow:0 1px 8px rgba(197,160,89,.35);}
+    .staff-flota #header-smart-search::-webkit-search-decoration,
+    .staff-flota #header-smart-search::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none;}
+    /* La lupa: mismo SVG embebido y misma posicion de escritorio (12px / 16px). */
+    .staff-buscar{position:relative;}
+    .staff-buscar::before{content:"";position:absolute;left:12px;top:50%;
+      transform:translateY(-50%);width:16px;height:16px;pointer-events:none;z-index:2;
+      opacity:.88;background:no-repeat center / contain;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%239aa0a6' d='M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/%3E%3C/svg%3E");}
+    @media (max-width:900px){ .staff-buscar{flex-basis:200px;} }
+    @media (max-width:620px){ .staff-buscar{display:none;} }
+    /* EXCEPCION (PO): Fenix AI no lleva buscador arriba. La consola tiene su
+       propio campo de entrada a pantalla completa y dos cajas de escribir
+       compitiendo confunden. MRM IA sale de esta pagina (road-map.html), que
+       ya no monta buscador. */
+    body[data-vista="elixis"] .staff-buscar{display:none;}
+    /* En FENIX no flota la marca de la plataforma: la estacion tiene la SUYA
+       (el lockup de ELIXIS) y dos a la vez competian una al lado de otra.
+       Se probo al reves -- quitar el de ELIXIS y dejar el de la plataforma --
+       y el PO lo descarto: aqui manda la identidad del agente.
+       La plataforma sigue anunciada arriba: el menu marca FENIX AI resaltado. */
+    body[data-vista="elixis"] .staff-flota{display:none;}
+    /* Oculto a la vista pero VIVO en el DOM y para lectores de pantalla. */
+    .solo-lectores{position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+      overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;}
+    @media (max-width:620px){ .staff-flota .tx-png{height:78px;margin:-18px 0;} }
+    /* Bajo 520px la marca cede el paso: el menu manda. */
+    @media (max-width:520px){ .staff-flota .tx-wrap{display:none;} .staff-flota .staff-brand .mk{height:26px;} }
     .staff-brand{display:flex;align-items:center;gap:11px;min-width:0;}
     .staff-brand .mk{width:34px;height:34px;flex:none;object-fit:contain;display:block;}
     .staff-brand .tx{font-size:15px;font-weight:900;letter-spacing:.02em;line-height:1.1;white-space:nowrap;}
     .staff-brand .tx small{display:block;font-size:8.5px;font-weight:700;letter-spacing:.16em;
       text-transform:uppercase;color:rgba(232,201,135,.72);}
     .staff-actions{display:flex;align-items:center;gap:12px;}
-    #staff-mrm-link{font-size:9.5px;font-weight:900;letter-spacing:.16em;color:var(--gold-lt);
-      border:1px solid rgba(197,160,89,.55);border-radius:999px;padding:4px 11px;text-transform:uppercase;
-      text-decoration:none;white-space:nowrap;transition:background .2s,border-color .2s;}
-    #staff-mrm-link:hover{background:rgba(197,160,89,.12);border-color:var(--gold);}
+    /* La pildora dorada de #staff-mrm-link se RETIRA. Era el estilo que tenia en
+       la barra de 84px, que ya no existe. Dentro del menu, MRM IA es una
+       pestana mas y hereda de `.staff-topnav a`: misma tipografia, mismo
+       tamano, mismo peso y mismo tracking que sus hermanas.
+       Dos modelos para la misma funcion es justo lo que la ley prohibe. */
     #role-badge{font-size:9.5px;font-weight:900;letter-spacing:.16em;color:var(--gold);
       border:1px solid rgba(197,160,89,.55);border-radius:999px;padding:4px 11px;text-transform:uppercase;}
     #staff-name{font-size:12.5px;font-weight:700;color:rgba(255,255,255,.85);max-width:180px;
@@ -91,8 +196,17 @@
       letter-spacing:.10em;text-transform:uppercase;color:var(--gold-lt);white-space:nowrap;}
 
     /* ── Menú PRINCIPAL (tira dorada grande, réplica del estilo del perfil artista) ── */
-    .staff-topnav{display:flex;align-items:center;justify-content:center;gap:0;
-      flex:0 0 72px;height:72px;min-height:72px;max-height:72px;padding:0 clamp(12px,2vw,32px);
+    /* CALIBRACION A PANTALLA COMPLETA — misma receta que la tira del perfil de
+       artista (.dj-owner-tabs .container en styles.css), que ya resolvio esto:
+       · `safe center`: centra cuando cabe y se alinea al inicio cuando NO cabe.
+         Con `center` a secas lo que sobra se reparte a los DOS lados y lo de la
+         izquierda queda INALCANZABLE -- el scroll no llega a negativos. Por eso
+         "INICIO" se leia "CIO".
+       · La franja de la barra horizontal se RESERVA. Si no, al aparecer crece la
+         tira y todo el menu da un salto. Es el mismo comentario que dejo el
+         perfil de artista, y la razon del temblor al cambiar de pestana. */
+    .staff-topnav{display:flex;align-items:center;justify-content:safe center;gap:0;
+      flex:0 0 72px;height:72px;min-height:72px;max-height:72px;padding:0 clamp(12px,2vw,32px) 6px;
       background:transparent;border-bottom:none;
       overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;
       overscroll-behavior-x:contain;}
@@ -101,13 +215,29 @@
          Antes: clamp(13px,1.05vw,16px), ls .07em y font-family:inherit — o sea,
          la de sistema del body, no Inter. La barra del owner era la unica del
          ecosistema con otra letra y otro tamano. */
-      font-size:20px;font-weight:800;letter-spacing:2.8px;cursor:pointer;text-transform:uppercase;
+      /* CALIBRACION AUTOMATICA A PANTALLA COMPLETA.
+         Antes era 20px/2.8px FIJOS. Medido: con las 11 pestanas el menu ocupa
+         1463px, asi que por debajo de ~1470px de ventana se salian tres. Ahora
+         escala de forma continua en vez de dar el salto brusco del media query:
+           · >=1470px -> 20px/2.8px, IDENTICO a hoy. No se pierde la unificacion
+             tipografica con el riel maestro, que fue una decision deliberada.
+           · 1280px   -> ~17px/1.8px, que es el punto exacto donde deja de
+             salirse (medido en vivo, no estimado).
+           · por debajo, sigue bajando hasta el minimo y entra el scroll. */
+      font-size:clamp(13px, calc(1.58vw - 3.2px), 20px);font-weight:800;
+      letter-spacing:clamp(1px, calc(0.48vw - 5.0px), 2.8px);cursor:pointer;text-transform:uppercase;
       font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
       position:relative;transition:color .2s ease;display:flex;align-items:center;justify-content:center;
       padding:4px clamp(4px,0.45vw,7px) 8px;white-space:nowrap;flex-shrink:0;}
     .staff-topnav button + button::before,.staff-topnav a + button::before,.staff-topnav button + a::before,.staff-topnav a + a::before{content:"/";color:rgba(197,160,89,.4);font-weight:500;margin-right:.68em;line-height:1;}
     .staff-topnav .tab-help{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;
       border:1.5px solid currentColor;border-radius:50%;font-size:9px;font-weight:800;letter-spacing:0;margin-left:7px;line-height:1;}
+    /* El dia/noche es un EMOJI, no una letra. Heredaba `font-family:Inter` y el
+       tracking del menu, y por eso salia como glifo monocromo en vez del emoji
+       a color. Se le da la familia de emoji del sistema y se le quita el
+       tracking y el uppercase, que a un emoji no le aplican. */
+    .staff-topnav #ofm-daynight{font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;
+      letter-spacing:0;text-transform:none;font-size:clamp(15px,1.25vw,19px);line-height:1;}
     .staff-topnav button.tab-sealed,.staff-topnav button.tab-sealed:hover{color:rgba(255,255,255,.3);cursor:default;}
     .staff-topnav .tab-lock{font-size:13px;margin-left:6px;line-height:1;}
     .staff-topnav button:hover,.staff-topnav a:hover{color:rgba(255,255,255,.92);}
@@ -141,6 +271,24 @@
     #ofm-business-view{height:calc(100vh - 116px);}
     #ofm-matrix-frame,#elixis-frame,#miperfil-frame,#agenda-frame,#cashflow-frame,#config-frame{width:100%;height:100%;min-height:520px;border:none;background:#0b0b0f;display:block;}
     #view-elixis,#view-miperfil,#view-agenda,#view-cashflow,#view-config{height:calc(100vh - 116px);}
+    /* Las vistas de MARCO reservan la banda flotante. Sin esto, la marca y el
+       buscador se apoyaban sobre el contenido del iframe: los tres arrancaban
+       en y=72, justo donde empieza la banda.
+       #view-miperfil NO entra aqui: ya lo reserva #perfil-scroll, y sumarlo
+       dos veces dejaria un hueco del doble.
+       box-sizing:border-box para que el padding salga de la altura ya fijada
+       arriba y el marco no se desborde por abajo. */
+    /* Agenda, Cash Flow y Config reservan la banda: su contenido es una pagina
+       normal y quedaria tapado.
+       FENIX AI **NO**: es una estacion inmersiva y va a pantalla completa,
+       pegada al menu. Reservarle la banda dejaba una franja NEGRA entre el menu
+       y el chat. Alli quien esquiva es el riel izquierdo DE LA CONSOLA, no el
+       chat -- ver data-empotrado en elixis-console.html. */
+    #view-agenda,#view-cashflow,#view-config{
+      padding-top:var(--flota-h);box-sizing:border-box;}
+    /* El riel lateral arrancaba justo donde acaba la banda: se tocaban y la
+       marca parecia apoyada encima. Un respiro de 14px los separa. */
+    .staff-shell{padding-top:calc(var(--flota-h) + 14px);}
     #view-agenda,#view-cashflow,#view-config{position:relative;}
     .agenda-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
       background:#0b0f18;color:rgba(255,255,255,.55);font-size:13px;letter-spacing:.04em;z-index:2;}
@@ -293,24 +441,60 @@
     .gov-table .res.wait{color:#e0b64d;background:rgba(224,182,77,.14);}
 
     /* ══════════ MI PERFIL — transporte NATIVO de la tarjeta de owner ══════════ */
-    #perfil-scroll{max-height:calc(100vh - 116px);overflow-y:auto;padding:28px 24px 60px;}
-    .pf-wrap{max-width:900px;margin:0 auto;}
+    /* La banda flotante (marca + buscador) se superpone: aqui se le reserva su
+       altura para que el hero arranque DEBAJO y no compita con ella en el
+       primer golpe de vista. Probado: el padding de main no mueve nada porque
+       quien posiciona la ficha es este contenedor. */
+    #perfil-scroll{max-height:calc(100vh - 116px - var(--flota-h));overflow-y:auto;
+      padding:calc(28px + var(--flota-h)) 24px 60px;}
+    /* El contenedor se abre para que el HERO llegue de un lado al otro. El
+       resto del contenido conserva su ancho de lectura: un parrafo a 1440px
+       es incomodo de leer, un hero no. */
+    .pf-wrap{max-width:none;margin:0;}
+    .pf-wrap > .pf-section,.pf-wrap > .pf-grid{max-width:900px;margin-left:auto;margin-right:auto;}
     /* HERO = TODA la etiqueta: el banner es el fondo completo de la tarjeta y el perfil flota encima */
     .pf-hero{position:relative;background:linear-gradient(135deg,rgba(197,160,89,.10),rgba(11,15,24,.35));
       border:1px solid var(--line);border-radius:20px;overflow:hidden;}
+    /* A SANGRE, sin aire a los lados -- igual que el hero de la cuenta de
+       artista. Va DESPUES de la regla base a proposito: la base declara
+       border-radius:20px con la misma especificidad, y estando antes ganaba
+       ella. Aqui el orden es el que decide.
+       El margen negativo lateral cancela el padding de #perfil-scroll (24px)
+       para llegar al borde de verdad de la pantalla. */
+    .pf-wrap > .pf-hero{margin:0 -24px;border-radius:0;border-left:0;border-right:0;}
+    /* separacion tras el hero a sangre, que ya no la da el borde redondeado */
+    .pf-wrap > .pf-hero + *{margin-top:26px;}
     .pf-banner{display:none;position:absolute;inset:0;z-index:0;}
     .pf-hero.has-banner .pf-banner{display:block;}
     .pf-banner img{width:100%;height:100%;object-fit:cover;display:block;}
     .pf-scrim{display:none;}
     .pf-hero.has-banner .pf-scrim{display:block;position:absolute;inset:0;z-index:0;
       background:linear-gradient(180deg,rgba(8,11,18,.05) 24%,rgba(8,11,18,.72) 56%,rgba(8,11,18,.97));}
-    /* CENTRADO (PO): avatar arriba + info (badge, nombre, estrellas, redes) centrados y simétricos, subidos del fondo */
-    .pf-hero-body{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:16px;flex-wrap:wrap;padding:38px 28px;}
-    .pf-hero-body .pf-id{flex:none;min-width:0;display:flex;flex-direction:column;align-items:center;}
-    .pf-hero-body .pf-socials{justify-content:center;}
+    /* PLANTILLA DEL STAFF (PO 2026-08-21). NO es la del artista -- esa vive en
+       otro arbol y ya se revirtio una vez por aplicarla aqui por error.
+       Aqui: identidad a la IZQUIERDA, foto CUADRADA y GRANDE a la DERECHA.
+       El orden dentro de la columna se conserva: rotulo -> rol -> nombre ->
+       estrellas -> redes. */
+    .pf-hero-body{position:relative;z-index:1;display:flex;flex-direction:row;
+      align-items:center;justify-content:space-between;text-align:left;gap:clamp(20px,3vw,48px);
+      padding:38px clamp(24px,4vw,64px);}
+    .pf-hero-body .pf-id{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;align-items:flex-start;}
+    .pf-hero-body .pf-socials{justify-content:flex-start;}
+    /* La foto va DESPUES aunque en el marcado esté antes: `order` lo resuelve
+       sin mover el HTML, que es lo que leen los lectores de pantalla. */
+    .pf-hero-body .pf-photo{order:2;}
+    /* Bajo 760px se apila y la foto vuelve arriba, o no cabrian las dos cosas. */
+    @media (max-width:760px){
+      .pf-hero-body{flex-direction:column;align-items:flex-start;padding:28px 22px;}
+      .pf-hero-body .pf-photo{order:0;}
+    }
     .pf-hero.has-banner .pf-hero-body{min-height:380px;}
     .pf-hero.has-banner .pf-name,.pf-hero.has-banner .pf-role,.pf-hero.has-banner .pf-badge{text-shadow:0 2px 10px rgba(0,0,0,.7);}
-    .pf-photo{width:132px;height:132px;border-radius:50%;object-fit:cover;flex:none;
+    /* CUADRADA y mas grande (PO): es lo que distingue la plantilla de staff de
+       la del artista, que la lleva redonda y pequena. Se escala con la pantalla
+       para no aplastar la columna de identidad en portatiles. */
+    .pf-photo{width:clamp(150px,15vw,220px);height:clamp(150px,15vw,220px);
+      border-radius:18px;object-fit:cover;flex:none;
       border:2px solid rgba(197,160,89,.55);background:#0b0f18;}
     .pf-id{flex:1;min-width:230px;}
     .pf-badge{display:inline-block;font-size:10px;font-weight:900;letter-spacing:.14em;color:var(--gold);
@@ -378,19 +562,46 @@
 </head>
 <body>
 
-  <header class="staff-topbar">
+  <!-- BARRA FLOTANTE · la de 84px se retiro para que el MENU sea el protagonista
+       arriba. Nada se perdio, se reparte:
+         · marca + identidad -> aqui, flotando y transparente, a la izquierda
+         · MRM IA            -> al menu, que es donde vive la navegacion
+         · dia/noche         -> al final del menu (se mueve el motor bueno, el que
+                                difunde el tema a los 4 marcos; ver staffTopnavHtml)
+         · SALIR             -> se retira: vive en la pantalla de Inicio, donde
+                                mdj-shared-header.js es su unico dueno. Decision
+                                del PO, verificada: index.html carga ese header y
+                                no lo limita por rol.
+       #brand-sub SE CONSERVA: mountOwner hace el('brand-sub').textContent SIN
+       guardia, y sin el nodo el portal del owner no monta. -->
+  <div class="staff-flota" aria-hidden="false">
     <div class="staff-brand">
-      <img class="mk" src="./assets/branding/fenix-emblem-160.png" alt="Miami DJ Beat — Fénix" width="34" height="34" />
-      <span class="tx">MIAMI DJ BEAT LLC<small id="brand-sub">Staff Command Center</small></span>
+      <img class="mk" src="./assets/branding/logo-transparent.png" alt="Miami DJ Beat — Fénix" />
+      <!-- El PNG oficial de la marca sustituye al texto escrito a mano. Es el
+           MISMO par que usa index.html: el ave + las letras.
+           #brand-sub NO se borra, se oculta: mountOwner hace
+           el('brand-sub').textContent SIN guardia y sin el nodo el portal del
+           owner no monta. Se conserva ademas para lectores de pantalla. -->
+      <span class="tx-wrap"><img class="tx-png" src="./assets/branding/logo-transparent Letras.png" alt="Miami DJ Beat LLC" /></span>
+      <small id="brand-sub" class="solo-lectores">Staff Command Center</small>
     </div>
-    <div class="staff-actions">
-      <button type="button" id="ofm-daynight" class="ofm-daynight" title="Modo día / noche" aria-label="Modo día / noche (global)"></button>
-      <a href="./road-map.html" id="staff-mrm-link" title="Road Master Map IA">MRM IA</a>
-      <span id="role-badge">◆ Staff</span>
-      <span id="staff-name"></span>
-      <button id="staff-logout" type="button">SALIR</button>
+    <!-- El rotulo de rol y el nombre NO viven aqui: viven en el HERO
+         (#pf-badge, #pf-name). Tenerlos en los dos sitios era el MISMO dato
+         pintado dos veces, con dos diseños distintos. -->
+    <!-- Buscador a la derecha, mismo componente que la cuenta de artista
+         (#header-smart-search). header-smart-search.js es autonomo: solo pide
+         este id e inyecta sus propios estilos, asi que no arrastra la cabecera
+         compartida. Transparente, como pidio el PO. -->
+    <!-- La X de cerrar se RETIRA (PO): aqui el menu de arriba ya lleva MI
+         PERFIL, asi que era una segunda salida para lo mismo. En MRM SI se
+         queda, porque road-map.html no monta este menu y sin ella no habia
+         forma de volver. -->
+    <div class="staff-buscar">
+      <input type="search" id="header-smart-search" class="header-smart-search"
+             placeholder="Buscar DJs, tienda, cursos, reservas…"
+             autocomplete="off" enterkeyhint="search" aria-label="Buscar" />
     </div>
-  </header>
+  </div>
 
   <!-- Menú PRINCIPAL (tira dorada grande, estilo perfil) — interactivo, poblado por RBAC -->
   <nav class="staff-topnav" id="staff-topnav" aria-label="Menú principal"></nav>
@@ -705,6 +916,10 @@
         b.addEventListener('click', function(){
           if(b.disabled || b.classList.contains('tab-sealed')) return;
           if(b.dataset.href){ window.location.href=b.dataset.href; return; }
+          /* Un boton que no es pestana (el dia/noche) no debe robarle el
+             resaltado a la vista abierta: haria parecer que cambiaste de
+             seccion al cambiar el tema. */
+          if(!b.dataset.top) return;
           topBtns.forEach(function(x){ x.classList.remove('active'); });
           b.classList.add('active');
           if(b.dataset.top && typeof onInternal==='function') onInternal(b.dataset.top);
@@ -747,10 +962,21 @@
           '<button type="button" data-top="miperfil">Mi Perfil</button>'+
           '<button type="button" data-top="gobernanza">Staff</button>'+
           '<button type="button" data-top="elixis">Fénix AI</button>'+
-          /* Cierra la tira igual que en el resto del portal. Reutiliza el
-             conmutador de tema que esta página YA tiene cableado (applyTheme);
-             no se crea un segundo mecanismo. */
-          '<button type="button" class="dj-tab-btn--tema" data-mdj-tema-toggle aria-label="Cambiar modo dia / noche" title="Modo dia / noche">☀️</button>';
+          /* MRM IA baja de la barra retirada al menu: es navegacion, y la
+             navegacion vive aqui. Va como <a> porque sale de la pagina;
+             paintStaffTopnav solo engancha clics a <button>. */
+          '<a href="./road-map.html" id="staff-mrm-link" title="Road Master Map IA">MRM IA</a>'+
+          /* DIA/NOCHE al final de la tira, como pidio el PO.
+             Se muda el boton DE ARRIBA (#ofm-daynight), no el ☀️ que habia aqui.
+             Los dos funcionaban, pero NO son equivalentes:
+               #ofm-daynight  -> clave `mdjStaffTheme`, COMPARTIDA con
+                                 mdj-shared-header.js, y DIFUNDE el tema a los
+                                 cuatro marcos (ELIXIS, Agenda, Cash Flow, Config).
+               .dj-tab-btn--tema -> clave `mdj-theme`, y NO difunde.
+             Quedarse con el segundo habria dejado los iframes en el tema
+             equivocado. Se conserva el id: mountOwner lo cablea en el('ofm-daynight')
+             DESPUES de pintar la tira (844 pinta, 859 cablea), asi que lo encuentra. */
+          '<button type="button" id="ofm-daynight" class="ofm-daynight" title="Modo día / noche" aria-label="Modo día / noche (global)"></button>';
       }
       if(role==='seller'){
         return start+
@@ -785,10 +1011,21 @@
     });
 
     /* ── Router RBAC: el shell renderiza el módulo según el rol ── */
+    /* UNA sola fuente para el rotulo del rol. Antes habia dos: esta, que
+       calculaba bien, y otra en el hero con el texto "OWNER" ESCRITO A MANO --
+       un manager habria visto "OWNER" en su propia ficha.
+       No es adorno ni relleno: sale de la cuenta. */
+    var MDJ_ROL_ACTUAL = '';
+    function mdjEtiquetaRol(role){
+      return role==='owner' ? 'Owner' : role==='seller' ? 'Vendedor'
+           : role==='manager' ? 'Manager' : role==='admin' ? 'Admin' : 'Staff';
+    }
     function initStaff(sb, role, profile){
-      // badge + nombre
+      MDJ_ROL_ACTUAL = role;
+      // badge + nombre: viven en el HERO. Estos nodos ya no existen en la barra
+      // (eran un duplicado del mismo dato); las guardas los dejan pasar.
       var badge=el('role-badge'), nm=el('staff-name');
-      var label = role==='owner' ? '◆ Owner' : role==='seller' ? 'Vendedor' : (role==='manager'?'Manager':'Admin');
+      var label = '◆ ' + mdjEtiquetaRol(role);
       if(badge) badge.textContent = label;
       if(nm) nm.textContent = profile.dj_name || (sb && '');
       // logout
@@ -822,6 +1059,9 @@
       }
 
       function showView(v){
+        /* La vista activa se marca en el <body> para que el CSS pueda gobernar
+           excepciones por vista sin que haya que tocar JS cada vez. */
+        try{ document.body.setAttribute('data-vista', v); }catch(eV){}
         views.forEach(function(s){ s.classList.toggle('active', s.id==='view-'+v); });
         btns.forEach(function(b){ b.classList.toggle('active', b.dataset.view===v); });
         sincronizarTira(v);
@@ -854,12 +1094,24 @@
       try {
         mdjVistaPedida = (new URLSearchParams(window.location.search).get('vista') || '').toLowerCase().trim();
       } catch (eVista) { mdjVistaPedida = ''; }
-      showView(MDJ_VISTAS_VALIDAS[mdjVistaPedida] ? mdjVistaPedida : 'gobernanza');
+      /* SIN parametro se entra a MI PERFIL, no a Staff.
+         Entrar desde Inicio no lleva ?vista=, asi que el owner aterrizaba
+         siempre en Gobernanza -- su propia ficha no la veia nunca sin escribir
+         la URL a mano. Es la estacion del ROL la que manda al entrar, no una
+         pestana interna. */
+      showView(MDJ_VISTAS_VALIDAS[mdjVistaPedida] ? mdjVistaPedida : 'miperfil');
+
 
       // ── DÍA/NOCHE GLOBAL del portal (botón central ÚNICO). Alterna data-theme en <html> + DIFUNDE a los marcos (base lista para adaptar los secundarios). ──
       var dtog=el('ofm-daynight');
-      var SUN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
-      var MOON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
+      /* EMOJI, no SVG: es el modelo que ya usan admin-dashboard.html,
+         account-settings.html y dj-dashboard.html, y el que alterna
+         mdj-tema-portal.js (linea 27: sol -> '☀️', luna -> '🌙').
+         Se conserva #ofm-daynight como motor porque es el unico que DIFUNDE el
+         tema a los cuatro marcos y comparte clave con mdj-shared-header.js.
+         Asi: el aspecto de siempre, con el motor bueno detras. */
+      var SUN='☀️';
+      var MOON='🌙';
       var THEME_KEY='mdjStaffTheme';
       /* P1.3 Fase A: mdjStaffTheme es compartida con mdj-shared-header.js — normaliza
          cualquier valor heredado ('day'/'night', pre-unificación) al estándar light/dark. */
@@ -974,8 +1226,11 @@
           var p=r.data||{};
           if(p.dj_name) el('pf-name').textContent=p.dj_name;
           // Nuevo motor: NO se usa el rol de artista (DJ · ciudad, eso queda en el viejo). Aquí es la cuenta Staff · Owner.
-          el('pf-role').textContent='Staff · Owner';
-          var b=el('pf-badge'); if(b) b.textContent='◆ OWNER'+(p.verified===true?' · VERIFICADO':'');
+          /* Se lee el rol REAL de la cuenta. Antes: 'Staff · Owner' y
+             '◆ OWNER' fijos -- un manager veia OWNER en su propia ficha. */
+          var rotulo = mdjEtiquetaRol(MDJ_ROL_ACTUAL);
+          el('pf-role').textContent = 'Staff · ' + rotulo;
+          var b=el('pf-badge'); if(b) b.textContent='◆ '+rotulo.toUpperCase()+(p.verified===true?' · VERIFICADO':'');
           var photo=p.photo_url||p.avatar_url||p.image_url||'';   // canónico: dj_profiles.photo_url (igual que CONFIG/dj-profile)
           if(photo){ var im=el('pf-photo'); im.src=photo; if(p.dj_name) im.alt=p.dj_name; }
           // HERO banner — COINCIDE con CONFIG: background_url + focal (photo_focal_x/y) + zoom (hero_bg_zoom), igual que dj-profile
@@ -1114,5 +1369,6 @@
   })();
   </script>
   <script src="./js/mdj-tema-portal.js?v=20260819-tema"></script>
+  <script src="./header-smart-search.js?v=20260821-staff"></script>
 </body>
 </html>
