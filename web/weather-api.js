@@ -3,6 +3,25 @@
  * Binds real weather data to the existing locked visual engine without altering HTML/CSS architecture.
  */
 
+/* ── PUENTE AL TIEMPO ────────────────────────────────────────────────
+   La clave YA NO viaja al navegador: vive solo en la funcion mdj-weather.
+   Antes estaba incrustada aqui y este archivo se sirve publico, asi que
+   cualquiera la leia.
+
+   ⚠ VA EN EL NIVEL SUPERIOR, Y ESO NO ES COSMETICO. Estaba metida DENTRO del
+   callback de DOMContentLoaded, o sea local: `event-weather.js` la llamaba
+   desde otro archivo y reventaba con "mdjPuenteClima is not defined". Por eso
+   weather-lab.html seguia sin clima aunque el dashboard y la agenda ya
+   funcionaran. La sintaxis era valida, asi que node --check no lo cazaba. */
+function mdjPuenteClima(params) {
+    var base = (typeof window !== 'undefined' && typeof window.mdbSupabaseFunctionUrl === 'function')
+        ? window.mdbSupabaseFunctionUrl('mdj-weather') : '';
+    if (!base) return '';
+    var u = new URL(base);
+    Object.keys(params).forEach(function (k) { u.searchParams.set(k, params[k]); });
+    return u.toString();
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Data Binding Targets (Existing HTML exactly as-is)
     const elements = {
@@ -15,19 +34,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Fail safe: If we are not on a page with weather, abort.
-/* ── PUENTE AL TIEMPO ────────────────────────────────────────────────
-   La clave YA NO viaja al navegador: vive solo en la funcion mdj-weather.
-   Antes estaba incrustada aqui y este archivo se sirve publico, asi que
-   cualquiera la leia. Una variable de navegador la habria sacado de git
-   pero no de la vista. */
-function mdjPuenteClima(params) {
-    var base = (typeof window !== 'undefined' && typeof window.mdbSupabaseFunctionUrl === 'function')
-        ? window.mdbSupabaseFunctionUrl('mdj-weather') : '';
-    if (!base) return '';
-    var u = new URL(base);
-    Object.keys(params).forEach(function (k) { u.searchParams.set(k, params[k]); });
-    return u.toString();
-}
     if (!elements.location) return;
 
     // La clave se inyecta desde fuera; NUNCA se escribe aqui. Habia un literal
