@@ -287,46 +287,107 @@ section.on>.cap-head{background:linear-gradient(90deg,var(--gold-a16),transparen
   /* BARRA DE MANDOS (PO 2026-08-21). Sube y se pega debajo del menu, y pierde
      el panel: TRANSPARENTE, como el resto de la plataforma. Lo que se ve son
      las teclas, no la caja que las contiene. */
-  .rm-deck{position:sticky;top:0;z-index:20;max-width:900px;margin:18px auto 0;
-    padding:10px 4px;background:transparent;border:0;border-radius:0;
-    display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-  body.con-menu .rm-deck{top:72px;margin-top:14px}
+  /* CLAVADOS. Antes eran pegajosos (sticky), que suben con el scroll hasta
+     engancharse arriba: eso ES movimiento. Los mandos de un equipo no se
+     mueven -- estan en el frontal y ahi se quedan. Con posicion fija salen del
+     flujo, asi que el contenido reserva su altura mas abajo para no meterse
+     debajo de ellos.
+     El contenedor va transparente; los MANDOS son solidos, que es lo que se ve
+     y lo que el PO pidio. */
+  .rm-deck{position:fixed;top:0;left:0;right:0;z-index:20;
+    padding:10px clamp(12px,2vw,32px);background:transparent;border:0;
+    display:flex;gap:10px;align-items:center;flex-wrap:nowrap;
+    pointer-events:none}
+  .rm-deck > *{pointer-events:auto}
+  body.con-menu .rm-deck{top:72px}
+  /* Altura reservada: sin esto el primer capitulo arranca debajo de los mandos. */
+  .rm-open{padding-top:88px}
+  body.con-menu .rm-open{padding-top:160px}
 
-  /* TECLAS DE ORDENADOR. No es un boton plano: es una tecla.
-       . el degradado la ilumina por arriba, como una superficie curva
-       . el filo claro de arriba es el reflejo de la luz
-       . el borde inferior oscuro y la sombra dura de 2px son el CANTO: lo que
-         le da altura y la despega del fondo
-       . al pulsarla BAJA 2px y pierde el canto, o sea que se hunde de verdad */
+  /* CONTROLES DE TRANSPORTE — aspecto de equipo de audio (PO 2026-08-21).
+     El fondo sigue transparente: lo que se ve son los mandos, como en un
+     frontal de amplificador donde el chasis desaparece y quedan los botones.
+       . metal cepillado: dos degradados superpuestos, el segundo en rayas
+         finísimas que simulan el pulido horizontal del aluminio
+       . bisel: filo claro arriba y sombra dentro abajo, que es como se ve un
+         boton torneado bajo luz cenital
+       . redondos, no cuadrados: los mandos de transporte de un reproductor
+         siempre lo son
+       . al pulsar se HUNDEN 1px y el bisel se invierte */
   .rm-deck button{
-    font:inherit;cursor:pointer;color:var(--ink,#e8eaed);
-    padding:9px 15px;border-radius:9px;
-    background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.025));
-    border:1px solid rgba(255,255,255,.13);
-    border-bottom-color:rgba(0,0,0,.55);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.17), 0 2px 0 rgba(0,0,0,.5), 0 5px 12px rgba(0,0,0,.34);
-    transition:transform .08s ease, box-shadow .08s ease, background .18s ease}
-  .rm-deck button:hover:not(:disabled){background:linear-gradient(180deg, rgba(255,255,255,.15), rgba(255,255,255,.05))}
-  .rm-deck button:active:not(:disabled){transform:translateY(2px);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.09), 0 1px 4px rgba(0,0,0,.3)}
-  .rm-deck button:disabled{opacity:.42;cursor:default;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.06), 0 1px 0 rgba(0,0,0,.4)}
-  /* La tecla principal, en oro: es la que invita a empezar. */
-  .rm-deck .play{color:#15110a;font-weight:800;letter-spacing:.02em;
-    background:linear-gradient(180deg, #e8c987, #c5a059);
-    border-color:rgba(255,255,255,.28);border-bottom-color:rgba(90,66,16,.9);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.5), 0 2px 0 rgba(90,66,16,.85), 0 6px 14px rgba(197,160,89,.24)}
-  .rm-deck .play:hover{background:linear-gradient(180deg, #f0d79c, #d0ac62)}
-  .rm-deck .play:active{box-shadow:inset 0 1px 0 rgba(255,255,255,.35), 0 2px 6px rgba(197,160,89,.2)}
-  /* Las flechas, cuadradas: una tecla de direccion no es un boton alargado. */
-  .rm-deck #prev,.rm-deck #next{width:42px;padding:9px 0;text-align:center;font-size:15px}
-  .rm-deck .pos{font-family:var(--mono,ui-monospace,monospace);font-size:12px;
-    color:var(--faint,#7b828e);font-variant-numeric:tabular-nums;padding:0 4px}
+    font:inherit;cursor:pointer;color:#d7dbe2;
+    width:44px;height:44px;padding:0;border-radius:50%;
+    display:inline-flex;align-items:center;justify-content:center;font-size:15px;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,0) 46%),
+      repeating-linear-gradient(90deg, rgba(255,255,255,.035) 0 1px, rgba(0,0,0,0) 1px 3px),
+      linear-gradient(180deg, #43474e, #23262b);
+    border:1px solid rgba(0,0,0,.55);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.30),
+      inset 0 -2px 5px rgba(0,0,0,.55),
+      0 2px 3px rgba(0,0,0,.5),
+      0 7px 16px rgba(0,0,0,.38);
+    transition:transform .07s ease, box-shadow .07s ease, filter .18s ease}
+  .rm-deck button:hover:not(:disabled){filter:brightness(1.18)}
+  .rm-deck button:active:not(:disabled){transform:translateY(1px);
+    box-shadow:inset 0 2px 6px rgba(0,0,0,.7), inset 0 -1px 0 rgba(255,255,255,.10), 0 1px 2px rgba(0,0,0,.4)}
+  .rm-deck button:disabled{opacity:.38;cursor:default;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.12), inset 0 -2px 4px rgba(0,0,0,.45)}
+  /* PLAY: el mando grande y en oro, como el boton principal de un equipo. */
+  .rm-deck .play{width:auto;height:44px;border-radius:999px;padding:0 22px;gap:2px;
+    color:#15110a;font-weight:800;letter-spacing:.03em;font-size:13.5px;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.45), rgba(255,255,255,0) 48%),
+      repeating-linear-gradient(90deg, rgba(255,255,255,.06) 0 1px, rgba(0,0,0,0) 1px 3px),
+      linear-gradient(180deg, #e8c987, #b8934c);
+    border-color:rgba(90,66,16,.85);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.62),
+      inset 0 -2px 5px rgba(120,88,20,.5),
+      0 2px 3px rgba(0,0,0,.45),
+      0 8px 20px rgba(197,160,89,.26)}
+  .rm-deck .play:active{box-shadow:inset 0 2px 7px rgba(120,88,20,.75), 0 1px 2px rgba(0,0,0,.4)}
+  /* CONTADOR: pantallita del equipo. Hundida, con el numero en ambar. */
+  .rm-deck .pos{font-family:var(--mono,ui-monospace,monospace);font-size:12.5px;
+    color:#e8c987;font-variant-numeric:tabular-nums;letter-spacing:.06em;
+    padding:7px 12px;border-radius:5px;min-width:64px;text-align:center;
+    background:linear-gradient(180deg, #0a0c10, #12151b);
+    border:1px solid rgba(0,0,0,.6);
+    box-shadow:inset 0 2px 6px rgba(0,0,0,.75), 0 1px 0 rgba(255,255,255,.06);
+    text-shadow:0 0 7px rgba(232,201,135,.45)}
   .rm-deck .cap{flex:1 1 260px;min-width:0}
   .rm-deck .cap b{display:block;font-size:13.5px}
   .rm-deck .cap span{font-size:12.5px;color:var(--soft,#9aa2ae)}
   .chapter{max-width:900px;margin:44px auto 0}
   .chapter.hide{display:none}
+
+  /* ── PREPARADO PARA FONDO EN MOVIMIENTO (PO 2026-08-21) ──────────────────
+     El siguiente paso es poner la galaxia / el simulador de cerebro DETRAS del
+     recorrido. Para que se vea, las superficies dejan de ser opacas y pasan a
+     CRISTAL: translucidas y con desenfoque.
+     El desenfoque no es adorno -- es lo que mantiene el texto legible sobre
+     algo que se mueve. Sin el, leer encima de particulas cansa la vista.
+     El fondo oscuro se queda en <html>, no en <body>: asi la pagina nunca se
+     ve rota si el lienzo tarda o falla, y el <body> puede ser transparente. */
+  html{background:#070910}
+  body{background:transparent}
+  /* Contenedor RESERVADO para el lienzo. Va vacio a proposito: montarlo es el
+     paso siguiente, y el motor 3D pide blindaje de GPU aparte. */
+  #rm-fondo{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+  #rm-fondo canvas{display:block;width:100%;height:100%}
+  /* Todo lo demas flota por encima del lienzo.
+     OJO: aqui NO entran .rm-deck ni .rm-menu.on ni la X ni el sol. Los cuatro
+     tienen su propia posicion (fija o pegajosa) declarada mas abajo, y meterlos
+     en esta lista se la pisaba: los mandos volvian a irse con el scroll. */
+  .rm-open,.chapter{position:relative;z-index:1}
+
+  /* CRISTAL en las tarjetas. El menu lo lleva en su propia regla, mas abajo:
+     duplicarlo aqui creaba dos reglas para lo mismo y la mia perdia por orden
+     de fuente. Una funcion, una regla. */
+  figure{background:rgba(15,19,27,.55) !important;backdrop-filter:blur(10px) saturate(115%);
+    -webkit-backdrop-filter:blur(10px) saturate(115%);
+    border:1px solid rgba(255,255,255,.07)}
 
   /* CERRAR (PO 2026-08-21). MRM no tenia ninguna salida: se entraba y solo
      quedaba el boton atras del navegador. Vuelve a MI PERFIL.
@@ -360,7 +421,13 @@ section.on>.cap-head{background:linear-gradient(90deg,var(--gold-a16),transparen
   .rm-menu.on{
     display:flex;align-items:center;justify-content:safe center;gap:0;
     position:sticky;top:0;z-index:50;height:72px;padding:0 clamp(12px,2vw,32px) 6px;
-    background:var(--bg,#0b0d12);overflow-x:auto;overflow-y:hidden;
+    /* CRISTAL, no color solido: detras va a ir el fondo en movimiento y un
+       fondo opaco lo taparia. El desenfoque es lo que mantiene legibles las
+       pestanas sobre algo que se mueve. */
+    background:rgba(11,13,18,.62);
+    backdrop-filter:blur(14px) saturate(120%);
+    -webkit-backdrop-filter:blur(14px) saturate(120%);
+    overflow-x:auto;overflow-y:hidden;
     scrollbar-width:thin;overscroll-behavior-x:contain}
   .rm-menu a,.rm-menu button{
     background:none;border:0;text-decoration:none;color:rgba(255,255,255,.88);
@@ -378,6 +445,10 @@ section.on>.cap-head{background:linear-gradient(90deg,var(--gold-a16),transparen
   .rm-menu .tema{font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;
     letter-spacing:0;text-transform:none;font-size:clamp(15px,1.25vw,19px);line-height:1}
 </style>
+
+<!-- Reservado para el fondo en movimiento (galaxia / simulador). Vacio hasta
+     que se monte: ver las directrices de blindaje de GPU antes de encenderlo. -->
+<div id="rm-fondo" aria-hidden="true"></div>
 
 <nav class="rm-menu" id="rmMenu" aria-label="Menu"></nav>
 
