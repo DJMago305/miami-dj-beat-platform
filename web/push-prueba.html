@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Avisos · Prueba — Miami DJ Beat</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#d4af37">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/assets/pwa/mdj-192.png">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
+<script>
+  /* Mismo respaldo que el resto del sitio: si la LIBRERIA no llego, entra la
+     copia vendorizada. Ver FIX-LEGACY-SUPABASE-01 en elixis-console.html. */
+  if (!(window.supabase && typeof window.supabase.createClient === 'function')) {
+    document.write('<script src="./vendor/supabase-js-2.112.3.legacy.js"><\/script>');
+  }
+</script>
+<script src="./supabase-config.js"></script>
+
+<style>
+  :root{ --oro:#d4af37; --fondo:#08090c; --panel:#111318; --linea:#23262e;
+         --texto:#e8eaee; --tenue:#8b929e; --si:#3ecf8e; --no:#ff6b6b; --ojo:#ffb454; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; padding:24px 18px 60px; background:var(--fondo); color:var(--texto);
+        font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif; }
+  .caja{ max-width:640px; margin:0 auto; }
+  h1{ font-size:20px; letter-spacing:.14em; text-transform:uppercase; color:var(--oro);
+      margin:0 0 4px; font-weight:600; }
+  .sub{ color:var(--tenue); font-size:13px; margin:0 0 26px; }
+  section{ background:var(--panel); border:1px solid var(--linea); border-radius:14px;
+           padding:18px; margin-bottom:14px; }
+  h2{ font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--tenue);
+      margin:0 0 12px; font-weight:600; }
+  .fila{ display:flex; justify-content:space-between; align-items:baseline; gap:14px;
+         padding:7px 0; border-bottom:1px solid var(--linea); }
+  .fila:last-child{ border-bottom:0; }
+  .fila span:first-child{ color:var(--tenue); font-size:13px; }
+  .fila span:last-child{ font-variant-numeric:tabular-nums; text-align:right;
+                         word-break:break-word; font-size:13px; }
+  .si{ color:var(--si); } .no{ color:var(--no); } .ojo{ color:var(--ojo); }
+  button{ width:100%; padding:13px; border-radius:10px; border:1px solid var(--oro);
+          background:transparent; color:var(--oro); font-size:14px; font-weight:600;
+          letter-spacing:.06em; cursor:pointer; margin-top:10px; }
+  button:hover:not(:disabled){ background:rgba(212,175,55,.1); }
+  button:disabled{ opacity:.4; cursor:not-allowed; }
+  button.lleno{ background:var(--oro); color:#0b0b0d; }
+  #aviso{ padding:13px; border-radius:10px; font-size:13px; margin-top:12px; display:none;
+          border:1px solid var(--linea); background:#0b0d11; white-space:pre-wrap; }
+  code{ font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace; color:var(--oro);
+        word-break:break-all; }
+</style>
+</head>
+<body>
+<div class="caja">
+
+  <h1>Avisos · Prueba</h1>
+  <p class="sub">Web Push. Sin operadoras, sin coste por mensaje, sin tramites.</p>
+
+  <section>
+    <h2>Este equipo</h2>
+    <div id="diag"></div>
+  </section>
+
+  <section>
+    <h2>Tu sesion</h2>
+    <div class="fila"><span>Usuario</span><span id="quien">comprobando…</span></div>
+    <div class="fila"><span>Tu user_id</span><span><code id="uid">—</code></span></div>
+  </section>
+
+  <section>
+    <h2>Probar</h2>
+    <button id="btnActivar">1 · Activar avisos en este equipo</button>
+    <button id="btnEnviar" class="lleno" disabled>2 · Enviarme un aviso de prueba</button>
+    <div id="aviso"></div>
+  </section>
+
+</div>
+
+<script src="./push-config.js"></script>
+<script src="./js/mdj-push.js"></script>
+<script>
+(function(){
+  "use strict";
+  var FN_ENVIAR = "https://hkuvuqupbxwkiykxvqdr.supabase.co/functions/v1/mdj-push-enviar";
+  var supa = (typeof window.getSupabaseClient === "function") ? window.getSupabaseClient() : null;
+  var miUid = null, miToken = null;
+
+  function fila(k, v, clase){
+    return '<div class="fila"><span>'+k+'</span><span class="'+(clase||'')+'">'+v+'</span></div>';
+  }
+  function decir(txt, clase){
+    var a = document.getElementById("aviso");
+    a.style.display = "block";
+    a.className = clase || "";
+    a.textContent = txt;
+  }
+
+  async function diagnostico(){
+    var haySW = "serviceWorker" in navigator;
+    var hayPush = "PushManager" in window;
+    var iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+              (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    var enHome = window.matchMedia("(display-mode: standalone)").matches ||
+                 window.navigator.standalone === true;
+    var permiso = (window.Notification && Notification.permission) || "no disponible";
+    var clave = !!window.MDJ_VAPID_PUBLIC;
+    var activo = window.MDJPush ? await window.MDJPush.estaActivo() : false;
+
+    var h = "";
+    h += fila("Service Worker", haySW ? "si" : "NO", haySW ? "si" : "no");
+    h += fila("Web Push", hayPush ? "si" : "NO", hayPush ? "si" : "no");
+    if (iOS) h += fila("En pantalla de inicio", enHome ? "si" : "NO — hace falta en iPhone", enHome ? "si" : "ojo");
+    h += fila("Permiso", permiso, permiso === "granted" ? "si" : permiso === "denied" ? "no" : "ojo");
+    h += fila("Clave publica VAPID", clave ? "configurada" : "FALTA", clave ? "si" : "no");
+    h += fila("Este equipo suscrito", activo ? "si" : "todavia no", activo ? "si" : "ojo");
+    document.getElementById("diag").innerHTML = h;
+
+    document.getElementById("btnEnviar").disabled = !activo || !miToken;
+  }
+
+  async function arrancar(){
+    if (!supa) { document.getElementById("quien").textContent = "sin cliente Supabase"; return; }
+    var s = (await supa.auth.getSession()).data.session;
+    if (!s) {
+      document.getElementById("quien").innerHTML = '<span class="no">sin sesion — entra primero</span>';
+    } else {
+      miUid = s.user.id; miToken = s.access_token;
+      document.getElementById("quien").textContent = s.user.email || "sesion activa";
+      document.getElementById("uid").textContent = miUid;
+    }
+    await diagnostico();
+  }
+
+  document.getElementById("btnActivar").addEventListener("click", async function(){
+    if (!miToken) return decir("Necesitas iniciar sesion primero.");
+    this.disabled = true;
+    decir("Pidiendo permiso…");
+    try {
+      var r = await window.MDJPush.activar(miToken);
+      decir(r.ok ? "Listo. Este equipo ya recibe avisos." : "No se pudo: " + r.motivo);
+    } catch(e){ decir("Error: " + (e && e.message ? e.message : e)); }
+    this.disabled = false;
+    await diagnostico();
+  });
+
+  document.getElementById("btnEnviar").addEventListener("click", async function(){
+    this.disabled = true;
+    decir("Enviando…");
+    try {
+      var r = await fetch(FN_ENVIAR, {
+        method:"POST",
+        headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+miToken },
+        body: JSON.stringify({
+          user_id: miUid,
+          titulo: "Miami DJ Beat",
+          mensaje: "Si ves esto, los avisos funcionan. Sin operadoras y sin coste.",
+          url: "/push-prueba.html"
+        })
+      });
+      decir(await r.text());
+    } catch(e){ decir("Error: " + (e && e.message ? e.message : e)); }
+    this.disabled = false;
+  });
+
+  arrancar();
+})();
+</script>
+</body>
+</html>
