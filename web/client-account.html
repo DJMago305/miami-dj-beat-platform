@@ -1473,6 +1473,14 @@
               <span data-i18n="account-pref-sms-title">SMS alerts</span>
               <input type="checkbox" id="ca-notify-sms" checked />
             </label>
+            <!-- Avisos del navegador. NO se guarda con el boton de abajo: el
+                 permiso lo concede el navegador y vale para ESTE equipo, no
+                 para la cuenta. Por eso actua al momento y no espera a Guardar. -->
+            <label class="ca-edit-toggle toggle-row">
+              <span data-i18n="account-pref-push-title">Avisos en este dispositivo</span>
+              <input type="checkbox" id="ca-notify-push" />
+            </label>
+            <p id="ca-push-hint" class="fineprint" style="margin:8px 0 0;line-height:1.5;" aria-live="polite"></p>
           </div>
           <div class="system-card-footer">
             <p id="ca-notify-status" class="fineprint" style="display:none;" aria-live="polite"></p>
@@ -1576,6 +1584,9 @@
   <script src="./account-address-data.js?v=20260429"></script>
   <script src="./account-address-selectors.js?v=20260422-country-select-only"></script>
   <script src="./js/client-account.js?v=20260514-client-account-payments-edge"></script>
+<script src="./push-config.js?v=20260820-push-1"></script>
+<script src="./js/mdj-push.js?v=20260820-push-1"></script>
+<script src="./js/mdj-push-cliente.js?v=20260820-push-1"></script>
   <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
   <script src="./mdj-identity.js?v=20260617-buyer-artist-fix-1"></script>
   <script src="./mdj-shared-header.js?v=20260820-unificacion"></script>

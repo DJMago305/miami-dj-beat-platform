@@ -1,28 +1,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Road Map IA — MIAMI DJ BEAT LLC</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
-<script>
-    /* FIX-LEGACY-SUPABASE-01 (2026-08-19) · el respaldo entra cuando falta la
-       LIBRERIA, no cuando falta la sintaxis.
-       Antes la puerta era una sonda de `?.` y `??`. Eso solo cubre el motor que no
-       sabe parsear: si el bundle del CDN muere por CUALQUIER otra razon —una v2 mas
-       nueva con sintaxis que el motor no soporta, red caida, TLS, bloqueo— la sonda
-       pasa, el respaldo NO se inyecta y la pagina se queda sin cliente Supabase.
-       Sin cliente no hay sesion, y el guard del perfil expulsa al login: ese era el
-       rebote en Mac antiguas. Ahora se pregunta lo unico que importa, si la libreria
-       esta aqui. En un navegador moderno no hace nada, porque ya esta.
-       El CDN ademas se clava a 2.112.3, la misma version que la copia vendorizada:
-       `@2` era flotante y podia cambiar bajo nuestros pies sin tocar el repo. */
-(function () {
-    var mdjLibAusente = !(window.supabase &&
-        typeof window.supabase.createClient === 'function');
-    if (mdjLibAusente) {
-        document.write('<script src="./vendor/supabase-js-2.112.3.legacy.js?v=20260818-safari-legacy"><\/script>');
-    }
-})();
-</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="./supabase-config.js"></script>
+<!-- Motor de dia/noche. Sin el, el sol del menu queda PINTADO PERO MUERTO:
+     escucha [data-mdj-tema-toggle], el mismo enganche que usan
+     admin-dashboard, account-settings y dj-dashboard. -->
+<script src="./js/mdj-tema-portal.js"></script>
 <style>
 :root{
   --ground:#f2f4f8;--panel:#fff;--panel2:#f7f8fb;--rail:#eceff4;--line:#dbdfe8;--edge:#c6ccd8;
@@ -300,18 +284,179 @@ section.on>.cap-head{background:linear-gradient(90deg,var(--gold-a16),transparen
   .rm-open h1{font:800 clamp(30px,5vw,46px)/1.04 system-ui,sans-serif;letter-spacing:-.024em;margin:12px 0 14px}
   .rm-open p{color:var(--soft);font-size:17px;max-width:70ch}
   .rm-who{display:flex;gap:8px;flex-wrap:wrap;margin:26px 0 0}
-  .rm-deck{position:sticky;top:0;z-index:20;max-width:900px;margin:26px auto 0;padding:10px 13px;
-    background:var(--panel);border:1px solid var(--line);border-radius:10px;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+  /* BARRA DE MANDOS (PO 2026-08-21). Sube y se pega debajo del menu, y pierde
+     el panel: TRANSPARENTE, como el resto de la plataforma. Lo que se ve son
+     las teclas, no la caja que las contiene. */
+  /* CLAVADOS. Antes eran pegajosos (sticky), que suben con el scroll hasta
+     engancharse arriba: eso ES movimiento. Los mandos de un equipo no se
+     mueven -- estan en el frontal y ahi se quedan. Con posicion fija salen del
+     flujo, asi que el contenido reserva su altura mas abajo para no meterse
+     debajo de ellos.
+     El contenedor va transparente; los MANDOS son solidos, que es lo que se ve
+     y lo que el PO pidio. */
+  .rm-deck{position:fixed;top:0;left:0;right:0;z-index:20;
+    padding:10px clamp(12px,2vw,32px);background:transparent;border:0;
+    display:flex;gap:10px;align-items:center;flex-wrap:nowrap;
+    pointer-events:none}
+  .rm-deck > *{pointer-events:auto}
+  body.con-menu .rm-deck{top:72px}
+  /* Altura reservada: sin esto el primer capitulo arranca debajo de los mandos. */
+  .rm-open{padding-top:88px}
+  body.con-menu .rm-open{padding-top:160px}
+
+  /* CONTROLES DE TRANSPORTE — aspecto de equipo de audio (PO 2026-08-21).
+     El fondo sigue transparente: lo que se ve son los mandos, como en un
+     frontal de amplificador donde el chasis desaparece y quedan los botones.
+       . metal cepillado: dos degradados superpuestos, el segundo en rayas
+         finísimas que simulan el pulido horizontal del aluminio
+       . bisel: filo claro arriba y sombra dentro abajo, que es como se ve un
+         boton torneado bajo luz cenital
+       . redondos, no cuadrados: los mandos de transporte de un reproductor
+         siempre lo son
+       . al pulsar se HUNDEN 1px y el bisel se invierte */
+  .rm-deck button{
+    font:inherit;cursor:pointer;color:#d7dbe2;
+    width:44px;height:44px;padding:0;border-radius:50%;
+    display:inline-flex;align-items:center;justify-content:center;font-size:15px;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,0) 46%),
+      repeating-linear-gradient(90deg, rgba(255,255,255,.035) 0 1px, rgba(0,0,0,0) 1px 3px),
+      linear-gradient(180deg, #43474e, #23262b);
+    border:1px solid rgba(0,0,0,.55);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.30),
+      inset 0 -2px 5px rgba(0,0,0,.55),
+      0 2px 3px rgba(0,0,0,.5),
+      0 7px 16px rgba(0,0,0,.38);
+    transition:transform .07s ease, box-shadow .07s ease, filter .18s ease}
+  .rm-deck button:hover:not(:disabled){filter:brightness(1.18)}
+  .rm-deck button:active:not(:disabled){transform:translateY(1px);
+    box-shadow:inset 0 2px 6px rgba(0,0,0,.7), inset 0 -1px 0 rgba(255,255,255,.10), 0 1px 2px rgba(0,0,0,.4)}
+  .rm-deck button:disabled{opacity:.38;cursor:default;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.12), inset 0 -2px 4px rgba(0,0,0,.45)}
+  /* PLAY: el mando grande y en oro, como el boton principal de un equipo. */
+  .rm-deck .play{width:auto;height:44px;border-radius:999px;padding:0 22px;gap:2px;
+    color:#15110a;font-weight:800;letter-spacing:.03em;font-size:13.5px;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.45), rgba(255,255,255,0) 48%),
+      repeating-linear-gradient(90deg, rgba(255,255,255,.06) 0 1px, rgba(0,0,0,0) 1px 3px),
+      linear-gradient(180deg, #e8c987, #b8934c);
+    border-color:rgba(90,66,16,.85);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.62),
+      inset 0 -2px 5px rgba(120,88,20,.5),
+      0 2px 3px rgba(0,0,0,.45),
+      0 8px 20px rgba(197,160,89,.26)}
+  .rm-deck .play:active{box-shadow:inset 0 2px 7px rgba(120,88,20,.75), 0 1px 2px rgba(0,0,0,.4)}
+  /* CONTADOR: pantallita del equipo. Hundida, con el numero en ambar. */
+  .rm-deck .pos{font-family:var(--mono,ui-monospace,monospace);font-size:12.5px;
+    color:#e8c987;font-variant-numeric:tabular-nums;letter-spacing:.06em;
+    padding:7px 12px;border-radius:5px;min-width:64px;text-align:center;
+    background:linear-gradient(180deg, #0a0c10, #12151b);
+    border:1px solid rgba(0,0,0,.6);
+    box-shadow:inset 0 2px 6px rgba(0,0,0,.75), 0 1px 0 rgba(255,255,255,.06);
+    text-shadow:0 0 7px rgba(232,201,135,.45)}
+  .rm-deck .cap{flex:1 1 260px;min-width:0}
+  .rm-deck .cap b{display:block;font-size:13.5px}
+  .rm-deck .cap span{font-size:12.5px;color:var(--soft,#9aa2ae)}
   .chapter{max-width:900px;margin:44px auto 0}
   .chapter.hide{display:none}
+
+  /* ── PREPARADO PARA FONDO EN MOVIMIENTO (PO 2026-08-21) ──────────────────
+     El siguiente paso es poner la galaxia / el simulador de cerebro DETRAS del
+     recorrido. Para que se vea, las superficies dejan de ser opacas y pasan a
+     CRISTAL: translucidas y con desenfoque.
+     El desenfoque no es adorno -- es lo que mantiene el texto legible sobre
+     algo que se mueve. Sin el, leer encima de particulas cansa la vista.
+     El fondo oscuro se queda en <html>, no en <body>: asi la pagina nunca se
+     ve rota si el lienzo tarda o falla, y el <body> puede ser transparente. */
+  html{background:#070910}
+  body{background:transparent}
+  /* Contenedor RESERVADO para el lienzo. Va vacio a proposito: montarlo es el
+     paso siguiente, y el motor 3D pide blindaje de GPU aparte. */
+  #rm-fondo{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+  #rm-fondo canvas{display:block;width:100%;height:100%}
+  /* Todo lo demas flota por encima del lienzo.
+     OJO: aqui NO entran .rm-deck ni .rm-menu.on ni la X ni el sol. Los cuatro
+     tienen su propia posicion (fija o pegajosa) declarada mas abajo, y meterlos
+     en esta lista se la pisaba: los mandos volvian a irse con el scroll. */
+  .rm-open,.chapter{position:relative;z-index:1}
+
+  /* CRISTAL en las tarjetas. El menu lo lleva en su propia regla, mas abajo:
+     duplicarlo aqui creaba dos reglas para lo mismo y la mia perdia por orden
+     de fuente. Una funcion, una regla. */
+  figure{background:rgba(15,19,27,.55) !important;backdrop-filter:blur(10px) saturate(115%);
+    -webkit-backdrop-filter:blur(10px) saturate(115%);
+    border:1px solid rgba(255,255,255,.07)}
+
+  /* CERRAR (PO 2026-08-21). MRM no tenia ninguna salida: se entraba y solo
+     quedaba el boton atras del navegador. Vuelve a MI PERFIL.
+     Mismo simbolo que usa toda la plataforma para cerrar. */
+  .rm-cerrar{position:fixed;top:16px;right:18px;z-index:9999;width:34px;height:34px;
+    display:flex;align-items:center;justify-content:center;background:transparent;
+    border:1px solid rgba(197,160,89,.28);border-radius:999px;color:#e8c987;
+    font-size:22px;line-height:1;cursor:pointer;padding:0;text-decoration:none;
+    transition:background .15s,border-color .15s}
+  .rm-cerrar:hover{background:rgba(197,160,89,.10);border-color:rgba(197,160,89,.62)}
+  body.con-menu .rm-cerrar{display:none}
+  /* El sol comparte molde con la X, pero NO se oculta nunca: lo necesita
+     tanto el staff como el artista o el cliente. Cuando hay menu se corre a
+     la izquierda para ocupar el hueco que deja la X. */
+  .rm-tema{position:fixed;top:16px;right:60px;z-index:9999;width:34px;height:34px;
+    display:flex;align-items:center;justify-content:center;background:transparent;
+    border:1px solid rgba(197,160,89,.28);border-radius:999px;
+    font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;
+    font-size:16px;line-height:1;cursor:pointer;padding:0;
+    transition:background .15s,border-color .15s}
+  .rm-tema:hover{background:rgba(197,160,89,.10);border-color:rgba(197,160,89,.62)}
+  body.con-menu .rm-tema{right:18px}
+
+  /* MENU — SOLO para sesiones de staff. road-map.html es PUBLICA: la ve un
+     cliente o un artista para entender la plataforma, y ensenarle AGENDA,
+     CASH FLOW o STAFF seria exponer la estructura interna del negocio.
+     Nace VACIO y solo se rellena si el rol es staff.
+     Valores copiados de .staff-topnav en staff.html: misma tipografia, misma
+     calibracion fluida, mismo reparto. Una funcion, un patron. */
+  .rm-menu{display:none}
+  .rm-menu.on{
+    display:flex;align-items:center;justify-content:safe center;gap:0;
+    position:sticky;top:0;z-index:50;height:72px;padding:0 clamp(12px,2vw,32px) 6px;
+    /* CRISTAL, no color solido: detras va a ir el fondo en movimiento y un
+       fondo opaco lo taparia. El desenfoque es lo que mantiene legibles las
+       pestanas sobre algo que se mueve. */
+    background:rgba(11,13,18,.62);
+    backdrop-filter:blur(14px) saturate(120%);
+    -webkit-backdrop-filter:blur(14px) saturate(120%);
+    overflow-x:auto;overflow-y:hidden;
+    scrollbar-width:thin;overscroll-behavior-x:contain}
+  .rm-menu a,.rm-menu button{
+    background:none;border:0;text-decoration:none;color:rgba(255,255,255,.88);
+    font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+    font-size:clamp(13px, calc(1.58vw - 3.2px), 20px);font-weight:800;
+    letter-spacing:clamp(1px, calc(0.48vw - 5.0px), 2.8px);
+    text-transform:uppercase;cursor:pointer;white-space:nowrap;flex-shrink:0;
+    display:flex;align-items:center;padding:4px clamp(4px,0.45vw,7px) 8px;
+    position:relative;transition:color .2s ease}
+  .rm-menu a+a::before,.rm-menu a+button::before{
+    content:"/";color:rgba(197,160,89,.4);font-weight:500;margin-right:.68em;line-height:1}
+  .rm-menu a:hover{color:rgba(255,255,255,.98)}
+  .rm-menu a.aqui{color:var(--gold,#d4af37);border-bottom:2px solid var(--gold,#d4af37)}
+  /* El sol es un EMOJI: hereda Inter del menu y saldria monocromo. */
+  .rm-menu .tema{font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;
+    letter-spacing:0;text-transform:none;font-size:clamp(15px,1.25vw,19px);line-height:1}
 </style>
 
-<div class="rm-open">
-  <p class="eyebrow">MIAMI DJ BEAT LLC · Road Map IA</p>
-  <h1>Cómo funciona esta plataforma</h1>
-  <p>Humanos y agentes de inteligencia artificial trabajando en equipo: las personas deciden, los agentes preparan el terreno. Este recorrido te enseña la parte que te toca a ti — y lo conduce el propio sistema, que es la mejor forma de demostrar que funciona.</p>
-  <div class="rm-who" id="rmWho"></div>
-</div>
+<!-- Reservado para el fondo en movimiento (galaxia / simulador). Vacio hasta
+     que se monte: ver las directrices de blindaje de GPU antes de encenderlo. -->
+<div id="rm-fondo" aria-hidden="true"></div>
+
+<nav class="rm-menu" id="rmMenu" aria-label="Menu"></nav>
+
+<button type="button" class="rm-tema" data-mdj-tema-toggle
+        aria-label="Modo dia o noche" title="Modo dia o noche">&#9728;&#65039;</button>
+
+<a class="rm-cerrar" href="./staff.html?vista=miperfil"
+   aria-label="Cerrar y volver a Mi Perfil" title="Cerrar">&times;</a>
 
 <div class="rm-deck">
   <button class="play" id="play">▶&nbsp; Recorrido</button>
@@ -320,6 +465,14 @@ section.on>.cap-head{background:linear-gradient(90deg,var(--gold-a16),transparen
   <span class="pos" id="pos">— / 0</span>
   <span class="cap" id="cap"><b>Tu recorrido</b><span>Pulsa Recorrido y te lo explico paso a paso.</span></span>
 </div>
+
+<div class="rm-open">
+  <p class="eyebrow">MIAMI DJ BEAT LLC · Road Map IA</p>
+  <h1>Cómo funciona esta plataforma</h1>
+  <p>Humanos y agentes de inteligencia artificial trabajando en equipo: las personas deciden, los agentes preparan el terreno. Este recorrido te enseña la parte que te toca a ti — y lo conduce el propio sistema, que es la mejor forma de demostrar que funciona.</p>
+  <div class="rm-who" id="rmWho"></div>
+</div>
+
 
     <section class="chapter" id="cap-1" data-aud="cliente artista vendedor manager owner">
       <div class="cap-head"><span class="cap-n">Capítulo 1</span><h2>El ecosistema en una vista</h2></div>
@@ -603,12 +756,63 @@ section.on>.cap-head{background:linear-gradient(90deg,var(--gold-a16),transparen
           else if (rol === 'manager' || rol === 'management') ruta = 'manager';
           else if (rol === 'seller') ruta = 'vendedor';
           else if (rol) ruta = 'artista';
+          /* CADA PERFIL VE SU PARTE (PO). No es que el artista vea el menu del
+             staff -- eso seria exponerle la estructura interna. Es que cada rol
+             recibe EL SUYO: staff el de staff, artista y cliente los 8 slots
+             canonicos con su destino. Sin sesion no hay menu. */
+          pintaMenu(rol);
         }
       }
     }catch(e){}
     if (AUD.indexOf(ruta) < 0) ruta = 'cliente';
     pinta();
   })();
+
+  /* Rotulos y destinos COPIADOS: los de staff de staffTopnavHtml() en
+     staff.html; los de artista y cliente de los 8 slots canonicos de #mainNav,
+     con CONFIG y MI PERFIL resueltos por rol igual que hace
+     mdj-shared-header.js. No se inventa ninguno. */
+  function pintaMenu(rol){
+    var m = document.getElementById('rmMenu');
+    if (!m || m.classList.contains('on')) return;
+    var esStaff = ['owner','admin','manager','management','seller'].indexOf(rol) >= 0;
+    if (!esStaff && !rol) return;                 // sin sesion, sin menu
+    var aqui = '<a href="./road-map.html" class="aqui" aria-current="page">MRM IA</a>';
+
+    if (esStaff) {
+      m.innerHTML =
+        '<a href="./index.html">Inicio</a>' +
+        '<a href="./academia.html">Academia</a>' +
+        '<a href="./staff.html?vista=agenda">Agenda</a>' +
+        '<a href="./account-settings.html">⚙ Config</a>' +
+        '<a href="./dj-tools.html">DJ Tools</a>' +
+        '<a href="./staff.html?vista=cashflow">Cash Flow</a>' +
+        '<a href="./staff.html?vista=miperfil">Mi Perfil</a>' +
+        '<a href="./staff.html?vista=gobernanza">Staff</a>' +
+        '<a href="./staff.html?vista=elixis">Fénix AI</a>' + aqui;
+    } else {
+      /* Los 8 slots canonicos. CONFIG y MI PERFIL cambian de destino, nunca de
+         rotulo: "MI PERFIL" es la etiqueta unica del slot 8 para todos. */
+      var esArtista = (rol !== 'cliente' && rol !== 'client');
+      var config  = esArtista ? './account-settings.html' : './client-account.html';
+      var miPerfil = esArtista ? './dj-profile.html' : './client-portal.html';
+      m.innerHTML =
+        '<a href="./index.html">Inicio</a>' +
+        '<a href="./rentals.html">Servicios</a>' +
+        '<a href="./events.html">Eventos</a>' +
+        '<a href="./shop.html">Shop</a>' +
+        '<a href="' + config + '">⚙ Config</a>' +
+        '<a href="./jobs.html">Trabajos</a>' +
+        '<a href="./contact.html">Contacto</a>' +
+        '<a href="' + miPerfil + '">Mi Perfil</a>' + aqui;
+    }
+    /* El sol NO va aqui dentro. El menu solo existe para staff, asi que un
+       artista o un cliente se quedaba sin poder cambiar el tema. Dia y noche
+       no es estructura interna: es una preferencia de pantalla y la tiene
+       cualquiera. Vive fuera, en la esquina, siempre visible. */
+    m.classList.add('on');
+    document.body.classList.add('con-menu');
+  }
 
   var i=-1, t=null, run=false;
   function lista(){ return [].slice.call(document.querySelectorAll('.chapter:not(.hide)')); }

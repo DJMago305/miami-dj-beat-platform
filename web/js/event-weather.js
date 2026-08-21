@@ -114,7 +114,6 @@ async function getWeatherForecast(city, eventDateStr, lat = null, lon = null) {
             }
         }
     }
-    const params = `&appid=${API_KEY}&units=imperial&lang=es&t=${Date.now()}`;
     const urlCurrent = mdjPuenteClima({ recurso: 'weather', lat: useLat, lon: useLon, units: 'imperial', lang: 'es' });
     if (!urlCurrent) return null;
 

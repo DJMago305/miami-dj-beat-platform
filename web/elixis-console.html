@@ -28,9 +28,38 @@
     }
 })();
 </script>
+<script>
+  /* EMPOTRADO O SUELTO. La consola se abre de dos formas:
+       · dentro del marco de staff.html -> el menu de arriba YA da Mi Perfil,
+         Staff y Fenix AI, asi que la tira de cuentas de abajo sobra.
+       · suelta, desde account-settings, admin-dashboard, dj-dashboard y
+         staff-admin -> ahi la tira es la UNICA salida y debe quedarse.
+     Se marca en <html> antes de pintar para que no haya parpadeo. */
+  try{ if(window.top !== window.self) document.documentElement.setAttribute('data-empotrado','1'); }
+  catch(e){ document.documentElement.setAttribute('data-empotrado','1'); }
+</script>
 <script src="./supabase-config.js"></script>
 
 <style>
+    /* ver la nota junto a <nav class="cuentas"> */
+    :root[data-empotrado="1"] .cuentas{display:none !important;}
+    /* EMPOTRADA: la consola va a PANTALLA COMPLETA bajo el menu de staff.html.
+       Encima flota la marca de Miami DJ Beat, en la franja de arriba a la
+       izquierda. Asi que solo esquivan las piezas de ESE lado; el chat y la red
+       siguen a sangre, que es lo que hace que la estacion se sienta inmersiva.
+       El valor es la altura de esa banda (58px) mas un respiro. */
+    /* El sol de la consola se retira cuando va empotrada: el menu de arriba ya
+       lleva el suyo, y ademas ES EL BUENO -- difunde el tema a los cuatro
+       marcos. Suelta se queda, que alli es el unico. */
+    :root[data-empotrado="1"] #temaBtn{display:none !important;}
+    /* EMPOTRADA: la consola CONSERVA su propio lockup -- es la identidad de la
+       estacion. Quien no aparece aqui es la marca de la plataforma: staff.html
+       la retira en esta vista para que no compitan (decision del PO tras
+       probarlo al reves).
+       Como no hay nada flotando encima, las piezas suben pegadas al menu. */
+    :root[data-empotrado="1"] .topbar{margin-top:6px;}
+    :root[data-empotrado="1"] .cfg-riel{padding-top:10px;}
+    :root[data-empotrado="1"] .lado-izq{top:88px;}
   /* MODO DIA. El oro baja a bronce: el oro claro sobre papel blanco se lee
      gris. Mismo criterio que en el movil, distintos nombres de token porque
      esta consola tiene los suyos. */
@@ -284,6 +313,35 @@
   .icon-btn svg{width:20px;height:20px;display:block}
   /* El contenedor es aire; las piezas si atrapan el raton. */
   .topbar > *{pointer-events:auto}
+
+  /* ═══ TIRA DE CUENTAS ═══════════════════════════════════════════════
+     El tratamiento se copia de .staff-topnav del portal: mayusculas,
+     espaciado ancho y una barra "/" separando. Asi la consola no inventa
+     un lenguaje propio -- se reconoce como parte del mismo portal.
+     Barra PROPIA de esta pagina, no un componente compartido: cada portal
+     implementa el suyo, por ley del PO. */
+  .cuentas{
+    display:flex;align-items:center;gap:0;min-width:0;
+    -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);
+  }
+  .cuentas a{
+    position:relative;text-decoration:none;color:var(--muted);
+    font-size:12.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+    padding:6px 12px 8px;white-space:nowrap;transition:color .15s ease;
+  }
+  .cuentas a + a::before{
+    content:"/";position:absolute;left:-2px;color:var(--line);
+    font-weight:500;letter-spacing:0;
+  }
+  .cuentas a.aqui{color:var(--gold)}
+  .cuentas a.aqui::after{
+    content:"";position:absolute;left:12px;right:12px;bottom:2px;height:2px;
+    background:var(--gold);border-radius:2px;
+  }
+  .cuentas a:focus-visible{outline:2px solid var(--gold-2);outline-offset:2px;border-radius:4px}
+  @media (hover:hover) and (pointer:fine){ .cuentas a:not(.aqui):hover{color:var(--text)} }
+  /* En pantalla estrecha la tira estorba mas de lo que ayuda. */
+  @media (max-width:900px){ .cuentas{display:none} }
   /* Cada pieza flota con su propio cristal, no sobre una franja comun. */
   .brand,.status > *{
     -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);
@@ -816,6 +874,23 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
         <div class="sub">Agente Ejecutivo · FÉNIX AI</div>
       </div>
     </div>
+    <!-- ═══ TIRA DE CUENTAS ═══ Los rotulos se COPIAN del portal, no se
+         inventan: "Mi Perfil", "Staff", "Fénix AI". Ojo -- la vista interna de
+         Staff se llama `gobernanza`, pero el rotulo visible es Staff y es el
+         rotulo el que manda. -->
+    <!-- Se oculta cuando la consola va dentro del marco de staff.html: alli el
+         menu de arriba ya lleva Mi Perfil, Staff y Fenix AI, y tenerlo dos
+         veces es la redundancia que la ley prohibe. Suelta SIGUE siendo la
+         unica salida, por eso no se borra. -->
+    <nav class="cuentas" id="cuentas" aria-label="Cuentas">
+      <a href="./staff.html?vista=miperfil" data-vista="miperfil">Mi Perfil</a>
+      <!-- STAFF NO ESTA AQUI A PROPOSITO. Se inyecta por codigo solo si el rol
+           pertenece al personal. Si estuviera en el HTML y la poda fallara,
+           una cuenta de artista se lo encontraria en el DOM: eso es fallar
+           ABIERTO, y en RBAC hay que fallar CERRADO. -->
+      <a href="./staff.html?vista=elixis" data-vista="elixis" class="aqui" aria-current="page">Fénix AI</a>
+    </nav>
+
     <div class="status">
       <!-- MODO. Hoy solo puede decir la verdad que conoce: si hay conexion.
            El modo real de presupuesto (FULL / SAVER / GRATIS) lo calcula
@@ -993,7 +1068,17 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
   var userName = "";
   var userRole = "";
   var LOGIN_URL = "./login.html?next=elixis-console.html";
-  function goLogin(){ try{ window.location.replace(LOGIN_URL); }catch(e){} }
+  /* SACA A TODA LA VENTANA, no solo al iframe. La consola vive dentro de
+     staff.html; si el login se cargara aqui dentro, quedaria una sesion
+     cerrada por dentro y el portal abierto por fuera -- y el usuario viendo un
+     formulario de acceso incrustado en su propio panel. Vale igual para el 401:
+     si la sesion muere, muere para toda la ventana. */
+  function goLogin(){
+    try{
+      if(window.top && window.top !== window.self){ window.top.location.replace(LOGIN_URL); return; }
+    }catch(e){ /* otro origen: se navega aqui y al menos no se queda colgado */ }
+    try{ window.location.replace(LOGIN_URL); }catch(e){}
+  }
 
   function showGreeting(){
     var first = userName ? userName.split(" ")[0] : "";
@@ -1030,6 +1115,7 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
       userName = String(p.stage_name || p.dj_name || p.full_name || "").trim();
       userRole = String(p.role || "").toLowerCase().trim();
     }catch(e){}
+    podarTiraPorRol();
     showGreeting();
     try{
       supa.auth.onAuthStateChange(function(_ev, s){
@@ -1038,13 +1124,19 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
       });
     }catch(e){}
   }
-  var logoutBtn = document.getElementById("logoutBtn");
-  if(logoutBtn){
-    logoutBtn.addEventListener("click", async function(){
-      try{ if(supa) await supa.auth.signOut(); }catch(e){}
-      accessToken = null; goLogin();
-    });
+  /* CERRAR SESION, una sola vez y compartido. Lo llaman el boton del riel y el
+     de la cabecera: dos accesos, UNA logica. Si se duplicara, el dia que haya
+     que anadir algo al cierre -- cortar la voz, liquidar la cuota -- se
+     arreglaria uno y se olvidaria el otro. */
+  async function cerrarSesion(){
+    try{ RT.stop(true); }catch(e){}     /* corta la voz y liquida el consumo */
+    try{ stopAudio(); }catch(e){}
+    try{ if(supa) await supa.auth.signOut(); }catch(e){}
+    accessToken = null;
+    goLogin();
   }
+  var logoutBtn = document.getElementById("logoutBtn");
+  if(logoutBtn) logoutBtn.addEventListener("click", cerrarSesion);
   FACE.iniciar();
   initAuth();
 
@@ -1118,7 +1210,12 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
             card.classList.remove("resuelta");
             return;
           }
-          cerrar(accion === "enviar" ? "✓ Enviado a "+(d.destinatario||sms.destinatario) : "Cancelado. No salió nada.");
+          /* NO se dice "Enviado": Twilio ACEPTA el mensaje y la entrega ocurre
+             despues. Prometer una entrega que aun no ha pasado es la clase de
+             mentira que este panel existe para evitar. */
+          cerrar(accion === "enviar"
+            ? "✓ Aceptado por la operadora · " + (d.destinatario || sms.destinatario)
+            : "Cancelado. No salió nada.");
           /* La ventana del proceso solo puede decir ENVIADO cuando el
              despachador lo confirma. Hasta aqui era "en cola", que es la
              verdad: encolar no es enviar. */
@@ -1342,7 +1439,10 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
     if(!escenaSms) return;
     escenaSms.classList.add("enviado");
     var c = escenaSms.querySelector(".pz-cartel");
-    if(c) c.textContent = "Enviado";
+    /* "En manos de la operadora" y no "Enviado": es lo unico que se sabe con
+       certeza en ese momento. La entrega la confirma la operadora despues, y
+       hoy nadie nos la cuenta. */
+    if(c) c.textContent = "En manos de la operadora";
     escenaSms = null;
   }
   function marcarSmsCancelado(){
@@ -1489,12 +1589,74 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
      si no, la estacion de staff, que es a donde el resolvedor manda al owner.
      target=_top a proposito: la consola vive dentro de un iframe en
      staff.html, y sin eso cargaria el portal DENTRO de si mismo. */
-  var salirBtn = document.getElementById("salirBtn");
-  if (salirBtn) salirBtn.addEventListener("click", function () {
-    var destino = "./staff.html";
-    try { if (window.top && window.top !== window.self) { window.top.location.href = destino; return; } } catch (e) {}
+  /* ═══ LA TIRA SALE DEL IFRAME ══════════════════════════════════════
+     La consola vive dentro de un iframe en staff.html. Sin window.top, pulsar
+     "Mi Perfil" cargaria el portal DENTRO de si mismo -- un portal anidado.
+
+     Se navega por URL y no llamando al conmutador del portal porque showView
+     vive dentro de un closure (mountOwner) y desde aqui es inalcanzable. El
+     portal YA lee ?vista= al arrancar, con su propia lista blanca: si el valor
+     no existe cae en gobernanza, asi que una URL torcida no puede dejarlo sin
+     vista. Por eso este menu NO necesita tocar staff.html. */
+  /* ═══ LA TIRA SE PODA POR ROL ══════════════════════════════════════
+     Ley RBAC del PO: la entrada a STAFF no le corresponde a una cuenta de
+     artista, y no basta con ocultarla -- tiene que salir DEL DOM. Ocultar por
+     CSS deja el enlace ahi para quien mire el codigo o navegue con el teclado.
+
+     Ojo con el nombre: "Staff" aqui es la PESTAÑA (estacion de trabajo,
+     internamente `gobernanza`), no la categoria. Quien la ve es quien pertenece
+     a la categoria: owner, manager o vendedor. */
+  var ROLES_STAFF = ["owner", "admin", "manager", "management", "seller"];
+  function podarTiraPorRol(){
+    /* AÑADIR, no quitar. El puesto de Staff nace fuera del DOM y solo entra si
+       el rol confirmado pertenece al personal. Asi, si esta funcion no llegara
+       a ejecutarse -- sin sesion, error de red, perfil sin leer -- la entrada
+       simplemente NO existe, en vez de quedarse expuesta.
+       Probado: la version anterior quitaba el nodo y, sin sesion, seguia en el
+       DOM porque este camino no se recorria. */
+    if(ROLES_STAFF.indexOf(userRole) === -1) return;
+    var nav = document.getElementById("cuentas");
+    if(!nav || nav.querySelector('[data-vista="gobernanza"]')) return;
+    var a = document.createElement("a");
+    a.href = "./staff.html?vista=gobernanza";
+    a.setAttribute("data-vista", "gobernanza");
+    a.textContent = "Staff";                 /* rotulo visible; la vista se llama gobernanza */
+    a.addEventListener("click", saltarFuera);
+    nav.insertBefore(a, nav.querySelector('[data-vista="elixis"]'));
+  }
+
+  /* Sale del iframe. Compartido por los puestos fijos y por el que se inyecta. */
+  function saltarFuera(ev){
+    ev.preventDefault();
+    var destino = ev.currentTarget.getAttribute("href");
+    try{
+      if(window.top && window.top !== window.self){ window.top.location.href = destino; return; }
+    }catch(_){ /* si el marco fuera de otro origen, se navega aqui */ }
     window.location.href = destino;
-  });
+  }
+
+  (function tiraDeCuentas(){
+    var nav = document.getElementById("cuentas");
+    if(!nav) return;
+    nav.querySelectorAll("a[data-vista]").forEach(function(a){
+      a.addEventListener("click", saltarFuera);
+    });
+  })();
+
+  /* SALIR CIERRA SESION, por decision del PO. Antes navegaba a staff.html --
+     el MISMO destino que el puesto "Staff" de la tira, o sea dos puertas a lo
+     mismo. Ahora hace lo que dice su nombre. */
+  var salirBtn = document.getElementById("salirBtn");
+  if (salirBtn) {
+    salirBtn.title = "Cerrar sesión";
+    salirBtn.setAttribute("aria-label", "Cerrar sesión");
+    salirBtn.addEventListener("click", function () {
+      /* Si esta dentro del portal, la salida tiene que sacar a TODA la ventana:
+         cerrar sesion y dejar el login dentro del iframe seria un portal con la
+         sesion cerrada por dentro y abierta por fuera. */
+      cerrarSesion();
+    });
+  }
 
   var cfgRiel = document.getElementById("cfgRiel");
   var cfgItems = document.getElementById("cfgItems");

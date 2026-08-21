@@ -1599,8 +1599,16 @@
           <div class="mdj-hero-panel-info">
             <p class="mdj-hero-desc">
               Banner shown at the top of your public profile.
-              Recommended <strong style="color:rgba(255,255,255,0.65);">1920 &times; 600 px</strong>
+              <!-- Medida actualizada 2026-08-21: el hero pasa a sangre, de borde a
+                   borde de la pantalla. Con 1920px se quedaba corto y se estiraba
+                   en monitores anchos. 2560 cubre pantallas grandes sin ampliar, y
+                   la franja visible es de ~380px de alto: el resto lo recorta el
+                   encuadre, que se ajusta con los controles de foco de abajo. -->
+              Recommended <strong style="color:rgba(255,255,255,0.65);">2560 &times; 720 px</strong>
               &nbsp;&middot;&nbsp; JPG, PNG or WebP &nbsp;&middot;&nbsp; Max 8 MB.
+              <br><span style="opacity:.72;">El hero ocupa todo el ancho de la pantalla.
+              Se ve una franja de unos <strong style="color:rgba(255,255,255,0.65);">380&nbsp;px</strong> de alto:
+              deja el motivo principal centrado y usa el encuadre para ajustarlo.</span>
             </p>
             <!-- Focal controls row: D-pad + Zoom -->
             <div class="mdj-hero-focal-controls" id="hero-zoom-row" style="display:none;">
