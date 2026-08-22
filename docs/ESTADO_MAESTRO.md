@@ -43,11 +43,25 @@ Estado general: Operativo / En consolidación
       está vacío"). No participa del riesgo de consistencia: `elixis-chat` solo
       cruza dos fuentes reales, `leads`/`event_builder_orders` y `artist_agenda`
       — no tres. Sigue siendo una pregunta legítima de consistencia entre esas dos.
-      **Recomendación (Hilo Road Master Map):** `leads` = fuente de verdad de la
-      reserva (la leen las 3 pantallas del dominio); `artist_agenda` = proyección
-      derivada, no fuente — ya alimentada de forma idempotente por R9b; `dj_events`
-      = retirar directo, sin paso previo de desconexión — ya no está conectada a
-      ningún código de aplicación. Decisión final de SSOT pendiente del PO.
+      — 2026-08-22 CUARTA PIEZA (Hilo Road Master Map, verificado por el Hilo
+      Maestro): la misma línea de comentario que descartó a `dj_events` nombra
+      dónde viven las reservas reales — `event_builder_orders` (la tabla del
+      disparador de avisos instalado hoy, estados `confirmed`/`cancelled`).
+      Tiene 8 consumidores reales (`elixis-chat`, `stripe-webhook`,
+      `admin-dashboard.html`, `staff-admin.html`, `staff-order.html`,
+      `client-portal.js`, `mdj-event-builder.js`, `production-module.js`) y
+      **cero** en las 3 pantallas de agenda. Enlaza con `leads` por FK nullable
+      (`event_builder_orders.lead_id → leads.id ON DELETE SET NULL`) — una orden
+      confirmada y pagada sin `lead_id` (o con el lead borrado) sería invisible
+      para cualquier calendario que solo lea `leads`.
+      **Recomendación (Hilo Road Master Map):** la pregunta de SSOT de agenda no
+      es de tres piezas sino de dos ejes — (1) **reserva**: `leads` (lo que leen
+      hoy las pantallas) frente a `event_builder_orders` (la orden pagada, Stripe
+      y el disparador de avisos) hay que reconciliarlos antes de fijar uno solo;
+      (2) **proyección personal**: `artist_agenda`, ya resuelta como derivada,
+      alimentada de forma idempotente por R9b. `dj_events` queda como baja simple
+      — cero consumidores de código, nada que desconectar antes. Decisión final
+      de SSOT (reserva) pendiente del PO.
 
 ## 2. Bitácora de Sincronización entre Cajas
 - [2026-08-22] Inicialización del Hub Central de sincronización multi-hilo.
@@ -58,4 +72,5 @@ Estado general: Operativo / En consolidación
 - [2026-08-22] SSOT de balance/payouts resuelto: `financial_payables` gana, `dj_ledger` a deprecar progresivamente. Stripe Connect queda diferido a sprint dedicado; el hilo BFI queda en espera de esa fase o de la siguiente tarea en su dominio.
 - [2026-08-22] Hilo Road Master Map / Calendario BI auditó el encargo de agenda: las tablas nombradas (`events`, `agenda_locks`, `dj_assignments`) no existen; las reales son `artist_agenda` (16-ago, R9a/R9b), `leads` y `dj_events` (legacy). Decisión de SSOT de agenda pendiente del PO (ver arriba).
 - [2026-08-22] CORRECCIÓN: el hallazgo del write-path paralelo en `dj-dashboard.html` es del Hilo Maestro, no del hilo Road Master Map (atribución errónea en la entrada anterior). Ese hilo ya rebasó con autorización del PO y su reconciliación completa (`V11`, `V12`, `R14`…`R21`, `cap-estacion-nav`, `cap-avisos-push`) está dentro de `main` — la rama NO sigue aparcada. Queda un commit local sin subir (`c4e1398`, arregla 3 referencias muertas al rename del PR #213 en `docs/roadmap/master-map.json`).
-- [2026-08-22] `dj_events` refinado a tabla sin ningún consumidor de código (ver arriba) y recomendación de SSOT de agenda entregada por el hilo Road Master Map: `leads` fuente de verdad, `artist_agenda` proyección derivada, `dj_events` a retirar.
+- [2026-08-22] `dj_events` refinado a tabla sin ningún consumidor de código (ver arriba).
+- [2026-08-22] Cuarta pieza encontrada: `event_builder_orders` (8 consumidores reales, cero en las pantallas de agenda, enlazada a `leads` por FK nullable). La pregunta de SSOT de agenda se reencuadra en dos ejes — reserva (`leads` vs `event_builder_orders`, sin resolver) y proyección personal (`artist_agenda`, ya resuelta como derivada). `dj_events` queda como baja simple.
