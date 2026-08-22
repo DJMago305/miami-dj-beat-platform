@@ -97,7 +97,12 @@
     <!-- mdjResolveEffectiveUserRole debe existir antes del guard (sesión talent/dj vs JWT app_metadata). -->
     <script src="./auth.js?v=20260820-unificacion"></script>
     <script src="./role-guard.js?v=20260425-dj-panel-jwt-staff" data-role="dj"></script>
+    <script>try{ if (window.self !== window.top) document.documentElement.classList.add('mdj-embedded'); }catch(_e){ document.documentElement.classList.add('mdj-embedded'); }</script>
     <style>
+        /* Embebida en el agenda-frame (staff.html): el PADRE ya muestra el header, y aquí el header
+           propio va oculto — pero el padding-top de header-clearance dejaba una FRANJA/"solapa" negra
+           reservada arriba. Cuando está anidada, se anula para calzar con dj-dashboard (la referencia). */
+        html.mdj-embedded body { padding-top: 0 !important; }
         body {
             /* Antes 110px fijo: el #mainHeader real es más alto (var --header-height en artista); el contenido/main
                empezaba bajo el header fijo y #owner-tabs quedaba tapada o “perdida”. Alinear con styles.css. */

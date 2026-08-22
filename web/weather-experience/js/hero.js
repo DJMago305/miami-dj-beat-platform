@@ -472,6 +472,14 @@ function resize(){
   gl.viewport(0,0,canvas.width,canvas.height);
 }
 addEventListener('resize',resize);resize();
+// Anidamiento seguro (staff.html → agenda-frame → staff-agenda.html → este iframe):
+// el evento 'resize' de la ventana NO se dispara de forma fiable cuando el PADRE
+// redimensiona/revela nuestro iframe, así que el canvas WebGL se queda a tamaño
+// inicial (chico) aunque el DOM esté full-width. Un ResizeObserver sobre el
+// documento capta el cambio real de caja; y un par de re-fits diferidos cubren
+// el layout tardío del anidamiento extra.
+if(typeof ResizeObserver!=='undefined'){ try{ new ResizeObserver(function(){ resize(); }).observe(document.documentElement); }catch(_e){} }
+setTimeout(resize,120); setTimeout(resize,500); setTimeout(resize,1500);
 const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
 let t0=performance.now(); let scene=0; let running=capable;   // weak/static devices: the render loop never starts
 // ===================== M0 · THE SEAM =====================
@@ -752,7 +760,7 @@ updateLiveUI();                             // estado inicial del indicador (En 
 // Serato we drop to zero GPU, and we resume the instant they click us back. On
 // resume we re-anchor lastT so dt stays clamped (no giant catch-up frame).
 function pauseLoop(){ running=false; }
-function resumeLoop(){ if(capable && !running && !document.hidden){ running=true; lastT=(performance.now()-t0)/1000; requestAnimationFrame(frame); } }
+function resumeLoop(){ if(capable && !running && !document.hidden){ resize(); running=true; lastT=(performance.now()-t0)/1000; requestAnimationFrame(frame); } }
 document.addEventListener('visibilitychange', ()=>{ document.hidden ? pauseLoop() : resumeLoop(); });
 addEventListener('blur',  pauseLoop);    // switched to Serato / another app → stop drawing
 addEventListener('focus', resumeLoop);   // back on our window → resume
