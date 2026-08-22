@@ -2233,9 +2233,21 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
       hideTyping();
       var data = {};
       try { data = await res.json(); } catch(_) {}
-      if(res.status === 401){ goLogin(); return; }
-      if(res.status === 403){ addError("Esta cuenta no tiene acceso de owner/staff" + (data.detail ? " (rol: " + data.detail + ")" : "") + "."); return; }
+      /* CADA SALIDA CIERRA LA OPERA (PO 2026-08-22: «cuando escribo en el chat
+         de ELIXIS se esta quedando con opacidad las conversaciones»).
+         `abrirOpera` pone .trabajando en el body y esa clase baja el chat al
+         18% de opacidad —a proposito, para que el panel de proceso mande
+         mientras la peticion viaja—. Pero solo el camino de EXITO llamaba a
+         cerrarOpera: con un 401, un 403, un 502 o una excepcion, la clase se
+         quedaba puesta y la conversacion se veia lavada PARA SIEMPRE, con el
+         panel clavado en «Conectando». Es justo lo que el PO fotografio junto
+         al error «(502) Empty response from AI».
+         No se usa un `finally` porque el camino de exito retrasa el cierre
+         2600ms a proposito, para que las escenas de las herramientas se vean. */
+      if(res.status === 401){ cerrarOpera(); goLogin(); return; }
+      if(res.status === 403){ cerrarOpera(); addError("Esta cuenta no tiene acceso de owner/staff" + (data.detail ? " (rol: " + data.detail + ")" : "") + "."); return; }
       if(!res.ok || !data.reply){
+        cerrarOpera();
         addError("ELIXIS tuvo un problema (" + res.status + "): " + (data.error || "sin respuesta") + ".");
         return;
       }
@@ -2261,6 +2273,7 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
       history.push({ role:"assistant", content:data.reply });
     }catch(err){
       hideTyping();
+      cerrarOpera();   /* si se cae la red, el chat vuelve a verse */
       statusPill.classList.add("off");
       statusPill.lastChild.textContent = " Sin conexión";
       addError("No pude contactar el servidor. Revisa tu conexión e inténtalo de nuevo.");
