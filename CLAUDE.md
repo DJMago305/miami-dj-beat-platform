@@ -21,3 +21,6 @@
 
 5. ESTADO MAESTRO COMPARTIDO:
 - Todo hilo secundario debe leer `docs/ESTADO_MAESTRO.md` al iniciar y actualizar su estado antes de cerrar sesión.
+
+6. MATRIZ DE JURISDICCIONES:
+- Cada hilo secundario solo tiene permiso de edición sobre los archivos de su dominio asignado en `docs/JURISDICCIONES.md`. Si una tarea excede su jurisdicción, debe rechazarla y remitir al hilo maestro.
