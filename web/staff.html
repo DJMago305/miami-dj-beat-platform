@@ -121,11 +121,20 @@
        que el buscador y el horizonte se veia escalonado.
        Medido, no ajustado a ojo: (708 - 960) * 111/1920 = -14.6px. */
     .staff-flota .tx-wrap .tx-png{height:clamp(103px,8vw,156px);width:auto;display:block;flex:none;
-      /* La compensacion optica ahora es PROPORCIONAL, no un valor fijo: la
-         tinta esta descentrada (708 frente a 960 sobre 1920), o sea el 13.125%
-         de la altura. En porcentaje, translateY se mide sobre el propio
-         elemento, asi que sigue clavada aunque la marca escale. */
-      transform:translateY(13.125%);}
+      /* COMPENSACION CORREGIDA (PO 2026-08-22: «el branding y el png estan
+         vizcos»). La medida anterior —13.125% hacia ABAJO— se calculo sobre una
+         caja de tinta que incluia el HALO del PNG, no las letras.
+         Medido barriendo el canal alfa fila a fila:
+             umbral  16 -> tinta 242..1175, centro 36.90%   (halo)
+             umbral  64 -> tinta 250..1172, centro 37.03%   (halo)
+             umbral 128 -> tinta 848..1171, centro 52.58%   (LETRAS)
+             umbral 200 -> tinta 850..1170, centro 52.60%   (LETRAS)
+         Entre 64 y 128 el borde salta de 250 a 848: esas ~600 filas son halo
+         casi invisible. Las letras de verdad estan centradas en el 52.58%, o
+         sea 2.58% por DEBAJO del centro del lienzo — no 13% por encima. Por eso
+         empujarlas hacia abajo las bajaba el doble de lo que hacia falta.
+         El ave no necesita nada: su centro es 49.22% en cualquier umbral. */
+      transform:translateY(-2.58%);}
     /* `margin-left:auto` lo empuja al extremo derecho sin tocar el reparto de
        lo que ya hay a la izquierda. */
     .staff-buscar{margin-left:auto;flex:0 1 320px;min-width:0;position:relative;}
