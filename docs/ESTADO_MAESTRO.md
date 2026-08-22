@@ -22,6 +22,12 @@ Estado general: Operativo / En consolidación
       reconciliar — `dj_ledger` (legacy) y `financial_payables`/`financial_owner_ledger_entries`
       (canónico nuevo). Decisión pendiente del PO: cuál es la fuente de verdad,
       antes de conectar Stripe Connect encima de cualquiera de los dos.
+      — 2026-08-22 RESUELTO (Hilo Business Financial Intelligence): SSOT formal —
+      `financial_payables`/`financial_payments`/`financial_owner_ledger_entries` son
+      la única fuente de verdad de balances y payouts. `dj_ledger` queda marcado
+      para deprecación progresiva (sin borrar nada, sin migración disparada aún).
+      Stripe Connect diferido a sprint dedicado, post-cierre de la matriz de
+      contenedores.
 
 ## 2. Bitácora de Sincronización entre Cajas
 - [2026-08-22] Inicialización del Hub Central de sincronización multi-hilo.
@@ -29,3 +35,4 @@ Estado general: Operativo / En consolidación
 - [2026-08-22] Hilo Elixis Voice Agent Blueprint reportó memoria persistente instalada (ver arriba) y detectó `dj_memory_facts` documentada como tabla en `JURISDICCIONES.md` cuando es una vista — corregido por el Hilo Maestro en el mismo commit.
 - [2026-08-22] Camino de escritura de la memoria confirmado con datos reales (escribir/recordar/olvidar) — hito de memoria persistente ELIXIS cerrado.
 - [2026-08-22] Hilo Business Financial Intelligence entregó diagnóstico de Stripe Connect (ver arriba) — sin infraestructura, con conflicto de dos ledgers sin reconciliar. Esperando decisión del PO antes de abrir ticket de construcción.
+- [2026-08-22] SSOT de balance/payouts resuelto: `financial_payables` gana, `dj_ledger` a deprecar progresivamente. Stripe Connect queda diferido a sprint dedicado; el hilo BFI queda en espera de esa fase o de la siguiente tarea en su dominio.
