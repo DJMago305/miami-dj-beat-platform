@@ -420,7 +420,8 @@
       "body": [
         "Cliente, Artista y Staff son <b>tres mundos separados a propósito</b>. Cada portal se implementa por su cuenta, incluida su barra de navegación. Compartir un menú entre portales ya fue una regresión en V1 y por eso no se repite.",
         "El Owner no es un DJ. Son dos cuentas distintas, con correo y login distintos, aunque las manejen las mismas manos. Esa separación es lo que permite auditar quién hizo qué.",
-        "La decisión de qué puede ver cada quien <b>no se toma en el navegador</b>. Se toma en la base, con políticas RLS. El frontend solo esconde botones; la base es la que niega el dato."
+        "La decisión de qué puede ver cada quien <b>no se toma en el navegador</b>. Se toma en la base, con políticas RLS. El frontend solo esconde botones; la base es la que niega el dato.",
+        "Cada rol entra por su propia barra, y <b>esa decisión se toma antes de que la página se pinte</b>. La sesión ya vive en el navegador y el rol viaja dentro del token, así que no hay que preguntarle nada al servidor para saber qué menú dibujar. Antes se pintaba uno y se cambiaba después: la barra saltaba a la vista. Elegir antes no da permisos —eso lo sigue decidiendo la base con RLS—, solo evita el parpadeo."
       ],
       "focus": [
         "L2",
@@ -448,7 +449,8 @@
       "body": [
         "El cliente entra por la capa pública, pide una fecha y con eso nace un <b>lead</b>. Ese lead es el mismo objeto que después se convierte en evento: no se vuelve a teclear en otro sistema.",
         "Antes de que el evento se confirme hay dos compuertas que no se saltan: el <b>documento</b> (acuerdo de servicio) y el <b>depósito</b>. Si una falla, el evento no avanza de estado, aunque la fecha ya esté en el calendario.",
-        "Después del evento, el cliente conserva su portal: su historial, sus facturas, sus comprobantes y el chat con el equipo. No se le cierra la puerta cuando termina la noche."
+        "Después del evento, el cliente conserva su portal: su historial, sus facturas, sus comprobantes y el chat con el equipo. No se le cierra la puerta cuando termina la noche.",
+        "Cuando alguien sin cuenta llega a la ficha de un DJ, <b>ve el perfil entero</b> —presentación, biografía, valoraciones, disponibilidad, comentarios y QR— pero con la <b>barra de Inicio</b>, no con la estación de trabajo del artista. La ficha es una página de conversión: está para que ese visitante explore, se suscriba y contrate, no para enseñarle herramientas que no le pertenecen."
       ],
       "focus": [
         "L1",
@@ -479,7 +481,8 @@
         "El artista entra por onboarding, arma su perfil público y define su disponibilidad. Ese perfil es lo que el cliente ve en el catálogo, así que la calidad del perfil es parte del producto.",
         "Cuando hay un evento que le calza, recibe una <b>oferta de asignación</b> que puede aceptar o rechazar. La asignación no se le impone en silencio.",
         "Su centro financiero le muestra lo suyo y solo lo suyo. Un artista nunca ve el ledger de otro; eso lo garantiza la capa de identidad, no una pantalla.",
-        "La reserva de un DJ escribe en <b>artist_agenda</b> (source assignment). El portal del artista (<code>dj-dashboard.html</code>) lee esa tabla en vivo bajo RLS."
+        "La reserva de un DJ escribe en <b>artist_agenda</b> (source assignment). El portal del artista (<code>dj-dashboard.html</code>) lee esa tabla en vivo bajo RLS.",
+        "La estación del artista es <b>la misma en todas sus pantallas</b>: Academia, Agenda, DJ Tools, Cursos, Conocimiento, Configuración y su propia ficha. Y una precisión que conviene no confundir: lo que el artista ve en Agenda es el <b>Calendario Operacional Inteligente</b>, el mismo motor que usa la casa. Su calendario personal sigue existiendo, pero no es lo que se le muestra."
       ],
       "focus": [
         "L3",
@@ -507,7 +510,8 @@
       "body": [
         "El staff trabaja sobre agregadores: la agenda y el Matrix <b>leen</b> datos de toda la plataforma pero reparten hacia abajo solo lo necesario. Es un flujo de una sola dirección, y quien lo hace cumplir es RLS.",
         "Las acciones que importan — confirmar un cobro, asignar un artista, cambiar el estado de un evento — dejan rastro. Una acción consecuente sin registro es un defecto, no una comodidad.",
-        "Dentro del staff hay grados: management y ventas no ven lo mismo. El portal es uno, los permisos son varios."
+        "Dentro del staff hay grados: management y ventas no ven lo mismo. El portal es uno, los permisos son varios.",
+        "El back-office lleva <b>riel interno</b> —con Fénix AI y el atajo a Staff— en las nueve pantallas de gestión, no solo en dos. Antes, entrar en el panel de administración devolvía el menú del visitante."
       ],
       "focus": [
         "L3",
@@ -563,7 +567,8 @@
         "ELIXIS corre del lado del servidor, verifica el rol de quien pregunta contra la base antes de responder, y recibe contexto vivo: artistas, bookings, pipeline, residencias, finanzas y catálogo de Miami DJ Beat LLC.",
         "Las tools pasan por <b>approval-gate</b> y el catálogo vive en <code>docs/ai/agent-registry.json</code>. Lectura: finanzas, agenda, catálogo de precios. Escritura auditada: nota de lead, bloque de agenda, borrador de cotización.",
         "<code>generar_cotizacion_evento</code> persiste un draft en <code>event_quotes</code> con totales calculados en el RPC. No crea órdenes formales ni sesiones de Stripe: eso lo hace staff con <code>event_quote_convert_to_order</code> y <code>create-quote-deposit</code>.",
-        "Por eso este capítulo tiene su propia sección de sondas más abajo: el estado de la IA no se declara, se mide."
+        "Por eso este capítulo tiene su propia sección de sondas más abajo: el estado de la IA no se declara, se mide.",
+        "Un límite de diseño que conviene conocer: el bucle de herramientas de ELIXIS da <b>tres vueltas</b>. Si una petición encadena más llamadas que eso, ELIXIS cierra en texto contando lo que quedó hecho y lo que falta. Por eso una tarea muy larga se pide mejor por partes."
       ],
       "focus": [
         "L8"
@@ -1049,6 +1054,33 @@
         "expect": "present"
       },
       "severity": "media"
+    },
+    {
+      "id": "V9",
+      "title": "El menú se decide antes del primer pintado",
+      "detail": "Las paginas de estacion escriben la barra publica y un prevuelo sincrono la cambia por la que toca ANTES de pintar, leyendo el rol del token que ya vive en el navegador. Si ese fichero desapareciera —o se cargara con defer— volveria el relevo tardio: la barra saltaria y se estiraria de 1397 a 1493px, y sin sesion se quedaria la barra de Inicio para siempre. Medido el 2026-08-22.",
+      "probe": {
+        "kind": "path",
+        "patterns": [
+          "web/mdj-estacion-preflight.js"
+        ],
+        "expect": "present"
+      },
+      "severity": "media"
+    },
+    {
+      "id": "V10",
+      "title": "Ningun riel de navegacion muerto en el arbol",
+      "detail": "#owner-tabs era un segundo menu de diez enlaces, en otro orden y con Shop apuntando a la tienda congelada. Vivia oculto por CSS pero seguia en el DOM: pulsable por teclado y listo para resucitar en cuanto una hoja cacheada le devolviera el display. Se retiro de las once paginas el 2026-08-22. Esta sonda existe porque es justo la clase de cosa que vuelve sola al copiar una plantilla vieja.",
+      "probe": {
+        "kind": "grep",
+        "pattern": "id=\"owner-tabs\"",
+        "paths": [
+          "web"
+        ],
+        "expect": "absent"
+      },
+      "severity": "media"
     }
   ],
   "capabilities": [
@@ -1311,7 +1343,8 @@
         "web/staff-agenda.html",
         "web/calendario-operacional-inteligente.html",
         "web/js/agenda-engine.js",
-        "web/js/event-intelligence.js"
+        "web/js/event-intelligence.js",
+        "web/dj-dashboard.html"
       ],
       "tests": [],
       "docs": [
@@ -1407,7 +1440,8 @@
         "web/role-guard.js",
         "web/mdj-identity.js",
         "web/security-shield.js",
-        "supabase/migrations/20260812120000_identity_ssot_rbac_phase1.sql"
+        "supabase/migrations/20260812120000_identity_ssot_rbac_phase1.sql",
+        "web/mdj-estacion-preflight.js"
       ],
       "tests": [
         ".github/workflows/rls-baseline-audit.yml",
@@ -1438,7 +1472,8 @@
         "web/client-portal.html",
         "web/client-account.html",
         "web/client-billing.html",
-        "web/js/client-account.js"
+        "web/js/client-account.js",
+        "web/mdj-estacion-preflight.js"
       ],
       "tests": [],
       "docs": [],
@@ -1459,7 +1494,8 @@
         "web/dj-dashboard.html",
         "web/dj-tools.html",
         "web/artist-onboarding.html",
-        "web/js/mdj-dashboard-hub.js"
+        "web/js/mdj-dashboard-hub.js",
+        "web/mdj-estacion-preflight.js"
       ],
       "tests": [],
       "docs": [],
@@ -1480,7 +1516,8 @@
         "web/staff.html",
         "web/staff-admin.html",
         "web/staff-config.html",
-        "web/staff-order.html"
+        "web/staff-order.html",
+        "web/mdj-estacion-preflight.js"
       ],
       "tests": [],
       "docs": [
@@ -1802,6 +1839,17 @@
         "R4",
         "R5"
       ],
+      "impact": "alto"
+    },
+    {
+      "id": "R13",
+      "title": "Desplegar elixis-chat con el cierre forzado",
+      "why": "El bucle de herramientas da tres vueltas; si en la tercera ELIXIS sigue llamando herramientas, sale sin escribir una palabra y el navegador recibe un 502 «Empty response from AI». No es el proveedor: es quedarse sin turnos. El arreglo —una vuelta mas sin herramientas, que obliga a cerrar en texto— esta en main desde el PR #209, pero elixis-chat es una funcion Edge y el merge NO la despliega.",
+      "done": "La funcion desplegada contiene el cierre forzado y una tarea con varias herramientas encadenadas termina en texto en vez de 502.",
+      "ref": {
+        "kind": "none"
+      },
+      "deps": [],
       "impact": "alto"
     }
   ]
