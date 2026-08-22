@@ -878,7 +878,7 @@
   /* Letras flotantes: «/» solo entre pestañas visibles (no antes de Inicio si hay slots fantasma antes en DOM). */
   #mainHeader.header.mdj-header-unified
     #mainNav.mdj-mainnav-flex.nav.top-nav
-    > a.mdj-mainnav-reserved-slot:not(#mainNav-config-link):not(#mainNav-mi-portal-link)::before,
+    > a.mdj-mainnav-reserved-slot:not(#mainNav-config-link):not(#mainNav-mi-portal-link):not(#mainNav-agenda-link):not(#mainNav-flow-link)::before,
   #mainHeader.header.mdj-header-unified
     #mainNav.mdj-mainnav-flex.nav.top-nav
     > a[aria-hidden='true']::before,
@@ -925,7 +925,22 @@
     ~ a#mainNav-mi-portal-link:not([aria-hidden='true']):not(.mdj-mi-portal--guest)::before,
   #mainHeader.header.mdj-header-unified
     #mainNav.mdj-mainnav-flex.nav.top-nav
-    > a[data-mdj-nav='shop'] ~ a#mainNav-config-link:not([aria-hidden='true'])::before {
+    > a[data-mdj-nav='shop'] ~ a#mainNav-config-link:not([aria-hidden='true'])::before,
+  /* AGENDA y CASH FLOW (PO 2026-08-21: «DJ Tools está pegado a Cash Flow»).
+     Los dos son .mdj-mainnav-reserved-slot, asi que la regla de arriba les
+     quitaba el «/» — igual que a CONFIG y MI PERFIL. A esos dos se les
+     devolvia por excepcion explicita; a estos nadie se la escribio porque
+     historicamente iban OCULTOS. La estacion de artista los hace visibles y
+     entonces se pegaban al puesto anterior: «ACADEMIAAGENDA», «DJ TOOLSCASH
+     FLOW». Se replica la excepcion existente en vez de inventar otra via. */
+  #mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav
+    > a:not([aria-hidden='true']):not(.mdj-mi-portal--guest)
+    ~ a#mainNav-agenda-link:not([aria-hidden='true'])::before,
+  #mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav
+    > a:not([aria-hidden='true']):not(.mdj-mi-portal--guest)
+    ~ a#mainNav-flow-link:not([aria-hidden='true'])::before {
     content: '\002F' !important;
     color: rgba(197, 160, 89, 0.4) !important;
     font-weight: 500 !important;
@@ -4969,4 +4984,218 @@ body.mdj-perfil-estacion #mainHeader.header.mdj-header-unified {
 #mainHeader.header.mdj-header-unified #mainNav > [data-mdj-slot] {
   white-space: nowrap;
   flex-shrink: 0;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   FASE 2 · UNA SOLA CAJA PARA TODOS LOS PUESTOS DEL RIEL
+   Prompt maestro «estabilizacion de barra» — PO 2026-08-21.
+
+   CAUSA MEDIDA: dos cajas distintas conviviendo en la misma fila.
+     37px · padding 4px 0 8px →  puestos genericos
+     25px · padding 0         →  los que llevan clase propia
+                                 (agenda, flow, mi-portal, tools)
+   Doce pixeles de diferencia: al centrarse verticalmente unos caian en y=102
+   y otros en y=108. Y como el reparto de "quien es especial" CAMBIA de pagina
+   a pagina (en index solo MI PERFIL; en academia son cuatro), al navegar el
+   texto se recolocaba. Eso es el efecto chicle.
+
+   DESCARTADO POR MEDICION, no por suposicion: .active no cambia el ancho
+   (79.6 con y sin), font-weight es 800 en TODOS, transition-property: none,
+   transform: none, border 0, box-sizing border-box. Ninguno era la causa.
+
+   Aqui NO se toca color, peso, tamano ni tipografia: la identidad visual de
+   la barra se conserva intacta. Solo se iguala la CAJA.
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (min-width: 1001px) {
+  /* Especificidad: las reglas que imponian `padding: 0` a los puestos con clase
+     propia usan `body:not(.mdj-buyer-session):not(.mdj-is-client)`, que suma dos
+     clases mas. Se replica ese peso y se repite el id de la cabecera para
+     ganar sin ambiguedad. Es el mismo recurso que ya usa este archivo. */
+  html body:not(.mdj-buyer-session):not(.mdj-is-client)
+    #mainHeader#mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav > a,
+  html body
+    #mainHeader#mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav > a {
+    box-sizing: border-box !important;
+    padding-top: 4px !important;
+    padding-bottom: 8px !important;
+    line-height: 1.25 !important;
+    /* Espaciado unico: «⚙️ CONFIG» iba a 1px y el resto a 2.8px. */
+    letter-spacing: 2.8px !important;
+    /* Sin geometria animada ni desplazada: se reafirma lo ya medido para que
+       ninguna hoja posterior lo reintroduzca. */
+    transform: none !important;
+    transition-property: color, background-color, border-color, opacity !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   EL MENU CABE EN UN PORTATIL · tramo 1001–1500px
+   Ley de pantallas del PO: portatil primero. Medido a 1366px (MacBook 13"):
+     columnas de la rejilla = 1397px  ·  caja = 1366  →  sobran 31
+     «MRM IA» terminaba en 1388 y quedaba FUERA, sin hamburguesa que lo
+     rescatara (se apaga a los 600px). Una seccion entera inalcanzable.
+
+   Palancas medidas en vivo, de menos a mas invasiva:
+     2.8 / 0.68em (actual) → 1397  ·  MRM IA cortado
+     2.2 / 0.60em          → 1353  ·  entra al filo (13px)
+     1.8 / 0.50em          → 1324  ·  entra con 42px de margen   ← ELEGIDA
+     1.2 / 0.38em          → 1280  ·  mas de lo necesario
+
+   Se toca SOLO el aire: espaciado entre letras y margen del separador. NO se
+   cambia tipografia, tamano, peso, color ni orden — no es un rediseno.
+   Por encima de 1500px no aplica: la barra grande queda EXACTAMENTE igual.
+   ══════════════════════════════════════════════════════════════════════════ */
+/* Frontera corregida: este tramo produce 1324 columnas, asi que no puede
+   empezar en 1001 — a 1310px cortaba «MRM IA» (medido). Arranca en 1340,
+   donde sus propias columnas caben con margen. */
+@media (min-width: 1340px) and (max-width: 1500px) {
+  html body:not(.mdj-buyer-session):not(.mdj-is-client)
+    #mainHeader#mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav > a,
+  html body
+    #mainHeader#mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav > a {
+    letter-spacing: 1.8px !important;
+  }
+
+  html body:not(.mdj-buyer-session):not(.mdj-is-client)
+    #mainHeader#mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav > a::before,
+  html body
+    #mainHeader#mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav > a::before {
+    margin-right: 0.5em !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   SEGUNDO TRAMO · 1001–1300px  (PO 2026-08-21, con su ley de pantallas)
+   LEY: portatil > escritorio > estudio > tablet > celular. Si el movil rompe
+   la web, se rompe el movil — NUNCA al reves.
+
+   Por eso aqui NO entra la hamburguesa, aunque encajaria tecnicamente: ese
+   tramo no son telefonos, son PORTATILES con la ventana a media pantalla y
+   tablets en horizontal — prioridades 1 y 4. Meter un patron de movil ahi
+   seria (a) dejar sin barra a un MacBook no maximizado, (b) reintroducir el
+   segundo sistema de navegacion que estamos desmontando, y (c) mostrar dos
+   ordenes de puestos distintos segun el ancho. Se descarta por la ley.
+
+   Solucion: el mismo recurso del tramo anterior, un paso mas apretado.
+   Medido en vivo a 1280px:
+     2.8 / 0.68em → 1397  ·  1.8 / 0.50em → 1324  ·  1.2 / 0.38em → 1280
+   Solo aire entre letras y margen del separador. Ni tipografia, ni tamano,
+   ni peso, ni rotulos, ni orden. La barra sigue siendo la barra.
+   Por debajo de 1000px no se actua: queda fuera de las cuatro prioridades.
+   ══════════════════════════════════════════════════════════════════════════ */
+/* Hasta 1339 para empalmar sin hueco con el tramo de arriba. */
+@media (min-width: 1001px) and (max-width: 1339px) {
+  html body:not(.mdj-buyer-session):not(.mdj-is-client)
+    #mainHeader#mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav > a,
+  html body
+    #mainHeader#mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav > a {
+    letter-spacing: 1.0px !important;
+  }
+
+  html body:not(.mdj-buyer-session):not(.mdj-is-client)
+    #mainHeader#mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav > a::before,
+  html body
+    #mainHeader#mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav > a::before {
+    margin-right: 0.32em !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   TRAMO DE LA ESTACION DEL ARTISTA  ·  2026-08-21
+   ──────────────────────────────────────────────────────────────────────────
+   DEFECTO (medido, no reportado): en la estacion del artista el puesto 9
+   «Shop» quedaba FUERA de la barra a 1366px —MacBook 13", la PRIMERA de las
+   prioridades del PO—. En su pantalla de 1728px no se ve: alli la barra cabe
+   con 107px de sobra, por eso llevaba tiempo pasando inadvertido.
+
+   CAUSA: los rotulos de la estacion son mas largos que los de la barra
+   publica —SoundForTips™ 238px, Cash Flow 179, DJ Tools 156— y piden ~90px
+   mas. Los tramos 1001–1339 y 1340–1500 se midieron sobre la barra publica.
+
+   POR QUE AQUI SE TOCA EL SEPARADOR Y NO SOLO EL ESPACIADO: el separador «/»
+   pone margen a AMBOS lados en los ocho saltos (1.05rem x 16 = 268px de aire).
+   Es la palanca grande. Se respeta su ley original —simetrico y en rem, nunca
+   em— para que la distancia texto→«/»→texto siga siendo identica de extremo a
+   extremo. Solo cambia cuanto aire, jamas donde.
+
+   TECHO EN 1544 Y NO EN 1500: con los valores de origen (2.8px / 1.05rem) la
+   estacion pide 1493px, asi que solo cabe cuando la barra tiene 1493 utiles,
+   es decir a partir de ~1545px de ventana. Medido a 1501px: «Shop» recortado
+   8px. Por eso el tramo llega hasta 1544 y de ahi hacia arriba no se toca.
+
+   El anclaje es el RIEL, no el usuario: :has(> a[data-mdj-nav="sft"]) — solo
+   el riel que lleva el puesto SoundForTips es la estacion del artista. Asi un
+   artista con sesion abierta ve la barra PUBLICA exactamente igual que un
+   visitante (comprobado en legal.html: 1.8px / 16.8px, sin contagio).
+
+   Ni rotulos, ni orden, ni tipografia, ni tamano, ni peso: la constitucion de
+   la barra queda intacta. Fuera de la estacion del artista no cambia nada.
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (min-width: 1340px) and (max-width: 1544px) {
+  html body:not(.mdj-buyer-session):not(.mdj-is-client)
+    #mainHeader#mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav:has(> a[data-mdj-nav="sft"]) > a {
+    letter-spacing: 1.0px !important;
+  }
+
+  html body
+    #mainHeader#mainHeader.header.mdj-header-unified
+    #mainNav#mainNav:has(> a[data-mdj-nav="sft"]) > a[data-mdj-slot]::before {
+    margin: 0 0.75rem !important;
+  }
+}
+
+/* Por debajo de 1340 la estacion dispone de menos caja todavia (a 1280px la
+   barra tiene ~1228px utiles), asi que el mismo recurso da un paso mas. */
+@media (min-width: 1001px) and (max-width: 1339px) {
+  html body:not(.mdj-buyer-session):not(.mdj-is-client)
+    #mainHeader#mainHeader.header.mdj-header-unified
+    #mainNav.mdj-mainnav-flex.nav.top-nav:has(> a[data-mdj-nav="sft"]) > a {
+    letter-spacing: 0.3px !important;
+  }
+
+  html body
+    #mainHeader#mainHeader.header.mdj-header-unified
+    #mainNav#mainNav:has(> a[data-mdj-nav="sft"]) > a[data-mdj-slot]::before {
+    margin: 0 0.52rem !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   SEPARADOR DE LA BARRA PUBLICA E INTERNA · 1001–1339  ·  2026-08-21
+   ──────────────────────────────────────────────────────────────────────────
+   DEFECTO: a 1212px la barra publica pierde «MRM IA» (68px fuera) y la interna
+   pierde «Staff» (70px fuera). Medido por puesto contra `nav.clientWidth`.
+
+   POR QUE NO SE VEIA: los tramos de mas arriba SI declaran un margen menor
+   para el separador, pero esa declaracion NUNCA llego a aplicarse — la pierde
+   contra la regla de origen, que tiene CUATRO IDs
+   (`#mainHeader#mainHeader … #mainNav#mainNav > a[data-mdj-slot]`).
+   Resultado: hasta hoy el unico ajuste real de esos tramos fue el espaciado
+   entre letras; la palanca grande —el separador «/», 1.05rem a cada lado en
+   los ocho saltos, 268px de aire— seguia intacta sin que se notara.
+
+   Se corrige solo AQUI, en el tramo donde hay recorte medido. De 1340 hacia
+   arriba no se toca: alli no se recorta ningun puesto y la barra se queda tal
+   y como el PO la ve hoy. La estacion del artista tiene su propio valor y
+   manda sobre este por el ancla :has(sft).
+
+   Se respeta la ley del separador: simetrico y en rem. Solo cambia cuanto aire.
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (min-width: 1001px) and (max-width: 1339px) {
+  html body
+    #mainHeader#mainHeader.header.mdj-header-unified
+    #mainNav#mainNav > a[data-mdj-slot]:not([data-mdj-slot="1"])::before {
+    margin: 0 0.6rem !important;
+  }
 }

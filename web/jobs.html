@@ -14,7 +14,7 @@
        sustituta del sistema y el texto salia ~2% mas ancho, desplazando el eje X. -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=optional" rel="stylesheet" />
     <link rel="stylesheet" href="./styles.css?v=20260820-purga4" />
-  <link rel="stylesheet" href="./header-unified.css?v=20260820-purga4" />
+  <link rel="stylesheet" href="./header-unified.css?v=20260821-separador-publico-b" />
     <link rel="stylesheet" href="./profile.css?v=20260820-ancho-total" />
     <style>
         :root {
@@ -86,7 +86,6 @@
          * Evita que estilos de página (p. ej. .container global / profile.css) desplacen fila 2.
          */
         #mainHeader.header.mdj-header-unified .header-nav .container {
-            max-width: min(1200px, 100%) !important;
             margin-left: auto !important;
             margin-right: auto !important;
             padding-left: 0 !important;
@@ -464,6 +463,9 @@
         .activate-container {
             margin-top: 60px;
             display: flex;
+            /* Sin envoltura esta fila se salia 84px en un telefono (medido a 390px).
+               En escritorio no cambia nada: solo actua cuando ya no cabe. */
+            flex-wrap: wrap;
             opacity: 0;
             transform: translateY(20px);
             transition: all 0.5s ease;
@@ -5438,7 +5440,7 @@
     <script src="./auth.js?v=20260820-unificacion"></script>
 
     <script defer src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
-      <script defer src="./mdj-shared-header.js?v=20260820-purga4"></script>
+      <script defer src="./mdj-shared-header.js?v=20260821-estacion-academia"></script>
   <script defer src="./mdj-mainnav-infinite.js?v=20260818-nav-canonico"></script>
     <script defer src="./mdj-owner-tabs-marquee.js?v=20260818-nav-canonico"></script>
     <script defer src="./mdj-profile-nav-context.js?v=20260818-nav-canonico"></script>

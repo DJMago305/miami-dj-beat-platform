@@ -1271,6 +1271,7 @@ if (process.argv.includes("--public")) {
 <!-- Motor de dia/noche. Sin el, el sol del menu queda PINTADO PERO MUERTO:
      escucha [data-mdj-tema-toggle], el mismo enganche que usan
      admin-dashboard, account-settings y dj-dashboard. -->
+<link rel="stylesheet" href="./mdj-assistant.css?v=20260411-booth-policy" />
 <script src="./js/mdj-tema-portal.js"></script>
 ${html.slice(html.indexOf("<style>"), html.indexOf("</style>") + 8)}
 <style>
@@ -1505,11 +1506,17 @@ ${capsPub}
           /* CADA PERFIL VE SU PARTE (PO). No es que el artista vea el menu del
              staff -- eso seria exponerle la estructura interna. Es que cada rol
              recibe EL SUYO: staff el de staff, artista y cliente los 8 slots
-             canonicos con su destino. Sin sesion no hay menu. */
+             canonicos con su destino. */
           pintaMenu(rol);
         }
       }
     }catch(e){}
+    /* VISTA CERO: si no hubo sesion, el menu se pinta IGUAL con el juego
+       publico. Antes esta llamada vivia solo dentro del bloque de sesion, asi
+       que un cliente sin login se quedaba sin barra — y MRM es justo su
+       manual. Llamarla dos veces es inocuo: pintaMenu() se corta sola si la
+       barra ya esta encendida. */
+    pintaMenu(typeof rol === 'string' ? rol : '');
     if (AUD.indexOf(ruta) < 0) ruta = 'cliente';
     pinta();
   })();
@@ -1522,7 +1529,12 @@ ${capsPub}
     var m = document.getElementById('rmMenu');
     if (!m || m.classList.contains('on')) return;
     var esStaff = ['owner','admin','manager','management','seller'].indexOf(rol) >= 0;
-    if (!esStaff && !rol) return;                 // sin sesion, sin menu
+    /* VISTA CERO (decision PO 2026-08-21): sin sesion TAMBIEN hay menu.
+       MRM es el manual del cliente, y un cliente sin login es justo quien
+       mas lo necesita. Recibe los MISMOS rotulos que la barra publica del
+       resto de la web —leidos de #mainNav sin sesion, no inventados—, con
+       CONFIG y MI PERFIL llevando a login, igual que alli. */
+    var sinSesion = !esStaff && !rol;
     var aqui = '<a href="./road-map.html" class="aqui" aria-current="page">MRM IA</a>';
 
     if (esStaff) {
@@ -1540,8 +1552,10 @@ ${capsPub}
       /* Los 8 slots canonicos. CONFIG y MI PERFIL cambian de destino, nunca de
          rotulo: "MI PERFIL" es la etiqueta unica del slot 8 para todos. */
       var esArtista = (rol !== 'cliente' && rol !== 'client');
-      var config  = esArtista ? './account-settings.html' : './client-account.html';
-      var miPerfil = esArtista ? './dj-profile.html' : './client-portal.html';
+      var config  = sinSesion ? './login.html'
+                  : (esArtista ? './account-settings.html' : './client-account.html');
+      var miPerfil = sinSesion ? './login.html'
+                  : (esArtista ? './dj-profile.html' : './client-portal.html');
       m.innerHTML =
         '<a href="./index.html">Inicio</a>' +
         '<a href="./rentals.html">Servicios</a>' +
@@ -1583,6 +1597,33 @@ ${capsPub}
   document.getElementById('next').addEventListener('click',function(){stop(); if(i<lista().length-1) show(i+1);});
 })();
 <\/script>
+
+<!-- ELIXIS publico (decision PO 2026-08-21): un visitante SIN LOGIN puede
+     preguntarle como funciona la plataforma. Es el agente economico ya
+     existente (booth-chat: verify_jwt=false, gpt-4o-mini) — no se crea uno
+     nuevo. No tiene herramientas ni acceso a internet: solo sabe de Miami
+     DJ Beat por su propio prompt. Bloque COPIADO literal de academia.html. -->
+<div id="mdj-assistant-booth">
+        <div class="booth-window">
+            <div class="booth-header">
+                <div class="status-dot"></div>
+                <div style="flex: 1;">
+                    <h3>Booth Assistant</h3>
+                    <div style="font-size: 10px; color: rgba(255,255,255,0.4); font-weight: 700;">Sales &amp; Negotiation Expert</div>
+                </div>
+            </div>
+            <div class="booth-messages"></div>
+            <div class="booth-input-area">
+                <input type="text" placeholder="Hablemos de negocios / Let's talk business..." />
+                <button type="button" class="booth-send-btn">➔</button>
+            </div>
+        </div>
+        <div class="booth-trigger" title="Hablar con Booth Assistant">
+            <div class="avatar-glow"></div>
+            <div style="font-size: 30px; z-index: 10;">🤖</div>
+        </div>
+    </div>
+<script src="./mdj-assistant.js?v=20260411-booth-policy"><\/script>
 `;
     writeFileSync(join(ROOT, "web/road-map.html"), pub, "utf8");
     console.log(`✓ web/road-map.html (${(pub.length / 1024).toFixed(1)} KB) — público, ${MAP.audiences.length} rutas, sin interioridades`);

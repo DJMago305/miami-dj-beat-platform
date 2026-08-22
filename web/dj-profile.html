@@ -129,7 +129,7 @@
         })();
     </script>
     <link rel="stylesheet" href="./styles.css?v=20260820-purga4" />
-    <link rel="stylesheet" href="./header-unified.css?v=20260820-purga4" />
+    <link rel="stylesheet" href="./header-unified.css?v=20260821-separador-publico-b" />
     <link rel="stylesheet" href="./profile.css?v=20260820-ancho-total" />
     <style id="mdj-qr-view-header-shield">
         /* Blindaje definitivo: especificidad mayor que #mainHeader.header.mdj-header-unified { display:flex !important } en header-unified.css */
@@ -10571,7 +10571,33 @@
             font-weight: 500;
             color: rgba(255, 255, 255, 0.42);
         }
-    </style>
+    
+        /* ══ EL HERO RESERVA SU SITIO (PO 2026-08-21) ══════════════════════
+           Medido: CLS 0.2031 en un solo salto a los 3.9s. `.dj-hero-left`
+           pasaba de 171 a 191px cuando llegaban las especialidades desde la
+           base, y TODO lo de abajo —Opiniones, Bio, QR— se desplomaba 350px.
+           No era animacion ni CSS: era espacio NO RESERVADO.
+           Estas dos piezas nacen vacias y se llenan tarde; ahora el hueco
+           existe desde el primer pintado y el contenido cae dentro.
+           La Bio NO se toca: su alto depende del texto de cada artista y
+           reservarlo seria inventar un numero. */
+        #pub-role-label { min-height: 25px; }
+        #pub-hero-rating { min-height: 20px; }
+
+        /* Segunda tanda, misma causa. El salto restante (0.1343 a los 6.8s)
+           venia de estas tarjetas y de la fila social: tambien nacen vacias y
+           se llenan desde la base. Se les reserva su alto medido en vivo, para
+           que el contenido caiga en un hueco que ya existe.
+             #avail-check-card  183px   ·  #venues-card  70px
+             .dj-social-row      40px   ·  .pub-web-title 13px
+           Son piezas de alto FIJO —un consultor de disponibilidad, una fila de
+           iconos, un rotulo— no texto libre, asi que reservar es exacto y no
+           deja hueco de mas. La Bio sigue sin tocarse por lo contrario. */
+        #avail-check-card { min-height: 183px; }
+        #venues-card { min-height: 70px; }
+        .dj-social-row { min-height: 40px; }
+        .pub-web-title { min-height: 13px; }
+</style>
 
     <!-- Mock Phone Notification (DJ DECISION) -->
     <div class="mock-sms-toast" id="mockSmsToast">
@@ -14303,7 +14329,7 @@
     <script defer src="./monetization.js?v=20260422-sft-math"></script>
 
     <script defer src="./header-smart-search.js?v=20260415-CORE-CONNECTIONS"></script>
-    <script defer src="./mdj-shared-header.js?v=20260820-purga4"></script>
+    <script defer src="./mdj-shared-header.js?v=20260821-estacion-academia"></script>
   <script defer src="./mdj-owner-tabs-marquee.js?v=20260818-nav-canonico"></script>
   <script defer src="./mdj-social-bar.js?v=20260819-social-contact-only"></script>
   <!-- Cart pill: badge + redirect to rentals (no heavy scripts needed here) -->

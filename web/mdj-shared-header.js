@@ -168,7 +168,14 @@
     'academia.html': 1,
     'dj-dashboard.html': 1,
     'account-settings.html': 1,
-    'dj-tools.html': 1
+    'dj-tools.html': 1,
+    /* Los dos destinos de Academia (PO 2026-08-21). El artista pulsaba «Cursos
+       y Certificacion» o «Cultura y Biblioteca DJ» desde su estacion y caia en
+       la barra publica, sin camino de vuelta: medido en vivo. Son la
+       continuacion natural de academia.html, asi que pertenecen a la estacion.
+       Ambas conservan la barra —comprobado— que es el requisito de esta lista. */
+    'courses.html': 1,
+    'dj-knowledge.html': 1
     /* shop.html NO figura: no es una vista nuestra, redirige a la tienda de
        Shopify. Comprobado en vivo — el riel sale de la plataforma por ese puesto,
        igual que por Inicio. La lista solo admite destinos que conserven la barra. */
@@ -378,6 +385,23 @@
          filtro de staff: un artista no es staff, y con esa comprobacion por
          delante nunca llegaria aqui. */
       if (mdjEnPortalArtista()) return MDJ_NAV_SLOTS_ARTISTA;
+      /* ORDEN DEL PO 2026-08-21 — «academia sigue mandando la barra de menu de
+         inicio». Causa medida: mdjEnPortalArtista() exige que la sesion ya este
+         resuelta, y esa resolucion es ASINCRONA. Hasta que llega, la pagina de
+         estacion se pintaba con la barra publica; despues saltaba a la de la
+         estacion y la barra se estiraba de 1397 a 1493px — el «chicle». Sin
+         sesion de artista no llegaba nunca y la barra de Inicio se quedaba.
+
+         Decision del PO: en una pagina de estacion manda la barra de la
+         estacion, haya sesion o no. La pagina lo declara en su <body> y ese
+         dato SI esta disponible en el primer pintado, asi que el HTML y el
+         guion coinciden desde el primer fotograma. El staff conserva su riel
+         interno: su comprobacion va justo debajo y no se toca. */
+      if (!mdjEsStaffEnVivo() &&
+          document.body &&
+          document.body.getAttribute('data-mdj-estacion') === 'artista') {
+        return MDJ_NAV_SLOTS_ARTISTA;
+      }
       if (!mdjEsStaffEnVivo()) return MDJ_NAV_SLOTS;
       var pagina = String(window.location.pathname || '').split('/').pop().toLowerCase();
       if (MDJ_VISTAS_INTERNAS[pagina]) return MDJ_NAV_SLOTS_INTERNO;
@@ -596,6 +620,21 @@
       el.setAttribute('aria-busy', 'true');
       mdjDestinoConfigEnVivo().then(function (dest) {
         el.removeAttribute('aria-busy');
+        /* CONFIG NO SACA AL ARTISTA DE SU ESTACION (PO 2026-08-21).
+           La tabla declara el puesto con ?mdj_nav=profile, pero este resolutor
+           devuelve la ruta A SECAS y la pisa: medido, salia con marcador y
+           aterrizaba en /account-settings.html sin el. Hoy no se nota porque
+           esa pagina figura en MDJ_VISTAS_ARTISTA, pero es una fuga latente —
+           el dia que salga de la lista, CONFIG tira al artista a la barra
+           publica sin camino de vuelta, como ya pasaba con Agenda y Cash Flow.
+           Se sella AQUI, dentro de su propio manejador, y no con un
+           interceptor aparte: dos manos sobre el mismo clic ya nos costo una
+           carrera de destinos. El staff queda fuera: tiene su propio juego. */
+        try {
+          if (!mdjEsStaffEnVivo() && mdjEnPortalArtista() && !/mdj_nav=profile/.test(dest)) {
+            dest = mdjArtistNavWithProfileContext(dest);
+          }
+        } catch (eCtxCfg) { /* noop */ }
         window.location.href = dest;
       }).catch(function () {
         el.removeAttribute('aria-busy');
@@ -1128,10 +1167,134 @@
        el slot SIEMPRE ocupa su columna; sólo se oculta su contenido. */
     /* Opción A: una sola barra. Los rieles alternativos se ocultan inline porque
        por CSS los gana una regla más específica en algunas páginas (academia). */
+    /* ══ LA ESTACION NO SE ESCAPA POR SUS PROPIOS ENLACES ═════════════════
+       Medido en academia.html?mdj_nav=profile: «Agenda» y «Cash Flow» salian
+       a ./dj-dashboard.html SIN el marcador. Al pulsarlos, la pagina destino
+       ya no se reconocia como estacion, pintaba la barra PUBLICA, y desde ahi
+       TODOS sus enlaces eran publicos: el artista no podia volver. Eso es la
+       cascada que veia el PO («academia se dirige a inicio»).
+       Se sella por regla, no enlace a enlace: estando en la estacion, todo
+       destino interno viaja con el marcador. Excepciones deliberadas:
+         · index.html — «Inicio» devuelve al sitio publico a proposito
+         · destinos externos y anclas — no son nuestros
+       Asi, un slot nuevo que alguien añada mañana nace ya sellado. */
+    try {
+      if (mdjEnPortalArtista()) {
+        Array.prototype.forEach.call(nav.querySelectorAll('a[href]'), function (a) {
+          var h = a.getAttribute('href') || '';
+          if (!/\.html/.test(h)) return;                 // ancla, # o boton
+          if (/^https?:/i.test(h)) return;                // externo
+          if (/index\.html/.test(h)) return;             // Inicio: publico a proposito
+          if (/mdj_nav=profile/.test(h)) return;          // ya sellado
+          a.setAttribute('href', mdjArtistNavWithProfileContext(h));
+        });
+      }
+    } catch (eSello) { /* noop */ }
+
+    /* Y el mismo sello EN LA PULSACION. El barrido de arriba no basta: hay
+       SIETE sitios distintos que reescriben el href de «Agenda» y «Cash Flow»
+       despues de cada pase (dj-dashboard.html?tab=...), asi que perseguirlos
+       uno a uno seria una carrera perdida. Aqui se decide en el ultimo
+       instante —cuando el dedo ya pulso— y por tanto nadie puede pisarlo.
+       Se engancha UNA sola vez por riel. */
+    try {
+      if (nav && !nav.__mdjSelloClick) {
+        nav.__mdjSelloClick = true;
+        nav.addEventListener('click', function (ev) {
+          try {
+            if (!mdjEnPortalArtista()) return;
+            if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button === 1) return; // pestaña nueva
+            var a = ev.target && ev.target.closest ? ev.target.closest('a[href]') : null;
+            if (!a || !nav.contains(a)) return;
+            /* CONFIG se resuelve solo, por rol y en asincrono: no se le toca. */
+            if (a.id === 'mainNav-config-link' || a.__mdjConfigHook) return;
+            if (a.getAttribute('data-mdj-nav') === 'config') return;
+            var h = a.getAttribute('href') || '';
+            if (!/\.html/.test(h)) return;
+            if (/^https?:/i.test(h)) return;
+            if (/index\.html/.test(h)) return;
+            if (/mdj_nav=profile/.test(h)) return;
+            ev.preventDefault();
+            window.location.href = mdjArtistNavWithProfileContext(h);
+          } catch (eClick) { /* noop */ }
+        }, true);
+      }
+    } catch (eSello2) { /* noop */ }
+
+    /* ══ EL RIEL ENTERRADO SE RETIRA, NO SE ESCONDE ═══════════════════════
+       #owner-tabs quedaba con display:none dentro de la estacion, pero seguia
+       en el arbol con DIEZ enlaces vivos: un menu duplicado en otro orden (el
+       que el PO fotografio) y —lo peor— `Shop` apuntando a la tienda de
+       Shopify que ya esta muerta. Un riel apagado resucita en cuanto una hoja
+       cacheada le devuelve el display, y sus enlaces siguen siendo pulsables
+       por teclado aunque no se vean.
+       Solo se retira ESTANDO en la estacion de artista: fuera de ella hay
+       paginas que lo usan de verdad. */
+    try {
+      if (mdjEnPortalArtista()) {
+        var _tiraMuerta = document.getElementById('owner-tabs');
+        if (_tiraMuerta && _tiraMuerta.parentNode) _tiraMuerta.parentNode.removeChild(_tiraMuerta);
+      }
+    } catch (eTira) { /* noop */ }
+
+    /* ══ LOS BOTONES DE CONTENIDO TAMBIEN CONSERVAN LA ESTACION ═══════════
+       Medido en academia: «Cursos y Certificacion» y «Cultura y Biblioteca DJ»
+       salian a courses.html / dj-knowledge.html SIN marcador, asi que el
+       artista se caia a la barra publica al pulsarlos. Se sellan igual que el
+       riel, pero SOLO los destinos que pertenecen a la estacion — no se toca
+       ningun otro enlace de la pagina. */
+    try {
+      if (mdjEnPortalArtista() && !document.body.__mdjSelloContenido) {
+        document.body.__mdjSelloContenido = true;
+        var DESTINOS_ESTACION = /(courses|dj-knowledge|academia|dj-tools|jobs|account-settings|dj-dashboard)\.html/;
+        document.addEventListener('click', function (ev) {
+          try {
+            if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button === 1) return;
+            var a = ev.target && ev.target.closest ? ev.target.closest('a[href]') : null;
+            if (!a) return;
+            /* NO TOCAR LO QUE YA TIENE DUEÑO. CONFIG lleva su propio manejador
+               (mdjEngancharConfig): intercepta el clic, resuelve el destino por
+               rol de forma asincrona y navega el. Si este sello tambien lo
+               intercepta, hay DOS manos sobre la misma pulsacion y el destino
+               pasa a depender de cual gane la carrera. Se aparta. */
+            if (a.id === 'mainNav-config-link' || a.__mdjConfigHook) return;
+            if (a.getAttribute('data-mdj-nav') === 'config') return;
+            var h = a.getAttribute('href') || '';
+            if (/^https?:/i.test(h) || !DESTINOS_ESTACION.test(h)) return;
+            if (/mdj_nav=profile/.test(h)) return;
+            ev.preventDefault();
+            window.location.href = mdjArtistNavWithProfileContext(h);
+          } catch (e2) { /* noop */ }
+        }, true);
+      }
+    } catch (eCont) { /* noop */ }
+
     MDJ_RIELES_MUERTOS.forEach(function (id) {
       var alt = document.getElementById(id);
       if (alt && alt !== nav) alt.style.setProperty('display', 'none', 'important');
     });
+
+    /* ══ LEY RBAC · STAFF FUERA DEL DOM, NO SOLO OCULTO ═══════════════════
+       header-unified.css:2548 lo dejaba escrito como deuda: «Sigue pendiente el
+       requisito pleno de la ley RBAC: sacarlo del DOM». Hasta ahora la celda
+       STAFF vivia ESTATICA en el HTML de dj-profile, dj-tools y staff-agenda y
+       solo se tapaba con CSS: seguia en el arbol, con su href a
+       admin-dashboard, dentro de un perfil de ARTISTA. Un nodo tapado es una
+       ruta interna a un `display` de distancia.
+       Se retira de verdad en cuanto el rol esta resuelto y NO es de oficina.
+       Mientras el rol aun no se conoce no se toca nada: preferimos esperar a
+       equivocarnos y borrarsela a un owner. */
+    try {
+      var _rolRBAC = (document.body.getAttribute('data-mdj-nav-role') || '').toLowerCase().trim();
+      var _esOficina = (_rolRBAC === 'management' || _rolRBAC === 'seller' ||
+                        _rolRBAC === 'owner' || _rolRBAC === 'admin' || _rolRBAC === 'manager');
+      if (_rolRBAC && !_esOficina) {
+        var _staffCells = document.querySelectorAll('.dj-tab-btn--staff-only, [data-mdj-nav="staff"]');
+        Array.prototype.forEach.call(_staffCells, function (c) {
+          if (c && c.parentNode) c.parentNode.removeChild(c);
+        });
+      }
+    } catch (eRBAC) { /* noop */ }
 
     /* El panel de la hamburguesa se reconstruye desde los mismos puestos que
        acaban de fijarse, para que barra y desplegable no puedan discrepar. Es
@@ -2408,24 +2571,23 @@
 
   /** Fila 2 artista (#mainNav-artist): 8 enlaces core; invitado #mainNav oculto sin CLS. */
   function mdjEnsureArtistMainNav() {
-    var headerNav = document.querySelector('#mainHeader .header-nav .container');
-    if (!headerNav) return null;
-    var existing = document.getElementById('mainNav-artist');
-    if (existing) return existing;
-    var nav = document.createElement('nav');
-    nav.id = 'mainNav-artist';
-    nav.className = 'nav top-nav mdj-artist-mainnav';
-    nav.setAttribute('aria-label', 'Navegación de artista');
-    nav.hidden = true;
-    nav.setAttribute('aria-hidden', 'true');
-    mdjRenderArtistNav(nav, false);
-    var guestNav = document.getElementById('mainNav');
-    if (guestNav && guestNav.parentNode === headerNav) {
-      headerNav.insertBefore(nav, guestNav.nextSibling);
-    } else {
-      headerNav.appendChild(nav);
-    }
-    return nav;
+    /* ══ YA NO SE FABRICA (PO 2026-08-21) ══════════════════════════════════
+       Este riel se creaba en CADA carga, se rellenaba con el juego viejo
+       (Servicios · Eventos · Contacto), se marcaba hidden y se insertaba en la
+       cabecera... para que acto seguido MDJ_RIELES_MUERTOS y header-unified.css
+       lo apagaran. El comentario de mdjApplyArtistHeaderRow2 ya lo sentenciaba:
+       «#mainNav-artist murio con la consolidacion de 9 puestos... No hay barra
+       especial de artista».
+
+       Un riel apagado no es inofensivo: sigue en el arbol con sus enlaces y
+       resucita en cuanto una hoja cacheada o una regla le devuelve el display.
+       Es una de las causas medidas de los «menus dobles» que reporto el PO.
+
+       Se deja de crear. Los TRES usos de su retorno estan protegidos con
+       `if (artistNav)` y lo unico que hacian era ocultarlo, asi que un null es
+       exactamente equivalente. Si alguna pagina aun lo trae escrito en su HTML,
+       se devuelve ese nodo y se sigue tratando igual que antes. */
+    return document.getElementById('mainNav-artist');
   }
 
   function mdjNavHighlightArtist() {
@@ -2530,7 +2692,18 @@
        segundo «MI PERFIL» al riel (academia salía con 10 puestos). El
        normalizador lo retira por DUPLICADOS_8, pero esta inyección corre
        DESPUÉS de su barrido y el duplicado sobrevivía. */
-    if (mdjTablaDeSlots() === MDJ_NAV_SLOTS_INTERNO) return null;
+    /* Las DOS estaciones, no solo la de staff (PO 2026-08-21). La guarda cubria
+       MDJ_NAV_SLOTS_INTERNO pero no MDJ_NAV_SLOTS_ARTISTA, asi que en el perfil
+       este respaldo se inyectaba DESPUES del barrido y dejaba dos «MI PERFIL»
+       en la misma coordenada: 11 puestos en una rejilla de 10 y un solape.
+       El propio archivo ya dice mas arriba que «Interno son las DOS estaciones». */
+    var _tablaAct = mdjTablaDeSlots();
+    if (_tablaAct === MDJ_NAV_SLOTS_INTERNO || _tablaAct === MDJ_NAV_SLOTS_ARTISTA) return null;
+    /* Y en CUALQUIER tabla: si el puesto 8 canonico ya esta puesto, este nodo de
+       respaldo sobra por definicion —seria un segundo «MI PERFIL» en la misma
+       coordenada—. Medido en jobs.html?mdj_nav=profile con sesion: el riel salia
+       con «MI PERFIL · MI PERFIL». El criterio es el hecho, no la tabla. */
+    if (nav.querySelector('[data-mdj-slot="8"]')) return null;
     var el = document.getElementById('mainNav-guest-mi-perfil-link');
     var legacy = document.getElementById('mainNav-artist-dashboard-link');
     if (legacy && !el) {
