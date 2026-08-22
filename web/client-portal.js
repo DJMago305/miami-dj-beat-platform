@@ -3300,6 +3300,9 @@ const PortalApp = {
                 '<span style="font-family:monospace;font-size:13px;font-weight:700;color:#fff;letter-spacing:0.05em;">#' + lid + '</span>';
             var btns =
                 '<a href="' + hrefOrder + '" style="display:inline-block;padding:6px 10px;border-radius:6px;border:1px solid rgba(197,160,89,0.6);background:rgba(197,160,89,0.45);color:#fff;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;vertical-align:middle;">Ver Orden</a>' +
+                (portalLeadIsPast(l)
+                    ? '&nbsp;<button onclick="window.mdjLibroClienteAbrir(\'' + l.id + '\')" style="display:inline-block;padding:6px 10px;border-radius:6px;border:1px solid rgba(197,160,89,0.6);background:transparent;color:#c99f4c;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;vertical-align:middle;">Reportar</button>'
+                    : '') +
                 '&nbsp;<button onclick="portalDeleteLead(\'' + l.id + '\',this)" style="display:inline-block;padding:6px 12px;border-radius:6px;border:1px solid rgba(220,60,60,0.6);background:rgba(220,60,60,0.45);color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;box-sizing:border-box;vertical-align:middle;min-width:64px;text-align:center;overflow:hidden;flex-shrink:0;">Delete</button>';
             return '<tr>' +
                 '<td style="' + TD + '">' + leadPill + '</td>' +
