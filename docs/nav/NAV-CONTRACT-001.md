@@ -18,7 +18,7 @@ Any change that affects navigation behavior, tab visibility, tab order, href tar
 
 | Surface | Path / selector | Notes |
 |--------|------------------|-------|
-| Shared header logic | `web/mdj-shared-header.js` | Single source of truth for session branches, tab reveal/hide, href wiring |
+| Shared header logic | `web/mdjb-shared-header.js` | Single source of truth for session branches, tab reveal/hide, href wiring |
 | Shared header styles | `web/header-unified.css` | Guest vs buyer vs staff CSS; anti-shift rules |
 | Markup | Any HTML containing `#mainNav` | Includes public pages, client journey pages, locked pages when `#mainNav` is touched |
 
@@ -81,7 +81,7 @@ The following are **forbidden** without a scoped ticket + Captain/Architect appr
 
 1. **Page-local nav variants** — different tab sets or order per `index.html`, `rentals.html`, `events.html`, etc., beyond the shared HTML skeleton + shared JS/CSS.
 2. **Duplicated navigation logic** — second copies of reveal/hide/order/href rules in page scripts, fragments, or inline `<script>` blocks.
-3. **`removeChild` / DOM deletion of tabs from page scripts** — e.g. stripping `venues` outside `mdj-shared-header.js`.
+3. **`removeChild` / DOM deletion of tabs from page scripts** — e.g. stripping `venues` outside `mdjb-shared-header.js`.
 4. **Inline restorers** — `mdj-vista-cero-guest-nav-restore` or similar per-page boot patches that fight hydration.
 5. **Unauthorized local CSS** on `#mainNav`, `.header-nav`, `.top-nav` in individual HTML files or page-scoped `<style>` blocks.
 6. **Reintroducing parallel systems** — new guest-nav restorers, buyer-nav injectors, or carousel-specific tab surgery outside the two protected shared files (unless ticket explicitly expands scope).

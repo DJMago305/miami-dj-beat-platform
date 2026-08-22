@@ -1536,7 +1536,7 @@ ${capsPub}
   /* Rotulos y destinos COPIADOS: los de staff de staffTopnavHtml() en
      staff.html; los de artista y cliente de los 8 slots canonicos de #mainNav,
      con CONFIG y MI PERFIL resueltos por rol igual que hace
-     mdj-shared-header.js. No se inventa ninguno. */
+     mdjb-shared-header.js. No se inventa ninguno. */
   function pintaMenu(rol){
     var m = document.getElementById('rmMenu');
     if (!m || m.classList.contains('on')) return;

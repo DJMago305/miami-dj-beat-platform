@@ -464,7 +464,7 @@ function portalTAmount(key, amountUsd) {
     return s.replace(/\$\{amount\}/g, '$' + amt.toFixed(2));
 }
 
-/** Normaliza rutas Storage (misma idea que mdj-shared-header). */
+/** Normaliza rutas Storage (misma idea que mdjb-shared-header). */
 function portalNormalizeAvatarUrl(raw) {
     var s = String(raw || '').trim();
     if (!s) return '';

@@ -619,7 +619,7 @@
          · dia/noche         -> al final del menu (se mueve el motor bueno, el que
                                 difunde el tema a los 4 marcos; ver staffTopnavHtml)
          · SALIR             -> se retira: vive en la pantalla de Inicio, donde
-                                mdj-shared-header.js es su unico dueno. Decision
+                                mdjb-shared-header.js es su unico dueno. Decision
                                 del PO, verificada: index.html carga ese header y
                                 no lo limita por rol.
        #brand-sub SE CONSERVA: mountOwner hace el('brand-sub').textContent SIN
@@ -1020,7 +1020,7 @@
              Se muda el boton DE ARRIBA (#ofm-daynight), no el ☀️ que habia aqui.
              Los dos funcionaban, pero NO son equivalentes:
                #ofm-daynight  -> clave `mdjStaffTheme`, COMPARTIDA con
-                                 mdj-shared-header.js, y DIFUNDE el tema a los
+                                 mdjb-shared-header.js, y DIFUNDE el tema a los
                                  cuatro marcos (ELIXIS, Agenda, Cash Flow, Config).
                .dj-tab-btn--tema -> clave `mdj-theme`, y NO difunde.
              Quedarse con el segundo habria dejado los iframes en el tema
@@ -1158,12 +1158,12 @@
          account-settings.html y dj-dashboard.html, y el que alterna
          mdj-tema-portal.js (linea 27: sol -> '☀️', luna -> '🌙').
          Se conserva #ofm-daynight como motor porque es el unico que DIFUNDE el
-         tema a los cuatro marcos y comparte clave con mdj-shared-header.js.
+         tema a los cuatro marcos y comparte clave con mdjb-shared-header.js.
          Asi: el aspecto de siempre, con el motor bueno detras. */
       var SUN='☀️';
       var MOON='🌙';
       var THEME_KEY='mdjStaffTheme';
-      /* P1.3 Fase A: mdjStaffTheme es compartida con mdj-shared-header.js — normaliza
+      /* P1.3 Fase A: mdjStaffTheme es compartida con mdjb-shared-header.js — normaliza
          cualquier valor heredado ('day'/'night', pre-unificación) al estándar light/dark. */
       function mdjNormalizeThemeValue(raw){
         var v=String(raw||'').toLowerCase().trim();

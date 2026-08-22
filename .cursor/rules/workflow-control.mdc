@@ -15,7 +15,7 @@ alwaysApply: true
 
 1. **`git status`**: cambios listos para commit solo con OK del Capitán; **push/merge/deploy** según [no-auto-deploy.mdc](./no-auto-deploy.mdc) (`APROBADO PUSH` / `APROBADO DEPLOY PRODUCCIÓN`). No asumir que “ya está en el Mac” = producción.
 2. **Locked / scope**: `.cursorrules` — no tocar layout/nav/copy de archivos LOCKED salvo bloque acotado que el usuario pidió; cero refactors colaterales.
-3. **Auth y sesión** (cualquier cambio en `login.html`, `auth.js`, `mdj-shared-header.js`, header en `jobs.html` u otras páginas con `#header-login-btn` / `doLogout`):
+3. **Auth y sesión** (cualquier cambio en `login.html`, `auth.js`, `mdjb-shared-header.js`, header en `jobs.html` u otras páginas con `#header-login-btn` / `doLogout`):
    - No ocultar (`display:none` / `visibility`) controles que **otro script** convierte en **Logout** o **Login**.
    - Tras tocar `onAuthStateChange` en login: distinguir **hidratar sesión** (`INITIAL_SESSION`) de **login real** (`SIGNED_IN`); no redirigir invitados antes de tiempo.
 4. **Rutas en cliente**: en Vercel con raíz = `web/`, las URLs públicas son **`/pagina.html`**, no **`/web/pagina.html`**. Revisar `fetch` a Edge y `successUrl` / redirects.

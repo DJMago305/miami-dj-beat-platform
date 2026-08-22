@@ -1,6 +1,6 @@
 /**
  * Ejecutar en <head> (sin defer) para que los estilos .mdj-compat-* apliquen en el primer paint.
- * mdj-shared-header.js repite la misma lógica al cargar (idempotente: solo añade clases).
+ * mdjb-shared-header.js repite la misma lógica al cargar (idempotente: solo añade clases).
  */
 (function () {
   try {

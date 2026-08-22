@@ -491,7 +491,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
     </style>
     <a id="mdj-back-portal" href="./staff.html">← Portal</a>
     <script>
-      /* Candado: el menú/header viejo se oculta y se VIGILA. mdj-shared-header.js lo re-muestra tras el login con estilo inline; aquí lo forzamos a oculto sí o sí (esto es lo que se te colaba). */
+      /* Candado: el menú/header viejo se oculta y se VIGILA. mdjb-shared-header.js lo re-muestra tras el login con estilo inline; aquí lo forzamos a oculto sí o sí (esto es lo que se te colaba). */
       (function(){
         // Dentro del portal (iframe): el botón "← Portal" sobra (el menú del portal ya está arriba).
         if(window.self!==window.top){ var bp=document.getElementById('mdj-back-portal'); if(bp) bp.style.display='none'; }
@@ -518,7 +518,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
     Scope: Logo, Tabs, Avatar, Navigation Bar.
     ================================================================================ 
     -->
-    <!-- MDJ canonical site header — alineado con index + header-unified (#mainNav con slots; mdj-shared-header.js) -->
+    <!-- MDJ canonical site header — alineado con index + header-unified (#mainNav con slots; mdjb-shared-header.js) -->
 <header class="header mdj-header-unified" id="mainHeader">
   <div class="header-top">
     <div class="container">
@@ -5055,7 +5055,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
             var profileUrl;
             var accTitle;
             var navLabel;
-            /* Pastilla #accountBtn: panel CONFIG (mismo criterio que mdj-shared-header), no perfil público. */
+            /* Pastilla #accountBtn: panel CONFIG (mismo criterio que mdjb-shared-header), no perfil público. */
             var accountHubHref = './account-settings.html?mdj_nav=profile';
             var accountTitle = 'Panel DJ — CONFIG';
             try {
@@ -5091,7 +5091,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                         img.src = av;
                     });
                 }
-                /* Header VIP: script inline corre antes que mdj-shared-header.js; reintentar hasta que exista el helper. */
+                /* Header VIP: script inline corre antes que mdjb-shared-header.js; reintentar hasta que exista el helper. */
                 (function mdjDashApplyHeaderVipPhoto(url) {
                     if (!url) return;
                     var tries = 0;
@@ -7292,7 +7292,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
     </script>
 
     <script src="./header-smart-search.js?v=20260421-smartsearch-dj-directory"></script>
-    <script src="./mdj-shared-header.js?v=20260822-guarda-canonica"></script>
+    <script src="./mdjb-shared-header.js?v=20260822-guarda-canonica"></script>
     <script src="./js/mdj-profile-owner-link.js?v=20260516-perf-ab-1"></script>
   <script src="./mdj-owner-tabs-marquee.js?v=20260818-nav-canonico"></script>
   <script src="./mdj-social-bar.js?v=20260819-social-contact-only"></script>

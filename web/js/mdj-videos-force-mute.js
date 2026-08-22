@@ -3,7 +3,7 @@
  * Excepción opt-in: video[data-mdj-allow-audio="1"] (no usar salvo caso muy concreto).
  *
  * Cubre vídeos añadidos después por JS (MutationObserver). Desactivar: window.MDJ_SKIP_FORCE_MUTE_VIDEOS = true
- * antes de cargar mdj-shared-header, o data-mdj-no-force-mute-videos="1" en <html>.
+ * antes de cargar mdjb-shared-header, o data-mdj-no-force-mute-videos="1" en <html>.
  */
 (function () {
   'use strict';

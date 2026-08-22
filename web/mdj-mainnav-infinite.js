@@ -2,7 +2,7 @@
  * Miami DJ Beat — #mainNav (cabecera unificada) como carrusel infinito cuando el menú
  * se desborda. Mismo ADN que `rentals.js` (clones + salto en bordes); además, deriva lenta
  * opcional (deshabilitada con prefers-reduced-motion).
- * Cargar después de `mdj-shared-header.js` y de `mdj-carousel-scroll-tick.js` (sonido trinquete).
+ * Cargar después de `mdjb-shared-header.js` y de `mdj-carousel-scroll-tick.js` (sonido trinquete).
  * Expone `window.mdjReinitMainNavInfinite`.
  */
 (function () {

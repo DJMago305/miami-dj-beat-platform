@@ -1407,7 +1407,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 }
 
-                /* STAFF / admin hub: #mainNav-staff-or-profile (Staff | Mi perfil) + mdj-shared-header.js. */
+                /* STAFF / admin hub: #mainNav-staff-or-profile (Staff | Mi perfil) + mdjb-shared-header.js. */
                 try {
                     const legacyMngr = document.getElementById('manager-link');
                     if (legacyMngr) legacyMngr.remove();
@@ -1446,7 +1446,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (typeof window.updateAuthButtons === 'function') {
                 window.updateAuthButtons();
             }
-            // mdj-shared-header owns VIP chrome + segregación portal/dashboard (no duplicar rutas de menú aquí).
+            // mdjb-shared-header owns VIP chrome + segregación portal/dashboard (no duplicar rutas de menú aquí).
             if (session && headerDelegated && typeof window.checkSessionForNav === 'function') {
                 void window.checkSessionForNav();
             }
