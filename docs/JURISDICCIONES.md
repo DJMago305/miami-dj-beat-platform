@@ -4,7 +4,7 @@
 - Dominio: Gobernanza, arquitectura global, `docs/ESTADO_MAESTRO.md`, `CLAUDE.md`, gestión de merges y PRs a `main`.
 
 ## 2. Especialista: Elixis Voice Agent Blueprint
-- Dominio exclusivo: Edge functions de audio/Realtime (`elixis-realtime-token`, `elixis-chat`), WebSocket, prompts del agente y herramientas de voz (`enviar_sms`, `dj_memory_facts`).
+- Dominio exclusivo: Edge functions de audio/Realtime (`elixis-realtime-token`, `elixis-chat`), WebSocket, prompts del agente y herramientas de voz (`enviar_sms`), más la memoria persistente del agente (`elixis_memory_facts`, `agent_memory`, y la vista de lectura `dj_memory_facts` — no es tabla, no duplicar la verdad ahí).
 - Restricción: No edita estilos de la web principal ni lógica financiera de Stripe.
 
 ## 3. Especialista: Business Financial Intelligence / Artist Financial
