@@ -2,6 +2,18 @@
 <html lang="en">
 
 <head>
+    <script src="./mdj-estacion-preflight.js?v=20260822-prevuelo-b"></script>
+
+
+<script>/* SEMILLA DE ESTACION · antes del primer pintado.
+   El guion del header va con defer y al final del documento: cuando decide que
+   esta es una estacion de trabajo, la pagina YA se pinto con la cabecera de dos
+   filas, y al retirarla todo daba un salto hacia arriba —el «acordeon» que
+   reporto el PO. Aqui se recuerda la ultima decision conocida y se aplica de
+   inmediato, asi el primer pintado ya tiene la geometria final. Si luego resulta
+   que no es estacion (sesion cerrada), el propio guion retira la marca. */
+(function(){try{if(localStorage.getItem('mdj_estacion')==='1')document.documentElement.classList.add('mdj-estacion-previa');}catch(e){}})();</script>
+
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Miami DJ Beat — Agenda y Control</title>
@@ -10,13 +22,13 @@
         <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,700;1,800&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,700;1,800&display=optional"
         rel="stylesheet">
     <!-- FullCalendar CSS -->
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css?v=20260516-wordmark-clear-r-1" />
-    <link rel="stylesheet" href="./header-unified.css?v=20260819-homolog2" />
-    <link rel="stylesheet" href="./profile.css?v=20260226-1" />
+    <link rel="stylesheet" href="./styles.css?v=20260820-purga4" />
+    <link rel="stylesheet" href="./header-unified.css?v=20260821-separador-publico-b" />
+    <link rel="stylesheet" href="./profile.css?v=20260820-ancho-total" />
     <link rel="stylesheet" href="./mdj-assistant.css?v=20260411-booth-policy" />
     <link rel="stylesheet" href="./weather-effects.css" />
     <!-- Dashboard privado: sin barra social lateral (no depende de caché de mdj-social-bar.js). -->
@@ -560,19 +572,25 @@
   <div class="header-nav">
     <div class="container">
       <nav class="nav top-nav mdj-mainnav-flex" id="mainNav" aria-label="Navegación principal">
-        <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Inicio</a>
-        <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Servicios</a>
-        <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues">Eventos</a>
-        <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-i18n="nav-shop" data-mdj-nav="shop">Shop</a>
-        <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
-        <a href="./dj-dashboard.html?tab=dashboard" id="mainNav-agenda-link" class="mdj-agenda-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="agenda" data-i18n="dash-your-profile" aria-hidden="true" tabindex="-1">SCHEDULE</a>
-        <a href="./dj-dashboard.html?tab=settings" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" aria-hidden="true" tabindex="-1">⚙️ CONFIG</a>
-        <a href="./dj-dashboard.html?tab=flow" id="mainNav-flow-link" class="mdj-flow-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="flow" data-i18n="flow-dash" aria-hidden="true" tabindex="-1">Cash Flow</a>
-        <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Trabajos</a>
-        <a href="./contact.html" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
-        <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="#" data-mdj-nav="mi-portal" data-mdj-slot="8" data-i18n="header-mi-portal" aria-hidden="true" tabindex="-1">MI PORTAL</a>
-        <a href="#" id="mainNav-staff-or-profile" class="mdj-staff-or-profile-mainnav mdj-staff-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="staff" data-i18n="nav-staff" aria-hidden="true" tabindex="-1">STAFF</a>
-      </nav>
+    <!-- EL HTML TRAE LA BARRA PUBLICA A PROPOSITO. Quien tenga sesion recibe la
+         de su estacion en el prevuelo de aqui abajo, que corre ANTES del primer
+         pintado. Se escribe la publica y no la de estacion porque asi se falla
+         del lado seguro: si el prevuelo fallara, un desconocido veria la barra
+         que le toca y como mucho un artista veria el relevo tarde. -->
+
+    <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home" data-mdj-slot="1">Inicio</a>
+    <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services" data-mdj-slot="2">Servicios</a>
+    <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues" data-mdj-slot="3">Eventos</a>
+    <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-i18n="nav-shop" data-mdj-nav="shop" data-mdj-slot="4">Shop</a>
+    <a href="./client-account.html" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" data-mdj-slot="5" aria-hidden="true" tabindex="-1">⚙️ CONFIG</a>
+    <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs" data-mdj-slot="6">Trabajos</a>
+    <a href="./contact.html" data-i18n="nav-contact" data-mdj-nav="contact" data-mdj-slot="7">Contacto</a>
+    <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="./client-portal.html" data-mdj-nav="mi-portal" data-mdj-slot="8" aria-hidden="true" tabindex="-1">MI PERFIL</a>
+    <a href="./road-map.html" id="mainNav-roadmap-link" class="mdj-roadmap-mainnav" data-i18n="nav-roadmap" data-mdj-nav="roadmap" data-mdj-slot="9">MRM IA</a>
+  </nav>
+  <script>/* Decide la barra antes de pintarla. Ver mdj-estacion-preflight.js */
+    try { window.mdjPrevueloEstacion && window.mdjPrevueloEstacion(); } catch (e) {}
+  </script>
     </div>
   </div>
 </header>
@@ -642,28 +660,18 @@
     </div>
 
     <!-- ── DASHBOARD TAB NAV (misma franja que perfil DJ) ────────────────────────────────────── -->
-    <nav class="dj-owner-tabs" id="owner-tabs" data-mdj-no-marquee="1" aria-label="Navegación de artista">
-        <div class="container">
-        <!-- ══ TIRA CANÓNICA DEL PORTAL OWNER (FIX-NAV-04) ══════════════════
-             Nueve elementos dictados por el PO + conmutador día/noche.
-             MRM IA NO va aquí: vive en el riel superior compartido, y
-             duplicarlo era parte del desorden que este ticket corrige.
-             SoundForTips va marcado con data-mdj-solo-artista, no borrado:
-             el CSS lo reserva al perfil de DJ/Artista. -->
-        <a href="./index.html" class="dj-tab-btn" data-mdj-portalnav="inicio" data-i18n="nav-home">Inicio</a>
-        <a href="./academia.html?mdj_nav=profile" class="dj-tab-btn" data-mdj-portalnav="academia" data-i18n="nav-academia">Academia</a>
-        <button type="button" class="dj-tab-btn active" data-mdj-portalnav="agenda" data-tab="dashboard" data-i18n="dash-your-profile" onclick="switchDashTab('dashboard')">Agenda</button>
-        <a href="./account-settings.html" class="dj-tab-btn" data-mdj-portalnav="config" data-i18n="nav-config">⚙ Config</a>
-        <a href="./dj-tools.html?mdj_nav=profile" class="dj-tab-btn" data-mdj-portalnav="tools" data-i18n="nav-tools">DJ Tools</a>
-        <a href="./dj-dashboard.html?tab=flow&amp;mdj_nav=profile" class="dj-tab-btn" data-mdj-portalnav="flow" data-i18n="flow-dash">Cash Flow</a>
-        <a href="./account-settings.html" class="dj-tab-btn" data-mdj-portalnav="perfil" data-i18n="menu-account">Mi Perfil</a>
-        <a href="./admin-dashboard.html" class="dj-tab-btn" data-mdj-portalnav="staff" data-i18n="nav-staff">Staff</a>
-        <a href="./elixis-console.html" class="dj-tab-btn" data-mdj-portalnav="fenix" data-i18n="nav-fenix">Fénix AI</a>
-        <a href="./dj-profile.html?tab=sft&amp;mdj_nav=profile" class="dj-tab-btn" data-mdj-portalnav="sft" data-i18n="nav-soundfortips" data-mdj-solo-artista="1">SoundForTips™</a>
-        <!-- Conmutador día/noche: cierra la tira, como pidió el PO. -->
-        <button type="button" class="dj-tab-btn dj-tab-btn--tema" data-mdj-portalnav="tema" data-mdj-tema-toggle aria-label="Cambiar modo día / noche" title="Modo día / noche">☀️</button>
-      </div>
-    </nav>
+    <!-- RIEL MUERTO RETIRADO (PO 2026-08-22, punto 4 aprobado).
+         Aqui vivia #owner-tabs (nav.dj-owner-tabs): un SEGUNDO menu con diez
+         enlaces en otro orden —el que el PO fotografio— y con `Shop` apuntando
+         a la tienda de Shopify ya congelada. Estaba en display:none, pero un
+         riel apagado resucita en cuanto una hoja cacheada le devuelve el
+         display. El guion ya lo retiraba en caliente, pero solo con sesion de
+         artista viva; sin sesion se quedaba dormido en el arbol.
+         Esta pagina es ESTACION: su barra es #mainNav, escrita arriba con los
+         nueve puestos canonicos. Este riel no pintaba nada.
+         NO se toca en admin-dashboard, staff-admin, staff-agenda ni
+         weather-lab: ahi hay paginas que lo usan de verdad y no se puede
+         comprobar sin una sesion de owner. -->
 
     <main>
         <style>
@@ -922,6 +930,17 @@
               /* HERO inmersivo a 100vh, en flujo (no fondo), sin marco ni máscara de bordes */
               #tab-dashboard #booth-hero-container { min-height: 0 !important; margin: 0 0 24px 0 !important; border: 0 !important; border-radius: 0 !important; }
               #tab-dashboard #booth-hero-container > .weather-scene { position: relative !important; inset: auto !important; top: auto !important; left: auto !important; width: 100% !important; height: calc(100vh - 174px) !important; border-radius: 0 !important; overflow: hidden !important; pointer-events: auto !important; -webkit-mask: none !important; mask: none !important; }  /* 174px = header fijo (158) + gap (16): el HERO cabe exacto bajo el menú */
+              /* EL CLIMA ESTA FIJO DESDE LA PRIMERA IMPRESION (PO 2026-08-22).
+                 Medido: la escena 3D no se mueve —826px clavados, calc(100vh - 174px)—.
+                 Quien se deslizaba era el PANEL DE DATOS: nace vacio (196px) y al
+                 llegar la respuesta del clima salta a 361, empujando 165px de pagina
+                 hacia abajo a los ~880ms. El PO no pidio ese efecto y es un defecto.
+                 Los dos paneles que se llenan reservan su sitio desde el principio,
+                 asi que la altura ya no cambia. Es un SUELO (min-height): si un dia
+                 el contenido creciera, crece; nunca recorta ni oculta nada.
+                 NO se toca la escena, ni las particulas, ni los shaders. */
+              #tab-dashboard #hourly-forecast-permanent { min-height: 218px; }
+              #tab-dashboard #daily-forecast-container { min-height: 218px; }
               #tab-dashboard #booth-hero-container > .weather-scene > iframe { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; pointer-events: auto !important; }
               /* los módulos de datos fluyen DEBAJO del HERO al hacer scroll */
               #tab-dashboard .weather-content { z-index: auto !important; }
@@ -1111,7 +1130,13 @@
                     ================================================================================ 
                     -->
                     <!-- ── Agenda operacional (Matrix) — SOLO staff/owner/manager/seller. Se decide por rol (dj_profiles.role): el artista mantiene su calendario personal de abajo. ── -->
-                    <div id="staff-matrix-embed" style="display:none; width:100%; margin-top:8px;">
+                    <!-- ARRANCA VISIBLE (PO 2026-08-21, «el jalon»): antes nacia oculto y el
+                         calendario personal de abajo se pintaba entero —500px de minimo mas
+                         lo que ocupa FullCalendar—; a los ~280ms el guion los intercambiaba y
+                         la pagina perdia 463px de golpe. Medido: 2729 -> 2266. Ese desplome
+                         era el tiron hacia arriba. El estado FINAL no depende del rol —el
+                         propio guion hace «void role»—, asi que se pinta directamente. -->
+                    <div id="staff-matrix-embed" style="display:block; width:100%; margin-top:8px;">
                       <iframe id="staff-matrix-frame" title="Agenda operacional — Miami DJ Beat" loading="lazy"
                         style="width:100%; height:calc(100vh - 120px); min-height:700px; border:0; border-radius:0; display:block;"></iframe>
                     </div>
@@ -1123,26 +1148,32 @@
                         try{
                           var sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
                           if(!sb || !sb.auth){ return setTimeout(pickAgenda, 300); }
+                          var box = document.getElementById('staff-matrix-embed');
+                          var frame = document.getElementById('staff-matrix-frame');
+                          var personal = document.querySelector('#tab-dashboard .agenda-sidebar.calendar-column');
+                          if(frame && !frame.getAttribute('src')) frame.setAttribute('src', './calendario-operacional-inteligente.html');
                           var sess = (await sb.auth.getSession()).data.session;
-                          if(!sess) return;
+                          if(!sess){
+                            /* Sin sesion se devuelve el calendario personal, que es lo que
+                               hacia antes al salir por aqui sin tocar nada. */
+                            if(box) box.style.display = 'none';
+                            if(personal) personal.style.display = '';
+                            return;
+                          }
                           var res = await sb.from('dj_profiles').select('role').eq('user_id', sess.user.id).maybeSingle();
                           var role = String(res.data && res.data.role ? res.data.role : '').toLowerCase().trim();
                           // TODOS ven el Calendario Operacional Inteligente: staff/owner → Owner·Matrix (consolida a todos);
                           // artista → su modo personal AISLADO (el propio calendario detecta el rol vía gate()+setupRole y
                           // bloquea al artista en lo suyo). El FullCalendar personal viejo queda OCULTO (no borrado).
                           void role;
-                          var box = document.getElementById('staff-matrix-embed');
-                          var frame = document.getElementById('staff-matrix-frame');
-                          var personal = document.querySelector('#tab-dashboard .agenda-sidebar.calendar-column');
-                          if(frame && !frame.getAttribute('src')) frame.setAttribute('src', './calendario-operacional-inteligente.html');
-                          if(box) box.style.display = 'block';
-                          if(personal) personal.style.display = 'none';
+                          /* El estado final ya viene pintado desde el HTML, asi que aqui no se
+                             mueve nada: sin intercambio no hay tiron. */
                         }catch(_e){}
                       }
                       pickAgenda();
                     })();
                     </script>
-                    <div class="agenda-sidebar calendar-column" style="position: relative; z-index: 80;">
+                    <div class="agenda-sidebar calendar-column" style="display:none; position: relative; z-index: 80;">
                         <div class="admin-card agenda-card-container calendar-card"
                             style="padding: 0; position: relative; overflow: visible; border: 1px solid rgba(197,160,89,0.25); min-height: 500px; background: rgba(6,6,10,0.35) !important; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 1;">
 
@@ -7352,7 +7383,7 @@
     </script>
 
     <script src="./header-smart-search.js?v=20260421-smartsearch-dj-directory"></script>
-    <script src="./mdj-shared-header.js?v=20260820-unificacion"></script>
+    <script src="./mdj-shared-header.js?v=20260822-guarda-canonica"></script>
     <script src="./js/mdj-profile-owner-link.js?v=20260516-perf-ab-1"></script>
   <script src="./mdj-owner-tabs-marquee.js?v=20260818-nav-canonico"></script>
   <script src="./mdj-social-bar.js?v=20260819-social-contact-only"></script>

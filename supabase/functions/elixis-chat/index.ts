@@ -1498,9 +1498,54 @@ serve(async (req: Request) => {
         break;
     }
 
+    /* ═══ CIERRE FORZADO ═══════════════════════════════════════════════════
+       El bucle de arriba da TRES vueltas. Si en la tercera ELIXIS sigue
+       pidiendo herramientas, se sale sin haber escrito ni una palabra y `reply`
+       queda vacio: de ahi salia el «(502) Empty response from AI» que el PO
+       fotografio. No era un fallo del proveedor ni una respuesta vacia — era
+       quedarse sin turnos en mitad de una tarea larga. Le paso justo pidiendo
+       registrar CUATRO eventos de golpe, que son varias llamadas encadenadas.
+
+       Las herramientas YA se ejecutaron; lo unico que faltaba era contarlo. Asi
+       que se pide una vuelta mas SIN herramientas: al no tener con que llamar,
+       el modelo no puede hacer otra cosa que responder en texto y resumir lo
+       hecho. Una sola llamada, corta y acotada.
+
+       Si ni asi contesta, entonces si es un fallo de verdad, y se dice con esas
+       palabras en vez de culpar a una «respuesta vacia». */
     if (!reply) {
-        return new Response(JSON.stringify({ error: "Empty response from AI" }),
-            { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
+        try {
+            const cierre = await fetch("https://api.anthropic.com/v1/messages", {
+                method: "POST",
+                headers: { "x-api-key": apiKey, "anthropic-version": ANTHROPIC_VERSION, "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    model: MODEL,
+                    max_tokens: govMaxTokens,
+                    temperature: 0.7,
+                    system: systemContent,
+                    /* sin `tools` a proposito: obliga a cerrar en texto */
+                    messages: [
+                        ...convo,
+                        { role: "user", content: "Resume en texto, sin usar herramientas, que quedo hecho y que falta. Se breve y concreto." },
+                    ],
+                }),
+            });
+            if (cierre.ok) {
+                const dc = await cierre.json();
+                if (dc.usage) { usInput += Number(dc.usage.input_tokens) || 0; usOutput += Number(dc.usage.output_tokens) || 0; }
+                const bl: Array<Record<string, unknown>> = Array.isArray(dc.content) ? dc.content : [];
+                reply = bl.filter((b) => b?.type === "text").map((b) => String(b.text ?? "")).join("").trim();
+            }
+        } catch (errCierre) {
+            console.error("[elixis-chat] cierre forzado fallo:", errCierre);
+        }
+    }
+
+    if (!reply) {
+        console.error("[elixis-chat] sin texto tras 3 vueltas y el cierre forzado; herramientas usadas:", herramientasUsadas.length);
+        return new Response(JSON.stringify({
+            error: "Me quede sin turnos antes de poder responderte. Si pediste varias cosas de golpe, pidemelas por partes.",
+        }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
     }
 
     // ─── LEDGER DE CONSUMO (Pieza B) — best-effort; nunca rompe la respuesta al usuario.

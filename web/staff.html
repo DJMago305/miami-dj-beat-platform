@@ -14,8 +14,8 @@
 
   <!-- Tipografia institucional del menu (Inter 800). Sin esta hoja la barra caia en la
        sustituta del sistema y el texto salia ~2% mas ancho, desplazando el eje X. -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="./styles.css?v=20260516-wordmark-clear-r-1" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=optional" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css?v=20260820-purga4" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
   <script>
     /* FIX-LEGACY-SUPABASE-01 (2026-08-19) · el respaldo entra cuando falta la
@@ -79,7 +79,18 @@
        Sigue siendo absoluta (no empuja al menu, que manda arriba), pero el
        casco reserva su altura mas abajo para que no tape texto: flotar no
        puede significar taparle al Capitan lo que tiene que leer. */
-    .staff-flota{position:absolute;top:72px;left:0;right:0;z-index:6;display:flex;
+    /* FIJA, NO ABSOLUTA (PO 2026-08-22): «el branding, el png y la barra de
+       search no se quedan solidas, se mueven con scroll y se quedan pegados al
+       hero». Medido: era `absolute` respecto al BODY, asi que subia 72px con la
+       pagina mientras #staff-topnav es `fixed` y se quedaba quieto — los dos se
+       perseguian y acababan pisandose. Ahora los dos van fijos y se mueven
+       juntos: nunca. Su altura ya la reservan mas abajo el body y el casco. */
+    /* ARRANCA DONDE ACABA EL MENU, NO 12px ANTES (PO 2026-08-22: «bajar un
+       poquito la pagina de staff para que no compita con el branding y el
+       search»). Medido: el riel #staff-topnav ocupa 0..84 y la banda empezaba
+       en 72 — doce pixeles de solape en los que la marca y el buscador
+       peleaban con el menu. Ahora se tocan sin pisarse. */
+    .staff-flota{position:fixed;top:84px;left:0;right:0;z-index:6;display:flex;
       align-items:center;gap:10px;height:var(--flota-h);padding:0 clamp(12px,2vw,22px);
       background:transparent;pointer-events:none;}
     .staff-flota > *{pointer-events:auto;}
@@ -110,11 +121,20 @@
        que el buscador y el horizonte se veia escalonado.
        Medido, no ajustado a ojo: (708 - 960) * 111/1920 = -14.6px. */
     .staff-flota .tx-wrap .tx-png{height:clamp(103px,8vw,156px);width:auto;display:block;flex:none;
-      /* La compensacion optica ahora es PROPORCIONAL, no un valor fijo: la
-         tinta esta descentrada (708 frente a 960 sobre 1920), o sea el 13.125%
-         de la altura. En porcentaje, translateY se mide sobre el propio
-         elemento, asi que sigue clavada aunque la marca escale. */
-      transform:translateY(13.125%);}
+      /* COMPENSACION CORREGIDA (PO 2026-08-22: «el branding y el png estan
+         vizcos»). La medida anterior —13.125% hacia ABAJO— se calculo sobre una
+         caja de tinta que incluia el HALO del PNG, no las letras.
+         Medido barriendo el canal alfa fila a fila:
+             umbral  16 -> tinta 242..1175, centro 36.90%   (halo)
+             umbral  64 -> tinta 250..1172, centro 37.03%   (halo)
+             umbral 128 -> tinta 848..1171, centro 52.58%   (LETRAS)
+             umbral 200 -> tinta 850..1170, centro 52.60%   (LETRAS)
+         Entre 64 y 128 el borde salta de 250 a 848: esas ~600 filas son halo
+         casi invisible. Las letras de verdad estan centradas en el 52.58%, o
+         sea 2.58% por DEBAJO del centro del lienzo — no 13% por encima. Por eso
+         empujarlas hacia abajo las bajaba el doble de lo que hacia falta.
+         El ave no necesita nada: su centro es 49.22% en cualquier umbral. */
+      transform:translateY(-2.58%);}
     /* `margin-left:auto` lo empuja al extremo derecho sin tocar el reparto de
        lo que ya hay a la izquierda. */
     .staff-buscar{margin-left:auto;flex:0 1 320px;min-width:0;position:relative;}
@@ -286,9 +306,29 @@
        chat -- ver data-empotrado en elixis-console.html. */
     #view-agenda,#view-cashflow,#view-config{
       padding-top:var(--flota-h);box-sizing:border-box;}
+    /* FENIX: PEGADO AL MENU, SIN AIRE Y SIN SCROLL (PO 2026-08-22).
+       «el fenix esta con aire, eso va mas arriba sin aire pegado al menu y sin
+       scroll; el fenix es fijo.»
+       El `body` reserva 188px —84 del riel + 12 + 72 de la banda + 20— pero en
+       esta vista la banda esta en display:none, asi que 104 de esos 188 no
+       tapan nada: eran el hueco medido entre el menu y la consola. El margen
+       negativo devuelve la vista justo al borde del riel, y la altura pasa a
+       ser todo lo que queda de pantalla. Asi el documento mide exactamente la
+       ventana y no hay nada que scrollear.
+       No se toca el padding del body: es comun a las otras cuatro vistas. */
+    #view-elixis{
+      margin-top:calc(84px - 188px);
+      height:calc(100vh - 84px);
+      overflow:hidden;}
     /* El riel lateral arrancaba justo donde acaba la banda: se tocaban y la
        marca parecia apoyada encima. Un respiro de 14px los separa. */
-    .staff-shell{padding-top:calc(var(--flota-h) + 14px);}
+    /* LA BANDA SE RESERVABA DOS VECES, tambien aqui (PO 2026-08-22: «no
+       exageres, subela un poco, que no sea tanto aire»). `body` ya reserva 188
+       —84 riel + 12 aire + 72 franja + 20— y el casco volvia a sumar
+       var(--flota-h) + 14, dejando 140px de hueco entre la banda y el primer
+       titulo. Se queda solo el respiro: la banda acaba en 158 y el contenido
+       arranca poco despues. Es la misma correccion que en #perfil-scroll. */
+    .staff-shell{padding-top:14px;}
     #view-agenda,#view-cashflow,#view-config{position:relative;}
     .agenda-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
       background:#0b0f18;color:rgba(255,255,255,.55);font-size:13px;letter-spacing:.04em;z-index:2;}
@@ -445,8 +485,17 @@
        altura para que el hero arranque DEBAJO y no compita con ella en el
        primer golpe de vista. Probado: el padding de main no mueve nada porque
        quien posiciona la ficha es este contenedor. */
+    /* LA BANDA SE RESERVABA DOS VECES (PO 2026-08-22, «demasiado fino y abajo»).
+       Arriba, `body{padding-top:188px}` ya la cuenta —su propio comentario lo
+       dice: «84 riel + 12 aire + 72 franja + 20»—, y aqui se volvia a sumar
+       var(--flota-h). Medido: la banda acaba en y=146 y el hero arrancaba en
+       y=290, o sea 144px de aire muerto. Es la misma trampa que el comentario
+       de #view-miperfil advierte, pero entre el body y este contenedor.
+       Se queda a cero (segundo ajuste del PO: «mas arriba»): los 42px que
+       aun separan el hero de la banda salen del sobrante del padding del
+       body —188 reservados frente a 146 que ocupa la banda de verdad—. */
     #perfil-scroll{max-height:calc(100vh - 116px - var(--flota-h));overflow-y:auto;
-      padding:calc(28px + var(--flota-h)) 24px 60px;}
+      padding:0 24px 60px;}
     /* El contenedor se abre para que el HERO llegue de un lado al otro. El
        resto del contenido conserva su ancho de lectura: un parrafo a 1440px
        es incomodo de leer, un hero no. */
@@ -488,7 +537,8 @@
       .pf-hero-body{flex-direction:column;align-items:flex-start;padding:28px 22px;}
       .pf-hero-body .pf-photo{order:0;}
     }
-    .pf-hero.has-banner .pf-hero-body{min-height:380px;}
+    /* Hero un punto mas grueso, por orden del PO (2026-08-22): 380 -> 440. */
+    .pf-hero.has-banner .pf-hero-body{min-height:500px;}
     .pf-hero.has-banner .pf-name,.pf-hero.has-banner .pf-role,.pf-hero.has-banner .pf-badge{text-shadow:0 2px 10px rgba(0,0,0,.7);}
     /* CUADRADA y mas grande (PO): es lo que distingue la plantilla de staff de
        la del artista, que la lleva redonda y pequena. Se escala con la pantalla
@@ -1369,6 +1419,111 @@
   })();
   </script>
   <script src="./js/mdj-tema-portal.js?v=20260819-tema"></script>
-  <script src="./header-smart-search.js?v=20260821-staff"></script>
+
+  <!-- ══ ESTACION DE TRABAJO DEL OWNER ═══════════════════════════════════════
+       Mismo proceso que la estacion del artista, con las diferencias que marco
+       el PO: aqui no hay SoundForTips —hay Staff y Fenix AI— y la fila superior
+       no se pierde: sus piezas BAJAN a la franja flotante.
+         izquierda  marca Miami DJ Beat (PNG)
+         centro     buscador calibrado, para paridad con el artista
+         derecha    MRM IA · selector de tema · pildora [◆ OWNER | nombre | SALIR]
+       Geometria identica a la del artista: riel de 84, franja en 96. -->
+  <style id="mdj-estacion-owner">
+    /* La fila superior se retira: sus piezas viven ahora en la franja. */
+    .staff-topbar { display: none !important; }
+
+    /* El riel manda arriba, fijo e inmutable, con la MISMA banda que el artista. */
+    .staff-topnav {
+      position: fixed !important; top: 0; left: 0; right: 0; z-index: 2980;
+      height: 84px !important; min-height: 84px !important; max-height: 84px !important;
+      contain: layout style;
+    }
+    body { padding-top: 188px !important; }   /* 84 riel + 12 aire + 72 franja + 20 */
+
+    /* La franja: sin fondo ni sombra, como decidio el PO para el artista. */
+    #mdj-franja-owner {
+      position: fixed; top: 96px; left: 16px; right: 16px; z-index: 3000;
+      display: flex; align-items: center; gap: 14px;
+      padding: 10px 14px; background: transparent; border: 0; box-shadow: none;
+    }
+    #mdj-franja-owner .mdj-of-marca { display: inline-flex; align-items: center; gap: 10px; flex: 0 0 auto; }
+    #mdj-franja-owner .mdj-of-marca img { display: block; filter: drop-shadow(0 2px 6px rgba(0,0,0,.9)); }
+    #mdj-franja-owner .mdj-of-sello  { height: 52px; width: 52px; }
+    /* El PNG de letras es 1920x1920 cuadrado: caja apaisada + cover recorta el aire. */
+    #mdj-franja-owner .mdj-of-letras { width: 210px; height: 46px; object-fit: cover; object-position: 50% 52.5%; }
+
+    /* Buscador al centro, con la calibracion ya aprobada en la estacion del artista. */
+    #mdj-franja-owner .header-search-wrap { flex: 1 1 520px; max-width: 520px; margin: 0 auto; position: relative; }
+    #mdj-franja-owner .header-smart-search {
+      width: 100%; height: 48px; padding-left: 44px; padding-right: 14px;
+      background: transparent; border: 1px solid rgba(197,160,89,.55); border-radius: 999px;
+      color: #f7f9fc; font-size: 14px; text-shadow: 0 1px 3px rgba(0,0,0,.85); outline: none;
+    }
+    #mdj-franja-owner .header-smart-search::placeholder { color: rgba(255,255,255,.62); letter-spacing: .04em; }
+    #mdj-franja-owner .header-smart-search:focus::placeholder { color: transparent; }
+    #mdj-franja-owner .header-search-wrap::before {
+      content: ""; position: absolute; left: 16px; top: 50%; width: 18px; height: 18px; margin-top: -9px;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23c5a059' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E") no-repeat center/contain;
+      pointer-events: none;
+    }
+
+    /* Grupo derecho: MRM IA, tema y la pildora de usuario. */
+    #mdj-franja-owner .mdj-of-derecha { display: inline-flex; align-items: center; gap: 10px; flex: 0 0 auto; margin-left: auto; }
+    #mdj-franja-owner .mdj-of-pildora {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 6px 12px; border-radius: 999px;
+      background: rgba(10,14,22,.55); border: 1px solid rgba(197,160,89,.28);
+    }
+    @media (max-width: 900px) {
+      #mdj-franja-owner { flex-wrap: wrap; }
+      #mdj-franja-owner .header-search-wrap { order: 3; flex: 1 1 100%; max-width: none; }
+    }
+  </style>
+  <script>
+  (function () {
+    var topbar = document.querySelector('.staff-topbar');
+    if (!topbar || document.getElementById('mdj-franja-owner')) return;
+
+    var caja = document.createElement('div');
+    caja.id = 'mdj-franja-owner';
+
+    /* Marca: enlace al inicio, igual que en la estacion del artista. */
+    var casa = document.createElement('a');
+    casa.className = 'mdj-of-marca';
+    casa.href = './index.html';
+    casa.title = 'Miami DJ Beat — ir al inicio';
+    casa.innerHTML =
+      '<img class="mdj-of-sello" src="./assets/branding/logo-transparent.png" alt="Miami DJ Beat">' +
+      '<img class="mdj-of-letras" src="./assets/branding/logo-transparent%20Letras.png" alt="MIAMI DJ BEAT LLC">';
+    caja.appendChild(casa);
+
+    /* Buscador: el MISMO componente de la plataforma, no una copia inerte.
+       header-smart-search.js lo engancha por #header-smart-search. */
+    var busc = document.createElement('div');
+    busc.className = 'header-search-wrap';
+    busc.innerHTML = '<input type="search" id="header-smart-search" class="header-smart-search" ' +
+                     'placeholder="Search" autocomplete="off" enterkeyhint="search">';
+    caja.appendChild(busc);
+
+    /* Derecha: se MUEVEN los originales, con sus escuchas intactas. */
+    var der = document.createElement('div');
+    der.className = 'mdj-of-derecha';
+    ['staff-mrm-link', 'ofm-daynight'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) der.appendChild(el);
+    });
+    var pil = document.createElement('div');
+    pil.className = 'mdj-of-pildora';
+    ['role-badge', 'staff-name', 'staff-logout'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) pil.appendChild(el);
+    });
+    if (pil.children.length) der.appendChild(pil);
+    caja.appendChild(der);
+
+    document.body.appendChild(caja);
+  })();
+  </script>
+  <script src="./header-smart-search.js?v=20260820-owner"></script>
 </body>
 </html>

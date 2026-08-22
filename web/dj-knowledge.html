@@ -2,6 +2,7 @@
 <html lang="es">
 
 <head>
+    <script src="./mdj-estacion-preflight.js?v=20260822-prevuelo-b"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
     <script>
     /* FIX-LEGACY-SUPABASE-01 (2026-08-19) · el respaldo entra cuando falta la
@@ -29,10 +30,10 @@
     <title>MDJPRO — Conocimiento DJ: Historia y Cultura</title>
   <!-- Tipografia institucional del menu (Inter 800). Sin esta hoja la barra cae en la
        sustituta del sistema y el texto sale ~2% mas estrecho, desplazando el eje X. -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css?v=20260516-wordmark-clear-r-1" />
-  <link rel="stylesheet" href="./header-unified.css?v=20260819-homolog2" />
-    <link rel="stylesheet" href="./profile.css?v=20260226-1" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=optional" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css?v=20260820-purga4" />
+  <link rel="stylesheet" href="./header-unified.css?v=20260821-separador-publico-b" />
+    <link rel="stylesheet" href="./profile.css?v=20260820-ancho-total" />
     <style>
         html {
             scroll-behavior: smooth;
@@ -476,35 +477,41 @@
   <div class="header-nav">
     <div class="container">
       <nav class="nav top-nav mdj-mainnav-flex" id="mainNav">
-        <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Home</a>
-        <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Services</a>
-        <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues">Events</a>
-        <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-mdj-nav="shop">Shop</a>
-        <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
-        <a href="./account-profile.html" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" aria-hidden="true" tabindex="-1">⚙️ CONFIG</a>
-        <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
-        <a href="./contact.html" data-i18n="nav-contact" data-mdj-nav="contact">Contact</a>
-        <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="#" data-mdj-nav="mi-portal" data-mdj-slot="8" aria-hidden="true" tabindex="-1">MY PORTAL</a>
-        <a href="#" id="mainNav-staff-or-profile" class="mdj-staff-or-profile-mainnav mdj-staff-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="staff" data-i18n="nav-staff" aria-hidden="true" tabindex="-1">STAFF</a>
-      </nav>
+    <!-- EL HTML TRAE LA BARRA PUBLICA A PROPOSITO. Quien tenga sesion recibe la
+         de su estacion en el prevuelo de aqui abajo, que corre ANTES del primer
+         pintado. Se escribe la publica y no la de estacion porque asi se falla
+         del lado seguro: si el prevuelo fallara, un desconocido veria la barra
+         que le toca y como mucho un artista veria el relevo tarde. -->
+
+    <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home" data-mdj-slot="1">Inicio</a>
+    <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services" data-mdj-slot="2">Servicios</a>
+    <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues" data-mdj-slot="3">Eventos</a>
+    <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-i18n="nav-shop" data-mdj-nav="shop" data-mdj-slot="4">Shop</a>
+    <a href="./client-account.html" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" data-mdj-slot="5" aria-hidden="true" tabindex="-1">⚙️ CONFIG</a>
+    <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs" data-mdj-slot="6">Trabajos</a>
+    <a href="./contact.html" data-i18n="nav-contact" data-mdj-nav="contact" data-mdj-slot="7">Contacto</a>
+    <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="./client-portal.html" data-mdj-nav="mi-portal" data-mdj-slot="8" aria-hidden="true" tabindex="-1">MI PERFIL</a>
+    <a href="./road-map.html" id="mainNav-roadmap-link" class="mdj-roadmap-mainnav" data-i18n="nav-roadmap" data-mdj-nav="roadmap" data-mdj-slot="9">MRM IA</a>
+  </nav>
+  <script>/* Decide la barra antes de pintarla. Ver mdj-estacion-preflight.js */
+    try { window.mdjPrevueloEstacion && window.mdjPrevueloEstacion(); } catch (e) {}
+  </script>
     </div>
   </div>
 </header>
 
-    <nav class="dj-owner-tabs" id="owner-tabs" aria-label="Artist navigation">
-        <div class="container">
-            <a href="./index.html" class="dj-tab-btn dj-tab-btn--home" data-i18n="nav-home">Home</a>
-            <a href="./jobs.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-jobs">Jobs</a>
-            <a href="./shop.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-shop">Shop</a>
-            <a href="./dj-dashboard.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="dash-your-profile">Agenda</a>
-            <a href="./dj-dashboard.html?tab=settings&amp;mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-settings">⚙️ CONFIG</a>
-            <a href="./academia.html?mdj_nav=profile" class="dj-tab-btn active" data-i18n="nav-academia">Academia</a>
-            <a href="./dj-tools.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-tools">DJ Tools</a>
-            <a href="./dj-dashboard.html?tab=flow&amp;mdj_nav=profile" class="dj-tab-btn" data-i18n="flow-dash">CASH FLOW</a>
-            <a href="./dj-profile.html?mdj_nav=profile" class="dj-tab-btn" data-i18n="menu-account">Mi Perfil</a>
-            <a href="./dj-profile.html?tab=sft&amp;mdj_nav=profile" class="dj-tab-btn" data-i18n="nav-soundfortips">SoundForTips™</a>
-        </div>
-    </nav>
+    <!-- RIEL MUERTO RETIRADO (PO 2026-08-22, punto 4 aprobado).
+         Aqui vivia #owner-tabs (nav.dj-owner-tabs): un SEGUNDO menu con diez
+         enlaces en otro orden —el que el PO fotografio— y con `Shop` apuntando
+         a la tienda de Shopify ya congelada. Estaba en display:none, pero un
+         riel apagado resucita en cuanto una hoja cacheada le devuelve el
+         display. El guion ya lo retiraba en caliente, pero solo con sesion de
+         artista viva; sin sesion se quedaba dormido en el arbol.
+         Esta pagina es ESTACION: su barra es #mainNav, escrita arriba con los
+         nueve puestos canonicos. Este riel no pintaba nada.
+         NO se toca en admin-dashboard, staff-admin, staff-agenda ni
+         weather-lab: ahi hay paginas que lo usan de verdad y no se puede
+         comprobar sin una sesion de owner. -->
 
     <!-- HERO -->
     <!-- 🆕 Cinematic Video-Ready Hero Section -->
@@ -1046,7 +1053,7 @@
     <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
     <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
   <script src="./mdj-identity.js?v=20260617-buyer-artist-fix-1"></script>
-      <script src="./mdj-shared-header.js?v=20260820-unificacion"></script>
+      <script src="./mdj-shared-header.js?v=20260822-guarda-canonica"></script>
       <script src="./js/mdj-profile-owner-link.js?v=20260516-perf-ab-1"></script>
   <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
   <script src="./mdj-mainnav-infinite.js?v=20260818-nav-canonico"></script>

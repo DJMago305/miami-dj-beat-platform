@@ -2,15 +2,25 @@
 <html lang="en">
 
 <head>
+    <script src="./mdj-estacion-preflight.js?v=20260822-prevuelo-b"></script>
+<script>/* SEMILLA DE ESTACION · antes del primer pintado.
+   El guion del header va con defer y al final del documento: cuando decide que
+   esta es una estacion de trabajo, la pagina YA se pinto con la cabecera de dos
+   filas, y al retirarla todo daba un salto hacia arriba —el «acordeon» que
+   reporto el PO. Aqui se recuerda la ultima decision conocida y se aplica de
+   inmediato, asi el primer pintado ya tiene la geometria final. Si luego resulta
+   que no es estacion (sesion cerrada), el propio guion retira la marca. */
+(function(){try{if(localStorage.getItem('mdj_estacion')==='1')document.documentElement.classList.add('mdj-estacion-previa');}catch(e){}})();</script>
+
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Account Settings — Miami DJ Beat</title>
   <meta name="description" content="Manage your account settings and preferences." />
   <!-- Tipografia institucional del menu (Inter 800). Sin esta hoja la barra caia en la
        sustituta del sistema y el texto salia ~2% mas ancho, desplazando el eje X. -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="./styles.css?v=20260516-wordmark-clear-r-1" />
-  <link rel="stylesheet" href="./header-unified.css?v=20260819-homolog2" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=optional" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css?v=20260820-purga4" />
+  <link rel="stylesheet" href="./header-unified.css?v=20260821-separador-publico-b" />
   <link rel="stylesheet" href="./mdj-outlined-fields.css?v=20260421-account-forms" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
   <script>
@@ -1313,19 +1323,25 @@
   <div class="header-nav">
     <div class="container">
       <nav class="nav top-nav mdj-mainnav-flex" id="mainNav">
-        <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Inicio</a>
-        <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Servicios</a>
-        <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues">Eventos</a>
-        <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-i18n="nav-shop" data-mdj-nav="shop">Shop</a>
-        <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
-        <a href="./dj-dashboard.html?tab=dashboard" id="mainNav-agenda-link" class="mdj-agenda-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="agenda" data-i18n="dash-your-profile" aria-hidden="true" tabindex="-1">SCHEDULE</a>
-        <a href="./account-settings.html?mdj_nav=profile" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" aria-hidden="true" tabindex="-1">⚙️ CONFIG</a>
-        <a href="./dj-dashboard.html?tab=flow" id="mainNav-flow-link" class="mdj-flow-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="flow" data-i18n="flow-dash" aria-hidden="true" tabindex="-1">Cash Flow</a>
-        <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Trabajos</a>
-        <a href="./contact.html" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
-        <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="#" data-mdj-nav="mi-portal" data-mdj-slot="8" data-i18n="header-mi-portal" aria-hidden="true" tabindex="-1">MI PORTAL</a>
-        <a href="#" id="mainNav-staff-or-profile" class="mdj-staff-or-profile-mainnav mdj-staff-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="staff" data-i18n="nav-staff" aria-hidden="true" tabindex="-1">STAFF</a>
-      </nav>
+    <!-- EL HTML TRAE LA BARRA PUBLICA A PROPOSITO. Quien tenga sesion recibe la
+         de su estacion en el prevuelo de aqui abajo, que corre ANTES del primer
+         pintado. Se escribe la publica y no la de estacion porque asi se falla
+         del lado seguro: si el prevuelo fallara, un desconocido veria la barra
+         que le toca y como mucho un artista veria el relevo tarde. -->
+
+    <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home" data-mdj-slot="1">Inicio</a>
+    <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services" data-mdj-slot="2">Servicios</a>
+    <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues" data-mdj-slot="3">Eventos</a>
+    <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-i18n="nav-shop" data-mdj-nav="shop" data-mdj-slot="4">Shop</a>
+    <a href="./client-account.html" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" data-mdj-slot="5" aria-hidden="true" tabindex="-1">⚙️ CONFIG</a>
+    <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs" data-mdj-slot="6">Trabajos</a>
+    <a href="./contact.html" data-i18n="nav-contact" data-mdj-nav="contact" data-mdj-slot="7">Contacto</a>
+    <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="./client-portal.html" data-mdj-nav="mi-portal" data-mdj-slot="8" aria-hidden="true" tabindex="-1">MI PERFIL</a>
+    <a href="./road-map.html" id="mainNav-roadmap-link" class="mdj-roadmap-mainnav" data-i18n="nav-roadmap" data-mdj-nav="roadmap" data-mdj-slot="9">MRM IA</a>
+  </nav>
+  <script>/* Decide la barra antes de pintarla. Ver mdj-estacion-preflight.js */
+    try { window.mdjPrevueloEstacion && window.mdjPrevueloEstacion(); } catch (e) {}
+  </script>
     </div>
   </div>
 </header>
@@ -1333,28 +1349,18 @@
     <!-- MDJB nav-fix 2026-08-14: strip #owner-tabs (mismos pilares que dj-profile/academia).
          account-settings CARECÍA de este elemento → su nav se veía distinta (caía al #mainNav
          mutilado). Con CONFIG activo. Reversible. -->
-    <nav class="dj-owner-tabs" id="owner-tabs" aria-label="Navegación de cuenta">
-        <div class="container">
-        <!-- ══ TIRA CANÓNICA DEL PORTAL OWNER (FIX-NAV-04) ══════════════════
-             Nueve elementos dictados por el PO + conmutador día/noche.
-             MRM IA NO va aquí: vive en el riel superior compartido, y
-             duplicarlo era parte del desorden que este ticket corrige.
-             SoundForTips va marcado con data-mdj-solo-artista, no borrado:
-             el CSS lo reserva al perfil de DJ/Artista. -->
-        <a href="./index.html" class="dj-tab-btn" data-mdj-portalnav="inicio" data-i18n="nav-home">Inicio</a>
-        <a href="./academia.html?mdj_nav=profile" class="dj-tab-btn" data-mdj-portalnav="academia" data-i18n="nav-academia">Academia</a>
-        <a href="./dj-dashboard.html?mdj_nav=profile" class="dj-tab-btn" data-mdj-portalnav="agenda" data-i18n="nav-agenda">Agenda</a>
-        <a href="./account-settings.html" class="dj-tab-btn" data-mdj-portalnav="config" data-i18n="nav-config">⚙ Config</a>
-        <a href="./dj-tools.html?mdj_nav=profile" class="dj-tab-btn" data-mdj-portalnav="tools" data-i18n="nav-tools">DJ Tools</a>
-        <a href="./dj-dashboard.html?tab=flow&amp;mdj_nav=profile" class="dj-tab-btn" data-mdj-portalnav="flow" data-i18n="flow-dash">Cash Flow</a>
-        <a href="./account-settings.html" class="dj-tab-btn active" data-mdj-portalnav="perfil" data-i18n="menu-account">Mi Perfil</a>
-        <a href="./admin-dashboard.html" class="dj-tab-btn" data-mdj-portalnav="staff" data-i18n="nav-staff">Staff</a>
-        <a href="./elixis-console.html" class="dj-tab-btn" data-mdj-portalnav="fenix" data-i18n="nav-fenix">Fénix AI</a>
-        <a href="./dj-profile.html?tab=sft&amp;mdj_nav=profile" class="dj-tab-btn" data-mdj-portalnav="sft" data-i18n="nav-soundfortips" data-mdj-solo-artista="1">SoundForTips™</a>
-        <!-- Conmutador día/noche: cierra la tira, como pidió el PO. -->
-        <button type="button" class="dj-tab-btn dj-tab-btn--tema" data-mdj-portalnav="tema" data-mdj-tema-toggle aria-label="Cambiar modo día / noche" title="Modo día / noche">☀️</button>
-      </div>
-    </nav>
+    <!-- RIEL MUERTO RETIRADO (PO 2026-08-22, punto 4 aprobado).
+         Aqui vivia #owner-tabs (nav.dj-owner-tabs): un SEGUNDO menu con diez
+         enlaces en otro orden —el que el PO fotografio— y con `Shop` apuntando
+         a la tienda de Shopify ya congelada. Estaba en display:none, pero un
+         riel apagado resucita en cuanto una hoja cacheada le devuelve el
+         display. El guion ya lo retiraba en caliente, pero solo con sesion de
+         artista viva; sin sesion se quedaba dormido en el arbol.
+         Esta pagina es ESTACION: su barra es #mainNav, escrita arriba con los
+         nueve puestos canonicos. Este riel no pintaba nada.
+         NO se toca en admin-dashboard, staff-admin, staff-agenda ni
+         weather-lab: ahi hay paginas que lo usan de verdad y no se puede
+         comprobar sin una sesion de owner. -->
 
   <main class="account-layout mdj-settings-has-split mdj-has-sidebar">
   <div class="acct-wrap">
@@ -7718,7 +7724,7 @@
     </script>
     <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
     <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
-      <script src="./mdj-shared-header.js?v=20260820-unificacion"></script>
+      <script src="./mdj-shared-header.js?v=20260822-guarda-canonica"></script>
   <script src="./mdj-profile-nav-context.js?v=20260818-nav-canonico"></script>
   <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
   <script src="./mdj-mainnav-infinite.js?v=20260818-nav-canonico"></script>

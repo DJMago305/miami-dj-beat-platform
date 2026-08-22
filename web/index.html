@@ -9,12 +9,12 @@
     content="Miami DJ Beat provides professional DJs and event production for corporate, private, and venue events across Florida, with primary coverage in Miami-Dade and Broward." />
   <!-- Tipografia institucional del menu (Inter 800). Sin esta hoja la barra caia en la
        sustituta del sistema y el texto salia ~2% mas ancho, desplazando el eje X. -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="./styles.css?v=20260516-wordmark-clear-r-1" />
-  <link rel="stylesheet" href="./header-unified.css?v=20260819-homolog2" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=optional" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css?v=20260820-purga4" />
+  <link rel="stylesheet" href="./header-unified.css?v=20260821-separador-publico-b" />
   <!-- Antes el JS inyectaba esto tras el primer paint → CLS (gap/búsqueda en ≥1200px); VIP ya va por @import en styles.css -->
   <link rel="stylesheet" id="mdj-header-desktop-audit-css" href="./mdj-header-desktop-audit.css?v=20260818-nav-canonico" />
-  <link rel="stylesheet" href="./profile.css?v=20260226-1" />
+  <link rel="stylesheet" href="./profile.css?v=20260820-ancho-total" />
   <style>
     /* Neutralizar inyección de auth.js en index.html para usar botón dinámico único */
     #global-logout-btn-desktop,
@@ -41,8 +41,11 @@
      */
     html body.page-home {
       --header-height: 84px;
-      --header-nav-band: 72px;
-      --mdj-index-header-total: 156px;
+      /* La banda ya NO se clava aqui: la plataforma la apaga en movil (styles.css,
+         gate `max-width:600px and pointer:coarse`). Clavarla en 72px reservaba 72px
+         de negro muerto en el telefono. El total se DERIVA: en escritorio sigue dando
+         84+72=156 igual que antes, y en movil da 84+0=84 sin banda. */
+      --mdj-index-header-total: calc(var(--header-height) + var(--header-nav-band));
       padding-top: calc(var(--mdj-index-header-total) + env(safe-area-inset-top, 0px));
       scroll-padding-top: calc(var(--mdj-index-header-total) + env(safe-area-inset-top, 0px));
     }
@@ -572,15 +575,16 @@
       <!-- LOCKED SECTION: DO NOT MODIFY -->
       <div class="container">
         <nav class="nav top-nav mdj-mainnav-flex" id="mainNav" aria-label="Navegación principal">
-          <a href="./index.html" class="active" data-i18n="nav-home" data-mdj-nav="home">Inicio</a>
-          <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Servicios</a>
-          <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues">Eventos</a>
-          <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-i18n="nav-shop" data-mdj-nav="shop">Shop</a>
-          <a href="./client-account.html" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" aria-hidden="true" tabindex="-1">⚙️ CONFIG</a>
-          <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Trabajos</a>
-          <a href="./contact.html" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
-          <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="./client-portal.html" data-mdj-nav="mi-portal" data-mdj-slot="8" aria-hidden="true" tabindex="-1">MI PORTAL</a>
-        </nav>
+    <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home" data-mdj-slot="1">Inicio</a>
+    <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services" data-mdj-slot="2">Servicios</a>
+    <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues" data-mdj-slot="3">Eventos</a>
+    <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-i18n="nav-shop" data-mdj-nav="shop" data-mdj-slot="4">Shop</a>
+    <a href="./client-account.html" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" data-mdj-slot="5" aria-hidden="true" tabindex="-1">⚙️ CONFIG</a>
+    <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs" data-mdj-slot="6">Trabajos</a>
+    <a href="./contact.html" data-i18n="nav-contact" data-mdj-nav="contact" data-mdj-slot="7">Contacto</a>
+    <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="./client-portal.html" data-mdj-nav="mi-portal" data-mdj-slot="8" aria-hidden="true" tabindex="-1">MI PERFIL</a>
+    <a href="./road-map.html" id="mainNav-roadmap-link" class="mdj-roadmap-mainnav" data-i18n="nav-roadmap" data-mdj-nav="roadmap" data-mdj-slot="9">MRM IA</a>
+  </nav>
       </div>
     </div>
   </header>
@@ -1446,7 +1450,7 @@
   <script defer src="./form-handler.js?v=20260420-deploy"></script>
   <script defer src="./header-smart-search.js?v=20260515-unified-header-geometry-1"></script>
   <script defer src="./mdj-identity.js?v=20260617-buyer-artist-fix-1"></script>
-  <script defer src="./mdj-shared-header.js?v=20260820-unificacion"></script>
+  <script defer src="./mdj-shared-header.js?v=20260822-guarda-canonica"></script>
   <script>
     /* Inicio: trinquete en #mainNav (scroll + flechas); no reactiva tick en otros carruseles por scroll. */
     window.MDJ_ENABLE_NAV_TICK_AUDIO = true;

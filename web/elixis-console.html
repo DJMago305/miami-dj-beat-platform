@@ -628,7 +628,10 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
   .op-sim,.opera.cerrando .op-sim{animation:none!important}
 }
 /* Mientras ELIXIS trabaja, el chat se retira. Vuelve al terminar. */
-.trabajando .stream{opacity:.18; transition:opacity .45s ease}
+/* .18 dejaba el chat CASI INVISIBLE (PO 2026-08-22: «se esta quedando mucho
+   tiempo casi transparente el chat de texto»). El panel de proceso sigue
+   mandando, pero la conversacion se lee mientras tanto. */
+.trabajando .stream{opacity:.55; transition:opacity .3s ease}
 
 /* ═══ LAS DOS VENTANAS LATERALES ══════════════════════════════════════
    Viven en los margenes que deja la columna de lectura (920px centrados),
@@ -2233,9 +2236,21 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
       hideTyping();
       var data = {};
       try { data = await res.json(); } catch(_) {}
-      if(res.status === 401){ goLogin(); return; }
-      if(res.status === 403){ addError("Esta cuenta no tiene acceso de owner/staff" + (data.detail ? " (rol: " + data.detail + ")" : "") + "."); return; }
+      /* CADA SALIDA CIERRA LA OPERA (PO 2026-08-22: «cuando escribo en el chat
+         de ELIXIS se esta quedando con opacidad las conversaciones»).
+         `abrirOpera` pone .trabajando en el body y esa clase baja el chat al
+         18% de opacidad —a proposito, para que el panel de proceso mande
+         mientras la peticion viaja—. Pero solo el camino de EXITO llamaba a
+         cerrarOpera: con un 401, un 403, un 502 o una excepcion, la clase se
+         quedaba puesta y la conversacion se veia lavada PARA SIEMPRE, con el
+         panel clavado en «Conectando». Es justo lo que el PO fotografio junto
+         al error «(502) Empty response from AI».
+         No se usa un `finally` porque el camino de exito retrasa el cierre
+         2600ms a proposito, para que las escenas de las herramientas se vean. */
+      if(res.status === 401){ cerrarOpera(); goLogin(); return; }
+      if(res.status === 403){ cerrarOpera(); addError("Esta cuenta no tiene acceso de owner/staff" + (data.detail ? " (rol: " + data.detail + ")" : "") + "."); return; }
       if(!res.ok || !data.reply){
+        cerrarOpera();
         addError("ELIXIS tuvo un problema (" + res.status + "): " + (data.error || "sin respuesta") + ".");
         return;
       }
@@ -2247,12 +2262,16 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
       if(data.modo) pintarModo(data.modo, data.modo_pct);
       /* Los simbolos reales solo cuando el backend confirma cuales corrio.
          Se quedan un momento a la vista y luego se alejan. */
+      /* EL CHAT VUELVE YA (PO 2026-08-22: «que no se demore tanto en
+         aparecer»). Antes, cuando ELIXIS habia usado herramientas, el chat se
+         quedaba atenuado 2600ms MAS despues de tener la respuesta delante.
+         Esa espera no protegia nada: las escenas de las herramientas SE QUEDAN
+         en el panel de proceso —son el registro de lo que hizo, no un
+         destello—, asi que se ven igual con el chat ya devuelto. */
       if(data.herramientas_usadas && data.herramientas_usadas.length){
         mostrarEnOpera(data.herramientas_usadas);
-        setTimeout(cerrarOpera, 2600);
-      } else {
-        cerrarOpera();
       }
+      cerrarOpera();
       /* Si en este turno quedo un SMS en cola, la tarjeta sale justo debajo de
          lo que dijo ELIXIS, para que la decision este donde esta el contexto. */
       if(data.sms_pendiente) addSmsCard(data.sms_pendiente);
@@ -2261,6 +2280,7 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
       history.push({ role:"assistant", content:data.reply });
     }catch(err){
       hideTyping();
+      cerrarOpera();   /* si se cae la red, el chat vuelve a verse */
       statusPill.classList.add("off");
       statusPill.lastChild.textContent = " Sin conexión";
       addError("No pude contactar el servidor. Revisa tu conexión e inténtalo de nuevo.");

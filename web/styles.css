@@ -7827,3 +7827,42 @@ main#app {
     width: 100% !important;
 }
 
+
+/* ══════════════════════════════════════════════════════════════════════════
+   REJILLAS QUE SE ADAPTAN AL TELEFONO (2026-08-21)
+   `.grid2/3/4/5` se definen arriba con un numero FIJO de columnas y no tenian
+   ninguna variante movil en toda la hoja: en un telefono seguian intentando
+   3, 4 y 5 columnas, y las piezas sobrantes se salian de la pantalla.
+   Medido a 390px antes de esto: dj-tools.html se salia 193px (`.grid4`).
+   Se colapsan por tramos, no de golpe: 5/4/3 a una columna en telefono, y
+   `.grid2` aguanta sus dos columnas hasta los 480px porque son fichas
+   estrechas que si caben. No se toca ningun color, borde ni separacion.
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 700px) {
+  .grid5,
+  .grid4,
+  .grid3 { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+  .grid2 { grid-template-columns: 1fr; }
+}
+
+/* Los desplegables de disponibilidad se estiraban al ancho de su opcion mas
+   larga (medido: 470px dentro de una fila de 366px en index.html y
+   article.html) y desbordaban la pantalla aunque la fila ya envolvia.
+   Se les pone techo; el texto largo se recorta, no rompe la pagina. */
+@media (max-width: 700px) {
+  .availability-form-mini select {
+    max-width: 100%;
+    min-width: 0;
+    text-overflow: ellipsis;
+  }
+}
+
+/* Un titular con una palabra larga empujaba la pagina 5px fuera en telefono
+   (medido en index.html y article.html). Los titulares parten la palabra en
+   vez de romper el ancho. */
+@media (max-width: 700px) {
+  h1, h2, h3, h4 { overflow-wrap: break-word; }
+}

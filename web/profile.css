@@ -589,3 +589,92 @@ body.dj-profile-fusion #owner-actions-card {
         padding: 14px !important;
     }
 }
+/* ═══ TAMAÑO OFICIAL DE OPINIONES Y BIO · orden del PO 2026-08-19 ═════════════
+   Ninguno de los dos contenedores puede cambiar de forma segun lo largo o corto
+   que escriba alguien. Solo cambian de tamaño cuando cambia la resolucion.
+
+   Medido antes de fijar nada, sobre el contenedor de Opiniones:
+       40 caracteres → 164px     300 caracteres → 252px
+      174 caracteres → 223px     900 caracteres → 458px
+   Es decir, 294px de variacion pura por texto. Eso es lo que se elimina.
+
+   El tamaño oficial NO se inventa: es el que ya tiene el diseño hoy.
+     · reseña · 118px = 4 lineas de 29.45   → se fija en 4 lineas
+     · bio    · 257px = 9 lineas de 28.5    → se fija en 9 lineas
+   Al declararlo en LINEAS y no en pixeles, la caja acompaña a la tipografia de
+   cada punto de ruptura: cambia con la resolucion, nunca con el contenido. */
+
+/* Opiniones · la reseña ocupa siempre cuatro lineas: el recorte pone el techo y
+   la altura fija pone el suelo. Solo con el recorte, medido, un comentario de 40
+   caracteres seguia encogiendo la caja a 164px frente a los 252 de uno largo —88
+   px de variacion residual. Con las dos cosas, cero. */
+.pub-review-card-comment {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  overflow: hidden;
+  height: calc(4 * 1lh);
+}
+@supports not (height: 1lh) {
+  .pub-review-card-comment { height: 118px; }   /* 4 lineas de 29.45 */
+}
+
+/* UN SOLO MODELO DE CONTENEDOR (orden del PO). La tarjeta de reseña traia borde
+   dorado y fondo negro opaco, mucho mas duro que el resto de la pagina; la Bio
+   usa una linea de susurro y un fondo apenas presente. Se adopta el modelo de la
+   Bio para que las dos cajas sean la misma pieza de diseño, no dos.
+       borde   rgba(197,160,89,.28) → rgba(255,255,255,.08)
+       fondo   rgba(0,0,0,.42)      → rgba(255,255,255,.03)
+       radio   14px                 → 16px
+       relleno 26/28/22             → 28px */
+.pub-review-card,
+.pub-review-card.pub-review-hero {
+  border: 1px solid rgba(255, 255, 255, .08) !important;
+  background: rgba(255, 255, 255, .03) !important;
+  border-radius: 16px !important;
+  padding: 28px !important;
+  box-shadow: none !important;
+}
+
+/* Bio · nueve lineas fijas. Con desplazamiento interno en vez de recorte: una
+   biografia larga sigue leyendose entera sin deformar la tarjeta. */
+#pub-bio {
+  height: calc(9 * 1lh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+/* Respaldo para motores sin la unidad `lh` (Safari anterior a 16.4). El bloque
+   solo entra cuando `lh` NO se soporta; donde si existe, esta regla ni se
+   evalua y manda la de arriba. Mismo alto por los dos caminos. */
+@supports not (height: 1lh) {
+  #pub-bio { height: 257px; }
+}
+
+
+/* ═══ MARCO INTERIOR DEL COMENTARIO · orden del PO ════════════════════════════
+   La reseña arrastraba UNA CAPA MAS que la Bio: el carrusel le añadia 24px de
+   relleno lateral ANTES de los 28 de la tarjeta, asi que su caja empezaba en
+   x=372 mientras el texto de la Bio empieza en 347. Ese desnivel es el «borde de
+   mas» dentro del recuadro. Se retira el relleno lateral del carrusel y las dos
+   piezas quedan alineadas al mismo margen. */
+.reviews-carousel,
+.reviews-carousel.reviews-carousel--hero {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* ═══ APROVECHAR LA PANTALLA · escritorio, portatil y tableta ═════════════════
+   Medido a 1990px: .dj-body estaba topado en max-width 1400px y ademas con una
+   rejilla de columnas FIJAS (908px 420px), asi que aunque se ensanchara el tope
+   el sobrante no se usaba. Resultado: ~295px muertos a cada lado.
+   Se libera el tope al ancho real de la ventana —dejando 24px de aire por lado,
+   el mismo que ya usaba— y la columna principal pasa a fluida, conservando el
+   raíl derecho en los 420px para los que fue diseñado.
+   Solo de tableta hacia arriba: el movil conserva su disposicion. */
+@media (min-width: 768px) {
+  .dj-profile .dj-body {
+    max-width: calc(100vw - 48px) !important;
+    grid-template-columns: minmax(0, 1fr) 420px !important;
+  }
+}
