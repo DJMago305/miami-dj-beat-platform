@@ -1527,6 +1527,18 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
     });
   })();
 
+  /* El botón de la barra (staff.html #ofm-daynight) manda el tema por
+     postMessage({mdjTheme:'light'|'dark'}) — es el cambio GENERAL, a
+     propósito, para que no haya un tema distinto por pestaña. Antes esta
+     consola no escuchaba nada: tenía su propio idioma (data-tema
+     claro/oscuro) y el de arriba habla otro (data-mode light/dark). Se
+     traduce aquí, sin tocar el emisor. */
+  window.addEventListener("message", function(ev){
+    var modo = ev && ev.data && ev.data.mdjTheme;
+    if(modo !== "light" && modo !== "dark") return;
+    ponerTema(modo === "light" ? "claro" : "oscuro");
+  });
+
   /* ═══ EL MODO DEL GOBERNADOR ═══════════════════════════════════════
      Cuando el presupuesto baja, ELIXIS no se apaga: se le acorta la cuerda y
      responde mas escueto. Eso pasaba EN SILENCIO. Ahora se ve.
