@@ -6,6 +6,11 @@
 -- ║  Requiere: M1, M2, M3, M5 ya aplicadas (fenix_puede() debe existir).      ║
 -- ╚══════════════════════════════════════════════════════════════════════════╝
 --
+-- COMPROBAR ANTES DE CORRER — no asumir por notas de otra sesión
+--   SELECT array_length(public.fenix_acciones_canonicas(), 1);
+--   -- Si da 11 → esta migración YA CORRIÓ. No repetir.
+--   -- Si da 10 → falta correrla. Si la función ni existe → falta M5 primero.
+--
 -- QUÉ RESUELVE
 --   El catálogo cerrado de fenix_acciones_canonicas() (M5) tiene hoy diez
 --   acciones — ninguna sirve para el Libro de Operaciones IA. La Fase 2A de su

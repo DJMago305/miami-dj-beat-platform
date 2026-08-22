@@ -6,6 +6,12 @@
 -- ║  Requiere: M1 (profile_id), M2 (mdj_profile_de_usuario), is_staff()       ║
 -- ╚══════════════════════════════════════════════════════════════════════════╝
 --
+-- COMPROBAR ANTES DE CORRER — no asumir por notas de otra sesión
+--   SELECT to_regclass('public.libro_operaciones');
+--   -- Si NO da null → esta migración YA CORRIÓ. No repetir.
+--   SELECT to_regprocedure('public.mdj_profile_de_usuario(uuid)');
+--   -- Si da null → falta M2 antes de esta.
+--
 -- QUÉ ES
 --   El registro central e inmutable de incidentes y facturación de toda la
 --   corporación (Constitución del Libro de Operaciones IA, artifact 55cf2cd5,

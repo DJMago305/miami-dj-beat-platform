@@ -8,6 +8,12 @@
 -- ║            catálogo (20260821000000_libro_operaciones_accion_canonica). ║
 -- ╚══════════════════════════════════════════════════════════════════════════╝
 --
+-- COMPROBAR ANTES DE CORRER — no asumir por notas de otra sesión
+--   SELECT to_regprocedure('public.libro_operaciones_autorizar_lectura(text,uuid[],date,date,timestamptz,text)');
+--   -- Si NO da null → esta migración YA CORRIÓ. No repetir.
+--   SELECT to_regclass('public.libro_operaciones');
+--   -- Si da null → falta la Fase 1 antes de esta.
+--
 -- QUÉ RESUELVE
 --   El artista no lee el libro por defecto (Fase 1). Cuando hace falta —
 --   probar un incidente, por ejemplo— el gerente o el propietario autorizan
