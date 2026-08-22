@@ -353,9 +353,38 @@
        · staff-agenda.html y staff-config.html — se incrustan como iframe en el
          portal y no pintan #mainHeader; no hay barra que cambiar.
        · elixis-console.html — sin verificar en vivo. */
+  /* LAS VISTAS INTERNAS · ampliada el 2026-08-22 por orden del PO («para la 2,
+     interna»).
+
+     Medido el dia anterior con SU sesion de owner en admin-dashboard.html: rol
+     `management`, uid resuelto, y aun asi la barra pintada era la PUBLICA
+     —Inicio · Servicios · Eventos · Shop…—. Causa: esta lista tenia dos
+     entradas, y `mdjTablaDeSlots()` exige staff vivo Y que la pagina figure
+     aqui; si no, cae al juego publico. O sea, el owner entraba a su propio
+     back-office y le recibia el menu del visitante, sin Fenix AI ni Staff.
+
+     Es el mismo defecto que el PO llevaba meses señalando en Academia, pero
+     del lado de owner.
+
+     staff-admin.html y staff-agenda.html NO entran: su propia hoja esconde
+     #mainHeader entero y mandan con su tira entramada. Añadirlas no pintaria
+     nada. staff.html tampoco: no tiene #mainNav, usa #staff-topnav.
+
+     Sigue exigiendose sesion de staff viva, asi que un invitado NO ve estas
+     rutas: en la primera pasada recibe el juego publico y solo cambia cuando
+     la sesion resuelve que es staff. Ese cambio es deliberado —ver el
+     comentario de mdjEsStaffEnVivo()— y se mantiene hasta que el PO decida el
+     punto 1 (que ve el invitado en las paginas de estacion). */
   var MDJ_VISTAS_INTERNAS = {
     'academia.html': 1,
-    'dj-tools.html': 1
+    'dj-tools.html': 1,
+    'admin-dashboard.html': 1,
+    'weather-lab.html': 1,
+    'cash-flow.html': 1,
+    'dj-dashboard.html': 1,
+    'account-settings.html': 1,
+    'courses.html': 1,
+    'dj-knowledge.html': 1
   };
 
   /* El juego interno exige DOS condiciones, no una: que la pagina sea interna
