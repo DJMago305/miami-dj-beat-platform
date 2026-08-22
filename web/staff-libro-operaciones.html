@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="es" class="mdj-admin-gate-pending">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Staff — Libro de Operaciones IA | Miami DJ Beat</title>
+
+  <!-- Auth gate: oculto hasta confirmar staff -->
+  <style id="mdj-libro-gate-css">
+    html.mdj-admin-gate-pending body { visibility: hidden !important; }
+  </style>
+
+  <style>
+    :root {
+      --gold: #c99f4c;
+      --bg: #0b0b0d;
+      --surface: #151519;
+      --surface-raised: #1c1c22;
+      --line: rgba(201,159,76,.20);
+      --line-strong: rgba(201,159,76,.40);
+      --text: rgba(255,255,255,.88);
+      --muted: rgba(255,255,255,.5);
+      --ok: #5fae82;
+      --danger: #c1595a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      margin: 0; min-height: 100vh; padding: 40px 24px 100px;
+    }
+    .wrap { max-width: 980px; margin: 0 auto; }
+    h1 { font-size: 26px; margin: 0 0 6px; }
+    .lede { color: var(--muted); font-size: 14px; margin: 0 0 32px; }
+    .card {
+      background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+      padding: 24px 26px; margin-bottom: 28px;
+    }
+    .card h2 { font-size: 18px; margin: 0 0 4px; }
+    .card .hint { color: var(--muted); font-size: 13px; margin: 0 0 18px; }
+    .filters { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+    .filters input {
+      background: var(--surface-raised); border: 1px solid var(--line-strong); border-radius: 8px;
+      padding: 8px 12px; color: var(--text); font-size: 13.5px;
+    }
+    .filters button, .card form button {
+      background: var(--gold); color: #100c02; border: none; border-radius: 8px;
+      padding: 9px 16px; font-weight: 700; font-size: 13.5px; cursor: pointer;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead th {
+      text-align: left; color: var(--gold); border-bottom: 1px solid var(--line-strong);
+      padding: 8px 10px; text-transform: uppercase; letter-spacing: .04em; font-size: 10.5px;
+    }
+    tbody td { padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    .grant-form { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+    .grant-form label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--muted); grid-column: span 1; }
+    .grant-form label.full { grid-column: span 2; }
+    .grant-form input, .grant-form textarea {
+      background: var(--surface-raised); border: 1px solid var(--line-strong); border-radius: 8px;
+      padding: 9px 12px; color: var(--text); font-size: 14px; font-family: inherit;
+    }
+    .status { margin-top: 14px; padding: 10px 14px; border-radius: 8px; font-size: 13.5px; display: none; }
+    .status.success { background: rgba(95,174,130,.12); color: var(--ok); display: block; }
+    .status.error { background: rgba(193,89,90,.12); color: var(--danger); display: block; }
+    .empty { color: var(--muted); font-size: 13.5px; padding: 12px 0; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Libro de Operaciones IA</h1>
+    <p class="lede">Vista agregada del equipo, y concesión puntual de lectura para un artista — ambas exclusivas de staff.</p>
+
+    <section class="card">
+      <h2>Registro completo</h2>
+      <p class="hint">Todas las entradas de todos los artistas. Filtra por nombre artístico, tipo de incidente, o rango de fechas.</p>
+      <div class="filters">
+        <input type="text" id="f-artista" placeholder="Nombre artístico">
+        <input type="text" id="f-tipo" placeholder="Tipo de incidente">
+        <input type="date" id="f-desde">
+        <input type="date" id="f-hasta">
+        <button type="button" id="btn-filtrar">Filtrar</button>
+      </div>
+      <div id="tabla-wrap">
+        <table>
+          <thead>
+            <tr><th>Fecha</th><th>Artista</th><th>Tipo</th><th>Lugar</th><th>Monto</th><th>Clima</th><th>Relato</th></tr>
+          </thead>
+          <tbody id="tabla-body"></tbody>
+        </table>
+        <div id="tabla-vacia" class="empty" style="display:none;">Sin resultados para este filtro.</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Conceder lectura puntual</h2>
+      <p class="hint">El artista no lee el libro por defecto. Esto abre una ventana temporal sobre un reporte o un rango — nunca un acceso permanente.</p>
+      <form id="grant-form" class="grant-form">
+        <label class="full">Identificador del artista (perfil)
+          <input type="text" id="g-profile-id" placeholder="FENIX-XXXXXXXX" required>
+        </label>
+        <label>Desde
+          <input type="date" id="g-desde">
+        </label>
+        <label>Hasta
+          <input type="date" id="g-hasta">
+        </label>
+        <label class="full">Reportes específicos (opcional, separados por coma)
+          <input type="text" id="g-reportes" placeholder="uuid-1, uuid-2…">
+        </label>
+        <label class="full">Motivo
+          <textarea id="g-motivo" rows="2" placeholder="Por qué se autoriza esta lectura"></textarea>
+        </label>
+        <label class="full">Vence en (opcional — por defecto, 72 horas desde ahora)
+          <input type="datetime-local" id="g-vence">
+        </label>
+        <div class="full"><button type="submit">Conceder</button></div>
+      </form>
+      <div id="grant-status" class="status"></div>
+    </section>
+  </div>
+
+  <script src="./supabase-config.js?v=20260821-libro-staff"></script>
+  <script>
+    (function () {
+      var supabase = null;
+
+      function setStatus(el, msg, tone) {
+        el.textContent = msg || '';
+        el.className = 'status' + (tone ? ' ' + tone : '');
+        el.style.display = msg ? 'block' : 'none';
+      }
+
+      async function boot() {
+        supabase = window.getSupabaseClient ? window.getSupabaseClient() : null;
+        if (!supabase) { setTimeout(boot, 400); return; }
+
+        var { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          document.documentElement.classList.remove('mdj-admin-gate-pending');
+          window.location.href = './login.html?next=' + encodeURIComponent('./staff-libro-operaciones.html');
+          return;
+        }
+
+        var { data: profile } = await supabase
+          .from('dj_profiles').select('role').eq('user_id', session.user.id).single();
+
+        var appRole = ((session.user.app_metadata || {}).role || '').toLowerCase();
+        var dbRole = ((profile || {}).role || '').toLowerCase();
+        var STAFF_ROLES = ['admin', 'owner', 'manager', 'seller'];
+        var isStaff = STAFF_ROLES.indexOf(appRole) !== -1 || STAFF_ROLES.indexOf(dbRole) !== -1;
+
+        if (!isStaff) {
+          document.documentElement.classList.remove('mdj-admin-gate-pending');
+          window.location.href = './index.html';
+          return;
+        }
+
+        document.documentElement.classList.remove('mdj-admin-gate-pending');
+        cargarTabla();
+        wireGrantForm();
+      }
+
+      async function cargarTabla() {
+        var body = document.getElementById('tabla-body');
+        var vacia = document.getElementById('tabla-vacia');
+        body.innerHTML = '';
+
+        var q = supabase.from('libro_operaciones_staff').select('*').order('created_at', { ascending: false }).limit(200);
+
+        var artista = document.getElementById('f-artista').value.trim();
+        var tipo = document.getElementById('f-tipo').value.trim();
+        var desde = document.getElementById('f-desde').value;
+        var hasta = document.getElementById('f-hasta').value;
+
+        if (artista) q = q.ilike('nombre_artistico', '%' + artista + '%');
+        if (tipo) q = q.ilike('tipo_incidente', '%' + tipo + '%');
+        if (desde) q = q.gte('created_at', desde);
+        if (hasta) q = q.lte('created_at', hasta + 'T23:59:59');
+
+        var res = await q;
+        var rows = (res && res.data) || [];
+
+        if (!rows.length) {
+          vacia.style.display = 'block';
+          return;
+        }
+        vacia.style.display = 'none';
+
+        rows.forEach(function (r) {
+          var tr = document.createElement('tr');
+          var fecha = r.created_at ? new Date(r.created_at).toLocaleDateString('es-US') : '—';
+          tr.innerHTML =
+            '<td>' + fecha + '</td>' +
+            '<td>' + esc(r.nombre_artistico) + '</td>' +
+            '<td>' + esc(r.tipo_incidente) + '</td>' +
+            '<td>' + esc(r.lugar || '—') + '</td>' +
+            '<td>' + (r.monto_facturado_usd != null ? '$' + Number(r.monto_facturado_usd).toFixed(2) : '—') + '</td>' +
+            '<td>' + esc(r.clima || '—') + '</td>' +
+            '<td>' + esc(r.relato_libre || '—') + '</td>';
+          body.appendChild(tr);
+        });
+      }
+
+      function esc(s) {
+        var d = document.createElement('div');
+        d.textContent = s == null ? '' : String(s);
+        return d.innerHTML;
+      }
+
+      function wireGrantForm() {
+        document.getElementById('btn-filtrar').addEventListener('click', cargarTabla);
+
+        document.getElementById('grant-form').addEventListener('submit', async function (ev) {
+          ev.preventDefault();
+          var statusEl = document.getElementById('grant-status');
+          setStatus(statusEl, '', null);
+
+          var profileId = document.getElementById('g-profile-id').value.trim();
+          var desde = document.getElementById('g-desde').value || null;
+          var hasta = document.getElementById('g-hasta').value || null;
+          var motivo = document.getElementById('g-motivo').value.trim() || null;
+          var venceRaw = document.getElementById('g-vence').value;
+          var vence = venceRaw ? new Date(venceRaw).toISOString() : null;
+          var reportesRaw = document.getElementById('g-reportes').value.trim();
+          var reportes = reportesRaw
+            ? reportesRaw.split(',').map(function (s) { return s.trim(); }).filter(Boolean)
+            : [];
+
+          if (!profileId) {
+            setStatus(statusEl, 'Falta el identificador del artista.', 'error');
+            return;
+          }
+          if (!reportes.length && !desde && !hasta) {
+            setStatus(statusEl, 'Hay que acotar un reporte específico o un rango de fechas.', 'error');
+            return;
+          }
+
+          var res = await supabase.rpc('libro_operaciones_autorizar_lectura', {
+            p_artista_profile_id: profileId,
+            p_reporte_ids: reportes,
+            p_desde: desde,
+            p_hasta: hasta,
+            p_vence_en: vence,
+            p_motivo: motivo
+          });
+
+          if (res.error) {
+            setStatus(statusEl, 'No se pudo conceder: ' + res.error.message, 'error');
+            return;
+          }
+
+          setStatus(statusEl, 'Concesión creada. El artista podrá leer solo lo indicado, hasta el vencimiento.', 'success');
+          document.getElementById('grant-form').reset();
+        });
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', boot);
+      } else {
+        boot();
+      }
+    })();
+  </script>
+</body>
+</html>
