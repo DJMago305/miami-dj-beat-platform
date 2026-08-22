@@ -299,7 +299,13 @@
       padding-top:var(--flota-h);box-sizing:border-box;}
     /* El riel lateral arrancaba justo donde acaba la banda: se tocaban y la
        marca parecia apoyada encima. Un respiro de 14px los separa. */
-    .staff-shell{padding-top:calc(var(--flota-h) + 14px);}
+    /* LA BANDA SE RESERVABA DOS VECES, tambien aqui (PO 2026-08-22: «no
+       exageres, subela un poco, que no sea tanto aire»). `body` ya reserva 188
+       —84 riel + 12 aire + 72 franja + 20— y el casco volvia a sumar
+       var(--flota-h) + 14, dejando 140px de hueco entre la banda y el primer
+       titulo. Se queda solo el respiro: la banda acaba en 158 y el contenido
+       arranca poco despues. Es la misma correccion que en #perfil-scroll. */
+    .staff-shell{padding-top:14px;}
     #view-agenda,#view-cashflow,#view-config{position:relative;}
     .agenda-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
       background:#0b0f18;color:rgba(255,255,255,.55);font-size:13px;letter-spacing:.04em;z-index:2;}
