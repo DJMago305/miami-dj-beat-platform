@@ -297,6 +297,20 @@
        chat -- ver data-empotrado en elixis-console.html. */
     #view-agenda,#view-cashflow,#view-config{
       padding-top:var(--flota-h);box-sizing:border-box;}
+    /* FENIX: PEGADO AL MENU, SIN AIRE Y SIN SCROLL (PO 2026-08-22).
+       «el fenix esta con aire, eso va mas arriba sin aire pegado al menu y sin
+       scroll; el fenix es fijo.»
+       El `body` reserva 188px —84 del riel + 12 + 72 de la banda + 20— pero en
+       esta vista la banda esta en display:none, asi que 104 de esos 188 no
+       tapan nada: eran el hueco medido entre el menu y la consola. El margen
+       negativo devuelve la vista justo al borde del riel, y la altura pasa a
+       ser todo lo que queda de pantalla. Asi el documento mide exactamente la
+       ventana y no hay nada que scrollear.
+       No se toca el padding del body: es comun a las otras cuatro vistas. */
+    #view-elixis{
+      margin-top:calc(84px - 188px);
+      height:calc(100vh - 84px);
+      overflow:hidden;}
     /* El riel lateral arrancaba justo donde acaba la banda: se tocaban y la
        marca parecia apoyada encima. Un respiro de 14px los separa. */
     /* LA BANDA SE RESERVABA DOS VECES, tambien aqui (PO 2026-08-22: «no
