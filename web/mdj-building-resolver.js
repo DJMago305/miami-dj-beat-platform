@@ -47,7 +47,7 @@
   /* ── BUILDING_ROUTES — Routing contract ───────────────────────────── */
   /**
    * Canonical destination per building × route slot.
-   * Consumers: mdj-shared-header.js (Phases 2-3), role-guard.js (Phase 3), auth.js (Phase 3).
+   * Consumers: mdjb-shared-header.js (Phases 2-3), role-guard.js (Phase 3), auth.js (Phase 3).
    * NO consumer in Phase 1 — exposed for inspection only.
    */
   var BUILDING_ROUTES = Object.freeze({
@@ -164,7 +164,7 @@
     ])
   });
 
-  /* ── navTier mapping — backward compat with mdj-shared-header.js ─── */
+  /* ── navTier mapping — backward compat with mdjb-shared-header.js ─── */
   var BUILDING_NAV_TIER = Object.freeze({
     owner:  'client_only',
     staff:  'client_only',

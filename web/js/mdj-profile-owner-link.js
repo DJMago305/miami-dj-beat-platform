@@ -1,6 +1,6 @@
 /**
  * Microfix B: owner-strip / local nav → dj-profile.html with ?id= when session uid is known.
- * Uses window.__mdjNavOwnUserId (mdj-shared-header.js). Does not change header geometry.
+ * Uses window.__mdjNavOwnUserId (mdjb-shared-header.js). Does not change header geometry.
  */
 (function () {
     'use strict';

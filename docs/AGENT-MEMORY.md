@@ -130,7 +130,7 @@ Los siguientes elementos están **CONGELADOS** en estado PRODUCTION BASELINE:
 | Archivo | Zona congelada |
 |---|---|
 | `web/header-unified.css` | Todas las zonas de navegación aprobadas |
-| `web/mdj-shared-header.js` | Lógica completa de nav/header |
+| `web/mdjb-shared-header.js` | Lógica completa de nav/header |
 | `web/mdj-mainnav-infinite.js` | Skip-logic y carousel |
 | Orden visual de tabs | No reordenar |
 | Espaciados de tabs | No alterar |
@@ -406,7 +406,7 @@ Cualquier cambio futuro en header / nav / auth debe cumplir:
 - `git commit` sin autorización explícita del Capitán
 - Tocar `main` directamente
 - Modificar archivos globales sin plan aprobado archivo por archivo
-- Tocar `auth.js`, `mdj-shared-header.js`, `header-unified.css`, `mdj-mainnav-infinite.js`, navegación, roles o header sin orden escrita
+- Tocar `auth.js`, `mdjb-shared-header.js`, `header-unified.css`, `mdj-mainnav-infinite.js`, navegación, roles o header sin orden escrita
 
 ### FLUJO OBLIGATORIO PARA CADA TAREA:
 1. **Modo solo lectura** → diagnóstico primero
@@ -526,7 +526,7 @@ El Capitán detectó y documentó el siguiente patrón de comportamiento del age
 - El agente NO informó este cambio proactivamente; fue detectado por el Capitán
 - Revertido en commit `6ec3bbb`
 
-**INCIDENTE B — `mdj-shared-header.js` (estructura CONFIRMADA violada 4 veces):**
+**INCIDENTE B — `mdjb-shared-header.js` (estructura CONFIRMADA violada 4 veces):**
 - El agente recibió orden "corrigue eso" para MI PERFIL y procedió sin scope acordado
 - Intento 1: fix display → MI PERFIL en posición incorrecta (entre CONFIG y TRABAJOS)
 - Intento 2: fix posición → doble MI PERFIL + carousel en contact.html
@@ -538,7 +538,7 @@ El Capitán detectó y documentó el siguiente patrón de comportamiento del age
 
 **VIOLACIONES ACUMULADAS DE ESTA SESIÓN:**
 - LEY 2 ZONA ROJA: `client-portal.js` tocado sin ticket
-- LEY 3 NO-REGRESIONES: `mdj-shared-header.js` modificado 4 veces dejando regresiones
+- LEY 3 NO-REGRESIONES: `mdjb-shared-header.js` modificado 4 veces dejando regresiones
 - LEY 5 OBEDIENCIA MILITAR: iniciativas propias no solicitadas
 - MANDATORY SCOPE: trabajo fuera de zona autorizada en múltiples ocasiones
 - WORKFLOW CONTROL: no se detuvo a pedir permiso antes de tocar estructuras confirmadas
@@ -550,7 +550,7 @@ El Capitán detectó y documentó el siguiente patrón de comportamiento del age
 > ESPERAR OK EXPLÍCITO del Capitán.
 > Si el resultado del intento no es correcto en el PRIMER intento: DETENER, REVERTIR, NOTIFICAR.
 > PROHIBIDO hacer múltiples intentos de fix sobre el mismo archivo sin aprobación entre cada intento.
-> PROHIBIDO tocar `mdj-shared-header.js` sin ticket TICKET-NAV-OWNER-MIPERFIL aprobado explícitamente.
+> PROHIBIDO tocar `mdjb-shared-header.js` sin ticket TICKET-NAV-OWNER-MIPERFIL aprobado explícitamente.
 
 ---
 
@@ -603,7 +603,7 @@ El owner (Gerardo) pudo acceder al portal del cliente (`client-portal.html?lead=
 | TICKET-EVENT-TIME-001 | **Hora de inicio y hora de cierre del evento** — faltan en barra de info de staff (`staff-order.html`) y en portal cliente. `client-portal.js` ya referencia `event_time/start_time` pero no están en SELECT ni en `leads` confirmado. Requiere: (1) verificar/crear columnas `event_start_time` + `event_end_time` en `leads`, (2) agregar a SELECT de ambos archivos, (3) input editable en staff, (4) display en cliente. | 🔴 PRÓXIMO |
 | TICKET-EVENT-BRIEF-001 | **Compartir información del evento con artistas y compañías subcontratadas** — la ficha del evento (cliente, fecha, ubicación, servicios) debe llegar a los participantes del evento (DJs, músicos en vivo, compañías). Propuesta: pestaña/panel de "Brief del Evento" desde `staff-order.html` que genere una vista compartible o notificación para cada artista/proveedor asignado a la orden. **Pendiente de diseño y alcance.** | 🔵 ESTRATÉGICO |
 | TICKET-UBICACION-001 | Campo `leads.location` — editable en `staff-order.html` (renderInfoGrid); muestra `—` al cliente porque staff no puede llenarlo aún | 🔴 PRÓXIMO |
-| TICKET-NAV-OWNER-MIPERFIL | **MI PERFIL parpadea y desaparece para el owner.** Root cause: `navTier='client_only'` → `body.mdj-is-client` → CSS `display:none !important` gana al JS `removeProperty`. **✅ CERRADO 2026-06-21** — Fix aplicado en 4 puntos de `mdj-shared-header.js`: líneas 3359, 3674, 3701, 3768. Cambio: `removeProperty('display')` → `setProperty('display','inline-flex','important')` + `min-width/max-width`. Posición: after CONTACTO (al final). Aprobado visualmente por el Capitán. | ✅ CERRADO |
+| TICKET-NAV-OWNER-MIPERFIL | **MI PERFIL parpadea y desaparece para el owner.** Root cause: `navTier='client_only'` → `body.mdj-is-client` → CSS `display:none !important` gana al JS `removeProperty`. **✅ CERRADO 2026-06-21** — Fix aplicado en 4 puntos de `mdjb-shared-header.js`: líneas 3359, 3674, 3701, 3768. Cambio: `removeProperty('display')` → `setProperty('display','inline-flex','important')` + `min-width/max-width`. Posición: after CONTACTO (al final). Aprobado visualmente por el Capitán. | ✅ CERRADO |
 | TICKET-NAV-CONTACT-INICIO | **INICIO recortado en contact.html para cuenta owner.** Nav muestra "I / SERVICIOS /…" — la pestaña INICIO queda oculta detrás del borde izquierdo. Causa raíz confirmada: al añadir MI PERFIL (8.º ítem) el total de ítems desborda el contenedor centrado (`justify-content: center`); `position: fixed` del header recorta contra el borde del viewport. `jobs.html` no presenta el problema. **Scope requerido:** `header-unified.css` (selector base `.header-nav`) O `contact.html` `<style>` — acción solo con OK del Capitán. Evidencia: captura 2026-06-21 22:42. | 🔴 CRÍTICO |
 | TICKET-CLIENT-PORTAL-OWNER | Ver orden bloqueado para owner — RLS fix aplicado pero persiste. Ver SESSION-LOG-2026-06-18 | 🔴 CRÍTICO |
 | FASE-6B-QA | QA manual Event Builder: toast + SQL + Staff Board (lo ejecuta el Capitán) | 🔴 ALTA |
@@ -631,7 +631,7 @@ El owner (Gerardo) pudo acceder al portal del cliente (`client-portal.html?lead=
 | TICKET-CASHFLOW-005 | — | Cash Flow verificado — datos vacíos son normales | 2026-06-16 |
 | TICKET-ROLE-REDIRECT-002 | #97+#98 | MI PORTAL → MI PERFIL artistas | 2026-06-17 |
 | TICKET-SEARCH-007 | #103 | Universal Smart Search + find-dj redesign | 2026-06-17 |
-| TICKET-ROLE-REDIRECT-002 (final) | #104 | `!djProfileErr` guard en `mdj-shared-header.js` | 2026-06-18 |
+| TICKET-ROLE-REDIRECT-002 (final) | #104 | `!djProfileErr` guard en `mdjb-shared-header.js` | 2026-06-18 |
 | TICKET-NAV-ARTIST-003 (v2) | #104 | Clase active estática eliminada + CTAs a dashboard billing | 2026-06-18 |
 | TICKET-DJTOOLS-006 (completo) | #104 | Spinner anti-flash + gate LITE + sección planes + Acceso Anticipado | 2026-06-18 |
 | TICKET-PRO-CHECKOUT-004 (v2) | #104 | Panel billing en dashboard + hash activation + links SFT a dj-tools | 2026-06-18 |
@@ -845,7 +845,7 @@ Si el agente usa cualquiera de estas frases o acciones → **patch rechazado aut
 
 ### Identidad de usuario (lección 2026-06-17 madrugada)
 - **`mdj-identity.js` línea 60:** `else if (hasClientRow && !dj)` — NO cambiar. Artistas con ambas filas siempre son performer.
-- **`mdj-shared-header.js`:** `isClient` requiere `!djProfileErr`. Artista con error de red no debe clasificarse como cliente.
+- **`mdjb-shared-header.js`:** `isClient` requiere `!djProfileErr`. Artista con error de red no debe clasificarse como cliente.
 - **Regla:** DB wins over JWT. Artista con `dj_profiles` → SIEMPRE performer, nunca buyer.
 - **Diagnóstico:** `window.__mdjLastBuyerSession` y `window.__mdjLastPlatformIdentity` en consola.
 

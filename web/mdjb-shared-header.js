@@ -157,6 +157,32 @@
   }
   window.mdjEsArtistaEnVivo = mdjEsArtistaEnVivo;
 
+  /* ══════════════════════════════════════════════════════════════════════════
+     ⚖️ LEY DE ACADEMIA (PO 2026-08-22) — toda pagina nueva que sea "continuacion
+     natural de academia.html" (se llega desde .academia-float-tabs, o cualquier
+     otra pagina pensada para vivir DENTRO de la estacion de trabajo del artista
+     o del staff) DEBE cumplir las DOS condiciones siguientes, o la barra sale
+     rota — mismo layout de dos filas con marca/buscador arriba en vez de una
+     fila con marca/buscador flotando abajo. Confirmado en vivo por el PO contra
+     produccion (academia.html real) el 2026-08-22.
+
+     1) Agregar el nombre de archivo a MDJ_VISTAS_ARTISTA (abajo) y/o
+        MDJ_VISTAS_INTERNAS (mas abajo) — artista, staff, o ambos segun quien
+        deba entrar. Sin esto, mdjTablaDeSlots() nunca elige el juego interno,
+        sin importar quien mire.
+     2) El <body> de esa pagina debe llevar la clase `mdj-artist-academy`
+        (aunque la pagina sea solo para staff — asi la usan admin-dashboard.html
+        y weather-lab.html, que no son de artista). Sin esto, el CONTENIDO del
+        nav sale correcto pero el LAYOUT no colapsa a una fila: styles.css y
+        header-unified.css leen esta clase para el min-height, el nav-band y
+        el resto de la geometria de la estacion.
+
+     Bug real encontrado y corregido el mismo dia por saltarse el punto 2:
+     mdj-music-intelligence.html (nueva) y cash-flow.html (ya existia, se
+     coló sin la clase). Antes de dar por terminada CUALQUIER pagina de
+     Academia/estacion, verificar AMBOS puntos — no asumir que uno implica
+     el otro, son mecanismos independientes (JS vs CSS). */
+
   /* LAS VISTAS DEL PORTAL DEL ARTISTA. Lista explicita, igual que la del staff:
      son los DESTINOS DEL PROPIO RIEL, las pantallas donde el artista sigue dentro
      de su estacion de trabajo.
@@ -175,7 +201,12 @@
        continuacion natural de academia.html, asi que pertenecen a la estacion.
        Ambas conservan la barra —comprobado— que es el requisito de esta lista. */
     'courses.html': 1,
-    'dj-knowledge.html': 1
+    'dj-knowledge.html': 1,
+    /* Tercer destino de Academia (PO 2026-08-22): mdj-music-intelligence.html
+       es "continuación natural de academia.html" por el mismo motivo que
+       courses.html/dj-knowledge.html — se llega por su tarjeta en
+       .academia-float-tabs y conserva la barra. */
+    'mdj-music-intelligence.html': 1
     /* shop.html NO figura: no es una vista nuestra, redirige a la tienda de
        Shopify. Comprobado en vivo — el riel sale de la plataforma por ese puesto,
        igual que por Inicio. La lista solo admite destinos que conserven la barra. */
@@ -384,7 +415,10 @@
     'dj-dashboard.html': 1,
     'account-settings.html': 1,
     'courses.html': 1,
-    'dj-knowledge.html': 1
+    'dj-knowledge.html': 1,
+    /* Mismo motivo que en MDJ_VISTAS_ARTISTA arriba (PO 2026-08-22): tercer
+       destino de Academia, staff/owner también debe conservar la estación. */
+    'mdj-music-intelligence.html': 1
   };
 
   /* El juego interno exige DOS condiciones, no una: que la pagina sea interna
@@ -5596,7 +5630,7 @@
                Se reintenta aquí, en modo público/base — mdjAutodetectArtistMiPerfilNav()
                ya maneja sesión ausente con gracia (mdjHydrateArtistSessionIdFromSupabase
                devuelve '' de forma segura si Supabase falló). */
-            console.warn('[mdj-shared-header] checkSessionForNav falló; renderizando menú base:', eChain);
+            console.warn('[mdjb-shared-header] checkSessionForNav falló; renderizando menú base:', eChain);
             try {
               mdjAutodetectArtistMiPerfilNav().catch(function (eFallback) { void eFallback; });
             } catch (eSync) {

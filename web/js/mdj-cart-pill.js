@@ -4,7 +4,7 @@
  * Lightweight universal cart badge for every page EXCEPT rentals.html.
  *
  * What it does:
- *   1. Creates a minimal #mdj-event-builder-root stub so mdj-shared-header.js
+ *   1. Creates a minimal #mdj-event-builder-root stub so mdjb-shared-header.js
  *      skips loading the full event-builder scripts on this page.
  *   2. Injects a 🛒 pill button into .header-avatar-cart-row (next to the
  *      shop cart link, just like the full builder does).
@@ -28,7 +28,7 @@
     if (pageLeaf === 'rentals' || pageLeaf === 'services') { return; }
 
     /* ── 1. Inject a stub root so shared-header skips the heavy chain ──────
-       mdj-shared-header.js checks:
+       mdjb-shared-header.js checks:
          if (document.getElementById('mdj-event-builder-root')) return;
        Placing this stub before that check runs prevents loading ~150 KB of
        unused event-builder scripts on non-cart pages.

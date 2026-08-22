@@ -27,9 +27,9 @@ La regla automática para asistentes IA está en [`.cursor/rules/workflow-contro
 
 ## 2. Auth, header y sesión
 
-- **`#header-login-btn`** y **`#header-login-btn-mobile`**: `auth.js` y `mdj-shared-header.js` los reutilizan como **Logout** con `doLogout`. **No** ocultarlos con estilos inline si hay sesión sin ofrecer otra salida clara (p. ej. menú cuenta).
+- **`#header-login-btn`** y **`#header-login-btn-mobile`**: `auth.js` y `mdjb-shared-header.js` los reutilizan como **Logout** con `doLogout`. **No** ocultarlos con estilos inline si hay sesión sin ofrecer otra salida clara (p. ej. menú cuenta).
 - **`login.html`**: cuidado con `onAuthStateChange` + `redirect=` — no expulsar a invitados al hidratar sesión; ver implementación actual ( `INITIAL_SESSION` vs `SIGNED_IN` + `getSession()` ).
-- **Logout global**: `window.doLogout` en `mdj-shared-header.js`; debe poder ejecutarse y recargar / limpiar storage según corresponda.
+- **Logout global**: `window.doLogout` en `mdjb-shared-header.js`; debe poder ejecutarse y recargar / limpiar storage según corresponda.
 
 ---
 

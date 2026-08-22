@@ -3,7 +3,7 @@
    ──────────────────────────────────────────────────────────────────────────
    QUE RESUELVE. Las paginas de estacion escriben en su HTML la barra PUBLICA
    —el juego de nueve de la vitrina—. Quien tiene sesion necesita la barra de
-   su estacion, y hasta hoy ese relevo lo daba mdj-shared-header.js DESPUES de
+   su estacion, y hasta hoy ese relevo lo daba mdjb-shared-header.js DESPUES de
    preguntarle a Supabase: unas decimas en las que la barra saltaba y se
    estiraba. Eso era el «chicle». Y sin sesion el relevo no llegaba nunca.
 
@@ -28,7 +28,7 @@
   'use strict';
 
   /* El juego de la estacion del artista, en el mismo orden y con los mismos
-     rotulos que MDJ_NAV_SLOTS_ARTISTA en mdj-shared-header.js. Si alli cambia
+     rotulos que MDJ_NAV_SLOTS_ARTISTA en mdjb-shared-header.js. Si alli cambia
      un puesto, aqui tambien: son la misma barra vista en dos momentos. */
   var ESTACION = [
     { s: 1, href: './index.html',                                  i18n: 'nav-home',       nav: 'home',      txt: 'Inicio' },

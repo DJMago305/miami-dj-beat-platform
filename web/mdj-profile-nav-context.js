@@ -75,7 +75,7 @@
         }
 
         /* Management real (admin/owner/manager) -> acordeón staff.html, mismo criterio que
-           mdjBuildArtistStaffMainNavHref (mdj-shared-header.js). Artista fundador y seller puro
+           mdjBuildArtistStaffMainNavHref (mdjb-shared-header.js). Artista fundador y seller puro
            (misma barra, sin managementInDb) conservan sus hojas legacy, para no romper su
            navegación (scope founder != owner; seller aún sin módulo propio en staff.html). */
         var idn = window.__mdjLastPlatformIdentity;

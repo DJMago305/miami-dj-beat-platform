@@ -17,7 +17,7 @@
   window.__MDJ_AMBIENT_BOOTED = true;
 
   /** FIX-AUDIO-01: defensa en profundidad — aunque este script se cargue directo (bypass del
-   * gate en mdj-shared-header.js), ninguna llamada a new Audio()/AudioContext ocurre fuera
+   * gate en mdjb-shared-header.js), ninguna llamada a new Audio()/AudioContext ocurre fuera
    * de la raíz ('/' o 'index.html'). */
   function mdjAmbientIsHomeRoute() {
     try {

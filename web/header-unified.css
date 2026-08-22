@@ -2124,7 +2124,7 @@ body.mdj-is-client #mainHeader #mainNav > a#mainNav-config-link[data-mdj-nav="cl
 }
 
 /*
- * Modo cabecera artista (mdj-shared-header.js → body.mdj-artist-header-mode).
+ * Modo cabecera artista (mdjb-shared-header.js → body.mdj-artist-header-mode).
  * Fila 1: ENTRAR oculto hasta .danger (SALIR); cluster auth anclado a la derecha.
  * Fila 2: #mainNav-artist (paridad #mainNav); #mainNav invitado sin interacción ni CLS.
  */
@@ -3062,7 +3062,7 @@ body.mdj-staff-nav.page-admin-dashboard
 /* ══════════════════════════════════════════════════════════════════════════
    MDJB 2026-08-16 · REJILLA CANÓNICA DE 8 COLUMNAS — Zero Layout Shift
    Depende de data-mdj-slot="1..8", que pone el normalizador de
-   mdj-shared-header.js. Sin esos atributos esta sección no hace nada, así que
+   mdjb-shared-header.js. Sin esos atributos esta sección no hace nada, así que
    no puede romper una página que aún no haya pasado por el normalizador.
 
    Por qué grid-column explícito y no un flujo automático: el puesto 8 tiene dos
@@ -3450,7 +3450,7 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
    QUÉ SUSTITUYE
    Hasta hoy el ancho de las columnas se declaraba en CINCO sitios: cuatro
    reglas de este archivo (líneas ~2975, ~3167, ~3211, ~3224, ahora comentadas
-   y apuntando aquí) y una escritura en línea desde mdj-shared-header.js con
+   y apuntando aquí) y una escritura en línea desde mdjb-shared-header.js con
    !important, que ganaba a las cuatro. La que mandaba era la última en
    ejecutarse, no la que alguien hubiera decidido.
 
@@ -3533,7 +3533,7 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
    del riel estático, mobile tenía su propia altura vía el carrusel
    (mdj-mainnav-infinite.js). Ese carrusel está apagado GLOBALMENTE, en
    cualquier ancho (MDJ_DISABLE_MAINNAV_INFINITE=true, sin condición, en
-   mdj-shared-header.js) — el riel es "estático" en TODOS los anchos desde
+   mdjb-shared-header.js) — el riel es "estático" en TODOS los anchos desde
    entonces, pero nadie extendió su altura a los anchos que quedaron sin
    carrusel. .header-nav (el abuelo) sí tiene altura en todos los anchos
    (regla ajena a este bloque) — .container y #mainNav no. Misma variable,
@@ -4099,7 +4099,7 @@ body #mainHeader.header.mdj-header-unified
    ── QUÉ GARANTIZA ─────────────────────────────────────────────────────────
    · Los nueve puestos SIEMPRE presentes y visibles, haya sesión o no.
    · La barra no cambia de forma al resolverse la sesión → CLS = 0.
-   · La geometría no depende de JavaScript: mdj-shared-header.js ya no escribe
+   · La geometría no depende de JavaScript: mdjb-shared-header.js ya no escribe
      estilos en línea, y este bloque describe el estado final completo.
 
    ── SI HAY QUE CAMBIAR UN PUESTO ──────────────────────────────────────────
@@ -4522,7 +4522,7 @@ html body #mainHeader.header.mdj-header-unified #mainNav > a#mainNav-mi-perfil-l
    tarjetas de esquinas redondeadas, hairline entre filas y NINGUNA bajo la
    ultima, encabezado de seccion FUERA y arriba, y aire generoso entre grupos.
 
-   El marcado lo construye mdj-shared-header.js desde los mismos puestos del
+   El marcado lo construye mdjb-shared-header.js desde los mismos puestos del
    riel, asi que barra y panel no pueden discrepar.
 
    La paleta no es la clara del documento: este panel se abre sobre el portal

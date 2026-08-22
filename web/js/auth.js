@@ -1,5 +1,5 @@
 /**
- * Stub: la sesión y el header VIP (`web/mdj-shared-header.js` → `checkSessionForNav`) definen rutas.
+ * Stub: la sesión y el header VIP (`web/mdjb-shared-header.js` → `checkSessionForNav`) definen rutas.
  * Implementación completa: `web/auth.js`.
  *
  * Cuentas artista vs cliente: post-login y `?next=` no deben mezclar `account-settings.html` / `client-portal.html`
