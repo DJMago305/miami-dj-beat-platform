@@ -3,6 +3,7 @@
 
 <head>
 
+
 <script>/* SEMILLA DE ESTACION · antes del primer pintado.
    El guion del header va con defer y al final del documento: cuando decide que
    esta es una estacion de trabajo, la pagina YA se pinto con la cabecera de dos
@@ -923,6 +924,17 @@
               /* HERO inmersivo a 100vh, en flujo (no fondo), sin marco ni máscara de bordes */
               #tab-dashboard #booth-hero-container { min-height: 0 !important; margin: 0 0 24px 0 !important; border: 0 !important; border-radius: 0 !important; }
               #tab-dashboard #booth-hero-container > .weather-scene { position: relative !important; inset: auto !important; top: auto !important; left: auto !important; width: 100% !important; height: calc(100vh - 174px) !important; border-radius: 0 !important; overflow: hidden !important; pointer-events: auto !important; -webkit-mask: none !important; mask: none !important; }  /* 174px = header fijo (158) + gap (16): el HERO cabe exacto bajo el menú */
+              /* EL CLIMA ESTA FIJO DESDE LA PRIMERA IMPRESION (PO 2026-08-22).
+                 Medido: la escena 3D no se mueve —826px clavados, calc(100vh - 174px)—.
+                 Quien se deslizaba era el PANEL DE DATOS: nace vacio (196px) y al
+                 llegar la respuesta del clima salta a 361, empujando 165px de pagina
+                 hacia abajo a los ~880ms. El PO no pidio ese efecto y es un defecto.
+                 Los dos paneles que se llenan reservan su sitio desde el principio,
+                 asi que la altura ya no cambia. Es un SUELO (min-height): si un dia
+                 el contenido creciera, crece; nunca recorta ni oculta nada.
+                 NO se toca la escena, ni las particulas, ni los shaders. */
+              #tab-dashboard #hourly-forecast-permanent { min-height: 218px; }
+              #tab-dashboard #daily-forecast-container { min-height: 218px; }
               #tab-dashboard #booth-hero-container > .weather-scene > iframe { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; pointer-events: auto !important; }
               /* los módulos de datos fluyen DEBAJO del HERO al hacer scroll */
               #tab-dashboard .weather-content { z-index: auto !important; }
@@ -7365,7 +7377,7 @@
     </script>
 
     <script src="./header-smart-search.js?v=20260421-smartsearch-dj-directory"></script>
-    <script src="./mdj-shared-header.js?v=20260822-vistas-internas"></script>
+    <script src="./mdj-shared-header.js?v=20260822-clima-fijo"></script>
     <script src="./js/mdj-profile-owner-link.js?v=20260516-perf-ab-1"></script>
   <script src="./mdj-owner-tabs-marquee.js?v=20260818-nav-canonico"></script>
   <script src="./mdj-social-bar.js?v=20260819-social-contact-only"></script>
