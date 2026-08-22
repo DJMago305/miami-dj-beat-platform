@@ -79,7 +79,18 @@
        Sigue siendo absoluta (no empuja al menu, que manda arriba), pero el
        casco reserva su altura mas abajo para que no tape texto: flotar no
        puede significar taparle al Capitan lo que tiene que leer. */
-    .staff-flota{position:absolute;top:72px;left:0;right:0;z-index:6;display:flex;
+    /* FIJA, NO ABSOLUTA (PO 2026-08-22): «el branding, el png y la barra de
+       search no se quedan solidas, se mueven con scroll y se quedan pegados al
+       hero». Medido: era `absolute` respecto al BODY, asi que subia 72px con la
+       pagina mientras #staff-topnav es `fixed` y se quedaba quieto — los dos se
+       perseguian y acababan pisandose. Ahora los dos van fijos y se mueven
+       juntos: nunca. Su altura ya la reservan mas abajo el body y el casco. */
+    /* ARRANCA DONDE ACABA EL MENU, NO 12px ANTES (PO 2026-08-22: «bajar un
+       poquito la pagina de staff para que no compita con el branding y el
+       search»). Medido: el riel #staff-topnav ocupa 0..84 y la banda empezaba
+       en 72 — doce pixeles de solape en los que la marca y el buscador
+       peleaban con el menu. Ahora se tocan sin pisarse. */
+    .staff-flota{position:fixed;top:84px;left:0;right:0;z-index:6;display:flex;
       align-items:center;gap:10px;height:var(--flota-h);padding:0 clamp(12px,2vw,22px);
       background:transparent;pointer-events:none;}
     .staff-flota > *{pointer-events:auto;}
