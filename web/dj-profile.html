@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+    <script src="./mdj-estacion-preflight.js?v=20260822-prevuelo-b"></script>
 <script>/* SEMILLA DE ESTACION · antes del primer pintado.
    El guion del header va con defer y al final del documento: cuando decide que
    esta es una estacion de trabajo, la pagina YA se pinto con la cabecera de dos
@@ -3105,6 +3106,12 @@
     <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="./client-portal.html" data-mdj-nav="mi-portal" data-mdj-slot="8" aria-hidden="true" tabindex="-1">MI PERFIL</a>
     <a href="./road-map.html" id="mainNav-roadmap-link" class="mdj-roadmap-mainnav" data-i18n="nav-roadmap" data-mdj-nav="roadmap" data-mdj-slot="9">MRM IA</a>
   </nav>
+  <script>/* La ficha de DJ tiene dos caras: escaparate publico para el visitante
+     y estacion para su dueño. Se decide ANTES de pintar, comparando el ?id= de
+     la direccion con el uid que viaja en el propio token. Ver
+     mdj-estacion-preflight.js */
+    try { window.mdjPrevueloFicha && window.mdjPrevueloFicha(); } catch (e) {}
+  </script>
     </div>
   </div>
 </header>

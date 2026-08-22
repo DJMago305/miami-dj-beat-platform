@@ -83,10 +83,15 @@
           var p = JSON.parse(decodeURIComponent(escape(atob(cuerpo))));
           rol = String((p.app_metadata && p.app_metadata.role) || '').toLowerCase().trim();
         } catch (eRol) { rol = ''; }
-        return { hay: true, rol: rol };
+        var uid = '';
+        try {
+          var c2 = crudo.access_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+          uid = String(JSON.parse(decodeURIComponent(escape(atob(c2)))).sub || '');
+        } catch (eUid) { uid = ''; }
+        return { hay: true, rol: rol, uid: uid };
       }
     } catch (e) { /* invitado */ }
-    return { hay: false, rol: '' };
+    return { hay: false, rol: '', uid: '' };
   }
 
   window.mdjPrevueloEstacion = function () {
@@ -111,5 +116,26 @@
       nav.innerHTML = html;
       if (!oficina && document.body) document.body.setAttribute('data-mdj-estacion', 'artista');
     } catch (e) { /* si algo falla, se queda la publica: el lado seguro */ }
+  };
+
+  /* ── LA FICHA DE DJ TIENE DOS CARAS ─────────────────────────────────────
+     Es el escaparate PUBLICO del artista y, a la vez, la estacion de quien es
+     su dueño. La regla del PO (2026-08-22): «cuando un visitante localiza un
+     dj no ve la estacion de trabajo, ahi ve la barra de inicio de la pagina
+     para poder entrar a chismiar o a subscribirce, pero si ve el perfil del dj
+     y lo que hay en el perfil».
+     Asi que aqui NO basta con tener sesion: hay que ser el DUEÑO de la ficha
+     que se esta mirando. El uid propio viaja en el mismo token (campo `sub`),
+     de modo que la comparacion tambien es instantanea y anterior al pintado.
+     Mirando la ficha de OTRO —aunque tengas cuenta— mandas la publica. */
+  window.mdjPrevueloFicha = function () {
+    try {
+      var ses = sesion();
+      if (!ses.hay || !ses.uid) return;
+      var pedido = '';
+      try { pedido = new URLSearchParams(location.search).get('id') || ''; } catch (eP) { pedido = ''; }
+      if (pedido && pedido !== ses.uid) return;       /* la ficha de otro: publica */
+      window.mdjPrevueloEstacion();
+    } catch (e) { /* si algo falla, se queda la publica */ }
   };
 })();
