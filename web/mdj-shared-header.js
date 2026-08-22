@@ -3061,10 +3061,28 @@
     }
   }
 
+  /* ────────────────────────────────────────────────────────────────────────
+     GUARDA CANONICA · 2026-08-22
+     Al retirar el riel muerto #owner-tabs de dj-profile.html aparecieron ONCE
+     puestos en la barra: estos dos creadores inyectaban «Agenda» y «CASH FLOW»
+     SIN data-mdj-slot dentro del juego PUBLICO de nueve. Medido en vivo con la
+     sesion del PO.
+     Regla: si el riel ya lo gobierna el juego canonico y ese juego NO trae este
+     puesto, aqui no se crea nada. Los juegos de artista e interno SI lo traen
+     —puestos 3 y 6—, asi que alli no cambia nada.
+     ──────────────────────────────────────────────────────────────────────── */
+  function mdjRielCanonicoSinPuesto(navAttr) {
+    var nav = document.getElementById('mainNav');
+    if (!nav) return false;
+    if (!nav.querySelector('a[data-mdj-slot]')) return false;
+    return !nav.querySelector('a[data-mdj-slot][data-mdj-nav="' + navAttr + '"]');
+  }
+
   /** Crea #mainNav-agenda-link antes de CONFIG: pestaña «Agenda» del panel (`?tab=dashboard`). */
   function mdjEnsureAgendaMainNavNode() {
     var existing = document.getElementById('mainNav-agenda-link');
     if (existing) return existing;
+    if (mdjRielCanonicoSinPuesto('agenda')) return null;
     mdjEnsureConfigMainNavNode();
     var nav = document.getElementById('mainNav');
     if (!nav) return null;
@@ -3116,6 +3134,7 @@
   function mdjEnsureFlowMainNavNode() {
     var existing = document.getElementById('mainNav-flow-link');
     if (existing) return existing;
+    if (mdjRielCanonicoSinPuesto('flow')) return null;
     mdjEnsureConfigMainNavNode();
     var nav = document.getElementById('mainNav');
     if (!nav) return null;
