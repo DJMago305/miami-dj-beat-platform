@@ -1081,6 +1081,25 @@
     try{ localStorage.setItem("coi_theme", goDark ? "dark" : "light"); }catch(e){}
     paint();
   });
+
+  /* El botón GENERAL de la barra (staff.html -> staff-agenda.html) avisa
+     escribiendo data-mode directo en el <body> de este documento -- no hay
+     postMessage porque staff-agenda.html accede al mismo origen. Antes nadie
+     lo escuchaba aquí: el Matrix solo miraba su propio data-theme/localStorage,
+     así que se quedaba siempre en el tema del sistema. Se traduce sin tocar
+     el botón interno ni coi_theme -- ambos siguen funcionando igual si esta
+     página se abre suelta. */
+  function seguirModoGeneral(){
+    var m = document.body.getAttribute("data-mode");
+    if(m !== "light" && m !== "dark") return;
+    root.setAttribute("data-theme", m);
+    paint();
+  }
+  seguirModoGeneral();
+  try{
+    new MutationObserver(seguirModoGeneral)
+      .observe(document.body, { attributes:true, attributeFilter:["data-mode"] });
+  }catch(e){}
 })();
 </script>
 <script>
