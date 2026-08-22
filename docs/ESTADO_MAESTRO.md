@@ -28,6 +28,19 @@ Estado general: Operativo / En consolidación
       para deprecación progresiva (sin borrar nada, sin migración disparada aún).
       Stripe Connect diferido a sprint dedicado, post-cierre de la matriz de
       contenedores.
+- [ ] Reconciliación de la Agenda del Artista (Sub-hilo Road Master Map / Calendario BI)
+      — 2026-08-22 HALLAZGO: la re-arquitectura de agenda (`calendario-operacional-inteligente.html`,
+      aprobada y construida 10–14 ago: vistas Día/Semana/Mes/Año, aislamiento
+      Artista↔Owner por RLS, notarización, confidencialidad de pagos) NO lee la
+      tabla `artist_agenda` (16-ago, R9a/R9b) — verificado, cero referencias.
+      El write-path que resuelve "la reserva no escribe en el calendario personal"
+      sí existe y es real, pero por un camino paralelo y más angosto: una lista
+      simple en `web/dj-dashboard.html` (sección "Calendario Personal", RLS
+      `dj_user_id = auth.uid()`), no integrada al calendario rediseñado.
+      Además `dj_events` (legacy, mar-2026) sigue vivo. Tres piezas de agenda sin
+      reconciliar. Mismo patrón que el SSOT de `dj_ledger`/`financial_payables` —
+      requiere la misma clase de decisión del PO: cuál es la fuente de verdad de
+      la agenda del artista antes de seguir construyendo sobre cualquiera.
 
 ## 2. Bitácora de Sincronización entre Cajas
 - [2026-08-22] Inicialización del Hub Central de sincronización multi-hilo.
@@ -36,3 +49,4 @@ Estado general: Operativo / En consolidación
 - [2026-08-22] Camino de escritura de la memoria confirmado con datos reales (escribir/recordar/olvidar) — hito de memoria persistente ELIXIS cerrado.
 - [2026-08-22] Hilo Business Financial Intelligence entregó diagnóstico de Stripe Connect (ver arriba) — sin infraestructura, con conflicto de dos ledgers sin reconciliar. Esperando decisión del PO antes de abrir ticket de construcción.
 - [2026-08-22] SSOT de balance/payouts resuelto: `financial_payables` gana, `dj_ledger` a deprecar progresivamente. Stripe Connect queda diferido a sprint dedicado; el hilo BFI queda en espera de esa fase o de la siguiente tarea en su dominio.
+- [2026-08-22] Hilo Road Master Map / Calendario BI auditó el encargo de agenda: las tablas nombradas (`events`, `agenda_locks`, `dj_assignments`) no existen; las reales son `artist_agenda` (16-ago, R9a/R9b) y `dj_events` (legacy). Halló que la reserva escribe al calendario personal por un camino paralelo (`dj-dashboard.html`) no integrado al calendario rediseñado (ver arriba) — decisión de SSOT de agenda pendiente del PO. Rama de reconciliación de ese hilo queda aparcada (10 commits detrás de `main` tras PR #213), esperando autorización para rebasar.
