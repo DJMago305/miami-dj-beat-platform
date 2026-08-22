@@ -62,6 +62,20 @@ Estado general: Operativo / En consolidación
       alimentada de forma idempotente por R9b. `dj_events` queda como baja simple
       — cero consumidores de código, nada que desconectar antes. Decisión final
       de SSOT (reserva) pendiente del PO.
+      — 2026-08-22 VERIFICADO EN PRODUCCIÓN (Hilo Road Master Map, ref
+      hkuvuqupbxwkiykxvqdr, guion de solo lectura de 25 filas): `artist_agenda`/R9a/R9b
+      está aplicado **entero**, nada a medias — funciones `artist_agenda_record` y
+      `artist_agenda_record_from_assignment`, `is_staff`, el índice único
+      `artist_agenda_assignment_lead_dj` (garantiza que R9b no duplique al
+      reasignar), RLS activo con sus dos políticas (staff / artista sobre lo
+      suyo), y las 4 columnas del puente de identidad — todo `true`. Las 3 tablas
+      fantasma del encargo original (`events`, `agenda_locks`, `dj_assignments`)
+      confirmadas `false` también en la base, no solo en el código.
+      ⚠️ **R9 del mapa (Road Master Map) NO se cierra todavía** — su criterio de
+      cierre depende de qué signifique "agenda personal del artista" una vez
+      resuelto el SSOT de reserva de arriba, y de si `R9b` es la solución
+      definitiva o cableado provisional. Pregunta repetida dos veces por el hilo
+      especialista, sigue esperando respuesta directa del PO.
 
 ## 2. Bitácora de Sincronización entre Cajas
 - [2026-08-22] Inicialización del Hub Central de sincronización multi-hilo.
@@ -74,3 +88,4 @@ Estado general: Operativo / En consolidación
 - [2026-08-22] CORRECCIÓN: el hallazgo del write-path paralelo en `dj-dashboard.html` es del Hilo Maestro, no del hilo Road Master Map (atribución errónea en la entrada anterior). Ese hilo ya rebasó con autorización del PO y su reconciliación completa (`V11`, `V12`, `R14`…`R21`, `cap-estacion-nav`, `cap-avisos-push`) está dentro de `main` — la rama NO sigue aparcada. Queda un commit local sin subir (`c4e1398`, arregla 3 referencias muertas al rename del PR #213 en `docs/roadmap/master-map.json`).
 - [2026-08-22] `dj_events` refinado a tabla sin ningún consumidor de código (ver arriba).
 - [2026-08-22] Cuarta pieza encontrada: `event_builder_orders` (8 consumidores reales, cero en las pantallas de agenda, enlazada a `leads` por FK nullable). La pregunta de SSOT de agenda se reencuadra en dos ejes — reserva (`leads` vs `event_builder_orders`, sin resolver) y proyección personal (`artist_agenda`, ya resuelta como derivada). `dj_events` queda como baja simple.
+- [2026-08-22] `artist_agenda`/R9a/R9b verificado en producción real, instalación completa (ver arriba) — al revés de `avisos_pendientes` (tabla sin función) de anoche. R9 del mapa queda deliberadamente sin cerrar hasta que el PO responda si R9b es definitivo o provisional.
