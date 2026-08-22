@@ -76,6 +76,26 @@ Estado general: Operativo / En consolidación
       resuelto el SSOT de reserva de arriba, y de si `R9b` es la solución
       definitiva o cableado provisional. Pregunta repetida dos veces por el hilo
       especialista, sigue esperando respuesta directa del PO.
+      — 2026-08-22 POLÍTICA (PO): la agenda de STAFF es la **master** (Matrix/Owner
+      — `calendario-operacional-inteligente.html` en modo staff); la de artistas
+      y clientes es **personal** (aislada por RLS, cada quien ve solo lo suyo).
+      Encaja con lo ya construido para el artista (`artist_agenda`, RLS
+      `dj_user_id = auth.uid()`). El calendario de CLIENTE todavía no existe —
+      queda anotado como tarea futura, no se construye ahora.
+- [ ] Calendario de Cliente (futuro, sin dominio asignado todavía)
+      — 2026-08-22 REGISTRADO (PO): no existe todavía. Anotado como tarea para
+      más adelante, siguiendo la política master/personal de arriba — el
+      cliente vería su propia agenda personal, aislada, igual que el artista.
+- [ ] Bug de layout: clima encogido en `staff.html?vista=agenda` (sin dominio activo)
+      — 2026-08-22 HALLAZGO (Hilo Maestro, en vivo con el PO): a ancho de
+      escritorio, `web/weather-experience/` (embebido dentro de `staff-agenda.html`)
+      se renderiza encogido en una tarjeta angosta arriba a la izquierda en vez
+      de usar el ancho disponible; el calendario grande sí carga más abajo, pero
+      es fácil no llegar a verlo. Localizado en `web/weather-experience/styles.css`
+      (`.center`/`.rail`/`.exp`) — no es un problema de datos ni de sesión, es de
+      layout responsivo del propio módulo. Dominio #5 (Weather Design Bible / UI)
+      de la matriz — sin hilo activo en ese dominio ahora mismo. No causado por
+      el rename de marca de hoy (verificado). Sin arreglar todavía.
 
 ## 2. Bitácora de Sincronización entre Cajas
 - [2026-08-22] Inicialización del Hub Central de sincronización multi-hilo.
@@ -85,6 +105,7 @@ Estado general: Operativo / En consolidación
 - [2026-08-22] Hilo Business Financial Intelligence entregó diagnóstico de Stripe Connect (ver arriba) — sin infraestructura, con conflicto de dos ledgers sin reconciliar. Esperando decisión del PO antes de abrir ticket de construcción.
 - [2026-08-22] SSOT de balance/payouts resuelto: `financial_payables` gana, `dj_ledger` a deprecar progresivamente. Stripe Connect queda diferido a sprint dedicado; el hilo BFI queda en espera de esa fase o de la siguiente tarea en su dominio.
 - [2026-08-22] Hilo Road Master Map / Calendario BI auditó el encargo de agenda: las tablas nombradas (`events`, `agenda_locks`, `dj_assignments`) no existen; las reales son `artist_agenda` (16-ago, R9a/R9b), `leads` y `dj_events` (legacy). Decisión de SSOT de agenda pendiente del PO (ver arriba).
+- [2026-08-22] PO fijó la política master/personal de agenda (ver arriba) y registró el calendario de cliente como tarea futura. El Hilo Maestro encontró en vivo un bug de layout del módulo de clima dentro de `staff.html?vista=agenda` (ver arriba) — dominio #5, sin hilo activo, sin arreglar.
 - [2026-08-22] CORRECCIÓN: el hallazgo del write-path paralelo en `dj-dashboard.html` es del Hilo Maestro, no del hilo Road Master Map (atribución errónea en la entrada anterior). Ese hilo ya rebasó con autorización del PO y su reconciliación completa (`V11`, `V12`, `R14`…`R21`, `cap-estacion-nav`, `cap-avisos-push`) está dentro de `main` — la rama NO sigue aparcada. Queda un commit local sin subir (`c4e1398`, arregla 3 referencias muertas al rename del PR #213 en `docs/roadmap/master-map.json`).
 - [2026-08-22] `dj_events` refinado a tabla sin ningún consumidor de código (ver arriba).
 - [2026-08-22] Cuarta pieza encontrada: `event_builder_orders` (8 consumidores reales, cero en las pantallas de agenda, enlazada a `leads` por FK nullable). La pregunta de SSOT de agenda se reencuadra en dos ejes — reserva (`leads` vs `event_builder_orders`, sin resolver) y proyección personal (`artist_agenda`, ya resuelta como derivada). `dj_events` queda como baja simple.
