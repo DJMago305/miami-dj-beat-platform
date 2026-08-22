@@ -2,6 +2,7 @@
 <html lang="es">
 
 <head>
+    <script src="./mdj-estacion-preflight.js?v=20260822-prevuelo-b"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
     <script>
     /* FIX-LEGACY-SUPABASE-01 (2026-08-19) · el respaldo entra cuando falta la
@@ -399,7 +400,7 @@
     </style>
 </head>
 
-<body class="notranslate mdj-artist-academy" style="background: #000; color: #fff; font-family: Inter, sans-serif;" data-mdj-estacion="artista">
+<body class="notranslate mdj-artist-academy" style="background: #000; color: #fff; font-family: Inter, sans-serif;">
 
     <!-- HEADER -->
     <!-- LOCKED SECTION: DO NOT MODIFY -->
@@ -476,21 +477,25 @@
   <div class="header-nav">
     <div class="container">
       <nav class="nav top-nav mdj-mainnav-flex" id="mainNav">
-    <!-- Pagina de ESTACION (PO 2026-08-21): el HTML escribe los nueve puestos de
-         la estacion para que el primer pintado sea ya el definitivo. Antes
-         escribia los publicos y el guion los sustituia cuando la sesion
-         terminaba de resolverse: hasta entonces mandaba la barra de Inicio, y
-         al llegar el relevo la barra se estiraba. Eso era el «chicle». -->
+    <!-- EL HTML TRAE LA BARRA PUBLICA A PROPOSITO. Quien tenga sesion recibe la
+         de su estacion en el prevuelo de aqui abajo, que corre ANTES del primer
+         pintado. Se escribe la publica y no la de estacion porque asi se falla
+         del lado seguro: si el prevuelo fallara, un desconocido veria la barra
+         que le toca y como mucho un artista veria el relevo tarde. -->
+
     <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home" data-mdj-slot="1">Inicio</a>
-    <a href="./academia.html?mdj_nav=profile" data-i18n="nav-academia" data-mdj-nav="academia" data-mdj-slot="2">Academia</a>
-    <a href="./dj-dashboard.html?mdj_nav=profile" id="mainNav-agenda-link" class="mdj-agenda-mainnav" data-mdj-nav="agenda" data-mdj-slot="3">Agenda</a>
-    <a href="./account-settings.html?mdj_nav=profile" id="mainNav-config-link" class="mdj-config-mainnav" data-i18n="nav-config" data-mdj-nav="config" data-mdj-slot="4">⚙️ CONFIG</a>
-    <a href="./dj-tools.html?mdj_nav=profile" data-i18n="nav-tools" data-mdj-nav="tools" data-mdj-slot="5">DJ Tools</a>
-    <a href="./dj-dashboard.html?tab=flow" id="mainNav-flow-link" class="mdj-flow-mainnav" data-mdj-nav="flow" data-mdj-slot="6">Cash Flow</a>
-    <a href="./dj-profile.html?mdj_nav=profile&amp;tab=sft" data-mdj-nav="sft" data-mdj-slot="7">SoundForTips&#8482;</a>
-    <a href="./dj-profile.html?mdj_nav=profile" id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold" data-i18n="nav-my-profile" data-mdj-nav="mi-portal" data-mdj-slot="8">MI PERFIL</a>
-    <a href="./shop.html?mdj_nav=profile" data-i18n="nav-shop" data-mdj-nav="shop" data-mdj-slot="9">Shop</a>
+    <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services" data-mdj-slot="2">Servicios</a>
+    <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues" data-mdj-slot="3">Eventos</a>
+    <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-i18n="nav-shop" data-mdj-nav="shop" data-mdj-slot="4">Shop</a>
+    <a href="./client-account.html" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" data-mdj-slot="5" aria-hidden="true" tabindex="-1">⚙️ CONFIG</a>
+    <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs" data-mdj-slot="6">Trabajos</a>
+    <a href="./contact.html" data-i18n="nav-contact" data-mdj-nav="contact" data-mdj-slot="7">Contacto</a>
+    <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="./client-portal.html" data-mdj-nav="mi-portal" data-mdj-slot="8" aria-hidden="true" tabindex="-1">MI PERFIL</a>
+    <a href="./road-map.html" id="mainNav-roadmap-link" class="mdj-roadmap-mainnav" data-i18n="nav-roadmap" data-mdj-nav="roadmap" data-mdj-slot="9">MRM IA</a>
   </nav>
+  <script>/* Decide la barra antes de pintarla. Ver mdj-estacion-preflight.js */
+    try { window.mdjPrevueloEstacion && window.mdjPrevueloEstacion(); } catch (e) {}
+  </script>
     </div>
   </div>
 </header>
