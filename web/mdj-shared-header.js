@@ -79,7 +79,7 @@
     { s: 1, key: 'nav-home',       nav: 'home',      href: './index.html',        txt: 'Inicio' },
     { s: 2, key: 'nav-academia',   nav: 'academia',  href: './academia.html',     txt: 'Academia' },
     { s: 3, key: null,             nav: 'agenda',    href: './staff-agenda.html', txt: 'Agenda' },
-    { s: 4, key: 'nav-config',     nav: 'config',    href: './account-settings.html', txt: '⚙ Config',
+    { s: 4, key: 'nav-config',     nav: 'config',    href: './account-settings.html', txt: '⚙️ Config',
       id: 'mainNav-config-link', cls: 'mdj-config-mainnav' },
     { s: 5, key: 'nav-tools',      nav: 'tools',     href: './dj-tools.html',     txt: 'DJ Tools' },
     { s: 6, key: null,             nav: 'flow',      href: './staff-agenda.html?tab=flow', txt: 'Cash Flow' },
@@ -114,11 +114,15 @@
      public). No se reimplementa su logica: el puesto delega el clic en el boton
      que ya existe en #owner-tabs, que sigue en el DOM aunque este oculto. Asi la
      franja se queda congelada e intacta, como exige .cursorrules. */
+  /* La tuerca lleva SELECTOR DE VARIACION (U+FE0F), igual que la barra de Inicio.
+     Sin el, el sistema la dibuja como glifo de texto y no como emoji: medido a
+     igual cuerpo de letra, 14.8px de ancho frente a los 22.8 de la publica. Se
+     copia el glifo que ya usa la plataforma, no se inventa un tamaño. */
   var MDJ_NAV_SLOTS_ARTISTA = [
     { s: 1,  key: 'nav-home',       nav: 'home',      href: './index.html', txt: 'Inicio' },
     { s: 2,  key: 'nav-academia',   nav: 'academia',  href: './academia.html?mdj_nav=profile', txt: 'Academia' },
     { s: 3,  key: null,             nav: 'agenda',    href: './dj-dashboard.html?mdj_nav=profile', txt: 'Agenda' },
-    { s: 4,  key: 'nav-config',     nav: 'config',    href: './account-settings.html?mdj_nav=profile', txt: '⚙ Config',
+    { s: 4,  key: 'nav-config',     nav: 'config',    href: './account-settings.html?mdj_nav=profile', txt: '⚙️ Config',
       id: 'mainNav-config-link', cls: 'mdj-config-mainnav' },
     { s: 5,  key: 'nav-tools',      nav: 'tools',     href: './dj-tools.html?mdj_nav=profile', txt: 'DJ Tools' },
     { s: 6,  key: null,             nav: 'flow',      href: '#', txt: 'Cash Flow',      tab: 'flow' },
@@ -128,13 +132,185 @@
     { s: 8,  key: 'nav-my-profile', nav: 'mi-portal', href: '#', txt: 'MI PERFIL',      tab: 'public',
       id: 'mainNav-mi-portal-link', cls: 'mdj-mi-portal-mainnav mdj-mi-portal-gold',
       alias: ['mi-portal', 'header-mi-portal'], navAlias: ['my-profile', 'profile'] },
-    { s: 9,  key: 'nav-jobs',       nav: 'jobs',      href: './jobs.html?mdj_nav=profile', txt: 'Trabajos' },
-    { s: 10, key: 'nav-shop',       nav: 'shop',      href: './shop.html?mdj_nav=profile', txt: 'Shop' }
+    /* Trabajos NO vive aqui (orden del PO 2026-08-19): pertenece al menu de
+       Inicio, la vitrina publica, donde ya ocupa su puesto 6. Shop sube del 10 al
+       9, con lo que la estacion queda en NUEVE puestos y MI PERFIL no se mueve
+       del 8 — que es donde su resolvedor de destino y su etiqueta lo buscan, por
+       numero de slot. */
+    { s: 9,  key: 'nav-shop',       nav: 'shop',      href: './shop.html?mdj_nav=profile', txt: 'Shop' }
   ];
 
   /* Dueño del perfil que se esta mirando. Se calcula con senales que el header
      ya tiene, sin pedirle nada a la pagina: hay sesion, no es la vista de QR, y
      o no viene ?id= —perfil propio— o el ?id= coincide con el uid propio. */
+  /* EL ROSTER DEL ARTISTA, EN UN SOLO SITIO. Mismo criterio que role-guard.js:
+     artist, dj y talent son la misma persona. Se mira tambien la clase porque una
+     sesion puede traer el atributo sin ella. */
+  function mdjEsArtistaEnVivo() {
+    try {
+      var b = document.body;
+      if (!b) return false;
+      var rol = (b.getAttribute('data-mdj-nav-role') || '').toLowerCase().trim();
+      return !!(b.classList.contains('mdj-artist-nav') ||
+                rol === 'artist' || rol === 'dj' || rol === 'talent');
+    } catch (eArt) { return false; }
+  }
+  window.mdjEsArtistaEnVivo = mdjEsArtistaEnVivo;
+
+  /* LAS VISTAS DEL PORTAL DEL ARTISTA. Lista explicita, igual que la del staff:
+     son los DESTINOS DEL PROPIO RIEL, las pantallas donde el artista sigue dentro
+     de su estacion de trabajo.
+
+     index.html queda FUERA a proposito (orden del PO): Inicio es la salida a la
+     vitrina publica y conserva su cabecera completa. */
+  var MDJ_VISTAS_ARTISTA = {
+    'dj-profile.html': 1,
+    'academia.html': 1,
+    'dj-dashboard.html': 1,
+    'account-settings.html': 1,
+    'dj-tools.html': 1
+    /* shop.html NO figura: no es una vista nuestra, redirige a la tienda de
+       Shopify. Comprobado en vivo — el riel sale de la plataforma por ese puesto,
+       igual que por Inicio. La lista solo admite destinos que conserven la barra. */
+  };
+
+  /* UNA SOLA FUENTE DE VERDAD PARA EL MENU. Antes la estacion existia en UNA sola
+     pantalla —mdjEsDuenoDelPerfil() devuelve false en cuanto la pagina no es
+     dj-profile.html—, asi que en academia, dj-tools y las demas al artista le
+     servian la barra publica: 9 puestos con Servicios, Eventos, Contacto y MRM IA,
+     y Shop en el puesto 4 en vez del 10. Dos barras distintas para la misma
+     persona, medido en vivo el 2026-08-19.
+
+     Se exige rol de ARTISTA, no solo sesion: con «hay sesion y no es staff» un
+     cliente recibiria DJ Tools, Cash Flow y SoundForTips. */
+  function mdjEnPortalArtista() {
+    try {
+      var pagina = String(window.location.pathname || '').split('/').pop().toLowerCase();
+      if (!MDJ_VISTAS_ARTISTA[pagina]) return false;
+      if (new URLSearchParams(window.location.search || '').get('view') === 'public') return false;
+      if (mdjEsStaffEnVivo()) return false;
+      if (!mdjEsArtistaEnVivo()) return false;
+      if (!String(window.__mdjNavOwnUserId || '').trim()) return false;   // sin sesion resuelta, nada
+      if (pagina === 'dj-profile.html') return mdjEsDuenoDelPerfil();     // en el de otro, es visitante
+      return true;
+    } catch (ePortal) { return false; }
+  }
+  window.mdjEnPortalArtista = mdjEnPortalArtista;
+
+  /* EL MISMO TRATO PARA EL STAFF (orden del PO 2026-08-19): mismo proceso, mismo
+     diseño. Las vistas internas ya estaban declaradas en MDJ_VISTAS_INTERNAS; lo
+     que faltaba era que tambien recibieran la estacion —barra arriba sola, marca
+     y buscador flotando debajo— en vez de la cabecera de dos filas.
+
+     staff.html NO entra: no tiene #mainHeader, usa su tira nativa #staff-topnav.
+     Aplicarle esto exigiria rehacer esa tira, que es otro trabajo. */
+  function mdjEnPortalStaff() {
+    try {
+      var pagina = String(window.location.pathname || '').split('/').pop().toLowerCase();
+      if (!MDJ_VISTAS_INTERNAS[pagina]) return false;
+      if (new URLSearchParams(window.location.search || '').get('view') === 'public') return false;
+      if (!mdjEsStaffEnVivo()) return false;
+      return !!String(window.__mdjNavOwnUserId || '').trim();
+    } catch (eSt) { return false; }
+  }
+  window.mdjEnPortalStaff = mdjEnPortalStaff;
+
+  /* Una sola puerta para el trato de estacion, sea de artista o de staff. */
+  function mdjEnEstacionDeTrabajo() {
+    return mdjEnPortalArtista() || mdjEnPortalStaff();
+  }
+  window.mdjEnEstacionDeTrabajo = mdjEnEstacionDeTrabajo;
+
+  /* LA MARCA DEBE SEÑALAR DONDE ESTAS. Auditado puesto por puesto: index marca
+     Inicio, academia marca Academia, dj-tools marca DJ Tools, la agenda marca
+     Agenda y config marca CONFIG. El unico que no marcaba NADA era el propio
+     perfil, donde ademas el dorado caia en Shop, que no es la pagina actual.
+
+     El perfil no navega entre paginas sino entre pestañas internas, asi que la
+     marca sigue a la pestaña visible: publica → MI PERFIL, flow → Cash Flow,
+     sft → SoundForTips. Se lee el panel que esta a la vista, no la URL, porque
+     dentro del perfil se conmuta sin tocar la direccion. */
+  function mdjMarcarPuestoActivo() {
+    try {
+      var pagina = String(window.location.pathname || '').split('/').pop().toLowerCase();
+      if (pagina !== 'dj-profile.html' || !mdjEnPortalArtista()) return;
+      var nav = document.getElementById('mainNav');
+      if (!nav) return;
+      var visible = null;
+      ['public', 'flow', 'sft'].forEach(function (t) {
+        var p = document.getElementById('tab-' + t);
+        if (p && getComputedStyle(p).display !== 'none') visible = t;
+      });
+      if (!visible) return;
+      var puestos = nav.querySelectorAll('[data-mdj-slot]');
+      for (var i = 0; i < puestos.length; i++) {
+        var esteTab = puestos[i].getAttribute('data-mdj-tab');
+        if (esteTab === visible) puestos[i].classList.add('active');
+        else puestos[i].classList.remove('active');
+      }
+    } catch (eMarca) { /* noop */ }
+  }
+  window.mdjMarcarPuestoActivo = mdjMarcarPuestoActivo;
+
+  /* Y que la marca acompañe al usuario cuando conmuta dentro del perfil: se
+     envuelve el conmutador de la pagina en vez de duplicar su logica. */
+  (function engancharConmutador() {
+    var intentos = 0;
+    var iv = setInterval(function () {
+      if (typeof window.switchProfileTab === 'function' && !window.switchProfileTab.__mdjMarca) {
+        var original = window.switchProfileTab;
+        var envuelto = function () {
+          /* LEY DE ESTABILIDAD VISUAL · ANTI-BRINCO.
+             Medido en el perfil: con la vista desplazada a 300 y el panel corto
+             entrando, el documento pasaba de 1561 a 1000 px y el navegador
+             CLAMPABA el scroll de 300 a 0 en el mismo instante. Ese tiron
+             involuntario es el «disparo» que reporta el PO.
+             switchProfileTab no desplaza a proposito: el salto lo provoca el
+             propio navegador al quedarse la pagina mas corta que la posicion
+             actual. Y con el panel corto el scroll maximo es 0, asi que el
+             clampeo es inevitable si no se coloca la vista ANTES.
+             Se sube al inicio del area de pestañas antes de conmutar. El
+             movimiento pasa a ser deliberado y previo; en el instante del cambio
+             el desplazamiento involuntario es cero. No se toca el tamaño de
+             ningun contenedor. */
+          try {
+            if (window.pageYOffset > 0) {
+              /* INSTANTANEO, nunca suave. Una animacion de scroll corriendo a la
+                 vez que el panel cambia de alto es precisamente la carrera que
+                 produce el acordeon: el documento encoge a mitad de animacion y
+                 el navegador vuelve a clampar. Colocar primero y de golpe deja
+                 el cambio de contenido sin ningun movimiento pendiente. */
+              window.scrollTo(0, 0);
+            }
+          } catch (eScroll) { void eScroll; }
+          var r = original.apply(this, arguments);
+          setTimeout(mdjMarcarPuestoActivo, 0);
+          return r;
+        };
+        envuelto.__mdjMarca = true;
+        window.switchProfileTab = envuelto;
+        clearInterval(iv);
+      }
+      if (++intentos > 60) clearInterval(iv);
+    }, 100);
+  })();
+
+  /* DESTINO DE UN PUESTO. Los puestos-PESTAÑA (Cash Flow, SoundForTips) traen
+     href '#' porque dentro del perfil conmutan sin navegar. Fuera del perfil ese
+     '#' dejaba el clic muerto: medido en dj-tools.html, pulsarlos solo añadia '#'
+     a la URL. Fuera se les da destino real —el perfil con la pestaña pedida—, que
+     dj-profile.html ya sabe leer de ?tab=.
+     'public' queda fuera: MI PERFIL tiene su propio resolvedor, que ademas le
+     añade el id del artista. */
+  function mdjHrefDeSlot(def) {
+    try {
+      if (!def || !def.tab || def.tab === 'public') return def && def.href;
+      var pagina = String(window.location.pathname || '').split('/').pop().toLowerCase();
+      if (pagina === 'dj-profile.html') return def.href;
+      return './dj-profile.html?mdj_nav=profile&tab=' + encodeURIComponent(def.tab);
+    } catch (eH) { return def && def.href; }
+  }
+
   function mdjEsDuenoDelPerfil() {
     try {
       var pagina = String(window.location.pathname || '').split('/').pop().toLowerCase();
@@ -201,7 +377,7 @@
       /* El artista en SU perfil recibe su estacion de trabajo. Va ANTES del
          filtro de staff: un artista no es staff, y con esa comprobacion por
          delante nunca llegaria aqui. */
-      if (mdjEsDuenoDelPerfil()) return MDJ_NAV_SLOTS_ARTISTA;
+      if (mdjEnPortalArtista()) return MDJ_NAV_SLOTS_ARTISTA;
       if (!mdjEsStaffEnVivo()) return MDJ_NAV_SLOTS;
       var pagina = String(window.location.pathname || '').split('/').pop().toLowerCase();
       if (MDJ_VISTAS_INTERNAS[pagina]) return MDJ_NAV_SLOTS_INTERNO;
@@ -286,6 +462,8 @@
      visibilidad no puede depender de la clase heredada mdj-mainnav-reserved-slot,
      que otros pases reponen. Se consulta en vivo y se recuerda. */
   var _mdjHaySesion = null;                       // null = aún no se sabe
+  var _mdjOrigenBuscador = null;                  // hueco del buscador antes de moverlo
+  var _mdjRotuloBuscador = null;                  // su rotulo original, para devolverlo
   function mdjRefrescarSesion() {
     var supa = (typeof window.getSupabaseClient === 'function') ? window.getSupabaseClient() : null;
     if (!supa) return;
@@ -298,8 +476,7 @@
         window.__mdjSesionHook = true;
         supa.auth.onAuthStateChange(function (_e, ses) {
           _mdjHaySesion = !!ses; _mdjSlotRuns = 0;
-          setTimeout(mdjAssertNavSlots, 40);
-          setTimeout(mdjAssertNavSlots, 500);
+          mdjAssertNavSlots();                  // una sola pasada, ver arriba
         });
       }
     } catch (e) {}
@@ -640,10 +817,14 @@
     } catch (eVis) { return false; }
   }
 
-  function mdjMontarFlotanteVisitante() {
+  /* DOS MODOS, UNA SOLA FRANJA.
+     · 'visitante': la franja sustituye a la cabecera entera.
+     · 'artista'  : la barra de tools se queda ARRIBA y la franja baja debajo de
+       ella. Se retira .header-top (idioma, SALIR, avatar, carrito): por orden del
+       PO esa fila se va, y la salida queda en la pestaña Inicio del riel. */
+  function mdjMontarFranjaFlotante(modo) {
     try {
-      if (!mdjEsVisitanteDePerfil()) return;
-      if (document.getElementById('mdj-flotante-visitante')) return;   // ya montado
+      if (document.getElementById('mdj-flotante-visitante')) return;   // ya montada
 
       var caja = document.createElement('div');
       caja.id = 'mdj-flotante-visitante';
@@ -651,29 +832,121 @@
       /* Logo: clonado, y envuelto en un enlace al inicio. Es tambien la salida
          del perfil hacia la cabecera completa, donde vive SALIR. */
       var logo = document.querySelector('#mainHeader .brand .logo-img-eagle');
+      /* Solo el PNG, no su envoltorio: el wrapper de la cabecera arrastra una caja
+         de 340x112 con margen negativo y estiraba la franja a 134px de alto. */
+      var letras = document.querySelector('#mainHeader .brand .brand-letters-wrapper img');
       var casa = document.createElement('a');
       casa.href = './index.html';
       casa.className = 'mdj-flotante-marca';
       casa.setAttribute('title', 'Miami DJ Beat — ir al inicio');
       if (logo) casa.appendChild(logo.cloneNode(true));
+      /* La marca es el aguila MAS el PNG de letras: con el aguila sola la franja
+         no dice de quien es la casa. Se clona, no se mueve: la cabecera conserva
+         la suya para cuando el dueño recupere su estacion. */
+      if (letras) {
+        var copiaLetras = letras.cloneNode(true);
+        copiaLetras.className = 'mdj-flotante-letras';
+        casa.appendChild(copiaLetras);
+      }
       caja.appendChild(casa);
 
-      /* Buscador: se MUEVE el original, con sus escuchas intactas. */
+      /* Buscador: se MUEVE el original, con sus escuchas intactas. Se apunta de
+         donde salio: si la sesion resuelve tarde y resulta que es el dueño, hay
+         que devolverlo a su hueco exacto, no dejarlo colgando. */
       var envoltura = document.querySelector('#mainHeader .header-search-wrap');
-      if (envoltura) caja.appendChild(envoltura);
+      if (envoltura) {
+        _mdjOrigenBuscador = { padre: envoltura.parentNode, siguiente: envoltura.nextSibling };
+        /* Dentro de la franja el rotulo es solo «Search» (orden del PO): el texto
+           largo «Buscar DJs, tienda, cursos, reservas…» tapaba la lupa. Se guarda
+           el original porque el mismo campo vuelve a la cabecera al desmontar. */
+        var campo = envoltura.querySelector('input');
+        if (campo) {
+          _mdjRotuloBuscador = campo.getAttribute('placeholder');
+          campo.setAttribute('placeholder', 'Search');
+          campo.removeAttribute('data-i18n-placeholder');   // que el pase de idioma no lo devuelva
+        }
+        caja.appendChild(envoltura);
+      }
 
+      caja.classList.add(modo === 'artista' ? 'mdj-franja-bajo-barra' : 'mdj-franja-sola');
       document.body.appendChild(caja);
-      document.body.classList.add('mdj-perfil-visitante');
+      document.body.classList.add(modo === 'artista' ? 'mdj-perfil-estacion' : 'mdj-perfil-visitante');
 
-      /* La cabecera se apaga EN LINEA, no solo por hoja: algun pase le escribe
-         display:flex en el propio elemento, y un estilo en linea gana a
-         cualquier regla por especifica que sea. Medido: con la clase puesta y la
-         regla aplicando, el computado seguia en flex. */
+      /* Se apaga EN LINEA, no solo por hoja: algun pase escribe display:flex en el
+         propio elemento, y un estilo en linea gana a cualquier regla por
+         especifica que sea. Medido: con la clase puesta y la regla aplicando, el
+         computado seguia en flex. */
+      /* Se recuerda la decision para el proximo pintado: la semilla del <head> la
+         leera antes de que el navegador dibuje, y no habra salto. */
+      try { if (modo === 'artista') localStorage.setItem('mdj_estacion', '1'); } catch (eLS) { void eLS; }
       var cab = document.getElementById('mainHeader');
-      if (cab) cab.style.setProperty('display', 'none', 'important');
+      if (!cab) return;
+      if (modo === 'artista') {
+        var arriba = cab.querySelector('.header-top');
+        if (arriba) arriba.style.setProperty('display', 'none', 'important');
+      } else {
+        cab.style.setProperty('display', 'none', 'important');
+      }
     } catch (eMontar) { /* noop */ }
   }
+
+  function mdjMontarFlotanteVisitante() {
+    if (mdjEsVisitanteDePerfil()) mdjMontarFranjaFlotante('visitante');
+  }
   window.mdjMontarFlotanteVisitante = mdjMontarFlotanteVisitante;
+  window.mdjMontarFranjaFlotante = mdjMontarFranjaFlotante;
+
+  /* Barra arriba, franja debajo. Mismo trato en todas las vistas de estacion
+     —artista y staff—, para que no haya saltos al cambiar de pestaña. */
+  function mdjArtistaEnSuPerfil() { return mdjEnEstacionDeTrabajo(); }
+
+  /* EL MONTAJE TIENE QUE PODER DESHACERSE. La decision de «visitante» se toma con
+     lo que se sabe en ese instante, y la sesion puede resolver despues: medido en
+     un perfil propio, convivian data-mdj-slots="10" (o sea, el dueño ya estaba
+     reconocido) con la franja de visitante puesta y la cabecera apagada. Sin esta
+     vuelta atras, quien restaura sesion despacio se queda sin su estacion. */
+  function mdjDesmontarFlotanteVisitante() {
+    try {
+      var caja = document.getElementById('mdj-flotante-visitante');
+      if (!caja) return false;
+
+      /* El buscador vuelve a su hueco exacto: es el original movido, con sus
+         escuchas, no una copia. */
+      var envoltura = caja.querySelector('.header-search-wrap');
+      if (envoltura) {
+        var campoVuelta = envoltura.querySelector('input');
+        if (campoVuelta && _mdjRotuloBuscador != null) {
+          campoVuelta.setAttribute('placeholder', _mdjRotuloBuscador);
+          _mdjRotuloBuscador = null;
+        }
+        if (_mdjOrigenBuscador && _mdjOrigenBuscador.padre && _mdjOrigenBuscador.padre.isConnected) {
+          _mdjOrigenBuscador.padre.insertBefore(envoltura, _mdjOrigenBuscador.siguiente || null);
+        } else {
+          /* Sin hueco registrado —franja de un pase anterior, u otra instancia del
+             guion— el buscador NO puede irse con la franja: se devuelve a la
+             cabecera aunque sea al final. Perderlo deja la pagina sin buscar. */
+          var destino = document.getElementById('mainHeader');
+          if (destino) destino.appendChild(envoltura);
+        }
+      }
+      _mdjOrigenBuscador = null;
+
+      caja.parentNode && caja.parentNode.removeChild(caja);
+      document.body.classList.remove('mdj-perfil-visitante');
+      document.body.classList.remove('mdj-perfil-estacion');
+
+      /* Se retira el display:none EN LINEA que puso el montaje; la hoja vuelve a
+         mandar sobre la cabecera. */
+      var cab = document.getElementById('mainHeader');
+      if (cab) {
+        cab.style.removeProperty('display');
+        var arriba = cab.querySelector('.header-top');
+        if (arriba) arriba.style.removeProperty('display');
+      }
+      return true;
+    } catch (eDesmontar) { return false; }
+  }
+  window.mdjDesmontarFlotanteVisitante = mdjDesmontarFlotanteVisitante;
 
   function mdjNormalizeMainNavSlots(idRiel) {
     var nav = document.getElementById(idRiel || 'mainNav');
@@ -695,7 +968,7 @@
 
     function crear(def) {
       var a = document.createElement('a');
-      a.setAttribute('href', def.href);
+      a.setAttribute('href', mdjHrefDeSlot(def));
       /* Sin clave no se pone data-i18n: un key inexistente hace que el pase de
          i18n deje el rótulo vacío. */
       if (def.key) a.setAttribute('data-i18n', def.key);
@@ -737,7 +1010,7 @@
           el.textContent = def.txt;
           if (sepPrevio) el.insertBefore(sepPrevio, el.firstChild);
         }
-        if (def.href && el.tagName === 'A') el.setAttribute('href', def.href);
+        if (def.href && el.tagName === 'A') el.setAttribute('href', mdjHrefDeSlot(def));
         /* Puestos que son PESTAÑA de la propia vista, no pagina. No se
            reimplementa el conmutador: se delega el clic en el boton que ya existe
            en #owner-tabs, que sigue en el DOM aunque la franja este oculta. Asi la
@@ -872,7 +1145,32 @@
     /* Visitante en un perfil ajeno: el logo y el buscador flotantes sustituyen a
        la barra de marketing. Se monta despues del riel para poder mover el
        buscador ya inicializado. */
-    mdjMontarFlotanteVisitante();
+    if (mdjEsVisitanteDePerfil()) mdjMontarFlotanteVisitante();
+    else if (mdjArtistaEnSuPerfil()) mdjMontarFranjaFlotante('artista');
+    else {
+      mdjDesmontarFlotanteVisitante();   /* fuera del perfil, todo vuelve a su sitio */
+      /* Y si esta pagina NO es estacion para quien mira, se borra la memoria y se
+         retira la marca temprana: mas vale una correccion puntual que arrastrar
+         una cabecera oculta a quien le corresponde verla. */
+      try {
+        /* SOLO CUANDO SE SABE. En las primeras pasadas la sesion aun no ha
+           resuelto y mdjEnEstacionDeTrabajo() devuelve false por falta de datos,
+           no por ser falso: sin esta guarda, la limpieza borraba la semilla en
+           cada carga y el acordeon volvia intacto. */
+        var uidLS = String(window.__mdjNavOwnUserId || '').trim();
+        /* El ROL llega despues que el uid. Con solo el uid habia una ventana en la
+           que la sesion ya existia pero data-mdj-nav-role aun estaba vacio: ahi
+           mdjEnEstacionDeTrabajo() decia false por falta de dato y la limpieza se
+           llevaba la semilla por delante. Se exige rol resuelto. */
+        var rolPuesto = document.body ? (document.body.getAttribute('data-mdj-nav-role') || '').trim() : '';
+        var seSabe = (!!uidLS && !!rolPuesto) || _mdjHaySesion === false;
+        if (seSabe && !mdjEnEstacionDeTrabajo() && !mdjEsVisitanteDePerfil()) {
+          localStorage.removeItem('mdj_estacion');
+          document.documentElement.classList.remove('mdj-estacion-previa');
+        }
+      } catch (eLS2) { void eLS2; }
+    }
+    mdjMarcarPuestoActivo();
 
     /* El propio riel también se blinda inline: hay reglas de la era flex que le
        devuelven display:flex, y sin display:grid las nueve columnas no existen
@@ -893,7 +1191,10 @@
        mismo bloque de header-unified.css. En línea impedían que el media
        query de contención por debajo de 1172px pudiera cambiarlos: inline
        con !important gana también a un media query. */
-    nav.style.setProperty('padding-right', '0', 'important');
+    /* El padding TAMPOCO se escribe aqui. Escribirlo en linea con !important
+       ganaba a la hoja y a los media queries, y dejaba la ultima pestaña
+       pegada al borde de la pantalla: medido a 1703px, 0px de aire a la
+       derecha. Vive en header-unified.css, como la rejilla. */
     nav.style.setProperty('grid-auto-rows', '0', 'important');
     nav.style.setProperty('align-items', 'center', 'important');
 
@@ -1011,6 +1312,14 @@
     if (_mdjSlotRuns++ > MDJ_SLOT_MAX) { mdjStopWatch(); return; }
     _mdjSlotLock = true;
     try { MDJ_RIELES.forEach(function (id) { mdjNormalizeMainNavSlots(id); }); } catch (e) {}
+    /* ANTI-TEMBLOR: revelar el riel solo cuando la tabla ya es la definitiva. Se
+       exige sesion RESUELTA porque la tabla cambia con ella —publica o de
+       estacion—, y revelar antes mostraria la publica y acto seguido la otra:
+       justo el jalon que se quiere evitar. Si la sesion tarda, el vigilante de
+       700ms de la hoja revela igualmente; nunca queda invisible. */
+    try {
+      if (_mdjHaySesion !== null) document.documentElement.classList.add('mdj-nav-lista');
+    } catch (eRev) { void eRev; }
     setTimeout(function () { _mdjSlotLock = false; }, 0);   // clave: liberar en la siguiente vuelta
   }
 
@@ -1018,10 +1327,45 @@
     if (_mdjSlotObs) { try { _mdjSlotObs.disconnect(); } catch (e) {} _mdjSlotObs = null; }
   }
 
+  /* ── VIGILANTE RETIRADO · directiva del PO ─────────────────────────────────
+     Este MutationObserver existia porque el marcado estatico de #mainNav habia
+     derivado a cinco variantes: 42 de las 43 paginas nacian con 8, 10 o 12
+     puestos, 25 con STAFF dentro del DOM y 22 en ingles, y el observador las
+     reparaba EN VIVO. Esa reparacion continua era la fuente del temblor.
+
+     Canonizado el HTML de las 43 paginas —nueve puestos identicos, sin STAFF y
+     sin ingles— ya no hay nada que vigilar: el DOM nace correcto. Se desactiva
+     la instalacion y NO se borra la funcion: quitar el `return` la reactiva. */
   function mdjWatchNavSlots() {
-    MDJ_RIELES.forEach(mdjWatchOne);
-    MDJ_RIELES_MUERTOS.forEach(mdjWatchOne);   // vigilar que no resuciten
+    return;                     // canonizado en el HTML: sin vigilancia continua
   }
+
+  /* ── UNA REACCION, NO UN RELOJ ─────────────────────────────────────────────
+     Al retirar la cadena de temporizadores aparecio una regresion real, cazada
+     por la suite: en el perfil con sesion de artista salia la barra PUBLICA y la
+     franja no se montaba. Motivo: la tabla del rol necesita
+     `data-mdj-nav-role`, que se escribe DESPUES de que la sesion resuelva, y sin
+     reintentos nadie volvia a aplicarla.
+
+     La solucion no es reponer los relojes —eran la fuente del temblor— sino
+     escuchar el UNICO evento que importa: que el rol aparezca. Se observa un
+     solo atributo de <body>, jamas los hijos de #mainNav, y en cuanto el rol
+     tiene valor se aplica la tabla UNA vez y el observador se desconecta. */
+  (function mdjEsperarRol() {
+    try {
+      if (!window.MutationObserver || !document.body) return;
+      var rolYa = (document.body.getAttribute('data-mdj-nav-role') || '').trim();
+      if (rolYa) return;                       // ya estaba: nada que esperar
+      var obs = new MutationObserver(function () {
+        var r = (document.body.getAttribute('data-mdj-nav-role') || '').trim();
+        if (!r) return;
+        obs.disconnect();
+        _mdjSlotRuns = 0;
+        mdjAssertNavSlots();
+      });
+      obs.observe(document.body, { attributes: true, attributeFilter: ['data-mdj-nav-role'] });
+    } catch (eRol) { void eRol; }
+  })();
   function mdjWatchOne(idRiel) {
     var nav = document.getElementById(idRiel);
     if (!nav || nav.__mdjSlotWatch) return;
@@ -1064,9 +1408,10 @@
       window.__mdjSlotAuthHook = true;
       supa.auth.onAuthStateChange(function () {
         _mdjSlotRuns = 0;                       // el cambio de sesión reabre el cupo
-        setTimeout(mdjAssertNavSlots, 60);
-        setTimeout(mdjAssertNavSlots, 400);
-        setTimeout(mdjAssertNavSlots, 1200);
+        /* UNA sola pasada. Esta cadena reescribia el riel TRES veces por cada
+           cambio de sesion; con el HTML ya canonico basta aplicar la tabla del
+           rol una vez. */
+        mdjAssertNavSlots();
       });
       supa.auth.getSession().then(function () {
         _mdjSlotRuns = 0;
@@ -2903,7 +3248,24 @@
   }
 
   /** Invitado: mantiene la 8.ª celda (nav mdj-mainnav-flex en tabla) sin quitar el nodo. */
+  /* ── EL RIEL MAESTRO TIENE UN SOLO DUEÑO ───────────────────────────────────
+     Tras canonizar el HTML de las 43 paginas y retirar el observador, se vio que
+     ese observador tambien era EL ULTIMO EN ESCRIBIR: vencia a seis pasadas
+     heredadas que aun rotulaban #mainNav con «MI PORTAL» y «CASH FLOW». Sin el,
+     en account-settings ganaba la vieja.
+
+     Los rotulos de #mainNav los fija AHORA la tabla canonica y nadie mas. Este
+     ayudante permite que cada pasada heredada siga sirviendo a sus rieles
+     legitimos (#owner-tabs, .header-actions) sin contaminar la barra maestra. */
+  function mdjEnRielMaestro(el) {
+    try {
+      var n = document.getElementById('mainNav');
+      return !!(n && el && n.contains(el));
+    } catch (eRM) { return false; }
+  }
+
   function mdjResetMainNavPortalGuestSlot() {
+    return;   /* NEUTRALIZADA: el puesto 8 de #mainNav lo fija la tabla canonica */
     var link = document.getElementById('mainNav-mi-portal-link');
     if (!link) return;
     link.className = 'mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest';
@@ -2917,7 +3279,7 @@
     link.removeAttribute('data-i18n');
     try {
       var rawLang = document.documentElement && String(document.documentElement.lang || '').toLowerCase();
-      link.textContent = rawLang.indexOf('es') === 0 ? 'MI PORTAL' : 'MY PORTAL';
+      link.textContent = 'MI PERFIL';
     } catch (e) {
       link.textContent = 'MY PORTAL';
     }
@@ -3002,6 +3364,7 @@
 
   /** Mientras llega el perfil: oculto pero ocupa columna (tabla v2). */
   function mdjEnsureMiPortalHydratingPlaceholder() {
+    return;   /* NEUTRALIZADA: el estatico canonico ya trae el puesto 8 */
     var nav = document.getElementById('mainNav');
     if (!nav) return;
     var existing = document.getElementById('mainNav-mi-portal-link');
@@ -3016,7 +3379,7 @@
       existing.style.removeProperty('display');
       existing.style.pointerEvents = 'none';
       existing.style.visibility = 'hidden';
-      existing.textContent = 'MI PORTAL';
+      existing.textContent = 'MI PERFIL';
       return;
     }
     if (mdjIsBuyerJourneyPage()) {
@@ -3037,7 +3400,7 @@
     link.style.removeProperty('display');
     link.style.pointerEvents = 'none';
     link.style.visibility = 'hidden';
-    link.textContent = 'MI PORTAL';
+    link.textContent = 'MI PERFIL';
     nav.appendChild(link);
   }
 
@@ -3110,6 +3473,9 @@
   }
 
   function mdjApplyMiPortalLinkLabel(el) {
+    /* Guarda por ELEMENTO, no global: esta rutina tambien rotula el CTA de
+       .header-actions, que sigue siendo suyo. Solo se aparta del riel maestro. */
+    if (mdjEnRielMaestro(el)) return;
     if (!el) return;
     try {
       if (window.i18n && typeof window.i18n.t === 'function') {
@@ -3117,7 +3483,7 @@
         if (tx) el.textContent = tx;
       } else {
         var rawLang = document.documentElement && String(document.documentElement.lang || '').toLowerCase();
-        el.textContent = rawLang.indexOf('es') === 0 ? 'MI PORTAL' : 'MY PORTAL';
+        el.textContent = 'MI PERFIL';
       }
     } catch (err) { /* ignore */ }
     try {
@@ -4636,7 +5002,12 @@
             /* Flujo de caja: reveal at slot 5 (after SHOP, before CONFIG).
                mdjApplyFlowMainNavLink(false) runs at line ~2686 before this guard,
                so we run AFTER it and override. */
-            if (window.location.pathname.indexOf('account-settings') !== -1) {
+            /* NEUTRALIZADA para el riel maestro (directiva del PO). Esta rama
+               reinsertaba CASH FLOW JUSTO DESPUES DE SHOP dentro de #mainNav
+               —insertBefore(_flowEl, _shopEl.nextSibling)—, y era la causa del
+               orden descuadrado en account-settings: Cash Flow acababa en el
+               puesto 9. El orden lo fija ahora la tabla canonica del rol. */
+            if (false && window.location.pathname.indexOf('account-settings') !== -1) {
               var _oNavF = document.getElementById('mainNav');
               var _flowEl = _oNavF && (
                 document.getElementById('mainNav-flow-link') ||
@@ -4647,7 +5018,7 @@
                 _flowEl.href = _fUid
                   ? './dj-dashboard.html?tab=flow&id=' + encodeURIComponent(_fUid)
                   : './dj-dashboard.html?tab=flow';
-                _flowEl.textContent = 'CASH FLOW';
+                if (!mdjEnRielMaestro(_flowEl)) _flowEl.textContent = 'CASH FLOW';   /* el riel maestro lo rotula la tabla canonica */
                 _flowEl.removeAttribute('data-i18n');
                 _flowEl.classList.remove('mdj-mainnav-reserved-slot');
                 _flowEl.removeAttribute('aria-hidden');
@@ -5178,6 +5549,13 @@
 
   /* Devuelve true cuando flowLink ya existe y fue procesado */
   function reorderOwnerMenu() {
+    /* NEUTRALIZADA para el riel maestro (directiva del PO). Esta rutina heredada
+       trabajaba integramente sobre #mainNav: ocultaba MI PERFIL y DJ TOOLS con
+       !important en linea y reordenaba CASH FLOW. Con el HTML ya canonico y la
+       tabla del rol como unica autoridad su trabajo sobra, y era quien
+       descuadraba el orden en account-settings.
+       Devuelve true = «ya procesado», que es exactamente lo que ahora ocurre. */
+    return true;
     if (document.body && document.body.classList.contains('mdj-from-profile') &&
         window.location.pathname.indexOf('account-settings.html') !== -1) {
       if (typeof window.mdjEnsureAccountSettingsOwnerStripNav === 'function') {
@@ -5202,7 +5580,7 @@
       flowLink.href = _flowUid
         ? './dj-dashboard.html?tab=flow&id=' + encodeURIComponent(_flowUid)
         : './dj-dashboard.html?tab=flow';
-      flowLink.textContent = 'CASH FLOW';
+      if (!mdjEnRielMaestro(flowLink)) flowLink.textContent = 'CASH FLOW';   /* idem */
       flowLink.removeAttribute('data-i18n');
       flowLink.removeAttribute('aria-hidden');
       flowLink.removeAttribute('tabindex');

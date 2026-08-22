@@ -2,6 +2,15 @@
 <html lang="en">
 
 <head>
+<script>/* SEMILLA DE ESTACION · antes del primer pintado.
+   El guion del header va con defer y al final del documento: cuando decide que
+   esta es una estacion de trabajo, la pagina YA se pinto con la cabecera de dos
+   filas, y al retirarla todo daba un salto hacia arriba —el «acordeon» que
+   reporto el PO. Aqui se recuerda la ultima decision conocida y se aplica de
+   inmediato, asi el primer pintado ya tiene la geometria final. Si luego resulta
+   que no es estacion (sesion cerrada), el propio guion retira la marca. */
+(function(){try{if(localStorage.getItem('mdj_estacion')==='1')document.documentElement.classList.add('mdj-estacion-previa');}catch(e){}})();</script>
+
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <script defer src="./js/mdj-compat-boot.js?v=20260430-1"></script>
@@ -119,9 +128,9 @@
             }, 2800);
         })();
     </script>
-    <link rel="stylesheet" href="./styles.css?v=20260430-legacy-compat-1" />
-    <link rel="stylesheet" href="./header-unified.css?v=20260819-homolog2" />
-    <link rel="stylesheet" href="./profile.css?v=20260513-reviews-carousel" />
+    <link rel="stylesheet" href="./styles.css?v=20260820-purga4" />
+    <link rel="stylesheet" href="./header-unified.css?v=20260820-purga4" />
+    <link rel="stylesheet" href="./profile.css?v=20260820-ancho-total" />
     <style id="mdj-qr-view-header-shield">
         /* Blindaje definitivo: especificidad mayor que #mainHeader.header.mdj-header-unified { display:flex !important } en header-unified.css */
         html.dj-profile-qr-view #mainHeader.header.mdj-header-unified,
@@ -137,7 +146,7 @@
         <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link
-        href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,700;1,800&family=Barlow+Condensed:ital,wght@1,700;1,800;1,900&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,700;1,800&family=Barlow+Condensed:ital,wght@1,700;1,800;1,900&display=optional"
         rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
     <script>
@@ -3086,19 +3095,16 @@
   <div class="header-nav">
     <div class="container">
       <nav class="nav top-nav mdj-mainnav-flex" id="mainNav" aria-label="Navegación principal">
-        <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Inicio</a>
-        <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Servicios</a>
-        <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues">Eventos</a>
-        <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-i18n="nav-shop" data-mdj-nav="shop">Shop</a>
-        <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
-        <a href="./dj-dashboard.html?tab=dashboard" id="mainNav-agenda-link" class="mdj-agenda-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="agenda" data-i18n="dash-your-profile" aria-hidden="true" tabindex="-1">SCHEDULE</a>
-        <a href="./account-settings.html?mdj_nav=profile" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" aria-hidden="true" tabindex="-1">⚙️ CONFIG</a>
-        <a href="./dj-dashboard.html?tab=flow" id="mainNav-flow-link" class="mdj-flow-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="flow" data-i18n="flow-dash" aria-hidden="true" tabindex="-1">Cash Flow</a>
-        <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Trabajos</a>
-        <a href="./contact.html" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
-        <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="#" data-mdj-nav="mi-portal" data-mdj-slot="8" data-i18n="header-mi-portal" aria-hidden="true" tabindex="-1">MI PORTAL</a>
-        <a href="#" id="mainNav-staff-or-profile" class="mdj-staff-or-profile-mainnav mdj-staff-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="staff" data-i18n="nav-staff" aria-hidden="true" tabindex="-1">STAFF</a>
-      </nav>
+    <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home" data-mdj-slot="1">Inicio</a>
+    <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services" data-mdj-slot="2">Servicios</a>
+    <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues" data-mdj-slot="3">Eventos</a>
+    <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-i18n="nav-shop" data-mdj-nav="shop" data-mdj-slot="4">Shop</a>
+    <a href="./client-account.html" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" data-mdj-slot="5" aria-hidden="true" tabindex="-1">⚙️ CONFIG</a>
+    <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs" data-mdj-slot="6">Trabajos</a>
+    <a href="./contact.html" data-i18n="nav-contact" data-mdj-nav="contact" data-mdj-slot="7">Contacto</a>
+    <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="./client-portal.html" data-mdj-nav="mi-portal" data-mdj-slot="8" aria-hidden="true" tabindex="-1">MI PERFIL</a>
+    <a href="./road-map.html" id="mainNav-roadmap-link" class="mdj-roadmap-mainnav" data-i18n="nav-roadmap" data-mdj-nav="roadmap" data-mdj-slot="9">MRM IA</a>
+  </nav>
     </div>
   </div>
 </header>
@@ -3363,7 +3369,7 @@
                                 style="display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,0.55);letter-spacing:0.06em;margin-bottom:6px;">
                                 Tu comentario (opcional)
                             </label>
-                            <textarea id="pub-review-comment" maxlength="500" rows="2"
+                            <textarea id="pub-review-comment" maxlength="300" rows="2"
                                 placeholder="Cuéntanos tu experiencia con este DJ…"></textarea>
                             <button type="button" class="pub-leave-review-btn" id="pub-leave-review-btn" style="display:none;">—</button>
                             <p id="pub-leave-review-hint" data-i18n="profile-review-cta-hint-guest"
@@ -3378,7 +3384,6 @@
                         <summary class="pub-bio-summary">
                             <span class="pub-bio-summary-head">
                                 <span class="pub-bio-title" data-i18n="profile-bio-title">Bio</span>
-                                <span class="pub-bio-hint" data-i18n="profile-bio-expand-hint">Opcional — desplegar para leer</span>
                             </span>
                             <span class="pub-bio-rule" aria-hidden="true"></span>
                             <span class="pub-bio-chevron" aria-hidden="true">▼</span>
@@ -5617,7 +5622,12 @@
                         /* Cash Flow en perfil (misma UX que copia de referencia ?tab=flow); dashboard sigue en dj-dashboard?tab=flow vía header. */
                         setTimeout(function () { switchProfileTab('flow'); }, 300);
                     } else if (tabFromUrl === 'sft') {
-                        switchProfileTab('sft');
+                        /* Los 300ms NO son adorno: sus vecinos 'public' y 'flow' los
+                           llevan, y sin ellos el conmutador corre antes de que la
+                           maquinaria de pestañas este lista y no hace nada. Medido:
+                           con ?tab=sft la vista se quedaba en tab-public, mientras
+                           que llamar a switchProfileTab('sft') a mano si conmutaba. */
+                        setTimeout(function () { switchProfileTab('sft'); }, 300);
                         if (
                             window._mdjSftProAllowed &&
                             window.currentDJData &&
@@ -14293,7 +14303,7 @@
     <script defer src="./monetization.js?v=20260422-sft-math"></script>
 
     <script defer src="./header-smart-search.js?v=20260415-CORE-CONNECTIONS"></script>
-    <script defer src="./mdj-shared-header.js?v=20260820-unificacion"></script>
+    <script defer src="./mdj-shared-header.js?v=20260820-purga4"></script>
   <script defer src="./mdj-owner-tabs-marquee.js?v=20260818-nav-canonico"></script>
   <script defer src="./mdj-social-bar.js?v=20260819-social-contact-only"></script>
   <!-- Cart pill: badge + redirect to rentals (no heavy scripts needed here) -->
