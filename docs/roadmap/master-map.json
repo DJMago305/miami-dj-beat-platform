@@ -326,6 +326,62 @@
     [
       "L10",
       "^docs/roadmap/.*$"
+    ],
+    [
+      "L1",
+      "^web/(header-unified\\.css|mdj-estacion-preflight\\.js)$"
+    ],
+    [
+      "L1",
+      "^web/js/mdj-tema-portal\\.js$"
+    ],
+    [
+      "L9",
+      "^web/(sw-push\\.js|push-config\\.js|push-prueba\\.html|manifest\\.webmanifest)$"
+    ],
+    [
+      "L9",
+      "^web/js/mdj-push(-cliente)?\\.js$"
+    ],
+    [
+      "L9",
+      "^web/vendor/.*\\.js$"
+    ],
+    [
+      "L8",
+      "^web/(elixis-voice-lab\\.html)$"
+    ],
+    [
+      "L8",
+      "^web/js/elixis-voice-engine\\.js$"
+    ],
+    [
+      "L10",
+      "^web/(road-map\\.html|diagnostico-sesion\\.html|neural-matrix-3d\\.html)$"
+    ],
+    [
+      "L10",
+      "^web/js/neural-matrix-3d\\.js$"
+    ],
+    [
+      "L9",
+      "^supabase/functions/_shared$"
+    ],
+    [
+      "L9",
+      "^supabase/functions/(mdj-push-enviar|mdj-push-suscribir|mdj-avisos-despachar)$"
+    ],
+    [
+      "L9",
+      "^supabase/functions/(elixis-sms-dispatch|elixis-sms-estado)$"
+    ],
+    [
+      "L8",
+      "^supabase/functions/elixis-realtime-session$"
+    ],
+    [
+      "L1",
+      "^supabase/functions/(mdj-music|mdj-weather)$"
     ]
   ],
   "scan": {
@@ -450,7 +506,8 @@
         "El cliente entra por la capa pública, pide una fecha y con eso nace un <b>lead</b>. Ese lead es el mismo objeto que después se convierte en evento: no se vuelve a teclear en otro sistema.",
         "Antes de que el evento se confirme hay dos compuertas que no se saltan: el <b>documento</b> (acuerdo de servicio) y el <b>depósito</b>. Si una falla, el evento no avanza de estado, aunque la fecha ya esté en el calendario.",
         "Después del evento, el cliente conserva su portal: su historial, sus facturas, sus comprobantes y el chat con el equipo. No se le cierra la puerta cuando termina la noche.",
-        "Cuando alguien sin cuenta llega a la ficha de un DJ, <b>ve el perfil entero</b> —presentación, biografía, valoraciones, disponibilidad, comentarios y QR— pero con la <b>barra de Inicio</b>, no con la estación de trabajo del artista. La ficha es una página de conversión: está para que ese visitante explore, se suscriba y contrate, no para enseñarle herramientas que no le pertenecen."
+        "Cuando alguien sin cuenta llega a la ficha de un DJ, <b>ve el perfil entero</b> —presentación, biografía, valoraciones, disponibilidad, comentarios y QR— pero con la <b>barra de Inicio</b>, no con la estación de trabajo del artista. La ficha es una página de conversión: está para que ese visitante explore, se suscriba y contrate, no para enseñarle herramientas que no le pertenecen.",
+        "Desde el <b>22 de agosto de 2026</b> el cliente se entera solo. Un disparador sobre <code>event_builder_orders</code> encola el hecho —orden confirmada, orden cancelada, depósito recibido, pago completo— en <code>avisos_pendientes</code>, y el despachador lo entrega por Web Push. El aviso <b>jamás puede tumbar la orden</b>: el encolado va dentro de un guardián de excepción, porque un aviso perdido es molesto y una reserva que no se guarda es perder al cliente. Comprobado contra el catálogo de PRODUCCIÓN, no contra el repositorio: ninguna sonda de este mapa puede ver el estado de la base."
       ],
       "focus": [
         "L1",
@@ -482,7 +539,8 @@
         "Cuando hay un evento que le calza, recibe una <b>oferta de asignación</b> que puede aceptar o rechazar. La asignación no se le impone en silencio.",
         "Su centro financiero le muestra lo suyo y solo lo suyo. Un artista nunca ve el ledger de otro; eso lo garantiza la capa de identidad, no una pantalla.",
         "La reserva de un DJ escribe en <b>artist_agenda</b> (source assignment). El portal del artista (<code>dj-dashboard.html</code>) lee esa tabla en vivo bajo RLS.",
-        "La estación del artista es <b>la misma en todas sus pantallas</b>: Academia, Agenda, DJ Tools, Cursos, Conocimiento, Configuración y su propia ficha. Y una precisión que conviene no confundir: lo que el artista ve en Agenda es el <b>Calendario Operacional Inteligente</b>, el mismo motor que usa la casa. Su calendario personal sigue existiendo, pero no es lo que se le muestra."
+        "La estación del artista es <b>la misma en todas sus pantallas</b>: Academia, Agenda, DJ Tools, Cursos, Conocimiento, Configuración y su propia ficha. Y una precisión que conviene no confundir: lo que el artista ve en Agenda es el <b>Calendario Operacional Inteligente</b>, el mismo motor que usa la casa. Su calendario personal sigue existiendo, pero no es lo que se le muestra.",
+        "Desde agosto de 2026 el artista deja de navegar con la barra publica. Sus cinco vistas —perfil, academia, agenda, configuracion y DJ Tools— forman una <b>estacion de trabajo</b>: riel de nueve puestos arriba, marca y buscador flotando debajo. El riel se pinta desde el HTML de cada pagina y la decision de que barra mostrar se toma <b>antes del primer fotograma</b>, en <code>mdj-estacion-preflight.js</code>; de ahi que el menu ya no tiemble al cambiar de pestaña. Trabajos no figura en ese riel: pertenece al menu de Inicio."
       ],
       "focus": [
         "L3",
@@ -494,7 +552,8 @@
         "web/dj-dashboard.html",
         "web/dj-profile.html",
         "web/centro-financiero-artista.html",
-        "supabase/functions/notify-dj-assignment"
+        "supabase/functions/notify-dj-assignment",
+        "web/mdj-estacion-preflight.js"
       ]
     },
     {
@@ -511,7 +570,8 @@
         "El staff trabaja sobre agregadores: la agenda y el Matrix <b>leen</b> datos de toda la plataforma pero reparten hacia abajo solo lo necesario. Es un flujo de una sola dirección, y quien lo hace cumplir es RLS.",
         "Las acciones que importan — confirmar un cobro, asignar un artista, cambiar el estado de un evento — dejan rastro. Una acción consecuente sin registro es un defecto, no una comodidad.",
         "Dentro del staff hay grados: management y ventas no ven lo mismo. El portal es uno, los permisos son varios.",
-        "El back-office lleva <b>riel interno</b> —con Fénix AI y el atajo a Staff— en las nueve pantallas de gestión, no solo en dos. Antes, entrar en el panel de administración devolvía el menú del visitante."
+        "El back-office lleva <b>riel interno</b> —con Fénix AI y el atajo a Staff— en las nueve pantallas de gestión, no solo en dos. Antes, entrar en el panel de administración devolvía el menú del visitante.",
+        "El owner recibe el mismo trato dentro de <code>staff.html</code>: se retira la fila superior, la marca y el buscador pasan a la franja flotante y la pildora de usuario se agrupa a la derecha. Cambia el contenido de los puestos, no la arquitectura. El riel canonico quedo escrito a mano en las 43 paginas de la web, y el informe del salto entre pestañas vive en <code>docs/incidentes/</code>."
       ],
       "focus": [
         "L3",
@@ -1081,6 +1141,34 @@
         "expect": "absent"
       },
       "severity": "media"
+    },
+    {
+      "id": "V11",
+      "title": "Un .container global en hoja de pagina empuja el menu dentro del branding",
+      "detail": "certification.css:112 declara .container { max-width:880px; margin:0 auto; padding:20px 16px 60px } sin acotar a su contenido. El max-width no llega a hacer dano porque header-unified.css lo bloquea con !important, pero el padding-top pasa sin oposicion y sube el menu 20px: la fila queda en top 84 y el menu en top 64, solapando la banda del branding. Lo cargan SIETE paginas —certification, certification-about, directory, verify, practical-evaluation, standards y admin—, no seis. Se arregla acotando el selector a :where(main, section, footer), el patron que ya existe y funciona en jobs.html; una linea, un solo archivo.",
+      "probe": {
+        "kind": "grep",
+        "pattern": "padding: 20px 16px 60px",
+        "paths": [
+          "web/certification.css"
+        ],
+        "expect": "absent"
+      },
+      "severity": "media"
+    },
+    {
+      "id": "V12",
+      "title": "El puesto SHOP del riel canonico lleva a una tienda congelada",
+      "detail": "shop.html:8 redirige en su primera linea ejecutable a miami-dj-beat-store.myshopify.com. Comprobado contra el servidor real: responde HTTP 402, que en Shopify significa tienda congelada por facturacion. SHOP es uno de los nueve puestos canonicos y aparece en las 43 paginas: cualquiera que lo pulse sale de la web y aterriza en una tienda cerrada. Queda fuera del alcance del trabajo de menu, pero es de mayor gravedad que cualquier defecto de geometria.",
+      "probe": {
+        "kind": "grep",
+        "pattern": "miami-dj-beat-store.myshopify.com",
+        "paths": [
+          "web/shop.html"
+        ],
+        "expect": "absent"
+      },
+      "severity": "alta"
     }
   ],
   "capabilities": [
@@ -1670,6 +1758,44 @@
         "El script de atribución existe como script, no como migración aplicada.",
         "¿Cómo se liquida la comisión del referido?"
       ]
+    },
+    {
+      "id": "cap-avisos-push",
+      "name": "Avisos al movil por Web Push",
+      "layer": "L9",
+      "sot": "supabase/functions/mdj-avisos-despachar/index.ts",
+      "impl": [
+        "web/js/mdj-push.js",
+        "web/js/mdj-push-cliente.js",
+        "web/sw-push.js",
+        "web/push-config.js",
+        "web/manifest.webmanifest",
+        "supabase/functions/mdj-avisos-despachar",
+        "supabase/functions/mdj-push-enviar",
+        "supabase/functions/mdj-push-suscribir"
+      ],
+      "tests": [
+        "web/push-prueba.html"
+      ],
+      "docs": [
+        "supabase/scripts/mdj_avisos_automaticos_PRODUCCION.sql"
+      ]
+    },
+    {
+      "id": "cap-estacion-nav",
+      "name": "Barra de menu y estaciones de trabajo",
+      "layer": "L1",
+      "sot": "web/mdj-shared-header.js",
+      "impl": [
+        "web/mdj-shared-header.js",
+        "web/header-unified.css",
+        "web/mdj-estacion-preflight.js",
+        "web/header-smart-search.js"
+      ],
+      "tests": [],
+      "docs": [
+        "docs/incidentes/2026-08-19-salto-pestanas-estacion-artista.md"
+      ]
     }
   ],
   "driftPhrases": "pendiente de cablear|no implementado|not implemented|sin cablear|UI wiring pending|todavía no existe|aún no existe",
@@ -1851,6 +1977,113 @@
       },
       "deps": [],
       "impact": "alto"
+    },
+    {
+      "id": "R14",
+      "title": "El libro de incidentes, inmutable",
+      "why": "Hoy no existe ningun registro permanente de incidentes ni de facturacion por evento. La unica practica parecida —la notarizacion del calendario operacional— vive solo en la pantalla del momento y no queda guardada. Sin un libro que nadie pueda corregir despues, no hay forma de comparar un año contra otro ni de sostener nada como evidencia.",
+      "done": "Existe una tabla de incidentes cuya unica via de entrada es una funcion que solo sabe insertar: ningun rol —ni el propio autor— puede actualizar ni borrar una fila ya guardada. Conservacion minima cinco años.",
+      "ref": {
+        "kind": "layer",
+        "id": "L10"
+      },
+      "deps": [],
+      "impact": "alto"
+    },
+    {
+      "id": "R15",
+      "title": "La puerta de escritura del artista",
+      "why": "El artista es quien vive el incidente y quien conoce su propia facturacion. Necesita un espacio propio en su perfil, precargado con su identidad, donde reporte una sola vez y sin poder releer lo enviado.",
+      "done": "Cada perfil de artista monta el formulario, precargado con el identificador permanente de la sesion; guardar inserta en el libro y limpia el formulario. El artista no dispone de ninguna vista de lectura del libro.",
+      "ref": {
+        "kind": "layer",
+        "id": "L3"
+      },
+      "deps": [
+        "R14"
+      ],
+      "impact": "alto"
+    },
+    {
+      "id": "R16",
+      "title": "La vista del libro para el equipo",
+      "why": "El libro solo sirve si alguien puede leerlo entero. Esa lectura pertenece al area interna, nunca al artista.",
+      "done": "Existe una vista con filtros por fecha, año, artista y tipo, alcanzable unicamente desde el area interna. Ninguna ruta la expone fuera de ella.",
+      "ref": {
+        "kind": "layer",
+        "id": "L3"
+      },
+      "deps": [
+        "R14"
+      ],
+      "impact": "medio"
+    },
+    {
+      "id": "R17",
+      "title": "ELIXIS lee el libro, en solo lectura",
+      "why": "El proposito del libro es comparar periodos: si un problema se repite en la misma epoca, si la facturacion de una plaza sube o baja. Eso es trabajo de analisis, no de archivo.",
+      "done": "Una herramienta nueva de SOLO LECTURA registrada en approval-gate, con el rol verificado en el servidor y limitada a gerente y propietario. No devuelve ninguna cifra que no salga de filas reales del libro.",
+      "ref": {
+        "kind": "layer",
+        "id": "L8"
+      },
+      "deps": [
+        "R14"
+      ],
+      "impact": "medio"
+    },
+    {
+      "id": "R18",
+      "title": "Resumen de crecimiento en el Flujo real",
+      "why": "La lectura de ELIXIS necesita un lugar donde entregarse. Ya existe uno pensado para cifras en vivo: la pestaña de Flujo del perfil y su copia en el panel del propietario. La pagina informativa de Cash Flow es una muestra con datos de ejemplo y no sirve como destino.",
+      "done": "El resumen aparece en la pestaña de Flujo con datos del libro; la pagina informativa queda intacta.",
+      "ref": {
+        "kind": "layer",
+        "id": "L7"
+      },
+      "deps": [
+        "R17"
+      ],
+      "impact": "medio"
+    },
+    {
+      "id": "R19",
+      "title": "Aviso cuando un problema podria repetirse",
+      "why": "Un libro que solo se consulta cuando alguien pregunta desaprovecha lo que sabe. Al preparar un evento con un artista que ya tiene incidentes registrados, el aviso deberia salir solo.",
+      "done": "Antes de un evento nuevo se consulta el libro y, SI Y SOLO SI existe una fila real que lo respalde, se emite el aviso. Sin respaldo, silencio.",
+      "ref": {
+        "kind": "layer",
+        "id": "L8"
+      },
+      "deps": [
+        "R17"
+      ],
+      "impact": "medio"
+    },
+    {
+      "id": "R20",
+      "title": "Asesor de hora de salida por trafico real",
+      "why": "Pieza APARTE: no lee el libro. Un incidente pasado no predice trafico, y decir lo contrario seria una suposicion disfrazada de dato. Lo honesto es consultar el trafico y la distancia de este momento y sumar el margen de armado del evento. No existe hoy ninguna conexion de mapas en la plataforma; el servicio de Apple ya esta pagado en la membresia de desarrollador y su tiempo estimado de llegada si incorpora demoras por trafico.",
+      "done": "Un puente en servidor recibe origen y destino, consulta al proveedor con la clave guardada como secreto y devuelve solo tiempo y distancia. El margen de armado se lee del evento ya registrado, no se adivina.",
+      "ref": {
+        "kind": "layer",
+        "id": "L5"
+      },
+      "deps": [],
+      "impact": "medio"
+    },
+    {
+      "id": "R21",
+      "title": "Confirmar si el Centro Legal esta aplicado en produccion",
+      "why": "Tres migraciones legal_center viven en el repositorio desde julio de 2026. Que una migracion este versionada NO prueba que se haya corrido contra la base de produccion; es el mismo patron que R20. Hasta comprobarlo, el Centro Legal figura como codigo escrito, no como capacidad viva. MEDIDO EN PRODUCCION EL 2026-08-22 contra el catalogo: las tablas legal_* NO existen. Las tres migraciones legal_center llevan versionadas desde julio de 2026 sin haberse aplicado nunca. El Centro Legal es codigo escrito, no capacidad viva.",
+      "done": "Verificado contra el catalogo de PRODUCCION que las tablas y funciones de legal_center existen, o bien decidido y registrado que la linea se descarta.",
+      "ref": {
+        "kind": "layer",
+        "id": "L6"
+      },
+      "deps": [],
+      "impact": "medio",
+      "evidence": "supabase/scripts/mrm_verificacion_R20_R21_PRODUCCION.sql"
     }
   ]
 }

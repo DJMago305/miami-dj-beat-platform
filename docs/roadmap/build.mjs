@@ -106,7 +106,7 @@ function grepHits(pattern, paths) {
         const files = statSync(abs).isDirectory()
             ? tree().filter((n) => !n.dir && n.rel.startsWith(p + "/")).map((n) => n.rel) : [p];
         for (const f of files) {
-            if (!/\.(html|js|ts|sql|md|json|yml|yaml)$/i.test(f)) continue;
+            if (!/\.(html|js|ts|css|sql|md|json|yml|yaml)$/i.test(f)) continue;
             try { if (re.test(readFileSync(join(ROOT, f), "utf8"))) hits.push(f); } catch { /* noop */ }
         }
     }
@@ -533,6 +533,18 @@ const roadmap = (() => {
         .sort((a, b) => (a.ok - b.ok) || (a.depth - b.depth) || (IMP[a.impact] - IMP[b.impact]) || a.id.localeCompare(b.id))
         .map((t, i) => ({ ...t, order: i + 1 }));
 })();
+// Una dependencia que apunta a una ruta inexistente deja el mapa señalando al
+// vacío, y ninguna sonda lo caza: las sondas miran el árbol de archivos, no la
+// coherencia interna del registro. Aquí se rompe la corrida antes que mentir.
+{
+    const ids = new Set(MAP.roadmap.map((t) => t.id));
+    const rotas = MAP.roadmap.flatMap((t) =>
+        (t.deps || []).filter((d) => !ids.has(d)).map((d) => `${t.id} → ${d}`));
+    if (rotas.length) {
+        console.error(`  ✗ dependencias que apuntan al vacío: ${rotas.join(", ")}`);
+        process.exit(1);
+    }
+}
 const rmDone = roadmap.filter((t) => t.ok).length;
 const rmReady = roadmap.filter((t) => t.status === "ready").length;
 const rmBlocked = roadmap.filter((t) => t.status === "blocked").length;
