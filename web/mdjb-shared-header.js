@@ -137,7 +137,11 @@
        9, con lo que la estacion queda en NUEVE puestos y MI PERFIL no se mueve
        del 8 — que es donde su resolvedor de destino y su etiqueta lo buscan, por
        numero de slot. */
-    { s: 9,  key: 'nav-shop',       nav: 'shop',      href: './shop.html?mdj_nav=profile', txt: 'Shop' }
+    { s: 9,  key: 'nav-shop',       nav: 'shop',      href: './shop.html?mdj_nav=profile', txt: 'Shop' },
+    /* Slot 10, agregado al final para no mover ningun puesto existente (MI
+       PERFIL sigue fijo en 8). Delega el clic en #tab-documentos igual que
+       flow/sft/public: no navega, conmuta la pestaña ya montada en la pagina. */
+    { s: 10, key: null,             nav: 'documentos', href: '#', txt: 'Mis Documentos', tab: 'documentos' }
   ];
 
   /* Dueño del perfil que se esta mirando. Se calcula con senales que el header

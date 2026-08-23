@@ -3,6 +3,41 @@
 Estado general: Operativo / En consolidación
 
 ## 1. Módulos y Estado Técnico
+- [ ] Motor de Contratos y W-9 (Legal Engine)
+      — 2026-08-23 IMPLEMENTADO Y CORREGIDO (Hilo Maestro, continuando el trabajo
+      del Hilo Legal & W-9 Engine): `web/contracts-engine.html` — motor bilingüe
+      ES/EN con 5 plantillas (DJ, Corporativo, Venue, Staff, W-9). Conectado a
+      `staff.html` y a `dj-profile.html` ("Mis Documentos").
+      **El W-9 NO se recreó en HTML/CSS** — un documento fiscal del gobierno no
+      se reconstruye, se muestra tal cual: el PDF real (idéntico byte a byte al
+      oficial de irs.gov, verificado por SHA-256) queda embebido en un visor,
+      con el link directo a `irs.gov/pub/irs-pdf/fw9.pdf` como respaldo. El
+      artista lo descarga, lo llena y firma con su propio lector de PDF, y lo
+      vuelve a subir por un dropzone (solo `.pdf`, máx. 10MB) que calcula su
+      SHA-256 en el navegador (`crypto.subtle`) antes de guardarlo — nunca se
+      genera ni se rellena un PDF por código.
+      **Acceso reubicado**: "Legal / Contratos" vive únicamente en el menú
+      lateral de `staff.html` (grupo Operaciones, mismo patrón que "Inbox ·
+      Tickets") — la barra superior quedó intacta, sin tocar (diff verificado).
+      **Dos bugs reales de producción encontrados y corregidos en vivo** (ref
+      `hkuvuqupbxwkiykxvqdr`): (1) la firma de parámetros de
+      `guardar_contrato_firmado` no coincidía — corregida tras verificar los 10
+      parámetros reales vía `information_schema.parameters`; sobraba un
+      `p_status` que no existe en la función. (2) `signed_contracts.contract_type`
+      tiene su propio `CHECK` que solo acepta `W9`/`DJ_AGREEMENT`/
+      `VENUE_AGREEMENT`/`CORPORATE_AGREEMENT`/`STAFF_AGREEMENT` — los ids locales
+      de plantilla (`w9`, `dj`, `venue`...) no coinciden con esos valores.
+      **Esto afectaba a los 5 templates, no solo al W-9** — nadie podía guardar
+      remotamente antes de este fix. Corregido con una tabla de mapeo
+      (`LOCAL_TO_DB_CONTRACT_TYPE`) en el único punto compartido de guardado.
+      Sin verificación end-to-end autenticada dentro del contenedor real de
+      `staff.html`/`dj-profile.html` con sesión de staff/artista (Regla 4) — no
+      hubo credenciales disponibles en esta sesión de build; sí se probó en
+      vivo contra producción el flujo de guardado (hash real + llamada RPC real,
+      sin insertar filas de prueba por decisión del PO). Sintaxis validada con
+      `node --check`/parseo de scripts en los 4 archivos tocados: sin errores.
+      Trabajo en rama `feature/contracts-w9-engine-integration`. PR abierto,
+      pendiente de aprobación explícita del PO antes de fusionar (Regla 1).
 - [x] Motor de Voz Realtime ELIXIS (PR #202 desplegado en producción)
 - [x] Políticas de Cuota y RBAC (3h Full / 5h Mini / Fallback a texto)
 - [x] Despacho SMS Seguro (`elixis_sms_pending` + validación E.164 + Twilio, verificado con envío real)
@@ -231,4 +266,5 @@ Estado general: Operativo / En consolidación
 - [2026-08-23] Modal de reporte de incidentes fusionado (PR #238, dominio #5) — consume `platform_incidents_reportar()` (núcleo de arriba). Botón + modal montados en `initStaff()` de `staff.html`, visibles para cualquier rol de staff, ocultos para no-staff por el candado ya existente de la página. `dominio`/`severidad` quedaron como texto libre (con sugerencias, no `<select>` fijo) porque el propio SQL deja ese catálogo pendiente del Capitán. Sin credenciales reales de staff en la sesión de build, no se pudo verificar el flujo autenticado completo (abrir → enviar → fila nueva) — quedó marcado explícitamente en el PR; el PO lo fusionó tras su propia revisión.
 - [2026-08-23] **PR #240 cerrado sin fusionar.** El PO reportó inicialmente que ya estaba integrado a `main`; verificado de forma independiente (`gh pr view`) que seguía `OPEN`. Auditoría posterior encontró que la rama de origen estaba contaminada — 14 archivos, incluyendo `CLAUDE.md` y este mismo `ESTADO_MAESTRO.md` en versión vieja, que se habrían arrastrado a `main` de fusionarse tal cual. Se aisló lo real (2 migraciones nuevas de Libro de Operaciones) sobre `origin/main` limpio; en el camino se descubrió que dependían de `mdj_profile_de_usuario()`, una función que solo existía en 5 archivos M1-M5 sin trackear localmente — bloqueando el aislamiento hasta resolver esa cadena (ver M1-M5 arriba).
 - [2026-08-23] M1–M5 (Constitución de Autoridad e Identidad) auditados, aislados en rama propia y fusionados (PR #241, ver arriba) — desbloquea la dependencia que detenía el aislamiento limpio del Libro de Operaciones.
+- [2026-08-23] Motor de Contratos y W-9 completado (ver arriba): el W-9 se rehizo como visor del PDF real (nunca una réplica en HTML) con dropzone de subida firmada, "Legal" se movió del top-nav (rompía el header) al sidebar de Staff, y se corrigieron dos bugs reales de producción — la firma de parámetros de `guardar_contrato_firmado` y el `CHECK` de `contract_type` que bloqueaba el guardado de los 5 templates. PR abierto en `feature/contracts-w9-engine-integration`, pendiente de aprobación del PO.
 - [2026-08-23] Libro de Operaciones Fase 1 + Fase 4 + RPC `get_my_cashflow_ledger` re-aislados sobre `origin/main` (ya con M1-M5 integrado) y fusionados como PR #242 (ver arriba) — versión limpia que reemplaza al PR #240, cerrado con nota explicando el reemplazo.
