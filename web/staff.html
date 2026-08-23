@@ -92,6 +92,9 @@
        peleaban con el menu. Ahora se tocan sin pisarse. */
     .staff-flota{position:fixed;top:84px;left:0;right:0;z-index:6;display:flex;
       align-items:center;gap:10px;height:var(--flota-h);padding:0 clamp(12px,2vw,22px);
+      /* TRANSPARENTE flotante: branding + buscador flotan sobre el hero como en
+         el perfil de artista (PO 2026-08-22). La franja solida vive solo en el
+         menu (.staff-topnav), no aqui. */
       background:transparent;pointer-events:none;}
     .staff-flota > *{pointer-events:auto;}
     /* Gobernanza tiene su propio casco; la ficha, su propio contenedor de
@@ -177,6 +180,16 @@
        y el PO lo descarto: aqui manda la identidad del agente.
        La plataforma sigue anunciada arriba: el menu marca FENIX AI resaltado. */
     body[data-vista="elixis"] .staff-flota{display:none;}
+    /* AGENDA (PO 2026-08-22): el clima de agenda es INMERSIVO y distinto al del
+       perfil de artista. La franja flotante (marca + buscador) quedaba montada
+       sobre el clima y se veia fea; unificar a 1 fila desbordaba el menu (10
+       pestanas ya ocupan casi todo el ancho). Decision del PO: quitar la franja
+       SOLO en esta vista. El menu queda como unica cabecera. */
+    body[data-vista="agenda"] .staff-flota{display:none;}
+    /* Menu esmerilado SOLO en agenda: el clima/calendario pasan por debajo
+       difuminados al scrollear, sin sangrar por encima (misma formula que el
+       header del perfil de artista). No global: las otras vistas no se tocan. */
+    body[data-vista="agenda"] .staff-topnav{background:rgba(7,6,5,.96) !important;}
     /* Oculto a la vista pero VIVO en el DOM y para lectores de pantalla. */
     .solo-lectores{position:absolute;width:1px;height:1px;padding:0;margin:-1px;
       overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;}
@@ -306,6 +319,17 @@
        chat -- ver data-empotrado en elixis-console.html. */
     #view-agenda,#view-cashflow,#view-config{
       padding-top:var(--flota-h);box-sizing:border-box;}
+    /* AGENDA es estacion INMERSIVA (HERO clima 100vh, paridad weather-lab), no
+       pagina normal: reservarle la banda flotante dejaba una FRANJA NEGRA entre
+       el menu y el clima —el mismo defecto que FENIX (abajo) y #perfil ya tenian
+       prohibido. Va pegada bajo la cabecera; el body ya reserva los 188px del
+       header completo (84 riel + 12 + 72 banda + 20), asi que no la doblamos. */
+    #view-agenda{padding-top:0 !important;
+      /* PEGADO A LA BARRA DE MENU (PO 2026-08-22): el clima sube flush justo bajo
+         el riel del menu (84px). El branding + buscador (.staff-flota, transparente)
+         flotan sobre el hero, como el perfil de artista. Mismo margen negativo
+         que #view-elixis (FENIX). El body reserva 188; jalamos hasta 84. */
+      margin-top:calc(84px - 188px) !important;}
     /* FENIX: PEGADO AL MENU, SIN AIRE Y SIN SCROLL (PO 2026-08-22).
        «el fenix esta con aire, eso va mas arriba sin aire pegado al menu y sin
        scroll; el fenix es fijo.»

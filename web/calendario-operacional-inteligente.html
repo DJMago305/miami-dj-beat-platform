@@ -300,8 +300,12 @@
   @media (max-width:840px){.year-grid{grid-template-columns:repeat(2,1fr);}.day-layout{grid-template-columns:1fr;gap:16px;}.day-split{display:none;}.toolbar{grid-template-columns:auto 1fr auto;}.roster{margin-left:0;}}
   @media (max-width:560px){.year-grid{grid-template-columns:1fr;}.seg button{padding:6px 9px;font-size:12px;}.ctx .iso{margin-left:0;}}
   /* Pantalla completa / full-width — la app llena toda la ventana */
-  .wrap{padding:0 !important;}
-  .app{max-width:none !important;border-radius:0 !important;border-left:none !important;border-right:none !important;min-height:100vh !important;box-shadow:none !important;}
+  .wrap{padding:0 !important;min-height:0 !important;}
+  /* Altura NATURAL del contenido (sin forzar 100vh): el iframe host se auto-ajusta
+     a esta altura para que NO haya scroll interno del calendario. Así la página
+     entera scrollea como una sola pieza, fluida, sin atrapamiento/imán del scroll
+     anidado. PO 2026-08-22 · UI-0822. */
+  .app{max-width:none !important;border-radius:0 !important;border-left:none !important;border-right:none !important;min-height:0 !important;box-shadow:none !important;}
 </style>
 
 <div class="wrap">
