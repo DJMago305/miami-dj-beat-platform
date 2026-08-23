@@ -106,6 +106,36 @@ Estado general: Operativo / En consolidación
       layout responsivo del propio módulo. Dominio #5 (Weather Design Bible / UI)
       de la matriz — sin hilo activo en ese dominio ahora mismo. No causado por
       el rename de marca de hoy (verificado). Sin arreglar todavía.
+- [x] Centro Legal (LC-12/13A/13B) — auditoría forense cerrada, riesgo neutralizado
+      — 2026-08-22 HALLAZGO (dominio #3, verificado por el Hilo Maestro y en
+      producción real por el PO): son 9 tablas `legal_*` (la auditoría de julio
+      decía 8 — su sonda truncaba nombres largos), cero consumidores de código
+      en `web/` ni `supabase/functions/`, diseñadas contra `MiamiDJBeat-MigracionV2`
+      (repo que nunca aterrizó). Las 3 migraciones se autodeclaran "NOT APPLIED"/
+      "isolated Postgres validation" en sus propias cabeceras.
+      ⚠️ **Riesgo real encontrado:** `20260722101300_..._lc13a.sql` redefine
+      `auth.uid()` con un stub de laboratorio sin el respaldo JSONB
+      (`request.jwt.claims`) que sí tiene la función real de Supabase — confirmado
+      en producción: `auth.uid()` real vive bajo `supabase_auth_admin` y usa
+      `coalesce(...)` entre las dos fuentes; el stub no tiene `coalesce`, solo lee
+      una. Esa función la usan 299 líneas en 76 archivos de migración —
+      identidad de artistas/clientes, reservas, mensajería, storage y memoria de
+      ELIXIS (76 tablas vivas con políticas RLS dependientes, confirmado con
+      conteo real de `pg_policy`). Las migraciones vivían en `supabase/migrations/`
+      — la carpeta que `supabase db push` ejecuta sin preguntar.
+      **Verificado en producción real (PO):** cero estado parcial — las 9 tablas,
+      la secuencia y las 22 funciones legales salen `AUSENTE` sin excepción. No es
+      una migración a medias, es un módulo entero que nunca tocó la base.
+      **Acción tomada:** las 3 migraciones se movieron a
+      `supabase/scripts/legal-center-design/` (con README explicando el porqué y
+      los pasos antes de reescribir) — solo rename, cero contenido SQL modificado.
+      Riesgo vivo neutralizado sin perder el diseño. No se aplica ni se borra
+      todavía; se reescribe cuando exista producto real, sustituyendo el stub por
+      identidad real y retirando las dos tablas de laboratorio `legal_lc13*`.
+      **Nota de gobernanza:** el Centro Legal no tenía dominio en
+      `docs/JURISDICCIONES.md` — cae dentro del #3 (BFI/Artist Financial,
+      "reportes de ingresos y contratos"), pero no estaba registrado
+      explícitamente. Pendiente formalizarlo si vuelve a activarse.
 
 ## 2. Bitácora de Sincronización entre Cajas
 - [2026-08-22] Inicialización del Hub Central de sincronización multi-hilo.
@@ -124,3 +154,4 @@ Estado general: Operativo / En consolidación
 - [2026-08-22] PO resolvió el SSOT de reserva: `event_builder_orders` gana sobre `leads` (ver arriba). `dj_events` marcada para DROP en la próxima migración de limpieza. Confirmado directamente por el PO, no relayado de un tercero, tras detectarse una contradicción en un mensaje de "resolución" que decía lo opuesto sobre R9b.
 - [2026-08-22] **Cierre de sprint de gobernanza y saneamiento git.** `main` consolidado con: Regla 7 en `CLAUDE.md` (auditoría visual obligatoria antes de commit/merge/producción — origen: incidente de commits sin autorización previa del PO, dos veces en la misma sesión); UI-0822 (agenda de staff: paños negros, efecto imán, tarjetas — PR #224); decisiones de R9b y SSOT de reserva (PR #225); `web/mdjb-music-intelligence.html` trackeado por primera vez, corrigiendo un 404 real en producción en el routing de Academia (PR #226); referencias del Road Master Map sincronizadas al rename de marca del PR #213 (PR #227).
 - [2026-08-22] **Worktree independiente creado para el hilo #5 (Weather Design Bible / UI):** `~/Desktop/mdjb-weather-ui`, rama `fix/weather-ui-canvas-refit` (incluye el fix de canvas WebGL en iframe anidado + el cache-busting `?v=` que le faltaba al único módulo del sitio sin ese patrón). Previene la colisión de commits cruzados entre hilos que causó el incidente de PR #223 hoy. Ese fix de clima todavía no tiene PR propio a `main` — pendiente de abrir cuando el hilo #5 esté listo.
+- [2026-08-22] Centro Legal: auditoría forense cerrada (ver arriba). Corrige la auditoría de julio (eran 9 tablas, no 8). Riesgo de `auth.uid()` sobreescrito confirmado en producción por el PO mismo, con severidad corregida (el escenario catastrófico queda descartado — `auth.uid()` es propiedad de `supabase_auth_admin`, la migración fallaría por permisos, no por tumbar la autenticación), y neutralizado moviendo las 3 migraciones fuera de la ruta ejecutable (PR #230) — sin aplicar ni borrar el diseño.
