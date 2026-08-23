@@ -86,6 +86,14 @@ Estado general: Operativo / En consolidación
       → `auth.users.id`). `artist_agenda` sigue siendo la proyección personal del
       artista, no la fuente. `dj_events` queda marcada para DROP en la próxima
       migración de limpieza (cero consumidores de código, ya verificado).
+      — 2026-08-22 GUION DE BAJA ARCHIVADO: `supabase/scripts/cleanup_dj_events.sql`
+      (PR #233, fusionado) — 4 pasos, no un DROP directo: auditoría de dependencias
+      en solo lectura (filas, FKs entrantes, vistas), copia de resguardo
+      (`dj_events_archive_20260822`), el `DROP TABLE` comentado a propósito, y
+      verificación posterior. Vive en `supabase/scripts/`, no en
+      `supabase/migrations/` — disponible para **ejecución manual controlada**,
+      ningún `supabase db push` lo corre solo. Pendiente: que el PO lo ejecute
+      línea por línea en producción cuando lo decida.
       — 2026-08-22 POLÍTICA (PO): la agenda de STAFF es la **master** (Matrix/Owner
       — `calendario-operacional-inteligente.html` en modo staff); la de artistas
       y clientes es **personal** (aislada por RLS, cada quien ve solo lo suyo).
@@ -165,3 +173,6 @@ Estado general: Operativo / En consolidación
 - [2026-08-22] **Cierre de sprint de gobernanza y saneamiento git.** `main` consolidado con: Regla 7 en `CLAUDE.md` (auditoría visual obligatoria antes de commit/merge/producción — origen: incidente de commits sin autorización previa del PO, dos veces en la misma sesión); UI-0822 (agenda de staff: paños negros, efecto imán, tarjetas — PR #224); decisiones de R9b y SSOT de reserva (PR #225); `web/mdjb-music-intelligence.html` trackeado por primera vez, corrigiendo un 404 real en producción en el routing de Academia (PR #226); referencias del Road Master Map sincronizadas al rename de marca del PR #213 (PR #227).
 - [2026-08-22] **Worktree independiente creado para el hilo #5 (Weather Design Bible / UI):** `~/Desktop/mdjb-weather-ui`, rama `fix/weather-ui-canvas-refit` (incluye el fix de canvas WebGL en iframe anidado + el cache-busting `?v=` que le faltaba al único módulo del sitio sin ese patrón). Previene la colisión de commits cruzados entre hilos que causó el incidente de PR #223 hoy. Ese fix de clima todavía no tiene PR propio a `main` — pendiente de abrir cuando el hilo #5 esté listo.
 - [2026-08-22] Centro Legal: auditoría forense cerrada (ver arriba). Corrige la auditoría de julio (eran 9 tablas, no 8). Riesgo de `auth.uid()` sobreescrito confirmado en producción por el PO mismo, con severidad corregida (el escenario catastrófico queda descartado — `auth.uid()` es propiedad de `supabase_auth_admin`, la migración fallaría por permisos, no por tumbar la autenticación), y neutralizado moviendo las 3 migraciones fuera de la ruta ejecutable (PR #230) — sin aplicar ni borrar el diseño.
+- [2026-08-22] `docs/LIBRO_OPERACIONES_IA.md` creado y fusionado (PR #231) — norma operativa de los 5 mandamientos de seguridad de ramas/código y los protocolos de contención de agentes, grounded en los incidentes reales de esta sesión.
+- [2026-08-22] Fix de clima del hilo #5 fusionado (PR #232, `fix/weather-ui-canvas-refit-v2`): canvas WebGL a ancho completo en el iframe anidado + cache-busting. Ticket cerrado del todo.
+- [2026-08-22] `dj_events`: guion de baja archivado y fusionado (ver arriba, PR #233) — disponible para ejecución manual controlada, ninguna migración automática lo dispara.
