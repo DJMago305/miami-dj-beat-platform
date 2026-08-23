@@ -154,6 +154,26 @@ Estado general: Operativo / En consolidación
       `docs/JURISDICCIONES.md` — cae dentro del #3 (BFI/Artist Financial,
       "reportes de ingresos y contratos"), pero no estaba registrado
       explícitamente. Pendiente formalizarlo si vuelve a activarse.
+- [x] `platform_incidents` — núcleo de registro inmutable de incidentes técnicos/UI (PR #235, fusionado)
+      — 2026-08-23 (Hilo Maestro, contrato de datos aprobado por el PO antes de
+      escribir código): tabla `platform_incidents` con RLS activo y **cero
+      políticas** — mismo candado que `libro_operaciones`, dominio distinto
+      (incidentes de ingeniería/UI, no el diario financiero del artista; son
+      tablas separadas, no se mezclan). Única entrada:
+      `platform_incidents_reportar()` (SECURITY DEFINER, exige
+      `is_staff(auth.uid())`, identidad resuelta en servidor). Única salida:
+      la vista `platform_incidents_staff`, filtrada por `is_staff()`. Sin
+      UPDATE ni DELETE en ningún camino — un incidente se reporta completo,
+      con qué pasó y cómo se solucionó, en una sola fila.
+      **Cabecera de entorno: PRUEBA** (`mdjb-ensayo`) — fusionar el PR solo
+      subió el archivo al repo; correrlo contra cualquier base sigue siendo
+      un paso manual del PO, empezando por el `SELECT to_regclass(...)` de
+      comprobación que trae el propio guion.
+      **Pendiente, marcado explícitamente en el SQL:** catálogo cerrado de
+      `dominio`/`severidad` (hoy texto libre); dónde vive el botón/emoji de
+      reporte en la interfaz (decisión de placement de UI, no de este
+      contrato); si esta tabla termina alimentando `docs/INCIDENTES.md` o
+      coexiste aparte.
 
 ## 2. Bitácora de Sincronización entre Cajas
 - [2026-08-22] Inicialización del Hub Central de sincronización multi-hilo.
@@ -176,3 +196,4 @@ Estado general: Operativo / En consolidación
 - [2026-08-22] `docs/LIBRO_OPERACIONES_IA.md` creado y fusionado (PR #231) — norma operativa de los 5 mandamientos de seguridad de ramas/código y los protocolos de contención de agentes, grounded en los incidentes reales de esta sesión.
 - [2026-08-22] Fix de clima del hilo #5 fusionado (PR #232, `fix/weather-ui-canvas-refit-v2`): canvas WebGL a ancho completo en el iframe anidado + cache-busting. Ticket cerrado del todo.
 - [2026-08-22] `dj_events`: guion de baja archivado y fusionado (ver arriba, PR #233) — disponible para ejecución manual controlada, ninguna migración automática lo dispara.
+- [2026-08-23] `platform_incidents` fusionado (PR #235, ver arriba) — núcleo de registro inmutable de incidentes técnicos/UI, contrato de datos aprobado por el PO antes de escribir código. Sprint de la cabecera (Single Row Header) rechazado por el Hilo Maestro y remitido al dominio #5 — protocolo "Reporto, no ejecuto" del propio `docs/LIBRO_OPERACIONES_IA.md` en acción, el mismo día que se escribió.
