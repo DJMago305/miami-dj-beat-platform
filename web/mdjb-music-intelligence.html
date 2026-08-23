@@ -1,0 +1,1810 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <script src="./mdj-estacion-preflight.js?v=20260822-prevuelo-b"></script>
+<script>/* SEMILLA DE ESTACION · antes del primer pintado.
+   El guion del header va con defer y al final del documento: cuando decide que
+   esta es una estacion de trabajo, la pagina YA se pinto con la cabecera de dos
+   filas, y al retirarla todo daba un salto hacia arriba —el «acordeon» que
+   reporto el PO. Aqui se recuerda la ultima decision conocida y se aplica de
+   inmediato, asi el primer pintado ya tiene la geometria final. Si luego resulta
+   que no es estacion (sesion cerrada), el propio guion retira la marca. */
+(function(){try{if(localStorage.getItem('mdj_estacion')==='1')document.documentElement.classList.add('mdj-estacion-previa');}catch(e){}})();</script>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
+    <script>
+    /* FIX-LEGACY-SUPABASE-01 (2026-08-19) · el respaldo entra cuando falta la
+       LIBRERIA, no cuando falta la sintaxis.
+       Antes la puerta era una sonda de `?.` y `??`. Eso solo cubre el motor que no
+       sabe parsear: si el bundle del CDN muere por CUALQUIER otra razon —una v2 mas
+       nueva con sintaxis que el motor no soporta, red caida, TLS, bloqueo— la sonda
+       pasa, el respaldo NO se inyecta y la pagina se queda sin cliente Supabase.
+       Sin cliente no hay sesion, y el guard del perfil expulsa al login: ese era el
+       rebote en Mac antiguas. Ahora se pregunta lo unico que importa, si la libreria
+       esta aqui. En un navegador moderno no hace nada, porque ya esta.
+       El CDN ademas se clava a 2.112.3, la misma version que la copia vendorizada:
+       `@2` era flotante y podia cambiar bajo nuestros pies sin tocar el repo. */
+    (function () {
+        var mdjLibAusente = !(window.supabase &&
+            typeof window.supabase.createClient === 'function');
+        if (mdjLibAusente) {
+            document.write('<script src="./vendor/supabase-js-2.112.3.legacy.js?v=20260818-safari-legacy"><\/script>');
+        }
+    })();
+    </script>
+    <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MDJB Music Intelligence — Miami DJ Beat</title>
+    <meta name="description"
+        content="MDJB Music Intelligence — DJ programming and floor intelligence cockpit. Plan Pro / Elite exclusive." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500&family=Syne:wght@600;700;800&display=optional"
+        rel="stylesheet" />
+  <!-- Tipografia institucional del menu (Inter 800). Sin esta hoja la barra caia en la
+       sustituta del sistema y el texto salia ~2% mas ancho, desplazando el eje X. -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=optional" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css?v=20260820-purga4" />
+  <link rel="stylesheet" href="./header-unified.css?v=20260821-separador-publico-b" />
+    <link rel="stylesheet" href="./profile.css?v=20260820-ancho-total" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800;900&display=optional" rel="stylesheet" />
+    <style>
+      /* ============================================================
+         MDJB MUSIC INTELLIGENCE — cockpit styles, scoped under #mi-cockpit
+         so nothing here can collide with sitewide styles.css / header-unified.css.
+         Ported from the standalone prototype approved 2026-08-22; PROTOTYPE / DEMO DATA.
+         ============================================================ */
+#mi-cockpit{
+    --bg:#0b0b0d;
+    --bg-elevated:#101012;
+    --surface:#17171b;
+    --surface-2:#1e1e23;
+    --surface-3:#25252b;
+    --border:#2b2b31;
+    --border-strong:#3c3c44;
+    --gold:#c5a059;
+    --gold-bright:#e3c68b;
+    --gold-dim:#7c6033;
+    --gold-wash:rgba(197,160,89,.08);
+    --text:#f1efe9;
+    --text-dim:#9d9ca4;
+    --text-faint:#5e5d64;
+    --good:#38caa0;
+    --good-wash:rgba(56,202,160,.12);
+    --warn:#e2a53f;
+    --warn-wash:rgba(226,165,63,.12);
+    --critical:#e5586a;
+    --critical-wash:rgba(229,88,106,.12);
+    --info:#5aa3d8;
+    --font-display:'Playfair Display',Georgia,serif;
+    --font-body:'Inter',system-ui,-apple-system,sans-serif;
+    --font-mono:'IBM Plex Mono',ui-monospace,monospace;
+    --rail-w:212px;
+    --rail-w-collapsed:72px;
+    --header-h:64px;
+    --radius:10px;
+    --radius-sm:6px;
+  }#mi-cockpit *, #mi-cockpit *::before, #mi-cockpit *::after{box-sizing:border-box;}#mi-cockpit{
+    margin:0;background:var(--bg);color:var(--text);
+    font-family:var(--font-body);
+    font-size:14px;line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  @media (prefers-reduced-motion: reduce){#mi-cockpit *{animation-duration:.001ms !important; transition-duration:.001ms !important;} }#mi-cockpit h1, #mi-cockpit h2, #mi-cockpit h3, #mi-cockpit h4{font-family:var(--font-display);font-weight:800;letter-spacing:.01em;text-wrap:balance;margin:0;}#mi-cockpit button{font-family:inherit;}#mi-cockpit ::selection{background:var(--gold-dim);color:#fff;}#mi-cockpit a{color:inherit;}#mi-cockpit .num{font-family:var(--font-mono);font-variant-numeric:tabular-nums;}#mi-cockpit .label{
+    font-family:var(--font-body);font-weight:600;font-size:10.5px;letter-spacing:.11em;
+    text-transform:uppercase;color:var(--text-dim);
+  }#mi-cockpit .scrollx{overflow-x:auto;}#mi-cockpit .badge{
+    display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:999px;
+    font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+    border:1px solid var(--border-strong);color:var(--text-dim);background:var(--surface-2);
+    white-space:nowrap;
+  }#mi-cockpit .badge.gold{color:var(--gold-bright);border-color:var(--gold-dim);background:var(--gold-wash);}#mi-cockpit .badge.good{color:var(--good);border-color:rgba(56,202,160,.35);background:var(--good-wash);}#mi-cockpit .badge.warn{color:var(--warn);border-color:rgba(226,165,63,.35);background:var(--warn-wash);}#mi-cockpit .badge.critical{color:var(--critical);border-color:rgba(229,88,106,.35);background:var(--critical-wash);}#mi-cockpit .badge.info{color:var(--info);border-color:rgba(90,163,216,.35);background:rgba(90,163,216,.1);}#mi-cockpit button.badge{appearance:none;font-family:inherit;cursor:pointer;}#mi-cockpit button.badge:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}#mi-cockpit .btn{
+    appearance:none;border:1px solid var(--border-strong);background:var(--surface-2);color:var(--text);
+    font-family:var(--font-body);font-weight:600;font-size:12.5px;letter-spacing:.03em;
+    padding:9px 14px;border-radius:var(--radius-sm);cursor:pointer;
+    transition:border-color .12s ease, background-color .12s ease, color .12s ease;
+    white-space:nowrap;
+  }#mi-cockpit .btn:hover{border-color:var(--text-faint);background:var(--surface-3);}#mi-cockpit .btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}#mi-cockpit .btn:disabled{opacity:.4;cursor:not-allowed;}#mi-cockpit .btn-gold{background:var(--gold);border-color:var(--gold);color:#151107;}#mi-cockpit .btn-gold:hover{background:var(--gold-bright);border-color:var(--gold-bright);color:#151107;}#mi-cockpit .btn-ghost{background:transparent;}#mi-cockpit .btn-sm{padding:6px 10px;font-size:11.5px;}#mi-cockpit .icon{width:16px;height:16px;display:block;flex:none;}#mi-cockpit .icon-lg{width:20px;height:20px;}#mi-cockpit .glass{
+    background:linear-gradient(180deg,var(--surface-2),var(--surface));
+    border:1px solid var(--border);border-radius:var(--radius);
+  }#mi-cockpit .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);}#mi-cockpit .panel-head{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:13px 16px;border-bottom:1px solid var(--border);
+  }#mi-cockpit .panel-body{padding:16px;}#mi-cockpit /* ---------- App shell ---------- */
+  #app{min-height:100%;display:flex;flex-direction:column;}#mi-cockpit .topbar{
+    height:var(--header-h);flex:none;display:flex;align-items:center;
+    padding:0 18px 0 16px;gap:18px;border-bottom:1px solid var(--border);
+    background:var(--bg-elevated);position:relative;z-index:20;
+  }#mi-cockpit .brand{display:flex;align-items:center;gap:10px;min-width:0;}#mi-cockpit .brand-mark{
+    width:38px;height:38px;flex:none;
+    display:flex;align-items:center;justify-content:center;
+  }#mi-cockpit .brand-mark img{width:100%;height:100%;object-fit:contain;display:block;}#mi-cockpit .brand-text{display:flex;flex-direction:column;line-height:1.15;min-width:0;}#mi-cockpit .brand-text .b-name{font-family:var(--font-display);font-weight:800;font-size:15.5px;letter-spacing:.03em;white-space:nowrap;}#mi-cockpit .brand-text .b-sub{font-size:9.5px;color:var(--text-dim);letter-spacing:.09em;text-transform:uppercase;white-space:nowrap;}#mi-cockpit .topbar-center{
+    flex:1;display:flex;justify-content:center;min-width:0;
+  }#mi-cockpit .experience-pill{
+    display:flex;align-items:center;gap:8px;padding:7px 14px 7px 10px;border-radius:999px;
+    background:var(--surface-2);border:1px solid var(--border-strong);max-width:100%;
+  }#mi-cockpit .experience-pill .dot{width:7px;height:7px;border-radius:50%;background:var(--good);flex:none;box-shadow:0 0 0 3px var(--good-wash);}#mi-cockpit .listen-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--text-faint);margin-right:5px;}#mi-cockpit .listen-dot.on{background:var(--good);box-shadow:0 0 0 3px var(--good-wash);animation:pulse-dot 1.6s ease-in-out infinite;}
+  @keyframes pulse-dot{0%,100%{opacity:1;}50%{opacity:.4;}}#mi-cockpit .experience-pill span{font-family:var(--font-display);font-weight:700;font-size:13px;letter-spacing:.04em;
+    text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}#mi-cockpit .topbar-right{display:flex;align-items:center;gap:6px;flex:none;}#mi-cockpit .icon-btn{
+    width:34px;height:34px;border-radius:var(--radius-sm);border:1px solid transparent;background:transparent;
+    color:var(--text-dim);display:flex;align-items:center;justify-content:center;cursor:pointer;
+    transition:background-color .12s ease, color .12s ease, border-color .12s ease;position:relative;
+  }#mi-cockpit .icon-btn:hover{background:var(--surface-2);color:var(--text);border-color:var(--border-strong);}#mi-cockpit .icon-btn.active{color:var(--gold);border-color:var(--gold-dim);background:var(--gold-wash);}#mi-cockpit .icon-btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}#mi-cockpit .shell{flex:1;display:flex;min-height:0;}#mi-cockpit .rail{
+    width:var(--rail-w);flex:none;border-right:1px solid var(--border);background:var(--bg-elevated);
+    display:flex;flex-direction:column;padding:14px 10px;gap:2px;transition:width .16s ease;overflow-y:auto;
+  }#mi-cockpit .rail.collapsed{width:var(--rail-w-collapsed);}#mi-cockpit .rail-group-label{
+    font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-faint);
+    padding:12px 10px 6px;
+  }#mi-cockpit .rail.collapsed .rail-group-label, #mi-cockpit .rail.collapsed .nav-label, #mi-cockpit .rail.collapsed .nav-tag{display:none;}#mi-cockpit .nav-item{
+    display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:var(--radius-sm);
+    color:var(--text-dim);cursor:pointer;border:1px solid transparent;background:none;width:100%;text-align:left;
+    font-family:var(--font-body);font-weight:600;font-size:12.5px;letter-spacing:.02em;
+    transition:background-color .12s ease,color .12s ease,border-color .12s ease;
+  }#mi-cockpit .nav-item:hover{background:var(--surface-2);color:var(--text);}#mi-cockpit .nav-item.active{background:var(--gold-wash);color:var(--gold-bright);border-color:var(--gold-dim);}#mi-cockpit .nav-item .icon{color:inherit;}#mi-cockpit .nav-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}#mi-cockpit .nav-tag{font-size:8.5px;font-weight:700;letter-spacing:.06em;color:var(--text-faint);
+    border:1px solid var(--border-strong);border-radius:4px;padding:1px 4px;flex:none;}#mi-cockpit .rail-foot{margin-top:auto;padding:10px 8px 4px;}#mi-cockpit .proto-badge{
+    display:flex;flex-direction:column;gap:3px;padding:9px 10px;border-radius:var(--radius-sm);
+    border:1px dashed var(--border-strong);
+  }#mi-cockpit .proto-badge b{font-size:9.5px;letter-spacing:.09em;color:var(--gold-bright);}#mi-cockpit .proto-badge span{font-size:9px;color:var(--text-faint);letter-spacing:.03em;}#mi-cockpit .rail.collapsed .proto-badge span, #mi-cockpit .rail.collapsed .proto-badge b{display:none;}#mi-cockpit main{flex:1;min-width:0;overflow-y:auto;padding:22px 26px 60px;}#mi-cockpit .view{display:none;}#mi-cockpit .view.active{display:block;animation:fade .14s ease;}
+  @keyframes fade{from{opacity:0;}to{opacity:1;}}#mi-cockpit .view-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:18px;flex-wrap:wrap;}#mi-cockpit .view-title{font-size:23px;}#mi-cockpit .view-desc{color:var(--text-dim);font-size:12.5px;max-width:62ch;margin-top:4px;}#mi-cockpit .eyebrow{font-family:var(--font-body);font-weight:700;font-size:10.5px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--gold-bright);margin-bottom:6px;display:block;}#mi-cockpit /* ---------- Home / Experiences ---------- */
+  .hero{text-align:center;padding:34px 10px 26px;}#mi-cockpit .hero h1{font-size:44px;letter-spacing:.01em;}#mi-cockpit .hero p{color:var(--text-dim);font-size:13.5px;letter-spacing:.02em;margin-top:8px;text-transform:uppercase;font-weight:600;}#mi-cockpit .exp-grid{
+    display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;max-width:1080px;margin:0 auto;
+  }
+  @media(max-width:1040px){#mi-cockpit .exp-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}#mi-cockpit .exp-card{
+    border-radius:var(--radius);border:1px solid var(--border);background:var(--surface);
+    padding:20px 18px;display:flex;flex-direction:column;gap:10px;min-height:186px;position:relative;overflow:hidden;
+  }#mi-cockpit .exp-card.enabled{border-color:var(--gold-dim);background:linear-gradient(160deg,var(--surface-2),var(--surface) 60%);}#mi-cockpit .exp-card.enabled::before{
+    content:"";position:absolute;inset:-40% -20% auto auto;width:200px;height:200px;
+    background:radial-gradient(circle,var(--gold-wash),transparent 70%);pointer-events:none;
+  }#mi-cockpit .exp-card.soon{opacity:.55;}#mi-cockpit .exp-card h3{font-size:19px;letter-spacing:.01em;line-height:1.05;}#mi-cockpit .exp-card .exp-tag{margin-bottom:2px;}#mi-cockpit .exp-card p{color:var(--text-dim);font-size:12px;margin:0;flex:1;}#mi-cockpit .exp-card .exp-foot{display:flex;align-items:center;justify-content:space-between;margin-top:6px;}#mi-cockpit /* ---------- Event Mode status strip ---------- */
+  .status-strip{
+    display:flex;align-items:center;gap:0;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--radius);margin-bottom:16px;overflow:hidden;
+  }#mi-cockpit .status-cell{padding:10px 16px;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:3px;min-width:96px;}#mi-cockpit .status-cell:last-child{border-right:none;}#mi-cockpit .status-cell .v{font-family:var(--font-mono);font-weight:600;font-size:14px;}#mi-cockpit .status-cell select{
+    background:none;border:none;color:var(--text);font-family:var(--font-mono);font-weight:600;font-size:14px;
+    padding:0;cursor:pointer;
+  }#mi-cockpit .status-cell select:focus-visible{outline:2px solid var(--gold);}#mi-cockpit .culture-toggle{display:flex;gap:4px;padding:10px 16px;}#mi-cockpit .culture-btn{
+    padding:6px 11px;border-radius:6px;border:1px solid var(--border-strong);background:var(--surface-2);
+    color:var(--text-dim);font-size:10.5px;font-weight:700;letter-spacing:.06em;cursor:pointer;
+  }#mi-cockpit .culture-btn.active{background:var(--gold);border-color:var(--gold);color:#151107;}#mi-cockpit .energy-cell{flex:1;min-width:160px;padding:10px 16px;}#mi-cockpit .energy-track{height:8px;border-radius:4px;background:var(--surface-3);overflow:hidden;margin-top:6px;}#mi-cockpit .energy-fill{height:100%;background:linear-gradient(90deg,var(--gold-dim),var(--gold));border-radius:4px;transition:width .2s ease;}#mi-cockpit /* ---------- Event Mode 3 columns ---------- */
+  .event-grid{display:grid;grid-template-columns:236px minmax(0,1fr) 268px;gap:14px;align-items:start;}
+  @media(max-width:1180px){#mi-cockpit .event-grid{grid-template-columns:1fr;}}#mi-cockpit .gen-list{display:flex;flex-direction:column;gap:5px;padding:10px;}#mi-cockpit .gen-item{
+    display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--radius-sm);cursor:pointer;
+    border:1px solid transparent;background:none;width:100%;text-align:left;color:var(--text-dim);
+  }#mi-cockpit .gen-item:hover{background:var(--surface-2);}#mi-cockpit .gen-item .gdot{width:8px;height:8px;border-radius:50%;background:var(--border-strong);flex:none;}#mi-cockpit .gen-item .gname{font-family:var(--font-display);font-weight:700;font-size:14px;color:inherit;flex:1;}#mi-cockpit .gen-item .grange{font-size:9.5px;color:var(--text-faint);font-family:var(--font-mono);}#mi-cockpit .gen-item.active{background:var(--gold-wash);border-color:var(--gold-dim);color:var(--gold-bright);}#mi-cockpit .gen-item.active .gdot{background:var(--gold);box-shadow:0 0 0 3px var(--gold-wash);}#mi-cockpit .gen-item.next .gname::after{content:"→ next";font-size:9px;color:var(--text-faint);margin-left:8px;font-family:var(--font-body);text-transform:uppercase;letter-spacing:.05em;}#mi-cockpit .gen-item.prev .gname::after{content:"prev";font-size:9px;color:var(--text-faint);margin-left:8px;font-family:var(--font-body);text-transform:uppercase;letter-spacing:.05em;}#mi-cockpit .now-playing{padding:20px;display:flex;flex-direction:column;gap:16px;}#mi-cockpit .np-top{display:flex;gap:16px;}#mi-cockpit .artwork{
+    width:112px;height:112px;border-radius:10px;flex:none;
+    background:linear-gradient(135deg,var(--surface-3),var(--surface));border:1px solid var(--border-strong);
+    display:flex;align-items:center;justify-content:center;color:var(--gold-dim);position:relative;overflow:hidden;
+  }#mi-cockpit .artwork::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 30% 20%,var(--gold-wash),transparent 60%);}#mi-cockpit .np-info{min-width:0;flex:1;display:flex;flex-direction:column;justify-content:center;gap:3px;}#mi-cockpit .np-title{font-family:var(--font-display);font-weight:800;font-size:22px;line-height:1.08;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}#mi-cockpit .np-artist{color:var(--text-dim);font-size:13.5px;font-weight:500;}#mi-cockpit .np-meta{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;}#mi-cockpit .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border-radius:var(--radius-sm);overflow:hidden;}#mi-cockpit .stat-cell{background:var(--surface-2);padding:10px 12px;display:flex;flex-direction:column;gap:3px;}#mi-cockpit .stat-cell .v{font-family:var(--font-mono);font-weight:700;font-size:17px;}#mi-cockpit .stat-cell.hi .v{color:var(--gold-bright);}#mi-cockpit .response-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}#mi-cockpit .response-btns{display:flex;gap:6px;}#mi-cockpit .rbtn{
+    width:44px;height:38px;border-radius:var(--radius-sm);border:1px solid var(--border-strong);background:var(--surface-2);
+    color:var(--text-dim);font-family:var(--font-mono);font-weight:700;font-size:13px;cursor:pointer;
+  }#mi-cockpit .rbtn:hover{border-color:var(--text-faint);}#mi-cockpit .rbtn[data-v="-2"]:hover, #mi-cockpit .rbtn[data-v="-1"]:hover{color:var(--critical);border-color:var(--critical);}#mi-cockpit .rbtn[data-v="0"]:hover{color:var(--text);}#mi-cockpit .rbtn[data-v="1"]:hover, #mi-cockpit .rbtn[data-v="2"]:hover{color:var(--good);border-color:var(--good);}#mi-cockpit .rbtn.picked{background:var(--gold);border-color:var(--gold);color:#151107;}#mi-cockpit .reaction-meter{display:flex;align-items:center;gap:8px;flex:1;min-width:150px;}#mi-cockpit .reaction-track{flex:1;height:20px;border-radius:5px;background:var(--surface-3);display:flex;align-items:center;gap:2px;padding:3px;}#mi-cockpit .reaction-bar{flex:1;height:100%;border-radius:3px;background:var(--border-strong);}#mi-cockpit .reaction-bar.on{background:var(--gold);}#mi-cockpit .fi-grid{display:flex;flex-direction:column;gap:1px;background:var(--border);border-radius:var(--radius-sm);overflow:hidden;}#mi-cockpit .fi-row{background:var(--surface-2);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;}#mi-cockpit .fi-row .k{font-size:10.5px;color:var(--text-dim);letter-spacing:.05em;text-transform:uppercase;font-weight:600;}#mi-cockpit .fi-row .v{font-family:var(--font-mono);font-weight:700;font-size:13px;}#mi-cockpit .nme-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px;}
+  @media(max-width:980px){#mi-cockpit .nme-grid{grid-template-columns:1fr;}}#mi-cockpit .move-card{padding:15px;display:flex;flex-direction:column;gap:10px;}#mi-cockpit .move-card .mc-head{display:flex;align-items:center;justify-content:space-between;}#mi-cockpit .move-card .mc-kind{font-family:var(--font-display);font-weight:800;font-size:13.5px;letter-spacing:.03em;}#mi-cockpit .move-card.safe{border-color:rgba(90,163,216,.3);}#mi-cockpit .move-card.up{border-color:rgba(226,165,63,.3);}#mi-cockpit .move-card.bridge{border-color:var(--gold-dim);}#mi-cockpit .move-track{font-weight:700;font-size:14.5px;}#mi-cockpit .move-artist{color:var(--text-dim);font-size:12px;}#mi-cockpit .move-meta{display:flex;gap:6px;flex-wrap:wrap;font-family:var(--font-mono);font-size:10.5px;color:var(--text-dim);}#mi-cockpit .confidence-row{display:flex;align-items:center;gap:8px;}#mi-cockpit .conf-track{flex:1;height:5px;border-radius:3px;background:var(--surface-3);overflow:hidden;}#mi-cockpit .conf-fill{height:100%;border-radius:3px;background:var(--gold);}#mi-cockpit .why-toggle{background:none;border:none;color:var(--text-faint);font-size:10.5px;text-decoration:underline;
+    cursor:pointer;padding:0;text-align:left;font-family:var(--font-body);}#mi-cockpit .why-box{font-size:11.5px;color:var(--text-dim);background:var(--surface-2);border:1px solid var(--border);
+    border-radius:6px;padding:9px 10px;display:none;line-height:1.5;}#mi-cockpit .why-box.open{display:block;}#mi-cockpit .move-empty{color:var(--text-faint);font-size:12px;padding:10px 0;}#mi-cockpit .journey-row{display:flex;align-items:center;gap:0;padding:22px 16px;overflow-x:auto;}#mi-cockpit .journey-node{display:flex;flex-direction:column;align-items:center;gap:8px;flex:none;width:104px;position:relative;}#mi-cockpit .journey-dot{width:15px;height:15px;border-radius:50%;background:var(--surface-3);border:2px solid var(--border-strong);z-index:1;}#mi-cockpit .journey-node.done .journey-dot{background:var(--gold-dim);border-color:var(--gold-dim);}#mi-cockpit .journey-node.active .journey-dot{background:var(--gold);border-color:var(--gold-bright);box-shadow:0 0 0 5px var(--gold-wash);}#mi-cockpit .journey-label{font-family:var(--font-display);font-weight:700;font-size:12.5px;color:var(--text-dim);}#mi-cockpit .journey-node.active .journey-label{color:var(--gold-bright);}#mi-cockpit .journey-here{font-size:8.5px;color:var(--gold-bright);letter-spacing:.06em;text-transform:uppercase;position:absolute;top:-16px;}#mi-cockpit .journey-line{flex:1;height:2px;background:var(--border-strong);margin-top:-31px;min-width:20px;}#mi-cockpit .journey-line.done{background:var(--gold-dim);}#mi-cockpit .journey-line.bridge{background:repeating-linear-gradient(90deg,var(--gold) 0 6px,transparent 6px 11px);}#mi-cockpit .timeline-wrap{padding:16px;}#mi-cockpit .timeline-svg{width:100%;height:150px;display:block;}#mi-cockpit .timeline-legend{display:flex;justify-content:space-between;font-size:9px;color:var(--text-faint);
+    letter-spacing:.04em;text-transform:uppercase;margin-top:6px;padding:0 4px;font-family:var(--font-mono);}#mi-cockpit .footer-strip{display:flex;gap:0;margin-top:16px;background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--radius);overflow-x:auto;}#mi-cockpit .footer-cell{padding:10px 16px;border-right:1px solid var(--border);white-space:nowrap;font-size:11px;color:var(--text-dim);
+    display:flex;align-items:center;gap:6px;}#mi-cockpit .footer-cell:last-child{border-right:none;}#mi-cockpit .footer-cell b{color:var(--text);font-family:var(--font-mono);}#mi-cockpit /* ---------- Library ---------- */
+  .filter-bar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;align-items:center;}#mi-cockpit .filter-bar select, #mi-cockpit .filter-bar input[type=text]{
+    background:var(--surface-2);border:1px solid var(--border-strong);color:var(--text);
+    padding:8px 10px;border-radius:6px;font-family:var(--font-body);font-size:12px;
+  }#mi-cockpit .filter-bar input[type=text]{min-width:190px;}#mi-cockpit .filter-bar select:focus-visible, #mi-cockpit .filter-bar input:focus-visible{outline:2px solid var(--gold);}#mi-cockpit table{border-collapse:collapse;width:100%;min-width:920px;}#mi-cockpit thead th{
+    text-align:left;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);
+    font-weight:700;padding:8px 12px;border-bottom:1px solid var(--border-strong);white-space:nowrap;position:sticky;top:0;background:var(--bg);
+  }#mi-cockpit tbody td{padding:9px 12px;border-bottom:1px solid var(--border);font-size:12.5px;white-space:nowrap;}#mi-cockpit tbody tr{cursor:pointer;}#mi-cockpit tbody tr:hover td{background:var(--surface-2);}#mi-cockpit tbody tr.played td{color:var(--text-faint);}#mi-cockpit .track-name{color:var(--text);font-weight:600;}#mi-cockpit .result-count{color:var(--text-faint);font-size:11px;margin-bottom:10px;}#mi-cockpit /* ---------- Generation map ---------- */
+  .genmap-row{display:flex;align-items:center;padding:30px 6px;overflow-x:auto;gap:0;}#mi-cockpit .genmap-node{display:flex;flex-direction:column;align-items:center;gap:10px;flex:none;width:118px;position:relative;cursor:pointer;
+    background:none;border:none;color:inherit;font-family:inherit;}#mi-cockpit .genmap-circle{width:52px;height:52px;border-radius:50%;background:var(--surface-2);border:2px solid var(--border-strong);
+    display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:800;font-size:15px;color:var(--text-dim);}#mi-cockpit .genmap-node.active .genmap-circle{background:var(--gold-wash);border-color:var(--gold);color:var(--gold-bright);}#mi-cockpit .genmap-node.from .genmap-circle{border-color:var(--info);box-shadow:0 0 0 3px rgba(90,163,216,.18);}#mi-cockpit .genmap-node.to .genmap-circle{border-color:var(--good);box-shadow:0 0 0 3px rgba(56,202,160,.18);}#mi-cockpit .genmap-label{font-size:11.5px;font-weight:700;color:var(--text-dim);}#mi-cockpit .genmap-node.active .genmap-label{color:var(--gold-bright);}#mi-cockpit .genmap-line{flex:1;height:2px;background:var(--border-strong);min-width:16px;margin-top:-30px;}#mi-cockpit .ft-row{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;}#mi-cockpit .ft-field{display:flex;flex-direction:column;gap:5px;}#mi-cockpit .ft-field select{background:var(--surface-2);border:1px solid var(--border-strong);color:var(--text);padding:9px 12px;
+    border-radius:6px;font-family:var(--font-mono);font-size:12.5px;min-width:150px;}#mi-cockpit .bridge-list{display:flex;flex-direction:column;gap:8px;}#mi-cockpit .bridge-item{display:flex;align-items:center;gap:12px;padding:12px 14px;}#mi-cockpit .bridge-item .bi-main{flex:1;min-width:0;}#mi-cockpit .bridge-item .bi-title{font-weight:700;font-size:13px;}#mi-cockpit .bridge-item .bi-sub{color:var(--text-dim);font-size:11.5px;}#mi-cockpit .chip-row{display:flex;gap:5px;flex-wrap:wrap;}#mi-cockpit .chip{font-size:9.5px;font-weight:700;letter-spacing:.04em;padding:3px 7px;border-radius:5px;
+    background:var(--surface-3);color:var(--text-dim);border:1px solid var(--border-strong);}#mi-cockpit /* ---------- Bridge engine ---------- */
+  .route-tabs{display:flex;gap:8px;margin:16px 0;flex-wrap:wrap;}#mi-cockpit .route-tab{padding:9px 14px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface-2);
+    color:var(--text-dim);font-weight:700;font-size:12px;cursor:pointer;}#mi-cockpit .route-tab.active{background:var(--gold-wash);border-color:var(--gold);color:var(--gold-bright);}#mi-cockpit .route-chain{display:flex;align-items:center;gap:0;flex-wrap:wrap;padding:20px 4px;}#mi-cockpit .chain-node{padding:14px 16px;min-width:150px;}#mi-cockpit .chain-arrow{width:34px;text-align:center;color:var(--text-faint);flex:none;}#mi-cockpit /* ---------- Block builder ---------- */
+  .bb-form{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding:16px;}
+  @media(max-width:900px){#mi-cockpit .bb-form{grid-template-columns:repeat(2,minmax(0,1fr));}}#mi-cockpit .field{display:flex;flex-direction:column;gap:5px;}#mi-cockpit .field label{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-faint);}#mi-cockpit .field input, #mi-cockpit .field select{background:var(--surface-2);border:1px solid var(--border-strong);color:var(--text);
+    padding:9px 11px;border-radius:6px;font-family:var(--font-body);font-size:12.5px;}#mi-cockpit .bb-lanes{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-top:14px;}
+  @media(max-width:1100px){#mi-cockpit .bb-lanes{grid-template-columns:repeat(2,minmax(0,1fr));}}#mi-cockpit .lane{display:flex;flex-direction:column;gap:8px;}#mi-cockpit .lane-head{display:flex;align-items:center;justify-content:space-between;}#mi-cockpit .lane-title{font-family:var(--font-display);font-weight:700;font-size:12px;letter-spacing:.04em;text-transform:uppercase;}#mi-cockpit .lane-body{min-height:64px;border:1px dashed var(--border-strong);border-radius:8px;padding:6px;display:flex;flex-direction:column;gap:6px;}#mi-cockpit .lane-empty{font-size:10.5px;color:var(--text-faint);text-align:center;padding:14px 4px;}#mi-cockpit .lane-track{background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:7px 8px;display:flex;flex-direction:column;gap:4px;}#mi-cockpit .lane-track .lt-title{font-size:11.5px;font-weight:700;}#mi-cockpit .lane-track .lt-meta{font-size:9.5px;color:var(--text-faint);font-family:var(--font-mono);}#mi-cockpit .lane-track .lt-actions{display:flex;gap:4px;margin-top:2px;}#mi-cockpit .lane-track .lt-actions button{flex:1;font-size:9.5px;padding:3px 4px;}#mi-cockpit .saved-blocks{display:flex;flex-direction:column;gap:8px;margin-top:10px;}#mi-cockpit .saved-block{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;gap:10px;}#mi-cockpit /* ---------- History ---------- */
+  .hist-row{display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid var(--border);}#mi-cockpit .hist-row:last-child{border-bottom:none;}#mi-cockpit .hist-time{font-family:var(--font-mono);font-size:11.5px;color:var(--text-faint);width:56px;flex:none;}#mi-cockpit .hist-icon{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex:none;}#mi-cockpit .hist-main{flex:1;min-width:0;}#mi-cockpit .hist-title{font-size:12.5px;font-weight:600;}#mi-cockpit .hist-sub{font-size:11px;color:var(--text-dim);}#mi-cockpit /* ---------- Learning ---------- */
+  .learn-grid{display:grid;grid-template-columns:280px minmax(0,1fr);gap:16px;align-items:start;}
+  @media(max-width:900px){#mi-cockpit .learn-grid{grid-template-columns:1fr;}}#mi-cockpit .learn-track-btn{display:flex;flex-direction:column;gap:2px;width:100%;text-align:left;padding:9px 11px;border-radius:8px;
+    border:1px solid transparent;background:none;color:var(--text-dim);cursor:pointer;}#mi-cockpit .learn-track-btn:hover{background:var(--surface-2);}#mi-cockpit .learn-track-btn.active{background:var(--gold-wash);border-color:var(--gold-dim);color:var(--gold-bright);}#mi-cockpit .reason-list{display:flex;flex-direction:column;gap:10px;}#mi-cockpit .reason-item{display:flex;gap:12px;padding:13px 14px;}#mi-cockpit .reason-icon{width:30px;height:30px;border-radius:8px;background:var(--gold-wash);color:var(--gold-bright);
+    display:flex;align-items:center;justify-content:center;flex:none;}#mi-cockpit .reason-item h4{font-family:var(--font-body);font-weight:700;font-size:12.5px;margin-bottom:3px;}#mi-cockpit .reason-item p{margin:0;color:var(--text-dim);font-size:12px;line-height:1.5;}#mi-cockpit /* ---------- Config ---------- */
+  .cfg-row{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--border);gap:16px;}#mi-cockpit .cfg-row:last-child{border-bottom:none;}#mi-cockpit .cfg-row .k{font-weight:600;font-size:12.5px;}#mi-cockpit .cfg-row .d{color:var(--text-dim);font-size:11px;margin-top:2px;}#mi-cockpit .switch{width:40px;height:22px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border-strong);
+    position:relative;cursor:pointer;flex:none;}#mi-cockpit .switch.on{background:var(--gold);border-color:var(--gold);}#mi-cockpit .switch::after{content:"";position:absolute;top:1px;left:1px;width:18px;height:18px;border-radius:50%;background:#0b0b0d;transition:left .12s ease;}#mi-cockpit .switch.on::after{left:19px;background:#151107;}#mi-cockpit .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:56px 20px;
+    color:var(--text-faint);gap:8px;text-align:center;}#mi-cockpit .empty-state .icon-lg{width:30px;height:30px;color:var(--text-faint);}#mi-cockpit .grid-2{display:grid;grid-template-columns:1.4fr 1fr;gap:14px;align-items:start;}
+  @media(max-width:1000px){#mi-cockpit .grid-2{grid-template-columns:1fr;}}#mi-cockpit .toast{
+    position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--surface-3);
+    border:1px solid var(--gold-dim);color:var(--text);padding:10px 18px;border-radius:999px;font-size:12.5px;
+    font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:opacity .18s ease, transform .18s ease;z-index:100;
+  }#mi-cockpit .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}#mi-cockpit ::-webkit-scrollbar{width:9px;height:9px;}#mi-cockpit ::-webkit-scrollbar-track{background:transparent;}#mi-cockpit ::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:5px;}#mi-cockpit ::-webkit-scrollbar-thumb:hover{background:var(--text-faint);}
+
+      /* ---- PRO/ELITE access gate (same pattern as courses.html #exam-gate) ---- */
+      .mi-gate-wrap{max-width:640px;margin:64px auto;padding:0 20px;}
+      .mi-gate-card{
+        background:rgba(197,160,89,0.06); border:1px solid rgba(197,160,89,0.3);
+        border-radius:24px; padding:50px 40px; text-align:center;
+      }
+      .mi-gate-card .mi-gate-icon{font-size:48px;margin-bottom:20px;}
+      .mi-gate-card h2{
+        font-family:'Playfair Display',Georgia,serif; font-size:24px; font-weight:800;
+        margin:0 0 12px; color:#fff;
+      }
+      .mi-gate-card p{color:rgba(255,255,255,0.65); font-size:15px; max-width:440px; margin:0 auto 28px; line-height:1.7;}
+      .mi-gate-card p strong{color:var(--gold);}
+      .mi-gate-pills{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;}
+      .mi-gate-pill{
+        display:inline-flex; align-items:center; gap:8px; padding:14px 28px; border-radius:50px;
+        text-decoration:none; font-weight:800; font-size:14px;
+      }
+      .mi-gate-pill.gold{background:linear-gradient(135deg,var(--gold),#e8b84b); color:#000;}
+      .mi-gate-pill.ghost{border:1px solid rgba(255,255,255,0.2); color:#fff; font-weight:600;}
+      #mi-cockpit{min-height:70vh;}
+    </style>
+</head>
+
+<body class="notranslate mdj-academia-hub mdj-artist-academy">
+    <!-- MDJ canonical site header — verbatim from academia.html #mainHeader -->
+    <header class="header mdj-header-unified" id="mainHeader">
+        <div class="header-top">
+            <div class="container">
+                <div class="brand">
+                    <img src="./assets/branding/logo-transparent.png" alt="Miami DJ Beat Logo" class="logo-img-eagle">
+                    <div class="brand-letters-wrapper">
+                        <img src="./assets/branding/logo-transparent Letras.png" alt="Miami DJ Beat Letters"
+                            class="brand-letters-img">
+                    </div>
+                </div>
+
+                <div class="header-actions">
+                    <a href="./login.html?plan=pro" class="btn-pill gold" id="header-get-pro-btn"
+                        data-i18n="btn-get-pro">Get PRO</a>
+        <a href="./login.html?signup=free" class="btn-pill" id="header-subscribe-free-btn" data-i18n="btn-subscribe-free">Suscripción gratis</a>
+                    <span id="header-djpro-badge" class="header-djpro-badge" style="display: none;"
+                        aria-label="DJPRO">DJPRO</span>
+                    <div class="mdj-header-r1-auth-cluster">
+
+                      <div class="lang-switcher">
+                        <span class="lang-btn" data-lang="es">ES</span>
+                        <span class="lang-pipe">|</span>
+                        <span class="lang-btn active" data-lang="en">EN</span>
+                    </div>
+
+                      <a href="./login.html" id="header-login-btn" class="btn-pill gold" data-i18n="btn-login">Log in</a>
+
+                      <div class="account session-pending" id="header-auth-zone" style="display: none;">
+                            <a class="account-btn" id="accountBtn" href="./dj-profile.html" title="Mi perfil" aria-label="Mi perfil">
+              <img class="avatar" src="./assets/dj-avatar-placeholder.png" alt="" />
+            </a>
+</div>
+
+                    </div>
+
+                    <div class="header-avatar-cart-row" aria-label="Account and cart">
+<a href="./shop.html" id="header-cart-link" class="header-cart-btn" title="Cart"
+                            aria-label="Shopping cart">
+                            <span aria-hidden="true">🛒</span>
+                            <span id="header-cart-count" class="header-cart-count" hidden></span>
+                        </a>
+                    </div>
+                    <div class="header-search-wrap">
+                        <input type="search" id="header-smart-search" class="header-smart-search"
+                            placeholder="Search DJs, gear, services…" autocomplete="off" enterkeyhint="search" />
+                    </div>
+                </div>
+
+                <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+
+                <div class="mobile-overlay" id="mobileMenu">
+                    <nav class="mobile-nav">
+                        <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Home</a>
+                        <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Services</a>
+                        <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues">Events</a>
+                        <a href="./shop.html" style="color:#c5a059;font-weight:800;" data-mdj-nav="shop">Shop</a>
+                        <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
+                        <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
+                        <a href="./contact.html" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
+                        <a href="./login.html?signup=free" id="header-subscribe-free-mobile" data-i18n="btn-subscribe-free"
+                          style="color:rgba(255,255,255,0.88); font-weight:800;">Suscripción gratis</a>
+                        <a href="./login.html" id="header-login-btn-mobile" data-i18n="btn-login"
+                            style="color:var(--gold); font-weight:800;">Entrar</a>
+                        <a href="./dj-profile.html" id="nav-my-profile-mobile"
+                            style="display:none; color:var(--gold); font-weight:900;" data-i18n="menu-account">MY
+                            PROFILE</a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+        <div class="header-nav">
+            <div class="container">
+                <nav class="nav top-nav mdj-mainnav-flex" id="mainNav">
+    <!-- EL HTML TRAE LA BARRA PUBLICA A PROPOSITO. Quien tenga sesion recibe la
+         de su estacion en el prevuelo de aqui abajo, que corre ANTES del primer
+         pintado. Se escribe la publica y no la de estacion porque asi se falla
+         del lado seguro: si el prevuelo fallara, un desconocido veria la barra
+         que le toca y como mucho un artista veria el relevo tarde. -->
+
+    <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home" data-mdj-slot="1">Inicio</a>
+    <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services" data-mdj-slot="2">Servicios</a>
+    <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues" data-mdj-slot="3">Eventos</a>
+    <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-i18n="nav-shop" data-mdj-nav="shop" data-mdj-slot="4">Shop</a>
+    <a href="./client-account.html" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" data-mdj-slot="5" aria-hidden="true" tabindex="-1">⚙️ CONFIG</a>
+    <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs" data-mdj-slot="6">Trabajos</a>
+    <a href="./contact.html" data-i18n="nav-contact" data-mdj-nav="contact" data-mdj-slot="7">Contacto</a>
+    <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="./client-portal.html" data-mdj-nav="mi-portal" data-mdj-slot="8" aria-hidden="true" tabindex="-1">MI PERFIL</a>
+    <a href="./road-map.html" id="mainNav-roadmap-link" class="mdj-roadmap-mainnav" data-i18n="nav-roadmap" data-mdj-nav="roadmap" data-mdj-slot="9">MRM IA</a>
+  </nav>
+  <script>/* Decide la barra antes de pintarla. Ver mdj-estacion-preflight.js */
+    try { window.mdjPrevueloEstacion && window.mdjPrevueloEstacion(); } catch (e) {}
+  </script>
+            </div>
+        </div>
+    </header>
+
+    <div class="mi-page-wrap">
+
+    <div class="mi-gate-wrap" id="mi-gate">
+      <div class="mi-gate-card">
+        <div class="mi-gate-icon">🔒</div>
+        <h2>MDJB Music Intelligence — Acceso Plan PRO</h2>
+        <p>El cockpit de inteligencia musical (Event Mode, Bridge Engine, Live Listening y Discovery) está
+          disponible únicamente para DJs con <strong>Plan PRO o ELITE</strong>. Inicia sesión con tu cuenta PRO
+          para entrar.</p>
+        <div class="mi-gate-pills">
+          <a href="./login.html" class="mi-gate-pill gold">🔑 Iniciar Sesión PRO</a>
+          <a href="./login.html?plan=pro" class="mi-gate-pill ghost">⭐ Obtener PRO</a>
+        </div>
+      </div>
+    </div>
+      <div id="mi-cockpit" style="display:none;">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-text">
+        <span class="b-name">MDJB MUSIC INTELLIGENCE</span>
+        <span class="b-sub">DJ Programming &amp; Floor Intelligence</span>
+      </div>
+    </div>
+    <div class="topbar-center">
+      <div class="experience-pill"><span class="dot"></span><span id="expPillLabel">ONE HIT WONDER EXPERIENCE</span></div>
+      <span class="badge" id="modeBadge" style="margin-left:8px;align-self:center;">EXPERIENCED</span>
+    </div>
+    <div class="topbar-right">
+      <button class="icon-btn" id="btnDjMode" title="DJ Mode — switch Experienced / Guided reasoning" aria-label="Toggle Experienced or Guided DJ mode"></button>
+      <button class="icon-btn" id="btnEventStatus" title="Event status" aria-label="Event status"></button>
+      <button class="icon-btn" id="btnSettings" title="Settings" aria-label="Open settings"></button>
+      <button class="icon-btn" id="btnFocus" title="Full screen booth focus" aria-label="Toggle full screen focus"></button>
+    </div>
+  </header>
+
+  <div class="shell">
+    <nav class="rail" id="rail">
+      <div class="rail-group-label">Cockpit</div>
+      <button class="nav-item" data-view="home"><span class="icon" data-icon="home"></span><span class="nav-label">Home</span></button>
+      <button class="nav-item" data-view="experiences"><span class="icon" data-icon="layers"></span><span class="nav-label">Experiences</span></button>
+      <button class="nav-item" data-view="event"><span class="icon" data-icon="disc"></span><span class="nav-label">Event Mode</span></button>
+      <div class="rail-group-label">Live Intelligence</div>
+      <button class="nav-item" data-view="live"><span class="icon" data-icon="mic"></span><span class="nav-label">Live Listening</span></button>
+      <button class="nav-item" data-view="discover"><span class="icon" data-icon="search"></span><span class="nav-label">Discover</span></button>
+      <div class="rail-group-label">Programming</div>
+      <button class="nav-item" data-view="library"><span class="icon" data-icon="library"></span><span class="nav-label">Library</span></button>
+      <button class="nav-item" data-view="genmap"><span class="icon" data-icon="map"></span><span class="nav-label">Generation Map</span></button>
+      <button class="nav-item" data-view="blocks"><span class="icon" data-icon="blocks"></span><span class="nav-label">Block Builder</span></button>
+      <button class="nav-item" data-view="bridge"><span class="icon" data-icon="bridge"></span><span class="nav-label">Bridge Engine</span></button>
+      <div class="rail-group-label">Record</div>
+      <button class="nav-item" data-view="history"><span class="icon" data-icon="history"></span><span class="nav-label">History</span></button>
+      <button class="nav-item" data-view="learning"><span class="icon" data-icon="book"></span><span class="nav-label">Learning</span></button>
+      <button class="nav-item" data-view="config"><span class="icon" data-icon="gear"></span><span class="nav-label">Config</span></button>
+      <div class="rail-foot">
+        <div class="proto-badge">
+          <b>PROTOTYPE · NON-PRODUCTION</b>
+          <span>All tracks &amp; readings are DEMO data</span>
+        </div>
+      </div>
+    </nav>
+
+    <main id="main">
+      <section class="view" id="view-home"></section>
+      <section class="view" id="view-experiences"></section>
+      <section class="view" id="view-event"></section>
+      <section class="view" id="view-live"></section>
+      <section class="view" id="view-discover"></section>
+      <section class="view" id="view-library"></section>
+      <section class="view" id="view-genmap"></section>
+      <section class="view" id="view-blocks"></section>
+      <section class="view" id="view-bridge"></section>
+      <section class="view" id="view-history"></section>
+      <section class="view" id="view-learning"></section>
+      <section class="view" id="view-config"></section>
+    </main>
+  </div>
+</div>
+        <div class="toast" id="toast"></div>
+      </div>
+    </div>
+
+
+    <script src="./translations.js?v=20260820-unificacion"></script>
+    <script src="./i18n.js?v=20260330"></script>
+    <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
+    <script src="./mdj-identity.js?v=20260617-buyer-artist-fix-1"></script>
+    <script src="./mdj-shared-header.js?v=20260822-guarda-canonica"></script>
+    <script src="./js/mdj-profile-owner-link.js?v=20260516-perf-ab-1"></script>
+    <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
+    <script src="./mdj-mainnav-infinite.js?v=20260818-nav-canonico"></script>
+    <script src="./mdj-owner-tabs-marquee.js?v=20260818-nav-canonico"></script>
+    <script src="./mdj-social-bar.js?v=20260819-social-contact-only"></script>
+    <script defer src="./js/mdj-cart-pill.js?v=20260616-pill-5"></script>
+
+    <script>
+    (function(){
+      async function mdjMiCheckAccess(){
+        try {
+          var sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+          if (!sb) return;
+          var sess = await sb.auth.getSession();
+          var session = sess && sess.data ? sess.data.session : null;
+          if (!session) return; // gate stays visible
+
+          var res = await sb.from('dj_profiles').select('plan, role').eq('user_id', session.user.id).single();
+          var p = res && res.data;
+          if (!p) return;
+
+          /* Owner y sus variantes de rol (admin/manager, ver account-settings.html:6887
+             y mdj-shared-header.js ~2599) son la única cuenta de desbloqueo total —
+             owner ya es PRO por definición, sin importar su campo .plan. */
+          var esOwnerOVariante = ['owner', 'admin', 'manager'].includes(p.role);
+          var isPro = esOwnerOVariante || ['PRO', 'ELITE'].includes(p.plan);
+          if (!isPro) return; // gate stays visible
+
+          var gate = document.getElementById('mi-gate');
+          var cockpit = document.getElementById('mi-cockpit');
+          if (gate) gate.style.display = 'none';
+          if (cockpit) cockpit.style.display = '';
+        } catch (e) {
+          console.log('MDJB Music Intelligence access check error:', e && e.message);
+        }
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', mdjMiCheckAccess);
+      } else {
+        mdjMiCheckAccess();
+      }
+    })();
+    </script>
+    <script>
+(function(){
+"use strict";
+
+/* ============================= ICONS ============================= */
+var ICONS = {
+  home:'<path d="M3 10.5 10 4l7 6.5"/><path d="M5 9v7h10V9"/><path d="M8 16v-4h4v4"/>',
+  layers:'<path d="M10 3 2.5 7 10 11l7.5-4Z"/><path d="M2.5 10.5 10 14.5l7.5-4"/><path d="M2.5 14 10 18l7.5-4"/>',
+  disc:'<circle cx="10" cy="10" r="7"/><circle cx="10" cy="10" r="2"/>',
+  library:'<path d="M3 4h5v13H3z"/><path d="M9.5 4h5v13h-5z"/><path d="M16 4.6 19.5 5.4 16.8 17.1 13.3 16.3"/>',
+  map:'<path d="M7 3.5 3 5v12l4-1.5 6 1.5 4-1.5V4l-4 1.5-6-1.5Z"/><path d="M7 3.5v12"/><path d="M13 5v12"/>',
+  blocks:'<rect x="3" y="3" width="6" height="6" rx="1"/><rect x="11" y="3" width="6" height="6" rx="1"/><rect x="3" y="11" width="6" height="6" rx="1"/><rect x="11" y="11" width="6" height="6" rx="1"/>',
+  bridge:'<path d="M2.5 13.5v-3a3 3 0 0 1 3-3h9a3 3 0 0 1 3 3v3"/><path d="M2.5 15.5v-2"/><path d="M17.5 15.5v-2"/><path d="M6.5 15.5v-2"/><path d="M13.5 15.5v-2"/>',
+  history:'<circle cx="10" cy="10.5" r="7"/><path d="M10 6.5v4l3 2"/><path d="M6 2.6 3.3 4.4"/>',
+  book:'<path d="M4 4.2c0-.7.6-1.2 1.3-1.1 1.8.2 3.6.9 4.7 1.9 1.1-1 2.9-1.7 4.7-1.9.7-.1 1.3.4 1.3 1.1v10.7c0 .6-.5 1-1.1 1.1-1.9.2-3.7.9-4.9 1.9-1.2-1-3-1.7-4.9-1.9-.6-.1-1.1-.5-1.1-1.1Z"/><path d="M10 5v11.8"/>',
+  gear:'<circle cx="10" cy="10" r="2.6"/><path d="M10 3.3v1.8M10 14.9v1.8M16.7 10h-1.8M5.1 10H3.3M14.7 5.3l-1.3 1.3M6.6 13.4l-1.3 1.3M14.7 14.7l-1.3-1.3M6.6 6.6 5.3 5.3"/>',
+  focus:'<path d="M3 7V4h3"/><path d="M17 7V4h-3"/><path d="M3 13v3h3"/><path d="M17 13v3h-3"/>',
+  status:'<circle cx="10" cy="10" r="7"/><path d="M10 6v4.5l3 1.8"/>',
+  search:'<circle cx="8.5" cy="8.5" r="5.2"/><path d="M16 16l-3.6-3.6"/>',
+  chevDown:'<path d="M5 7.5 10 12.5 15 7.5"/>',
+  close:'<path d="M5 5l10 10M15 5 5 15"/>',
+  music:'<circle cx="7" cy="15" r="2.6"/><circle cx="15.5" cy="13" r="2.6"/><path d="M9.6 15V4.5L18 3v10"/>',
+  add:'<path d="M10 4v12M4 10h12"/>',
+  play:'<path d="M6 4.5v11l9-5.5z"/>',
+  check:'<path d="M4 10.5 8 14.5 16 6"/>',
+  mic:'<rect x="7.5" y="2.8" width="5" height="9" rx="2.5"/><path d="M5 9.3a5 5 0 0 0 10 0"/><path d="M10 14.3v3"/><path d="M7 17.3h6"/>',
+  trendUp:'<path d="M4 13.5 9 8.5 12 11.5 16 6.5"/><path d="M12.5 6.5h3.5v3.5"/>',
+  trendDown:'<path d="M4 6.5 9 11.5 12 8.5 16 13.5"/><path d="M12.5 13.5h3.5v-3.5"/>',
+  trendNew:'<path d="M10 4v12M4 10h12"/>',
+  trendFlat:'<path d="M4 10h12"/>'
+};
+function iconSvg(name){
+  return '<svg class="icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+(ICONS[name]||'')+'</svg>';
+}
+document.querySelectorAll('[data-icon]').forEach(function(el){ el.innerHTML = iconSvg(el.getAttribute('data-icon')); });
+document.getElementById('btnDjMode').innerHTML = iconSvg('book');
+document.getElementById('btnEventStatus').innerHTML = iconSvg('status');
+document.getElementById('btnSettings').innerHTML = iconSvg('gear');
+document.getElementById('btnFocus').innerHTML = iconSvg('focus');
+
+/* ============================= DATA ============================= */
+var GENERATIONS = [
+  {code:'G0', label:'ROOTS', range:'50s–60s'},
+  {code:'G1', label:'70s', range:'1970–79'},
+  {code:'G2', label:'80s', range:'1980–89'},
+  {code:'G3', label:'90s', range:'1990–99'},
+  {code:'G4', label:'2000s', range:'2000–09'},
+  {code:'G5', label:'2010s', range:'2010–19'},
+  {code:'G6', label:'CURRENT', range:'2020–now'}
+];
+
+var PHASES = ['OPENING','BUILD','ACTIVATE','ACTIVE','PEAK','ROTATE','RECOVER','PEAK 2','CLOSE'];
+
+// culture: anglo | latino | mixed   |   func: ENTRY / CORE / PEAK / EXIT / BRIDGE
+var TRACKS = [
+  // G0 ROOTS
+  {id:'t01',title:'Harbor Lights Serenade',artist:'The True Tones',year:1959,gen:0,genre:'Doo-Wop',bpm:96,key:'2A',energy:4,recognition:8.1,singalong:'MED',func:'ENTRY',culture:'anglo',category:'GENERATIONAL ANTHEM',bridge:false,notes:'Slow, warm opener — great for guest arrival and dinner seating.'},
+  {id:'t02',title:'Sugar Cane Sway',artist:"Bettye & The Reflections",year:1962,gen:0,genre:'Motown Soul',bpm:112,key:'4B',energy:6,recognition:8.8,singalong:'HIGH',func:'CORE',culture:'anglo',category:'GLOBAL SIGNATURE HIT',bridge:false,notes:'Universally recognized hook across generations — safe crowd warmer.'},
+  {id:'t03',title:'Ritmo Habana',artist:'Chico Del Mar Orchestra',year:1958,gen:0,genre:'Mambo',bpm:104,key:'6A',energy:7,recognition:8.4,singalong:'MED',func:'PEAK',culture:'latino',category:'CULTURAL TRIGGER',bridge:true,notes:'Big-band mambo peak — strong trigger for older Latino guests.'},
+  {id:'t04',title:'Boulevard Twist',artist:'Danny Marsh',year:1961,gen:0,genre:'Rock & Roll',bpm:126,key:'9B',energy:7,recognition:7.9,singalong:'HIGH',func:'EXIT',culture:'anglo',category:'TRUE ONE-HIT WONDER',bridge:true,notes:'Classic exit ramp out of the roots block into 70s territory.'},
+  // G1 70s
+  {id:'t05',title:'Vinyl Fever',artist:'Jade Larkspur',year:1974,gen:1,genre:'Soul',bpm:108,key:'3A',energy:5,recognition:8.0,singalong:'MED',func:'ENTRY',culture:'anglo',category:'GENERATIONAL ANTHEM',bridge:true,notes:'Eases the room out of the 50s/60s block — familiar groove, low risk.'},
+  {id:'t06',title:'Midnight Mirage',artist:'Solstice',year:1977,gen:1,genre:'Disco',bpm:120,key:'8A',energy:8,recognition:9.2,singalong:'HIGH',func:'CORE',culture:'anglo',category:'GLOBAL SIGNATURE HIT',bridge:false,notes:'Disco core — nearly universal recognition, very low floor risk.'},
+  {id:'t07',title:'Fuego en la Pista',artist:'Orquesta Tropicana',year:1978,gen:1,genre:'Salsa Dura',bpm:98,key:'5A',energy:8,recognition:8.6,singalong:'HIGH',func:'PEAK',culture:'latino',category:'CULTURAL TRIGGER',bridge:true,notes:'Salsa dura peak, huge singalong with Latino elders and Gen X alike.'},
+  {id:'t08',title:'Funk You Right',artist:'The Cassette Kings',year:1979,gen:1,genre:'Funk',bpm:114,key:'11A',energy:9,recognition:8.3,singalong:'MED',func:'EXIT',culture:'anglo',category:'GLOBAL SIGNATURE HIT',bridge:true,notes:'High-energy funk exit, sample-compatible with early 80s material.'},
+  // G2 80s
+  {id:'t09',title:'Chrome Hearts Radio',artist:'Vector Nine',year:1983,gen:2,genre:'Synth Pop',bpm:118,key:'5A',energy:7,recognition:9.1,singalong:'HIGH',func:'ENTRY',culture:'anglo',category:'GLOBAL SIGNATURE HIT',bridge:true,notes:'Iconic synth intro instantly reads as "the 80s" to every generation.'},
+  {id:'t10',title:'Neon Parade',artist:'The Skyline Kids',year:1986,gen:2,genre:'Synth Pop',bpm:122,key:'6A',energy:8,recognition:9.4,singalong:'HIGH',func:'CORE',culture:'anglo',category:'GLOBAL SIGNATURE HIT',bridge:false,notes:'One of the most bulletproof singalongs in the whole demo library.'},
+  {id:'t11',title:'Bailando Bajo la Luna',artist:'Grupo Caribe',year:1985,gen:2,genre:'Merengue',bpm:130,key:'9A',energy:9,recognition:8.9,singalong:'HIGH',func:'PEAK',culture:'latino',category:'CULTURAL TRIGGER',bridge:true,notes:'Merengue peak — massive floor reaction from Latino Gen X + Boomers.'},
+  {id:'t12',title:'Glass City Nights',artist:'Aurora Static',year:1988,gen:2,genre:'New Wave',bpm:124,key:'11A',energy:7,recognition:8.2,singalong:'MED',func:'EXIT',culture:'anglo',category:'GENERATIONAL ANTHEM',bridge:true,notes:'Tempo/energy bridge candidate into early-90s dance material.'},
+  // G3 90s
+  {id:'t13',title:'Sunset Boulevard Freeze',artist:'MC Solstice',year:1993,gen:3,genre:'Hip-Hop',bpm:96,key:'7A',energy:7,recognition:9.0,singalong:'HIGH',func:'ENTRY',culture:'anglo',category:'GLOBAL SIGNATURE HIT',bridge:true,notes:'90s hip-hop entry — huge Millennial + Gen X recognition.'},
+  {id:'t14',title:'Diamond Static',artist:'Velvet Radio',year:1996,gen:3,genre:'Dance Pop',bpm:128,key:'8A',energy:8,recognition:9.7,singalong:'HIGH',func:'CORE',culture:'anglo',category:'GLOBAL SIGNATURE HIT',bridge:false,notes:'The reference track for this prototype\'s Now Playing panel.'},
+  {id:'t15',title:'Salsa del Barrio',artist:'Los Hermanos Cruz',year:1994,gen:3,genre:'Salsa Romantica',bpm:100,key:'4A',energy:8,recognition:9.0,singalong:'HIGH',func:'PEAK',culture:'latino',category:'CULTURAL TRIGGER',bridge:true,notes:'Cross-generational salsa peak — reliable trigger for mixed floors.'},
+  {id:'t16',title:'Jump the Wire',artist:'Bassline Kru',year:1998,gen:3,genre:'Big Beat',bpm:130,key:'9A',energy:9,recognition:8.1,singalong:'MED',func:'EXIT',culture:'anglo',category:'CROSS-GENERATION HIT',bridge:true,notes:'High-tempo exit that lines up cleanly with early-2000s BPMs.'},
+  // G4 2000s
+  {id:'t17',title:'Crash the Party',artist:'Nova Rush',year:2003,gen:4,genre:'Pop Rock',bpm:126,key:'6A',energy:7,recognition:8.9,singalong:'HIGH',func:'ENTRY',culture:'anglo',category:'GENERATIONAL ANTHEM',bridge:true,notes:'Reliable 2000s opener with strong recall for Millennials.'},
+  {id:'t18',title:'Miami Heatwave',artist:'DJ Lucero',year:2005,gen:4,genre:'Latin Pop / Dance',bpm:128,key:'8A',energy:9,recognition:9.3,singalong:'HIGH',func:'CORE',culture:'mixed',category:'CROSS-GENERATION HIT',bridge:false,notes:'Mixed-culture crossover — works equally on Anglo and Latino floors.'},
+  {id:'t19',title:'Perreo Intenso',artist:'Grupo Fuego',year:2006,gen:4,genre:'Reggaeton',bpm:94,key:'3A',energy:9,recognition:8.7,singalong:'HIGH',func:'PEAK',culture:'latino',category:'CULTURAL TRIGGER',bridge:true,notes:'Early reggaeton peak — strong trigger for Latino Millennials.'},
+  {id:'t20',title:'Platinum Static',artist:'The Circuit',year:2008,gen:4,genre:'Electro Pop',bpm:128,key:'10A',energy:8,recognition:8.5,singalong:'MED',func:'EXIT',culture:'anglo',category:'GLOBAL SIGNATURE HIT',bridge:true,notes:'Electro-pop exit that tempo-matches into early EDM territory.'},
+  // G5 2010s
+  {id:'t21',title:'Sunrise Over Ocean Drive',artist:'Kalvin Rae',year:2012,gen:5,genre:'EDM Pop',bpm:128,key:'5A',energy:8,recognition:8.8,singalong:'HIGH',func:'ENTRY',culture:'anglo',category:'GENERATIONAL ANTHEM',bridge:true,notes:'EDM-pop entry with huge Gen Z / Millennial overlap.'},
+  {id:'t22',title:'Electric Bloom',artist:'Nyla Cross',year:2015,gen:5,genre:'Pop',bpm:100,key:'1A',energy:8,recognition:9.5,singalong:'HIGH',func:'CORE',culture:'anglo',category:'GLOBAL SIGNATURE HIT',bridge:false,notes:'One of the highest recognition scores in the demo catalog.'},
+  {id:'t23',title:'Bachata en la Playa',artist:'Romeo Alvarez',year:2014,gen:5,genre:'Bachata',bpm:124,key:'2B',energy:6,recognition:8.6,singalong:'HIGH',func:'PEAK',culture:'latino',category:'CULTURAL TRIGGER',bridge:true,notes:'Bachata peak, slows energy on purpose — intentional floor breathing.'},
+  {id:'t24',title:'Vibra Miami',artist:'DJ Lucero ft. Nova Rush',year:2017,gen:5,genre:'Reggaeton Pop',bpm:92,key:'4A',energy:9,recognition:9.1,singalong:'HIGH',func:'BRIDGE',culture:'mixed',category:'CROSS-GENERATION HIT',bridge:true,notes:'Built specifically as a mixed-culture bridge into the current decade.'},
+  // G6 CURRENT
+  {id:'t25',title:'Neon Coastline',artist:'Tessa Vale',year:2022,gen:6,genre:'Pop',bpm:118,key:'6B',energy:8,recognition:8.7,singalong:'HIGH',func:'ENTRY',culture:'anglo',category:'GENERATIONAL ANTHEM',bridge:true,notes:'Current-era entry with strong Gen Z recall and radio ubiquity.'},
+  {id:'t26',title:'Overdrive',artist:'Kappa Loud',year:2023,gen:6,genre:'Hyperpop / Dance',bpm:132,key:'9A',energy:9,recognition:8.3,singalong:'MED',func:'CORE',culture:'anglo',category:'CROSS-GENERATION HIT',bridge:false,notes:'High-tempo current core — best used once the floor is fully warm.'},
+  {id:'t27',title:'Perreo 305',artist:'Yeimy & DJ Nico',year:2023,gen:6,genre:'Reggaeton',bpm:96,key:'3A',energy:9,recognition:9.2,singalong:'HIGH',func:'PEAK',culture:'latino',category:'CULTURAL TRIGGER',bridge:false,notes:'Current reggaeton peak — the single highest-energy track in the set.'},
+  {id:'t28',title:'305 Anthem',artist:'Miami All-Stars',year:2024,gen:6,genre:'Latin Trap-Pop',bpm:100,key:'5A',energy:9,recognition:8.9,singalong:'HIGH',func:'PEAK',culture:'mixed',category:'CROSS-GENERATION HIT',bridge:false,notes:'Mixed-culture closer built for Miami weddings specifically.'}
+];
+
+var EXPERIENCES = [
+  {id:'one-hit-wonder', name:'One Hit Wonder', sub:'Experience', desc:'Global recognition across generations — songs that land on any floor, any culture, any decade.', status:'enabled'},
+  {id:'generational-journey', name:'Generational Journey', sub:'Experience', desc:'A guided decade-by-decade arc built for long-format events.', status:'soon'},
+  {id:'latin-classics', name:'Latin Classics', sub:'Experience', desc:'Salsa, merengue, bachata and reggaeton lineage, curated by era.', status:'soon'},
+  {id:'wedding', name:'Wedding', sub:'Experience', desc:'Ceremony-to-reception arc tuned for mixed-generation guest lists.', status:'soon'},
+  {id:'open-format', name:'Open Format', sub:'Experience', desc:'Club-style open format programming with no fixed generational arc.', status:'soon'},
+  {id:'miami-classics', name:'Miami Classics', sub:'Experience', desc:'Local-legacy tracks with outsized recognition in South Florida.', status:'soon'}
+];
+
+var ONE_HIT_CATEGORIES = [
+  {name:'TRUE ONE-HIT WONDER', desc:'An artist\'s single career-defining hit — no other track from them reads on a floor.'},
+  {name:'GLOBAL SIGNATURE HIT', desc:'The one song everyone in the room knows, regardless of age or background.'},
+  {name:'GENERATIONAL ANTHEM', desc:'Owns a specific generation completely — safe, near-guaranteed reaction within it.'},
+  {name:'CROSS-GENERATION HIT', desc:'Works across two or more adjacent generations without losing energy.'},
+  {name:'CULTURAL TRIGGER', desc:'Produces an outsized reaction within a specific cultural audience.'}
+];
+
+var REASONS = [
+  {icon:'layers', name:'Generation compatibility', text:'How closely the candidate\'s generation tag matches the floor\'s currently active generation, or the target generation for a bridge.'},
+  {icon:'status', name:'Energy relationship', text:'The energy delta between the current Now Playing track and the candidate — small deltas feel safe, larger ones signal an intentional push or breather.'},
+  {icon:'check', name:'Recognition level', text:'How broadly the track is recognized across ages and backgrounds — the single strongest predictor of floor risk.'},
+  {icon:'bridge', name:'Bridge value', text:'Whether the track is tagged as bridge-capable, meaning it shares enough BPM, key, era or cultural DNA to connect two generations cleanly.'},
+  {icon:'music', name:'Rhythmic compatibility', text:'BPM and harmonic key proximity to the current track, which determines how smooth the transition will feel.'},
+  {icon:'history', name:'Historical relationship', text:'Shared samples, remix lineage, era, or cultural context that connects the candidate back to what is already playing.'},
+  {icon:'disc', name:'Expected floor function', text:'Whether the track is best used as an ENTRY, CORE, PEAK, EXIT or BRIDGE moment within the current block.'}
+];
+
+/* ---- Live Listening: simulated detection sequence (no real audio/ShazamKit — DEMO only) ---- */
+var LIVE_DEMO_SEQUENCE = ['t14','t17','t20','t21','t24','t25','t12','t13','t07','t11','t15','t19','t23','t27'];
+
+/* ---- DJ Performance Intelligence: seed Transition Knowledge (Track A -> Track B, aggregated demo field data) ---- */
+var TRANSITION_KNOWLEDGE = [
+  {from:'t14',to:'t17',played:137,positivePct:84,byEvent:{Wedding:91,Club:73,Corporate:58},mixedPct:88,confidence:'HIGHLY PROVEN'},
+  {from:'t16',to:'t17',played:52,positivePct:77,byEvent:{Wedding:80,Club:71,Corporate:64},mixedPct:75,confidence:'FIELD TESTED'},
+  {from:'t12',to:'t13',played:64,positivePct:81,byEvent:{Wedding:85,Club:76,Corporate:60},mixedPct:79,confidence:'FIELD TESTED'},
+  {from:'t20',to:'t21',played:41,positivePct:73,byEvent:{Wedding:70,Club:79,Corporate:55},mixedPct:68,confidence:'CURATED'},
+  {from:'t24',to:'t25',played:29,positivePct:69,byEvent:{Wedding:66,Club:74,Corporate:50},mixedPct:80,confidence:'CURATED'},
+  {from:'t08',to:'t09',played:58,positivePct:79,byEvent:{Wedding:75,Club:82,Corporate:57},mixedPct:70,confidence:'FIELD TESTED'},
+  {from:'t07',to:'t11',played:94,positivePct:89,byEvent:{Wedding:93,'Quinceañera':95,Club:82},mixedPct:60,confidence:'HIGHLY PROVEN'},
+  {from:'t15',to:'t19',played:71,positivePct:86,byEvent:{Wedding:88,'Quinceañera':92,Club:80},mixedPct:65,confidence:'FIELD TESTED'},
+  {from:'t19',to:'t23',played:33,positivePct:70,byEvent:{Wedding:68,'Quinceañera':74,Club:66},mixedPct:58,confidence:'CURATED'},
+  {from:'t23',to:'t27',played:19,positivePct:64,byEvent:{Wedding:60,'Quinceañera':70,Club:63},mixedPct:55,confidence:'THEORETICAL'}
+];
+
+/* ---- Music Discovery: DEMO catalog, no live Apple Music API call ---- */
+var DISCOVER_REGIONS = ['Miami / USA','New York / USA','Los Angeles / USA','San Juan / PR'];
+var DISCOVERY = [
+  {artist:'Kappa Loud', title:'Overdrive', genre:'Hyperpop', trend:'up', inLibrary:true, trackId:'t26'},
+  {artist:'Yeimy & DJ Nico', title:'Perreo 305', genre:'Reggaeton', trend:'up', inLibrary:true, trackId:'t27'},
+  {artist:'Miami All-Stars', title:'305 Anthem', genre:'Latin Trap-Pop', trend:'flat', inLibrary:true, trackId:'t28'},
+  {artist:'DJ Lucero', title:'Miami Heatwave', genre:'Latin Pop / Dance', trend:'flat', inLibrary:true, trackId:'t18'},
+  {artist:'Tessa Vale', title:'Neon Coastline', genre:'Pop', trend:'up', inLibrary:true, trackId:'t25'},
+  {artist:'Solstice Bay', title:'Afterglow', genre:'Indie Pop', trend:'new', inLibrary:false},
+  {artist:'Rio Palace', title:'Que Viva', genre:'Latin Pop', trend:'new', inLibrary:false},
+  {artist:'Nova Kid', title:'Static Heart', genre:'Synth Pop', trend:'up', inLibrary:false},
+  {artist:'Marea Alta', title:'Costa Libre', genre:'Tropical House', trend:'new', inLibrary:false},
+  {artist:'Echo District', title:'Faded Neon', genre:'Dream Pop', trend:'down', inLibrary:false},
+  {artist:'Grupo Sol', title:'Verano Eterno', genre:'Cumbia Pop', trend:'up', inLibrary:false},
+  {artist:'Kelis Vane', title:'Runaway Heart', genre:'Pop', trend:'flat', inLibrary:false}
+];
+
+/* ============================= STATE ============================= */
+var state = {
+  view: 'home',
+  experience: 'one-hit-wonder',
+  eventType: 'Wedding',
+  culture: 'mixed',
+  activeGen: 3,
+  nowPlayingId: 't14',
+  playedIds: {},
+  history: [],
+  lastResponse: 0,
+  blockStartedAt: Date.now(),
+  currentBlockLabel: 'B-014',
+  phaseIndex: 3,
+  energyPoints: [4, 5.5, 7, 8, 8.2],
+  railCollapsed: false,
+  djMode: false,
+  guided: false,
+  libFilters: {gen:'all', culture:'all', func:'all', bridge:'all', q:''},
+  genFrom: 3, genTo: 4,
+  bridgeFrom: 3, bridgeTo: 4, bridgeRoute: '1-track',
+  learnTrackId: 't14',
+  block: {name:'Prime Time Bridge Block', gen:3, phase:'PEAK', targetEnergy:8, lanes:{ENTRY:['t13'],CORE:['t14'],PEAK:['t15'],EXIT:['t16'],BRIDGE:[]}},
+  savedBlocks: [],
+  moveConfidence: {},
+  liveListening: false,
+  liveSource: 'Microphone',
+  liveSeqIndex: -1,
+  liveCurrentId: null,
+  livePreviousId: null,
+  liveMatchConfidence: 0,
+  liveTimecode: 0,
+  liveTransitionLog: [],
+  liveLastResponse: {},
+  discoverTab: 'trending',
+  discoverRegion: 0,
+  discoverQuery: ''
+};
+
+function trackById(id){ for (var i=0;i<TRACKS.length;i++){ if (TRACKS[i].id===id) return TRACKS[i]; } return null; }
+function genOf(idx){ return GENERATIONS[idx]; }
+function fmtClock(sec){
+  var m = Math.floor(sec/60), s = Math.floor(sec%60);
+  return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+}
+function nowStamp(){
+  var sec = Math.floor((Date.now()-state.blockStartedAt)/1000);
+  return fmtClock(sec);
+}
+function toast(msg){
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toast._h);
+  toast._h = setTimeout(function(){ t.classList.remove('show'); }, 2200);
+}
+function pushHistory(kind, track, extra){
+  state.history.unshift({time: nowStamp(), kind: kind, trackId: track ? track.id : null, extra: extra||''});
+  if (state.history.length>60) state.history.pop();
+}
+
+/* ============================= RENDER HELPERS ============================= */
+function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+function trackMetaChips(t){
+  return '<span class="chip num">'+t.bpm+' BPM</span><span class="chip num">'+t.key+'</span><span class="chip">'+genOf(t.gen).label+'</span><span class="chip">'+t.culture.toUpperCase()+'</span>';
+}
+
+function cultureBadge(c){
+  var m = {anglo:'info', latino:'warn', mixed:'gold'};
+  return '<span class="badge '+m[c]+'">'+c+'</span>';
+}
+
+function functionBadge(f){
+  var m = {ENTRY:'info', CORE:'', PEAK:'gold', EXIT:'warn', BRIDGE:'good'};
+  return '<span class="badge '+(m[f]||'')+'">'+f+'</span>';
+}
+
+/* ============================= NEXT MOVE ENGINE ============================= */
+function candidatesForGen(genIdx){
+  return TRACKS.filter(function(t){ return t.gen===genIdx && !state.playedIds[t.id]; });
+}
+function pickSafeRoute(){
+  var np = trackById(state.nowPlayingId);
+  var pool = candidatesForGen(state.activeGen).filter(function(t){ return t.id!==state.nowPlayingId; });
+  pool.sort(function(a,b){
+    var da = Math.abs(a.energy-np.energy), db = Math.abs(b.energy-np.energy);
+    if (da!==db) return da-db;
+    return b.recognition-a.recognition;
+  });
+  return pool[0]||null;
+}
+function pickEnergyUp(){
+  var np = trackById(state.nowPlayingId);
+  var pool = TRACKS.filter(function(t){ return !state.playedIds[t.id] && t.id!==state.nowPlayingId && (t.gen===state.activeGen || t.gen===state.activeGen+1) && t.energy>=np.energy+1; });
+  pool.sort(function(a,b){ return (b.energy-a.recognition/20) - (a.energy-a.recognition/20); });
+  pool.sort(function(a,b){ return b.energy-a.energy || b.recognition-a.recognition; });
+  return pool[0]||null;
+}
+function pickGenerationBridge(){
+  var target = Math.min(state.activeGen+1, GENERATIONS.length-1);
+  var pool = TRACKS.filter(function(t){ return !state.playedIds[t.id] && t.bridge && (t.gen===state.activeGen || t.gen===target); });
+  pool.sort(function(a,b){ return b.recognition-a.recognition; });
+  return {track: pool[0]||null, target: target};
+}
+function confidenceFor(kind, t){
+  if (!t) return 0;
+  var base = Math.round(t.recognition*9);
+  if (kind==='bridge') base -= 4;
+  if (kind==='up') base -= 2;
+  return Math.max(58, Math.min(99, base));
+}
+function evidenceFor(t){
+  if (state.playedIds[t.id]) return {label:'FIELD TESTED', tone:'good'};
+  if (t.recognition>=9.3) return {label:'HIGHLY PROVEN', tone:'gold'};
+  if (t.recognition>=8.0) return {label:'CURATED', tone:'info'};
+  return {label:'THEORETICAL', tone:''};
+}
+function whyText(kind, t){
+  if (!t) return '';
+  var np = trackById(state.nowPlayingId);
+  if (kind==='safe'){
+    return 'Same generation as the floor ('+genOf(t.gen).label+'), energy within '+Math.abs(t.energy-np.energy).toFixed(0)+' point of the current track, and a '+t.recognition+'/10 recognition score keeps floor risk low.';
+  }
+  return 'Energy '+t.energy+'/10 is higher than the current '+np.energy+'/10 — a deliberate push. Function tag "'+t.func+'" signals this track is built to intensify, not maintain.';
+}
+
+/* ---- DJ Knowledge layer: Track A -> next-generation bridge relationship ---- */
+function bridgeKnowledgeFor(t){
+  var targetGen = Math.min(t.gen+1, GENERATIONS.length-1);
+  var why = ['Rhythm & tempo compatibility ('+t.bpm+' BPM, key '+t.key+')', 'Energy continuity ('+t.energy.toFixed(1)+'/10)'];
+  if (t.recognition>=9) why.push('Near-universal cross-generation recognition ('+t.recognition.toFixed(1)+'/10)');
+  if (t.culture==='mixed') why.push('Built as a cross-cultural crossover track');
+  if (t.category==='CULTURAL TRIGGER') why.push('Strong cultural-trigger reaction within its audience');
+  if (t.func==='BRIDGE' || t.func==='EXIT') why.push('Functionally tagged as an '+t.func+' moment for this block');
+  var risk = t.recognition>=9 ? 'LOW' : (t.recognition>=8 ? 'MEDIUM' : 'HIGH');
+  var when = (t.func==='EXIT' || t.func==='BRIDGE')
+    ? 'Once the '+genOf(t.gen).label+' block has peaked and energy is ready to carry forward, before the floor cools.'
+    : 'Early in the '+genOf(t.gen).label+' block, to set up a smoother generational hand-off later.';
+  var audience = t.culture==='mixed'
+    ? 'Mixed '+genOf(t.gen).label+' / '+genOf(targetGen).label+' crossover guests'
+    : (t.culture==='latino' ? 'Latino ' : 'Anglo ')+genOf(t.gen).label+' audience moving into '+genOf(targetGen).label;
+  var eventTypes = t.culture==='latino' ? ['Wedding','Quinceañera','Club'] : ['Wedding','Club','Corporate'];
+  return {targetGen:targetGen, why:why, when:when, audience:audience, risk:risk, eventTypes:eventTypes};
+}
+function renderBridgeKnowledgePanel(t, fromGen, toGen){
+  if (!t){
+    return '<div class="panel" style="margin-top:14px;"><div class="panel-head"><span class="label">DJ Knowledge — Generation Bridge</span></div>'+
+      '<div class="panel-body"><div class="move-empty">Select a route with at least one bridge-capable DEMO track to see the reasoning behind it.</div></div></div>';
+  }
+  var conf = confidenceFor('bridge', t);
+  var ev = evidenceFor(t);
+  return (
+    '<div class="panel" style="margin-top:14px;"><div class="panel-head"><span class="label">DJ Knowledge — Generation Bridge</span><span class="badge gold">'+conf+'% confidence</span></div>'+
+    '<div class="panel-body">'+
+      '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;">'+
+        '<span style="font-family:var(--font-display);font-weight:800;font-size:19px;">'+genOf(fromGen).label+' → '+genOf(toGen).label+'</span>'+
+        '<span class="badge '+ev.tone+'">Evidence: '+ev.label+'</span>'+
+      '</div>'+
+      '<div class="hist-sub" style="margin-bottom:10px;">via <b style="color:var(--text);">'+esc(t.title)+'</b> — '+esc(t.artist)+'</div>'+
+      renderBridgeKnowledge(t)+
+    '</div></div>'
+  );
+}
+function renderBridgeKnowledge(t){
+  var bk = bridgeKnowledgeFor(t);
+  return (
+    '<div class="label" style="margin-bottom:5px;">Why</div>'+
+    '<ul style="margin:0 0 10px 16px;padding:0;color:var(--text-dim);font-size:11.5px;line-height:1.6;">'+
+      bk.why.map(function(w){ return '<li>'+esc(w)+'</li>'; }).join('')+
+    '</ul>'+
+    '<div style="display:grid;grid-template-columns:auto 1fr;gap:5px 10px;font-size:11px;">'+
+      '<span class="label">When</span><span>'+esc(bk.when)+'</span>'+
+      '<span class="label">Audience</span><span>'+esc(bk.audience)+'</span>'+
+      '<span class="label">Risk</span><span style="color:'+(bk.risk==='LOW'?'var(--good)':bk.risk==='MEDIUM'?'var(--warn)':'var(--critical)')+';font-weight:700;">'+bk.risk+'</span>'+
+      '<span class="label">Event Types</span><span>'+bk.eventTypes.join(', ')+'</span>'+
+    '</div>'
+  );
+}
+
+/* ============================= DJ PERFORMANCE / TRANSITION KNOWLEDGE ============================= */
+function bridgeQualityFor(prevT, curT){
+  if (!prevT || !curT) return null;
+  var genDelta = Math.abs(curT.gen - prevT.gen);
+  var score = 0;
+  if (curT.bridge || prevT.bridge) score += 2;
+  if (Math.abs(curT.energy - prevT.energy) <= 1.5) score += 1;
+  if (curT.recognition >= 8.5) score += 1;
+  if (genDelta === 0) score += 1;
+  if (genDelta <= 1) score += 1;
+  if (score >= 4) return 'STRONG';
+  if (score >= 2) return 'MODERATE';
+  return 'WEAK';
+}
+function seedKnowledgeFor(fromId, toId){
+  for (var i=0;i<TRANSITION_KNOWLEDGE.length;i++){
+    if (TRANSITION_KNOWLEDGE[i].from===fromId && TRANSITION_KNOWLEDGE[i].to===toId) return TRANSITION_KNOWLEDGE[i];
+  }
+  return null;
+}
+function liveStatsFor(fromId, toId){
+  var entries = state.liveTransitionLog.filter(function(l){ return l.fromId===fromId && l.toId===toId; });
+  return {
+    count: entries.length,
+    pos: entries.filter(function(l){ return l.response>0; }).length,
+    neu: entries.filter(function(l){ return l.response===0; }).length,
+    neg: entries.filter(function(l){ return l.response<0; }).length
+  };
+}
+function combinedTransitionKnowledge(fromId, toId){
+  var seed = seedKnowledgeFor(fromId, toId);
+  var live = liveStatsFor(fromId, toId);
+  var basePlayed = seed ? seed.played : 0;
+  var basePositive = seed ? Math.round(seed.played*seed.positivePct/100) : 0;
+  var totalPlayed = basePlayed + live.count;
+  if (totalPlayed===0) return null;
+  var totalPositive = basePositive + live.pos;
+  var positivePct = Math.round((totalPositive/totalPlayed)*100);
+  var confidence;
+  if (seed){ confidence = seed.confidence; }
+  else if (totalPlayed>=25){ confidence='FIELD TESTED'; }
+  else if (totalPlayed>=10){ confidence='CURATED'; }
+  else { confidence='THEORETICAL'; }
+  return {played:totalPlayed, positivePct:positivePct, byEvent:seed?seed.byEvent:null, mixedPct:seed?seed.mixedPct:null, confidence:confidence, liveCount:live.count, live:live};
+}
+
+/* ============================= VIEW: HOME ============================= */
+function renderExperienceGrid(){
+  return EXPERIENCES.map(function(e){
+    var enabled = e.status==='enabled';
+    return (
+      '<div class="exp-card '+(enabled?'enabled':'soon')+'">'+
+        '<span class="badge gold exp-tag">'+e.sub+'</span>'+
+        '<h3>'+esc(e.name)+'</h3>'+
+        '<p>'+esc(e.desc)+'</p>'+
+        '<div class="exp-foot">'+
+          (enabled
+            ? '<button class="btn btn-gold" data-enter-experience="'+e.id+'">Enter Experience</button>'
+            : '<span class="badge">Coming Soon</span>')+
+        '</div>'+
+      '</div>'
+    );
+  }).join('');
+}
+
+function renderHome(){
+  var el = document.getElementById('view-home');
+  el.innerHTML =
+    '<div class="hero">'+
+      '<h1>MDJB MUSIC INTELLIGENCE</h1>'+
+      '<p>DJ Programming &amp; Floor Intelligence System</p>'+
+    '</div>'+
+    '<div class="view-head" style="justify-content:center;text-align:center;display:block;">'+
+      '<span class="eyebrow">Choose Your Music Experience</span>'+
+    '</div>'+
+    '<div class="exp-grid">'+renderExperienceGrid()+'</div>';
+  el.querySelectorAll('[data-enter-experience]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      state.experience = btn.getAttribute('data-enter-experience');
+      setView('event');
+    });
+  });
+}
+function renderExperiences(){
+  var el = document.getElementById('view-experiences');
+  el.innerHTML =
+    '<div class="view-head"><div><span class="eyebrow">Platform</span><h2 class="view-title">Music Experiences</h2>'+
+    '<p class="view-desc">Extensible engine registry — new Experiences plug into this shell via configuration, no rebuild required. Only One Hit Wonder is fully wired in this prototype.</p></div></div>'+
+    '<div class="exp-grid">'+renderExperienceGrid()+'</div>';
+  el.querySelectorAll('[data-enter-experience]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      state.experience = btn.getAttribute('data-enter-experience');
+      setView('event');
+    });
+  });
+}
+
+/* ============================= VIEW: EVENT MODE ============================= */
+function renderStatusStrip(){
+  var floorPct = Math.round(trackById(state.nowPlayingId).energy*10);
+  return (
+    '<div class="status-strip">'+
+      '<div class="status-cell"><span class="label">Event</span>'+
+        '<select id="selEventType"><option'+(state.eventType==='Wedding'?' selected':'')+'>Wedding</option>'+
+        '<option'+(state.eventType==='Club'?' selected':'')+'>Club</option>'+
+        '<option'+(state.eventType==='Corporate'?' selected':'')+'>Corporate</option>'+
+        '<option'+(state.eventType==='Quinceañera'?' selected':'')+'>Quinceañera</option></select></div>'+
+      '<div class="status-cell"><span class="label">Phase</span><span class="v">'+PHASES[state.phaseIndex]+'</span></div>'+
+      '<div class="status-cell"><span class="label">Elapsed</span><span class="v" id="clockCell">'+nowStamp()+'</span></div>'+
+      '<div class="status-cell"><span class="label">Floor</span><span class="v">'+floorPct+'%</span></div>'+
+      '<div class="culture-toggle">'+
+        ['anglo','latino','mixed'].map(function(c){
+          return '<button class="culture-btn'+(state.culture===c?' active':'')+'" data-culture="'+c+'">'+c.toUpperCase()+'</button>';
+        }).join('')+
+      '</div>'+
+      '<div class="energy-cell"><span class="label">Energy '+trackById(state.nowPlayingId).energy.toFixed(1)+' / 10</span>'+
+        '<div class="energy-track"><div class="energy-fill" style="width:'+(trackById(state.nowPlayingId).energy*10)+'%"></div></div></div>'+
+    '</div>'
+  );
+}
+
+function renderGenerations(){
+  var rows = GENERATIONS.map(function(g, i){
+    var cls = 'gen-item'+(i===state.activeGen?' active':'')+(i===state.activeGen-1?' prev':'')+(i===state.activeGen+1?' next':'');
+    return '<button class="'+cls+'" data-gen="'+i+'"><span class="gdot"></span><span class="gname">'+g.code+' — '+g.label+'</span><span class="grange">'+g.range+'</span></button>';
+  }).join('');
+  return '<div class="panel"><div class="panel-head"><span class="label">Generations</span></div><div class="gen-list">'+rows+'</div></div>';
+}
+
+function renderNowPlaying(){
+  var t = trackById(state.nowPlayingId);
+  var meterVal = state.lastResponse;
+  var bars = [-2,-1,0,1,2].map(function(v){
+    var on = (meterVal>0 && v>0 && v<=meterVal) || (meterVal<0 && v<0 && v>=meterVal) || (meterVal===0 && v===0);
+    return '<div class="reaction-bar'+(on?' on':'')+'"></div>';
+  }).join('');
+  return (
+    '<div class="panel now-playing">'+
+      '<div class="np-top">'+
+        '<div class="artwork">'+iconSvg('music')+'</div>'+
+        '<div class="np-info">'+
+          '<span class="label">Now Playing</span>'+
+          '<div class="np-title">'+esc(t.title)+'</div>'+
+          '<div class="np-artist">'+esc(t.artist)+' &middot; '+t.year+'</div>'+
+          '<div class="np-meta">'+functionBadge(t.func)+cultureBadge(t.culture)+'<span class="badge">'+t.category+'</span>'+
+            (state.playedIds[t.id]?'<span class="badge good">Played</span>':'')+
+          '</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="stat-grid">'+
+        '<div class="stat-cell"><span class="label">BPM</span><span class="v num">'+t.bpm+'</span></div>'+
+        '<div class="stat-cell"><span class="label">Key</span><span class="v num">'+t.key+'</span></div>'+
+        '<div class="stat-cell hi"><span class="label">Energy</span><span class="v num">'+t.energy.toFixed(1)+'</span></div>'+
+        '<div class="stat-cell hi"><span class="label">Recognition</span><span class="v num">'+t.recognition.toFixed(1)+'</span></div>'+
+      '</div>'+
+      '<div>'+
+        '<span class="label">Floor Response</span>'+
+        '<div class="response-row" style="margin-top:8px;">'+
+          '<div class="response-btns">'+
+            [-2,-1,0,1,2].map(function(v){
+              return '<button class="rbtn'+(state.lastResponse===v?' picked':'')+'" data-response="'+v+'">'+(v>0?'+':'')+v+'</button>';
+            }).join('')+
+          '</div>'+
+          '<div class="reaction-meter"><span class="label" style="white-space:nowrap;">Reaction</span><div class="reaction-track">'+bars+'</div></div>'+
+        '</div>'+
+      '</div>'+
+    '</div>'
+  );
+}
+
+function renderFloorIntelligence(){
+  var t = trackById(state.nowPlayingId);
+  var bridgeTarget = Math.min(state.activeGen+1, GENERATIONS.length-1);
+  var ready = TRACKS.some(function(tr){ return !state.playedIds[tr.id] && tr.bridge && (tr.gen===state.activeGen||tr.gen===bridgeTarget); });
+  var rows = [
+    ['Active Generation', genOf(state.activeGen).label],
+    ['Energy', t.energy.toFixed(1)+' / 10'],
+    ['Recognition', t.recognition.toFixed(1)+' / 10'],
+    ['Singalong', t.singalong],
+    ['Floor Status', state.history.length? 'ACTIVE':'STANDBY'],
+    ['Current Block', state.currentBlockLabel],
+    ['Block Duration', nowStamp()],
+    ['Transition Readiness', ready?'BRIDGE READY':'BUILDING']
+  ];
+  return (
+    '<div class="panel"><div class="panel-head"><span class="label">Floor Intelligence</span></div>'+
+    '<div class="fi-grid">'+rows.map(function(r){
+      var highlight = (r[0]==='Transition Readiness' && ready) ? 'good' : (r[0]==='Floor Status' && state.history.length ? 'good':'');
+      return '<div class="fi-row"><span class="k">'+r[0]+'</span><span class="v'+(highlight?' ':'')+'" style="'+(highlight?'color:var(--good)':'')+'">'+r[1]+'</span></div>';
+    }).join('')+'</div></div>'
+  );
+}
+
+function renderNextMove(){
+  var safe = pickSafeRoute();
+  var up = pickEnergyUp();
+  var b = pickGenerationBridge();
+
+  function card(kind, title, t, extraLabel){
+    if (!t){
+      return '<div class="panel move-card '+kind+'"><div class="mc-head"><span class="mc-kind">'+title+'</span></div><div class="move-empty">No further DEMO tracks match this route — every candidate has been played.</div></div>';
+    }
+    var conf = confidenceFor(kind, t);
+    var ev = evidenceFor(t);
+    return (
+      '<div class="panel move-card '+kind+'">'+
+        '<div class="mc-head"><span class="mc-kind">'+title+'</span>'+(extraLabel?'<span class="badge gold">'+extraLabel+'</span>':'')+'</div>'+
+        '<div><div class="move-track">'+esc(t.title)+'</div><div class="move-artist">'+esc(t.artist)+'</div></div>'+
+        '<div class="move-meta">'+trackMetaChips(t)+'</div>'+
+        '<div class="confidence-row"><span class="label" style="white-space:nowrap;">Confidence</span><div class="conf-track"><div class="conf-fill" style="width:'+conf+'%"></div></div><span class="num" style="font-size:11px;">'+conf+'%</span></div>'+
+        '<div class="move-meta"><span class="badge '+ev.tone+'">Evidence: '+ev.label+'</span></div>'+
+        '<button class="why-toggle" data-why="'+kind+'">Why this track?</button>'+
+        '<div class="why-box'+(state.guided?' open':'')+'" id="why-'+kind+'">'+whyText(kind,t)+'</div>'+
+        '<button class="btn btn-gold btn-sm" data-select-move="'+kind+'" data-track="'+t.id+'">Select</button>'+
+      '</div>'
+    );
+  }
+
+  var html =
+    '<div class="panel-head" style="border:none;padding:0 0 10px;"><span class="label">Next Move Engine — recommended, not required</span>'+
+    (state.guided?'<span class="badge info">Guided Mode — reasoning expanded</span>':'<span class="badge">Experienced Mode — tap Why for reasoning</span>')+
+    '</div>'+
+    '<div class="nme-grid">'+
+      card('safe','Safe Route', safe)+
+      card('up','Energy Up', up)+
+      card('bridge','Generation Bridge', b.track, b.track ? (genOf(state.activeGen).label+' → '+genOf(b.target).label) : '')+
+    '</div>';
+  return html;
+}
+
+function renderJourney(){
+  var nodes = GENERATIONS.map(function(g,i){
+    var cls = 'journey-node'+(i<state.activeGen?' done':'')+(i===state.activeGen?' active':'');
+    var here = i===state.activeGen ? '<span class="journey-here">You are here</span>' : '';
+    return '<div class="'+cls+'">'+here+'<div class="journey-dot"></div><div class="journey-label">'+g.label+'</div></div>'+
+      (i<GENERATIONS.length-1 ? '<div class="journey-line'+(i<state.activeGen?' done':'')+(i===state.activeGen?' bridge':'')+'"></div>' : '');
+  }).join('');
+  return '<div class="panel"><div class="panel-head"><span class="label">Block Journey</span></div><div class="journey-row scrollx">'+nodes+'</div></div>';
+}
+
+function renderTimeline(){
+  var w=760,h=130,pad=10;
+  var pts = state.energyPoints;
+  var maxE=10;
+  var stepX = (w-pad*2)/(pts.length-1);
+  var coords = pts.map(function(v,i){ return [pad+i*stepX, h-pad-((v/maxE)*(h-pad*2))]; });
+  var line = coords.map(function(c,i){ return (i===0?'M':'L')+c[0].toFixed(1)+' '+c[1].toFixed(1); }).join(' ');
+  var area = line+' L '+coords[coords.length-1][0].toFixed(1)+' '+(h-pad)+' L '+coords[0][0].toFixed(1)+' '+(h-pad)+' Z';
+  var last = coords[coords.length-1];
+  return (
+    '<div class="panel"><div class="panel-head"><span class="label">Event Energy Timeline</span><span class="num" style="font-size:11px;color:var(--text-dim);">Scale 1–10</span></div>'+
+    '<div class="timeline-wrap">'+
+      '<svg class="timeline-svg" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none">'+
+        '<defs><linearGradient id="tlfill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--gold)" stop-opacity="0.35"/><stop offset="100%" stop-color="var(--gold)" stop-opacity="0"/></linearGradient></defs>'+
+        [2,4,6,8,10].map(function(v){ var y=h-pad-((v/maxE)*(h-pad*2)); return '<line x1="'+pad+'" y1="'+y+'" x2="'+(w-pad)+'" y2="'+y+'" stroke="var(--border)" stroke-width="1"/>'; }).join('')+
+        '<path d="'+area+'" fill="url(#tlfill)"/>'+
+        '<path d="'+line+'" fill="none" stroke="var(--gold)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>'+
+        '<circle cx="'+last[0]+'" cy="'+last[1]+'" r="5" fill="var(--gold)" stroke="var(--bg)" stroke-width="2"/>'+
+      '</svg>'+
+      '<div class="timeline-legend">'+PHASES.slice(0, pts.length+2).map(function(p){ return '<span>'+p+'</span>'; }).join('')+'</div>'+
+    '</div></div>'
+  );
+}
+
+function renderFooterStrip(){
+  var playedCount = Object.keys(state.playedIds).length;
+  var bridgeTarget = Math.min(state.activeGen+1, GENERATIONS.length-1);
+  var ready = TRACKS.some(function(tr){ return !state.playedIds[tr.id] && tr.bridge && (tr.gen===state.activeGen||tr.gen===bridgeTarget); });
+  return (
+    '<div class="footer-strip">'+
+      '<div class="footer-cell">Played <b>'+playedCount+'</b></div>'+
+      '<div class="footer-cell">Block <b>'+nowStamp()+'</b></div>'+
+      '<div class="footer-cell">'+iconSvg('check')+' No Repeats <b style="color:var(--good)">✓</b></div>'+
+      '<div class="footer-cell">Bridge <b style="color:'+(ready?'var(--good)':'var(--text-faint)')+'">'+(ready?'READY ✓':'BUILDING')+'</b></div>'+
+      '<div class="footer-cell">Floor <b>'+(state.history.length?'ACTIVE':'STANDBY')+'</b></div>'+
+    '</div>'
+  );
+}
+
+function renderEvent(){
+  var el = document.getElementById('view-event');
+  el.innerHTML =
+    '<div class="view-head"><div><span class="eyebrow">One Hit Wonder Experience</span><h2 class="view-title">Event Mode</h2>'+
+    '<p class="view-desc">Global songs with extraordinary recognition power across generations. The system advises — you decide.</p></div></div>'+
+    renderStatusStrip()+
+    '<div class="event-grid">'+renderGenerations()+renderNowPlaying()+renderFloorIntelligence()+'</div>'+
+    '<div style="margin-top:16px;">'+renderNextMove()+'</div>'+
+    '<div style="margin-top:14px;">'+renderJourney()+'</div>'+
+    '<div style="margin-top:14px;">'+renderTimeline()+'</div>'+
+    renderFooterStrip();
+  wireEventView();
+}
+
+function wireEventView(){
+  var el = document.getElementById('view-event');
+  el.querySelectorAll('[data-gen]').forEach(function(b){
+    b.addEventListener('click', function(){ state.activeGen = parseInt(b.getAttribute('data-gen'),10); renderEvent(); });
+  });
+  el.querySelectorAll('[data-culture]').forEach(function(b){
+    b.addEventListener('click', function(){ state.culture = b.getAttribute('data-culture'); renderEvent(); });
+  });
+  var sel = document.getElementById('selEventType');
+  if (sel) sel.addEventListener('change', function(){ state.eventType = sel.value; });
+  el.querySelectorAll('[data-response]').forEach(function(b){
+    b.addEventListener('click', function(){
+      var v = parseInt(b.getAttribute('data-response'),10);
+      state.lastResponse = v;
+      var t = trackById(state.nowPlayingId);
+      var delta = v*0.15;
+      t._liveEnergy = Math.max(1, Math.min(10, t.energy + delta));
+      t.energy = Math.round(t._liveEnergy*10)/10;
+      var last = state.energyPoints[state.energyPoints.length-1];
+      state.energyPoints[state.energyPoints.length-1] = Math.max(1, Math.min(10, last + delta));
+      pushHistory('response', t, (v>0?'+':'')+v);
+      toast('Floor response logged: '+(v>0?'+':'')+v);
+      renderEvent();
+    });
+  });
+  el.querySelectorAll('[data-why]').forEach(function(b){
+    b.addEventListener('click', function(){
+      var box = document.getElementById('why-'+b.getAttribute('data-why'));
+      box.classList.toggle('open');
+    });
+  });
+  el.querySelectorAll('[data-select-move]').forEach(function(b){
+    b.addEventListener('click', function(){
+      selectTrack(b.getAttribute('data-track'), b.getAttribute('data-select-move'));
+    });
+  });
+}
+
+function selectTrack(trackId, source){
+  var prev = trackById(state.nowPlayingId);
+  var next = trackById(trackId);
+  if (!next) return;
+  state.playedIds[prev.id] = true;
+  pushHistory('played', prev, '');
+  if (next.gen !== state.activeGen){
+    state.currentBlockLabel = 'B-0'+(15+Object.keys(state.playedIds).length);
+    state.blockStartedAt = Date.now();
+    state.phaseIndex = Math.min(PHASES.length-1, state.phaseIndex+1);
+    state.energyPoints.push(next.energy);
+    pushHistory('block', next, 'New block — '+genOf(next.gen).label);
+  }
+  state.activeGen = next.gen;
+  state.nowPlayingId = next.id;
+  state.lastResponse = 0;
+  toast((source==='bridge'?'Bridge selected — ':source==='up'?'Energy Up selected — ':'Safe Route selected — ')+next.title);
+  renderEvent();
+  renderHeaderBits();
+}
+
+/* ============================= VIEW: LIVE LISTENING ============================= */
+function renderLiveListening(){
+  var el = document.getElementById('view-live');
+  var cur = state.liveCurrentId ? trackById(state.liveCurrentId) : null;
+  var prev = state.livePreviousId ? trackById(state.livePreviousId) : null;
+  el.innerHTML =
+    '<div class="view-head"><div><span class="eyebrow">Live Intelligence</span><h2 class="view-title">Live Listening Engine</h2>'+
+    '<p class="view-desc">Microphone-based track recognition and real-time transition scoring.</p></div>'+
+    '<span class="badge gold">Prototype · ShazamKit Ready</span></div>'+
+    renderLiveIntelPanel(cur, prev)+
+    '<div style="margin-top:14px;">'+renderDjPerformancePanel(cur, prev)+'</div>'+
+    '<div style="margin-top:14px;">'+renderFloorLearningPanel(cur, prev)+'</div>'+
+    '<div style="margin-top:14px;">'+renderTransitionKnowledgeCard(cur, prev)+'</div>'+
+    '<div class="footer-strip" style="margin-top:14px;"><div class="footer-cell">'+iconSvg('mic')+' Live Listening · Prototype</div><div class="footer-cell">No audio captured or transmitted</div><div class="footer-cell">ShazamKit &amp; on-device recognition — not wired in this build</div></div>';
+  wireLiveListening();
+}
+function renderLiveIntelPanel(cur, prev){
+  var listening = state.liveListening;
+  return (
+    '<div class="panel">'+
+      '<div class="panel-head">'+
+        '<span class="label" style="display:flex;align-items:center;gap:8px;">'+iconSvg('mic')+' Live Music Intelligence</span>'+
+        '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">'+
+          '<button class="badge'+(listening?' good':'')+'" id="toggleListen" style="cursor:pointer;"><span class="listen-dot'+(listening?' on':'')+'"></span>'+(listening?'LISTENING':'IDLE')+'</button>'+
+          '<span class="label" style="white-space:nowrap;">Source</span>'+
+          '<select id="liveSourceSel" style="background:var(--surface-2);border:1px solid var(--border-strong);color:var(--text);padding:6px 9px;border-radius:6px;font-size:11.5px;">'+
+            ['Microphone','Line In','Booth Feed'].map(function(s){ return '<option'+(state.liveSource===s?' selected':'')+'>'+s+'</option>'; }).join('')+
+          '</select>'+
+          '<span class="badge gold">SHAZAMKIT ✓ READY</span>'+
+        '</div>'+
+      '</div>'+
+      '<div class="panel-body">'+
+        (listening ? (
+          '<div class="event-grid" style="grid-template-columns:1fr 1fr;">'+
+            '<div><span class="label">Now Detected</span>'+
+              (cur ? (
+                '<div class="np-title" style="font-size:19px;margin-top:6px;">'+esc(cur.title)+'</div>'+
+                '<div class="np-artist">'+esc(cur.artist)+'</div>'+
+                '<div class="move-meta" style="margin-top:8px;"><span class="chip num">'+cur.bpm+' BPM</span><span class="chip num">'+cur.key+'</span><span class="chip num" id="liveTimecodeCell">'+fmtClock(state.liveTimecode)+'</span><span class="chip">Match '+state.liveMatchConfidence+'%</span></div>'
+              ) : '<div class="move-empty">Listening for audio — click Simulate Detection below.</div>')+
+            '</div>'+
+            '<div><span class="label">Previous</span>'+
+              (prev ? '<div class="np-title" style="font-size:15px;margin-top:6px;color:var(--text-dim);">'+esc(prev.title)+'</div><div class="np-artist">'+esc(prev.artist)+'</div>' : '<div class="move-empty">No previous track yet this session.</div>')+
+            '</div>'+
+          '</div>'+
+          ((prev||cur) ? (
+            '<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">'+
+              '<span class="label">Transition</span>'+
+              '<div style="display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap;">'+
+                '<span style="font-weight:600;color:var(--text-dim);">'+(prev?esc(prev.title):'—')+'</span>'+
+                '<span style="color:var(--gold);">→</span>'+
+                '<span style="font-weight:700;">'+(cur?esc(cur.title):'—')+'</span>'+
+              '</div>'+
+              '<div class="move-meta" style="margin-top:10px;">'+
+                (cur?'<span class="badge good">MATCHED ✓</span>':'')+
+                (prev&&cur?'<span class="badge good">TRANSITION DETECTED ✓</span>':'')+
+              '</div>'+
+            '</div>'
+          ) : '')+
+          '<div style="margin-top:16px;"><button class="btn btn-gold" id="simulateDetect">Simulate Detection</button></div>'
+        ) : ('<div class="empty-state">'+iconSvg('mic')+'<span>Not listening — start listening to begin simulated live track detection.</span><button class="btn btn-gold btn-sm" id="startListening" style="margin-top:6px;">Start Listening</button></div>'))+
+      '</div>'+
+    '</div>'
+  );
+}
+function renderDjPerformancePanel(cur, prev){
+  if (!cur || !prev){
+    return '<div class="panel"><div class="panel-head"><span class="label">DJ Performance Intelligence</span></div><div class="panel-body"><div class="empty-state">'+iconSvg('status')+'<span>Detect a transition (Previous → Now Detected) to see performance scoring here.</span></div></div></div>';
+  }
+  var energyDelta = cur.energy - prev.energy;
+  var quality = bridgeQualityFor(prev, cur);
+  var qTone = quality==='STRONG'?'good':quality==='MODERATE'?'warn':'critical';
+  var key = prev.id+'>'+cur.id;
+  var resp = state.liveLastResponse[key];
+  var learningLine = resp===undefined ? 'Log a floor result below to teach the system.' :
+    resp>0 ? 'This transition worked in this context.' :
+    resp===0 ? 'Neutral reaction — inconclusive for this pairing.' :
+    'This transition underperformed in this context — treat with caution next time.';
+  return (
+    '<div class="panel"><div class="panel-head"><span class="label">DJ Performance Intelligence</span></div>'+
+    '<div class="fi-grid">'+
+      '<div class="fi-row"><span class="k">Track Change</span><span class="v" style="color:var(--good);">✓</span></div>'+
+      '<div class="fi-row"><span class="k">Energy</span><span class="v num">'+prev.energy.toFixed(1)+' → '+cur.energy.toFixed(1)+' ('+(energyDelta>=0?'+':'')+energyDelta.toFixed(1)+')</span></div>'+
+      '<div class="fi-row"><span class="k">Generation</span><span class="v">'+genOf(prev.gen).label+' → '+genOf(cur.gen).label+'</span></div>'+
+      '<div class="fi-row"><span class="k">Bridge Quality</span><span class="badge '+qTone+'">'+quality+'</span></div>'+
+    '</div>'+
+    '<div class="panel-body">'+
+      '<span class="label">Floor Result</span>'+
+      '<div class="response-btns" style="margin-top:8px;">'+
+        [-2,-1,0,1,2].map(function(v){ return '<button class="rbtn'+(resp===v?' picked':'')+'" data-live-response="'+v+'">'+(v>0?'+':'')+v+'</button>'; }).join('')+
+      '</div>'+
+      '<div style="margin-top:12px;padding:10px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--text-dim);font-style:italic;">"'+learningLine+'"</div>'+
+    '</div></div>'
+  );
+}
+function renderFloorLearningPanel(cur, prev){
+  if (!cur||!prev) return '';
+  var live = liveStatsFor(prev.id, cur.id);
+  var ck = combinedTransitionKnowledge(prev.id, cur.id);
+  var manualKey = prev.id+'>'+cur.id;
+  var manual = state.liveLastResponse[manualKey];
+  return (
+    '<div class="panel"><div class="panel-head"><span class="label">Floor Learning</span></div>'+
+    '<div class="stat-grid" style="grid-template-columns:repeat(5,1fr);">'+
+      '<div class="stat-cell"><span class="label" style="color:var(--good);">Worked</span><span class="v num">'+live.pos+'</span></div>'+
+      '<div class="stat-cell"><span class="label">Neutral</span><span class="v num">'+live.neu+'</span></div>'+
+      '<div class="stat-cell"><span class="label" style="color:var(--critical);">Failed</span><span class="v num">'+live.neg+'</span></div>'+
+      '<div class="stat-cell"><span class="label">DJ Manual Score</span><span class="v num">'+(manual!==undefined ? (manual>0?'+':'')+manual : '—')+'</span></div>'+
+      '<div class="stat-cell hi"><span class="label">Historical Confidence</span><span class="v" style="font-size:12px;">'+(ck?ck.confidence:'THEORETICAL')+'</span></div>'+
+    '</div></div>'
+  );
+}
+function renderTransitionKnowledgeCard(cur, prev){
+  if (!cur||!prev){
+    return '<div class="panel"><div class="panel-head"><span class="label">Transition Knowledge</span></div><div class="panel-body"><div class="empty-state">'+iconSvg('history')+'<span>No transition selected yet.</span></div></div></div>';
+  }
+  var ck = combinedTransitionKnowledge(prev.id, cur.id);
+  return (
+    '<div class="panel"><div class="panel-head"><span class="label">Transition Knowledge</span>'+(ck?'<span class="badge gold">'+ck.confidence+'</span>':'')+'</div>'+
+    '<div class="panel-body">'+
+      '<div style="text-align:center;padding:6px 0 14px;">'+
+        '<div style="font-weight:700;">'+esc(prev.title)+'</div>'+
+        '<div style="color:var(--gold);margin:4px 0;">↓</div>'+
+        '<div style="font-weight:700;">'+esc(cur.title)+'</div>'+
+      '</div>'+
+      (ck ? (
+        '<div style="display:grid;grid-template-columns:auto 1fr;gap:7px 14px;font-size:12.5px;max-width:420px;margin:0 auto;">'+
+          '<span class="label">Played</span><span class="num">'+ck.played+' times'+(ck.liveCount?' ('+ck.liveCount+' this session)':'')+'</span>'+
+          '<span class="label">Positive Floor Response</span><span class="num" style="color:var(--good);">'+ck.positivePct+'%</span>'+
+          (ck.byEvent ? Object.keys(ck.byEvent).map(function(k){ return '<span class="label">'+k+'</span><span class="num">'+ck.byEvent[k]+'%</span>'; }).join('') : '')+
+          (ck.mixedPct!=null ? '<span class="label">Mixed Audience</span><span class="num">'+ck.mixedPct+'%</span>' : '')+
+          '<span class="label">Generation Bridge</span><span>'+genOf(prev.gen).label+' → '+genOf(cur.gen).label+'</span>'+
+        '</div>'
+      ) : '<div class="move-empty" style="text-align:center;">No accumulated evidence yet for this exact pairing — every transition starts as THEORETICAL until it is played and rated.</div>')+
+    '</div></div>'
+  );
+}
+function toggleListening(){
+  state.liveListening = !state.liveListening;
+  renderLiveListening();
+}
+function simulateDetection(){
+  state.liveSeqIndex = (state.liveSeqIndex+1) % LIVE_DEMO_SEQUENCE.length;
+  var nextId = LIVE_DEMO_SEQUENCE[state.liveSeqIndex];
+  if (state.liveCurrentId) state.livePreviousId = state.liveCurrentId;
+  state.liveCurrentId = nextId;
+  state.liveMatchConfidence = 92 + ((state.liveSeqIndex*7) % 8);
+  state.liveTimecode = 0;
+  renderLiveListening();
+}
+function wireLiveListening(){
+  var el = document.getElementById('view-live');
+  var toggle = document.getElementById('toggleListen');
+  if (toggle) toggle.addEventListener('click', toggleListening);
+  var startBtn = document.getElementById('startListening');
+  if (startBtn) startBtn.addEventListener('click', toggleListening);
+  var srcSel = document.getElementById('liveSourceSel');
+  if (srcSel) srcSel.addEventListener('change', function(e){ state.liveSource=e.target.value; });
+  var simBtn = document.getElementById('simulateDetect');
+  if (simBtn) simBtn.addEventListener('click', simulateDetection);
+  el.querySelectorAll('[data-live-response]').forEach(function(b){
+    b.addEventListener('click', function(){
+      var v = parseInt(b.getAttribute('data-live-response'),10);
+      var prev = trackById(state.livePreviousId), cur = trackById(state.liveCurrentId);
+      if (!prev||!cur) return;
+      var key = prev.id+'>'+cur.id;
+      state.liveLastResponse[key] = v;
+      state.liveTransitionLog.push({fromId:prev.id, toId:cur.id, response:v, time: nowStamp()});
+      toast('Floor result logged: '+(v>0?'+':'')+v+' — teaching the system');
+      renderLiveListening();
+    });
+  });
+}
+
+/* ============================= VIEW: DISCOVER ============================= */
+function discTabTitle(tab){
+  var m = {trending:'Trending Now', charts:"This Week's Chart", 'new':'New & Rising', recommended:'Recommended For You', genres:'By Genre', regions:'By Region', search:'Search Results'};
+  return m[tab] || 'Trending Now';
+}
+function discoverPoolForTab(tab){
+  var base = DISCOVERY.slice();
+  var r = state.discoverRegion;
+  if (r>0){ base = base.slice(r).concat(base.slice(0,r)); }
+  if (tab==='charts') return base.slice().reverse();
+  if (tab==='new') return base.filter(function(d){ return d.trend==='new'; });
+  if (tab==='recommended') return base.filter(function(d){ return !d.inLibrary; });
+  if (tab==='genres') return base.slice().sort(function(a,b){ return a.genre.localeCompare(b.genre); });
+  return base;
+}
+function discoverRow(d, i){
+  var trendIcon = d.trend==='up'?'trendUp':d.trend==='down'?'trendDown':d.trend==='new'?'trendNew':'trendFlat';
+  var trendColor = d.trend==='up'?'var(--good)':d.trend==='down'?'var(--critical)':d.trend==='new'?'var(--gold-bright)':'var(--text-faint)';
+  var rankLabel = (i!=null) ? (i+1<10?'0'+(i+1):String(i+1)) : '';
+  return (
+    '<div class="hist-row">'+
+      (i!=null ? '<span class="hist-time num" style="width:26px;">'+rankLabel+'</span>' : '')+
+      '<span class="hist-icon" style="background:var(--surface-3);color:'+trendColor+';">'+iconSvg(trendIcon)+'</span>'+
+      '<span class="hist-main"><div class="hist-title">'+esc(d.title)+'</div><div class="hist-sub">'+esc(d.artist)+' &middot; '+d.genre+(d.inLibrary?' &middot; In your library':'')+'</div></span>'+
+    '</div>'
+  );
+}
+function renderDiscover(){
+  var el = document.getElementById('view-discover');
+  var region = DISCOVER_REGIONS[state.discoverRegion];
+  var pool = discoverPoolForTab(state.discoverTab);
+  if (state.discoverQuery){
+    var q = state.discoverQuery.toLowerCase();
+    pool = pool.filter(function(d){ return (d.artist+' '+d.title).toLowerCase().indexOf(q)!==-1; });
+  }
+  var watchlist = DISCOVERY.filter(function(d){ return d.trend==='up'||d.trend==='new'; }).slice(0,4);
+
+  el.innerHTML =
+    '<div class="view-head"><div><span class="eyebrow">Live Intelligence</span><h2 class="view-title">Music Discovery</h2>'+
+    '<p class="view-desc">Apple Music Intelligence — trending, charts and recommendations to feed the Library.</p></div>'+
+    '<span class="badge gold">API Ready</span></div>'+
+    '<div class="filter-bar">'+
+      '<input type="text" id="discSearch" placeholder="Search artist or track" value="'+esc(state.discoverQuery)+'">'+
+      '<select id="discRegion">'+DISCOVER_REGIONS.map(function(r,i){ return '<option value="'+i+'"'+(state.discoverRegion===i?' selected':'')+'>'+r+'</option>'; }).join('')+'</select>'+
+    '</div>'+
+    '<div class="route-tabs">'+
+      [['trending','Trending'],['charts','Charts'],['new','New Releases'],['recommended','Recommended'],['genres','Genres'],['regions','Regions'],['search','Search']].map(function(t){
+        return '<button class="route-tab'+(state.discoverTab===t[0]?' active':'')+'" data-disc-tab="'+t[0]+'">'+t[1]+'</button>';
+      }).join('')+
+    '</div>'+
+    '<div class="grid-2">'+
+      '<div><div class="result-count">'+discTabTitle(state.discoverTab)+' — '+region+'</div>'+
+        '<div class="panel">'+(pool.length ? pool.map(function(d,i){ return discoverRow(d,i); }).join('') : '<div class="panel-body"><div class="move-empty">No demo tracks match this search.</div></div>')+'</div>'+
+      '</div>'+
+      '<div><div class="panel"><div class="panel-head"><span class="label">Watchlist</span><span class="badge">Gaining momentum</span></div>'+
+        watchlist.map(function(d){ return discoverRow(d); }).join('')+
+      '</div></div>'+
+    '</div>'+
+    '<div class="footer-strip" style="margin-top:14px;"><div class="footer-cell">'+iconSvg('search')+' Apple Music Discovery · Prototype</div><div class="footer-cell">No live API call is made — every list here is DEMO data</div></div>';
+
+  document.getElementById('discSearch').addEventListener('input', function(e){ state.discoverQuery=e.target.value; renderDiscover(); });
+  document.getElementById('discRegion').addEventListener('change', function(e){ state.discoverRegion=parseInt(e.target.value,10); renderDiscover(); });
+  el.querySelectorAll('[data-disc-tab]').forEach(function(b){
+    b.addEventListener('click', function(){ state.discoverTab=b.getAttribute('data-disc-tab'); renderDiscover(); });
+  });
+}
+
+/* ============================= VIEW: LIBRARY ============================= */
+function filteredLibrary(){
+  var f = state.libFilters;
+  return TRACKS.filter(function(t){
+    if (f.gen!=='all' && String(t.gen)!==f.gen) return false;
+    if (f.culture!=='all' && t.culture!==f.culture) return false;
+    if (f.func!=='all' && t.func!==f.func) return false;
+    if (f.bridge!=='all' && String(t.bridge)!==f.bridge) return false;
+    if (f.q && (t.title+' '+t.artist).toLowerCase().indexOf(f.q.toLowerCase())===-1) return false;
+    return true;
+  });
+}
+function renderLibrary(){
+  var el = document.getElementById('view-library');
+  var rows = filteredLibrary();
+  el.innerHTML =
+    '<div class="view-head"><div><span class="eyebrow">Programming</span><h2 class="view-title">Master Library</h2>'+
+    '<p class="view-desc">DEMO catalog — 28 fictional reference tracks used to demonstrate filtering, bridging and block logic.</p></div>'+
+    '<span class="badge gold">Demo Data</span></div>'+
+    '<div class="filter-bar">'+
+      '<input type="text" id="libSearch" placeholder="Search track or artist" value="'+esc(state.libFilters.q)+'">'+
+      '<select id="fGen"><option value="all">All Generations</option>'+GENERATIONS.map(function(g,i){ return '<option value="'+i+'"'+(state.libFilters.gen===String(i)?' selected':'')+'>'+g.code+' — '+g.label+'</option>'; }).join('')+'</select>'+
+      '<select id="fCulture"><option value="all">All Cultures</option><option value="anglo">Anglo</option><option value="latino">Latino</option><option value="mixed">Mixed</option></select>'+
+      '<select id="fFunc"><option value="all">All Functions</option>'+['ENTRY','CORE','PEAK','EXIT','BRIDGE'].map(function(f){ return '<option value="'+f+'">'+f+'</option>'; }).join('')+'</select>'+
+      '<select id="fBridge"><option value="all">Bridge: Any</option><option value="true">Bridge Capable</option><option value="false">Non-Bridge</option></select>'+
+    '</div>'+
+    '<div class="result-count">'+rows.length+' of '+TRACKS.length+' demo tracks</div>'+
+    '<div class="panel scrollx"><table><thead><tr>'+
+      ['Track','Artist','Year','Gen','Genre','BPM','Key','Energy','Recognition','Function','Culture','Status'].map(function(h){ return '<th>'+h+'</th>'; }).join('')+
+    '</tr></thead><tbody>'+
+      rows.map(function(t){
+        return '<tr class="'+(state.playedIds[t.id]?'played':'')+'" data-track-row="'+t.id+'">'+
+          '<td class="track-name">'+esc(t.title)+'</td><td>'+esc(t.artist)+'</td><td class="num">'+t.year+'</td>'+
+          '<td>'+genOf(t.gen).code+'</td><td>'+t.genre+'</td><td class="num">'+t.bpm+'</td><td class="num">'+t.key+'</td>'+
+          '<td class="num">'+t.energy.toFixed(1)+'</td><td class="num">'+t.recognition.toFixed(1)+'</td>'+
+          '<td>'+functionBadge(t.func)+'</td><td>'+cultureBadge(t.culture)+'</td>'+
+          '<td>'+(state.playedIds[t.id]?'<span class="badge good">Played</span>':'<span class="badge">Available</span>')+'</td>'+
+        '</tr>';
+      }).join('')+
+    '</tbody></table></div>'+
+    '<div id="trackDetail"></div>';
+
+  document.getElementById('libSearch').addEventListener('input', function(e){ state.libFilters.q = e.target.value; renderLibrary(); });
+  document.getElementById('fGen').addEventListener('change', function(e){ state.libFilters.gen = e.target.value; renderLibrary(); });
+  document.getElementById('fCulture').addEventListener('change', function(e){ state.libFilters.culture = e.target.value; renderLibrary(); });
+  document.getElementById('fFunc').addEventListener('change', function(e){ state.libFilters.func = e.target.value; renderLibrary(); });
+  document.getElementById('fBridge').addEventListener('change', function(e){ state.libFilters.bridge = e.target.value; renderLibrary(); });
+  el.querySelectorAll('[data-track-row]').forEach(function(row){
+    row.addEventListener('click', function(){ renderTrackDetail(row.getAttribute('data-track-row')); });
+  });
+}
+function renderTrackDetail(id){
+  var t = trackById(id);
+  var reactions = state.history.filter(function(h){ return h.trackId===id; });
+  var entryFrom = state.history.length ? '' : '';
+  var bridgeOpts = TRACKS.filter(function(tr){ return tr.bridge && Math.abs(tr.gen-t.gen)<=1 && tr.id!==t.id; }).slice(0,3);
+  var box = document.getElementById('trackDetail');
+  box.innerHTML =
+    '<div class="panel" style="margin-top:14px;">'+
+      '<div class="panel-head"><span class="label">Track Detail</span><button class="icon-btn" id="closeDetail">'+iconSvg('close')+'</button></div>'+
+      '<div class="panel-body grid-2">'+
+        '<div>'+
+          '<div class="np-title" style="font-size:19px;">'+esc(t.title)+'</div>'+
+          '<div class="np-artist">'+esc(t.artist)+' &middot; '+t.year+'</div>'+
+          '<div class="np-meta" style="margin-top:8px;">'+functionBadge(t.func)+cultureBadge(t.culture)+'<span class="badge">'+t.category+'</span>'+(function(){ var ev=evidenceFor(t); return '<span class="badge '+ev.tone+'">Evidence: '+ev.label+'</span>'; })()+'</div>'+
+          '<p style="color:var(--text-dim);font-size:12.5px;margin-top:12px;line-height:1.6;">'+esc(t.notes)+'</p>'+
+          '<div class="stat-grid" style="margin-top:12px;">'+
+            '<div class="stat-cell"><span class="label">BPM</span><span class="v num">'+t.bpm+'</span></div>'+
+            '<div class="stat-cell"><span class="label">Key</span><span class="v num">'+t.key+'</span></div>'+
+            '<div class="stat-cell hi"><span class="label">Energy</span><span class="v num">'+t.energy.toFixed(1)+'</span></div>'+
+            '<div class="stat-cell hi"><span class="label">Recognition</span><span class="v num">'+t.recognition.toFixed(1)+'</span></div>'+
+          '</div>'+
+        '</div>'+
+        '<div>'+
+          '<span class="label">Bridge Options</span>'+
+          '<div class="bridge-list" style="margin-top:8px;">'+
+            (bridgeOpts.length ? bridgeOpts.map(function(b){ return '<div class="panel bridge-item"><div class="bi-main"><div class="bi-title">'+esc(b.title)+'</div><div class="bi-sub">'+genOf(b.gen).label+' &middot; '+b.bpm+' BPM &middot; '+b.key+'</div></div></div>'; }).join('') : '<div class="move-empty">No adjacent-generation bridge tracks tagged for this entry.</div>')+
+          '</div>'+
+          '<span class="label" style="margin-top:14px;display:block;">Reaction History</span>'+
+          '<div class="panel" style="margin-top:8px;">'+
+            (reactions.length ? reactions.map(function(r){ return '<div class="hist-row"><span class="hist-time">'+r.time+'</span><span class="hist-main"><span class="hist-title">Floor response '+r.extra+'</span></span></div>'; }).join('') : '<div class="move-empty">No logged reactions yet for this track this event.</div>')+
+          '</div>'+
+        '</div>'+
+      '</div>'+
+      (t.bridge ? '<div class="panel-body" style="border-top:1px solid var(--border);"><span class="label" style="display:block;margin-bottom:10px;">DJ Knowledge — this track as a bridge</span>'+renderBridgeKnowledge(t)+'</div>' : '')+
+    '</div>';
+  document.getElementById('closeDetail').addEventListener('click', function(){ box.innerHTML=''; });
+  box.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+/* ============================= VIEW: GENERATION MAP ============================= */
+function renderGenMap(){
+  var el = document.getElementById('view-genmap');
+  var nodes = GENERATIONS.map(function(g,i){
+    var cls='genmap-node'+(i===state.activeGen?' active':'')+(i===state.genFrom?' from':'')+(i===state.genTo?' to':'');
+    return '<button class="'+cls+'" data-genmap="'+i+'"><div class="genmap-circle">'+g.code+'</div><div class="genmap-label">'+g.label+'</div></button>'+
+      (i<GENERATIONS.length-1?'<div class="genmap-line"></div>':'');
+  }).join('');
+  var bridges = TRACKS.filter(function(t){ return t.bridge && (t.gen===state.genFrom || t.gen===state.genTo); })
+    .sort(function(a,b){ return b.recognition-a.recognition; });
+  el.innerHTML =
+    '<div class="view-head"><div><span class="eyebrow">Programming</span><h2 class="view-title">Generation Map</h2>'+
+    '<p class="view-desc">Visualize the full generational spine and find tagged bridge tracks between any two points.</p></div></div>'+
+    '<div class="panel"><div class="genmap-row scrollx">'+nodes+'</div></div>'+
+    '<div class="ft-row" style="margin-top:18px;">'+
+      '<div class="ft-field"><label class="label">From</label><select id="genFrom">'+GENERATIONS.map(function(g,i){ return '<option value="'+i+'"'+(state.genFrom===i?' selected':'')+'>'+g.code+' — '+g.label+'</option>'; }).join('')+'</select></div>'+
+      '<div class="ft-field"><label class="label">To</label><select id="genTo">'+GENERATIONS.map(function(g,i){ return '<option value="'+i+'"'+(state.genTo===i?' selected':'')+'>'+g.code+' — '+g.label+'</option>'; }).join('')+'</select></div>'+
+    '</div>'+
+    '<div class="panel"><div class="panel-head"><span class="label">Possible Bridges: '+genOf(state.genFrom).label+' → '+genOf(state.genTo).label+'</span><span class="badge">'+bridges.length+' found</span></div>'+
+    '<div class="bridge-list panel-body">'+
+      (bridges.length ? bridges.map(function(b){
+        return '<div class="panel bridge-item"><div class="bi-main"><div class="bi-title">'+esc(b.title)+' <span style="color:var(--text-faint);font-weight:400;">— '+esc(b.artist)+'</span></div><div class="bi-sub">'+genOf(b.gen).label+' &middot; DEMO track</div><div class="chip-row" style="margin-top:6px;">'+trackMetaChips(b)+'</div></div><div class="num" style="color:var(--gold-bright);font-weight:700;">'+b.recognition.toFixed(1)+'</div></div>';
+      }).join('') : '<div class="move-empty">No demo tracks tagged for this specific span yet.</div>')+
+    '</div></div>';
+  el.querySelectorAll('[data-genmap]').forEach(function(b){
+    b.addEventListener('click', function(){ state.activeGen = parseInt(b.getAttribute('data-genmap'),10); renderGenMap(); });
+  });
+  document.getElementById('genFrom').addEventListener('change', function(e){ state.genFrom = parseInt(e.target.value,10); renderGenMap(); });
+  document.getElementById('genTo').addEventListener('change', function(e){ state.genTo = parseInt(e.target.value,10); renderGenMap(); });
+}
+
+/* ============================= VIEW: BLOCK BUILDER ============================= */
+var LANES = ['ENTRY','CORE','PEAK','EXIT','BRIDGE'];
+function renderBlocks(){
+  var el = document.getElementById('view-blocks');
+  var bk = state.block;
+  el.innerHTML =
+    '<div class="view-head"><div><span class="eyebrow">Programming</span><h2 class="view-title">Block Builder</h2>'+
+    '<p class="view-desc">Assemble a generational block: Entry → Core → Peak → Exit → Bridge, with an explicit exit route every time.</p></div></div>'+
+    '<div class="panel">'+
+      '<div class="bb-form">'+
+        '<div class="field"><label>Block Name</label><input type="text" id="bbName" value="'+esc(bk.name)+'"></div>'+
+        '<div class="field"><label>Generation</label><select id="bbGen">'+GENERATIONS.map(function(g,i){ return '<option value="'+i+'"'+(bk.gen===i?' selected':'')+'>'+g.code+' — '+g.label+'</option>'; }).join('')+'</select></div>'+
+        '<div class="field"><label>Event Phase</label><select id="bbPhase">'+PHASES.map(function(p){ return '<option'+(bk.phase===p?' selected':'')+'>'+p+'</option>'; }).join('')+'</select></div>'+
+        '<div class="field"><label>Target Energy</label><input type="text" id="bbEnergy" value="'+bk.targetEnergy+'"></div>'+
+      '</div>'+
+      '<div class="bb-lanes panel-body" style="padding-top:0;">'+
+        LANES.map(function(lane){
+          var items = bk.lanes[lane];
+          return '<div class="lane"><div class="lane-head"><span class="lane-title">'+lane+'</span><button class="btn btn-ghost btn-sm" data-add-lane="'+lane+'">'+iconSvg('add')+'</button></div>'+
+            '<div class="lane-body">'+
+              (items.length ? items.map(function(id, idx){
+                var t = trackById(id);
+                return '<div class="lane-track"><div class="lt-title">'+esc(t.title)+'</div><div class="lt-meta">'+t.bpm+' BPM &middot; '+genOf(t.gen).code+'</div>'+
+                  '<div class="lt-actions">'+
+                    '<button class="btn btn-ghost btn-sm" data-move="'+lane+':'+idx+':-1">↑</button>'+
+                    '<button class="btn btn-ghost btn-sm" data-move="'+lane+':'+idx+':1">↓</button>'+
+                    '<button class="btn btn-ghost btn-sm" data-remove="'+lane+':'+idx+'">Remove</button>'+
+                  '</div>'+
+                '</div>';
+              }).join('') : '<div class="lane-empty">Empty — Add a track</div>')+
+            '</div></div>';
+        }).join('')+
+      '</div>'+
+    '</div>'+
+    '<div style="margin-top:14px;display:flex;gap:10px;">'+
+      '<button class="btn btn-gold" id="bbSave">Save Block</button>'+
+      '<span class="badge gold" style="align-self:center;">Demo Data</span>'+
+    '</div>'+
+    '<div class="saved-blocks">'+
+      (state.savedBlocks.length ? state.savedBlocks.map(function(sb,i){
+        return '<div class="panel saved-block"><div><div style="font-weight:700;font-size:13px;">'+esc(sb.name)+'</div><div class="hist-sub">'+genOf(sb.gen).label+' &middot; '+sb.phase+' &middot; target energy '+sb.targetEnergy+'</div></div><span class="badge">'+(sb.lanes.ENTRY.length+sb.lanes.CORE.length+sb.lanes.PEAK.length+sb.lanes.EXIT.length+sb.lanes.BRIDGE.length)+' tracks</span></div>';
+      }).join('') : '<div class="empty-state">'+iconSvg('blocks')+'<span>No saved blocks yet this session.</span></div>')+
+    '</div>';
+
+  document.getElementById('bbName').addEventListener('input', function(e){ bk.name=e.target.value; });
+  document.getElementById('bbGen').addEventListener('change', function(e){ bk.gen=parseInt(e.target.value,10); renderBlocks(); });
+  document.getElementById('bbPhase').addEventListener('change', function(e){ bk.phase=e.target.value; });
+  document.getElementById('bbEnergy').addEventListener('input', function(e){ bk.targetEnergy=e.target.value; });
+  el.querySelectorAll('[data-add-lane]').forEach(function(b){
+    b.addEventListener('click', function(){
+      var lane = b.getAttribute('data-add-lane');
+      var pool = TRACKS.filter(function(t){ return t.gen===bk.gen && bk.lanes[lane].indexOf(t.id)===-1; });
+      if (!pool.length){ toast('No more demo tracks for '+lane+' in '+genOf(bk.gen).label); return; }
+      bk.lanes[lane].push(pool[0].id);
+      renderBlocks();
+    });
+  });
+  el.querySelectorAll('[data-remove]').forEach(function(b){
+    b.addEventListener('click', function(){
+      var p = b.getAttribute('data-remove').split(':');
+      bk.lanes[p[0]].splice(parseInt(p[1],10),1);
+      renderBlocks();
+    });
+  });
+  el.querySelectorAll('[data-move]').forEach(function(b){
+    b.addEventListener('click', function(){
+      var p = b.getAttribute('data-move').split(':');
+      var lane=p[0], idx=parseInt(p[1],10), dir=parseInt(p[2],10);
+      var arr = bk.lanes[lane]; var ni = idx+dir;
+      if (ni<0||ni>=arr.length) return;
+      var tmp=arr[idx]; arr[idx]=arr[ni]; arr[ni]=tmp;
+      renderBlocks();
+    });
+  });
+  document.getElementById('bbSave').addEventListener('click', function(){
+    state.savedBlocks.unshift(JSON.parse(JSON.stringify(bk)));
+    toast('Block saved: '+bk.name);
+    renderBlocks();
+  });
+}
+
+/* ============================= VIEW: BRIDGE ENGINE ============================= */
+var ROUTE_OPTIONS = [
+  {id:'direct', label:'Direct', hops:0},
+  {id:'1-track', label:'1-Track Bridge', hops:1},
+  {id:'2-track', label:'2-Track Bridge', hops:2},
+  {id:'3-track', label:'3-Track Bridge', hops:3}
+];
+var CONNECTORS = ['BPM','KEY','RHYTHM','SAMPLE','REMIX','ERA','CULTURAL CONNECTION','ENERGY','LEGACY'];
+function connectorsFor(t){
+  var seed = t.id.charCodeAt(1)+t.gen;
+  var picked = [];
+  CONNECTORS.forEach(function(c,i){ if ((seed+i)%3===0) picked.push(c); });
+  return picked.length ? picked.slice(0,4) : ['ERA','ENERGY'];
+}
+function renderBridge(){
+  var el = document.getElementById('view-bridge');
+  var from = state.bridgeFrom, to = state.bridgeTo;
+  var hops = ROUTE_OPTIONS.filter(function(r){ return r.id===state.bridgeRoute; })[0].hops;
+  var pool = TRACKS.filter(function(t){ return t.bridge && (t.gen===from||t.gen===to); }).sort(function(a,b){ return b.recognition-a.recognition; });
+  var chain = pool.slice(0, Math.max(hops,0));
+  var npTrack = trackById(state.nowPlayingId);
+
+  el.innerHTML =
+    '<div class="view-head"><div><span class="eyebrow">Programming</span><h2 class="view-title">Bridge Engine</h2>'+
+    '<p class="view-desc">Plan the connective tissue between two generations using BPM, key, rhythm, sample and cultural relationships.</p></div></div>'+
+    '<div class="ft-row">'+
+      '<div class="ft-field"><label class="label">Current Generation</label><select id="brFrom">'+GENERATIONS.map(function(g,i){ return '<option value="'+i+'"'+(from===i?' selected':'')+'>'+g.code+' — '+g.label+'</option>'; }).join('')+'</select></div>'+
+      '<div class="ft-field"><label class="label">Target Generation</label><select id="brTo">'+GENERATIONS.map(function(g,i){ return '<option value="'+i+'"'+(to===i?' selected':'')+'>'+g.code+' — '+g.label+'</option>'; }).join('')+'</select></div>'+
+      '<div class="ft-field"><label class="label">Current Track</label><div class="badge" style="padding:9px 12px;">'+esc(npTrack.title)+'</div></div>'+
+    '</div>'+
+    '<div class="route-tabs">'+ROUTE_OPTIONS.map(function(r){ return '<button class="route-tab'+(state.bridgeRoute===r.id?' active':'')+'" data-route="'+r.id+'">'+r.label+'</button>'; }).join('')+'</div>'+
+    '<div class="panel"><div class="panel-head"><span class="label">'+genOf(from).label+' → '+(hops>0?hops+'-Track Bridge':'Direct')+' → '+genOf(to).label+'</span></div>'+
+    '<div class="route-chain scrollx">'+
+      '<div class="panel chain-node"><div class="label">'+genOf(from).label+'</div><div style="font-weight:700;margin-top:4px;">'+esc(npTrack.title)+'</div></div>'+
+      '<div class="chain-arrow">→</div>'+
+      (chain.length ? chain.map(function(t,i){
+        return '<div class="panel chain-node"><div class="label">Bridge '+(i+1)+' &middot; '+genOf(t.gen).label+'</div><div style="font-weight:700;margin-top:4px;">'+esc(t.title)+'</div>'+
+          '<div class="chip-row" style="margin-top:6px;">'+connectorsFor(t).map(function(c){ return '<span class="chip">'+c+'</span>'; }).join('')+'</div></div><div class="chain-arrow">→</div>';
+      }).join('') : (hops>0 ? '<div class="move-empty" style="padding:14px;">No demo tracks tagged for '+hops+' hops on this span.</div><div class="chain-arrow">→</div>' : ''))+
+      '<div class="panel chain-node" style="border-color:var(--gold-dim);"><div class="label">'+genOf(to).label+'</div><div style="font-weight:700;margin-top:4px;color:var(--gold-bright);">Target Generation</div></div>'+
+    '</div>'+
+    '<div class="panel-body" style="padding-top:0;"><button class="btn btn-gold btn-sm" id="useRoute">Use This Route</button></div>'+
+    '</div>'+
+    renderBridgeKnowledgePanel(chain[0]||null, from, to);
+
+  document.getElementById('brFrom').addEventListener('change', function(e){ state.bridgeFrom=parseInt(e.target.value,10); renderBridge(); });
+  document.getElementById('brTo').addEventListener('change', function(e){ state.bridgeTo=parseInt(e.target.value,10); renderBridge(); });
+  el.querySelectorAll('[data-route]').forEach(function(b){
+    b.addEventListener('click', function(){ state.bridgeRoute = b.getAttribute('data-route'); renderBridge(); });
+  });
+  document.getElementById('useRoute').addEventListener('click', function(){
+    state.activeGen = state.bridgeFrom;
+    toast("Route queued — visit Event Mode's Generation Bridge card to select the next track.");
+    setView('event');
+  });
+}
+
+/* ============================= VIEW: HISTORY ============================= */
+function renderHistory(){
+  var el = document.getElementById('view-history');
+  var playedCount = Object.keys(state.playedIds).length;
+  el.innerHTML =
+    '<div class="view-head"><div><span class="eyebrow">Record</span><h2 class="view-title">History</h2>'+
+    '<p class="view-desc">Chronological log of played tracks, floor responses and block changes for this session.</p></div>'+
+    '<span class="badge good">No Repeats ✓</span></div>'+
+    '<div class="footer-strip" style="margin-bottom:14px;"><div class="footer-cell">Tracks Played <b>'+playedCount+'</b></div><div class="footer-cell">Events Logged <b>'+state.history.length+'</b></div></div>'+
+    '<div class="panel">'+
+      (state.history.length ? state.history.map(function(h){
+        var t = h.trackId ? trackById(h.trackId) : null;
+        var iconName = h.kind==='played'?'play':(h.kind==='response'?'status':'blocks');
+        var iconBg = h.kind==='played'?'good-wash':(h.kind==='response'?'gold-wash':'info');
+        var title = h.kind==='played' ? 'Played: '+(t?t.title:'') : h.kind==='response' ? 'Floor response '+h.extra+' — '+(t?t.title:'') : h.extra;
+        var sub = t ? genOf(t.gen).label+' · '+t.artist : '';
+        return '<div class="hist-row"><span class="hist-time">'+h.time+'</span><span class="hist-icon" style="background:var(--'+(h.kind==='played'?'good-wash':h.kind==='response'?'gold-wash':'surface-3')+');color:'+(h.kind==='played'?'var(--good)':h.kind==='response'?'var(--gold-bright)':'var(--info)')+';">'+iconSvg(iconName)+'</span><span class="hist-main"><div class="hist-title">'+esc(title)+'</div><div class="hist-sub">'+esc(sub)+'</div></span></div>';
+      }).join('') : '<div class="empty-state">'+iconSvg('history')+'<span>Nothing logged yet — select a Next Move or log a Floor Response in Event Mode.</span></div>')+
+    '</div>';
+}
+
+/* ============================= VIEW: LEARNING ============================= */
+function renderLearning(){
+  var el = document.getElementById('view-learning');
+  var t = trackById(state.learnTrackId);
+  el.innerHTML =
+    '<div class="view-head"><div><span class="eyebrow">Record</span><h2 class="view-title">DJ Learning Mode</h2>'+
+    '<p class="view-desc">The platform teaches reasoning, not just titles. Pick a demo track to see how the engine would justify a recommendation.</p></div></div>'+
+    '<div class="learn-grid">'+
+      '<div class="panel panel-body" style="max-height:520px;overflow-y:auto;">'+
+        '<span class="label" style="display:block;margin-bottom:8px;">Demo Tracks</span>'+
+        TRACKS.map(function(tr){
+          return '<button class="learn-track-btn'+(tr.id===state.learnTrackId?' active':'')+'" data-learn="'+tr.id+'"><span style="font-weight:700;font-size:12px;">'+esc(tr.title)+'</span><span style="font-size:10.5px;color:var(--text-faint);">'+genOf(tr.gen).label+' &middot; '+tr.artist+'</span></button>';
+        }).join('')+
+      '</div>'+
+      '<div>'+
+        '<div class="panel panel-body" style="margin-bottom:14px;">'+
+          '<div class="np-title" style="font-size:18px;">'+esc(t.title)+'</div>'+
+          '<div class="np-artist">'+esc(t.artist)+' &middot; '+genOf(t.gen).label+' &middot; '+t.category+'</div>'+
+        '</div>'+
+        '<div class="reason-list">'+
+          REASONS.map(function(r){
+            return '<div class="panel reason-item"><div class="reason-icon">'+iconSvg(r.icon)+'</div><div><h4>'+r.name+'</h4><p>'+r.text+'</p></div></div>';
+          }).join('')+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  el.querySelectorAll('[data-learn]').forEach(function(b){
+    b.addEventListener('click', function(){ state.learnTrackId = b.getAttribute('data-learn'); renderLearning(); });
+  });
+}
+
+/* ============================= VIEW: CONFIG ============================= */
+function renderConfig(){
+  var el = document.getElementById('view-config');
+  el.innerHTML =
+    '<div class="view-head"><div><span class="eyebrow">System</span><h2 class="view-title">Config</h2>'+
+    '<p class="view-desc">Prototype-level settings. Nothing here writes to a backend — this is a local, non-production shell.</p></div></div>'+
+    '<div class="panel">'+
+      '<div class="cfg-row"><div><div class="k">Guided Learning Mode</div><div class="d">Same recommendation engine for both — Guided auto-expands WHY reasoning; Experienced stays compact for veteran DJs who just want the numbers.</div></div><button class="switch'+(state.guided?' on':'')+'" id="cfgGuided"></button></div>'+
+      '<div class="cfg-row"><div><div class="k">Booth Focus (Full Screen)</div><div class="d">Collapses the rail to icons only for low-light booth use.</div></div><button class="switch'+(state.djMode?' on':'')+'" id="cfgFocus"></button></div>'+
+      '<div class="cfg-row"><div><div class="k">Default Culture Mode</div><div class="d">Applied when Event Mode is opened fresh.</div></div>'+
+        '<select id="cfgCulture" style="background:var(--surface-2);border:1px solid var(--border-strong);color:var(--text);padding:8px 10px;border-radius:6px;">'+
+        ['anglo','latino','mixed'].map(function(c){ return '<option value="'+c+'"'+(state.culture===c?' selected':'')+'>'+c.toUpperCase()+'</option>'; }).join('')+'</select></div>'+
+      '<div class="cfg-row"><div><div class="k">Active Experience</div><div class="d">Determines which catalog and rules are loaded into Event Mode.</div></div><span class="badge gold">One Hit Wonder</span></div>'+
+      '<div class="cfg-row"><div><div class="k">Platform Architecture</div><div class="d">Core Platform (Event, Library, Floor Intelligence, Energy, Generation, Block, Bridge, History and Learning engines) is fully decoupled from Experiences. Each Experience plugs in its own catalog, rules and bridges by ID — the core never has to be rebuilt to add one.</div></div><span class="badge">10 Core Engines</span></div>'+
+      '<div class="cfg-row"><div><div class="k">Environment</div><div class="d">This build never writes to production systems, and carries no payments, accounts or persistence.</div></div><span class="badge">Prototype · Local · Non-Production</span></div>'+
+    '</div>';
+  document.getElementById('cfgGuided').addEventListener('click', function(){ toggleGuidedMode(); renderConfig(); });
+  document.getElementById('cfgFocus').addEventListener('click', function(){ toggleFocusMode(); renderConfig(); });
+  document.getElementById('cfgCulture').addEventListener('change', function(e){ state.culture=e.target.value; });
+}
+
+/* ============================= NAV / SHELL ============================= */
+var VIEWS = ['home','experiences','event','live','discover','library','genmap','blocks','bridge','history','learning','config'];
+var RENDERERS = {
+  home:renderHome, experiences:renderExperiences, event:renderEvent, live:renderLiveListening, discover:renderDiscover, library:renderLibrary,
+  genmap:renderGenMap, blocks:renderBlocks, bridge:renderBridge, history:renderHistory,
+  learning:renderLearning, config:renderConfig
+};
+function setView(v){
+  state.view = v;
+  VIEWS.forEach(function(name){
+    document.getElementById('view-'+name).classList.toggle('active', name===v);
+  });
+  document.querySelectorAll('.nav-item').forEach(function(btn){
+    btn.classList.toggle('active', btn.getAttribute('data-view')===v);
+  });
+  RENDERERS[v]();
+}
+document.querySelectorAll('.nav-item').forEach(function(btn){
+  btn.addEventListener('click', function(){ setView(btn.getAttribute('data-view')); });
+});
+
+function toggleGuidedMode(){
+  state.guided = !state.guided;
+  document.getElementById('btnDjMode').classList.toggle('active', state.guided);
+  var badge = document.getElementById('modeBadge');
+  badge.textContent = state.guided ? 'GUIDED' : 'EXPERIENCED';
+  badge.className = 'badge'+(state.guided?' info':'');
+  toast(state.guided ? 'Guided Mode — recommendations now show full reasoning' : 'Experienced Mode — compact readouts, tap Why when needed');
+  if (state.view==='event') renderEvent();
+}
+function toggleFocusMode(){
+  state.djMode = !state.djMode;
+  document.getElementById('rail').classList.toggle('collapsed', state.djMode);
+}
+document.getElementById('btnDjMode').addEventListener('click', toggleGuidedMode);
+document.getElementById('btnSettings').addEventListener('click', function(){ setView('config'); });
+document.getElementById('btnEventStatus').addEventListener('click', function(){
+  toast(state.history.length ? 'Event status: ACTIVE — '+Object.keys(state.playedIds).length+' tracks played' : 'Event status: STANDBY — no tracks played yet');
+});
+document.getElementById('btnFocus').addEventListener('click', function(){
+  var el = document.documentElement;
+  try{
+    if (!document.fullscreenElement){ (el.requestFullscreen||el.webkitRequestFullscreen||function(){}).call(el); document.getElementById('btnFocus').classList.add('active'); }
+    else { (document.exitFullscreen||document.webkitExitFullscreen||function(){}).call(document); document.getElementById('btnFocus').classList.remove('active'); }
+  }catch(e){ toggleFocusMode(); document.getElementById('btnFocus').classList.toggle('active', state.djMode); }
+});
+
+function renderHeaderBits(){
+  var exp = EXPERIENCES.filter(function(e){ return e.id===state.experience; })[0] || EXPERIENCES[0];
+  document.getElementById('expPillLabel').textContent = exp.name.toUpperCase()+' EXPERIENCE';
+}
+
+setInterval(function(){
+  if (state.view==='event'){
+    var cell = document.getElementById('clockCell');
+    if (cell) cell.textContent = nowStamp();
+  }
+  if (state.view==='live' && state.liveListening && state.liveCurrentId){
+    state.liveTimecode += 1;
+    var tcCell = document.getElementById('liveTimecodeCell');
+    if (tcCell) tcCell.textContent = fmtClock(state.liveTimecode);
+  }
+}, 1000);
+
+renderHeaderBits();
+setView('home');
+})();
+    </script>
+</body>
+</html>

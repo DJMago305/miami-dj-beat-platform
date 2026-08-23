@@ -178,7 +178,7 @@
         el resto de la geometria de la estacion.
 
      Bug real encontrado y corregido el mismo dia por saltarse el punto 2:
-     mdj-music-intelligence.html (nueva) y cash-flow.html (ya existia, se
+     mdjb-music-intelligence.html (nueva) y cash-flow.html (ya existia, se
      coló sin la clase). Antes de dar por terminada CUALQUIER pagina de
      Academia/estacion, verificar AMBOS puntos — no asumir que uno implica
      el otro, son mecanismos independientes (JS vs CSS). */
@@ -202,11 +202,11 @@
        Ambas conservan la barra —comprobado— que es el requisito de esta lista. */
     'courses.html': 1,
     'dj-knowledge.html': 1,
-    /* Tercer destino de Academia (PO 2026-08-22): mdj-music-intelligence.html
+    /* Tercer destino de Academia (PO 2026-08-22): mdjb-music-intelligence.html
        es "continuación natural de academia.html" por el mismo motivo que
        courses.html/dj-knowledge.html — se llega por su tarjeta en
        .academia-float-tabs y conserva la barra. */
-    'mdj-music-intelligence.html': 1
+    'mdjb-music-intelligence.html': 1
     /* shop.html NO figura: no es una vista nuestra, redirige a la tienda de
        Shopify. Comprobado en vivo — el riel sale de la plataforma por ese puesto,
        igual que por Inicio. La lista solo admite destinos que conserven la barra. */
@@ -418,7 +418,7 @@
     'dj-knowledge.html': 1,
     /* Mismo motivo que en MDJ_VISTAS_ARTISTA arriba (PO 2026-08-22): tercer
        destino de Academia, staff/owner también debe conservar la estación. */
-    'mdj-music-intelligence.html': 1
+    'mdjb-music-intelligence.html': 1
   };
 
   /* El juego interno exige DOS condiciones, no una: que la pagina sea interna
