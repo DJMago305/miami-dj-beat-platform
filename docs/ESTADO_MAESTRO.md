@@ -43,17 +43,31 @@ Estado general: Operativo / En consolidación
       en topbar, tarjetas de plantilla, panel de campos, marco del documento y
       dropzone del W-9. El "papel" de los documentos (contrato, PDF del W-9)
       se queda claro a propósito — es el papel dentro del marco oscuro, no el
-      chrome de la herramienta. Sin commitear/PR todavía — checkpoint de pausa
-      (ver abajo), no una entrega cerrada.
-      **⏸️ PENDIENTES VISUALES AL RETOMAR (2 puntos, PO 2026-08-23):**
-      1. Eliminar la cabecera interna redundante de `contracts-engine.html`
-         (la barra propia con ES/EN/Marca) para que la herramienta se integre
-         limpia bajo el header principal de `staff.html`, sin una segunda
-         barra encima.
-      2. Terminar la homologación de marca: aplicar el Dark Design System al
-         contenedor EXTERIOR de la herramienta (ya iniciado, ver arriba) e
-         integrar el logotipo oficial de Miami DJ Beat en las plantillas de
-         contrato (hoy usan el slot de logo genérico/subida manual).
+      chrome de la herramienta. Commiteado como checkpoint local
+      (`d9d5922`), sin PR nuevo abierto todavía.
+      **⏸️ ARQUITECTURA APROBADA PARA LA PRÓXIMA SESIÓN DE MAQUILLAJE VISUAL**
+      (PO 2026-08-23, reemplaza el punteo genérico anterior — esta es la
+      versión concreta a construir):
+      1. **Nuevo acordeón `⚖️ Bóveda Legal` en el sidebar de Staff** (mismo
+         nivel que Gobernanza/Clientes/Equipo/Operaciones/Eventos, no un link
+         suelto dentro de Operaciones como quedó hoy). Sus sub-ítems son la
+         selección de plantilla, hoy dentro del propio HTML del motor:
+         - 🎧 Contrato Artista / DJ
+         - 🏢 Eventos Corporativos
+         - 🏛️ Venue / Residencia
+         - 🎚️ Staff / Operador Técnico
+         - 🧾 Formulario IRS W-9
+         Click en un sub-ítem → carga esa plantilla en el área principal de
+         trabajo (mismo mecanismo de panel que ya usan Gobernanza/Inbox).
+      2. **Limpieza del área principal de `contracts-engine.html`**: quitar
+         la columna "TEMPLATES" interna (ya no hace falta — la selección vive
+         en el sidebar) para que el formulario y el visualizador del
+         documento usen el 100% del ancho.
+      3. **Quitar la barra superior beige/propia** (ES/EN/Marca) del motor —
+         debe vivir bajo el header nativo de `staff.html`, sin una segunda
+         cabecera encima.
+      Punto 2 del checkpoint anterior (logo oficial en las plantillas) sigue
+      pendiente, sin cambios.
       Trabajo en rama `feature/contracts-w9-engine-integration` (misma rama,
       reutilizada tras el merge — commits nuevos siguen ahí, sin PR nuevo
       abierto todavía).
