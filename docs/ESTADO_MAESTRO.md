@@ -71,11 +71,14 @@ Estado general: Operativo / En consolidación
       suyo), y las 4 columnas del puente de identidad — todo `true`. Las 3 tablas
       fantasma del encargo original (`events`, `agenda_locks`, `dj_assignments`)
       confirmadas `false` también en la base, no solo en el código.
-      ⚠️ **R9 del mapa (Road Master Map) NO se cierra todavía** — su criterio de
-      cierre depende de qué signifique "agenda personal del artista" una vez
-      resuelto el SSOT de reserva de arriba, y de si `R9b` es la solución
-      definitiva o cableado provisional. Pregunta repetida dos veces por el hilo
-      especialista, sigue esperando respuesta directa del PO.
+      — 2026-08-22 DECISIÓN DEL PO: **R9b NO es la solución definitiva por sí solo.**
+      Es necesario integrar lo que R9b ya escribe en `artist_agenda` DENTRO del
+      calendario rediseñado (`calendario-operacional-inteligente.html`) — no basta
+      con que la reserva aparezca solo en la lista simple de `dj-dashboard.html`.
+      **R9 del mapa (Road Master Map) queda ABIERTA** — no se cierra hasta que esa
+      integración exista. Próximo paso técnico: que el calendario rediseñado lea
+      `artist_agenda` (o su equivalente tras resolver el SSOT de reserva de arriba)
+      además de `leads`, en la vista de artista.
       — 2026-08-22 POLÍTICA (PO): la agenda de STAFF es la **master** (Matrix/Owner
       — `calendario-operacional-inteligente.html` en modo staff); la de artistas
       y clientes es **personal** (aislada por RLS, cada quien ve solo lo suyo).
@@ -110,3 +113,4 @@ Estado general: Operativo / En consolidación
 - [2026-08-22] `dj_events` refinado a tabla sin ningún consumidor de código (ver arriba).
 - [2026-08-22] Cuarta pieza encontrada: `event_builder_orders` (8 consumidores reales, cero en las pantallas de agenda, enlazada a `leads` por FK nullable). La pregunta de SSOT de agenda se reencuadra en dos ejes — reserva (`leads` vs `event_builder_orders`, sin resolver) y proyección personal (`artist_agenda`, ya resuelta como derivada). `dj_events` queda como baja simple.
 - [2026-08-22] `artist_agenda`/R9a/R9b verificado en producción real, instalación completa (ver arriba) — al revés de `avisos_pendientes` (tabla sin función) de anoche. R9 del mapa queda deliberadamente sin cerrar hasta que el PO responda si R9b es definitivo o provisional.
+- [2026-08-22] PO respondió: R9b no es definitivo por sí solo — falta integrarlo al calendario rediseñado (ver arriba). R9 del mapa queda abierta, con el próximo paso técnico ya definido.
