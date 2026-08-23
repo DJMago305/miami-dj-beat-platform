@@ -113,16 +113,26 @@ Estado general: Operativo / En consolidación
       en `web/` ni `supabase/functions/`, diseñadas contra `MiamiDJBeat-MigracionV2`
       (repo que nunca aterrizó). Las 3 migraciones se autodeclaran "NOT APPLIED"/
       "isolated Postgres validation" en sus propias cabeceras.
-      ⚠️ **Riesgo real encontrado:** `20260722101300_..._lc13a.sql` redefine
-      `auth.uid()` con un stub de laboratorio sin el respaldo JSONB
-      (`request.jwt.claims`) que sí tiene la función real de Supabase — confirmado
-      en producción: `auth.uid()` real vive bajo `supabase_auth_admin` y usa
-      `coalesce(...)` entre las dos fuentes; el stub no tiene `coalesce`, solo lee
-      una. Esa función la usan 299 líneas en 76 archivos de migración —
-      identidad de artistas/clientes, reservas, mensajería, storage y memoria de
-      ELIXIS (76 tablas vivas con políticas RLS dependientes, confirmado con
-      conteo real de `pg_policy`). Las migraciones vivían en `supabase/migrations/`
-      — la carpeta que `supabase db push` ejecuta sin preguntar.
+      ⚠️ **Riesgo encontrado, con severidad corregida tras verificar en
+      producción:** `20260722101300_..._lc13a.sql` redefine `auth.uid()` con un
+      stub de laboratorio sin el respaldo JSONB (`request.jwt.claims`) que sí
+      tiene la función real — confirmado en producción: `auth.uid()` real usa
+      `coalesce(...)` entre `request.jwt.claim.sub` y `request.jwt.claims->>'sub'`;
+      el stub solo lee la primera rama. **Pero el escenario catastrófico queda
+      DESCARTADO**: `auth.uid()` real es propiedad de `supabase_auth_admin`, no
+      del rol que ejecuta las migraciones — `CREATE OR REPLACE FUNCTION
+      auth.uid()` fallaría con "must be owner of function uid". `LC-13A` no
+      puede ejecutarse en Supabase alojado tal como está escrita; sus propias
+      cabeceras ya lo decían ("isolated Postgres validation" — se escribió para
+      un Postgres local). El daño real, más pequeño pero concreto: un
+      `supabase db push` aplicaría LC-12 con éxito (7 tablas + secuencia) y
+      luego LC-13A abortaría en su línea 12, dejando 7 de 9 tablas huérfanas
+      (sin RLS, sin las funciones que las protegen) y la cadena de migraciones
+      en estado fallido, bloqueando la siguiente migración legítima. Las
+      migraciones vivían en `supabase/migrations/` — la carpeta que
+      `supabase db push` ejecuta sin preguntar — de ahí que moverlas siguiera
+      siendo lo correcto, aunque el riesgo real sea de cadena rota, no de
+      autenticación caída.
       **Verificado en producción real (PO):** cero estado parcial — las 9 tablas,
       la secuencia y las 22 funciones legales salen `AUSENTE` sin excepción. No es
       una migración a medias, es un módulo entero que nunca tocó la base.
