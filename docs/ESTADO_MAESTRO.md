@@ -1,5 +1,5 @@
 # ESTADO MAESTRO — MIAMI DJ BEAT LLC (SSOT)
-Última actualización: 2026-08-22
+Última actualización: 2026-08-23
 Estado general: Operativo / En consolidación
 
 ## 1. Módulos y Estado Técnico
@@ -174,6 +174,36 @@ Estado general: Operativo / En consolidación
       reporte en la interfaz (decisión de placement de UI, no de este
       contrato); si esta tabla termina alimentando `docs/INCIDENTES.md` o
       coexiste aparte.
+- [x] Constitución de Autoridad e Identidad M1–M5 (PR #241, fusionado)
+      — 2026-08-23 (Hilo Maestro): 5 migraciones auditadas y fusionadas juntas
+      como bloque único por su cadena de dependencia real — M1
+      (`mdj_profile_id_inmutable`) → M2 (`audit_log` + `mdj_profile_de_usuario`,
+      la función que resuelve identidad de perfil desde `auth.uid()`) → M3
+      (`permission_grants`) → M4 (auditoría de dispositivos) → M5
+      (`fenix_puede()`, autoridad única). Única dependencia externa,
+      verificada por `git grep`: `fenix_can()`, ya sellado en PRUEBA+PROD
+      desde el 17-ago (cimentación 2A). Las 5 migraciones estaban sin
+      trackear en git desde el inicio de la sesión — se aislaron y
+      commitearon limpias, sin arrastrar nada más. Cabecera de entorno:
+      **PRUEBA** en las 5 — aplicarlas en producción sigue pendiente de
+      autorización expresa del PO.
+- [x] Libro de Operaciones — Fase 1 (esquema) + Fase 4 (reconciliación EBO)
+      + RPC `get_my_cashflow_ledger` (PR #242, fusionado)
+      — 2026-08-23 (Hilo Maestro): versión limpia de lo que traía el PR #240
+      (cerrado, ver bitácora). Fase 1: tabla `libro_operaciones` (mismo
+      candado RLS+cero-políticas que `platform_incidents`), única entrada
+      `libro_operaciones_reportar()`, única salida la vista
+      `libro_operaciones_staff`. Fase 4: columna `event_builder_order_id`
+      (nullable), `libro_operaciones_reportar()` reemplazada para validar
+      que la orden enlazada pertenezca a quien reporta, vista
+      `libro_operaciones_reconciliacion_staff` (contrasta autorreporte vs.
+      total oficial, sin corregir ni borrar nada). RPC
+      `get_my_cashflow_ledger(p_since)`: única fuente de monto es
+      `dj_ledger` (ya liberado al artista); `event_builder_orders`/`leads`
+      solo aportan `event_label`; nunca expone `total_usd`/
+      `amount_paid_usd` (margen de la empresa). Dependencia real
+      (`mdj_profile_de_usuario`, de M2) resuelta al fusionar el PR #241
+      justo antes. Cabecera de entorno: **PRUEBA** en las 3 migraciones.
 
 ## 2. Bitácora de Sincronización entre Cajas
 - [2026-08-22] Inicialización del Hub Central de sincronización multi-hilo.
@@ -199,3 +229,6 @@ Estado general: Operativo / En consolidación
 - [2026-08-23] `platform_incidents` fusionado (PR #235, ver arriba) — núcleo de registro inmutable de incidentes técnicos/UI, contrato de datos aprobado por el PO antes de escribir código. Sprint de la cabecera (Single Row Header) rechazado por el Hilo Maestro y remitido al dominio #5 — protocolo "Reporto, no ejecuto" del propio `docs/LIBRO_OPERACIONES_IA.md` en acción, el mismo día que se escribió.
 - [2026-08-23] Dominio #5 ejecutó el sprint de cabecera remitido arriba: `.header-top` desbordaba en banda portátil 1001-1439px (buscador cortado, wordmark inalcanzable fuera del viewport) — cerrado con scroll contenido + aire de margen del logo, sin tocar slots fijos ni el carrusel de `#mainNav`. Mismo PR sumó el fix de la card "Create Your Account" del Hero de `index.html` (recortaba el botón REGISTER en altura reducida — 13"/split-view). Verificado en vivo antes de commitear (Regla 7), aprobado por el PO, fusionado en `main` (PR #237).
 - [2026-08-23] Modal de reporte de incidentes fusionado (PR #238, dominio #5) — consume `platform_incidents_reportar()` (núcleo de arriba). Botón + modal montados en `initStaff()` de `staff.html`, visibles para cualquier rol de staff, ocultos para no-staff por el candado ya existente de la página. `dominio`/`severidad` quedaron como texto libre (con sugerencias, no `<select>` fijo) porque el propio SQL deja ese catálogo pendiente del Capitán. Sin credenciales reales de staff en la sesión de build, no se pudo verificar el flujo autenticado completo (abrir → enviar → fila nueva) — quedó marcado explícitamente en el PR; el PO lo fusionó tras su propia revisión.
+- [2026-08-23] **PR #240 cerrado sin fusionar.** El PO reportó inicialmente que ya estaba integrado a `main`; verificado de forma independiente (`gh pr view`) que seguía `OPEN`. Auditoría posterior encontró que la rama de origen estaba contaminada — 14 archivos, incluyendo `CLAUDE.md` y este mismo `ESTADO_MAESTRO.md` en versión vieja, que se habrían arrastrado a `main` de fusionarse tal cual. Se aisló lo real (2 migraciones nuevas de Libro de Operaciones) sobre `origin/main` limpio; en el camino se descubrió que dependían de `mdj_profile_de_usuario()`, una función que solo existía en 5 archivos M1-M5 sin trackear localmente — bloqueando el aislamiento hasta resolver esa cadena (ver M1-M5 arriba).
+- [2026-08-23] M1–M5 (Constitución de Autoridad e Identidad) auditados, aislados en rama propia y fusionados (PR #241, ver arriba) — desbloquea la dependencia que detenía el aislamiento limpio del Libro de Operaciones.
+- [2026-08-23] Libro de Operaciones Fase 1 + Fase 4 + RPC `get_my_cashflow_ledger` re-aislados sobre `origin/main` (ya con M1-M5 integrado) y fusionados como PR #242 (ver arriba) — versión limpia que reemplaza al PR #240, cerrado con nota explicando el reemplazo.
