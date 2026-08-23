@@ -293,6 +293,97 @@
     row-gap: 0 !important;
   }
 
+  /* ══════════════════════════════════════════════════════════════════════════
+     TRAMO PORTATIL · FILA 1 (header-top) · 1001-1221px · 2026-08-23
+     ──────────────────────────────────────────────────────────────────────────
+     DEFECTO (medido, ticket "Single Row Header", dominio #5): a 1024px .header-top
+     desborda su propia caja (scrollWidth 1058 vs clientWidth 1024, medido en vivo
+     en index.html). Como .header-top usa overflow-x:visible sin scroll ni wrap, el
+     logo se recorta por la izquierda y el buscador por la derecha — contenido
+     inalcanzable, no una segunda linea.
+
+     CAUSA: margin-right de .header-actions es clamp(250px, calc(18vw+30px), 390px).
+     Por debajo de 1222px calc(18vw+30) < 250, asi que el margen se queda FIJO en
+     250px sin seguir encogiendo — justo el hueco que le falta a auth-slot +
+     carril-carrito + buscador para caber. Por encima de 1222px esta regla no actua
+     (el clamp original ya usa la formula, sin floor).
+
+     FIX: mismo metodo que el tramo de fila 2 (portatil > escritorio, LEY del PO) —
+     se continua la MISMA formula (calc(18vw+30px)) sin floor artificial dentro de
+     esta banda, en vez de imponer un numero nuevo. A 1001px da ~210px, a 1221px da
+     ~250px (empalma sin salto con el clamp original en 1222px). No toca fuentes,
+     orden, ancho de marca ni los slots fijos (auth/cart-rail/search) — solo el aire
+     que .header-actions reserva antes del borde del viewport.
+
+     Medido en vivo tras el cambio: 1024px sin desborde (antes 34px), 1060px sin
+     desborde (antes 15px), 1100/1200/1440px sin cambio visual.
+     ══════════════════════════════════════════════════════════════════════════ */
+  @media (min-width: 1001px) and (max-width: 1221px) {
+    #mainHeader.header.mdj-header-unified .header-top .container > .header-actions {
+      margin-right: calc(18vw + 30px) !important;
+    }
+
+    /*
+     * El ahorro de arriba (36px) no alcanza: a esta banda le faltan hasta 272px que
+     * viven en slots protegidos (zero-accordion / logo, ver auditoria del ticket). En
+     * vez de tocarlos sin autorizacion, el sobrante pasa a scroll horizontal CONTENIDO
+     * dentro de .header-top — nada queda recortado ni fuera de alcance del viewport.
+     * Sin scrollbar visible (mismo patron ya usado en #mainNav para el carrusel).
+     */
+    #mainHeader.header.mdj-header-unified .header-top {
+      overflow-x: auto !important;
+      overflow-y: hidden !important;
+      -webkit-overflow-scrolling: touch !important;
+      scrollbar-width: none !important;
+      -ms-overflow-style: none !important;
+    }
+
+    #mainHeader.header.mdj-header-unified .header-top::-webkit-scrollbar {
+      display: none !important;
+      height: 0 !important;
+    }
+
+    /* ID doblado: gana a la regla de origen de .container (misma tecnica que el
+       separador de #mainNav mas abajo en este archivo) — si no, width:max-content
+       pierde contra flex:0 1 auto y el contenedor se sigue encogiendo al viewport. */
+    #mainHeader#mainHeader.header.mdj-header-unified .header-top .container {
+      flex: 0 0 max-content !important;
+      width: max-content !important;
+      min-width: 100% !important;
+    }
+
+    /*
+     * El scroll de arriba resuelve el borde DERECHO (buscador/acciones), pero no el
+     * IZQUIERDO: el wordmark (`.brand-letters-wrapper`, escalado 2.45x) ya nace con
+     * bleed negativo (-46px a 1440, PNG con relleno transparente antes de la letra).
+     * En este tramo .brand pierde ~60px de aire por el margin-left:-20px de origen,
+     * empujando ese bleed a -106px — mas alla del relleno transparente, así que
+     * recorta letra real. scrollLeft nunca puede ser negativo (inalcanzable con
+     * scroll). Se devuelve solo ese aire — el margen, no el logo ni su escala.
+     */
+    #mainHeader#mainHeader.header.mdj-header-unified .header-top .container > .brand {
+      margin-left: 90px !important;
+    }
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════════
+     TRAMO PORTATIL · FILA 1 (wordmark) · 1222-1439px · 2026-08-23
+     ──────────────────────────────────────────────────────────────────────────
+     El mismo recorte de letra real (no el .header-top completo — aqui
+     scrollWidth == clientWidth, la caja no desborda; es solo el bleed negativo
+     del wordmark contra el borde del viewport, invisible a esa medicion) sigue
+     hasta 1439px. Medido en vivo (bleed original del PNG antes del ajuste):
+       1222-1300px → -106px  ·  1380px → -76px  ·  1410px → -61px  ·  1440px → -46px (a salvo, fuera de tramo)
+     FIX: mismo metodo — solo el margin-left de .brand, en formula vw que empalma
+     a 0px extra justo en 1439 (a 1440 ya esta a salvo de forma natural, sin tocar
+     nada). Ni logo, ni escala, ni orden — solo el aire antes de la marca.
+     ══════════════════════════════════════════════════════════════════════════ */
+  @media (min-width: 1222px) and (max-width: 1439px) {
+    #mainHeader#mainHeader.header.mdj-header-unified .header-top .container > .brand {
+      margin-left: clamp(0px, calc(663px - 46.08vw), 100px) !important;
+    }
+  }
+
   /*
    * Sesión: .header-actions por encima de .brand (z 8) en pintura — si no, el wordmark tapa
    * LOGOUT, carrito y búsqueda en dj-profile / index / rentals (mismo header unificado).
