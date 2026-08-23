@@ -79,6 +79,13 @@ Estado general: Operativo / En consolidación
       integración exista. Próximo paso técnico: que el calendario rediseñado lea
       `artist_agenda` (o su equivalente tras resolver el SSOT de reserva de arriba)
       además de `leads`, en la vista de artista.
+      — 2026-08-22 SSOT DE RESERVA RESUELTO (PO): **`event_builder_orders` gana**
+      sobre `leads` como fuente de verdad comercial de la reserva. Toda orden
+      confirmada en `event_builder_orders` debe materializarse en `artist_agenda`
+      (resolviendo la junta de identidad `leads.assigned_dj_id`/`dj_profiles.id`
+      → `auth.users.id`). `artist_agenda` sigue siendo la proyección personal del
+      artista, no la fuente. `dj_events` queda marcada para DROP en la próxima
+      migración de limpieza (cero consumidores de código, ya verificado).
       — 2026-08-22 POLÍTICA (PO): la agenda de STAFF es la **master** (Matrix/Owner
       — `calendario-operacional-inteligente.html` en modo staff); la de artistas
       y clientes es **personal** (aislada por RLS, cada quien ve solo lo suyo).
@@ -114,3 +121,4 @@ Estado general: Operativo / En consolidación
 - [2026-08-22] Cuarta pieza encontrada: `event_builder_orders` (8 consumidores reales, cero en las pantallas de agenda, enlazada a `leads` por FK nullable). La pregunta de SSOT de agenda se reencuadra en dos ejes — reserva (`leads` vs `event_builder_orders`, sin resolver) y proyección personal (`artist_agenda`, ya resuelta como derivada). `dj_events` queda como baja simple.
 - [2026-08-22] `artist_agenda`/R9a/R9b verificado en producción real, instalación completa (ver arriba) — al revés de `avisos_pendientes` (tabla sin función) de anoche. R9 del mapa queda deliberadamente sin cerrar hasta que el PO responda si R9b es definitivo o provisional.
 - [2026-08-22] PO respondió: R9b no es definitivo por sí solo — falta integrarlo al calendario rediseñado (ver arriba). R9 del mapa queda abierta, con el próximo paso técnico ya definido.
+- [2026-08-22] PO resolvió el SSOT de reserva: `event_builder_orders` gana sobre `leads` (ver arriba). `dj_events` marcada para DROP en la próxima migración de limpieza. Confirmado directamente por el PO, no relayado de un tercero, tras detectarse una contradicción en un mensaje de "resolución" que decía lo opuesto sobre R9b.
