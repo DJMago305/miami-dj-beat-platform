@@ -632,6 +632,43 @@
     .pf-rate-submit{background:var(--gold);border:none;color:#0a0e16;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;}
     .pf-rate-submit:hover{filter:brightness(1.08);}
     .pf-rate-msg{font-size:11.5px;margin-top:9px;color:rgba(255,255,255,.6);line-height:1.4;}
+
+    /* ── Reporte de incidentes de plataforma (staff, cualquier rol) ──
+       FAB inyectado por JS en initStaff() — no depende de .staff-flota ni de
+       la franja del owner, así que no se pierde en ninguna de las dos
+       "estaciones" de este archivo. Oculto para no-staff por el mismo candado
+       html.mdj-staff-gate-pending de arriba (nunca se llega a montar). */
+    .mdj-incident-fab{position:fixed;left:18px;bottom:18px;z-index:9500;width:46px;height:46px;
+      border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
+      background:rgba(10,14,22,.88);border:1px solid var(--line);color:var(--gold);
+      cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.4);}
+    .mdj-incident-fab:hover{border-color:var(--gold);background:rgba(197,160,89,.12);}
+    .mdj-incident-fab svg{width:20px;height:20px;display:block;}
+    .mdj-incident-backdrop{display:none;position:fixed;inset:0;z-index:9600;
+      background:rgba(4,6,10,.72);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:20px;}
+    .mdj-incident-backdrop.open{display:flex;}
+    .mdj-incident-modal{width:100%;max-width:520px;max-height:88vh;overflow-y:auto;
+      background:#0c1018;border:1px solid var(--line);border-radius:16px;padding:22px;box-sizing:border-box;}
+    .mdj-incident-modal h3{margin:0 0 4px;font-size:18px;color:var(--gold);letter-spacing:.02em;}
+    .mdj-incident-modal .mdj-inc-sub{margin:0 0 16px;font-size:12px;color:rgba(255,255,255,.6);line-height:1.4;}
+    .mdj-inc-field{margin-bottom:12px;}
+    .mdj-inc-field label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.06em;
+      color:var(--gold);margin-bottom:5px;font-weight:700;}
+    .mdj-inc-field input,.mdj-inc-field textarea{width:100%;box-sizing:border-box;
+      background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:9px;color:#fff;
+      padding:9px 11px;font-size:13px;font-family:inherit;resize:vertical;}
+    .mdj-inc-field textarea{min-height:64px;}
+    .mdj-inc-required{color:#e0664d;}
+    .mdj-inc-actions{display:flex;gap:9px;justify-content:flex-end;margin-top:16px;}
+    .mdj-inc-cancel{background:transparent;border:1px solid var(--line);color:rgba(255,255,255,.6);
+      border-radius:8px;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
+    .mdj-inc-submit{background:var(--gold);border:none;color:#0a0e16;border-radius:8px;
+      padding:9px 18px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;}
+    .mdj-inc-submit:hover{filter:brightness(1.08);}
+    .mdj-inc-submit:disabled{opacity:.6;cursor:wait;}
+    .mdj-inc-msg{font-size:11.5px;margin-top:11px;line-height:1.4;}
+    .mdj-inc-msg.err{color:#e0664d;}
+    .mdj-inc-msg.ok{color:#7fd48f;}
   </style>
 </head>
 <body>
@@ -1094,8 +1131,118 @@
       return role==='owner' ? 'Owner' : role==='seller' ? 'Vendedor'
            : role==='manager' ? 'Manager' : role==='admin' ? 'Admin' : 'Staff';
     }
+    /* ── Reporte de incidentes de plataforma (platform_incidents_reportar) ──
+       Botón flotante + modal, montados una vez por sesión de staff (cualquier
+       rol — owner/admin/manager/seller). Vive fuera de .staff-flota / la
+       franja del owner a propósito: esas dos filas se reconstruyen distinto
+       según el rol y no hay garantía de que un nodo estático sobreviva ahí.
+       Un <div> propio en <body>, inyectado por JS, no depende de ninguna de
+       las dos. dominio/severidad quedan como texto libre — el RPC no tiene
+       catálogo cerrado todavía (ver comentario en la migración SQL), así que
+       no se inventa aquí un <select> con opciones que no son oficiales. */
+    function mountIncidentReporter(sb){
+      if(el('mdj-incident-fab')) return; // no duplicar si initStaff corriera dos veces
+
+      var fab = document.createElement('button');
+      fab.type = 'button';
+      fab.id = 'mdj-incident-fab';
+      fab.className = 'mdj-incident-fab';
+      fab.title = 'Reportar incidente de plataforma';
+      fab.setAttribute('aria-label', 'Reportar incidente de plataforma');
+      fab.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+        'stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>' +
+        '<line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+      document.body.appendChild(fab);
+
+      var backdrop = document.createElement('div');
+      backdrop.id = 'mdj-incident-backdrop';
+      backdrop.className = 'mdj-incident-backdrop';
+      backdrop.innerHTML =
+        '<div class="mdj-incident-modal" role="dialog" aria-modal="true" aria-labelledby="mdj-inc-title">' +
+          '<h3 id="mdj-inc-title">Reportar incidente</h3>' +
+          '<p class="mdj-inc-sub">Registro interno, inmutable — visible solo para staff. Nadie corrige ni borra un reporte ya guardado.</p>' +
+          '<div class="mdj-inc-field"><label for="mdj-inc-dominio">Dominio <span class="mdj-inc-required">*</span></label>' +
+            '<input type="text" id="mdj-inc-dominio" list="mdj-inc-dominio-list" placeholder="ej. weather-ui, elixis-voice, header, hero" />' +
+            '<datalist id="mdj-inc-dominio-list"><option value="header"></option><option value="hero"></option>' +
+            '<option value="weather-ui"></option><option value="elixis-voice"></option><option value="bfi"></option>' +
+            '<option value="road-master-map"></option><option value="gobernanza"></option><option value="staff-portal"></option></datalist></div>' +
+          '<div class="mdj-inc-field"><label for="mdj-inc-severidad">Severidad <span class="mdj-inc-required">*</span></label>' +
+            '<input type="text" id="mdj-inc-severidad" list="mdj-inc-severidad-list" placeholder="ej. baja, media, alta, crítica" />' +
+            '<datalist id="mdj-inc-severidad-list"><option value="baja"></option><option value="media"></option>' +
+            '<option value="alta"></option><option value="crítica"></option></datalist></div>' +
+          '<div class="mdj-inc-field"><label for="mdj-inc-componente">Componente afectado <span class="mdj-inc-required">*</span></label>' +
+            '<input type="text" id="mdj-inc-componente" placeholder="ej. staff.html?vista=agenda" /></div>' +
+          '<div class="mdj-inc-field"><label for="mdj-inc-quepaso">Qué pasó <span class="mdj-inc-required">*</span></label>' +
+            '<textarea id="mdj-inc-quepaso" maxlength="2000" placeholder="Describe el incidente…"></textarea></div>' +
+          '<div class="mdj-inc-field"><label for="mdj-inc-solucion">Cómo se solucionó (opcional)</label>' +
+            '<textarea id="mdj-inc-solucion" maxlength="2000" placeholder="Deja vacío si aún no tiene solución…"></textarea></div>' +
+          '<div class="mdj-inc-field"><label for="mdj-inc-pr">PR / commit (opcional)</label>' +
+            '<input type="text" id="mdj-inc-pr" placeholder="ej. PR #237 o el hash del commit" /></div>' +
+          '<div class="mdj-inc-actions">' +
+            '<button type="button" class="mdj-inc-cancel" id="mdj-inc-cancel">Cancelar</button>' +
+            '<button type="button" class="mdj-inc-submit" id="mdj-inc-submit">Guardar reporte</button>' +
+          '</div>' +
+          '<div class="mdj-inc-msg" id="mdj-inc-msg"></div>' +
+        '</div>';
+      document.body.appendChild(backdrop);
+
+      var msg = el('mdj-inc-msg');
+      var submitBtn = el('mdj-inc-submit');
+      var fields = {
+        dominio: el('mdj-inc-dominio'), severidad: el('mdj-inc-severidad'),
+        componente: el('mdj-inc-componente'), quepaso: el('mdj-inc-quepaso'),
+        solucion: el('mdj-inc-solucion'), pr: el('mdj-inc-pr')
+      };
+
+      function setMsg(text, cls){ msg.textContent = text || ''; msg.className = 'mdj-inc-msg' + (cls ? ' ' + cls : ''); }
+
+      function openModal(){
+        setMsg('');
+        Object.keys(fields).forEach(function(k){ fields[k].value = ''; });
+        backdrop.classList.add('open');
+        fields.dominio.focus();
+      }
+      function closeModal(){ backdrop.classList.remove('open'); }
+
+      fab.addEventListener('click', openModal);
+      el('mdj-inc-cancel').addEventListener('click', closeModal);
+      backdrop.addEventListener('click', function(e){ if(e.target === backdrop) closeModal(); });
+      document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && backdrop.classList.contains('open')) closeModal(); });
+
+      submitBtn.addEventListener('click', async function(){
+        var dominio = fields.dominio.value.trim();
+        var severidad = fields.severidad.value.trim();
+        var componente = fields.componente.value.trim();
+        var quePaso = fields.quepaso.value.trim();
+        if(!dominio || !severidad || !componente || !quePaso){
+          setMsg('Dominio, severidad, componente afectado y qué pasó son obligatorios.', 'err');
+          return;
+        }
+        submitBtn.disabled = true;
+        setMsg('Guardando…');
+        try{
+          var res = await sb.rpc('platform_incidents_reportar', {
+            p_dominio: dominio,
+            p_severidad: severidad,
+            p_componente_afectado: componente,
+            p_que_paso: quePaso,
+            p_como_se_soluciono: fields.solucion.value.trim() || null,
+            p_pr_commit_referencia: fields.pr.value.trim() || null
+          });
+          if(res.error) throw res.error;
+          setMsg('Incidente guardado.', 'ok');
+          setTimeout(closeModal, 900);
+        }catch(err){
+          setMsg('No se pudo guardar: ' + (err && err.message ? err.message : 'error desconocido'), 'err');
+        }finally{
+          submitBtn.disabled = false;
+        }
+      });
+    }
+
     function initStaff(sb, role, profile){
       MDJ_ROL_ACTUAL = role;
+      mountIncidentReporter(sb); // cualquier rol de staff — ver función más abajo
       // badge + nombre: viven en el HERO. Estos nodos ya no existen en la barra
       // (eran un duplicado del mismo dato); las guardas los dejan pasar.
       var badge=el('role-badge'), nm=el('staff-name');
