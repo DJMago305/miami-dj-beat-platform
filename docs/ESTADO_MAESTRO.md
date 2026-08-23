@@ -3,7 +3,7 @@
 Estado general: Operativo / En consolidación
 
 ## 1. Módulos y Estado Técnico
-- [ ] Motor de Contratos y W-9 (Legal Engine)
+- [x] Motor de Contratos y W-9 (Legal Engine) — núcleo fusionado (PR #244), 2 pendientes visuales abajo
       — 2026-08-23 IMPLEMENTADO Y CORREGIDO (Hilo Maestro, continuando el trabajo
       del Hilo Legal & W-9 Engine): `web/contracts-engine.html` — motor bilingüe
       ES/EN con 5 plantillas (DJ, Corporativo, Venue, Staff, W-9). Conectado a
@@ -36,8 +36,27 @@ Estado general: Operativo / En consolidación
       vivo contra producción el flujo de guardado (hash real + llamada RPC real,
       sin insertar filas de prueba por decisión del PO). Sintaxis validada con
       `node --check`/parseo de scripts en los 4 archivos tocados: sin errores.
-      Trabajo en rama `feature/contracts-w9-engine-integration`. PR abierto,
-      pendiente de aprobación explícita del PO antes de fusionar (Regla 1).
+      **PR #244 fusionado a `main` (2026-08-23).**
+      — 2026-08-23 HOMOLOGACIÓN VISUAL (Hilo Maestro): tema oscuro permanente
+      aplicado a `contracts-engine.html` con los tokens reales de `staff.html`
+      (`--gold:#c5a059`, `--bg:#050810`) + `backdrop-filter` (glassmorphism)
+      en topbar, tarjetas de plantilla, panel de campos, marco del documento y
+      dropzone del W-9. El "papel" de los documentos (contrato, PDF del W-9)
+      se queda claro a propósito — es el papel dentro del marco oscuro, no el
+      chrome de la herramienta. Sin commitear/PR todavía — checkpoint de pausa
+      (ver abajo), no una entrega cerrada.
+      **⏸️ PENDIENTES VISUALES AL RETOMAR (2 puntos, PO 2026-08-23):**
+      1. Eliminar la cabecera interna redundante de `contracts-engine.html`
+         (la barra propia con ES/EN/Marca) para que la herramienta se integre
+         limpia bajo el header principal de `staff.html`, sin una segunda
+         barra encima.
+      2. Terminar la homologación de marca: aplicar el Dark Design System al
+         contenedor EXTERIOR de la herramienta (ya iniciado, ver arriba) e
+         integrar el logotipo oficial de Miami DJ Beat en las plantillas de
+         contrato (hoy usan el slot de logo genérico/subida manual).
+      Trabajo en rama `feature/contracts-w9-engine-integration` (misma rama,
+      reutilizada tras el merge — commits nuevos siguen ahí, sin PR nuevo
+      abierto todavía).
 - [x] Motor de Voz Realtime ELIXIS (PR #202 desplegado en producción)
 - [x] Políticas de Cuota y RBAC (3h Full / 5h Mini / Fallback a texto)
 - [x] Despacho SMS Seguro (`elixis_sms_pending` + validación E.164 + Twilio, verificado con envío real)

@@ -22,87 +22,44 @@
 <script src="./supabase-config.js?v=20260814-bfi"></script>
 
 <style>
+/* Homologación visual (2026-08-23): este motor vive empotrado en el sidebar
+   de Staff, junto a Agenda/FÉNIX/Perfiles — no puede traer su propio look de
+   "formulario web genérico". Un solo tema oscuro y permanente ahora, con los
+   MISMOS tokens reales de staff.html (--gold:#c5a059, --bg:#050810), no una
+   paleta inventada. Ya no depende de prefers-color-scheme/[data-theme]: la
+   herramienta siempre vive dentro de un panel oscuro, sin importar el tema
+   del sistema del visitante — dejarlo condicional habría producido un marco
+   claro chocando contra el panel oscuro de alrededor.
+   --paper/--paper-text/--paper-border quedan APARTE, siempre claros: son el
+   papel del documento en sí (el contrato, el PDF del W-9), no el chrome de
+   la herramienta — un documento no se pone oscuro porque el panel lo esté. */
 :root{
-  --bg:#f5efe1;
-  --surface:#ffffff;
-  --surface-2:#efe6d1;
-  --surface-3:#e6d8b8;
-  --border:#ddccA3;
-  --border-strong:#c9b285;
-  --text:#241f16;
-  --text-muted:#6b5f47;
-  --text-faint:#948968;
-  --accent:#a9803a;
-  --accent-strong:#8a6428;
-  --accent-soft:#f0dfb8;
-  --accent-contrast:#1c1710;
-  --success:#2f7d52;
-  --success-soft:#dcefe1;
-  --warning:#b3771d;
-  --warning-soft:#f6e6c9;
-  --danger:#b23b30;
-  --danger-soft:#f7dfda;
+  --bg:#050810;
+  --surface:rgba(255,255,255,.045);
+  --surface-2:rgba(255,255,255,.065);
+  --surface-3:rgba(255,255,255,.10);
+  --border:rgba(255,255,255,.12);
+  --border-strong:rgba(197,160,89,.40);
+  --text:#e8eaed;
+  --text-muted:rgba(232,234,237,.64);
+  --text-faint:rgba(232,234,237,.42);
+  --accent:#c5a059;
+  --accent-strong:#e8c987;
+  --accent-soft:rgba(197,160,89,.16);
+  --accent-contrast:#0b0810;
+  --success:#5fbf87;
+  --success-soft:rgba(95,191,135,.14);
+  --warning:#e0aa4e;
+  --warning-soft:rgba(224,170,78,.14);
+  --danger:#e0796a;
+  --danger-soft:rgba(224,121,106,.14);
   --paper:#fffdf7;
   --paper-text:#2a2418;
   --paper-border:#e2d3ab;
-  --shadow:0 18px 40px -20px rgba(60,45,10,.35);
+  --shadow:0 18px 44px -20px rgba(0,0,0,.65);
   --radius:10px;
   --ink:#1b1b1f;
   --ink-blue:#1c2f66;
-  color-scheme:light;
-}
-@media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){
-    --bg:#15110a;
-    --surface:#1e180f;
-    --surface-2:#271f14;
-    --surface-3:#332918;
-    --border:#3c311d;
-    --border-strong:#4d3f24;
-    --text:#f3ecdb;
-    --text-muted:#b3a37f;
-    --text-faint:#8a7c5c;
-    --accent:#c5a059;
-    --accent-strong:#e0bd7c;
-    --accent-soft:#332715;
-    --accent-contrast:#1c1710;
-    --success:#5fbf87;
-    --success-soft:#1c2e22;
-    --warning:#e0aa4e;
-    --warning-soft:#332a14;
-    --danger:#e0796a;
-    --danger-soft:#33201c;
-    --paper:#1b160e;
-    --paper-text:#efe6d3;
-    --paper-border:#453824;
-    --shadow:0 18px 44px -20px rgba(0,0,0,.6);
-    color-scheme:dark;
-  }
-}
-:root[data-theme="dark"]{
-  --bg:#15110a;
-  --surface:#1e180f;
-  --surface-2:#271f14;
-  --surface-3:#332918;
-  --border:#3c311d;
-  --border-strong:#4d3f24;
-  --text:#f3ecdb;
-  --text-muted:#b3a37f;
-  --text-faint:#8a7c5c;
-  --accent:#c5a059;
-  --accent-strong:#e0bd7c;
-  --accent-soft:#332715;
-  --accent-contrast:#1c1710;
-  --success:#5fbf87;
-  --success-soft:#1c2e22;
-  --warning:#e0aa4e;
-  --warning-soft:#332a14;
-  --danger:#e0796a;
-  --danger-soft:#33201c;
-  --paper:#1b160e;
-  --paper-text:#efe6d3;
-  --paper-border:#453824;
-  --shadow:0 18px 44px -20px rgba(0,0,0,.6);
   color-scheme:dark;
 }
 
@@ -169,6 +126,7 @@ a{color:var(--accent-strong);}
 .module-switch{
   display:flex;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:11px;
   padding:5px;margin:14px 0 18px;max-width:640px;
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
 }
 .module-switch button{
   flex:1;border:0;background:transparent;color:var(--text-muted);border-radius:8px;padding:10px 12px;
@@ -189,6 +147,7 @@ a{color:var(--accent-strong);}
   display:flex;align-items:flex-start;gap:10px;text-align:left;
   background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
   padding:10px 11px;cursor:pointer;transition:border-color .15s, background .15s, transform .1s;
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
 }
 .template-card:hover{border-color:var(--border-strong);}
 .template-card.active{border-color:var(--accent);background:var(--accent-soft);}
@@ -205,6 +164,7 @@ a{color:var(--accent-strong);}
 .panel{
   background:var(--surface);border:1px solid var(--border);border-radius:14px;
   padding:18px 18px 20px;
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
 }
 .panel + .panel{margin-top:14px;}
 .panel-title{
@@ -293,8 +253,9 @@ a{color:var(--accent-strong);}
 .zoom-controls button{width:28px;height:28px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-size:14px;}
 
 .paper-frame{
-  background:var(--surface-2);border-radius:16px;padding:22px;
+  background:var(--surface-2);border:1px solid var(--border);border-radius:16px;padding:22px;
   max-height:calc(100vh - 130px);overflow:auto;
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
 }
 .paper{
   background:var(--paper);color:var(--paper-text);border:1px solid var(--paper-border);border-radius:3px;
@@ -349,12 +310,14 @@ a{color:var(--accent-strong);}
 .w9-mono{font-family:"IBM Plex Mono",monospace;word-break:break-all;}
 .w9-upload-drop{border:1.5px dashed var(--border-strong);border-radius:10px;padding:18px 14px;text-align:center;
   font-family:"IBM Plex Sans",sans-serif;font-size:12px;color:var(--text-muted);cursor:pointer;margin-bottom:12px;
-  transition:border-color .15s,background .15s;}
+  transition:border-color .15s,background .15s;background:var(--surface-2);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
 .w9-upload-drop:hover,.w9-upload-drop:focus-visible{border-color:var(--accent-strong);outline:none;}
 .w9-upload-drop.dragover{border-color:var(--accent-strong);background:var(--accent-soft);}
 .w9-upload-icon{font-size:20px;margin-bottom:6px;}
 .w9-upload-sub{font-size:10.5px;color:var(--text-faint);margin-top:4px;}
-.w9-upload-preview{font-family:"IBM Plex Sans",sans-serif;font-size:11.5px;background:var(--surface-2);border-radius:8px;padding:10px 12px;margin-bottom:10px;}
+.w9-upload-preview{font-family:"IBM Plex Sans",sans-serif;font-size:11.5px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:10px;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
 .w9-upload-row{display:flex;justify-content:space-between;gap:10px;padding:2px 0;}
 .w9-upload-row span{color:var(--text-faint);}
 .w9-upload-row b{font-weight:600;text-align:right;}
