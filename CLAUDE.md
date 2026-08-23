@@ -24,3 +24,10 @@
 
 6. MATRIZ DE JURISDICCIONES:
 - Cada hilo secundario solo tiene permiso de edición sobre los archivos de su dominio asignado en `docs/JURISDICCIONES.md`. Si una tarea excede su jurisdicción, debe rechazarla y remitir al hilo maestro.
+
+7. AUDITORÍA VISUAL OBLIGATORIA ANTES DE COMMIT / MERGE / PRODUCCIÓN:
+- Ningún cambio se comitea, se fusiona ni se envía a producción sin que el humano (el PO) haya visto y confirmado el cambio positivo primero.
+- La tarea del Hilo Maestro es supervisar, ANTES de cualquier commit/merge, si el hilo especialista está cumpliendo lo que promete — no relayar su reporte como hecho, no aceptar su propia medición como prueba suficiente, sino verificarlo de forma independiente.
+- Aun con esa supervisión hecha, la confirmación técnica del Hilo Maestro NO sustituye la confirmación visual directa del PO — son dos pasos, no uno.
+- Declarar un trabajo como "resuelto" o "listo" antes de la confirmación del PO es una falta grave — no solo un error técnico, sino de conducta.
+- Aplica a todo hilo, sin excepción: quien audite/apruebe antes de tiempo responde por ello.

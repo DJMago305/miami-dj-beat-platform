@@ -805,7 +805,15 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
             }
             /* #1 (PO): dividir la sección en dos — PRONÓSTICO a la izquierda, MÉTRICAS
                (Humedad/Viento/Sensación/Visibilidad) a la DERECHA. En pantallas angostas se apila. */
-            #tab-dashboard .wx-overlay{display:flex;flex-wrap:wrap;align-items:stretch;justify-content:center;gap:18px;}
+            /* TARJETA propia (PO 2026-08-22, estetico): la pieza de datos del clima
+               (por horas + 10 dias + metricas) se separa del hero en su propia caja,
+               igual estilo que la tarjeta del calendario. */
+            #tab-dashboard .wx-overlay{display:flex;flex-wrap:wrap;align-items:stretch;justify-content:center;gap:18px;
+              margin:26px 16px 16px !important;padding:20px !important;
+              /* Fondo SOLIDO (sin backdrop-filter): el blur causaba jank de scroll en
+                 Safari (se sentia como que la tarjeta del medio "se pegaba"). PO 2026-08-22. */
+              background:rgba(12,13,20,0.92) !important;border:1px solid rgba(197,160,89,0.22) !important;
+              border-radius:18px !important;}
             /* DOS MITADES lado a lado — experiencia visual del clima: por horas (izq) y 10 días (der). */
             #tab-dashboard .wx-overlay > #hourly-forecast-permanent{flex:1 1 46%;min-width:0;margin-top:0 !important;display:flex;flex-direction:column;justify-content:center;}
             #tab-dashboard .wx-overlay > #daily-forecast-container{flex:1 1 46%;min-width:0;margin-top:0 !important;}
@@ -934,7 +942,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
         <div id="tab-dashboard" class="dash-tab-panel active">
             <!-- ── Layout vertical full-page de AGENDA (paridad con weather-lab): HERO clima 100vh → scroll → calendario + módulos. Sin máscara de bordes del sistema viejo. Reversible: borrar este <style>. ── -->
             <style id="agenda-vertical-layout">
-              #tab-dashboard > section:first-of-type { padding: 16px 0 0 !important; margin-top: 0 !important; }   /* poco aire bajo el menú (antes 62px) */
+              #tab-dashboard > section:first-of-type { padding: 0 !important; margin-top: 0 !important; }   /* clima a ras del menú, sin paño negro (PO 2026-08-22; antes 16px) */
               #tab-dashboard .hero-grid { display: block !important; max-width: none !important; }        /* apila las columnas verticalmente */
               #tab-dashboard .agenda-main, #tab-dashboard .agenda-sidebar { width: 100% !important; max-width: 100% !important; }
               #tab-dashboard .agenda-main { padding-top: 0 !important; }
@@ -945,6 +953,18 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
               /* los módulos de datos fluyen DEBAJO del HERO al hacer scroll */
               #tab-dashboard .weather-content { z-index: auto !important; }
               #tab-dashboard .agenda-sidebar { margin-top: 8px !important; }
+              /* Separacion (aire) entre la tarjeta de clima y la de calendario.
+                 NOTA historica: un intento previo con min-height:100vh + padding-bottom
+                 dejaba una BARRA NEGRA vacia abajo (retirado). El recorrido de scroll
+                 lo da ahora la altura del iframe del calendario (abajo), sin vacio.
+                 Ver INCIDENTE UI-0822. */
+              #tab-dashboard #staff-matrix-embed { margin-top: 28px !important; }
+              /* El iframe del calendario se AUTO-AJUSTA a la altura de su contenido
+                 (script abajo) para que NO tenga scroll interno: toda la agenda
+                 scrollea como una sola pieza, fluida, sin atrapamiento/imán del
+                 scroll anidado (PO 2026-08-22 · UI-0822). min-height = fallback
+                 mientras carga. */
+              #tab-dashboard #staff-matrix-frame { height: auto !important; min-height: 600px !important; }
             </style>
             <script>
             /* ── Alimenta el HERO de clima con el gig REAL de HOY (tabla leads).
@@ -1159,6 +1179,29 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                         }catch(_e){}
                       }
                       pickAgenda();
+                      /* AUTO-AJUSTE de altura del iframe del calendario a su contenido:
+                         sin scroll interno → la agenda scrollea como una sola pieza,
+                         fluida, sin atrapamiento/imán del scroll anidado (UI-0822). */
+                      (function(){
+                        var f = document.getElementById('staff-matrix-frame');
+                        if(!f) return;
+                        function sizeIt(){
+                          try{
+                            var d = f.contentDocument; if(!d) return;
+                            var h = Math.max(d.documentElement ? d.documentElement.scrollHeight : 0,
+                                             d.body ? d.body.scrollHeight : 0);
+                            if(h > 0) f.style.setProperty('height', h + 'px', 'important');
+                          }catch(_e){}
+                        }
+                        f.addEventListener('load', function(){
+                          sizeIt();
+                          try{
+                            var d = f.contentDocument;
+                            if(window.ResizeObserver && d && d.body){ new ResizeObserver(sizeIt).observe(d.body); }
+                          }catch(_e){}
+                          setTimeout(sizeIt, 300); setTimeout(sizeIt, 1200); setTimeout(sizeIt, 3000);
+                        });
+                      })();
                     })();
                     </script>
                     <div class="agenda-sidebar calendar-column" style="position: relative; z-index: 80;">
