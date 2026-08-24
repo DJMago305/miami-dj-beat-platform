@@ -6395,6 +6395,10 @@
         VENUE_AGREEMENT: 'Contrato Venue / Residencia',
         CORPORATE_AGREEMENT: 'Contrato Eventos Corporativos',
         STAFF_AGREEMENT: 'Contrato Staff / Operador Técnico',
+        LIVE_BAND_AGREEMENT: 'Contrato Orquesta / Banda en Vivo',
+        SOLO_ARTIST_AGREEMENT: 'Contrato Cantante / Solista',
+        SUBCONTRACTOR_SHOW_AGREEMENT: 'Contrato Show / Hora Loca',
+        PRIVATE_EVENT_AGREEMENT: 'Contrato Cliente Particular / Boda',
       };
       var LEGAL_STATUS_LABELS = {
         SIGNED: { text: 'Certificado', color: '#4ade80' },
@@ -7541,7 +7545,7 @@
       /* ── Open panel from URL hash ── */
       (function () {
         var hash = window.location.hash.replace('#', '');
-        var validPanels = ['account','agenda','rewards','products','notifications','billing','soundfortips','devices','socials','create-profile','danger','campaign'];
+        var validPanels = ['account','agenda','rewards','products','notifications','billing','soundfortips','devices','socials','create-profile','danger','campaign','legal'];
         if (!hash || validPanels.indexOf(hash) === -1) return;
 
         /* Campaign deep-link guard: block seller / talent / client */

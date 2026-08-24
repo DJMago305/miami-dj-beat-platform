@@ -602,7 +602,9 @@
             min-width: 0;
         }
 
-        /* Subtítulo de roles */
+        /* Subtítulo de roles — carrusel continuo de una sola línea (nunca se
+           apila ni desborda), con fallback a scroll manual si el usuario
+           pide menos movimiento. */
         .dj-hero-role {
             font-size: 11px;
             font-weight: 700;
@@ -610,6 +612,36 @@
             color: rgba(255, 255, 255, 0.5);
             text-transform: uppercase;
             margin-bottom: 10px;
+            white-space: nowrap;
+            overflow: hidden;
+            position: relative;
+            -webkit-mask-image: linear-gradient(90deg, transparent, #000 20px, #000 calc(100% - 20px), transparent);
+            mask-image: linear-gradient(90deg, transparent, #000 20px, #000 calc(100% - 20px), transparent);
+        }
+        .dj-hero-role-track {
+            display: inline-flex;
+            gap: 28px;
+            padding-right: 28px;
+            animation: mdjRoleMarquee 16s linear infinite;
+            will-change: transform;
+        }
+        .dj-hero-role:hover .dj-hero-role-track,
+        .dj-hero-role:active .dj-hero-role-track {
+            animation-play-state: paused;
+        }
+        @keyframes mdjRoleMarquee {
+            from { transform: translateX(0); }
+            to { transform: translateX(-50%); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .dj-hero-role-track { animation: none; }
+            .dj-hero-role {
+                overflow-x: auto;
+                overflow-y: hidden;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+            .dj-hero-role::-webkit-scrollbar { display: none; }
         }
 
         /* Nombre grande con punto dorado */
@@ -1122,6 +1154,18 @@
 
             .dj-hero-top-stack {
                 left: 24px;
+            }
+
+            /* Vertical (portrait) en móvil: la foto inset del artista competía
+               visualmente con el logo de la cabecera justo arriba. Landscape y
+               escritorio no cambian — solo se reduce en este caso puntual. */
+            @media (orientation: portrait) {
+                .dj-hero-inset {
+                    width: 84px;
+                    height: 84px;
+                    top: 48px;
+                    right: 16px;
+                }
             }
 
             /* Columna: SFT → sidebar (disponibilidad, home MDJB, reserva…) → columna (especialidades, bio, venues). Reseñas: bloque full-width bajo .dj-body */
@@ -3595,6 +3639,17 @@
                     </div>
                 </div>
 
+                <!-- Documentación Legal & W-9 (solo dueño): lee obtener_mis_contratos() —
+                     misma RPC de solo lectura ya usada en account-settings.html, sin
+                     duplicar la lista completa aquí. Solo un resumen + enlace. -->
+                <div class="dj-card" id="legal-compliance-card" style="display:none;">
+                    <div class="dj-card-label">DOCUMENTACIÓN LEGAL &amp; W-9</div>
+                    <div id="legal-compliance-rows" style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
+                        <div style="font-size:11px;color:rgba(255,255,255,0.35);">Cargando…</div>
+                    </div>
+                    <a href="./account-settings.html#legal" style="display:inline-block;margin-top:12px;font-size:12px;font-weight:800;color:var(--gold);text-decoration:underline;">Ver todos mis documentos →</a>
+                </div>
+
                 <!-- Staff/manager: criterios de venta (teléfono/directo) — no incluye Cash Flow del artista. -->
                 <!-- Practical Assessment (Manager Only) -->
                 <div class="assessment-card" id="manager-assessment-card">
@@ -4439,6 +4494,105 @@
             }
         }
 
+        /* "Mis Documentos" (tab-documentos, slot 10 de MDJ_NAV_SLOTS_ARTISTA en
+           mdjb-shared-header.js): antes incrustaba contracts-engine.html
+           completo en un iframe — el motor de STAFF (buscador, generador de
+           envíos, CRM), no una vista propia del artista. Reemplazado por una
+           lista real, misma RPC/labels que account-settings.html#legal (sin
+           duplicar la lógica, solo el render, porque no hay un .js
+           compartido entre ambos archivos). "PENDIENTE" aquí solo puede
+           significar "no hay fila firmada todavía" — signed_contracts no
+           guarda un estado intermedio consultable por el propio artista, así
+           que NO se ofrece un botón de "completar" que no llevaría a ningún
+           lado real; solo se indica que debe esperar el enlace que Staff ya
+           le envió por email/SMS. */
+        var DOC_TYPE_LABELS = {
+            W9: 'Formulario IRS W-9',
+            DJ_AGREEMENT: 'Contrato Artista / DJ',
+            VENUE_AGREEMENT: 'Contrato Venue / Residencia',
+            CORPORATE_AGREEMENT: 'Contrato Eventos Corporativos',
+            STAFF_AGREEMENT: 'Contrato Staff / Operador Técnico',
+            LIVE_BAND_AGREEMENT: 'Contrato Orquesta / Banda en Vivo',
+            SOLO_ARTIST_AGREEMENT: 'Contrato Cantante / Solista',
+            SUBCONTRACTOR_SHOW_AGREEMENT: 'Contrato Show / Hora Loca',
+            PRIVATE_EVENT_AGREEMENT: 'Contrato Cliente Particular / Boda',
+        };
+        var DOC_STATUS_LABELS = {
+            SIGNED: { text: '✓ FIRMADO', color: '#4ade80', bg: 'rgba(34,197,94,0.12)', border: 'rgba(34,197,94,0.35)' },
+            COMPLETADO_EXTERNO: { text: '✓ FIRMADO', color: '#4ade80', bg: 'rgba(34,197,94,0.12)', border: 'rgba(34,197,94,0.35)' },
+        };
+        async function loadMisDocumentosPanel() {
+            var list = document.getElementById('documentos-list');
+            if (!list) return;
+            var db = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+            if (!db) { list.innerHTML = '<p style="color:rgba(255,255,255,0.25);text-align:center;padding:30px 0;font-size:13px;">No se pudo conectar.</p>'; return; }
+            try {
+                var sess = (await db.auth.getSession()).data.session;
+                if (!sess) { list.innerHTML = '<p style="color:rgba(255,255,255,0.25);text-align:center;padding:30px 0;font-size:13px;">Inicia sesión para ver tus documentos.</p>'; return; }
+                var res = await db.rpc('obtener_mis_contratos');
+                var docs = res.data, error = res.error;
+                if (error || !docs) { list.innerHTML = '<p style="color:rgba(255,80,80,0.6);text-align:center;padding:30px 0;font-size:13px;">Error al cargar documentos.</p>'; return; }
+                if (!docs.length) {
+                    list.innerHTML = '<div style="background:rgba(251,146,60,0.08);border:1px solid rgba(251,146,60,0.25);border-radius:12px;padding:20px;text-align:center;color:rgba(255,255,255,0.6);font-size:13px;">PENDIENTE DE FIRMA — Miami DJ Beat LLC te enviará un enlace por email/SMS para firmar tu contrato y W-9.</div>';
+                    return;
+                }
+                list.innerHTML = docs.map(function (d) {
+                    var typeLabel = DOC_TYPE_LABELS[d.contract_type] || d.contract_type;
+                    var statusInfo = DOC_STATUS_LABELS[d.status] || { text: d.status, color: 'rgba(255,255,255,0.4)', bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.15)' };
+                    var dateStr = d.signed_at ? new Date(d.signed_at).toLocaleDateString('es', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+                    return (
+                        '<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;">' +
+                            '<div>' +
+                                '<div style="font-size:15px;font-weight:800;color:#fff;margin-bottom:4px;">' + typeLabel + '</div>' +
+                                '<div style="font-size:11.5px;color:rgba(255,255,255,0.4);">Firmado: ' + dateStr + '</div>' +
+                            '</div>' +
+                            '<div style="display:flex;align-items:center;gap:10px;">' +
+                                '<span style="font-size:10.5px;font-weight:800;letter-spacing:.03em;padding:5px 12px;border-radius:999px;background:' + statusInfo.bg + ';color:' + statusInfo.color + ';border:1px solid ' + statusInfo.border + ';">' + statusInfo.text + '</span>' +
+                                '<a href="./contracts-engine.html?view_record=' + encodeURIComponent(d.id) + '" target="_blank" rel="noopener" style="background:rgba(197,160,89,0.12);border:1px solid rgba(197,160,89,0.35);color:#e8c987;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:800;text-decoration:none;white-space:nowrap;">📥 Descargar</a>' +
+                            '</div>' +
+                        '</div>'
+                    );
+                }).join('');
+            } catch (e) {
+                console.warn('[mis-documentos] load:', e);
+                list.innerHTML = '<p style="color:rgba(255,80,80,0.6);text-align:center;padding:30px 0;font-size:13px;">Error al cargar documentos.</p>';
+            }
+        }
+        window.loadMisDocumentosPanel = loadMisDocumentosPanel;
+
+        /* Resumen compacto de Documentación Legal & W-9 en la Cabina DJ — lee
+           obtener_mis_contratos() (misma RPC de solo lectura ya usada en
+           account-settings.html "Documentos Legales"; cruza por perfil de
+           artista/email de la sesión, nunca recibe un usuario como
+           parámetro). Solo un resumen de 2 líneas + enlace — la lista
+           completa con descarga vive en account-settings.html#legal, no se
+           duplica aquí. */
+        const LEGAL_SERVICE_TYPES = new Set(['DJ_AGREEMENT', 'VENUE_AGREEMENT', 'CORPORATE_AGREEMENT', 'STAFF_AGREEMENT', 'LIVE_BAND_AGREEMENT', 'SOLO_ARTIST_AGREEMENT', 'SUBCONTRACTOR_SHOW_AGREEMENT', 'PRIVATE_EVENT_AGREEMENT']);
+        const LEGAL_SIGNED_STATUSES = new Set(['SIGNED', 'COMPLETADO_EXTERNO']);
+        async function loadLegalComplianceSummary(db) {
+            const rows = document.getElementById('legal-compliance-rows');
+            if (!rows || !db) return;
+            try {
+                const { data: docs, error } = await db.rpc('obtener_mis_contratos');
+                if (error || !docs) { rows.innerHTML = '<div style="font-size:11px;color:rgba(255,80,80,0.6);">Error al cargar.</div>'; return; }
+                const hasContract = docs.some(d => LEGAL_SERVICE_TYPES.has(d.contract_type) && LEGAL_SIGNED_STATUSES.has(d.status));
+                const hasW9 = docs.some(d => d.contract_type === 'W9' && LEGAL_SIGNED_STATUSES.has(d.status));
+                const row = (label, ok) => (
+                    '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">' +
+                        '<span style="font-size:12px;color:rgba(255,255,255,0.7);">' + label + '</span>' +
+                        '<span style="font-size:10px;font-weight:800;letter-spacing:.03em;padding:3px 9px;border-radius:999px;' +
+                            (ok ? 'background:rgba(34,197,94,0.14);color:#4ade80;border:1px solid rgba(34,197,94,0.35);'
+                                : 'background:rgba(251,146,60,0.12);color:#fb923c;border:1px solid rgba(251,146,60,0.3);') +
+                        '">' + (ok ? '✓ FIRMADO' : 'PENDIENTE') + '</span>' +
+                    '</div>'
+                );
+                rows.innerHTML = row('Contrato de Servicios', hasContract) + row('Formulario W-9', hasW9);
+            } catch (e) {
+                console.warn('[legal-compliance] load:', e);
+                rows.innerHTML = '<div style="font-size:11px;color:rgba(255,80,80,0.6);">Error al cargar.</div>';
+            }
+        }
+
         async function loadProfile() {
             /** Vuelta desde Stripe Checkout (create-sft-tip-checkout): limpiar URL y mostrar tostada al final del load. */
             let mdjSftStripeReturn = null;
@@ -4771,7 +4925,19 @@
                     const loc = [p.city, p.region].filter(Boolean).join(' · ');
                     roleLine = roleLine ? (roleLine + ' · ' + loc) : loc;
                 }
-                roleEl.textContent = mdjSanitizeHeroRoleLine(roleLine);
+                const cleanRoleLine = mdjSanitizeHeroRoleLine(roleLine);
+                /* Carrusel continuo (marquee): el texto se pinta DOS veces seguidas
+                   dentro de una pista que se desliza -50% en loop — la segunda copia
+                   (aria-hidden) hace que el bucle se vea continuo sin salto. Con
+                   prefers-reduced-motion la animación se apaga por CSS y esto se
+                   vuelve el mismo contenedor de una sola línea con scroll manual de
+                   antes. p.artist_specialty/roles/city/region son datos del propio
+                   perfil (editables por su dueño) — nunca van por textContent aquí
+                   porque ahora se arma HTML, así que pasan por escape manual. */
+                const escRole = String(cleanRoleLine).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+                roleEl.innerHTML = escRole
+                    ? '<span class="dj-hero-role-track"><span>' + escRole + '</span><span aria-hidden="true">' + escRole + '</span></span>'
+                    : '';
             }
 
             // ── Suscripción & Visibilidad Dinámica ──
@@ -5018,6 +5184,13 @@
                     } else {
                         owc.style.display = 'none';
                     }
+                }
+
+                // ── Documentación Legal & W-9 (solo dueño, nunca en vista pública/QR) ──
+                const legalCard = document.getElementById('legal-compliance-card');
+                if (legalCard && isOwner && !isPublicQrView) {
+                    legalCard.style.display = 'block';
+                    loadLegalComplianceSummary(db);
                 }
 
                 const snfl = document.getElementById('sft-night-log-flow-shell');
@@ -6976,12 +7149,11 @@
         <section style="padding:40px 0;background:#000;min-height:80vh;">
             <div class="container" style="padding:0 56px;">
                 <div style="margin-bottom:24px;">
-                    <h2 style="font-size:32px;font-weight:900;color:#fff;margin:0;">Mis Documentos</h2>
+                    <h2 style="font-size:32px;font-weight:900;color:#fff;margin:0;">⚖️ Bóveda Legal</h2>
                     <p style="color:rgba(255,255,255,0.4);margin-top:8px;">Contratos y Formulario W-9 — firma electrónica y copias certificadas.</p>
                 </div>
-                <div style="position:relative;border-radius:14px;overflow:hidden;background:#0b0b0f;min-height:70vh;">
-                    <div id="documentos-loading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#0b0f18;color:rgba(255,255,255,.55);font-size:13px;letter-spacing:.04em;z-index:2;">Cargando documentos…</div>
-                    <iframe id="documentos-frame" data-src="./contracts-engine.html" title="Mis Documentos" referrerpolicy="same-origin" style="width:100%;height:80vh;min-height:640px;border:none;background:#0b0b0f;display:block;"></iframe>
+                <div id="documentos-list" style="display:flex;flex-direction:column;gap:12px;">
+                    <div style="text-align:center;padding:40px 0;color:rgba(255,255,255,0.25);font-size:13px;">Cargando documentos…</div>
                 </div>
             </div>
         </section>
@@ -7062,14 +7234,8 @@
                 }
             }
 
-            if (tab === 'documentos') {
-                var docFrame = document.getElementById('documentos-frame');
-                if (docFrame && !docFrame.getAttribute('src')) {
-                    var docLoading = document.getElementById('documentos-loading');
-                    docFrame.addEventListener('load', function () { if (docLoading) docLoading.style.display = 'none'; });
-                    setTimeout(function () { docFrame.setAttribute('src', docFrame.getAttribute('data-src')); }, 30);
-                    setTimeout(function () { if (docLoading) docLoading.style.display = 'none'; }, 8000);
-                }
+            if (tab === 'documentos' && typeof loadMisDocumentosPanel === 'function') {
+                loadMisDocumentosPanel();
             }
 
             var floatCta = document.getElementById('mdj-sft-mobile-float-cta');
