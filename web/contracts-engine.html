@@ -163,8 +163,18 @@ a{color:var(--accent-strong);}
   backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
 }
 .panel + .panel{margin-top:14px;}
+/* #contextSimPanel necesita quedar por ENCIMA del panel del formulario que
+   tiene justo debajo (#fieldsPanel) — ambos son .panel con backdrop-filter,
+   lo que crea un stacking context propio en cada uno; sin esta elevación,
+   el dropdown de resultados de búsqueda (que se desborda fuera de su caja)
+   queda pintado detrás del panel siguiente en vez de encima. */
+#contextSimPanel{position:relative;z-index:5;}
+/* Mismo motivo: #fieldsPanel ahora tiene su propio dropdown flotante
+   (autocompletado de venue) que puede desbordarse hacia el panel
+   siguiente — sin esto se repetiría exactamente el mismo bug. */
+#fieldsPanel{position:relative;z-index:4;}
 .panel-title{
-  font-family:"Fraunces",serif;font-size:16px;font-weight:600;margin:0 0 3px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  font-family:"Fraunces",serif;font-size:16px;font-weight:600;margin:0 0 3px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;position:relative;
 }
 .panel-hint{font-size:12px;color:var(--text-muted);margin:0 0 14px;}
 
@@ -392,11 +402,54 @@ a{color:var(--accent-strong);}
 .template-card[disabled]{opacity:.4;pointer-events:none;}
 
 /* context / profile panel */
-.context-row{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;}
-.context-row .field{flex:1;min-width:180px;margin-bottom:0;}
 .context-note{font-size:10.5px;color:var(--text-faint);background:var(--surface-2);border-radius:7px;padding:6px 9px;margin-top:10px;}
 .linked-badge{display:flex;align-items:center;gap:8px;background:var(--accent-soft);border:1px solid var(--accent);border-radius:8px;padding:7px 10px;font-size:12px;margin-top:10px;}
 .linked-badge button{border:0;background:transparent;color:var(--danger);cursor:pointer;font-size:11px;font-weight:600;margin-left:auto;}
+/* búsqueda real de artista/cliente — reemplaza el selector de perfiles
+   simulados; misma caja de texto, resultados como lista flotante debajo */
+.profile-search-results{position:absolute;left:0;right:0;top:100%;margin-top:4px;z-index:5;
+  background:var(--surface);border:1px solid var(--border-strong);border-radius:10px;
+  box-shadow:0 10px 24px rgba(0,0,0,.4);max-height:240px;overflow:auto;
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);}
+.profile-search-item{display:flex;flex-direction:column;gap:2px;width:100%;text-align:left;
+  padding:9px 12px;border:0;border-bottom:1px solid var(--border);background:transparent;
+  color:var(--text);cursor:pointer;font-family:inherit;}
+.profile-search-item:last-child{border-bottom:0;}
+.profile-search-item:hover,.profile-search-item.active{background:var(--accent-soft);}
+.profile-search-item b{font-size:12.5px;}
+.profile-search-item span{font-size:11px;color:var(--text-faint);}
+.profile-search-item .psi-kind{display:inline-block;font-size:9px;font-weight:800;letter-spacing:.04em;
+  text-transform:uppercase;color:var(--accent-strong);margin-right:6px;}
+.profile-search-empty{padding:12px;font-size:11.5px;color:var(--text-faint);text-align:center;}
+/* autocompletado del campo "Nombre del venue" — misma lógica visual que
+   profile-search-results, contra financial_venues (name/address reales,
+   confirmado en producción 3 filas: El Valle Restaurante, Sundowner Key
+   Largo, Mojitos Calle 8). Si no hay coincidencia, el campo sigue siendo
+   100% manual — nada bloquea ese camino. */
+.field-venue-wrap{position:relative;}
+.venue-search-results{position:absolute;left:0;right:0;top:100%;margin-top:4px;z-index:5;
+  background:var(--surface);border:1px solid var(--border-strong);border-radius:10px;
+  box-shadow:0 10px 24px rgba(0,0,0,.4);max-height:200px;overflow:auto;
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);}
+.venue-search-item{display:flex;flex-direction:column;gap:2px;width:100%;text-align:left;
+  padding:9px 12px;border:0;border-bottom:1px solid var(--border);background:transparent;
+  color:var(--text);cursor:pointer;font-family:inherit;}
+.venue-search-item:last-child{border-bottom:0;}
+.venue-search-item:hover,.venue-search-item.active{background:var(--accent-soft);}
+.venue-search-item b{font-size:12.5px;}
+.venue-search-item span{font-size:11px;color:var(--text-faint);}
+/* "?" de ayuda — la explicación del buscador ya no ocupa espacio fijo
+   bajo la caja, vive detrás de este ícono. Sin title= a propósito (ver
+   la píldora nativa "Bóveda Legal" — evitamos ese mismo mecanismo). */
+.info-dot{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;
+  border-radius:999px;border:1px solid var(--border-strong);background:var(--surface-2);color:var(--text-faint);
+  font-size:10px;font-weight:800;cursor:pointer;vertical-align:middle;margin-left:4px;line-height:1;padding:0;}
+.info-dot:hover{color:var(--accent-strong);border-color:var(--accent-strong);}
+.info-popover{position:absolute;left:0;top:100%;margin-top:6px;z-index:6;width:240px;
+  background:var(--surface);border:1px solid var(--border-strong);border-radius:10px;
+  padding:10px 12px;font-size:11px;font-weight:400;line-height:1.5;color:var(--text-muted);
+  text-transform:none;letter-spacing:normal;box-shadow:0 10px 24px rgba(0,0,0,.4);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);}
 
 /* send / link */
 .send-sim-note{background:var(--warning-soft);color:var(--warning);border-radius:8px;padding:9px 11px;font-size:11.5px;margin-bottom:4px;line-height:1.5;}
@@ -564,14 +617,14 @@ a{color:var(--accent-strong);}
       <div class="main-grid">
         <div class="form-col" id="formCol">
           <section class="panel" id="contextSimPanel">
-            <h3 class="panel-title">🗂️ <span data-i18n="contextPanelTitle">Contexto simulado</span></h3>
-            <p class="panel-hint" data-i18n="profileSimNote">Directorio simulado — datos de ejemplo, no artistas reales.</p>
-            <div class="context-row">
-              <div class="field">
-                <label data-i18n="profileSelectLabel">Perfil de artista (simulado)</label>
-                <select id="profileSelect"></select>
-              </div>
-              <button class="btn btn-ghost" id="loadProfileBtn" data-i18n="loadProfileBtn">Cargar en el formulario</button>
+            <h3 class="panel-title">🔍 <span data-i18n="contextPanelTitle">Buscar artista / cliente</span>
+              <button type="button" class="info-dot" data-info-target="profileSearchInfoPopover" aria-label="Ayuda">?</button>
+            </h3>
+            <div class="info-popover" id="profileSearchInfoPopover" hidden data-i18n="profileSimNote">Busca por nombre o email en la base real. Si no aparece, llena el formulario manualmente abajo.</div>
+            <div class="field" style="position:relative;">
+              <label data-i18n="profileSelectLabel">Nombre o email</label>
+              <input type="text" id="profileSearchInput" autocomplete="off" placeholder="Ej. Gerardo, DJMago305, djmago305@gmail.com…">
+              <div id="profileSearchResults" class="profile-search-results" hidden></div>
             </div>
             <div id="linkedBadge" hidden></div>
           </section>
@@ -579,8 +632,10 @@ a{color:var(--accent-strong);}
           <section class="panel" id="fieldsPanel"></section>
 
           <section class="panel">
-            <h3 class="panel-title">📤 <span data-i18n="sendPanelTitle">Generador de envíos</span> <span id="statusPill" class="status-pill"></span></h3>
-            <p class="panel-hint" data-i18n="sendPanelHint">Envía este documento para firma remota, o fírmalo tú mismo en el momento.</p>
+            <h3 class="panel-title">📤 <span data-i18n="sendPanelTitle">Generador de envíos</span> <span id="statusPill" class="status-pill"></span>
+              <button type="button" class="info-dot" data-info-target="sendPanelHintPop" aria-label="Ayuda">?</button>
+            </h3>
+            <div class="panel-hint info-popover" id="sendPanelHintPop" hidden data-i18n="sendPanelHint">Envía este documento para firma remota, o fírmalo tú mismo en el momento.</div>
             <div id="staffActionArea"></div>
             <div id="staffValidationBanner"></div>
             <div id="staffAuditPanel" hidden style="margin-top:16px;">
@@ -590,14 +645,18 @@ a{color:var(--accent-strong);}
           </section>
 
           <section class="panel">
-            <h3 class="panel-title">🎙️ <span data-i18n="elixisPanelTitle">Integración Elixis Voice Dispatcher</span></h3>
-            <p class="panel-hint" data-i18n="elixisPanelHint"></p>
+            <h3 class="panel-title">🎙️ <span data-i18n="elixisPanelTitle">Integración Elixis Voice Dispatcher</span>
+              <button type="button" class="info-dot" data-info-target="elixisPanelHintPop" aria-label="Ayuda">?</button>
+            </h3>
+            <div class="panel-hint info-popover" id="elixisPanelHintPop" hidden data-i18n="elixisPanelHint"></div>
             <button type="button" class="btn btn-ghost" id="simulateElixisBtn" style="width:100%;" data-i18n="simulateElixisBtn">🎙️ Simular Elixis (demo)</button>
           </section>
 
           <section class="panel">
-            <h3 class="panel-title">📋 <span data-i18n="inboxTitle">Bandeja de Contratos</span></h3>
-            <p class="panel-hint" data-i18n="inboxHint">Todos los contratos generados en este navegador — estado, fecha y hash.</p>
+            <h3 class="panel-title">📋 <span data-i18n="inboxTitle">Bandeja de Contratos</span>
+              <button type="button" class="info-dot" data-info-target="inboxHintPop" aria-label="Ayuda">?</button>
+            </h3>
+            <div class="panel-hint info-popover" id="inboxHintPop" hidden data-i18n="inboxHint">Todos los contratos generados en este navegador — estado, fecha y hash.</div>
             <div class="contract-list" id="contractList"></div>
           </section>
         </div>
@@ -627,14 +686,18 @@ a{color:var(--accent-strong);}
     <div id="signerWorkArea" class="main-grid" hidden>
       <div class="form-col">
         <section class="panel">
-          <h3 class="panel-title">🔒 <span data-i18n="signerTermsTitle">Términos del documento</span> <span class="status-pill status-pending" data-i18n="statusPending">Pendiente</span></h3>
-          <p class="panel-hint" data-i18n="signerTermsHint">Estos términos fueron definidos por Miami DJ Beat LLC y no pueden modificarse aquí.</p>
+          <h3 class="panel-title">🔒 <span data-i18n="signerTermsTitle">Términos del documento</span> <span class="status-pill status-pending" data-i18n="statusPending">Pendiente</span>
+            <button type="button" class="info-dot" data-info-target="signerTermsHintPop" aria-label="Ayuda">?</button>
+          </h3>
+          <div class="panel-hint info-popover" id="signerTermsHintPop" hidden data-i18n="signerTermsHint">Estos términos fueron definidos por Miami DJ Beat LLC y no pueden modificarse aquí.</div>
           <button class="btn btn-ghost" id="backToPendingBtn" style="width:100%;margin-bottom:4px;" data-i18n="backToPendingBtn">Volver a documentos pendientes</button>
         </section>
 
         <section class="panel" id="signerSigPanel">
-          <h3 class="panel-title">✍️ <span data-i18n="sigPanelTitle">Firma y cumplimiento</span></h3>
-          <p class="panel-hint" data-i18n="sigPanelHint">Identifica a quien firma y captura su firma electrónica.</p>
+          <h3 class="panel-title">✍️ <span data-i18n="sigPanelTitle">Firma y cumplimiento</span>
+            <button type="button" class="info-dot" data-info-target="sigPanelHintPop" aria-label="Ayuda">?</button>
+          </h3>
+          <div class="panel-hint info-popover" id="sigPanelHintPop" hidden data-i18n="sigPanelHint">Identifica a quien firma y captura su firma electrónica.</div>
 
           <div class="field"><label data-i18n="signerNameLabel">Nombre de quien firma<span class="req">*</span></label><input type="text" id="signerName" placeholder="" autocomplete="off"></div>
           <div class="field"><label data-i18n="signerRoleLabel">Rol / cargo</label><input type="text" id="signerRole" placeholder="" autocomplete="off"></div>
@@ -670,8 +733,10 @@ a{color:var(--accent-strong);}
              las dos secciones (esta o "Firma y cumplimiento", arriba) se
              muestra según record.contract_type. -->
         <section class="panel" id="signerW9Panel" hidden>
-          <h3 class="panel-title"><span data-i18n="w9SignerPanelTitle">Completar Formulario W-9</span></h3>
-          <p class="panel-hint" data-i18n="w9SignerPanelHint">Descarga el formulario oficial, fírmalo por tu cuenta y sube aquí el PDF ya firmado.</p>
+          <h3 class="panel-title"><span data-i18n="w9SignerPanelTitle">Completar Formulario W-9</span>
+            <button type="button" class="info-dot" data-info-target="w9SignerPanelHintPop" aria-label="Ayuda">?</button>
+          </h3>
+          <div class="panel-hint info-popover" id="w9SignerPanelHintPop" hidden data-i18n="w9SignerPanelHint">Descarga el formulario oficial, fírmalo por tu cuenta y sube aquí el PDF ya firmado.</div>
           <a href="https://www.irs.gov/pub/irs-pdf/fw9.pdf" target="_blank" rel="noopener" class="btn btn-ghost" style="width:100%;margin-bottom:16px;display:block;box-sizing:border-box;text-align:center;text-decoration:none;">⬇ <span data-i18n="dlOfficialW9Btn">Descargar PDF oficial del IRS (Rev. March 2024)</span></a>
           <div class="panel-hint" style="margin:-8px 0 14px;font-weight:700;" data-i18n="w9UploadStep">Paso 2 — Sube tu W-9 completado y firmado</div>
           <div class="w9-upload-drop" id="w9SignerDropArea" tabindex="0" role="button">
@@ -896,9 +961,9 @@ const STR = {
     mtabPreview:"Vista previa",
     moduleStaffBtn:"Módulo Staff: Envío y Recepción",
     moduleSignerBtn:"Módulo Firmante: Pantalla del Cliente/Artista",
-    contextPanelTitle:"Contexto simulado",
-    profileSimNote:"Directorio simulado — datos de ejemplo, no artistas reales.",
-    profileSelectLabel:"Perfil de artista (simulado)",
+    contextPanelTitle:"Buscar artista / cliente",
+    profileSimNote:"Busca por nombre o email en la base real. Si no aparece, llena el formulario manualmente abajo.",
+    profileSelectLabel:"Nombre o email",
     profileNone:"Sin vincular",
     loadProfileBtn:"Cargar en el formulario",
     linkedPrefix:"Vinculado a:",
@@ -1028,9 +1093,9 @@ const STR = {
     mtabPreview:"Preview",
     moduleStaffBtn:"Staff Module: Send & Receive",
     moduleSignerBtn:"Signer Module: Client/Artist Screen",
-    contextPanelTitle:"Simulated context",
-    profileSimNote:"Simulated directory — sample data, not real artists.",
-    profileSelectLabel:"Artist profile (simulated)",
+    contextPanelTitle:"Search artist / client",
+    profileSimNote:"Search the real directory by name or email. If nothing shows up, fill the form manually below.",
+    profileSelectLabel:"Name or email",
     profileNone:"Unlinked",
     loadProfileBtn:"Load into form",
     linkedPrefix:"Linked to:",
@@ -1244,6 +1309,7 @@ const state = {
   activeContractId: null,
   signerActiveId: null,
   sigTargetContext: "staff",
+  currentStaffIdentity: null, // "Nombre (Rol)" real de la sesión — ver resolveCurrentStaffIdentity()
 };
 
 /* ============ templates ============ */
@@ -1255,6 +1321,19 @@ const GENERAL_CLAUSE = {
   es:{title:"Ley Aplicable y Disposiciones Generales", body:"Este contrato se rige por las leyes del Estado de Florida. Toda controversia derivada de este contrato estará sujeta a la jurisdicción exclusiva de los tribunales estatales y federales ubicados en el Condado de Miami-Dade, Florida. Ambas partes reconocen que la parte prestadora de servicios participa como contratista independiente y no como empleado. Este documento, junto con cualquier anexo adjunto, constituye el entendimiento completo entre las partes y solo podrá modificarse por escrito firmado por ambas. Ante circunstancias de fuerza mayor fuera del control razonable de cualquiera de las partes, la parte afectada notificará a la otra con prontitud y ambas negociarán de buena fe una reprogramación o solución razonable."},
   en:{title:"Governing Law & General Provisions", body:"This Agreement is governed by the laws of the State of Florida. Any dispute arising from this Agreement shall be subject to the exclusive jurisdiction of the state and federal courts located in Miami-Dade County, Florida. Both parties acknowledge that the servicing party is engaged as an independent contractor and not as an employee. This document, together with any attached riders, constitutes the entire understanding between the parties and may only be amended in writing signed by both. In the event of circumstances beyond either party's reasonable control (force majeure), the affected party shall notify the other promptly, and both will negotiate in good faith a reasonable rescheduling or resolution."}
 };
+/* Cláusulas adicionales inyectadas por el puente de Elixir AI (payload
+   estructurado, ver applyElixirContractPayload más abajo) — 100% aditivo:
+   si d._customClauses no existe, el contrato se renderiza exactamente
+   igual que antes de esta función. */
+function withCustomClauses(clauses, d, lang){
+  const extra = Array.isArray(d._customClauses) ? d._customClauses : [];
+  if(!extra.length) return clauses;
+  const injected = extra.map(c=>{
+    if(typeof c === "string") return {es:{title:'Cláusula adicional', body: esc(c)}, en:{title:'Additional Clause', body: esc(c)}};
+    return {es:{title: esc(c.title||'Cláusula adicional'), body: esc(c.body||'')}, en:{title: esc(c.title||'Additional Clause'), body: esc(c.body||'')}};
+  });
+  return [...clauses, ...injected];
+}
 function renderClauses(items, lang, startAt){
   return items.map((c,i)=>`<h2>${(startAt||1)+i}. ${c[lang].title}</h2><p>${c[lang].body}</p>`).join("");
 }
@@ -1305,6 +1384,11 @@ const TEMPLATES = [
       {key:"overtimeRate", type:"number", label:{es:"Tarifa por hora extra (USD)", en:"Overtime rate (USD/hr)"}},
       {key:"technicalRider", type:"textarea", label:{es:"Rider técnico", en:"Technical rider"},
         placeholder:{es:"Ej. 2 CDJ-3000, mixer DJM-A9, monitores de piso, DI box...", en:"E.g. 2x CDJ-3000, DJM-A9 mixer, floor monitors, DI box..."}},
+      {key:"exclusivityRegime", type:"select", label:{es:"Régimen de exclusividad", en:"Exclusivity regime"},
+        options:[
+          {v:"exclusive", l:{es:"Exclusivo (Representación Total / Agencia)", en:"Exclusive (Full Agency Representation)"}},
+          {v:"non_exclusive", l:{es:"No Exclusivo / Libre (Booking por Evento)", en:"Non-Exclusive / Free (Per-Event Booking)"}},
+        ]},
       {key:"cancellation", type:"select", label:{es:"Política de cancelación", en:"Cancellation policy"},
         options:[
           {v:"strict", l:{es:"Estricta — 100% si se cancela dentro de 14 días", en:"Strict — 100% if cancelled within 14 days"}},
@@ -1335,6 +1419,14 @@ const TEMPLATES = [
          en:{title:'Compensation', body:`Client agrees to pay Artist a total fee of ${d.feeAmount?fmtMoney(d.feeAmount):'[amount]'}.${d.depositAmount?` A deposit of ${fmtMoney(d.depositAmount)} is required${d.depositDueDate?` by ${fmtDate(d.depositDueDate,lang)}`:''}, with the remaining balance due on the day of the event.`:''}${d.overtimeRate?` Any performance time beyond the scheduled window will be billed at ${fmtMoney(d.overtimeRate)}/hour.`:''}`}},
         {es:{title:'Rider técnico', body: esc(d.technicalRider)||'<span class="placeholder">Sin especificaciones técnicas indicadas.</span>'},
          en:{title:'Technical Rider', body: esc(d.technicalRider)||'<span class="placeholder">No technical specifications provided.</span>'}},
+        {es:{title:'Exclusividad y no negociación', body:'El Artista/DJ reconoce que el evento y la relación con el Venue/Cliente han sido gestionados exclusivamente por Miami DJ Beat LLC. Queda estrictamente prohibido que el Artista/DJ negocie contrataciones privadas directas, intercambie acuerdos comerciales por cuenta propia o intente representar o comprometer a Miami DJ Beat LLC sin autorización previa y por escrito de la dirección.'},
+         en:{title:'Exclusivity & Non-Circumvention', body:'Artist/DJ acknowledges that the event and the relationship with the Venue/Client have been arranged exclusively by Miami DJ Beat LLC. Artist/DJ is strictly prohibited from negotiating direct private bookings, entering into independent commercial arrangements, or attempting to represent or bind Miami DJ Beat LLC without prior written authorization from management.'}},
+        {es:{title:'No circunvención y protección de plazas', body:'El DJ mantiene libertad para prestar servicios independientes en locaciones externas. No obstante, queda estrictamente prohibido que el DJ preste servicios directos, negocie fechas o sea contratado por su cuenta en cualquier Venue, Empresa o con cualquier Cliente al que haya sido asignado o presentado previamente por Miami DJ Beat LLC, protegiendo la titularidad comercial de la agencia.'},
+         en:{title:'Non-Circumvention & Territory Protection', body:'DJ retains the freedom to provide independent services at outside locations. However, DJ is strictly prohibited from providing direct services, negotiating dates, or being engaged independently by any Venue, Company, or Client to which DJ was previously assigned or introduced by Miami DJ Beat LLC, protecting the agency\'s commercial ownership of that relationship.'}},
+        {es:{title:'Conducta profesional y jurisdicción', body:'El Artista/DJ se concentrará única y exclusivamente en su desempeño musical y técnico. Queda terminantemente prohibido entrometerse, opinar o interferir en las operaciones internas, administrativas o comerciales del Venue o del Cliente. Cualquier observación sobre el entorno de trabajo debe canalizarse a través de la gerencia de Miami DJ Beat LLC.'},
+         en:{title:'Professional Conduct & Scope', body:'Artist/DJ shall focus solely and exclusively on their musical and technical performance. Artist/DJ is strictly prohibited from interfering with, commenting on, or involving themselves in the internal, administrative, or business operations of the Venue or Client. Any observations about the working environment must be channeled through Miami DJ Beat LLC management.'}},
+        {es:{title:'Requerimientos técnicos adicionales', body:'En caso de requerir soporte técnico adicional en cabina (monitoreo de referencia, cableado o accesorios complementarios), el Artista/DJ solicitará cortésmente la disponibilidad al personal del Venue, absteniéndose de realizar exigencias impositivas que comprometan la imagen de la empresa.'},
+         en:{title:'Additional Technical Requirements', body:'Should additional booth technical support be required (reference monitoring, cabling, or supplementary accessories), Artist/DJ shall courteously request availability from Venue personnel, refraining from demanding requirements that could compromise the company\'s image.'}},
         {es:{title:'Política de cancelación', body: cancelText.es||cancelText}, en:{title:'Cancellation Policy', body: cancelText.en||cancelText}},
         PRIVACY_CLAUSE,
       ];
@@ -1351,7 +1443,241 @@ const TEMPLATES = [
           <div><span>${t.kv_venue}</span><b>${esc(d.venueName)||'<span class=\"placeholder\">—</span>'}</b></div>
           <div><span>${t.kv_fee}</span><b>${d.feeAmount?fmtMoney(d.feeAmount):'<span class="placeholder">—</span>'}</b></div>
         </div>
-        ${renderClauses(clauses,lang,1)}
+        ${renderClauses(withCustomClauses(clauses,d,lang),lang,1)}
+        <h2>${clauses.length+1}. ${GENERAL_CLAUSE[lang].title}</h2><p>${GENERAL_CLAUSE[lang].body}</p>`;
+    }
+  },
+  {
+    id:"live_band", icon:"🎷",
+    name:{es:"Orquesta / Banda en Vivo", en:"Live Band / Orchestra Agreement"},
+    desc:{es:"Stage plot, input list, soundcheck", en:"Stage plot, input list, soundcheck"},
+    fields:[
+      {key:"clientName", type:"text", req:true, label:{es:"Nombre del cliente", en:"Client name"}},
+      {key:"bandName", type:"text", req:true, label:{es:"Nombre de la banda / orquesta", en:"Band / orchestra name"}},
+      {key:"bandLeaderName", type:"text", label:{es:"Nombre del representante / líder", en:"Bandleader / representative name"}},
+      {key:"eventDate", type:"date", req:true, label:{es:"Fecha del evento", en:"Event date"}},
+      {key:"eventStart", type:"time", label:{es:"Hora de inicio", en:"Start time"}, row:"time"},
+      {key:"eventEnd", type:"time", label:{es:"Hora de fin", en:"End time"}, row:"time"},
+      {key:"venueName", type:"text", label:{es:"Nombre del venue", en:"Venue name"}},
+      {key:"venueAddress", type:"text", label:{es:"Dirección del venue", en:"Venue address"}},
+      {key:"feeAmount", type:"number", req:true, label:{es:"Honorario total (USD)", en:"Total fee (USD)"}, row:"fee"},
+      {key:"depositAmount", type:"number", label:{es:"Depósito (USD)", en:"Deposit (USD)"}, row:"fee"},
+      {key:"soundcheckTime", type:"time", label:{es:"Horario de soundcheck", en:"Soundcheck time"}},
+      {key:"setStructure", type:"textarea", label:{es:"Estructura de sets y descansos", en:"Set structure & breaks"},
+        placeholder:{es:"Ej. 2 sets de 45 min con 15 min de descanso entre cada uno...", en:"E.g. 2x 45-min sets with a 15-min break between..."}},
+      {key:"stagePlot", type:"textarea", label:{es:"Stage plot (distribución en escenario)", en:"Stage plot"},
+        placeholder:{es:"Ej. 6 músicos, batería al centro, 2 vocalistas al frente...", en:"E.g. 6 musicians, drums center stage, 2 vocalists upfront..."}},
+      {key:"inputList", type:"textarea", label:{es:"Input list (canales de audio)", en:"Input list"},
+        placeholder:{es:"Ej. 1. Bombo 2. Caja 3. Bajo DI 4. Guitarra...", en:"E.g. 1. Kick 2. Snare 3. Bass DI 4. Guitar..."}},
+      {key:"exclusivityRegime", type:"select", label:{es:"Régimen de exclusividad", en:"Exclusivity regime"},
+        options:[
+          {v:"exclusive", l:{es:"Exclusivo (Representación Total / Agencia)", en:"Exclusive (Full Agency Representation)"}},
+          {v:"non_exclusive", l:{es:"No Exclusivo / Libre (Booking por Evento)", en:"Non-Exclusive / Free (Per-Event Booking)"}},
+        ]},
+      {key:"cancellation", type:"select", label:{es:"Política de cancelación", en:"Cancellation policy"},
+        options:[
+          {v:"strict", l:{es:"Estricta — 100% si se cancela dentro de 14 días", en:"Strict — 100% if cancelled within 14 days"}},
+          {v:"standard", l:{es:"Estándar — 50% si se cancela dentro de 30 días", en:"Standard — 50% if cancelled within 30 days"}},
+          {v:"flexible", l:{es:"Flexible — reembolso completo hasta 7 días antes", en:"Flexible — full refund up to 7 days before"}},
+        ]},
+    ],
+    partyNames(d,lang){
+      return [
+        {label:{es:'Cliente',en:'Client'}, name:d.clientName},
+        {label:{es:'Banda / Orquesta',en:'Band / Orchestra'}, name:(d.bandName||'')+(d.bandLeaderName?` (rep. ${d.bandLeaderName})`:'')},
+      ];
+    },
+    render(d,lang){
+      const t=STR[lang];
+      const cancelText = {
+        strict:{es:"Si el Cliente cancela dentro de los 14 días previos al evento, deberá pagar el 100% del honorario acordado.",
+                en:"If Client cancels within 14 days of the event, 100% of the agreed fee is due."},
+        standard:{es:"Si el Cliente cancela dentro de los 30 días previos al evento, deberá pagar el 50% del honorario acordado.",
+                  en:"If Client cancels within 30 days of the event, 50% of the agreed fee is due."},
+        flexible:{es:"El Cliente recibirá reembolso completo si cancela con al menos 7 días de anticipación.",
+                  en:"Client receives a full refund if cancelling at least 7 days in advance."},
+      }[d.cancellation||"standard"];
+      /* Regla de negocio: sin selección explícita, el régimen por defecto es
+         No Exclusivo — no restringimos la libertad de trabajo de un tercero
+         sin su acuerdo consciente. El staff debe elegir "Exclusivo" a propósito. */
+      const exclusivityClause = d.exclusivityRegime==='exclusive'
+        ? {es:'El Artista/Agrupación concede la exclusividad de representación y contratación a Miami DJ Beat LLC. No podrá aceptar presentaciones, contrataciones ni apariciones en vivo sin el consentimiento previo y formal por escrito de la gerencia.',
+           en:'Artist/Ensemble grants Miami DJ Beat LLC exclusive representation and booking rights. Artist/Ensemble may not accept performances, bookings, or live appearances without prior, formal written consent from management.'}
+        : {es:'El Artista/Agrupación conserva plena libertad para agendar y ejecutar presentaciones por su cuenta sin requerir autorización de Miami DJ Beat LLC, obligándose exclusivamente a garantizar la comparecencia en la fecha/hora pactada en este contrato y a no realizar ofertas directas al Cliente contratante del evento.',
+           en:'Artist/Ensemble retains full freedom to schedule and perform engagements independently without requiring authorization from Miami DJ Beat LLC, subject only to the obligation of guaranteeing attendance at the date/time agreed in this Agreement and to refrain from making direct offers to the Client engaging this event.'};
+      const clauses = [
+        {es:{title:'Partes y compromiso', body:`Este Contrato de Servicios Musicales se celebra entre <b>${esc(d.clientName)||'[Cliente]'}</b> ("Cliente") y <b>${esc(d.bandName)||'[Banda]'}</b>${d.bandLeaderName?`, representada por ${esc(d.bandLeaderName)}`:''} ("Agrupación"), administrado por Miami DJ Beat LLC como agencia de representación, para una presentación en vivo el ${d.eventDate?fmtDate(d.eventDate,lang):'[fecha]'} en ${esc(d.venueName)||'[venue]'}${d.venueAddress?`, ubicado en ${esc(d.venueAddress)}`:''}.`},
+         en:{title:'Parties & Engagement', body:`This Live Music Services Agreement is entered into between <b>${esc(d.clientName)||'[Client]'}</b> ("Client") and <b>${esc(d.bandName)||'[Band]'}</b>${d.bandLeaderName?`, represented by ${esc(d.bandLeaderName)}`:''} ("Ensemble"), administered by Miami DJ Beat LLC as booking agency, for a live performance on ${d.eventDate?fmtDate(d.eventDate,lang):'[date]'} at ${esc(d.venueName)||'[venue]'}${d.venueAddress?`, located at ${esc(d.venueAddress)}`:''}.`}},
+        {es:{title:'Compensación', body:`El Cliente pagará a la Agrupación un honorario total de ${d.feeAmount?fmtMoney(d.feeAmount):'[monto]'}.${d.depositAmount?` Se requiere un depósito de ${fmtMoney(d.depositAmount)}, con el saldo restante a pagar el día del evento.`:''}`},
+         en:{title:'Compensation', body:`Client agrees to pay the Ensemble a total fee of ${d.feeAmount?fmtMoney(d.feeAmount):'[amount]'}.${d.depositAmount?` A deposit of ${fmtMoney(d.depositAmount)} is required, with the remaining balance due on the day of the event.`:''}`}},
+        {es:{title:'Régimen de exclusividad', body: exclusivityClause.es}, en:{title:'Exclusivity Regime', body: exclusivityClause.en}},
+        {es:{title:'Soundcheck y estructura de sets', body:`${d.soundcheckTime?`Soundcheck programado a las ${d.soundcheckTime}. `:''}${esc(d.setStructure)||'<span class="placeholder">Estructura de sets no especificada.</span>'}`},
+         en:{title:'Soundcheck & Set Structure', body:`${d.soundcheckTime?`Soundcheck scheduled at ${d.soundcheckTime}. `:''}${esc(d.setStructure)||'<span class="placeholder">Set structure not specified.</span>'}`}},
+        {es:{title:'Stage plot', body: esc(d.stagePlot)||'<span class="placeholder">Sin stage plot indicado.</span>'},
+         en:{title:'Stage Plot', body: esc(d.stagePlot)||'<span class="placeholder">No stage plot provided.</span>'}},
+        {es:{title:'Input list', body: esc(d.inputList)||'<span class="placeholder">Sin input list indicado.</span>'},
+         en:{title:'Input List', body: esc(d.inputList)||'<span class="placeholder">No input list provided.</span>'}},
+        {es:{title:'Política de cancelación', body: cancelText.es}, en:{title:'Cancellation Policy', body: cancelText.en}},
+        PRIVACY_CLAUSE,
+      ];
+      return `
+        ${letterheadBlock()}
+        <div class="paper-eyebrow">${lang==='es'?'Contrato de Servicios Musicales':'Live Music Services Agreement'}</div>
+        <h1>${lang==='es'?'Orquesta / Banda en Vivo':'Live Band / Orchestra Agreement'}</h1>
+        <div class="paper-sub">${lang==='es'?'Preparado':'Prepared'} ${fmtDate(todayIso(),lang)} · Miami DJ Beat LLC</div>
+        <div class="kv">
+          <div><span>${t.kv_client}</span><b>${esc(d.clientName)||'<span class=\"placeholder\">—</span>'}</b></div>
+          <div><span>${lang==='es'?'Agrupación':'Ensemble'}</span><b>${esc(d.bandName)||'<span class=\"placeholder\">—</span>'}</b></div>
+          <div><span>${t.kv_date}</span><b>${d.eventDate?fmtDate(d.eventDate,lang):'<span class="placeholder">—</span>'}</b></div>
+          <div><span>${lang==='es'?'Horario':'Schedule'}</span><b>${d.eventStart||'—'} – ${d.eventEnd||'—'}</b></div>
+          <div><span>${t.kv_venue}</span><b>${esc(d.venueName)||'<span class=\"placeholder\">—</span>'}</b></div>
+          <div><span>${t.kv_fee}</span><b>${d.feeAmount?fmtMoney(d.feeAmount):'<span class="placeholder">—</span>'}</b></div>
+        </div>
+        ${renderClauses(withCustomClauses(clauses,d,lang),lang,1)}
+        <h2>${clauses.length+1}. ${GENERAL_CLAUSE[lang].title}</h2><p>${GENERAL_CLAUSE[lang].body}</p>`;
+    }
+  },
+  {
+    id:"solo_artist", icon:"🎤",
+    name:{es:"Cantante / Músico Solista", en:"Solo Singer / Musician Agreement"},
+    desc:{es:"Pistas/playback, microfonía inalámbrica", en:"Backing tracks, wireless mics"},
+    fields:[
+      {key:"clientName", type:"text", req:true, label:{es:"Nombre del cliente", en:"Client name"}},
+      {key:"artistLegalName", type:"text", req:true, label:{es:"Nombre legal del artista", en:"Artist legal name"}},
+      {key:"stageName", type:"text", label:{es:"Nombre artístico", en:"Stage name"}},
+      {key:"eventDate", type:"date", req:true, label:{es:"Fecha del evento", en:"Event date"}},
+      {key:"eventStart", type:"time", label:{es:"Hora de inicio", en:"Start time"}, row:"time"},
+      {key:"eventEnd", type:"time", label:{es:"Hora de fin", en:"End time"}, row:"time"},
+      {key:"venueName", type:"text", label:{es:"Nombre del venue", en:"Venue name"}},
+      {key:"venueAddress", type:"text", label:{es:"Dirección del venue", en:"Venue address"}},
+      {key:"feeAmount", type:"number", req:true, label:{es:"Honorario total (USD)", en:"Total fee (USD)"}, row:"fee"},
+      {key:"depositAmount", type:"number", label:{es:"Depósito (USD)", en:"Deposit (USD)"}, row:"fee"},
+      {key:"usesBackingTracks", type:"select", label:{es:"¿Usa pistas / playback?", en:"Uses backing tracks?"},
+        options:[{v:"yes",l:{es:"Sí",en:"Yes"}},{v:"no",l:{es:"No — en vivo con banda/instrumento",en:"No — live with band/instrument"}}]},
+      {key:"needsWirelessMic", type:"select", label:{es:"¿Requiere microfonía inalámbrica?", en:"Needs wireless microphone?"},
+        options:[{v:"yes",l:{es:"Sí",en:"Yes"}},{v:"no",l:{es:"No",en:"No"}}]},
+      {key:"micDetails", type:"textarea", label:{es:"Detalles de microfonía / pistas", en:"Mic / track details"},
+        placeholder:{es:"Ej. 1 mic inalámbrico de mano Shure SM58, pistas en formato MP3 vía USB...", en:"E.g. 1 wireless Shure SM58 handheld, tracks in MP3 via USB..."}},
+      {key:"exclusivityRegime", type:"select", label:{es:"Régimen de exclusividad", en:"Exclusivity regime"},
+        options:[
+          {v:"exclusive", l:{es:"Exclusivo (Representación Total / Agencia)", en:"Exclusive (Full Agency Representation)"}},
+          {v:"non_exclusive", l:{es:"No Exclusivo / Libre (Booking por Evento)", en:"Non-Exclusive / Free (Per-Event Booking)"}},
+        ]},
+      {key:"cancellation", type:"select", label:{es:"Política de cancelación", en:"Cancellation policy"},
+        options:[
+          {v:"strict", l:{es:"Estricta — 100% si se cancela dentro de 14 días", en:"Strict — 100% if cancelled within 14 days"}},
+          {v:"standard", l:{es:"Estándar — 50% si se cancela dentro de 30 días", en:"Standard — 50% if cancelled within 30 days"}},
+          {v:"flexible", l:{es:"Flexible — reembolso completo hasta 7 días antes", en:"Flexible — full refund up to 7 days before"}},
+        ]},
+    ],
+    partyNames(d,lang){
+      return [
+        {label:{es:'Cliente',en:'Client'}, name:d.clientName},
+        {label:{es:'Artista Solista',en:'Solo Artist'}, name:(d.artistLegalName||'')+(d.stageName?` "${d.stageName}"`:'')},
+      ];
+    },
+    render(d,lang){
+      const t=STR[lang];
+      const cancelText = {
+        strict:{es:"Si el Cliente cancela dentro de los 14 días previos al evento, deberá pagar el 100% del honorario acordado.",
+                en:"If Client cancels within 14 days of the event, 100% of the agreed fee is due."},
+        standard:{es:"Si el Cliente cancela dentro de los 30 días previos al evento, deberá pagar el 50% del honorario acordado.",
+                  en:"If Client cancels within 30 days of the event, 50% of the agreed fee is due."},
+        flexible:{es:"El Cliente recibirá reembolso completo si cancela con al menos 7 días de anticipación.",
+                  en:"Client receives a full refund if cancelling at least 7 days in advance."},
+      }[d.cancellation||"standard"];
+      const tracksText = d.usesBackingTracks==='yes'
+        ? {es:'El Artista se presentará utilizando pistas/playback pregrabadas.', en:'Artist will perform using pre-recorded backing tracks.'}
+        : {es:'El Artista se presentará en vivo, sin pistas pregrabadas.', en:'Artist will perform live, without pre-recorded tracks.'};
+      const micText = d.needsWirelessMic==='yes'
+        ? {es:'El Artista requiere microfonía inalámbrica provista por el Venue o Miami DJ Beat LLC según se coordine.', en:'Artist requires wireless microphone equipment, to be provided by the Venue or Miami DJ Beat LLC as coordinated.'}
+        : {es:'El Artista no requiere microfonía inalámbrica adicional.', en:'Artist does not require additional wireless microphone equipment.'};
+      /* Mismo criterio que live_band: por defecto No Exclusivo hasta que el
+         staff elija "Exclusivo" a propósito. */
+      const exclusivityClause = d.exclusivityRegime==='exclusive'
+        ? {es:'El Artista/Agrupación concede la exclusividad de representación y contratación a Miami DJ Beat LLC. No podrá aceptar presentaciones, contrataciones ni apariciones en vivo sin el consentimiento previo y formal por escrito de la gerencia.',
+           en:'Artist/Ensemble grants Miami DJ Beat LLC exclusive representation and booking rights. Artist/Ensemble may not accept performances, bookings, or live appearances without prior, formal written consent from management.'}
+        : {es:'El Artista/Agrupación conserva plena libertad para agendar y ejecutar presentaciones por su cuenta sin requerir autorización de Miami DJ Beat LLC, obligándose exclusivamente a garantizar la comparecencia en la fecha/hora pactada en este contrato y a no realizar ofertas directas al Cliente contratante del evento.',
+           en:'Artist/Ensemble retains full freedom to schedule and perform engagements independently without requiring authorization from Miami DJ Beat LLC, subject only to the obligation of guaranteeing attendance at the date/time agreed in this Agreement and to refrain from making direct offers to the Client engaging this event.'};
+      const clauses = [
+        {es:{title:'Partes y compromiso', body:`Este Contrato de Servicios de Artista se celebra entre <b>${esc(d.clientName)||'[Cliente]'}</b> ("Cliente") y <b>${esc(d.artistLegalName)||'[Artista]'}</b>${d.stageName?` (actuando como "${esc(d.stageName)}")`:''} ("Artista"), administrado por Miami DJ Beat LLC como agencia de representación, para una presentación en vivo el ${d.eventDate?fmtDate(d.eventDate,lang):'[fecha]'} en ${esc(d.venueName)||'[venue]'}${d.venueAddress?`, ubicado en ${esc(d.venueAddress)}`:''}.`},
+         en:{title:'Parties & Engagement', body:`This Artist Services Agreement is entered into between <b>${esc(d.clientName)||'[Client]'}</b> ("Client") and <b>${esc(d.artistLegalName)||'[Artist]'}</b>${d.stageName?` (performing as "${esc(d.stageName)}")`:''} ("Artist"), administered by Miami DJ Beat LLC as booking agency, for a live performance on ${d.eventDate?fmtDate(d.eventDate,lang):'[date]'} at ${esc(d.venueName)||'[venue]'}${d.venueAddress?`, located at ${esc(d.venueAddress)}`:''}.`}},
+        {es:{title:'Compensación', body:`El Cliente pagará al Artista un honorario total de ${d.feeAmount?fmtMoney(d.feeAmount):'[monto]'}.${d.depositAmount?` Se requiere un depósito de ${fmtMoney(d.depositAmount)}, con el saldo restante a pagar el día del evento.`:''}`},
+         en:{title:'Compensation', body:`Client agrees to pay Artist a total fee of ${d.feeAmount?fmtMoney(d.feeAmount):'[amount]'}.${d.depositAmount?` A deposit of ${fmtMoney(d.depositAmount)} is required, with the remaining balance due on the day of the event.`:''}`}},
+        {es:{title:'Régimen de exclusividad', body: exclusivityClause.es}, en:{title:'Exclusivity Regime', body: exclusivityClause.en}},
+        {es:{title:'Pistas / playback', body: tracksText.es}, en:{title:'Backing Tracks', body: tracksText.en}},
+        {es:{title:'Microfonía', body: `${micText.es}${d.micDetails?` ${esc(d.micDetails)}`:''}`}, en:{title:'Microphones', body: `${micText.en}${d.micDetails?` ${esc(d.micDetails)}`:''}`}},
+        {es:{title:'Política de cancelación', body: cancelText.es}, en:{title:'Cancellation Policy', body: cancelText.en}},
+        PRIVACY_CLAUSE,
+      ];
+      return `
+        ${letterheadBlock()}
+        <div class="paper-eyebrow">${lang==='es'?'Contrato de Servicios':'Service Agreement'}</div>
+        <h1>${lang==='es'?'Cantante / Músico Solista':'Solo Singer / Musician Agreement'}</h1>
+        <div class="paper-sub">${lang==='es'?'Preparado':'Prepared'} ${fmtDate(todayIso(),lang)} · Miami DJ Beat LLC</div>
+        <div class="kv">
+          <div><span>${t.kv_client}</span><b>${esc(d.clientName)||'<span class=\"placeholder\">—</span>'}</b></div>
+          <div><span>${lang==='es'?'Artista':'Artist'}</span><b>${esc(d.artistLegalName)||'<span class=\"placeholder\">—</span>'}${d.stageName?' "'+esc(d.stageName)+'"':''}</b></div>
+          <div><span>${t.kv_date}</span><b>${d.eventDate?fmtDate(d.eventDate,lang):'<span class="placeholder">—</span>'}</b></div>
+          <div><span>${lang==='es'?'Horario':'Schedule'}</span><b>${d.eventStart||'—'} – ${d.eventEnd||'—'}</b></div>
+          <div><span>${t.kv_venue}</span><b>${esc(d.venueName)||'<span class=\"placeholder\">—</span>'}</b></div>
+          <div><span>${t.kv_fee}</span><b>${d.feeAmount?fmtMoney(d.feeAmount):'<span class="placeholder">—</span>'}</b></div>
+        </div>
+        ${renderClauses(withCustomClauses(clauses,d,lang),lang,1)}
+        <h2>${clauses.length+1}. ${GENERAL_CLAUSE[lang].title}</h2><p>${GENERAL_CLAUSE[lang].body}</p>`;
+    }
+  },
+  {
+    id:"subcontractor_show", icon:"🎪",
+    name:{es:"Show / Hora Loca (Subcontratista)", en:"Show / Hora Loca (Subcontractor)"},
+    desc:{es:"B2B, seguro COI, exoneración", en:"B2B, COI insurance, hold harmless"},
+    fields:[
+      {key:"contractorLegalName", type:"text", req:true, label:{es:"Nombre legal del subcontratista / empresa", en:"Subcontractor legal / company name"}},
+      {key:"showType", type:"text", req:true, label:{es:"Tipo de show", en:"Show type"}, placeholder:{es:"Ej. Hora Loca, Zanqueros, Show de fuego...", en:"E.g. Hora Loca, Stilt walkers, Fire show..."}},
+      {key:"eventDate", type:"date", req:true, label:{es:"Fecha del evento", en:"Event date"}},
+      {key:"eventStart", type:"time", label:{es:"Hora de inicio", en:"Start time"}, row:"time"},
+      {key:"eventEnd", type:"time", label:{es:"Hora de fin", en:"End time"}, row:"time"},
+      {key:"venueName", type:"text", label:{es:"Nombre del venue", en:"Venue name"}},
+      {key:"venueAddress", type:"text", label:{es:"Dirección del venue", en:"Venue address"}},
+      {key:"feeAmount", type:"number", req:true, label:{es:"Honorario total (USD)", en:"Total fee (USD)"}, row:"fee"},
+      {key:"depositAmount", type:"number", label:{es:"Depósito (USD)", en:"Deposit (USD)"}, row:"fee"},
+      {key:"coiRequired", type:"select", label:{es:"¿Requiere seguro COI (Certificate of Insurance)?", en:"COI (Certificate of Insurance) required?"},
+        options:[{v:"yes",l:{es:"Sí — obligatorio",en:"Yes — mandatory"}},{v:"no",l:{es:"No aplica",en:"Not applicable"}}]},
+      {key:"coiAmount", type:"text", label:{es:"Cobertura mínima requerida", en:"Minimum coverage required"}, placeholder:{es:"Ej. $1,000,000 por ocurrencia", en:"E.g. $1,000,000 per occurrence"}},
+    ],
+    partyNames(d,lang){
+      return [
+        {label:{es:'Contratante',en:'Contracting Party'}, name:'Miami DJ Beat LLC'},
+        {label:{es:'Subcontratista',en:'Subcontractor'}, name:(d.contractorLegalName||'')+(d.showType?` (${d.showType})`:'')},
+      ];
+    },
+    render(d,lang){
+      const t=STR[lang];
+      const clauses = [
+        {es:{title:'Partes y alcance', body:`Este Contrato de Subcontratación B2B se celebra entre <b>Miami DJ Beat LLC</b> ("Contratante") y <b>${esc(d.contractorLegalName)||'[Subcontratista]'}</b> ("Subcontratista"), para la prestación del servicio "${esc(d.showType)||'[tipo de show]'}" el ${d.eventDate?fmtDate(d.eventDate,lang):'[fecha]'} en ${esc(d.venueName)||'[venue]'}${d.venueAddress?`, ubicado en ${esc(d.venueAddress)}`:''}.`},
+         en:{title:'Parties & Scope', body:`This B2B Subcontracting Agreement is entered into between <b>Miami DJ Beat LLC</b> ("Contracting Party") and <b>${esc(d.contractorLegalName)||'[Subcontractor]'}</b> ("Subcontractor"), for the provision of "${esc(d.showType)||'[show type]'}" services on ${d.eventDate?fmtDate(d.eventDate,lang):'[date]'} at ${esc(d.venueName)||'[venue]'}${d.venueAddress?`, located at ${esc(d.venueAddress)}`:''}.`}},
+        {es:{title:'Compensación', body:`El Contratante pagará al Subcontratista un honorario total de ${d.feeAmount?fmtMoney(d.feeAmount):'[monto]'}.${d.depositAmount?` Se requiere un depósito de ${fmtMoney(d.depositAmount)}, con el saldo restante a pagar el día del evento.`:''}`},
+         en:{title:'Compensation', body:`Contracting Party agrees to pay Subcontractor a total fee of ${d.feeAmount?fmtMoney(d.feeAmount):'[amount]'}.${d.depositAmount?` A deposit of ${fmtMoney(d.depositAmount)} is required, with the remaining balance due on the day of the event.`:''}`}},
+        {es:{title:'Seguro de responsabilidad civil (COI)', body: d.coiRequired==='yes' ? `El Subcontratista deberá presentar un Certificado de Seguro (COI) vigente${d.coiAmount?`, con cobertura mínima de ${esc(d.coiAmount)}`:''}, nombrando a Miami DJ Beat LLC como asegurado adicional, antes de la fecha del evento. La falta de presentación del COI faculta al Contratante a cancelar este acuerdo sin penalización.` : '<span class="placeholder">Seguro COI no requerido para este servicio.</span>'},
+         en:{title:'Certificate of Insurance (COI)', body: d.coiRequired==='yes' ? `Subcontractor must provide a valid Certificate of Insurance (COI)${d.coiAmount?`, with minimum coverage of ${esc(d.coiAmount)}`:''}, naming Miami DJ Beat LLC as additional insured, prior to the event date. Failure to provide the COI entitles the Contracting Party to cancel this Agreement without penalty.` : '<span class="placeholder">COI insurance not required for this service.</span>'}},
+        {es:{title:'Exoneración de responsabilidad (Hold Harmless)', body:'El Subcontratista acepta indemnizar, defender y eximir de toda responsabilidad a Miami DJ Beat LLC, sus directivos, empleados y representantes, frente a cualquier reclamo, daño, lesión o pérdida que surja de la prestación de sus servicios, incluyendo negligencia propia del Subcontratista o de su personal. Miami DJ Beat LLC actúa únicamente como intermediario de contratación y no asume responsabilidad operativa por la ejecución del show.'},
+         en:{title:'Hold Harmless Clause', body:'Subcontractor agrees to indemnify, defend, and hold harmless Miami DJ Beat LLC, its officers, employees, and representatives from any claim, damage, injury, or loss arising from the performance of its services, including negligence by the Subcontractor or its personnel. Miami DJ Beat LLC acts solely as a booking intermediary and assumes no operational responsibility for the execution of the show.'}},
+        PRIVACY_CLAUSE,
+      ];
+      return `
+        ${letterheadBlock()}
+        <div class="paper-eyebrow">${lang==='es'?'Contrato de Subcontratación B2B':'B2B Subcontracting Agreement'}</div>
+        <h1>${lang==='es'?'Show / Hora Loca (Subcontratista)':'Show / Hora Loca (Subcontractor)'}</h1>
+        <div class="paper-sub">${lang==='es'?'Preparado':'Prepared'} ${fmtDate(todayIso(),lang)} · Miami DJ Beat LLC</div>
+        <div class="kv">
+          <div><span>${lang==='es'?'Subcontratista':'Subcontractor'}</span><b>${esc(d.contractorLegalName)||'<span class=\"placeholder\">—</span>'}</b></div>
+          <div><span>${lang==='es'?'Tipo de show':'Show type'}</span><b>${esc(d.showType)||'<span class=\"placeholder\">—</span>'}</b></div>
+          <div><span>${t.kv_date}</span><b>${d.eventDate?fmtDate(d.eventDate,lang):'<span class="placeholder">—</span>'}</b></div>
+          <div><span>${lang==='es'?'Horario':'Schedule'}</span><b>${d.eventStart||'—'} – ${d.eventEnd||'—'}</b></div>
+          <div><span>${t.kv_venue}</span><b>${esc(d.venueName)||'<span class=\"placeholder\">—</span>'}</b></div>
+          <div><span>${t.kv_fee}</span><b>${d.feeAmount?fmtMoney(d.feeAmount):'<span class="placeholder">—</span>'}</b></div>
+        </div>
+        ${renderClauses(withCustomClauses(clauses,d,lang),lang,1)}
         <h2>${clauses.length+1}. ${GENERAL_CLAUSE[lang].title}</h2><p>${GENERAL_CLAUSE[lang].body}</p>`;
     }
   },
@@ -1410,7 +1736,7 @@ const TEMPLATES = [
           <div><span>${lang==='es'?'Ubicación':'Location'}</span><b>${esc(d.eventLocation)||'<span class=\"placeholder\">—</span>'}</b></div>
           <div><span>${t.kv_fee}</span><b>${d.totalFee?fmtMoney(d.totalFee):'<span class="placeholder">—</span>'}</b></div>
         </div>
-        ${renderClauses(clauses,lang,1)}
+        ${renderClauses(withCustomClauses(clauses,d,lang),lang,1)}
         <h2>${clauses.length+1}. ${GENERAL_CLAUSE[lang].title}</h2><p>${GENERAL_CLAUSE[lang].body}</p>`;
     }
   },
@@ -1431,6 +1757,11 @@ const TEMPLATES = [
       {key:"exclusivityRadius", type:"number", label:{es:"Radio de exclusividad (millas)", en:"Exclusivity radius (miles)"}},
       {key:"noticePeriod", type:"select", label:{es:"Periodo de aviso para terminar", en:"Termination notice period"},
         options:[{v:"15",l:{es:"15 días",en:"15 days"}},{v:"30",l:{es:"30 días",en:"30 days"}},{v:"60",l:{es:"60 días",en:"60 days"}}]},
+      {key:"loadInTime", type:"time", label:{es:"Hora de carga (load-in)", en:"Load-in time"}, row:"loadinout"},
+      {key:"loadOutTime", type:"time", label:{es:"Hora de descarga (load-out)", en:"Load-out time"}, row:"loadinout"},
+      {key:"dbLimit", type:"number", label:{es:"Límite de decibeles (dB)", en:"Noise limit (dB)"}},
+      {key:"electricalOutlets", type:"textarea", label:{es:"Tomas eléctricas disponibles", en:"Available electrical outlets"},
+        placeholder:{es:"Ej. 2 circuitos dedicados de 20A cerca del escenario...", en:"E.g. 2 dedicated 20A circuits near the stage..."}},
     ],
     partyNames(d,lang){
       return [{label:{es:'Venue',en:'Venue'}, name:d.venueName},{label:{es:'Artista / DJ',en:'Artist / DJ'}, name:d.djName}];
@@ -1448,6 +1779,8 @@ const TEMPLATES = [
          en:{title:'Exclusivity', body: d.exclusivityRadius? `Artist will not perform at another venue within a ${d.exclusivityRadius}-mile radius during the term of this residency.` : '<span class="placeholder">No exclusivity clause indicated.</span>'}},
         {es:{title:'Terminación', body:`Cualquiera de las partes podrá terminar este contrato con un aviso previo de ${d.noticePeriod||'30'} días.`},
          en:{title:'Termination', body:`Either party may terminate this Agreement with ${d.noticePeriod||'30'} days' written notice.`}},
+        {es:{title:'Logística técnica del venue', body: (d.loadInTime||d.loadOutTime||d.dbLimit||d.electricalOutlets) ? `${d.loadInTime?`Carga (load-in): ${d.loadInTime}. `:''}${d.loadOutTime?`Descarga (load-out): ${d.loadOutTime}. `:''}${d.dbLimit?`Límite de sonido: ${d.dbLimit} dB. `:''}${d.electricalOutlets?`Tomas eléctricas: ${esc(d.electricalOutlets)}.`:''}` : '<span class="placeholder">Sin logística técnica especificada.</span>'},
+         en:{title:'Venue Technical Logistics', body: (d.loadInTime||d.loadOutTime||d.dbLimit||d.electricalOutlets) ? `${d.loadInTime?`Load-in: ${d.loadInTime}. `:''}${d.loadOutTime?`Load-out: ${d.loadOutTime}. `:''}${d.dbLimit?`Noise limit: ${d.dbLimit} dB. `:''}${d.electricalOutlets?`Electrical outlets: ${esc(d.electricalOutlets)}.`:''}` : '<span class="placeholder">No technical logistics specified.</span>'}},
         PRIVACY_CLAUSE,
       ];
       return `
@@ -1462,7 +1795,70 @@ const TEMPLATES = [
           <div><span>${lang==='es'?'Fin':'End'}</span><b>${d.residencyEnd?fmtDate(d.residencyEnd,lang):'<span class="placeholder">—</span>'}</b></div>
           <div><span>${lang==='es'?'Horario':'Schedule'}</span><b>${esc(d.scheduleDays)||'<span class=\"placeholder\">—</span>'}</b></div>
         </div>
-        ${renderClauses(clauses,lang,1)}
+        ${renderClauses(withCustomClauses(clauses,d,lang),lang,1)}
+        <h2>${clauses.length+1}. ${GENERAL_CLAUSE[lang].title}</h2><p>${GENERAL_CLAUSE[lang].body}</p>`;
+    }
+  },
+  {
+    id:"private_event", icon:"💍",
+    name:{es:"Cliente Particular / Boda / 15 Años", en:"Private Client / Wedding / Quinceañera Agreement"},
+    desc:{es:"Depósitos, horas extra, cláusula climática", en:"Deposits, overtime, weather clause"},
+    fields:[
+      {key:"clientName", type:"text", req:true, label:{es:"Nombre del cliente", en:"Client name"}},
+      {key:"eventType", type:"select", label:{es:"Tipo de evento", en:"Event type"},
+        options:[
+          {v:"wedding",l:{es:"Boda",en:"Wedding"}},
+          {v:"quince",l:{es:"15 Años / Quinceañera",en:"Quinceañera"}},
+          {v:"birthday",l:{es:"Cumpleaños",en:"Birthday"}},
+          {v:"other",l:{es:"Otro evento privado",en:"Other private event"}},
+        ]},
+      {key:"eventDate", type:"date", req:true, label:{es:"Fecha del evento", en:"Event date"}},
+      {key:"eventStart", type:"time", label:{es:"Hora de inicio", en:"Start time"}, row:"time"},
+      {key:"eventEnd", type:"time", label:{es:"Hora de fin", en:"End time"}, row:"time"},
+      {key:"venueName", type:"text", label:{es:"Nombre del venue", en:"Venue name"}},
+      {key:"venueAddress", type:"text", label:{es:"Dirección del venue", en:"Venue address"}},
+      {key:"outdoorEvent", type:"select", label:{es:"¿Evento al aire libre?", en:"Outdoor event?"},
+        options:[{v:"yes",l:{es:"Sí",en:"Yes"}},{v:"no",l:{es:"No — interior",en:"No — indoor"}}]},
+      {key:"totalFee", type:"number", req:true, label:{es:"Honorario total (USD)", en:"Total fee (USD)"}, row:"fee"},
+      {key:"depositAmount", type:"number", label:{es:"Depósito (USD)", en:"Deposit (USD)"}, row:"fee"},
+      {key:"depositDueDate", type:"date", label:{es:"Fecha límite del depósito", en:"Deposit due date"}},
+      {key:"overtimeRate", type:"number", label:{es:"Tarifa por hora extra (USD)", en:"Overtime rate (USD/hr)"}},
+      {key:"serviceScope", type:"textarea", label:{es:"Alcance del servicio", en:"Scope of service"},
+        placeholder:{es:"Ej. DJ, audio, iluminación de pista, animación...", en:"E.g. DJ, audio, dance-floor lighting, MC/hosting..."}},
+    ],
+    partyNames(d,lang){ return [{label:{es:'Cliente',en:'Client'}, name:d.clientName}]; },
+    render(d,lang){
+      const t=STR[lang];
+      const eventTypeLabel = {
+        wedding:{es:"Boda",en:"Wedding"}, quince:{es:"15 Años",en:"Quinceañera"},
+        birthday:{es:"Cumpleaños",en:"Birthday"}, other:{es:"Evento Privado",en:"Private Event"},
+      }[d.eventType||"other"];
+      const weatherClause = d.outdoorEvent==='yes'
+        ? {es:'Al tratarse de un evento al aire libre, el Cliente asume la responsabilidad de proveer un plan de contingencia (carpa, techado o espacio interior alterno) en caso de lluvia u otras condiciones climáticas adversas. Miami DJ Beat LLC no se hace responsable por daños al equipo causados por exposición a la intemperie si no se proveyó dicha protección.',
+             en:'As this is an outdoor event, Client is responsible for providing a contingency plan (tent, covered area, or alternate indoor space) in the event of rain or other adverse weather conditions. Miami DJ Beat LLC is not liable for equipment damage caused by exposure to the elements if such protection was not provided.'}
+        : {es:'Este evento se realizará en un espacio interior; no aplica cláusula climática.', en:'This event will take place indoors; the weather clause does not apply.'};
+      const clauses = [
+        {es:{title:'Partes y compromiso', body:`Este Contrato de Servicios de Entretenimiento se celebra entre <b>${esc(d.clientName)||'[Cliente]'}</b> ("Cliente") y Miami DJ Beat LLC ("Proveedor"), para brindar servicios de ${eventTypeLabel.es.toLowerCase()} el ${d.eventDate?fmtDate(d.eventDate,lang):'[fecha]'} en ${esc(d.venueName)||'[venue]'}${d.venueAddress?`, ubicado en ${esc(d.venueAddress)}`:''}. ${esc(d.serviceScope)||'<span class="placeholder">Alcance del servicio no especificado.</span>'}`},
+         en:{title:'Parties & Engagement', body:`This Entertainment Services Agreement is entered into between <b>${esc(d.clientName)||'[Client]'}</b> ("Client") and Miami DJ Beat LLC ("Provider"), to deliver ${eventTypeLabel.en.toLowerCase()} services on ${d.eventDate?fmtDate(d.eventDate,lang):'[date]'} at ${esc(d.venueName)||'[venue]'}${d.venueAddress?`, located at ${esc(d.venueAddress)}`:''}. ${esc(d.serviceScope)||'<span class="placeholder">Scope of service not specified.</span>'}`}},
+        {es:{title:'Honorario y depósito', body:`El honorario total acordado es de ${d.totalFee?fmtMoney(d.totalFee):'[monto]'}.${d.depositAmount?` Se requiere un depósito de ${fmtMoney(d.depositAmount)}${d.depositDueDate?` antes del ${fmtDate(d.depositDueDate,lang)}`:''}, con el saldo restante a pagar el día del evento.`:''}${d.overtimeRate?` Todo tiempo de servicio adicional al horario acordado se facturará a ${fmtMoney(d.overtimeRate)} por hora.`:''}`},
+         en:{title:'Fee & Deposit', body:`The total agreed fee is ${d.totalFee?fmtMoney(d.totalFee):'[amount]'}.${d.depositAmount?` A deposit of ${fmtMoney(d.depositAmount)} is required${d.depositDueDate?` by ${fmtDate(d.depositDueDate,lang)}`:''}, with the remaining balance due on the day of the event.`:''}${d.overtimeRate?` Any service time beyond the scheduled window will be billed at ${fmtMoney(d.overtimeRate)}/hour.`:''}`}},
+        {es:{title:'Cláusula climática', body: weatherClause.es}, en:{title:'Weather Clause', body: weatherClause.en}},
+        PRIVACY_CLAUSE,
+      ];
+      return `
+        ${letterheadBlock()}
+        <div class="paper-eyebrow">${lang==='es'?'Contrato de Servicios de Entretenimiento':'Entertainment Services Agreement'}</div>
+        <h1>${lang==='es'?'Cliente Particular / Boda / 15 Años':'Private Client / Wedding / Quinceañera Agreement'}</h1>
+        <div class="paper-sub">${lang==='es'?'Preparado':'Prepared'} ${fmtDate(todayIso(),lang)} · Miami DJ Beat LLC</div>
+        <div class="kv">
+          <div><span>${t.kv_client}</span><b>${esc(d.clientName)||'<span class=\"placeholder\">—</span>'}</b></div>
+          <div><span>${lang==='es'?'Tipo de evento':'Event type'}</span><b>${eventTypeLabel[lang]}</b></div>
+          <div><span>${t.kv_date}</span><b>${d.eventDate?fmtDate(d.eventDate,lang):'<span class="placeholder">—</span>'}</b></div>
+          <div><span>${lang==='es'?'Horario':'Schedule'}</span><b>${d.eventStart||'—'} – ${d.eventEnd||'—'}</b></div>
+          <div><span>${t.kv_venue}</span><b>${esc(d.venueName)||'<span class=\"placeholder\">—</span>'}</b></div>
+          <div><span>${t.kv_fee}</span><b>${d.totalFee?fmtMoney(d.totalFee):'<span class="placeholder">—</span>'}</b></div>
+        </div>
+        ${renderClauses(withCustomClauses(clauses,d,lang),lang,1)}
         <h2>${clauses.length+1}. ${GENERAL_CLAUSE[lang].title}</h2><p>${GENERAL_CLAUSE[lang].body}</p>`;
     }
   },
@@ -1511,7 +1907,7 @@ const TEMPLATES = [
           <div><span>${lang==='es'?'Vinculación':'Engagement'}</span><b>${d.engagementType==='ongoing'?(lang==='es'?'Continua':'Ongoing'):(lang==='es'?'Por evento':'Per-event')}</b></div>
           <div><span>${lang==='es'?'Compensación':'Compensation'}</span><b>${d.compensationPerEvent?fmtMoney(d.compensationPerEvent):'<span class="placeholder">—</span>'}</b></div>
         </div>
-        ${renderClauses(clauses,lang,1)}
+        ${renderClauses(withCustomClauses(clauses,d,lang),lang,1)}
         <h2>${clauses.length+1}. ${GENERAL_CLAUSE[lang].title}</h2><p>${GENERAL_CLAUSE[lang].body}</p>`;
     }
   },
@@ -1565,40 +1961,181 @@ function tinDigitBoxes(digitsStr, groups){
   return out;
 }
 
-/* ============ profile directory UI ============ */
-function renderProfileSelect(){
-  const lang = state.lang;
-  const sel = $("#profileSelect");
-  sel.innerHTML = `<option value="">${STR[lang].profileNone}</option>` + MOCK_PROFILES.map(p=>`<option value="${p.id}">${esc(p.djName)}</option>`).join("");
-  sel.value = state.linkedProfileId || "";
-  renderLinkedBadge();
+/* ============ identidad real del emisor (sesión activa) ============
+   Mismo patrón ya usado en staff.html (auth.getSession() → dj_profiles por
+   user_id → role/dj_name/full_name) — replicado aquí porque este motor
+   corre en su propio iframe/contexto. Se resuelve UNA vez en init() y se
+   cachea en state.currentStaffIdentity; si algo falla (sin sesión, tabla
+   sin fila, etc.) queda en null y el resto del código cae a "Staff
+   Manual" — nunca bloquea el flujo de trabajo. */
+async function resolveCurrentStaffIdentity(){
+  const client = (typeof window.getSupabaseClient === "function") ? window.getSupabaseClient() : null;
+  if(!client) return null;
+  try{
+    const { data: sessData } = await client.auth.getSession();
+    const session = sessData && sessData.session;
+    if(!session) return null;
+    const { data } = await client.from("dj_profiles").select("role, dj_name, full_name, stage_name").eq("user_id", session.user.id).maybeSingle();
+    if(!data) return null;
+    const roleLabel = {owner:"Owner", seller:"Vendedor", manager:"Manager", admin:"Admin"}[String(data.role||"").toLowerCase().trim()] || "Staff";
+    const name = data.full_name || data.dj_name || data.stage_name || session.user.email || "Staff";
+    return `${name} (${roleLabel})`;
+  }catch(e){ return null; }
 }
-function renderLinkedBadge(){
-  const lang = state.lang;
-  const badge = $("#linkedBadge");
-  const p = MOCK_PROFILES.find(x=>x.id===state.linkedProfileId);
-  if(!p){ badge.hidden = true; badge.innerHTML=""; return; }
-  badge.hidden = false;
-  badge.className = "linked-badge";
-  badge.innerHTML = `<span>${STR[lang].linkedPrefix} <b>${esc(p.djName)}</b></span><button type="button" id="unlinkProfileBtn">${STR[lang].unlinkBtn}</button>`;
-  $("#unlinkProfileBtn").addEventListener("click", ()=>{ state.linkedProfileId=null; renderProfileSelect(); renderPreview(); });
+/* ============ venue autocomplete — búsqueda real contra financial_venues ============
+   Confirmado en producción (2026-08-24): tabla real con datos (El Valle
+   Restaurante, Sundowner Key Largo, Mojitos Calle 8). Si no hay coincidencia
+   el campo "Nombre del venue" sigue siendo 100% manual — nada lo bloquea. */
+async function searchVenues(query){
+  const client = (typeof window.getSupabaseClient === "function") ? window.getSupabaseClient() : null;
+  const term = query.trim();
+  if(!client || !term || term.length < 2) return [];
+  const { data, error } = await client.from("financial_venues")
+    .select("id, name, address, contact_name, contact_phone, contact_email")
+    .eq("status", "ACTIVE")
+    .ilike("name", `%${term}%`)
+    .limit(8);
+  if(error || !data) return [];
+  return data;
 }
-function loadProfileIntoForm(){
-  const sel = $("#profileSelect");
-  const p = MOCK_PROFILES.find(x=>x.id===sel.value);
-  if(!p) return;
+function wireVenueAutocomplete(panel){
+  const input = $('[data-field="venueName"]', panel);
+  const box = $('[data-venue-results]', panel);
+  const contactHint = $('[data-venue-contact-hint]', panel);
+  if(!input || !box) return;
+  let debounceHandle = null;
+  function closeBox(){ box.hidden = true; box.innerHTML = ""; }
+  input.addEventListener("input", ()=>{
+    clearTimeout(debounceHandle);
+    const q = input.value;
+    if(q.trim().length < 2){ closeBox(); return; }
+    debounceHandle = setTimeout(async ()=>{
+      const results = await searchVenues(q);
+      if(!results.length){ closeBox(); return; }
+      const lang = state.lang;
+      box.innerHTML = results.map(v=>`
+        <button type="button" class="venue-search-item" data-vid="${esc(v.id)}">
+          <b>${esc(v.name)}</b>
+          <span>${esc(v.address || (lang==='es'?'Sin dirección registrada':'No address on file'))}</span>
+          ${v.contact_name?`<span>${lang==='es'?'Contacto':'Contact'}: ${esc(v.contact_name)}${v.contact_phone?` · ${esc(v.contact_phone)}`:''}</span>`:''}
+        </button>`).join("");
+      box.hidden = false;
+      $$(".venue-search-item", box).forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          const match = results.find(r=>r.id===btn.dataset.vid);
+          if(match){
+            const data = getData();
+            data.venueName = match.name;
+            input.value = match.name;
+            const addrInput = $('[data-field="venueAddress"]', panel);
+            if(addrInput && match.address){ data.venueAddress = match.address; addrInput.value = match.address; }
+            if(contactHint){
+              const lang = state.lang;
+              if(match.contact_name || match.contact_phone || match.contact_email){
+                const parts = [match.contact_name, match.contact_phone, match.contact_email].filter(Boolean);
+                contactHint.textContent = `${lang==='es'?'Contacto del venue':'Venue contact'}: ${parts.join(' · ')}`;
+                contactHint.hidden = false;
+              } else {
+                contactHint.hidden = true;
+              }
+            }
+            renderPreview();
+          }
+          closeBox();
+        });
+      });
+    }, 300);
+  });
+  input.addEventListener("blur", ()=>{ setTimeout(closeBox, 150); });
+}
+/* ============ profile directory UI — búsqueda real (dj_profiles + client_profiles) ============
+   Reemplaza el selector de perfiles simulados. Se busca en la base real
+   mientras el usuario escribe; si no hay resultado, el formulario de
+   abajo sigue siendo 100% manual (nada bloquea ese camino). */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+async function searchRealProfiles(query){
+  const client = (typeof window.getSupabaseClient === "function") ? window.getSupabaseClient() : null;
+  const term = query.trim();
+  if(!client || !term || term.length < 2) return [];
+  const q = `%${term}%`;
+  /* Si pegan/escriben un id (uuid) completo, coincidencia exacta por id
+     además de la búsqueda normal por nombre/email — "search de personas
+     y su id, nada más". */
+  const djFilter = UUID_RE.test(term)
+    ? `id.eq.${term},full_name.ilike.${q},stage_name.ilike.${q},dj_name.ilike.${q},email.ilike.${q}`
+    : `full_name.ilike.${q},stage_name.ilike.${q},dj_name.ilike.${q},email.ilike.${q}`;
+  const clientFilter = UUID_RE.test(term)
+    ? `id.eq.${term},full_name.ilike.${q},company_name.ilike.${q},email.ilike.${q}`
+    : `full_name.ilike.${q},company_name.ilike.${q},email.ilike.${q}`;
+  const [djRes, clientRes] = await Promise.all([
+    client.from("dj_profiles").select("id, full_name, stage_name, dj_name, email, phone").or(djFilter).limit(8),
+    client.from("client_profiles").select("id, full_name, email, phone, company_name").or(clientFilter).limit(8),
+  ]);
+  const artists = (djRes.data||[]).map(d=>({
+    id:d.id, kind:"artist",
+    displayName: d.stage_name || d.dj_name || d.full_name || "Sin nombre",
+    legalName: d.full_name || d.dj_name || d.stage_name || "",
+    email: d.email || "", phone: d.phone || "",
+  }));
+  const clients = (clientRes.data||[]).map(c=>({
+    id:c.id, kind:"client",
+    displayName: c.company_name ? `${c.company_name} (${c.full_name||"Sin nombre"})` : (c.full_name || "Sin nombre"),
+    legalName: c.full_name || c.company_name || "",
+    email: c.email || "", phone: c.phone || "",
+  }));
+  return [...artists, ...clients];
+}
+function renderProfileSearchResults(results){
+  const box = $("#profileSearchResults");
+  if(!box) return;
+  const lang = state.lang;
+  if(!results.length){
+    box.innerHTML = `<div class="profile-search-empty">${lang==='es'?'Sin resultados — puedes llenar el formulario manualmente abajo.':'No results — you can fill the form manually below.'}</div>`;
+    box.hidden = false;
+    return;
+  }
+  box.innerHTML = results.map(p=>`
+    <button type="button" class="profile-search-item" data-pid="${esc(p.id)}" data-pkind="${p.kind}">
+      <div><span class="psi-kind">${p.kind==='artist'?(lang==='es'?'Artista':'Artist'):(lang==='es'?'Cliente':'Client')}</span><b>${esc(p.displayName)}</b></div>
+      <span>${esc(p.email||'—')}</span>
+    </button>`).join("");
+  box.hidden = false;
+  $$(".profile-search-item", box).forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const match = results.find(r=>r.id===btn.dataset.pid && r.kind===btn.dataset.pkind);
+      if(match) selectRealProfile(match);
+      box.hidden = true;
+      $("#profileSearchInput").value = "";
+    });
+  });
+}
+function selectRealProfile(p){
   state.linkedProfileId = p.id;
+  state.linkedProfileKind = p.kind;
+  state.linkedProfileName = p.displayName;
   const data = getData();
   const tplId = state.templateId;
-  if(tplId==='dj'){ data.djName = p.legalName; data.stageName = p.djName; }
+  if(tplId==='dj'){ data.djName = p.legalName; data.stageName = p.displayName; }
+  else if(tplId==='live_band'){ data.bandName = p.displayName; data.bandLeaderName = p.legalName; }
+  else if(tplId==='solo_artist'){ data.artistLegalName = p.legalName; data.stageName = p.displayName; }
+  else if(tplId==='subcontractor_show'){ data.contractorLegalName = p.legalName || p.displayName; }
   else if(tplId==='venue'){ data.djName = p.legalName; }
   else if(tplId==='staff'){ data.staffName = p.legalName; }
   else if(tplId==='corporate'){ data.contactName = p.legalName; }
-  /* Sin rama "w9": esa plantilla oculta la tarjeta de Contexto simulado
-     (no hay campos que autocompletar — ver renderForm()). */
+  else if(tplId==='private_event'){ data.clientName = p.legalName || p.displayName; }
+  else if(tplId==='w9'){ /* el W-9 no tiene campos genéricos que llenar — solo queda vinculado */ }
   renderForm(); renderPreview(); renderLinkedBadge();
 }
-
+function renderProfileSelect(){ renderLinkedBadge(); }
+function renderLinkedBadge(){
+  const lang = state.lang;
+  const badge = $("#linkedBadge");
+  if(!state.linkedProfileId || !state.linkedProfileName){ badge.hidden = true; badge.innerHTML=""; return; }
+  badge.hidden = false;
+  badge.className = "linked-badge";
+  badge.innerHTML = `<span>${STR[lang].linkedPrefix} <b>${esc(state.linkedProfileName)}</b></span><button type="button" id="unlinkProfileBtn">${STR[lang].unlinkBtn}</button>`;
+  $("#unlinkProfileBtn").addEventListener("click", ()=>{ state.linkedProfileId=null; state.linkedProfileKind=null; state.linkedProfileName=null; renderLinkedBadge(); renderPreview(); });
+}
 /* ============ render: template rail ============ */
 function renderRail(){
   /* #templateRail no existe mas: la seleccion de plantilla vive en el
@@ -1647,8 +2184,10 @@ function renderForm(){
      ahí y solo estorba. */
   const contextPanel = $("#contextSimPanel");
   if(contextPanel) contextPanel.hidden = tpl.id==="w9";
-  let html = `<h3 class="panel-title"><span>${tpl.name[lang]}</span></h3>
-    <p class="panel-hint">${tpl.desc[lang]}</p>`;
+  let html = `<h3 class="panel-title"><span>${tpl.name[lang]}</span>
+      <button type="button" class="info-dot" data-info-target="tplDescHintPop" aria-label="Ayuda">?</button>
+    </h3>
+    <div class="panel-hint info-popover" id="tplDescHintPop" hidden>${tpl.desc[lang]}</div>`;
   if(tpl.id==="w9"){
     html += `<a href="https://www.irs.gov/pub/irs-pdf/fw9.pdf" target="_blank" rel="noopener" class="btn btn-ghost" style="width:100%;margin-bottom:16px;display:block;box-sizing:border-box;text-align:center;text-decoration:none;">⬇ ${STR[lang].dlOfficialW9Btn}</a>
       <div class="panel-hint" style="margin:-8px 0 14px;font-weight:700;">${STR[lang].w9UploadStep}</div>
@@ -1725,6 +2264,7 @@ function renderForm(){
     renderForm(); renderPreview();
   }));
   if(tpl.id==="w9") wireW9Upload(panel, lang);
+  wireVenueAutocomplete(panel);
 
   if(locked){ $$("input,select,textarea,button",panel).forEach(el=>{ el.disabled = true; }); }
 }
@@ -1790,8 +2330,8 @@ function wireW9Upload(panel, lang){
       lang: state.lang,
       status: "SIGNED",
       form_payload: { file_name: pending.fileName, file_size_bytes: pending.fileSize, uploaded_at: new Date().toISOString() },
-      artist_profile_id: state.linkedProfileId || null,
-      linked_profile_name: state.linkedProfileId ? ((MOCK_PROFILES.find(p=>p.id===state.linkedProfileId)||{}).djName||null) : null,
+      artist_profile_id: state.linkedProfileKind==="artist" ? state.linkedProfileId : null,
+      linked_profile_name: state.linkedProfileName || null,
       send: null, dispatch_source: null,
       signer_name: signerName, signer_role: null, signer_email: null, signer_phone: null, signer_ip: null,
       /* Prefixed as a real data URI (same convention the canvas-drawn
@@ -1983,6 +2523,11 @@ function fieldHtml(f,data,lang){
       </div>
       <div class="field-hint">${lang==='es'?'Enmascarado por seguridad. Solo se muestran los últimos 4 dígitos.':'Masked for security. Only the last 4 digits are shown.'}</div>
     </div>`;
+  }
+  if(f.key==="venueName"){
+    return `<div class="field field-venue-wrap"><label>${label}</label><input type="${f.type}" data-field="${f.key}" value="${esc(val)}" placeholder="${esc(ph)}" autocomplete="off">
+      <div class="venue-search-results" data-venue-results hidden></div>
+      <div class="context-note" data-venue-contact-hint hidden></div></div>`;
   }
   return `<div class="field"><label>${label}</label><input type="${f.type}" data-field="${f.key}" value="${esc(val)}" placeholder="${esc(ph)}" autocomplete="off"></div>`;
 }
@@ -2176,15 +2721,27 @@ if(typeof window!=="undefined" && window.claude && window.claude.use){
 
 function newContractDraftFromCurrent(){
   const tpl = currentTemplate();
+  /* Trazabilidad del emisor: todo contrato lleva _meta.issuedBy en su
+     form_payload (JSONB, aditivo — sin ALTER TABLE). El flujo manual de
+     Staff nunca lo pone explícitamente, así que aquí cae al nombre+rol
+     real de la sesión activa (resolveCurrentStaffIdentity(), cacheado en
+     state.currentStaffIdentity) y si por lo que sea no se pudo resolver
+     (sin sesión, tabla sin fila...) usa "Staff Manual" como último
+     respaldo — nunca bloquea el guardado. El puente de Elixir (ver
+     applyElixirContractPayload) pone su propio valor ANTES de llamar esta
+     función, y ese valor se respeta tal cual. */
+  const payload = JSON.parse(JSON.stringify(getData()));
+  if(!payload._meta) payload._meta = {};
+  if(!payload._meta.issuedBy) payload._meta.issuedBy = state.currentStaffIdentity || "Staff Manual";
   return {
     id: uid(),
     contract_type: tpl.id,
     document_version: "1.0",
     lang: state.lang,
     status: "DRAFT",
-    form_payload: JSON.parse(JSON.stringify(getData())),
-    artist_profile_id: state.linkedProfileId || null,
-    linked_profile_name: state.linkedProfileId ? ((MOCK_PROFILES.find(p=>p.id===state.linkedProfileId)||{}).djName||null) : null,
+    form_payload: payload,
+    artist_profile_id: state.linkedProfileKind==="artist" ? state.linkedProfileId : null,
+    linked_profile_name: state.linkedProfileName || null,
     send: null,
     dispatch_source: null,
     signer_name: null, signer_role: null, signer_email: null, signer_phone: null, signer_ip: null,
@@ -2393,10 +2950,17 @@ async function finalizeSignature(record){
    lowercase, short) is a different, unrelated naming scheme — sending it
    straight through fails with a 23514 constraint violation. This affected
    ALL 5 templates, not just W-9; confirmed live by testing the W-9 upload
-   path and reading the real constraint via pg_constraint. */
+   path and reading the real constraint via pg_constraint.
+   2026-08-24: 4 plantillas nuevas (live_band, solo_artist,
+   subcontractor_show, private_event) — el constraint de PRODUCCIÓN ya fue
+   ampliado para aceptar sus 4 nuevos valores (ver
+   supabase/scripts/ampliar_tipos_contrato_signed_contracts.sql, corrido con
+   éxito por el PO). El guardado real de estos 4 tipos ya funciona. */
 const LOCAL_TO_DB_CONTRACT_TYPE = {
   w9: "W9", dj: "DJ_AGREEMENT", venue: "VENUE_AGREEMENT",
   corporate: "CORPORATE_AGREEMENT", staff: "STAFF_AGREEMENT",
+  live_band: "LIVE_BAND_AGREEMENT", solo_artist: "SOLO_ARTIST_AGREEMENT",
+  subcontractor_show: "SUBCONTRACTOR_SHOW_AGREEMENT", private_event: "PRIVATE_EVENT_AGREEMENT",
 };
 /* Inverso — obtener_mi_contrato_detalle() devuelve el enum real de la DB
    ("W9", "DJ_AGREEMENT"...); TEMPLATES usa los ids locales en minúscula
@@ -2750,6 +3314,122 @@ async function copyJson(){
   catch(e){ $("#jsonOutput").value = JSON.stringify(lastPayload,null,2); $("#jsonModalVeil").hidden = false; }
 }
 
+/* ============ puente Elixir AI — payload estructurado con confirmación humana (Voice-HITL) ============
+   LEY YA ESTABLECIDA en este proyecto (ver enviar_sms): el modelo prepara,
+   nunca despacha solo — una verificación humana separada hace el envío
+   real. Aquí esa verificación es la propia conversación: Elixir llama a
+   este puente DOS VECES con la misma forma de payload:
+     1) sin user_confirmed (o en false) → SOLO PREPARA: llena la plantilla
+        correcta, resuelve venue_id contra financial_venues, arma el
+        resumen hablable y lo devuelve por postMessage al padre. Nada se
+        envía todavía — el contrato queda como borrador en pantalla.
+     2) con user_confirmed:true → esto solo debe ocurrir DESPUÉS de que una
+        persona real dijo "sí"/"envíalo" por voz o pulsó el botón de
+        confirmación en pantalla (eso lo decide el flujo conversacional de
+        Elixir, no este archivo). Solo entonces se genera el enlace y se
+        despacha — mismo camino que generateSendLink()+confirmSendContinue()
+        usan para un envío manual.
+   contract_type usa los ids locales de TEMPLATES directamente (dj,
+   live_band, solo_artist, subcontractor_show, venue, private_event) — es
+   un puente nuevo y separado del despachador legado (ELIXIS_TEMPLATE_MAP /
+   handleElixisDispatch, arriba), que no se toca. */
+const ELIXIR_KEY_CANDIDATES = {
+  artist_name: ['djName','bandName','artistLegalName','contractorLegalName'],
+  client_name: ['clientName'],
+  event_date: ['eventDate'],
+  fee: ['feeAmount','totalFee'],
+  deposit: ['depositAmount'],
+  exclusivity: ['exclusivityRegime'],
+};
+async function lookupVenueById(venueId){
+  const client = (typeof window.getSupabaseClient === "function") ? window.getSupabaseClient() : null;
+  if(!client || !venueId) return null;
+  const { data, error } = await client.from("financial_venues").select("id, name, address").eq("id", venueId).maybeSingle();
+  if(error || !data) return null;
+  return data;
+}
+async function applyElixirContractPayload(payload){
+  payload = payload || {};
+  const tpl = TEMPLATES.find(t=>t.id===payload.contract_type);
+  const relay = (extra)=>{
+    try{ window.parent.postMessage(Object.assign({type:"mdjb:elixir-contract-result", template: payload.contract_type}, extra), "*"); }catch(err){}
+  };
+  if(!tpl){ relay({ok:false, stage:"prepare", reason:"unknown_template"}); return {ok:false, reason:"unknown_template"}; }
+
+  state.templateId = tpl.id;
+  state.activeContractId = null;
+  state.linkedProfileId = null;
+  state.formData[tpl.id] = {}; // borrador limpio — el payload de Elixir es autoritativo, no se mezcla con ediciones manuales previas
+  const data = getData();
+
+  Object.entries(ELIXIR_KEY_CANDIDATES).forEach(([payloadKey, candidates])=>{
+    const value = payload[payloadKey];
+    if(value==null || value==='') return;
+    const fieldKey = candidates.find(k=>tpl.fields.some(f=>f.key===k));
+    if(fieldKey) data[fieldKey] = value;
+  });
+
+  let venue = null;
+  if(payload.venue_id && tpl.fields.some(f=>f.key==='venueName')){
+    venue = await lookupVenueById(payload.venue_id);
+    if(venue){
+      data.venueName = venue.name;
+      if(venue.address && tpl.fields.some(f=>f.key==='venueAddress')) data.venueAddress = venue.address;
+    }
+  }
+  if(Array.isArray(payload.custom_clauses) && payload.custom_clauses.length){
+    data._customClauses = payload.custom_clauses;
+  }
+  data._meta = { issuedBy: "Elixir AI - Voice Command", preparedBy: "Elixir AI" };
+
+  renderRail(); renderForm(); renderPreview(); renderStatusPill(); renderStaffActionArea(); renderProfileSelect();
+
+  const lang = state.lang;
+  const docName = (tpl.name && tpl.name[lang]) || tpl.id;
+  const nameForSummary = payload.artist_name || payload.client_name || '';
+  const venueForSummary = venue ? venue.name : (data.venueName || '');
+  const feeForSummary = payload.fee ? fmtMoney(payload.fee) : '';
+  const recipient = payload.recipient || '';
+  const summary = lang==='es'
+    ? `He preparado el contrato de ${docName} para ${nameForSummary||'[nombre]'}${venueForSummary?` en ${venueForSummary}`:''}${feeForSummary?` por ${feeForSummary}`:''}. ¿Confirmas el envío${recipient?` a ${recipient}`:''}?`
+    : `I've prepared the ${docName} for ${nameForSummary||'[name]'}${venueForSummary?` at ${venueForSummary}`:''}${feeForSummary?` for ${feeForSummary}`:''}. Confirm sending${recipient?` to ${recipient}`:''}?`;
+
+  const missing = validateTemplateFields();
+  if(missing.length){
+    relay({ok:false, stage:"prepare", reason:"missing_fields", missing, summary});
+    return {ok:false, reason:"missing_fields", missing};
+  }
+
+  if(payload.user_confirmed !== true){
+    relay({ok:true, stage:"awaiting_confirmation", summary});
+    return {ok:true, stage:"awaiting_confirmation", summary};
+  }
+
+  // Fase 2 — despacho autorizado. Solo se llega aquí si el flujo
+  // conversacional de Elixir ya obtuvo una confirmación humana real.
+  if(!recipient){
+    relay({ok:false, stage:"dispatch", reason:"no_recipient"});
+    return {ok:false, reason:"no_recipient"};
+  }
+  const record = newContractDraftFromCurrent();
+  const token = uid();
+  const channel = payload.channel || (recipient.includes("@") ? "email" : "sms");
+  record.send = {channel, recipient, token, link:`https://sign.miamidjbeat.app/s/${token}`, sentAt:new Date().toISOString()};
+  record.status = "PENDING";
+  record.dispatch_source = "voice";
+  if(channel==="email") record.signer_email = recipient; else record.signer_phone = recipient;
+  record.form_payload._meta = Object.assign({}, record.form_payload._meta, {
+    authorizedBy: payload.authorized_by || state.currentStaffIdentity || "Staff (sesión autenticada)",
+    dispatchChannel: "Voice Command Authorization",
+  });
+  state.contracts.unshift(record);
+  saveContracts();
+  state.activeContractId = record.id;
+  renderRail(); renderForm(); renderPreview(); renderStatusPill(); renderStaffActionArea(); renderContractList();
+  relay({ok:true, stage:"dispatched", link: record.send.link, recordId: record.id});
+  return {ok:true, stage:"dispatched", link: record.send.link};
+}
+
 /* ============ wire up ============ */
 /* staff.html abre este motor dentro de un iframe (#legal-frame, ver
    web/staff.html) y le dice qué plantilla mostrar por postMessage — la
@@ -2758,22 +3438,84 @@ async function copyJson(){
    desde el propio sitio), así que no hace falta filtrar por e.origin. */
 window.addEventListener("message", (e)=>{
   const d = e.data;
-  if(!d || d.type !== "mdjb:open-template") return;
-  const tpl = TEMPLATES.find(t=>t.id===d.template);
-  if(!tpl) return;
-  state.templateId = tpl.id;
-  state.activeContractId = null;
-  state.linkedProfileId = null;
-  renderForm(); renderPreview(); renderStatusPill(); renderStaffActionArea(); renderProfileSelect();
+  if(!d) return;
+  if(d.type === "mdjb:open-template"){
+    const tpl = TEMPLATES.find(t=>t.id===d.template);
+    if(!tpl) return;
+    state.templateId = tpl.id;
+    state.activeContractId = null;
+    state.linkedProfileId = null;
+    renderForm(); renderPreview(); renderStatusPill(); renderStaffActionArea(); renderProfileSelect();
+    return;
+  }
+  if(d.type === "mdjb:elixir-contract"){
+    applyElixirContractPayload(d.payload || {});
+    return;
+  }
 });
 function init(){
+  /* Fire-and-forget: se resuelve en paralelo al resto de init(), no
+     bloquea el primer render. Si un envío ocurre antes de que resuelva,
+     newContractDraftFromCurrent() cae a "Staff Manual" — no rompe nada. */
+  resolveCurrentStaffIdentity().then(identity=>{ state.currentStaffIdentity = identity; });
+
+  /* Un solo manejador para TODAS las notas "?" del archivo — cero espacio
+     fijo perdido en las casillas de trabajo, cero cableado repetido por
+     cada panel. Cualquier nota nueva solo necesita un botón
+     data-info-target="<id>" + un contenedor .info-popover con ese id. */
+  document.addEventListener("click", (e)=>{
+    const dot = e.target.closest(".info-dot");
+    if(dot){
+      e.stopPropagation();
+      const target = $("#"+dot.dataset.infoTarget);
+      const wasHidden = target ? target.hidden : true;
+      $$(".info-popover").forEach(p=>{ p.hidden = true; });
+      if(target) target.hidden = !wasHidden;
+      return;
+    }
+    if(!e.target.closest(".info-popover")) $$(".info-popover").forEach(p=>{ p.hidden = true; });
+  });
+
   $("#langEs").addEventListener("click",()=>{ state.lang="es"; applyLang(); });
   $("#langEn").addEventListener("click",()=>{ state.lang="en"; applyLang(); });
 
   $$("#moduleSwitch button").forEach(b=>b.addEventListener("click",()=>switchModule(b.dataset.module)));
 
-  $("#profileSelect").addEventListener("change", ()=>{});
-  $("#loadProfileBtn").addEventListener("click", loadProfileIntoForm);
+  {
+    const searchInput = $("#profileSearchInput");
+    const resultsBox = $("#profileSearchResults");
+    let debounceHandle = null;
+    searchInput.addEventListener("input", ()=>{
+      clearTimeout(debounceHandle);
+      const q = searchInput.value;
+      if(q.trim().length < 2){ resultsBox.hidden = true; resultsBox.innerHTML = ""; return; }
+      debounceHandle = setTimeout(async ()=>{
+        const results = await searchRealProfiles(q);
+        renderProfileSearchResults(results);
+      }, 300);
+    });
+    /* Enter = confirmar directo: toma el primer resultado real (o exacto
+       por id si se pegó un uuid) y autorrellena, sin tener que hacer clic
+       en la lista. */
+    searchInput.addEventListener("keydown", async (e)=>{
+      if(e.key !== "Enter") return;
+      e.preventDefault();
+      clearTimeout(debounceHandle);
+      const q = searchInput.value;
+      if(q.trim().length < 2) return;
+      const results = await searchRealProfiles(q);
+      if(results.length){
+        selectRealProfile(results[0]);
+        resultsBox.hidden = true;
+        searchInput.value = "";
+      } else {
+        renderProfileSearchResults(results);
+      }
+    });
+    document.addEventListener("click", (e)=>{
+      if(!resultsBox.hidden && !resultsBox.contains(e.target) && e.target!==searchInput) resultsBox.hidden = true;
+    });
+  }
 
   $$(".sigtab").forEach(b=>b.addEventListener("click",()=>switchSigTab(b.dataset.tab)));
   $("#closeSigModal").addEventListener("click", closeSigModal);
@@ -2883,6 +3625,32 @@ function init(){
   applyMobileView();
   applyZoom();
   tryOpenSharedRecord();
+  tryOpenSendFromQuery();
+}
+/* Entrada desde un badge "pendiente" del Directorio Global (CRM,
+   staff-admin.html): ?open_send=<template>&name=..&contact=.. selecciona
+   la plantilla correcta y — solo para W-9, que no tiene campos de evento
+   que validar — abre el generador de enlaces ya prellenado. Para los
+   otros 4 contratos, el CRM no sabe fecha/honorario/venue del evento, así
+   que solo deja el formulario listo en la plantilla correcta; Staff
+   completa los datos del evento antes de generar el enlace él mismo. */
+function tryOpenSendFromQuery(){
+  const params = new URLSearchParams(location.search);
+  const tplId = params.get("open_send");
+  if(!tplId) return;
+  const tpl = TEMPLATES.find(t=>t.id===tplId);
+  if(!tpl) return;
+  state.templateId = tpl.id;
+  state.activeContractId = null;
+  state.linkedProfileId = null;
+  renderRail(); renderForm(); renderPreview(); renderStatusPill(); renderStaffActionArea(); renderProfileSelect();
+  if(tpl.id==="w9"){
+    openSendModal();
+    const name = params.get("name")||"", contact = params.get("contact")||"";
+    const nameInput = $("#sendRecipientNameInput"), contactInput = $("#sendRecipientInput");
+    if(nameInput) nameInput.value = name;
+    if(contactInput) contactInput.value = contact;
+  }
 }
 /* Entrada desde la Bóveda Privada del cliente (account-settings.html →
    "Documentos Legales" → Descargar): ?view_record=<id> abre el MISMO
@@ -2898,9 +3666,22 @@ async function tryOpenSharedRecord(){
   try{
     const client = (typeof window.getSupabaseClient === "function") ? window.getSupabaseClient() : null;
     if(!client){ console.warn("[view_record] Supabase no disponible en este contexto."); return; }
-    const { data, error } = await client.rpc("obtener_mi_contrato_detalle", { p_id: id });
-    const row = Array.isArray(data) ? data[0] : data;
-    if(error || !row){ console.warn("[view_record] documento no encontrado o sin permiso:", error); return; }
+    let row = null;
+    const rpcResult = await client.rpc("obtener_mi_contrato_detalle", { p_id: id });
+    row = Array.isArray(rpcResult.data) ? rpcResult.data[0] : rpcResult.data;
+    if(!row){
+      /* obtener_mi_contrato_detalle solo devuelve documentos PROPIOS (por
+         perfil de artista o email) — si quien abre el enlace es Staff
+         viendo el expediente de otra persona (desde el badge de
+         compliance del CRM), esa validación de "dueño" no aplica. Esta
+         página ya es una superficie solo-staff (staff-admin.html lee
+         signed_contracts directo, sin RPC, con la misma sesión) — mismo
+         patrón, de respaldo, solo cuando la vía "documento propio" no
+         encontró nada. */
+      const direct = await client.from("signed_contracts").select("*").eq("id", id).maybeSingle();
+      row = direct.data || null;
+    }
+    if(!row){ console.warn("[view_record] documento no encontrado o sin permiso."); return; }
     openRecordView({
       id: row.id, contract_type: DB_TO_LOCAL_CONTRACT_TYPE[row.contract_type] || row.contract_type, document_version: row.document_version,
       form_payload: row.form_payload, signature_png_base64: row.signature_png_base64,

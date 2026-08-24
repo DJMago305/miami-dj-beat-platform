@@ -6071,15 +6071,50 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     
                     document.getElementById('crm-container').innerHTML = '<div class="loading-spinner">Generando auditoría global de contactos...</div>';
                     
-                    // Fetch both profiles concurrently to speed up loading
-                    const [clientsRes, djsRes] = await Promise.all([
+                    // Fetch both profiles concurrently to speed up loading. signed_contracts
+                    // se trae aparte (misma consulta directa, sin RPC — esta página ya lee
+                    // dj_profiles/client_profiles así, es una superficie solo-staff) para
+                    // cruzar compliance legal (Contrato / W-9) sin tocar el esquema.
+                    const [clientsRes, djsRes, contractsRes] = await Promise.all([
                         db.from('client_profiles').select('id, full_name, email, phone, is_commercial, company_name, tier_level, total_spent, total_events, created_at').order('total_spent', { ascending: false }),
-                        db.from('dj_profiles').select('id, full_name, stage_name, dj_name, email, phone, role, artist_specialty, bio, status, plan, is_premium, created_at').order('created_at', { ascending: false })
+                        db.from('dj_profiles').select('id, full_name, stage_name, dj_name, email, phone, role, artist_specialty, bio, status, plan, is_premium, created_at').order('created_at', { ascending: false }),
+                        db.from('signed_contracts').select('id, artist_profile_id, contract_type, signer_email, status')
                     ]);
-                    
+
                     if(clientsRes.error) throw clientsRes.error;
                     if(djsRes.error) throw djsRes.error;
-                    
+
+                    // Mapas de compliance: por artist_profile_id (artistas reales) y por
+                    // email en minúsculas (todos — clientes/venues/staff no tienen fila en
+                    // dj_profiles). "status" real en la DB es siempre SIGNED cuando existe
+                    // la fila (guardar_contrato_firmado lo fija así) — su sola presencia ya
+                    // significa "certificado".
+                    const complianceByProfileId = {};
+                    const complianceByEmail = {};
+                    const SERVICE_CONTRACT_TYPES = new Set(['DJ_AGREEMENT', 'VENUE_AGREEMENT', 'CORPORATE_AGREEMENT', 'STAFF_AGREEMENT', 'LIVE_BAND_AGREEMENT', 'SOLO_ARTIST_AGREEMENT', 'SUBCONTRACTOR_SHOW_AGREEMENT', 'PRIVATE_EVENT_AGREEMENT']);
+                    (contractsRes.data || []).forEach(c => {
+                        const isW9 = c.contract_type === 'W9';
+                        const bucket = { contractId: null, w9Id: null };
+                        if (isW9) bucket.w9Id = c.id; else if (SERVICE_CONTRACT_TYPES.has(c.contract_type)) bucket.contractId = c.id;
+                        const mergeInto = (map, key) => {
+                            if (!key) return;
+                            const cur = map[key] || { contractId: null, w9Id: null };
+                            if (bucket.contractId) cur.contractId = bucket.contractId;
+                            if (bucket.w9Id) cur.w9Id = bucket.w9Id;
+                            map[key] = cur;
+                        };
+                        mergeInto(complianceByProfileId, c.artist_profile_id);
+                        mergeInto(complianceByEmail, (c.signer_email || '').toLowerCase().trim());
+                    });
+                    const getCompliance = (profileId, email) => {
+                        const byId = profileId ? complianceByProfileId[profileId] : null;
+                        const byEmail = email ? complianceByEmail[(email || '').toLowerCase().trim()] : null;
+                        return {
+                            contractId: (byId && byId.contractId) || (byEmail && byEmail.contractId) || null,
+                            w9Id: (byId && byId.w9Id) || (byEmail && byEmail.w9Id) || null,
+                        };
+                    };
+
                     const clients = clientsRes.data;
                     const djs = djsRes.data;
                     
@@ -6113,15 +6148,21 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                             return; 
                         }
                         
+                        const isCommercial = !!c.is_commercial;
                         allContacts.push({
                             ...c,
                             _source: 'client',
-                            _category: c.is_commercial ? 'Comercial' : 'Personal',
+                            _category: isCommercial ? 'Comercial' : 'Personal',
                             _displayName: c.company_name ? `${c.company_name} (${c.full_name || 'Sin Nombre'})` : (c.full_name || 'Sin Nombre'),
                             _displayEmail: c.email || '—',
                             _displayPhone: c.phone || '—',
                             _proStatus: c.tier_level || 'NEW',
-                            _createdAt: c.created_at ? new Date(c.created_at).toLocaleDateString() : '—'
+                            _createdAt: c.created_at ? new Date(c.created_at).toLocaleDateString() : '—',
+                            _compliance: getCompliance(null, c.email),
+                            // Comercial -> venue (salón/locación); Personal -> private_event
+                            // (bodas/15s, con depósitos/horas extra/cláusula climática) —
+                            // reemplaza el mapeo genérico anterior a "corporate".
+                            _contractTemplate: isCommercial ? 'venue' : 'private_event',
                         });
                     });
                     
@@ -6149,7 +6190,8 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                             _displayEmail: d.email || '—',
                             _displayPhone: d.phone || '—',
                             _proStatus: proStatus,
-                            _createdAt: d.created_at ? new Date(d.created_at).toLocaleDateString() : '—'
+                            _createdAt: d.created_at ? new Date(d.created_at).toLocaleDateString() : '—',
+                            _compliance: getCompliance(d.id, d.email),
                         };
 
                         let assignedCategories = [];
@@ -6165,8 +6207,11 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         if (/\b(hora loca|robot|personaje|zanquero)\b/.test(spec)) {
                             assignedCategories.push('HoraLoca');
                         }
-                        if (/\b(band|banda|bandas|músico|musico|músicos|musicos|cantante|saxo|percusión)\b/.test(spec)) {
+                        if (/\b(band|banda|bandas|orquesta|orquestas|músicos|musicos)\b/.test(spec)) {
                             assignedCategories.push('Band');
+                        }
+                        if (/\b(cantante|solista|vocalista|saxo|percusión|percusion)\b/.test(spec)) {
+                            assignedCategories.push('Solista');
                         }
                         if (/\b(foto|video|vj|drone|booth|espejo|visuales)\b/.test(spec)) {
                             assignedCategories.push('Visuales');
@@ -6185,11 +6230,21 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         // Remove duplicates just in case
                         assignedCategories = [...new Set(assignedCategories)];
 
+                        // Cada categoría real de talento usa su propia plantilla especializada
+                        // (rider/COI/exclusividad varían según el tipo de figura) — ya no se
+                        // agrupan en el template genérico "staff". Personal técnico interno
+                        // (Staff/MDJBStaff) sigue usando "staff", que es lo que realmente es.
+                        const TEMPLATE_BY_CATEGORY = {
+                            DJ: 'dj', Band: 'live_band', Solista: 'solo_artist',
+                            HoraLoca: 'subcontractor_show', Visuales: 'subcontractor_show', MC: 'subcontractor_show',
+                            Payaso: 'subcontractor_show', Staff: 'staff', MDJBStaff: 'staff',
+                        };
                         // Push a copy of the contact for EACH category they belong to
                         assignedCategories.forEach(cat => {
                             allContacts.push({
                                 ...baseContact,
-                                _category: cat
+                                _category: cat,
+                                _contractTemplate: TEMPLATE_BY_CATEGORY[cat] || 'staff',
                             });
                         });
                     });
@@ -6214,6 +6269,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     'Comercial': [],
                     'HoraLoca': [],
                     'Band': [],
+                    'Solista': [],
                     'Visuales': [],
                     'MC': [],
                     'Staff': [],
@@ -6236,6 +6292,35 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 };
 
                 let html = '';
+
+                // Badges de compliance legal (Contrato + W-9) — verde con link real si
+                // ya existe el registro (abre/descarga vía ?view_record=<id>, mismo
+                // patrón que account-settings.html); gris/naranja y clicable si falta
+                // (abre el generador de envíos en la plantilla correcta vía
+                // ?open_send=<template>, prefiliando nombre/contacto — ver
+                // tryOpenSendFromQuery() en contracts-engine.html).
+                const badgeStyle = (bg, border, color) =>
+                    `display:inline-flex;align-items:center;gap:4px;background:${bg};border:1px solid ${border};color:${color};padding:3px 8px;border-radius:999px;font-size:10px;font-weight:800;text-decoration:none;white-space:nowrap;backdrop-filter:blur(6px);`;
+                const buildComplianceCell = (p) => {
+                    const email = (p._displayEmail && p._displayEmail !== '—') ? p._displayEmail : '';
+                    const name = encodeURIComponent(p._displayName || '');
+                    const contact = encodeURIComponent(email);
+                    const comp = p._compliance || {};
+
+                    const contractBadge = comp.contractId
+                        ? `<a href="./contracts-engine.html?view_record=${encodeURIComponent(comp.contractId)}" target="_blank" rel="noopener" style="${badgeStyle('rgba(34,197,94,0.12)', 'rgba(34,197,94,0.35)', '#4ade80')}">📄 Contrato</a>`
+                        : (email
+                            ? `<a href="./contracts-engine.html?open_send=${encodeURIComponent(p._contractTemplate || 'private_event')}&name=${name}&contact=${contact}" target="_blank" rel="noopener" style="${badgeStyle('rgba(255,255,255,0.06)', 'rgba(255,255,255,0.15)', 'rgba(255,255,255,0.45)')}">Sin Contrato</a>`
+                            : `<span style="${badgeStyle('rgba(255,255,255,0.06)', 'rgba(255,255,255,0.15)', 'rgba(255,255,255,0.3)')}">Sin Contrato</span>`);
+
+                    const w9Badge = comp.w9Id
+                        ? `<a href="./contracts-engine.html?view_record=${encodeURIComponent(comp.w9Id)}" target="_blank" rel="noopener" style="${badgeStyle('rgba(34,197,94,0.12)', 'rgba(34,197,94,0.35)', '#4ade80')}">🧾 W-9</a>`
+                        : (email
+                            ? `<a href="./contracts-engine.html?open_send=w9&name=${name}&contact=${contact}" target="_blank" rel="noopener" style="${badgeStyle('rgba(251,146,60,0.12)', 'rgba(251,146,60,0.35)', '#fb923c')}">Pendiente W-9</a>`
+                            : `<span style="${badgeStyle('rgba(251,146,60,0.08)', 'rgba(251,146,60,0.2)', 'rgba(251,146,60,0.45)')}">Pendiente W-9</span>`);
+
+                    return `<div style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center;">${contractBadge}${w9Badge}</div>`;
+                };
 
                 // Helper function to render a table for a specific group
                 const renderTable = (title, icon, groupData, isClient, index) => {
@@ -6260,6 +6345,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                                             <th style="text-align:left; padding:10px; border: 1px solid rgba(255,255,255,0.1);">Teléfono</th>
                                             <th style="text-align:center; padding:10px; border: 1px solid rgba(255,255,255,0.1);">PRO / Nivel</th>
                                             <th style="text-align:center; padding:10px; border: 1px solid rgba(255,255,255,0.1);">Fecha Suscripción</th>
+                                            <th style="text-align:center; padding:10px; border: 1px solid rgba(255,255,255,0.1);">Compliance Legal</th>
                                             ${isClient ? '<th style="text-align:center; padding:10px; border: 1px solid rgba(255,255,255,0.1);">Eventos</th><th style="text-align:right; padding:10px; border: 1px solid rgba(255,255,255,0.1);">Gasto</th>' : ''}
                                         </tr>
                                     </thead>
@@ -6269,7 +6355,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     if (groupData.length === 0) {
                         tableHtml += `
                             <tr>
-                                <td colspan="${isClient ? 7 : 5}" style="padding:15px; text-align:center; font-size:12px; color:var(--muted); border: 1px solid rgba(255,255,255,0.1);">
+                                <td colspan="${isClient ? 8 : 6}" style="padding:15px; text-align:center; font-size:12px; color:var(--muted); border: 1px solid rgba(255,255,255,0.1);">
                                     No hay registros en esta categoría aún.
                                 </td>
                             </tr>
@@ -6292,6 +6378,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                                     <td style="padding:10px; font-size:12px; color:var(--muted); border: 1px solid rgba(255,255,255,0.1);">${p._displayPhone}</td>
                                     <td style="padding:10px; text-align:center; border: 1px solid rgba(255,255,255,0.1);">${proHtml}</td>
                                     <td style="padding:10px; text-align:center; font-size:12px; color:var(--muted); border: 1px solid rgba(255,255,255,0.1);">${p._createdAt}</td>
+                                    <td style="padding:10px; text-align:center; border: 1px solid rgba(255,255,255,0.1);">${buildComplianceCell(p)}</td>
                                     ${isClient ? `
                                         <td style="padding:10px; text-align:center; border: 1px solid rgba(255,255,255,0.1);">${p.total_events || 0}</td>
                                         <td style="padding:10px; text-align:right; color:var(--gold); border: 1px solid rgba(255,255,255,0.1);">$${Number(p.total_spent || 0).toFixed(2)}</td>
@@ -6316,11 +6403,12 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 html += renderTable('DJs', '🎧', groups['DJ'], false, 3);
                 html += renderTable('Hora Loca Experience', '🎭', groups['HoraLoca'], false, 4);
                 html += renderTable('Músicos en Vivo', '🎷', groups['Band'], false, 5);
-                html += renderTable('Captura y Visuales', '📸', groups['Visuales'], false, 6);
-                html += renderTable('MC y Presentadores', '🎙️', groups['MC'], false, 7);
-                html += renderTable('Staff (Eventos)', '🪪', groups['Staff'], false, 8);
-                html += renderTable('Payasos', '🤡', groups['Payaso'], false, 9);
-                html += renderTable('MDJB Staff (Equipo Interno)', '🏢', groups['MDJBStaff'], false, 10);
+                html += renderTable('Cantantes / Solistas', '🎤', groups['Solista'], false, 6);
+                html += renderTable('Captura y Visuales', '📸', groups['Visuales'], false, 7);
+                html += renderTable('MC y Presentadores', '🎙️', groups['MC'], false, 8);
+                html += renderTable('Staff (Eventos)', '🪪', groups['Staff'], false, 9);
+                html += renderTable('Payasos', '🤡', groups['Payaso'], false, 10);
+                html += renderTable('MDJB Staff (Equipo Interno)', '🏢', groups['MDJBStaff'], false, 11);
 
                 container.innerHTML = html;
                 
