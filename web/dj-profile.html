@@ -602,6 +602,49 @@
             min-width: 0;
         }
 
+        /* Botón de menú móvil SIEMPRE visible — ver el <button id="mdjMobileMenuFab">
+           justo después de </header> (fuera de la sección LOCKED). Independiente
+           de cualquier modo visitante/artista: no vive dentro de #mainHeader ni
+           .header-top, así que ninguna regla que los oculte lo afecta. */
+        .mdj-mobile-menu-fab {
+            display: none;
+            position: fixed;
+            top: 14px;
+            right: 14px;
+            z-index: 12500;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(10, 10, 10, 0.72);
+            border: 1px solid rgba(197, 160, 89, 0.4);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            cursor: pointer;
+            padding: 0;
+        }
+        .mdj-mobile-menu-fab span {
+            width: 20px;
+            height: 2px;
+            background: var(--gold, #c5a059);
+            border-radius: 10px;
+        }
+        @media (max-width: 768px) {
+            .mdj-mobile-menu-fab { display: flex; }
+            /* El buscador del header se mueve por JS a la franja flotante en modo
+               visitante/artista (mdjMontarFranjaFlotante) — se oculta sin
+               importar en cuál de los dos viva en cada momento, para dejar
+               limpia la franja superior en móvil, tal como pidió el PO.
+               header-unified.css pone "#mdj-flotante-visitante .header-search-wrap
+               {display:block !important}" — misma especificidad (id+clase) hace
+               falta para ganarle, un simple .header-search-wrap no alcanza. */
+            .header-search-wrap,
+            #mdj-flotante-visitante .header-search-wrap { display: none !important; }
+        }
+
         /* Subtítulo de roles — carrusel continuo de una sola línea (nunca se
            apila ni desborda), con fallback a scroll manual si el usuario
            pide menos movimiento. */
@@ -1157,14 +1200,11 @@
             }
 
             /* Vertical (portrait) en móvil: la foto inset del artista competía
-               visualmente con el logo de la cabecera justo arriba. Landscape y
-               escritorio no cambian — solo se reduce en este caso puntual. */
+               visualmente con el fondo y el nombre del artista. Landscape y
+               escritorio no cambian — solo se oculta en este caso puntual. */
             @media (orientation: portrait) {
                 .dj-hero-inset {
-                    width: 84px;
-                    height: 84px;
-                    top: 48px;
-                    right: 16px;
+                    display: none;
                 }
             }
 
@@ -1190,9 +1230,13 @@
         }
 
         @media(max-width: 560px) {
-            /* Un poco más de altura: el bloque inferior baja en pantalla y deja más “cara” libre arriba. */
+            /* Reducido de 352px: sin foto de fondo propia (caso real reportado por
+               el PO — Sundowner/DJMago305), esos 352px eran solo degradado vacío
+               antes del bloque de nombre/redes. 260px conserva aire para la foto
+               cuando SÍ existe, sin la franja muerta cuando no. Solo mobile
+               (≤560px) — tablet, escritorio y laptop no cambian. */
             .dj-hero {
-                height: 352px;
+                height: 260px;
             }
 
             .dj-hero-name {
@@ -3159,6 +3203,39 @@
     </div>
   </div>
 </header>
+
+    <!-- Botón de menú SIEMPRE visible en móvil, fuera de #mainHeader a propósito
+         (esa sección está marcada LOCKED — no se toca). El botón original
+         (#mobileMenuBtn, dentro de .header-top) queda invisible cuando el modo
+         visitante/artista oculta .header-top o #mainHeader completo — este es
+         un segundo disparador independiente, inmune a esas reglas, que abre el
+         MISMO panel (#mobileMenu) con el mismo mecanismo ya cableado
+         (mdjb-shared-header.js sigue armando el panel a partir de #mainNav).
+         Insertado por JS, no como HTML estático: en este punto del archivo el
+         markup estático se estaba perdiendo (probablemente por el
+         document.write() legado de supabase-js más arriba, que reabre el
+         parser) — confirmado en vivo: el botón vivía en el HTML servido pero
+         nunca llegaba al DOM final. Crearlo por script evita depender de la
+         posición exacta en el flujo de parseo. -->
+    <script>
+      (function () {
+        var fab = document.createElement('button');
+        fab.type = 'button';
+        fab.id = 'mdjMobileMenuFab';
+        fab.className = 'mdj-mobile-menu-fab';
+        fab.setAttribute('aria-label', 'Menú');
+        fab.setAttribute('aria-controls', 'mobileMenu');
+        fab.setAttribute('aria-expanded', 'false');
+        fab.innerHTML = '<span></span><span></span><span></span>';
+        fab.addEventListener('click', function () {
+          var real = document.getElementById('mobileMenuBtn');
+          if (real) { real.click(); return; }
+          var menu = document.getElementById('mobileMenu');
+          if (menu) menu.classList.toggle('active');
+        });
+        document.body.appendChild(fab);
+      })();
+    </script>
 
     <!-- Fan móvil: mismo CTA que INTERACTUAR — visible en ≤640px (CSS) -->
     <div id="mdj-sft-mobile-float-cta" class="mdj-sft-mobile-float-cta" aria-hidden="true">
