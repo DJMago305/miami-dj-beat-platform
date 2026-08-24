@@ -141,7 +141,7 @@
     /* Slot 10, agregado al final para no mover ningun puesto existente (MI
        PERFIL sigue fijo en 8). Delega el clic en #tab-documentos igual que
        flow/sft/public: no navega, conmuta la pestaña ya montada en la pagina. */
-    { s: 10, key: null,             nav: 'documentos', href: '#', txt: 'Mis Documentos', tab: 'documentos' }
+    { s: 10, key: null,             nav: 'documentos', href: '#', txt: 'Bóveda Legal', tab: 'documentos' }
   ];
 
   /* Dueño del perfil que se esta mirando. Se calcula con senales que el header

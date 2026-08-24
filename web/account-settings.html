@@ -1415,6 +1415,10 @@
           Redes Sociales
         </button>
         <!-- Crear Perfiles y Promociones movidos al panel de Staff (admin-dashboard.html) -->
+        <button class="acct-side-link" onclick="showPanel('legal',this)">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          Documentos Legales
+        </button>
         <button class="acct-side-link danger" onclick="showPanel('danger',this)">
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           Zona de riesgo
@@ -2538,6 +2542,24 @@
         <button class="acct-edit" style="color:rgba(255,80,80,0.7);font-size:12px;" onclick="devicesRevokeAll()">Desvincular todos los demás →</button>
       </div>
     </div><!-- /panel-devices -->
+
+    <!-- PANEL: DOCUMENTOS LEGALES ─────────────────────────────────
+         Contratos + W-9 firmados, vía las RPC de solo lectura
+         obtener_mis_contratos() / obtener_mi_contrato_detalle(id) —
+         cruzan por perfil de artista o por email, nunca aceptan un
+         usuario como parámetro (siempre auth.uid()/auth.email() de
+         quien llama). Mismo patrón que panel-devices: getSession(),
+         luego la consulta, luego pintar la lista. -->
+    <div id="panel-legal" class="acct-panel">
+      <h1 class="acct-h1">Documentos Legales</h1>
+      <p style="font-size:13px;color:rgba(255,255,255,0.45);margin:0 0 8px;line-height:1.6;">
+        Tus contratos y formularios firmados con Miami DJ Beat LLC — descarga tu copia certificada cuando la necesites.
+      </p>
+
+      <div id="legal-contracts-list" style="display:flex;flex-direction:column;gap:12px;">
+        <div style="text-align:center;padding:40px 0;color:rgba(255,255,255,0.25);font-size:13px;">Cargando documentos…</div>
+      </div>
+    </div><!-- /panel-legal -->
 
     <!-- PANEL: REDES SOCIALES ─────────────────────────────────── -->
     <div id="panel-socials" class="acct-panel">
@@ -4598,6 +4620,7 @@
         if (id === 'notifications') loadInboxPanel();
         if (id === 'soundfortips') loadSftPanel();
         if (id === 'devices') loadDevicesPanel();
+        if (id === 'legal') loadLegalContractsPanel();
         if (id === 'socials') { _loadSocials(); _wiresSocialsInputs && _wiresSocialsInputs(); _updateSocialsPreview && _updateSocialsPreview(); }
         if (id === 'create-profile') loadCreateProfilePanel();
       }
@@ -6360,6 +6383,64 @@
       }
       window.loadDevicesPanel = loadDevicesPanel;
 
+      /* Documentos legales (contratos + W-9) — lee obtener_mis_contratos(),
+         la RPC de solo lectura que cruza por perfil de artista o por email
+         (nunca recibe un usuario como parámetro; siempre auth.uid()/
+         auth.email() de quien llama). "Descargar" abre contracts-engine.html
+         con ?view_record=<id> — reutiliza el visor real (PDF nativo para
+         W-9, HTML+imprimir para el resto) en vez de reconstruirlo aquí. */
+      var LEGAL_TYPE_LABELS = {
+        W9: 'Formulario IRS W-9',
+        DJ_AGREEMENT: 'Contrato Artista / DJ',
+        VENUE_AGREEMENT: 'Contrato Venue / Residencia',
+        CORPORATE_AGREEMENT: 'Contrato Eventos Corporativos',
+        STAFF_AGREEMENT: 'Contrato Staff / Operador Técnico',
+        LIVE_BAND_AGREEMENT: 'Contrato Orquesta / Banda en Vivo',
+        SOLO_ARTIST_AGREEMENT: 'Contrato Cantante / Solista',
+        SUBCONTRACTOR_SHOW_AGREEMENT: 'Contrato Show / Hora Loca',
+        PRIVATE_EVENT_AGREEMENT: 'Contrato Cliente Particular / Boda',
+      };
+      var LEGAL_STATUS_LABELS = {
+        SIGNED: { text: 'Certificado', color: '#4ade80' },
+        COMPLETADO_EXTERNO: { text: 'Certificado', color: '#4ade80' },
+        PENDING: { text: 'Pendiente de firma', color: '#facc15' },
+        DRAFT: { text: 'Borrador', color: 'rgba(255,255,255,0.4)' },
+      };
+      async function loadLegalContractsPanel() {
+        var list = document.getElementById('legal-contracts-list');
+        if (list) list.innerHTML = '<div style="text-align:center;padding:40px 0;color:rgba(255,255,255,0.25);font-size:13px;">Cargando documentos…</div>';
+        try {
+          var sb = window.getSupabaseClient ? window.getSupabaseClient() : (window._supabase || window._supabaseClient);
+          if (!sb) return;
+          var sess = (await sb.auth.getSession()).data.session;
+          if (!sess) { if (list) list.innerHTML = '<p style="color:rgba(255,255,255,0.25);text-align:center;padding:30px 0;font-size:13px;">Inicia sesión para ver tus documentos.</p>'; return; }
+
+          var { data: docs, error } = await sb.rpc('obtener_mis_contratos');
+          if (error || !docs) { if (list) list.innerHTML = '<p style="color:rgba(255,80,80,0.6);text-align:center;padding:30px 0;font-size:13px;">Error al cargar documentos.</p>'; return; }
+
+          if (!docs.length) {
+            if (list) list.innerHTML = '<p style="color:rgba(255,255,255,0.25);text-align:center;padding:30px 0;font-size:13px;">No tienes documentos legales todavía.</p>';
+            return;
+          }
+
+          if (list) list.innerHTML = docs.map(function(d) {
+            var typeLabel = LEGAL_TYPE_LABELS[d.contract_type] || d.contract_type;
+            var statusInfo = LEGAL_STATUS_LABELS[d.status] || { text: d.status, color: 'rgba(255,255,255,0.4)' };
+            var dateStr = d.signed_at ? new Date(d.signed_at).toLocaleDateString('es', { day:'2-digit', month:'short', year:'numeric' }) : '—';
+            return [
+              '<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">',
+                '<div>',
+                  '<div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:4px;">' + _escHtml(typeLabel) + '</div>',
+                  '<div style="font-size:11px;color:rgba(255,255,255,0.4);">Firmado: ' + dateStr + ' · <span style="color:' + statusInfo.color + ';font-weight:700;">' + _escHtml(statusInfo.text) + '</span></div>',
+                '</div>',
+                '<a href="./contracts-engine.html?view_record=' + encodeURIComponent(d.id) + '" target="_blank" rel="noopener" style="background:rgba(197,160,89,0.12);border:1px solid rgba(197,160,89,0.35);color:#e8c987;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;">📥 Descargar Copia Oficial</a>',
+              '</div>'
+            ].join('');
+          }).join('');
+        } catch(e) { console.warn('[legal] load:', e); if (list) list.innerHTML = '<p style="color:rgba(255,80,80,0.6);text-align:center;padding:30px 0;font-size:13px;">Error al cargar documentos.</p>'; }
+      }
+      window.loadLegalContractsPanel = loadLegalContractsPanel;
+
       /* Desvincular un dispositivo por ID */
       window.deactivateDevice = async function (deviceId) {
         if (!confirm('¿Desvincular este dispositivo? La próxima vez que se use, tendrá que iniciar sesión nuevamente.')) return;
@@ -7464,7 +7545,7 @@
       /* ── Open panel from URL hash ── */
       (function () {
         var hash = window.location.hash.replace('#', '');
-        var validPanels = ['account','agenda','rewards','products','notifications','billing','soundfortips','devices','socials','create-profile','danger','campaign'];
+        var validPanels = ['account','agenda','rewards','products','notifications','billing','soundfortips','devices','socials','create-profile','danger','campaign','legal'];
         if (!hash || validPanels.indexOf(hash) === -1) return;
 
         /* Campaign deep-link guard: block seller / talent / client */
