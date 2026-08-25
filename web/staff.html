@@ -225,9 +225,16 @@
        · La franja de la barra horizontal se RESERVA. Si no, al aparecer crece la
          tira y todo el menu da un salto. Es el mismo comentario que dejo el
          perfil de artista, y la razon del temblor al cambiar de pestana. */
+    /* PO 2026-08-22: "algunas lineas divisoras no se ven en pantalla blanca,
+       por ejemplo la que divide el menu general de arriba". No era que se
+       perdiera con el tema -- nunca existio: `border-bottom:none` a
+       proposito, y lo que se leia como raya en oscuro era solo el borde del
+       iframe de abajo coincidiendo con el fondo negro. En claro ese
+       contraste de casualidad desaparece y no queda nada separando el menu
+       del contenido. Se le pone raya real, propia, en los dos temas. */
     .staff-topnav{display:flex;align-items:center;justify-content:safe center;gap:0;
       flex:0 0 72px;height:72px;min-height:72px;max-height:72px;padding:0 clamp(12px,2vw,32px) 6px;
-      background:transparent;border-bottom:none;
+      background:transparent;border-bottom:1px solid rgba(255,255,255,.14);
       overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;
       overscroll-behavior-x:contain;}
     .staff-topnav button,.staff-topnav a{background:none;border:none;text-decoration:none;color:rgba(255,255,255,.88);
@@ -392,7 +399,7 @@
     :root[data-theme="day"] .staff-brand .tx{ color:#1b1f27; }
     :root[data-theme="day"] .staff-brand .tx small{ color:#8a6d2e; }
     :root[data-theme="day"] #staff-name{ color:rgba(20,25,35,.85); }
-    :root[data-theme="day"] .staff-topnav{ background:transparent; }
+    :root[data-theme="day"] .staff-topnav{ background:transparent; border-bottom-color:rgba(14,18,28,.18); }
     :root[data-theme="day"] .staff-topnav button{ color:rgba(20,25,35,.55); }
     :root[data-theme="day"] .staff-topnav button:hover{ color:rgba(20,25,35,.9); }
     :root[data-theme="day"] .staff-topnav button.tab-sealed,:root[data-theme="day"] .staff-topnav button.tab-sealed:hover{ color:rgba(20,25,35,.32); }

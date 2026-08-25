@@ -68,7 +68,7 @@
     --line:rgba(138,109,20,.30); --line-soft:rgba(0,0,0,.10);
     --gold:#8a6d14; --gold-2:#a8871f;
     --text:#0e1116; --muted:#535b69; --user:#e6e9ef; --danger:#c23c48;
-    --hilos:120,94,16;      /* bronce: el oro claro sobre blanco se lee gris */
+    --hilos:143,111,20;      /* bronce marcado: el oro claro sobre blanco se lee gris, este ya no se lava */
   }
   :root[data-tema="claro"] body{background:var(--bg)}
   :root{
@@ -375,6 +375,24 @@
   @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(224,101,79,.4)}50%{box-shadow:0 0 0 9px rgba(224,101,79,0)}}
   .icon-btn:focus-visible,.mic-btn:focus-visible{outline:2px solid var(--gold-2);outline-offset:2px}
   @media (prefers-reduced-motion:reduce){.mic-btn.listening{animation:none}}
+  /* TICKET post-pausa 2026-08-22 (PO: "en modo blanco las herramientas
+     microfono/play quedan opacas, esa pantalla debe ser una experiencia dia
+     premium"). .icon-btn traia su borde/relleno/color en BLANCO fijo -- se
+     lee bien sobre el fondo negro y desaparece sobre papel. El mic ya usaba
+     variables de tema, pero --panel-2 y --line-soft en claro casi no se
+     distinguen del fondo: el boton se lavaba igual, solo que "en teoria"
+     era tematizable. Ambos se marcan aparte para claro, con tinta oscura. */
+  :root[data-tema="claro"] .icon-btn{
+    border-color:rgba(14,17,22,.18); background:rgba(14,17,22,.045); color:#3c4048;
+  }
+  :root[data-tema="claro"] .icon-btn:hover{ border-color:rgba(14,17,22,.34); color:#171a1f; }
+  :root[data-tema="claro"] .icon-btn.salir{ color:#a3372b; border-color:rgba(194,60,72,.4); }
+  :root[data-tema="claro"] .icon-btn.salir:hover{ border-color:var(--danger); color:#8a271d; }
+  :root[data-tema="claro"] .icon-btn.off{ color:#8a909a; }
+  :root[data-tema="claro"] .mic-btn{
+    background:rgba(14,17,22,.05); border-color:rgba(14,17,22,.22);
+  }
+  :root[data-tema="claro"] .mic-btn:hover{ border-color:rgba(14,17,22,.4); }
 
   /* selector de voz */
   .settings-panel{
@@ -766,6 +784,22 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
   border:1px solid rgba(212,175,55,.46);
   border-top-right-radius:5px;
 }
+/* TICKET post-pausa 2026-08-22: en oscuro, un nodo brillante de la red pasando
+   justo detras de la burbuja bajaba el contraste del texto. Se sube el
+   desenfoque y se pone una base casi negra debajo del tinte de color -- el
+   hilo dorado sigue asomando por detras, pero ya no puede aclarar la burbuja
+   por debajo del texto. Modo claro no se toca: ahi el problema no existe. */
+:root:not([data-tema="claro"]) .row.elixis .bubble,
+:root:not([data-tema="claro"]) .row.user .bubble{
+  -webkit-backdrop-filter:blur(16px) saturate(130%);
+  backdrop-filter:blur(16px) saturate(130%);
+}
+:root:not([data-tema="claro"]) .row.elixis .bubble{
+  background:linear-gradient(rgba(7,9,13,.62),rgba(7,9,13,.62)),rgba(63,185,230,.16);
+}
+:root:not([data-tema="claro"]) .row.user .bubble{
+  background:linear-gradient(rgba(7,9,13,.62),rgba(7,9,13,.62)),rgba(212,175,55,.20);
+}
 
 /* En el telefono no hay iniciales ni rotulos sobre cada burbuja: el color ya
    dice quien habla. Se ocultan, no se borran -- volver atras es una linea. */
@@ -984,7 +1018,36 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
     var cv=null, ctx=null, W=0, H=0, pts=null, raf=0;
     var intensidad=0.7, objetivo=0.7, tono='gold', modo='idle';
     var reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-    var MAPA = { idle:[0.7,'gold'], thinking:[2.1,'magenta'], speaking:[1.5,'gold'] };
+    var MAPA = { idle:[0.7,'gold'], escuchando:[1.15,'gold'], thinking:[2.1,'magenta'], speaking:[1.5,'gold'] };
+    /* PULSOS DE ENERGIA (ticket 2026-08-22): es un simulador energetico, no
+       una malla decorativa -- el PO pidio que la energia SE SIENTA fluir
+       mientras ELIXIS trabaja, que el "lenguaje" del sistema se lea en esta
+       red. La malla ya cambiaba de color/velocidad por estado; lo que
+       faltaba era el flujo en si: un punto de luz viajando por un hilo, como
+       un impulso. Nace mas seguido pensando que quieto, y punto. */
+    var pulsos = [];
+    var TASA_PULSO = { idle:0.10, escuchando:0.24, thinking:0.55, speaking:0.38 };
+    function nacerPulso(D){
+      if(pulsos.length > 16 || pts.length < 2) return;
+      for(var t=0;t<6;t++){
+        var i=Math.floor(Math.random()*pts.length), j=Math.floor(Math.random()*pts.length);
+        if(i===j) continue;
+        var a=pts[i], b=pts[j], dx=a.x-b.x, dy=a.y-b.y, d=Math.sqrt(dx*dx+dy*dy);
+        if(d<D){ pulsos.push({a:a,b:b,t:0,dur:600+Math.random()*500}); return; }
+      }
+    }
+    function pintarPulsos(dt){
+      for(var k=pulsos.length-1;k>=0;k--){
+        var pu=pulsos[k]; pu.t+=dt;
+        var f=pu.t/pu.dur;
+        if(f>=1){ pulsos.splice(k,1); continue; }
+        var ease = f<.5 ? 2*f*f : -1+(4-2*f)*f;
+        var x=pu.a.x+(pu.b.x-pu.a.x)*ease, y=pu.a.y+(pu.b.y-pu.a.y)*ease;
+        var brillo=Math.sin(f*Math.PI);
+        ctx.fillStyle=color(Math.min(1,0.9*brillo+0.1));
+        ctx.beginPath(); ctx.arc(x,y,1.4+1.6*brillo,0,6.283); ctx.fill();
+      }
+    }
 
     /* El oro sale del tema: sobre papel blanco el oro claro se lee gris y la
        red practicamente desaparecia. En dia baja a bronce. Se cachea porque
@@ -1017,15 +1080,21 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
          pantalla: mas alcance en grande, sin pasarse en pequeno. */
       var grande = Math.min(1, Math.max(0, (Math.min(W,H) - 600) / 900));
       var D=Math.min(W,H)*(0.34 + grande*0.10);
+      /* TICKET post-pausa 2026-08-22: la red se veia debil en ambas pantallas.
+         Sube el techo del hilo (.86->1.05) y el grosor base, y el punto pasa
+         de .6 a .74 -- mas marcada sin tocar cuantos hilos hay ni su
+         velocidad, que es lo que dispararia el freeze de GPU ya conocido. */
       for(var i=0;i<pts.length;i++) for(var j=i+1;j<pts.length;j++){
         var a=pts[i], b=pts[j], dx=a.x-b.x, dy=a.y-b.y, d=Math.sqrt(dx*dx+dy*dy);
-        if(d<D){ ctx.strokeStyle=color((1-d/D)*(1-d/D)*0.86*Math.min(1.7,inten)); ctx.lineWidth=.9+grande*0.7;
+        if(d<D){ ctx.strokeStyle=color((1-d/D)*(1-d/D)*1.15*Math.min(1.7,inten)); ctx.lineWidth=1.5+grande*1.0;
           ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); }
       }
       for(var i=0;i<pts.length;i++){
         var p=pts[i], pr=p.r+Math.sin(Date.now()/600+p.ph)*.3;
-        ctx.fillStyle=color(.6); ctx.beginPath(); ctx.arc(p.x,p.y,Math.max(.4,pr),0,6.283); ctx.fill();
+        ctx.fillStyle=color(.85); ctx.beginPath(); ctx.arc(p.x,p.y,Math.max(.7,pr),0,6.283); ctx.fill();
       }
+      if(Math.random() < (TASA_PULSO[modo]||TASA_PULSO.idle)) nacerPulso(D);
+      pintarPulsos(16);
     }
     function bucle(){ pintar(); raf=requestAnimationFrame(bucle); }
 
@@ -1039,7 +1108,7 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
       pts=[]; for(var i=0;i<objetivo;i++) pts.push({
         x:Math.random()*W, y:Math.random()*H,
         vx:(Math.random()-.5)*.32, vy:(Math.random()-.5)*.32,
-        r:Math.random()*1.5+.7, ph:Math.random()*6.28 });
+        r:Math.random()*1.8+1.1, ph:Math.random()*6.28 });
       if(reduce){ pintar(); return; }   /* sin bucle si pidieron menos movimiento */
       if(!raf) bucle();
       window.addEventListener('resize', medir);
@@ -2347,6 +2416,20 @@ body.modo-voz .face-stage.speaking .face-glow{opacity:.9}
     if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); send(); }
   });
   sendBtn.addEventListener("click", send);
+
+  /* TICKET post-pausa 2026-08-22 (PO: "mientras no se escribe la energia
+     debe fluir lento, modo reposo; que actue con el movimiento de la
+     conversacion o texto"). Escribir sube la red a un termino medio -- ni
+     el reposo de idle ni el hervor de "pensando", que es solo para cuando
+     ELIXIS de verdad esta elaborando. Se apaga sola 900ms despues de la
+     ultima tecla, y nunca pisa thinking/speaking si ELIXIS ya esta activa. */
+  var _tecleoTimer = null;
+  input.addEventListener("input", function(){
+    if(busy) return;
+    FACE.estado("escuchando");
+    clearTimeout(_tecleoTimer);
+    _tecleoTimer = setTimeout(function(){ if(!busy) FACE.estado("idle"); }, 900);
+  });
 
   // ── VOZ DE SALIDA — TTS del navegador (gratis) ─────
   var voiceToggle = document.getElementById("voiceToggle");
