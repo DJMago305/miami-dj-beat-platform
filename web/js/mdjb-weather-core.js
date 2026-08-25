@@ -23,8 +23,8 @@
 import { solarPosition, moonPhase, moonPhaseName, fmtLocal, dayTFromLocalHour } from '../weather-experience/js/astro.js';
 import { constellations, moonAltAz } from '../weather-experience/js/celestial.js';
 
-// Miami Lakes, FL — referencia fija (LIVE mode puede pasar geoloc real vía ensureFresh(coords))
-const LOC = { lat: 25.91, lon: -80.31, tz: 'America/New_York', name: 'Miami Lakes, FL' };
+// Miami Lakes, FL — BASE CORPORATIVA (fallback si el GPS se niega/offline/timeout)
+const LOC = { lat: 25.9115, lon: -80.3012, tz: 'America/New_York', name: 'Miami Lakes, FL' };
 const TTL_MS = 12 * 60 * 1000;     // caché compartida 12 min (rango 10-15 del ticket)
 const LS_KEY = 'mdjb:weather:v1';  // clave de localStorage (compartida entre iframes del mismo origen)
 
@@ -101,6 +101,30 @@ function notify(reason) {
   for (const cb of _subs) { try { cb(_state, reason); } catch (_e) {} }
 }
 
+// ── Geolocalización dinámica: GPS real del usuario → fallback a la base corporativa ──
+// Si el usuario autoriza GPS: coords precisas (la zona real: Hialeah/Kendall/Doral/etc.,
+// la ciudad la resuelve el Edge Function desde lat/lon). Si niega/offline/timeout: Miami Lakes.
+let _coordsCache = null, _coordsAt = 0;
+function getCoords() {
+  const tz = -new Date().getTimezoneOffset() / 60;
+  const fb = { lat: LOC.lat, lon: LOC.lon, tz };                 // base corporativa (Miami Lakes)
+  // reutiliza la última ubicación por 10 min (no re-pedir GPS en cada refresh)
+  if (_coordsCache && (Date.now() - _coordsAt) < 600000) return Promise.resolve(_coordsCache);
+  return new Promise((res) => {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) { _coordsCache = fb; _coordsAt = Date.now(); return res(fb); }
+    let done = false;
+    const finish = (c) => { if (done) return; done = true; clearTimeout(to); _coordsCache = c; _coordsAt = Date.now(); res(c); };
+    const to = setTimeout(() => finish(fb), 6000);               // timeout → fallback
+    try {
+      navigator.geolocation.getCurrentPosition(
+        (p) => finish({ lat: p.coords.latitude, lon: p.coords.longitude, tz }),   // GPS OK
+        () => finish(fb),                                                          // negado/error → fallback
+        { timeout: 6000, maximumAge: 600000 }
+      );
+    } catch (_e) { finish(fb); }
+  });
+}
+
 // ── API pública ──
 const MDJ_WeatherHub = {
   LOC,
@@ -121,8 +145,10 @@ const MDJ_WeatherHub = {
 
   // Devuelve estado fresco-o-cacheado. Dedup dentro del documento; cross-view por caché.
   // NUNCA lanza a los consumidores y NUNCA deja el cielo en blanco (resiliencia offline).
+  getCoords,                                        // GPS dinámico → fallback base corporativa
+
   async ensureFresh(coords) {
-    const c0 = coords || LOC;
+    const c0 = coords || await getCoords();          // el hub es SSOT de ubicación (GPS o fallback)
     // 1. hidratar de la caché compartida (otra vista pudo haber fetcheado ya)
     if (!_state) { const c = readCache(); if (c) { _state = c.state; _fetchedAt = c.fetchedAt; } }
     // 2. ¿suficientemente fresco? devolver sin red

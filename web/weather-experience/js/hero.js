@@ -577,16 +577,8 @@ refreshState();
 // once deployed in the real app. Fully verified against a local mirror endpoint.
 const ATMO_ENDPOINT=(typeof window!=='undefined' && window.MDJB_ATMO_ENDPOINT) || '';
 let liveMode=false, liveTimer=null, liveStatus='';
-function getCoords(){                                   // browser geolocation → Miami fallback, 6s timeout
-  const tz=-new Date().getTimezoneOffset()/60, fb={lat:25.91,lon:-80.31,tz};
-  return new Promise(res=>{
-    if(!navigator.geolocation) return res(fb);
-    let done=false; const to=setTimeout(()=>{if(!done){done=true;res(fb);}},6000);
-    navigator.geolocation.getCurrentPosition(
-      p=>{ if(done)return; done=true; clearTimeout(to); res({lat:p.coords.latitude,lon:p.coords.longitude,tz}); },
-      ()=>{ if(done)return; done=true; clearTimeout(to); res(fb); }, {timeout:6000,maximumAge:600000});
-  });
-}
+// NOTA (Fase GPS): la geolocalización (GPS real → fallback base corporativa) se movió
+// a MDJ_WeatherHub.getCoords() como SSOT de ubicación; ensureFresh() la usa sola.
 // NOTA (Fase 2): el fetch + validación de AtmosphericState se movieron a
 // MDJ_WeatherHub (js/mdjb-weather-core.js) como Fuente Única de Verdad. Aquí ya no
 // hay fetch propio — se eliminaron fetchProvider() e isValidState() (código náufrago).
@@ -614,7 +606,7 @@ async function refreshLive(){
   if(!ep){ liveStatus='fallback'; refreshState(); updateLiveUI(); return; }   // no endpoint (artifact) -> mock
   subscribeHub();
   liveStatus='connecting'; updateLiveUI();
-  const s=await MDJ_WeatherHub.ensureFresh(await getCoords());   // dispara/reutiliza el fetch compartido; nunca lanza
+  const s=await MDJ_WeatherHub.ensureFresh();   // el hub geolocaliza (GPS→fallback) + fetch compartido; nunca lanza
   if(!s){ liveStatus='fallback'; refreshState(); updateLiveUI(); }   // frío sin red -> mock (el astro local mantiene el cielo)
 }
 function setLive(on){
