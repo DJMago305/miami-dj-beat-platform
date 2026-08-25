@@ -53,3 +53,20 @@ Ver `CLAUDE.md` §8 para el texto normativo completo. Resumen operativo:
 3. **Rama limpia**: toda tarea nueva empieza con `git checkout main && git pull origin main` antes de `git checkout -b`. Ramificar desde una rama de trabajo vieja fue la causa de que el dataset "One Hit Wonder" viajara sin revisión propia dentro del PR #256.
 4. **Diff antes de PR**: `git diff origin/main --stat` para confirmar que el PR solo toca archivos de esa tarea.
 5. **Destino canónico**: docs de gobernanza → `docs/`; media de artistas → `web/assets/artists/<nombre>/`; SQL → `supabase/scripts/`.
+
+## 9 · Cierre de jornada — 2026-08-25
+
+Además del saneamiento de worktrees (§1-8), el mismo día se auditó y corrigió el header en producción:
+
+- **PR #256** — consolidación de assets/docs rescatados.
+- **PR #257** — Regla 8 de gobernanza (confinamiento de worktrees, `git add` nominal, ramas limpias).
+- **PR #258** — este acta.
+- **PR #259** — `artist-portal.html` apuntaba a `mdj-shared-header.js` (inexistente); corregido a `mdjb-shared-header.js`.
+- **PR #260** — Bóveda Legal (slot 10) desbordaba la rejilla rígida de 9 columnas de `#mainNav` y se montaba sobre Shop; removido del riel (el acceso ya existía en `account-settings.html` → Documentos Legales). Estación vuelve a 9 puestos.
+- **PR #261** — el FAB móvil de `dj-profile.html` usaba un corte de breakpoint (`max-width:768px`, sin `pointer:coarse`) desalineado del ya establecido en el resto del sitio (`600px + pointer:coarse`, "hamburguesa exclusiva de teléfono"); igualado, cierra el amontonamiento entre 601-768px.
+
+**Estado al cierre:** `main` en `83f1e02`, árbol de trabajo limpio, sin ramas locales huérfanas de esta sesión (las 6 creadas hoy se fusionaron y se borraron localmente; `docs/constitucion-m1-m5` queda deliberadamente aislada, sin fusionar, a la espera de decisión sobre su destino). Sistema estabilizado.
+
+**Pendiente, sin tocar:** `MiamiDJBeat-MigracionV2/` en `~/Developer/Archivos_Viejos/` (decisión del PO sobre su `.env`/destino final); los ~130 branches locales preexistentes de otros hilos (fuera del alcance de este saneamiento).
+
+**Próximo objetivo fijado:** trabajo y pulido del módulo de **Contratos y W-9 Engine** (`feature/contracts-w9-engine-integration`, ya existe como rama local fusionada — retomar desde ahí o desde `main`).
