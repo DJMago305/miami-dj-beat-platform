@@ -70,3 +70,11 @@ Además del saneamiento de worktrees (§1-8), el mismo día se auditó y corrigi
 **Pendiente, sin tocar:** `MiamiDJBeat-MigracionV2/` en `~/Developer/Archivos_Viejos/` (decisión del PO sobre su `.env`/destino final); los ~130 branches locales preexistentes de otros hilos (fuera del alcance de este saneamiento).
 
 **Próximo objetivo fijado:** trabajo y pulido del módulo de **Contratos y W-9 Engine** (`feature/contracts-w9-engine-integration`, ya existe como rama local fusionada — retomar desde ahí o desde `main`).
+
+## 10 · Backlog para la próxima sesión (registrado 2026-08-25, sin tocar código)
+
+1. **Hero de `dj-profile.html`, espaciado estrellas→nombre**: el gap actual entre `.dj-rating` (★★★★★) y `#pub-name` ("DJMago305") mide 24px — el único espacio notablemente "airoso" en ese bloque (nombre→redes sociales y redes→especialidades ya miden 5px y 0px respectivamente, medidos en vivo a 700px y 1440px). Reducirlo a pedido del PO.
+2. **Ícono de compartir en `.dj-social-row`**: el último ícono de la fila de redes sociales (`.dj-social-icon.share-btn`, botón de compartir perfil) se ve tenue/vacío junto a los íconos de red social reales — revisar si es un estado visual intencional (ícono de compartir, distinto a los de red social) o un ícono roto/mal cargado.
+3. Módulo de **Contratos y W-9 Engine** (ver arriba, §9).
+
+`main` intacto en `ee531a7` — nada de esto se tocó en código, solo quedó registrado.
