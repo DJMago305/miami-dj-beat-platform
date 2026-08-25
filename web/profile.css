@@ -420,12 +420,18 @@ body.dj-profile-fusion #tab-public .venue-badge {
     box-shadow: 0 0 18px rgba(197, 160, 89, 0.22);
 }
 
-body.dj-profile-fusion #tab-public .dj-social-icon {
+/* :not(.share-btn) — el botón de compartir es un CTA sólido en dorado con
+   ícono negro (.share-btn más abajo en dj-profile.html), no un ícono de red
+   social más. Sin esta exclusión, esta regla (con #tab-public, más específica
+   que .dj-social-icon.share-btn) le imponía el mismo fondo negro translúcido
+   que los íconos de red, dejando el ícono negro invisible sobre fondo casi
+   negro. */
+body.dj-profile-fusion #tab-public .dj-social-icon:not(.share-btn) {
     border: 1px solid rgba(197, 160, 89, 0.22);
     background: rgba(0, 0, 0, 0.35);
 }
 
-body.dj-profile-fusion #tab-public .dj-social-icon:hover {
+body.dj-profile-fusion #tab-public .dj-social-icon:not(.share-btn):hover {
     border-color: rgba(197, 160, 89, 0.55);
     transform: translateY(-1px);
 }
