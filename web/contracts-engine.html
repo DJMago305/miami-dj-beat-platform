@@ -3150,6 +3150,10 @@ function validateTemplateFields(){
   const missing=[];
   tpl.fields.forEach(f=>{
     if(!f.req) return;
+    /* Un campo oculto por showIf (ej. "Nombre del cliente" en modo Roster,
+       donde no hay cliente ni evento único) no puede seguir siendo
+       obligatorio — si lo es, el contrato nunca se puede firmar. */
+    if(f.showIf && !f.showIf(data)) return;
     if(f.type==='taxclass'){ if(!data.taxClass||!data.taxClass.type) missing.push(t.vRequiredField(f.label[lang])); return; }
     if(f.type==='tin'){ if(!data.tin||!data.tin.value||data.tin.value.length<4) missing.push(t.vRequiredField(f.label[lang])); return; }
     if(!data[f.key]) missing.push(t.vRequiredField(f.label[lang]));
