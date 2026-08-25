@@ -403,14 +403,18 @@ a{color:var(--accent-strong);}
 
 /* context / profile panel */
 .context-note{font-size:10.5px;color:var(--text-faint);background:var(--surface-2);border-radius:7px;padding:6px 9px;margin-top:10px;}
-.linked-badge{display:flex;align-items:center;gap:8px;background:var(--accent-soft);border:1px solid var(--accent);border-radius:8px;padding:7px 10px;font-size:12px;margin-top:10px;}
-.linked-badge button{border:0;background:transparent;color:var(--danger);cursor:pointer;font-size:11px;font-weight:600;margin-left:auto;}
+.field-input-wrap{position:relative;}
+.field-clear-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);
+  width:20px;height:20px;border-radius:999px;border:1px solid var(--border-strong);
+  background:var(--surface-2);color:var(--text-faint);font-size:11px;line-height:1;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;}
+.field-clear-btn:hover{color:var(--danger);border-color:var(--danger);}
+#profileSearchInput.is-linked{padding-right:32px;color:var(--accent-strong);font-weight:600;cursor:default;}
 /* búsqueda real de artista/cliente — reemplaza el selector de perfiles
    simulados; misma caja de texto, resultados como lista flotante debajo */
-.profile-search-results{position:absolute;left:0;right:0;top:100%;margin-top:4px;z-index:5;
-  background:var(--surface);border:1px solid var(--border-strong);border-radius:10px;
-  box-shadow:0 10px 24px rgba(0,0,0,.4);max-height:240px;overflow:auto;
-  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);}
+.profile-search-results{position:absolute;left:0;right:0;top:100%;margin-top:4px;z-index:1000;
+  background:#1c202a;border:1px solid var(--border-strong);border-radius:10px;
+  box-shadow:0 10px 25px rgba(0,0,0,.6);max-height:240px;overflow:auto;}
 .profile-search-item{display:flex;flex-direction:column;gap:2px;width:100%;text-align:left;
   padding:9px 12px;border:0;border-bottom:1px solid var(--border);background:transparent;
   color:var(--text);cursor:pointer;font-family:inherit;}
@@ -427,15 +431,22 @@ a{color:var(--accent-strong);}
    Largo, Mojitos Calle 8). Si no hay coincidencia, el campo sigue siendo
    100% manual — nada bloquea ese camino. */
 .field-venue-wrap{position:relative;}
-.venue-search-results{position:absolute;left:0;right:0;top:100%;margin-top:4px;z-index:5;
-  background:var(--surface);border:1px solid var(--border-strong);border-radius:10px;
-  box-shadow:0 10px 24px rgba(0,0,0,.4);max-height:200px;overflow:auto;
-  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);}
+.venue-search-results{position:absolute;left:0;right:0;top:100%;margin-top:4px;z-index:1000;
+  background:#161a23;border:1px solid var(--border-strong);border-radius:10px;
+  box-shadow:0 10px 25px rgba(0,0,0,.6);max-height:200px;overflow:auto;}
 .venue-search-item{display:flex;flex-direction:column;gap:2px;width:100%;text-align:left;
   padding:9px 12px;border:0;border-bottom:1px solid var(--border);background:transparent;
   color:var(--text);cursor:pointer;font-family:inherit;}
 .venue-search-item:last-child{border-bottom:0;}
 .venue-search-item:hover,.venue-search-item.active{background:var(--accent-soft);}
+/* autocompletado del campo "Nombre del cliente" — mismo patrón visual que
+   venue, contra dj_profiles+client_profiles (searchRealProfiles); opción
+   fija "crear/usar nuevo" al final para no bloquear un cliente inexistente. */
+.field-client-wrap{position:relative;}
+.client-search-results{position:absolute;left:0;right:0;top:100%;margin-top:4px;z-index:1000;
+  background:#161a23;border:1px solid var(--border-strong);border-radius:10px;
+  box-shadow:0 10px 25px rgba(0,0,0,.6);max-height:240px;overflow:auto;}
+.client-search-item.is-create{color:var(--accent-strong);font-weight:700;border-top:1px solid var(--border-strong);}
 .venue-search-item b{font-size:12.5px;}
 .venue-search-item span{font-size:11px;color:var(--text-faint);}
 /* "?" de ayuda — la explicación del buscador ya no ocupa espacio fijo
@@ -623,10 +634,12 @@ a{color:var(--accent-strong);}
             <div class="info-popover" id="profileSearchInfoPopover" hidden data-i18n="profileSimNote">Busca por nombre o email en la base real. Si no aparece, llena el formulario manualmente abajo.</div>
             <div class="field" style="position:relative;">
               <label data-i18n="profileSelectLabel">Nombre o email</label>
-              <input type="text" id="profileSearchInput" autocomplete="off" placeholder="Ej. Gerardo, DJMago305, djmago305@gmail.com…">
+              <div class="field-input-wrap">
+                <input type="text" id="profileSearchInput" autocomplete="off" placeholder="Ej. Gerardo, DJMago305, djmago305@gmail.com…">
+                <button type="button" id="clearLinkedProfileBtn" class="field-clear-btn" hidden>✕</button>
+              </div>
               <div id="profileSearchResults" class="profile-search-results" hidden></div>
             </div>
-            <div id="linkedBadge" hidden></div>
           </section>
 
           <section class="panel" id="fieldsPanel"></section>
@@ -966,7 +979,6 @@ const STR = {
     profileSelectLabel:"Nombre o email",
     profileNone:"Sin vincular",
     loadProfileBtn:"Cargar en el formulario",
-    linkedPrefix:"Vinculado a:",
     unlinkBtn:"Desvincular",
     sendPanelTitle:"Generador de envíos",
     sendPanelHint:"Envía este documento para firma remota, o fírmalo tú mismo en el momento.",
@@ -1098,7 +1110,6 @@ const STR = {
     profileSelectLabel:"Name or email",
     profileNone:"Unlinked",
     loadProfileBtn:"Load into form",
-    linkedPrefix:"Linked to:",
     unlinkBtn:"Unlink",
     sendPanelTitle:"Send generator",
     sendPanelHint:"Send this document for remote signature, or sign it yourself right now.",
@@ -1304,6 +1315,8 @@ const state = {
   strokeW: 1.6,
   ink: "#1b1b1f",
   linkedProfileId: null,
+  linkedClientId: null,
+  linkedClientKind: null,
   w9Pending: null,
   contracts: lsGet("mdjb_ce_contracts", []),
   activeContractId: null,
@@ -1320,6 +1333,20 @@ const PRIVACY_CLAUSE = {
 const GENERAL_CLAUSE = {
   es:{title:"Ley Aplicable y Disposiciones Generales", body:"Este contrato se rige por las leyes del Estado de Florida. Toda controversia derivada de este contrato estará sujeta a la jurisdicción exclusiva de los tribunales estatales y federales ubicados en el Condado de Miami-Dade, Florida. Ambas partes reconocen que la parte prestadora de servicios participa como contratista independiente y no como empleado. Este documento, junto con cualquier anexo adjunto, constituye el entendimiento completo entre las partes y solo podrá modificarse por escrito firmado por ambas. Ante circunstancias de fuerza mayor fuera del control razonable de cualquiera de las partes, la parte afectada notificará a la otra con prontitud y ambas negociarán de buena fe una reprogramación o solución razonable."},
   en:{title:"Governing Law & General Provisions", body:"This Agreement is governed by the laws of the State of Florida. Any dispute arising from this Agreement shall be subject to the exclusive jurisdiction of the state and federal courts located in Miami-Dade County, Florida. Both parties acknowledge that the servicing party is engaged as an independent contractor and not as an employee. This document, together with any attached riders, constitutes the entire understanding between the parties and may only be amended in writing signed by both. In the event of circumstances beyond either party's reasonable control (force majeure), the affected party shall notify the other promptly, and both will negotiate in good faith a reasonable rescheduling or resolution."}
+};
+/* Cláusula de no-solicitación — aplica a las dos modalidades del contrato
+   de DJ (Evento y Roster Permanente), ver template "dj" más abajo. Texto
+   legal fijado por el PO, traducido al inglés para el par bilingüe ES/EN
+   ya establecido en todo el archivo. */
+const DJ_NONSOLICIT_CLAUSE = {
+  es:{title:"Protección de Clientes, No Solicitación y No Elusión (Eventos Públicos y Privados)", body:
+    `<b>1. Prohibición de contratación directa.</b> El Artista/DJ reconoce y acepta que todos los clientes, anfitriones, coordinadores, organizadores de eventos privados (bodas, quinceañeras, fiestas privadas, corporativos) y propietarios o gerentes de venues asignados provienen del fondo de comercio, reputación e inversión exclusiva de Miami DJ Beat LLC.<br><br>
+    <b>2. Restricción de 24 meses.</b> Queda estrictamente prohibido que el Artista/DJ negocie, cotice, acepte reservas directas, intercambie contacto personal con fines comerciales o preste servicios de DJ/producción a dichos clientes o venues sin la debida intermediación, facturación y consentimiento previo por escrito de Miami DJ Beat LLC, tanto durante la vigencia de este acuerdo como por un período ininterrumpido de veinticuatro (24) meses posteriores a la fecha del último evento realizado.<br><br>
+    <b>3. Sanciones y recurso judicial.</b> Cualquier infracción a esta disposición constituirá un incumplimiento contractual grave. Miami DJ Beat LLC se reserva el derecho de rescindir toda relación comercial inmediata, exigir el pago de daños y perjuicios comerciales (equivalente al 100% de los ingresos percibidos indebidamente más daños punitivos) e interponer las acciones judiciales pertinentes ante los Tribunales del Condado de Miami-Dade, Florida. En caso de litigio, el Artista/DJ asumirá la totalidad de los costos procesales y los honorarios razonables de los abogados de Miami DJ Beat LLC.`},
+  en:{title:"Client Protection, Non-Solicitation & Non-Circumvention (Public and Private Events)", body:
+    `<b>1. Prohibition on direct engagement.</b> Artist/DJ acknowledges and agrees that all clients, hosts, coordinators, private-event organizers (weddings, quinceañeras, private parties, corporate events), and assigned venue owners or managers arise from the exclusive goodwill, reputation, and investment of Miami DJ Beat LLC.<br><br>
+    <b>2. 24-month restriction.</b> Artist/DJ is strictly prohibited from negotiating, quoting, accepting direct bookings, exchanging personal contact information for commercial purposes, or providing DJ/production services to such clients or venues without the proper intermediation, invoicing, and prior written consent of Miami DJ Beat LLC, both during the term of this agreement and for an uninterrupted period of twenty-four (24) months following the date of the last event performed.<br><br>
+    <b>3. Sanctions and legal recourse.</b> Any breach of this provision constitutes a material breach of contract. Miami DJ Beat LLC reserves the right to immediately terminate any business relationship, demand payment of commercial damages (equivalent to 100% of wrongfully received income plus punitive damages), and pursue any pertinent legal action before the Courts of Miami-Dade County, Florida. In the event of litigation, Artist/DJ shall bear all procedural costs and Miami DJ Beat LLC's reasonable attorneys' fees.`},
 };
 /* Cláusulas adicionales inyectadas por el puente de Elixir AI (payload
    estructurado, ver applyElixirContractPayload más abajo) — 100% aditivo:
@@ -1370,33 +1397,51 @@ const TEMPLATES = [
     name:{es:"Contrato de Artista / DJ", en:"Artist / DJ Booking Agreement"},
     desc:{es:"Booking, honorarios, rider técnico", en:"Booking, fees, technical rider"},
     fields:[
-      {key:"clientName", type:"text", req:true, label:{es:"Nombre del cliente", en:"Client name"}},
+      {key:"engagementMode", type:"radio2", refreshFormOnChange:true, default:"event",
+        label:{es:"Modalidad de contratación", en:"Engagement mode"},
+        options:[
+          {v:"event", l:{es:"Presentación por Evento / DJ Invitado", en:"Per-Event Performance / Guest DJ"}},
+          {v:"roster", l:{es:"Acuerdo Marco de Representación y Exclusividad (Roster Permanente)", en:"Master Representation & Exclusivity Agreement (Permanent Roster)"}},
+        ]},
+      {key:"clientName", type:"text", req:true, showIf:(d)=>d.engagementMode!=='roster', label:{es:"Nombre del cliente", en:"Client name"}},
       {key:"djName", type:"text", req:true, label:{es:"Nombre legal del DJ / Artista", en:"DJ / Artist legal name"}},
       {key:"stageName", type:"text", label:{es:"Nombre artístico", en:"Stage name"}},
-      {key:"eventDate", type:"date", req:true, label:{es:"Fecha del evento", en:"Event date"}},
-      {key:"eventStart", type:"time", label:{es:"Hora de inicio", en:"Start time"}, row:"time"},
-      {key:"eventEnd", type:"time", label:{es:"Hora de fin", en:"End time"}, row:"time"},
-      {key:"setupTime", type:"time", label:{es:"Hora de montaje", en:"Setup time"}, row:"time2"},
-      {key:"soundcheckTime", type:"time", label:{es:"Hora de prueba de sonido", en:"Soundcheck time"}, row:"time2"},
-      {key:"venueName", type:"text", label:{es:"Nombre del venue", en:"Venue name"}},
-      {key:"venueAddress", type:"text", label:{es:"Dirección del venue", en:"Venue address"}},
-      {key:"feeAmount", type:"number", req:true, label:{es:"Honorario total (USD)", en:"Total fee (USD)"}, row:"fee"},
-      {key:"depositAmount", type:"number", label:{es:"Depósito (USD)", en:"Deposit (USD)"}, row:"fee"},
-      {key:"depositDueDate", type:"date", label:{es:"Fecha límite del depósito", en:"Deposit due date"}},
-      {key:"overtimeRate", type:"number", label:{es:"Tarifa por hora extra (USD)", en:"Overtime rate (USD/hr)"}},
-      {key:"technicalRider", type:"textarea", label:{es:"Rider técnico", en:"Technical rider"},
+      {key:"eventDate", type:"date", req:true, showIf:(d)=>d.engagementMode!=='roster', label:{es:"Fecha del evento", en:"Event date"}},
+      {key:"eventStart", type:"time", showIf:(d)=>d.engagementMode!=='roster', label:{es:"Hora de inicio", en:"Start time"}, row:"time"},
+      {key:"eventEnd", type:"time", showIf:(d)=>d.engagementMode!=='roster', label:{es:"Hora de fin", en:"End time"}, row:"time"},
+      {key:"setupTime", type:"time", showIf:(d)=>d.engagementMode!=='roster', label:{es:"Hora de montaje", en:"Setup time"}, row:"time2"},
+      {key:"soundcheckTime", type:"time", showIf:(d)=>d.engagementMode!=='roster', label:{es:"Hora de prueba de sonido", en:"Soundcheck time"}, row:"time2"},
+      {key:"venueName", type:"text", showIf:(d)=>d.engagementMode!=='roster', label:{es:"Nombre del venue", en:"Venue name"}},
+      {key:"venueAddress", type:"text", showIf:(d)=>d.engagementMode!=='roster', label:{es:"Dirección del venue", en:"Venue address"}},
+      {key:"agreementTerm", type:"select", showIf:(d)=>d.engagementMode==='roster', label:{es:"Vigencia del acuerdo", en:"Agreement term"},
+        options:[
+          {v:"indefinite", l:{es:"Indefinida", en:"Indefinite"}},
+          {v:"renewable_1y", l:{es:"1 Año (renovable)", en:"1 Year (renewable)"}},
+        ]},
+      {key:"jurisdiction", type:"select", showIf:(d)=>d.engagementMode==='roster', label:{es:"Jurisdicción legal", en:"Legal jurisdiction"},
+        options:[
+          {v:"hialeah", l:{es:"Hialeah, FL", en:"Hialeah, FL"}},
+          {v:"miami_dade", l:{es:"Condado de Miami-Dade, FL", en:"Miami-Dade County, FL"}},
+        ]},
+      {key:"commissionScheme", type:"textarea", showIf:(d)=>d.engagementMode==='roster', label:{es:"Esquema de comisión / booking", en:"Commission / booking scheme"},
+        placeholder:{es:"Ej. 20% de comisión por cada evento gestionado y facturado por la agencia...", en:"E.g. 20% commission on every event booked and invoiced by the agency..."}},
+      {key:"feeAmount", type:"number", req:true, showIf:(d)=>d.engagementMode!=='roster', label:{es:"Honorario total (USD)", en:"Total fee (USD)"}, row:"fee"},
+      {key:"depositAmount", type:"number", showIf:(d)=>d.engagementMode!=='roster', label:{es:"Depósito (USD)", en:"Deposit (USD)"}, row:"fee"},
+      {key:"depositDueDate", type:"date", showIf:(d)=>d.engagementMode!=='roster', label:{es:"Fecha límite del depósito", en:"Deposit due date"}},
+      {key:"overtimeRate", type:"number", showIf:(d)=>d.engagementMode!=='roster', label:{es:"Tarifa por hora extra (USD)", en:"Overtime rate (USD/hr)"}},
+      {key:"technicalRider", type:"textarea", showIf:(d)=>d.engagementMode!=='roster', label:{es:"Rider técnico", en:"Technical rider"},
         placeholder:{es:"Ej. 2 CDJ-3000, mixer DJM-A9, monitores de piso, DI box...", en:"E.g. 2x CDJ-3000, DJM-A9 mixer, floor monitors, DI box..."}},
-      {key:"clubMode", type:"select", label:{es:"Presentación en Club / Festival", en:"Club / Festival Performance"},
+      {key:"clubMode", type:"select", showIf:(d)=>d.engagementMode!=='roster', label:{es:"Presentación en Club / Festival", en:"Club / Festival Performance"},
         options:[
           {v:"no", l:{es:"No — evento privado/estándar", en:"No — private/standard event"}},
           {v:"yes", l:{es:"Sí — booth de club/festival", en:"Yes — club/festival booth"}},
         ]},
-      {key:"exclusivityRegime", type:"select", label:{es:"Régimen de exclusividad", en:"Exclusivity regime"},
+      {key:"exclusivityRegime", type:"select", showIf:(d)=>d.engagementMode!=='roster', label:{es:"Régimen de exclusividad", en:"Exclusivity regime"},
         options:[
           {v:"exclusive", l:{es:"Exclusivo (Representación Total / Agencia)", en:"Exclusive (Full Agency Representation)"}},
           {v:"non_exclusive", l:{es:"No Exclusivo / Libre (Booking por Evento)", en:"Non-Exclusive / Free (Per-Event Booking)"}},
         ]},
-      {key:"cancellation", type:"select", label:{es:"Política de cancelación", en:"Cancellation policy"},
+      {key:"cancellation", type:"select", showIf:(d)=>d.engagementMode!=='roster', label:{es:"Política de cancelación", en:"Cancellation policy"},
         options:[
           {v:"strict", l:{es:"Estricta — 100% si se cancela dentro de 14 días", en:"Strict — 100% if cancelled within 14 days"}},
           {v:"standard", l:{es:"Estándar — 50% si se cancela dentro de 30 días", en:"Standard — 50% if cancelled within 30 days"}},
@@ -1404,6 +1449,12 @@ const TEMPLATES = [
         ]},
     ],
     partyNames(d,lang){
+      if(d.engagementMode==='roster'){
+        return [
+          {label:{es:'Miami DJ Beat LLC (Agencia)',en:'Miami DJ Beat LLC (Agency)'}, name:'Miami DJ Beat LLC'},
+          {label:{es:'Artista / DJ (Roster)',en:'Artist / DJ (Roster)'}, name:(d.djName||'')+(d.stageName?` "${d.stageName}"`:'')},
+        ];
+      }
       return [
         {label:{es:'Cliente',en:'Client'}, name:d.clientName},
         {label:{es:'Artista / DJ',en:'Artist / DJ'}, name:(d.djName||'')+(d.stageName?` "${d.stageName}"`:'')},
@@ -1411,6 +1462,34 @@ const TEMPLATES = [
     },
     render(d,lang){
       const t=STR[lang];
+      if(d.engagementMode==='roster'){
+        const termLabel = {indefinite:{es:'Indefinida',en:'Indefinite'}, renewable_1y:{es:'1 Año (renovable)',en:'1 Year (renewable)'}}[d.agreementTerm||'indefinite'];
+        const jurisdictionLabel = {hialeah:{es:'Hialeah, FL',en:'Hialeah, FL'}, miami_dade:{es:'Condado de Miami-Dade, FL',en:'Miami-Dade County, FL'}}[d.jurisdiction||'miami_dade'];
+        const clauses = [
+          {es:{title:'Declaración de Fidelidad y Vigencia', body:`Mediante este Acuerdo Marco de Representación y Exclusividad, el Artista/DJ <b>${esc(d.djName)||'[Artista]'}</b>${d.stageName?` (actuando como "${esc(d.stageName)}")`:''} declara bajo fe de juramento su fidelidad y sujeción total a las políticas internas, código de conducta y procedimientos operativos de Miami DJ Beat LLC ("la Agencia"). La vigencia de este acuerdo es: <b>${termLabel.es}</b>. Cualquier controversia derivada de este acuerdo se somete a la jurisdicción de los tribunales de <b>${jurisdictionLabel.es}</b>.`},
+           en:{title:'Declaration of Fidelity & Term', body:`Through this Master Representation & Exclusivity Agreement, Artist/DJ <b>${esc(d.djName)||'[Artist]'}</b>${d.stageName?` (performing as "${esc(d.stageName)}")`:''} declares under oath their fidelity and full submission to the internal policies, code of conduct, and operating procedures of Miami DJ Beat LLC ("the Agency"). The term of this agreement is: <b>${termLabel.en}</b>. Any dispute arising from this agreement is subject to the jurisdiction of the courts of <b>${jurisdictionLabel.en}</b>.`}},
+          {es:{title:'Exclusividad Comercial y No Elusión (Non-Circumvention)', body:'El Artista/DJ, en su calidad de miembro del roster permanente de Miami DJ Beat LLC, otorga a la Agencia la representación exclusiva, total y permanente de su actividad profesional como DJ/Artista. Queda estricta y permanentemente prohibido que el Artista/DJ negocie, contrate, cobre o preste servicios de forma directa e independiente — sin la intermediación, facturación y consentimiento previo por escrito de la Agencia — con cualquier venue, cliente o promotor que le haya sido asignado o presentado por Miami DJ Beat LLC.'},
+           en:{title:'Commercial Exclusivity & Non-Circumvention', body:'Artist/DJ, as a permanent roster member of Miami DJ Beat LLC, grants the Agency exclusive, total, and permanent representation of their professional activity as a DJ/Artist. Artist/DJ is strictly and permanently prohibited from negotiating, engaging, charging, or providing services directly and independently — without the Agency\'s intermediation, invoicing, and prior written consent — with any venue, client, or promoter assigned or introduced to them by Miami DJ Beat LLC.'}},
+          {es:{title:'Esquema de Comisión / Booking', body: esc(d.commissionScheme)||'<span class="placeholder">Esquema de comisión no especificado.</span>'},
+           en:{title:'Commission / Booking Scheme', body: esc(d.commissionScheme)||'<span class="placeholder">Commission scheme not specified.</span>'}},
+          {es:{title:'Penalidades por Incumplimiento y Rescisión', body:'El incumplimiento de la cláusula de exclusividad comercial constituye una falta grave. Miami DJ Beat LLC se reserva el derecho de rescindir de forma inmediata la representación del Artista/DJ, exigir el pago de los daños y perjuicios comerciales ocasionados, y ejercer cualquier acción legal pertinente para hacer valer sus derechos bajo este acuerdo.'},
+           en:{title:'Penalties for Breach & Termination', body:'Breach of the commercial exclusivity clause constitutes a material fault. Miami DJ Beat LLC reserves the right to immediately terminate the Artist/DJ\'s representation, demand payment of the resulting commercial damages, and pursue any pertinent legal action to enforce its rights under this agreement.'}},
+          DJ_NONSOLICIT_CLAUSE,
+          PRIVACY_CLAUSE,
+        ];
+        return `
+          ${letterheadBlock()}
+          <div class="paper-eyebrow">${lang==='es'?'Acuerdo de Representación':'Representation Agreement'}</div>
+          <h1>${lang==='es'?'Acuerdo de Representación Artística y Exclusividad':'Artistic Representation & Exclusivity Agreement'}</h1>
+          <div class="paper-sub">${lang==='es'?'Preparado':'Prepared'} ${fmtDate(todayIso(),lang)} · Miami DJ Beat LLC</div>
+          <div class="kv">
+            <div><span>${lang==='es'?'Artista':'Artist'}</span><b>${esc(d.djName)||'<span class="placeholder">—</span>'}${d.stageName?' "'+esc(d.stageName)+'"':''}</b></div>
+            <div><span>${lang==='es'?'Vigencia':'Term'}</span><b>${termLabel[lang]}</b></div>
+            <div><span>${lang==='es'?'Jurisdicción':'Jurisdiction'}</span><b>${jurisdictionLabel[lang]}</b></div>
+          </div>
+          ${renderClauses(withCustomClauses(clauses,d,lang),lang,1)}
+          <h2>${clauses.length+1}. ${GENERAL_CLAUSE[lang].title}</h2><p>${GENERAL_CLAUSE[lang].body}</p>`;
+      }
       const cancelText = {
         strict:{es:"Si el Cliente cancela dentro de los 14 días previos al evento, deberá pagar el 100% del honorario acordado.",
                 en:"If Client cancels within 14 days of the event, 100% of the agreed fee is due."},
@@ -1444,6 +1523,7 @@ const TEMPLATES = [
            en:{title:'Courtesies & Technical Access', body:'The Venue/Client will provide the Artist/DJ and their technical assistant (if applicable) courtesy access to the venue, booth area, and parking during setup, performance, and load-out, at no additional cost.'}},
         );
       }
+      clauses.push(DJ_NONSOLICIT_CLAUSE);
       clauses.push(PRIVACY_CLAUSE);
       return `
         ${letterheadBlock()}
@@ -2102,6 +2182,100 @@ function wireVenueAutocomplete(panel){
   });
   input.addEventListener("blur", ()=>{ setTimeout(closeBox, 150); });
 }
+/* ============ autocompletado del campo "Nombre del cliente" ============
+   Reutiliza searchRealProfiles() (dj_profiles + client_profiles, mismo
+   motor que el buscador de arriba) — sin duplicar la consulta. Siempre
+   agrega "➕ Crear / usar nuevo cliente" al final: un nombre nuevo nunca
+   queda bloqueado. Al elegir un cliente real, intenta encadenar el venue
+   (ver applyVenueFromClient). */
+function wireClientAutocomplete(panel){
+  const input = $('[data-field="clientName"]', panel);
+  const box = $('[data-client-results]', panel);
+  if(!input || !box) return;
+  let debounceHandle = null;
+  function closeBox(){ box.hidden = true; box.innerHTML = ""; }
+  input.addEventListener("input", ()=>{
+    clearTimeout(debounceHandle);
+    const q = input.value;
+    /* Retomar la edición manual sobre un nombre ya vinculado desvincula el
+       client_id — a partir de ahí es un cliente nuevo/distinto hasta que
+       elija otro de la lista o el botón "crear nuevo". */
+    if(state.linkedClientId){ state.linkedClientId = null; state.linkedClientKind = null; }
+    if(q.trim().length < 2){ closeBox(); return; }
+    debounceHandle = setTimeout(async ()=>{
+      const results = await searchRealProfiles(q);
+      renderClientSearchResults(input, box, panel, results, q);
+    }, 300);
+  });
+  input.addEventListener("blur", ()=>{ setTimeout(closeBox, 150); });
+}
+function renderClientSearchResults(input, box, panel, results, term){
+  const lang = state.lang;
+  let html = results.map(p=>`
+    <button type="button" class="profile-search-item client-search-item" data-pid="${esc(p.id)}" data-pkind="${p.kind}">
+      <div><span class="psi-kind">${p.kind==='artist'?(lang==='es'?'Artista':'Artist'):(lang==='es'?'Cliente':'Client')}</span><b>${esc(p.displayName)}</b></div>
+      <span>${esc(p.email||'—')}</span>
+    </button>`).join("");
+  const createLabel = lang==='es' ? `➕ Crear / Usar nuevo cliente: "${esc(term)}"` : `➕ Create / use new client: "${esc(term)}"`;
+  html += `<button type="button" class="profile-search-item client-search-item is-create" data-create="1">${createLabel}</button>`;
+  box.innerHTML = html;
+  box.hidden = false;
+  $$(".client-search-item[data-pid]", box).forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const match = results.find(r=>r.id===btn.dataset.pid && r.kind===btn.dataset.pkind);
+      if(match) applyClientSelection(match, input, panel);
+      box.hidden = true;
+    });
+  });
+  const createBtn = $('.client-search-item[data-create]', box);
+  if(createBtn) createBtn.addEventListener("click", ()=>{
+    state.linkedClientId = null;
+    state.linkedClientKind = null;
+    box.hidden = true;
+    input.focus();
+  });
+}
+function applyClientSelection(match, input, panel){
+  state.linkedClientId = match.id;
+  state.linkedClientKind = match.kind;
+  const data = getData();
+  data.clientName = match.displayName;
+  input.value = match.displayName;
+  applyVenueFromClient(match, panel);
+  renderPreview();
+}
+/* Vínculo Cliente → Venue: no existe una FK real cliente↔venue en el
+   esquema (financial_venues no tiene columna de cliente), así que se
+   resuelve con dos señales reales, en orden — nunca se inventa un venue:
+   1) el cliente ES el contacto registrado de un venue activo (mismo email)
+      → se toma como su "venue frecuente".
+   2) si no hay ese venue frecuente, se usa la dirección del propio perfil
+      del cliente (client_profiles.address_*) como Dirección del venue.
+   Ninguna de las dos rutas bloquea la edición manual posterior. */
+async function applyVenueFromClient(match, panel){
+  if(match.kind !== "client") return;
+  const venueInput = $('[data-field="venueName"]', panel);
+  const addrInput = $('[data-field="venueAddress"]', panel);
+  if(!venueInput && !addrInput) return;
+  const data = getData();
+  const sb = (typeof window.getSupabaseClient === "function") ? window.getSupabaseClient() : null;
+  let frequentVenue = null;
+  if(sb && match.email){
+    const { data: vRows } = await sb.from("financial_venues")
+      .select("id, name, address").eq("status", "ACTIVE").eq("contact_email", match.email).limit(1);
+    frequentVenue = (vRows && vRows[0]) || null;
+  }
+  if(frequentVenue){
+    data.venueName = frequentVenue.name;
+    if(frequentVenue.address) data.venueAddress = frequentVenue.address;
+    if(venueInput) venueInput.value = frequentVenue.name;
+    if(addrInput && frequentVenue.address) addrInput.value = frequentVenue.address;
+  } else if(match.address){
+    data.venueAddress = match.address;
+    if(addrInput) addrInput.value = match.address;
+  }
+  renderPreview();
+}
 /* ============ profile directory UI — búsqueda real (dj_profiles + client_profiles) ============
    Reemplaza el selector de perfiles simulados. Se busca en la base real
    mientras el usuario escribe; si no hay resultado, el formulario de
@@ -2123,19 +2297,20 @@ async function searchRealProfiles(query){
     : `full_name.ilike.${q},company_name.ilike.${q},email.ilike.${q}`;
   const [djRes, clientRes] = await Promise.all([
     client.from("dj_profiles").select("id, full_name, stage_name, dj_name, email, phone").or(djFilter).limit(8),
-    client.from("client_profiles").select("id, full_name, email, phone, company_name").or(clientFilter).limit(8),
+    client.from("client_profiles").select("id, full_name, email, phone, company_name, address_street, address_apt, city, address_state, address_zip").or(clientFilter).limit(8),
   ]);
   const artists = (djRes.data||[]).map(d=>({
     id:d.id, kind:"artist",
     displayName: d.stage_name || d.dj_name || d.full_name || "Sin nombre",
     legalName: d.full_name || d.dj_name || d.stage_name || "",
-    email: d.email || "", phone: d.phone || "",
+    email: d.email || "", phone: d.phone || "", address: "",
   }));
   const clients = (clientRes.data||[]).map(c=>({
     id:c.id, kind:"client",
     displayName: c.company_name ? `${c.company_name} (${c.full_name||"Sin nombre"})` : (c.full_name || "Sin nombre"),
     legalName: c.full_name || c.company_name || "",
     email: c.email || "", phone: c.phone || "",
+    address: [c.address_street, c.address_apt, c.city, c.address_state, c.address_zip].filter(Boolean).join(", "),
   }));
   return [...artists, ...clients];
 }
@@ -2159,7 +2334,6 @@ function renderProfileSearchResults(results){
       const match = results.find(r=>r.id===btn.dataset.pid && r.kind===btn.dataset.pkind);
       if(match) selectRealProfile(match);
       box.hidden = true;
-      $("#profileSearchInput").value = "";
     });
   });
 }
@@ -2178,17 +2352,28 @@ function selectRealProfile(p){
   else if(tplId==='corporate'){ data.contactName = p.legalName; }
   else if(tplId==='private_event'){ data.clientName = p.legalName || p.displayName; }
   else if(tplId==='w9'){ /* el W-9 no tiene campos genéricos que llenar — solo queda vinculado */ }
-  renderForm(); renderPreview(); renderLinkedBadge();
+  renderForm(); renderPreview(); syncSearchLinkUI();
 }
-function renderProfileSelect(){ renderLinkedBadge(); }
-function renderLinkedBadge(){
-  const lang = state.lang;
-  const badge = $("#linkedBadge");
-  if(!state.linkedProfileId || !state.linkedProfileName){ badge.hidden = true; badge.innerHTML=""; return; }
-  badge.hidden = false;
-  badge.className = "linked-badge";
-  badge.innerHTML = `<span>${STR[lang].linkedPrefix} <b>${esc(state.linkedProfileName)}</b></span><button type="button" id="unlinkProfileBtn">${STR[lang].unlinkBtn}</button>`;
-  $("#unlinkProfileBtn").addEventListener("click", ()=>{ state.linkedProfileId=null; state.linkedProfileKind=null; state.linkedProfileName=null; renderLinkedBadge(); renderPreview(); });
+function renderProfileSelect(){ syncSearchLinkUI(); }
+/* Estado de vinculación integrado en el propio input de búsqueda (antes:
+   caja "Vinculado a: [Nombre] [Desvincular]" aparte, debajo) — mientras hay
+   perfil vinculado, el input muestra el nombre en solo lectura + un botón
+   "✕" para desvincular sin perder lo ya escrito en el formulario. */
+function syncSearchLinkUI(){
+  const input = $("#profileSearchInput");
+  const clearBtn = $("#clearLinkedProfileBtn");
+  if(!input || !clearBtn) return;
+  if(state.linkedProfileId && state.linkedProfileName){
+    input.value = state.linkedProfileName;
+    input.readOnly = true;
+    input.classList.add("is-linked");
+    clearBtn.hidden = false;
+    clearBtn.setAttribute("aria-label", STR[state.lang].unlinkBtn);
+  } else {
+    input.readOnly = false;
+    input.classList.remove("is-linked");
+    clearBtn.hidden = true;
+  }
 }
 /* ============ render: template rail ============ */
 function renderRail(){
@@ -2295,6 +2480,15 @@ function renderForm(){
       renderForm(); renderPreview();
     });
   });
+  $$("[data-radio2]",panel).forEach(el=>{
+    el.addEventListener("change",()=>{
+      const key = el.dataset.radio2;
+      const fdef = tpl.fields.find(x=>x.key===key);
+      data[key] = el.value;
+      if(fdef && fdef.refreshFormOnChange){ renderForm(); }
+      renderPreview();
+    });
+  });
   const llcSub = $("[data-taxclass-llcsub]",panel);
   if(llcSub) llcSub.addEventListener("input",()=>{ data.taxClass.llcSub = llcSub.value.toUpperCase().slice(0,1); renderPreview(); });
   const otherTxt = $("[data-taxclass-other]",panel);
@@ -2325,6 +2519,7 @@ function renderForm(){
   }));
   if(tpl.id==="w9") wireW9Upload(panel, lang);
   wireVenueAutocomplete(panel);
+  wireClientAutocomplete(panel);
 
   if(locked){ $$("input,select,textarea,button",panel).forEach(el=>{ el.disabled = true; }); }
 }
@@ -2560,6 +2755,16 @@ function fieldHtml(f,data,lang){
   if(f.type==="textarea"){
     return `<div class="field"><label>${label}</label><textarea data-field="${f.key}" placeholder="${esc(ph)}">${esc(val)}</textarea></div>`;
   }
+  if(f.type==="radio2"){
+    const rv = val || f.default || "";
+    return `<div class="field"><label>${label}</label><div class="radio-grid">
+      ${f.options.map(o=>`
+        <label class="radio-opt ${rv===o.v?'checked':''}">
+          <input type="radio" name="${f.key}" value="${o.v}" data-radio2="${f.key}" ${rv===o.v?'checked':''}>
+          <span>${o.l[lang]}</span>
+        </label>`).join("")}
+    </div></div>`;
+  }
   if(f.type==="taxclass"){
     const tc = data.taxClass || {};
     const opts = [
@@ -2600,6 +2805,10 @@ function fieldHtml(f,data,lang){
     return `<div class="field field-venue-wrap"><label>${label}</label><input type="${f.type}" data-field="${f.key}" value="${esc(val)}" placeholder="${esc(ph)}" autocomplete="off">
       <div class="venue-search-results" data-venue-results hidden></div>
       <div class="context-note" data-venue-contact-hint hidden></div></div>`;
+  }
+  if(f.key==="clientName"){
+    return `<div class="field field-client-wrap"><label>${label}</label><input type="${f.type}" data-field="${f.key}" value="${esc(val)}" placeholder="${esc(ph)}" autocomplete="off">
+      <div class="client-search-results" data-client-results hidden></div></div>`;
   }
   return `<div class="field"><label>${label}</label><input type="${f.type}" data-field="${f.key}" value="${esc(val)}" placeholder="${esc(ph)}" autocomplete="off"></div>`;
 }
@@ -3579,13 +3788,21 @@ function init(){
       if(results.length){
         selectRealProfile(results[0]);
         resultsBox.hidden = true;
-        searchInput.value = "";
       } else {
         renderProfileSearchResults(results);
       }
     });
     document.addEventListener("click", (e)=>{
       if(!resultsBox.hidden && !resultsBox.contains(e.target) && e.target!==searchInput) resultsBox.hidden = true;
+    });
+    $("#clearLinkedProfileBtn").addEventListener("click", ()=>{
+      state.linkedProfileId = null;
+      state.linkedProfileKind = null;
+      state.linkedProfileName = null;
+      searchInput.value = "";
+      syncSearchLinkUI();
+      renderPreview();
+      searchInput.focus();
     });
   }
 
