@@ -1296,8 +1296,18 @@
             }
 
             .dj-hero-name {
-                font-size: 32px;
+                font-size: clamp(1.4rem, 5vw, 2.2rem);
                 letter-spacing: -1px;
+            }
+
+            .dj-hero-plan-pill {
+                font-size: clamp(0.65rem, 2vw, 0.8rem);
+                padding: 2px 8px;
+            }
+
+            .dj-hero-role {
+                font-size: clamp(0.7rem, 2vw, 0.75rem);
+                letter-spacing: 2px;
             }
 
             /* Encima del corte: menos padding inferior que antes = overlay más abajo; sigue habiendo aire bajo la fila social. */
@@ -1312,6 +1322,17 @@
 
             .dj-social-row {
                 margin-top: 6px;
+                flex-wrap: nowrap;
+                justify-content: center;
+                gap: clamp(4px, 1.5vw, 8px);
+            }
+
+            /* .share-btn hereda esto (misma clase base .dj-social-icon en el
+               HTML) — mismo tamaño y alineación que las redes reales, nunca
+               se cae a una segunda línea ni queda sobredimensionado. */
+            .dj-social-icon {
+                width: clamp(26px, 6.5vw, 34px);
+                height: clamp(26px, 6.5vw, 34px);
             }
 
             #tab-public > .dj-body {
