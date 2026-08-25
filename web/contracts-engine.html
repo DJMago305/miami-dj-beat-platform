@@ -163,6 +163,13 @@ a{color:var(--accent-strong);}
   backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
 }
 .panel + .panel{margin-top:14px;}
+/* Panel de QA colapsable (<details>) — mismo look de .panel, pero cerrado
+   por defecto y con su título como <summary> nativo (sin JS de toggle). */
+.qa-tools-panel{padding:14px 18px;}
+.qa-tools-summary{cursor:pointer;margin:0;}
+.qa-tools-summary::marker{color:var(--text-faint);}
+.qa-tools-body{margin-top:12px;}
+.qa-tools-subtitle{font-family:"Fraunces",serif;font-size:13px;font-weight:600;margin:0 0 6px;display:flex;align-items:center;gap:6px;color:var(--text-muted);}
 /* #contextSimPanel necesita quedar por ENCIMA del panel del formulario que
    tiene justo debajo (#fieldsPanel) — ambos son .panel con backdrop-filter,
    lo que crea un stacking context propio en cada uno; sin esta elevación,
@@ -240,6 +247,12 @@ a{color:var(--accent-strong);}
   font-size:0.70rem;line-height:1.35;text-align:justify;color:#4a5568;}
 .legal-consent-box-title{display:block;font-size:0.75rem;font-weight:800;color:#b8860b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
 .legal-consent-box-status{margin-top:8px;font-size:0.65rem;font-weight:700;color:#9c7a1e;text-align:right;}
+/* Casilla visual con palomita — dibujada en CSS (no glifo de fuente) para
+   que se vea nítida igual en pantalla oscura y al imprimir/exportar PDF,
+   sin depender de qué fuente tenga instalada el sistema del lector. */
+.legal-consent-glyph{display:inline-block;width:11px;height:11px;border:1.5px solid #9c7a1e;border-radius:2px;margin-right:5px;position:relative;vertical-align:-1px;background:transparent;}
+.legal-consent-glyph.is-checked{background:#d4af37;border-color:#d4af37;}
+.legal-consent-glyph.is-checked::after{content:'';position:absolute;left:3px;top:0px;width:4px;height:7px;border:solid #161a23;border-width:0 2px 2px 0;transform:rotate(40deg);}
 @media (prefers-color-scheme: dark){
   .legal-consent-box{background:rgba(22,26,35,.6);color:#c7c9d1;}
 }
@@ -416,11 +429,16 @@ a{color:var(--accent-strong);}
 .status-draft{background:var(--surface-2);color:var(--text-muted);border:1px solid var(--border);}
 .status-pending{background:var(--warning-soft);color:var(--warning);}
 .status-signed{background:var(--success-soft);color:var(--success);}
+.contract-kpis{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 4px;}
+.kpi-pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:4px 11px;font-size:11px;font-weight:700;background:var(--surface-2);border:1px solid var(--border);color:var(--text-muted);}
+.kpi-pill.kpi-signed{background:var(--success-soft);color:var(--success);border-color:transparent;}
+.kpi-pill.kpi-pending{background:var(--warning-soft);color:var(--warning);border-color:transparent;}
 [disabled]{opacity:.55;cursor:not-allowed;}
 .template-card[disabled]{opacity:.4;pointer-events:none;}
 
 /* context / profile panel */
 .context-note{font-size:10.5px;color:var(--text-faint);background:var(--surface-2);border-radius:7px;padding:6px 9px;margin-top:10px;}
+.context-note.note-amber{background:rgba(245,158,11,.1);color:#f59e0b;border:1px solid rgba(245,158,11,.3);}
 .field-input-wrap{position:relative;}
 .field-clear-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);
   width:20px;height:20px;border-radius:999px;border:1px solid var(--border-strong);
@@ -677,20 +695,27 @@ a{color:var(--accent-strong);}
           </section>
 
           <section class="panel">
-            <h3 class="panel-title">🎙️ <span data-i18n="elixisPanelTitle">Integración Elixis Voice Dispatcher</span>
-              <button type="button" class="info-dot" data-info-target="elixisPanelHintPop" aria-label="Ayuda">?</button>
-            </h3>
-            <div class="panel-hint info-popover" id="elixisPanelHintPop" hidden data-i18n="elixisPanelHint"></div>
-            <button type="button" class="btn btn-ghost" id="simulateElixisBtn" style="width:100%;" data-i18n="simulateElixisBtn">🎙️ Simular Elixis (demo)</button>
-          </section>
-
-          <section class="panel">
             <h3 class="panel-title">📋 <span data-i18n="inboxTitle">Bandeja de Contratos</span>
               <button type="button" class="info-dot" data-info-target="inboxHintPop" aria-label="Ayuda">?</button>
             </h3>
             <div class="panel-hint info-popover" id="inboxHintPop" hidden data-i18n="inboxHint">Todos los contratos generados en este navegador — estado, fecha y hash.</div>
+            <div class="contract-kpis" id="contractKpis"></div>
             <div class="contract-list" id="contractList"></div>
           </section>
+
+          <!-- Herramientas de QA interno — separadas y colapsadas a propósito
+               (PO 2026-08-25): el staff real nunca necesita esto, Elixis real
+               vive en Fénix y dispara el evento directo, sin botón visible.
+               Este simulador es solo para probar el punto de enganche aquí
+               en local, donde Elixis no puede llegar por ser otro origen. -->
+          <details class="panel qa-tools-panel">
+            <summary class="panel-title qa-tools-summary">🧪 <span data-i18n="qaToolsTitle">Herramientas de Prueba Interna / QA</span></summary>
+            <div class="qa-tools-body">
+              <h4 class="qa-tools-subtitle">🎙️ <span data-i18n="elixisPanelTitle">Integración Elixis Voice Dispatcher</span></h4>
+              <div class="panel-hint" data-i18n="elixisPanelHint"></div>
+              <button type="button" class="btn btn-ghost" id="simulateElixisBtn" style="width:100%;margin-top:8px;" data-i18n="simulateElixisBtn">🎙️ Simular Elixis (demo)</button>
+            </div>
+          </details>
         </div>
 
         <div class="preview-col" id="previewCol">
@@ -888,6 +913,10 @@ a{color:var(--accent-strong);}
       <div id="paneNotifySms">
         <div class="msg-preview" id="smsPreviewText"></div>
         <div class="action-row"><button class="btn btn-ghost" id="copySmsBtn" data-i18n="copyMessageBtn">Copiar mensaje</button></div>
+        <div class="action-row" id="realSendRow" style="margin-top:8px;" hidden>
+          <a class="btn btn-ghost" id="sendWhatsAppBtn" target="_blank" rel="noopener" data-i18n="sendWhatsAppBtn">📱 Enviar por WhatsApp</a>
+          <a class="btn btn-ghost" id="sendSmsLinkBtn" data-i18n="sendSmsLinkBtn">💬 Enviar por SMS</a>
+        </div>
       </div>
       <div id="paneNotifyEmail" hidden>
         <div class="email-preview">
@@ -1112,9 +1141,12 @@ const STR = {
     simulateElixisBtn:"🎙️ Simular Elixis (demo)",
     elixisPanelTitle:"Integración Elixis Voice Dispatcher",
     elixisPanelHint:"Este Artifact vive en un iframe aislado — Elixis real (en tu sitio) no puede llegar aquí directamente. El botón de abajo simula un despacho por voz para probar el flujo completo.",
+    qaToolsTitle:"Herramientas de Prueba Interna / QA",
     tabSms:"SMS / WhatsApp",
     tabEmail:"Email",
     copyMessageBtn:"Copiar mensaje",
+    sendWhatsAppBtn:"📱 Enviar por WhatsApp",
+    sendSmsLinkBtn:"💬 Enviar por SMS",
     ogPreviewLabel:"Vista previa de tarjeta (Open Graph simulado):",
     ogTitle:"Portal de Firma Electrónica",
   },
@@ -1243,9 +1275,12 @@ const STR = {
     simulateElixisBtn:"🎙️ Simulate Elixis (demo)",
     elixisPanelTitle:"Elixis Voice Dispatcher integration",
     elixisPanelHint:"This Artifact lives in an isolated iframe — the real Elixis (on your site) can't reach it directly. The button below simulates a voice dispatch to test the full flow.",
+    qaToolsTitle:"Internal QA Testing Tools",
     tabSms:"SMS / WhatsApp",
     tabEmail:"Email",
     copyMessageBtn:"Copy message",
+    sendWhatsAppBtn:"📱 Send via WhatsApp",
+    sendSmsLinkBtn:"💬 Send via SMS",
     ogPreviewLabel:"Card preview (simulated Open Graph):",
     ogTitle:"Electronic Signature Portal",
   }
@@ -1429,7 +1464,7 @@ const TEMPLATES = [
           {v:"roster", l:{es:"Acuerdo Marco de Representación y Exclusividad (Roster Permanente)", en:"Master Representation & Exclusivity Agreement (Permanent Roster)"}},
         ]},
       {key:"clientName", type:"text", req:true, showIf:(d)=>d.engagementMode!=='roster', label:{es:"Nombre del cliente", en:"Client name"}},
-      {key:"djName", type:"text", req:true, label:{es:"Nombre legal del DJ / Artista", en:"DJ / Artist legal name"}},
+      {key:"djName", type:"text", req:true, isArtistField:true, label:{es:"Nombre legal del DJ / Artista", en:"DJ / Artist legal name"}},
       {key:"stageName", type:"text", label:{es:"Nombre artístico", en:"Stage name"}},
       {key:"eventDate", type:"date", req:true, showIf:(d)=>d.engagementMode!=='roster', label:{es:"Fecha del evento", en:"Event date"}},
       {key:"eventStart", type:"time", showIf:(d)=>d.engagementMode!=='roster', label:{es:"Hora de inicio", en:"Start time"}, row:"time"},
@@ -1589,7 +1624,7 @@ const TEMPLATES = [
     fields:[
       {key:"clientName", type:"text", req:true, label:{es:"Nombre del cliente", en:"Client name"}},
       {key:"bandName", type:"text", req:true, label:{es:"Nombre de la banda / orquesta", en:"Band / orchestra name"}},
-      {key:"bandLeaderName", type:"text", label:{es:"Nombre del representante / líder", en:"Bandleader / representative name"}},
+      {key:"bandLeaderName", type:"text", isArtistField:true, label:{es:"Nombre del representante / líder", en:"Bandleader / representative name"}},
       {key:"eventDate", type:"date", req:true, label:{es:"Fecha del evento", en:"Event date"}},
       {key:"eventStart", type:"time", label:{es:"Hora de inicio", en:"Start time"}, row:"time"},
       {key:"eventEnd", type:"time", label:{es:"Hora de fin", en:"End time"}, row:"time"},
@@ -1682,7 +1717,7 @@ const TEMPLATES = [
     desc:{es:"Pistas/playback, microfonía inalámbrica", en:"Backing tracks, wireless mics"},
     fields:[
       {key:"clientName", type:"text", req:true, label:{es:"Nombre del cliente", en:"Client name"}},
-      {key:"artistLegalName", type:"text", req:true, label:{es:"Nombre legal del artista", en:"Artist legal name"}},
+      {key:"artistLegalName", type:"text", req:true, isArtistField:true, label:{es:"Nombre legal del artista", en:"Artist legal name"}},
       {key:"stageName", type:"text", label:{es:"Nombre artístico", en:"Stage name"}},
       {key:"eventDate", type:"date", req:true, label:{es:"Fecha del evento", en:"Event date"}},
       {key:"eventStart", type:"time", label:{es:"Hora de inicio", en:"Start time"}, row:"time"},
@@ -1778,7 +1813,7 @@ const TEMPLATES = [
     name:{es:"Show / Hora Loca (Subcontratista)", en:"Show / Hora Loca (Subcontractor)"},
     desc:{es:"B2B, seguro COI, exoneración", en:"B2B, COI insurance, hold harmless"},
     fields:[
-      {key:"contractorLegalName", type:"text", req:true, label:{es:"Nombre legal del subcontratista / empresa", en:"Subcontractor legal / company name"}},
+      {key:"contractorLegalName", type:"text", req:true, isArtistField:true, label:{es:"Nombre legal del subcontratista / empresa", en:"Subcontractor legal / company name"}},
       {key:"showType", type:"text", req:true, label:{es:"Tipo de show", en:"Show type"}, placeholder:{es:"Ej. Hora Loca, Zanqueros, Show de fuego...", en:"E.g. Hora Loca, Stilt walkers, Fire show..."}},
       {key:"eventDate", type:"date", req:true, label:{es:"Fecha del evento", en:"Event date"}},
       {key:"eventStart", type:"time", label:{es:"Hora de inicio", en:"Start time"}, row:"time"},
@@ -1900,7 +1935,7 @@ const TEMPLATES = [
     fields:[
       {key:"venueName", type:"text", req:true, label:{es:"Nombre del venue", en:"Venue name"}},
       {key:"venueAddress", type:"text", label:{es:"Dirección del venue", en:"Venue address"}},
-      {key:"djName", type:"text", req:true, label:{es:"Nombre del DJ / Artista", en:"DJ / Artist name"}},
+      {key:"djName", type:"text", req:true, isArtistField:true, label:{es:"Nombre del DJ / Artista", en:"DJ / Artist name"}},
       {key:"residencyStart", type:"date", label:{es:"Inicio de residencia", en:"Residency start"}, row:"res"},
       {key:"residencyEnd", type:"date", label:{es:"Fin de residencia", en:"Residency end"}, row:"res"},
       {key:"scheduleDays", type:"text", label:{es:"Días y horario", en:"Days & schedule"}, placeholder:{es:"Ej. Viernes y sábado, 10PM–2AM", en:"E.g. Fri & Sat, 10PM–2AM"}},
@@ -2040,7 +2075,7 @@ const TEMPLATES = [
     name:{es:"Contrato de Staff / Operador Técnico", en:"Staff / Technical Operator Agreement"},
     desc:{es:"Compensación, confidencialidad, rol", en:"Compensation, confidentiality, role"},
     fields:[
-      {key:"staffName", type:"text", req:true, label:{es:"Nombre del staff", en:"Staff name"}},
+      {key:"staffName", type:"text", req:true, isArtistField:true, label:{es:"Nombre del staff", en:"Staff name"}},
       {key:"role", type:"select", label:{es:"Rol operativo", en:"Operational role"},
         options:[
           {v:"sound",l:{es:"Ingeniero de sonido",en:"Sound engineer"}},
@@ -2586,8 +2621,26 @@ function renderForm(){
   if(tpl.id==="w9") wireW9Upload(panel, lang);
   wireVenueAutocomplete(panel);
   wireClientAutocomplete(panel);
+  wireArtistLinkHint(panel);
 
   if(locked){ $$("input,select,textarea,button",panel).forEach(el=>{ el.disabled = true; }); }
+}
+/* Aviso ámbar si se escribe el nombre del artista/DJ a mano sin haberlo
+   vinculado desde el buscador superior — sin ese vínculo (state.linkedProfileId
+   + kind "artist"), el contrato se guarda pero artist_profile_id queda null y
+   nunca aparece en la Bóveda Legal del artista (ver newContractDraftFromCurrent). */
+function syncArtistLinkHint(panel){
+  const input = $('[data-artist-field]', panel);
+  const hint = $('[data-artist-link-hint]', panel);
+  if(!input || !hint) return;
+  const linked = state.linkedProfileId && state.linkedProfileKind==='artist';
+  hint.hidden = !(input.value.trim() && !linked);
+}
+function wireArtistLinkHint(panel){
+  const input = $('[data-artist-field]', panel);
+  if(!input) return;
+  syncArtistLinkHint(panel);
+  input.addEventListener('input', ()=>syncArtistLinkHint(panel));
 }
 
 /* ============ W-9 upload: real signed PDF, validated + hashed client-side ============
@@ -2889,6 +2942,10 @@ function fieldHtml(f,data,lang){
       <div class="client-search-results" data-client-results hidden></div>
       <div class="context-note" data-client-contact-hint hidden></div></div>`;
   }
+  if(f.isArtistField){
+    return `<div class="field"><label>${label}</label><input type="${f.type}" data-field="${f.key}" data-artist-field value="${esc(val)}" placeholder="${esc(ph)}" autocomplete="off">
+      <div class="context-note note-amber" data-artist-link-hint hidden>${lang==='es'?'⚠️ Para que este contrato aparezca en la Bóveda Legal del artista, selecciónalo desde el buscador superior.':'⚠️ For this contract to appear in the artist\'s Legal Vault, select them from the search box above.'}</div></div>`;
+  }
   return `<div class="field"><label>${label}</label><input type="${f.type}" data-field="${f.key}" value="${esc(val)}" placeholder="${esc(ph)}" autocomplete="off"></div>`;
 }
 
@@ -2918,11 +2975,22 @@ const LEGAL_CONSENT_DECLARATION = {
   en:`By checking the verification box and affixing the signature to this document, the parties declare and certify under oath that: (1) They have read in full, fully understand, and accept without reservation each of the terms, conditions, non-circumvention obligations, 24-month non-solicitation, and operating policies of Miami DJ Beat LLC; (2) They expressly consent to conduct transactions by electronic means under Florida's Uniform Electronic Transaction Act (Fla. Stat. § 668.50) and the Federal ESIGN Act (15 U.S.C. § 7001); and (3) They acknowledge that this agreement constitutes a legally binding, valid, and enforceable contract before the courts of the State of Florida.`,
 };
 function legalConsentBoxHtml(signedDateIso, consentChecked, lang){
-  if(!consentChecked && !signedDateIso) return '';
-  const statusLine = signedDateIso
-    ? `${lang==='es'?'✓ Aceptación formalizada bajo registro electrónico —':'✓ Acceptance formalized under electronic record —'} ${fmtDateTime(signedDateIso, lang)} — Miami DJ Beat LLC`
-    : (lang==='es'?'☑ Consentimiento electrónico pre-aceptado por el firmante':'☑ Electronic consent pre-accepted by the signer');
-  return `<div class="legal-consent-box"><span class="legal-consent-box-title">${LEGAL_CONSENT_TITLE[lang]}</span>${LEGAL_CONSENT_DECLARATION[lang]}<div class="legal-consent-box-status">${statusLine}</div></div>`;
+  /* Siempre visible (antes desaparecía sin marcar) — un documento legal no
+     debe ocultar su propia cláusula de consentimiento, solo mostrar si ya
+     se otorgó. 3 estados: sin marcar / marcado en borrador / formalizado. */
+  let isChecked, statusLine;
+  if(signedDateIso){
+    isChecked = true;
+    statusLine = `${lang==='es'?'Consentimiento Otorgado y Certificado':'Consent Granted & Certified'} — ${fmtDateTime(signedDateIso, lang)} — Miami DJ Beat LLC`;
+  } else if(consentChecked){
+    isChecked = true;
+    statusLine = lang==='es'?'Consentimiento Electrónico Aceptado por el Firmante':'Electronic Consent Accepted by the Signer';
+  } else {
+    isChecked = false;
+    statusLine = lang==='es'?'Pendiente de aceptación':'Pending acceptance';
+  }
+  const glyph = `<span class="legal-consent-glyph${isChecked?' is-checked':''}" aria-hidden="true"></span>`;
+  return `<div class="legal-consent-box"><span class="legal-consent-box-title">${LEGAL_CONSENT_TITLE[lang]}</span>${LEGAL_CONSENT_DECLARATION[lang]}<div class="legal-consent-box-status">${glyph}${esc(statusLine)}</div></div>`;
 }
 function buildSignBlock(tpl, data, lang, signerName, signerRole, sigDataUrl, signedDateIso, consentChecked){
   const parties = (tpl.partyNames(data, lang) || []).map(p=>`
@@ -3208,7 +3276,12 @@ function openSendModal(){
   if(missing.length) return;
   const lang = state.lang, isW9 = currentTemplate().id==="w9";
   $("#sendLinkBox").hidden = true;
-  $("#sendRecipientInput").value = "";
+  /* Autocompletado desde el perfil ya seleccionado en el buscador superior
+     (state.linkedProfileContact) — teléfono primero (para que el canal por
+     defecto sea SMS/WhatsApp), email como respaldo. Si no hay nada
+     vinculado, el campo queda vacío para llenado manual, como antes. */
+  const contact = state.linkedProfileContact;
+  $("#sendRecipientInput").value = (contact && (contact.phone || contact.email)) || "";
   $("#sendRecipientNameInput").value = "";
   /* El W-9 no firma en el enlace (es descarga → firma externa → sube) —
      por eso ahí sí pedimos el nombre del destinatario (no hay canvas de
@@ -3248,6 +3321,19 @@ function generateSendLink(){
     ? `🎧 MIAMI DJ BEAT LLC — Documentación Oficial\n\nHola,\n\nSe ha generado tu ${docName} para tu revisión y firma.\n\n🔒 Acceso seguro y firma digital cifrada:\n${link}\n\nEste enlace es de uso único y confidencial.\nMiami DJ Beat LLC | ${MDJB_LEGAL.addr}, ${MDJB_LEGAL.cityStateZip}`
     : `🎧 MIAMI DJ BEAT LLC — Official Documentation\n\nHi,\n\nYour ${docName} has been generated for your review and signature.\n\n🔒 Secure access & encrypted digital signature:\n${link}\n\nThis link is single-use and confidential.\nMiami DJ Beat LLC | ${MDJB_LEGAL.addr}, ${MDJB_LEGAL.cityStateZip}`;
   $("#smsPreviewText").textContent = sms;
+
+  /* Envío real (no solo copiar/pegar) — solo tiene sentido si el destinatario
+     es un teléfono; wa.me/sms: son esquemas de URL, no llamadas a un
+     backend, así que no hay nada que despachar server-side aquí. */
+  const realSendRow = $("#realSendRow");
+  if(record.send.channel==="sms"){
+    const digits = recipient.replace(/[^\d+]/g,"");
+    $("#sendWhatsAppBtn").href = `https://wa.me/${digits.replace(/^\+/,"")}?text=${encodeURIComponent(sms)}`;
+    $("#sendSmsLinkBtn").href = `sms:${digits}?body=${encodeURIComponent(sms)}`;
+    realSendRow.hidden = false;
+  } else {
+    realSendRow.hidden = true;
+  }
 
   $("#emailBrandName").textContent = state.branding.name;
   $("#emailBodyText").innerHTML = lang==='es'
@@ -3464,6 +3550,16 @@ function statusClass(status){ return {DRAFT:"status-draft", PENDING:"status-pend
 function renderContractList(){
   const lang=state.lang; const t=STR[lang];
   const list = $("#contractList");
+  const kpis = $("#contractKpis");
+  if(kpis){
+    const total = state.contracts.length;
+    const signed = state.contracts.filter(r=>r.status==="SIGNED"||r.status==="COMPLETADO_EXTERNO").length;
+    const pending = state.contracts.filter(r=>r.status==="PENDING").length;
+    kpis.innerHTML = total ? `
+      <span class="kpi-pill">${lang==='es'?'Total':'Total'}: ${total}</span>
+      <span class="kpi-pill kpi-signed">✓ ${lang==='es'?'Firmados':'Signed'}: ${signed}</span>
+      <span class="kpi-pill kpi-pending">⏳ ${lang==='es'?'Pendientes':'Pending'}: ${pending}</span>` : "";
+  }
   if(!state.contracts.length){ list.innerHTML = `<div class="empty-note">${t.inboxEmpty}</div>`; return; }
   list.innerHTML = state.contracts.map(r=>{
     const tpl = TEMPLATES.find(x=>x.id===r.contract_type)||{};
@@ -3909,6 +4005,7 @@ function init(){
       state.linkedProfileContact = null;
       searchInput.value = "";
       syncSearchLinkUI();
+      syncArtistLinkHint($("#fieldsPanel"));
       renderPreview();
       searchInput.focus();
     });
