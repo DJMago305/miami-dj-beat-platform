@@ -2,7 +2,7 @@
 // shared modules the backend Edge Function uses — no duplicated math.
 import { moonPhase as moonPhaseAt } from './astro.js';
 import { constellations, moonAltAz as moonAltAzRaw } from './celestial.js';
-import { MDJ_WeatherHub } from '../../js/mdjb-weather-core.js';   // SSOT: un solo fetch/caché compartido (Fase 2, TICKET-WEATHER-01)
+import { MDJ_WeatherHub } from '../../js/mdjb-weather-core.js?v=20260825-weather-realfeed';   // SSOT: un solo fetch/caché compartido (Fase 2, TICKET-WEATHER-01)
 
 // PREVIEW = true shows the dev controls (weather/time/date/scene/live). In the
 // real app set to false to hide them (users must not fake the weather).
@@ -528,6 +528,7 @@ let bolt=0.0, boltX=0.5, boltSeed=0.0;   // visible bolt streak
 // Time of day: dayFixed=-1 -> auto cycle; otherwise a paused phase (0=medianoche,0.25=amanecer,0.5=mediodía,0.75=atardecer)
 let dayFixed=-1; let dispDay=0.72;   // dispDay eases toward the target for a smooth sun glide
 let _clockIsDay=null;                 // reloj: modo día/noche actual (contraste adaptativo)
+let liveMode=false, liveTimer=null, liveStatus='';   // declaradas ANTES de refreshState() (evita TDZ)
 // Shooting stars: occasional meteors at night
 const met={on:false, hx:0, hy:0, vx:0, vy:0, life:0, dur:1.0};
 let nextMet=5.0, lastT=0, metOn=0.0;
@@ -569,14 +570,18 @@ function renderUI(s){
     if(hostEvent.loc)    $('ev-loc').textContent=hostEvent.loc;
   }
 }
-function refreshState(){ state=providerFn(currentInput()); renderUI(state); }   // rebuild contract -> repaint UI (async-ready for real fetch)
+function refreshState(){
+  // LIVE con dato real: conservar el estado del hub — NO pisarlo con el mock del providerFn
+  // (el bucle/intervalo llaman refreshState para retintar; en vivo el clima manda el hub).
+  if(liveMode && liveStatus==='live'){ const hs=MDJ_WeatherHub.getState(); if(hs){ state=hs; renderUI(state); return; } }
+  state=providerFn(currentInput()); renderUI(state);   // preview/mock (async-ready)
+}
 refreshState();
 // ===================== M2 · LIVE MODE (real data via Edge Function) =====================
 // Set window.MDJB_ATMO_ENDPOINT to your Supabase function URL. Note: in a Claude
 // artifact the CSP blocks external fetch, so LIVE falls back to mock there; it works
 // once deployed in the real app. Fully verified against a local mirror endpoint.
 const ATMO_ENDPOINT=(typeof window!=='undefined' && window.MDJB_ATMO_ENDPOINT) || '';
-let liveMode=false, liveTimer=null, liveStatus='';
 // NOTA (Fase GPS): la geolocalización (GPS real → fallback base corporativa) se movió
 // a MDJ_WeatherHub.getCoords() como SSOT de ubicación; ensureFresh() la usa sola.
 // NOTA (Fase 2): el fetch + validación de AtmosphericState se movieron a
