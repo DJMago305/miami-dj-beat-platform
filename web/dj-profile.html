@@ -644,7 +644,8 @@
             height: 44px;
             z-index: 12500;
             align-items: center;
-            gap: 10px;
+            gap: 6px;
+            overflow: visible;
             text-decoration: none;
             filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6));
         }
@@ -653,8 +654,16 @@
             width: auto;
             display: block;
         }
+        /* El PNG de letras trae mucho relleno transparente en su propio lienzo
+           (1920x1920 — el texto real ocupa solo una franja central). El header
+           real de escritorio ya resuelve esto mostrando la imagen a 276px
+           dentro de una caja de 85px con overflow:visible (styles.css,
+           .brand-letters-wrapper/.brand-letters-img) — misma proporción
+           aplicada aquí (~3.2x) para que el texto se lea a un tamaño real,
+           dejando que el relleno sobrante desborde sin afectar el layout. */
         .mdj-mobile-brand-fab-letras {
-            height: 30px !important;
+            height: 140px !important;
+            width: auto !important;
         }
         @media (max-width: 768px) {
             .mdj-mobile-menu-fab { display: flex; }
