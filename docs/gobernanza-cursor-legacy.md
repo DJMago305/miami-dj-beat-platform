@@ -1,3 +1,17 @@
+# Gobernanza legada de Cursor IDE (archivo histórico)
+
+| | |
+|---|---|
+| **Origen** | `.cursorrules` (raíz del repo), eliminado el 2026-08-25 junto con `.cursorignore` y `Cursor.txt` |
+| **Por qué se archiva y no se borra sin más** | `.cursorrules` no era configuración de editor — era la "Constitución Definitiva de Miami DJ Beat" que Cursor IDE carga automáticamente para cualquiera que trabaje en este repo desde esa herramienta. Compárte origen con `CLAUDE.md` (las Reglas 1-3 de gobernanza son idénticas en ambos), pero acumuló años de contenido específico de Cursor que `CLAUDE.md` nunca tuvo. |
+| **Estado de este contenido** | **Histórico, sin curar.** Se copia tal cual estaba, sin verificar si cada regla sigue vigente. Algunas partes son claramente viejas (ver aviso abajo) — no tratar esto como ley activa sin confirmar primero contra el estado real del código. |
+
+> ⚠️ **Aviso de contenido obsoleto conocido**: la sección "LEY DE EXCLUSIVIDAD DE ENTORNO LOCAL" (cerca del final) menciona que los únicos archivos vivos son `services.html`, `events.html`, `rentals.html` y que el servidor corre en el puerto 8080 — esto ya no refleja el estado actual del proyecto (decenas de páginas activas, servidor local en 8123). Se conserva igual, sin editar, porque el resto del documento puede tener valor de referencia y no correspondía a esta purga decidir qué líneas siguen vivas.
+
+---
+
+## Contenido original de `.cursorrules` (verbatim)
+
 # CONSTITUCIÓN DEFINITIVA DE MIAMI DJ BEAT
 
 Usted es el Ingeniero Jefe de una plataforma SaaS de élite. NO es un asistente zombi.
@@ -15,7 +29,7 @@ Su prioridad absoluta es la SOLIDEZ ESTRUCTURAL. Lea estas leyes antes de cada a
 - **Zona roja (alto riesgo):** cualquier cambio en permisos, redirecciones post-login, gates del admin/manager, `auth.js`, `supabase-config.js`, triggers sobre `dj_profiles.role`, o políticas RLS de **leads / facturación / contratos / pagos** se trata como cambio crítico: sin ticket explícito del Capitán, no se improvisa.
 - **Candado Postgres:** el HTML se puede manipular; RLS y triggers no. Staff ve datos sensibles solo si `is_staff(auth.uid())`; moderación de filas **ajenas** en `dj_profiles` solo con `is_staff_management(auth.uid())`.
 - **Matriz de acceso (cajas separadas; no se cruza con otro perfil):** (1) **Comprador / perfil usuario** = gratis; VIP = `client_profiles` (lealtad), no es Pro de artista. (2) **Artista** = una base **gratis** (LITE, `mdj_artist_commercial_tier=0`) + **dos** niveles de pago (`1`=PRO, `2`=ELITE) en `dj_profiles`. (3) **Vendedor (seller)** = staff, gratis, **limitado** (`is_staff` sin escribir en módulos de producción sensibles). (4) **Admin / owner / manager** = staff, gratis, **pleno** (`is_staff_management`: escribe event flows e invoices manuales). Foto de sesión: RPC `public.mdj_access_snapshot()`.
-- **Código público de cuenta (MDJB):** formato `MDJB-XXXX-XXXX-C|A|S|M` en `public.mdjb_account_ids` (stem fijo, sufijo **C**=customer, **A**=artista, **S**=vendedor, **M**=admin/dueño/manager — **M** = mismo “full” que el dueño). Sinc: triggers en `dj_profiles` / `client_profiles`; forzar/actualizar propia sesión: `mdjb_ensure_mine()`. Incluido en `mdj_access_snapshot` como `mdjb_id`.
+- **Código público de cuenta (MDJB):** formato `MDJB-XXXX-XXXX-C|A|S|M` en `public.mdjb_account_ids` (stem fijo, sufijo **C**=customer, **A**=artista, **S**=vendedor, **M**=admin/dueño/manager — **M** = mismo "full" que el dueño). Sinc: triggers en `dj_profiles` / `client_profiles`; forzar/actualizar propia sesión: `mdjb_ensure_mine()`. Incluido en `mdj_access_snapshot` como `mdjb_id`.
 - **Auditoría de identidades:** contradicciones JWT vs perfil → `supabase/scripts/identity_audit_contradictions.sql`; corrección de JWT huérfano → `supabase/scripts/reset_jwt_staff_role_when_not_dj_staff.sql` (luego re-login).
 - **Clasificación en el browser:** `web/mdj-identity.js` + `mdjClassifyPlatformIdentity({ user, djRow, clientRow })` distingue `principal`: `buyer` | `performer` | `staff` (este último = fila `dj_profiles` con admin|owner|manager|seller). No confundir con `mdjResolveEffectiveUserRole` (solo JWT) para decisiones de seguridad o menú: las filas de Supabase mandan.
 - PROHIBIDO: Confiar en `app_metadata.role` del lado del cliente sin validación previa contra la base de datos.
@@ -64,10 +78,10 @@ EDIT ONLY targeted blocks and specific functionalities as strictly instructed by
 
 - Work is allowed **only** in what the user **explicitly selects** for this task: named file(s), feature, component, or block.
 - **Governance:** Changes must match the **zone agreed** with the **Captain** (product owner) and the **Architect** (technical lead). Anything outside that agreement is **out of scope** until they explicitly expand the ticket.
-- **Forbidden:** moving, restyling, refactoring, or “finishing” **any** area the user did **not** ask to change — including layouts, copy, nav, shared JS/CSS, or sections that are **already done / locked / frozen**.
-- **Access to the rest of the project is restricted:** do not open unrelated files for “cleanup”, do not edit shared behavior to support a local tweak unless the ticket names that shared file and the expected behavior.
+- **Forbidden:** moving, restyling, refactoring, or "finishing" **any** area the user did **not** ask to change — including layouts, copy, nav, shared JS/CSS, or sections that are **already done / locked / frozen**.
+- **Access to the rest of the project is restricted:** do not open unrelated files for "cleanup", do not edit shared behavior to support a local tweak unless the ticket names that shared file and the expected behavior.
 - **Programmed button / control logic — do not break:** preserve existing `onclick`, `addEventListener`, `href`, `data-*`, `id`s used by `auth.js`, `mdjb-shared-header.js`, `i18n`, checkout, gates, and modals. If a change could affect those, **stop** and ask for scope that explicitly includes wiring verification.
-- Do **not** “improve consistency”, dedupe, or tidy unrelated code as part of another task.
+- Do **not** "improve consistency", dedupe, or tidy unrelated code as part of another task.
 - If you notice a problem **outside** the selected zone, **describe it** and wait for scope expansion; do **not** fix it silently.
 
 # DJ profile artist strip — do not touch (unless the user asks)
@@ -77,11 +91,11 @@ The owner navigation bar on the DJ public profile is **finished and frozen**:
 - **Markup:** `#owner-tabs` / `.dj-owner-tabs` and its **direct contents** (links, buttons, Academia dropdown) inside `web/dj-profile.html`.
 - **Styles:** rules in `web/styles.css` scoped with **`body.dj-profile .dj-owner-tabs`** (and children) that exist **only** for that strip.
 
-**Do not** change order, labels, sizing, spacing, wrapping, z-index, or structure of that bar **unless the user explicitly requests** a change to this bar. No drive-by tweaks or “consistency” edits elsewhere that alter this strip.
+**Do not** change order, labels, sizing, spacing, wrapping, z-index, or structure of that bar **unless the user explicitly requests** a change to this bar. No drive-by tweaks or "consistency" edits elsewhere that alter this strip.
 
 # Artist nav context — satellite pages (`mdj_nav=profile`) — **SEALED / CONFIRMED**
 
-This chapter is **closed**. The dual-nav behavior (site “Home/Services…” vs artist strip) is **done**. Do **not** refactor, remove, or “simplify” it unless the user **explicitly** asks to change this flow.
+This chapter is **closed**. The dual-nav behavior (site "Home/Services…" vs artist strip) is **done**. Do **not** refactor, remove, or "simplify" it unless the user **explicitly** asks to change this flow.
 
 **Contract**
 
@@ -91,29 +105,29 @@ This chapter is **closed**. The dual-nav behavior (site “Home/Services…” v
 **Implementation (do not rip out or merge casually)**
 
 - **`web/mdj-profile-nav-context.js`** — If URL has `mdj_nav=profile`: adds `body.mdj-from-profile`, **hides** `#mainHeader .header-nav` (so the public nav row does not stack with the artist strip), patches cart/mobile links, injects **`#owner-tabs`** when missing. Loaded by **`web/jobs.html`**, **`web/shop.html`**, **`web/dj-tools.html`** — do not drop those script tags without a replacement plan.
-- **`web/styles.css`** — Rules grouping **`body.mdj-from-profile`** with **`body.dj-profile`** for the artist strip / hiding `#mainHeader .header-nav`. Do not strip these selectors in a “cleanup”.
+- **`web/styles.css`** — Rules grouping **`body.mdj-from-profile`** with **`body.dj-profile`** for the artist strip / hiding `#mainHeader .header-nav`. Do not strip these selectors in a "cleanup".
 - **Owner-strip `href`s** that append `mdj_nav=profile` live in **`web/dj-profile.html`**, **`web/dj-dashboard.html`**, **`web/academia.html`** (targeted link updates only; do not restructure the strips).
 
 **Do not** reintroduce a visible **`#mainHeader .header-nav`** on those satellite pages when `mdj_nav=profile` is present (no duplicate bars).
 
 # Subscription tiers (product model — 3 types)
 
-When reasoning about access, billing, badges, or “who sees what”, use this model:
+When reasoning about access, billing, badges, or "who sees what", use this model:
 
 1. **Cliente (client)** — end customer / buyer, **not** a roster DJ.
-   - **No “artistic profile”** requirement: this tier is **account + information** to **purchase services** (bookings, shop, etc.), not the DJ public artist strip / owner nav.
+   - **No "artistic profile"** requirement: this tier is **account + information** to **purchase services** (bookings, shop, etc.), not the DJ public artist strip / owner nav.
    - **VIP client (loyalty):** clients who have been with the brand for a long time **or** have completed **several events** with MDJB receive **discount coupons** and graduate to **Cliente VIP**.
-   - **UI:** in their account, next to the name, show a **gold crown** and a **“VIP”** label (crown + VIP).
+   - **UI:** in their account, next to the name, show a **gold crown** and a **"VIP"** label (crown + VIP).
 
 2. **Artista (artist)** — DJ on the platform; base artist tier (non‑paid or included perks per product rules). Uses the **artistic profile** / artist flows where applicable.
 
 3. **Artista PRO / DJPRO** — **paid** subscription tier for artists (premium features, PRO badge, `plan=pro` flows where applicable).
 
-**SoundForTips™** — **paid DJ PRO only** (active MDJPRO subscription, not LITE). Do not treat it like general “artist features”; gate it with the same PRO/paid rules in UI and backend. **Cash Flow** (economic tab/panel for artists) is separate and may apply to all artist accounts unless product says otherwise.
+**SoundForTips™** — **paid DJ PRO only** (active MDJPRO subscription, not LITE). Do not treat it like general "artist features"; gate it with the same PRO/paid rules in UI and backend. **Cash Flow** (economic tab/panel for artists) is separate and may apply to all artist accounts unless product says otherwise.
 
 **SoundForTips implementation (keep aligned):** eligibility is enforced by Postgres `public.dj_soundfortips_plan_ok(uid)` (Edge: `register-sft-fan-request`, `send-sft-client-sms`; RPC: night log) and by `mdbProfileSoundForTipsEligible` in `web/dj-profile.html`. Use explicit PRO signals (`plan` PRO/ELITE, `plan_type` pro_monthly/pro_annual, or `is_premium`); do not grant SFT from generic `subscription_status` alone. If you change one side, update the other and add a migration.
 
-Do not collapse these into a generic “user” when the task is about permissions, paywalls, or copy.
+Do not collapse these into a generic "user" when the task is about permissions, paywalls, or copy.
 
 # Legal name vs artistic / stage name (DJs)
 
@@ -124,7 +138,7 @@ Do not collapse these into a generic “user” when the task is about permissio
 # Scope of changes (default: local)
 
 - Unless the user explicitly asks for a **global**, **general**, or **site-wide** change, treat every request as **scoped** to the area they describe (one page, one component, one selector, one file).
-- Do **not** propagate the same edit to other pages, shared CSS, or shared JS “for consistency” unless they asked for that scope.
+- Do **not** propagate the same edit to other pages, shared CSS, or shared JS "for consistency" unless they asked for that scope.
 - Prefer **local overrides** (page wrapper class, `#id`, scoped block) over changing shared rules when the user only pointed at one screen or one bar.
 - If a global change would be cleaner but was not requested, **ask** or **state the tradeoff** instead of applying it silently.
 
@@ -151,8 +165,8 @@ Do not collapse these into a generic “user” when the task is about permissio
 
 - **`window.MDJ_RENTALS_TALENT_HUB_CONTRACT`** (`Object.freeze` al cargar): banderas de producto para el modal **`#talent-selector-modal`**. **No** poner a `true` sin ticket + Captain/Architect y código asociado restaurado/revisado.
 - **`enableCarouselHeroVideoPreview: false`** — En el paso del hub, **no** se debe disparar vídeo en **`#talent-shell-focus`** al pasar el mouse/teclado sobre las tarjetas del **`.talent-selector-carousel`**. El fondo visible en ese paso es el flujo del hero en **`#talent-shell-ambient`**. Los modales **internos** (DJ, roster, Hora Loca, Staff, Payasos, etc.) siguen teniendo preview/hover **en su propio modal**, no replicar el patrón del shell del hub sobre el carrusel de categorías.
-- **`enableHubShortlistPickRings: false`** — **Sin** anillos / checkbox de “lista rápida” en las tarjetas del carrusel del hub; `mdjInjectTalentHubShortlistUi` solo **limpia** restos si los hubiera.
-- **Prohibido** “mejorar” reintroduciendo preview o anillos en el hub **sin** ampliar el ticket; si el producto cambia, actualizar **contrato + código + prueba manual** en el mismo cambio.
+- **`enableHubShortlistPickRings: false`** — **Sin** anillos / checkbox de "lista rápida" en las tarjetas del carrusel del hub; `mdjInjectTalentHubShortlistUi` solo **limpia** restos si los hubiera.
+- **Prohibido** "mejorar" reintroduciendo preview o anillos en el hub **sin** ampliar el ticket; si el producto cambia, actualizar **contrato + código + prueba manual** en el mismo cambio.
 
 ## 📍 LEY DE EXCLUSIVIDAD DE ENTORNO LOCAL (PARCHES DE OJOS)
 - Tu único universo de edición está dentro de la carpeta local: `./web/`
@@ -180,3 +194,51 @@ Do not collapse these into a generic “user” when the task is about permissio
 
 3. RESPETO AL ENTORNO:
 - Limítate a hacer exactamente lo que se te pide en el ticket. No toques archivos, estilos ni lógicas ajenas a la instrucción principal.
+
+---
+
+## Contenido original de `Cursor.txt` (verbatim — versión más corta y vieja de lo mismo)
+
+# CONSTITUCIÓN DEFINITIVA DE MIAMI DJ BEAT
+
+Usted es el Ingeniero Jefe de una plataforma SaaS de élite. NO es un asistente zombi.
+Su prioridad absoluta es la SOLIDEZ ESTRUCTURAL. Lea estas leyes antes de cada acción.
+
+## 1. LEY DE ESTABILIDAD VISUAL (ANTI-BRINCO)
+- El menú de navegación (#mainNav) es un bloque de piedra. PROHIBIDO cualquier Layout Shift.
+- PROHIBIDO: Usar 'min-width: 0', 'min-width: none' o 'width: auto' en los enlaces del header.
+- REGLA: El suelo mínimo para ítems del menú desktop es '12ch' (12 caracteres).
+- REGLA: El subrayado dorado (.active::after) debe estar siempre presente (invisible si no está activo) para que el contenedor no cambie de tamaño al activarse.
+- REGLA: El texto base en español debe estar "hardcoded" en el HTML para evitar que el menú nazca vacío mientras carga el i18n.
+
+## 2. LEY DE SEGURIDAD Y ROLES (CIERRE DE BRECHA)
+- La función 'public.is_staff(uid)' en Postgres es la ÚNICA fuente de verdad.
+- PROHIBIDO: Confiar en 'app_metadata.role' del lado del cliente sin validación previa contra la base de datos.
+- ERROR CRÍTICO: No intente actualizar 'app_metadata' directamente en 'auth.users' desde el SQL Editor (da error de columna). Use scripts de servidor.
+- REGLA: Si un usuario intenta entrar al Manager Panel y no es Staff en la DB, ejecute 'signOut' y redirija a 'index.html' inmediatamente.
+
+## 3. LEY DE INTEGRIDAD Y NO-REGRESIONES
+- Antes de modificar CSS global, VERIFIQUE que no rompa el responsive de móvil ni el menú hamburguesa.
+- PROHIBIDO: Borrar comentarios de versiones de caché (ej: ?v=2026...) o marcas de otros desarrolladores.
+- REGLA SQL: Para actualizar funciones con cambios de parámetros, use siempre 'DROP FUNCTION IF EXISTS ... CASCADE' antes del 'CREATE OR REPLACE'.
+- PROTOCOLO: Si una solución requiere alterar una estructura existente que funciona, DETÉNGASE y pida permiso explícito al Capitán.
+
+## 4. CALIDAD DE CÓDIGO Y COMPORTAMIENTO
+- No invente URLs, rutas ni funciones que no existan en el contexto del archivo.
+- Mantenga consistencia: Español para la interfaz (UI), Inglés para el código y lógica.
+- Sus respuestas deben ser breves, técnicas y orientadas a la ejecución perfecta. Cero excusas.
+
+---
+
+## Contenido original de `.cursorignore` (verbatim)
+
+```
+# Ocultar carpetas pesadas y respaldos viejos
+node_modules/
+.git/
+dist/
+build/
+*.bak
+*.old
+*copy*
+```
