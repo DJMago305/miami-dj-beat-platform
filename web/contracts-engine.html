@@ -1386,6 +1386,11 @@ const TEMPLATES = [
       {key:"overtimeRate", type:"number", label:{es:"Tarifa por hora extra (USD)", en:"Overtime rate (USD/hr)"}},
       {key:"technicalRider", type:"textarea", label:{es:"Rider técnico", en:"Technical rider"},
         placeholder:{es:"Ej. 2 CDJ-3000, mixer DJM-A9, monitores de piso, DI box...", en:"E.g. 2x CDJ-3000, DJM-A9 mixer, floor monitors, DI box..."}},
+      {key:"clubMode", type:"select", label:{es:"Presentación en Club / Festival", en:"Club / Festival Performance"},
+        options:[
+          {v:"no", l:{es:"No — evento privado/estándar", en:"No — private/standard event"}},
+          {v:"yes", l:{es:"Sí — booth de club/festival", en:"Yes — club/festival booth"}},
+        ]},
       {key:"exclusivityRegime", type:"select", label:{es:"Régimen de exclusividad", en:"Exclusivity regime"},
         options:[
           {v:"exclusive", l:{es:"Exclusivo (Representación Total / Agencia)", en:"Exclusive (Full Agency Representation)"}},
@@ -1430,8 +1435,16 @@ const TEMPLATES = [
         {es:{title:'Requerimientos técnicos adicionales', body:'En caso de requerir soporte técnico adicional en cabina (monitoreo de referencia, cableado o accesorios complementarios), el Artista/DJ solicitará cortésmente la disponibilidad al personal del Venue, absteniéndose de realizar exigencias impositivas que comprometan la imagen de la empresa.'},
          en:{title:'Additional Technical Requirements', body:'Should additional booth technical support be required (reference monitoring, cabling, or supplementary accessories), Artist/DJ shall courteously request availability from Venue personnel, refraining from demanding requirements that could compromise the company\'s image.'}},
         {es:{title:'Política de cancelación', body: cancelText.es||cancelText}, en:{title:'Cancellation Policy', body: cancelText.en||cancelText}},
-        PRIVACY_CLAUSE,
       ];
+      if(d.clubMode==='yes'){
+        clauses.splice(3, 0,
+          {es:{title:'Rider técnico de cabina (Club/Festival)', body:'Para presentaciones en booth de club o festival, el Venue/Cliente deberá garantizar: (1) un mínimo de dos (2) tornamesas o reproductores CDJ de la serie profesional Pioneer (o equivalente aprobado), (2) mixer Pioneer DJM de la serie profesional, (3) monitores de booth independientes del sistema de sonido principal, y (4) corriente eléctrica estabilizada y dedicada para el equipo de cabina. La ausencia de estos elementos deberá notificarse a Miami DJ Beat LLC con al menos 72 horas de anticipación.'},
+           en:{title:'Booth Technical Rider (Club/Festival)', body:'For club or festival booth performances, the Venue/Client must guarantee: (1) a minimum of two (2) professional-series Pioneer turntables or CDJ players (or approved equivalent), (2) a professional-series Pioneer DJM mixer, (3) booth monitors independent from the main sound system, and (4) stabilized, dedicated electrical power for the booth equipment. Absence of any of these elements must be reported to Miami DJ Beat LLC at least 72 hours in advance.'}},
+          {es:{title:'Cortesías y acceso técnico', body:'El Venue/Cliente proveerá al Artista/DJ y a su asistente técnico (de aplicar) acceso de cortesía al recinto, área de cabina y estacionamiento durante el horario de montaje, presentación y desmontaje, sin costo adicional.'},
+           en:{title:'Courtesies & Technical Access', body:'The Venue/Client will provide the Artist/DJ and their technical assistant (if applicable) courtesy access to the venue, booth area, and parking during setup, performance, and load-out, at no additional cost.'}},
+        );
+      }
+      clauses.push(PRIVACY_CLAUSE);
       return `
         ${letterheadBlock()}
         <div class="paper-eyebrow">${lang==='es'?'Contrato de Servicios':'Service Agreement'}</div>
@@ -1465,7 +1478,10 @@ const TEMPLATES = [
       {key:"venueAddress", type:"text", label:{es:"Dirección del venue", en:"Venue address"}},
       {key:"feeAmount", type:"number", req:true, label:{es:"Honorario total (USD)", en:"Total fee (USD)"}, row:"fee"},
       {key:"depositAmount", type:"number", label:{es:"Depósito (USD)", en:"Deposit (USD)"}, row:"fee"},
-      {key:"soundcheckTime", type:"time", label:{es:"Horario de soundcheck", en:"Soundcheck time"}},
+      {key:"depositDueDate", type:"date", label:{es:"Fecha límite del depósito", en:"Deposit due date"}},
+      {key:"overtimeRate", type:"number", label:{es:"Tarifa por hora extra (USD)", en:"Overtime rate (USD/hr)"}},
+      {key:"setupTime", type:"time", label:{es:"Hora de montaje", en:"Setup time"}, row:"time2"},
+      {key:"soundcheckTime", type:"time", label:{es:"Horario de soundcheck", en:"Soundcheck time"}, row:"time2"},
       {key:"setStructure", type:"textarea", label:{es:"Estructura de sets y descansos", en:"Set structure & breaks"},
         placeholder:{es:"Ej. 2 sets de 45 min con 15 min de descanso entre cada uno...", en:"E.g. 2x 45-min sets with a 15-min break between..."}},
       {key:"stagePlot", type:"textarea", label:{es:"Stage plot (distribución en escenario)", en:"Stage plot"},
@@ -1511,11 +1527,11 @@ const TEMPLATES = [
       const clauses = [
         {es:{title:'Partes y compromiso', body:`Este Contrato de Servicios Musicales se celebra entre <b>${esc(d.clientName)||'[Cliente]'}</b> ("Cliente") y <b>${esc(d.bandName)||'[Banda]'}</b>${d.bandLeaderName?`, representada por ${esc(d.bandLeaderName)}`:''} ("Agrupación"), administrado por Miami DJ Beat LLC como agencia de representación, para una presentación en vivo el ${d.eventDate?fmtDate(d.eventDate,lang):'[fecha]'} en ${esc(d.venueName)||'[venue]'}${d.venueAddress?`, ubicado en ${esc(d.venueAddress)}`:''}.`},
          en:{title:'Parties & Engagement', body:`This Live Music Services Agreement is entered into between <b>${esc(d.clientName)||'[Client]'}</b> ("Client") and <b>${esc(d.bandName)||'[Band]'}</b>${d.bandLeaderName?`, represented by ${esc(d.bandLeaderName)}`:''} ("Ensemble"), administered by Miami DJ Beat LLC as booking agency, for a live performance on ${d.eventDate?fmtDate(d.eventDate,lang):'[date]'} at ${esc(d.venueName)||'[venue]'}${d.venueAddress?`, located at ${esc(d.venueAddress)}`:''}.`}},
-        {es:{title:'Compensación', body:`El Cliente pagará a la Agrupación un honorario total de ${d.feeAmount?fmtMoney(d.feeAmount):'[monto]'}.${d.depositAmount?` Se requiere un depósito de ${fmtMoney(d.depositAmount)}, con el saldo restante a pagar el día del evento.`:''}`},
-         en:{title:'Compensation', body:`Client agrees to pay the Ensemble a total fee of ${d.feeAmount?fmtMoney(d.feeAmount):'[amount]'}.${d.depositAmount?` A deposit of ${fmtMoney(d.depositAmount)} is required, with the remaining balance due on the day of the event.`:''}`}},
+        {es:{title:'Compensación', body:`El Cliente pagará a la Agrupación un honorario total de ${d.feeAmount?fmtMoney(d.feeAmount):'[monto]'}.${d.depositAmount?` Se requiere un depósito de ${fmtMoney(d.depositAmount)}${d.depositDueDate?`, a más tardar el ${fmtDate(d.depositDueDate,lang)}`:''}, con el saldo restante a pagar el día del evento.`:''}${d.overtimeRate?` Toda hora adicional más allá de lo pactado se cobrará a razón de ${fmtMoney(d.overtimeRate)} por hora.`:''}`},
+         en:{title:'Compensation', body:`Client agrees to pay the Ensemble a total fee of ${d.feeAmount?fmtMoney(d.feeAmount):'[amount]'}.${d.depositAmount?` A deposit of ${fmtMoney(d.depositAmount)} is required${d.depositDueDate?` no later than ${fmtDate(d.depositDueDate,lang)}`:''}, with the remaining balance due on the day of the event.`:''}${d.overtimeRate?` Any additional hour beyond the agreed schedule will be billed at ${fmtMoney(d.overtimeRate)} per hour.`:''}`}},
         {es:{title:'Régimen de exclusividad', body: exclusivityClause.es}, en:{title:'Exclusivity Regime', body: exclusivityClause.en}},
-        {es:{title:'Soundcheck y estructura de sets', body:`${d.soundcheckTime?`Soundcheck programado a las ${d.soundcheckTime}. `:''}${esc(d.setStructure)||'<span class="placeholder">Estructura de sets no especificada.</span>'}`},
-         en:{title:'Soundcheck & Set Structure', body:`${d.soundcheckTime?`Soundcheck scheduled at ${d.soundcheckTime}. `:''}${esc(d.setStructure)||'<span class="placeholder">Set structure not specified.</span>'}`}},
+        {es:{title:'Montaje, soundcheck y estructura de sets', body:`${d.setupTime?`Montaje programado a las ${d.setupTime}. `:''}${d.soundcheckTime?`Soundcheck programado a las ${d.soundcheckTime}. `:''}${esc(d.setStructure)||'<span class="placeholder">Estructura de sets no especificada.</span>'}`},
+         en:{title:'Setup, Soundcheck & Set Structure', body:`${d.setupTime?`Setup scheduled at ${d.setupTime}. `:''}${d.soundcheckTime?`Soundcheck scheduled at ${d.soundcheckTime}. `:''}${esc(d.setStructure)||'<span class="placeholder">Set structure not specified.</span>'}`}},
         {es:{title:'Stage plot', body: esc(d.stagePlot)||'<span class="placeholder">Sin stage plot indicado.</span>'},
          en:{title:'Stage Plot', body: esc(d.stagePlot)||'<span class="placeholder">No stage plot provided.</span>'}},
         {es:{title:'Input list', body: esc(d.inputList)||'<span class="placeholder">Sin input list indicado.</span>'},
@@ -1535,6 +1551,7 @@ const TEMPLATES = [
           <div><span>${lang==='es'?'Horario':'Schedule'}</span><b>${d.eventStart||'—'} – ${d.eventEnd||'—'}</b></div>
           <div><span>${t.kv_venue}</span><b>${esc(d.venueName)||'<span class=\"placeholder\">—</span>'}</b></div>
           <div><span>${t.kv_fee}</span><b>${d.feeAmount?fmtMoney(d.feeAmount):'<span class="placeholder">—</span>'}</b></div>
+          <div><span>${lang==='es'?'Montaje / Soundcheck':'Setup / Soundcheck'}</span><b>${d.setupTime||'—'} / ${d.soundcheckTime||'—'}</b></div>
         </div>
         ${renderClauses(withCustomClauses(clauses,d,lang),lang,1)}
         <h2>${clauses.length+1}. ${GENERAL_CLAUSE[lang].title}</h2><p>${GENERAL_CLAUSE[lang].body}</p>`;
@@ -1555,6 +1572,10 @@ const TEMPLATES = [
       {key:"venueAddress", type:"text", label:{es:"Dirección del venue", en:"Venue address"}},
       {key:"feeAmount", type:"number", req:true, label:{es:"Honorario total (USD)", en:"Total fee (USD)"}, row:"fee"},
       {key:"depositAmount", type:"number", label:{es:"Depósito (USD)", en:"Deposit (USD)"}, row:"fee"},
+      {key:"depositDueDate", type:"date", label:{es:"Fecha límite del depósito", en:"Deposit due date"}},
+      {key:"overtimeRate", type:"number", label:{es:"Tarifa por hora extra (USD)", en:"Overtime rate (USD/hr)"}},
+      {key:"setupTime", type:"time", label:{es:"Hora de montaje", en:"Setup time"}, row:"time2"},
+      {key:"soundcheckTime", type:"time", label:{es:"Horario de soundcheck", en:"Soundcheck time"}, row:"time2"},
       {key:"usesBackingTracks", type:"select", label:{es:"¿Usa pistas / playback?", en:"Uses backing tracks?"},
         options:[{v:"yes",l:{es:"Sí",en:"Yes"}},{v:"no",l:{es:"No — en vivo con banda/instrumento",en:"No — live with band/instrument"}}]},
       {key:"needsWirelessMic", type:"select", label:{es:"¿Requiere microfonía inalámbrica?", en:"Needs wireless microphone?"},
@@ -1605,9 +1626,11 @@ const TEMPLATES = [
       const clauses = [
         {es:{title:'Partes y compromiso', body:`Este Contrato de Servicios de Artista se celebra entre <b>${esc(d.clientName)||'[Cliente]'}</b> ("Cliente") y <b>${esc(d.artistLegalName)||'[Artista]'}</b>${d.stageName?` (actuando como "${esc(d.stageName)}")`:''} ("Artista"), administrado por Miami DJ Beat LLC como agencia de representación, para una presentación en vivo el ${d.eventDate?fmtDate(d.eventDate,lang):'[fecha]'} en ${esc(d.venueName)||'[venue]'}${d.venueAddress?`, ubicado en ${esc(d.venueAddress)}`:''}.`},
          en:{title:'Parties & Engagement', body:`This Artist Services Agreement is entered into between <b>${esc(d.clientName)||'[Client]'}</b> ("Client") and <b>${esc(d.artistLegalName)||'[Artist]'}</b>${d.stageName?` (performing as "${esc(d.stageName)}")`:''} ("Artist"), administered by Miami DJ Beat LLC as booking agency, for a live performance on ${d.eventDate?fmtDate(d.eventDate,lang):'[date]'} at ${esc(d.venueName)||'[venue]'}${d.venueAddress?`, located at ${esc(d.venueAddress)}`:''}.`}},
-        {es:{title:'Compensación', body:`El Cliente pagará al Artista un honorario total de ${d.feeAmount?fmtMoney(d.feeAmount):'[monto]'}.${d.depositAmount?` Se requiere un depósito de ${fmtMoney(d.depositAmount)}, con el saldo restante a pagar el día del evento.`:''}`},
-         en:{title:'Compensation', body:`Client agrees to pay Artist a total fee of ${d.feeAmount?fmtMoney(d.feeAmount):'[amount]'}.${d.depositAmount?` A deposit of ${fmtMoney(d.depositAmount)} is required, with the remaining balance due on the day of the event.`:''}`}},
+        {es:{title:'Compensación', body:`El Cliente pagará al Artista un honorario total de ${d.feeAmount?fmtMoney(d.feeAmount):'[monto]'}.${d.depositAmount?` Se requiere un depósito de ${fmtMoney(d.depositAmount)}${d.depositDueDate?`, a más tardar el ${fmtDate(d.depositDueDate,lang)}`:''}, con el saldo restante a pagar el día del evento.`:''}${d.overtimeRate?` Toda hora adicional más allá de lo pactado se cobrará a razón de ${fmtMoney(d.overtimeRate)} por hora.`:''}`},
+         en:{title:'Compensation', body:`Client agrees to pay Artist a total fee of ${d.feeAmount?fmtMoney(d.feeAmount):'[amount]'}.${d.depositAmount?` A deposit of ${fmtMoney(d.depositAmount)} is required${d.depositDueDate?` no later than ${fmtDate(d.depositDueDate,lang)}`:''}, with the remaining balance due on the day of the event.`:''}${d.overtimeRate?` Any additional hour beyond the agreed schedule will be billed at ${fmtMoney(d.overtimeRate)} per hour.`:''}`}},
         {es:{title:'Régimen de exclusividad', body: exclusivityClause.es}, en:{title:'Exclusivity Regime', body: exclusivityClause.en}},
+        {es:{title:'Montaje y soundcheck', body:`${d.setupTime?`Montaje programado a las ${d.setupTime}. `:''}${d.soundcheckTime?`Soundcheck programado a las ${d.soundcheckTime}.`:''}${(!d.setupTime&&!d.soundcheckTime)?'<span class="placeholder">Horarios de montaje/soundcheck no especificados.</span>':''}`},
+         en:{title:'Setup & Soundcheck', body:`${d.setupTime?`Setup scheduled at ${d.setupTime}. `:''}${d.soundcheckTime?`Soundcheck scheduled at ${d.soundcheckTime}.`:''}${(!d.setupTime&&!d.soundcheckTime)?'<span class="placeholder">Setup/soundcheck times not specified.</span>':''}`}},
         {es:{title:'Pistas / playback', body: tracksText.es}, en:{title:'Backing Tracks', body: tracksText.en}},
         {es:{title:'Microfonía', body: `${micText.es}${d.micDetails?` ${esc(d.micDetails)}`:''}`}, en:{title:'Microphones', body: `${micText.en}${d.micDetails?` ${esc(d.micDetails)}`:''}`}},
         {es:{title:'Política de cancelación', body: cancelText.es}, en:{title:'Cancellation Policy', body: cancelText.en}},
@@ -1625,6 +1648,7 @@ const TEMPLATES = [
           <div><span>${lang==='es'?'Horario':'Schedule'}</span><b>${d.eventStart||'—'} – ${d.eventEnd||'—'}</b></div>
           <div><span>${t.kv_venue}</span><b>${esc(d.venueName)||'<span class=\"placeholder\">—</span>'}</b></div>
           <div><span>${t.kv_fee}</span><b>${d.feeAmount?fmtMoney(d.feeAmount):'<span class="placeholder">—</span>'}</b></div>
+          <div><span>${lang==='es'?'Montaje / Soundcheck':'Setup / Soundcheck'}</span><b>${d.setupTime||'—'} / ${d.soundcheckTime||'—'}</b></div>
         </div>
         ${renderClauses(withCustomClauses(clauses,d,lang),lang,1)}
         <h2>${clauses.length+1}. ${GENERAL_CLAUSE[lang].title}</h2><p>${GENERAL_CLAUSE[lang].body}</p>`;
@@ -1644,6 +1668,10 @@ const TEMPLATES = [
       {key:"venueAddress", type:"text", label:{es:"Dirección del venue", en:"Venue address"}},
       {key:"feeAmount", type:"number", req:true, label:{es:"Honorario total (USD)", en:"Total fee (USD)"}, row:"fee"},
       {key:"depositAmount", type:"number", label:{es:"Depósito (USD)", en:"Deposit (USD)"}, row:"fee"},
+      {key:"depositDueDate", type:"date", label:{es:"Fecha límite del depósito", en:"Deposit due date"}},
+      {key:"overtimeRate", type:"number", label:{es:"Tarifa por hora extra (USD)", en:"Overtime rate (USD/hr)"}},
+      {key:"setupTime", type:"time", label:{es:"Hora de montaje", en:"Setup time"}, row:"time2"},
+      {key:"soundcheckTime", type:"time", label:{es:"Horario de soundcheck", en:"Soundcheck time"}, row:"time2"},
       {key:"coiRequired", type:"select", label:{es:"¿Requiere seguro COI (Certificate of Insurance)?", en:"COI (Certificate of Insurance) required?"},
         options:[{v:"yes",l:{es:"Sí — obligatorio",en:"Yes — mandatory"}},{v:"no",l:{es:"No aplica",en:"Not applicable"}}]},
       {key:"coiAmount", type:"text", label:{es:"Cobertura mínima requerida", en:"Minimum coverage required"}, placeholder:{es:"Ej. $1,000,000 por ocurrencia", en:"E.g. $1,000,000 per occurrence"}},
@@ -1659,8 +1687,10 @@ const TEMPLATES = [
       const clauses = [
         {es:{title:'Partes y alcance', body:`Este Contrato de Subcontratación B2B se celebra entre <b>Miami DJ Beat LLC</b> ("Contratante") y <b>${esc(d.contractorLegalName)||'[Subcontratista]'}</b> ("Subcontratista"), para la prestación del servicio "${esc(d.showType)||'[tipo de show]'}" el ${d.eventDate?fmtDate(d.eventDate,lang):'[fecha]'} en ${esc(d.venueName)||'[venue]'}${d.venueAddress?`, ubicado en ${esc(d.venueAddress)}`:''}.`},
          en:{title:'Parties & Scope', body:`This B2B Subcontracting Agreement is entered into between <b>Miami DJ Beat LLC</b> ("Contracting Party") and <b>${esc(d.contractorLegalName)||'[Subcontractor]'}</b> ("Subcontractor"), for the provision of "${esc(d.showType)||'[show type]'}" services on ${d.eventDate?fmtDate(d.eventDate,lang):'[date]'} at ${esc(d.venueName)||'[venue]'}${d.venueAddress?`, located at ${esc(d.venueAddress)}`:''}.`}},
-        {es:{title:'Compensación', body:`El Contratante pagará al Subcontratista un honorario total de ${d.feeAmount?fmtMoney(d.feeAmount):'[monto]'}.${d.depositAmount?` Se requiere un depósito de ${fmtMoney(d.depositAmount)}, con el saldo restante a pagar el día del evento.`:''}`},
-         en:{title:'Compensation', body:`Contracting Party agrees to pay Subcontractor a total fee of ${d.feeAmount?fmtMoney(d.feeAmount):'[amount]'}.${d.depositAmount?` A deposit of ${fmtMoney(d.depositAmount)} is required, with the remaining balance due on the day of the event.`:''}`}},
+        {es:{title:'Compensación', body:`El Contratante pagará al Subcontratista un honorario total de ${d.feeAmount?fmtMoney(d.feeAmount):'[monto]'}.${d.depositAmount?` Se requiere un depósito de ${fmtMoney(d.depositAmount)}${d.depositDueDate?`, a más tardar el ${fmtDate(d.depositDueDate,lang)}`:''}, con el saldo restante a pagar el día del evento.`:''}${d.overtimeRate?` Toda hora adicional más allá de lo pactado se cobrará a razón de ${fmtMoney(d.overtimeRate)} por hora.`:''}`},
+         en:{title:'Compensation', body:`Contracting Party agrees to pay Subcontractor a total fee of ${d.feeAmount?fmtMoney(d.feeAmount):'[amount]'}.${d.depositAmount?` A deposit of ${fmtMoney(d.depositAmount)} is required${d.depositDueDate?` no later than ${fmtDate(d.depositDueDate,lang)}`:''}, with the remaining balance due on the day of the event.`:''}${d.overtimeRate?` Any additional hour beyond the agreed schedule will be billed at ${fmtMoney(d.overtimeRate)} per hour.`:''}`}},
+        {es:{title:'Montaje y soundcheck', body:`${d.setupTime?`Montaje programado a las ${d.setupTime}. `:''}${d.soundcheckTime?`Soundcheck programado a las ${d.soundcheckTime}.`:''}${(!d.setupTime&&!d.soundcheckTime)?'<span class="placeholder">Horarios de montaje/soundcheck no especificados.</span>':''}`},
+         en:{title:'Setup & Soundcheck', body:`${d.setupTime?`Setup scheduled at ${d.setupTime}. `:''}${d.soundcheckTime?`Soundcheck scheduled at ${d.soundcheckTime}.`:''}${(!d.setupTime&&!d.soundcheckTime)?'<span class="placeholder">Setup/soundcheck times not specified.</span>':''}`}},
         {es:{title:'Seguro de responsabilidad civil (COI)', body: d.coiRequired==='yes' ? `El Subcontratista deberá presentar un Certificado de Seguro (COI) vigente${d.coiAmount?`, con cobertura mínima de ${esc(d.coiAmount)}`:''}, nombrando a Miami DJ Beat LLC como asegurado adicional, antes de la fecha del evento. La falta de presentación del COI faculta al Contratante a cancelar este acuerdo sin penalización.` : '<span class="placeholder">Seguro COI no requerido para este servicio.</span>'},
          en:{title:'Certificate of Insurance (COI)', body: d.coiRequired==='yes' ? `Subcontractor must provide a valid Certificate of Insurance (COI)${d.coiAmount?`, with minimum coverage of ${esc(d.coiAmount)}`:''}, naming Miami DJ Beat LLC as additional insured, prior to the event date. Failure to provide the COI entitles the Contracting Party to cancel this Agreement without penalty.` : '<span class="placeholder">COI insurance not required for this service.</span>'}},
         {es:{title:'Exoneración de responsabilidad (Hold Harmless)', body:'El Subcontratista acepta indemnizar, defender y eximir de toda responsabilidad a Miami DJ Beat LLC, sus directivos, empleados y representantes, frente a cualquier reclamo, daño, lesión o pérdida que surja de la prestación de sus servicios, incluyendo negligencia propia del Subcontratista o de su personal. Miami DJ Beat LLC actúa únicamente como intermediario de contratación y no asume responsabilidad operativa por la ejecución del show.'},
@@ -1679,6 +1709,7 @@ const TEMPLATES = [
           <div><span>${lang==='es'?'Horario':'Schedule'}</span><b>${d.eventStart||'—'} – ${d.eventEnd||'—'}</b></div>
           <div><span>${t.kv_venue}</span><b>${esc(d.venueName)||'<span class=\"placeholder\">—</span>'}</b></div>
           <div><span>${t.kv_fee}</span><b>${d.feeAmount?fmtMoney(d.feeAmount):'<span class="placeholder">—</span>'}</b></div>
+          <div><span>${lang==='es'?'Montaje / Soundcheck':'Setup / Soundcheck'}</span><b>${d.setupTime||'—'} / ${d.soundcheckTime||'—'}</b></div>
         </div>
         ${renderClauses(withCustomClauses(clauses,d,lang),lang,1)}
         <h2>${clauses.length+1}. ${GENERAL_CLAUSE[lang].title}</h2><p>${GENERAL_CLAUSE[lang].body}</p>`;
@@ -1808,13 +1839,17 @@ const TEMPLATES = [
     desc:{es:"Depósitos, horas extra, cláusula climática", en:"Deposits, overtime, weather clause"},
     fields:[
       {key:"clientName", type:"text", req:true, label:{es:"Nombre del cliente", en:"Client name"}},
-      {key:"eventType", type:"select", label:{es:"Tipo de evento", en:"Event type"},
+      {key:"eventType", type:"select", refreshFormOnChange:true, label:{es:"Tipo de evento", en:"Event type"},
         options:[
           {v:"wedding",l:{es:"Boda",en:"Wedding"}},
           {v:"quince",l:{es:"15 Años / Quinceañera",en:"Quinceañera"}},
           {v:"birthday",l:{es:"Cumpleaños",en:"Birthday"}},
           {v:"other",l:{es:"Otro evento privado",en:"Other private event"}},
         ]},
+      {key:"quinceaneraName", type:"text", showIf:(d)=>d.eventType==='quince',
+        label:{es:"Nombre de la Quinceañera", en:"Quinceañera's name"}},
+      {key:"guardianName", type:"text", showIf:(d)=>d.eventType==='quince',
+        label:{es:"Firma del Padre/Tutor/Responsable Financiero", en:"Parent/Guardian/Financially Responsible Party (signature)"}},
       {key:"eventDate", type:"date", req:true, label:{es:"Fecha del evento", en:"Event date"}},
       {key:"eventStart", type:"time", label:{es:"Hora de inicio", en:"Start time"}, row:"time"},
       {key:"eventEnd", type:"time", label:{es:"Hora de fin", en:"End time"}, row:"time"},
@@ -1831,7 +1866,13 @@ const TEMPLATES = [
       {key:"serviceScope", type:"textarea", label:{es:"Alcance del servicio", en:"Scope of service"},
         placeholder:{es:"Ej. DJ, audio, iluminación de pista, animación...", en:"E.g. DJ, audio, dance-floor lighting, MC/hosting..."}},
     ],
-    partyNames(d,lang){ return [{label:{es:'Cliente',en:'Client'}, name:d.clientName}]; },
+    partyNames(d,lang){
+      const parties = [{label:{es:'Cliente',en:'Client'}, name:d.clientName}];
+      if(d.eventType==='quince' && d.guardianName){
+        parties.push({label:{es:'Padre/Tutor/Responsable Financiero',en:'Parent/Guardian/Financially Responsible Party'}, name:d.guardianName});
+      }
+      return parties;
+    },
     render(d,lang){
       const t=STR[lang];
       const eventTypeLabel = {
@@ -1848,8 +1889,14 @@ const TEMPLATES = [
         {es:{title:'Honorario y depósito', body:`El honorario total acordado es de ${d.totalFee?fmtMoney(d.totalFee):'[monto]'}.${d.depositAmount?` Se requiere un depósito de ${fmtMoney(d.depositAmount)}${d.depositDueDate?` antes del ${fmtDate(d.depositDueDate,lang)}`:''}, con el saldo restante a pagar el día del evento.`:''}${d.overtimeRate?` Todo tiempo de servicio adicional al horario acordado se facturará a ${fmtMoney(d.overtimeRate)} por hora.`:''}`},
          en:{title:'Fee & Deposit', body:`The total agreed fee is ${d.totalFee?fmtMoney(d.totalFee):'[amount]'}.${d.depositAmount?` A deposit of ${fmtMoney(d.depositAmount)} is required${d.depositDueDate?` by ${fmtDate(d.depositDueDate,lang)}`:''}, with the remaining balance due on the day of the event.`:''}${d.overtimeRate?` Any service time beyond the scheduled window will be billed at ${fmtMoney(d.overtimeRate)}/hour.`:''}`}},
         {es:{title:'Cláusula climática', body: weatherClause.es}, en:{title:'Weather Clause', body: weatherClause.en}},
-        PRIVACY_CLAUSE,
       ];
+      if(d.eventType==='quince'){
+        clauses.push({
+          es:{title:'Protocolo de Quinceañera', body:`Se establece el siguiente protocolo de tiempos para los momentos especiales de ${esc(d.quinceaneraName)||'la Quinceañera'}: Vals de Honor, Brindis y Hora Loca. El Cliente deberá coordinar con el Proveedor el orden y horario exacto de estos momentos con al menos 7 días de anticipación al evento. Cualquier cambio de última hora podrá afectar la fluidez del itinerario musical.${d.guardianName?` El Padre/Tutor/Responsable Financiero identificado como <b>${esc(d.guardianName)}</b> queda registrado como firmante autorizado para efectos de este contrato.`:''}`},
+          en:{title:'Quinceañera Protocol', body:`The following timing protocol is established for ${esc(d.quinceaneraName)||"the Quinceañera's"} special moments: Waltz, Toast, and Hora Loca. Client must coordinate the exact order and timing of these moments with Provider at least 7 days prior to the event. Last-minute changes may affect the flow of the musical itinerary.${d.guardianName?` The Parent/Guardian/Financially Responsible Party identified as <b>${esc(d.guardianName)}</b> is recorded as an authorized signer for purposes of this Agreement.`:''}`},
+        });
+      }
+      clauses.push(PRIVACY_CLAUSE);
       return `
         ${letterheadBlock()}
         <div class="paper-eyebrow">${lang==='es'?'Contrato de Servicios de Entretenimiento':'Entertainment Services Agreement'}</div>
@@ -1858,6 +1905,7 @@ const TEMPLATES = [
         <div class="kv">
           <div><span>${t.kv_client}</span><b>${esc(d.clientName)||'<span class=\"placeholder\">—</span>'}</b></div>
           <div><span>${lang==='es'?'Tipo de evento':'Event type'}</span><b>${eventTypeLabel[lang]}</b></div>
+          ${d.eventType==='quince'?`<div><span>${lang==='es'?'Quinceañera':'Quinceañera'}</span><b>${esc(d.quinceaneraName)||'<span class="placeholder">—</span>'}</b></div>`:''}
           <div><span>${t.kv_date}</span><b>${d.eventDate?fmtDate(d.eventDate,lang):'<span class="placeholder">—</span>'}</b></div>
           <div><span>${lang==='es'?'Horario':'Schedule'}</span><b>${d.eventStart||'—'} – ${d.eventEnd||'—'}</b></div>
           <div><span>${lang==='es'?'Montaje / Soundcheck':'Setup / Soundcheck'}</span><b>${d.setupTime||'—'} / ${d.soundcheckTime||'—'}</b></div>
@@ -2216,11 +2264,12 @@ function renderForm(){
       <button type="button" class="btn btn-primary" id="w9SaveVaultBtn" style="width:100%;margin-top:10px;" disabled>${STR[lang].w9SaveVaultBtn}</button>`;
   }
 
+  const visibleFields = tpl.fields.filter(f=>!f.showIf || f.showIf(data));
   let i=0;
-  while(i < tpl.fields.length){
-    const f = tpl.fields[i];
-    if(f.row && tpl.fields[i+1] && tpl.fields[i+1].row===f.row){
-      const f2 = tpl.fields[i+1];
+  while(i < visibleFields.length){
+    const f = visibleFields[i];
+    if(f.row && visibleFields[i+1] && visibleFields[i+1].row===f.row){
+      const f2 = visibleFields[i+1];
       html += `<div class="field-row">${fieldHtml(f,data,lang)}${fieldHtml(f2,data,lang)}</div>`;
       i+=2; continue;
     }
@@ -2231,8 +2280,13 @@ function renderForm(){
 
   $$("[data-field]",panel).forEach(el=>{
     const key = el.dataset.field;
+    const fdef = tpl.fields.find(x=>x.key===key);
     const ev = (el.tagName==="SELECT" || el.type==="date" || el.type==="time")? "change":"input";
-    el.addEventListener(ev, ()=>{ data[key] = el.value; renderPreview(); });
+    el.addEventListener(ev, ()=>{
+      data[key] = el.value;
+      if(fdef && fdef.refreshFormOnChange){ renderForm(); }
+      renderPreview();
+    });
   });
   $$("[data-taxclass-radio]",panel).forEach(el=>{
     el.addEventListener("change",()=>{
