@@ -2427,12 +2427,24 @@ function wireW9SignerUpload(lang){
     record.is_locked = true;
     record.status = "COMPLETADO_EXTERNO";
     const result = await saveContractToSupabase(record);
+    if(!result.ok){
+      // Antes: se mostraba "Éxito" igual aunque guardar_contrato_firmado fallara —
+      // el firmante externo nunca se enteraba de que su W-9 no llegó al servidor.
+      // Mismo patrón que la subida del lado Staff (banner w9SavedOk/w9SavedFail,
+      // más arriba en este archivo): sin éxito visual sin confirmación real.
+      console.error("[W9 signer] guardar_contrato_firmado failed — nothing persisted remotely.", result);
+      saveContracts();   // igual que el flujo Staff: el intento queda local para reintentar, aunque el server no confirmó
+      submitBtn.disabled = false;
+      banner.hidden = false;
+      banner.className = "banner banner-warning";
+      banner.textContent = STR[curLang].w9SavedFail;
+      return;
+    }
     saveContracts();
     state.w9SignerPending = null;
     $("#signerWorkArea").hidden = true;
     $("#signerSuccessState").hidden = false;
     renderContractList();
-    if(!result.ok) console.warn("[W9 signer] guardar_contrato_firmado failed — record kept locally.", result);
   });
 }
 

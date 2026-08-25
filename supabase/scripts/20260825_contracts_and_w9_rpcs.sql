@@ -148,7 +148,29 @@ $function$;
 --
 -- Si se reproduce este esquema en un ambiente nuevo (mdjb-ensayo), replicar
 -- igual salvo que se decida cerrar el acceso de 'anon' tras resolver el
--- hallazgo de seguridad anotado arriba:
+-- hallazgo de seguridad anotado arriba.
+--
+-- OJO antes de aplicar la opción simple: guardar_contrato_firmado acepta
+-- p_signer_email/p_signer_phone como parámetros propios, y
+-- obtener_mi_contrato_detalle ya autoriza por email además de por sesión
+-- (`sc.signer_email = auth.email()`) — el diseño YA contempla firmantes
+-- externos (subcontratistas, W-9 de terceros) que pueden no tener cuenta
+-- activa en la plataforma. Revocar 'anon' sin más rompería ese caso real.
+--
+-- OPCIÓN A (simple, rompe firmantes externos sin cuenta):
 --   REVOKE EXECUTE ON FUNCTION public.guardar_contrato_firmado FROM anon;
 --   REVOKE EXECUTE ON FUNCTION public.obtener_mi_contrato_detalle FROM anon;
 --   REVOKE EXECUTE ON FUNCTION public.obtener_mis_contratos FROM anon;
+--
+-- OPCIÓN B (preserva el flujo de firmante externo, propuesta — NO aplicada,
+-- requiere diseño y aprobación aparte antes de escribir código):
+--   1. Agregar una columna `signing_token` (uuid, generado al crear el
+--      contrato en modo staff/interno) a signed_contracts o a una tabla
+--      puente `contract_signing_links`.
+--   2. guardar_contrato_firmado exige un nuevo parámetro p_signing_token y
+--      valida contra esa tabla ANTES de insertar — sustituye la ausencia de
+--      auth.uid() por prueba de posesión del enlace de firma (igual que un
+--      link de DocuSign/HelloSign), en vez de dejar el INSERT abierto a
+--      cualquiera con la clave anon pública.
+--   3. Con el token validando la identidad del firmante externo, ahí sí se
+--      puede revocar EXECUTE a 'anon' sin romper el caso real.
