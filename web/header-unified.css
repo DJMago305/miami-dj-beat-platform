@@ -4822,14 +4822,16 @@ html body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.to
 #mdj-flotante-visitante.mdj-franja-bajo-barra {
   top: 96px;   /* 84 de cabecera ya sin .header-top, mas 12 de aire */
 }
-/* En movil (≤768px) la cabecera real YA muestra marca + el botón de menú
-   siempre visible (#mdjMobileMenuFab, dj-profile.html) — el sello clonado de
-   esta franja quedaba flotando sin fondo sobre el hero (por diseño, franja
-   "sin fondo") y se solapaba visualmente con el nombre/insignias del artista.
-   En escritorio no se toca: ahí no hay solape reportado. */
+/* En movil (≤768px) dj-profile.html ya monta su propia marca SIEMPRE VISIBLE
+   (#mdjMobileBrandFab), independiente de esta franja — el sello clonado de
+   aquí quedaba flotando sin fondo sobre el hero (por diseño, franja "sin
+   fondo") y se veía duplicado/solapado con esa marca nueva y con el
+   nombre/insignias del artista. Aplica a las DOS variantes (visitante y
+   artista): ambas quedan cubiertas por la marca nueva. En escritorio no se
+   toca: ahí no hay solape reportado y esta franja no se monta. */
 @media (max-width: 768px) {
-  #mdj-flotante-visitante.mdj-franja-bajo-barra .mdj-flotante-marca {
-    display: none;
+  #mdj-flotante-visitante .mdj-flotante-marca {
+    display: none !important;   /* gana a la regla incondicional definida más abajo en este archivo */
   }
 }
 /* El hero arranca DONDE LA BARRA, a tamaño real: la banda solida que lo empujaba

@@ -130,7 +130,7 @@
         })();
     </script>
     <link rel="stylesheet" href="./styles.css?v=20260823-hero-card-altura" />
-    <link rel="stylesheet" href="./header-unified.css?v=20260824-franja-marca-mobile" />
+    <link rel="stylesheet" href="./header-unified.css?v=20260824-marca-fab-important" />
     <link rel="stylesheet" href="./profile.css?v=20260820-ancho-total" />
     <style id="mdj-qr-view-header-shield">
         /* Blindaje definitivo: especificidad mayor que #mainHeader.header.mdj-header-unified { display:flex !important } en header-unified.css */
@@ -632,8 +632,32 @@
             background: var(--gold, #c5a059);
             border-radius: 10px;
         }
+        /* Marca SIEMPRE visible en móvil — mismo criterio que el botón de arriba.
+           Sin fondo propio (igual que la franja flotante "por orden del PO": el
+           sello flota sobre el hero, no sobre un panel), pero con drop-shadow
+           para que se lea sobre cualquier foto de fondo. */
+        .mdj-mobile-brand-fab {
+            display: none;
+            position: fixed;
+            top: 14px;
+            left: 14px;
+            z-index: 12500;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6));
+        }
+        .mdj-mobile-brand-fab img {
+            height: 36px;
+            width: auto;
+            display: block;
+        }
+        .mdj-mobile-brand-fab-letras {
+            height: 22px !important;
+        }
         @media (max-width: 768px) {
             .mdj-mobile-menu-fab { display: flex; }
+            .mdj-mobile-brand-fab { display: flex; }
             /* El buscador del header se mueve por JS a la franja flotante en modo
                visitante/artista (mdjMontarFranjaFlotante) — se oculta sin
                importar en cuál de los dos viva en cada momento, para dejar
@@ -3223,6 +3247,16 @@
          parser) — confirmado en vivo: el botón vivía en el HTML servido pero
          nunca llegaba al DOM final. Crearlo por script evita depender de la
          posición exacta en el flujo de parseo. -->
+    <!-- Marca SIEMPRE visible en móvil, misma técnica que el botón de arriba:
+         confirmado en vivo (localhost, ambos modos) que .header-top —donde
+         vive el logo real— se queda display:none incluso ya resuelta la
+         sesión, no solo durante el parpadeo inicial. La franja flotante
+         tampoco es fuente confiable: en modo artista (.mdj-franja-bajo-barra)
+         su clon de marca se oculta a propósito (ver header-unified.css, este
+         mismo commit) porque se solapaba con el hero, y en modo visitante
+         depende de que #mainHeader exista en el momento del montaje. Un
+         tercer elemento, independiente de ambos caminos, es lo único que
+         garantiza que la marca se vea siempre — pedido explícito del PO. -->
     <script>
       (function () {
         var fab = document.createElement('button');
@@ -3240,6 +3274,16 @@
           if (menu) menu.classList.toggle('active');
         });
         document.body.appendChild(fab);
+
+        var brand = document.createElement('a');
+        brand.id = 'mdjMobileBrandFab';
+        brand.className = 'mdj-mobile-brand-fab';
+        brand.href = './index.html';
+        brand.setAttribute('aria-label', 'Miami DJ Beat — ir al inicio');
+        brand.innerHTML =
+          '<img src="./assets/branding/logo-transparent.png" alt="Miami DJ Beat Logo">' +
+          '<img src="./assets/branding/logo-transparent Letras.png" alt="Miami DJ Beat" class="mdj-mobile-brand-fab-letras">';
+        document.body.appendChild(brand);
       })();
     </script>
 
