@@ -41,6 +41,19 @@ BACKUP_CAMBIOS_HOY.patch
 # sobre temporal con las claves VAPID -- nunca se comitea
 .vapid.env
 
-# Proyecto aparte (1.6GB, node_modules + .env) que vive en el escritorio raiz
-# pero no pertenece a este repo — ver auditoria de worktrees 2026-08-25.
+# Proyecto aparte (1.6GB, node_modules + .env) que no pertenece a este repo —
+# vivia anidado dentro de esta misma carpeta, movido a
+# ~/Developer/Archivos_Viejos/ el 2026-08-25 (auditoria de worktrees).
+# Se deja la regla como blindaje por si vuelve a aparecer aqui.
 MiamiDJBeat-MigracionV2/
+
+# Worktrees de agentes: deben vivir en .worktrees/ (raiz, fuera de git) o en
+# el scratchpad temporal del agente — nunca en el escritorio. Ver
+# auditoria de worktrees 2026-08-25 (11 carpetas huerfanas encontradas ahi).
+.claude/worktrees/
+.claude/*.bak
+
+# Cualquier variante de archivo de entorno con secretos, sin importar el
+# sufijo — .env*.local (arriba) no cubria .env ni .env.production sueltos.
+*.env
+*.env.*

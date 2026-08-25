@@ -31,3 +31,19 @@
 - Aun con esa supervisión hecha, la confirmación técnica del Hilo Maestro NO sustituye la confirmación visual directa del PO — son dos pasos, no uno.
 - Declarar un trabajo como "resuelto" o "listo" antes de la confirmación del PO es una falta grave — no solo un error técnico, sino de conducta.
 - Aplica a todo hilo, sin excepción: quien audite/apruebe antes de tiempo responde por ello.
+
+8. CONFINAMIENTO DE WORKTREES Y AMBIENTE DE TRABAJO (2026-08-25):
+- Origen: 11 worktrees terminaron abandonados directamente en `~/Desktop`, mezclados con proyectos ajenos al repo — auditoría forense completa el 2026-08-25.
+- PROHIBIDO crear worktrees de git sueltos en el escritorio. Deben vivir en `.worktrees/` (dentro del repo, ignorado) o en el scratchpad temporal del propio agente — nunca como carpeta hermana de `miami-dj-beat-platform/`.
+- PROHIBIDO `git add -A` / `git add .` a secas. Agregar archivos nominalmente (`git add web/archivo.js`) — así se detectan `node_modules/`, `.env` o proyectos ajenos ANTES de que entren al historial, no después.
+- Toda rama nueva nace de un `main` recién actualizado:
+  ```
+  git checkout main && git pull origin main
+  git checkout -b feature/nombre-del-ticket
+  ```
+  Ramificar desde una rama de trabajo vieja (no desde `main` limpio) es cómo el dataset de "One Hit Wonder" terminó viajando dentro de un PR de limpieza de escritorio sin revisión propia.
+- Antes de abrir cualquier PR, correr `git diff origin/main --stat` y confirmar que solo aparecen archivos de esa tarea.
+- Estructura canónica de destino (no inventar rutas nuevas para lo mismo):
+  - Documentación de gobernanza/planes/contratos → `docs/` (`docs/constitucion-*`, `docs/incidentes/`, `docs/archivo-historico/`).
+  - Imágenes/media de artistas → `web/assets/artists/<nombre-artista>/`.
+  - Scripts SQL de Supabase → `supabase/scripts/`, con fecha o prefijo descriptivo en el nombre.
