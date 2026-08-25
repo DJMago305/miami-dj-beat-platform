@@ -5263,6 +5263,13 @@
                 if (iconRow) {
                     // Map all social icons, applying fallback bridge logic
                     const links = Object.entries(SOCIAL_ICONS).map(([k, meta]) => {
+                        // El globo (social_web) NO es un enlace social del artista: es el
+                        // regreso institucional a Miami DJ Beat. Fijo, nunca lee el perfil
+                        // (ni social_web ni website_url) — así ningún dato de Supabase puede
+                        // sobreescribirlo, y siempre aparece aunque el artista no haya
+                        // puesto ninguna web propia.
+                        if (k === 'social_web') return { k, meta, href: './index.html' };
+
                         let href = p[k];
 
                         // Fallback bridge for dashboard column mismatch
@@ -5271,7 +5278,6 @@
                             if (k === 'social_facebook') href = p.facebook_url;
                             if (k === 'social_tiktok') href = p.tiktok_url;
                             if (k === 'social_youtube') href = p.youtube_url;
-                            if (k === 'social_web') href = p.website_url;
                             if (k === 'social_soundcloud') href = p.soundcloud_url;
                             if (k === 'social_spotify') href = p.spotify_url;
                             if (k === 'social_apple') href = p.apple_music_url;
