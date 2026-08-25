@@ -4822,6 +4822,16 @@ html body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.to
 #mdj-flotante-visitante.mdj-franja-bajo-barra {
   top: 96px;   /* 84 de cabecera ya sin .header-top, mas 12 de aire */
 }
+/* En movil (≤768px) la cabecera real YA muestra marca + el botón de menú
+   siempre visible (#mdjMobileMenuFab, dj-profile.html) — el sello clonado de
+   esta franja quedaba flotando sin fondo sobre el hero (por diseño, franja
+   "sin fondo") y se solapaba visualmente con el nombre/insignias del artista.
+   En escritorio no se toca: ahí no hay solape reportado. */
+@media (max-width: 768px) {
+  #mdj-flotante-visitante.mdj-franja-bajo-barra .mdj-flotante-marca {
+    display: none;
+  }
+}
 /* El hero arranca DONDE LA BARRA, a tamaño real: la banda solida que lo empujaba
    190px abajo cortaba la cabeza de la foto. En su lugar no se mueve el hero, se
    aparta solo lo que chocaba: la insignia PLAN PRO, que nace en lo alto del hero

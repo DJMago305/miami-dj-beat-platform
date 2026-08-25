@@ -130,7 +130,7 @@
         })();
     </script>
     <link rel="stylesheet" href="./styles.css?v=20260823-hero-card-altura" />
-    <link rel="stylesheet" href="./header-unified.css?v=20260823-fila1-portatil-scroll" />
+    <link rel="stylesheet" href="./header-unified.css?v=20260824-franja-marca-mobile" />
     <link rel="stylesheet" href="./profile.css?v=20260820-ancho-total" />
     <style id="mdj-qr-view-header-shield">
         /* Blindaje definitivo: especificidad mayor que #mainHeader.header.mdj-header-unified { display:flex !important } en header-unified.css */
@@ -1230,12 +1230,18 @@
         }
 
         @media(max-width: 560px) {
-            /* Reducido de 352px: sin foto de fondo propia (caso real reportado por
-               el PO — Sundowner/DJMago305), esos 352px eran solo degradado vacío
-               antes del bloque de nombre/redes. 260px conserva aire para la foto
-               cuando SÍ existe, sin la franja muerta cuando no. Solo mobile
-               (≤560px) — tablet, escritorio y laptop no cambian. */
+            /* Un poco más de altura: el bloque inferior baja en pantalla y deja más “cara” libre arriba. */
             .dj-hero {
+                height: 352px;
+            }
+            /* Reducido a 260px SOLO en vista pública: sin foto de fondo propia (caso
+               real reportado por el PO — Sundowner/DJMago305), esos 352px eran solo
+               degradado vacío antes del bloque de nombre/redes. En modo artista
+               (body.mdj-perfil-estacion) el hero se queda en 352px — ese modo ya
+               reserva 88px+30px de espacio para la franja flotante que se cuelga
+               debajo de la cabecera (ver header-unified.css); acortarlo ahí también
+               dejaba menos aire real del que ese offset fijo necesita. */
+            body:not(.mdj-perfil-estacion) .dj-hero {
                 height: 260px;
             }
 
