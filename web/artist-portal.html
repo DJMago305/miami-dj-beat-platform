@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Portal del Artista — Miami DJ Beat</title>
+
+  <!-- Tipografia institucional del menu (Inter 800). Sin esta hoja la barra cae en la
+       sustituta del sistema y el texto sale ~2% mas ancho, desplazando el eje X. -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="./header-unified.css" />
+  <link rel="stylesheet" href="./css/mdj-icons.css" />
+  <link rel="stylesheet" href="./css/mdj-inset-list.css" />
+
+  <style>
+    /* ── Shell del portal ────────────────────────────────────────────────────
+       La cabecera de 9 puestos es la homologada del sistema y no se toca desde
+       aqui: se hereda tal cual de header-unified.css. Lo de abajo es solo el
+       contenedor modular del portal. */
+    /* ── Dia y noche ─────────────────────────────────────────────────────────
+       El shell no tiene tema propio: sigue el interruptor de la plataforma, que
+       marca el dia con data-theme="day" en <html> y deja la noche por defecto.
+       Se declaran los dos como tokens para que no quede ningun color clavado. */
+    body.page-artist-portal {
+      --ap-fondo: #0a0e16;
+      --ap-texto: #e6ebf2;
+      --ap-sidebar-1: rgba(10, 14, 22, .72);
+      --ap-sidebar-2: rgba(7, 10, 17, .94);
+      --ap-linea: rgba(197, 160, 89, .16);
+      --ap-item: rgba(255, 255, 255, .82);
+      --ap-rotulo: #6f7a8b;
+      background: var(--ap-fondo);
+      color: var(--ap-texto);
+    }
+
+    html[data-theme="day"] body.page-artist-portal {
+      --ap-fondo: #f5f5f7;
+      --ap-texto: #1d1d1f;
+      --ap-sidebar-1: #ffffff;
+      --ap-sidebar-2: #f0f0f3;
+      --ap-linea: rgba(60, 60, 67, .16);
+      --ap-item: #3a3a3c;
+      --ap-rotulo: #8e8e93;
+    }
+
+    /* ── Reparto espacial: sidebar + lienzo ──────────────────────────────────
+       Decision PO 2026-08-19: NADA de una segunda barra horizontal apilada bajo
+       la cabecera; dos tiras seguidas saturan la vista. Los modulos pasan a una
+       columna lateral izquierda.
+       El propio patron canonico ya preveia esta variante ("sidebar de
+       navegacion: lista vertical de categorias con icono + texto, la activa
+       resaltada con fondo solido"). Se adopta con el dorado de la casa en lugar
+       del azul de macOS, que es el estilo por defecto de Miami DJ Beat. */
+    .ap-marco {
+      display: grid;
+      grid-template-columns: 252px minmax(0, 1fr);
+      align-items: start;
+      gap: 0;
+      min-height: calc(100vh - 156px);
+    }
+
+    .ap-sidebar {
+      position: sticky;
+      top: 156px;                                  /* justo bajo la cabecera 84+72 */
+      align-self: start;
+      padding: 22px 14px;
+      border-right: 1px solid var(--ap-linea);
+      background: linear-gradient(180deg, var(--ap-sidebar-1), var(--ap-sidebar-2));
+      min-height: calc(100vh - 156px);
+    }
+
+    .ap-sidebar h2 {
+      margin: 0 0 12px 12px;
+      font-family: Inter, system-ui, sans-serif;
+      font-size: 10.5px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--ap-rotulo);
+    }
+
+    .ap-sidebar button {
+      display: flex; align-items: center; gap: 11px;
+      width: 100%; margin-bottom: 3px;
+      background: none; border: 0; cursor: pointer; text-align: left;
+      color: var(--ap-item);
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+      font-size: 12.5px; font-weight: 700; letter-spacing: 1.3px; text-transform: uppercase;
+      padding: 11px 12px; border-radius: 9px;
+      transition: background .16s ease, color .16s ease;
+    }
+    .ap-sidebar button:hover { background: rgba(197, 160, 89, .09); color: #e8c987; }
+
+    /* Activa: fondo solido, como marca el patron. */
+    .ap-sidebar button.active { background: var(--gold, #c5a059); color: #10131a; }
+    .ap-sidebar button.active .mdj-ico { color: #10131a; opacity: 1; }
+
+    /* Contenedor principal — preparado para albergar tarjetas. */
+    .ap-lienzo { min-height: 60vh; padding-top: 8px; }
+
+    /* Bajo 900px la columna no cabe: pasa arriba como nicho segmentado, que es
+       la otra forma que autorizo el PO, en vez de reaparecer como barra fija. */
+    @media (max-width: 900px) {
+      .ap-marco { grid-template-columns: minmax(0, 1fr); }
+      .ap-sidebar {
+        position: static; min-height: 0;
+        display: flex; gap: 6px; overflow-x: auto;
+        border-right: 0; border-bottom: 1px solid var(--ap-linea);
+        padding: 12px;
+      }
+      .ap-sidebar h2 { display: none; }
+      .ap-sidebar button { width: auto; margin: 0; white-space: nowrap; flex: 0 0 auto; }
+    }
+    .ap-panel { display: none; }
+    .ap-panel.activo { display: block; }
+
+    .ap-vacio {
+      max-width: 720px; margin: 0 auto; padding: 60px 20px;
+      text-align: center; color: #8b95a6;
+      font-family: Inter, system-ui, sans-serif; font-size: 14px;
+    }
+  </style>
+</head>
+
+<body class="notranslate page-artist-portal">
+
+<header class="header mdj-header-unified" id="mainHeader">
+  <div class="header-top">
+    <div class="container">
+      <div class="brand">
+        <img src="./assets/branding/logo-transparent.png" alt="Miami DJ Beat Logo" class="logo-img-eagle">
+        <div class="brand-letters-wrapper">
+          <img src="./assets/branding/logo-transparent Letras.png" alt="Miami DJ Beat Letters" class="brand-letters-img">
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <a href="./login.html?plan=pro" class="btn-pill gold" id="header-get-pro-btn" data-i18n="btn-get-pro">Get PRO</a>
+        <a href="./login.html?signup=free" class="btn-pill" id="header-subscribe-free-btn" data-i18n="btn-subscribe-free">Suscripción gratis</a>
+        <span id="header-djpro-badge" class="header-djpro-badge" style="display: none;" aria-label="DJPRO">DJPRO</span>
+        <div class="mdj-header-r1-auth-cluster">
+
+          <div class="lang-switcher">
+          <span class="lang-btn" data-lang="es">ES</span>
+          <span class="lang-pipe">|</span>
+          <span class="lang-btn" data-lang="en">EN</span>
+        </div>
+
+          <a href="./login.html" id="header-login-btn" class="btn-pill gold" data-auth-btn>Log in</a>
+
+          <div class="account session-pending" id="header-auth-zone" style="display: none;">
+            <a class="account-btn" id="accountBtn" href="./dj-profile.html" title="Mi perfil" aria-label="Mi perfil">
+              <img class="avatar" src="./assets/dj-avatar-placeholder.png" alt="" />
+            </a>
+</div>
+
+        </div>
+
+        <div class="header-avatar-cart-row" aria-label="Account and cart">
+<a href="./shop.html" id="header-cart-link" class="header-cart-btn" title="Cart" aria-label="Shopping cart">
+            <span aria-hidden="true">🛒</span>
+            <span id="header-cart-count" class="header-cart-count" hidden></span>
+          </a>
+        </div>
+        <div class="header-search-wrap">
+          <input type="search" id="header-smart-search" class="header-smart-search"
+            placeholder="Search DJs, gear, services…" autocomplete="off" enterkeyhint="search" />
+        </div>
+      </div>
+
+      <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <div class="mobile-overlay" id="mobileMenu">
+        <nav class="mobile-nav">
+          <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Home</a>
+          <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Services</a>
+          <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues">Events</a>
+          <a href="./shop.html" style="color:#c5a059;font-weight:800;" data-mdj-nav="shop">Shop</a>
+          <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
+          <a href="./contact.html" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
+          <a href="./login.html?signup=free" id="header-subscribe-free-mobile" data-i18n="btn-subscribe-free"
+            style="color:rgba(255,255,255,0.88); font-weight:800;">Suscripción gratis</a>
+          <a href="./login.html" id="header-login-btn-mobile" data-auth-btn
+            style="color:var(--gold); font-weight:800;">Entrar</a>
+          <a href="./dj-profile.html" id="nav-my-profile-mobile"
+            style="display:none; color:var(--gold); font-weight:900;" data-i18n="menu-account">MY PROFILE</a>
+        </nav>
+      </div>
+    </div>
+  </div>
+  <div class="header-nav">
+    <div class="container">
+      <nav class="nav top-nav mdj-mainnav-flex" id="mainNav" data-mdj-compact-nav="1" aria-label="Navegación principal">
+        <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Inicio</a>
+        <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Servicios</a>
+        <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues">Eventos</a>
+        <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-i18n="nav-shop" data-mdj-nav="shop">Shop</a>
+        <a href="./account-profile.html" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" aria-hidden="true" tabindex="-1">⚙️CONFIG</a>
+        <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Trabajos</a>
+        <a href="./contact.html" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
+        <a href="./login.html" id="mainNav-guest-mi-perfil-link" data-mdj-slot="8" class="mdj-guest-mi-perfil-mainnav" data-mdj-nav="my-profile" data-i18n="nav-my-profile">MI PERFIL</a>
+      </nav>
+    </div>
+  </div>
+</header>
+  <div class="ap-marco">
+
+  <!-- ── Modulos del portal · columna lateral ────────────────────────────────
+       Son los MODULOS del portal, no navegacion del sitio: esa es la cabecera
+       de 9 puestos y no se duplica aqui. Van en vertical por decision del PO,
+       para no apilar una segunda tira horizontal bajo el header. -->
+  <nav class="ap-sidebar" id="ap-modulos" aria-label="Modulos del portal">
+    <h2>Portal del artista</h2>
+    <button type="button" data-ap-modulo="workspace" class="active" aria-current="page">
+      <svg class="mdj-ico mdj-ico--sm"><use href="./assets/icons/mdj-icons.svg#ico-mezcla"/></svg>Work Space IA
+    </button>
+    <button type="button" data-ap-modulo="agenda">
+      <svg class="mdj-ico mdj-ico--sm"><use href="./assets/icons/mdj-icons.svg#ico-agenda"/></svg>Agenda
+    </button>
+    <button type="button" data-ap-modulo="rendimiento">
+      <svg class="mdj-ico mdj-ico--sm"><use href="./assets/icons/mdj-icons.svg#ico-rendimiento"/></svg>Rendimiento
+    </button>
+    <button type="button" data-ap-modulo="cabina">
+      <svg class="mdj-ico mdj-ico--sm"><use href="./assets/icons/mdj-icons.svg#ico-cabina"/></svg>Cabina
+    </button>
+    <!-- SoundForTips: exclusivo de ARTISTA/DJ (son propinas del publico a un DJ).
+         Queda ACTIVO y parametrizado; en staff/owner lo suprime el marcador que
+         ya usa la plataforma, sin borrar la arquitectura. -->
+    <button type="button" data-ap-modulo="tips" data-mdj-solo-artista="1">
+      <svg class="mdj-ico mdj-ico--sm"><use href="./assets/icons/mdj-icons.svg#ico-perfil"/></svg>SoundForTips
+    </button>
+  </nav>
+
+  <main class="ap-lienzo">
+    <!-- ══ WORK SPACE IA ══════════════════════════════════════════════════
+         Listas agrupadas estilo macOS. El patron canonico esta en
+         docs/design/premium-settings-tabs-pattern.md y se implementa en
+         css/mdj-inset-list.css: fila = icono lider + etiqueta + UN solo
+         contenido final; tarjeta de esquinas redondeadas con hairline entre
+         filas y sin divisoria en la ultima; encabezado FUERA y arriba. -->
+    <section class="ap-panel activo" id="panel-workspace">
+      <div class="mdj-ajustes">
+
+        <div class="lst-seccion">
+          <div class="lst-tarjeta">
+            <div class="lst-fila lst-fila--maestro">
+              <svg class="mdj-ico"><use href="./assets/icons/mdj-icons.svg#ico-staff"/></svg>
+              <span class="lst-etiqueta">Autorizar Todo
+                <small>Concede a la vez todos los permisos de abajo</small>
+              </span>
+              <label class="lst-switch">
+                <input type="checkbox" id="ap-maestro" aria-label="Autorizar todo">
+                <span></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="lst-seccion">
+          <h3>Agenda &amp; Calendarios</h3>
+          <div class="lst-tarjeta" data-ap-grupo>
+            <div class="lst-fila">
+              <svg class="mdj-ico"><use href="./assets/icons/mdj-icons.svg#ico-agenda"/></svg>
+              <span class="lst-etiqueta">Google Calendar</span>
+              <label class="lst-switch"><input type="checkbox" data-ap-permiso aria-label="Google Calendar"><span></span></label>
+            </div>
+            <div class="lst-fila">
+              <svg class="mdj-ico"><use href="./assets/icons/mdj-icons.svg#ico-agenda"/></svg>
+              <span class="lst-etiqueta">Apple iCal</span>
+              <label class="lst-switch"><input type="checkbox" data-ap-permiso aria-label="Apple iCal"><span></span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="lst-seccion">
+          <h3>Comunicaciones</h3>
+          <div class="lst-tarjeta" data-ap-grupo>
+            <div class="lst-fila">
+              <svg class="mdj-ico"><use href="./assets/icons/mdj-icons.svg#ico-perfil"/></svg>
+              <span class="lst-etiqueta">Email Sync</span>
+              <label class="lst-switch"><input type="checkbox" data-ap-permiso aria-label="Email Sync"><span></span></label>
+            </div>
+            <div class="lst-fila">
+              <svg class="mdj-ico"><use href="./assets/icons/mdj-icons.svg#ico-cabina"/></svg>
+              <span class="lst-etiqueta">Notificaciones</span>
+              <label class="lst-switch"><input type="checkbox" data-ap-permiso aria-label="Notificaciones"><span></span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="lst-seccion">
+          <h3>Almacenamiento &amp; Media</h3>
+          <div class="lst-tarjeta" data-ap-grupo>
+            <div class="lst-fila">
+              <svg class="mdj-ico"><use href="./assets/icons/mdj-icons.svg#ico-mezcla"/></svg>
+              <span class="lst-etiqueta">Dropbox</span>
+              <label class="lst-switch"><input type="checkbox" data-ap-permiso aria-label="Dropbox"><span></span></label>
+            </div>
+            <div class="lst-fila">
+              <svg class="mdj-ico"><use href="./assets/icons/mdj-icons.svg#ico-mezcla"/></svg>
+              <span class="lst-etiqueta">Cloud Riders</span>
+              <label class="lst-switch"><input type="checkbox" data-ap-permiso aria-label="Cloud Riders"><span></span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="lst-seccion">
+          <h3>IA &amp; Asistencia</h3>
+          <div class="lst-tarjeta" data-ap-grupo>
+            <div class="lst-fila">
+              <svg class="mdj-ico"><use href="./assets/icons/mdj-icons.svg#ico-rendimiento"/></svg>
+              <span class="lst-etiqueta">Telemetria Fenix</span>
+              <label class="lst-switch"><input type="checkbox" data-ap-permiso aria-label="Telemetria Fenix"><span></span></label>
+            </div>
+            <div class="lst-fila">
+              <svg class="mdj-ico"><use href="./assets/icons/mdj-icons.svg#ico-rendimiento"/></svg>
+              <span class="lst-etiqueta">MRM IA</span>
+              <label class="lst-switch"><input type="checkbox" data-ap-permiso aria-label="MRM IA"><span></span></label>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <section class="ap-panel" id="panel-agenda"><p class="ap-vacio">Agenda — contenedor listo para tarjetas.</p></section>
+    <section class="ap-panel" id="panel-rendimiento"><p class="ap-vacio">Rendimiento — contenedor listo para tarjetas.</p></section>
+    <section class="ap-panel" id="panel-cabina"><p class="ap-vacio">Cabina — contenedor listo para tarjetas.</p></section>
+    <section class="ap-panel" id="panel-tips"><p class="ap-vacio">SoundForTips — modulo activo y parametrizado, pendiente de cablear.</p></section>
+  </main>
+
+  </div><!-- /.ap-marco -->
+
+
+  <!-- Mismo orden de carga que las paginas ya niveladas: sin el bundle de
+       Supabase la sesion no resuelve y el rol nunca llega al body. -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./vendor/supabase-js-2.112.3.legacy.js?v=20260818-safari-legacy"></script>
+  <script src="./supabase-config.js"></script>
+  <script src="./translations.js"></script>
+  <script src="./i18n.js"></script>
+  <script src="./mdj-identity.js"></script>
+  <script src="./auth.js"></script>
+  <script src="./mdj-shared-header.js"></script>
+
+  <script id="ap-rbac">
+  (function () {
+    /* ══ RBAC ESTRICTO — FUERA DEL DOM, NO OCULTO ═════════════════════════════
+       Ley del PO: en cuentas DJ/ARTISTA los puestos STAFF y el CONFIG
+       administrativo no pueden estar en el documento. Ocultarlos con CSS no
+       cumple: el nodo sigue ahi y su href se lee en el codigo fuente.
+
+       Se ejecuta en cada pasada del header porque el normalizador reconstruye
+       el riel: si solo se limpiara una vez, la siguiente pasada los repondria.
+       El observador vigila #mainNav y la clase de body, que es donde aterriza
+       el rol cuando la sesion resuelve. */
+    /* OJO con el alcance: lo que la ley saca del DOM es STAFF y el CONFIG
+       ADMINISTRATIVO — las pestanas de owner que viven DENTRO de Config
+       (Ajustes de Sistema, Pasarelas & Licencias) —, no el puesto CONFIG de la
+       barra. Ese puesto es la cuenta del propio artista y le pertenece: podarlo
+       dejaba la cabecera en 8 slots y al DJ sin acceso a sus ajustes.
+       Las pestanas administrativas ya estan gateadas en staff-config.html, que
+       ademas rebota si no se abre dentro del portal. */
+    var SELECTORES_PROHIBIDOS = [
+      '#mainNav a[data-mdj-nav="staff"]',
+      '#mainNav a.mdj-staff-mainnav',
+      '#mainNav a.dj-tab-btn--staff-only'
+    ].join(',');
+
+    function esArtista() {
+      var b = document.body;
+      if (!b) return false;
+      var rol = (b.getAttribute('data-mdj-nav-role') || '').toLowerCase().trim();
+      /* Staff declarado: NO se poda. Cualquier otro caso resuelto como artista
+         si, o bien lo dice la clase, o bien no hay rol de gestion. */
+      if (rol === 'management' || rol === 'seller') return false;
+      return b.classList.contains('mdj-artist-nav') || rol === 'artist' || rol === 'dj' || rol === '';
+    }
+
+    function podar() {
+      if (!esArtista()) return;
+      document.querySelectorAll(SELECTORES_PROHIBIDOS).forEach(function (el) {
+        if (el.parentNode) el.parentNode.removeChild(el);
+      });
+    }
+
+    podar();
+    [0, 60, 200, 600, 1400, 2600, 4200].forEach(function (ms) { setTimeout(podar, ms); });
+
+    var nav = document.getElementById('mainNav');
+    if (nav && typeof MutationObserver !== 'undefined') {
+      new MutationObserver(podar).observe(nav, { childList: true });
+    }
+    if (document.body && typeof MutationObserver !== 'undefined') {
+      new MutationObserver(podar).observe(document.body, { attributes: true, attributeFilter: ['class', 'data-mdj-nav-role'] });
+    }
+    window.mdjArtistPortalPodar = podar;
+  })();
+  </script>
+
+  <script id="ap-shell">
+  (function () {
+    /* Conmutador de modulos del portal. */
+    var barra = document.getElementById('ap-modulos');
+    barra.addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-ap-modulo]');
+      if (!b) return;
+      barra.querySelectorAll('button').forEach(function (x) {
+        var activo = (x === b);
+        x.classList.toggle('active', activo);
+        if (activo) x.setAttribute('aria-current', 'page');
+        else x.removeAttribute('aria-current');
+      });
+      document.querySelectorAll('.ap-panel').forEach(function (p) {
+        p.classList.toggle('activo', p.id === 'panel-' + b.getAttribute('data-ap-modulo'));
+      });
+    });
+
+    /* ── Switch maestro ──────────────────────────────────────────────────────
+       "Autorizar Todo" no es un permiso mas: refleja el estado del conjunto.
+       Cuando unas estan activas y otras no queda INDETERMINADO, que es como se
+       comporta el equivalente nativo de macOS; encenderlo o apagarlo arrastra
+       a todas. */
+    var maestro = document.getElementById('ap-maestro');
+    var permisos = [].slice.call(document.querySelectorAll('[data-ap-permiso]'));
+
+    function refrescarMaestro() {
+      var n = permisos.filter(function (p) { return p.checked; }).length;
+      maestro.checked = (n === permisos.length);
+      maestro.indeterminate = (n > 0 && n < permisos.length);
+    }
+
+    maestro.addEventListener('change', function () {
+      permisos.forEach(function (p) { p.checked = maestro.checked; });
+      maestro.indeterminate = false;
+    });
+    permisos.forEach(function (p) { p.addEventListener('change', refrescarMaestro); });
+    refrescarMaestro();
+  })();
+  </script>
+
+</body>
+</html>

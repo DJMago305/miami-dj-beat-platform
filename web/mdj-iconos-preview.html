@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Iconos de trazo — Miami DJ Beat LLC</title>
+  <link rel="stylesheet" href="./css/mdj-icons.css" />
+  <style>
+    :root { --gold: #c5a059; --gold-glow: rgba(197,160,89,.25); --muted: #b7c2dc; }
+    body { margin: 0; padding: 40px 28px 64px; background: #0a0e16; color: #e6ebf2;
+           font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    h1 { font-size: 20px; font-weight: 800; letter-spacing: 2.8px; text-transform: uppercase;
+         margin: 0 0 6px; color: var(--gold); }
+    p.sub { margin: 0 0 34px; color: #8b95a6; font-size: 13px; }
+    h2 { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: #8b95a6;
+         margin: 34px 0 14px; font-weight: 700; }
+    .rejilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+    .celda { border: 1px solid rgba(197,160,89,.18); border-radius: 12px; padding: 18px 12px;
+             text-align: center; background: rgba(255,255,255,.02); }
+    .celda .nom { display: block; margin-top: 10px; font-size: 11px; letter-spacing: 1px;
+                  text-transform: uppercase; color: #8b95a6; }
+    .celda .emo { display: block; margin-top: 3px; font-size: 13px; opacity: .5; }
+    .tira { display: flex; gap: 4px; flex-wrap: wrap; border: 1px solid rgba(197,160,89,.18);
+            border-radius: 12px; padding: 10px; background: rgba(255,255,255,.02); }
+    .tira a { display: inline-flex; align-items: center; gap: 9px; padding: 10px 15px;
+              border-radius: 9px; text-decoration: none; color: #b7c2dc; font-size: 13px;
+              font-weight: 700; letter-spacing: 1.1px; text-transform: uppercase; }
+    .tira a.active { color: var(--gold); background: rgba(197,160,89,.09); }
+    .tira a:hover { color: var(--gold); }
+    .escalas { display: flex; align-items: center; gap: 26px; }
+  </style>
+</head>
+<body>
+  <h1>Iconos de trazo</h1>
+  <p class="sub">
+    Trazo copiado del precedente vivo de la plataforma — viewBox&nbsp;24 · stroke&nbsp;2.5 ·
+    linecap round. Sin color propio: heredan <code>currentColor</code>.
+  </p>
+
+  <h2>Los siete símbolos · reposo (plata) y activo (dorado)</h2>
+  <div class="rejilla" id="rejilla"></div>
+
+  <h2>En una barra, con el puesto activo</h2>
+  <div class="tira" id="tira"></div>
+
+  <h2>Escalas — el trazo se mantiene ópticamente igual</h2>
+  <div class="escalas">
+    <svg class="mdj-ico mdj-ico--sm mdj-ico--activo"><use href="./assets/icons/mdj-icons.svg#ico-cabina"/></svg>
+    <svg class="mdj-ico mdj-ico--md mdj-ico--activo"><use href="./assets/icons/mdj-icons.svg#ico-cabina"/></svg>
+    <svg class="mdj-ico mdj-ico--lg mdj-ico--activo"><use href="./assets/icons/mdj-icons.svg#ico-cabina"/></svg>
+  </div>
+
+  <script>
+    var ICONOS = [
+      { id: 'ico-cabina',      nom: 'Cabina',      emo: '🎧' },
+      { id: 'ico-mezcla',      nom: 'Mezcla',      emo: '🎚️' },
+      { id: 'ico-rendimiento', nom: 'Rendimiento', emo: '📈' },
+      { id: 'ico-agenda',      nom: 'Agenda',      emo: '📅' },
+      { id: 'ico-perfil',      nom: 'Mi Perfil',   emo: '👤' },
+      { id: 'ico-config',      nom: 'Config',      emo: '⛭' },
+      { id: 'ico-staff',       nom: 'Staff',       emo: '🛡️' }
+    ];
+    var RUTA = './assets/icons/mdj-icons.svg#';
+
+    var rejilla = document.getElementById('rejilla');
+    ICONOS.forEach(function (ic) {
+      var d = document.createElement('div');
+      d.className = 'celda';
+      d.innerHTML =
+        '<svg class="mdj-ico mdj-ico--lg"><use href="' + RUTA + ic.id + '"/></svg>' +
+        '<svg class="mdj-ico mdj-ico--lg mdj-ico--activo" style="margin-left:14px"><use href="' + RUTA + ic.id + '"/></svg>' +
+        '<span class="nom">' + ic.nom + '</span><span class="emo">' + ic.emo + '</span>';
+      rejilla.appendChild(d);
+    });
+
+    var tira = document.getElementById('tira');
+    ICONOS.forEach(function (ic, i) {
+      var a = document.createElement('a');
+      a.href = '#';
+      a.className = (i === 3 ? 'active' : '');
+      a.innerHTML = '<svg class="mdj-ico"><use href="' + RUTA + ic.id + '"/></svg>' + ic.nom;
+      tira.appendChild(a);
+    });
+  </script>
+</body>
+</html>
