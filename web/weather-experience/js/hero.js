@@ -2,6 +2,7 @@
 // shared modules the backend Edge Function uses — no duplicated math.
 import { moonPhase as moonPhaseAt } from './astro.js';
 import { constellations, moonAltAz as moonAltAzRaw } from './celestial.js';
+import { MDJ_WeatherHub } from '../../js/mdjb-weather-core.js';   // SSOT: un solo fetch/caché compartido (Fase 2, TICKET-WEATHER-01)
 
 // PREVIEW = true shows the dev controls (weather/time/date/scene/live). In the
 // real app set to false to hide them (users must not fake the weather).
@@ -526,6 +527,7 @@ let flash=0.0, nextFlash=0.0;   // lightning glow
 let bolt=0.0, boltX=0.5, boltSeed=0.0;   // visible bolt streak
 // Time of day: dayFixed=-1 -> auto cycle; otherwise a paused phase (0=medianoche,0.25=amanecer,0.5=mediodía,0.75=atardecer)
 let dayFixed=-1; let dispDay=0.72;   // dispDay eases toward the target for a smooth sun glide
+let _clockIsDay=null;                 // reloj: modo día/noche actual (contraste adaptativo)
 // Shooting stars: occasional meteors at night
 const met={on:false, hx:0, hy:0, vx:0, vy:0, life:0, dur:1.0};
 let nextMet=5.0, lastT=0, metOn=0.0;
@@ -575,47 +577,37 @@ refreshState();
 // once deployed in the real app. Fully verified against a local mirror endpoint.
 const ATMO_ENDPOINT=(typeof window!=='undefined' && window.MDJB_ATMO_ENDPOINT) || '';
 let liveMode=false, liveTimer=null, liveStatus='';
-function getCoords(){                                   // browser geolocation → Miami fallback, 6s timeout
-  const tz=-new Date().getTimezoneOffset()/60, fb={lat:25.91,lon:-80.31,tz};
-  return new Promise(res=>{
-    if(!navigator.geolocation) return res(fb);
-    let done=false; const to=setTimeout(()=>{if(!done){done=true;res(fb);}},6000);
-    navigator.geolocation.getCurrentPosition(
-      p=>{ if(done)return; done=true; clearTimeout(to); res({lat:p.coords.latitude,lon:p.coords.longitude,tz}); },
-      ()=>{ if(done)return; done=true; clearTimeout(to); res(fb); }, {timeout:6000,maximumAge:600000});
-  });
+// NOTA (Fase GPS): la geolocalización (GPS real → fallback base corporativa) se movió
+// a MDJ_WeatherHub.getCoords() como SSOT de ubicación; ensureFresh() la usa sola.
+// NOTA (Fase 2): el fetch + validación de AtmosphericState se movieron a
+// MDJ_WeatherHub (js/mdjb-weather-core.js) como Fuente Única de Verdad. Aquí ya no
+// hay fetch propio — se eliminaron fetchProvider() e isValidState() (código náufrago).
+// ── Fase 2 (SSOT): el clima entra por MDJ_WeatherHub — un solo fetch/caché para todas
+//    las vistas. Fase 4: al fijar la hora del fetch, anclamos el reloj real para que el
+//    sol siga avanzando en tiempo real aunque caiga la red (ver el bucle frame). ──
+let dayAnchor=-1, dayAnchorAt=0;                        // dayT del último dato real + cuándo se fijó
+function anchorDay(dayT){ dayAnchor=dayT; dayAnchorAt=(typeof performance!=='undefined'?performance.now():Date.now()); }
+function applyHubState(s, reason){
+  if(reason==='offline'){                              // sin red: conservar última caché, marcar offline
+    if(s){ state=s; try{ renderUI(state); }catch(_e){} }
+    liveStatus= liveMode ? 'fallback' : liveStatus;    // el cielo NO se congela: sigue con el reloj real (frame)
+  }else if(s){                                          // 'live' | 'storage' | 'init' → dato bueno
+    state=s;
+    dayFixed=state.time.dayT; anchorDay(state.time.dayT);   // ASTRONOMÍA primero: independiente del UI
+    liveStatus= liveMode ? 'live' : liveStatus;
+    try{ renderUI(state); }catch(_e){}                       // un fallo de UI NUNCA debe tumbar el motor/astro
+  }
+  updateLiveUI();
 }
-// Validate that a response really is an AtmosphericState before the UI trusts it —
-// a malformed/partial body must fall back to mock, never throw mid-render.
-function isValidState(s){
-  return !!(s && s.condition && typeof s.condition.temp==='string' && s.condition.label
-    && s.time && typeof s.time.dayT==='number'
-    && s.drivers && typeof s.drivers.cloud==='number'
-    && s.metrics && s.location && Array.isArray(s.hourly) && s.hourly.length && s.sky);
-}
-async function fetchProvider(c){                        // calls the Edge Function, returns AtmosphericState
-  const ep=(typeof window!=='undefined' && window.MDJB_ATMO_ENDPOINT) || ATMO_ENDPOINT;
-  if(!ep) throw new Error('no endpoint configured');
-  const ctrl=new AbortController(); const to=setTimeout(()=>ctrl.abort(),8000);   // 8s cap — never hang on a slow/dead endpoint
-  try{
-    const r=await fetch(ep+'?lat='+c.lat.toFixed(4)+'&lon='+c.lon.toFixed(4)+'&tz='+c.tz,{cache:'no-store',signal:ctrl.signal});
-    if(!r.ok) throw new Error('http '+r.status);
-    const s=await r.json();                             // may throw on malformed JSON -> caught by refreshLive
-    if(!isValidState(s)) throw new Error('malformed AtmosphericState');
-    return s;
-  } finally { clearTimeout(to); }
-}
+let _hubSubscribed=false;
+function subscribeHub(){ if(_hubSubscribed)return; _hubSubscribed=true; MDJ_WeatherHub.subscribe(applyHubState); }
 async function refreshLive(){
   const ep=(typeof window!=='undefined' && window.MDJB_ATMO_ENDPOINT) || ATMO_ENDPOINT;
-  if(!ep){ liveStatus='fallback'; refreshState(); updateLiveUI(); return; }   // no endpoint (e.g. in the artifact) -> mock, skip the geolocation prompt
+  if(!ep){ liveStatus='fallback'; refreshState(); updateLiveUI(); return; }   // no endpoint (artifact) -> mock
+  subscribeHub();
   liveStatus='connecting'; updateLiveUI();
-  try{
-    const s=await fetchProvider(await getCoords());
-    state=s; renderUI(state);
-    dayFixed=state.time.dayT;                           // sun/sky follow the real local time
-    liveStatus='live';
-  }catch(e){ liveStatus='fallback'; refreshState(); }   // graceful fallback to mock
-  updateLiveUI();
+  const s=await MDJ_WeatherHub.ensureFresh();   // el hub geolocaliza (GPS→fallback) + fetch compartido; nunca lanza
+  if(!s){ liveStatus='fallback'; refreshState(); updateLiveUI(); }   // frío sin red -> mock (el astro local mantiene el cielo)
 }
 function setLive(on){
   liveMode=on; if(liveTimer){clearInterval(liveTimer);liveTimer=null;}
@@ -648,11 +640,24 @@ function frame(now){
   lastDrawWall=now;
   const t=(now-t0)/1000;
   const dt=Math.min(0.05, Math.max(0.0, t-lastT)); lastT=t;
-  const dayTgt=(dayFixed>=0.0)?dayFixed:((t/1200)+0.72)%1.0;   // cycle (~20 min) or a chosen fixed phase
+  // Fase 4/B (TICKET-WEATHER-01): en modo LIVE el sol avanza en TIEMPO REAL desde el
+  // último dato (ancla), así sigue moviéndose aunque caiga la red — nunca se congela.
+  // dispDay (abajo) lo interpola: reconexión sin snap. Preview/ciclo: comportamiento previo.
+  let dayTgt;
+  if(liveMode && dayAnchor>=0.0){
+    const nowMs=(typeof performance!=='undefined'?performance.now():Date.now());
+    dayTgt=(((dayAnchor + (nowMs-dayAnchorAt)/86400000)%1.0)+1.0)%1.0;   // 1 día = 86 400 000 ms
+  }else{
+    dayTgt=(dayFixed>=0.0)?dayFixed:((t/1200)+0.72)%1.0;                 // fase fija (preview) o ciclo (~20 min)
+  }
   let dd=dayTgt-dispDay; if(dd>0.5)dd-=1.0; else if(dd<-0.5)dd+=1.0;   // shortest path around the clock
   dispDay=(dispDay+dd*(reduce?1.0:0.05)+1.0)%1.0;
   const dayT=dispDay;
   const sunElev=Math.sin((dayT-0.25)*6.2832);
+  // Reloj: contraste adaptativo día/noche (PO 2026-08-25). Toggle SOLO al cruzar el
+  // umbral (no cada frame); el CSS hace la transición suave de color (1.5s).
+  const isDayNow = sunElev>0.15;
+  if(isDayNow!==_clockIsDay){ _clockIsDay=isDayNow; const _ck=document.querySelector('.clock'); if(_ck) _ck.classList.toggle('is-day', isDayNow); }
   const az=0.45+0.48*dayT;          // keep sun/moon in the right negative space
   const hb=Math.floor(dayT*24); if(hb!==lastHourBucket){ lastHourBucket=hb; refreshState(); }  // temp/forecast track the moving clock, from the provider
   const tgt=state.drivers;          // ease current -> the contract's drivers (~1.5s)
@@ -805,6 +810,18 @@ document.getElementById('livebtn').addEventListener('click',function(){ setLive(
 })();
 // production: hide the dev/preview controls (users must not fake weather/time/location)
 if(!PREVIEW){ ['datectl','timeofday','weather','scenes'].forEach(function(id){ const e=document.getElementById(id); if(e) e.style.display='none'; }); }
+
+// ── QA hook (solo lectura): expone el estado del motor para pruebas de offline/
+//    reconexión-LERP del SSOT (TICKET-WEATHER-01). No altera nada. ──
+if(typeof window!=='undefined'){ window.__mdjbHero=function(){
+  var nowMs=(typeof performance!=='undefined'?performance.now():Date.now());
+  var dayTgt=(liveMode && dayAnchor>=0.0) ? (((dayAnchor+(nowMs-dayAnchorAt)/86400000)%1.0)+1.0)%1.0 : dayFixed;
+  return {
+    liveMode, liveStatus, hasState:!!state,
+    dayFixed:+(+dayFixed).toFixed(5), dayAnchor:+(+dayAnchor).toFixed(5),
+    dayTgt:+(+dayTgt).toFixed(6), dispDay:+(+dispDay).toFixed(5),
+    sunElev:+Math.sin((dispDay-0.25)*6.2832).toFixed(4)
+  }; }; }
 
 // ── Real "today event" from the host page ──────────────────────────────────
 // The HERO stays self-contained (no DB, no keys): the host — which already

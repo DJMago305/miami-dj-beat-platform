@@ -52,19 +52,34 @@
   .hilo{font-size:16px;color:var(--ink-dim);margin-top:11px}
   .divider{width:min(400px,70%);height:1px;background:linear-gradient(90deg,transparent,var(--stroke),transparent);margin:22px 0 20px}
   .loc{font-size:25px;font-weight:500}.loc .sub{display:block;font-size:12px;letter-spacing:.22em;color:var(--ink-soft);margin-top:4px;font-weight:400}
-  /* Floating transparent Roman clock — no dial, only numerals + two hands, in 3D */
-  .clock{position:relative;width:250px;height:250px;margin-top:28px;animation:floatC 7s ease-in-out infinite alternate}
+  /* Floating transparent Roman clock — numerals + two hands, in 3D.
+     Contraste adaptativo día/noche (PO 2026-08-25, TICKET-WEATHER-01): variables por
+     modo + transición 1.5s. La clase .is-day la pone hero.js cuando sunElevNorm>0.15. */
+  .clock{position:relative;width:250px;height:250px;margin-top:28px;animation:floatC 7s ease-in-out infinite alternate;
+    /* NOCHE / atardecer (default): blanco marfil luminiscente + glow dorado */
+    --clk-num:rgba(255,255,255,.58); --clk-num-q:rgba(248,250,252,.88);
+    --clk-num-shadow:0 1px 11px rgba(4,10,20,.55),0 0 18px rgba(255,255,255,.32);
+    --clk-hand:rgba(255,255,255,.62); --clk-glow:0 0 13px rgba(245,185,66,.42);
+    --clk-cap:rgba(255,255,255,.72); --clk-cap-glow:0 0 13px rgba(245,185,66,.62);}
+  /* DÍA (sunElevNorm>0.15): negro pizarra + halo claro para máximo contraste con cielo/sol */
+  .clock.is-day{
+    --clk-num:rgba(15,23,42,.82); --clk-num-q:rgba(17,24,39,.96);
+    --clk-num-shadow:0 1px 2px rgba(255,255,255,.8),0 0 13px rgba(255,255,255,.55);
+    --clk-hand:rgba(15,23,42,.92); --clk-glow:0 1px 6px rgba(255,255,255,.6);
+    --clk-cap:rgba(17,24,39,.95); --clk-cap-glow:0 1px 6px rgba(255,255,255,.7);}
   .clock .dial{position:absolute;inset:0;transform:perspective(860px) rotateX(17deg);transform-style:preserve-3d}
   .clock .num{position:absolute;font-size:19px;font-weight:300;letter-spacing:.03em;
-    color:rgba(255,255,255,.58);text-shadow:0 1px 11px rgba(4,10,20,.55),0 0 18px rgba(255,255,255,.32);transform:translate(-50%,-50%)}
-  .clock .num.q{color:rgba(255,255,255,.85);font-weight:400}
+    color:var(--clk-num);text-shadow:var(--clk-num-shadow);transform:translate(-50%,-50%);
+    transition:color 1.5s ease,text-shadow 1.5s ease}
+  .clock .num.q{color:var(--clk-num-q);font-weight:400}
   .clock .hand{position:absolute;left:50%;bottom:50%;transform-origin:bottom center;border-radius:4px;
-    background:linear-gradient(to top,rgba(255,255,255,.10),rgba(255,255,255,.64));
-    box-shadow:0 0 13px rgba(245,185,66,.42)}
+    background:var(--clk-hand);box-shadow:var(--clk-glow);
+    transition:background 1.5s ease,box-shadow 1.5s ease}
   .clock .hand.h{width:3.5px;height:62px;margin-left:-1.75px}
   .clock .hand.m{width:2.5px;height:92px;margin-left:-1.25px}
   .clock .cap{position:absolute;left:50%;top:50%;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%;
-    background:rgba(255,255,255,.72);box-shadow:0 0 13px rgba(245,185,66,.62)}
+    background:var(--clk-cap);box-shadow:var(--clk-cap-glow);
+    transition:background 1.5s ease,box-shadow 1.5s ease}
   @keyframes floatC{from{transform:translateY(-5px) rotateZ(-1.1deg)}to{transform:translateY(6px) rotateZ(1.1deg)}}
 
   .badge{position:absolute;left:24px;bottom:24px;font-size:11px;letter-spacing:.14em;color:var(--ink-soft);
