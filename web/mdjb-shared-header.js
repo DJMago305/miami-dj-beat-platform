@@ -137,11 +137,13 @@
        9, con lo que la estacion queda en NUEVE puestos y MI PERFIL no se mueve
        del 8 — que es donde su resolvedor de destino y su etiqueta lo buscan, por
        numero de slot. */
-    { s: 9,  key: 'nav-shop',       nav: 'shop',      href: './shop.html?mdj_nav=profile', txt: 'Shop' },
-    /* Slot 10, agregado al final para no mover ningun puesto existente (MI
-       PERFIL sigue fijo en 8). Delega el clic en #tab-documentos igual que
-       flow/sft/public: no navega, conmuta la pestaña ya montada en la pagina. */
-    { s: 10, key: null,             nav: 'documentos', href: '#', txt: 'Bóveda Legal', tab: 'documentos' }
+    { s: 9,  key: 'nav-shop',       nav: 'shop',      href: './shop.html?mdj_nav=profile', txt: 'Shop' }
+    /* Bóveda Legal NO vive aqui: el slot 10 agregado el 2026-08-24 desbordaba
+       la rejilla rigida de #mainNav (repeat(9, ...) — nunca se actualizo a
+       10 columnas) y el puesto quedaba montado sobre Shop. El acceso ya
+       existe, sin duplicar nada: account-settings.html tiene su propio
+       "Documentos Legales" (#panel-legal, showPanel('legal',this)), que es
+       la MISMA vista que usaba este slot. La estacion vuelve a NUEVE puestos. */
   ];
 
   /* Dueño del perfil que se esta mirando. Se calcula con senales que el header
