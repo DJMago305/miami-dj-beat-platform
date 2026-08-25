@@ -1,0 +1,153 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   MIAMI DJ BEAT LLC · Listas agrupadas estilo macOS (inset grouped lists)
+   ───────────────────────────────────────────────────────────────────────────
+   Implementacion del patron canonico registrado en
+   docs/design/premium-settings-tabs-pattern.md (commit 52274e3).
+
+   Del documento se respetan al pie: la anatomia de fila (icono lider ~20-22px
+   monolineal + etiqueta + UN solo contenido final), la agrupacion en tarjeta de
+   esquinas redondeadas con hairline entre filas y SIN divisoria en la ultima, el
+   encabezado de seccion FUERA y arriba de la tarjeta, el aire de 24-32px entre
+   grupos y el padding horizontal constante de 16-20px.
+
+   Sobre el color: el documento fija la paleta clara nativa de macOS (texto
+   #1d1d1f, secundario #8e8e93, acento #007AFF, tarjeta un escalon mas oscura
+   que la pagina). Se toma tal cual como tema claro. El tema oscuro NO inventa
+   una paleta nueva: traslada los mismos ROLES a las superficies que la
+   plataforma ya usa, porque el portal tiene conmutador dia/noche y una pestaña
+   en blanco puro dentro del portal oscuro romperia la continuidad.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ══ DIA Y NOCHE ════════════════════════════════════════════════════════════
+   La plataforma marca el dia con data-theme="day" en <html> y deja la NOCHE
+   como estado por defecto, sin atributo (clave mdjStaffTheme). Este panel sigue
+   ese mismo interruptor: no tiene tema propio ni se fija a mano.
+   Por eso la noche va en el bloque base y el dia en el override — al reves de
+   como suele escribirse, pero es lo que exige el mecanismo existente. */
+.mdj-ajustes {
+  /* NOCHE (por defecto). Los mismos ROLES del documento sobre las superficies
+     que la plataforma ya usa; no se inventa una paleta nueva. */
+  --lst-fondo-pagina: #0a0e16;
+  --lst-fondo-tarjeta: #161b26;
+  --lst-texto: #f2f4f8;
+  --lst-texto-2: #8b95a6;
+  --lst-acento: #007aff;
+  --lst-hairline: rgba(255, 255, 255, .09);
+  --lst-destructivo: #ff6961;
+
+  --lst-radio: 12px;
+  --lst-pad-x: 18px;
+  --lst-aire: 28px;
+
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 28px 20px 72px;
+  color: var(--lst-texto);
+  /* Patron de UTILIDAD: tipografia de sistema, nunca la display de marca. */
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+/* DIA — la paleta clara literal del documento de patron. */
+html[data-theme="day"] .mdj-ajustes {
+  --lst-fondo-pagina: #f5f5f7;
+  --lst-fondo-tarjeta: #ffffff;
+  --lst-texto: #1d1d1f;
+  --lst-texto-2: #8e8e93;
+  --lst-hairline: rgba(60, 60, 67, .13);
+  --lst-destructivo: #d70015;
+}
+
+/* ── Encabezado de seccion: FUERA y arriba de la tarjeta ── */
+.lst-seccion { margin-top: var(--lst-aire); }
+.lst-seccion:first-of-type { margin-top: 0; }
+
+.lst-seccion > h3 {
+  margin: 0 0 9px var(--lst-pad-x);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--lst-texto);
+  letter-spacing: -.01em;
+}
+
+/* ── Tarjeta ── */
+.lst-tarjeta {
+  background: var(--lst-fondo-tarjeta);
+  border-radius: var(--lst-radio);
+  overflow: hidden;
+}
+
+/* ── Fila ── */
+.lst-fila {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-height: 46px;
+  padding: 9px var(--lst-pad-x);
+  border-bottom: 1px solid var(--lst-hairline);
+  background: none;
+  border-left: 0; border-right: 0; border-top: 0;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+
+/* La ultima fila de la tarjeta no lleva divisoria. */
+.lst-fila:last-child { border-bottom: 0; }
+
+.lst-fila > .mdj-ico { color: var(--lst-texto-2); opacity: 1; }
+
+.lst-etiqueta { flex: 1 1 auto; min-width: 0; }
+
+.lst-etiqueta small {
+  display: block;
+  color: var(--lst-texto-2);
+  font-size: 12.5px;
+  line-height: 1.35;
+  margin-top: 1px;
+}
+
+/* Contenido final: valor informativo, chevron o toggle. Nunca combinados. */
+.lst-valor { color: var(--lst-texto-2); flex: 0 0 auto; }
+.lst-chevron { color: var(--lst-texto-2); flex: 0 0 auto; font-size: 17px; line-height: 1; }
+
+/* ── Toggle iOS/macOS ── */
+.lst-switch { position: relative; flex: 0 0 auto; width: 51px; height: 31px; }
+.lst-switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; z-index: 2; }
+
+.lst-switch span {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: rgba(120, 120, 128, .32);
+  transition: background .22s ease;
+}
+
+.lst-switch span::after {
+  content: "";
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 27px; height: 27px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, .18);
+  transition: transform .22s cubic-bezier(.4, .1, .2, 1);
+}
+
+.lst-switch input:checked + span { background: var(--lst-acento); }
+.lst-switch input:checked + span::after { transform: translateX(20px); }
+.lst-switch input:focus-visible + span { outline: 2px solid var(--lst-acento); outline-offset: 2px; }
+
+/* ── Switch maestro: misma anatomia, peso visual de cabecera ── */
+.lst-fila--maestro { min-height: 58px; }
+.lst-fila--maestro .lst-etiqueta { font-weight: 600; font-size: 16px; }
+
+/* ── Fila de estado indeterminado del maestro (algunas activas, otras no) ── */
+.lst-switch input:indeterminate + span { background: rgba(120, 120, 128, .55); }
+.lst-switch input:indeterminate + span::after { transform: translateX(10px); }
+
+@media (prefers-reduced-motion: reduce) {
+  .lst-switch span, .lst-switch span::after { transition: none; }
+}

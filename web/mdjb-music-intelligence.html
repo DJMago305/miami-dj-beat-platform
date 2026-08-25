@@ -436,7 +436,7 @@
     <script src="./i18n.js?v=20260330"></script>
     <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
     <script src="./mdj-identity.js?v=20260617-buyer-artist-fix-1"></script>
-    <script src="./mdj-shared-header.js?v=20260822-guarda-canonica"></script>
+    <script src="./mdjb-shared-header.js?v=20260822-guarda-canonica"></script>
     <script src="./js/mdj-profile-owner-link.js?v=20260516-perf-ab-1"></script>
     <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
     <script src="./mdj-mainnav-infinite.js?v=20260818-nav-canonico"></script>
@@ -459,7 +459,7 @@
           if (!p) return;
 
           /* Owner y sus variantes de rol (admin/manager, ver account-settings.html:6887
-             y mdj-shared-header.js ~2599) son la única cuenta de desbloqueo total —
+             y mdjb-shared-header.js ~2599) son la única cuenta de desbloqueo total —
              owner ya es PRO por definición, sin importar su campo .plan. */
           var esOwnerOVariante = ['owner', 'admin', 'manager'].includes(p.role);
           var isPro = esOwnerOVariante || ['PRO', 'ELITE'].includes(p.plan);
@@ -669,7 +669,10 @@ var state = {
   liveLastResponse: {},
   discoverTab: 'trending',
   discoverRegion: 0,
-  discoverQuery: ''
+  discoverQuery: '',
+  caseStudyEdition: 'anglo',
+  caseStudyData: null,
+  caseStudyLoading: false
 };
 
 function trackById(id){ for (var i=0;i<TRACKS.length;i++){ if (TRACKS[i].id===id) return TRACKS[i]; } return null; }
@@ -1711,10 +1714,110 @@ function renderLearning(){
           }).join('')+
         '</div>'+
       '</div>'+
-    '</div>';
+    '</div>'+
+    '<div id="caseStudyMount" style="margin-top:24px;"></div>';
   el.querySelectorAll('[data-learn]').forEach(function(b){
     b.addEventListener('click', function(){ state.learnTrackId = b.getAttribute('data-learn'); renderLearning(); });
   });
+  renderCaseStudy();
+}
+
+/* ============================= REAL CASE STUDY: THE ONE HIT WONDER EXPERIENCE =============================
+   Real production dossier (Miami DJ Beat LLC / DJMago305) — NOT demo data, unlike the rest of this prototype.
+   Loaded from web/data/one-hit-wonder-experience.json on demand, cached in state.caseStudyData. */
+function caseStudyCutTypeLabel(ct){
+  var m = {'blend-armonico':'Blend Armónico','cut-on-drop':'Cut on Drop','hard-cut':'Hard Cut','stem-transition':'Stem Transition','echo-out':'Echo-Out'};
+  return m[ct] || ct;
+}
+function renderCaseStudyTrackRow(t, hasEra){
+  var keyLabel = t.camelotKeyEstimate ? t.camelotKeyEstimate : '—';
+  return (
+    '<tr>'+
+      '<td class="num">'+t.order+'</td>'+
+      '<td class="track-name">'+esc(t.title)+'</td>'+
+      '<td>'+esc(t.artist)+'</td>'+
+      '<td class="num">'+t.year+'</td>'+
+      '<td class="num">'+t.bpm+'</td>'+
+      '<td class="num">'+keyLabel+'</td>'+
+      '<td class="num">'+t.energyEstimate+'</td>'+
+      '<td><span class="chip">'+caseStudyCutTypeLabel(t.bridgeLogic.cutType)+'</span></td>'+
+      '<td style="white-space:normal;max-width:260px;color:var(--text-dim);font-size:11px;">'+esc(t.mixNote)+'</td>'+
+    '</tr>'
+  );
+}
+function renderCaseStudyBody(){
+  var d = state.caseStudyData;
+  if (!d) return '';
+  var edKey = state.caseStudyEdition;
+  var edition = edKey==='latino' ? d.latino : d.anglo;
+  var r = d.technicalRider;
+  return (
+    '<div class="culture-toggle" style="padding:0 0 14px;">'+
+      ['anglo','latino'].map(function(k){
+        return '<button class="culture-btn'+(state.caseStudyEdition===k?' active':'')+'" data-case-edition="'+k+'">'+(k==='anglo'?'Anglo International':'Latino Edition')+'</button>';
+      }).join('')+
+    '</div>'+
+    '<div class="result-count">'+edition.editionName+' — '+edition.tracks.length+' real tracks · '+edition.audience+'</div>'+
+    '<div class="panel scrollx"><table><thead><tr>'+
+      ['#','Track','Artist','Year','BPM','Key (est.)','Energy (est.)','Cut Type','Mix Note (dossier)'].map(function(h){ return '<th>'+h+'</th>'; }).join('')+
+    '</tr></thead><tbody>'+
+      edition.tracks.map(function(t){ return renderCaseStudyTrackRow(t); }).join('')+
+    '</tbody></table></div>'+
+    '<div class="panel" style="margin-top:14px;"><div class="panel-head"><span class="label">Fusion Crossover — Ping-Pong Technique</span></div>'+
+      '<div class="panel-body"><p style="color:var(--text-dim);font-size:12.5px;line-height:1.6;margin:0;">'+esc(d.fusionCrossover.technique)+'</p></div>'+
+    '</div>'+
+    '<div class="panel" style="margin-top:14px;"><div class="panel-head"><span class="label">Technical Rider (real)</span></div>'+
+      '<div class="panel-body" style="display:grid;grid-template-columns:auto 1fr;gap:8px 14px;font-size:12.5px;">'+
+        '<span class="label">Booth</span><span>'+r.booth.controllers.join(' + ')+'</span>'+
+        '<span class="label">PA</span><span>'+r.pa.type+' — '+r.pa.targetDbA+'</span>'+
+        '<span class="label">Video/VJ</span><span>'+r.video.screen+'</span>'+
+        '<span class="label">SFX</span><span>'+r.fx.join(', ')+'</span>'+
+        '<span class="label">Stage</span><span>'+r.stage.size+' · soundcheck '+r.stage.soundcheck+'</span>'+
+      '</div>'+
+    '</div>'
+  );
+}
+function renderCaseStudy(){
+  var mount = document.getElementById('caseStudyMount');
+  if (!mount) return;
+  var header =
+    '<div class="panel-head" style="border:none;padding:0 0 10px;">'+
+      '<span class="label" style="display:flex;align-items:center;gap:8px;">'+iconSvg('history')+' Real Case Study — The One Hit Wonder Experience</span>'+
+      '<span class="badge gold">Miami DJ Beat LLC · Real Production Dossier</span>'+
+    '</div>'+
+    '<p class="view-desc" style="margin:0 0 14px;">Real curated live show (Anglo / Latino / Fusion Crossover editions), transcribed from the PO\'s own production dossiers — not DEMO data like the rest of this prototype. BPM and mix notes come straight from the dossier; Camelot Key and Energy are Claude-derived estimates, unverified — confirm with Mixed In Key / rekordbox before relying on them for live harmonic mixing.</p>';
+
+  if (state.caseStudyData){
+    mount.innerHTML = header + renderCaseStudyBody();
+    mount.querySelectorAll('[data-case-edition]').forEach(function(b){
+      b.addEventListener('click', function(){ state.caseStudyEdition = b.getAttribute('data-case-edition'); renderCaseStudy(); });
+    });
+    return;
+  }
+  if (state.caseStudyLoading){
+    mount.innerHTML = header + '<div class="move-empty">Loading real dossier data…</div>';
+    return;
+  }
+  mount.innerHTML = header + '<div class="move-empty">Could not load the case study yet. <button class="btn btn-sm" id="caseStudyRetry">Load Real Dossier</button></div>';
+  var retryBtn = document.getElementById('caseStudyRetry');
+  if (retryBtn) retryBtn.addEventListener('click', loadCaseStudy);
+  loadCaseStudy();
+}
+function loadCaseStudy(){
+  if (state.caseStudyLoading || state.caseStudyData) return;
+  state.caseStudyLoading = true;
+  fetch('./data/one-hit-wonder-experience.json')
+    .then(function(r){ if (!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    .then(function(data){
+      state.caseStudyData = data;
+      state.caseStudyLoading = false;
+      if (state.view==='learning') renderCaseStudy();
+    })
+    .catch(function(err){
+      state.caseStudyLoading = false;
+      console.log('Case study load failed:', err && err.message);
+      if (state.view==='learning') renderCaseStudy();
+    });
 }
 
 /* ============================= VIEW: CONFIG ============================= */

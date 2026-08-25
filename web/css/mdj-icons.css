@@ -1,0 +1,55 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   MIAMI DJ BEAT LLC · Iconos de trazo — estados (Paso 1 · perfiles de artista)
+   ───────────────────────────────────────────────────────────────────────────
+   Los símbolos de assets/icons/mdj-icons.svg no llevan color propio: pintan con
+   `currentColor`. Todo el estado se decide aquí cambiando `color`, así que un
+   mismo símbolo sirve para activo, inactivo y hover sin duplicar el trazo.
+
+   Los tres colores NO son nuevos: se toman de los tokens que ya viven en
+   styles.css (--gold #c5a059, --gold-glow, --muted #b7c2dc). Si el token no
+   existe en la página, el respaldo repite su valor literal.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.mdj-ico {
+  width: var(--mdj-ico-tam, 22px);
+  height: var(--mdj-ico-tam, 22px);
+  display: inline-block;
+  vertical-align: middle;
+  flex: 0 0 auto;
+  /* El trazo no debe engordar al escalar el icono. */
+  overflow: visible;
+  pointer-events: none;
+  /* Plata = reposo. */
+  color: var(--muted, #b7c2dc);
+  opacity: .82;
+  transition: color .18s ease, opacity .18s ease, filter .18s ease;
+}
+
+/* Dorado = puesto activo. */
+.mdj-ico--activo,
+[aria-current="page"] > .mdj-ico,
+.active > .mdj-ico {
+  color: var(--gold, #c5a059);
+  opacity: 1;
+  filter: drop-shadow(0 0 6px var(--gold-glow, rgba(197, 160, 89, .25)));
+}
+
+a:hover > .mdj-ico,
+button:hover > .mdj-ico {
+  color: var(--gold, #c5a059);
+  opacity: 1;
+}
+
+/* Deshabilitado: mismo trazo, sin peso visual. */
+.mdj-ico--inerte {
+  opacity: .38;
+}
+
+/* Tamaños. El trazo se mantiene ópticamente igual porque el viewBox es fijo. */
+.mdj-ico--sm { --mdj-ico-tam: 18px; }
+.mdj-ico--md { --mdj-ico-tam: 22px; }
+.mdj-ico--lg { --mdj-ico-tam: 28px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mdj-ico { transition: none; }
+}
