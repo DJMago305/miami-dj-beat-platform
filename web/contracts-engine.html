@@ -1376,6 +1376,8 @@ const TEMPLATES = [
       {key:"eventDate", type:"date", req:true, label:{es:"Fecha del evento", en:"Event date"}},
       {key:"eventStart", type:"time", label:{es:"Hora de inicio", en:"Start time"}, row:"time"},
       {key:"eventEnd", type:"time", label:{es:"Hora de fin", en:"End time"}, row:"time"},
+      {key:"setupTime", type:"time", label:{es:"Hora de montaje", en:"Setup time"}, row:"time2"},
+      {key:"soundcheckTime", type:"time", label:{es:"Hora de prueba de sonido", en:"Soundcheck time"}, row:"time2"},
       {key:"venueName", type:"text", label:{es:"Nombre del venue", en:"Venue name"}},
       {key:"venueAddress", type:"text", label:{es:"Dirección del venue", en:"Venue address"}},
       {key:"feeAmount", type:"number", req:true, label:{es:"Honorario total (USD)", en:"Total fee (USD)"}, row:"fee"},
@@ -1440,6 +1442,7 @@ const TEMPLATES = [
           <div><span>${lang==='es'?'Artista':'Artist'}</span><b>${esc(d.djName)||'<span class=\"placeholder\">—</span>'}${d.stageName?' "'+esc(d.stageName)+'"':''}</b></div>
           <div><span>${t.kv_date}</span><b>${d.eventDate?fmtDate(d.eventDate,lang):'<span class="placeholder">—</span>'}</b></div>
           <div><span>${lang==='es'?'Horario':'Schedule'}</span><b>${d.eventStart||'—'} – ${d.eventEnd||'—'}</b></div>
+          <div><span>${lang==='es'?'Montaje / Soundcheck':'Setup / Soundcheck'}</span><b>${d.setupTime||'—'} / ${d.soundcheckTime||'—'}</b></div>
           <div><span>${t.kv_venue}</span><b>${esc(d.venueName)||'<span class=\"placeholder\">—</span>'}</b></div>
           <div><span>${t.kv_fee}</span><b>${d.feeAmount?fmtMoney(d.feeAmount):'<span class="placeholder">—</span>'}</b></div>
         </div>
@@ -1815,6 +1818,8 @@ const TEMPLATES = [
       {key:"eventDate", type:"date", req:true, label:{es:"Fecha del evento", en:"Event date"}},
       {key:"eventStart", type:"time", label:{es:"Hora de inicio", en:"Start time"}, row:"time"},
       {key:"eventEnd", type:"time", label:{es:"Hora de fin", en:"End time"}, row:"time"},
+      {key:"setupTime", type:"time", label:{es:"Hora de montaje", en:"Setup time"}, row:"time2"},
+      {key:"soundcheckTime", type:"time", label:{es:"Hora de prueba de sonido", en:"Soundcheck time"}, row:"time2"},
       {key:"venueName", type:"text", label:{es:"Nombre del venue", en:"Venue name"}},
       {key:"venueAddress", type:"text", label:{es:"Dirección del venue", en:"Venue address"}},
       {key:"outdoorEvent", type:"select", label:{es:"¿Evento al aire libre?", en:"Outdoor event?"},
@@ -1855,6 +1860,7 @@ const TEMPLATES = [
           <div><span>${lang==='es'?'Tipo de evento':'Event type'}</span><b>${eventTypeLabel[lang]}</b></div>
           <div><span>${t.kv_date}</span><b>${d.eventDate?fmtDate(d.eventDate,lang):'<span class="placeholder">—</span>'}</b></div>
           <div><span>${lang==='es'?'Horario':'Schedule'}</span><b>${d.eventStart||'—'} – ${d.eventEnd||'—'}</b></div>
+          <div><span>${lang==='es'?'Montaje / Soundcheck':'Setup / Soundcheck'}</span><b>${d.setupTime||'—'} / ${d.soundcheckTime||'—'}</b></div>
           <div><span>${t.kv_venue}</span><b>${esc(d.venueName)||'<span class=\"placeholder\">—</span>'}</b></div>
           <div><span>${t.kv_fee}</span><b>${d.totalFee?fmtMoney(d.totalFee):'<span class="placeholder">—</span>'}</b></div>
         </div>
