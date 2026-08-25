@@ -1,0 +1,182 @@
+-- ╔══════════════════════════════════════════════════════════════════════════╗
+-- ║  DISEÑO — NO APLICAR TODAVÍA                                             ║
+-- ║  RECONCILIACIÓN: fenix_can() ←→ mdj_permiso_vigente()                    ║
+-- ║  2026-08-17 · para decisión del PO antes de escribirse como M5           ║
+-- ╚══════════════════════════════════════════════════════════════════════════╝
+--
+-- ═══ EL PROBLEMA ═══════════════════════════════════════════════════════════
+--
+--   Hoy la plataforma tiene DOS funciones que responden a «¿puede esta persona
+--   hacer esto?» y no se conocen entre sí:
+--
+--   fenix_can(user, action, resource, context)      · cimentación 2A
+--     Decide por ROL + PLAN + ENTITLEMENTS del propio usuario. Lista fija de
+--     acciones en un CASE. Vive en PRUEBA y en PRODUCCIÓN. La llaman las Edge
+--     Functions. No sabe qué es una delegación.
+--
+--   mdj_permiso_vigente(otorgante, tipo, ref, alcance, nivel)   · M3
+--     Decide por CONCESIONES explícitas, revocables y auditadas, con escalera
+--     consultar < preparar < ejecutar. Vive solo en PRUEBA. No sabe qué es un
+--     plan ni un rol.
+--
+--   Si ambas llegan a producción sin reconciliar, la plataforma tendrá dos
+--   respuestas distintas a la misma pregunta, y la que conteste dependerá de
+--   qué trozo de código pregunte. Eso no es un detalle: es la definición de un
+--   sistema de permisos roto.
+--
+--
+-- ═══ EL DIAGNÓSTICO: NO SOBRA NINGUNA ══════════════════════════════════════
+--
+--   La tentación es fundirlas o quedarse con una. Sería un error: responden a
+--   preguntas distintas y las dos hacen falta.
+--
+--     fenix_can            → ¿qué puede esta persona POR SÍ MISMA?
+--                            Capacidad propia. Viene de lo que es y lo que paga.
+--
+--     mdj_permiso_vigente  → ¿qué le ha PRESTADO otra persona?
+--                            Autoridad delegada. Viene de un acto de confianza.
+--
+--   Son dos ejes, no dos versiones de lo mismo. Un mánager con plan `free`
+--   puede tener delegada la agenda de un artista `pro`; y un artista `pro` sin
+--   delegación de nadie no puede tocar la agenda de otro. Ninguna de las dos
+--   funciones puede responder sola.
+--
+--   Lo que falta no es fusionarlas: es una TERCERA que las componga con una
+--   regla de precedencia explícita.
+--
+--
+-- ═══ LA REGLA DE COMPOSICIÓN ═══════════════════════════════════════════════
+--
+--   1 · DENEGAR POR DEFECTO. Acción desconocida, usuario sin perfil, o
+--       cualquier duda → false.
+--
+--   2 · ACTUANDO EN NOMBRE PROPIO (sin `en_nombre_de`):
+--       manda fenix_can() y nada más. La delegación no entra en juego.
+--
+--   3 · ACTUANDO EN NOMBRE DE OTRO: hacen falta las DOS cosas a la vez.
+--       a) que exista concesión vigente del otro perfil hacia el mío, para ese
+--          alcance y a ese nivel o superior  → mdj_permiso_vigente()
+--       b) que el OTORGANTE tuviera esa capacidad          → fenix_can(dueño)
+--
+--       El punto (b) es el corazón del diseño: NADIE PUEDE DELEGAR MÁS DE LO
+--       QUE TIENE. Si el plan del artista no incluye `campaign.prepare`, no
+--       puede concederle a su mánager que prepare campañas — ni por error ni a
+--       propósito. Sin esta regla, la tabla de concesiones sería una puerta
+--       trasera para saltarse el plan: bastaría con que alguien se concediera
+--       a sí mismo lo que no ha pagado.
+--
+--   4 · HAY PODERES QUE NO SE DELEGAN NUNCA.
+--       Los que fenix_can otorga por ROL y no por plan —`financial.execute`,
+--       `staff.read_all`— son personales. El owner no puede conceder «ser el
+--       owner». Delegar un cargo no es delegar una tarea: es sustituir a la
+--       persona, y eso ningún registro lo puede auditar de forma útil.
+--       Lista explícita, no heurística.
+--
+--   5 · TODO EJERCICIO DELEGADO DEJA RASTRO, y el rastro dice EN NOMBRE DE
+--       QUIÉN. La columna `actor_en_nombre_de` ya existe en audit_log (M2):
+--       se escribió pensando en esto.
+--
+--
+-- ═══ EL VOCABULARIO: LA DECISIÓN QUE HAY QUE TOMAR ═════════════════════════
+--
+--   fenix_can usa nombres de acción de una lista fija: 'gmail.send',
+--   'calendar.write', 'financial.execute'.
+--   M3 usa `alcance`, texto libre: 'calendario.disponibilidad',
+--   'agenda.confirmar', 'contactos.analizar'.
+--
+--   Hoy son dos idiomas. Componerlas exige que hablen uno solo, y hay que
+--   elegir CÓMO:
+--
+--   OPCIÓN A · `alcance` pasa a usar los nombres de fenix_can.
+--     Simple, inmediata, sin tabla nueva. A cambio, la delegación queda
+--     limitada a la lista fija del CASE, que hoy tiene once entradas.
+--
+--   OPCIÓN B · un catálogo `acciones` en tabla, y las dos funciones lo leen.
+--     Es la buena a medio plazo: añadir una acción deja de ser tocar código.
+--     Cuesta convertir el CASE de fenix_can en consulta, y eso toca 2A, que
+--     YA ESTÁ EN PRODUCCIÓN.
+--
+--   RECOMENDACIÓN: A ahora, B cuando 2A vuelva a abrirse por otro motivo.
+--   No merece la pena tocar producción solo por esto, y la opción A no cierra
+--   la puerta a la B.
+--
+--
+-- ═══ BORRADOR DE LA FUNCIÓN COMPUESTA ══════════════════════════════════════
+--
+--   Nombre propuesto: fenix_puede().
+--   Pasaría a ser el ÚNICO punto de entrada. fenix_can y mdj_permiso_vigente
+--   quedan como piezas internas: nadie más las llama directamente.
+--   Ese es el sentido que la cimentación 2A prometía con «Autoridad Única» y
+--   que hasta ahora no era única.
+--
+--   NO EJECUTAR. Falta decidir el vocabulario (arriba) y la lista de acciones
+--   no delegables.
+--
+-- CREATE OR REPLACE FUNCTION public.fenix_puede(
+--   p_user          uuid,
+--   p_accion        text,
+--   p_en_nombre_de  text    DEFAULT NULL,   -- FENIX-ID del dueño, o NULL
+--   p_nivel         public.mdj_nivel_autoridad DEFAULT 'ejecutar',
+--   p_context       jsonb   DEFAULT '{}'::jsonb
+-- ) RETURNS boolean
+-- LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public AS $$
+-- DECLARE
+--   v_mi_perfil     text;
+--   v_dueño_user    uuid;
+--   NO_DELEGABLES CONSTANT text[] := ARRAY[
+--     'financial.execute',   -- ejecución financiera: solo el owner, en persona
+--     'staff.read_all'       -- ver a toda la plantilla es un cargo, no una tarea
+--   ];
+-- BEGIN
+--   -- 1 · denegar por defecto
+--   IF p_user IS NULL OR p_accion IS NULL THEN RETURN false; END IF;
+--
+--   -- 2 · en nombre propio: manda la capacidad propia
+--   IF p_en_nombre_de IS NULL THEN
+--     RETURN public.fenix_can(p_user, p_accion, NULL, p_context);
+--   END IF;
+--
+--   -- 4 · poderes personales: no se delegan jamás
+--   IF p_accion = ANY (NO_DELEGABLES) THEN RETURN false; END IF;
+--
+--   -- 3a · ¿me lo concedieron a mí, vigente, a este nivel o superior?
+--   v_mi_perfil := public.mdj_profile_de_usuario(p_user);
+--   IF v_mi_perfil IS NULL THEN RETURN false; END IF;
+--
+--   IF NOT public.mdj_permiso_vigente(
+--            p_en_nombre_de, 'perfil', v_mi_perfil, p_accion, p_nivel) THEN
+--     RETURN false;
+--   END IF;
+--
+--   -- 3b · EL TECHO: nadie delega más de lo que tiene
+--   SELECT user_id INTO v_dueño_user
+--     FROM public.dj_profiles WHERE profile_id = p_en_nombre_de
+--    UNION ALL
+--   SELECT user_id FROM public.client_profiles WHERE profile_id = p_en_nombre_de
+--    LIMIT 1;
+--   IF v_dueño_user IS NULL THEN RETURN false; END IF;
+--
+--   RETURN public.fenix_can(v_dueño_user, p_accion, NULL, p_context);
+-- END;
+-- $$;
+--
+--
+-- ═══ CÓMO SE PRUEBA, CUANDO SE ESCRIBA ═════════════════════════════════════
+--
+--   La prueba que define este diseño no es que la delegación funcione —eso ya
+--   está probado en M3—. Es esta:
+--
+--     Un artista con plan `free` concede a su mánager `campaign.prepare`.
+--     El mánager tiene plan `pro`.
+--     fenix_puede(mánager, 'campaign.prepare', <FENIX del artista>) → FALSE
+--
+--   Porque el artista no podía prepararlas él mismo. Si sale TRUE, la tabla de
+--   concesiones se ha convertido en una forma de saltarse el plan y el diseño
+--   no vale.
+--
+--   Y la simétrica:
+--
+--     Un owner concede a su asistente 'financial.execute'.
+--     fenix_puede(asistente, 'financial.execute', <FENIX del owner>) → FALSE
+--
+--   Porque hay cargos que no se prestan.
