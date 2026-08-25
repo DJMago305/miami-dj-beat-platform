@@ -527,6 +527,7 @@ let flash=0.0, nextFlash=0.0;   // lightning glow
 let bolt=0.0, boltX=0.5, boltSeed=0.0;   // visible bolt streak
 // Time of day: dayFixed=-1 -> auto cycle; otherwise a paused phase (0=medianoche,0.25=amanecer,0.5=mediodía,0.75=atardecer)
 let dayFixed=-1; let dispDay=0.72;   // dispDay eases toward the target for a smooth sun glide
+let _clockIsDay=null;                 // reloj: modo día/noche actual (contraste adaptativo)
 // Shooting stars: occasional meteors at night
 const met={on:false, hx:0, hy:0, vx:0, vy:0, life:0, dur:1.0};
 let nextMet=5.0, lastT=0, metOn=0.0;
@@ -661,6 +662,10 @@ function frame(now){
   dispDay=(dispDay+dd*(reduce?1.0:0.05)+1.0)%1.0;
   const dayT=dispDay;
   const sunElev=Math.sin((dayT-0.25)*6.2832);
+  // Reloj: contraste adaptativo día/noche (PO 2026-08-25). Toggle SOLO al cruzar el
+  // umbral (no cada frame); el CSS hace la transición suave de color (1.5s).
+  const isDayNow = sunElev>0.15;
+  if(isDayNow!==_clockIsDay){ _clockIsDay=isDayNow; const _ck=document.querySelector('.clock'); if(_ck) _ck.classList.toggle('is-day', isDayNow); }
   const az=0.45+0.48*dayT;          // keep sun/moon in the right negative space
   const hb=Math.floor(dayT*24); if(hb!==lastHourBucket){ lastHourBucket=hb; refreshState(); }  // temp/forecast track the moving clock, from the provider
   const tgt=state.drivers;          // ease current -> the contract's drivers (~1.5s)
