@@ -295,16 +295,16 @@ const FRAG = [
 ' vec3 col = mix(hor,zen,pow(sky,0.62));',
 ' float cov = clamp(uCloud*(0.72+0.5*fbm(vec2(uTime*0.015,7.0))),0.0,1.0);',           // cloud coverage (also hides the sun when overcast)
 ' float sunVis = (1.0 - smoothstep(0.15,0.55,sceneF)*step(0.5,uScene)) * (1.0-cov*0.9);',  // in city/mountain scenes the sun belongs to the scene; heavy clouds also veil it
-' float glow = exp(-sd*2.6)*1.0 + exp(-sd*7.5)*0.6;',
+' float glow = exp(-sd*6.5)*0.75 + exp(-sd*16.0)*0.45;',
 ' vec3 sunCol = mix(vec3(1.0,0.95,0.85), warm, clamp(golden+redness,0.0,1.0));',
 ' vec3 glowCol = mix(vec3(1.0,0.98,0.92), mix(vec3(1.0,0.70,0.35), vec3(1.0,0.30,0.13), redness), clamp(golden+redness,0.0,1.0));',  // WHITE by day -> orange golden -> red at horizon
-' col += glowCol*glow*(day*1.15+golden*1.3+redness*1.05)*sunVis;',                    // stronger daytime halo
-' float discR = 0.072;',
-' float disc = smoothstep(discR, discR-0.010, sd);',
+' col += glowCol*glow*(day*0.65+golden*1.1+redness*0.95)*sunVis;',                    // calibrated daytime halo — no more blown-out white
+' float discR = 0.052;',
+' float disc = smoothstep(discR, discR-0.006, sd);',
 ' float limb = 1.0 - 0.18*smoothstep(0.0, discR, sd);',
 ' vec3 discCol = mix(vec3(1.0,0.99,0.95), vec3(1.0,0.88,0.52), clamp(golden*0.5+redness*0.9,0.0,1.0));',  // brilliant white by day, warm at sunset
-' col += discCol*limb*disc*(1.0+day*2.0+golden*0.5+redness*0.5)*sunVis;',             // overexposed by day -> reads as a REAL bright sun
-' col += vec3(1.0,0.98,0.9)*smoothstep(0.036,0.0,sd)*(0.55+day*0.9+golden*0.4+redness*0.35)*sunVis;',  // hot white core bloom
+' col += discCol*limb*disc*(1.0+day*1.1+golden*0.5+redness*0.5)*sunVis;',             // defined disc, sharper edge, less overexposure
+' col += vec3(1.0,0.98,0.9)*smoothstep(0.024,0.0,sd)*(0.4+day*0.5)*sunVis;',          // smaller hot core — no longer eats the text above
 ' if(uMoon.z>0.001){',                                                                  // REAL moon position (alt/az → uMoon.xy); shown whenever above the horizon, faint by day
 '  vec2 md=(uv-uMoon.xy)*vec2(asp,1.0);',
 '  float mdst=length(md); float R=0.06;',                                               // decoratively oversized (true moon ~0.5 deg)
