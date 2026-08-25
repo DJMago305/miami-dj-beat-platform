@@ -3269,6 +3269,21 @@
          garantiza que la marca se vea siempre — pedido explícito del PO. -->
     <script>
       (function () {
+        /* BUG RAÍZ encontrado en vivo: #mobileMenu vive dentro de
+           .header-top → #mainHeader (sección LOCKED). Cuando cualquiera de
+           los dos queda en display:none (modo visitante, o el parpadeo
+           .mdj-estacion-previa), el menú se queda invisible AUNQUE tenga la
+           clase .active — un ancestro oculto oculta todo su contenido sin
+           importar el estado propio del hijo. Confirmado midiendo
+           getBoundingClientRect(): {0,0,0,0} con .active ya puesta. El botón
+           de menú (#mdjMobileMenuFab, más abajo) activaba la clase
+           correctamente todo este tiempo — el menú resultante simplemente
+           nunca se pintaba. Se mueve el nodo REAL (no una copia) a
+           document.body, mismo criterio que ya se usó para el botón y la
+           marca: fuera de cualquier ancestro que alguna regla pueda ocultar. */
+        var realMenu = document.getElementById('mobileMenu');
+        if (realMenu) document.body.appendChild(realMenu);
+
         var fab = document.createElement('button');
         fab.type = 'button';
         fab.id = 'mdjMobileMenuFab';
