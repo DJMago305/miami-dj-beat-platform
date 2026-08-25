@@ -665,7 +665,23 @@
             height: 140px !important;
             width: auto !important;
         }
-        @media (max-width: 768px) {
+        /* max-width:600px Y pointer:coarse — NO max-width:768px a secas.
+           Bajar el corte a 767px no alcanzaba: medido en vivo, #mainNav (la
+           barra grande) sigue con tamaño real hasta bien por debajo de
+           768px (592px de ancho todavía a 640px de ventana) porque este
+           archivo ya tiene, en otro sitio, la decisión correcta y
+           documentada del PO (2026-08-20): "la hamburguesa es EXCLUSIVA DE
+           TELÉFONO — las tablets se quedan con la barra completa, la misma
+           de escritorio". ESE corte real es 600px + pointer:coarse (ver
+           header-unified.css, bloque "CORTE HIBRIDO · ANCHO Y PUNTERO
+           TACTIL"): 600px separa telefono de tablet, y pointer:coarse deja
+           fuera a un portátil con ventana angosta, que debe quedarse con la
+           barra deslizable, no con la hamburguesa. Este FAB usaba un umbral
+           distinto (768px, sin condición de puntero) — el desacuerdo entre
+           los dos era la causa real del amontonamiento: ambos sistemas se
+           creían dueños del mismo rango de anchos. Se iguala aquí al mismo
+           corte, no se inventa uno nuevo. */
+        @media (max-width: 600px) and (pointer: coarse) {
             .mdj-mobile-menu-fab { display: flex; }
             .mdj-mobile-brand-fab { display: flex; }
             /* El buscador del header se mueve por JS a la franja flotante en modo
