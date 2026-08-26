@@ -246,8 +246,18 @@
       emit('onState','idle');
     }
 
+    /* Modo de enfoque: inyecta contexto a media sesion via session.update,
+       el mismo evento que la Realtime API usa para fijar 'instructions' al
+       arrancar. No reinicia la conexion ni pierde el hilo de la conversacion
+       -- solo cambia lo que ELIXIS tiene en mente para el siguiente turno. */
+    function actualizarContexto(instrucciones){
+      if(!dc || dc.readyState!=='open') return false;
+      dc.send(JSON.stringify({ type:'session.update', session:{ instructions:String(instrucciones||'') } }));
+      return true;
+    }
+
     window.addEventListener('beforeunload', liquidar);
-    return { start:start, stop:stop, activa:function(){ return !!pc; } };
+    return { start:start, stop:stop, activa:function(){ return !!pc; }, actualizarContexto:actualizarContexto };
   }
 
   window.ElixisVoiceSession = { crear:crear, ESTADOS:ESTADOS };

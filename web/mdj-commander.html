@@ -26,6 +26,7 @@
 })();
 </script>
 <script src="./supabase-config.js?v=elixis-commander"></script>
+<script src="./js/elixis-swipe-carousel.js?v=20260826-carrusel-3-pantallas"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
 <style>
   /* ═══════════ MDJ COMMANDER · mobile executive · dark premium ═══════════ */
@@ -450,6 +451,23 @@
   /* boca/energia real: mientras hay audio real de ELIXIS (RT.latir -> --voz),
      el bamboleo fijo de "talk" se apaga y manda la amplitud real */
   .avatar-stage.speaking.voz-activa .avatar-fig{animation:none;transform:translateY(calc(var(--voz,0) * -3.5px)) scale(calc(1 + var(--voz,0) * 0.02))}
+
+  /* Carrusel de 3 pantallas del modo voz (Enfoque / Avatar / Hilos) --
+     misma mecanica y mismas clases que el carrusel de staff.html, aqui
+     dentro de .pad-centro en vez de la rejilla de .ew-grid. */
+  .ew-carrusel{position:relative;overflow:hidden;width:100%;flex:1;min-height:0;touch-action:pan-y;}
+  .ew-carrusel-pista{display:flex;width:300%;height:100%;}
+  .ew-pantalla{width:33.3333%;height:100%;box-sizing:border-box;display:flex;flex-direction:column;overflow-y:auto;padding:0 6px;}
+  .ew-pantalla::-webkit-scrollbar{display:none}
+  .ew-dots{display:flex;justify-content:center;gap:8px;padding:10px 0 4px;}
+  .ew-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.22);border:none;padding:0;cursor:pointer;}
+  .ew-dot.activo{background:var(--gold);}
+  .ew-enfoque{display:flex;flex-wrap:wrap;align-content:center;justify-content:center;gap:16px;flex:1;}
+  .ew-enfoque-item{display:flex;flex-direction:column;align-items:center;gap:5px;width:70px;cursor:pointer;-webkit-tap-highlight-color:transparent;background:none;border:none;padding:0;font-family:inherit;}
+  .ew-enfoque-icono{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:22px;background:rgba(255,255,255,.05);border:2px solid rgba(255,255,255,.14);transition:border-color .25s,box-shadow .25s;}
+  .ew-enfoque-icono.activo{border:2px solid rgba(234,179,8,0.5);box-shadow:0 0 14px rgba(234,179,8,0.5);}
+  .ew-enfoque-item .l{font-size:9.5px;letter-spacing:.03em;color:var(--muted);text-align:center}
   /* ACCESIBILIDAD — el unico hueco real de la capa reactiva.
      La regla global de arriba (animation:none, transition:none) ya apaga el
      parpadeo y el bamboleo `talk`, y FX.reduce ya impide que arranque el bucle
@@ -1263,20 +1281,54 @@
         }
       } else {
         /* El saludo "Hola, soy ELIXIS, tu agente ejecutivo / Que necesitas que
-           haga?" se elimino por decision del PO. La cara ya dice quien es. */
-        var greet='';
+           haga?" se elimino por decision del PO. La cara ya dice quien es.
+           Ahora la pantalla no es una sola vista: es un carrusel de 3 --
+           Modo Enfoque / Avatar & Core / Hilos & Transcripcion -- que se
+           recorre con el dedo (misma mecanica que staff.html). */
         v.style.removeProperty('display'); v.style.removeProperty('flex-direction');
-        v.innerHTML='<div class="pad fade-anim pad-centro">'+avatarHTML+'<div id="cmdBody"></div></div>';
+        v.innerHTML='<div class="pad fade-anim pad-centro" style="display:flex;flex-direction:column;min-height:100%">'+
+          '<div class="ew-carrusel" id="mcCarrusel"><div class="ew-carrusel-pista">'+
+            '<div class="ew-pantalla">'+
+              '<div class="ew-enfoque" id="mcEnfoque">'+
+                '<button type="button" class="ew-enfoque-item" data-modo="correo"><span class="ew-enfoque-icono">✉️</span><span class="l">Correo</span></button>'+
+                '<button type="button" class="ew-enfoque-item" data-modo="legal"><span class="ew-enfoque-icono">⚖️</span><span class="l">Legal</span></button>'+
+                '<button type="button" class="ew-enfoque-item" data-modo="distribucion"><span class="ew-enfoque-icono">🎵</span><span class="l">Distribución</span></button>'+
+                '<button type="button" class="ew-enfoque-item" data-modo="eventos"><span class="ew-enfoque-icono">📅</span><span class="l">Eventos</span></button>'+
+                '<button type="button" class="ew-enfoque-item" data-modo="general"><span class="ew-enfoque-icono">🌐</span><span class="l">General</span></button>'+
+              '</div>'+
+            '</div>'+
+            '<div class="ew-pantalla" style="align-items:center;justify-content:center">'+avatarHTML+'</div>'+
+            '<div class="ew-pantalla" id="cmdBody">'+
+              /* El motor ya vivia dentro; lo que faltaba era donde verlo.
+                 Estado de la conversacion + lo que ELIXIS va diciendo. */
+              '<div class="convo-state" id="convoState"></div>'+
+              '<div class="convo" id="convo"></div>'+
+            '</div>'+
+          '</div></div>'+
+          '<div class="ew-dots">'+
+            '<button type="button" class="ew-dot" aria-label="Modo Enfoque"></button>'+
+            '<button type="button" class="ew-dot" aria-label="Avatar"></button>'+
+            '<button type="button" class="ew-dot" aria-label="Hilos"></button>'+
+          '</div>'+
+        '</div>';
         body=$('#cmdBody');
-        body.innerHTML=greet+
-          /* Solo el avatar y su microfono. Los dos botones laterales se
-             retiraron por decision del PO: la pantalla es la presencia de
-             ELIXIS, no un panel de mandos. El conmutador a texto sigue vivo
-             en el modo texto, para no dejar a nadie atrapado. */
-          /* El motor ya vivia dentro; lo que faltaba era donde verlo.
-             Estado de la conversacion + lo que ELIXIS va diciendo. */
-          '<div class="convo-state" id="convoState"></div>'+
-          '<div class="convo" id="convo"></div>';
+        if(window.ElixisSwipeCarousel){ var mcC=$('#mcCarrusel'); if(mcC) window.ElixisSwipeCarousel.crear(mcC, {inicio:1}); }
+        var mcE=$('#mcEnfoque');
+        if(mcE) mcE.querySelectorAll('[data-modo]').forEach(function(b){
+          b.onclick=function(){
+            mcE.querySelectorAll('.ew-enfoque-icono').forEach(function(i){ i.classList.remove('activo'); });
+            b.querySelector('.ew-enfoque-icono').classList.add('activo');
+            var MC_CONTEXTOS={
+              correo:'Modo Correo: ayuda a redactar o resumir correspondencia con clientes/DJs. Aun no puedes enviar correos de verdad, solo redactar el contenido.',
+              legal:'Modo Legal Artístico: prioriza consultas sobre contratos, W-9 y clausulas del roster.',
+              distribucion:'Modo Música & Distribución: prioriza consultas sobre catalogo, licencias y distribucion musical.',
+              eventos:'Modo Eventos: prioriza consultas sobre agenda, cotizaciones y disponibilidad de DJs.',
+              general:'Modo General: sin foco especifico, atiende cualquier consulta operativa.'
+            };
+            var aplicado = RT.activa() && RT.actualizarContexto(MC_CONTEXTOS[b.getAttribute('data-modo')]||MC_CONTEXTOS.general);
+            if(!aplicado) rotulo(T('Modo elegido · activa la voz para aplicarlo','Mode chosen · start voice to apply it'));
+          };
+        });
       }
       /* El teclado de la barra superior enciende y apaga el modo escritura.
          Al entrar, si habia sesion de voz viva, se cuelga: escribir y hablar
@@ -1684,7 +1736,16 @@
     }
 
     window.addEventListener('beforeunload', liquidar);
-    return { start:start, stop:stop, activa:function(){ return !!pc; } };
+    /* Modo de enfoque: mismo mecanismo que el modulo compartido de
+       staff.html (elixis-voice-session.js) -- session.update a media
+       sesion, sin reiniciar la llamada. */
+    function actualizarContexto(instrucciones){
+      if(!dc || dc.readyState!=='open') return false;
+      dc.send(JSON.stringify({ type:'session.update', session:{ instructions:String(instrucciones||'') } }));
+      return true;
+    }
+
+    return { start:start, stop:stop, activa:function(){ return !!pc; }, actualizarContexto:actualizarContexto };
   })();
 
   /* continuous dialogue: the agent keeps listening & answering until the human ends it */
