@@ -39,6 +39,7 @@
   </script>
   <script src="./supabase-config.js?v=20260814-bfi"></script>
   <script src="./js/elixis-voice-session.js?v=20260826-workspace-nativo"></script>
+  <script src="./js/elixis-swipe-carousel.js?v=20260826-carrusel-3-pantallas"></script>
   <!-- QR: misma librería que el perfil (qrcodejs) para generar el código nativo -->
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
 
@@ -375,13 +376,34 @@
     #view-elixis-native{
       --gold-glow:rgba(197,160,89,.55);
       height:100%; display:flex; flex-direction:column; gap:14px; padding:16px; overflow:hidden;box-sizing:border-box;}
-    .ew-grid{flex:1; min-height:0; display:grid; grid-template-columns:220px 1fr 240px; gap:14px;}
-    @media (max-width:980px){ .ew-grid{grid-template-columns:1fr; grid-auto-rows:auto; overflow-y:auto;} }
-    .ew-col{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:12px; min-height:0; display:flex; flex-direction:column;}
+    /* Carrusel de 3 pantallas (Enfoque / Avatar / Hilos): la MISMA pista para
+       movil y escritorio -- en escritorio el media query de abajo neutraliza
+       el transform/ancho y la convierte en una rejilla de 3 columnas fija,
+       sin duplicar ningun nodo (nada de dos avatares con el mismo id). */
+    .ew-grid{flex:1; min-height:0; position:relative; overflow:hidden; border-radius:14px;}
+    .ew-carrusel-pista{display:flex; width:300%; height:100%; touch-action:pan-y;}
+    .ew-pantalla{width:33.3333%; height:100%; box-sizing:border-box; padding:0 5px; overflow-y:auto;}
+    .ew-pantalla::-webkit-scrollbar{display:none}
+    @media (min-width:981px){
+      .ew-carrusel-pista{display:grid !important; grid-template-columns:220px 1fr 240px; width:100% !important; transform:none !important; gap:14px;}
+      .ew-pantalla{width:auto; padding:0;}
+      .ew-dots{display:none;}
+    }
+    .ew-col{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:12px; min-height:0; height:100%; box-sizing:border-box; display:flex; flex-direction:column;}
     .ew-col.ew-mid{align-items:center;}
     .ew-col h4{font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--gold); margin:0 0 10px; font-weight:700;}
     .ew-col-body{flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:8px;}
     .ew-col-body::-webkit-scrollbar{display:none}
+    .ew-dots{display:flex; justify-content:center; gap:8px; padding-top:10px;}
+    .ew-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.22);border:none;padding:0;cursor:pointer;}
+    .ew-dot.activo{background:var(--gold);}
+    .ew-enfoque{display:flex; flex-wrap:wrap; align-content:center; justify-content:center; gap:18px; height:100%;}
+    .ew-enfoque-item{display:flex;flex-direction:column;align-items:center;gap:5px;width:74px;cursor:pointer;-webkit-tap-highlight-color:transparent;background:none;border:none;padding:0;font-family:inherit;}
+    .ew-enfoque-icono{width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+      font-size:24px;background:rgba(255,255,255,.04);border:2px solid rgba(255,255,255,.14);transition:border-color .25s,box-shadow .25s;}
+    .ew-enfoque-icono.activo{border:2px solid rgba(234,179,8,0.5); box-shadow:0 0 14px rgba(234,179,8,0.5);}
+    .ew-enfoque-item .l{font-size:10px;letter-spacing:.03em;color:rgba(255,255,255,.55);text-align:center;}
+    .ew-proceso-mini{font-size:11px;color:rgba(255,255,255,.5);margin-bottom:8px;}
     .avatar-stage{position:relative;width:min(230px,80%);height:220px;margin:4px auto 10px;}
     .avatar-fx{position:absolute;inset:0;width:100%;height:100%;z-index:1}
     .avatar-baseglow{position:absolute;left:50%;bottom:5%;transform:translateX(-50%);width:74%;height:44%;z-index:2;
@@ -846,25 +868,39 @@
             <div class="ew-metrica"><div class="n" id="ewClientesN">–</div><div class="l">Clientes maestros</div></div>
             <div class="ew-metrica"><div class="n" id="ewEventosN">–</div><div class="l">Eventos en calendario</div></div>
           </div>
-          <div class="ew-grid">
-            <div class="ew-col">
-              <h4>Proceso</h4>
-              <div class="ew-col-body" id="ewProceso"><div class="ew-vacio">Sin actividad todavía.</div></div>
-            </div>
-            <div class="ew-col ew-mid">
-              <div class="avatar-stage idle" id="ewAvatarStage">
-                <canvas class="avatar-fx" id="ewAvatarFX"></canvas>
-                <div class="avatar-baseglow"></div>
-                <img class="avatar-fig" src="./assets/elixis-avatar.webp" alt="ELIXIS">
-                <div class="avatar-eyes"><i></i><i></i></div>
+          <div class="ew-grid" id="ewCarrusel">
+            <div class="ew-carrusel-pista">
+              <div class="ew-pantalla ew-col">
+                <h4>Modo Enfoque</h4>
+                <div class="ew-enfoque" id="ewEnfoque">
+                  <button type="button" class="ew-enfoque-item" data-modo="correo"><span class="ew-enfoque-icono">✉️</span><span class="l">Correo</span></button>
+                  <button type="button" class="ew-enfoque-item" data-modo="legal"><span class="ew-enfoque-icono">⚖️</span><span class="l">Legal</span></button>
+                  <button type="button" class="ew-enfoque-item" data-modo="distribucion"><span class="ew-enfoque-icono">🎵</span><span class="l">Distribución</span></button>
+                  <button type="button" class="ew-enfoque-item" data-modo="eventos"><span class="ew-enfoque-icono">📅</span><span class="l">Eventos</span></button>
+                  <button type="button" class="ew-enfoque-item" data-modo="general"><span class="ew-enfoque-icono">🌐</span><span class="l">General</span></button>
+                </div>
               </div>
-              <div class="ew-estado" id="ewEstado">Inactivo</div>
-              <button class="ew-mic" id="ewMicBtn" type="button">Activar voz</button>
+              <div class="ew-pantalla ew-col ew-mid">
+                <div class="avatar-stage idle" id="ewAvatarStage">
+                  <canvas class="avatar-fx" id="ewAvatarFX"></canvas>
+                  <div class="avatar-baseglow"></div>
+                  <img class="avatar-fig" src="./assets/elixis-avatar.webp" alt="ELIXIS">
+                  <div class="avatar-eyes"><i></i><i></i></div>
+                </div>
+                <div class="ew-estado" id="ewEstado">Inactivo</div>
+                <button class="ew-mic" id="ewMicBtn" type="button">Activar voz</button>
+              </div>
+              <div class="ew-pantalla ew-col">
+                <h4>Hilos &amp; Transcripción</h4>
+                <div class="ew-col-body" id="ewProceso"><div class="ew-vacio">Sin actividad todavía.</div></div>
+                <div class="ew-col-body" id="ewTranscripcion"><div class="ew-vacio">La conversación aparecerá aquí.</div></div>
+              </div>
             </div>
-            <div class="ew-col">
-              <h4>Transcripción</h4>
-              <div class="ew-col-body" id="ewTranscripcion"><div class="ew-vacio">La conversación aparecerá aquí.</div></div>
-            </div>
+          </div>
+          <div class="ew-dots">
+            <button type="button" class="ew-dot" aria-label="Modo Enfoque"></button>
+            <button type="button" class="ew-dot" aria-label="Avatar"></button>
+            <button type="button" class="ew-dot" aria-label="Hilos"></button>
           </div>
           <div class="ew-dock" id="ewDock">
             <button type="button" data-ir="agenda">Agenda</button>
@@ -1632,6 +1668,32 @@
         if(btn) btn.onclick=function(){ if(ewSesion.activa()) ewSesion.stop(); else ewSesion.start(); };
         var dock=el('ewDock');
         if(dock) dock.querySelectorAll('[data-ir]').forEach(function(b){ b.onclick=function(){ showView(b.getAttribute('data-ir')); }; });
+
+        /* Carrusel de 3 pantallas: arranca centrado en el Avatar (indice 1). */
+        var carrusel=el('ewCarrusel');
+        if(carrusel && window.ElixisSwipeCarousel) window.ElixisSwipeCarousel.crear(carrusel, {inicio:1});
+
+        /* Modo Enfoque: cada icono inyecta contexto a la sesion de voz YA
+           ABIERTA (session.update) -- no abre ni cierra la llamada por si
+           solo. Si no hay sesion activa, solo marca el modo elegido. */
+        var EW_CONTEXTOS = {
+          correo: 'Modo Correo: ayuda a redactar o resumir correspondencia con clientes/DJs. Aun no puedes enviar correos de verdad, solo redactar el contenido.',
+          legal: 'Modo Legal Artístico: prioriza consultas sobre contratos, W-9 y cláusulas del roster.',
+          distribucion: 'Modo Música & Distribución: prioriza consultas sobre catálogo, licencias y distribución musical.',
+          eventos: 'Modo Eventos: prioriza consultas sobre agenda, cotizaciones y disponibilidad de DJs.',
+          general: 'Modo General: sin foco específico, atiende cualquier consulta operativa.'
+        };
+        var enfoque=el('ewEnfoque');
+        if(enfoque) enfoque.querySelectorAll('[data-modo]').forEach(function(b){
+          b.onclick=function(){
+            enfoque.querySelectorAll('.ew-enfoque-icono').forEach(function(i){ i.classList.remove('activo'); });
+            b.querySelector('.ew-enfoque-icono').classList.add('activo');
+            var texto = EW_CONTEXTOS[b.getAttribute('data-modo')] || EW_CONTEXTOS.general;
+            var aplicado = ewSesion.activa() && ewSesion.actualizarContexto(texto);
+            var lbl=el('ewEstado');
+            if(lbl && !aplicado) lbl.textContent = 'Modo elegido · activa la voz para aplicarlo';
+          };
+        });
 
         /* métricas rápidas — mismas tablas/RPC del Calendario Maestro (PR #283) */
         try{
