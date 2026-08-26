@@ -450,6 +450,16 @@
   /* boca/energia real: mientras hay audio real de ELIXIS (RT.latir -> --voz),
      el bamboleo fijo de "talk" se apaga y manda la amplitud real */
   .avatar-stage.speaking.voz-activa .avatar-fig{animation:none;transform:translateY(calc(var(--voz,0) * -3.5px)) scale(calc(1 + var(--voz,0) * 0.02))}
+  /* ACCESIBILIDAD — el unico hueco real de la capa reactiva.
+     La regla global de arriba (animation:none, transition:none) ya apaga el
+     parpadeo y el bamboleo `talk`, y FX.reduce ya impide que arranque el bucle
+     de la red de particulas. Pero ESTO no es una animacion: es un transform
+     gobernado por --voz, una variable que latir() reescribe 60 veces por
+     segundo. Ninguna de las dos defensas anteriores lo detiene, asi que el
+     avatar seguia oscilando con quien pidio que nada se moviera. */
+  @media (prefers-reduced-motion:reduce){
+    .avatar-stage.speaking.voz-activa .avatar-fig{transform:none !important}
+  }
   /* immersive voice-conversation mode: only the agent + particles + subtitles */
   .voice-live{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100% - 2px);padding-top:4px}
   .avatar-stage.big{width:min(350px,90vw);height:min(390px,48vh)}
