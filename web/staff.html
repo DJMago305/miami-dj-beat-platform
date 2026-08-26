@@ -676,6 +676,30 @@
       cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.4);}
     .mdj-incident-fab:hover{border-color:var(--gold);background:rgba(197,160,89,.12);}
     .mdj-incident-fab svg{width:20px;height:20px;display:block;}
+    /* Campana de notificaciones (contratos pendientes de firma) — inyectada
+       igual que el FAB de incidentes de arriba: independiente, fixed,
+       jamás dentro de #staff-topnav. La rejilla/tira de arriba y su pintado
+       por rol (paintStaffTopnav/mountOwner/mountStub) no se tocan. */
+    .mdj-notif-bell{position:fixed;top:14px;right:18px;z-index:9500;}
+    .mdj-notif-bell-btn{position:relative;width:38px;height:38px;border-radius:50%;
+      display:inline-flex;align-items:center;justify-content:center;font-size:17px;
+      background:rgba(10,14,22,.88);border:1px solid var(--line);color:var(--gold);
+      cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.4);}
+    .mdj-notif-bell-btn:hover{border-color:var(--gold);background:rgba(197,160,89,.12);}
+    .mdj-notif-bell-badge{position:absolute;top:-3px;right:-3px;min-width:16px;height:16px;padding:0 4px;
+      border-radius:999px;background:var(--gold);color:#0c1018;font-size:10px;font-weight:800;
+      display:flex;align-items:center;justify-content:center;line-height:1;}
+    .mdj-notif-bell-dropdown{position:absolute;top:46px;right:0;width:300px;max-height:360px;overflow-y:auto;
+      background:#0c1018;border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.5);
+      padding:10px;box-sizing:border-box;}
+    .mdj-notif-bell-title{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,.5);
+      padding:2px 6px 8px;border-bottom:1px solid var(--line);margin-bottom:6px;}
+    .mdj-notif-bell-item{display:flex;flex-direction:column;gap:2px;padding:8px 6px;border-radius:8px;
+      text-decoration:none;color:rgba(255,255,255,.88);}
+    .mdj-notif-bell-item:hover{background:rgba(197,160,89,.1);}
+    .mdj-notif-bell-item-who{font-size:12.5px;font-weight:600;}
+    .mdj-notif-bell-item-meta{font-size:10.5px;color:rgba(255,255,255,.5);}
+    .mdj-notif-bell-empty{padding:14px 6px;font-size:12px;color:rgba(255,255,255,.5);text-align:center;}
     .mdj-incident-backdrop{display:none;position:fixed;inset:0;z-index:9600;
       background:rgba(4,6,10,.72);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:20px;}
     .mdj-incident-backdrop.open{display:flex;}
@@ -1041,7 +1065,7 @@
                para que el sidebar siga visible, no como vista aparte. -->
           <div class="sc3-panel" id="sc3-legal">
             <div class="sc3-loading" id="legal-loading"><span class="acc-spin"></span> Cargando Bóveda Legal…</div>
-            <iframe id="legal-frame" class="sc3-frame" data-src="./contracts-engine.html?v=20260824-w9footer" aria-label="Bóveda Legal" loading="lazy"></iframe>
+            <iframe id="legal-frame" class="sc3-frame" data-src="./contracts-engine.html?v=20260826-docdock" aria-label="Bóveda Legal" loading="lazy" allow="fullscreen" allowfullscreen></iframe>
           </div>
         </div><!-- /staff-content3 -->
        </div><!-- /staff-shell -->
@@ -1299,9 +1323,73 @@
       });
     }
 
+    /* ── Campana de notificaciones (contratos pendientes de firma) ──
+       Mismo patrón que mountIncidentReporter arriba: elemento propio,
+       inyectado a document.body, fixed — nunca dentro de #staff-topnav ni
+       de sus funciones de pintado por rol (paintStaffTopnav/mountOwner/
+       mountStub), que quedan intactas. Consulta única al montar (sin
+       polling ni websockets) contra contract_sends — ver
+       supabase/scripts/20260825_contract_sends_pending_flow.sql. */
+    function mountNotifBell(sb){
+      if(el('mdj-notif-bell')) return;
+      var wrap = document.createElement('div');
+      wrap.id = 'mdj-notif-bell';
+      wrap.className = 'mdj-notif-bell';
+      wrap.innerHTML =
+        '<button type="button" id="mdj-notif-bell-btn" class="mdj-notif-bell-btn" ' +
+          'aria-label="Contratos pendientes de firma" aria-expanded="false" title="Contratos pendientes de firma">' +
+          '🔔<span id="mdj-notif-bell-badge" class="mdj-notif-bell-badge" hidden>0</span>' +
+        '</button>' +
+        '<div id="mdj-notif-bell-dropdown" class="mdj-notif-bell-dropdown" hidden>' +
+          '<div class="mdj-notif-bell-title">Contratos pendientes de firma</div>' +
+          '<div id="mdj-notif-bell-list" class="mdj-notif-bell-list"></div>' +
+        '</div>';
+      document.body.appendChild(wrap);
+
+      var btn = el('mdj-notif-bell-btn'), dd = el('mdj-notif-bell-dropdown');
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        var willOpen = dd.hidden;
+        dd.hidden = !willOpen;
+        btn.setAttribute('aria-expanded', String(willOpen));
+      });
+      document.addEventListener('click', function(e){
+        if(!wrap.contains(e.target)) dd.hidden = true;
+      });
+
+      loadPendingContracts(sb);
+    }
+    async function loadPendingContracts(sb){
+      var badge = el('mdj-notif-bell-badge'), list = el('mdj-notif-bell-list');
+      try{
+        var res = await sb.from('contract_sends')
+          .select('id, recipient, recipient_name, contract_type, sent_at')
+          .eq('status', 'PENDING')
+          .order('sent_at', { ascending: false });
+        var rows = (res && res.data) || [];
+        if(rows.length){
+          badge.hidden = false;
+          badge.textContent = String(rows.length);
+          list.innerHTML = rows.map(function(r){
+            var who = (r.recipient_name || r.recipient || 'Destinatario sin nombre').replace(/</g, '&lt;');
+            var when = r.sent_at ? new Date(r.sent_at).toLocaleDateString('es-US') : '—';
+            return '<a class="mdj-notif-bell-item" href="./staff.html?vista=gobernanza">' +
+              '<span class="mdj-notif-bell-item-who">' + who + '</span>' +
+              '<span class="mdj-notif-bell-item-meta">' + when + '</span></a>';
+          }).join('');
+        } else {
+          badge.hidden = true;
+          list.innerHTML = '<div class="mdj-notif-bell-empty">Sin contratos pendientes de firma</div>';
+        }
+      }catch(e){
+        list.innerHTML = '<div class="mdj-notif-bell-empty">Sin contratos pendientes de firma</div>';
+      }
+    }
+
     function initStaff(sb, role, profile){
       MDJ_ROL_ACTUAL = role;
       mountIncidentReporter(sb); // cualquier rol de staff — ver función más abajo
+      mountNotifBell(sb); // campana de contratos pendientes — mismo patrón, ver función más abajo
       // badge + nombre: viven en el HERO. Estos nodos ya no existen en la barra
       // (eran un duplicado del mismo dato); las guardas los dejan pasar.
       var badge=el('role-badge'), nm=el('staff-name');
