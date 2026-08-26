@@ -38,6 +38,7 @@
   })();
   </script>
   <script src="./supabase-config.js?v=20260814-bfi"></script>
+  <script src="./js/elixis-voice-session.js?v=20260826-workspace-nativo"></script>
   <!-- QR: misma librería que el perfil (qrcodejs) para generar el código nativo -->
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
 
@@ -365,6 +366,62 @@
       margin-top:0;
       height:calc(100vh - 84px);
       overflow:hidden;}
+
+    /* ═══ ELIXIS WORKSPACE NATIVO ═══════════════════════════════════════
+       Avatar transportado de mdj-commander.html, proceso+transcripcion
+       transportados de elixis-console.html (mismo lenguaje visual pz-*),
+       consolidados sobre elixis-voice-session.js. El iframe viejo
+       (#elixis-frame) se retira en el propio HTML de esta vista. */
+    #view-elixis-native{
+      --gold-glow:rgba(197,160,89,.55);
+      height:100%; display:flex; flex-direction:column; gap:14px; padding:16px; overflow:hidden;box-sizing:border-box;}
+    .ew-grid{flex:1; min-height:0; display:grid; grid-template-columns:220px 1fr 240px; gap:14px;}
+    @media (max-width:980px){ .ew-grid{grid-template-columns:1fr; grid-auto-rows:auto; overflow-y:auto;} }
+    .ew-col{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:12px; min-height:0; display:flex; flex-direction:column;}
+    .ew-col.ew-mid{align-items:center;}
+    .ew-col h4{font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--gold); margin:0 0 10px; font-weight:700;}
+    .ew-col-body{flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:8px;}
+    .ew-col-body::-webkit-scrollbar{display:none}
+    .avatar-stage{position:relative;width:min(230px,80%);height:220px;margin:4px auto 10px;}
+    .avatar-fx{position:absolute;inset:0;width:100%;height:100%;z-index:1}
+    .avatar-baseglow{position:absolute;left:50%;bottom:5%;transform:translateX(-50%);width:74%;height:44%;z-index:2;
+      background:radial-gradient(closest-side,var(--gold-glow),transparent 72%);filter:blur(11px);opacity:.6;transition:.45s ease}
+    .avatar-fig{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;z-index:3;
+      filter:drop-shadow(0 10px 26px rgba(0,0,0,.7));animation:ew-breathe 5.6s ease-in-out infinite}
+    @keyframes ew-breathe{50%{transform:translateY(-3px) scale(1.008)}}
+    .avatar-stage.listening .avatar-baseglow{opacity:1;width:90%;height:56%}
+    .avatar-stage.understanding .avatar-baseglow,.avatar-stage.executing .avatar-baseglow{opacity:1;background:radial-gradient(closest-side,rgba(199,123,255,.42),transparent 72%)}
+    .avatar-stage.speaking .avatar-fig{animation:ew-talk 1.1s ease-in-out infinite}
+    @keyframes ew-talk{25%{transform:translateY(-2px)}60%{transform:translateY(1px) scale(1.006)}}
+    .avatar-eyes{position:absolute;inset:0;width:100%;height:100%;z-index:4;pointer-events:none}
+    .avatar-eyes i{position:absolute;top:34.5%;width:7%;height:5.5%;border-radius:50%;
+      background:radial-gradient(closest-side,rgba(58,36,26,.92),rgba(58,36,26,.55) 65%,transparent);
+      transform:translate(-50%,-50%) scaleY(0);transform-origin:center;filter:blur(.5px)}
+    .avatar-eyes i:first-child{left:40.4%}
+    .avatar-eyes i:last-child{left:59.6%}
+    .avatar-stage.parpadeo .avatar-eyes i{animation:ew-parpadeo .18s ease-in-out}
+    @keyframes ew-parpadeo{0%,100%{transform:translate(-50%,-50%) scaleY(0)}45%,55%{transform:translate(-50%,-50%) scaleY(1)}}
+    .avatar-stage.speaking.voz-activa .avatar-fig{animation:none;transform:translateY(calc(var(--voz,0) * -3.5px)) scale(calc(1 + var(--voz,0) * 0.02))}
+    .ew-estado{text-align:center;font-family:var(--mono,monospace);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);margin-top:2px;}
+    .ew-mic{display:block;margin:12px auto 0;padding:10px 22px;border-radius:999px;border:none;cursor:pointer;
+      background:linear-gradient(180deg,var(--gold-lt),var(--gold));color:#1a1405;font-weight:700;font-size:13px;}
+    .ew-mic.on{background:#c0392b;color:#fff;}
+    .pz{padding:8px 10px;border-radius:10px;background:var(--bg);border:1px solid var(--line);font-size:12px;}
+    .pz-n{display:flex;align-items:center;gap:6px;font-family:var(--mono,monospace);font-size:10.5px;letter-spacing:.08em;color:rgba(255,255,255,.55);text-transform:uppercase;}
+    .pz-n .punto{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.35);flex:none}
+    .pz.ok .pz-n .punto{background:#3ecb7f;box-shadow:0 0 8px #3ecb7f}
+    .pz.mal .pz-n .punto{background:#e05252;box-shadow:0 0 8px #e05252}
+    .ew-vacio{font-size:12px;color:rgba(255,255,255,.4);padding:6px 2px;}
+    .ew-linea{font-size:12.5px;line-height:1.5;color:rgba(255,255,255,.85);}
+    .ew-linea b{color:var(--gold);}
+    .ew-linea.yo{color:rgba(255,255,255,.55);}
+    .ew-metricas{display:flex;gap:10px;flex-wrap:wrap;}
+    .ew-metrica{flex:1;min-width:110px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;}
+    .ew-metrica .n{font-size:22px;font-weight:800;color:var(--gold);font-family:var(--mono,monospace);}
+    .ew-metrica .l{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-top:2px;}
+    .ew-dock{display:flex;gap:8px;flex-wrap:wrap;}
+    .ew-dock button{padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:#fff;font-size:12.5px;cursor:pointer;font-weight:600;}
+    .ew-dock button:hover{border-color:var(--gold);}
     /* El riel lateral arrancaba justo donde acaba la banda: se tocaban y la
        marca parecia apoyada encima. Un respiro de 14px los separa. */
     /* LA BANDA SE RESERVABA DOS VECES, tambien aqui (PO 2026-08-22: «no
@@ -784,7 +841,38 @@
     <!-- ═══ Módulo OWNER (Matrix Principal) — solo rol owner ═══ -->
     <div id="module-owner" class="staff-module">
       <section id="view-elixis" class="staff-view">
-        <iframe id="elixis-frame" data-src="./elixis-console.html" title="ELIXIS — consola" referrerpolicy="same-origin"></iframe>
+        <div id="view-elixis-native">
+          <div class="ew-metricas" id="ewMetricas">
+            <div class="ew-metrica"><div class="n" id="ewClientesN">–</div><div class="l">Clientes maestros</div></div>
+            <div class="ew-metrica"><div class="n" id="ewEventosN">–</div><div class="l">Eventos en calendario</div></div>
+          </div>
+          <div class="ew-grid">
+            <div class="ew-col">
+              <h4>Proceso</h4>
+              <div class="ew-col-body" id="ewProceso"><div class="ew-vacio">Sin actividad todavía.</div></div>
+            </div>
+            <div class="ew-col ew-mid">
+              <div class="avatar-stage idle" id="ewAvatarStage">
+                <canvas class="avatar-fx" id="ewAvatarFX"></canvas>
+                <div class="avatar-baseglow"></div>
+                <img class="avatar-fig" src="./assets/elixis-avatar.webp" alt="ELIXIS">
+                <div class="avatar-eyes"><i></i><i></i></div>
+              </div>
+              <div class="ew-estado" id="ewEstado">Inactivo</div>
+              <button class="ew-mic" id="ewMicBtn" type="button">Activar voz</button>
+            </div>
+            <div class="ew-col">
+              <h4>Transcripción</h4>
+              <div class="ew-col-body" id="ewTranscripcion"><div class="ew-vacio">La conversación aparecerá aquí.</div></div>
+            </div>
+          </div>
+          <div class="ew-dock" id="ewDock">
+            <button type="button" data-ir="agenda">Agenda</button>
+            <button type="button" data-ir="cashflow">Cash Flow</button>
+            <button type="button" data-ir="config">Config</button>
+            <button type="button" data-ir="gobernanza">Gobernanza</button>
+          </div>
+        </div>
       </section>
 
       <!-- ═══ Vista AGENDA — muestra staff-agenda.html DENTRO del portal (debajo del menú, como FINANCIERO). Archivo del tronco nuevo, independiente del viejo. ═══ -->
@@ -1422,6 +1510,144 @@
          aterrizar con ?vista=. Por eso marcaba «Staff» aunque el contenido
          fuese tu ficha. Se sincronizan las dos aqui, que es la unica forma de
          que no vuelvan a discrepar. */
+      /* ═══ ELIXIS WORKSPACE NATIVO ═══
+         Avatar+red de particulas transportados de mdj-commander.html;
+         proceso+transcripcion transportados de elixis-console.html;
+         motor de voz consolidado en elixis-voice-session.js (tercer
+         consumidor nuevo -- ninguno de los dos originales se toco). */
+      var ewFX = {canvas:null, ctx:null, W:0, H:0, intensity:0.8, target:0.8, hue:'gold', raf:null, pts:null, level:0, voiceLevel:0,
+        reduce:(window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches)};
+      var ewFXMAP = {idle:[0.95,'gold'], listening:[1.5,'gold'], transcribing:[1.3,'cyan'], understanding:[2.1,'magenta'],
+        confirmation:[1,'gold'], executing:[2.4,'magenta'], speaking:[1.5,'gold']};
+      function ewFxSize(){
+        var c=ewFX.canvas; if(!c) return;
+        var r=c.getBoundingClientRect(); var dpr=Math.min(2,window.devicePixelRatio||1);
+        ewFX.W=Math.max(60,r.width); ewFX.H=Math.max(60,r.height);
+        c.width=ewFX.W*dpr; c.height=ewFX.H*dpr; ewFX.ctx.setTransform(dpr,0,0,dpr,0,0);
+      }
+      function ewFxCol(a){ return ewFX.hue==='magenta' ? 'rgba(199,123,255,'+a+')' : ewFX.hue==='cyan' ? 'rgba(63,185,230,'+a+')' : 'rgba(197,160,89,'+a+')'; }
+      function ewMountFX(estado){
+        var c=el('ewAvatarFX'); if(!c) return;
+        ewFX.canvas=c; ewFX.ctx=c.getContext('2d'); ewFxSize();
+        var m=ewFXMAP[estado]||ewFXMAP.idle; ewFX.target=m[0]; ewFX.hue=m[1];
+        if(!ewFX.pts){ ewFX.pts=[]; for(var i=0;i<40;i++) ewFX.pts.push({x:Math.random()*ewFX.W,y:Math.random()*ewFX.H,
+          vx:(Math.random()-.5)*.32,vy:(Math.random()-.5)*.32,r:Math.random()*1.5+.7,ph:Math.random()*6.28,z:0.42+Math.random()*0.58}); }
+        if(ewFX.reduce){ ewFX.intensity=ewFX.target; ewFxDraw(); return; }
+        if(!ewFX.raf) ewFxLoop();
+      }
+      function ewFxDraw(){
+        var ctx=ewFX.ctx,c=ewFX.canvas; if(!ctx||!c||!document.body.contains(c)) return;
+        ewFX.intensity += (ewFX.target-ewFX.intensity)*0.05;
+        var lvl=ewFX.level=(ewFX.level||0)+((ewFX.voiceLevel||0)-(ewFX.level||0))*0.3;
+        var W=ewFX.W,H=ewFX.H,pts=ewFX.pts,inten=ewFX.intensity*(1+lvl*0.7);
+        ctx.clearRect(0,0,W,H);
+        for(var i=0;i<pts.length;i++){ var p=pts[i]; var pz=p.z||1; p.x+=p.vx*inten*pz; p.y+=p.vy*inten*pz;
+          if(p.x<-4)p.x+=W+8; if(p.x>W+4)p.x-=W+8; if(p.y<-4)p.y+=H+8; if(p.y>H+4)p.y-=H+8; }
+        var D=Math.min(W,H)*0.46*(1+lvl*0.14);
+        ctx.lineCap='round';
+        for(var i=0;i<pts.length;i++) for(var j=i+1;j<pts.length;j++){
+          var a=pts[i],b=pts[j],dx=a.x-b.x,dy=a.y-b.y,d=Math.sqrt(dx*dx+dy*dy);
+          if(d<D){ var k=1-d/D; var zz=((a.z||1)+(b.z||1))*0.5;
+            ctx.strokeStyle=ewFxCol((k*k*0.92*zz*Math.min(1.7,inten)*(1+lvl*0.9)).toFixed(3));
+            ctx.lineWidth=(0.7+k*1.8+lvl*0.6)*zz;
+            ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); }
+        }
+        for(var i=0;i<pts.length;i++){ var p=pts[i]; var pz=p.z||1;
+          var pr=(p.r+Math.sin(Date.now()/600+p.ph)*.3)*(1+lvl*1.05)*(0.55+pz*0.65);
+          ctx.fillStyle=ewFxCol((0.20*pz+lvl*0.16).toFixed(3)); ctx.beginPath(); ctx.arc(p.x,p.y,Math.max(.6,pr*2.9),0,6.283); ctx.fill();
+          ctx.fillStyle=ewFxCol(((0.42+pz*0.46)+lvl*.22).toFixed(3)); ctx.beginPath(); ctx.arc(p.x,p.y,Math.max(.4,pr),0,6.283); ctx.fill();
+        }
+      }
+      function ewFxLoop(){ ewFxDraw(); ewFX.raf=requestAnimationFrame(ewFxLoop); }
+      window.addEventListener('resize', function(){ if(ewFX.canvas && document.body.contains(ewFX.canvas)) ewFxSize(); });
+
+      function ewParpadear(){
+        var s=el('ewAvatarStage'); if(!s) return;
+        s.classList.add('parpadeo');
+        setTimeout(function(){ var s2=el('ewAvatarStage'); if(s2) s2.classList.remove('parpadeo'); }, 180);
+      }
+      function ewProgramarParpadeo(){ setTimeout(function(){ ewParpadear(); ewProgramarParpadeo(); }, 3000+Math.random()*3000); }
+      function ewEsc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m];}); }
+
+      var ewSesion = null, ewIniciado = false, ewTxt='';
+      async function iniciarWorkspaceElixis(){
+        if(ewIniciado) return; ewIniciado = true;
+        ewMountFX('idle');
+        ewProgramarParpadeo();
+
+        ewSesion = window.ElixisVoiceSession.crear({
+          getHeaders: async function(){
+            var sb=getSb(); var pub = window.MDB_SUPABASE_ANON_KEY || '';
+            var h={'Content-Type':'application/json'}; if(pub) h.apikey=pub;
+            var sess = sb ? (await sb.auth.getSession()).data.session : null;
+            h.Authorization = 'Bearer ' + (sess ? sess.access_token : pub);
+            return h;
+          },
+          getAudioEl: function(){
+            var a = el('ewAudio');
+            if(!a){ a=document.createElement('audio'); a.id='ewAudio'; a.autoplay=true; a.style.display='none'; document.body.appendChild(a); }
+            return a;
+          },
+          onState: function(estado){
+            var stage=el('ewAvatarStage'); if(stage) stage.className='avatar-stage '+estado;
+            var lbl=el('ewEstado');
+            if(lbl) lbl.textContent = ({idle:'Inactivo',listening:'Escuchando',transcribing:'Transcribiendo',
+              understanding:'Pensando',confirmation:'Confirmando',executing:'Ejecutando',speaking:'Hablando'})[estado] || estado;
+            ewMountFX(estado);
+            var btn=el('ewMicBtn'); if(btn){ btn.classList.toggle('on', estado!=='idle'); btn.textContent = estado==='idle' ? 'Activar voz' : 'Terminar'; }
+          },
+          onLevel: function(pulso){
+            ewFX.voiceLevel = pulso;
+            var stage=el('ewAvatarStage');
+            if(stage){ stage.style.setProperty('--voz', pulso.toFixed(3)); stage.classList.toggle('voz-activa', pulso>0.004); }
+          },
+          onTranscript: function(t){
+            var box=el('ewTranscripcion'); if(!box) return;
+            var vacio=box.querySelector('.ew-vacio'); if(vacio) vacio.remove();
+            if(t.reset){ ewSesion._fila=null; return; }
+            if(t.who==='yo'){
+              var d=document.createElement('div'); d.className='ew-linea yo'; d.textContent='Tú: '+t.text;
+              box.appendChild(d); box.scrollTop=box.scrollHeight; return;
+            }
+            if(t.start){
+              var f=document.createElement('div'); f.className='ew-linea'; f.innerHTML='<b>ELIXIS:</b> ';
+              box.appendChild(f); ewSesion._fila=f; ewTxt='';
+            }
+            if(ewSesion._fila && t.delta){ ewTxt += t.delta; ewSesion._fila.innerHTML='<b>ELIXIS:</b> '+ewEsc(ewTxt); }
+            box.scrollTop=box.scrollHeight;
+          },
+          onTool: function(info){
+            var box=el('ewProceso'); if(!box) return;
+            var vacio=box.querySelector('.ew-vacio'); if(vacio) vacio.remove();
+            var d=document.createElement('div'); d.className='pz '+(info.ok?'ok':'mal');
+            d.innerHTML='<div class="pz-n"><span class="punto"></span>'+ewEsc(info.nombre)+'</div>';
+            box.appendChild(d); box.scrollTop=box.scrollHeight;
+          },
+          onSystem: function(){ /* discreto: no necesita linea propia en este panel */ },
+          onError: function(txt){ console.warn('[ELIXIS workspace]', txt); },
+          onUnauthorized: function(){ location.replace('./login.html?next=staff.html'); }
+        });
+
+        var btn=el('ewMicBtn');
+        if(btn) btn.onclick=function(){ if(ewSesion.activa()) ewSesion.stop(); else ewSesion.start(); };
+        var dock=el('ewDock');
+        if(dock) dock.querySelectorAll('[data-ir]').forEach(function(b){ b.onclick=function(){ showView(b.getAttribute('data-ir')); }; });
+
+        /* métricas rápidas — mismas tablas/RPC del Calendario Maestro (PR #283) */
+        try{
+          var sb=getSb();
+          if(sb && sb.auth){
+            var sess=(await sb.auth.getSession()).data.session;
+            if(sess){
+              var rc = await sb.from('master_clients').select('id',{count:'exact',head:true});
+              if(!rc.error && rc.count!=null){ var cn=el('ewClientesN'); if(cn) cn.textContent=String(rc.count); }
+              var re = await sb.rpc('get_master_calendar_events');
+              if(!re.error){ var en=el('ewEventosN'); if(en) en.textContent=String((re.data||[]).length); }
+            }
+          }
+        }catch(e){ /* métrica opcional: si falla, se queda en "–" */ }
+      }
+
       function sincronizarTira(v){
         var bar=el('staff-topnav');
         if(!bar) return;
@@ -1439,7 +1665,7 @@
         sincronizarTira(v);
         var lbl=el('staff-section');
         if(lbl) lbl.textContent = v==='financiero' ? '◆ Financial Matrix IA' : v==='elixis' ? '◆ ELIXIS' : v==='gobernanza' ? '◆ Gobernanza' : v==='miperfil' ? '◆ Mi Perfil' : v==='agenda' ? '◆ Agenda' : v==='cashflow' ? '◆ Cash Flow' : v==='config' ? '◆ Config' : '';
-        if(v==='elixis'){ var f=el('elixis-frame'); if(f&&!f.getAttribute('src')) f.setAttribute('src', f.getAttribute('data-src')); }
+        if(v==='elixis'){ iniciarWorkspaceElixis(); }
         if(v==='agenda'){ var af=el('agenda-frame'); if(af&&!af.getAttribute('src')){ var ld=el('agenda-loading');
           if(af.addEventListener) af.addEventListener('load', function(){ if(ld) ld.classList.add('hidden'); });
           setTimeout(function(){ af.setAttribute('src', af.getAttribute('data-src')); }, 30);
