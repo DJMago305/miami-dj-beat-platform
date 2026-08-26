@@ -436,6 +436,20 @@
   .avatar-stage.speaking .avatar-fig{animation:talk 1.1s ease-in-out infinite}
   @keyframes talk{25%{transform:translateY(-2px)}60%{transform:translateY(1px) scale(1.006)}}
   .avatar-stage.executing .avatar-fig{transform:scale(.94);transition:transform .4s}
+  /* micro-expresion: parpadeo. No hay foto con los ojos cerrados, asi que el
+     cierre es una capa sintetica (dos elipses) que se infla un instante sobre
+     los ojos reales de la foto -- no un segundo fotograma. */
+  .avatar-eyes{position:absolute;inset:0;width:100%;height:100%;z-index:4;pointer-events:none}
+  .avatar-eyes i{position:absolute;top:34.5%;width:7%;height:5.5%;border-radius:50%;
+    background:radial-gradient(closest-side,rgba(58,36,26,.92),rgba(58,36,26,.55) 65%,transparent);
+    transform:translate(-50%,-50%) scaleY(0);transform-origin:center;filter:blur(.5px)}
+  .avatar-eyes i:first-child{left:40.4%}
+  .avatar-eyes i:last-child{left:59.6%}
+  .avatar-stage.parpadeo .avatar-eyes i{animation:parpadeo .18s ease-in-out}
+  @keyframes parpadeo{0%,100%{transform:translate(-50%,-50%) scaleY(0)}45%,55%{transform:translate(-50%,-50%) scaleY(1)}}
+  /* boca/energia real: mientras hay audio real de ELIXIS (RT.latir -> --voz),
+     el bamboleo fijo de "talk" se apaga y manda la amplitud real */
+  .avatar-stage.speaking.voz-activa .avatar-fig{animation:none;transform:translateY(calc(var(--voz,0) * -3.5px)) scale(calc(1 + var(--voz,0) * 0.02))}
   /* immersive voice-conversation mode: only the agent + particles + subtitles */
   .voice-live{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100% - 2px);padding-top:4px}
   .avatar-stage.big{width:min(350px,90vw);height:min(390px,48vh)}
@@ -958,9 +972,10 @@
     var ctx=FX.ctx,c=FX.canvas;if(!ctx||!c||!document.body.contains(c))return;
     FX.intensity+=(FX.target-FX.intensity)*0.05;
     var voiceOn=(state.avatar==='listening'||state.avatar==='speaking'||state.avatar==='transcribing');
-    var t=Date.now()/1000;
-    var sMix=0.5*Math.sin(t*7.3)+0.28*Math.sin(t*13.1+1)+0.22*Math.sin(t*19.7+2);
-    var raw=voiceOn?(0.5+0.5*sMix):0;
+    /* Nivel real del analizador de RT (latir() lo publica cada frame en
+       FX.voiceLevel), no una simulacion. En silencio o sin llamada activa,
+       FX.voiceLevel es 0/indefinido y la red simplemente no reacciona. */
+    var raw=voiceOn?(FX.voiceLevel||0):0;
     FX.level=(FX.level||0)+(raw-(FX.level||0))*0.3; var lvl=FX.level;
     var W=FX.W,H=FX.H,pts=FX.pts,inten=FX.intensity*(1+lvl*0.7);
     ctx.clearRect(0,0,W,H);
@@ -1024,6 +1039,24 @@
   }
   function fxLoop(){fxDraw();FX.raf=requestAnimationFrame(fxLoop);}
   window.addEventListener('resize',function(){if(FX.canvas&&document.body.contains(FX.canvas))fxSize();});
+
+  /* ───── parpadeo idle ─────
+     render() reconstruye el avatar por innerHTML en cada cambio de estado,
+     asi que este temporizador vive aparte (nunca dentro de una pantalla) y
+     vuelve a buscar .avatar-stage cada vez -- nunca una referencia vieja. */
+  function parpadear(){
+    var stages=document.querySelectorAll('.avatar-stage');
+    if(!stages.length) return;
+    for(var i=0;i<stages.length;i++) stages[i].classList.add('parpadeo');
+    setTimeout(function(){
+      var s=document.querySelectorAll('.avatar-stage');
+      for(var i=0;i<s.length;i++) s[i].classList.remove('parpadeo');
+    },180);
+  }
+  function programarParpadeo(){
+    setTimeout(function(){ parpadear(); programarParpadeo(); },3000+Math.random()*3000);
+  }
+  programarParpadeo();
 
   /* ───── router ───── */
   var MAIN=['command','radar','decisions','notifications'];
@@ -1161,7 +1194,7 @@
       : '<button class="modo-btn'+(state.voiceMode==='text'?' on':'')+'" id="modoBtn" title="'+(state.voiceMode==='text'?T('Volver a voz','Back to voice'):T('Escribir','Write'))+'">'+svg(state.voiceMode==='text'?'mic':'keyboard')+'</button>'+
         '<span class="row" style="gap:6px;margin-right:6px;font-size:11px;font-family:var(--mono);color:var(--green)"><span class="dot d-green"></span>ONLINE</span><button class="icon-btn" id="temaBtn" title="'+T('Día / noche','Day / night')+'" aria-label="'+T('Día o noche','Day or night')+'">'+svg(temaActual()==='claro'?'luna':'sol')+'</button>'});
     var avatarHTML='<div class="avatar-stage '+st+(voice?' big':'')+'" id="avatarStage"><canvas class="avatar-fx" id="avatarFX"></canvas><i class="bola-energia"></i><div class="avatar-baseglow"></div>'+
-      '<img class="avatar-fig" src="'+AVATAR+'" alt="'+AGENT+' · AI Agent"></div>';
+      '<img class="avatar-fig" src="'+AVATAR+'" alt="'+AGENT+' · AI Agent"><div class="avatar-eyes"><i></i><i></i></div></div>';
     if(voice){
       /* immersive: only avatar + particles + subtitles — like talking to a human, no chat cards */
       v.innerHTML='<div class="pad voice-live fade-anim">'+
@@ -1440,6 +1473,16 @@
            se enciende del todo. Es lo que le da la pulsacion al boton. */
         o.style.opacity = (0.62 + pulso * 0.38).toFixed(3);
         o.classList.toggle('rx', !hablando);
+        /* Mismo nivel real, ahora tambien hacia la cara: fxDraw() (red de
+           particulas) lo lee de FX.voiceLevel, y el propio .avatar-fig lo
+           recibe como --voz para el bamboleo de "hablando" (ver CSS
+           .voz-activa). Sin esto ambos seguian una onda senoidal falsa. */
+        FX.voiceLevel = pulso;
+        var esc = document.getElementById('avatarStage');
+        if(esc){
+          esc.style.setProperty('--voz', pulso.toFixed(3));
+          esc.classList.toggle('voz-activa', hablando);
+        }
       }
       rafPulso = requestAnimationFrame(latir);
     }
@@ -1894,7 +1937,7 @@
   SCREENS.conversation=function(v){
     renderTopbar({back:true,title:'ELIXIS',sub:T('Conversación','Conversation')});
     v.innerHTML='<div class="pad screen-anim" style="display:flex;flex-direction:column;min-height:100%">'+
-      '<div class="avatar-stage speaking" style="width:170px;height:186px;margin:0 auto 8px" id="cvStage"><canvas class="avatar-fx" id="cvFX"></canvas><div class="avatar-baseglow"></div><img class="avatar-fig" src="'+AVATAR+'"></div>'+
+      '<div class="avatar-stage speaking" style="width:170px;height:186px;margin:0 auto 8px" id="cvStage"><canvas class="avatar-fx" id="cvFX"></canvas><div class="avatar-baseglow"></div><img class="avatar-fig" src="'+AVATAR+'"><div class="avatar-eyes"><i></i><i></i></div></div>'+
       '<div style="flex:1">'+
       msgBubble('me',T('Analiza esta compañía.','Analyze this company.'))+
       msgBubble('ai',T('Encontré su web. ¿Quieres análisis comercial o técnico?','Found their website. Commercial or technical analysis?'))+
