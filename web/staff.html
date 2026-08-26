@@ -332,14 +332,17 @@
     /* AGENDA es estacion INMERSIVA (HERO clima 100vh, paridad weather-lab), no
        pagina normal: reservarle la banda flotante dejaba una FRANJA NEGRA entre
        el menu y el clima —el mismo defecto que FENIX (abajo) y #perfil ya tenian
-       prohibido. Va pegada bajo la cabecera; el body ya reserva los 188px del
-       header completo (84 riel + 12 + 72 banda + 20), asi que no la doblamos. */
+       prohibido. Va pegada bajo la cabecera, en flujo normal, sin margen que
+       compensar. */
     #view-agenda{padding-top:0 !important;
       /* PEGADO A LA BARRA DE MENU (PO 2026-08-22): el clima sube flush justo bajo
-         el riel del menu (84px). El branding + buscador (.staff-flota, transparente)
-         flotan sobre el hero, como el perfil de artista. Mismo margen negativo
-         que #view-elixis (FENIX). El body reserva 188; jalamos hasta 84. */
-      margin-top:calc(84px - 188px) !important;}
+         el riel del menu. Mismo arreglo que #view-elixis (FENIX, ver arriba):
+         este margen negativo compensaba la banda de branding+buscador que
+         staff.html ya no monta (retirada PO 2026-08-24, --flota-h:0) — con la
+         banda fuera, el menu ya no deja hueco que cerrar, y el margen viejo
+         empujaba el hero 32px por encima del borde de la ventana, tapando el
+         menu (regresión detectada 2026-08-26, mismo síntoma que FENIX). */
+      margin-top:0 !important;}
     /* BÓVEDA LEGAL NO vive aquí — es un panel dentro de #view-gobernanza
        (ver .sc3-panel#sc3-legal, mismo patrón que Inbox), no una vista de
        nivel superior. Como Inbox, no necesita ningún truco de margen: el
@@ -350,15 +353,16 @@
     /* FENIX: PEGADO AL MENU, SIN AIRE Y SIN SCROLL (PO 2026-08-22).
        «el fenix esta con aire, eso va mas arriba sin aire pegado al menu y sin
        scroll; el fenix es fijo.»
-       El `body` reserva 188px —84 del riel + 12 + 72 de la banda + 20— pero en
-       esta vista la banda esta en display:none, asi que 104 de esos 188 no
-       tapan nada: eran el hueco medido entre el menu y la consola. El margen
-       negativo devuelve la vista justo al borde del riel, y la altura pasa a
-       ser todo lo que queda de pantalla. Asi el documento mide exactamente la
-       ventana y no hay nada que scrollear.
-       No se toca el padding del body: es comun a las otras cuatro vistas. */
+       Este margen negativo compensaba la banda de branding+buscador que
+       staff.html ya no monta (retirada PO 2026-08-24, --flota-h:0 arriba).
+       Con la banda fuera, `main.staff-main` ya arranca justo bajo el riel del
+       menu en flujo normal — restar un margen pensado para una banda que ya
+       no ocupa espacio empujaba la vista 32px por encima del borde de la
+       ventana, tapando el menu (regresión detectada 2026-08-26). Sin margen
+       negativo, la vista queda pegada al riel exactamente igual, porque ya no
+       hay hueco que cerrar. */
     #view-elixis{
-      margin-top:calc(84px - 188px);
+      margin-top:0;
       height:calc(100vh - 84px);
       overflow:hidden;}
     /* El riel lateral arrancaba justo donde acaba la banda: se tocaban y la
