@@ -2814,6 +2814,9 @@ function wireW9SignerUpload(lang){
       banner.textContent = STR[curLang].w9SavedFail;
       return;
     }
+    if(record._remoteToken && result.data){
+      resolveContractSend(record._remoteToken, result.data).catch(()=>{});
+    }
     saveContracts();
     state.w9SignerPending = null;
     $("#signerWorkArea").hidden = true;
@@ -3310,7 +3313,11 @@ function generateSendLink(){
   const docName = (tpl.name && tpl.name[lang]) || tpl.id;
   const record = newContractDraftFromCurrent();
   const token = uid();
-  const link = `https://sign.miamidjbeat.app/s/${token}`;
+  /* Enlace real y autocontenido: el propio contracts-engine.html resuelve
+     ?token=... contra Supabase y salta directo al Módulo Firmante — ver
+     resolveTokenFromUrl() en init(). Antes esto apuntaba a un dominio
+     ficticio (sign.miamidjbeat.app) que nunca existió. */
+  const link = `${location.origin}${location.pathname}?token=${token}`;
   record.send = {channel: recipient.includes("@")?"email":"sms", recipient, token, link, sentAt:new Date().toISOString()};
   record.status = "PENDING";
   if(record.send.channel==="email") record.signer_email = recipient; else record.signer_phone = recipient;
@@ -3353,10 +3360,32 @@ function confirmSendContinue(){
   if(!pendingSendDraft) return;
   state.contracts.unshift(pendingSendDraft);
   saveContracts();
+  registerContractSend(pendingSendDraft).catch(()=>{});
   state.activeContractId = pendingSendDraft.id;
   pendingSendDraft = null;
   $("#sendModalVeil").hidden = true;
   renderRail(); renderForm(); renderPreview(); renderStatusPill(); renderStaffActionArea(); renderContractList();
+}
+/* Registra el envío en la cola operativa real (contract_sends) — sin esto
+   el enlace generado nunca podría resolverse desde otro dispositivo/
+   navegador, y la campana de notificaciones nunca vería nada real.
+   INSERT directo (no una RPC): la política de INSERT de la tabla ya
+   permite a cualquier authenticated crearla, igual que hace el resto del
+   archivo con otras tablas (ver wireVenueAutocomplete). */
+async function registerContractSend(record){
+  const client = (typeof window.getSupabaseClient === "function") ? window.getSupabaseClient() : null;
+  if(!client || !record.send) return {ok:false, reason:"not_configured"};
+  const { error } = await client.from("contract_sends").insert({
+    token: record.send.token,
+    contract_type: LOCAL_TO_DB_CONTRACT_TYPE[record.contract_type] || record.contract_type,
+    form_payload: record.form_payload,
+    artist_profile_id: record.artist_profile_id,
+    recipient: record.send.recipient,
+    recipient_name: record.send.recipientName || record.signer_name || null,
+    channel: record.send.channel,
+  });
+  if(error){ console.error("[Supabase] registerContractSend failed:", error); return {ok:false, error}; }
+  return {ok:true};
 }
 
 async function signHereNow(){
@@ -3398,7 +3427,24 @@ async function finalizeSignature(record){
   record.status = "SIGNED";
   record.is_locked = true;
   record.raw_w9_data = record.contract_type==="w9" ? record.form_payload : null;
-  saveContractToSupabase(record).catch(()=>{});
+  if(record._remoteToken){
+    /* Firma desde un enlace remoto: a diferencia del flujo local (guarda
+       en segundo plano, sin bloquear), aquí sí esperamos el id real para
+       cerrar el ciclo — marcar_envio_firmado necesita saber a qué
+       registro de signed_contracts quedó vinculado este envío. */
+    const result = await saveContractToSupabase(record);
+    if(result.ok && result.data){
+      resolveContractSend(record._remoteToken, result.data).catch(()=>{});
+    }
+  } else {
+    saveContractToSupabase(record).catch(()=>{});
+  }
+}
+async function resolveContractSend(token, signedContractId){
+  const client = (typeof window.getSupabaseClient === "function") ? window.getSupabaseClient() : null;
+  if(!client) return;
+  const { error } = await client.rpc("marcar_envio_firmado", { p_token: token, p_signed_contract_id: signedContractId });
+  if(error) console.error("[Supabase] marcar_envio_firmado failed:", error);
 }
 
 /* ============ Supabase RPC connector ============
@@ -4129,6 +4175,7 @@ function init(){
   applyZoom();
   tryOpenSharedRecord();
   tryOpenSendFromQuery();
+  tryOpenTokenSignerLink();
 }
 /* Entrada desde un badge "pendiente" del Directorio Global (CRM,
    staff-admin.html): ?open_send=<template>&name=..&contact=.. selecciona
@@ -4193,6 +4240,35 @@ async function tryOpenSharedRecord(){
       artist_profile_id: null, linked_profile_name: null,
     });
   }catch(e){ console.warn("[view_record] error:", e); }
+}
+/* Entrada desde el enlace de firma remota (📨 Generar Enlace Tokenizado):
+   ?token=<token> resuelve el envío pendiente por su token vía
+   resolver_envio_por_token (SECURITY DEFINER — contract_sends nunca se
+   expone directo a anon, ver supabase/scripts/20260825_contract_sends_pending_flow.sql)
+   y salta directo al Módulo Firmante, sin login ni pantalla intermedia de
+   "elige un pendiente" (aquí solo hay uno: el de este enlace). */
+async function tryOpenTokenSignerLink(){
+  const params = new URLSearchParams(location.search);
+  const token = params.get("token");
+  if(!token) return;
+  try{
+    const client = (typeof window.getSupabaseClient === "function") ? window.getSupabaseClient() : null;
+    if(!client){ console.warn("[token] Supabase no disponible en este contexto."); return; }
+    const { data, error } = await client.rpc("resolver_envio_por_token", { p_token: token });
+    const row = Array.isArray(data) ? data[0] : data;
+    if(error || !row){ console.warn("[token] enlace no encontrado, ya usado, o expirado.", error); return; }
+    const record = {
+      id: row.id, contract_type: DB_TO_LOCAL_CONTRACT_TYPE[row.contract_type] || row.contract_type,
+      document_version: "2026.1", form_payload: row.form_payload, status: "PENDING",
+      artist_profile_id: row.artist_profile_id, signer_name: row.recipient_name || "",
+      created_at: row.sent_at, lang: state.lang, _remoteToken: token,
+    };
+    state.contracts = state.contracts.filter(c=>c.id!==record.id);
+    state.contracts.push(record);
+    switchModule("signer");
+    state.signerActiveId = record.id;
+    renderSignerModule();
+  }catch(e){ console.warn("[token] error:", e); }
 }
 init();
 })();
