@@ -431,6 +431,14 @@ verify_jwt = true
 [functions.create-buyer-billing-portal]
 verify_jwt = true
 
+# Recordatorios de contrato pendiente (pg_cron con CRON_EDGE_AUTH_SECRET, no
+# un JWT real) o un staff autenticado forzando un reintento puntual — la
+# verificación es propia, adentro de la función (mismo patrón que
+# elixis-sms-dispatch). false a propósito: con true, la plataforma rechaza
+# la llamada del cron antes de que el código llegue a revisarla.
+[functions.send-reminder-sms]
+verify_jwt = false
+
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
