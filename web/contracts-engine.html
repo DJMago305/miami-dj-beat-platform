@@ -3665,6 +3665,7 @@ async function saveContractToSupabase(record){
     p_signer_phone: record.signer_phone,
     p_signer_ip: record.signer_ip,
     p_user_agent: record.user_agent,
+    p_signer_role: record.signer_role,
   });
   if(error){ console.error("[Supabase] guardar_contrato_firmado failed:", error); return {ok:false, error}; }
   return {ok:true, data};
@@ -4445,8 +4446,8 @@ async function tryOpenSharedRecord(){
       id: row.id, contract_type: DB_TO_LOCAL_CONTRACT_TYPE[row.contract_type] || row.contract_type, document_version: row.document_version,
       form_payload: row.form_payload, signature_png_base64: row.signature_png_base64,
       audit_sha256: row.audit_sha256, status: row.status, signer_name: row.signer_name,
-      signer_role: null, signed_at: row.signed_at, lang: state.lang,
-      artist_profile_id: null, linked_profile_name: null,
+      signer_role: row.signer_role||null, signed_at: row.signed_at, lang: state.lang,
+      artist_profile_id: row.artist_profile_id||null, linked_profile_name: row.linked_profile_name||null,
     });
   }catch(e){ console.warn("[view_record] error:", e); }
 }
