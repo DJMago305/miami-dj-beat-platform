@@ -197,6 +197,16 @@
   .opp{margin-top:12px;padding:11px;border-radius:10px;background:color-mix(in srgb,var(--set) 10%,transparent);border:1px dashed color-mix(in srgb,var(--set) 45%,transparent);font-size:12.5px;color:var(--ink-soft);}
   .opp b{color:var(--set);}
   .act{margin-top:12px;width:100%;padding:9px;border-radius:10px;border:none;cursor:pointer;background:var(--sunset);color:#1a0a12;font-weight:700;font-size:13px;font-family:var(--sans);}
+  .rec-list{margin-top:10px;display:flex;flex-direction:column;gap:6px;}
+  .rec-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:9px;background:var(--panel-2);border:1px solid var(--line);font-size:12.5px;color:var(--ink);}
+  .rec-item .pip{width:8px;height:8px;border-radius:50%;flex:none;}
+  .rec-item .rn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .rec-item .rtag{font-size:10.5px;padding:2px 7px;border-radius:99px;font-weight:700;white-space:nowrap;}
+  .rec-item .rtag.aff{background:color-mix(in srgb,var(--pago) 20%,transparent);color:var(--pago);}
+  .rec-item .rtag.pro{background:color-mix(in srgb,var(--sunset) 22%,transparent);color:var(--sunset);}
+  .rec-item .rsend{border:none;border-radius:8px;padding:6px 10px;background:var(--cliente);color:#04211d;font-weight:700;font-size:11.5px;cursor:pointer;white-space:nowrap;}
+  .rec-item .rsend:disabled{opacity:.4;cursor:not-allowed;}
+  .rec-empty{font-size:12px;color:var(--ink-mute);padding:6px 2px;}
 
   .rem-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
   .rem-col{border:1px solid var(--line);border-radius:14px;background:var(--panel-2);padding:14px;display:flex;flex-direction:column;gap:9px;min-height:120px;}
@@ -480,7 +490,16 @@
   function same(a,b){return a.getFullYear()==b.getFullYear()&&a.getMonth()==b.getMonth()&&a.getDate()==b.getDate();}
   function addDays(dt,n){var x=new Date(dt);x.setDate(x.getDate()+n);return x;}
   function startOfWeek(dt){return addDays(dt,-dt.getDay());}
-  function inScope(e){return state.role==="owner"?true:e.artist===state.artist;}
+  function inScope(e){
+    if(state.role==="owner") return true;
+    if(e.artist===state.artist) return true;
+    // Un cliente maestro puede estar afiliado a varios DJs a la vez
+    // (master_clients/dj_client_affiliations) — e.artist solo carga UNO
+    // (el primero, para el pip de color), así que un DJ afiliado que no
+    // sea ese "primero" igual debe ver el evento en su agenda personal.
+    if(e.client && Array.isArray(e.client.djIds) && e.client.djIds.indexOf(state.artist)!==-1) return true;
+    return false;
+  }
   function evOn(k){return EV.filter(function(e){return e.d===k&&inScope(e);});}
   function scopedClients(){return state.role==="owner"?CLIENTS:CLIENTS.filter(function(c){return c.owner===state.artist;});}
   function fmtHour(h){h=((h%24)+24)%24;if(h===0)return"12 a.m.";if(h===12)return"12 p.m.";if(h<12)return h+" a.m.";return(h-12)+" p.m.";}
@@ -707,11 +726,71 @@
     if(e.client){var c=e.client;
       h+='<div class="layers-lbl">Cliente en base de datos</div>';
       h+='<div class="layer lx-pago"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="3.4"/><path d="M5 20a7 7 0 0 1 14 0"/></svg></div><div class="lt">'+c.n+'<small>'+c.note+'</small></div><div class="val">'+c.estado+'</div></div>';
+      // Insignias de DJs afiliados — un cliente maestro puede tener varios
+      // (dj_client_affiliations), mismo estilo de "pip" que ya usa .artline.
+      if(c.djNames && c.djNames.length){
+        h+='<div class="artline" style="flex-wrap:wrap;">';
+        c.djIds.forEach(function(djId,i){
+          h+='<span class="pip" style="--a:'+artColor(djId)+'"></span>'+(c.djNames[i]||"DJ")+(i<c.djIds.length-1?' &nbsp;·&nbsp; ':'');
+        });
+        h+='</div>';
+      }
       h+='<div class="notify-row">'+BELL+'Notificación '+c.chan+' programada · se envía en la fecha.</div>';
       if(state.role==="artista")h+='<div class="opp"><b>Oportunidad:</b> es su '+(e.kind==="aniv"?"aniversario":"cumpleaños")+'. Miami DJ Beat puede gestionarte un evento con este contacto.</div>';
-      h+='<button class="act">Enviar felicitación por '+c.chan+'</button>';
+      h+='<button class="act" data-mcid="'+(c.masterClientId||'')+'" data-edate="'+e.d+'">Ofrecer evento — ver DJs recomendados</button>';
+      h+='<div class="rec-list" hidden></div>';
     }
     return h;
+  }
+
+  // Botón de acción real de la tarjeta de cliente: pide a get_recommended_djs()
+  // la lista priorizada (afiliado → PRO activo → disponible → rating) y la
+  // pinta debajo del botón. Un segundo clic sin cambios cierra la lista.
+  async function offerEvent(btn){
+    var list=btn.parentElement.querySelector(".rec-list");
+    if(!list) return;
+    if(!list.hidden){ list.hidden=true; return; }
+    var mcId=btn.dataset.mcid, eDate=btn.dataset.edate;
+    if(!mcId){ list.innerHTML='<div class="rec-empty">Sin cliente maestro vinculado.</div>'; list.hidden=false; return; }
+    var origText=btn.textContent; btn.disabled=true; btn.textContent="Buscando DJs recomendados…";
+    try{
+      var sb=(window.getSupabaseClient? window.getSupabaseClient() : window.supabase);
+      var r=await sb.rpc("get_recommended_djs",{p_master_client_id:mcId,p_event_date:eDate});
+      if(r.error) throw r.error;
+      var rows=r.data||[];
+      if(!rows.length){
+        list.innerHTML='<div class="rec-empty">Sin DJs para sugerir en esta fecha.</div>';
+      }else{
+        list.innerHTML=rows.map(function(dj){
+          var tags=(dj.is_affiliated?'<span class="rtag aff">Afiliado</span>':'')+(dj.is_pro?'<span class="rtag pro">PRO</span>':'');
+          var ratingTxt=dj.rating!=null?(' ★'+Number(dj.rating).toFixed(1)):'';
+          return '<div class="rec-item"><span class="pip" style="background:'+artColor(dj.dj_id)+'"></span>'
+            +'<span class="rn">'+(dj.dj_name||"DJ")+ratingTxt+'</span>'+tags
+            +'<button class="rsend" data-djname="'+(dj.dj_name||"DJ")+'"'+(dj.is_available?'':' disabled')+'>'+(dj.is_available?"WhatsApp":"No disp.")+'</button></div>';
+        }).join("");
+        list.querySelectorAll(".rsend").forEach(function(sendBtn){
+          sendBtn.onclick=function(evx){ evx.stopPropagation(); offerToClient(btn, sendBtn.dataset.djname); };
+        });
+      }
+      list.hidden=false;
+    }catch(err){
+      list.innerHTML='<div class="rec-empty">No se pudo cargar la recomendación: '+(err.message||err)+'</div>';
+      list.hidden=false;
+    }finally{
+      btn.disabled=false; btn.textContent=origText;
+    }
+  }
+  // Abre WhatsApp hacia el CLIENTE (no al DJ) ofreciéndole el DJ elegido
+  // para su fecha — un humano hace clic y envía, nada se despacha solo.
+  function offerToClient(actBtn, djName){
+    var card=actBtn.closest(".ev-card");
+    var e=card?findEv(card.dataset.detid):null;
+    var c=e&&e.client;
+    if(!c||!c.phone){ alert("Este cliente no tiene teléfono registrado en su ficha maestra."); return; }
+    var when=(e.kind==="aniv")?"aniversario":"cumpleaños";
+    var msg="🎧 MIAMI DJ BEAT LLC\n\nHola "+c.n+", tu "+when+" se acerca. Te ofrecemos reservar a "+djName+" para tu celebración. ¿Te gustaría agendarlo?";
+    var digits=String(c.phone).replace(/[^\d+]/g,"").replace(/^\+/,"");
+    window.open("https://wa.me/"+digits+"?text="+encodeURIComponent(msg), "_blank", "noopener");
   }
 
   // Panel lateral del día: lista TODOS los eventos de ese día (con su hora y detalle). Si hay 2, aparecen los 2.
@@ -726,7 +805,7 @@
     var _dots='';for(var _i=0;_i<list.length;_i++)_dots+='<span class="ev-dot" data-i="'+_i+'"></span>';
     el.innerHTML=hd+'<div class="ev-cards" id="evCards"><div class="ev-track">'+h+'</div></div>'+(list.length>1?'<div class="ev-dots" id="evDots">'+_dots+'</div>':'');
     el.querySelectorAll(".ev-card").forEach(function(card){
-      var act=card.querySelector(".act");if(act)act.onclick=function(ev){ev.stopPropagation();act.textContent="✓ Felicitación programada";act.style.background="var(--pago)";act.style.color="#04211d";};
+      var act=card.querySelector(".act");if(act)act.onclick=function(ev){ev.stopPropagation();offerEvent(act);};
       card.onclick=function(ev){if(ev.target.closest(".act"))return;var e=findEv(card.dataset.detid);if(e){state.sel=e;render();}};
     });
     startDayCarousel();
@@ -975,21 +1054,39 @@
       rebuild(); render();
     }catch(err){ console.warn("[Matrix] carga de leads falló:", err); }
   }
-  // ═══ FASE 1 · Fechas VIP reales (client_profiles.birth_date / wedding_anniversary) ═══
-  // Si las columnas aún no existen (SQL sin correr), la query falla y se salta sin romper nada.
+  // ═══ FASE 2 · Calendario Maestro (master_clients, deduplicado) ═══
+  // Reemplaza la consulta directa a client_profiles (Fase 1): esa vía
+  // ataba cada cliente a UN solo DJ, así que el mismo cliente atendido
+  // por 3 DJs distintos habría aparecido 3 veces. get_master_calendar_events()
+  // ya viene deduplicado por master_client, con el array completo de DJs
+  // afiliados. Si la RPC aún no existe (SQL sin correr), falla y se
+  // salta sin romper nada — mismo criterio defensivo que antes.
   async function loadClientDates(){
     try{
       var sb=(window.getSupabaseClient? window.getSupabaseClient() : window.supabase);
-      if(!sb || !sb.from || !sb.auth){ return setTimeout(loadClientDates, 300); }
+      if(!sb || !sb.rpc || !sb.auth){ return setTimeout(loadClientDates, 300); }
       if(!(await sb.auth.getSession()).data.session){ return setTimeout(loadClientDates, 300); }
-      var r=await sb.from("client_profiles").select("id, full_name, birth_date, wedding_anniversary, tier_level");
+      var r=await sb.rpc("get_master_calendar_events");
       if(r.error) throw r.error;
       var md=function(d){ return d ? String(d).slice(5,10) : null; };   // "YYYY-MM-DD" → "MM-DD"
-      CLIENTS=(r.data||[]).map(function(c){
-        return { n:c.full_name||"Cliente", estado:(c.tier_level||""), bday:md(c.birth_date), anniv:md(c.wedding_anniversary), chan:"", note:"", owner:"_none" };
+      CLIENTS=(r.data||[]).map(function(row){
+        var djIds=row.dj_ids||[], djNames=row.dj_names||[];
+        return {
+          n: row.client_name || "Cliente",
+          estado: "",
+          bday: row.event_type==="birthday" ? md(row.event_date) : null,
+          anniv: row.event_type==="wedding_anniversary" ? md(row.event_date) : null,
+          chan: "WhatsApp",
+          note: djNames.length>1 ? ("Afiliado a "+djNames.length+" DJs") : (djNames[0]||"Sin DJ afiliado"),
+          owner: djIds[0] || "_none",
+          djIds: djIds,
+          djNames: djNames,
+          phone: row.client_phone || null,
+          masterClientId: row.master_client_id
+        };
       }).filter(function(c){ return c.bday || c.anniv; });
       rebuild(); render();
-    }catch(err){ console.warn("[Matrix] fechas de clientes (¿columnas SSOT creadas?):", err.message||err); }
+    }catch(err){ console.warn("[Matrix] calendario maestro (¿RPC get_master_calendar_events creada?):", err.message||err); }
   }
   // ═══ Residencias recurrentes reales (tabla residency_schedule) ═══
   var _leadsEv=[], _resEv=[];
