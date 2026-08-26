@@ -3508,10 +3508,13 @@ function generateSendLink(){
 }
 function confirmSendContinue(){
   if(!pendingSendDraft) return;
-  state.contracts.unshift(pendingSendDraft);
+  const record = pendingSendDraft;
+  state.contracts.unshift(record);
   saveContracts();
-  registerContractSend(pendingSendDraft).catch(()=>{});
-  state.activeContractId = pendingSendDraft.id;
+  registerContractSend(record).then(result=>{
+    if(result.ok) encolarRecordatorioParaEnvio(record, result.id);
+  }).catch(()=>{});
+  state.activeContractId = record.id;
   pendingSendDraft = null;
   $("#sendModalVeil").hidden = true;
   renderRail(); renderForm(); renderPreview(); renderStatusPill(); renderStaffActionArea(); renderContractList();
@@ -3525,7 +3528,7 @@ function confirmSendContinue(){
 async function registerContractSend(record){
   const client = (typeof window.getSupabaseClient === "function") ? window.getSupabaseClient() : null;
   if(!client || !record.send) return {ok:false, reason:"not_configured"};
-  const { error } = await client.from("contract_sends").insert({
+  const { data, error } = await client.from("contract_sends").insert({
     token: record.send.token,
     contract_type: LOCAL_TO_DB_CONTRACT_TYPE[record.contract_type] || record.contract_type,
     form_payload: record.form_payload,
@@ -3533,9 +3536,40 @@ async function registerContractSend(record){
     recipient: record.send.recipient,
     recipient_name: record.send.recipientName || record.signer_name || null,
     channel: record.send.channel,
-  });
+  }).select("id").single();
   if(error){ console.error("[Supabase] registerContractSend failed:", error); return {ok:false, error}; }
-  return {ok:true};
+  return {ok:true, id: data.id};
+}
+/* Deja +1XXXXXXXXXX o +<lo que haya> — suficiente para lo que Twilio
+   necesita en la mayoría de los números capturados aquí (EE.UU./Miami).
+   No es validación E.164 estricta, es la misma normalización ligera que
+   ya usan los enlaces wa.me/sms: más arriba, solo que persistida. */
+function normalizePhoneForReminder(raw){
+  const digits = String(raw||"").replace(/[^\d+]/g,"");
+  if(!digits) return null;
+  if(digits.startsWith("+")) return digits;
+  if(digits.length===10) return "+1"+digits;
+  return "+"+digits;
+}
+/* Recordatorio automático de firma pendiente — se encola una sola vez,
+   junto con el registro real de contract_sends, para que el cron de
+   send-reminder-sms (cada 10 min) le avise al firmante si a las 24h
+   sigue sin firmar. Solo aplica al canal SMS: no hay número que textear
+   en un envío por email, y reminder_queue no soporta ese canal todavía. */
+async function encolarRecordatorioParaEnvio(record, contractSendId){
+  if(!contractSendId || record.send.channel!=="sms") return;
+  const phone = normalizePhoneForReminder(record.send.recipient);
+  if(!phone) return;
+  const client = (typeof window.getSupabaseClient === "function") ? window.getSupabaseClient() : null;
+  if(!client) return;
+  const { error } = await client.rpc("encolar_recordatorio", {
+    p_contract_send_id: contractSendId,
+    p_recipient_phone: phone,
+    p_recipient_name: record.send.recipientName || record.signer_name || null,
+    p_channel: "sms",
+    p_delay_hours: 24,
+  });
+  if(error) console.error("[Supabase] encolar_recordatorio failed:", error);
 }
 
 async function signHereNow(){
