@@ -336,6 +336,73 @@ Estado general: Operativo / En consolidación
       (`mdj_profile_de_usuario`, de M2) resuelta al fusionar el PR #241
       justo antes. Cabecera de entorno: **PRUEBA** en las 3 migraciones.
 
+- [ ] **VISIÓN — ELIXIS/DJMago: catálogo del DJ desde su propio software (Serato/VirtualDJ/Rekordbox), sin motor de fingerprinting pago**
+      — 2026-08-28 (Hilo Maestro, sin ticket de construcción abierto todavía —
+      solo visión registrada a pedido del PO). Origen: el PO preguntó por
+      Spotify Web API / ACRCloud (motor tipo Shazam) para que ELIXIS pudiera
+      catalogar su librería personal de ~4TB y armar sets. Investigación real
+      (no del entrenamiento, con fuentes) descartó ambos caminos como
+      **innecesarios** para ese objetivo específico:
+      - **Spotify Web API / ACRCloud NO existen en el repo** (verificado por
+        grep completo — solo iconos decorativos de "Spotify"). El único motor
+        de música real desplegado es `supabase/functions/mdj-music/index.ts`,
+        puente JWT a Apple Music (catálogo, no fingerprinting).
+      - **ACRCloud es pago-por-uso, no un plan fijo** (confirmado en su propia
+        consola): $3/1000 peticiones (primeras 20k), bajando por volumen;
+        +80% de recargo si el proyecto usa su "Music bucket" comercial; y el
+        dato clave para 4TB — **cobra mensualmente por HORAS de audio
+        cargadas a su bucket**, no por espacio. Con miles de horas reales,
+        esto sale caro y RECURRENTE — choca con la meta explícita del PO de
+        cuidar el margen de MDJB.
+      - **Hallazgo que resuelve el problema real, gratis**: Serato ya genera
+        su propia base de datos binaria compacta al importar/analizar cada
+        canción — `database V2` (catálogo completo: rutas, BPM, tonalidad,
+        tags) y `history.database` (qué se tocó, cuándo, por sesión). Es solo
+        metadata (nunca el audio), por eso pesa poco pese a un catálogo de
+        4TB. El formato ya está documentado/reverse-engineered, con librería
+        de referencia open source ([`serato-connect`](https://github.com/chrisle/serato-connect),
+        [formato Serato en el wiki de Mixxx](https://github.com/mixxxdj/mixxx/wiki/Serato-Database-Format)).
+        **Conclusión: si la librería del DJ ya está organizada en Serato, no
+        hace falta pagarle a nadie para catalogarla — ese trabajo ya está
+        hecho.**
+      - **VirtualDJ** guarda su historial en texto plano legible
+        (`history.txt`/`tracklisting.txt` + `.m3u` por fecha) — el más fácil
+        de leer de los tres, cero necesidad de librería especial
+        ([manual oficial](https://virtualdj.com/manuals/virtualdj/interface/database/history.html)).
+      - **Rekordbox** es el más difícil: exportación XML retirada desde la
+        versión 6 (la importación sigue viva), base de datos moderna cifrada
+        (SQLCipher). Hay proyectos de terceros que ya lo resolvieron
+        ([`rekordbox-mcp`](https://github.com/davehenke/rekordbox-mcp)), pero
+        requiere más ingeniería que los otros dos — arrancar por XML
+        exportado a mano, no por lectura directa de su base de datos.
+      **Arquitectura de la visión (sin construir todavía):** el DJ hace UNA
+      acción de una sola vez (dar permiso a una carpeta, o instalar un
+      ayudante local ligero) — después de eso, invisible y automático, el DJ
+      nunca vuelve a tocar nada técnico. Es honesto decir que "cero acción,
+      nunca" no es técnicamente posible (los navegadores no pueden leer
+      archivos locales sin al menos un permiso explícito) — se documenta así
+      para no prometer algo que no se puede cumplir. Un parser server-side
+      lee el archivo (`database V2`/history/`.m3u`) y guarda la metadata
+      estructurada en Supabase, ligada al perfil del DJ, como fuente de
+      conocimiento real para ELIXIS/DJMago — que la usa en conversación para
+      armar playlists nuevas y detectar patrones de mezcla. **Entregable
+      pedido por el PO:** ELIXIS arma la playlist y se la entrega en el chat
+      como PDF o PNG descargable — sin que el DJ tenga que saber ni ver nada
+      del proceso técnico detrás.
+      **Nota de alcance:** el mecanismo de lectura local (agente/ayudante en
+      la máquina del DJ) es territorio de MDJPRO (app de escritorio, hoy
+      pausada — un proyecto a la vez, ver regla vigente), no de la plataforma
+      web actual. Esta entrada documenta la visión para cuando le toque su
+      turno; no autoriza ni empieza su construcción.
+      **Segunda pieza, separada y de menor prioridad — reconocimiento "Shazam"
+      bajo demanda:** el PO planteó un caso de uso distinto y válido:
+      identificar qué canción está tocando OTRO DJ en vivo (no monitoreo
+      continuo). Con volumen bajo y ocasional (el DJ aprieta un botón, se
+      capturan unos segundos), tanto ACRCloud como AudD salen a centavos al
+      mes — ahí sí tendría sentido un motor de fingerprinting pago, pero como
+      función aparte y opcional, nunca como reemplazo del catálogo propio de
+      Serato. Sin ticket abierto, solo registrado.
+
 ## 2. Bitácora de Sincronización entre Cajas
 - [2026-08-22] Inicialización del Hub Central de sincronización multi-hilo.
 - [2026-08-22] Matriz de Jurisdicciones (`docs/JURISDICCIONES.md`) registrada + regla 6 en `CLAUDE.md`. Rename de marca `mdj-shared-header.js` → `mdjb-shared-header.js` fusionado en 61 archivos activos (PR #213).
@@ -405,3 +472,4 @@ Estado general: Operativo / En consolidación
   - **Hallazgo crítico de seguridad financiera, ya resuelto:** el mismo `STRIPE_SECRET_KEY` alimentaba TODOS los cobros de la plataforma (suscripciones, depósitos de eventos, propinas, y ahora merch) — confirmado en modo **LIVE** (`cs_live_...`) antes de tocar nada. Se creó `STRIPE_SECRET_KEY_MERCH` (llave de prueba, `sk_test_...`, generada por el propio PO desde el modo de prueba de su cuenta real "MIAMI DJ BEAT" en Stripe — nunca una cuenta nueva) exclusivamente para `create-merch-checkout`, dejando la llave compartida intacta. Regla para cualquier hilo futuro que agregue un cobro nuevo: **nunca reusar `STRIPE_SECRET_KEY` para algo que necesite probarse** — darle su propia llave con sufijo del dominio, como aquí.
   - **Incidente de confusión de entorno, resuelto por diagnóstico, no por código:** el PO reportó varias veces "el header duplicado sigue ahí" mostrando capturas de `localhost` (sin puerto) — resultó ser una pestaña de un ambiente completamente distinto (`http://localhost:8124/mdj-commander.html`, sirviendo el directorio de trabajo COMPARTIDO en `fix/mobile-ui-cleanup`, no cualquiera de los dos worktrees donde vivía el arreglo real). Verificado con `lsof` que no hay nada en el puerto 80, y con `git diff --stat` que ese directorio compartido tiene `web/staff.html` (203 líneas) y `web/mdj-commander.html` (1165 líneas) sin comitear, del hilo de avatares. **No se tocó nada de ese directorio** — se relevó al hilo de avatares (`miami-dj-beat-platform-6d`) el reporte de inestabilidad de menú del PO más el contexto de que su copia local de `staff.html` va detrás de los dos PRs recién fusionados, para que no lo confunda con una regresión real.
   - **Pendiente de decisión/verificación del hilo de avatares** (relevado, no resuelto por el Hilo Maestro): estado actual del trabajo de ELIXIS/avatares en `mdj-commander.html`, y si la inestabilidad de menú que reporta el PO en `localhost:8124` es del cambio en curso de ese hilo o solo un artefacto de estar detrás de `main`.
+- [2026-08-28] **Visión registrada — ELIXIS/DJMago catalogando la librería del DJ vía Serato/VirtualDJ/Rekordbox, sin motor de fingerprinting pago (ver módulo arriba).** El PO preguntó por Spotify Web API/ACRCloud para catalogar su librería personal de 4TB; investigación real (no de entrenamiento, con fuentes citadas) confirmó que ninguno de los dos existe en el repo hoy, que ACRCloud cobra mensualmente por horas de audio cargadas (caro y recurrente a esa escala), y que Serato ya resuelve el problema gratis con su propia base de datos de metadata (`database V2`/`history.database`). Sin ticket de construcción abierto — el mecanismo de lectura local es territorio de MDJPRO (pausado). Segunda pieza registrada aparte: reconocimiento tipo Shazam bajo demanda (no continuo) para identificar sets de otros DJs, de bajo costo por su volumen ocasional — sin ticket tampoco.
