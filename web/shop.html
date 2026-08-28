@@ -2,10 +2,9 @@
 <html lang="es">
 
 <head>
-    <!-- SHOP AISLADA: esta página fue reemplazada por la tienda externa de Shopify.
-         Redirige inmediatamente. El archivo se conserva como respaldo pero no se sirve activamente.
-         v20260525-shop-isolated -->
-    <script>window.location.replace('https://miami-dj-beat-store.myshopify.com/?shop_sign_in=true');</script>
+    <!-- SHOPPING MIAMI DJ BEAT: tienda nativa. Reemplaza el redirect a Shopify (frozen,
+         HTTP 402) retirado el 2026-08-27 — ver memoria "Shop Plan A retired". Checkout
+         real vía Stripe (create-merch-checkout), catálogo/carrito ya construidos aquí. -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
     <script>
     /* FIX-LEGACY-SUPABASE-01 (2026-08-19) · el respaldo entra cuando falta la
@@ -2112,7 +2111,7 @@
             if (!currentActiveItem) return;
 
             // Reset state
-            selectedState = { size: null, color: null, qty: 1, variantId: null };
+            selectedState = { size: null, color: null, qty: 1 };
             document.getElementById('amzQty').value = "1";
             document.getElementById('validationWarning').style.opacity = '0';
 
@@ -2373,10 +2372,8 @@
             }, 500);
         };
 
-        // ── PUENTE OFICIAL DE COMERCIO (INTERMEDIARIO) ──
+        // ── MOTOR DE CARRITO NATIVO (checkout real vía Stripe, ver checkoutCartAndRedirect) ──
         (function () {
-            const SHOPIFY_DOMAIN = "miami-dj-beat-store.myshopify.com";
-
             function normalize(value) {
                 return String(value ?? "").trim().toLowerCase();
             }
@@ -2411,22 +2408,9 @@
                 return null;
             }
 
-            function buildCheckoutUrl(variantId, quantity = 1) {
-                return `https://${SHOPIFY_DOMAIN}/cart/${variantId}:${quantity}`;
-            }
-
             function getQuantity(rawQuantity) {
                 const parsed = Number(rawQuantity);
                 return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
-            }
-
-            function ensureVariantId(variant) {
-                if (!variant || !variant.id) return null;
-
-                const raw = String(variant.id).trim();
-                const numeric = raw.includes("/") ? raw.split("/").pop() : raw;
-
-                return numeric && /^\d+$/.test(numeric) ? numeric : null;
             }
 
             function createCartLine(product, variant, quantity) {
@@ -2438,10 +2422,8 @@
                     image: product.image || product.images?.[0] || "",
                     size: variant.size || "",
                     color: variant.color || "",
-                    variantId: ensureVariantId(variant),
                     price: Number(variant.price ?? product.price ?? 0),
-                    quantity,
-                    shopifyDomain: SHOPIFY_DOMAIN
+                    quantity
                 };
             }
 
@@ -2468,7 +2450,8 @@
                 const index = cart.findIndex((item) => {
                     return (
                         (item.productKey === newLine.productKey || item.id === newLine.id) &&
-                        item.variantId === newLine.variantId
+                        normalize(item.size) === normalize(newLine.size) &&
+                        normalize(item.color) === normalize(newLine.color)
                     );
                 });
 
@@ -2479,11 +2462,6 @@
 
                 cart.push(newLine);
                 return cart;
-            }
-
-            function openCheckout(variantId, quantity = 1) {
-                const url = buildCheckoutUrl(variantId, quantity);
-                window.open(url, "_blank", "noopener,noreferrer");
             }
 
             function triggerDrawerRefresh() {
@@ -2502,7 +2480,7 @@
              * @param {number} [config.quantity=1]
              * @param {"buy_now"|"add_to_cart"} [config.mode="buy_now"]
              *
-             * @returns {{ok: boolean, reason?: string, variant?: Object, cartLine?: Object, checkoutUrl?: string}}
+             * @returns {{ok: boolean, reason?: string, variant?: Object, cartLine?: Object}}
              */
             window.launchCommerceAction = function launchCommerceAction(config = {}) {
                 const {
@@ -2519,38 +2497,27 @@
                 }
 
                 const variant = resolveVariantFlexible(product, selectedSize, selectedColor);
-                const variantId = ensureVariantId(variant);
                 const safeQty = getQuantity(quantity);
 
-                if (!variant || !variantId) {
+                if (!variant) {
                     alert("Esta combinación no está disponible.");
                     return { ok: false, reason: "variant_not_found" };
                 }
 
                 const cartLine = createCartLine(product, variant, safeQty);
+                const cart = readCart();
+                const updatedCart = mergeCartLine(cart, cartLine);
+                writeCart(updatedCart);
 
                 if (mode === "buy_now") {
-                    const checkoutUrl = buildCheckoutUrl(variantId, safeQty);
-                    openCheckout(variantId, safeQty);
-                    return {
-                        ok: true,
-                        variant,
-                        cartLine,
-                        checkoutUrl
-                    };
+                    if (typeof window.openCartDrawer === "function") window.openCartDrawer();
+                    if (typeof window.checkoutCartAndRedirect === "function") window.checkoutCartAndRedirect();
+                    return { ok: true, variant, cartLine };
                 }
 
                 if (mode === "add_to_cart") {
-                    const cart = readCart();
-                    const updatedCart = mergeCartLine(cart, cartLine);
-                    writeCart(updatedCart);
                     triggerDrawerRefresh();
-
-                    return {
-                        ok: true,
-                        variant,
-                        cartLine
-                    };
+                    return { ok: true, variant, cartLine };
                 }
 
                 console.warn(`launchCommerceAction: modo no soportado -> ${mode}`);
@@ -2786,7 +2753,8 @@
 
             // Validar
             const email = document.getElementById('chkEmail').value.trim();
-            if (!email || !document.getElementById('chkName').value.trim() || !document.getElementById('chkPhone').value.trim() || !document.getElementById('chkAddress').value.trim()) {
+            const custName = document.getElementById('chkName').value.trim();
+            if (!email || !custName || !document.getElementById('chkPhone').value.trim() || !document.getElementById('chkAddress').value.trim()) {
                 return alert(dict.chk_alert_fields);
             }
 
@@ -2795,38 +2763,60 @@
 
             // Guardar consistencia del Perfil en LocalStorage para compras futuras
             localStorage.setItem('mdj_user_profile', JSON.stringify({
-                name: document.getElementById('chkName').value.trim(),
+                name: custName,
                 email: email,
                 phone: document.getElementById('chkPhone').value.trim(),
                 address: document.getElementById('chkAddress').value.trim()
             }));
 
-            // ── FASE 2 FINAL: SECUESTRO SHOPIFY CON AUTOFILLED INVOICE DATA ──
             let currentCart = [];
             try { const s = sessionStorage.getItem('mdjpro_checkout_cart'); if (s) currentCart = JSON.parse(s); } catch (e) { }
 
-            let hasShopifyItems = currentCart.some(item => item.variantId);
-            if (hasShopifyItems) {
-                let permalinkPayload = currentCart.map(item => {
-                    if (item.variantId) return `${item.variantId.split('/').pop()}:${item.quantity}`;
-                    return null;
-                }).filter(Boolean).join(',');
-
-                if (permalinkPayload) {
-                    const shopifyDomain = "miami-dj-beat-store.myshopify.com";
-                    let emailParam = encodeURIComponent(email);
-                    let nameParam = encodeURIComponent(document.getElementById('chkName').value.trim());
-
-                    // Permalink enriquecido con la data de tu Bello Invoice Local 
-                    const checkoutFullUrl = `https://${shopifyDomain}/cart/${permalinkPayload}?checkout[email]=${emailParam}&checkout[shipping_address][first_name]=${nameParam}`;
-
-                    btn.innerText = "Transfiriendo a Caja Fuerte...";
-                    sessionStorage.removeItem('mdjpro_checkout_cart');
-
-                    console.log("🚀 Túnel Shopify Enriquecido Confirmado:", checkoutFullUrl);
-                    window.location.href = checkoutFullUrl;
-                    return; // Abortamos el flujo simulado de Zelle de aquí en adelante
+            // ── Credit / Debit Card → Stripe Checkout real (reemplaza el viejo puente a Shopify) ──
+            if (selectedPaymentMethod === 'Credit Card') {
+                if (currentCart.length === 0) {
+                    btn.innerText = dict.chk_btn_pay || 'Pay';
+                    btn.disabled = false;
+                    return alert(dict.cart_alert_empty);
                 }
+
+                const fnUrl = typeof window.mdbSupabaseFunctionUrl === 'function'
+                    ? window.mdbSupabaseFunctionUrl('create-merch-checkout') : '';
+                if (!fnUrl) {
+                    btn.innerText = dict.chk_btn_pay || 'Pay';
+                    btn.disabled = false;
+                    return alert('Checkout no disponible.');
+                }
+
+                btn.innerText = 'Conectando con Stripe…';
+
+                const successUrl = new URL('shop.html', window.location.href);
+                successUrl.searchParams.set('merch_payment', 'success');
+                const cancelUrl = new URL('shop.html', window.location.href);
+                cancelUrl.searchParams.set('merch_payment', 'cancelled');
+
+                fetch(fnUrl, {
+                    method: 'POST',
+                    headers: typeof window.mdjSupabaseAnonInvokeHeaders === 'function'
+                        ? window.mdjSupabaseAnonInvokeHeaders() : { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        items: currentCart.map(item => ({
+                            productId: item.id, size: item.size, color: item.color, quantity: item.quantity
+                        })),
+                        promo: activePromoDiscount > 0 ? (document.getElementById('promoCodeInput').value || '') : '',
+                        customer: { name: custName, email: email },
+                        success_url: successUrl.href,
+                        cancel_url: cancelUrl.href
+                    })
+                }).then(res => res.json()).then(data => {
+                    if (!data.ok || !data.url) throw new Error(data.error || 'Checkout no disponible');
+                    window.location.href = data.url;
+                }).catch(err => {
+                    alert('No se pudo iniciar el pago: ' + (err && err.message ? err.message : String(err)));
+                    btn.innerText = dict.chk_btn_pay || 'Pay';
+                    btn.disabled = false;
+                });
+                return; // Stripe redirige la página; el resto del flujo (Zelle simulado) no aplica
             }
 
             // Cierra el panel deslizante para mostrar el Overlay Global

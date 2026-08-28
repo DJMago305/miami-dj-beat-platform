@@ -1080,6 +1080,16 @@
             <button type="button" class="side3-link" data-sec="admin" data-go="ev-corporativa" data-nav="event-blueprint" title="Fiesta Corporativa"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg></span><span class="side3-tx">Fiesta Corporativa</span></button>
             <button type="button" class="side3-link" data-sec="admin" data-nav="fashion-show-panel" title="Pasarela / Fashion Show"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></span><span class="side3-tx">Pasarela / Fashion Show</span></button>
           </div>
+
+          <!-- Grupo PEDIDOS (Shopping Miami DJ Beat) — espacio propio, no anidado en Operaciones -->
+          <button type="button" class="side3-group" data-group="pedidos" aria-label="Pedidos">
+            <span class="side3-ic">🛍️</span><span class="side3-tx">Pedidos</span><span class="side3-car">▾</span>
+          </button>
+          <div class="side3-items" data-items="pedidos">
+            <button type="button" class="side3-link" data-merch-filter="paid_pending_fulfillment" title="Pendientes"><span class="side3-ic">🟡</span><span class="side3-tx">Pendientes</span></button>
+            <button type="button" class="side3-link" data-merch-filter="shipped" title="Enviados"><span class="side3-ic">🟢</span><span class="side3-tx">Enviados</span></button>
+            <button type="button" class="side3-link" data-merch-filter="all" title="Todos"><span class="side3-ic">📦</span><span class="side3-tx">Todos</span></button>
+          </div>
         </aside>
 
         <!-- ═══ PANEL DE CONTENIDO ═══ -->
@@ -1187,6 +1197,11 @@
           <div class="sc3-panel" id="sc3-inbox">
             <div class="sc3-loading" id="sc3-inbox-loading"><span class="acc-spin"></span> Cargando Inbox…</div>
             <iframe id="sc3-inbox-iframe" class="sc3-frame" data-src="./account-settings.html?panel=notifications&bare=1" aria-label="Inbox · Tickets" loading="lazy"></iframe>
+          </div>
+          <!-- Pedidos (Shopping Miami DJ Beat): mismo patrón que Inbox — panel dedicado + iframe perezoso. -->
+          <div class="sc3-panel" id="sc3-pedidos">
+            <div class="sc3-loading" id="sc3-pedidos-loading"><span class="acc-spin"></span> Cargando Pedidos…</div>
+            <iframe id="sc3-pedidos-iframe" class="sc3-frame" data-src="./staff-merch-orders.html?v=20260828-full-width" aria-label="Pedidos" loading="lazy"></iframe>
           </div>
           <!-- Bóveda Legal: motor de contratos y W-9, mismo patrón que Inbox
                (panel dedicado + iframe perezoso) — vive DENTRO de Gobernanza
@@ -1465,12 +1480,14 @@
       wrap.className = 'mdj-notif-bell';
       wrap.innerHTML =
         '<button type="button" id="mdj-notif-bell-btn" class="mdj-notif-bell-btn" ' +
-          'aria-label="Contratos pendientes de firma" aria-expanded="false" title="Contratos pendientes de firma">' +
+          'aria-label="Notificaciones" aria-expanded="false" title="Notificaciones">' +
           '🔔<span id="mdj-notif-bell-badge" class="mdj-notif-bell-badge" hidden>0</span>' +
         '</button>' +
         '<div id="mdj-notif-bell-dropdown" class="mdj-notif-bell-dropdown" hidden>' +
           '<div class="mdj-notif-bell-title">Contratos pendientes de firma</div>' +
           '<div id="mdj-notif-bell-list" class="mdj-notif-bell-list"></div>' +
+          '<div class="mdj-notif-bell-title">Pedidos sin leer</div>' +
+          '<div id="mdj-notif-bell-list-merch" class="mdj-notif-bell-list"></div>' +
         '</div>';
       document.body.appendChild(wrap);
 
@@ -1485,19 +1502,35 @@
         if(!wrap.contains(e.target)) dd.hidden = true;
       });
 
-      loadPendingContracts(sb);
+      // Pedidos sin leer: el número solo se borra cuando staff abre "Pedidos" en el
+      // sidebar (ver markAllRead en staff-merch-orders.html) — no al cambiar de estado.
+      window.addEventListener('message', function(e){
+        if(e.data && e.data.type === 'mdjb:merch-read') refreshNotifBell(sb);
+      });
+
+      refreshNotifBell(sb);
+    }
+    var _notifContractCount = 0, _notifMerchCount = 0;
+    function _paintNotifBadge(){
+      var badge = el('mdj-notif-bell-badge');
+      var total = _notifContractCount + _notifMerchCount;
+      if(total > 0){ badge.hidden = false; badge.textContent = String(total); }
+      else badge.hidden = true;
+    }
+    async function refreshNotifBell(sb){
+      await loadPendingContracts(sb);
+      await loadUnreadMerchOrders(sb);
     }
     async function loadPendingContracts(sb){
-      var badge = el('mdj-notif-bell-badge'), list = el('mdj-notif-bell-list');
+      var list = el('mdj-notif-bell-list');
       try{
         var res = await sb.from('contract_sends')
           .select('id, recipient, recipient_name, contract_type, sent_at')
           .eq('status', 'PENDING')
           .order('sent_at', { ascending: false });
         var rows = (res && res.data) || [];
+        _notifContractCount = rows.length;
         if(rows.length){
-          badge.hidden = false;
-          badge.textContent = String(rows.length);
           list.innerHTML = rows.map(function(r){
             var who = (r.recipient_name || r.recipient || 'Destinatario sin nombre').replace(/</g, '&lt;');
             var when = r.sent_at ? new Date(r.sent_at).toLocaleDateString('es-US') : '—';
@@ -1506,12 +1539,47 @@
               '<span class="mdj-notif-bell-item-meta">' + when + '</span></a>';
           }).join('');
         } else {
-          badge.hidden = true;
           list.innerHTML = '<div class="mdj-notif-bell-empty">Sin contratos pendientes de firma</div>';
         }
       }catch(e){
+        _notifContractCount = 0;
         list.innerHTML = '<div class="mdj-notif-bell-empty">Sin contratos pendientes de firma</div>';
       }
+      _paintNotifBadge();
+    }
+    async function loadUnreadMerchOrders(sb){
+      var list = el('mdj-notif-bell-list-merch');
+      try{
+        var res = await sb.from('merch_orders')
+          .select('id, customer_name, total_cents, created_at')
+          .eq('is_read', false)
+          .order('created_at', { ascending: false });
+        var rows = (res && res.data) || [];
+        _notifMerchCount = rows.length;
+        if(rows.length){
+          list.innerHTML = rows.map(function(r){
+            var who = (r.customer_name || 'Cliente sin nombre').replace(/</g, '&lt;');
+            var amt = '$' + ((r.total_cents || 0) / 100).toFixed(2);
+            return '<a class="mdj-notif-bell-item mdj-notif-goto-pedidos" href="javascript:void(0)">' +
+              '<span class="mdj-notif-bell-item-who">' + who + '</span>' +
+              '<span class="mdj-notif-bell-item-meta">' + amt + '</span></a>';
+          }).join('');
+          list.querySelectorAll('.mdj-notif-goto-pedidos').forEach(function(a){
+            a.addEventListener('click', function(){
+              var g = document.querySelector('[data-group="pedidos"]');
+              if(g && !g.classList.contains('open')) g.click();
+              var link = document.querySelector('[data-merch-filter="paid_pending_fulfillment"]');
+              if(link) link.click();
+            });
+          });
+        } else {
+          list.innerHTML = '<div class="mdj-notif-bell-empty">Sin pedidos nuevos</div>';
+        }
+      }catch(e){
+        _notifMerchCount = 0;
+        list.innerHTML = '<div class="mdj-notif-bell-empty">Sin pedidos nuevos</div>';
+      }
+      _paintNotifBadge();
     }
 
     function initStaff(sb, role, profile){
@@ -1808,7 +1876,7 @@
     function wireStaffSidebar(){
       var side=el('staff-side3'); if(!side) return;
       var iframe=el('sc3-iframe'), loading=el('sc3-loading'), loadTx=el('sc3-load-tx');
-      var panels={ gob:el('sc3-gob'), admin:el('sc3-admin'), inbox:el('sc3-inbox'), legal:el('sc3-legal') };
+      var panels={ gob:el('sc3-gob'), admin:el('sc3-admin'), inbox:el('sc3-inbox'), legal:el('sc3-legal'), pedidos:el('sc3-pedidos') };
       function showPanel(k){ for(var p in panels){ if(panels[p]) panels[p].classList.toggle('active', p===k); } }
       /* botón: contrae/expande toda la barra a solo iconos */
       var col=el('side3-collapse'); if(col) col.addEventListener('click', function(){ side.classList.toggle('collapsed'); });
@@ -1859,6 +1927,17 @@
           var f=el('sc3-inbox-iframe'), il=el('sc3-inbox-loading');
           if(f && !f.getAttribute('src')){ if(f.addEventListener) f.addEventListener('load', function(){ if(il) il.classList.add('hidden'); });
             f.setAttribute('src', f.getAttribute('data-src')); setTimeout(function(){ if(il) il.classList.add('hidden'); }, 9000); }
+          return;
+        }
+        var merchFilter=a.getAttribute('data-merch-filter');
+        if(merchFilter){ showPanel('pedidos');
+          var fp=el('sc3-pedidos-iframe'), ilp=el('sc3-pedidos-loading');
+          function sendFilter(){ try{ fp.contentWindow.postMessage({type:'mdjb:merch-filter', filter:merchFilter}, '*'); }catch(eMsg){} }
+          if(fp && !fp.getAttribute('src')){
+            if(fp.addEventListener) fp.addEventListener('load', function(){ if(ilp) ilp.classList.add('hidden'); sendFilter(); });
+            fp.setAttribute('src', fp.getAttribute('data-src'));
+            setTimeout(function(){ if(ilp) ilp.classList.add('hidden'); }, 9000);
+          } else if(fp) { sendFilter(); }
           return;
         }
         loadAdmin({ hash:a.getAttribute('data-nav')||null, go:a.getAttribute('data-go')||null }, a.getAttribute('title')||'');

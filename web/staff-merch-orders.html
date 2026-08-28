@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Pedidos Merch — Miami DJ Beat</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
+    <script src="./js/mdj-safe-storage.js?v=20260616-1"></script>
+    <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=optional" rel="stylesheet" />
+    <style>
+        /* Mismos tokens que el carrito de shop.html (.cart-item, var(--gold), etc.)
+           — esta pantalla es la continuación operativa de esa misma tienda, no una
+           herramienta aparte, así que hereda su lenguaje visual en vez de inventar uno. */
+        :root {
+            --gold: #c5a059;
+            --gold-soft: rgba(197, 160, 89, .14);
+            --bg: #0a0a0c;
+            --card: #16151a;
+            --card-line: #2a2a30;
+            --muted: #8f8f98;
+            --text: #f2f1ee;
+            --ok: #5fd68a;
+            --ok-soft: rgba(70, 200, 120, .14);
+            --bad: #f08080;
+            --bad-soft: rgba(220, 80, 80, .14);
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', system-ui, sans-serif;
+            min-height: 100vh;
+        }
+        .wrap { width: 100%; margin: 0; padding: 32px 40px 60px; }
+
+        .page-head { margin-bottom: 24px; }
+        .eyebrow {
+            color: var(--gold);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            margin: 0 0 6px;
+        }
+        h1 { font-size: 24px; font-weight: 800; margin: 0 0 6px; letter-spacing: .2px; }
+        #filter-label { color: var(--gold); font-weight: 700; font-size: 15px; }
+        #filter-label:not(:empty)::before { content: "· "; color: var(--muted); }
+        .sub { color: var(--muted); font-size: 13px; margin: 0; }
+
+        .toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 24px 0 20px;
+        }
+        .filters { display: flex; gap: 8px; }
+        .filters button {
+            background: transparent;
+            border: 1px solid var(--card-line);
+            color: var(--muted);
+            padding: 7px 16px;
+            border-radius: 999px;
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: border-color .15s, color .15s;
+        }
+        .filters button:hover { border-color: var(--gold); color: var(--text); }
+        .filters button.active { border-color: var(--gold); color: var(--gold); background: var(--gold-soft); }
+        .count { color: var(--muted); font-size: 12.5px; }
+
+        .orders { display: grid; grid-template-columns: 1fr; gap: 16px; }
+
+        .order-card {
+            background: var(--card);
+            border: 1px solid var(--card-line);
+            border-radius: 12px;
+            padding: 18px 20px;
+        }
+        .order-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding-bottom: 14px;
+            margin-bottom: 14px;
+            border-bottom: 1px solid var(--card-line);
+        }
+        .order-when { font-size: 12.5px; color: var(--muted); }
+        .order-when b { color: var(--text); font-weight: 600; }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 11px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .02em;
+        }
+        .pill.paid_pending_fulfillment { background: var(--gold-soft); color: var(--gold); }
+        .pill.shipped { background: var(--ok-soft); color: var(--ok); }
+        .pill.cancelled, .pill.refunded { background: var(--bad-soft); color: var(--bad); }
+
+        .order-body { display: grid; grid-template-columns: 1.1fr 1.4fr; gap: 24px; }
+        @media (max-width: 640px) { .order-body { grid-template-columns: 1fr; } }
+
+        .block-label {
+            font-size: 10.5px;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin: 0 0 8px;
+        }
+        .customer-name { font-size: 14.5px; font-weight: 700; margin-bottom: 2px; }
+        .customer-line { font-size: 12.5px; color: var(--muted); line-height: 1.6; }
+        .ship-block { margin-top: 14px; }
+        .ship-line { font-size: 12.5px; color: var(--text); line-height: 1.6; }
+
+        .item-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px dashed var(--card-line);
+            font-size: 13px;
+        }
+        .item-row:last-child { border-bottom: none; }
+        .item-name { font-weight: 600; }
+        .item-variant { color: var(--muted); font-size: 12px; margin-top: 1px; }
+        .item-qty {
+            color: var(--gold);
+            font-weight: 700;
+            font-size: 12.5px;
+            white-space: nowrap;
+        }
+
+        .order-foot {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 16px;
+            padding-top: 14px;
+            border-top: 1px solid var(--card-line);
+        }
+        .total { font-size: 17px; font-weight: 800; color: var(--gold); }
+        .total span { color: var(--muted); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; margin-right: 8px; }
+
+        .btn-ship {
+            background: var(--gold);
+            color: #17130a;
+            border: none;
+            padding: 9px 18px;
+            border-radius: 999px;
+            font-weight: 700;
+            font-size: 12.5px;
+            cursor: pointer;
+            transition: filter .15s;
+        }
+        .btn-ship:hover { filter: brightness(1.08); }
+        .btn-ship:disabled { opacity: .55; cursor: default; }
+        .fulfilled-note { color: var(--muted); font-size: 12px; }
+        .fulfilled-note b { color: var(--ok); }
+
+        .state {
+            text-align: center;
+            color: var(--muted);
+            font-size: 13.5px;
+            padding: 70px 20px;
+            border: 1px dashed var(--card-line);
+            border-radius: 12px;
+        }
+        .state .glyph { font-size: 26px; display: block; margin-bottom: 10px; opacity: .7; }
+        .state.error { color: var(--bad); }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <div class="page-head">
+            <p class="eyebrow">Shopping Miami DJ Beat</p>
+            <h1>Pedidos <span id="filter-label"></span></h1>
+            <p class="sub">Pedidos pagados vía Stripe Checkout · visible solo para staff (owner/admin/manager/seller)</p>
+        </div>
+
+        <div class="toolbar">
+            <span></span>
+            <span class="count" id="count"></span>
+        </div>
+
+        <div id="content" class="state">Cargando…</div>
+    </div>
+
+    <script>
+        var currentFilter = 'paid_pending_fulfillment';
+
+        function esc(s) { return String(s == null ? '' : s).replace(/[<>&]/g, function (c) { return { '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]; }); }
+
+        var STATUS_LABEL = {
+            paid_pending_fulfillment: 'Pendiente de envío',
+            shipped: 'Enviado',
+            cancelled: 'Cancelado',
+            refunded: 'Reembolsado'
+        };
+
+        function itemRows(items) {
+            if (!Array.isArray(items) || !items.length) return '<div class="item-row"><span class="item-variant">Sin artículos registrados</span></div>';
+            return items.map(function (it) {
+                return '<div class="item-row">' +
+                    '<div><div class="item-name">' + esc(it.i || '?') + '</div>' +
+                    '<div class="item-variant">' + esc(it.c || '—') + ' · Talla ' + esc(it.s || '—') + '</div></div>' +
+                    '<div class="item-qty">×' + esc(it.q || 1) + '</div>' +
+                    '</div>';
+            }).join('');
+        }
+
+        function fmtAddr(a) {
+            if (!a || !a.address) return 'Sin dirección de envío';
+            var ad = a.address;
+            var name = a.name ? esc(a.name) + '<br>' : '';
+            return name + esc([ad.line1, ad.line2].filter(Boolean).join(', ')) + '<br>' +
+                esc([ad.city, ad.state, ad.postal_code].filter(Boolean).join(', '));
+        }
+
+        async function markShipped(sb, id, btn) {
+            btn.disabled = true;
+            btn.textContent = 'Guardando…';
+            var sess = (await sb.auth.getSession()).data.session;
+            var { error } = await sb.from('merch_orders').update({
+                status: 'shipped',
+                fulfilled_at: new Date().toISOString(),
+                fulfilled_by: sess ? sess.user.id : null
+            }).eq('id', id);
+            if (error) {
+                alert('No se pudo actualizar: ' + error.message);
+                btn.disabled = false;
+                btn.textContent = 'Marcar enviado';
+                return;
+            }
+            load(sb);
+        }
+
+        function orderCard(o) {
+            var when = o.created_at ? new Date(o.created_at).toLocaleString('es-US', {
+                timeZone: 'America/New_York', dateStyle: 'medium', timeStyle: 'short'
+            }) : '—';
+
+            var foot = o.status === 'paid_pending_fulfillment'
+                ? '<button class="btn-ship" data-id="' + o.id + '">Marcar enviado</button>'
+                : (o.fulfilled_at
+                    ? '<span class="fulfilled-note">Enviado el <b>' + new Date(o.fulfilled_at).toLocaleDateString('es-US') + '</b></span>'
+                    : '');
+
+            return '<div class="order-card">' +
+                '<div class="order-top">' +
+                    '<span class="order-when">Pedido del <b>' + when + '</b></span>' +
+                    '<span class="pill ' + esc(o.status) + '">' + esc(STATUS_LABEL[o.status] || o.status) + '</span>' +
+                '</div>' +
+                '<div class="order-body">' +
+                    '<div>' +
+                        '<p class="block-label">Cliente</p>' +
+                        '<div class="customer-name">' + esc(o.customer_name || 'Sin nombre') + '</div>' +
+                        '<div class="customer-line">' + esc(o.customer_email || '—') + '<br>' + esc(o.customer_phone || '—') + '</div>' +
+                        '<div class="ship-block">' +
+                            '<p class="block-label">Envío</p>' +
+                            '<div class="ship-line">' + fmtAddr(o.shipping_address) + '</div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div>' +
+                        '<p class="block-label">Artículos</p>' +
+                        itemRows(o.items) +
+                    '</div>' +
+                '</div>' +
+                '<div class="order-foot">' +
+                    '<div class="total"><span>Total</span>$' + ((o.total_cents || 0) / 100).toFixed(2) + '</div>' +
+                    foot +
+                '</div>' +
+            '</div>';
+        }
+
+        async function load(sb) {
+            var content = document.getElementById('content');
+            var countEl = document.getElementById('count');
+            content.className = 'state';
+            content.innerHTML = 'Cargando…';
+            countEl.textContent = '';
+
+            var q = sb.from('merch_orders').select('*').order('created_at', { ascending: false }).limit(200);
+            if (currentFilter !== 'all') q = q.eq('status', currentFilter);
+            var { data, error } = await q;
+
+            if (error) {
+                content.className = 'state error';
+                content.innerHTML = '<span class="glyph">⚠</span>' + esc(error.message);
+                return;
+            }
+            if (!data || !data.length) {
+                content.className = 'state';
+                content.innerHTML = '<span class="glyph">🛍️</span>No hay pedidos en este filtro.';
+                return;
+            }
+
+            countEl.textContent = data.length + (data.length === 1 ? ' pedido' : ' pedidos');
+            content.className = 'orders';
+            content.innerHTML = data.map(orderCard).join('');
+
+            content.querySelectorAll('button.btn-ship').forEach(function (btn) {
+                btn.addEventListener('click', function () { markShipped(sb, btn.getAttribute('data-id'), btn); });
+            });
+        }
+
+        // Cablea la campana de notificaciones (#mdj-notif-bell en staff.html): el número
+        // no se borra por cambiar de estado, solo cuando alguien de staff realmente abre
+        // este panel. Se marca UNA vez por sesión de vista, no en cada cambio de filtro.
+        async function markAllRead(sb) {
+            var { error } = await sb.from('merch_orders').update({ is_read: true }).eq('is_read', false);
+            if (!error) {
+                try { window.parent.postMessage({ type: 'mdjb:merch-read' }, '*'); } catch (e) { }
+            }
+        }
+
+        var FILTER_LABEL = { paid_pending_fulfillment: 'Pendientes', shipped: 'Enviados', all: 'Todos' };
+        var _sbRef = null;
+
+        function applyFilter(filter) {
+            currentFilter = filter;
+            document.getElementById('filter-label').textContent = FILTER_LABEL[filter] || '';
+            if (_sbRef) load(_sbRef);
+        }
+
+        // El padre (staff.html → sidebar Pedidos → Pendientes/Enviados/Todos) manda el filtro
+        // por postMessage, mismo patrón que usan las plantillas de Bóveda Legal con su iframe.
+        window.addEventListener('message', function (e) {
+            if (e.data && e.data.type === 'mdjb:merch-filter') applyFilter(e.data.filter);
+        });
+
+        document.addEventListener('DOMContentLoaded', async function () {
+            var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+            var content = document.getElementById('content');
+            if (!sb) { content.innerHTML = 'Supabase no configurado.'; return; }
+
+            var sess = (await sb.auth.getSession()).data.session;
+            if (!sess) {
+                content.innerHTML = '<span class="glyph">🔒</span>Sesión requerida — abre esta vista desde staff.html.';
+                return;
+            }
+
+            _sbRef = sb;
+            document.getElementById('filter-label').textContent = FILTER_LABEL[currentFilter] || '';
+            load(sb);
+            markAllRead(sb);
+        });
+    </script>
+</body>
+
+</html>

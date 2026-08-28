@@ -6288,28 +6288,13 @@
     var toolsEl    = c.querySelector('[data-i18n="nav-tools"]');
     var perfilEl   = c.querySelector('[data-i18n="menu-account"]')     || c.querySelector('button[data-tab="public"]');
 
-    /* ── SHOP: edificio Staff → shop interno (C-2); resto → Shopify externo ── */
-    if (shopEl) {
-      if (_staffBuildingPage) {
-        if (shopEl.tagName === 'A') {
-          shopEl.href = './shop.html';
-          shopEl.removeAttribute('target');
-          shopEl.removeAttribute('rel');
-        }
-      } else {
-        var _shopUrl = 'https://miami-dj-beat-store.myshopify.com/?shop_sign_in=true';
-        if (shopEl.tagName === 'A') {
-          shopEl.href = _shopUrl;
-          shopEl.setAttribute('target', '_blank');
-          shopEl.setAttribute('rel', 'noopener noreferrer');
-        } else {
-          shopEl.addEventListener('click', function (e) {
-            e.preventDefault();
-            e.stopImmediatePropagation();
-            window.open(_shopUrl, '_blank', 'noopener,noreferrer');
-          }, true);
-        }
-      }
+    /* ── SHOP: tienda nativa Shopping Miami DJ Beat (./shop.html) en todas partes.
+       Antes: Staff → shop interno, resto → tienda Shopify externa (frozen, HTTP 402).
+       Retirado 2026-08-27 por orden del PO — ver memoria "Shop Plan A retired". ── */
+    if (shopEl && shopEl.tagName === 'A') {
+      shopEl.href = './shop.html';
+      shopEl.removeAttribute('target');
+      shopEl.removeAttribute('rel');
     }
 
     /* ── MI PERFIL (owner-tabs): STAFF building — Owner → dj-profile; resto → account-profile (C-1) ── */
@@ -6450,20 +6435,20 @@
   } catch (e3) { /* ignore if not patchable */ }
 })();
 
-/* ── SHOP → Shopify externo en #mainNav (todas las páginas)
-   Parcha a[data-mdj-nav="shop"] en el nav principal para evitar la cortina interna.
-   La IIFE de owner strip cubre el mismo nodo en #owner-tabs independientemente.
-   v20260524-shop-mainnav-external */
+/* ── SHOP → tienda nativa en #mainNav (todas las páginas)
+   Antes forzaba a[data-mdj-nav="shop"] a la tienda Shopify externa (frozen, HTTP 402);
+   retirado 2026-08-27 por orden del PO. El markup estático de cada página ya trae
+   href="./shop.html" — esta IIFE queda solo para limpiar sesiones viejas que cachearon
+   el href externo en el DOM (bfcache) antes de este cambio.
+   v20260827-shop-mainnav-native */
 (function () {
-  var _SHOPIFY = 'https://miami-dj-beat-store.myshopify.com/?shop_sign_in=true';
-
   function _patchMainNavShop() {
     var nav = document.getElementById('mainNav');
     if (!nav) return;
     nav.querySelectorAll('a[data-mdj-nav="shop"]').forEach(function (a) {
-      a.href = _SHOPIFY;
-      a.setAttribute('target', '_blank');
-      a.setAttribute('rel', 'noopener noreferrer');
+      a.href = './shop.html';
+      a.removeAttribute('target');
+      a.removeAttribute('rel');
     });
   }
 
