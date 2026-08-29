@@ -388,6 +388,25 @@
       .ew-carrusel-pista{display:grid !important; grid-template-columns:220px 1fr 240px; width:100% !important; transform:none !important; gap:14px;}
       .ew-pantalla{width:auto; padding:0;}
       .ew-dots{display:none;}
+      .ew-flecha{display:none !important;} /* aca los 3 paneles ya se ven juntos en columnas -- no hay nada que navegar */
+    }
+    /* Flechas laterales de escritorio angosto (2026-08-28, ticket de
+       soporte desktop) -- inyectadas por elixis-swipe-carousel.js mismo.
+       Solo tienen sentido MIENTRAS este carrusel sigue siendo carrusel
+       (por debajo de 981px, ver arriba): en 981px+ se vuelve grid de 3
+       columnas fijas y la regla de arriba las oculta sin excepcion. */
+    .ew-flecha{display:none}
+    @media (hover:hover) and (pointer:fine){
+      .ew-flecha{position:absolute;top:50%;transform:translateY(-50%);z-index:4;
+        width:34px;height:34px;border-radius:50%;border:none;
+        background:rgba(20,24,30,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+        color:var(--text);font-size:19px;line-height:1;cursor:pointer;
+        display:flex;align-items:center;justify-content:center;
+        transition:opacity .15s linear,background .15s linear}
+      .ew-flecha:hover{background:rgba(20,24,30,.7)}
+      .ew-flecha:disabled{opacity:.22;cursor:default}
+      .ew-flecha-izq{left:6px}
+      .ew-flecha-der{right:6px}
     }
     .ew-col{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:12px; min-height:0; height:100%; box-sizing:border-box; display:flex; flex-direction:column;}
     .ew-col.ew-mid{align-items:center;}
