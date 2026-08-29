@@ -6523,6 +6523,7 @@
   'use strict';
 
   var SERVICES = [
+    { href: './events.html', key: 'nav-svc-events', txt: 'Event Production' },
     { href: './rentals.html', key: 'nav-svc-rentals', txt: 'DJ Equipment Rental' },
     { href: './weddings.html', key: 'nav-svc-weddings', txt: 'Wedding DJ Services' },
     { href: './corporate.html', key: 'nav-svc-corporate', txt: 'Corporate DJ & AV' },
