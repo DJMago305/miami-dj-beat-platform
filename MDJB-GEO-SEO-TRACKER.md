@@ -154,3 +154,9 @@ De ese total, **3,729.1 KB (3.6 MB) ya están en vivo y sin riesgo** (logo + let
 - Fix aplicado y verificado en las dos rutas (header visible → sin failsafe; header oculto simulado → failsafe intacto). Reintento a 400ms agregado para estados de sesión que resuelven tarde.
 - Coordiné por mensaje cruzado con el hilo GEO/SEO paralelo (`miami-dj-beat-platform-12`) que también estaba operando en este mismo worktree: confirmé propiedad del worktree y que los 5 `.webp` están finales — evitó una posible colisión de escritura.
 - Exportada la lista de rutas exactas para el hilo de Backend & Storage (bloqueado por falta de herramienta de subida en su sesión, según reportó él mismo).
+
+### 2026-08-29 — Sincronización de Storage confirmada (por el Hilo Maestro)
+- El PO subió manualmente los 5 archivos `.webp` pendientes al bucket `assets` de Supabase Storage (guiado paso a paso, dashboard). Verificado por SQL directo contra `storage.objects` (no por reporte relayado) — dos intentos previos reportados como "ya subido" resultaron falsos antes de este.
+- Confirmados en Storage: `Weeding_Baner.webp` (46.7 KB), `Weeding_DJ.webp` (39.0 KB), `Weeding_studios.webp` (36.2 KB), `wedding_blurred_ambient.webp` (75.9 KB), `home_hero_4k_wide.webp` (48.5 KB) — coinciden con los tamaños de este tracker.
+- **El bloqueo de "Lighthouse después" queda levantado** — las imágenes ya no estarán rotas al re-medir.
+- Nota aparte (no de este hilo): aviso de seguridad de Supabase en el bucket `assets` ("Clients can list all files") — no se encontró una política RLS específica de `assets` vía `pg_policies`; se recomendó al PO usar el botón "Remove policy" del propio dashboard en vez de tocar RLS por SQL a ciegas en producción.
