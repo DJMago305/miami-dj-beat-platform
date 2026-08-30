@@ -28,7 +28,6 @@
 <script src="./supabase-config.js?v=elixis-commander"></script>
 <script src="./js/elixis-swipe-carousel.js?v=20260827-pointer-wheel-desktop"></script>
 <script src="./js/avatar-frame-player.js?v=20260826-clip-engine"></script>
-<script src="./js/avatar-viseme-sprites.js?v=20260826-viseme-sprites"></script>
 <!-- SDK OFICIAL de LiveAvatar/HeyGen (2026-08-27, segunda reescritura).
      La primera version de este puente arme a mano la conexion (LiveKit +
      WebSocket propio) leyendo documentacion paraseada -- funcionaba para
@@ -49,17 +48,17 @@
 <script src="./js/avatar-heygen-chromakey.js?v=20260827-multicapa-djmago"></script>
 <script src="./js/avatar-heygen-stream.js?v=20260827-heygen-base"></script>
 <script>
-  /* Fotogramas reales de boca (2026-08-27, sesion de green-screen real).
-     nivel de "sonrisa" es una aproximacion: no es una banda de amplitud
-     real como las otras 4, es una forma de boca distinta (E/I) colocada
-     donde visualmente mejor calza en la progresion cerrada->abierta. */
-  window.MDB_AVATAR_VISEMES = [
-    { src:'./assets/elixis-boca-cerrada.webp', nivel:0 },
-    { src:'./assets/elixis-boca-media.webp',   nivel:0.35 },
-    { src:'./assets/elixis-boca-redonda.webp', nivel:0.55 },
-    { src:'./assets/elixis-boca-sonrisa.webp', nivel:0.65, tipo:'sonrisa' },
-    { src:'./assets/elixis-boca-abierta.webp', nivel:0.85 }
-  ];
+  /* Sprites de boca (MDB_AVATAR_VISEMES + avatar-viseme-sprites.js)
+     eliminados por completo (2026-08-29): la llamada ya estaba apagada
+     desde 2026-08-27 ("se veia como marioneta, me estresa"), pero los 5
+     .webp y el script se conservaron entonces "por si se reconsidera mas
+     adelante" (ver el mismo comentario, mas abajo en latir()). El PO
+     reconsidero hoy: los archivos resultaron ser fotos completas con
+     fondo BLANCO solido, no recortes transparentes de boca -- el tipo de
+     asset era el equivocado desde el principio. Los 5 .webp ya se
+     borraron del disco a proposito ("no quiero dejar rastros de
+     errores"); dejar esta config apuntando a rutas muertas seria
+     exactamente ese rastro. */
   /* El PO pidio sacar la foto fija (mano levantada, "se queda tiesa" en
      escuchando/pensando/hablando -- no hay grabacion real todavia para
      esos estados) y usar el MISMO loop calmado en su lugar para las 4
@@ -2300,18 +2299,15 @@
         o.classList.toggle('rx', !hablando);
         /* La foto (.avatar-fig) queda 100% estatica por orden expresa
            (2026-08-26): este nivel real alimenta la red de particulas
-           (fxDraw() lee FX.voiceLevel), el anillo del boton, y -- solo si
-           hay fotogramas reales configurados en MDB_AVATAR_VISEMES -- la
-           capa de sprites de boca, que si no hay fotogramas se queda
-           invisible para siempre (ver avatar-viseme-sprites.js). */
+           (fxDraw() lee FX.voiceLevel) y el anillo del boton. */
         FX.voiceLevel = pulso;
-        /* Apagado a pedido explicito del PO (2026-08-27): el intercambio de
-           bocas en tiempo real se veia y se sentia como un muñeco de
-           marioneta abriendo y cerrando la boca -- "me estresa". djmago
-           ahora es solo el loop calmado (elixis-idle.mp4), sin animar la
-           boca -- "se ve vivo" igual, por el movimiento del cuerpo. No se
-           borra avatar-viseme-sprites.js ni sus imagenes por si se
-           reconsidera mas adelante; solo se dejo de llamar. */
+        /* Sprites de boca (avatar-viseme-sprites.js): apagados el
+           2026-08-27 ("se veia como marioneta, me estresa") y eliminados
+           por completo el 2026-08-29, assets incluidos -- resultaron ser
+           fotos completas con fondo blanco solido, tipo de asset
+           equivocado desde el principio, no solo un efecto que no gusto.
+           djmago sigue siendo el loop calmado (elixis-idle.mp4), "se ve
+           vivo" igual por el movimiento del cuerpo. */
       }
       rafPulso = requestAnimationFrame(latir);
     }
