@@ -411,6 +411,17 @@ serve(async (req: Request) => {
             headers: { ...cors, "Content-Type": "application/json", ...extra },
         });
 
+    // BLINDAJE DE CORS GLOBAL (2026-08-30, sesion real: el navegador reporto
+    // "Origin ... not allowed by Access-Control-Allow-Origin. Status code:
+    // 500" -- eso es la huella de un 500 SIN cabeceras CORS, que solo pasa
+    // cuando una excepcion no capturada escapa de este handler antes de
+    // llegar al try/catch interno (el que ya existia solo alrededor del
+    // fetch a OpenAI): Deno sirve su propia pagina de error generica ahi,
+    // sin cors, y el navegador la bloquea por completo -- ni el mensaje real
+    // del error llega a verse en consola. Este try/catch envuelve TODO el
+    // resto del handler para que, pase lo que pase, la respuesta siempre
+    // lleve las cabeceras CORS reales y el mensaje del error de verdad.
+    try {
     if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
     if (req.method !== "POST") return json({ ok: false, error: "method_not_allowed" }, 405);
 
@@ -706,19 +717,17 @@ serve(async (req: Request) => {
                         interrupt_response: true,  // barge-in: el usuario manda
                     },
                 ...(nrMode === "off" ? {} : { noise_reduction: { type: nrMode } }),
-                // Ayuda a la transcripcion de ENTRADA a no confundirse con
-                // letras de canciones en ingles de fondo (2026-08-30, mismo
-                // reporte en vivo) -- esto es una PISTA para transcribir mejor
-                // lo que capta el mic, no una garantia de en que idioma
-                // RESPONDE el modelo (eso lo fija la instruccion de abajo, en
-                // buildInstructions). Nesting segun la guia GA de audio.input
-                // (misma familia que turn_detection/noise_reduction arriba) --
-                // si el campo no existiera en esta version exacta de la API,
-                // un campo extra desconocido no tumba la sesion, solo se
-                // ignora; no se pudo confirmar byte a byte contra la
-                // documentacion oficial (bloqueada por su propio WAF) al
-                // momento de escribir esto.
-                ...(identidad === "djmago" ? { transcription: { language: "es" } } : {}),
+                // REMOVIDO (2026-08-30, sesion real: la llamada completa a
+                // OpenAI devolvia 500 sin CORS -- ver el try/catch global
+                // agregado mas abajo, que ahora deberia exponer el error real
+                // la proxima vez). Este campo (audio.input.transcription.
+                // language) ya se habia agregado con una advertencia
+                // explicita de "no se pudo confirmar contra la documentacion
+                // oficial" -- es el sospechoso mas probable de un rechazo de
+                // schema estricto de OpenAI, y removerlo no cuesta nada real:
+                // el idioma de RESPUESTA de DjMago lo fija la regla dura del
+                // prompt (buildInstructions), no este campo -- este solo era
+                // una pista de transcripcion de entrada, nunca la garantia.
             },
             output: { voice },
         },
@@ -853,5 +862,15 @@ serve(async (req: Request) => {
             await ADMIN.rpc("elixis_voice_settle", { p_session: sessionId, p_used: 0 }).catch(() => {});
         }
         return json({ ok: false, error: "voice_unreachable" }, 502);
+    }
+    } catch (err) {
+        // Cierre del blindaje global de arriba -- cualquier excepcion que se
+        // haya escapado de TODO lo anterior (construccion de sessionConfig,
+        // buildInstructions, una RPC que revienta en vez de devolver
+        // {error}, lo que sea) cae aca en vez de tumbar la respuesta sin
+        // CORS. El mensaje real del error viaja en el JSON esta vez -- antes
+        // era invisible, bloqueado por el navegador antes de llegar a verse.
+        console.error("[elixis-realtime-session] excepcion no capturada:", err);
+        return json({ ok: false, error: "internal_error", detail: String(err && (err as Error).message || err) }, 500);
     }
 });
