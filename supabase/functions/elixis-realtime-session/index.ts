@@ -473,16 +473,38 @@ serve(async (req: Request) => {
                       total: row?.total ?? 0 }, 200);
     }
 
-    // ── Music Hunter (paso 1 del fork: solo la tool queda declarada) ─────
-    // Mismo patron server-a-servidor que 'consultar' hacia elixis-orchestrator
-    // -- este handoff iria hacia music-fingerprint cuando esa Edge Function
-    // exista (item 3 de la especificacion, todavia no autorizado). Sin esta
-    // rama, la tool identificar_track (declarada arriba solo para identidad
-    // djmago) caeria sin querer en el intercambio SDP de mas abajo y
-    // devolveria un 415 opaco que no explica nada. Stub honesto en su lugar.
+    // ── Music Hunter (2026-08-30) ─────────────────────────────────────────
+    // Mismo patron server-a-servidor que 'consultar' hacia elixis-orchestrator:
+    // el navegador manda el audio crudo (PCM + sample rate, ver
+    // music-hunter-ring-buffer.js) hasta ACA -- con el JWT ya verificado -- y
+    // este handoff lo reenvia a music-fingerprint (que a su vez habla con
+    // ACRCloud). El JWT del usuario NO hace falta reenviarlo: music-fingerprint
+    // no toca la base de datos de Miami DJ Beat, solo credenciales de terceros
+    // que viven en sus propios secrets.
     if (action === "identificar_track") {
-        return json({ ok: false, motivo: "no_implementado",
-            detalle: "El motor de identificacion de musica (music-fingerprint) todavia no esta construido." }, 200);
+        let a: { pcm_base64?: string; sample_rate?: number } = {};
+        try { a = await req.json(); } catch { /* cuerpo vacio */ }
+        if (!a.pcm_base64 || !a.sample_rate) {
+            return json({ ok: false, error: "missing_pcm_or_sample_rate" }, 400);
+        }
+
+        const base = (Deno.env.get("SUPABASE_URL") || SUPABASE_URL_FALLBACK).replace(/\/$/, "");
+        try {
+            const r = await fetch(`${base}/functions/v1/music-fingerprint`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ pcm_base64: a.pcm_base64, sample_rate: a.sample_rate }),
+            });
+            const payload = await r.json().catch(() => ({}));
+            if (!r.ok) {
+                console.error(`[elixis-realtime-session] identificar_track ${r.status}:`, JSON.stringify(payload).slice(0, 300));
+                return json({ ok: false, motivo: "fallo", detalle: `El identificador respondió ${r.status}.` }, 200);
+            }
+            return json(payload, 200);
+        } catch (err) {
+            console.error("[elixis-realtime-session] identificar_track, red:", err);
+            return json({ ok: false, motivo: "fallo", detalle: "No se pudo alcanzar al identificador de música." }, 200);
+        }
     }
 
     // ── Liquidacion y latido ─────────────────────────────────────────────

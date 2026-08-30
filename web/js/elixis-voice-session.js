@@ -91,6 +91,18 @@
     }
     function usados(){ return t0 ? Math.max(0, Math.round((Date.now()-t0)/1000)) : 0; }
 
+    /* Float32Array -> base64 (2026-08-30, Music Hunter): en trozos, no de un
+       tiro -- String.fromCharCode.apply(null, arregloEnorme) puede reventar
+       la pila con los ~1MB reales que salen de 6s de audio a 44.1kHz. */
+    function pcmABase64(float32Array){
+      var bytes = new Uint8Array(float32Array.buffer, float32Array.byteOffset, float32Array.byteLength);
+      var CHUNK = 0x8000, binario = '';
+      for(var i=0; i<bytes.length; i+=CHUNK){
+        binario += String.fromCharCode.apply(null, bytes.subarray(i, i+CHUNK));
+      }
+      return btoa(binario);
+    }
+
     /* Mismo sumidero mudo que las dos copias originales: sin el, algunos
        navegadores no alimentan un analizador que no llega a los parlantes. */
     function analizador(stream){
@@ -149,6 +161,18 @@
       if(item.name==='consultar_elixis')      out = await accion('consultar',     { pregunta:String(args.pregunta||'') });
       else if(item.name==='recordar')         out = await accion('memory_write',  { clave:String(args.clave||''), hecho:String(args.hecho||'') });
       else if(item.name==='olvidar')          out = await accion('memory_forget', { clave:String(args.clave||'') });
+      else if(item.name==='identificar_track'){
+        /* Modo A ("bajo demanda") de Music Hunter -- Modo B (ciclo continuo
+           de 15-20s / setlist logger) es el item 4, todavia sin autorizar.
+           Usa la misma instantanea que expone obtenerMuestraMusicHunter(),
+           leyendo musicHunterNodo directo (misma closure, sin pasar por la
+           API publica que es para quien llama desde afuera). */
+        var muestra = (musicHunterNodo && window.MusicHunterRingBuffer)
+          ? await window.MusicHunterRingBuffer.obtenerInstantanea(musicHunterNodo) : null;
+        out = muestra
+          ? await accion('identificar_track', { pcm_base64: pcmABase64(muestra.pcm), sample_rate: muestra.sampleRate })
+          : { ok:false, motivo:'sin_audio_capturado' };
+      }
       else                                    out = { ok:false, motivo:'herramienta_desconocida' };
       emit('onTool', { nombre:item.name, args:args, ok:(out&&out.ok!==false) });
 
