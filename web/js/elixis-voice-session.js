@@ -266,15 +266,26 @@
 
       /* Music Hunter, Rama B (2026-08-30, autorizado por el PO): conecta el
          MISMO stream de mic -- ninguna captura nueva, ningun permiso extra --
-         a un buffer circular de 6s (ver music-hunter-ring-buffer.js). Todavia
-         nadie LEE ese buffer (eso es el ciclo de muestreo de "Cazador
-         Musical", item 4, no autorizado aun): esto solo deja la tuberia
-         corriendo y lista. Opcional a proposito (si el archivo no esta
-         cargado en la pagina, sigue sin pasar nada) -- staff.html hoy no lo
-         necesita para ELIXIS, solo para la identidad djmago mas adelante. */
-      if(window.MusicHunterRingBuffer && anMic){
+         a un buffer circular de 6s (ver music-hunter-ring-buffer.js).
+
+         SOLO identidad==='djmago' (2026-08-30, correccion en vivo -- reporte
+         real: "al activar el modo Cazador y conectar el microfono, el audio
+         general del sistema/musica se corta"). Antes esto se conectaba en
+         TODA sesion de voz, ELIXIS incluido, sin necesidad real -- un
+         AudioWorkletNode activo (aunque mudo) sigue procesando cada bloque de
+         audio en el hilo de tiempo real del navegador, y sumarle eso a
+         CUALQUIER sesion es exponer a Serato a un riesgo que solo tiene
+         sentido pagar cuando Cazador Musical de verdad se va a usar. Acotar
+         el alcance no prueba por si solo cual era la causa exacta (no hay
+         forma de perfilar el audio real del PO desde aca), pero es la unica
+         correccion honesta posible sin esa sesion en vivo: menos sesiones
+         tocan esta rama, menos sesiones pueden verse afectadas. */
+      if(window.MusicHunterRingBuffer && anMic && identidadActual === 'djmago'){
         window.MusicHunterRingBuffer.conectar(ac, mic).then(function(nodo){
           musicHunterNodo = nodo;
+          console.log('[ElixisVoiceSession] Music Hunter ring buffer conectado:', !!nodo);
+        }).catch(function(e){
+          console.error('[ElixisVoiceSession] Music Hunter ring buffer, fallo al conectar:', e);
         });
       }
 
@@ -436,26 +447,44 @@
        elixis-realtime-session/index.ts) -- este modulo no necesito cambios,
        ya estaba desacoplado como debia. */
     var CAZADOR_INTERVALO_MS = 18000;
-    var cazadorTimer = 0, cazadorUltimoId = null, cazadorOrden = 0;
+    var cazadorTimer = 0, cazadorUltimoId = null, cazadorOrden = 0, cazadorCiclo = 0;
     function iniciarCazadorMusical(){
-      if(cazadorTimer) return;
+      if(cazadorTimer){ console.log('[CazadorMusical] iniciarCazadorMusical(): ya estaba corriendo, no hace nada.'); return; }
+      console.log('[CazadorMusical] ciclo iniciado, cada', CAZADOR_INTERVALO_MS, 'ms. musicHunterNodo activo:', !!musicHunterNodo);
       cazadorTimer = setInterval(async function(){
+        cazadorCiclo += 1;
+        var etiqueta = '[CazadorMusical] ciclo #' + cazadorCiclo;
+        /* Logs pedidos explicitamente (2026-08-30, reporte "playlist vacia,
+           el ciclo de 18s no esta logrando identificar pistas") -- antes de
+           esto no habia forma de saber, con datos reales, en que paso se
+           estaba perdiendo: si musicHunterNodo nunca se conecto, si el
+           buffer llegaba vacio, o si llegaba lleno pero ACRCloud de verdad
+           no encontraba coincidencia (muy real con musica mezclada/pitcheada
+           en vivo -- el fingerprint de un DJ set no calza igual que el de la
+           grabacion de estudio original). */
+        if(!musicHunterNodo){ console.warn(etiqueta, 'sin musicHunterNodo -- el ring buffer nunca se conecto en este start().'); return; }
         var muestra = await obtenerMuestraMusicHunter();
-        if(!muestra || !muestra.pcm || !muestra.pcm.length) return;
+        if(!muestra || !muestra.pcm || !muestra.pcm.length){
+          console.warn(etiqueta, 'obtenerMuestraMusicHunter() no devolvio PCM utilizable:', muestra);
+          return;
+        }
+        console.log(etiqueta, 'PCM listo -- muestras:', muestra.pcm.length, '· sampleRate:', muestra.sampleRate, '· segundos reales:', muestra.segundos.toFixed(2));
         var resultado = await accion('identificar_track', {
           pcm_base64: pcmABase64(muestra.pcm), sample_rate: muestra.sampleRate,
         });
-        if(!resultado || resultado.ok === false) return;
-        if(resultado.mock) return; // ACRCloud sin configurar -- nada real que registrar
-        if(!resultado.artist && !resultado.title) return; // sin_coincidencia: silencio, no es un error
+        console.log(etiqueta, 'respuesta de identificar_track:', resultado);
+        if(!resultado || resultado.ok === false){ console.warn(etiqueta, 'la Edge Function respondio fallo.'); return; }
+        if(resultado.mock){ console.warn(etiqueta, 'ACRCloud sin configurar (modo mock) -- nada real que registrar.'); return; }
+        if(!resultado.artist && !resultado.title){ console.log(etiqueta, 'sin coincidencia real en ACRCloud para esta muestra.'); return; }
         /* Anti-duplicado por ID/título (pedido explicito): isrc si vino,
            si no artista+titulo normalizado -- mientras siga sonando el
            MISMO track, cada ciclo de 18s vuelve a "detectarlo" y no debe
            generar una fila nueva cada vez. */
         var idNuevo = (resultado.isrc || (resultado.artist||'') + '|' + (resultado.title||'')).toLowerCase();
-        if(idNuevo === cazadorUltimoId) return;
+        if(idNuevo === cazadorUltimoId){ console.log(etiqueta, 'mismo track que el anterior, no se duplica fila.'); return; }
         cazadorUltimoId = idNuevo;
         cazadorOrden += 1;
+        console.log(etiqueta, 'track NUEVO -> fila #' + cazadorOrden, resultado.artist, '-', resultado.title);
         emit('onMusicHunterTrack', {
           orden: cazadorOrden, hora: new Date(), artist: resultado.artist, title: resultado.title,
           bpm: resultado.bpm, musical_key: resultado.musical_key, genre: resultado.genre,
@@ -465,7 +494,7 @@
     }
     function detenerCazadorMusical(){
       if(cazadorTimer){ clearInterval(cazadorTimer); cazadorTimer=0; }
-      cazadorUltimoId = null; cazadorOrden = 0;
+      cazadorUltimoId = null; cazadorOrden = 0; cazadorCiclo = 0;
     }
 
     /* enviarTexto(): via de entrada de TEXTO para el mismo turno de voz --
