@@ -1188,7 +1188,11 @@
                      via el handler onMusicHunterTrack de ewSesion.crear() mas abajo.
                      Fuera de ese modo se queda vacia a proposito -- no es un error,
                      es que nadie esta muestreando musica ahora mismo. -->
-                <h4>Live Setlist</h4>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                  <h4 style="margin:0;">Live Setlist</h4>
+                  <button type="button" id="ewSetlistExportar" title="Exportar setlist como M3U"
+                    style="font-size:9px;opacity:.5;background:none;border:1px solid var(--line);border-radius:6px;color:var(--text);padding:2px 6px;cursor:pointer;">.m3u</button>
+                </div>
                 <div class="ew-col-body" id="ewSetlist"><div class="ew-vacio">Activa "Cazador Musical" para ver el setlist en vivo.</div></div>
               </div>
             </div>
@@ -1970,6 +1974,13 @@
           });
         })();
 
+        /* Acumulador del Live Setlist (2026-08-30, para exportar .m3u) -- el
+           DOM (#ewSetlist) es solo la vista; esto es el dato real que
+           sobrevive mientras dure la pestana, para que "Exportar .m3u" no
+           tenga que releer texto del HTML. Se pierde al recargar (sin
+           persistencia en base de datos todavia, ver ESTADO_MAESTRO.md). */
+        var ewSetlistTracks = [];
+
         ewSesion = window.ElixisVoiceSession.crear({
           getHeaders: async function(){
             var sb=getSb(); var pub = window.MDB_SUPABASE_ANON_KEY || '';
@@ -2084,6 +2095,7 @@
              todavia (solo DOM, se pierde al recargar) -- exportar/guardar en
              base de datos es un paso aparte, no pedido para hoy. */
           onMusicHunterTrack: function(track){
+            ewSetlistTracks.push(track);
             var box=el('ewSetlist'); if(!box) return;
             var vacio=box.querySelector('.ew-vacio'); if(vacio) vacio.remove();
             var fila=document.createElement('div'); fila.className='ew-setlist-fila';
@@ -2200,6 +2212,48 @@
             if(lbl && !ewSesion.activa()) lbl.textContent = 'Modo elegido · activa la voz para aplicarlo';
           };
         });
+
+        /* Exportar Live Setlist a .m3u (2026-08-30). M3U extendido, el
+           formato que Serato y la mayoria de software de DJ importan de
+           verdad -- no es el "Local Indexer" del diagrama de arquitectura
+           mas amplio (leer la base de datos/crates reales de Serato desde
+           el disco) ni el formato binario propio .crate de Serato: eso es
+           otra pieza, mas grande, todavia sin construir (ver la nota de
+           arquitectura en docs/ESTADO_MAESTRO.md). Esto es la exportacion
+           HONESTA de lo que si existe hoy: el historial de tracks
+           identificados en vivo por Cazador Musical, en un formato que se
+           puede abrir en Serato/iTunes/VLC/etc.
+           #EXTINF necesita una linea de "ruta" por track -- como esto no
+           apunta a un archivo real en disco (es un historial identificado
+           por audio, no una libreria de archivos), se repite el texto
+           legible ahi: Serato y la mayoria de reproductores lo muestran
+           igual aunque no resuelva a un archivo real. */
+        var ewSetlistExportarBtn = el('ewSetlistExportar');
+        if(ewSetlistExportarBtn) ewSetlistExportarBtn.onclick = function(){
+          if(!ewSetlistTracks.length){
+            var original = ewSetlistExportarBtn.textContent;
+            ewSetlistExportarBtn.textContent = 'vacío';
+            setTimeout(function(){ ewSetlistExportarBtn.textContent = original; }, 1500);
+            return;
+          }
+          var lineas = ['#EXTM3U'];
+          ewSetlistTracks.forEach(function(t){
+            var etiqueta = (t.artist || 'Desconocido') + ' - ' + (t.title || '');
+            var detalle = [];
+            if(t.bpm) detalle.push(t.bpm + ' BPM');
+            if(t.musical_key) detalle.push(t.musical_key);
+            lineas.push('#EXTINF:-1,' + etiqueta + (detalle.length ? ' [' + detalle.join(' · ') + ']' : ''));
+            lineas.push(etiqueta);
+          });
+          var contenido = lineas.join('\r\n') + '\r\n';
+          var blob = new Blob([contenido], { type: 'audio/x-mpegurl' });
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          a.href = url;
+          a.download = 'setlist-' + new Date().toISOString().slice(0, 10) + '.m3u';
+          document.body.appendChild(a); a.click(); document.body.removeChild(a);
+          setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+        };
 
       }
 
