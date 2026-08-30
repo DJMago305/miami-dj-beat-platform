@@ -19,6 +19,19 @@
 
   var ESTADOS = ['idle','listening','transcribing','understanding','confirmation','executing','speaking'];
 
+  /* Disparador de "modo dialogo" para DjMago (2026-08-30, directiva del PO
+     tras el reporte real "hablo solo, las canciones que identifico no son
+     las que han sonado"): con create_response:false para identidad djmago
+     (ver elixis-realtime-session/index.ts), OpenAI transcribe cada turno
+     pero NUNCA genera una respuesta hablada por su cuenta -- esto evita el
+     bug de raiz (la API generaba y reproducia ALGO en cada turno detectado,
+     sin importar lo que dijera el prompt sobre quedarse callado). Este
+     patron es el UNICO lugar donde se decide, mirando la transcripcion REAL
+     ya recibida, si de verdad preguntaron por la cancion -- si matchea, el
+     cliente manda response.create a mano (mismo mecanismo que ya usa
+     herramienta() tras una tool-call) para que DjMago SI responda esa vez. */
+  var PREGUNTA_CANCION_RE = /qu[ée]\s+(canci[oó]n|tema|track|rola|disco)|qu[ée]\s+(es|era)\s+(esta|esa|eso)|qu[ée]\s+(est[aá]|esta)\s+(sonando|tocando|pasando)|c[oó]mo se llama (esta|esa)|what('?s| is)\s+(this|that)?\s*(song|track|playing)/i;
+
   function crear(handlers){
     handlers = handlers || {};
     function emit(nombre, arg){
@@ -193,6 +206,14 @@
           if(dicho){
             emit('onTranscript', { who:'yo', text:dicho, final:true });
             emit('onThreadLine', { rol:'yo', contenido:dicho, modo:modoActual });
+            /* Modo dialogo bajo demanda (ver PREGUNTA_CANCION_RE arriba):
+               con identidad djmago, create_response:false hace que llegar
+               hasta aca (transcripcion real, turno detectado) NO implique
+               que DjMago vaya a decir nada -- salvo que la transcripcion
+               real diga que le preguntaron por la cancion. */
+            if(identidadActual === 'djmago' && PREGUNTA_CANCION_RE.test(dicho) && dc && dc.readyState==='open'){
+              dc.send(JSON.stringify({ type:'response.create' }));
+            }
           }
           break;
         }
@@ -447,6 +468,19 @@
        elixis-realtime-session/index.ts) -- este modulo no necesito cambios,
        ya estaba desacoplado como debia. */
     var CAZADOR_INTERVALO_MS = 18000;
+    /* Piso de confianza (2026-08-30, reporte real: "las canciones que
+       identifico no son las que han sonado en el ambiente") -- antes se
+       aceptaba CUALQUIER match con artista/titulo, sin mirar la confianza.
+       Verificado en una prueba anterior con un tono sintetico (sin musica
+       real): ACRCloud devolvio un match REAL pero completamente falso, con
+       confidence:0.28 -- exactamente el tipo de resultado que esta pasando
+       en vivo. La causa de fondo probablemente sigue siendo la fuente de
+       audio (mic ambiente/built-in, elegido a proposito para no tocar la
+       interfaz de Serato -- ver elegirMicrofono() -- pero lejos y de baja
+       fidelidad para fingerprinting real), no algo que este piso arregle
+       del todo; pero al menos deja de registrar como "identificado" algo
+       que ACRCloud en el fondo tampoco esta seguro de que sea. */
+    var CAZADOR_CONFIANZA_MINIMA = 0.5;
     var cazadorTimer = 0, cazadorUltimoId = null, cazadorOrden = 0, cazadorCiclo = 0;
     function iniciarCazadorMusical(){
       if(cazadorTimer){ console.log('[CazadorMusical] iniciarCazadorMusical(): ya estaba corriendo, no hace nada.'); return; }
@@ -476,6 +510,10 @@
         if(!resultado || resultado.ok === false){ console.warn(etiqueta, 'la Edge Function respondio fallo.'); return; }
         if(resultado.mock){ console.warn(etiqueta, 'ACRCloud sin configurar (modo mock) -- nada real que registrar.'); return; }
         if(!resultado.artist && !resultado.title){ console.log(etiqueta, 'sin coincidencia real en ACRCloud para esta muestra.'); return; }
+        if((resultado.confidence||0) < CAZADOR_CONFIANZA_MINIMA){
+          console.warn(etiqueta, 'match descartado por confianza baja ('+resultado.confidence+' < '+CAZADOR_CONFIANZA_MINIMA+'):', resultado.artist, '-', resultado.title);
+          return;
+        }
         /* Anti-duplicado por ID/título (pedido explicito): isrc si vino,
            si no artista+titulo normalizado -- mientras siga sonando el
            MISMO track, cada ciclo de 18s vuelve a "detectarlo" y no debe

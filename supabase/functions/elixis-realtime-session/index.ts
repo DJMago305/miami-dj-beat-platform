@@ -708,8 +708,27 @@ serve(async (req: Request) => {
             input: {
                 // DJMago SIEMPRE con el umbral alto -- ver DJMAGO_VAD_THRESHOLD
                 // arriba -- sin importar que ?vad= haya mandado el cliente.
+                // create_response:false (2026-08-30, sesion real con capturas
+                // Y CONSOLA: DjMago seguia hablando solo -- "No escuché nada
+                // claro..." repetido dos veces, comentarios espontaneos sobre
+                // "armar el set", etc. -- pese al umbral alto Y a la regla
+                // dura del prompt. Razon real: create_response:true hace que
+                // la API genere una respuesta HABLADA automaticamente cada
+                // vez que el VAD detecta un turno, sin importar lo que diga
+                // el prompt -- una instruccion de "quedate callado" cambia
+                // el CONTENIDO de lo que se genera, pero no puede evitar que
+                // se genere y se reproduzca ALGO. Con create_response:false,
+                // OpenAI sigue transcribiendo (el cliente sigue viendo
+                // conversation.item.input_audio_transcription.completed) pero
+                // NUNCA habla por su cuenta. El "modo dialogo" (responder de
+                // verdad) queda reservado para cuando el cliente detecta una
+                // pregunta real sobre la cancion en esa transcripcion y
+                // manda response.create el mismo -- ver elixis-voice-
+                // session.js, mismo mecanismo que ya usa herramienta() tras
+                // una tool-call. Directiva explicita del PO: "modo dialogo
+                // solo para cuando le pregunten que cancion esta sonando".
                 turn_detection: identidad === "djmago"
-                    ? { ...STRICT_TURN_DETECTION, threshold: DJMAGO_VAD_THRESHOLD }
+                    ? { ...STRICT_TURN_DETECTION, threshold: DJMAGO_VAD_THRESHOLD, create_response: false }
                     : estricto ? STRICT_TURN_DETECTION : {
                         type: "semantic_vad",
                         eagerness,                 // ver DEFAULT_EAGERNESS arriba
