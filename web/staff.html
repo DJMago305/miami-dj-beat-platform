@@ -39,6 +39,7 @@
   </script>
   <script src="./supabase-config.js?v=20260814-bfi"></script>
   <script src="./subscription.js?v=20260422-find-dj-rank"></script>
+  <script src="./js/smartcrate-harmonic-engine.js?v=20260830-camelot-engine"></script>
   <script src="./js/music-hunter-ring-buffer.js?v=20260830-ring-buffer"></script>
   <script src="./js/elixis-voice-session.js?v=20260830-modo-dialogo-bajo-demanda"></script>
   <script src="./js/elixis-swipe-carousel.js?v=20260827-pointer-wheel-desktop"></script>
@@ -1235,14 +1236,51 @@
            la rama feature/music-intel-serato-parser (Dominio #6,
            Inteligencia Musical) -- este contenedor no lo reimplementa, lo
            consume cuando ese hilo entregue el sincronizador hacia Supabase
-           (ver docs/ESTADO_MAESTRO.md). Sin ese dato sincronizado todavia,
-           esta vista es honesta sobre su propio estado: candado de plan
-           pago + mensaje de "todavia no conectado", nunca datos inventados. -->
+           (ver docs/ESTADO_MAESTRO.md). Mientras tanto (2026-08-30), esta
+           vista consume una INSTANTANEA DE PRUEBA real -- 369 tracks de la
+           libreria real del PO, exportados una sola vez con el parser ya
+           validado del Dominio #6 (web/data/smartcrate-test-tracks.json,
+           ver su propio _meta.nota) -- nunca datos inventados, pero
+           tampoco un sincronizador en vivo todavia. El motor de Camelot/
+           BPM (web/js/smartcrate-harmonic-engine.js) es real y verificado
+           contra estos mismos datos, no un mockup. -->
       <section id="view-smartcrate" class="staff-view">
-        <div style="max-width:720px;margin:0 auto;padding:32px 20px;">
+        <div style="max-width:1100px;margin:0 auto;padding:32px 20px;">
           <h2 style="color:var(--gold);font-size:1.4rem;margin:0 0 6px;">SmartCrate IA</h2>
           <p style="color:rgba(255,255,255,.55);font-size:13px;margin:0 0 24px;">Motor de recomendación armónica sobre tu librería real de Serato — operado por voz vía DjMago.</p>
           <div id="smartcrateGate"></div>
+          <div id="smartcrateApp" style="display:none;">
+            <!-- Instantanea de PRUEBA (2026-08-30), no sincronizador en vivo --
+                 ver web/data/smartcrate-test-tracks.json (_meta.nota). Cuando
+                 el Dominio #6 entregue el sincronizador real hacia Supabase,
+                 este fetch cambia de destino, no la logica de abajo. -->
+            <div style="border:1px solid rgba(197,160,89,.4);background:rgba(197,160,89,.05);border-radius:8px;padding:8px 14px;font-size:11px;color:var(--gold-lt,var(--gold));margin-bottom:16px;">
+              Instantánea de prueba — datos reales de tu librería, capturados el 2026-08-30. No es sincronización en vivo todavía.
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+              <label style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.5);">Tipo de evento</label>
+              <select id="smartcrateEvento" style="background:var(--panel,#0b0f18);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:13px;">
+                <option value="quince">15s / general (±4%)</option>
+                <option value="bodas">Bodas (±3%)</option>
+                <option value="corporativos">Corporativos (±3%)</option>
+                <option value="clubs_latinos">Clubs Latinos (±6%)</option>
+                <option value="edm">EDM (±8%)</option>
+              </select>
+              <span id="smartcrateContador" style="font-size:12px;color:rgba(255,255,255,.4);margin-left:auto;"></span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;">
+              <div>
+                <h4 style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.5);">Catálogo (clic para ver compatibles)</h4>
+                <div id="smartcrateTabla" style="max-height:520px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;"></div>
+              </div>
+              <div>
+                <h4 style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.5);">Compatibles con la selección</h4>
+                <div id="smartcrateCompatibles" style="max-height:520px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;">
+                  <div style="padding:16px;color:rgba(255,255,255,.4);font-size:13px;">Elige un track del catálogo.</div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -2353,15 +2391,86 @@
             '</div>';
           return;
         }
-        /* Plan activo confirmado -- estado real, no un catalogo simulado.
-           El sincronizador (Dominio #6, "el vehiculo" de su spec) todavia no
-           entrega datos aca; cuando exista, esta funcion se actualiza para
-           leer la tabla real de Supabase en vez de mostrar este mensaje. */
-        caja.innerHTML =
-          '<div style="border:1px solid var(--line);border-radius:12px;padding:20px;">' +
-            '<p style="margin:0 0 10px;font-weight:700;color:var(--text);">Plan activo confirmado.</p>' +
-            '<p style="margin:0;color:rgba(255,255,255,.55);font-size:13px;">Tu librería de Serato todavía no está sincronizada con SmartCrate IA — el motor de lectura de crates ya está validado (Dominio #6, Inteligencia Musical); falta conectar el sincronizador hacia esta cuenta. Sin datos reales, esta vista no muestra un catálogo simulado.</p>' +
+        /* Plan activo confirmado -- desde aca en adelante se muestra la
+           instantanea de PRUEBA real (369 tracks de la libreria real del
+           PO, ver el banner en el propio HTML). Cuando el Dominio #6
+           entregue el sincronizador real, este fetch cambia de
+           web/data/smartcrate-test-tracks.json a una consulta real de
+           Supabase -- la logica de tabla/motor armonico de abajo no
+           cambia, solo el origen del array. */
+        caja.style.display = 'none';
+        var app = el('smartcrateApp'); if(app) app.style.display = '';
+        try{
+          var resp = await fetch('./data/smartcrate-test-tracks.json');
+          var datos = await resp.json();
+          smartcrateCatalogo = (datos && datos.tracks) || [];
+        }catch(e){
+          console.error('[SmartCrate IA] no se pudo cargar la instantánea de prueba:', e);
+          if(app) app.innerHTML = '<p style="color:rgba(255,150,140,.8);font-size:13px;">No se pudo cargar el catálogo de prueba.</p>';
+          return;
+        }
+        renderSmartcrateTabla();
+        var sel = el('smartcrateEvento');
+        if(sel) sel.onchange = function(){ if(smartcrateSeleccionado) renderSmartcrateCompatibles(smartcrateSeleccionado); };
+      }
+
+      /* Estado de la vista -- vive fuera de iniciarSmartcrateIA() porque el
+         selector de evento y el click en una fila necesitan leerlo/mutarlo
+         despues de que la carga inicial ya termino. */
+      var smartcrateCatalogo = [];
+      var smartcrateSeleccionado = null;
+
+      function renderSmartcrateTabla(){
+        var tabla = el('smartcrateTabla'); if(!tabla) return;
+        var contador = el('smartcrateContador');
+        if(contador) contador.textContent = smartcrateCatalogo.length + ' tracks';
+        var html = smartcrateCatalogo.map(function(t){
+          var camelot = window.SmartCrateHarmonicEngine ? window.SmartCrateHarmonicEngine.claveACamelot(t.key) : null;
+          return '<div class="smartcrate-fila" data-id="' + t.id + '" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--line);cursor:pointer;font-size:12.5px;">' +
+            '<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);">' + ewEsc(t.title || t.path || '(sin título)') + '</span>' +
+            '<span style="color:rgba(255,255,255,.45);flex:0 0 auto;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + ewEsc(t.artist || '') + '</span>' +
+            '<span style="flex:0 0 auto;color:rgba(255,255,255,.5);font-family:var(--mono,monospace);">' + (t.bpm ? Math.round(t.bpm) : '—') + '</span>' +
+            '<span style="flex:0 0 auto;min-width:34px;text-align:center;font-family:var(--mono,monospace);font-weight:700;border-radius:6px;padding:2px 6px;' + (camelot ? 'background:rgba(197,160,89,.18);color:var(--gold-lt,var(--gold));' : 'background:rgba(255,255,255,.05);color:rgba(255,255,255,.3);') + '">' + (camelot || '—') + '</span>' +
           '</div>';
+        }).join('');
+        tabla.innerHTML = html || '<div style="padding:16px;color:rgba(255,255,255,.4);font-size:13px;">Catálogo vacío.</div>';
+        tabla.querySelectorAll('.smartcrate-fila').forEach(function(fila){
+          fila.onclick = function(){
+            var id = Number(fila.getAttribute('data-id'));
+            var t = smartcrateCatalogo.filter(function(x){ return x.id === id; })[0];
+            if(!t) return;
+            smartcrateSeleccionado = t;
+            tabla.querySelectorAll('.smartcrate-fila').forEach(function(f){ f.style.background = ''; });
+            fila.style.background = 'rgba(197,160,89,.1)';
+            renderSmartcrateCompatibles(t);
+          };
+        });
+      }
+
+      var SMARTCRATE_ETIQUETAS_COMPAT = {
+        mezcla_perfecta: 'Mezcla perfecta', transicion_suave: 'Transición suave',
+        cambio_modo: 'Cambio de modo', salto_energia: 'Salto de energía',
+      };
+      function renderSmartcrateCompatibles(trackActual){
+        var caja = el('smartcrateCompatibles'); if(!caja || !window.SmartCrateHarmonicEngine) return;
+        var sel = el('smartcrateEvento');
+        var tipoEvento = sel ? sel.value : 'quince';
+        var codigoActual = window.SmartCrateHarmonicEngine.claveACamelot(trackActual.key);
+        if(!codigoActual){
+          caja.innerHTML = '<div style="padding:16px;color:rgba(255,255,255,.4);font-size:13px;">"' + ewEsc(trackActual.key || 'sin tonalidad') + '" no se reconoce en el diccionario Camelot — no se puede calcular compatibilidad.</div>';
+          return;
+        }
+        var compatibles = window.SmartCrateHarmonicEngine.calcularTracksCompatibles(trackActual, smartcrateCatalogo, { tipoEvento: tipoEvento });
+        var encabezado = '<div style="padding:10px;font-size:11px;color:rgba(255,255,255,.5);border-bottom:1px solid var(--line);">Base: <b style="color:var(--gold-lt,var(--gold));">' + ewEsc(trackActual.title||'') + '</b> · ' + codigoActual + ' · ' + Math.round(trackActual.bpm||0) + ' bpm</div>';
+        var filas = compatibles.map(function(c){
+          return '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--line);font-size:12.5px;">' +
+            '<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);">' + ewEsc(c.track.title || '') + '</span>' +
+            '<span style="flex:0 0 auto;color:rgba(255,255,255,.5);font-family:var(--mono,monospace);">' + Math.round(c.track.bpm||0) + '</span>' +
+            '<span style="flex:0 0 auto;font-family:var(--mono,monospace);font-weight:700;color:var(--gold-lt,var(--gold));">' + c.camelot + '</span>' +
+            '<span style="flex:0 0 auto;font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:rgba(255,255,255,.4);">' + (SMARTCRATE_ETIQUETAS_COMPAT[c.tipoCompatibilidad]||c.tipoCompatibilidad) + '</span>' +
+          '</div>';
+        }).join('');
+        caja.innerHTML = encabezado + (filas || '<div style="padding:16px;color:rgba(255,255,255,.4);font-size:13px;">Sin coincidencias con este rango de BPM/evento.</div>');
       }
       paintStaffTopnav(staffTopnavHtml('owner'), showView);
       /* Aterrizaje. Por defecto Gobernanza (FINANCIERO quedo fusionado en CASH
