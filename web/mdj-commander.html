@@ -45,7 +45,7 @@
   import { LiveAvatarSession, SessionEvent } from 'https://esm.sh/@heygen/liveavatar-web-sdk@0.0.18';
   window.LiveAvatarSDK = { LiveAvatarSession: LiveAvatarSession, SessionEvent: SessionEvent };
 </script>
-<script src="./js/avatar-heygen-chromakey.js?v=20260827-multicapa-djmago"></script>
+<script src="./js/avatar-heygen-chromakey.js?v=20260830-recorte-borde-blanco"></script>
 <script src="./js/avatar-heygen-stream.js?v=20260827-heygen-base"></script>
 <script>
   /* Sprites de boca (MDB_AVATAR_VISEMES + avatar-viseme-sprites.js)
@@ -2067,6 +2067,11 @@
     var opciones = {minHue:60, maxHue:180, minSaturation:0.10, minValue:0.30,
       suprimirSpill:1.0, /* afinado del croma key -- ver avatar-heygen-chromakey.js */
       fraccionAncho: ZOOM_NIVELES[state.avatarZoomNivel],
+      /* recorteInferiorPx (2026-08-30): mismo video que staff.html
+         (djmago-idle-boomerang.mp4) -- mismo borde blanco horneado en las
+         ultimas filas del frame, mismo fix. Ver dibujarCover() en
+         avatar-heygen-chromakey.js y el comentario gemelo en staff.html. */
+      recorteInferiorPx:10,
       /* zonaProtegida: elipse de rotoscopia, calibrada UNICAMENTE para el
          encuadre viejo del nivel 0 (el cover automatico que este mismo
          cambio reemplazo). Con el nuevo default (0.60) la cabeza queda en

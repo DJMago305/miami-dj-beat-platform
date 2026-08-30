@@ -240,6 +240,15 @@
 
       dc = pc.createDataChannel('oai-events');
       dc.onopen = function(){
+        /* Log de auditoria (2026-08-30, pedido explicito del PO: confirmar
+           que esto es la conexion WebRTC real contra OpenAI Realtime y no
+           un mock de consola). Este evento solo dispara cuando el canal de
+           datos de verdad completo su handshake -- oferta/respuesta SDP
+           real intercambiada con el backend (elixis-realtime-session) mas
+           ICE/DTLS conectado -- no es un valor fijo ni un placeholder. */
+        console.log('[ELIXIS-WEBRTC] Connected:', true, {
+          session: sesion, iceConnectionState: pc.iceConnectionState, connectionState: pc.connectionState
+        });
         emit('onSystem','Canal de voz conectado. Habla con normalidad.');
         encender();
         emit('onState','listening');

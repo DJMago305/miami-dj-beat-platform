@@ -38,10 +38,10 @@
   })();
   </script>
   <script src="./supabase-config.js?v=20260814-bfi"></script>
-  <script src="./js/elixis-voice-session.js?v=20260830-mic-prewarm"></script>
+  <script src="./js/elixis-voice-session.js?v=20260830-webrtc-audit-log"></script>
   <script src="./js/elixis-swipe-carousel.js?v=20260827-pointer-wheel-desktop"></script>
   <script src="./js/avatar-frame-player.js?v=20260830-crossorigin-fix"></script>
-  <script src="./js/avatar-heygen-chromakey.js?v=20260827-multicapa-djmago"></script>
+  <script src="./js/avatar-heygen-chromakey.js?v=20260830-recorte-borde-blanco"></script>
   <script src="./js/elixis-hud-transmision.js?v=20260829-hud-transmision"></script>
   <script>
     /* Sprites de boca (avatar-viseme-sprites.js + MDB_AVATAR_VISEMES)
@@ -599,6 +599,35 @@
     .ew-orbe-mic.on .ew-orbe-mic-svg{display:none;}
     .ew-orbe-mic.on .ew-orbe-mic-fenix{display:block;}
     .ew-orbe-mic.on{box-shadow:0 0 0 4px rgba(197,160,89,.28),0 4px 18px rgba(197,160,89,.4);}
+    /* Aros de radiofrecuencia en modo escucha (2026-08-30, directiva del PO:
+       "genera unas ondas de aros como rediofrecuencia antena eso esta bien
+       [en el telefono] si quieres aplica la misma tegnica" -- mismo mecanismo
+       real de .nav-orb.live/::before/::after/.orb-aro + @keyframes orbe-radar
+       en mdj-commander.html, solo renombrado con prefijo ew- para no chocar
+       con esas reglas si algun dia comparten pagina. position:relative en el
+       boton para que los aros (position:absolute;inset:0) se midan contra
+       el circulo del orbe y no contra un ancestro mas grande. */
+    .ew-orbe-mic{position:relative;}
+    .ew-orbe-mic.on::before,.ew-orbe-mic.on::after,.ew-orbe-mic.on .ew-orbe-mic-aro{
+      content:"";position:absolute;inset:0;border-radius:50%;pointer-events:none;
+      border:2px solid var(--gold-lt);opacity:0;
+      animation:ew-orbe-radar 1.9s cubic-bezier(.15,.6,.35,1) infinite;
+    }
+    .ew-orbe-mic.on::after{animation-delay:.63s}
+    .ew-orbe-mic-aro{display:none}
+    .ew-orbe-mic.on .ew-orbe-mic-aro{display:block;animation-delay:1.26s}
+    @keyframes ew-orbe-radar{
+      0%{transform:scale(1);opacity:calc(.22 + var(--ew-pulso,0) * .58)}
+      100%{transform:scale(2.35);opacity:0}
+    }
+    /* .rx = "escuchando" (recibiendo), tenue y lento -- se saca al hablar
+       para que los aros se abran del todo (mismo criterio que el telefono:
+       el oro no cambia de color, cambia de INTENSIDAD segun quien tiene la
+       palabra). */
+    .ew-orbe-mic.on.rx::before,.ew-orbe-mic.on.rx::after,.ew-orbe-mic.on.rx .ew-orbe-mic-aro{
+      border-color:var(--gold);
+      animation-duration:2.6s;
+    }
     /* Barra de escritura flotante (2026-08-29, directiva del PO: "esa ya
        existe... que desaparece cuando se llama al avatar" -- mismo patron
        visual que .cmd-input de mdj-commander.html: pastilla translucida,
@@ -621,10 +650,19 @@
     .avatar-stage.idle ~ .ew-estado{opacity:0;transition:opacity .18s linear;}
     .avatar-stage:not(.idle){opacity:1;transition:opacity .18s linear;}
     .avatar-stage:not(.idle) ~ .ew-estado{opacity:1;transition:opacity .18s linear;}
+    /* Fondo transparente / borde visible (2026-08-30, reporte en vivo del PO:
+       "el borde... es casi invisible necesito sea transparente pero los
+       bordes visibles") -- antes el relleno oscuro (rgba(11,15,24,.55)) era
+       lo que daba contraste; al pedir fondo transparente ese relleno se va,
+       asi que el borde no puede seguir en var(--line) al 10% (pensado para
+       descansar sobre un panel solido, no sobre la red de particulas) --
+       sube a 32% para que se lea solo por si mismo. El blur se mantiene
+       (no agrega color/opacidad, solo desenfoca el fondo) para que el texto
+       tecleado siga siendo legible sobre la red de particulas. */
     #ewTextoInput{width:100%;box-sizing:border-box;resize:none;overflow-y:auto;
       min-height:40px;max-height:6em;padding:9px 16px;border-radius:20px;
-      background:rgba(11,15,24,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
-      border:1.4px solid var(--line);color:var(--text);font-size:14px;line-height:1.4;
+      background:transparent;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+      border:1.4px solid rgba(255,255,255,.32);color:var(--text);font-size:14px;line-height:1.4;
       font-family:inherit;box-shadow:0 6px 18px rgba(0,0,0,.3);}
     #ewTextoInput:focus{outline:none;border-color:rgba(197,160,89,.55);}
     #ewTextoInput::placeholder{color:rgba(255,255,255,.45);}
@@ -1107,6 +1145,7 @@
                   <button type="button" class="ew-orbe ew-orbe-mic" id="ewMicBtn" title="Activar voz" aria-label="Activar voz">
                     <svg class="ew-orbe-mic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/></svg>
                     <img class="ew-orbe-mic-fenix" src="./assets/branding/fenix-emblem-160.png" alt="">
+                    <i class="ew-orbe-mic-aro"></i>
                   </button>
                   <button type="button" class="ew-orbe" id="ewOrbeDer" title="Hilos y Transcripción" aria-label="Abrir Hilos y Transcripción">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
@@ -1874,9 +1913,17 @@
         }
         /* Chroma key de DJMago (2026-08-29): mismo mecanismo real de
            iniciarChromaKeyDJMago() en mdj-commander.html -- mismas opciones
-           calibradas ahi (nivel de zoom 0 = 0.42, zonaProtegida desactivada
-           tras la recalibracion del encuadre 2026-08-28). Sin esto, el video
-           crudo se veia con el fondo verde sin procesar. */
+           calibradas ahi (zonaProtegida desactivada tras la recalibracion
+           del encuadre 2026-08-28). Sin esto, el video crudo se veia con
+           el fondo verde sin procesar.
+           fraccionAncho 0.42 -> 0.465 -> 0.485 (2026-08-30, segunda vuelta:
+           el PO aprobo los aros del microfono y pidio subir el avatar "un
+           poco mas" para dar mas margen sobre la cabeza/gorra). No es un CSS
+           object-fit/transform (esto es un <canvas>, no una img/video con
+           object-position) -- fraccionAncho es el knob real que existe aca:
+           agrandarlo reduce el zoom y, como el contenido queda anclado al
+           FONDO del canvas (ver dy en avatar-heygen-chromakey.js), el
+           espacio que se libera aparece arriba de la cabeza, no abajo. */
         (function(){
           var stage=el('ewAvatarStage');
           if(!stage || stage._djChroma || !window.AvatarHeygenChromaKey) return;
@@ -1886,7 +1933,14 @@
           if(!canvas || !videoA || !videoB) return;
           stage._djChroma = window.AvatarHeygenChromaKey.iniciarChromaKey([videoA, videoB], canvas, {
             minHue:60, maxHue:180, minSaturation:0.10, minValue:0.30,
-            suprimirSpill:1.0, fraccionAncho:0.42, zonaProtegida:undefined
+            suprimirSpill:1.0, fraccionAncho:0.485, zonaProtegida:undefined,
+            /* recorteInferiorPx (2026-08-30): la "linea blanca debajo del
+               avatar" reportada -- confirmado con pixeles reales que es un
+               borde horneado en el propio djmago-idle-boomerang.mp4 (filas
+               1074-1079 de 1080, blanco puro), no un bug de CSS/canvas. Ver
+               el comentario completo en dibujarCover(), avatar-heygen-
+               chromakey.js. 10px de margen sobre las ~6 filas medidas. */
+            recorteInferiorPx:10
           });
         })();
 
@@ -1907,10 +1961,16 @@
             var stage=el('ewAvatarStage'); if(stage) stage.className='avatar-stage '+estado;
             ewHablando = (estado==='speaking');
             /* Se abre sola en cuanto hay una orden real en curso (deja de
-               estar idle) -- el PO no quiere tener que ir a buscarla. No se
-               vuelve a cerrar sola al terminar: el usuario puede seguir
-               leyendo el hilo/transcripcion despues de que ELIXIS termine. */
+               estar idle) -- el PO no quiere tener que ir a buscarla. Entre
+               turnos de la MISMA conversacion (habla -> vuelve a escuchar)
+               nunca pasa por 'idle', asi que sigue sin cerrarse sola ahi --
+               el usuario puede seguir leyendo el hilo mientras la sesion
+               sigue viva. Recien al llegar a 'idle' de verdad (2026-08-30,
+               directiva del PO: "el panel derecho al [cer]rar avatar debe
+               [ce]rrar automaticamente") -- osea cuando la SESION termina,
+               no cuando un turno termina -- se cierra sola. */
             if(estado!=='idle' && !ewAcordeon.der){ ewAcordeon.der=true; ewAplicarAcordeon(); }
+            else if(estado==='idle' && ewAcordeon.der){ ewAcordeon.der=false; ewAplicarAcordeon(); }
             if(window.AvatarFramePlayer){
               var afp=window.AvatarFramePlayer.montar(stage);
               if(afp) window.AvatarFramePlayer.fijarEstado(afp, estado);
@@ -1919,9 +1979,16 @@
             if(lbl) lbl.textContent = ({idle:'Inactivo',listening:'Escuchando',transcribing:'Transcribiendo',
               understanding:'Pensando',confirmation:'Confirmando',executing:'Ejecutando',speaking:'Hablando'})[estado] || estado;
             ewMountFX(estado);
-            var btn=el('ewMicBtn'); if(btn){ btn.classList.toggle('on', estado!=='idle'); var etq=estado==='idle'?'Activar voz':'Terminar'; btn.title=etq; btn.setAttribute('aria-label',etq); }
+            var btn=el('ewMicBtn'); if(btn){
+              btn.classList.toggle('on', estado!=='idle');
+              /* .rx = aros tenues/lentos ("escuchando"); se saca solo al
+                 hablar de verdad, igual que .nav-orb.rx en mdj-commander.html. */
+              btn.classList.toggle('rx', estado!=='idle' && estado!=='speaking');
+              var etq=estado==='idle'?'Activar voz':'Terminar'; btn.title=etq; btn.setAttribute('aria-label',etq);
+            }
           },
           onLevel: function(pulso){
+            var btn=el('ewMicBtn'); if(btn) btn.style.setProperty('--ew-pulso', pulso.toFixed(3));
             /* Sprites de boca DESACTIVADOS (2026-08-29, reporte en vivo del
                PO: "que horror" -- los MDB_AVATAR_VISEMES nunca fueron
                recortes de boca transparentes, son fotos completas de DJMago

@@ -173,6 +173,22 @@
        garantiza dw/dh >= cw/ch siempre, sin excepcion. */
     var dw = Math.ceil(vw*escala), dh = Math.ceil(vh*escala);
     var dx = Math.round((cw-dw)/2);
+    /* recorteInferiorPx (2026-08-30, "linea blanca debajo del avatar"
+       reportada en vivo por el PO): NO es un bug de este dibujado -- es un
+       borde blanco solido de 5-6px de alto que ya viene HORNEADO en el
+       archivo fuente (djmago-idle-boomerang.mp4), verificado leyendo los
+       pixeles reales del frame (fila 1074-1079 de 1080 = blanco puro
+       255,255,255; el mismo borde tambien esta en los costados izq/der,
+       pero esos hoy quedan fuera de cuadro por el zoom de fraccionAncho).
+       Como dy siempre pega el CONTENIDO al fondo del canvas, esa ultima
+       fila del video (la blanca) es justo la que termina visible. Opcional
+       y apagado por default (0): un video sin este defecto -- el stream
+       de HeyGen, por ejemplo -- no pierde nada si no lo pide. Cuando viene
+       definido, se recorta esa franja del SOURCE (no del destino) y el
+       resto se estira para llenar el mismo dw/dh de siempre -- el
+       encuadre/anclaje calibrado no se mueve un pixel, solo deja de leer
+       la franja mala. */
+    var altoFuente = vh - ((opciones && opciones.recorteInferiorPx) || 0);
     /* dy (2026-08-28, pedido en vivo sobre el zoom de 3 niveles): con
        fraccionAncho activo, dh puede quedar MENOR que ch (el "hueco" que
        revela la red de particulas, a proposito). Con dy=0 fijo, ese hueco
@@ -187,7 +203,7 @@
        cambios ahi. */
     var dy = Math.max(0, ch-dh);
     ctx.clearRect(0, 0, cw, ch);
-    ctx.drawImage(video, dx, dy, dw, dh);
+    ctx.drawImage(video, 0, 0, vw, altoFuente, dx, dy, dw, dh);
     return true;
   }
 
