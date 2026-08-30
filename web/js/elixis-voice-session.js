@@ -35,6 +35,7 @@
     var sesion=null, hb=0, t0=0;
     var hablando=false, vivo=false, pulso=0, modoActual=null, _textoElixis='';
     var conectando=false, micPrecalentado=null;
+    var identidadActual=null, musicHunterNodo=null;
 
     /* Pre-calentado de microfono + constraints RAW (2026-08-30, portado de
        mdj-commander.html/precalentarMic() -- mismo bug real reportado hoy
@@ -217,7 +218,8 @@
       if(!url){ emit('onError','No pude ubicar el servidor de voz'); return; }
       url += (url.indexOf('?')===-1?'?':'&') + 'voice=' + (localStorage.getItem('elixis_voice')||'ash')
            + '&vad=' + (localStorage.getItem('elixis_vad')||'medium')
-           + (modoActual ? '&modo=' + encodeURIComponent(modoActual) : '');
+           + (modoActual ? '&modo=' + encodeURIComponent(modoActual) : '')
+           + (identidadActual ? '&identidad=' + encodeURIComponent(identidadActual) : '');
 
       emit('onState','understanding');
       try{
@@ -237,6 +239,20 @@
       };
       mic.getAudioTracks().forEach(function(t){ pc.addTrack(t, mic); });
       anMic = analizador(mic);
+
+      /* Music Hunter, Rama B (2026-08-30, autorizado por el PO): conecta el
+         MISMO stream de mic -- ninguna captura nueva, ningun permiso extra --
+         a un buffer circular de 6s (ver music-hunter-ring-buffer.js). Todavia
+         nadie LEE ese buffer (eso es el ciclo de muestreo de "Cazador
+         Musical", item 4, no autorizado aun): esto solo deja la tuberia
+         corriendo y lista. Opcional a proposito (si el archivo no esta
+         cargado en la pagina, sigue sin pasar nada) -- staff.html hoy no lo
+         necesita para ELIXIS, solo para la identidad djmago mas adelante. */
+      if(window.MusicHunterRingBuffer && anMic){
+        window.MusicHunterRingBuffer.conectar(ac, mic).then(function(nodo){
+          musicHunterNodo = nodo;
+        });
+      }
 
       dc = pc.createDataChannel('oai-events');
       dc.onopen = function(){
@@ -313,6 +329,9 @@
       liquidar();
       if(dc){ try{ dc.close(); }catch(_){ } dc=null; }
       if(pc){ try{ pc.close(); }catch(_){ } pc=null; }
+      if(musicHunterNodo && window.MusicHunterRingBuffer){
+        window.MusicHunterRingBuffer.desconectar(musicHunterNodo); musicHunterNodo=null;
+      }
       if(mic){ mic.getTracks().forEach(function(t){ try{ t.stop(); }catch(_){ } }); mic=null; }
       if(spk){ try{ spk.pause(); spk.srcObject=null; }catch(_){ } }
       hablando=false;
@@ -341,6 +360,30 @@
     function fijarModo(nombre, textoInstrucciones){
       modoActual = nombre || null;
       if(dc && dc.readyState==='open' && textoInstrucciones) actualizarContexto(textoInstrucciones);
+    }
+
+    /* Identidad ('elixis'|'djmago', 2026-08-30, fork autorizado por el PO):
+       a diferencia de fijarModo(), esto NO se puede aplicar a media sesion
+       via session.update -- la identidad completa (quien es, que sabe, que
+       tools tiene) se arma UNA vez en el servidor al abrir la llamada
+       (buildInstructions() + el arreglo de tools en elixis-realtime-session),
+       igual que la voz (?voice=): cambiarla de verdad implica una conexion
+       nueva. fijarIdentidad() solo decide con que identidad arranca el
+       PROXIMO start() -- quien llama (staff.html, segun que avatar este
+       activo) la fija antes de tocar el orbe. */
+    function fijarIdentidad(nombre){
+      identidadActual = nombre || null;
+    }
+
+    /* Instantanea de audio crudo para Music Hunter (Rama B) -- devuelve
+       null si no hay sesion de voz activa o si el archivo del ring buffer
+       no esta cargado en la pagina. La maquina de estados de "Cazador
+       Musical" (item 4, no autorizado aun) es quien decide CUANDO llamar
+       esto; este modulo solo expone el dato. */
+    function obtenerMuestraMusicHunter(){
+      return (musicHunterNodo && window.MusicHunterRingBuffer)
+        ? window.MusicHunterRingBuffer.obtenerInstantanea(musicHunterNodo)
+        : Promise.resolve(null);
     }
 
     /* enviarTexto(): via de entrada de TEXTO para el mismo turno de voz --
@@ -374,7 +417,9 @@
        usuario si toque el orbe. */
     precalentarMic();
 
-    return { start:start, stop:stop, activa:function(){ return !!pc; }, actualizarContexto:actualizarContexto, fijarModo:fijarModo, enviarTexto:enviarTexto };
+    return { start:start, stop:stop, activa:function(){ return !!pc; }, actualizarContexto:actualizarContexto,
+      fijarModo:fijarModo, fijarIdentidad:fijarIdentidad, obtenerMuestraMusicHunter:obtenerMuestraMusicHunter,
+      enviarTexto:enviarTexto };
   }
 
   window.ElixisVoiceSession = { crear:crear, ESTADOS:ESTADOS };

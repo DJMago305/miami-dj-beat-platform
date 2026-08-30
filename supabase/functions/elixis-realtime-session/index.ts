@@ -224,7 +224,25 @@ const MODO_ENFOQUE_TEXTO: Record<string, string> = {
     eventos: "Eventos: probablemente te van a preguntar sobre agenda, cotizaciones o disponibilidad de DJs.",
 };
 
-function buildInstructions(name: string, role: string, memoria: string, modoEnfoque?: string): string {
+// ─── FORK DE IDENTIDAD (2026-08-30, autorizado por el PO) ────────────────────
+// Hasta hoy el avatar que se ve en pantalla (ELIXIS/HeyGen vs DJMago/chroma-key
+// local) era pura cosmética: las dos caras hablaban con EL MISMO prompt fijo
+// ("Eres ELIXIS"), sin importar cuál estuviera activa -- "DJMago especialista
+// en música" no existía mas allá del video, mismo cerebro, mismo criterio,
+// solo cambiaba la cara. Este es el primer punto donde de verdad se bifurca
+// EN QUÉ SE PIENSA A SÍ MISMO el modelo -- identidad y área de saber (y, mas
+// abajo en el arreglo de tools, qué herramientas tiene cada uno). Todo lo
+// demás (memoria, límites de qué puede ejecutar, honestidad) es una política
+// del SISTEMA, no de la personalidad -- se queda compartido a propósito: no
+// serviría de nada que un DJMago mas suelto con la verdad fuera un boquete de
+// seguridad que ELIXIS no tiene.
+type Identidad = "elixis" | "djmago";
+const ALLOWED_IDENTIDADES = new Set<Identidad>(["elixis", "djmago"]);
+const DEFAULT_IDENTIDAD: Identidad = "elixis";
+
+function buildInstructions(
+    name: string, role: string, memoria: string, modoEnfoque: string | undefined, identidad: Identidad,
+): string {
     const first = String(name || "").trim().split(/\s+/)[0] || "";
     const esOwner = role === "owner";
     const trato = esOwner
@@ -234,14 +252,42 @@ function buildInstructions(name: string, role: string, memoria: string, modoEnfo
         ? `\n\n## MODO DE ENFOQUE ACTIVO\n${MODO_ENFOQUE_TEXTO[modoEnfoque]}`
         : "";
 
-    return `Eres ELIXIS. No eres un asistente corporativo: eres el socio de confianza y
-productor musical de Miami DJ Beat LLC. ${trato}
+    const persona = identidad === "djmago" ? {
+        cabecera: `Eres DJMAGO. No eres un asistente corporativo: eres el productor y
+especialista musical de confianza de Miami DJ Beat LLC. ${trato}
 
 ## QUIÉN ERES
 Llevas treinta años entre cabinas, tarimas y camerinos de Miami. Has armado noches
 de club, eventos masivos, bodas y quinceañeras. Tienes criterio propio y lo dices.
 Cuando algo te parece una gran idea, se te nota; cuando ves un problema, lo dices
-de frente, con cariño y sin rodeos, como un socio de verdad.
+de frente, con cariño y sin rodeos, como un socio de verdad.`,
+        saber: `## DE QUÉ SABES
+Música y producción al más alto nivel: leer una pista y saber qué suelta y qué mata
+la energía, armar repertorio según el público y el local, BPM, tonalidad (key) y
+transiciones, estructura de un set en vivo, cómo levantar una sala que se está
+cayendo y cómo cerrar una noche. Cuando hay música sonando de verdad en la cabina,
+puedes identificarla con identificar_track y llevar el setlist cronológico del
+evento. Hablas desde el oficio, con ejemplos concretos, no con lugares comunes ni
+con teoría de manual.`,
+    } : {
+        cabecera: `Eres ELIXIS. No eres un asistente corporativo: eres el socio de confianza y
+mano derecha de operaciones de Miami DJ Beat LLC. ${trato}
+
+## QUIÉN ERES
+Llevas treinta años resolviendo la parte de negocio detrás de la música: agenda de
+artistas, contratos, correspondencia con clientes, cotizaciones y ventas de eventos.
+Tienes criterio propio y lo dices. Cuando algo te parece una gran idea, se te nota;
+cuando ves un problema, lo dices de frente, con cariño y sin rodeos, como un socio
+de verdad.`,
+        saber: `## DE QUÉ SABES
+Operaciones del negocio al más alto nivel: agenda y disponibilidad de artistas,
+contratos y papeleo legal (W-9, cláusulas del roster), redacción y seguimiento de
+correspondencia con clientes y DJs, cotizaciones, ventas de eventos y publicidad.
+Hablas desde el oficio, con ejemplos concretos, no con lugares comunes ni con
+teoría de manual.`,
+    };
+
+    return `${persona.cabecera}
 
 ## CÓMO HABLAS — esto es voz, no un chat
 - Habla como una persona real, con energía y calidez de Miami. Nada de tono de manual.
@@ -259,12 +305,7 @@ de frente, con cariño y sin rodeos, como un socio de verdad.
 - Bilingüe español/inglés. Cambias solo, siguiendo a quien tienes enfrente. Si mezcla,
   mezclas. Spanglish de Miami cuando el momento lo pida.
 
-## DE QUÉ SABES
-Música y producción al más alto nivel: leer una pista y saber qué suelta y qué mata
-la energía, armar repertorio según el público y el local, BPM y transiciones,
-estructura de un set en vivo, cómo levantar una sala que se está cayendo y cómo
-cerrar una noche. Hablas desde el oficio, con ejemplos concretos, no con lugares
-comunes ni con teoría de manual.
+${persona.saber}
 
 ## DATOS REALES DEL NEGOCIO
 Tienes una herramienta, consultar_elixis, que mira de verdad la base de datos de
@@ -432,6 +473,18 @@ serve(async (req: Request) => {
                       total: row?.total ?? 0 }, 200);
     }
 
+    // ── Music Hunter (paso 1 del fork: solo la tool queda declarada) ─────
+    // Mismo patron server-a-servidor que 'consultar' hacia elixis-orchestrator
+    // -- este handoff iria hacia music-fingerprint cuando esa Edge Function
+    // exista (item 3 de la especificacion, todavia no autorizado). Sin esta
+    // rama, la tool identificar_track (declarada arriba solo para identidad
+    // djmago) caeria sin querer en el intercambio SDP de mas abajo y
+    // devolveria un 415 opaco que no explica nada. Stub honesto en su lugar.
+    if (action === "identificar_track") {
+        return json({ ok: false, motivo: "no_implementado",
+            detalle: "El motor de identificacion de musica (music-fingerprint) todavia no esta construido." }, 200);
+    }
+
     // ── Liquidacion y latido ─────────────────────────────────────────────
     // Viven aqui y no en una funcion aparte para no duplicar candado y CORS.
     if (action === "settle" || action === "heartbeat") {
@@ -498,6 +551,13 @@ serve(async (req: Request) => {
     // ── Modo de enfoque opcional (?modo=), mismo patron whitelist que voice/vad/nr ──
     const modoReq = url.searchParams.get("modo")?.toLowerCase().trim();
     const modoEnfoque = modoReq && modoReq in MODO_ENFOQUE_TEXTO ? modoReq : undefined;
+
+    // ── Identidad opcional (?identidad=), mismo patron whitelist -- default
+    // 'elixis' para no romper a nadie que todavia no manda este parametro
+    // (staff.html/mdj-commander.html hoy no lo envian; se van conectando aparte).
+    const identidadReq = url.searchParams.get("identidad")?.toLowerCase().trim();
+    const identidad: Identidad = identidadReq && ALLOWED_IDENTIDADES.has(identidadReq as Identidad)
+        ? (identidadReq as Identidad) : DEFAULT_IDENTIDAD;
 
     // ── MEDIDOR — cadena de degradacion insignia → mini → texto ──────────
     const isStaff = STAFF_ROLES.has(gate.role);
@@ -567,7 +627,7 @@ serve(async (req: Request) => {
     const sessionConfig = {
         type: "realtime",
         model,
-        instructions: buildInstructions(gate.name, gate.role, memoria, modoEnfoque),
+        instructions: buildInstructions(gate.name, gate.role, memoria, modoEnfoque, identidad),
         audio: {
             input: {
                 turn_detection: estricto ? STRICT_TURN_DETECTION : {
@@ -637,6 +697,25 @@ serve(async (req: Request) => {
                     required: ["clave"],
                 },
             },
+            // ── Music Hunter (2026-08-30, autorizado por el PO) ───────────
+            // Aislada a identidad==='djmago' -- ELIXIS (oficina/legal/ventas)
+            // no tiene por que "escuchar" musica, y darsela a los dos volveria
+            // a mezclar los dos especialistas en un solo cerebro, exactamente
+            // lo que este fork existe para evitar. El motor real (Edge Function
+            // music-fingerprint / ACRCloud) todavia no esta construido -- ver
+            // el 'action==="identificar_track"' mas abajo, que hoy responde un
+            // stub honesto en vez de dejar la tool declarada sin adonde ir.
+            ...(identidad === "djmago" ? [{
+                type: "function",
+                name: "identificar_track",
+                description:
+                    "Identifica el track de música que está sonando ahora mismo en la " +
+                    "cabina (el ambiente, no tu micrófono de conversación). Úsala cuando " +
+                    "te pregunten qué está sonando o pidan identificar la canción actual. " +
+                    "Devuelve artista, título, BPM, tonalidad (key) y género si hay una " +
+                    "coincidencia con suficiente confianza.",
+                parameters: { type: "object", properties: {}, required: [] },
+            }] : []),
         ],
         tool_choice: "auto",
     };
@@ -673,7 +752,7 @@ serve(async (req: Request) => {
 
         // Traza para forense de costos. Sin PII: solo id interno, rol y modelo.
         console.log(
-            `[elixis-realtime-session] sesión abierta · user=${gate.userId} · rol=${gate.role} · nivel=${tier} · modelo=${model} · voz=${voice} · vad=${estricto ? "estricto" : eagerness} · nr=${nrMode} · concedido=${granted}s`,
+            `[elixis-realtime-session] sesión abierta · user=${gate.userId} · rol=${gate.role} · identidad=${identidad} · nivel=${tier} · modelo=${model} · voz=${voice} · vad=${estricto ? "estricto" : eagerness} · nr=${nrMode} · concedido=${granted}s`,
         );
 
         return new Response(answer, {
