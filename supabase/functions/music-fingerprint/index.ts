@@ -69,6 +69,7 @@ type ResultadoTrack = {
     bpm: number | null;
     musical_key: string | null;
     genre: string | null;
+    isrc: string | null;
     confidence: number;
     motivo?: string;
 };
@@ -84,7 +85,7 @@ function respuestaMock(motivo: string): ResultadoTrack {
     return {
         ok: true, mock: true,
         artist: "(modo prueba — ACRCloud sin configurar)", title: null,
-        bpm: null, musical_key: null, genre: null, confidence: 0,
+        bpm: null, musical_key: null, genre: null, isrc: null, confidence: 0,
         motivo,
     };
 }
@@ -192,21 +193,25 @@ async function identificarConAcrcloud(
         // "No result" -- llamada correcta, no hubo coincidencia. No es un mock,
         // es un resultado real: no se reconocio la pista.
         return { ok: true, mock: false, artist: null, title: null, bpm: null,
-            musical_key: null, genre: null, confidence: 0, motivo: "sin_coincidencia" };
+            musical_key: null, genre: null, isrc: null, confidence: 0, motivo: "sin_coincidencia" };
     }
     if (codigo !== 0) {
         console.error("[music-fingerprint] ACRCloud codigo inesperado:", JSON.stringify(payload.status).slice(0, 300));
         return { ok: false, mock: false, artist: null, title: null, bpm: null,
-            musical_key: null, genre: null, confidence: 0, motivo: "acrcloud_fallo" };
+            musical_key: null, genre: null, isrc: null, confidence: 0, motivo: "acrcloud_fallo" };
     }
 
     const track = payload?.metadata?.music?.[0];
     if (!track) {
         return { ok: true, mock: false, artist: null, title: null, bpm: null,
-            musical_key: null, genre: null, confidence: 0, motivo: "sin_coincidencia" };
+            musical_key: null, genre: null, isrc: null, confidence: 0, motivo: "sin_coincidencia" };
     }
     const artista = Array.isArray(track.artists) && track.artists[0]?.name ? String(track.artists[0].name) : null;
     const genero = Array.isArray(track.genres) && track.genres[0]?.name ? String(track.genres[0].name) : null;
+    // isrc SI viene en external_ids cuando ACRCloud lo tiene catalogado -- a
+    // diferencia de bpm/key, este es un dato real de su respuesta, no algo
+    // que haya que inventar u omitir.
+    const isrc = track.external_ids?.isrc ? String(track.external_ids.isrc) : null;
     // "score" de ACRCloud viene 0-100 -- se normaliza a 0-1 para que
     // confidence sea consistente sin importar el proveedor de fingerprint.
     const confianza = typeof track.score === "number" ? Math.max(0, Math.min(1, track.score / 100)) : 0;
@@ -217,7 +222,7 @@ async function identificarConAcrcloud(
         // ACRCloud Music Recognition no trae BPM/key -- ver nota de cabecera.
         // Null explicito, no un valor inventado.
         bpm: null, musical_key: null,
-        genre: genero, confidence: confianza,
+        genre: genero, isrc: isrc, confidence: confianza,
     };
 }
 
@@ -262,6 +267,6 @@ serve(async (req: Request) => {
     } catch (err) {
         console.error("[music-fingerprint] fallo de red hacia ACRCloud:", err);
         return json({ ok: false, mock: false, artist: null, title: null, bpm: null,
-            musical_key: null, genre: null, confidence: 0, motivo: "acrcloud_inalcanzable" }, 200);
+            musical_key: null, genre: null, isrc: null, confidence: 0, motivo: "acrcloud_inalcanzable" }, 200);
     }
 });

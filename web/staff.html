@@ -39,7 +39,7 @@
   </script>
   <script src="./supabase-config.js?v=20260814-bfi"></script>
   <script src="./js/music-hunter-ring-buffer.js?v=20260830-ring-buffer"></script>
-  <script src="./js/elixis-voice-session.js?v=20260830-music-hunter-fork"></script>
+  <script src="./js/elixis-voice-session.js?v=20260830-cazador-musical-modo-b"></script>
   <script src="./js/elixis-swipe-carousel.js?v=20260827-pointer-wheel-desktop"></script>
   <script src="./js/avatar-frame-player.js?v=20260830-crossorigin-fix"></script>
   <script src="./js/avatar-heygen-chromakey.js?v=20260830-recorte-borde-blanco"></script>
@@ -678,6 +678,15 @@
     .ew-linea{font-size:12.5px;line-height:1.5;color:rgba(255,255,255,.85);}
     .ew-linea b{color:var(--gold);}
     .ew-linea.yo{color:rgba(255,255,255,.55);}
+    /* Fila de Live Setlist (2026-08-30, Cazador Musical): mismo lenguaje
+       visual que .pz (caja redondeada sobre --bg), pero con 2 renglones --
+       artista/titulo arriba, bpm/key/hora abajo en mono chico -- porque el
+       panel es angosto (25% del ancho) y una tabla real de columnas fijas
+       se rompe ahi. */
+    .ew-setlist-fila{padding:8px 10px;border-radius:10px;background:var(--bg);border:1px solid var(--line);font-size:12px;}
+    .ew-setlist-fila .principal{color:rgba(255,255,255,.9);font-weight:600;}
+    .ew-setlist-fila .principal b{color:var(--gold);font-weight:700;}
+    .ew-setlist-fila .detalle{margin-top:3px;font-family:var(--mono,monospace);font-size:10px;letter-spacing:.04em;color:rgba(255,255,255,.45);text-transform:uppercase;}
     /* El riel lateral arrancaba justo donde acaba la banda: se tocaban y la
        marca parecia apoyada encima. Un respiro de 14px los separa. */
     /* LA BANDA SE RESERVABA DOS VECES, tambien aqui (PO 2026-08-22: «no
@@ -1109,6 +1118,16 @@
                   <button type="button" class="ew-enfoque-item" data-modo="legal"><span class="ew-enfoque-icono">⚖️</span><span class="l">Legal</span></button>
                   <button type="button" class="ew-enfoque-item" data-modo="distribucion"><span class="ew-enfoque-icono">🎵</span><span class="l">Distribución</span></button>
                   <button type="button" class="ew-enfoque-item" data-modo="eventos"><span class="ew-enfoque-icono">📅</span><span class="l">Eventos</span></button>
+                  <!-- Cazador Musical (2026-08-30, autorizado por el PO): a diferencia
+                       de los otros modos (solo cambian el foco del prompt), este
+                       ademas prende/apaga el ciclo de fondo de Music Hunter -- ver
+                       el caso especial en el onclick de abajo. Solo tiene sentido
+                       real con identidad djmago (identificar_track no existe para
+                       ELIXIS), pero no se oculta el boton: sin sesion de voz activa
+                       o sin identidad djmago, el ciclo simplemente no encuentra
+                       musicHunterNodo y no hace nada, en vez de fingir un candado
+                       que todavia no existe (no hay selector de avatar real aqui). -->
+                  <button type="button" class="ew-enfoque-item" data-modo="cazador"><span class="ew-enfoque-icono">🎧</span><span class="l">Cazador Musical</span></button>
                   <button type="button" class="ew-enfoque-item" data-modo="general"><span class="ew-enfoque-icono">🌐</span><span class="l">General</span></button>
                 </div>
               </div>
@@ -1165,6 +1184,12 @@
                 <button type="button" id="ewHudDemo" style="font-size:9px;opacity:.5;background:none;border:1px solid var(--line);border-radius:6px;color:var(--text);padding:2px 6px;align-self:center;cursor:pointer;">demo transmisión</button>
                 <div class="ew-col-body" id="ewProceso"><div class="ew-vacio">Sin actividad todavía.</div></div>
                 <div class="ew-col-body" id="ewTranscripcion"><div class="ew-vacio">La conversación aparecerá aquí.</div></div>
+                <!-- Live Setlist (2026-08-30, Cazador Musical / Modo B): se llena
+                     via el handler onMusicHunterTrack de ewSesion.crear() mas abajo.
+                     Fuera de ese modo se queda vacia a proposito -- no es un error,
+                     es que nadie esta muestreando musica ahora mismo. -->
+                <h4>Live Setlist</h4>
+                <div class="ew-col-body" id="ewSetlist"><div class="ew-vacio">Activa "Cazador Musical" para ver el setlist en vivo.</div></div>
               </div>
             </div>
           </div>
@@ -1972,6 +1997,15 @@
                no cuando un turno termina -- se cierra sola. */
             if(estado!=='idle' && !ewAcordeon.der){ ewAcordeon.der=true; ewAplicarAcordeon(); }
             else if(estado==='idle' && ewAcordeon.der){ ewAcordeon.der=false; ewAplicarAcordeon(); }
+            /* Cazador Musical: si el modo ya estaba elegido ANTES de tocar el
+               orbe (musicHunterNodo no existia todavia), el ciclo de fondo
+               arranca recien aca, en cuanto la sesion esta de verdad viva.
+               iniciarCazadorMusical() es idempotente (no hace nada si el
+               ciclo ya esta corriendo), asi que llamarlo en cada 'listening'
+               -- tambien los que vienen DESPUES del primero, entre turnos --
+               es seguro y barato. Al llegar a 'idle' de verdad se apaga solo
+               (ver detenerCazadorMusical() dentro de stop()). */
+            if(estado==='listening' && ewModoAnterior==='cazador') ewSesion.iniciarCazadorMusical();
             if(window.AvatarFramePlayer){
               var afp=window.AvatarFramePlayer.montar(stage);
               if(afp) window.AvatarFramePlayer.fijarEstado(afp, estado);
@@ -2044,6 +2078,25 @@
             if(ewHudInst) window.ElixisHudTransmision.fijarEstado(ewHudInst,'beam_dispatch');
           },
           onSystem: function(){ /* discreto: no necesita linea propia en este panel */ },
+          /* Live Setlist (2026-08-30, Cazador Musical / Modo B): una fila
+             por deteccion real (el modulo ya filtro mocks/sin-coincidencia/
+             duplicados -- ver elixis-voice-session.js). Sin persistencia
+             todavia (solo DOM, se pierde al recargar) -- exportar/guardar en
+             base de datos es un paso aparte, no pedido para hoy. */
+          onMusicHunterTrack: function(track){
+            var box=el('ewSetlist'); if(!box) return;
+            var vacio=box.querySelector('.ew-vacio'); if(vacio) vacio.remove();
+            var fila=document.createElement('div'); fila.className='ew-setlist-fila';
+            var hora = track.hora.toLocaleTimeString('es-US', {hour:'2-digit', minute:'2-digit'});
+            var artista = ewEsc(track.artist || 'Desconocido');
+            var titulo = ewEsc(track.title || '');
+            fila.innerHTML = '<div class="principal">#'+track.orden+' · <b>'+artista+'</b>'+(titulo?' — '+titulo:'')+'</div>'
+              + '<div class="detalle">'+hora
+              + (track.bpm ? ' · '+track.bpm+' bpm' : '')
+              + (track.musical_key ? ' · '+ewEsc(track.musical_key) : '')
+              + '</div>';
+            box.appendChild(fila); box.scrollTop=box.scrollHeight;
+          },
           /* Persiste en elixis_session_threads (TTL 7 dias) via la unica via
              de escritura permitida -- la RPC exige auth.uid(), nadie puede
              escribir en el hilo de otro. Best-effort: si falla, la
@@ -2106,8 +2159,10 @@
           legal: 'Modo Legal Artístico: prioriza consultas sobre contratos, W-9 y cláusulas del roster.',
           distribucion: 'Modo Música & Distribución: prioriza consultas sobre catálogo, licencias y distribución musical.',
           eventos: 'Modo Eventos: prioriza consultas sobre agenda, cotizaciones y disponibilidad de DJs.',
+          cazador: 'Modo Cazador Musical: estás escuchando la música real de la cabina. Si te preguntan qué está sonando, usa identificar_track. Además hay un muestreo de fondo silencioso armando el setlist del evento -- no anuncies esas detecciones por tu cuenta, solo responde cuando te pregunten.',
           general: 'Modo General: sin foco específico, atiende cualquier consulta operativa.'
         };
+        var ewModoAnterior = null;
         var enfoque=el('ewEnfoque');
         if(enfoque) enfoque.querySelectorAll('[data-modo]').forEach(function(b){
           b.onclick=function(){
@@ -2115,6 +2170,26 @@
             b.querySelector('.ew-enfoque-icono').classList.add('activo');
             var modo = b.getAttribute('data-modo');
             var texto = EW_CONTEXTOS[modo] || EW_CONTEXTOS.general;
+            /* Cazador Musical (2026-08-30): unico modo que hace algo mas que
+               cambiar el texto del prompt -- identificar_track solo existe
+               para identidad djmago (ver el fork en elixis-realtime-session),
+               asi que entrar a este modo fija esa identidad, y prende el
+               ciclo de fondo de Modo B (setlist logger). Salir de el apaga
+               el ciclo -- no tiene sentido seguir muestreando audio para una
+               tabla que ya no se esta mirando. vad=estricto (pedido
+               explicito, "evitar que la musica de sala dispare turnos de
+               habla") solo aplica desde el PROXIMO start(): igual que la
+               voz, el turn_detection se fija al abrir la llamada, no se
+               puede cambiar a media sesion sin reconectar. */
+            if(modo === 'cazador'){
+              ewSesion.fijarIdentidad('djmago');
+              localStorage.setItem('elixis_vad','estricto');
+              if(ewSesion.activa()) ewSesion.iniciarCazadorMusical();
+            } else if(ewModoAnterior === 'cazador'){
+              ewSesion.detenerCazadorMusical();
+              localStorage.setItem('elixis_vad','medium');
+            }
+            ewModoAnterior = modo;
             /* fijarModo(): si ya hay sesion viva lo aplica ya (session.update);
                si no, queda listo para el proximo start() -- ver ?modo= en
                elixis-realtime-session. */

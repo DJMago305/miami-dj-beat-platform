@@ -351,6 +351,7 @@
 
     function stop(silencioso){
       liquidar();
+      detenerCazadorMusical(); // el ciclo de fondo no puede sobrevivir a musicHunterNodo
       if(dc){ try{ dc.close(); }catch(_){ } dc=null; }
       if(pc){ try{ pc.close(); }catch(_){ } pc=null; }
       if(musicHunterNodo && window.MusicHunterRingBuffer){
@@ -410,6 +411,52 @@
         : Promise.resolve(null);
     }
 
+    /* Cazador Musical, Modo B ("continuo" / setlist logger, 2026-08-30,
+       autorizado por el PO): un ciclo de fondo cada 18s (dentro del rango
+       15-20s pedido) que llama a identificar_track SIN pasar por el modelo
+       de voz -- esto es deliberado, no un atajo: el pedido explicito fue
+       "silenciar respuestas de voz automaticas durante el modo continuo
+       para no interferir en cabina". Si esto fuera una tool-call real (como
+       el Modo A "bajo demanda"), cada deteccion forzaria una respuesta
+       hablada de DjMago sobre una cancion que nadie pidio identificar.
+       En cambio esto llama accion('identificar_track', ...) DIRECTO (el
+       mismo helper HTTP que usan consultar/memory_write) y solo avisa por
+       el evento onMusicHunterTrack -- quien escuche (staff.html) decide
+       que hacer (hoy: una fila en la tabla de Live Setlist), sin que la
+       voz de la sesion diga una palabra. */
+    var CAZADOR_INTERVALO_MS = 18000;
+    var cazadorTimer = 0, cazadorUltimoId = null, cazadorOrden = 0;
+    function iniciarCazadorMusical(){
+      if(cazadorTimer) return;
+      cazadorTimer = setInterval(async function(){
+        var muestra = await obtenerMuestraMusicHunter();
+        if(!muestra || !muestra.pcm || !muestra.pcm.length) return;
+        var resultado = await accion('identificar_track', {
+          pcm_base64: pcmABase64(muestra.pcm), sample_rate: muestra.sampleRate,
+        });
+        if(!resultado || resultado.ok === false) return;
+        if(resultado.mock) return; // ACRCloud sin configurar -- nada real que registrar
+        if(!resultado.artist && !resultado.title) return; // sin_coincidencia: silencio, no es un error
+        /* Anti-duplicado por ID/título (pedido explicito): isrc si vino,
+           si no artista+titulo normalizado -- mientras siga sonando el
+           MISMO track, cada ciclo de 18s vuelve a "detectarlo" y no debe
+           generar una fila nueva cada vez. */
+        var idNuevo = (resultado.isrc || (resultado.artist||'') + '|' + (resultado.title||'')).toLowerCase();
+        if(idNuevo === cazadorUltimoId) return;
+        cazadorUltimoId = idNuevo;
+        cazadorOrden += 1;
+        emit('onMusicHunterTrack', {
+          orden: cazadorOrden, hora: new Date(), artist: resultado.artist, title: resultado.title,
+          bpm: resultado.bpm, musical_key: resultado.musical_key, genre: resultado.genre,
+          isrc: resultado.isrc, confidence: resultado.confidence,
+        });
+      }, CAZADOR_INTERVALO_MS);
+    }
+    function detenerCazadorMusical(){
+      if(cazadorTimer){ clearInterval(cazadorTimer); cazadorTimer=0; }
+      cazadorUltimoId = null; cazadorOrden = 0;
+    }
+
     /* enviarTexto(): via de entrada de TEXTO para el mismo turno de voz --
        conversation.item.create con role:user + input_text es el mecanismo
        real y documentado de la Realtime API para mezclar texto y voz en la
@@ -443,6 +490,7 @@
 
     return { start:start, stop:stop, activa:function(){ return !!pc; }, actualizarContexto:actualizarContexto,
       fijarModo:fijarModo, fijarIdentidad:fijarIdentidad, obtenerMuestraMusicHunter:obtenerMuestraMusicHunter,
+      iniciarCazadorMusical:iniciarCazadorMusical, detenerCazadorMusical:detenerCazadorMusical,
       enviarTexto:enviarTexto };
   }
 
