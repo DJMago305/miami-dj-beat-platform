@@ -423,7 +423,18 @@
        mismo helper HTTP que usan consultar/memory_write) y solo avisa por
        el evento onMusicHunterTrack -- quien escuche (staff.html) decide
        que hacer (hoy: una fila en la tabla de Live Setlist), sin que la
-       voz de la sesion diga una palabra. */
+       voz de la sesion diga una palabra.
+
+       RE-VERIFICADO (2026-08-30, reporte en vivo del PO con capturas): la
+       narracion en ingles ("no hay match todavia, Gerardo"/"dejame escuchar
+       de nuevo") que se vio en produccion NO vino de aca -- esta funcion
+       nunca toco `dc`. Vino del Modo A (herramienta(), mas abajo): el VAD
+       normal confundio letras/voces de la musica de fondo con el DJ
+       hablandole al avatar, y el modelo penso que le habian preguntado.
+       El arreglo real esta del lado del servidor (umbral de VAD mas alto
+       para identidad djmago + regla dura de silencio en el prompt, ver
+       elixis-realtime-session/index.ts) -- este modulo no necesito cambios,
+       ya estaba desacoplado como debia. */
     var CAZADOR_INTERVALO_MS = 18000;
     var cazadorTimer = 0, cazadorUltimoId = null, cazadorOrden = 0;
     function iniciarCazadorMusical(){

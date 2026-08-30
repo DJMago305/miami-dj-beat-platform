@@ -73,6 +73,21 @@ const STRICT_TURN_DETECTION = {
     interrupt_response: true,
 };
 
+// UMBRAL DE DJMAGO — mas alto que el ?vad=estricto normal (2026-08-30,
+// correccion en vivo del PO): reportado con capturas reales, "Cazador
+// Musical" con musica real sonando en la cabina disparaba turnos falsos --
+// el propio ELIXIS/DJMago escuchaba las voces/letras de la cancion como si
+// el DJ le estuviera hablando, y encima invocaba identificar_track y
+// NARRABA el resultado en ingles, sin que nadie preguntara nada. 0.72 (el
+// umbral estricto normal, pensado contra una TV de fondo) no alcanza contra
+// musica sonando CERCA del mismo microfono que capta la voz -- DJMago
+// SIEMPRE opera en un ambiente mas ruidoso que ELIXIS (esa es la razon de
+// ser de su identidad), asi que este umbral se aplica SIEMPRE que la
+// identidad sea djmago, sin depender de que el cliente mande ?vad=estricto
+// (defensa en profundidad: si el cliente alguna vez no lo manda, DJMago no
+// se queda expuesto).
+const DJMAGO_VAD_THRESHOLD = Number(Deno.env.get("ELIXIS_DJMAGO_VAD_THRESHOLD") ?? "0.85");
+
 // Filtra el audio ANTES del detector de turnos. near_field es para microfono
 // cercano (auriculares, el del portatil si hablas de frente) y ayuda a que el
 // sonido lejano —una tele al fondo— no cuente como turno.
@@ -269,6 +284,30 @@ cayendo y cómo cerrar una noche. Cuando hay música sonando de verdad en la cab
 puedes identificarla con identificar_track y llevar el setlist cronológico del
 evento. Hablas desde el oficio, con ejemplos concretos, no con lugares comunes ni
 con teoría de manual.`,
+        // Reglas duras (2026-08-30, corrección en vivo del PO, con capturas):
+        // "Cazador Musical" con música real sonando disparó turnos falsos --
+        // el modelo oyó letras/voces de la canción como si el DJ le hablara,
+        // llamó identificar_track por su cuenta y narró el resultado en
+        // inglés, sin que nadie preguntara nada. La sección "MODO DE ENFOQUE
+        // ACTIVO" (más abajo, `enfoque`) es DELIBERADAMENTE una sugerencia
+        // débil por diseño de este archivo ("no reemplaza tu criterio... es
+        // una sugerencia, no una jaula") -- meterle una regla dura ahí no
+        // sirve, por eso vive en el bloque de IDENTIDAD, que sí es una regla
+        // real de quién es DjMago, no una sugerencia de contexto.
+        reglas: `## REGLAS DURAS DE MUSIC HUNTER -- NO SON UNA SUGERENCIA
+- Hablas EXCLUSIVAMENTE en español, sin importar el idioma de lo que suene de
+  fondo. Si una canción en inglés suena cerca del micrófono, es música, no
+  alguien hablándote en inglés -- nunca le respondas en inglés a una canción.
+- Hay un muestreo de fondo SILENCIOSO armando el setlist del evento por su
+  cuenta, sin pasar por ti. NUNCA anuncies, comentes ni narres una
+  identificación de track por iniciativa propia -- ni que no hubo coincidencia,
+  ni que vas a "escuchar de nuevo", ni el resultado cuando sí lo hay. Eso no es
+  cosa tuya a menos que te pregunten directamente.
+- Solo usas identificar_track cuando alguien te pregunta algo equivalente a
+  "¿qué está sonando?" o "¿qué canción es esta?" DICHO DIRECTAMENTE A TI. Si lo
+  que "escuchaste" bien pudo ser una letra de canción o ruido de fondo y no
+  estás seguro de que alguien te habló de verdad, no contestes nada y no
+  llames a ninguna herramienta -- el silencio es la respuesta correcta ahí.`,
     } : {
         cabecera: `Eres ELIXIS. No eres un asistente corporativo: eres el socio de confianza y
 mano derecha de operaciones de Miami DJ Beat LLC. ${trato}
@@ -285,6 +324,7 @@ contratos y papeleo legal (W-9, cláusulas del roster), redacción y seguimiento
 correspondencia con clientes y DJs, cotizaciones, ventas de eventos y publicidad.
 Hablas desde el oficio, con ejemplos concretos, no con lugares comunes ni con
 teoría de manual.`,
+        reglas: "",
     };
 
     return `${persona.cabecera}
@@ -302,10 +342,13 @@ teoría de manual.`,
 - Tolera pausas, dudas y frases a medias. Una pausa breve no es el fin de su turno.
 - Si te interrumpen, cállate en el acto y atiende lo nuevo. Sin quejarte, sin
   recapitular, sin "como te decía".
-- Bilingüe español/inglés. Cambias solo, siguiendo a quien tienes enfrente. Si mezcla,
-  mezclas. Spanglish de Miami cuando el momento lo pida.
+${identidad === "djmago"
+    ? "- Hablas SOLO en español (ver las reglas duras de más abajo -- excepción a lo bilingüe de ELIXIS)."
+    : "- Bilingüe español/inglés. Cambias solo, siguiendo a quien tienes enfrente. Si mezcla,\n  mezclas. Spanglish de Miami cuando el momento lo pida."}
 
 ${persona.saber}
+
+${persona.reglas}
 
 ## DATOS REALES DEL NEGOCIO
 Tienes una herramienta, consultar_elixis, que mira de verdad la base de datos de
@@ -652,13 +695,30 @@ serve(async (req: Request) => {
         instructions: buildInstructions(gate.name, gate.role, memoria, modoEnfoque, identidad),
         audio: {
             input: {
-                turn_detection: estricto ? STRICT_TURN_DETECTION : {
-                    type: "semantic_vad",
-                    eagerness,                 // ver DEFAULT_EAGERNESS arriba
-                    create_response: true,
-                    interrupt_response: true,  // barge-in: el usuario manda
-                },
+                // DJMago SIEMPRE con el umbral alto -- ver DJMAGO_VAD_THRESHOLD
+                // arriba -- sin importar que ?vad= haya mandado el cliente.
+                turn_detection: identidad === "djmago"
+                    ? { ...STRICT_TURN_DETECTION, threshold: DJMAGO_VAD_THRESHOLD }
+                    : estricto ? STRICT_TURN_DETECTION : {
+                        type: "semantic_vad",
+                        eagerness,                 // ver DEFAULT_EAGERNESS arriba
+                        create_response: true,
+                        interrupt_response: true,  // barge-in: el usuario manda
+                    },
                 ...(nrMode === "off" ? {} : { noise_reduction: { type: nrMode } }),
+                // Ayuda a la transcripcion de ENTRADA a no confundirse con
+                // letras de canciones en ingles de fondo (2026-08-30, mismo
+                // reporte en vivo) -- esto es una PISTA para transcribir mejor
+                // lo que capta el mic, no una garantia de en que idioma
+                // RESPONDE el modelo (eso lo fija la instruccion de abajo, en
+                // buildInstructions). Nesting segun la guia GA de audio.input
+                // (misma familia que turn_detection/noise_reduction arriba) --
+                // si el campo no existiera en esta version exacta de la API,
+                // un campo extra desconocido no tumba la sesion, solo se
+                // ignora; no se pudo confirmar byte a byte contra la
+                // documentacion oficial (bloqueada por su propio WAF) al
+                // momento de escribir esto.
+                ...(identidad === "djmago" ? { transcription: { language: "es" } } : {}),
             },
             output: { voice },
         },

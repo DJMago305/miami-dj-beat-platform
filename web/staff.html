@@ -2176,18 +2176,20 @@
                asi que entrar a este modo fija esa identidad, y prende el
                ciclo de fondo de Modo B (setlist logger). Salir de el apaga
                el ciclo -- no tiene sentido seguir muestreando audio para una
-               tabla que ya no se esta mirando. vad=estricto (pedido
-               explicito, "evitar que la musica de sala dispare turnos de
-               habla") solo aplica desde el PROXIMO start(): igual que la
-               voz, el turn_detection se fija al abrir la llamada, no se
-               puede cambiar a media sesion sin reconectar. */
+               tabla que ya no se esta mirando.
+               vad=estricto por localStorage YA NO HACE FALTA aca (2026-08-30,
+               correccion en vivo tras un reporte real con capturas: musica de
+               fondo disparaba turnos falsos y el modelo narraba resultados de
+               Music Hunter sin que nadie preguntara) -- el servidor ahora
+               fuerza un umbral alto SIEMPRE que identidad==='djmago'
+               (DJMAGO_VAD_THRESHOLD en elixis-realtime-session), sin importar
+               que mande el cliente. Aplica desde el PROXIMO start() de todos
+               modos: el turn_detection se fija al abrir la llamada. */
             if(modo === 'cazador'){
               ewSesion.fijarIdentidad('djmago');
-              localStorage.setItem('elixis_vad','estricto');
               if(ewSesion.activa()) ewSesion.iniciarCazadorMusical();
             } else if(ewModoAnterior === 'cazador'){
               ewSesion.detenerCazadorMusical();
-              localStorage.setItem('elixis_vad','medium');
             }
             ewModoAnterior = modo;
             /* fijarModo(): si ya hay sesion viva lo aplica ya (session.update);
