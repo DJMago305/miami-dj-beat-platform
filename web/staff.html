@@ -38,6 +38,7 @@
   })();
   </script>
   <script src="./supabase-config.js?v=20260814-bfi"></script>
+  <script src="./subscription.js?v=20260422-find-dj-rank"></script>
   <script src="./js/music-hunter-ring-buffer.js?v=20260830-ring-buffer"></script>
   <script src="./js/elixis-voice-session.js?v=20260830-modo-dialogo-bajo-demanda"></script>
   <script src="./js/elixis-swipe-carousel.js?v=20260827-pointer-wheel-desktop"></script>
@@ -1226,6 +1227,24 @@
         <iframe id="config-frame" data-src="./account-settings.html" title="Config" referrerpolicy="same-origin"></iframe>
       </section>
 
+      <!-- ═══ Vista SMARTCRATE IA (2026-08-30, autorizado por el PO) ═══
+           Contenedor base -- NO es "Smart Crates" de MDJPRO (ver el tile de
+           dj-tools.html, funcion distinta ya existente, nombre parecido a
+           proposito segun directiva del PO). El motor de lectura de crates
+           reales de Serato (.crate/database V2) vive y ya esta VALIDADO en
+           la rama feature/music-intel-serato-parser (Dominio #6,
+           Inteligencia Musical) -- este contenedor no lo reimplementa, lo
+           consume cuando ese hilo entregue el sincronizador hacia Supabase
+           (ver docs/ESTADO_MAESTRO.md). Sin ese dato sincronizado todavia,
+           esta vista es honesta sobre su propio estado: candado de plan
+           pago + mensaje de "todavia no conectado", nunca datos inventados. -->
+      <section id="view-smartcrate" class="staff-view">
+        <div style="max-width:720px;margin:0 auto;padding:32px 20px;">
+          <h2 style="color:var(--gold);font-size:1.4rem;margin:0 0 6px;">SmartCrate IA</h2>
+          <p style="color:rgba(255,255,255,.55);font-size:13px;margin:0 0 24px;">Motor de recomendación armónica sobre tu librería real de Serato — operado por voz vía DjMago.</p>
+          <div id="smartcrateGate"></div>
+        </div>
+      </section>
 
       <!-- ═══ Vista MI PERFIL — TRANSPORTE NATIVO del perfil al tronco nuevo (sin iframe/link al viejo) ═══ -->
       <section id="view-miperfil" class="staff-view">
@@ -2287,6 +2306,62 @@
           if(xf.addEventListener) xf.addEventListener('load', function(){ if(xld) xld.classList.add('hidden'); });
           setTimeout(function(){ xf.setAttribute('src', xf.getAttribute('data-src')); }, 30);
           setTimeout(function(){ if(xld) xld.classList.add('hidden'); }, 8000); } }
+        if(v==='smartcrate'){ iniciarSmartcrateIA(); }
+      }
+
+      /* SmartCrate IA (2026-08-30): candado de plan pago con el helper YA
+         establecido en el proyecto (window.MDB_SUBSCRIPTION.isPremiumTier,
+         ver web/subscription.js -- mismo criterio que usa el resto del
+         sitio para PRO/ELITE, no un candado inventado aparte). Sin dato
+         sincronizado de Serato todavia (el sincronizador es del Dominio #6,
+         pendiente), esta vista es honesta: no inventa tracks ni un catalogo
+         falso -- dice claramente que la sincronizacion todavia no esta
+         conectada. */
+      var smartcrateIniciado = false;
+      async function iniciarSmartcrateIA(){
+        if(smartcrateIniciado) return; smartcrateIniciado = true;
+        var caja = el('smartcrateGate');
+        if(!caja) return;
+        caja.innerHTML = '<p style="color:rgba(255,255,255,.4);font-size:13px;">Verificando tu plan…</p>';
+        var sb = getSb();
+        var sess = sb ? (await sb.auth.getSession()).data.session : null;
+        if(!sb || !sess){ caja.innerHTML = '<p style="color:rgba(255,255,255,.55);font-size:13px;">Inicia sesión para continuar.</p>'; return; }
+        var perfil = null;
+        try{
+          var r = await sb.from('dj_profiles').select('*').eq('user_id', sess.user.id).maybeSingle();
+          perfil = r.data || null;
+        }catch(e){ console.warn('[SmartCrate IA] no se pudo leer dj_profiles:', e); }
+
+        /* Bypass de staff (2026-08-30): isPremiumTier() mira el plan de
+           CLIENTE (PRO/ELITE) -- el owner real de la plataforma tiene
+           role:'owner', plan:'founder', is_premium:false (verificado por
+           SQL) porque "founder" es un concepto de plan de artista, no un
+           permiso de owner (ver memoria del proyecto: nunca mezclar los
+           dos). Sin este bypass, el propio dueño vería "activa tu plan PRO"
+           en su propia herramienta interna -- igual que el resto del sitio
+           ya deja pasar a owner/staff en candados de cuota (ver
+           STAFF_ROLES en elixis-realtime-session). No se tocó
+           subscription.js -- ese archivo sigue siendo la fuente real para
+           el candado de CLIENTE que sí aplica a un DJ normal. */
+        var esStaff = perfil && ['owner','admin','manager','seller'].indexOf(String(perfil.role||'').toLowerCase()) !== -1;
+        var esPremium = esStaff || (window.MDB_SUBSCRIPTION ? window.MDB_SUBSCRIPTION.isPremiumTier(perfil) : false);
+        if(!esPremium){
+          caja.innerHTML =
+            '<div style="border:1px solid var(--gold);border-radius:12px;padding:20px;background:rgba(197,160,89,.05);">' +
+              '<p style="margin:0 0 10px;font-weight:700;color:var(--gold-lt,var(--gold));">SmartCrate IA es exclusivo de cuentas PRO/ELITE.</p>' +
+              '<p style="margin:0;color:rgba(255,255,255,.6);font-size:13px;">Activa tu plan para desbloquear el motor de recomendación armónica sobre tu propia librería de Serato.</p>' +
+            '</div>';
+          return;
+        }
+        /* Plan activo confirmado -- estado real, no un catalogo simulado.
+           El sincronizador (Dominio #6, "el vehiculo" de su spec) todavia no
+           entrega datos aca; cuando exista, esta funcion se actualiza para
+           leer la tabla real de Supabase en vez de mostrar este mensaje. */
+        caja.innerHTML =
+          '<div style="border:1px solid var(--line);border-radius:12px;padding:20px;">' +
+            '<p style="margin:0 0 10px;font-weight:700;color:var(--text);">Plan activo confirmado.</p>' +
+            '<p style="margin:0;color:rgba(255,255,255,.55);font-size:13px;">Tu librería de Serato todavía no está sincronizada con SmartCrate IA — el motor de lectura de crates ya está validado (Dominio #6, Inteligencia Musical); falta conectar el sincronizador hacia esta cuenta. Sin datos reales, esta vista no muestra un catálogo simulado.</p>' +
+          '</div>';
       }
       paintStaffTopnav(staffTopnavHtml('owner'), showView);
       /* Aterrizaje. Por defecto Gobernanza (FINANCIERO quedo fusionado en CASH
@@ -2296,7 +2371,7 @@
          lado, aunque estuviera cargada y oculta en esta misma pagina.
          Lista blanca a proposito: un valor inventado en la URL no puede dejar el
          portal sin ninguna vista activa. */
-      var MDJ_VISTAS_VALIDAS = { financiero:1, elixis:1, gobernanza:1, miperfil:1, agenda:1, cashflow:1, config:1 };
+      var MDJ_VISTAS_VALIDAS = { financiero:1, elixis:1, gobernanza:1, miperfil:1, agenda:1, cashflow:1, config:1, smartcrate:1 };
       var mdjVistaPedida = '';
       try {
         mdjVistaPedida = (new URLSearchParams(window.location.search).get('vista') || '').toLowerCase().trim();
