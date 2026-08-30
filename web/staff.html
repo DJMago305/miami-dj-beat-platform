@@ -1245,39 +1245,110 @@
            BPM (web/js/smartcrate-harmonic-engine.js) es real y verificado
            contra estos mismos datos, no un mockup. -->
       <section id="view-smartcrate" class="staff-view">
-        <div style="max-width:1100px;margin:0 auto;padding:32px 20px;">
-          <h2 style="color:var(--gold);font-size:1.4rem;margin:0 0 6px;">SmartCrate IA</h2>
-          <p style="color:rgba(255,255,255,.55);font-size:13px;margin:0 0 24px;">Motor de recomendación armónica sobre tu librería real de Serato — operado por voz vía DjMago.</p>
+        <style>
+          /* SmartCrate IA -- rediseño 2026-08-30 (b), transportado del prototipo
+             "MDJB Music Intelligence" (Claude Artifact 179db959), NUNCA enlazado --
+             ver docs/referencia-prototipo-mdjb-music-intelligence.html y la
+             sección 7 del ticket de reconciliación. Solo se transportó lo visual
+             (Playfair Display para headers -- el --gold ya coincidía exacto,
+             #c5a059 en ambos) y el patrón de pestañas; ninguna lógica ficticia
+             del prototipo (TRACKS[], simulateDetection()) entró aquí. */
+          #view-smartcrate .sc-header-name{font-family:'Playfair Display',Georgia,serif;font-weight:800;letter-spacing:.01em;}
+          #view-smartcrate .sc-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:18px 0 16px;border-bottom:1px solid var(--line);padding-bottom:0;}
+          #view-smartcrate .sc-tab{background:none;border:1px solid transparent;border-bottom:none;color:rgba(255,255,255,.55);font-size:12.5px;font-weight:700;letter-spacing:.02em;padding:9px 14px;border-radius:8px 8px 0 0;cursor:pointer;font-family:inherit;}
+          #view-smartcrate .sc-tab:hover{color:#fff;background:rgba(255,255,255,.04);}
+          #view-smartcrate .sc-tab.active{color:var(--gold-lt,var(--gold));background:rgba(197,160,89,.08);border-color:var(--line);border-bottom-color:rgba(197,160,89,.08);}
+          #view-smartcrate .sc-panel{display:none;}
+          #view-smartcrate .sc-panel.active{display:block;}
+          #view-smartcrate .sc-exp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;}
+          #view-smartcrate .sc-exp-card{border:1px solid var(--line);border-radius:10px;padding:16px;background:rgba(255,255,255,.02);}
+          #view-smartcrate .sc-exp-card.on{border-color:rgba(197,160,89,.4);background:rgba(197,160,89,.05);}
+          #view-smartcrate .sc-exp-card h4{margin:0 0 6px;font-size:14px;color:#fff;}
+          #view-smartcrate .sc-exp-card p{margin:0 0 10px;font-size:11.5px;color:rgba(255,255,255,.5);line-height:1.5;}
+          #view-smartcrate .sc-badge{display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:rgba(255,255,255,.45);}
+          #view-smartcrate .sc-badge.on{color:var(--gold-lt,var(--gold));border-color:rgba(197,160,89,.5);}
+        </style>
+        <div style="max-width:1200px;margin:0 auto;padding:32px 20px;">
+          <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px;">
+            <h2 class="sc-header-name" style="color:var(--gold);font-size:1.6rem;margin:0;">SmartCrate IA</h2>
+            <span style="font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.4);">Music Intelligence System</span>
+          </div>
+          <p style="color:rgba(255,255,255,.55);font-size:13px;margin:0 0 20px;">Motor de recomendación armónica sobre tu librería real de Serato — operado por voz vía DjMago.</p>
           <div id="smartcrateGate"></div>
           <div id="smartcrateApp" style="display:none;">
             <!-- Instantanea de PRUEBA (2026-08-30), no sincronizador en vivo --
                  ver web/data/smartcrate-test-tracks.json (_meta.nota). Cuando
                  el Dominio #6 entregue el sincronizador real hacia Supabase,
                  este fetch cambia de destino, no la logica de abajo. -->
-            <div style="border:1px solid rgba(197,160,89,.4);background:rgba(197,160,89,.05);border-radius:8px;padding:8px 14px;font-size:11px;color:var(--gold-lt,var(--gold));margin-bottom:16px;">
+            <div style="border:1px solid rgba(197,160,89,.4);background:rgba(197,160,89,.05);border-radius:8px;padding:8px 14px;font-size:11px;color:var(--gold-lt,var(--gold));margin-bottom:8px;">
               Instantánea de prueba — datos reales de tu librería, capturados el 2026-08-30. No es sincronización en vivo todavía.
             </div>
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
-              <label style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.5);">Tipo de evento</label>
-              <select id="smartcrateEvento" style="background:var(--panel,#0b0f18);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:13px;">
-                <option value="quince">15s / general (±4%)</option>
-                <option value="bodas">Bodas (±3%)</option>
-                <option value="corporativos">Corporativos (±3%)</option>
-                <option value="clubs_latinos">Clubs Latinos (±6%)</option>
-                <option value="edm">EDM (±8%)</option>
-              </select>
-              <span id="smartcrateContador" style="font-size:12px;color:rgba(255,255,255,.4);margin-left:auto;"></span>
+
+            <div class="sc-tabs" role="tablist">
+              <button type="button" class="sc-tab active" data-sc-tab="catalogo">Catálogo</button>
+              <button type="button" class="sc-tab" data-sc-tab="experiences">Experiences</button>
+              <button type="button" class="sc-tab" data-sc-tab="livelistening">Live Listening</button>
+              <button type="button" class="sc-tab" data-sc-tab="setlist">Live Setlist</button>
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;">
-              <div>
-                <h4 style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.5);">Catálogo (clic para ver compatibles)</h4>
-                <div id="smartcrateTabla" style="max-height:520px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;"></div>
+
+            <div class="sc-panel active" id="scPanelCatalogo">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+                <label style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.5);">Tipo de evento (macro — calibra el rango de BPM)</label>
+                <select id="smartcrateEvento" style="background:var(--panel,#0b0f18);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:13px;">
+                  <option value="quince">15s / general (±4%)</option>
+                  <option value="bodas">Bodas (±3%)</option>
+                  <option value="corporativos">Corporativos (±3%)</option>
+                  <option value="clubs_latinos">Clubs Latinos (±6%)</option>
+                  <option value="edm">EDM (±8%)</option>
+                </select>
+                <span id="smartcrateContador" style="font-size:12px;color:rgba(255,255,255,.4);margin-left:auto;"></span>
               </div>
-              <div>
-                <h4 style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.5);">Compatibles con la selección</h4>
-                <div id="smartcrateCompatibles" style="max-height:520px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;">
-                  <div style="padding:16px;color:rgba(255,255,255,.4);font-size:13px;">Elige un track del catálogo.</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;">
+                <div>
+                  <h4 style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.5);">Catálogo (clic para ver compatibles)</h4>
+                  <div id="smartcrateTabla" style="max-height:520px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;"></div>
                 </div>
+                <div>
+                  <h4 style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.5);">Compatibles con la selección</h4>
+                  <div id="smartcrateCompatibles" style="max-height:520px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;">
+                    <div style="padding:16px;color:rgba(255,255,255,.4);font-size:13px;">Elige un track del catálogo.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="sc-panel" id="scPanelExperiences">
+              <p style="font-size:12px;color:rgba(255,255,255,.5);margin:0 0 14px;max-width:70ch;">
+                Capa "micro" de curaduría temática (afina el estilo dentro del evento ya elegido arriba). Solo las Experiences
+                con un filtro real sobre tu catálogo están activas — el resto queda honesto como "Coming Soon" hasta que
+                el catálogo real tenga esa etiqueta (ninguna curaduría se inventa).
+              </p>
+              <div class="sc-exp-grid" id="scExperienceCards"></div>
+              <div id="scExperienceResult" style="margin-top:16px;"></div>
+            </div>
+
+            <div class="sc-panel" id="scPanelLiveListening">
+              <div style="border:1px solid var(--line);border-radius:10px;padding:18px;max-width:640px;">
+                <h4 style="margin:0 0 8px;font-size:13px;color:#fff;">Cazador Acústico (real, vía ACRCloud)</h4>
+                <p style="margin:0 0 14px;font-size:12px;color:rgba(255,255,255,.55);line-height:1.6;">
+                  La identificación en vivo por micrófono ya existe y está verificada en producción — vive en el panel de
+                  <b style="color:var(--gold-lt,var(--gold));">Elixis Console</b> (identidad DjMago, Modo A "bajo demanda" por voz
+                  y Modo B "Cazador Musical" continuo cada 18s). Esta pestaña no duplica esa captura de audio — te lleva
+                  directo a activarla.
+                </p>
+                <button type="button" id="scIrACazador" style="background:var(--gold);border:none;color:#0a0e16;border-radius:8px;padding:9px 18px;font-size:12.5px;font-weight:800;cursor:pointer;">Abrir Elixis Console →</button>
+              </div>
+            </div>
+
+            <div class="sc-panel" id="scPanelSetlist">
+              <div style="border:1px solid var(--line);border-radius:10px;padding:18px;max-width:640px;">
+                <h4 style="margin:0 0 8px;font-size:13px;color:#fff;">Live Setlist (real, del Cazador Musical)</h4>
+                <p style="margin:0 0 14px;font-size:12px;color:rgba(255,255,255,.55);line-height:1.6;">
+                  El registro en vivo de lo detectado por el Cazador Acústico, con exportación a <b>.m3u</b>, ya existe en el
+                  panel de Elixis Console (<code>#ewSetlist</code>). Se mantiene ahí por ahora — fusionarlo físicamente aquí es
+                  un paso aparte, no de este ticket, para no arriesgar el panel que ya funciona.
+                </p>
+                <button type="button" id="scIrASetlist" style="background:transparent;border:1px solid var(--gold);color:var(--gold-lt,var(--gold));border-radius:8px;padding:9px 18px;font-size:12.5px;font-weight:800;cursor:pointer;">Ver Live Setlist en Elixis Console →</button>
               </div>
             </div>
           </div>
@@ -2472,6 +2543,86 @@
         }).join('');
         caja.innerHTML = encabezado + (filas || '<div style="padding:16px;color:rgba(255,255,255,.4);font-size:13px;">Sin coincidencias con este rango de BPM/evento.</div>');
       }
+
+      /* Pestañas de SmartCrate IA (2026-08-30 b) -- transportadas del prototipo
+         "MDJB Music Intelligence", ver comentario de estilo arriba. Simple
+         mostrar/ocultar por data-sc-tab, sin router propio: esta vista ya vive
+         DENTRO del router de staff.html (showView), no hace falta uno anidado. */
+      document.querySelectorAll('#view-smartcrate [data-sc-tab]').forEach(function(btn){
+        btn.addEventListener('click', function(){
+          var tab = btn.getAttribute('data-sc-tab');
+          document.querySelectorAll('#view-smartcrate [data-sc-tab]').forEach(function(b){ b.classList.toggle('active', b===btn); });
+          var map = { catalogo:'scPanelCatalogo', experiences:'scPanelExperiences', livelistening:'scPanelLiveListening', setlist:'scPanelSetlist' };
+          Object.keys(map).forEach(function(k){
+            var p = el(map[k]); if(p) p.classList.toggle('active', k===tab);
+          });
+          if(tab==='experiences' && !scExperienciasPintadas){ renderScExperiences(); }
+        });
+      });
+      var elIrCazador = el('scIrACazador'); if(elIrCazador) elIrCazador.addEventListener('click', function(){ showView('elixis'); });
+      var elIrSetlist = el('scIrASetlist'); if(elIrSetlist) elIrSetlist.addEventListener('click', function(){ showView('elixis'); });
+
+      /* Experiences (capa "micro" de curaduría, resolución 2026-08-30 del PO:
+         convive con "Tipo de Evento" -- ese calibra BPM técnico, esto afina
+         estilo). Solo se activa un filtro cuando existe una etiqueta REAL en
+         el catálogo (campo `genre` del parser de Serato, Dominio #6) contra la
+         que calcular algo -- nunca se inventa a qué Experience pertenece un
+         track. "One Hit Wonders" y las demás heredadas del prototipo de diseño
+         no tienen esa etiqueta todavía, así que quedan honestamente en
+         "Coming Soon" hasta que el catálogo real la tenga. */
+      var SC_EXPERIENCES = [
+        { id:'latin_classics', nombre:'Latin Classics', desc:'Salsa, bachata, merengue, reggaetón, dembow, cubatón, timba — por género real del catálogo.', activo:true,
+          filtro: /latin|salsa|bachata|merengue|reggaeton|regueton|dembow|cubaton|cubat[oó]n|timba|reparto/i },
+        { id:'disco_classics', nombre:'Disco & Classics', desc:'Disco y clásicos etiquetados como tal en tu librería real.', activo:true,
+          filtro: /disco|classic/i },
+        { id:'one_hit_wonders', nombre:'One Hit Wonders', desc:'Himnos reconocidos en los primeros segundos, cualquier era/cultura.', activo:false },
+        { id:'wedding', nombre:'Wedding', desc:'Arco de ceremonia a recepción para bodas mixtas.', activo:false },
+        { id:'generational', nombre:'Generational Journey', desc:'Recorrido década por década para eventos largos.', activo:false },
+        { id:'open_format', nombre:'Open Format', desc:'Programación de club sin arco generacional fijo.', activo:false },
+      ];
+      var scExperienciasPintadas = false;
+      var scExperienciaSeleccionada = null;
+      function renderScExperiences(){
+        scExperienciasPintadas = true;
+        var grid = el('scExperienceCards'); if(!grid) return;
+        grid.innerHTML = SC_EXPERIENCES.map(function(x){
+          var seleccionada = scExperienciaSeleccionada === x.id;
+          return '<div class="sc-exp-card' + (x.activo ? ' on' : '') + '" data-exp="' + x.id + '" style="cursor:' + (x.activo ? 'pointer' : 'default') + ';' + (seleccionada ? 'outline:1px solid var(--gold);' : '') + '">' +
+            '<span class="sc-badge' + (x.activo ? ' on' : '') + '">' + (x.activo ? 'Activa · dato real' : 'Coming Soon') + '</span>' +
+            '<h4 style="margin-top:8px;">' + x.nombre + '</h4>' +
+            '<p>' + x.desc + '</p>' +
+          '</div>';
+        }).join('');
+        grid.querySelectorAll('[data-exp]').forEach(function(card){
+          var id = card.getAttribute('data-exp');
+          var def = SC_EXPERIENCES.filter(function(x){ return x.id===id; })[0];
+          if(!def || !def.activo) return;
+          card.addEventListener('click', function(){
+            scExperienciaSeleccionada = id;
+            renderScExperiences();
+            renderScExperienceResult(def);
+          });
+        });
+      }
+      function renderScExperienceResult(def){
+        var box = el('scExperienceResult'); if(!box) return;
+        var coincidencias = smartcrateCatalogo.filter(function(t){ return t.genre && def.filtro.test(String(t.genre)); });
+        var html = '<div style="border:1px solid var(--line);border-radius:8px;padding:14px;">' +
+          '<div style="font-size:12px;color:rgba(255,255,255,.6);margin-bottom:10px;">' +
+            '<b style="color:var(--gold-lt,var(--gold));">' + def.nombre + '</b> — ' + coincidencias.length + ' tracks reales con género coincidente en tu librería.' +
+          '</div>' +
+          (coincidencias.length ? coincidencias.slice(0, 40).map(function(t){
+            return '<div style="display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid var(--line);font-size:12px;">' +
+              '<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + ewEsc(t.title || t.path || '') + '</span>' +
+              '<span style="color:rgba(255,255,255,.4);font-size:10.5px;text-transform:uppercase;">' + ewEsc(t.genre || '') + '</span>' +
+              '<span style="color:rgba(255,255,255,.4);font-family:var(--mono,monospace);">' + (t.bpm ? Math.round(t.bpm) : '—') + '</span>' +
+            '</div>';
+          }).join('') : '<div style="color:rgba(255,255,255,.4);font-size:12px;">Sin coincidencias de género en la instantánea actual.</div>') +
+          (coincidencias.length > 40 ? '<div style="padding-top:8px;font-size:11px;color:rgba(255,255,255,.35);">+' + (coincidencias.length - 40) + ' más, no listados.</div>' : '') +
+        '</div>';
+        box.innerHTML = html;
+      }
+
       paintStaffTopnav(staffTopnavHtml('owner'), showView);
       /* Aterrizaje. Por defecto Gobernanza (FINANCIERO quedo fusionado en CASH
          FLOW), pero se puede pedir una vista concreta con ?vista=.
