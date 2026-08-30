@@ -72,7 +72,29 @@
     var entra = m.activa === 'a' ? m.b : m.a;
     var sale  = m.activa === 'a' ? m.a : m.b;
     if(entra.getAttribute('data-clip') !== nombre){
-      entra.src = c[nombre];
+      /* resolveMdAssetPublicUrl() (2026-08-30, bug real encontrado en vivo):
+         c[nombre] es una ruta local (./assets/...) -- sin pasarla por la
+         misma reescritura que usa el resto del sitio (supabase-config.js,
+         "vídeo, imagen u otro objeto"), esto funcionaba SOLO en localhost
+         (que sirve el archivo directo del disco) y hubiera fallado en
+         produccion real exactamente igual que le paso a elixis-avatar.webp
+         el 2026-08-29. Con fallback a la ruta cruda si la funcion global
+         todavia no cargo (orden de <script> ya la garantiza, pero no cuesta
+         nada ser defensivo). */
+      /* crossOrigin ANTES del src (2026-08-30, segundo bug real encontrado
+         en la misma prueba): con el video sirviendose desde Supabase
+         Storage (otro origen que localhost/el dominio real), el canvas
+         quedaba "contaminado por origen cruzado" -- SI se veia el video
+         (drawImage nunca lo bloquea), pero avatar-heygen-chromakey.js no
+         podia LEER los pixeles (getImageData) para quitar el verde, y
+         tiraba en silencio sin avisar. Verificado con curl: Supabase
+         Storage ya manda "access-control-allow-origin: *" en los archivos
+         publicos -- solo faltaba pedir el modo CORS del lado del navegador.
+         Debe ir antes de asignar .src o no aplica retroactivamente. */
+      entra.crossOrigin = 'anonymous';
+      entra.src = (typeof window.resolveMdAssetPublicUrl === 'function')
+        ? window.resolveMdAssetPublicUrl(c[nombre])
+        : c[nombre];
       entra.setAttribute('data-clip', nombre);
     }
     /* Aparte de "data-clip" (la categoria) se guarda el archivo real --

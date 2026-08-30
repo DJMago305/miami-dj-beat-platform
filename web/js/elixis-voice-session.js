@@ -34,6 +34,53 @@
     var ac=null, sink=null, anMic=null, anRem=null, buf=null, rafPulso=0;
     var sesion=null, hb=0, t0=0;
     var hablando=false, vivo=false, pulso=0, modoActual=null, _textoElixis='';
+    var conectando=false, micPrecalentado=null;
+
+    /* Pre-calentado de microfono + constraints RAW (2026-08-30, portado de
+       mdj-commander.html/precalentarMic() -- mismo bug real reportado hoy
+       en staff.html: "el microfono pide permiso y se cae la musica en
+       Serato al ejecutar". Este modulo se extraio ANTES de que esa funcion
+       existiera ahi (ver cabecera del archivo), asi que nunca la heredo.
+       Mismas 3 piezas probadas en vivo, sin inventar nada nuevo:
+       (1) constraints con TODO el procesamiento de voz apagado -- eso es
+       lo que dispara la reconfiguracion de CoreAudio que corta a Serato;
+       (2) evitar por nombre las interfaces de DJ/USB (comparten reloj de
+       audio con Serato, causa real de glitches, no solo el primer golpe);
+       (3) pedir el permiso UNA vez y reusar el mismo stream entre
+       start()/stop() -- solo el primerisimo click en la sesion sigue
+       tocando hardware nuevo (limite real de macOS, no arreglable en JS),
+       pero ya no cada activacion. */
+    var CONSTRAINTS_MIC_RAW = { audio:{ echoCancellation:false, noiseSuppression:false, autoGainControl:false, channelCount:1 } };
+    function elegirMicrofono(dispositivos){
+      var EVITAR = /pioneer|serato|rane|ddj|flx|denon|xdj|traktor|djm|numark|reloop|hercules|usb audio|aggregate device/i;
+      var PREFERIR = /built-?in|integrad|macbook|airpods/i;
+      var entradas = dispositivos.filter(function(d){ return d.kind==='audioinput' && d.label; });
+      if(!entradas.length) return null;
+      var preferido = entradas.filter(function(d){ return PREFERIR.test(d.label); })[0];
+      if(preferido) return preferido.deviceId;
+      var seguro = entradas.filter(function(d){ return !EVITAR.test(d.label); })[0];
+      return seguro ? seguro.deviceId : null;
+    }
+    async function precalentarMic(){
+      if(micPrecalentado && micPrecalentado.getAudioTracks().some(function(t){ return t.readyState==='live'; })){
+        return micPrecalentado;
+      }
+      try{
+        var constraints = CONSTRAINTS_MIC_RAW;
+        try{
+          var deviceId = elegirMicrofono(await navigator.mediaDevices.enumerateDevices());
+          if(deviceId){
+            constraints = { audio: Object.assign({}, CONSTRAINTS_MIC_RAW.audio, { deviceId: { exact: deviceId } }) };
+          }
+        }catch(e){ /* enumerateDevices puede fallar sin permiso -- seguir con el default */ }
+        var s = await navigator.mediaDevices.getUserMedia(constraints);
+        s.getAudioTracks().forEach(function(t){ t.enabled=false; });
+        micPrecalentado = s;
+        return s;
+      }catch(e){
+        return null;
+      }
+    }
 
     function fnUrl(accion){
       if(!window.mdbSupabaseFunctionUrl) return null;
@@ -156,7 +203,16 @@
     }
 
     async function start(){
-      if(pc) return;
+      /* conectando (2026-08-30, portado de mdj-commander.html -- mismo bug
+         real ya resuelto ahi, "hey hey hey" en loop): "if(pc) return" solo
+         no alcanza -- pc se asigna DESPUES de esperar el microfono, y
+         durante esa espera un segundo toque al orbe pasa el mismo guard
+         sin problema, creando dos sesiones en paralelo. conectando se pone
+         en true ANTES de cualquier await (sincronico, cierra la ventana
+         del todo) y se resetea en el finally de abajo pase lo que pase. */
+      if(pc || conectando) return;
+      conectando = true;
+      try{
       var url = fnUrl(null);
       if(!url){ emit('onError','No pude ubicar el servidor de voz'); return; }
       url += (url.indexOf('?')===-1?'?':'&') + 'voice=' + (localStorage.getItem('elixis_voice')||'ash')
@@ -165,8 +221,9 @@
 
       emit('onState','understanding');
       try{
-        mic = await navigator.mediaDevices.getUserMedia({
-          audio:{ echoCancellation:true, noiseSuppression:true, autoGainControl:true } });
+        mic = await precalentarMic();
+        if(!mic) throw new Error('sin_stream');
+        mic.getAudioTracks().forEach(function(t){ t.enabled=true; });
       }catch(e){
         emit('onError','Necesito permiso de micrófono');
         emit('onState','idle'); return;
@@ -225,6 +282,7 @@
           });
         }, 4*60*1000);
       }
+      }finally{ conectando = false; }
     }
 
     /* keepalive: la liquidacion sale aunque se cierre la pestaña. Sin esto se
@@ -297,6 +355,15 @@
         item:{ type:'message', role:'user', content:[{ type:'input_text', text:texto }] } }));
       dc.send(JSON.stringify({ type:'response.create' }));
     }
+
+    /* Dispara el pre-calentado al entrar al workspace, no al primer clic
+       del orbe -- mismo momento que "al entrar a Comando" en
+       mdj-commander.html. crear() solo corre una vez por carga de pagina
+       (ver el guard ewIniciado en staff.html), asi que esto tampoco se
+       repite. Sin await: corre en segundo plano, silencioso (los errores
+       ya los traga precalentarMic() a proposito), listo para cuando el
+       usuario si toque el orbe. */
+    precalentarMic();
 
     return { start:start, stop:stop, activa:function(){ return !!pc; }, actualizarContexto:actualizarContexto, fijarModo:fijarModo, enviarTexto:enviarTexto };
   }

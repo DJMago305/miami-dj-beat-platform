@@ -38,9 +38,9 @@
   })();
   </script>
   <script src="./supabase-config.js?v=20260814-bfi"></script>
-  <script src="./js/elixis-voice-session.js?v=20260829-enviar-texto"></script>
+  <script src="./js/elixis-voice-session.js?v=20260830-mic-prewarm"></script>
   <script src="./js/elixis-swipe-carousel.js?v=20260827-pointer-wheel-desktop"></script>
-  <script src="./js/avatar-frame-player.js?v=20260826-clip-engine"></script>
+  <script src="./js/avatar-frame-player.js?v=20260830-crossorigin-fix"></script>
   <script src="./js/avatar-heygen-chromakey.js?v=20260827-multicapa-djmago"></script>
   <script src="./js/elixis-hud-transmision.js?v=20260829-hud-transmision"></script>
   <script>
@@ -577,7 +577,14 @@
     .ew-orbe{width:52px;height:52px;border-radius:50%;border:1px solid var(--line);padding:0;cursor:pointer;
       background:rgba(20,24,30,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
       color:var(--text);display:flex;align-items:center;justify-content:center;transition:background .15s linear,box-shadow .15s linear;}
-    .ew-orbe:hover{background:rgba(20,24,30,.72);}
+    /* :not(.ew-orbe-mic) (2026-08-30, bug real reportado en vivo: "al
+       ponerle el mouse arriba del microfono da la sensacion que se borra
+       el boton") -- este hover generico pintaba un fondo OSCURO sobre
+       CUALQUIER .ew-orbe, incluido el orbe dorado del microfono, apagando
+       justo el boton que mas debe destacar. Los orbes laterales (que si
+       usan este hover oscuro a proposito) quedan intactos. */
+    .ew-orbe:not(.ew-orbe-mic):hover{background:rgba(20,24,30,.72);}
+    .ew-orbe-mic:hover{box-shadow:0 6px 22px rgba(197,160,89,.55);}
     .ew-orbe:disabled{opacity:.32;cursor:default;}
     .ew-orbe:disabled:hover{background:rgba(20,24,30,.45);}
     .ew-orbe svg{width:23px;height:23px;}
