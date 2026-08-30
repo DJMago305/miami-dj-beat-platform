@@ -57,20 +57,6 @@
      el comportamiento es IDENTICO al de antes -- por eso HeyGen, que nunca
      pasa minValue, no se ve afectado en nada. */
 
-  function rgbAHsv(r, g, b){
-    r/=255; g/=255; b/=255;
-    var max=Math.max(r,g,b), min=Math.min(r,g,b), d=max-min;
-    var h=0;
-    if(d!==0){
-      if(max===r) h=((g-b)/d)%6;
-      else if(max===g) h=(b-r)/d+2;
-      else h=(r-g)/d+4;
-      h*=60; if(h<0) h+=360;
-    }
-    var s = max===0 ? 0 : d/max;
-    return [h, s, max];
-  }
-
   /* zonaProtegida (2026-08-28, rotoscopia simplificada -- sugerencia real
      del PO: "se nota como un brillo moviendose zona de orejas"). Medido
      sobre los 394 frames del boomerang: en 236 de 394 (60%) la oreja
@@ -102,11 +88,26 @@
     var o = opciones || OPCIONES_DEF;
     var img = ctx.getImageData(0, 0, ancho, alto);
     var d = img.data;
+    /* HSV calculado inline (2026-08-29, "contencion de CPU en movil"): antes
+       rgbAHsv() devolvia un array [h,s,v] nuevo por cada pixel -- en un
+       frame de 384x530 son ~200mil arrays descartables por fotograma, puro
+       trabajo extra para el garbage collector sin cambiar el resultado.
+       Mismo calculo exacto, verificado equivalente en 200k+ valores
+       aleatorios + casos borde (negro/blanco/rgb puros) antes de aplicar. */
     for(var i=0; i<d.length; i+=4){
       var r=d[i], g=d[i+1], b=d[i+2];
-      var hsv = rgbAHsv(r, g, b);
-      var esFondo = hsv[0]>=o.minHue && hsv[0]<=o.maxHue && hsv[1]>=o.minSaturation &&
-         (o.minValue===undefined || hsv[2]>=o.minValue);
+      var rn=r/255, gn=g/255, bn=b/255;
+      var max=Math.max(rn,gn,bn), min=Math.min(rn,gn,bn), delta=max-min;
+      var h=0;
+      if(delta!==0){
+        if(max===rn) h=((gn-bn)/delta)%6;
+        else if(max===gn) h=(bn-rn)/delta+2;
+        else h=(rn-gn)/delta+4;
+        h*=60; if(h<0) h+=360;
+      }
+      var s = max===0 ? 0 : delta/max;
+      var esFondo = h>=o.minHue && h<=o.maxHue && s>=o.minSaturation &&
+         (o.minValue===undefined || max>=o.minValue);
       if(esFondo && o.zonaProtegida){
         var idx = i/4;
         var px = idx % ancho, py = Math.floor(idx/ancho);

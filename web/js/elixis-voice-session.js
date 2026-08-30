@@ -33,7 +33,7 @@
     var pc=null, dc=null, mic=null, spk=null;
     var ac=null, sink=null, anMic=null, anRem=null, buf=null, rafPulso=0;
     var sesion=null, hb=0, t0=0;
-    var hablando=false, vivo=false, pulso=0;
+    var hablando=false, vivo=false, pulso=0, modoActual=null, _textoElixis='';
 
     function fnUrl(accion){
       if(!window.mdbSupabaseFunctionUrl) return null;
@@ -118,7 +118,10 @@
            conversacion"). Se conserva aqui para no perder esa mejora real. */
         case 'conversation.item.input_audio_transcription.completed': {
           var dicho = (m.transcript || '').trim();
-          if(dicho) emit('onTranscript', { who:'yo', text:dicho, final:true });
+          if(dicho){
+            emit('onTranscript', { who:'yo', text:dicho, final:true });
+            emit('onThreadLine', { rol:'yo', contenido:dicho, modo:modoActual });
+          }
           break;
         }
         case 'input_audio_buffer.speech_started':
@@ -130,7 +133,8 @@
           emit('onState','understanding'); break;
 
         case 'response.output_audio_transcript.delta':
-          if(!hablando){ hablando=true; emit('onTranscript', { who:'elixis', start:true }); }
+          if(!hablando){ hablando=true; _textoElixis=''; emit('onTranscript', { who:'elixis', start:true }); }
+          _textoElixis += (m.delta||'');
           emit('onTranscript', { who:'elixis', delta:(m.delta||'') });
           emit('onState','speaking'); break;
 
@@ -140,6 +144,9 @@
           var salida = (m.response && m.response.output) || [];
           var llamadas = salida.filter(function(i){ return i && i.type==='function_call'; });
           if(llamadas.length){ llamadas.forEach(herramienta); break; }
+          /* El hilo se guarda completo aqui, no en cada delta -- una fila
+             por turno, no una por fragmento de texto. */
+          if(hablando && _textoElixis.trim()) emit('onThreadLine', { rol:'elixis', contenido:_textoElixis.trim(), modo:modoActual });
           hablando=false;
           emit('onState','listening'); break;
         }
@@ -153,7 +160,8 @@
       var url = fnUrl(null);
       if(!url){ emit('onError','No pude ubicar el servidor de voz'); return; }
       url += (url.indexOf('?')===-1?'?':'&') + 'voice=' + (localStorage.getItem('elixis_voice')||'ash')
-           + '&vad=' + (localStorage.getItem('elixis_vad')||'medium');
+           + '&vad=' + (localStorage.getItem('elixis_vad')||'medium')
+           + (modoActual ? '&modo=' + encodeURIComponent(modoActual) : '');
 
       emit('onState','understanding');
       try{
@@ -257,7 +265,40 @@
     }
 
     window.addEventListener('beforeunload', liquidar);
-    return { start:start, stop:stop, activa:function(){ return !!pc; }, actualizarContexto:actualizarContexto };
+    /* Guarda el modo para el PROXIMO start() (va en la URL de sesion, ver
+       arriba) Y, si ya hay sesion viva, lo aplica de una vez via
+       actualizarContexto (session.update no reinicia la llamada). El texto
+       humano del modo lo trae quien llama (ya lo tiene: EW_CONTEXTOS en
+       staff.html, MC_CONTEXTOS en mdj-commander.html) -- este modulo no
+       duplica ese mapa, solo decide CUANDO aplicarlo. */
+    function fijarModo(nombre, textoInstrucciones){
+      modoActual = nombre || null;
+      if(dc && dc.readyState==='open' && textoInstrucciones) actualizarContexto(textoInstrucciones);
+    }
+
+    /* enviarTexto(): via de entrada de TEXTO para el mismo turno de voz --
+       conversation.item.create con role:user + input_text es el mecanismo
+       real y documentado de la Realtime API para mezclar texto y voz en la
+       misma sesion (no es un endpoint aparte).
+       NO arranca start() por su cuenta (revertido 2026-08-29, incidente real
+       del PO: escribir texto sin sesion activa disparaba getUserMedia() por
+       primera vez en la pestana -- eso corto el audio de Serato un instante
+       en vivo, DJ tocando en ese momento). Requiere sesion YA activa
+       (activa()===true, el usuario prendio la voz a mano con el orbe) --
+       nunca toca el microfono como efecto secundario de escribir. */
+    function enviarTexto(texto){
+      texto = String(texto||'').trim();
+      if(!texto) return;
+      if(!dc || dc.readyState!=='open'){
+        emit('onError','Activa la voz antes de escribir — así no se toca el micrófono sin que tú lo pidas.');
+        return;
+      }
+      dc.send(JSON.stringify({ type:'conversation.item.create',
+        item:{ type:'message', role:'user', content:[{ type:'input_text', text:texto }] } }));
+      dc.send(JSON.stringify({ type:'response.create' }));
+    }
+
+    return { start:start, stop:stop, activa:function(){ return !!pc; }, actualizarContexto:actualizarContexto, fijarModo:fijarModo, enviarTexto:enviarTexto };
   }
 
   window.ElixisVoiceSession = { crear:crear, ESTADOS:ESTADOS };

@@ -100,10 +100,10 @@
      PO, arruinaban el video ya elegido; esto es puro retiming+reversa,
      el contenido de cada fotograma no se toca. */
   window.MDB_AVATAR_CLIPS = {
-    idle: './assets/Elixis%20IA/djmago-idle-boomerang.mp4',
-    listening: './assets/Elixis%20IA/djmago-idle-boomerang.mp4',
-    thinking: './assets/Elixis%20IA/djmago-idle-boomerang.mp4',
-    speaking: './assets/Elixis%20IA/djmago-idle-boomerang.mp4'
+    idle: './assets/DJMago%20IA/djmago-idle-boomerang.mp4',
+    listening: './assets/DJMago%20IA/djmago-idle-boomerang.mp4',
+    thinking: './assets/DJMago%20IA/djmago-idle-boomerang.mp4',
+    speaking: './assets/DJMago%20IA/djmago-idle-boomerang.mp4'
   };
   /* Avatar HeyGen elegido por el PO (2026-08-27): "Katya in Black Suit".
      La tabla real de docs.liveavatar.com/docs/core-concepts/avatars.md
@@ -2509,6 +2509,21 @@
        entrar a Comando, ver SCREENS.command) y reusar el MISMO stream entre
        llamadas -- start()/stop() ya no vuelven a pedir hardware, solo
        activan/desactivan el track (ver mas abajo). */
+    /* noiseSuppression: se probo reactivar en true el 2026-08-29 (ruido de
+       TV colandose en la conversacion) y se REVIRTIO el mismo dia -- el PO
+       reporto que la voz del agente empezo a cortarse en fragmentos ("como
+       hipo", sin dialogo estable) justo despues de ese cambio, cuando antes
+       (con este flag en false) el agente se autocalibraba bien al entorno
+       ruidoso. Hipotesis: el DSP de noiseSuppression introduce micro-cortes/
+       artefactos en el audio del MICROFONO que el VAD del servidor (fuera
+       de este archivo, en elixis-realtime-session) interpreta como el
+       usuario interrumpiendo, cortando la respuesta del agente a cada rato
+       -- no confirmado con certeza, pero la correlacion temporal con el
+       cambio fue clara y se priorizo volver al estado ya confirmado bueno
+       en vez de seguir probando en vivo. Ver [[project_mic_prewarm_serato_
+       glitch]] Ronda 4. El ruido de fondo real (TV) sigue sin filtrarse --
+       queda pendiente, a resolver de otra forma (probablemente del lado
+       del VAD/servidor, fuera de jurisdiccion de este hilo). */
     var CONSTRAINTS_MIC_RAW = { audio:{ echoCancellation:false, noiseSuppression:false, autoGainControl:false, channelCount:1 } };
     /* Preferir el microfono integrado y evitar interfaces de DJ/USB por
        nombre (2026-08-27, "las micro-caidas persisten") -- pedirle el mismo

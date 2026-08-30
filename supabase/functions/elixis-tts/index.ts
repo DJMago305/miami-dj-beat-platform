@@ -2,7 +2,8 @@
 // Voz de ELIXIS — TTS natural vía OpenAI (endpoint audio/speech).
 // Reusa el secreto OPENAI_API_KEY ya existente (el mismo de booth-chat).
 // Función NUEVA y AISLADA — NO toca booth-tts ni ninguna otra función.
-// POST { text } -> audio/mpeg (mp3). CORS restringido + rate limit.
+// POST { text, format? } -> audio/mpeg (mp3, default) o audio/pcm (crudo,
+// para avatar-heygen-stream.js). CORS restringido + rate limit.
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -60,9 +61,17 @@ const ALLOWED_ORIGINS = [
     "http://localhost:3000",
 ];
 
+// Mismo patron que elixis-realtime-session / elixis-orchestrator: el panel
+// local corre en el primer puerto libre (8124, 8210...), que cambia -- una
+// lista fija de puertos falla en silencio con CORS opaco. Faltaba aqui
+// (encontrado 2026-08-27 al conectar avatar-heygen-stream.js, que llama a
+// esta funcion desde el mismo puerto que ya fallaba en elixis-orchestrator).
+const LOCALHOST_ORIGIN = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
+
 function buildCorsHeaders(req: Request): Record<string, string> {
     const origin = req.headers.get("origin") ?? "";
-    const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+    const isAllowed = ALLOWED_ORIGINS.includes(origin) || LOCALHOST_ORIGIN.test(origin);
+    const allowed = isAllowed ? origin : ALLOWED_ORIGINS[0];
     return {
         "Access-Control-Allow-Origin": allowed,
         "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -121,7 +130,7 @@ serve(async (req: Request) => {
         });
     }
 
-    let body: { text?: string; voice?: string };
+    let body: { text?: string; voice?: string; format?: string };
     try {
         body = await req.json();
     } catch {
@@ -134,6 +143,14 @@ serve(async (req: Request) => {
     const voice = typeof body.voice === "string" && ALLOWED_VOICES.has(body.voice)
         ? body.voice
         : DEFAULT_VOICE;
+
+    // "pcm" es para avatar-heygen-stream.js: LiveAvatar pide audio crudo
+    // PCM 16-bit 24kHz para mover los labios (agent.speak), no un texto que
+    // ella misma convierta. OpenAI ya lo entrega en ese formato exacto sin
+    // necesitar ninguna conversion en el navegador (verificado contra el
+    // OpenAPI real de OpenAI, 2026-08-27). Todo lo demas sigue pidiendo mp3
+    // como siempre -- este parametro es opcional y no rompe nada existente.
+    const format = body.format === "pcm" ? "pcm" : "mp3";
 
     const raw = typeof body.text === "string" ? body.text.trim() : "";
     if (!raw) {
@@ -157,7 +174,7 @@ serve(async (req: Request) => {
                 voice,
                 input: text,
                 instructions: INSTRUCTIONS,
-                response_format: "mp3",
+                response_format: format,
             }),
         });
     } catch (err) {
@@ -184,6 +201,10 @@ serve(async (req: Request) => {
     const audioBuffer = await ttsRes.arrayBuffer();
     return new Response(audioBuffer, {
         status: 200,
-        headers: { ...cors, "Content-Type": "audio/mpeg", "Cache-Control": "no-store" },
+        headers: {
+            ...cors,
+            "Content-Type": format === "pcm" ? "audio/pcm" : "audio/mpeg",
+            "Cache-Control": "no-store",
+        },
     });
 });

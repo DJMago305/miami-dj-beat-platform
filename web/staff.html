@@ -38,14 +38,41 @@
   })();
   </script>
   <script src="./supabase-config.js?v=20260814-bfi"></script>
-  <script src="./js/elixis-voice-session.js?v=20260826-workspace-nativo"></script>
-  <script src="./js/elixis-swipe-carousel.js?v=20260826-carrusel-3-pantallas"></script>
+  <script src="./js/elixis-voice-session.js?v=20260829-enviar-texto"></script>
+  <script src="./js/elixis-swipe-carousel.js?v=20260827-pointer-wheel-desktop"></script>
+  <script src="./js/avatar-frame-player.js?v=20260826-clip-engine"></script>
+  <script src="./js/avatar-heygen-chromakey.js?v=20260827-multicapa-djmago"></script>
+  <script src="./js/elixis-hud-transmision.js?v=20260829-hud-transmision"></script>
+  <script>
+    /* Sprites de boca (avatar-viseme-sprites.js + MDB_AVATAR_VISEMES)
+       eliminados de esta pagina 2026-08-29: los .webp reales eran fotos
+       completas de DJMago con fondo blanco solido, no recortes de boca
+       transparentes -- tapaban el video con chroma key cada vez que habia
+       audio real ("que horror", reporte en vivo del PO). Ademas 2 de los
+       5 archivos ya no existen en disco. Si se recalibra con visemas
+       reales (mouth-only, fondo transparente) en el futuro, esto se
+       vuelve a conectar; hasta entonces el script ni se carga. */
+    /* Mismo clip base que mdj-commander.html usa hoy para las 4 categorias
+       (ver window.MDB_AVATAR_CLIPS ahi, linea ~102) -- directiva del PO
+       2026-08-29: "elimina ese avatar [la foto rota] y busca el que usamos
+       en el telefono version". No es un avatar nuevo, es traer el mismo
+       real ya elegido y aprobado en vivo por el PO en esa pagina. Requiere
+       que el archivo este subido a Supabase Storage (mismo mecanismo que
+       las fotos de bodas) -- sin eso, 404 igual que le paso a elixis-avatar
+       .webp. */
+    window.MDB_AVATAR_CLIPS = {
+      idle: './assets/DJMago IA/djmago-idle-boomerang.mp4',
+      listening: './assets/DJMago IA/djmago-idle-boomerang.mp4',
+      thinking: './assets/DJMago IA/djmago-idle-boomerang.mp4',
+      speaking: './assets/DJMago IA/djmago-idle-boomerang.mp4'
+    };
+  </script>
   <!-- QR: misma librería que el perfil (qrcodejs) para generar el código nativo -->
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
 
   <style>
     /* ══════════ Portal STAFF — shell modular, bounded context /staff ══════════ */
-    :root{ --gold:#c5a059; --gold-lt:#e8c987; --bg:#050810; --panel:#0b0f18; --line:rgba(255,255,255,.10); }
+    :root{ --gold:#c5a059; --gold-lt:#e8c987; --bg:#050810; --panel:#0b0f18; --panel-glass:rgba(11,15,24,.62); --line:rgba(255,255,255,.10); }
     *{box-sizing:border-box;}
     /* El portal tiene su PROPIA topbar: anula el padding-top del header fijo del sitio (styles.css) que dejaba un hueco negro arriba. */
     /* El hueco de la barra vertical se reserva SIEMPRE. Sin esto, una vista alta
@@ -375,20 +402,58 @@
        (#elixis-frame) se retira en el propio HTML de esta vista. */
     #view-elixis-native{
       --gold-glow:rgba(197,160,89,.55);
-      height:100%; display:flex; flex-direction:column; gap:14px; padding:16px; overflow:hidden;box-sizing:border-box;}
+      height:100%; display:flex; flex-direction:column; gap:14px; padding:16px 16px 0; overflow:hidden;box-sizing:border-box;}
     /* Carrusel de 3 pantallas (Enfoque / Avatar / Hilos): la MISMA pista para
        movil y escritorio -- en escritorio el media query de abajo neutraliza
        el transform/ancho y la convierte en una rejilla de 3 columnas fija,
        sin duplicar ningun nodo (nada de dos avatares con el mismo id). */
     .ew-grid{flex:1; min-height:0; position:relative; overflow:hidden; border-radius:14px;}
-    .ew-carrusel-pista{display:flex; width:300%; height:100%; touch-action:pan-y;}
+    /* Red de particulas de fondo (2026-08-29, correccion de alcance): antes
+       #ewAvatarFX vivia DENTRO de .avatar-stage (la caja chica del avatar),
+       asi que la red solo se veia ahi -- orden del PO: "la red energetica
+       es en toda la pantalla no es solamente en esa seccion". Movida a hijo
+       directo de .ew-grid, detras de los 3 paneles (z-index:0), un solo
+       canvas compartido para las 3 columnas en vez de uno por columna. */
+    .ew-grid > .avatar-fx{position:absolute; inset:0; width:100%; height:100%; z-index:0;}
+    .ew-carrusel-pista{display:flex; width:300%; height:100%; touch-action:pan-y; position:relative; z-index:1;}
     .ew-pantalla{width:33.3333%; height:100%; box-sizing:border-box; padding:0 5px; overflow-y:auto;}
     .ew-pantalla::-webkit-scrollbar{display:none}
     @media (min-width:981px){
-      .ew-carrusel-pista{display:grid !important; grid-template-columns:220px 1fr 240px; width:100% !important; transform:none !important; gap:14px;}
-      .ew-pantalla{width:auto; padding:0;}
-      .ew-dots{display:none;}
+      /* Acordeon de escritorio (2026-08-29, reescrito el mismo dia --
+         directiva explicita del PO: "el panel de la izquierda no invade
+         el centro, solo llega hasta los limites de jurisdiccion de la
+         pieza del centro... el avatar siempre es protagonista"). Con GRID
+         (version anterior) abrir un riel lateral le quitaba ancho real a
+         la columna central -- el avatar se encogia/desplazaba, que es
+         exactamente lo que el PO reporto como error. Ahora el centro NO
+         vive en el grid: es un bloque independiente, ancho FIJO (50%),
+         siempre centrado en el medio de .ew-carrusel-pista via position:
+         absolute + transform, sin importar que hagan los rieles. Cada
+         riel es TAMBIEN independiente, anclado a su propio borde (left:0 /
+         right:0), y su ancho abierto es exactamente 25% -- la mitad de lo
+         que le sobra al centro a cada lado -- para que topen justo en el
+         borde del centro sin superponerse ("los limites de jurisdiccion"),
+         nunca invadiendolo. */
+      .ew-carrusel-pista{position:relative !important; width:100% !important; height:100%; transform:none !important; display:block;}
+      /* .ew-pantalla.ew-col (2 clases), no .ew-pantalla solo (1 clase): esta
+         pagina tambien tiene ".ew-col{position:relative}" (base, fuera de
+         este media query) con la MISMA especificidad que un ".ew-pantalla"
+         de una sola clase -- empate que gana quien este mas abajo en el
+         archivo (.ew-col), revirtiendo esto a relative en silencio. Bug
+         real encontrado en vivo (2026-08-29): los 3 paneles quedaban en
+         flujo normal, apilados verticalmente uno debajo del otro, en vez
+         de lado a lado -- "se fueron los controles de abajo". Subir la
+         especificidad aca es mas robusto que reordenar el archivo (que ya
+         fallo 3 veces hoy con este mismo patron). */
+      .ew-pantalla.ew-col{width:auto; padding:0; position:absolute; top:0; height:100%; box-sizing:border-box;}
+      .ew-pantalla.ew-mid{left:50%; transform:translateX(-50%); width:50%; z-index:1;}
+      #ewPanelIzq{left:0; width:var(--ew-izq,64px); transition:width .28s ease; z-index:2;}
+      #ewPanelDer{right:0; width:var(--ew-der,64px); transition:width .28s ease; z-index:2;}
       .ew-flecha{display:none !important;} /* aca los 3 paneles ya se ven juntos en columnas -- no hay nada que navegar */
+      .ew-pantalla.ew-cerrado .ew-enfoque{flex-direction:column; gap:10px;}
+      .ew-pantalla.ew-cerrado .ew-enfoque-item .l{display:none;}
+      .ew-pantalla.ew-cerrado h4{writing-mode:vertical-rl; text-orientation:mixed; margin:0 0 8px; white-space:nowrap;}
+      .ew-pantalla.ew-cerrado .ew-col-body{display:none;}
     }
     /* Flechas laterales de escritorio angosto (2026-08-28, ticket de
        soporte desktop) -- inyectadas por elixis-swipe-carousel.js mismo.
@@ -408,12 +473,39 @@
       .ew-flecha-izq{left:6px}
       .ew-flecha-der{right:6px}
     }
-    .ew-col{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:12px; min-height:0; height:100%; box-sizing:border-box; display:flex; flex-direction:column;}
-    .ew-col.ew-mid{align-items:center;}
+    /* Vidrio translucido (2026-08-29): antes .ew-col era var(--panel) solido,
+       lo que tapaba por completo la red de particulas de fondo dentro de
+       cada columna -- solo se veia donde el CSS viejo la encerraba. Mismo
+       tono/blur que .ew-flecha (unico precedente de "vidrio sobre
+       particulas" que ya existia en este archivo), no un color inventado. */
+    .ew-col{background:var(--panel-glass, var(--panel)); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); border:1px solid var(--line); border-radius:14px; padding:12px; min-height:0; height:100%; box-sizing:border-box; display:flex; flex-direction:column; position:relative;}
+    /* El panel central (avatar/red de energia) queda SIN vidrio -- ese fondo
+       traslucido + blur(8px) es exactamente lo que tapaba la red que se
+       pidio ver limpia (2026-08-29, reporte en vivo del PO). El vidrio se
+       queda en los laterales (Enfoque/Hilos), que si necesitan legibilidad
+       de texto sobre el fondo. */
+    .ew-col.ew-mid{align-items:center; background:none; backdrop-filter:none; -webkit-backdrop-filter:none; border-color:transparent;}
     .ew-col h4{font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--gold); margin:0 0 10px; font-weight:700;}
     .ew-col-body{flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:8px;}
     .ew-col-body::-webkit-scrollbar{display:none}
+    .ew-acordeon-toggle{display:none; position:absolute; top:8px; right:8px; width:24px; height:24px; border-radius:50%; border:1px solid var(--line);
+      background:rgba(0,0,0,.25); color:var(--text); align-items:center; justify-content:center; cursor:pointer; font-size:11px; line-height:1; padding:0;}
+    /* El toggle solo existe/tiene sentido en el grid fijo de escritorio (ver
+       arriba, >=981px): en movil cada pantalla ya ocupa el ancho completo
+       por turno via el carrusel, no hay nada que colapsar. Esta regla debe
+       venir DESPUES de ".ew-acordeon-toggle{display:none;...}" de arriba --
+       misma especificidad (una sola clase), así que el orden en el archivo
+       decide quien gana, no el media query por si solo (bug real detectado
+       en vivo: quedaba con display:none en 1400px hasta reordenar esto). */
+    @media (min-width:981px){ .ew-acordeon-toggle{display:flex;} }
+    .ew-pantalla.ew-mid .ew-acordeon-toggle{display:none !important;}
     .ew-dots{display:flex; justify-content:center; gap:8px; padding-top:10px;}
+    /* Igual que el toggle del acordeon: esta regla debe ir DESPUES de la
+       base de arriba -- misma especificidad, el orden en el archivo decide.
+       Bug real encontrado en vivo (2026-08-29): en escritorio los puntos
+       seguian ocupando ~30-40px de alto porque la version vieja de esta
+       regla vivia ANTES de la base y perdia el empate de cascada. */
+    @media (min-width:981px){ .ew-dots{display:none;} }
     .ew-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.22);border:none;padding:0;cursor:pointer;}
     .ew-dot.activo{background:var(--gold);}
     .ew-enfoque{display:flex; flex-wrap:wrap; align-content:center; justify-content:center; gap:18px; height:100%;}
@@ -423,30 +515,114 @@
     .ew-enfoque-icono.activo{border:2px solid rgba(234,179,8,0.5); box-shadow:0 0 14px rgba(234,179,8,0.5);}
     .ew-enfoque-item .l{font-size:10px;letter-spacing:.03em;color:rgba(255,255,255,.55);text-align:center;}
     .ew-proceso-mini{font-size:11px;color:rgba(255,255,255,.5);margin-bottom:8px;}
-    .avatar-stage{position:relative;width:min(230px,80%);height:220px;margin:4px auto 10px;}
+    /* Agrandado (2026-08-29, directiva del PO: "ubicarlo... ampliado...
+       falta la parte de abajo del torso"): antes era una cajita fija de
+       230x220px flotando en medio de un panel mucho mas grande. Ahora
+       crece con flex:1 para llenar el alto disponible de su columna --
+       avatar-heygen-chromakey.js ya ancla el contenido dibujado al FONDO
+       del canvas cuando fraccionAncho deja hueco vertical (ver dy en ese
+       archivo), asi que una caja mas alta revela mas torso solo por tener
+       mas alto real, sin tocar el zoom. */
+    .avatar-stage{position:relative;width:min(420px,92%);flex:1;min-height:0;margin:4px auto 10px;}
     .avatar-fx{position:absolute;inset:0;width:100%;height:100%;z-index:1}
     .avatar-baseglow{position:absolute;left:50%;bottom:5%;transform:translateX(-50%);width:74%;height:44%;z-index:2;
       background:radial-gradient(closest-side,var(--gold-glow),transparent 72%);filter:blur(11px);opacity:.6;transition:.45s ease}
     .avatar-fig{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;z-index:3;
       filter:drop-shadow(0 10px 26px rgba(0,0,0,.7));animation:ew-breathe 5.6s ease-in-out infinite}
+    /* Respiracion ligera de reposo (restaurada 2026-08-29, directiva de
+       mitigacion): al quitar el parpadeo/respiro viejos para dar paso a
+       clips/visemas reales, la foto se quedo congelada en idle porque
+       MDB_AVATAR_CLIPS nunca se define en esta pagina -- el motor de
+       fotogramas no tiene nada que reproducir. Esta animacion es
+       independiente de esa capa (vive en .avatar-fig, no en .avatar-clip/
+       .avatar-viseme) y no interfiere con clips/visemas reales cuando se
+       configuren: solo evita la sensacion de "imagen muerta" mientras
+       tanto. */
     @keyframes ew-breathe{50%{transform:translateY(-3px) scale(1.008)}}
-    .avatar-stage.listening .avatar-baseglow{opacity:1;width:90%;height:56%}
-    .avatar-stage.understanding .avatar-baseglow,.avatar-stage.executing .avatar-baseglow{opacity:1;background:radial-gradient(closest-side,rgba(199,123,255,.42),transparent 72%)}
-    .avatar-stage.speaking .avatar-fig{animation:ew-talk 1.1s ease-in-out infinite}
-    @keyframes ew-talk{25%{transform:translateY(-2px)}60%{transform:translateY(1px) scale(1.006)}}
-    .avatar-eyes{position:absolute;inset:0;width:100%;height:100%;z-index:4;pointer-events:none}
-    .avatar-eyes i{position:absolute;top:34.5%;width:7%;height:5.5%;border-radius:50%;
-      background:radial-gradient(closest-side,rgba(58,36,26,.92),rgba(58,36,26,.55) 65%,transparent);
-      transform:translate(-50%,-50%) scaleY(0);transform-origin:center;filter:blur(.5px)}
-    .avatar-eyes i:first-child{left:40.4%}
-    .avatar-eyes i:last-child{left:59.6%}
-    .avatar-stage.parpadeo .avatar-eyes i{animation:ew-parpadeo .18s ease-in-out}
-    @keyframes ew-parpadeo{0%,100%{transform:translate(-50%,-50%) scaleY(0)}45%,55%{transform:translate(-50%,-50%) scaleY(1)}}
-    .avatar-stage.speaking.voz-activa .avatar-fig{animation:none;transform:translateY(calc(var(--voz,0) * -3.5px)) scale(calc(1 + var(--voz,0) * 0.02))}
+    /* Contenedor hibrido para el avatar generativo (Simli/HeyGen via WebRTC):
+       hoy no hay proveedor configurado, asi que el video se queda oculto y
+       solo se ve la foto en reposo -- ver ORDEN "cancelacion 2D" del
+       2026-08-26. Sin controlador todavia a proposito: es el contenedor,
+       no la integracion. */
+    .avatar-stream{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;z-index:3;display:none}
+    .avatar-stage.stream-live .avatar-fig{display:none}
+    .avatar-stage.stream-live .avatar-stream{display:block}
+    /* Motor de fotogramas (avatar-frame-player.js): dos capas superpuestas en
+       opacity:0 por defecto -- sin clips reales configurados, se quedan asi
+       para siempre y la foto de arriba manda, tal como se pidio. */
+    .avatar-clip{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;z-index:3;opacity:0;transition:opacity .2s linear;pointer-events:none}
+    /* Chroma key de DJMago (2026-08-29, mismo mecanismo real de
+       mdj-commander.html): el <video> crudo (fondo verde de verdad) se
+       oculta con visibility -- NO display/opacity, esas SI pausarian la
+       reproduccion en algunos navegadores -- y lo que se ve es el canvas,
+       redibujado cuadro a cuadro sin el verde por avatar-heygen-chromakey.js.
+       Sin esto, lo que aparecia era el verde crudo sin procesar. */
+    .avatar-clip-fuente{visibility:hidden}
+    .avatar-clip-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-events:none}
+    /* Sprites de boca por amplitud real (avatar-viseme-sprites.js): una sola
+       capa que se prende SOLO mientras ELIXIS habla de verdad. Sin fotogramas
+       reales configurados, se queda en opacity:0 para siempre. */
+    .avatar-viseme{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;z-index:4;opacity:0;transition:opacity .04s linear;pointer-events:none}
     .ew-estado{text-align:center;font-family:var(--mono,monospace);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);margin-top:2px;}
-    .ew-mic{display:block;margin:12px auto 0;padding:10px 22px;border-radius:999px;border:none;cursor:pointer;
-      background:linear-gradient(180deg,var(--gold-lt),var(--gold));color:#1a1405;font-weight:700;font-size:13px;}
-    .ew-mic.on{background:#c0392b;color:#fff;}
+    /* Barra de orbes flotantes (2026-08-29, directiva del PO: "los botones
+       del sistema del telefono inteligente" -- mismo patron de mdj-commander
+       .html, #bottomnav/.nav-orb, pero sin etiquetas de texto y solo con las
+       3 acciones que existen de verdad en este panel: abrir Modo Enfoque,
+       voz (el mismo control de siempre, ahora en forma de orbe), abrir
+       Hilos/Transcripcion. Los otros 2 iconos del telefono (Radar/Mas)
+       navegan a pantallas de mdj-commander.html que no existen aqui -- se
+       dejan fuera en vez de fingir que hacen algo. */
+    .ew-orbes-flotantes{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:5;
+      display:flex;align-items:center;gap:16px;}
+    .ew-orbe{width:52px;height:52px;border-radius:50%;border:1px solid var(--line);padding:0;cursor:pointer;
+      background:rgba(20,24,30,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+      color:var(--text);display:flex;align-items:center;justify-content:center;transition:background .15s linear,box-shadow .15s linear;}
+    .ew-orbe:hover{background:rgba(20,24,30,.72);}
+    .ew-orbe:disabled{opacity:.32;cursor:default;}
+    .ew-orbe:disabled:hover{background:rgba(20,24,30,.45);}
+    .ew-orbe svg{width:23px;height:23px;}
+    .ew-orbe-mic{width:68px;height:68px;border:none;
+      background:linear-gradient(180deg,var(--gold-lt),var(--gold));color:#1a1405;
+      box-shadow:0 4px 18px rgba(197,160,89,.4);}
+    .ew-orbe-mic-svg{width:31px;height:31px;}
+    /* En reposo: microfono. Con la voz activa: el emblema Fenix, igual que
+       .nav-orb.live en mdj-commander.html (mismo patron, ahi tambien
+       intercambia el icono en vez de solo cambiar de color). */
+    .ew-orbe-mic-fenix{width:40px;height:40px;display:none;object-fit:contain;}
+    .ew-orbe-mic.on .ew-orbe-mic-svg{display:none;}
+    .ew-orbe-mic.on .ew-orbe-mic-fenix{display:block;}
+    .ew-orbe-mic.on{box-shadow:0 0 0 4px rgba(197,160,89,.28),0 4px 18px rgba(197,160,89,.4);}
+    /* Barra de escritura flotante (2026-08-29, directiva del PO: "esa ya
+       existe... que desaparece cuando se llama al avatar" -- mismo patron
+       visual que .cmd-input de mdj-commander.html: pastilla translucida,
+       la red de particulas se ve pasar por detras, sin fondo propio en el
+       contenedor. Escribir+enviar usa ElixisVoiceSession.enviarTexto(), que
+       arranca la sesion sola si todavia no esta viva -- por eso se oculta
+       en cuanto estado deje de ser 'idle' (ver JS): una vez que se "llama"
+       al avatar (por voz o por este texto), no hace falta seguir viendola. */
+    .ew-texto-flotante-wrap{position:absolute;left:50%;bottom:96px;transform:translateX(-50%);z-index:5;
+      width:min(460px,92%);transition:opacity .18s linear,transform .18s ease;}
+    .avatar-stage:not(.idle) ~ .ew-texto-flotante-wrap{opacity:0;pointer-events:none;transform:translateX(-50%) translateY(6px);}
+    /* Modo escritura en reposo (2026-08-29, directiva del PO: "el cuadro y
+       el letrero inactivo no van ahi, solo la red de energia... nada de
+       rastros"): en idle no se ve ni la cajita del avatar ni el texto de
+       estado -- solo la red de particulas de fondo y la barra de texto
+       (arriba). En cuanto pasa a cualquier otro estado (voz o texto
+       lanzados), la caja y el estado reaparecen -- ahi si hace falta ver
+       al avatar respondiendo. */
+    .avatar-stage.idle{opacity:0;pointer-events:none;transition:opacity .18s linear;}
+    .avatar-stage.idle ~ .ew-estado{opacity:0;transition:opacity .18s linear;}
+    .avatar-stage:not(.idle){opacity:1;transition:opacity .18s linear;}
+    .avatar-stage:not(.idle) ~ .ew-estado{opacity:1;transition:opacity .18s linear;}
+    #ewTextoInput{width:100%;box-sizing:border-box;resize:none;overflow-y:auto;
+      min-height:40px;max-height:6em;padding:9px 16px;border-radius:20px;
+      background:rgba(11,15,24,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+      border:1.4px solid var(--line);color:var(--text);font-size:14px;line-height:1.4;
+      font-family:inherit;box-shadow:0 6px 18px rgba(0,0,0,.3);}
+    #ewTextoInput:focus{outline:none;border-color:rgba(197,160,89,.55);}
+    #ewTextoInput::placeholder{color:rgba(255,255,255,.45);}
+    #ewTextoInput.ew-texto-error{border-color:rgba(220,90,70,.75);}
+    #ewTextoInput.ew-texto-error::placeholder{color:rgba(240,150,140,.9);}
     .pz{padding:8px 10px;border-radius:10px;background:var(--bg);border:1px solid var(--line);font-size:12px;}
     .pz-n{display:flex;align-items:center;gap:6px;font-family:var(--mono,monospace);font-size:10.5px;letter-spacing:.08em;color:rgba(255,255,255,.55);text-transform:uppercase;}
     .pz-n .punto{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.35);flex:none}
@@ -456,13 +632,6 @@
     .ew-linea{font-size:12.5px;line-height:1.5;color:rgba(255,255,255,.85);}
     .ew-linea b{color:var(--gold);}
     .ew-linea.yo{color:rgba(255,255,255,.55);}
-    .ew-metricas{display:flex;gap:10px;flex-wrap:wrap;}
-    .ew-metrica{flex:1;min-width:110px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;}
-    .ew-metrica .n{font-size:22px;font-weight:800;color:var(--gold);font-family:var(--mono,monospace);}
-    .ew-metrica .l{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-top:2px;}
-    .ew-dock{display:flex;gap:8px;flex-wrap:wrap;}
-    .ew-dock button{padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:#fff;font-size:12.5px;cursor:pointer;font-weight:600;}
-    .ew-dock button:hover{border-color:var(--gold);}
     /* El riel lateral arrancaba justo donde acaba la banda: se tocaban y la
        marca parecia apoyada encima. Un respiro de 14px los separa. */
     /* LA BANDA SE RESERVABA DOS VECES, tambien aqui (PO 2026-08-22: «no
@@ -536,7 +705,7 @@
       #sc3-gob .gov-scroll{padding:16px 14px 50px;}
     }
     /* ═══ MODO DÍA (tema claro del portal) — el botón central alterna data-theme en <html>. Base del día/noche global. ═══ */
-    :root[data-theme="day"]{ --bg:#eef1f5; --panel:#ffffff; --line:rgba(14,18,28,.13); --gold:#9a7a33; --gold-lt:#7a5f22; }
+    :root[data-theme="day"]{ --bg:#eef1f5; --panel:#ffffff; --panel-glass:rgba(255,255,255,.72); --line:rgba(14,18,28,.13); --gold:#9a7a33; --gold-lt:#7a5f22; }
     :root[data-theme="day"] body{ background:var(--bg); color:#1b1f27; }
     :root[data-theme="day"] .staff-topbar{ background:linear-gradient(180deg,#ffffff,#e9edf3); }
     :root[data-theme="day"] .staff-brand .tx{ color:#1b1f27; }
@@ -883,13 +1052,11 @@
     <div id="module-owner" class="staff-module">
       <section id="view-elixis" class="staff-view">
         <div id="view-elixis-native">
-          <div class="ew-metricas" id="ewMetricas">
-            <div class="ew-metrica"><div class="n" id="ewClientesN">–</div><div class="l">Clientes maestros</div></div>
-            <div class="ew-metrica"><div class="n" id="ewEventosN">–</div><div class="l">Eventos en calendario</div></div>
-          </div>
           <div class="ew-grid" id="ewCarrusel">
+            <canvas class="avatar-fx" id="ewAvatarFX"></canvas>
             <div class="ew-carrusel-pista">
-              <div class="ew-pantalla ew-col">
+              <div class="ew-pantalla ew-col ew-cerrado" id="ewPanelIzq">
+                <button type="button" class="ew-acordeon-toggle" id="ewToggleIzq" aria-label="Abrir Modo Enfoque">›</button>
                 <h4>Modo Enfoque</h4>
                 <div class="ew-enfoque" id="ewEnfoque">
                   <button type="button" class="ew-enfoque-item" data-modo="correo"><span class="ew-enfoque-icono">✉️</span><span class="l">Correo</span></button>
@@ -901,16 +1068,54 @@
               </div>
               <div class="ew-pantalla ew-col ew-mid">
                 <div class="avatar-stage idle" id="ewAvatarStage">
-                  <canvas class="avatar-fx" id="ewAvatarFX"></canvas>
                   <div class="avatar-baseglow"></div>
-                  <img class="avatar-fig" src="./assets/elixis-avatar.webp" alt="ELIXIS">
-                  <div class="avatar-eyes"><i></i><i></i></div>
+                  <!-- avatar-fig (foto estatica) eliminado 2026-08-29, directiva del
+                       PO: "elimina ese avatar" -- el archivo elixis-avatar.webp nunca
+                       existio en Supabase Storage, la caja se veia con el icono de
+                       imagen rota. El clip de video real (MDB_AVATAR_CLIPS, arriba)
+                       es ahora la unica capa visual del avatar. -->
+                  <video class="avatar-clip avatar-clip-fuente" data-capa="a" muted playsinline loop></video>
+                  <video class="avatar-clip avatar-clip-fuente" data-capa="b" muted playsinline loop></video>
+                  <canvas class="avatar-clip-canvas" data-clip-canvas></canvas>
+                  <img class="avatar-viseme" data-viseme alt="">
+                  <video class="avatar-stream" id="elixis-avatar-stream" autoplay playsinline muted></video>
                 </div>
                 <div class="ew-estado" id="ewEstado">Inactivo</div>
-                <button class="ew-mic" id="ewMicBtn" type="button">Activar voz</button>
+                <div class="ew-texto-flotante-wrap" id="ewTextoWrap">
+                  <textarea id="ewTextoInput" rows="1" placeholder="Escribe a ELIXIS…"
+                    enterkeyhint="send" inputmode="text" autocapitalize="sentences" autocorrect="on" spellcheck="true" autocomplete="off"></textarea>
+                </div>
+                <div class="ew-orbes-flotantes">
+                  <!-- Sin destino todavia (2026-08-29): equivalente visual al icono
+                       "Avatar"/persona del telefono (abrirSelectorPersona()) -- alli
+                       abre una hoja para elegir DJMago/ELIXIS. Aqui solo existe UN
+                       avatar por ahora, asi que este boton queda inerte a proposito
+                       hasta que se decida que hace. -->
+                  <button type="button" class="ew-orbe" id="ewOrbePersona" title="Avatar (pendiente)" aria-label="Avatar" disabled>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
+                  </button>
+                  <button type="button" class="ew-orbe" id="ewOrbeIzq" title="Modo Enfoque" aria-label="Abrir Modo Enfoque">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><path d="M12 12 19 5"/></svg>
+                  </button>
+                  <button type="button" class="ew-orbe ew-orbe-mic" id="ewMicBtn" title="Activar voz" aria-label="Activar voz">
+                    <svg class="ew-orbe-mic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/></svg>
+                    <img class="ew-orbe-mic-fenix" src="./assets/branding/fenix-emblem-160.png" alt="">
+                  </button>
+                  <button type="button" class="ew-orbe" id="ewOrbeDer" title="Hilos y Transcripción" aria-label="Abrir Hilos y Transcripción">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                  </button>
+                  <!-- Sin destino todavia: equivalente visual al icono "Mas" del
+                       telefono (abre un menu secundario alli). -->
+                  <button type="button" class="ew-orbe" id="ewOrbeMas" title="Más (pendiente)" aria-label="Más" disabled>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+                  </button>
+                </div>
               </div>
-              <div class="ew-pantalla ew-col">
+              <div class="ew-pantalla ew-col ew-cerrado" id="ewPanelDer">
+                <button type="button" class="ew-acordeon-toggle" id="ewToggleDer" aria-label="Abrir Hilos y Transcripción">‹</button>
                 <h4>Hilos &amp; Transcripción</h4>
+                <div id="ewHud"></div>
+                <button type="button" id="ewHudDemo" style="font-size:9px;opacity:.5;background:none;border:1px solid var(--line);border-radius:6px;color:var(--text);padding:2px 6px;align-self:center;cursor:pointer;">demo transmisión</button>
                 <div class="ew-col-body" id="ewProceso"><div class="ew-vacio">Sin actividad todavía.</div></div>
                 <div class="ew-col-body" id="ewTranscripcion"><div class="ew-vacio">La conversación aparecerá aquí.</div></div>
               </div>
@@ -920,12 +1125,6 @@
             <button type="button" class="ew-dot" aria-label="Modo Enfoque"></button>
             <button type="button" class="ew-dot" aria-label="Avatar"></button>
             <button type="button" class="ew-dot" aria-label="Hilos"></button>
-          </div>
-          <div class="ew-dock" id="ewDock">
-            <button type="button" data-ir="agenda">Agenda</button>
-            <button type="button" data-ir="cashflow">Cash Flow</button>
-            <button type="button" data-ir="config">Config</button>
-            <button type="button" data-ir="gobernanza">Gobernanza</button>
           </div>
         </div>
       </section>
@@ -1604,7 +1803,7 @@
           var a=pts[i],b=pts[j],dx=a.x-b.x,dy=a.y-b.y,d=Math.sqrt(dx*dx+dy*dy);
           if(d<D){ var k=1-d/D; var zz=((a.z||1)+(b.z||1))*0.5;
             ctx.strokeStyle=ewFxCol((k*k*0.92*zz*Math.min(1.7,inten)*(1+lvl*0.9)).toFixed(3));
-            ctx.lineWidth=(0.7+k*1.8+lvl*0.6)*zz;
+            ctx.lineWidth=(1.4+k*3.2+lvl*1.1)*zz; /* 2026-08-29: mas gruesa, directiva del PO ("que se note") */
             ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); }
         }
         for(var i=0;i<pts.length;i++){ var p=pts[i]; var pz=p.z||1;
@@ -1616,19 +1815,73 @@
       function ewFxLoop(){ ewFxDraw(); ewFX.raf=requestAnimationFrame(ewFxLoop); }
       window.addEventListener('resize', function(){ if(ewFX.canvas && document.body.contains(ewFX.canvas)) ewFxSize(); });
 
-      function ewParpadear(){
-        var s=el('ewAvatarStage'); if(!s) return;
-        s.classList.add('parpadeo');
-        setTimeout(function(){ var s2=el('ewAvatarStage'); if(s2) s2.classList.remove('parpadeo'); }, 180);
-      }
-      function ewProgramarParpadeo(){ setTimeout(function(){ ewParpadear(); ewProgramarParpadeo(); }, 3000+Math.random()*3000); }
       function ewEsc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m];}); }
 
-      var ewSesion = null, ewIniciado = false, ewTxt='';
+      var ewSesion = null, ewIniciado = false, ewTxt='', ewHablando = false;
+      /* Acordeon de escritorio (2026-08-29, directiva del PO): izquierda
+         (Modo Enfoque) la abre/cierra el usuario a mano; derecha (Hilos &
+         Transcripcion) se abre SOLA en cuanto se lanza una orden real (deja
+         de estar en 'idle') -- no hace falta que el usuario la busque para
+         ver el proceso. Los anchos concretos viven en el CSS (var(--ew-izq)/
+         var(--ew-der)); esta funcion solo decide abierto/cerrado. */
+      var ewAcordeon = { izq:false, der:false };
+      function ewAplicarAcordeon(){
+        var pista=document.querySelector('.ew-carrusel-pista');
+        if(pista){
+          /* 25% = exactamente la mitad de lo que le sobra al centro (fijo
+             en 50%) a cada lado -- topa justo en su borde, nunca lo invade
+             ni lo desplaza (ver CSS, .ew-carrusel-pista ya no es grid). */
+          pista.style.setProperty('--ew-izq', ewAcordeon.izq ? '25%' : '64px');
+          pista.style.setProperty('--ew-der', ewAcordeon.der ? '25%' : '64px');
+        }
+        var pIzq=el('ewPanelIzq'); if(pIzq) pIzq.classList.toggle('ew-cerrado', !ewAcordeon.izq);
+        var pDer=el('ewPanelDer'); if(pDer) pDer.classList.toggle('ew-cerrado', !ewAcordeon.der);
+        var tIzq=el('ewToggleIzq'); if(tIzq) tIzq.textContent = ewAcordeon.izq ? '‹' : '›';
+        var tDer=el('ewToggleDer'); if(tDer) tDer.textContent = ewAcordeon.der ? '›' : '‹';
+      }
+      var toggleIzq=el('ewToggleIzq'); if(toggleIzq) toggleIzq.onclick=function(){ ewAcordeon.izq=!ewAcordeon.izq; ewAplicarAcordeon(); };
+      var toggleDer=el('ewToggleDer'); if(toggleDer) toggleDer.onclick=function(){ ewAcordeon.der=!ewAcordeon.der; ewAplicarAcordeon(); };
+      /* Mismos dos orbes laterales de la barra flotante -- misma accion que
+         los togglecitos de esquina de arriba, solo que accesibles sin tener
+         que buscar la esquina del panel. */
+      var orbeIzq=el('ewOrbeIzq'); if(orbeIzq) orbeIzq.onclick=function(){ ewAcordeon.izq=!ewAcordeon.izq; ewAplicarAcordeon(); };
+      var orbeDer=el('ewOrbeDer'); if(orbeDer) orbeDer.onclick=function(){ ewAcordeon.der=!ewAcordeon.der; ewAplicarAcordeon(); };
+      ewAplicarAcordeon();
+
+      /* Tope de caracteres para considerar el "sobre" lleno -- no hay un
+         limite real de la API que copiar (el texto de ELIXIS puede seguir
+         despues de esto), es solo la escala visual de la barra de carga.
+         160 ~ un mensaje corto tipo SMS, que es la referencia que dio el
+         PO en el ticket original de accion (enviar_sms). */
+      var EHD_TOPE_CARGA = 160;
+      var ewHudInst = null;
       async function iniciarWorkspaceElixis(){
         if(ewIniciado) return; ewIniciado = true;
         ewMountFX('idle');
-        ewProgramarParpadeo();
+        ewHudInst = window.ElixisHudTransmision ? window.ElixisHudTransmision.montar(el('ewHud')) : null;
+        var hudDemo = el('ewHudDemo');
+        if(hudDemo) hudDemo.onclick = function(){ if(ewHudInst) window.ElixisHudTransmision.demo(ewHudInst); };
+        if(window.AvatarFramePlayer){
+          var afpInicial=window.AvatarFramePlayer.montar(el('ewAvatarStage'));
+          if(afpInicial) window.AvatarFramePlayer.fijarEstado(afpInicial, 'idle');
+        }
+        /* Chroma key de DJMago (2026-08-29): mismo mecanismo real de
+           iniciarChromaKeyDJMago() en mdj-commander.html -- mismas opciones
+           calibradas ahi (nivel de zoom 0 = 0.42, zonaProtegida desactivada
+           tras la recalibracion del encuadre 2026-08-28). Sin esto, el video
+           crudo se veia con el fondo verde sin procesar. */
+        (function(){
+          var stage=el('ewAvatarStage');
+          if(!stage || stage._djChroma || !window.AvatarHeygenChromaKey) return;
+          var canvas=stage.querySelector('.avatar-clip-canvas');
+          var videoA=stage.querySelector('.avatar-clip[data-capa="a"]');
+          var videoB=stage.querySelector('.avatar-clip[data-capa="b"]');
+          if(!canvas || !videoA || !videoB) return;
+          stage._djChroma = window.AvatarHeygenChromaKey.iniciarChromaKey([videoA, videoB], canvas, {
+            minHue:60, maxHue:180, minSaturation:0.10, minValue:0.30,
+            suprimirSpill:1.0, fraccionAncho:0.42, zonaProtegida:undefined
+          });
+        })();
 
         ewSesion = window.ElixisVoiceSession.crear({
           getHeaders: async function(){
@@ -1645,16 +1898,34 @@
           },
           onState: function(estado){
             var stage=el('ewAvatarStage'); if(stage) stage.className='avatar-stage '+estado;
+            ewHablando = (estado==='speaking');
+            /* Se abre sola en cuanto hay una orden real en curso (deja de
+               estar idle) -- el PO no quiere tener que ir a buscarla. No se
+               vuelve a cerrar sola al terminar: el usuario puede seguir
+               leyendo el hilo/transcripcion despues de que ELIXIS termine. */
+            if(estado!=='idle' && !ewAcordeon.der){ ewAcordeon.der=true; ewAplicarAcordeon(); }
+            if(window.AvatarFramePlayer){
+              var afp=window.AvatarFramePlayer.montar(stage);
+              if(afp) window.AvatarFramePlayer.fijarEstado(afp, estado);
+            }
             var lbl=el('ewEstado');
             if(lbl) lbl.textContent = ({idle:'Inactivo',listening:'Escuchando',transcribing:'Transcribiendo',
               understanding:'Pensando',confirmation:'Confirmando',executing:'Ejecutando',speaking:'Hablando'})[estado] || estado;
             ewMountFX(estado);
-            var btn=el('ewMicBtn'); if(btn){ btn.classList.toggle('on', estado!=='idle'); btn.textContent = estado==='idle' ? 'Activar voz' : 'Terminar'; }
+            var btn=el('ewMicBtn'); if(btn){ btn.classList.toggle('on', estado!=='idle'); var etq=estado==='idle'?'Activar voz':'Terminar'; btn.title=etq; btn.setAttribute('aria-label',etq); }
           },
           onLevel: function(pulso){
+            /* Sprites de boca DESACTIVADOS (2026-08-29, reporte en vivo del
+               PO: "que horror" -- los MDB_AVATAR_VISEMES nunca fueron
+               recortes de boca transparentes, son fotos completas de DJMago
+               con fondo BLANCO solido -- cada vez que habia nivel de audio
+               real, tapaban todo el video ya con chroma key con un cuadro
+               blanco de golpe. Ademas 2 de los 5 archivos ya no existen en
+               disco. No es un ajuste, el asset es del tipo equivocado --
+               se apaga la capa entera hasta que existan visemas reales
+               (mouth-only, fondo transparente). La foto/video de fondo
+               sigue reaccionando al nivel real via la red de particulas. */
             ewFX.voiceLevel = pulso;
-            var stage=el('ewAvatarStage');
-            if(stage){ stage.style.setProperty('--voz', pulso.toFixed(3)); stage.classList.toggle('voz-activa', pulso>0.004); }
           },
           onTranscript: function(t){
             var box=el('ewTranscripcion'); if(!box) return;
@@ -1667,8 +1938,19 @@
             if(t.start){
               var f=document.createElement('div'); f.className='ew-linea'; f.innerHTML='<b>ELIXIS:</b> ';
               box.appendChild(f); ewSesion._fila=f; ewTxt='';
+              /* ELIXIS empieza a redactar -- el sobre aparece vacio y arranca
+                 a llenarse con cada fragmento de texto real (ver mas abajo). */
+              if(ewHudInst) window.ElixisHudTransmision.fijarEstado(ewHudInst,'envelope_spawn');
             }
-            if(ewSesion._fila && t.delta){ ewTxt += t.delta; ewSesion._fila.innerHTML='<b>ELIXIS:</b> '+ewEsc(ewTxt); }
+            if(ewSesion._fila && t.delta){
+              ewTxt += t.delta; ewSesion._fila.innerHTML='<b>ELIXIS:</b> '+ewEsc(ewTxt);
+              /* Sprites de boca desactivados -- ver el comentario completo
+                 en onLevel(), mismo motivo. */
+              if(ewHudInst){
+                window.ElixisHudTransmision.fijarEstado(ewHudInst,'envelope_charge');
+                window.ElixisHudTransmision.cargar(ewHudInst, ewTxt.length / EHD_TOPE_CARGA);
+              }
+            }
             box.scrollTop=box.scrollHeight;
           },
           onTool: function(info){
@@ -1677,16 +1959,65 @@
             var d=document.createElement('div'); d.className='pz '+(info.ok?'ok':'mal');
             d.innerHTML='<div class="pz-n"><span class="punto"></span>'+ewEsc(info.nombre)+'</div>';
             box.appendChild(d); box.scrollTop=box.scrollHeight;
+            /* Disparo del haz (2026-08-29): hoy elixis-realtime-session solo
+               tiene 3 tools (consultar_elixis/recordar/olvidar), ninguna
+               "envia" nada todavia -- se usa CUALQUIER tool_call como el
+               mejor proxy real disponible de "se lanzo una orden". Cuando
+               exista una tool real de envio (ej. enviar_sms), esta misma
+               linea sigue sirviendo sin cambios; si se quiere limitar el
+               HUD a SOLO esa tool, filtrar aqui por info.nombre. */
+            if(ewHudInst) window.ElixisHudTransmision.fijarEstado(ewHudInst,'beam_dispatch');
           },
           onSystem: function(){ /* discreto: no necesita linea propia en este panel */ },
-          onError: function(txt){ console.warn('[ELIXIS workspace]', txt); },
+          /* Persiste en elixis_session_threads (TTL 7 dias) via la unica via
+             de escritura permitida -- la RPC exige auth.uid(), nadie puede
+             escribir en el hilo de otro. Best-effort: si falla, la
+             conversacion sigue igual (ver elixis-realtime-session, mismo
+             criterio con la memoria). */
+          onThreadLine: function(linea){
+            var sb=getSb(); if(!sb || !sb.rpc) return;
+            sb.rpc('elixis_thread_append', { p_rol:linea.rol, p_contenido:linea.contenido, p_modo_enfoque:linea.modo||null })
+              .catch(function(e){ console.warn('[ELIXIS workspace] hilo no guardado:', e); });
+          },
+          onError: function(txt){
+            console.warn('[ELIXIS workspace]', txt);
+            /* Visible de verdad (2026-08-29): antes solo quedaba en consola,
+               invisible para cualquiera que no sea desarrollador -- justo el
+               error de "activa la voz antes de escribir" necesita verse,
+               no esconderse. Se muestra como placeholder momentaneo de la
+               propia barra de texto, que es donde el usuario ya esta
+               mirando cuando esto pasa. */
+            var ta=el('ewTextoInput');
+            if(ta){
+              var original=ta.getAttribute('placeholder');
+              ta.setAttribute('placeholder', txt);
+              ta.classList.add('ew-texto-error');
+              setTimeout(function(){ ta.setAttribute('placeholder', original||'Escribe a ELIXIS…'); ta.classList.remove('ew-texto-error'); }, 3200);
+            }
+          },
           onUnauthorized: function(){ location.replace('./login.html?next=staff.html'); }
         });
 
         var btn=el('ewMicBtn');
         if(btn) btn.onclick=function(){ if(ewSesion.activa()) ewSesion.stop(); else ewSesion.start(); };
-        var dock=el('ewDock');
-        if(dock) dock.querySelectorAll('[data-ir]').forEach(function(b){ b.onclick=function(){ showView(b.getAttribute('data-ir')); }; });
+
+        /* Barra de texto flotante: Enter manda (Shift+Enter salta de linea),
+           igual que en mdj-commander.html. enviarTexto() arranca la sesion
+           sola si hace falta -- escribir es tan valido como hablar para
+           "llamar" al avatar. La barra misma se oculta por CSS en cuanto
+           .avatar-stage deja el estado idle (ver arriba), sin JS extra. */
+        var txt=el('ewTextoInput');
+        if(txt){
+          txt.addEventListener('input', function(){ txt.style.height='auto'; txt.style.height=Math.min(txt.scrollHeight,96)+'px'; });
+          txt.addEventListener('keydown', function(e){
+            if(e.key==='Enter' && !e.shiftKey && !e.isComposing){
+              e.preventDefault();
+              var val=txt.value.trim(); if(!val) return;
+              ewSesion.enviarTexto(val);
+              txt.value=''; txt.style.height='auto';
+            }
+          });
+        }
 
         /* Carrusel de 3 pantallas: arranca centrado en el Avatar (indice 1). */
         var carrusel=el('ewCarrusel');
@@ -1707,26 +2038,17 @@
           b.onclick=function(){
             enfoque.querySelectorAll('.ew-enfoque-icono').forEach(function(i){ i.classList.remove('activo'); });
             b.querySelector('.ew-enfoque-icono').classList.add('activo');
-            var texto = EW_CONTEXTOS[b.getAttribute('data-modo')] || EW_CONTEXTOS.general;
-            var aplicado = ewSesion.activa() && ewSesion.actualizarContexto(texto);
+            var modo = b.getAttribute('data-modo');
+            var texto = EW_CONTEXTOS[modo] || EW_CONTEXTOS.general;
+            /* fijarModo(): si ya hay sesion viva lo aplica ya (session.update);
+               si no, queda listo para el proximo start() -- ver ?modo= en
+               elixis-realtime-session. */
+            ewSesion.fijarModo(modo, texto);
             var lbl=el('ewEstado');
-            if(lbl && !aplicado) lbl.textContent = 'Modo elegido · activa la voz para aplicarlo';
+            if(lbl && !ewSesion.activa()) lbl.textContent = 'Modo elegido · activa la voz para aplicarlo';
           };
         });
 
-        /* métricas rápidas — mismas tablas/RPC del Calendario Maestro (PR #283) */
-        try{
-          var sb=getSb();
-          if(sb && sb.auth){
-            var sess=(await sb.auth.getSession()).data.session;
-            if(sess){
-              var rc = await sb.from('master_clients').select('id',{count:'exact',head:true});
-              if(!rc.error && rc.count!=null){ var cn=el('ewClientesN'); if(cn) cn.textContent=String(rc.count); }
-              var re = await sb.rpc('get_master_calendar_events');
-              if(!re.error){ var en=el('ewEventosN'); if(en) en.textContent=String((re.data||[]).length); }
-            }
-          }
-        }catch(e){ /* métrica opcional: si falla, se queda en "–" */ }
       }
 
       function sincronizarTira(v){

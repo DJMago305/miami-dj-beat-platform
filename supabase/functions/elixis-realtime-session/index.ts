@@ -213,12 +213,26 @@ async function safetyIdentifier(userId: string): Promise<string> {
 const MEMORY_MAX_FACTS = 40;
 const MEMORY_MAX_CHARS = 4000;
 
-function buildInstructions(name: string, role: string, memoria: string): string {
+// Modo de enfoque elegido en el avatar (icono Correo/Legal/Distribución/
+// Eventos/General) -- NO reemplaza tu criterio ni tus herramientas, solo
+// te dice por dónde probablemente va la conversación. Si te preguntan
+// algo de otro tema, respóndelo igual: es una sugerencia, no una jaula.
+const MODO_ENFOQUE_TEXTO: Record<string, string> = {
+    correo: "Correo: probablemente te van a pedir ayuda para redactar o resumir correspondencia con clientes o DJs.",
+    legal: "Legal Artístico: probablemente te van a preguntar sobre contratos, W-9 o cláusulas del roster.",
+    distribucion: "Música & Distribución: probablemente te van a preguntar sobre catálogo, licencias o distribución musical.",
+    eventos: "Eventos: probablemente te van a preguntar sobre agenda, cotizaciones o disponibilidad de DJs.",
+};
+
+function buildInstructions(name: string, role: string, memoria: string, modoEnfoque?: string): string {
     const first = String(name || "").trim().split(/\s+/)[0] || "";
     const esOwner = role === "owner";
     const trato = esOwner
         ? `Le hablas al dueño de Miami DJ Beat${first ? `, ${first}` : ""}. Puedes llamarle "Capitán".`
         : `Le hablas a ${first || "un miembro del equipo"}, del equipo de Miami DJ Beat.`;
+    const enfoque = modoEnfoque && MODO_ENFOQUE_TEXTO[modoEnfoque]
+        ? `\n\n## MODO DE ENFOQUE ACTIVO\n${MODO_ENFOQUE_TEXTO[modoEnfoque]}`
+        : "";
 
     return `Eres ELIXIS. No eres un asistente corporativo: eres el socio de confianza y
 productor musical de Miami DJ Beat LLC. ${trato}
@@ -301,7 +315,7 @@ Un socio de verdad no te miente para quedar bien.
 - Nunca inventes datos, cifras, nombres, precios ni disponibilidad.
 - Nunca digas que ejecutaste una acción externa: enviar, cobrar, publicar o borrar.
   Puedes consultar y preparar; ejecutar lo hace una persona.
-La calidez nunca es excusa para inventar. Eso no es ser buen socio, es ser un problema.`;
+La calidez nunca es excusa para inventar. Eso no es ser buen socio, es ser un problema.${enfoque}`;
 }
 
 // ─── HANDLER ─────────────────────────────────────────────────────────────────
@@ -481,6 +495,10 @@ serve(async (req: Request) => {
     const nrReq = url.searchParams.get("nr")?.toLowerCase().trim();
     const nrMode = nrReq && ALLOWED_NOISE.has(nrReq) ? nrReq : NOISE_REDUCTION;
 
+    // ── Modo de enfoque opcional (?modo=), mismo patron whitelist que voice/vad/nr ──
+    const modoReq = url.searchParams.get("modo")?.toLowerCase().trim();
+    const modoEnfoque = modoReq && modoReq in MODO_ENFOQUE_TEXTO ? modoReq : undefined;
+
     // ── MEDIDOR — cadena de degradacion insignia → mini → texto ──────────
     const isStaff = STAFF_ROLES.has(gate.role);
     let model = FLAGSHIP_MODEL;
@@ -549,7 +567,7 @@ serve(async (req: Request) => {
     const sessionConfig = {
         type: "realtime",
         model,
-        instructions: buildInstructions(gate.name, gate.role, memoria),
+        instructions: buildInstructions(gate.name, gate.role, memoria, modoEnfoque),
         audio: {
             input: {
                 turn_detection: estricto ? STRICT_TURN_DETECTION : {
