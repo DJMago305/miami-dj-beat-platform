@@ -48,7 +48,13 @@
     var sesion=null, hb=0, t0=0;
     var hablando=false, vivo=false, pulso=0, modoActual=null, _textoElixis='';
     var conectando=false, micPrecalentado=null;
-    var identidadActual=null, musicHunterNodo=null;
+    /* Default 'djmago', no null (2026-08-30, correccion en vivo -- reporte
+       real: hablar sin haber tocado antes un boton de Modo dejaba
+       identidadActual en null, el servidor caia a DEFAULT_IDENTIDAD='elixis'
+       y perdia el VAD estricto de DJMAGO_VAD_THRESHOLD). No hay todavia un
+       selector real de avatar (ver ewOrbePersona en staff.html, deshabilitado
+       a proposito) -- hoy DjMago es la unica identidad real de este panel. */
+    var identidadActual='djmago', musicHunterNodo=null;
 
     /* Pre-calentado de microfono + constraints RAW (2026-08-30, portado de
        mdj-commander.html/precalentarMic() -- mismo bug real reportado hoy

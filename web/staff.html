@@ -2327,23 +2327,23 @@
             b.querySelector('.ew-enfoque-icono').classList.add('activo');
             var modo = b.getAttribute('data-modo');
             var texto = EW_CONTEXTOS[modo] || EW_CONTEXTOS.general;
-            /* Cazador Musical (2026-08-30): unico modo que hace algo mas que
-               cambiar el texto del prompt -- identificar_track solo existe
-               para identidad djmago (ver el fork en elixis-realtime-session),
-               asi que entrar a este modo fija esa identidad, y prende el
-               ciclo de fondo de Modo B (setlist logger). Salir de el apaga
-               el ciclo -- no tiene sentido seguir muestreando audio para una
-               tabla que ya no se esta mirando.
-               vad=estricto por localStorage YA NO HACE FALTA aca (2026-08-30,
-               correccion en vivo tras un reporte real con capturas: musica de
-               fondo disparaba turnos falsos y el modelo narraba resultados de
-               Music Hunter sin que nadie preguntara) -- el servidor ahora
-               fuerza un umbral alto SIEMPRE que identidad==='djmago'
-               (DJMAGO_VAD_THRESHOLD en elixis-realtime-session), sin importar
-               que mande el cliente. Aplica desde el PROXIMO start() de todos
-               modos: el turn_detection se fija al abrir la llamada. */
+            /* Identidad djmago SIEMPRE, en los 5 modos (2026-08-30, correccion
+               en vivo -- reporte real: en Modo General el avatar hablaba solo
+               con relleno generico "Si, aqui es"/"Dale, seguimos"). Causa
+               real: fijarIdentidad('djmago') solo se llamaba al entrar a
+               Cazador Musical, asi que Modo General (y legal/distribucion/
+               eventos, si eran el PRIMER modo elegido en la sesion) se
+               quedaban con identidadActual=null -- el servidor por defecto
+               cae a identidad 'elixis' (DEFAULT_IDENTIDAD en elixis-realtime-
+               session), que NO fuerza DJMAGO_VAD_THRESHOLD. No hay todavia un
+               selector real de avatar (ver ewOrbePersona, deshabilitado): hoy
+               DjMago es la unica identidad real de este panel, asi que se fija
+               sin condicion, no solo en cazador.
+               Cazador Musical sigue siendo el UNICO modo que ademas prende/
+               apaga el ciclo de fondo de Modo B (setlist logger) -- eso si
+               sigue condicionado a el. */
+            ewSesion.fijarIdentidad('djmago');
             if(modo === 'cazador'){
-              ewSesion.fijarIdentidad('djmago');
               if(ewSesion.activa()) ewSesion.iniciarCazadorMusical();
             } else if(ewModoAnterior === 'cazador'){
               ewSesion.detenerCazadorMusical();
