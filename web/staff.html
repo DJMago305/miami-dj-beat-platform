@@ -2179,16 +2179,19 @@
           onState: function(estado){
             var stage=el('ewAvatarStage'); if(stage) stage.className='avatar-stage '+estado;
             ewHablando = (estado==='speaking');
-            /* Se abre sola en cuanto hay una orden real en curso (deja de
-               estar idle) -- el PO no quiere tener que ir a buscarla. Entre
-               turnos de la MISMA conversacion (habla -> vuelve a escuchar)
-               nunca pasa por 'idle', asi que sigue sin cerrarse sola ahi --
-               el usuario puede seguir leyendo el hilo mientras la sesion
-               sigue viva. Recien al llegar a 'idle' de verdad (2026-08-30,
-               directiva del PO: "el panel derecho al [cer]rar avatar debe
-               [ce]rrar automaticamente") -- osea cuando la SESION termina,
-               no cuando un turno termina -- se cierra sola. */
-            if(estado!=='idle' && !ewAcordeon.der){ ewAcordeon.der=true; ewAplicarAcordeon(); }
+            /* AJUSTE 2026-08-31 (orden del PO: el panel no debe abrirse solo
+               en una charla general por voz, solo saturaba la pantalla con
+               subtitulos sin necesidad -- el avatar es el protagonista de
+               esa conversacion). Antes se abria con CUALQUIER estado que no
+               fuera 'idle' (directiva del 2026-08-30, ya superada por esta).
+               Ahora el auto-abrir queda acotado a Cazador Musical (para el
+               Live Setlist en vivo, unico caso donde el panel es
+               informacion que de verdad hace falta ver sin buscarla) -- el
+               otro disparador real (una herramienta ejecutandose de verdad)
+               vive en onTool() mas abajo, no aqui. El cierre automatico al
+               llegar a 'idle' de verdad SI se conserva para los dos casos:
+               si algo lo abrio solo, algo lo cierra solo. */
+            if(estado!=='idle' && ewModoAnterior==='cazador' && !ewAcordeon.der){ ewAcordeon.der=true; ewAplicarAcordeon(); }
             else if(estado==='idle' && ewAcordeon.der){ ewAcordeon.der=false; ewAplicarAcordeon(); }
             /* Cazador Musical: si el modo ya estaba elegido ANTES de tocar el
                orbe (musicHunterNodo no existia todavia), el ciclo de fondo
@@ -2269,6 +2272,11 @@
                linea sigue sirviendo sin cambios; si se quiere limitar el
                HUD a SOLO esa tool, filtrar aqui por info.nombre. */
             if(ewHudInst) window.ElixisHudTransmision.fijarEstado(ewHudInst,'beam_dispatch');
+            /* AJUSTE 2026-08-31: este es el disparador real de "orden
+               explicita de redaccion/herramienta" del punto 1b del ticket --
+               una tool_call de verdad, no solo hablar. Se abre aca, no en
+               onState(), para no abrirse con cualquier charla general. */
+            if(!ewAcordeon.der){ ewAcordeon.der=true; ewAplicarAcordeon(); }
           },
           onSystem: function(){ /* discreto: no necesita linea propia en este panel */ },
           /* Live Setlist (2026-08-30, Cazador Musical / Modo B): una fila
@@ -2373,6 +2381,20 @@
           var ic = el('ewModoIcono');
           if(ic) ic.textContent = EW_MODO_ICONOS[modo] || EW_MODO_ICONOS.general;
         }
+        /* AJUSTE 2026-08-31 (orden del PO, punto 2 del ticket): el sobre
+           animado (ElixisHudTransmision, 2026-08-29 -- demo de "se esta
+           redactando/enviando algo") no tiene sentido en Modo General, sin
+           foco de oficina -- se oculta ahi y se muestra en el resto (correo/
+           legal/distribucion/eventos/cazador). No se borra ni se
+           repropositan sus estados (envelope_spawn/charge/etc, ver
+           elixis-hud-transmision.js) -- solo se esconde su contenedor
+           cuando no aplica, mismo patron que ya se sigue en todo el archivo
+           de no eliminar nada que ya funciona. */
+        function ewActualizarVisibilidadSobre(modo){
+          var visible = modo !== 'general';
+          var hud = el('ewHud'); if(hud) hud.style.display = visible ? '' : 'none';
+          var demo = el('ewHudDemo'); if(demo) demo.style.display = visible ? '' : 'none';
+        }
         /* Modo General activo por defecto (2026-08-31, orden del PO: el
            enfoque real es criterio de quien opera, pero SIN elegir ninguno
            el comportamiento -- y ahora tambien el aro dorado -- debe ser el
@@ -2384,12 +2406,14 @@
           if(ewBotonGeneral) ewBotonGeneral.classList.add('activo');
         }
         ewFijarIconoModo('general');
+        ewActualizarVisibilidadSobre('general');
         if(enfoque) enfoque.querySelectorAll('[data-modo]').forEach(function(b){
           b.onclick=function(){
             enfoque.querySelectorAll('.ew-enfoque-icono').forEach(function(i){ i.classList.remove('activo'); });
             b.querySelector('.ew-enfoque-icono').classList.add('activo');
             var modo = b.getAttribute('data-modo');
             ewFijarIconoModo(modo);
+            ewActualizarVisibilidadSobre(modo);
             var texto = EW_CONTEXTOS[modo] || EW_CONTEXTOS.general;
             /* Identidad djmago SIEMPRE, en los 5 modos (2026-08-30, correccion
                en vivo -- reporte real: en Modo General el avatar hablaba solo
