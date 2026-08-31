@@ -69,20 +69,21 @@
       thinking: './assets/DJMago IA/djmago-idle-boomerang.mp4',
       speaking: './assets/DJMago IA/djmago-idle-boomerang.mp4'
     };
-    /* Clip de Cazador Musical (2026-08-31, orden del PO -- "prepara el
-       conmutador de video del avatar"): PLACEHOLDER explicito, el archivo
-       './assets/video/elixis_cazador.mp4' todavia NO existe en disco (mismo
-       criterio honesto que ya sigue avatar-frame-player.js con 'idle': si el
-       archivo no esta, el <video> entrante simplemente no revela y el clip
-       base sigue viendose -- no hay pantalla negra ni error visible). En
-       cuanto el PO suba el archivo real (mismo mecanismo de Supabase Storage
-       que djmago-idle-boomerang.mp4), esto empieza a funcionar solo, sin
-       tocar mas codigo. */
+    /* Clip de Cazador Musical (2026-08-31): archivo REAL, ya procesado y
+       subido -- segmentacion por IA (rembg/u2net, no color-key ingenuo: el
+       fondo blanco del estudio tenia brillos de piel casi identicos al
+       blanco puro, que un colorkey por distancia RGB confundia con fondo)
+       recompuesto sobre el MISMO verde puro (16,251,8) que ya usa
+       djmago-idle-boomerang.mp4, boomerang ida+vuelta para loop sin costura
+       (mismo criterio que ese archivo). Vive en el MISMO bucket/carpeta de
+       Supabase Storage que el idle (assets/DJMago IA/), a pedido explicito
+       del PO -- antes era un placeholder en ./assets/video/, ya no existe
+       ahi. */
     window.EW_AVATAR_CLIPS_CAZADOR = {
-      idle: './assets/video/elixis_cazador.mp4',
-      listening: './assets/video/elixis_cazador.mp4',
-      thinking: './assets/video/elixis_cazador.mp4',
-      speaking: './assets/video/elixis_cazador.mp4'
+      idle: './assets/DJMago IA/elixis_cazador.mp4',
+      listening: './assets/DJMago IA/elixis_cazador.mp4',
+      thinking: './assets/DJMago IA/elixis_cazador.mp4',
+      speaking: './assets/DJMago IA/elixis_cazador.mp4'
     };
     window.MDB_AVATAR_CLIPS = window.EW_AVATAR_CLIPS_BASE;
   </script>
