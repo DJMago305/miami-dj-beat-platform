@@ -789,12 +789,23 @@
     async function enviarTextoSolo(texto){
       var url = window.mdbSupabaseFunctionUrl ? window.mdbSupabaseFunctionUrl('elixis-orchestrator') : null;
       if(!url){ emit('onError','No pude ubicar el servidor de texto.'); return; }
-      emit('onTranscript', { who:'yo', text:texto, final:true });
-      emit('onThreadLine', { rol:'yo', contenido:texto, modo:modoActual });
-      /* Sin sesion de voz no hay watchdog de "Pensando" armado (esa maquina
-         de estados vive en evento(), atada al canal de datos) -- basta con
-         el estado visual, no hace falta duplicar el temporizador aqui. */
-      emit('onState','understanding');
+      /* BUG REAL 2026-08-31 (reporte del PO: "sale el avatar por un segundo,
+         no sale nada en el chat... esto es chat escrito, no se necesita
+         avatar aqui"). Dos causas, dos fixes:
+         (1) el flag textoSolo:true en los onTranscript de abajo -- staff.html
+             lo usa para ABRIR el panel de Hilos & Transcripcion, que ahora
+             arranca cerrado por defecto (commit anterior, mismo dia). Sin
+             este flag el texto SI se escribia en el DOM (confirmado en la
+             verificacion previa) pero quedaba oculto dentro del panel
+             colapsado -- el usuario nunca lo veia.
+         (2) se quitaron los emit('onState', 'understanding'/'idle') que
+             habia antes: eso es lo que prendia y apagaba la caja del avatar
+             un instante (.avatar-stage deja de ser 'idle' -> opacity:1,
+             vuelve a 'idle' -> opacity:0). En una conversacion de solo
+             texto no hay nada que el avatar deba actuar -- el PO lo dijo
+             explicito, esto es chat escrito. */
+      emit('onTranscript', { who:'yo', text:texto, final:true, textoSolo:true });
+      emit('onThreadLine', { rol:'yo', contenido:texto, modo:modoActual, textoSolo:true });
       try{
         var h = await headers();
         var res = await fetch(url, { method:'POST', headers:h, body:JSON.stringify({ message:texto }) });
@@ -802,16 +813,13 @@
         var d = {}; try{ d = await res.json(); }catch(_){}
         if(!res.ok || !d.reply){
           emit('onError', (d && d.error==='forbidden_not_staff') ? 'Esta cuenta no tiene acceso de staff/owner.' : 'No se pudo obtener respuesta de texto.');
-          emit('onState','idle');
           return;
         }
-        emit('onTranscript', { who:'elixis', start:true });
-        emit('onTranscript', { who:'elixis', delta:d.reply });
+        emit('onTranscript', { who:'elixis', start:true, textoSolo:true });
+        emit('onTranscript', { who:'elixis', delta:d.reply, textoSolo:true });
         emit('onThreadLine', { rol:'elixis', contenido:d.reply, modo:modoActual, textoSolo:true });
-        emit('onState','idle');
       }catch(e){
         emit('onError','No pude conectar con el texto.');
-        emit('onState','idle');
       }
     }
 

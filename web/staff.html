@@ -41,7 +41,7 @@
   <script src="./subscription.js?v=20260422-find-dj-rank"></script>
   <script src="./js/smartcrate-harmonic-engine.js?v=20260830-camelot-engine"></script>
   <script src="./js/music-hunter-ring-buffer.js?v=20260830-ring-buffer"></script>
-  <script src="./js/elixis-voice-session.js?v=20260831-text-standalone-mode"></script>
+  <script src="./js/elixis-voice-session.js?v=20260831-text-panel-open-fix"></script>
   <script src="./js/elixis-swipe-carousel.js?v=20260827-pointer-wheel-desktop"></script>
   <script src="./js/avatar-frame-player.js?v=20260830-crossorigin-fix"></script>
   <script src="./js/avatar-heygen-chromakey.js?v=20260830-recorte-borde-blanco"></script>
@@ -2239,6 +2239,14 @@
             ewFX.voiceLevel = pulso;
           },
           onTranscript: function(t){
+            /* BUG REAL 2026-08-31 (reporte del PO: escribe texto y "no sale
+               nada en el chat" -- el contenido SI se escribia en #ewTranscripcion,
+               pero el panel arranca cerrado por defecto (mismo dia) y nada lo
+               abria para una respuesta de solo texto (esa via no pasa por
+               onState/onTool, que son los otros dos disparadores reales).
+               Sin voz no hay otra forma de "escuchar" la respuesta -- si el
+               usuario escribio, tiene que poder leerla. */
+            if(t.textoSolo && !ewAcordeon.der){ ewAcordeon.der=true; ewAplicarAcordeon(); }
             var box=el('ewTranscripcion'); if(!box) return;
             var vacio=box.querySelector('.ew-vacio'); if(vacio) vacio.remove();
             if(t.reset){ ewSesion._fila=null; return; }
