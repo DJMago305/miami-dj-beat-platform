@@ -73,6 +73,24 @@ const STRICT_TURN_DETECTION = {
     interrupt_response: true,
 };
 
+// CALIBRACION ESTANDAR (2026-08-31, orden del PO tras confirmar en vivo que
+// la voz ya fluye bien): reemplaza semantic_vad como default de los modos de
+// oficina/general. semantic_vad clasifica por significado, sin un numero que
+// ajustar -- si el PO reporta "corta las frases con pausas cortas" o "es
+// sensible al ruido", no hay parametro que tocar. server_vad si los tiene:
+// 0.55 filtra ruido bajo sin exigir gritarle al microfono, 300ms de
+// prefix_padding para no comerse la primera silaba de la frase, 700ms de
+// silencio para permitir una pausa natural sin que el turno se cierre solo.
+// Mismo patron env-overridable que STRICT_TURN_DETECTION arriba.
+const STANDARD_TURN_DETECTION = {
+    type: "server_vad",
+    threshold: Number(Deno.env.get("ELIXIS_STANDARD_VAD_THRESHOLD") ?? "0.55"),
+    prefix_padding_ms: Number(Deno.env.get("ELIXIS_STANDARD_PREFIX_PADDING_MS") ?? "300"),
+    silence_duration_ms: Number(Deno.env.get("ELIXIS_STANDARD_SILENCE_MS") ?? "700"),
+    create_response: true,
+    interrupt_response: true,  // barge-in: el usuario manda
+};
+
 // UMBRAL DE DJMAGO — mas alto que el ?vad=estricto normal (2026-08-30,
 // correccion en vivo del PO): reportado con capturas reales, "Cazador
 // Musical" con musica real sonando en la cabina disparaba turnos falsos --
@@ -768,12 +786,7 @@ serve(async (req: Request) => {
                 // riesgo conocido.
                 turn_detection: (identidad === "djmago" && modoReq === "cazador")
                     ? { ...STRICT_TURN_DETECTION, threshold: DJMAGO_VAD_THRESHOLD, silence_duration_ms: DJMAGO_SILENCE_DURATION_MS, create_response: false }
-                    : estricto ? STRICT_TURN_DETECTION : {
-                        type: "semantic_vad",
-                        eagerness,                 // ver DEFAULT_EAGERNESS arriba
-                        create_response: true,
-                        interrupt_response: true,  // barge-in: el usuario manda
-                    },
+                    : estricto ? STRICT_TURN_DETECTION : STANDARD_TURN_DETECTION,
                 ...(nrMode === "off" ? {} : { noise_reduction: { type: nrMode } }),
                 // REMOVIDO (2026-08-30, sesion real: la llamada completa a
                 // OpenAI devolvia 500 sin CORS -- ver el try/catch global

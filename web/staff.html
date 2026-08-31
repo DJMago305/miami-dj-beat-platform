@@ -41,7 +41,7 @@
   <script src="./subscription.js?v=20260422-find-dj-rank"></script>
   <script src="./js/smartcrate-harmonic-engine.js?v=20260830-camelot-engine"></script>
   <script src="./js/music-hunter-ring-buffer.js?v=20260830-ring-buffer"></script>
-  <script src="./js/elixis-voice-session.js?v=20260831-cazador-only-vad"></script>
+  <script src="./js/elixis-voice-session.js?v=20260831-mic-mute-echo-fix"></script>
   <script src="./js/elixis-swipe-carousel.js?v=20260827-pointer-wheel-desktop"></script>
   <script src="./js/avatar-frame-player.js?v=20260830-crossorigin-fix"></script>
   <script src="./js/avatar-heygen-chromakey.js?v=20260830-recorte-borde-blanco"></script>
@@ -460,7 +460,38 @@
          especificidad aca es mas robusto que reordenar el archivo (que ya
          fallo 3 veces hoy con este mismo patron). */
       .ew-pantalla.ew-col{width:auto; padding:0; position:absolute; top:0; height:100%; box-sizing:border-box;}
-      .ew-pantalla.ew-mid{left:50%; transform:translateX(-50%); width:50%; z-index:1;}
+      /* AJUSTE 2026-08-31 (orden del PO, Opcion B: "que los paneles laterales
+         ganen espacio util... sin modificar la escala ni el zoom de la
+         imagen/video"). El 50% fijo de arriba (nota 2026-08-29) protegia al
+         avatar de ENCOGERSE cuando un riel abre -- eso sigue intacto, este
+         cambio no lo toca: .avatar-stage adentro sigue en su propio
+         width:min(420px,92%), pixel identico a como estaba -- CASI: el
+         primer intento puso este contenedor en exactamente 420px y eso
+         volteo la formula de .avatar-stage al lado del 92% (92% de 420px =
+         386.4px), encogiendo el avatar de verdad -- error real, medido en
+         vivo (420px -> 384.5px) y corregido antes de comitear. 420/0.92 =
+         456.5px es el minimo para que el 92% deje de ser el limite activo;
+         457px (ver mas abajo) le da un pelo de margen extra por redondeo de
+         subpixel. Medido en vivo: sobraban ~232px de fondo vacio a cada lado
+         entre el borde del panel y el avatar real (contenedor de 50% para
+         una pieza que nunca pasa de 420px) -- bajar el contenedor a 457px
+         deja solo ~18px de aire real (el propio canvas del avatar no llena
+         los 420px a todo lo ancho, letterboxing de su aspect ratio, ajeno a
+         este cambio), sin que el avatar mismo cambie de tamaño. El ancho
+         abierto de los rieles (mas abajo, JS) se recalculo en la misma
+         proporcion para seguir topando justo en este nuevo borde, nunca
+         invadiendolo -- mismo principio de "limites de jurisdiccion" de la
+         nota original, solo con el numero correcto. */
+      .ew-pantalla.ew-mid{left:50%; transform:translateX(-50%); width:457px; z-index:1;}
+      /* BUG REAL 2026-08-31 (reporte del PO: "los nombres estan pegados a
+         los bordes... no tienen nada de aire"): el padding:0 de arriba
+         estaba pensado SOLO para el panel central (avatar sin vidrio, ver
+         nota 2026-08-29 mas abajo) pero se lo llevaba por delante a los dos
+         paneles laterales tambien -- ahi si hace falta el mismo aire que ya
+         usa .ew-col en cualquier otro layout (padding:12px, mismo valor,
+         no uno inventado). Selector por ID: gana sin depender del orden en
+         el archivo. */
+      #ewPanelIzq, #ewPanelDer{padding:12px; box-sizing:border-box;}
       #ewPanelIzq{left:0; width:var(--ew-izq,64px); transition:width .28s ease; z-index:2;}
       #ewPanelDer{right:0; width:var(--ew-der,64px); transition:width .28s ease; z-index:2;}
       .ew-flecha{display:none !important;} /* aca los 3 paneles ya se ven juntos en columnas -- no hay nada que navegar */
@@ -1192,7 +1223,7 @@
               </div>
               <div class="ew-pantalla ew-col ew-cerrado" id="ewPanelDer">
                 <button type="button" class="ew-acordeon-toggle" id="ewToggleDer" aria-label="Abrir Hilos y Transcripción">‹</button>
-                <h4>Hilos &amp; Transcripción</h4>
+                <h4>Hilos &amp; Transcripción <span id="ewModoIcono" title="Modo activo" style="margin-left:4px;">🌐</span></h4>
                 <div id="ewHud"></div>
                 <button type="button" id="ewHudDemo" style="font-size:9px;opacity:.5;background:none;border:1px solid var(--line);border-radius:6px;color:var(--text);padding:2px 6px;align-self:center;cursor:pointer;">demo transmisión</button>
                 <div class="ew-col-body" id="ewProceso"><div class="ew-vacio">Sin actividad todavía.</div></div>
@@ -2049,11 +2080,17 @@
       function ewAplicarAcordeon(){
         var pista=document.querySelector('.ew-carrusel-pista');
         if(pista){
-          /* 25% = exactamente la mitad de lo que le sobra al centro (fijo
-             en 50%) a cada lado -- topa justo en su borde, nunca lo invade
-             ni lo desplaza (ver CSS, .ew-carrusel-pista ya no es grid). */
-          pista.style.setProperty('--ew-izq', ewAcordeon.izq ? '25%' : '64px');
-          pista.style.setProperty('--ew-der', ewAcordeon.der ? '25%' : '64px');
+          /* calc((100% - 457px) / 2) = la mitad de lo que le sobra al centro
+             (fijo en 457px, ver CSS -- ajustado 2026-08-31, antes 50%) a cada
+             lado -- topa justo en su borde, nunca lo invade ni lo desplaza
+             (ver CSS, .ew-carrusel-pista ya no es grid). Antes era el
+             literal '25%', que solo daba el resultado correcto cuando el
+             centro media 50%; con el centro en un px fijo hace falta el
+             mismo calc() en los dos lados para seguir topando exacto. 457px,
+             no 420px -- ver la nota completa en el CSS de .ew-pantalla.ew-mid
+             sobre por que 420px exactos encogian el avatar de verdad. */
+          pista.style.setProperty('--ew-izq', ewAcordeon.izq ? 'calc((100% - 457px) / 2)' : '64px');
+          pista.style.setProperty('--ew-der', ewAcordeon.der ? 'calc((100% - 457px) / 2)' : '64px');
         }
         var pIzq=el('ewPanelIzq'); if(pIzq) pIzq.classList.toggle('ew-cerrado', !ewAcordeon.izq);
         var pDer=el('ewPanelDer'); if(pDer) pDer.classList.toggle('ew-cerrado', !ewAcordeon.der);
@@ -2321,6 +2358,21 @@
         };
         var ewModoAnterior = null;
         var enfoque=el('ewEnfoque');
+        /* Icono de modo en el header de Hilos & Transcripcion (2026-08-31,
+           pedido del PO: el panel no reflejaba el modo activo). Mismos
+           emojis EXACTOS ya usados en el riel de Modo Enfoque de arriba --
+           un solo banco de iconos por concepto, nunca uno inventado aparte
+           (ver banco de iconos del proyecto). No toca ewHud/ElixisHudTransmision
+           (el "sobre" animado de ahi es la demo de transmision de mensajes,
+           2026-08-29, un elemento distinto con su propio proposito -- confundir
+           los dos habria sido borrar/repropositar algo que ya funciona). */
+        var EW_MODO_ICONOS = {
+          correo:'✉️', legal:'⚖️', distribucion:'🎵', eventos:'📅', cazador:'🎧', general:'🌐'
+        };
+        function ewFijarIconoModo(modo){
+          var ic = el('ewModoIcono');
+          if(ic) ic.textContent = EW_MODO_ICONOS[modo] || EW_MODO_ICONOS.general;
+        }
         /* Modo General activo por defecto (2026-08-31, orden del PO: el
            enfoque real es criterio de quien opera, pero SIN elegir ninguno
            el comportamiento -- y ahora tambien el aro dorado -- debe ser el
@@ -2331,11 +2383,13 @@
           var ewBotonGeneral = enfoque.querySelector('[data-modo="general"] .ew-enfoque-icono');
           if(ewBotonGeneral) ewBotonGeneral.classList.add('activo');
         }
+        ewFijarIconoModo('general');
         if(enfoque) enfoque.querySelectorAll('[data-modo]').forEach(function(b){
           b.onclick=function(){
             enfoque.querySelectorAll('.ew-enfoque-icono').forEach(function(i){ i.classList.remove('activo'); });
             b.querySelector('.ew-enfoque-icono').classList.add('activo');
             var modo = b.getAttribute('data-modo');
+            ewFijarIconoModo(modo);
             var texto = EW_CONTEXTOS[modo] || EW_CONTEXTOS.general;
             /* Identidad djmago SIEMPRE, en los 5 modos (2026-08-30, correccion
                en vivo -- reporte real: en Modo General el avatar hablaba solo

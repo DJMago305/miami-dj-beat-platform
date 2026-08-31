@@ -277,13 +277,38 @@
 
         case 'response.output_audio_transcript.delta':
           limpiarWatchdogPensando();
-          if(!hablando){ hablando=true; _textoElixis=''; emit('onTranscript', { who:'elixis', start:true }); }
+          if(!hablando){
+            hablando=true; _textoElixis=''; emit('onTranscript', { who:'elixis', start:true });
+            /* BUG REAL 2026-08-31 (reporte del PO con captura: bucle de
+               "Hola Gerardo..." cortandose solo, una y otra vez). NO es un
+               disparador duplicado -- se busco y no existe ningun otro sitio
+               que mande response.create sin que el usuario hable. Es eco
+               acustico real: las bocinas reproducen a DjMago/Elixis, el
+               mismo microfono lo vuelve a captar, y con create_response:true
+               + interrupt_response:true (flujo nativo, ver elixis-realtime-
+               session) OpenAI interpreta su propia voz como que el usuario
+               interrumpio -- corta la respuesta a medias Y dispara una
+               nueva, en bucle. NO se soluciona pidiendo echoCancellation:
+               true/noiseSuppression:true/autoGainControl:true en
+               getUserMedia -- CONSTRAINTS_MIC_RAW (arriba) las tiene TODAS
+               en false a proposito, porque encenderlas es justo lo que
+               dispara la reconfiguracion de CoreAudio que corta a Serato en
+               vivo (ver el comentario de precalentarMic()). Mutear el track
+               por software mientras el asistente habla logra el mismo
+               resultado (el eco nunca llega al VAD) sin tocar constraints
+               ni CoreAudio. Efecto secundario aceptado: mientras el
+               asistente habla, no se puede interrumpir por voz (hay que
+               esperar a que termine) -- es el precio de cortar el eco sin
+               arriesgar el audio de Serato. */
+            if(mic){ mic.getAudioTracks().forEach(function(t){ t.enabled=false; }); }
+          }
           _textoElixis += (m.delta||'');
           emit('onTranscript', { who:'elixis', delta:(m.delta||'') });
           emit('onState','speaking'); break;
 
         case 'response.done': {
           limpiarWatchdogPensando();
+          if(mic){ mic.getAudioTracks().forEach(function(t){ t.enabled=true; }); }
           /* Las llamadas a herramienta viajan DENTRO de response.done. Si se
              cierra el turno aqui sin mirarlas, la consulta no sale nunca. */
           var salida = (m.response && m.response.output) || [];
@@ -310,6 +335,7 @@
           console.error('[ElixisVoiceSession] error del canal de voz:', m.error || m);
           emit('onError', (m.error && m.error.message) || 'Error en el canal de voz');
           emit('onState','listening');
+          if(mic){ mic.getAudioTracks().forEach(function(t){ t.enabled=true; }); } // no dejar el mic mudo si el error llego a mitad de la respuesta
           break;
       }
     }
