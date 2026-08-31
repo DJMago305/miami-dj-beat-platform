@@ -63,12 +63,28 @@
        que el archivo este subido a Supabase Storage (mismo mecanismo que
        las fotos de bodas) -- sin eso, 404 igual que le paso a elixis-avatar
        .webp. */
-    window.MDB_AVATAR_CLIPS = {
+    window.EW_AVATAR_CLIPS_BASE = {
       idle: './assets/DJMago IA/djmago-idle-boomerang.mp4',
       listening: './assets/DJMago IA/djmago-idle-boomerang.mp4',
       thinking: './assets/DJMago IA/djmago-idle-boomerang.mp4',
       speaking: './assets/DJMago IA/djmago-idle-boomerang.mp4'
     };
+    /* Clip de Cazador Musical (2026-08-31, orden del PO -- "prepara el
+       conmutador de video del avatar"): PLACEHOLDER explicito, el archivo
+       './assets/video/elixis_cazador.mp4' todavia NO existe en disco (mismo
+       criterio honesto que ya sigue avatar-frame-player.js con 'idle': si el
+       archivo no esta, el <video> entrante simplemente no revela y el clip
+       base sigue viendose -- no hay pantalla negra ni error visible). En
+       cuanto el PO suba el archivo real (mismo mecanismo de Supabase Storage
+       que djmago-idle-boomerang.mp4), esto empieza a funcionar solo, sin
+       tocar mas codigo. */
+    window.EW_AVATAR_CLIPS_CAZADOR = {
+      idle: './assets/video/elixis_cazador.mp4',
+      listening: './assets/video/elixis_cazador.mp4',
+      thinking: './assets/video/elixis_cazador.mp4',
+      speaking: './assets/video/elixis_cazador.mp4'
+    };
+    window.MDB_AVATAR_CLIPS = window.EW_AVATAR_CLIPS_BASE;
   </script>
   <!-- QR: misma librería que el perfil (qrcodejs) para generar el código nativo -->
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
@@ -2843,6 +2859,31 @@
             campoInsercion:'enlaces'
           }
         };
+        /* Conmutador de video del avatar por Modo de Enfoque (2026-08-31,
+           orden del PO). avatar-frame-player.js lee window.MDB_AVATAR_CLIPS
+           DE NUEVO en cada llamada a fijarEstado() -- pero esa funcion es
+           idempotente por diseno (linea "if(nombre === m.estado) return;"):
+           si el estado-app de la maquina fina (idle/listening/...) no
+           cambio, no vuelve a mirar el mapa aunque el mapa mismo haya
+           cambiado. Por eso, tras reasignar el mapa, hace falta resetear
+           m.estado a null y volver a llamar fijarEstado() con el estado
+           actual (leido de la clase real de .avatar-stage, la MISMA fuente
+           de verdad que ya usa onState() -- no se inventa una variable
+           paralela) para forzar la re-evaluacion. NO toca el <audio>/
+           RTCPeerConnection de elixis-voice-session.js (arbol de DOM
+           completamente aparte) ni avatar-heygen-chromakey.js (sigue
+           leyendo pixeles del MISMO <video> vivo, solo cambia que hay
+           dibujado adentro cuando el clip nuevo empiece a reproducir). */
+        function ewAplicarClipsPorModo(modo){
+          window.MDB_AVATAR_CLIPS = (modo === 'cazador') ? window.EW_AVATAR_CLIPS_CAZADOR : window.EW_AVATAR_CLIPS_BASE;
+          var stage = el('ewAvatarStage');
+          if(!stage || !window.AvatarFramePlayer) return;
+          var afp = window.AvatarFramePlayer.montar(stage);
+          if(!afp) return;
+          var estadoActual = (stage.className||'').replace('avatar-stage','').trim() || 'idle';
+          afp.estado = null;
+          window.AvatarFramePlayer.fijarEstado(afp, estadoActual);
+        }
         /* Live Setlist es EXCLUSIVO de Cazador Musical (2026-08-31, punto 1
            del ticket de paneles modulares) -- antes quedaba visible siempre,
            vacio fuera de ese modo. No toca ewSetlistTracks/onMusicHunterTrack
@@ -2914,6 +2955,7 @@
         ewActualizarVisibilidadSobre('general');
         ewMostrarBloqueSetlist('general');
         ewRenderPanelEspecializado('general');
+        ewAplicarClipsPorModo('general');
         /* ewSeleccionarModo(modo): logica compartida entre el riel de Modo
            Enfoque (arriba, clic directo) y el nuevo selector de Hilos
            guardados (mas abajo) -- un solo lugar que decide que pasa al
@@ -2936,6 +2978,7 @@
           ewActualizarVisibilidadSobre(modo);
           ewMostrarBloqueSetlist(modo);
           ewRenderPanelEspecializado(modo);
+          ewAplicarClipsPorModo(modo);
           var texto = EW_CONTEXTOS[modo] || EW_CONTEXTOS.general;
           /* Identidad djmago SIEMPRE, en los 5 modos (2026-08-30, correccion
              en vivo -- reporte real: en Modo General el avatar hablaba solo
