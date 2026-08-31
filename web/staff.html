@@ -740,16 +740,41 @@
        lenguaje visual que .pz/.ew-setlist-fila (caja sobre --bg), y el
        mismo dorado rgba(234,179,8,.5) que .ew-enfoque-icono.activo ya usa
        para "esto es lo activo", no un color inventado aparte. */
-    .ew-hilo-fila{display:flex; align-items:center; gap:8px; width:100%; text-align:left;
+    .ew-hilo-fila{display:flex; align-items:center; gap:6px; width:100%; text-align:left;
       padding:7px 9px; border-radius:10px; background:var(--bg); border:1px solid var(--line);
-      font-size:12px; color:rgba(255,255,255,.85); cursor:pointer;}
+      font-size:12px; color:rgba(255,255,255,.85); position:relative;}
     .ew-hilo-fila:hover{border-color:rgba(255,255,255,.3);}
     .ew-hilo-fila.activo{border-color:rgba(234,179,8,.5); box-shadow:0 0 10px rgba(234,179,8,.25);}
+    .ew-hilo-click{display:flex; align-items:center; gap:8px; flex:1; min-width:0; text-align:left;
+      background:none; border:0; padding:0; margin:0; color:inherit; font:inherit; cursor:pointer;}
     .ew-hilo-ico{flex:none; font-size:14px;}
     .ew-hilo-info{flex:1; min-width:0; display:flex; flex-direction:column; gap:1px;}
-    .ew-hilo-modo{font-weight:700; font-size:11px;}
+    .ew-hilo-modo{font-weight:700; font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
     .ew-hilo-prev{font-size:10.5px; color:rgba(255,255,255,.5); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
     .ew-hilo-n{flex:none; font-family:var(--mono,monospace); font-size:10px; color:rgba(255,255,255,.4);}
+    /* Menu de 3 puntos por hilo (2026-08-31, autorizado por el PO -- ultimo
+       ticket de la ronda: "menu de herramientas estilo ChatGPT"). Mismo
+       lenguaje de caja que .ew-hilo-fila/.pz; dropdown flotante, no empuja
+       el layout del panel angosto. */
+    .ew-hilo-menu-btn{flex:none; width:22px; height:22px; border-radius:6px; background:none;
+      border:1px solid transparent; color:rgba(255,255,255,.55); font-size:14px; line-height:1;
+      cursor:pointer; display:flex; align-items:center; justify-content:center;}
+    .ew-hilo-menu-btn:hover{border-color:var(--line); color:rgba(255,255,255,.9);}
+    .ew-hilo-menu{position:absolute; top:calc(100% + 4px); right:0; z-index:30; min-width:168px;
+      background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:4px;
+      box-shadow:0 8px 24px rgba(0,0,0,.45); display:none; flex-direction:column; gap:1px;}
+    .ew-hilo-menu.abierto{display:flex;}
+    .ew-hilo-menu button{display:flex; align-items:center; gap:7px; width:100%; text-align:left;
+      background:none; border:0; border-radius:7px; padding:6px 8px; font-size:11.5px;
+      color:rgba(255,255,255,.85); cursor:pointer;}
+    .ew-hilo-menu button:hover{background:rgba(255,255,255,.08);}
+    .ew-hilo-menu button.peligro:hover{background:rgba(220,90,70,.18); color:#ffb4a4;}
+    .ew-hilo-rename-input{flex:1; min-width:0; background:var(--bg); border:1px solid rgba(234,179,8,.5);
+      border-radius:6px; color:rgba(255,255,255,.9); font:inherit; font-size:11px; padding:3px 6px;}
+    .ew-hilo-resumen{font-size:11.5px; line-height:1.5; color:rgba(255,255,255,.85); white-space:pre-wrap;
+      padding:8px 10px; border-radius:10px; background:var(--bg); border:1px solid rgba(234,179,8,.35);}
+    .ew-hilo-resumen .ew-hilo-resumen-copiar{margin-top:6px; font-size:9.5px; opacity:.7; background:none;
+      border:1px solid var(--line); border-radius:6px; color:var(--text); padding:2px 7px; cursor:pointer;}
     /* Fila de Live Setlist (2026-08-30, Cazador Musical): mismo lenguaje
        visual que .pz (caja redondeada sobre --bg), pero con 2 renglones --
        artista/titulo arriba, bpm/key/hora abajo en mono chico -- porque el
@@ -2202,14 +2227,22 @@
            persistencia en base de datos todavia, ver ESTADO_MAESTRO.md). */
         var ewSetlistTracks = [];
 
+        /* Extraida de adentro de ElixisVoiceSession.crear({getHeaders:...})
+           (2026-08-31, menu de 3 puntos de Hilos): ewResumirHilo() necesita
+           las MISMAS cabeceras de auth para llamar a elixis-orchestrator
+           directo, fuera del ciclo de conversacion normal -- un solo lugar
+           que arma estas cabeceras, no dos copias (ver "un patron por
+           funcion"). */
+        async function ewHeaders(){
+          var sb=getSb(); var pub = window.MDB_SUPABASE_ANON_KEY || '';
+          var h={'Content-Type':'application/json'}; if(pub) h.apikey=pub;
+          var sess = sb ? (await sb.auth.getSession()).data.session : null;
+          h.Authorization = 'Bearer ' + (sess ? sess.access_token : pub);
+          return h;
+        }
+
         ewSesion = window.ElixisVoiceSession.crear({
-          getHeaders: async function(){
-            var sb=getSb(); var pub = window.MDB_SUPABASE_ANON_KEY || '';
-            var h={'Content-Type':'application/json'}; if(pub) h.apikey=pub;
-            var sess = sb ? (await sb.auth.getSession()).data.session : null;
-            h.Authorization = 'Bearer ' + (sess ? sess.access_token : pub);
-            return h;
-          },
+          getHeaders: ewHeaders,
           getAudioEl: function(){
             var a = el('ewAudio');
             if(!a){ a=document.createElement('audio'); a.id='ewAudio'; a.autoplay=true; a.style.display='none'; document.body.appendChild(a); }
@@ -2467,18 +2500,168 @@
           lista.innerHTML='';
           filas.forEach(function(f){
             var modo = f.modo_enfoque || 'general';
-            var btn=document.createElement('button');
-            btn.type='button';
-            btn.className='ew-hilo-fila'+((modo===ewModoAnterior || (ewModoAnterior===null && modo==='general')) ? ' activo' : '');
-            btn.setAttribute('data-modo', modo);
+            var nombreVisible = f.alias || EW_HILO_NOMBRES[modo] || modo;
+            var fila=document.createElement('div');
+            fila.className='ew-hilo-fila'+((modo===ewModoAnterior || (ewModoAnterior===null && modo==='general')) ? ' activo' : '');
+            fila.setAttribute('data-modo', modo);
             var prefijo = f.ultimo_rol==='yo' ? 'Tú: ' : 'ELIXIS: ';
-            btn.innerHTML = '<span class="ew-hilo-ico">'+(EW_MODO_ICONOS[modo]||EW_MODO_ICONOS.general)+'</span>'
-              + '<span class="ew-hilo-info"><span class="ew-hilo-modo">'+ewEsc(EW_HILO_NOMBRES[modo]||modo)+'</span>'
-              + '<span class="ew-hilo-prev">'+ewEsc(prefijo+String(f.ultimo_mensaje||'').slice(0,64))+'</span></span>'
-              + '<span class="ew-hilo-n">'+f.total_mensajes+'</span>';
-            btn.onclick=function(){ ewSeleccionarModo(modo); };
-            lista.appendChild(btn);
+            fila.innerHTML =
+              '<button type="button" class="ew-hilo-click">'
+                + '<span class="ew-hilo-ico">'+(EW_MODO_ICONOS[modo]||EW_MODO_ICONOS.general)+'</span>'
+                + '<span class="ew-hilo-info"><span class="ew-hilo-modo">'+ewEsc(nombreVisible)+'</span>'
+                + '<span class="ew-hilo-prev">'+ewEsc(prefijo+String(f.ultimo_mensaje||'').slice(0,64))+'</span></span>'
+              + '</button>'
+              + '<span class="ew-hilo-n">'+f.total_mensajes+'</span>'
+              + '<button type="button" class="ew-hilo-menu-btn" title="Herramientas del hilo" aria-label="Herramientas del hilo">⋯</button>'
+              + '<div class="ew-hilo-menu">'
+                + '<button type="button" data-accion="renombrar">✏️ Renombrar hilo</button>'
+                + '<button type="button" data-accion="copiar">📋 Copiar conversación</button>'
+                + '<button type="button" data-accion="resumir">📑 Resumir</button>'
+                + '<button type="button" class="peligro" data-accion="borrar">🗑️ Borrar hilo</button>'
+              + '</div>';
+            fila.querySelector('.ew-hilo-click').onclick=function(){ ewSeleccionarModo(modo); };
+            fila.querySelector('.ew-hilo-menu-btn').onclick=function(e){
+              e.stopPropagation();
+              var abierto = fila.querySelector('.ew-hilo-menu').classList.contains('abierto');
+              ewCerrarMenusHilo();
+              if(!abierto) fila.querySelector('.ew-hilo-menu').classList.add('abierto');
+            };
+            fila.querySelector('[data-accion="renombrar"]').onclick=function(e){ e.stopPropagation(); ewCerrarMenusHilo(); ewRenombrarHiloInline(fila, modo, nombreVisible); };
+            fila.querySelector('[data-accion="copiar"]').onclick=function(e){ e.stopPropagation(); ewCerrarMenusHilo(); ewCopiarHilo(fila, modo); };
+            fila.querySelector('[data-accion="resumir"]').onclick=function(e){ e.stopPropagation(); ewCerrarMenusHilo(); ewResumirHilo(fila, modo); };
+            fila.querySelector('[data-accion="borrar"]').onclick=function(e){ e.stopPropagation(); ewCerrarMenusHilo(); ewBorrarHilo(fila, modo); };
+            lista.appendChild(fila);
           });
+        }
+        /* Cierra cualquier menu de 3 puntos abierto en la lista de Hilos --
+           un solo menu visible a la vez. Se llama antes de abrir otro y
+           desde el listener global de "click afuera" (mas abajo). */
+        function ewCerrarMenusHilo(){
+          document.querySelectorAll('.ew-hilo-menu.abierto').forEach(function(m){ m.classList.remove('abierto'); });
+        }
+        document.addEventListener('click', function(e){
+          if(!e.target.closest || !e.target.closest('.ew-hilo-menu-btn, .ew-hilo-menu')) ewCerrarMenusHilo();
+        });
+        /* Toast minimo reutilizable para las 4 acciones del menu (Copiado,
+           Renombrado, etc.) -- una linea que aparece y se disuelve sola,
+           sin depender de ningun sistema de notificaciones mas grande que
+           no existe todavia en este panel. */
+        function ewToastHilo(fila, texto){
+          var t=document.createElement('div');
+          t.textContent=texto;
+          t.style.cssText='font-size:10px;color:rgba(234,179,8,.9);padding:2px 2px 0;';
+          fila.appendChild(t);
+          setTimeout(function(){ if(t.parentNode) t.parentNode.removeChild(t); }, 2200);
+        }
+        /* Renombrar (2026-08-31): el esquema de elixis_session_threads NO
+           tiene "titulo" -- modo_enfoque ES el hilo (una tabla por
+           especialidad, no threads independientes con id propio, ver
+           EW_HILO_NOMBRES). "Renombrar" un modo fijo (Legal, General...) no
+           tendria sentido; en vez de eso se agrego una tabla chica aparte,
+           elixis_thread_alias (user_id+modo_enfoque -> alias), que SOLO
+           cambia el nombre mostrado en esta lista -- no toca modo_enfoque,
+           EW_CONTEXTOS ni ningun comportamiento real del modo. */
+        function ewRenombrarHiloInline(fila, modo, nombreActual){
+          var info = fila.querySelector('.ew-hilo-info');
+          var original = info.innerHTML;
+          info.innerHTML = '';
+          var input = document.createElement('input');
+          input.type='text'; input.className='ew-hilo-rename-input'; input.maxLength=60; input.value=nombreActual;
+          info.appendChild(input);
+          input.focus(); input.select();
+          var guardado=false;
+          function guardar(){
+            if(guardado) return; guardado=true;
+            var valor = input.value.trim();
+            if(!valor || valor===nombreActual){ info.innerHTML = original; return; }
+            var sb=getSb();
+            if(!sb || !sb.rpc){ info.innerHTML = original; return; }
+            Promise.resolve(sb.rpc('elixis_thread_rename', { p_modo_enfoque: modo, p_alias: valor })).then(function(r){
+              if(r && r.error){ console.warn('[ELIXIS workspace] no se pudo renombrar el hilo:', r.error); info.innerHTML = original; return; }
+              ewCargarHilosLista();
+            }).catch(function(e){ console.warn('[ELIXIS workspace] no se pudo renombrar el hilo:', e); info.innerHTML = original; });
+          }
+          input.addEventListener('keydown', function(e){
+            if(e.key==='Enter'){ e.preventDefault(); guardar(); }
+            else if(e.key==='Escape'){ guardado=true; info.innerHTML = original; }
+          });
+          input.addEventListener('blur', guardar);
+        }
+        /* Copiar conversacion (2026-08-31): texto plano "Tú:"/"ELIXIS:" --
+           mismo prefijo humano que ya usa la UI, no el rol crudo de la
+           tabla ("yo"/"elixis"). navigator.clipboard.writeText requiere
+           contexto seguro (https o localhost, este panel corre en ambos). */
+        async function ewCopiarHilo(fila, modo){
+          var sb=getSb(); if(!sb || !sb.rpc) return;
+          var r = await sb.rpc('elixis_get_thread_history', { p_modo_enfoque: modo });
+          if(r.error){ console.warn('[ELIXIS workspace] no se pudo copiar el hilo:', r.error); return; }
+          var filas = r.data || [];
+          if(!filas.length){ ewToastHilo(fila, 'Nada que copiar'); return; }
+          var texto = filas.map(function(f){ return (f.rol==='yo'?'Tú: ':'ELIXIS: ')+f.contenido; }).join('\n\n');
+          try{ await navigator.clipboard.writeText(texto); ewToastHilo(fila, 'Copiado ✓'); }
+          catch(e){ console.warn('[ELIXIS workspace] no se pudo copiar al portapapeles:', e); ewToastHilo(fila, 'No se pudo copiar'); }
+        }
+        /* Resumir (2026-08-31): llamada directa a elixis-orchestrator (mismo
+           destino que enviarTextoSolo(), mismos headers via ewHeaders()) --
+           NO pasa por ElixisVoiceSession ni se guarda en el hilo (es una
+           consulta sobre la conversacion, no una linea mas de ella). Los
+           ultimos 30 mensajes, recortados a 180 caracteres cada uno, para
+           quedar bajo el tope real de 2000 caracteres que ya impone
+           elixis-orchestrator sobre el campo "message" (ver su index.ts) --
+           un hilo largo de verdad no cabria entero, y truncar es preferible
+           a que el POST falle con 400 sin explicacion. */
+        async function ewResumirHilo(fila, modo){
+          var sb=getSb();
+          var filas=[];
+          if(sb && sb.rpc){
+            var r = await sb.rpc('elixis_get_thread_history', { p_modo_enfoque: modo });
+            if(!r.error) filas = r.data || [];
+          }
+          var previo = fila.querySelector('.ew-hilo-resumen'); if(previo) previo.remove();
+          var caja=document.createElement('div'); caja.className='ew-hilo-resumen';
+          if(!filas.length){ caja.textContent='Sin mensajes que resumir.'; fila.appendChild(caja); return; }
+          caja.textContent='Generando resumen…';
+          fila.appendChild(caja);
+          var texto = filas.slice(-30).map(function(f){
+            return (f.rol==='yo'?'Usuario':'ELIXIS')+': '+String(f.contenido).slice(0,180);
+          }).join('\n').slice(0,1600);
+          var mensaje = 'Resume esta conversación en puntos clave ejecutivos (acuerdos, presupuestos, fechas, notas importantes) en una lista corta:\n\n'+texto;
+          try{
+            var url = window.mdbSupabaseFunctionUrl ? window.mdbSupabaseFunctionUrl('elixis-orchestrator') : null;
+            if(!url){ caja.textContent='No pude ubicar el servidor de texto.'; return; }
+            var h = await ewHeaders();
+            var res = await fetch(url, { method:'POST', headers:h, body:JSON.stringify({ message:mensaje }) });
+            var d = {}; try{ d = await res.json(); }catch(_){}
+            if(!res.ok || !d.reply){ caja.textContent='No se pudo generar el resumen.'; return; }
+            caja.textContent = d.reply;
+            var copiarBtn=document.createElement('button');
+            copiarBtn.type='button'; copiarBtn.className='ew-hilo-resumen-copiar'; copiarBtn.textContent='Copiar resumen';
+            copiarBtn.onclick=async function(e){
+              e.stopPropagation();
+              try{ await navigator.clipboard.writeText(d.reply); ewToastHilo(fila,'Copiado ✓'); }
+              catch(err){ ewToastHilo(fila,'No se pudo copiar'); }
+            };
+            caja.appendChild(document.createElement('br'));
+            caja.appendChild(copiarBtn);
+          }catch(e){
+            caja.textContent='No pude conectar con el texto.';
+          }
+        }
+        /* Borrar hilo (2026-08-31): ticket del PO dice explicito "archiva/
+           elimina ... (elixis_archivar_hilo)" -- mismo RPC que ya usa el
+           boton "+ Nuevo" (TTL logico, no fisico -- ver el header de
+           20260826200000_elixis_session_threads.sql). confirm() nativo
+           como "confirmacion rapida" (el ticket no pide un modal propio). */
+        async function ewBorrarHilo(fila, modo){
+          if(!window.confirm('¿Borrar este hilo? Se archiva y deja de aparecer en la lista.')) return;
+          var sb=getSb(); if(!sb || !sb.rpc) return;
+          try{ await sb.rpc('elixis_archivar_hilo', { p_modo_enfoque: modo }); }
+          catch(e){ console.warn('[ELIXIS workspace] no se pudo borrar el hilo:', e); }
+          if(modo === ewModoAnterior || (ewModoAnterior===null && modo==='general')){
+            var box=el('ewTranscripcion'); if(box) box.innerHTML='<div class="ew-vacio">La conversación aparecerá aquí.</div>';
+            if(ewSesion.cargarHistorialTexto) ewSesion.cargarHistorialTexto([]);
+          }
+          ewCargarHilosLista();
         }
         /* Carga el hilo guardado de un modo: repinta #ewTranscripcion con su
            historial real (elixis_get_thread_history), siembra el buffer de
