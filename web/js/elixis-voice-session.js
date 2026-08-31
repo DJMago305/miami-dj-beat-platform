@@ -46,8 +46,14 @@
     var pc=null, dc=null, mic=null, spk=null;
     var ac=null, sink=null, anMic=null, anRem=null, buf=null, rafPulso=0;
     var sesion=null, hb=0, t0=0;
-    var hablando=false, vivo=false, pulso=0, modoActual=null, _textoElixis='';
+    /* Default 'general', no null (2026-08-31, orden del PO: el modo de
+       enfoque real es criterio del usuario -- pero SIN elegir ninguno
+       todavia, el comportamiento debe ser el generico, nunca el candado
+       estricto de Cazador Musical). Ver mismo criterio en identidadActual
+       un poco mas abajo. */
+    var hablando=false, vivo=false, pulso=0, modoActual='general', _textoElixis='';
     var conectando=false, micPrecalentado=null;
+    var watchdogPensando=null; // ver limpiarWatchdogPensando()/evento()
     /* Default 'djmago', no null (2026-08-30, correccion en vivo -- reporte
        real: hablar sin haber tocado antes un boton de Modo dejaba
        identidadActual en null, el servidor caia a DEFAULT_IDENTIDAD='elixis'
@@ -201,7 +207,37 @@
       dc.send(JSON.stringify({ type:'response.create' }));   /* sin esto se queda mudo */
     }
 
+    /* Watchdog de "Pensando" (2026-08-31, reporte real del PO: el avatar se
+       quedaba en PENSANDO para siempre y la unica pista visible era un
+       placeholder de 3.2s en la caja de texto -- facil de no ver si se esta
+       mirando el avatar). Dos capas de defensa, no una sola:
+       1) el 'error' de abajo ahora SI resetea el estado (la causa real mas
+          probable: OpenAI devuelve error tras el response.create manual y
+          nada lo escuchaba).
+       2) este watchdog cubre cualquier otro silencio sin evento -- conexion
+          caida sin disparar onconnectionstatechange, respuesta que nunca
+          llega, etc. 5s es suficiente margen sobre cualquier respuesta real
+          (la primera transcripcion de audio suele llegar en <2s). */
+    function limpiarWatchdogPensando(){
+      if(watchdogPensando){ clearTimeout(watchdogPensando); watchdogPensando=null; }
+    }
+    function armarWatchdogPensando(){
+      limpiarWatchdogPensando();
+      watchdogPensando = setTimeout(function(){
+        console.warn('[ElixisVoiceSession] watchdog: 5s en "Pensando" sin respuesta -- reseteando a escuchando.');
+        watchdogPensando=null;
+        emit('onState','listening');
+      }, 5000);
+    }
+
     function evento(m){
+      /* Log exhaustivo (2026-08-31, pedido explicito del PO): TODO evento
+         entrante del canal de datos de OpenAI, no solo los que este switch
+         ya sabe manejar -- la unica forma de ver, la proxima vez que esto
+         pase, cual mensaje llego de verdad (incluye 'response.created',
+         'rate_limits.updated', 'conversation.item.created', etc. que hoy no
+         tienen case propio y antes se descartaban en silencio). */
+      console.log('[ElixisVoiceSession][evento]', m.type, m);
       switch(m.type){
         /* Lo que dice el humano, por escrito — la copia de mdj-commander no
            la tenia, la de elixis-console si (ver su propio comentario "LO
@@ -237,19 +273,23 @@
         }
         case 'input_audio_buffer.speech_started':
           hablando=false;
+          limpiarWatchdogPensando();
           emit('onTranscript', { who:'elixis', reset:true });
           emit('onState','listening'); break;
 
         case 'input_audio_buffer.speech_stopped':
+          armarWatchdogPensando();
           emit('onState','understanding'); break;
 
         case 'response.output_audio_transcript.delta':
+          limpiarWatchdogPensando();
           if(!hablando){ hablando=true; _textoElixis=''; emit('onTranscript', { who:'elixis', start:true }); }
           _textoElixis += (m.delta||'');
           emit('onTranscript', { who:'elixis', delta:(m.delta||'') });
           emit('onState','speaking'); break;
 
         case 'response.done': {
+          limpiarWatchdogPensando();
           /* Las llamadas a herramienta viajan DENTRO de response.done. Si se
              cierra el turno aqui sin mirarlas, la consulta no sale nunca. */
           var salida = (m.response && m.response.output) || [];
@@ -262,7 +302,21 @@
           emit('onState','listening'); break;
         }
         case 'error':
-          emit('onError', (m.error && m.error.message) || 'Error en el canal de voz'); break;
+          /* BUG REAL 2026-08-31 (reporte del PO con captura: avatar colgado
+             en "Pensando" indefinidamente). Antes este caso solo avisaba
+             (onError, un placeholder de 3.2s en la caja de texto -- facil de
+             no ver si se esta mirando el avatar) SIN tocar el estado. Si
+             OpenAI rechaza el response.create manual (create_response:false
+             para djmago) a mitad de turno, el aviso pasaba y "entendiendo"
+             se quedaba pintado para siempre -- el watchdog de arriba habria
+             tapado el sintoma en 5s, pero esto ataca la causa real: hay
+             conexion viva (dc/pc siguen abiertos), asi que basta con volver
+             a "escuchando", no hace falta tirar la sesion entera con stop(). */
+          limpiarWatchdogPensando();
+          console.error('[ElixisVoiceSession] error del canal de voz:', m.error || m);
+          emit('onError', (m.error && m.error.message) || 'Error en el canal de voz');
+          emit('onState','listening');
+          break;
       }
     }
 
@@ -421,7 +475,18 @@
        -- solo cambia lo que ELIXIS tiene en mente para el siguiente turno. */
     function actualizarContexto(instrucciones){
       if(!dc || dc.readyState!=='open') return false;
-      dc.send(JSON.stringify({ type:'session.update', session:{ instructions:String(instrucciones||'') } }));
+      /* BUG REAL 2026-08-31 (reporte del PO, error textual de OpenAI en
+         consola: "Missing required parameter: 'session.type'."). Confirmado
+         contra la documentacion oficial actual (developers.openai.com/api/
+         reference/resources/realtime/client-events), no adivinado: el objeto
+         `session` de un session.update ahora es una union de dos formas
+         (RealtimeSessionCreateRequest / RealtimeTranscriptionSessionCreateRequest)
+         y exige `type:"realtime"` para distinguir cual es -- antes esto no
+         hacia falta, cambio de esquema de OpenAI, no un bug de este archivo.
+         Sin este campo, OpenAI rechazaba CUALQUIER cambio de Modo de Enfoque
+         a media llamada con un error real -- que antes de hoy pasaba
+         inadvertido (ver el fix de 'error' que ahora si resetea el estado). */
+      dc.send(JSON.stringify({ type:'session.update', session:{ type:'realtime', instructions:String(instrucciones||'') } }));
       return true;
     }
 

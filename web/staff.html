@@ -41,7 +41,7 @@
   <script src="./subscription.js?v=20260422-find-dj-rank"></script>
   <script src="./js/smartcrate-harmonic-engine.js?v=20260830-camelot-engine"></script>
   <script src="./js/music-hunter-ring-buffer.js?v=20260830-ring-buffer"></script>
-  <script src="./js/elixis-voice-session.js?v=20260831-response-trigger-fix"></script>
+  <script src="./js/elixis-voice-session.js?v=20260831-session-type-fix"></script>
   <script src="./js/elixis-swipe-carousel.js?v=20260827-pointer-wheel-desktop"></script>
   <script src="./js/avatar-frame-player.js?v=20260830-crossorigin-fix"></script>
   <script src="./js/avatar-heygen-chromakey.js?v=20260830-recorte-borde-blanco"></script>
@@ -2321,6 +2321,16 @@
         };
         var ewModoAnterior = null;
         var enfoque=el('ewEnfoque');
+        /* Modo General activo por defecto (2026-08-31, orden del PO: el
+           enfoque real es criterio de quien opera, pero SIN elegir ninguno
+           el comportamiento -- y ahora tambien el aro dorado -- debe ser el
+           generico, nunca el candado estricto de Cazador Musical). Coincide
+           con el default real de elixis-voice-session.js (modoActual=
+           'general'), esto solo pinta el mismo estado, no lo decide. */
+        if(enfoque){
+          var ewBotonGeneral = enfoque.querySelector('[data-modo="general"] .ew-enfoque-icono');
+          if(ewBotonGeneral) ewBotonGeneral.classList.add('activo');
+        }
         if(enfoque) enfoque.querySelectorAll('[data-modo]').forEach(function(b){
           b.onclick=function(){
             enfoque.querySelectorAll('.ew-enfoque-icono').forEach(function(i){ i.classList.remove('activo'); });
