@@ -723,6 +723,18 @@
     .ew-linea{font-size:12.5px;line-height:1.5;color:rgba(255,255,255,.85);}
     .ew-linea b{color:var(--gold);}
     .ew-linea.yo{color:rgba(255,255,255,.55);}
+    /* Etiquetas de participante (2026-08-31, orden del PO: "etiquetas de
+       colores para cada uno de los participantes... opacidad 50%-100%").
+       Colores NO inventados: cyan es el mismo rgba(63,185,230,a) que
+       ewFxCol()/ewFXMAP ya usa para el estado 'transcribing' (cuando habla
+       el humano) en este mismo panel; dorado es var(--gold), la marca de
+       ELIXIS en todo el sitio. 70% de opacidad -- dentro del rango pedido,
+       coherente con el vidrio translucido que ya usa .ew-col alrededor. */
+    .ew-etiqueta{display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.06em;
+      text-transform:uppercase;padding:2px 7px;border-radius:999px;margin-right:6px;
+      vertical-align:middle;line-height:1.4;}
+    .ew-etiqueta-yo{background:rgba(63,185,230,.7);color:#eaf7fc;}
+    .ew-etiqueta-elixis{background:rgba(197,160,89,.7);color:#1a1408;}
     /* Fila de Live Setlist (2026-08-30, Cazador Musical): mismo lenguaje
        visual que .pz (caja redondeada sobre --bg), pero con 2 renglones --
        artista/titulo arriba, bpm/key/hora abajo en mono chico -- porque el
@@ -2251,18 +2263,19 @@
             var vacio=box.querySelector('.ew-vacio'); if(vacio) vacio.remove();
             if(t.reset){ ewSesion._fila=null; return; }
             if(t.who==='yo'){
-              var d=document.createElement('div'); d.className='ew-linea yo'; d.textContent='Tú: '+t.text;
+              var d=document.createElement('div'); d.className='ew-linea yo';
+              d.innerHTML='<span class="ew-etiqueta ew-etiqueta-yo">Tú</span>'+ewEsc(t.text);
               box.appendChild(d); box.scrollTop=box.scrollHeight; return;
             }
             if(t.start){
-              var f=document.createElement('div'); f.className='ew-linea'; f.innerHTML='<b>ELIXIS:</b> ';
+              var f=document.createElement('div'); f.className='ew-linea'; f.innerHTML='<span class="ew-etiqueta ew-etiqueta-elixis">ELIXIS</span>';
               box.appendChild(f); ewSesion._fila=f; ewTxt='';
               /* ELIXIS empieza a redactar -- el sobre aparece vacio y arranca
                  a llenarse con cada fragmento de texto real (ver mas abajo). */
               if(ewHudInst) window.ElixisHudTransmision.fijarEstado(ewHudInst,'envelope_spawn');
             }
             if(ewSesion._fila && t.delta){
-              ewTxt += t.delta; ewSesion._fila.innerHTML='<b>ELIXIS:</b> '+ewEsc(ewTxt);
+              ewTxt += t.delta; ewSesion._fila.innerHTML='<span class="ew-etiqueta ew-etiqueta-elixis">ELIXIS</span>'+ewEsc(ewTxt);
               /* Sprites de boca desactivados -- ver el comentario completo
                  en onLevel(), mismo motivo. */
               if(ewHudInst){
