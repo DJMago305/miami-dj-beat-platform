@@ -78,6 +78,36 @@
     return Math.abs(bpmCandidato - bpmActual) <= tolerancia;
   }
 
+  /* estimarNivelEnergia(track) -- base del motor #3 (Criterio Contextual por
+     Evento, sin construir todavia). Rangos de BPM tal cual los dio el PO en
+     el ticket 2026-08-30; el genero solo entra para partir el nivel 1 del 2
+     dentro del mismo rango "<100 bpm" (el ticket los agrupa como un solo
+     bloque "Warm-up/Lounge" sin frontera numerica entre ambos -- el genero
+     es el unico dato que puede distinguirlos ahi). Fuera de ese caso el BPM
+     manda solo, como pide el ticket con numeros explicitos.
+     Devuelve null (nunca un nivel inventado) si el track no trae BPM real. */
+  var GENEROS_NIVEL_1 = /loung|ambient|chill|downtempo|smooth|easy[\s-]?listening/i;
+
+  function estimarNivelEnergia(track){
+    var bpm = track && Number(track.bpm);
+    if(!bpm || !isFinite(bpm) || bpm <= 0) return null;
+    if(bpm < 100){
+      var genero = String((track && track.genre) || '');
+      return GENEROS_NIVEL_1.test(genero) ? 1 : 2;
+    }
+    if(bpm <= 118) return 3;
+    if(bpm <= 128) return 4;
+    return 5;
+  }
+
+  var ENERGIA_ETIQUETAS = {
+    1: 'Warm-up / Lounge',
+    2: 'Warm-up / Lounge',
+    3: 'Mid-tempo / Groove',
+    4: 'Dancefloor / Peak',
+    5: 'Clímax / High Energy',
+  };
+
   /* Porcentajes por tipo de evento -- DEFAULTS RAZONADOS por este hilo, NO
      verificados/prescritos por el PO (el ticket solo pidio "configurable
      por tipo de evento", sin numeros concretos por tipo). Ajustables sin
@@ -120,6 +150,8 @@
     claveACamelot: claveACamelot,
     analizarCompatibilidad: analizarCompatibilidad,
     calcularTracksCompatibles: calcularTracksCompatibles,
+    estimarNivelEnergia: estimarNivelEnergia,
+    ENERGIA_ETIQUETAS: ENERGIA_ETIQUETAS,
     RANGO_BPM_POR_EVENTO: RANGO_BPM_POR_EVENTO,
     RANGO_BPM_DEFAULT: RANGO_BPM_DEFAULT,
   };

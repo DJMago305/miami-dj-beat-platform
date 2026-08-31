@@ -1303,6 +1303,12 @@
             </div>
 
             <div class="sc-panel active" id="scPanelCatalogo">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+                <input type="search" id="smartcrateBuscador" placeholder="Buscar por título, artista o género…" style="flex:1 1 220px;min-width:180px;background:var(--panel,#0b0f18);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:7px 12px;font-size:13px;" />
+                <select id="smartcrateCamelotFiltro" style="background:var(--panel,#0b0f18);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:13px;" title="Filtrar por tonalidad Camelot">
+                  <option value="">Todas las claves</option>
+                </select>
+              </div>
               <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
                 <label style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.5);">Tipo de evento (macro — calibra el rango de BPM)</label>
                 <select id="smartcrateEvento" style="background:var(--panel,#0b0f18);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:13px;">
@@ -2491,9 +2497,52 @@
           if(app) app.innerHTML = '<p style="color:rgba(255,150,140,.8);font-size:13px;">No se pudo cargar el catálogo de prueba.</p>';
           return;
         }
+        smartcrateLlenarFiltroCamelot();
         renderSmartcrateTabla();
         var sel = el('smartcrateEvento');
         if(sel) sel.onchange = function(){ if(smartcrateSeleccionado) renderSmartcrateCompatibles(smartcrateSeleccionado); };
+        var buscador = el('smartcrateBuscador');
+        if(buscador) buscador.oninput = renderSmartcrateTabla;
+        var filtroCamelot = el('smartcrateCamelotFiltro');
+        if(filtroCamelot) filtroCamelot.onchange = renderSmartcrateTabla;
+      }
+
+      /* Rueda Camelot completa (1A..12A, 1B..12B) para el selector directo del
+         ticket 2026-08-30 -- opciones fijas, no derivadas del catálogo, para
+         poder pedir "todos los 8A" aunque hoy no haya ninguno cargado. */
+      function smartcrateLlenarFiltroCamelot(){
+        var sel = el('smartcrateCamelotFiltro'); if(!sel || sel.__lleno) return;
+        sel.__lleno = true;
+        var opciones = [];
+        for(var n=1; n<=12; n++){ opciones.push(n+'A'); }
+        for(var m=1; m<=12; m++){ opciones.push(m+'B'); }
+        opciones.forEach(function(codigo){
+          var op = document.createElement('option');
+          op.value = codigo; op.textContent = codigo;
+          sel.appendChild(op);
+        });
+      }
+
+      /* Filtro combinado (buscador de texto + clave Camelot exacta) sobre el
+         catálogo completo -- ninguno de los dos toca smartcrateCatalogo, solo
+         acotan qué se pinta. */
+      function smartcrateListaFiltrada(){
+        var buscador = el('smartcrateBuscador');
+        var textoBusq = buscador ? buscador.value.trim().toLowerCase() : '';
+        var filtroCamelot = el('smartcrateCamelotFiltro');
+        var codigoFiltro = filtroCamelot ? filtroCamelot.value : '';
+        var engine = window.SmartCrateHarmonicEngine;
+        return smartcrateCatalogo.filter(function(t){
+          if(codigoFiltro){
+            var codigo = engine ? engine.claveACamelot(t.key) : null;
+            if(codigo !== codigoFiltro) return false;
+          }
+          if(textoBusq){
+            var texto = (String(t.title||'') + ' ' + String(t.artist||'') + ' ' + String(t.genre||'')).toLowerCase();
+            if(texto.indexOf(textoBusq) === -1) return false;
+          }
+          return true;
+        });
       }
 
       /* Estado de la vista -- vive fuera de iniciarSmartcrateIA() porque el
@@ -2502,20 +2551,28 @@
       var smartcrateCatalogo = [];
       var smartcrateSeleccionado = null;
 
+      var ENERGIA_COLOR = { 1:'#6ea8ff', 2:'#6ea8ff', 3:'#6edc8b', 4:'#e0b34d', 5:'#e0664d' };
       function renderSmartcrateTabla(){
         var tabla = el('smartcrateTabla'); if(!tabla) return;
+        var engine = window.SmartCrateHarmonicEngine;
         var contador = el('smartcrateContador');
-        if(contador) contador.textContent = smartcrateCatalogo.length + ' tracks';
-        var html = smartcrateCatalogo.map(function(t){
-          var camelot = window.SmartCrateHarmonicEngine ? window.SmartCrateHarmonicEngine.claveACamelot(t.key) : null;
+        var lista = smartcrateListaFiltrada();
+        if(contador) contador.textContent = lista.length === smartcrateCatalogo.length
+          ? (lista.length + ' tracks')
+          : (lista.length + ' de ' + smartcrateCatalogo.length + ' tracks');
+        var html = lista.map(function(t){
+          var camelot = engine ? engine.claveACamelot(t.key) : null;
+          var nivel = engine ? engine.estimarNivelEnergia(t) : null;
+          var etiquetaNivel = (nivel && engine.ENERGIA_ETIQUETAS[nivel]) || '';
           return '<div class="smartcrate-fila" data-id="' + t.id + '" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--line);cursor:pointer;font-size:12.5px;">' +
             '<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);">' + ewEsc(t.title || t.path || '(sin título)') + '</span>' +
             '<span style="color:rgba(255,255,255,.45);flex:0 0 auto;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + ewEsc(t.artist || '') + '</span>' +
             '<span style="flex:0 0 auto;color:rgba(255,255,255,.5);font-family:var(--mono,monospace);">' + (t.bpm ? Math.round(t.bpm) : '—') + '</span>' +
             '<span style="flex:0 0 auto;min-width:34px;text-align:center;font-family:var(--mono,monospace);font-weight:700;border-radius:6px;padding:2px 6px;' + (camelot ? 'background:rgba(197,160,89,.18);color:var(--gold-lt,var(--gold));' : 'background:rgba(255,255,255,.05);color:rgba(255,255,255,.3);') + '">' + (camelot || '—') + '</span>' +
+            '<span title="' + (etiquetaNivel ? 'Energía: ' + etiquetaNivel : 'Energía desconocida (sin BPM)') + '" style="flex:0 0 auto;min-width:22px;text-align:center;font-family:var(--mono,monospace);font-weight:700;font-size:11px;border-radius:6px;padding:2px 5px;' + (nivel ? ('background:' + ENERGIA_COLOR[nivel] + '22;color:' + ENERGIA_COLOR[nivel] + ';') : 'background:rgba(255,255,255,.05);color:rgba(255,255,255,.3);') + '">' + (nivel || '—') + '</span>' +
           '</div>';
         }).join('');
-        tabla.innerHTML = html || '<div style="padding:16px;color:rgba(255,255,255,.4);font-size:13px;">Catálogo vacío.</div>';
+        tabla.innerHTML = html || ('<div style="padding:16px;color:rgba(255,255,255,.4);font-size:13px;">' + (smartcrateCatalogo.length ? 'Sin resultados para este filtro.' : 'Catálogo vacío.') + '</div>');
         tabla.querySelectorAll('.smartcrate-fila').forEach(function(fila){
           fila.onclick = function(){
             var id = Number(fila.getAttribute('data-id'));
