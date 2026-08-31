@@ -712,6 +712,19 @@
     .avatar-stage.idle ~ .ew-estado{opacity:0;transition:opacity .18s linear;}
     .avatar-stage:not(.idle){opacity:1;transition:opacity .18s linear;}
     .avatar-stage:not(.idle) ~ .ew-estado{opacity:1;transition:opacity .18s linear;}
+    /* Chat central (2026-08-31): mismo criterio de arriba ("en idle... nada
+       de rastros") -- oculto por defecto, aparece SOLO cuando hay lineas de
+       verdad (.ew-mostrar, ver ewActualizarChatCentro()). Vidrio traslucido
+       igual que .ew-col (panel-glass+blur), para que la red de particulas
+       se siga viendo alrededor -- el chat no tapa el fondo entero, se lee
+       encima de el. z-index 4: por encima del avatar (3) y su brillo, por
+       debajo de los orbes/barra de texto (5) para que sigan siendo
+       clicables. */
+    .ew-chat-centro{position:absolute; top:6px; left:50%; transform:translateX(-50%);
+      width:min(460px,94%); bottom:112px; z-index:4; display:none;
+      background:var(--panel-glass, rgba(11,15,24,.62)); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+      border:1px solid var(--line); border-radius:14px; padding:12px; box-sizing:border-box;}
+    .ew-chat-centro.ew-mostrar{display:flex; flex-direction:column; gap:8px;}
     /* Fondo transparente / borde visible (2026-08-30, reporte en vivo del PO:
        "el borde... es casi invisible necesito sea transparente pero los
        bordes visibles") -- antes el relleno oscuro (rgba(11,15,24,.55)) era
@@ -1280,6 +1293,17 @@
                   <img class="avatar-viseme" data-viseme alt="">
                   <video class="avatar-stream" id="elixis-avatar-stream" autoplay playsinline muted></video>
                 </div>
+                <!-- Chat central (2026-08-31, reubicado aqui por orden directa
+                     del PO -- "el chat se hace en el centro, para eso tenemos
+                     el centro, no la pestana de al lado"). MISMO elemento,
+                     mismo id, que antes vivia dentro de #ewPanelDer -- todo
+                     el JS que lo llena (onTranscript, ewCargarHiloDeModo,
+                     ewPintarLineaHilo) sigue igual, solo cambio su padre.
+                     Se ve por encima del avatar (ya invisible en 'idle', que
+                     es el estado en el que se queda enviarTextoSolo() a
+                     proposito) -- visibilidad real via ewActualizarChatCentro()
+                     mas abajo: solo aparece cuando hay lineas de verdad. -->
+                <div class="ew-col-body ew-chat-centro" id="ewTranscripcion"><div class="ew-vacio">La conversación aparecerá aquí.</div></div>
                 <div class="ew-estado" id="ewEstado">Inactivo</div>
                 <div class="ew-texto-flotante-wrap" id="ewTextoWrap">
                   <textarea id="ewTextoInput" rows="1" placeholder="Escribe a ELIXIS…"
@@ -1336,7 +1360,15 @@
                      oculto por completo en General/Cazador (esos dos ya
                      tienen su propia vista real: Hilos hub y Live Setlist). -->
                 <div id="ewBloqueEspecializado" style="display:none;"></div>
-                <div class="ew-col-body" id="ewTranscripcion"><div class="ew-vacio">La conversación aparecerá aquí.</div></div>
+                <!-- #ewTranscripcion vivia AQUI hasta 2026-08-31 -- se mudo al
+                     panel CENTRAL (.ew-mid, junto a #ewAvatarStage). Reporte
+                     directo del PO, dos veces: "el chat se hace en el centro,
+                     no en la pestana de al lado" -- este panel derecho ahora
+                     es solo el picker/gestor de hilos (lista + paneles por
+                     modo), no la vista viva de la conversacion. Misma
+                     etiqueta, mismo elemento (mismo id) -- ningun JS que lo
+                     referencia (onTranscript/ewCargarHiloDeModo/etc) cambio,
+                     solo su padre en el DOM. -->
                 <!-- Live Setlist (2026-08-30, Cazador Musical / Modo B): se llena
                      via el handler onMusicHunterTrack de ewSesion.crear() mas abajo.
                      Fuera de ese modo se queda vacia a proposito -- no es un error,
@@ -2183,7 +2215,19 @@
 
       function ewEsc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m];}); }
 
-      var ewSesion = null, ewIniciado = false, ewTxt='', ewHablando = false;
+      var ewSesion = null, ewIniciado = false, ewTxt='', ewHablando = false, ewTextoFxTimer = null;
+      /* Chat central (2026-08-31): #ewTranscripcion solo se muestra cuando
+         tiene lineas de verdad -- mismo criterio ya usado en .avatar-stage.idle
+         ("en idle... nada de rastros"), aplicado al chat en vez de al avatar
+         (que ya se oculta solo via esa regla cuando no hay voz activa). Se
+         llama despues de CADA pintura/limpieza real (onTranscript,
+         ewCargarHiloDeModo, "+ Nuevo", borrar hilo), nunca se infiere del
+         estado del avatar (texto puro nunca lo toca). */
+      function ewActualizarChatCentro(){
+        var box=el('ewTranscripcion'); if(!box) return;
+        var hay = !!box.querySelector('.ew-linea');
+        box.classList.toggle('ew-mostrar', hay);
+      }
       /* Acordeon de escritorio (2026-08-29, directiva del PO): izquierda
          (Modo Enfoque) la abre/cierra el usuario a mano; derecha (Hilos &
          Transcripcion) se abre SOLA en cuanto se lanza una orden real (deja
@@ -2360,21 +2404,40 @@
             ewFX.voiceLevel = pulso;
           },
           onTranscript: function(t){
-            /* BUG REAL 2026-08-31 (reporte del PO: escribe texto y "no sale
-               nada en el chat" -- el contenido SI se escribia en #ewTranscripcion,
-               pero el panel arranca cerrado por defecto (mismo dia) y nada lo
-               abria para una respuesta de solo texto (esa via no pasa por
-               onState/onTool, que son los otros dos disparadores reales).
-               Sin voz no hay otra forma de "escuchar" la respuesta -- si el
-               usuario escribio, tiene que poder leerla. */
-            if(t.textoSolo && !ewAcordeon.der){ ewAcordeon.der=true; ewAplicarAcordeon(); }
+            /* AJUSTE 2026-08-31 (reporte directo del PO, dos veces: "el chat
+               se hace en el centro, no en la pestana de al lado"): el viejo
+               disparador que abria el ACORDEON DERECHO para "no sale nada en
+               el chat" ya no aplica -- #ewTranscripcion se mudo al panel
+               CENTRAL (junto al avatar), asi que no depende de que el panel
+               derecho este abierto. Su visibilidad real ahora la decide
+               ewActualizarChatCentro() (mas abajo), no el acordeon. */
             var box=el('ewTranscripcion'); if(!box) return;
             var vacio=box.querySelector('.ew-vacio'); if(vacio) vacio.remove();
             if(t.reset){ ewSesion._fila=null; return; }
+            /* Red de energia reacciona a texto puro (2026-08-31, orden del
+               PO: "la red se tiene que mover al escribir... efecto de que
+               esta pensando y esta respondiendo"). Solo para textoSolo --
+               la voz YA mueve la red via onState()/ewMountFX mas abajo; esto
+               es el equivalente para cuando no hay sesion de voz activa. La
+               linea "Tu" que emite enviarTextoSolo() llega justo cuando el
+               HTTP a elixis-orchestrator ya salio -- ese es el momento real
+               de "pensando" (understanding = magenta, el mismo look que ya
+               significa eso en ewFXMAP). */
+            if(t.textoSolo && t.who==='yo') ewMountFX('understanding');
+            if(t.textoSolo && t.start) ewMountFX('speaking');
+            if(t.textoSolo && t.delta){
+              /* La respuesta de enviarTextoSolo() llega completa en UN solo
+                 delta (no hay streaming real todavia, ver el propio
+                 enviarTextoSolo() en elixis-voice-session.js) -- se asienta
+                 de vuelta a 'idle' un instante despues, no de inmediato, para
+                 que el ojo alcance a ver el cambio de color/intensidad. */
+              if(ewTextoFxTimer) clearTimeout(ewTextoFxTimer);
+              ewTextoFxTimer = setTimeout(function(){ ewMountFX('idle'); ewTextoFxTimer=null; }, 900);
+            }
             if(t.who==='yo'){
               var d=document.createElement('div'); d.className='ew-linea yo';
               d.innerHTML='<span class="ew-etiqueta ew-etiqueta-yo">Tú</span>'+ewEsc(t.text);
-              box.appendChild(d); box.scrollTop=box.scrollHeight; return;
+              box.appendChild(d); box.scrollTop=box.scrollHeight; ewActualizarChatCentro(); return;
             }
             if(t.start){
               var f=document.createElement('div'); f.className='ew-linea'; f.innerHTML='<span class="ew-etiqueta ew-etiqueta-elixis">ELIXIS</span>';
@@ -2393,6 +2456,7 @@
               }
             }
             box.scrollTop=box.scrollHeight;
+            ewActualizarChatCentro();
           },
           onTool: function(info){
             var box=el('ewProceso'); if(!box) return;
@@ -2485,7 +2549,16 @@
            voice-session.js), que nunca toca el microfono. */
         var txt=el('ewTextoInput');
         if(txt){
-          txt.addEventListener('input', function(){ txt.style.height='auto'; txt.style.height=Math.min(txt.scrollHeight,96)+'px'; });
+          txt.addEventListener('input', function(){
+            txt.style.height='auto'; txt.style.height=Math.min(txt.scrollHeight,96)+'px';
+            /* Red de energia reacciona a CADA tecla (2026-08-31, orden del
+               PO: "se tiene que mover al escribir como si captara
+               movimientos en escritura"). Empuja voiceLevel igual que un
+               nivel de audio real (onLevel() hace lo mismo con la voz) --
+               el propio ewFxDraw() ya lo suaviza cuadro a cuadro (lerp
+               *0.3), asi que cada pulso decae solo sin acumular sin limite. */
+            ewFX.voiceLevel = Math.min(1, (ewFX.voiceLevel||0) + 0.45);
+          });
           txt.addEventListener('keydown', function(e){
             if(e.key==='Enter' && !e.shiftKey && !e.isComposing){
               e.preventDefault();
@@ -2710,6 +2783,7 @@
           if(modo === ewModoAnterior || (ewModoAnterior===null && modo==='general')){
             var box=el('ewTranscripcion'); if(box) box.innerHTML='<div class="ew-vacio">La conversación aparecerá aquí.</div>';
             if(ewSesion.cargarHistorialTexto) ewSesion.cargarHistorialTexto([]);
+            ewActualizarChatCentro();
           }
           ewCargarHilosLista();
         }
@@ -2738,6 +2812,7 @@
             box.innerHTML='';
             if(!filas.length) box.innerHTML='<div class="ew-vacio">La conversación aparecerá aquí.</div>';
             else filas.forEach(function(f){ ewPintarLineaHilo(f.rol, f.contenido); box.scrollTop=box.scrollHeight; });
+            ewActualizarChatCentro();
           }
           if(ewSesion && ewSesion.cargarHistorialTexto){
             ewSesion.cargarHistorialTexto(filas.map(function(f){ return { role: f.rol==='yo' ? 'user' : 'assistant', content: f.contenido }; }));
@@ -3031,6 +3106,7 @@
           }
           var box=el('ewTranscripcion'); if(box) box.innerHTML='<div class="ew-vacio">La conversación aparecerá aquí.</div>';
           if(ewSesion.cargarHistorialTexto) ewSesion.cargarHistorialTexto([]);
+          ewActualizarChatCentro();
           ewSesion.fijarModo(modo, EW_CONTEXTOS[modo] || EW_CONTEXTOS.general);
           ewCargarHilosLista();
         };
