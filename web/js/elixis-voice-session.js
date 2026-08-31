@@ -248,23 +248,17 @@
           if(dicho){
             emit('onTranscript', { who:'yo', text:dicho, final:true });
             emit('onThreadLine', { rol:'yo', contenido:dicho, modo:modoActual });
-            /* BUG REAL 2026-08-31 (reporte del PO: DjMago se queda mudo
-               fuera de Cazador Musical, en los otros 5 modos): este
-               candado nacio cuando identidadActual==='djmago' implicaba
-               SIEMPRE "estamos en Cazador Musical" -- ya no es asi desde
-               que la identidad se fijo incondicional en los 6 modos. Con
-               create_response:false, llegar hasta aca (transcripcion real,
-               turno detectado) NUNCA implica que DjMago hable solo; alguien
-               tiene que mandar response.create. Restringir ese disparo a
-               "solo si preguntan por la cancion" tiene sentido DENTRO de
-               Cazador Musical (para no narrar el music-hunter de fondo por
-               su cuenta) pero fuera de ahi silenciaba cualquier pregunta
-               real. Ahora el candado por regex solo aplica en modoActual
-               ==='cazador'; en el resto, cualquier transcripcion real
-               dispara respuesta, igual que ELIXIS. */
-            if(identidadActual === 'djmago' && dc && dc.readyState==='open'){
-              var esCazador = modoActual === 'cazador';
-              if(!esCazador || PREGUNTA_CANCION_RE.test(dicho)){
+            /* CORRECCION 2026-08-31 (server: elixis-realtime-session ahora
+               solo pone create_response:false cuando modoReq==='cazador' --
+               ver ese archivo para el porque completo). En los otros 5
+               modos OpenAI genera la respuesta el solo (create_response:
+               true, flujo nativo) -- mandar este response.create manual ahi
+               TAMBIEN seria redundante (y arriesga un error real de OpenAI,
+               "ya hay una respuesta activa", si el nativo ya iba a
+               disparar). El disparo manual queda EXCLUSIVO de Cazador
+               Musical, donde el servidor de verdad se queda mudo sin el. */
+            if(identidadActual === 'djmago' && modoActual === 'cazador' && dc && dc.readyState==='open'){
+              if(PREGUNTA_CANCION_RE.test(dicho)){
                 dc.send(JSON.stringify({ type:'response.create' }));
               }
             }
@@ -351,7 +345,21 @@
       pc = new RTCPeerConnection();
       spk = handlers.getAudioEl ? handlers.getAudioEl() : null;
       pc.ontrack = function(ev){
-        if(spk){ try{ spk.srcObject = ev.streams[0]; spk.play(); }catch(_){ } }
+        /* .play() devuelve una Promise -- si Safari bloquea el autoplay
+           (NotAllowedError), rechaza SIN tirar una excepcion sincronica, asi
+           que el try/catch de aqui nunca la atrapaba: el audio de respuesta
+           se perdia en silencio total, sin ni una linea en consola (2026-08-
+           31, mismo reporte del PO: "no hay salida de audio"). Ahora se
+           loguea de verdad si esto pasa. */
+        if(spk){
+          try{
+            spk.srcObject = ev.streams[0];
+            var p = spk.play();
+            if(p && typeof p.catch === 'function'){
+              p.catch(function(e){ console.warn('[ElixisVoiceSession] audio remoto bloqueado (autoplay):', e && e.message); });
+            }
+          }catch(_){ }
+        }
         anRem = analizador(ev.streams[0]);
       };
       mic.getAudioTracks().forEach(function(t){ pc.addTrack(t, mic); });

@@ -721,8 +721,26 @@ serve(async (req: Request) => {
         instructions: buildInstructions(gate.name, gate.role, memoria, modoEnfoque, identidad),
         audio: {
             input: {
-                // DJMago SIEMPRE con el umbral alto -- ver DJMAGO_VAD_THRESHOLD
-                // arriba -- sin importar que ?vad= haya mandado el cliente.
+                // BUG REAL 2026-08-31 (reporte del PO: microfono activo,
+                // "Escuchando", panel de Hilos & Transcripcion sin ninguna
+                // actividad -- ni una transcripcion, en ningun modo). Este
+                // umbral (0.85) y create_response:false nacieron el
+                // 2026-08-30 exclusivamente para Cazador Musical (musica real
+                // sonando CERCA del microfono, ver historia completa abajo),
+                // pero la condicion de arriba era "identidad===djmago" a
+                // secas -- desde que djmago se volvio la identidad de los 6
+                // modos (commit 4d3c83f), este umbral tan alto (pensado
+                // contra musica de fondo en una cabina) tambien se aplicaba
+                // en modos de oficina probados en silencio normal, donde la
+                // voz nunca llega a superarlo -- el VAD del servidor jamas
+                // detecta "hablo alguien" y no hay turno que cerrar, sin
+                // importar nada del lado del cliente. Acotado a modoReq
+                // ==='cazador': en el resto, flujo 100% nativo de OpenAI
+                // (semantic_vad + create_response:true, la rama de abajo).
+                //
+                // DJMago SIEMPRE con el umbral alto EN CAZADOR MUSICAL -- ver
+                // DJMAGO_VAD_THRESHOLD arriba -- sin importar que ?vad= haya
+                // mandado el cliente.
                 // create_response:false (2026-08-30, sesion real con capturas
                 // Y CONSOLA: DjMago seguia hablando solo -- "No escuché nada
                 // claro..." repetido dos veces, comentarios espontaneos sobre
@@ -742,7 +760,13 @@ serve(async (req: Request) => {
                 // session.js, mismo mecanismo que ya usa herramienta() tras
                 // una tool-call. Directiva explicita del PO: "modo dialogo
                 // solo para cuando le pregunten que cancion esta sonando".
-                turn_detection: identidad === "djmago"
+                // NOTA 2026-08-31: se evaluo quitar esto tambien en Cazador
+                // (orden del PO, controlar todo solo por prompt) pero el
+                // parrafo de arriba es el resultado de una prueba real que ya
+                // demostro que el prompt solo no alcanza -- queda tal cual
+                // hasta que el PO confirme explicitamente que acepta ese
+                // riesgo conocido.
+                turn_detection: (identidad === "djmago" && modoReq === "cazador")
                     ? { ...STRICT_TURN_DETECTION, threshold: DJMAGO_VAD_THRESHOLD, silence_duration_ms: DJMAGO_SILENCE_DURATION_MS, create_response: false }
                     : estricto ? STRICT_TURN_DETECTION : {
                         type: "semantic_vad",
