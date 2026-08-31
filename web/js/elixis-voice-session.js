@@ -764,12 +764,55 @@
       texto = String(texto||'').trim();
       if(!texto) return;
       if(!dc || dc.readyState!=='open'){
-        emit('onError','Activa la voz antes de escribir — así no se toca el micrófono sin que tú lo pidas.');
+        enviarTextoSolo(texto);
         return;
       }
       dc.send(JSON.stringify({ type:'conversation.item.create',
         item:{ type:'message', role:'user', content:[{ type:'input_text', text:texto }] } }));
       dc.send(JSON.stringify({ type:'response.create' }));
+    }
+
+    /* Modo escritura SIN sesion de voz (2026-08-31, orden del PO: escribir
+       no debe exigir microfono). NO se implemento como pedia el ticket
+       literal ("conecta la sesion WebRTC en segundo plano" / "modo solo-
+       datos sin audio") -- el comentario de arriba documenta el incidente
+       REAL que puso este candado en primer lugar (2026-08-29: escribir sin
+       sesion activa disparaba getUserMedia() por primera vez en la pestana y
+       corto el audio de Serato en vivo). Cualquier camino que termine
+       llamando a start() como efecto secundario de escribir reabre EXACTAMENTE
+       ese incidente. En vez de eso, reusa el MISMO backend de texto puro que
+       ya usa mdj-commander.html (askElixis() -> elixis-orchestrator, HTTP
+       plano) -- nunca toca WebRTC, RTCPeerConnection ni getUserMedia. La
+       Realtime API tampoco documenta un modo "solo texto, sin audio" real
+       para WebRTC -- forzar eso a ciegas habria arriesgado el mismo tipo de
+       error de esquema que ya costo una sesion completa (session.type). */
+    async function enviarTextoSolo(texto){
+      var url = window.mdbSupabaseFunctionUrl ? window.mdbSupabaseFunctionUrl('elixis-orchestrator') : null;
+      if(!url){ emit('onError','No pude ubicar el servidor de texto.'); return; }
+      emit('onTranscript', { who:'yo', text:texto, final:true });
+      emit('onThreadLine', { rol:'yo', contenido:texto, modo:modoActual });
+      /* Sin sesion de voz no hay watchdog de "Pensando" armado (esa maquina
+         de estados vive en evento(), atada al canal de datos) -- basta con
+         el estado visual, no hace falta duplicar el temporizador aqui. */
+      emit('onState','understanding');
+      try{
+        var h = await headers();
+        var res = await fetch(url, { method:'POST', headers:h, body:JSON.stringify({ message:texto }) });
+        if(res.status===401){ emit('onUnauthorized'); return; }
+        var d = {}; try{ d = await res.json(); }catch(_){}
+        if(!res.ok || !d.reply){
+          emit('onError', (d && d.error==='forbidden_not_staff') ? 'Esta cuenta no tiene acceso de staff/owner.' : 'No se pudo obtener respuesta de texto.');
+          emit('onState','idle');
+          return;
+        }
+        emit('onTranscript', { who:'elixis', start:true });
+        emit('onTranscript', { who:'elixis', delta:d.reply });
+        emit('onThreadLine', { rol:'elixis', contenido:d.reply, modo:modoActual, textoSolo:true });
+        emit('onState','idle');
+      }catch(e){
+        emit('onError','No pude conectar con el texto.');
+        emit('onState','idle');
+      }
     }
 
     /* Dispara el pre-calentado al entrar al workspace, no al primer clic

@@ -41,7 +41,7 @@
   <script src="./subscription.js?v=20260422-find-dj-rank"></script>
   <script src="./js/smartcrate-harmonic-engine.js?v=20260830-camelot-engine"></script>
   <script src="./js/music-hunter-ring-buffer.js?v=20260830-ring-buffer"></script>
-  <script src="./js/elixis-voice-session.js?v=20260831-audio-tail-cooldown"></script>
+  <script src="./js/elixis-voice-session.js?v=20260831-text-standalone-mode"></script>
   <script src="./js/elixis-swipe-carousel.js?v=20260827-pointer-wheel-desktop"></script>
   <script src="./js/avatar-frame-player.js?v=20260830-crossorigin-fix"></script>
   <script src="./js/avatar-heygen-chromakey.js?v=20260830-recorte-borde-blanco"></script>
@@ -673,17 +673,18 @@
       border-color:var(--gold);
       animation-duration:2.6s;
     }
-    /* Barra de escritura flotante (2026-08-29, directiva del PO: "esa ya
-       existe... que desaparece cuando se llama al avatar" -- mismo patron
-       visual que .cmd-input de mdj-commander.html: pastilla translucida,
-       la red de particulas se ve pasar por detras, sin fondo propio en el
-       contenedor. Escribir+enviar usa ElixisVoiceSession.enviarTexto(), que
-       arranca la sesion sola si todavia no esta viva -- por eso se oculta
-       en cuanto estado deje de ser 'idle' (ver JS): una vez que se "llama"
-       al avatar (por voz o por este texto), no hace falta seguir viendola. */
+    /* Barra de escritura flotante -- pastilla translucida, mismo patron
+       visual que .cmd-input de mdj-commander.html, la red de particulas se
+       ve pasar por detras, sin fondo propio en el contenedor.
+       SUPERSEDE la directiva 2026-08-29 ("desaparece en cuanto se llama al
+       avatar"): orden nueva del PO (2026-08-31, "el campo de texto debe
+       estar SIEMPRE habilitado... sin importar si el microfono esta
+       encendido o apagado") -- ya no se oculta al dejar 'idle'. Escribir es
+       independiente de la voz de verdad ahora: ver enviarTextoSolo() en
+       elixis-voice-session.js, que responde por texto sin tocar el
+       microfono cuando no hay sesion de voz activa. */
     .ew-texto-flotante-wrap{position:absolute;left:50%;bottom:96px;transform:translateX(-50%);z-index:5;
       width:min(460px,92%);transition:opacity .18s linear,transform .18s ease;}
-    .avatar-stage:not(.idle) ~ .ew-texto-flotante-wrap{opacity:0;pointer-events:none;transform:translateX(-50%) translateY(6px);}
     /* Modo escritura en reposo (2026-08-29, directiva del PO: "el cuadro y
        el letrero inactivo no van ahi, solo la red de energia... nada de
        rastros"): en idle no se ve ni la cajita del avatar ni el texto de
@@ -2184,14 +2185,19 @@
                subtitulos sin necesidad -- el avatar es el protagonista de
                esa conversacion). Antes se abria con CUALQUIER estado que no
                fuera 'idle' (directiva del 2026-08-30, ya superada por esta).
-               Ahora el auto-abrir queda acotado a Cazador Musical (para el
-               Live Setlist en vivo, unico caso donde el panel es
-               informacion que de verdad hace falta ver sin buscarla) -- el
-               otro disparador real (una herramienta ejecutandose de verdad)
-               vive en onTool() mas abajo, no aqui. El cierre automatico al
-               llegar a 'idle' de verdad SI se conserva para los dos casos:
-               si algo lo abrio solo, algo lo cierra solo. */
-            if(estado!=='idle' && ewModoAnterior==='cazador' && !ewAcordeon.der){ ewAcordeon.der=true; ewAplicarAcordeon(); }
+               Ahora el auto-abrir queda acotado a Cazador Musical (Live
+               Setlist en vivo) y Modo Correo (editor/widget de redaccion,
+               ampliado el mismo dia) -- los dos casos donde el panel es
+               informacion que de verdad hace falta ver sin buscarla. El
+               otro disparador real (una herramienta ejecutandose de verdad:
+               presupuestos, escaletas, contratos) vive en onTool() mas
+               abajo, no aqui -- son 3 tools reales hoy (consultar_elixis/
+               recordar/olvidar), CUALQUIERA de ellas cuenta como "tarea
+               estructurada" real, no hay una tool por tipo de tarea todavia.
+               El cierre automatico al llegar a 'idle' de verdad SI se
+               conserva para todos los casos: si algo lo abrio solo, algo lo
+               cierra solo. */
+            if(estado!=='idle' && (ewModoAnterior==='cazador' || ewModoAnterior==='correo') && !ewAcordeon.der){ ewAcordeon.der=true; ewAplicarAcordeon(); }
             else if(estado==='idle' && ewAcordeon.der){ ewAcordeon.der=false; ewAplicarAcordeon(); }
             /* Cazador Musical: si el modo ya estaba elegido ANTES de tocar el
                orbe (musicHunterNodo no existia todavia), el ciclo de fondo
@@ -2332,10 +2338,12 @@
         if(btn) btn.onclick=function(){ if(ewSesion.activa()) ewSesion.stop(); else ewSesion.start(); };
 
         /* Barra de texto flotante: Enter manda (Shift+Enter salta de linea),
-           igual que en mdj-commander.html. enviarTexto() arranca la sesion
-           sola si hace falta -- escribir es tan valido como hablar para
-           "llamar" al avatar. La barra misma se oculta por CSS en cuanto
-           .avatar-stage deja el estado idle (ver arriba), sin JS extra. */
+           igual que en mdj-commander.html. AJUSTE 2026-08-31 (orden del PO):
+           ya NO se oculta por CSS al dejar 'idle' (ver nota junto a
+           .ew-texto-flotante-wrap, arriba) -- queda visible y utilizable
+           siempre. enviarTexto() ya no exige sesion de voz activa: sin
+           sesion, responde por texto puro via enviarTextoSolo() (elixis-
+           voice-session.js), que nunca toca el microfono. */
         var txt=el('ewTextoInput');
         if(txt){
           txt.addEventListener('input', function(){ txt.style.height='auto'; txt.style.height=Math.min(txt.scrollHeight,96)+'px'; });
