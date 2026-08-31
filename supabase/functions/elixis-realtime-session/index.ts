@@ -78,13 +78,20 @@ const STRICT_TURN_DETECTION = {
 // oficina/general. semantic_vad clasifica por significado, sin un numero que
 // ajustar -- si el PO reporta "corta las frases con pausas cortas" o "es
 // sensible al ruido", no hay parametro que tocar. server_vad si los tiene:
-// 0.55 filtra ruido bajo sin exigir gritarle al microfono, 300ms de
-// prefix_padding para no comerse la primera silaba de la frase, 700ms de
-// silencio para permitir una pausa natural sin que el turno se cierre solo.
-// Mismo patron env-overridable que STRICT_TURN_DETECTION arriba.
+// 300ms de prefix_padding para no comerse la primera silaba de la frase,
+// 700ms de silencio para permitir una pausa natural sin que el turno se
+// cierre solo. Mismo patron env-overridable que STRICT_TURN_DETECTION arriba.
+// UMBRAL 0.65, no 0.55 (2026-08-31, mismo dia, reporte de monologo infinito
+// con captura): 0.55 dejaba pasar rebotes acusticos leves del propio audio
+// de ELIXIS/DjMago como si fueran turno nuevo del usuario -- 0.65 sigue muy
+// por debajo del 0.85 de Cazador Musical (esto NO es la cabina ruidosa de
+// DjMago, es una correccion mas fina) pero ya no confunde el eco leve con
+// voz real. La correccion principal del monologo vive en el cliente
+// (elixis-voice-session.js: cooldown + input_audio_buffer.clear antes de
+// reactivar el mic) -- esto es defensa en profundidad, no el fix completo.
 const STANDARD_TURN_DETECTION = {
     type: "server_vad",
-    threshold: Number(Deno.env.get("ELIXIS_STANDARD_VAD_THRESHOLD") ?? "0.55"),
+    threshold: Number(Deno.env.get("ELIXIS_STANDARD_VAD_THRESHOLD") ?? "0.65"),
     prefix_padding_ms: Number(Deno.env.get("ELIXIS_STANDARD_PREFIX_PADDING_MS") ?? "300"),
     silence_duration_ms: Number(Deno.env.get("ELIXIS_STANDARD_SILENCE_MS") ?? "700"),
     create_response: true,

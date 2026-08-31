@@ -54,6 +54,18 @@
     var hablando=false, vivo=false, pulso=0, modoActual='general', _textoElixis='';
     var conectando=false, micPrecalentado=null;
     var watchdogPensando=null; // ver limpiarWatchdogPensando()/evento()
+    /* BUG REAL 2026-08-31 (reporte del PO con captura: monologo infinito --
+       ELIXIS respondiendose a si misma, "Uff, boda!"..."Si, para romperla de
+       verdad..."). El mute de anoche (arriba, response.output_audio_
+       transcript.delta) corta el eco MIENTRAS habla, pero reactivaba el mic
+       de inmediato en response.done -- ese evento es del CANAL DE DATOS, no
+       garantiza que las bocinas ya terminaron de reproducir la cola de audio
+       real (buffer de audio propio del hardware/WebRTC, un camino separado
+       del canal de control). El mic se abria mientras el ultimo pedazo de la
+       voz de ELIXIS seguia sonando, se volvia a captar, y arrancaba un turno
+       nuevo. Dos variables para la defensa de abajo: */
+    var micReactivarTimeout=null; // temporizador pendiente de reactivar el mic (response.done)
+    var historialAsistente=[]; // últimas frases de ELIXIS/DjMago con su hora, para el filtro anti-eco
     /* Default 'djmago', no null (2026-08-30, correccion en vivo -- reporte
        real: hablar sin haber tocado antes un boton de Modo dejaba
        identidadActual en null, el servidor caia a DEFAULT_IDENTIDAD='elixis'
@@ -221,6 +233,40 @@
     function limpiarWatchdogPensando(){
       if(watchdogPensando){ clearTimeout(watchdogPensando); watchdogPensando=null; }
     }
+
+    /* Filtro anti-eco (2026-08-31, ver historialAsistente arriba): compara lo
+       que OpenAI transcribio como "dijo el usuario" contra las ultimas frases
+       reales del asistente. No exige coincidencia exacta -- el STT de la cola
+       de audio mal cortada rara vez transcribe identico a la frase original --
+       alcanza con que una contenga a la otra o que compartan la mayoria de
+       las palabras. */
+    function esTextoParecido(a, b){
+      if(!a || !b) return false;
+      /* BUG REAL encontrado en la propia verificacion de este fix (simulacion
+         con node antes de comitear): una transcripcion real trae puntuacion
+         ("boda!", "verdad,") que .split(/\s+/) sola no separa del texto --
+         "boda!" != "boda" como palabras, y el filtro fallaba justo en el caso
+         mas comun. Se quita toda puntuacion antes de comparar, no solo de
+         separar. */
+      var limpiar = function(s){ return s.replace(/[.,!?¡¿"'();:]/g,'').trim(); };
+      var la = limpiar(a), lb = limpiar(b);
+      if(!la || !lb) return false;
+      if(la === lb) return true;
+      if(la.length > 6 && lb.indexOf(la) !== -1) return true;
+      if(lb.length > 6 && la.indexOf(lb) !== -1) return true;
+      var pa = la.split(/\s+/).filter(Boolean), pb = lb.split(/\s+/).filter(Boolean);
+      /* SEGUNDO BUG encontrado en la misma simulacion: con el minimo de
+         palabras en el denominador, una respuesta corta y real del usuario
+         ("si", "no", "dale") comparte UNA palabra con cualquier frase larga
+         del asistente y sale ratio=1.0 -- se descartaria una respuesta real
+         creyendola eco. Las frases de 1-2 palabras solo pueden caer por el
+         chequeo de substring de arriba (que ya exige >6 caracteres); la
+         proporcion de palabras en comun solo aplica de 3 palabras en
+         adelante, donde de verdad distingue eco de respuesta real. */
+      if(!pa.length || !pb.length || Math.min(pa.length, pb.length) < 3) return false;
+      var comunes = pa.filter(function(w){ return pb.indexOf(w) !== -1; }).length;
+      return (comunes / Math.min(pa.length, pb.length)) >= 0.6;
+    }
     function armarWatchdogPensando(){
       limpiarWatchdogPensando();
       watchdogPensando = setTimeout(function(){
@@ -246,6 +292,25 @@
         case 'conversation.item.input_audio_transcription.completed': {
           var dicho = (m.transcript || '').trim();
           if(dicho){
+            /* FILTRO ANTI-ECO 2026-08-31 (mismo reporte de monologo infinito):
+               si lo que OpenAI transcribio como "dijo el usuario" se parece a
+               algo que el propio asistente dijo en los ultimos 3s, es casi
+               seguro cola de audio mal cortada, no una persona real -- se
+               descarta antes de mostrarlo en el hilo o de poder disparar
+               nada (el response.create manual de Cazador, mas abajo). Esto
+               es defensa ADICIONAL, no la correccion principal: el cooldown
+               + input_audio_buffer.clear de response.done (mas abajo) es lo
+               que ataca la causa real (mic reabierto antes de que las
+               bocinas terminen); esto solo tapa lo que se cuele de todos
+               modos. */
+            var dichoNorm = dicho.toLowerCase();
+            var esEco = historialAsistente.some(function(h){
+              return (Date.now() - h.ts) < 3000 && esTextoParecido(dichoNorm, h.texto);
+            });
+            if(esEco){
+              console.warn('[ElixisVoiceSession] transcripcion descartada por eco probable del propio asistente:', dicho);
+              break;
+            }
             emit('onTranscript', { who:'yo', text:dicho, final:true });
             emit('onThreadLine', { rol:'yo', contenido:dicho, modo:modoActual });
             /* CORRECCION 2026-08-31 (server: elixis-realtime-session ahora
@@ -300,6 +365,13 @@
                asistente habla, no se puede interrumpir por voz (hay que
                esperar a que termine) -- es el precio de cortar el eco sin
                arriesgar el audio de Serato. */
+            /* Cancela un cooldown de reactivacion pendiente (ver response.done
+               mas abajo): si un nuevo response.output_audio_transcript.delta
+               llega mientras todavia se esperaba el margen de 800ms de la
+               respuesta ANTERIOR, ese timer viejo reactivaria el mic a media
+               respuesta nueva -- justo la ventana de eco que se esta
+               cerrando. */
+            if(micReactivarTimeout){ clearTimeout(micReactivarTimeout); micReactivarTimeout=null; }
             if(mic){ mic.getAudioTracks().forEach(function(t){ t.enabled=false; }); }
           }
           _textoElixis += (m.delta||'');
@@ -308,15 +380,39 @@
 
         case 'response.done': {
           limpiarWatchdogPensando();
-          if(mic){ mic.getAudioTracks().forEach(function(t){ t.enabled=true; }); }
+          /* BUG REAL 2026-08-31 (reporte del PO con captura: monologo
+             infinito -- ELIXIS respondiendose a si misma, "Uff, boda!"...
+             "Si, para romperla de verdad..."). response.done es del CANAL DE
+             DATOS -- no garantiza que las bocinas ya terminaron de reproducir
+             la cola de audio real (via WebRTC, un camino separado del canal
+             de control). Reactivar el mic de inmediato aqui (como hacia
+             anoche) lo abria mientras el ultimo pedazo de la voz de ELIXIS
+             seguia sonando, se volvia a captar, y arrancaba un turno nuevo.
+             Dos capas: (1) input_audio_buffer.clear descarta cualquier
+             residuo que el servidor ya haya empezado a acumular; (2) el mic
+             se reactiva 800ms despues, no de inmediato, dandole margen real
+             a las bocinas. Ver tambien esTextoParecido()/historialAsistente
+             arriba -- defensa adicional si algo se cuela de todos modos. */
+          if(dc && dc.readyState==='open') dc.send(JSON.stringify({ type:'input_audio_buffer.clear' }));
+          if(micReactivarTimeout){ clearTimeout(micReactivarTimeout); }
+          micReactivarTimeout = setTimeout(function(){
+            if(mic){ mic.getAudioTracks().forEach(function(t){ t.enabled=true; }); }
+            micReactivarTimeout = null;
+          }, 800);
           /* Las llamadas a herramienta viajan DENTRO de response.done. Si se
              cierra el turno aqui sin mirarlas, la consulta no sale nunca. */
           var salida = (m.response && m.response.output) || [];
           var llamadas = salida.filter(function(i){ return i && i.type==='function_call'; });
           if(llamadas.length){ llamadas.forEach(herramienta); break; }
           /* El hilo se guarda completo aqui, no en cada delta -- una fila
-             por turno, no una por fragmento de texto. */
-          if(hablando && _textoElixis.trim()) emit('onThreadLine', { rol:'elixis', contenido:_textoElixis.trim(), modo:modoActual });
+             por turno, no una por fragmento de texto. Se guarda tambien en
+             historialAsistente (arriba) para el filtro anti-eco. */
+          if(hablando && _textoElixis.trim()){
+            var _textoFinal = _textoElixis.trim();
+            emit('onThreadLine', { rol:'elixis', contenido:_textoFinal, modo:modoActual });
+            historialAsistente.push({ texto: _textoFinal.toLowerCase(), ts: Date.now() });
+            if(historialAsistente.length > 6) historialAsistente.shift();
+          }
           hablando=false;
           emit('onState','listening'); break;
         }
@@ -335,6 +431,7 @@
           console.error('[ElixisVoiceSession] error del canal de voz:', m.error || m);
           emit('onError', (m.error && m.error.message) || 'Error en el canal de voz');
           emit('onState','listening');
+          if(micReactivarTimeout){ clearTimeout(micReactivarTimeout); micReactivarTimeout=null; }
           if(mic){ mic.getAudioTracks().forEach(function(t){ t.enabled=true; }); } // no dejar el mic mudo si el error llego a mitad de la respuesta
           break;
       }
@@ -489,6 +586,7 @@
 
     function stop(silencioso){
       liquidar();
+      if(micReactivarTimeout){ clearTimeout(micReactivarTimeout); micReactivarTimeout=null; } // mic=null mas abajo ya lo haria inofensivo, pero mejor no dejarlo pendiente
       detenerCazadorMusical(); // el ciclo de fondo no puede sobrevivir a musicHunterNodo
       if(dc){ try{ dc.close(); }catch(_){ } dc=null; }
       if(pc){ try{ pc.close(); }catch(_){ } pc=null; }
