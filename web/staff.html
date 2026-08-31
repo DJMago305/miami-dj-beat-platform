@@ -775,6 +775,28 @@
       padding:8px 10px; border-radius:10px; background:var(--bg); border:1px solid rgba(234,179,8,.35);}
     .ew-hilo-resumen .ew-hilo-resumen-copiar{margin-top:6px; font-size:9.5px; opacity:.7; background:none;
       border:1px solid var(--line); border-radius:6px; color:var(--text); padding:2px 7px; cursor:pointer;}
+    /* Envolver Live Setlist en #ewBloqueSetlist (2026-08-31, paneles
+       modulares) le agrega un nivel de anidado a #ewSetlist -- sin esto
+       perderia su flex:1 (el padre dejaria de ser un contenedor flex) y se
+       encogeria a su contenido en vez de repartirse el espacio como antes. */
+    #ewBloqueSetlist{display:flex; flex-direction:column; flex:1; min-height:0;}
+    /* Panel especializado por modo (2026-08-31): un solo contenedor con
+       flex-column + gap para los campos de formulario -- no crece a
+       expensas de la Transcripcion (sin flex:1), se ve completo arriba de
+       ella. */
+    #ewBloqueEspecializado{display:flex; flex-direction:column; gap:10px;}
+    .ew-form-titulo{font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--gold); font-weight:700;}
+    .ew-form-nota{font-size:10px; color:rgba(255,255,255,.45); line-height:1.4;}
+    .ew-campo{display:flex; flex-direction:column; gap:3px;}
+    .ew-campo label{font-size:10px; color:rgba(255,255,255,.55); text-transform:uppercase; letter-spacing:.04em;}
+    .ew-campo input, .ew-campo select, .ew-campo textarea{background:var(--bg); border:1px solid var(--line);
+      border-radius:8px; color:rgba(255,255,255,.9); font:inherit; font-size:12px; padding:6px 8px;
+      box-sizing:border-box; width:100%;}
+    .ew-campo textarea{resize:vertical; min-height:64px;}
+    .ew-form-acciones{display:flex; gap:6px; flex-wrap:wrap;}
+    .ew-form-acciones button{font-size:10px; background:none; border:1px solid var(--line); border-radius:7px;
+      color:var(--text); padding:5px 9px; cursor:pointer;}
+    .ew-form-acciones button.principal{border-color:rgba(234,179,8,.5); color:var(--gold);}
     /* Fila de Live Setlist (2026-08-30, Cazador Musical): mismo lenguaje
        visual que .pz (caja redondeada sobre --bg), pero con 2 renglones --
        artista/titulo arriba, bpm/key/hora abajo en mono chico -- porque el
@@ -1291,17 +1313,29 @@
                     style="font-size:9px;opacity:.5;background:none;border:1px solid var(--line);border-radius:6px;color:var(--text);padding:2px 6px;cursor:pointer;">+ Nuevo</button>
                 </div>
                 <div class="ew-col-body" id="ewHilosLista" style="flex:0 0 auto;max-height:150px;"><div class="ew-vacio">Sin hilos guardados todavía.</div></div>
+                <!-- Panel especializado por Modo de Enfoque (2026-08-31,
+                     autorizado por el PO -- "paneles modulares especializados
+                     por modo de enfoque"). Un solo contenedor que
+                     ewRenderPanelEspecializado() rellena segun modoActual;
+                     oculto por completo en General/Cazador (esos dos ya
+                     tienen su propia vista real: Hilos hub y Live Setlist). -->
+                <div id="ewBloqueEspecializado" style="display:none;"></div>
                 <div class="ew-col-body" id="ewTranscripcion"><div class="ew-vacio">La conversación aparecerá aquí.</div></div>
                 <!-- Live Setlist (2026-08-30, Cazador Musical / Modo B): se llena
                      via el handler onMusicHunterTrack de ewSesion.crear() mas abajo.
                      Fuera de ese modo se queda vacia a proposito -- no es un error,
-                     es que nadie esta muestreando musica ahora mismo. -->
-                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-                  <h4 style="margin:0;">Live Setlist</h4>
-                  <button type="button" id="ewSetlistExportar" title="Exportar setlist como M3U"
-                    style="font-size:9px;opacity:.5;background:none;border:1px solid var(--line);border-radius:6px;color:var(--text);padding:2px 6px;cursor:pointer;">.m3u</button>
+                     es que nadie esta muestreando musica ahora mismo.
+                     AJUSTE 2026-08-31 (paneles modulares): este bloque completo
+                     ahora se oculta fuera de Modo Cazador Musical (antes quedaba
+                     visible siempre, aunque vacio) -- ver ewMostrarBloqueSetlist(). -->
+                <div id="ewBloqueSetlist">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                    <h4 style="margin:0;">Live Setlist</h4>
+                    <button type="button" id="ewSetlistExportar" title="Exportar setlist como M3U"
+                      style="font-size:9px;opacity:.5;background:none;border:1px solid var(--line);border-radius:6px;color:var(--text);padding:2px 6px;cursor:pointer;">.m3u</button>
+                  </div>
+                  <div class="ew-col-body" id="ewSetlist"><div class="ew-vacio">Activa "Cazador Musical" para ver el setlist en vivo.</div></div>
                 </div>
-                <div class="ew-col-body" id="ewSetlist"><div class="ew-vacio">Activa "Cazador Musical" para ver el setlist en vivo.</div></div>
               </div>
             </div>
           </div>
@@ -2742,8 +2776,144 @@
           var ewBotonGeneral = enfoque.querySelector('[data-modo="general"] .ew-enfoque-icono');
           if(ewBotonGeneral) ewBotonGeneral.classList.add('activo');
         }
+        /* Paneles modulares por Modo de Enfoque (2026-08-31, autorizado por
+           el PO: "el contenedor lateral derecho debe alojar sub-paneles
+           modulares independientes que se conmutan dinamicamente"). General
+           y Cazador Musical YA tienen su vista real (Hilos guardados/hub y
+           Live Setlist) -- para los otros 4 modos (sin tabla propia en
+           Supabase todavia: no hay contratos, checklist de eventos ni
+           catalogo de distribucion reales) se construye un formulario
+           liviano por modo, con borrador guardado SOLO en localStorage de
+           este navegador (no en Supabase -- seria inventar persistencia
+           que no existe) y un boton "Copiar" para llevarlo a donde
+           corresponda (cliente de correo, documento, etc). Ningun boton
+           "Enviar" real: eso pertenece a una tool de verdad con su propio
+           gate humano (ver "ELIXIS action-tool HITL pattern" en memoria),
+           que no existe para email/contratos/eventos/distribucion hoy --
+           un boton que simula enviar y no envia nada seria mentir. */
+        var EW_PANEL_FORMULARIOS = {
+          correo: {
+            titulo: 'Dispatcher de Correo',
+            nota: 'El envío real de correo todavía no está conectado -- usa "Copiar correo" y pégalo en tu cliente de correo.',
+            campos: [
+              { id:'para', etiqueta:'Para', tipo:'text', placeholder:'cliente@correo.com' },
+              { id:'asunto', etiqueta:'Asunto', tipo:'text', placeholder:'Asunto del correo' },
+              { id:'contenido', etiqueta:'Contenido', tipo:'textarea', placeholder:'Redacta aquí o pide a ELIXIS que redacte, luego usa "Insertar último de ELIXIS".' }
+            ],
+            copiarEtiqueta:'Copiar correo',
+            copiar:function(v){ return 'Para: '+(v.para||'')+'\nAsunto: '+(v.asunto||'')+'\n\n'+(v.contenido||''); },
+            campoInsercion:'contenido'
+          },
+          legal: {
+            titulo: 'Contratos & Cotizaciones',
+            nota: 'Borrador guardado solo en este navegador -- todavía no hay tabla de contratos en la base de datos.',
+            campos: [
+              { id:'cliente', etiqueta:'Cliente / Artista', tipo:'text' },
+              { id:'tipoDoc', etiqueta:'Tipo', tipo:'select', opciones:['Contrato DJ','Cotización','Términos de servicio'] },
+              { id:'notas', etiqueta:'Cláusulas / Notas', tipo:'textarea', placeholder:'Términos, tarifas, cláusulas...' }
+            ],
+            copiarEtiqueta:'Copiar documento',
+            copiar:function(v){ return (v.tipoDoc||'Documento')+' — '+(v.cliente||'')+'\n\n'+(v.notas||''); },
+            campoInsercion:'notas'
+          },
+          eventos: {
+            titulo: 'Escaleta & Cronograma',
+            nota: 'Horarios guardados solo en este navegador -- todavía no conectado a la Agenda real.',
+            campos: [
+              { id:'nombreEvento', etiqueta:'Evento', tipo:'text' },
+              { id:'fecha', etiqueta:'Fecha', tipo:'date' },
+              { id:'escaleta', etiqueta:'Escaleta (una línea por bloque, ej. "19:00 - Cóctel")', tipo:'textarea' }
+            ],
+            copiarEtiqueta:'Copiar escaleta',
+            copiar:function(v){ return (v.nombreEvento||'Evento')+' — '+(v.fecha||'')+'\n\n'+(v.escaleta||''); },
+            campoInsercion:'escaleta'
+          },
+          distribucion: {
+            titulo: 'Ficha de Lanzamiento',
+            nota: 'Ficha guardada solo en este navegador -- todavía no conectado a Soundcaribe Record.',
+            campos: [
+              { id:'trackTitulo', etiqueta:'Título del track', tipo:'text' },
+              { id:'artista', etiqueta:'Artista', tipo:'text' },
+              { id:'isrc', etiqueta:'ISRC', tipo:'text' },
+              { id:'fechaLanzamiento', etiqueta:'Fecha de lanzamiento', tipo:'date' },
+              { id:'enlaces', etiqueta:'Enlaces de distribución (uno por línea)', tipo:'textarea' }
+            ],
+            copiarEtiqueta:'Copiar ficha',
+            copiar:function(v){ return (v.trackTitulo||'Track')+' — '+(v.artista||'')+' (ISRC '+(v.isrc||'—')+')\n'+(v.enlaces||''); },
+            campoInsercion:'enlaces'
+          }
+        };
+        /* Live Setlist es EXCLUSIVO de Cazador Musical (2026-08-31, punto 1
+           del ticket de paneles modulares) -- antes quedaba visible siempre,
+           vacio fuera de ese modo. No toca ewSetlistTracks/onMusicHunterTrack
+           (el dato real sigue igual), solo el bloque visual. */
+        function ewMostrarBloqueSetlist(modo){
+          var b=el('ewBloqueSetlist'); if(b) b.style.display = (modo==='cazador') ? '' : 'none';
+        }
+        /* Renderiza (o esconde) el formulario del modo activo dentro de
+           #ewBloqueEspecializado. General/Cazador no tienen formulario --
+           ya tienen su propia vista real -- asi que el bloque queda oculto
+           en esos dos. Los valores viven en localStorage bajo una llave por
+           modo (mdj_elixis_panel_<modo>), independiente de Supabase. */
+        function ewLlaveFormulario(modo){ return 'mdj_elixis_panel_'+modo; }
+        function ewLeerFormulario(modo){
+          try{ return JSON.parse(localStorage.getItem(ewLlaveFormulario(modo))||'{}'); }catch(e){ return {}; }
+        }
+        function ewGuardarFormulario(modo, valores){
+          try{ localStorage.setItem(ewLlaveFormulario(modo), JSON.stringify(valores)); }catch(e){ /* localStorage lleno/bloqueado -- el formulario sigue usable en pantalla, solo no persiste */ }
+        }
+        function ewRenderPanelEspecializado(modo){
+          var cont = el('ewBloqueEspecializado'); if(!cont) return;
+          var cfg = EW_PANEL_FORMULARIOS[modo];
+          if(!cfg){ cont.style.display='none'; cont.innerHTML=''; return; }
+          cont.style.display='';
+          var valores = ewLeerFormulario(modo);
+          var html = '<div class="ew-form-titulo">'+ewEsc(cfg.titulo)+'</div>';
+          cfg.campos.forEach(function(c){
+            html += '<div class="ew-campo"><label>'+ewEsc(c.etiqueta)+'</label>';
+            if(c.tipo==='textarea'){
+              html += '<textarea data-campo="'+c.id+'" placeholder="'+ewEsc(c.placeholder||'')+'">'+ewEsc(valores[c.id]||'')+'</textarea>';
+            } else if(c.tipo==='select'){
+              html += '<select data-campo="'+c.id+'">'+(c.opciones||[]).map(function(op){
+                return '<option'+(valores[c.id]===op?' selected':'')+'>'+ewEsc(op)+'</option>';
+              }).join('')+'</select>';
+            } else {
+              html += '<input type="'+(c.tipo||'text')+'" data-campo="'+c.id+'" placeholder="'+ewEsc(c.placeholder||'')+'" value="'+ewEsc(valores[c.id]||'')+'">';
+            }
+            html += '</div>';
+          });
+          html += '<div class="ew-form-acciones">'
+            + '<button type="button" class="principal" data-accion="copiar">'+ewEsc(cfg.copiarEtiqueta)+'</button>'
+            + '<button type="button" data-accion="insertar">Insertar último de ELIXIS</button>'
+            + '</div><div class="ew-form-nota">'+ewEsc(cfg.nota)+'</div>';
+          cont.innerHTML = html;
+          function valoresActuales(){
+            var v={};
+            cfg.campos.forEach(function(c){ var el2=cont.querySelector('[data-campo="'+c.id+'"]'); v[c.id]=el2?el2.value:''; });
+            return v;
+          }
+          cont.querySelectorAll('[data-campo]').forEach(function(campoEl){
+            campoEl.addEventListener('input', function(){ ewGuardarFormulario(modo, valoresActuales()); });
+          });
+          cont.querySelector('[data-accion="copiar"]').onclick = async function(){
+            var texto = cfg.copiar(valoresActuales());
+            try{ await navigator.clipboard.writeText(texto); ewToastHilo(cont, 'Copiado ✓'); }
+            catch(e){ ewToastHilo(cont, 'No se pudo copiar'); }
+          };
+          cont.querySelector('[data-accion="insertar"]').onclick = function(){
+            var ultimaElixis = null;
+            el('ewTranscripcion').querySelectorAll('.ew-linea:not(.yo)').forEach(function(l){ ultimaElixis = l; });
+            if(!ultimaElixis){ ewToastHilo(cont, 'ELIXIS no ha respondido todavía en este hilo'); return; }
+            var clon = ultimaElixis.cloneNode(true);
+            var etiqueta = clon.querySelector('.ew-etiqueta'); if(etiqueta) etiqueta.remove();
+            var destino = cont.querySelector('[data-campo="'+cfg.campoInsercion+'"]');
+            if(destino){ destino.value = clon.textContent.trim(); ewGuardarFormulario(modo, valoresActuales()); }
+          };
+        }
         ewFijarIconoModo('general');
         ewActualizarVisibilidadSobre('general');
+        ewMostrarBloqueSetlist('general');
+        ewRenderPanelEspecializado('general');
         /* ewSeleccionarModo(modo): logica compartida entre el riel de Modo
            Enfoque (arriba, clic directo) y el nuevo selector de Hilos
            guardados (mas abajo) -- un solo lugar que decide que pasa al
@@ -2764,6 +2934,8 @@
           }
           ewFijarIconoModo(modo);
           ewActualizarVisibilidadSobre(modo);
+          ewMostrarBloqueSetlist(modo);
+          ewRenderPanelEspecializado(modo);
           var texto = EW_CONTEXTOS[modo] || EW_CONTEXTOS.general;
           /* Identidad djmago SIEMPRE, en los 5 modos (2026-08-30, correccion
              en vivo -- reporte real: en Modo General el avatar hablaba solo
