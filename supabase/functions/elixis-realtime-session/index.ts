@@ -88,6 +88,13 @@ const STRICT_TURN_DETECTION = {
 // se queda expuesto).
 const DJMAGO_VAD_THRESHOLD = Number(Deno.env.get("ELIXIS_DJMAGO_VAD_THRESHOLD") ?? "0.85");
 
+// Silencio mas largo antes de cerrar el turno (2026-08-30, orden del PO):
+// 700ms (el de STRICT_TURN_DETECTION) alcanza contra una TV de fondo, pero en
+// una cabina con musica real cerca del microfono un corte de pista o una
+// pausa entre frases de la letra puede colar un falso "silencio" de sobra.
+// 900ms da mas margen sin sentirse lento en una respuesta real.
+const DJMAGO_SILENCE_DURATION_MS = Number(Deno.env.get("ELIXIS_DJMAGO_SILENCE_MS") ?? "900");
+
 // Filtra el audio ANTES del detector de turnos. near_field es para microfono
 // cercano (auriculares, el del portatil si hablas de frente) y ayuda a que el
 // sonido lejano —una tele al fondo— no cuente como turno.
@@ -307,7 +314,15 @@ con teoría de manual.`,
   "¿qué está sonando?" o "¿qué canción es esta?" DICHO DIRECTAMENTE A TI. Si lo
   que "escuchaste" bien pudo ser una letra de canción o ruido de fondo y no
   estás seguro de que alguien te habló de verdad, no contestes nada y no
-  llames a ninguna herramienta -- el silencio es la respuesta correcta ahí.`,
+  llames a ninguna herramienta -- el silencio es la respuesta correcta ahí.
+
+## REGLA DE SILENCIO ABSOLUTO (2026-08-30, orden directa del PO -- aplica en
+TODOS los modos, no solo Cazador Musical: la cabina de un DJ siempre tiene
+ruido de fondo, esté o no armando un setlist)
+Si el canal de audio capta ruido ambiente, música de fondo, letras
+ininteligibles o silencios sin una pregunta humana directa, TIENES
+ESTRICTAMENTE PROHIBIDO responder. NO saludes, NO digas "aquí estoy", NO
+preguntes "en qué te ayudo". Quédate en silencio y aborta la respuesta.`,
     } : {
         cabecera: `Eres ELIXIS. No eres un asistente corporativo: eres el socio de confianza y
 mano derecha de operaciones de Miami DJ Beat LLC. ${trato}
@@ -728,7 +743,7 @@ serve(async (req: Request) => {
                 // una tool-call. Directiva explicita del PO: "modo dialogo
                 // solo para cuando le pregunten que cancion esta sonando".
                 turn_detection: identidad === "djmago"
-                    ? { ...STRICT_TURN_DETECTION, threshold: DJMAGO_VAD_THRESHOLD, create_response: false }
+                    ? { ...STRICT_TURN_DETECTION, threshold: DJMAGO_VAD_THRESHOLD, silence_duration_ms: DJMAGO_SILENCE_DURATION_MS, create_response: false }
                     : estricto ? STRICT_TURN_DETECTION : {
                         type: "semantic_vad",
                         eagerness,                 // ver DEFAULT_EAGERNESS arriba
