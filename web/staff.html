@@ -41,7 +41,7 @@
   <script src="./subscription.js?v=20260422-find-dj-rank"></script>
   <script src="./js/smartcrate-harmonic-engine.js?v=20260830-camelot-engine"></script>
   <script src="./js/music-hunter-ring-buffer.js?v=20260830-ring-buffer"></script>
-  <script src="./js/elixis-voice-session.js?v=20260831-text-panel-open-fix"></script>
+  <script src="./js/elixis-voice-session.js?v=20260831-hilos-historial"></script>
   <script src="./js/elixis-swipe-carousel.js?v=20260827-pointer-wheel-desktop"></script>
   <script src="./js/avatar-frame-player.js?v=20260830-crossorigin-fix"></script>
   <script src="./js/avatar-heygen-chromakey.js?v=20260830-recorte-borde-blanco"></script>
@@ -735,6 +735,21 @@
       vertical-align:middle;line-height:1.4;}
     .ew-etiqueta-yo{background:rgba(63,185,230,.7);color:#eaf7fc;}
     .ew-etiqueta-elixis{background:rgba(197,160,89,.7);color:#1a1408;}
+    /* Hilos guardados (2026-08-31, autorizado por el PO): un renglon por
+       Modo de Enfoque con hilo guardado en elixis_session_threads -- mismo
+       lenguaje visual que .pz/.ew-setlist-fila (caja sobre --bg), y el
+       mismo dorado rgba(234,179,8,.5) que .ew-enfoque-icono.activo ya usa
+       para "esto es lo activo", no un color inventado aparte. */
+    .ew-hilo-fila{display:flex; align-items:center; gap:8px; width:100%; text-align:left;
+      padding:7px 9px; border-radius:10px; background:var(--bg); border:1px solid var(--line);
+      font-size:12px; color:rgba(255,255,255,.85); cursor:pointer;}
+    .ew-hilo-fila:hover{border-color:rgba(255,255,255,.3);}
+    .ew-hilo-fila.activo{border-color:rgba(234,179,8,.5); box-shadow:0 0 10px rgba(234,179,8,.25);}
+    .ew-hilo-ico{flex:none; font-size:14px;}
+    .ew-hilo-info{flex:1; min-width:0; display:flex; flex-direction:column; gap:1px;}
+    .ew-hilo-modo{font-weight:700; font-size:11px;}
+    .ew-hilo-prev{font-size:10.5px; color:rgba(255,255,255,.5); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+    .ew-hilo-n{flex:none; font-family:var(--mono,monospace); font-size:10px; color:rgba(255,255,255,.4);}
     /* Fila de Live Setlist (2026-08-30, Cazador Musical): mismo lenguaje
        visual que .pz (caja redondeada sobre --bg), pero con 2 renglones --
        artista/titulo arriba, bpm/key/hora abajo en mono chico -- porque el
@@ -1240,6 +1255,17 @@
                 <div id="ewHud"></div>
                 <button type="button" id="ewHudDemo" style="font-size:9px;opacity:.5;background:none;border:1px solid var(--line);border-radius:6px;color:var(--text);padding:2px 6px;align-self:center;cursor:pointer;">demo transmisión</button>
                 <div class="ew-col-body" id="ewProceso"><div class="ew-vacio">Sin actividad todavía.</div></div>
+                <!-- Hilos guardados (2026-08-31, autorizado por el PO): un hilo
+                     por Modo de Enfoque en elixis_session_threads, estilo
+                     ChatGPT/Workspace. Click en un hilo = cambia de modo Y carga
+                     su historial (ver ewCargarHiloDeModo). "+ Nuevo" archiva
+                     (TTL logico, no borra) el hilo del modo ACTIVO nada mas. -->
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                  <h4 style="margin:0;">Hilos guardados</h4>
+                  <button type="button" id="ewHiloNuevo" title="Archivar este hilo y empezar uno nuevo en el modo activo"
+                    style="font-size:9px;opacity:.5;background:none;border:1px solid var(--line);border-radius:6px;color:var(--text);padding:2px 6px;cursor:pointer;">+ Nuevo</button>
+                </div>
+                <div class="ew-col-body" id="ewHilosLista" style="flex:0 0 auto;max-height:150px;"><div class="ew-vacio">Sin hilos guardados todavía.</div></div>
                 <div class="ew-col-body" id="ewTranscripcion"><div class="ew-vacio">La conversación aparecerá aquí.</div></div>
                 <!-- Live Setlist (2026-08-30, Cazador Musical / Modo B): se llena
                      via el handler onMusicHunterTrack de ewSesion.crear() mas abajo.
@@ -2330,10 +2356,19 @@
              de escritura permitida -- la RPC exige auth.uid(), nadie puede
              escribir en el hilo de otro. Best-effort: si falla, la
              conversacion sigue igual (ver elixis-realtime-session, mismo
-             criterio con la memoria). */
+             criterio con la memoria).
+             BUG REAL 2026-08-31 (encontrado en verificacion en vivo, no
+             reportado por el PO): sb.rpc(...) en supabase-js es "thenable"
+             (tiene .then) pero NO tiene .catch propio -- llamar .catch()
+             directo tira un TypeError sincrono que emit() traga en silencio
+             (su try/catch esta pensado para handlers rotos, no para esto).
+             Resultado real: CERO hilos se guardaban desde que este handler
+             se escribio, sin ningun aviso -- ver memoria del proyecto sobre
+             este mismo patron ("rpc().catch no existe"). Fix: envolver en
+             Promise.resolve(), que si tiene .catch real. */
           onThreadLine: function(linea){
             var sb=getSb(); if(!sb || !sb.rpc) return;
-            sb.rpc('elixis_thread_append', { p_rol:linea.rol, p_contenido:linea.contenido, p_modo_enfoque:linea.modo||null })
+            Promise.resolve(sb.rpc('elixis_thread_append', { p_rol:linea.rol, p_contenido:linea.contenido, p_modo_enfoque:linea.modo||null }))
               .catch(function(e){ console.warn('[ELIXIS workspace] hilo no guardado:', e); });
           },
           onError: function(txt){
@@ -2395,6 +2430,96 @@
         };
         var ewModoAnterior = null;
         var enfoque=el('ewEnfoque');
+        /* Hilos guardados (2026-08-31, autorizado por el PO): pinta UNA
+           linea historica en #ewTranscripcion, con las MISMAS etiquetas
+           .ew-etiqueta-yo/.ew-etiqueta-elixis que ya usa onTranscript() para
+           la conversacion en vivo -- un solo patron visual para "linea de
+           conversacion", nunca dos (ver "un patron por funcion"). No toca
+           ewSesion._fila (eso es solo para el streaming en vivo de una
+           respuesta que se esta armando). */
+        function ewPintarLineaHilo(rol, contenido){
+          var box=el('ewTranscripcion'); if(!box) return;
+          var d=document.createElement('div');
+          if(rol==='yo'){
+            d.className='ew-linea yo';
+            d.innerHTML='<span class="ew-etiqueta ew-etiqueta-yo">Tú</span>'+ewEsc(contenido);
+          } else {
+            d.className='ew-linea';
+            d.innerHTML='<span class="ew-etiqueta ew-etiqueta-elixis">ELIXIS</span>'+ewEsc(contenido);
+          }
+          box.appendChild(d);
+        }
+        var EW_HILO_NOMBRES = { correo:'Correo', legal:'Legal', distribucion:'Distribución', eventos:'Eventos', cazador:'Cazador Musical', general:'General' };
+        /* Lista de hilos guardados (uno por Modo de Enfoque con actividad en
+           elixis_session_threads) -- fuente real: elixis_get_user_threads(),
+           RPC nueva de esta migracion. Se repinta entera cada vez (lista
+           corta, maximo 6 modos) en vez de diffear filas -- mismo criterio
+           ya usado en onMusicHunterTrack/onTool para listas chicas de este
+           panel. */
+        async function ewCargarHilosLista(){
+          var lista=el('ewHilosLista'); if(!lista) return;
+          var sb=getSb();
+          if(!sb || !sb.rpc) return;
+          var r = await sb.rpc('elixis_get_user_threads');
+          if(r.error){ console.warn('[ELIXIS workspace] no se pudo listar hilos:', r.error); return; }
+          var filas = r.data || [];
+          if(!filas.length){ lista.innerHTML='<div class="ew-vacio">Sin hilos guardados todavía.</div>'; return; }
+          lista.innerHTML='';
+          filas.forEach(function(f){
+            var modo = f.modo_enfoque || 'general';
+            var btn=document.createElement('button');
+            btn.type='button';
+            btn.className='ew-hilo-fila'+((modo===ewModoAnterior || (ewModoAnterior===null && modo==='general')) ? ' activo' : '');
+            btn.setAttribute('data-modo', modo);
+            var prefijo = f.ultimo_rol==='yo' ? 'Tú: ' : 'ELIXIS: ';
+            btn.innerHTML = '<span class="ew-hilo-ico">'+(EW_MODO_ICONOS[modo]||EW_MODO_ICONOS.general)+'</span>'
+              + '<span class="ew-hilo-info"><span class="ew-hilo-modo">'+ewEsc(EW_HILO_NOMBRES[modo]||modo)+'</span>'
+              + '<span class="ew-hilo-prev">'+ewEsc(prefijo+String(f.ultimo_mensaje||'').slice(0,64))+'</span></span>'
+              + '<span class="ew-hilo-n">'+f.total_mensajes+'</span>';
+            btn.onclick=function(){ ewSeleccionarModo(modo); };
+            lista.appendChild(btn);
+          });
+        }
+        /* Carga el hilo guardado de un modo: repinta #ewTranscripcion con su
+           historial real (elixis_get_thread_history), siembra el buffer de
+           continuidad de texto puro (ewSesion.cargarHistorialTexto -- para
+           que enviarTextoSolo() mande "history" al Orchestrator, mismo
+           formato que ya usa mdj-commander.html) y aplica el modo por voz
+           CON un resumen de los ultimos mensajes pegado a las instrucciones
+           base, para que quien retome por voz "siga donde se quedo" en vez
+           de repetir el contexto generico del modo desde cero. Se llama
+           tanto al cambiar de Modo Enfoque (ewSeleccionarModo) como al
+           elegir un hilo directo de la lista (mismo destino, un solo
+           camino). */
+        async function ewCargarHiloDeModo(modo, textoBase){
+          var box=el('ewTranscripcion');
+          if(box) box.innerHTML='<div class="ew-vacio">Cargando hilo…</div>';
+          var sb=getSb();
+          var filas=[];
+          if(sb && sb.rpc){
+            var r = await sb.rpc('elixis_get_thread_history', { p_modo_enfoque: modo });
+            if(r.error) console.warn('[ELIXIS workspace] no se pudo cargar el hilo de', modo, r.error);
+            else filas = r.data || [];
+          }
+          if(box){
+            box.innerHTML='';
+            if(!filas.length) box.innerHTML='<div class="ew-vacio">La conversación aparecerá aquí.</div>';
+            else filas.forEach(function(f){ ewPintarLineaHilo(f.rol, f.contenido); box.scrollTop=box.scrollHeight; });
+          }
+          if(ewSesion && ewSesion.cargarHistorialTexto){
+            ewSesion.cargarHistorialTexto(filas.map(function(f){ return { role: f.rol==='yo' ? 'user' : 'assistant', content: f.contenido }; }));
+          }
+          var textoFinal = textoBase || EW_CONTEXTOS[modo] || EW_CONTEXTOS.general;
+          if(filas.length){
+            var resumen = filas.slice(-6).map(function(f){
+              return (f.rol==='yo' ? 'Usuario' : 'ELIXIS') + ': ' + String(f.contenido).slice(0,160);
+            }).join('\n');
+            textoFinal += '\n\nEsta conversación ya empezó en este modo -- continúala, no la reinicies. Últimos mensajes:\n' + resumen;
+          }
+          if(ewSesion) ewSesion.fijarModo(modo, textoFinal);
+          var lista=el('ewHilosLista');
+          if(lista) lista.querySelectorAll('.ew-hilo-fila').forEach(function(f){ f.classList.toggle('activo', f.getAttribute('data-modo')===modo); });
+        }
         /* Icono de modo en el header de Hilos & Transcripcion (2026-08-31,
            pedido del PO: el panel no reflejaba el modo activo). Mismos
            emojis EXACTOS ya usados en el riel de Modo Enfoque de arriba --
@@ -2436,44 +2561,81 @@
         }
         ewFijarIconoModo('general');
         ewActualizarVisibilidadSobre('general');
-        if(enfoque) enfoque.querySelectorAll('[data-modo]').forEach(function(b){
-          b.onclick=function(){
+        /* ewSeleccionarModo(modo): logica compartida entre el riel de Modo
+           Enfoque (arriba, clic directo) y el nuevo selector de Hilos
+           guardados (mas abajo) -- un solo lugar que decide que pasa al
+           cambiar de modo, no dos copias que puedan divergir (ver "un
+           patron por funcion" en las reglas del proyecto). Antes esto vivia
+           inline dentro del onclick de cada boton del riel; se extrae tal
+           cual, sin cambiar su comportamiento previo, solo para que la
+           lista de Hilos pueda llamar exactamente lo mismo.
+           AJUSTE 2026-08-31 (punto 3 del ticket de hilos): ademas de lo de
+           siempre, ahora tambien carga el hilo guardado de ese modo (ver
+           ewCargarHiloDeModo) -- "cada cambio de Modo de Enfoque conmuta
+           automaticamente al hilo activo de esa especialidad". */
+        function ewSeleccionarModo(modo){
+          if(enfoque){
             enfoque.querySelectorAll('.ew-enfoque-icono').forEach(function(i){ i.classList.remove('activo'); });
-            b.querySelector('.ew-enfoque-icono').classList.add('activo');
-            var modo = b.getAttribute('data-modo');
-            ewFijarIconoModo(modo);
-            ewActualizarVisibilidadSobre(modo);
-            var texto = EW_CONTEXTOS[modo] || EW_CONTEXTOS.general;
-            /* Identidad djmago SIEMPRE, en los 5 modos (2026-08-30, correccion
-               en vivo -- reporte real: en Modo General el avatar hablaba solo
-               con relleno generico "Si, aqui es"/"Dale, seguimos"). Causa
-               real: fijarIdentidad('djmago') solo se llamaba al entrar a
-               Cazador Musical, asi que Modo General (y legal/distribucion/
-               eventos, si eran el PRIMER modo elegido en la sesion) se
-               quedaban con identidadActual=null -- el servidor por defecto
-               cae a identidad 'elixis' (DEFAULT_IDENTIDAD en elixis-realtime-
-               session), que NO fuerza DJMAGO_VAD_THRESHOLD. No hay todavia un
-               selector real de avatar (ver ewOrbePersona, deshabilitado): hoy
-               DjMago es la unica identidad real de este panel, asi que se fija
-               sin condicion, no solo en cazador.
-               Cazador Musical sigue siendo el UNICO modo que ademas prende/
-               apaga el ciclo de fondo de Modo B (setlist logger) -- eso si
-               sigue condicionado a el. */
-            ewSesion.fijarIdentidad('djmago');
-            if(modo === 'cazador'){
-              if(ewSesion.activa()) ewSesion.iniciarCazadorMusical();
-            } else if(ewModoAnterior === 'cazador'){
-              ewSesion.detenerCazadorMusical();
-            }
-            ewModoAnterior = modo;
-            /* fijarModo(): si ya hay sesion viva lo aplica ya (session.update);
-               si no, queda listo para el proximo start() -- ver ?modo= en
-               elixis-realtime-session. */
-            ewSesion.fijarModo(modo, texto);
-            var lbl=el('ewEstado');
-            if(lbl && !ewSesion.activa()) lbl.textContent = 'Modo elegido · activa la voz para aplicarlo';
-          };
+            var boton = enfoque.querySelector('[data-modo="'+modo+'"] .ew-enfoque-icono');
+            if(boton) boton.classList.add('activo');
+          }
+          ewFijarIconoModo(modo);
+          ewActualizarVisibilidadSobre(modo);
+          var texto = EW_CONTEXTOS[modo] || EW_CONTEXTOS.general;
+          /* Identidad djmago SIEMPRE, en los 5 modos (2026-08-30, correccion
+             en vivo -- reporte real: en Modo General el avatar hablaba solo
+             con relleno generico "Si, aqui es"/"Dale, seguimos"). Causa
+             real: fijarIdentidad('djmago') solo se llamaba al entrar a
+             Cazador Musical, asi que Modo General (y legal/distribucion/
+             eventos, si eran el PRIMER modo elegido en la sesion) se
+             quedaban con identidadActual=null -- el servidor por defecto
+             cae a identidad 'elixis' (DEFAULT_IDENTIDAD en elixis-realtime-
+             session), que NO fuerza DJMAGO_VAD_THRESHOLD. No hay todavia un
+             selector real de avatar (ver ewOrbePersona, deshabilitado): hoy
+             DjMago es la unica identidad real de este panel, asi que se fija
+             sin condicion, no solo en cazador.
+             Cazador Musical sigue siendo el UNICO modo que ademas prende/
+             apaga el ciclo de fondo de Modo B (setlist logger) -- eso si
+             sigue condicionado a el. */
+          ewSesion.fijarIdentidad('djmago');
+          if(modo === 'cazador'){
+            if(ewSesion.activa()) ewSesion.iniciarCazadorMusical();
+          } else if(ewModoAnterior === 'cazador'){
+            ewSesion.detenerCazadorMusical();
+          }
+          ewModoAnterior = modo;
+          /* ewCargarHiloDeModo() ya llama a ewSesion.fijarModo() por dentro
+             (con el texto base + resumen del hilo cargado) -- no se llama
+             fijarModo() dos veces aca. */
+          ewCargarHiloDeModo(modo, texto);
+          var lbl=el('ewEstado');
+          if(lbl && !ewSesion.activa()) lbl.textContent = 'Modo elegido · activa la voz para aplicarlo';
+        }
+        if(enfoque) enfoque.querySelectorAll('[data-modo]').forEach(function(b){
+          b.onclick=function(){ ewSeleccionarModo(b.getAttribute('data-modo')); };
         });
+
+        /* Hilos guardados (2026-08-31, autorizado por el PO): carga inicial
+           de la lista (todos los modos con hilo) y del hilo del modo activo
+           por defecto ('general') -- sin forzar la apertura del panel (ver
+           directiva del 2026-08-31 anterior, "conversacion de voz limpia",
+           el panel sigue abriendose solo por los disparadores ya existentes:
+           cazador/correo, tool-call real, o texto puro). */
+        ewCargarHilosLista();
+        ewCargarHiloDeModo('general', EW_CONTEXTOS.general);
+        var hiloNuevoBtn = el('ewHiloNuevo');
+        if(hiloNuevoBtn) hiloNuevoBtn.onclick = async function(){
+          var modo = ewModoAnterior || 'general';
+          var sb = getSb();
+          if(sb && sb.rpc){
+            try{ await sb.rpc('elixis_archivar_hilo', { p_modo_enfoque: modo }); }
+            catch(e){ console.warn('[ELIXIS workspace] no se pudo archivar el hilo:', e); }
+          }
+          var box=el('ewTranscripcion'); if(box) box.innerHTML='<div class="ew-vacio">La conversación aparecerá aquí.</div>';
+          if(ewSesion.cargarHistorialTexto) ewSesion.cargarHistorialTexto([]);
+          ewSesion.fijarModo(modo, EW_CONTEXTOS[modo] || EW_CONTEXTOS.general);
+          ewCargarHilosLista();
+        };
 
         /* Exportar Live Setlist a .m3u (2026-08-30). M3U extendido, el
            formato que Serato y la mayoria de software de DJ importan de

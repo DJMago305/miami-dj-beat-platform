@@ -53,6 +53,16 @@
        un poco mas abajo. */
     var hablando=false, vivo=false, pulso=0, modoActual='general', _textoElixis='';
     var conectando=false, micPrecalentado=null;
+    /* Continuidad de texto puro entre turnos (2026-08-31, autorizado por el
+       PO -- sistema de hilos estilo ChatGPT). Mismo formato exacto que
+       mdj-commander.html usa para _elixisHistory ({role:'user'|'assistant',
+       content}), pasado como "history" al mismo elixis-orchestrator -- este
+       ya reenvia el body COMPLETO a elixis-chat (ver el propio orchestrator),
+       que ya sabe leer "history" desde antes; enviarTextoSolo() solo no lo
+       estaba mandando todavia. staff.html llena esto con cargarHistorialTexto()
+       al cargar un hilo guardado o al cambiar de Modo de Enfoque -- este
+       modulo no sabe nada de hilos/Supabase, solo mantiene el buffer. */
+    var historialTexto=[];
     var watchdogPensando=null; // ver limpiarWatchdogPensando()/evento()
     /* BUG REAL 2026-08-31 (reporte del PO con captura: monologo infinito --
        ELIXIS respondiendose a si misma, "Uff, boda!"..."Si, para romperla de
@@ -808,7 +818,7 @@
       emit('onThreadLine', { rol:'yo', contenido:texto, modo:modoActual, textoSolo:true });
       try{
         var h = await headers();
-        var res = await fetch(url, { method:'POST', headers:h, body:JSON.stringify({ message:texto }) });
+        var res = await fetch(url, { method:'POST', headers:h, body:JSON.stringify({ message:texto, history:historialTexto.slice(-20) }) });
         if(res.status===401){ emit('onUnauthorized'); return; }
         var d = {}; try{ d = await res.json(); }catch(_){}
         if(!res.ok || !d.reply){
@@ -818,9 +828,21 @@
         emit('onTranscript', { who:'elixis', start:true, textoSolo:true });
         emit('onTranscript', { who:'elixis', delta:d.reply, textoSolo:true });
         emit('onThreadLine', { rol:'elixis', contenido:d.reply, modo:modoActual, textoSolo:true });
+        historialTexto.push({ role:'user', content:texto });
+        historialTexto.push({ role:'assistant', content:d.reply });
+        if(historialTexto.length > 40) historialTexto = historialTexto.slice(-40);
       }catch(e){
         emit('onError','No pude conectar con el texto.');
       }
+    }
+
+    /* Siembra/reemplaza el buffer de continuidad de texto -- llamado por
+       staff.html al cargar el historial real de un hilo (elixis_get_thread_
+       history) o al archivar uno nuevo (arreglo vacio). No dispara red ni
+       toca la sesion de voz; solo el buffer que enviarTextoSolo() manda como
+       "history" en el proximo turno. */
+    function cargarHistorialTexto(mensajes){
+      historialTexto = Array.isArray(mensajes) ? mensajes.slice(-20) : [];
     }
 
     /* Dispara el pre-calentado al entrar al workspace, no al primer clic
@@ -835,7 +857,7 @@
     return { start:start, stop:stop, activa:function(){ return !!pc; }, actualizarContexto:actualizarContexto,
       fijarModo:fijarModo, fijarIdentidad:fijarIdentidad, obtenerMuestraMusicHunter:obtenerMuestraMusicHunter,
       iniciarCazadorMusical:iniciarCazadorMusical, detenerCazadorMusical:detenerCazadorMusical,
-      enviarTexto:enviarTexto };
+      enviarTexto:enviarTexto, cargarHistorialTexto:cargarHistorialTexto };
   }
 
   window.ElixisVoiceSession = { crear:crear, ESTADOS:ESTADOS };
