@@ -239,6 +239,17 @@
     /* Bajo 520px la marca cede el paso: el menu manda. */
     @media (max-width:520px){ .staff-flota .tx-wrap{display:none;} .staff-flota .staff-brand .mk{height:26px;} }
     .staff-brand{display:flex;align-items:center;gap:11px;min-width:0;}
+    /* RESPALDO WEBKIT VIEJO (Safari < 14.1, orden PO 2026-08-31): gap en
+       flexbox no se soporta ahi, y sin esto los hijos de .staff-brand y
+       .staff-actions quedarian pegados entre si (no colapsados como el bug
+       real de inset:0, pero si mas apretados de lo debido). @supports not
+       (gap:1px) hace que este margen SOLO exista donde gap no funciona --
+       sin el "not", un navegador moderno aplicaria gap Y margin a la vez y
+       duplicaria el espacio. */
+    @supports not (gap: 1px) {
+      .staff-brand > *:not(:last-child){margin-right:11px;}
+      .staff-actions > *:not(:last-child){margin-right:12px;}
+    }
     .staff-brand .mk{width:34px;height:34px;flex:none;object-fit:contain;display:block;}
     .staff-brand .tx{font-size:15px;font-weight:900;letter-spacing:.02em;line-height:1.1;white-space:nowrap;}
     .staff-brand .tx small{display:block;font-size:8.5px;font-weight:700;letter-spacing:.16em;
@@ -417,7 +428,7 @@
        es en toda la pantalla no es solamente en esa seccion". Movida a hijo
        directo de .ew-grid, detras de los 3 paneles (z-index:0), un solo
        canvas compartido para las 3 columnas en vez de uno por columna. */
-    .ew-grid > .avatar-fx{position:absolute; inset:0; width:100%; height:100%; z-index:0;}
+    .ew-grid > .avatar-fx{position:absolute; top:0;right:0;bottom:0;left:0; width:100%; height:100%; z-index:0;}
     .ew-carrusel-pista{display:flex; width:300%; height:100%; touch-action:pan-y; position:relative; z-index:1;}
     .ew-pantalla{width:33.3333%; height:100%; box-sizing:border-box; padding:0 5px; overflow-y:auto;}
     .ew-pantalla::-webkit-scrollbar{display:none}
@@ -527,10 +538,10 @@
        archivo), asi que una caja mas alta revela mas torso solo por tener
        mas alto real, sin tocar el zoom. */
     .avatar-stage{position:relative;width:min(420px,92%);flex:1;min-height:0;margin:4px auto 10px;}
-    .avatar-fx{position:absolute;inset:0;width:100%;height:100%;z-index:1}
+    .avatar-fx{position:absolute;top:0;right:0;bottom:0;left:0;width:100%;height:100%;z-index:1}
     .avatar-baseglow{position:absolute;left:50%;bottom:5%;transform:translateX(-50%);width:74%;height:44%;z-index:2;
       background:radial-gradient(closest-side,var(--gold-glow),transparent 72%);filter:blur(11px);opacity:.6;transition:.45s ease}
-    .avatar-fig{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;z-index:3;
+    .avatar-fig{position:absolute;top:0;right:0;bottom:0;left:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;z-index:3;
       filter:drop-shadow(0 10px 26px rgba(0,0,0,.7));animation:ew-breathe 5.6s ease-in-out infinite}
     /* Respiracion ligera de reposo (restaurada 2026-08-29, directiva de
        mitigacion): al quitar el parpadeo/respiro viejos para dar paso a
@@ -547,13 +558,13 @@
        solo se ve la foto en reposo -- ver ORDEN "cancelacion 2D" del
        2026-08-26. Sin controlador todavia a proposito: es el contenedor,
        no la integracion. */
-    .avatar-stream{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;z-index:3;display:none}
+    .avatar-stream{position:absolute;top:0;right:0;bottom:0;left:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;z-index:3;display:none}
     .avatar-stage.stream-live .avatar-fig{display:none}
     .avatar-stage.stream-live .avatar-stream{display:block}
     /* Motor de fotogramas (avatar-frame-player.js): dos capas superpuestas en
        opacity:0 por defecto -- sin clips reales configurados, se quedan asi
        para siempre y la foto de arriba manda, tal como se pidio. */
-    .avatar-clip{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;z-index:3;opacity:0;transition:opacity .2s linear;pointer-events:none}
+    .avatar-clip{position:absolute;top:0;right:0;bottom:0;left:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;z-index:3;opacity:0;transition:opacity .2s linear;pointer-events:none}
     /* Chroma key de DJMago (2026-08-29, mismo mecanismo real de
        mdj-commander.html): el <video> crudo (fondo verde de verdad) se
        oculta con visibility -- NO display/opacity, esas SI pausarian la
@@ -561,11 +572,11 @@
        redibujado cuadro a cuadro sin el verde por avatar-heygen-chromakey.js.
        Sin esto, lo que aparecia era el verde crudo sin procesar. */
     .avatar-clip-fuente{visibility:hidden}
-    .avatar-clip-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-events:none}
+    .avatar-clip-canvas{position:absolute;top:0;right:0;bottom:0;left:0;width:100%;height:100%;z-index:3;pointer-events:none}
     /* Sprites de boca por amplitud real (avatar-viseme-sprites.js): una sola
        capa que se prende SOLO mientras ELIXIS habla de verdad. Sin fotogramas
        reales configurados, se queda en opacity:0 para siempre. */
-    .avatar-viseme{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;z-index:4;opacity:0;transition:opacity .04s linear;pointer-events:none}
+    .avatar-viseme{position:absolute;top:0;right:0;bottom:0;left:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;z-index:4;opacity:0;transition:opacity .04s linear;pointer-events:none}
     .ew-estado{text-align:center;font-family:var(--mono,monospace);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);margin-top:2px;}
     /* Barra de orbes flotantes (2026-08-29, directiva del PO: "los botones
        del sistema del telefono inteligente" -- mismo patron de mdj-commander
@@ -612,7 +623,7 @@
        el circulo del orbe y no contra un ancestro mas grande. */
     .ew-orbe-mic{position:relative;}
     .ew-orbe-mic.on::before,.ew-orbe-mic.on::after,.ew-orbe-mic.on .ew-orbe-mic-aro{
-      content:"";position:absolute;inset:0;border-radius:50%;pointer-events:none;
+      content:"";position:absolute;top:0;right:0;bottom:0;left:0;border-radius:50%;pointer-events:none;
       border:2px solid var(--gold-lt);opacity:0;
       animation:ew-orbe-radar 1.9s cubic-bezier(.15,.6,.35,1) infinite;
     }
@@ -699,7 +710,7 @@
        arranca poco despues. Es la misma correccion que en #perfil-scroll. */
     .staff-shell{padding-top:14px;}
     #view-agenda,#view-cashflow,#view-config{position:relative;}
-    .agenda-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    .agenda-loading{position:absolute;top:0;right:0;bottom:0;left:0;display:flex;align-items:center;justify-content:center;
       background:#0b0f18;color:rgba(255,255,255,.55);font-size:13px;letter-spacing:.04em;z-index:2;}
     .agenda-loading.hidden{display:none;}
 
@@ -803,12 +814,12 @@
     .staff-side3.collapsed .side3-group,.staff-side3.collapsed .side3-link,.staff-side3.collapsed .side3-solo{justify-content:center;gap:0;padding-left:0;padding-right:0;}
     /* panel de contenido */
     .staff-content3{flex:1;min-width:0;position:relative;background:#070a10;}
-    .sc3-panel{display:none;position:absolute;inset:0;}
+    .sc3-panel{display:none;position:absolute;top:0;right:0;bottom:0;left:0;}
     .sc3-panel.active{display:block;}
     #sc3-gob{overflow-y:auto;}
     #sc3-gob .gov-scroll{max-height:none;overflow:visible;padding:22px 22px 60px;}
     .sc3-frame{width:100%;height:100%;border:0;display:block;background:#0a0e16;}
-    .sc3-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:10px;color:var(--gold-lt);font-size:13px;font-weight:700;letter-spacing:.02em;background:#0a0e16;z-index:2;}
+    .sc3-loading{position:absolute;top:0;right:0;bottom:0;left:0;display:flex;align-items:center;justify-content:center;gap:10px;color:var(--gold-lt);font-size:13px;font-weight:700;letter-spacing:.02em;background:#0a0e16;z-index:2;}
     .sc3-loading.hidden{display:none;}
     .acc-spin{width:15px;height:15px;border:2px solid rgba(197,160,89,.3);border-top-color:var(--gold);border-radius:50%;display:inline-block;animation:accspin .7s linear infinite;}
     @keyframes accspin{to{transform:rotate(360deg);}}
@@ -897,11 +908,11 @@
     .pf-wrap > .pf-hero{margin:0 -24px;border-radius:0;border-left:0;border-right:0;}
     /* separacion tras el hero a sangre, que ya no la da el borde redondeado */
     .pf-wrap > .pf-hero + *{margin-top:26px;}
-    .pf-banner{display:none;position:absolute;inset:0;z-index:0;}
+    .pf-banner{display:none;position:absolute;top:0;right:0;bottom:0;left:0;z-index:0;}
     .pf-hero.has-banner .pf-banner{display:block;}
     .pf-banner img{width:100%;height:100%;object-fit:cover;display:block;}
     .pf-scrim{display:none;}
-    .pf-hero.has-banner .pf-scrim{display:block;position:absolute;inset:0;z-index:0;
+    .pf-hero.has-banner .pf-scrim{display:block;position:absolute;top:0;right:0;bottom:0;left:0;z-index:0;
       background:linear-gradient(180deg,rgba(8,11,18,.05) 24%,rgba(8,11,18,.72) 56%,rgba(8,11,18,.97));}
     /* PLANTILLA DEL STAFF (PO 2026-08-21). NO es la del artista -- esa vive en
        otro arbol y ya se revirtio una vez por aplicarla aqui por error.
@@ -1028,7 +1039,7 @@
     .mdj-notif-bell-item-who{font-size:12.5px;font-weight:600;}
     .mdj-notif-bell-item-meta{font-size:10.5px;color:rgba(255,255,255,.5);}
     .mdj-notif-bell-empty{padding:14px 6px;font-size:12px;color:rgba(255,255,255,.5);text-align:center;}
-    .mdj-incident-backdrop{display:none;position:fixed;inset:0;z-index:9600;
+    .mdj-incident-backdrop{display:none;position:fixed;top:0;right:0;bottom:0;left:0;z-index:9600;
       background:rgba(4,6,10,.72);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:20px;}
     .mdj-incident-backdrop.open{display:flex;}
     .mdj-incident-modal{width:100%;max-width:520px;max-height:88vh;overflow-y:auto;
