@@ -3470,13 +3470,16 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
   /* UNIFICADO 2026-08-18 → ver bloque «REJILLA RÍGIDA» al final del archivo: */
   /* grid-template-columns: repeat(9, max-content) 40px !important; */
 }
-#mainHeader.header.mdj-header-unified .mdj-daynight {
-  position: static !important;
-  transform: none !important;
-  grid-area: 1 / 10 !important;
-  justify-self: end !important;
-  margin-left: 12px;
-}
+/* ORDEN PO 2026-08-30 (blindaje definitivo de 10 puestos): este override
+   forzaba al sol a la "columna 10" fija -- valido cuando MRM IA era el
+   puesto 9 y el sol el 10. Con la interna de 10 puestos, MRM IA (data-mdj-
+   slot="10") pasa a competir por esa misma columna 10 (sin regla explicita
+   de grid-column, cae ahi por auto-placement) y ambos se solapaban: la
+   misma familia de bug que ya rompio Bóveda Legal el 2026-08-24 y que hoy
+   rompio MI PERFIL/STAFF. Se retira el override: el sol vuelve a su
+   definicion original, `position:absolute` (ver bloque mas arriba), que
+   lo saca del flujo por completo -- ni grid ni flex pueden asignarle una
+   columna que otro puesto tambien reclame. */
 
 /* Separadores con ritmo uniforme: una "/" delante de cada pestaña salvo la
    primera y las que siguen a un slot reservado. El separador es del riel, no de
@@ -3641,52 +3644,58 @@ body #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
    #mainNav.mdj-mainnav-flex.nav.top-nav, la regla max-width:100% activa en
    @media min-width:1001px que le ganaba a esta — verificado en vivo a
    2560px: sin este refuerzo, max-width nunca aplicaba, en ningún valor. */
+/* RETIRADO 2026-08-31 (orden PO, "cero grid-template-columns: repeat(...)"
+   y "cero regla obsoleta que encime MI PERFIL/STAFF"): este bloque completo
+   (columnas de grid + `width:100%` por celda) queda comentado en vez de
+   vivo. Se conserva como TEXTO, no como CSS activo, por el valor historico
+   del calculo de anchos (NUEVE COLUMNAS CANÓNICAS, 2026-08-18) -- pero ya no
+   se ejecuta. El `width:100% !important` de la segunda regla era la MISMA
+   familia de bug que el `.style.setProperty('width','100%')` que el JS
+   inyectaba en 6 sitios para MI PERFIL (retirado hoy tambien): bajo grid,
+   100% de una celda angosta era inofensivo; bajo el riel flex real, ese
+   mismo valor se habria vuelto a inflar hasta empujar los puestos
+   siguientes fuera de pantalla. La geometria real hoy vive en flexbox, en
+   el bloque «REJILLA FLEXIBLE · BLINDAJE DEFINITIVO» al final del archivo.
+
 #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots="9"] ,
 #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-slots="10"]{
-  display: grid !important;
+  display: grid;
   grid-template-columns:
-    /* NUEVE COLUMNAS CANÓNICAS · reestructurado 2026-08-18.
-       Antes: diez pistas fijas en píxeles (95 165 145 105 150 160 160 170 130
-       + 40 del botón día/noche). Ese ancho en píxeles ataba cada columna a la
-       longitud del texto en un idioma concreto, y las pistas de los puestos que
-       el JS ocultaba quedaban vacías —150 px de CONFIG y 170 px de MI PERFIL,
-       medidos en login.html— produciendo los agujeros y las barras huérfanas.
-       Ahora: nueve columnas proporcionales con suelo mínimo. El suelo evita que
-       una etiqueta corta encoja su columna al cambiar de idioma (la paridad
-       bilingüe que ya costó una regresión) y el reparto en fracciones mantiene
-       la barra simétrica sea cual sea el ancho de ventana.
-       El botón día/noche no entra en la rejilla: va absoluto, fuera de flujo. */
-    repeat(9, minmax(6.5rem, 1fr)) !important;
-  /* center y no space-between: con columnas fijas, space-between reparte el
-     sobrante ENTRE ellas, así que su posición pasaría a depender del ancho del
-     contenedor — es decir, volvería a derivar entre páginas. */
-  justify-content: center !important;
-  align-items: center !important;
-  max-width: 1600px !important;
-  height: var(--mdj-header-unified-r2) !important;
-  min-height: var(--mdj-header-unified-r2) !important;
-  max-height: var(--mdj-header-unified-r2) !important;
-  margin: 0 auto !important;
-  box-sizing: border-box !important;
-  gap: 0 !important;
-  /* visible a ancho completo: el riel cabe entero y nada debe recortarse.
-     Por debajo del umbral, el media query de más abajo lo pasa a auto. */
-  overflow: visible !important;
+    NUEVE COLUMNAS CANÓNICAS · reestructurado 2026-08-18.
+    Antes: diez pistas fijas en píxeles (95 165 145 105 150 160 160 170 130
+    + 40 del botón día/noche). Ese ancho en píxeles ataba cada columna a la
+    longitud del texto en un idioma concreto, y las pistas de los puestos que
+    el JS ocultaba quedaban vacías —150 px de CONFIG y 170 px de MI PERFIL,
+    medidos en login.html— produciendo los agujeros y las barras huérfanas.
+    Ahora: nueve columnas proporcionales con suelo mínimo. El suelo evita que
+    una etiqueta corta encoja su columna al cambiar de idioma (la paridad
+    bilingüe que ya costó una regresión) y el reparto en fracciones mantiene
+    la barra simétrica sea cual sea el ancho de ventana.
+    El botón día/noche no entra en la rejilla: va absoluto, fuera de flujo.
+    repeat(9, minmax(6.5rem, 1fr));
+  justify-content: center;
+  align-items: center;
+  max-width: 1600px;
+  height: var(--mdj-header-unified-r2);
+  min-height: var(--mdj-header-unified-r2);
+  max-height: var(--mdj-header-unified-r2);
+  margin: 0 auto;
+  box-sizing: border-box;
+  gap: 0;
+  overflow: visible;
 }
 
-/* El slot ocupa su celda y nada más. `min-width: max-content` —que este archivo
-   declaraba en dos sitios y el JS inyectaba desde siete— re-expandía la celda y
-   anulaba el ancho fijo. */
 #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot] ,
 #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > [data-mdj-slot]{
-  min-width: 0 !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  white-space: nowrap !important;
-  text-align: center !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  white-space: nowrap;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+*/
 
 /* CONTENCIÓN, NO AMPUTACIÓN.
    overflow:hidden hacía desaparecer los dos últimos slots sin aviso ni forma de
@@ -4154,15 +4163,32 @@ body #mainHeader.header.mdj-header-unified
  * El estándar de nueve puestos es universal e idéntico en todas las vistas, así
  * que la variante de invitado se muestra igual que la autenticada. Selector con
  * la misma raíz que la regla que lo escondía, para ganarle por especificidad.
+ *
+ * FIX-NAV-DUP-MIPERFIL-02 (2026-08-30): esta columna 8 es la del estándar
+ * VIEJO de 9 puestos. La interna de 10 (con MRM IA) corrió MI PERFIL a la
+ * columna 7 y dejó la 8 para Staff -- sin el :not() de abajo, esta regla con
+ * !important le seguía imponiendo la columna 8 a MI PERFIL tambien ahi, y
+ * las dos pestañas quedaban una encima de la otra (medido en dj-tools.html,
+ * texto "MI PERFIL"/"Staff" ilegible por superposición). La rama de abajo
+ * cubre el caso de 10 puestos con su propia columna.
  */
-#mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav
+#mainHeader.header.mdj-header-unified #mainNav:not([data-mdj-slots="10"]).mdj-mainnav-flex.nav.top-nav
   > a#mainNav-guest-mi-perfil-link,
 #mainHeader.header.mdj-header-unified .header-nav .container
-  > #mainNav.mdj-mainnav-flex.nav.top-nav > a#mainNav-guest-mi-perfil-link {
+  > #mainNav:not([data-mdj-slots="10"]).mdj-mainnav-flex.nav.top-nav > a#mainNav-guest-mi-perfil-link {
   display:    inline-flex !important;
   visibility: visible     !important;
   opacity:    1           !important;
   grid-area:  1 / 8       !important;
+}
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"].mdj-mainnav-flex.nav.top-nav
+  > a#mainNav-guest-mi-perfil-link,
+#mainHeader.header.mdj-header-unified .header-nav .container
+  > #mainNav[data-mdj-slots="10"].mdj-mainnav-flex.nav.top-nav > a#mainNav-guest-mi-perfil-link {
+  display:    inline-flex !important;
+  visibility: visible     !important;
+  opacity:    1           !important;
+  grid-area:  1 / 7       !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -4198,50 +4224,90 @@ body #mainHeader.header.mdj-header-unified
    problema que este bloque vino a cerrar.
    ═══════════════════════════════════════════════════════════════════════════ */
 
+/* REFACTOR 2026-08-30 (orden PO, "cero parches temporales" -- reemplaza el
+   bloque anterior de este mismo sitio, que era display:grid):
+   display:grid + grid-template-columns fijo era la fuente real de los
+   choques de MI PERFIL/STAFF y del sol/MRM IA -- agregar un puesto obligaba
+   a correr numeros de columna a mano en ~30 sitios de este archivo, y
+   bastaba con olvidar uno para que dos puestos cayeran en la misma celda.
+
+   Con flexbox, cada puesto ocupa su lugar por ORDEN DE APARICION en el DOM
+   -- orden que ya gobierna mdjNormalizeMainNavSlots() en mdjb-shared-
+   header.js, reafirmado en cada pasada. Agregar o quitar un puesto (como
+   paso con MRM IA) nunca vuelve a desalinear a otro: no hay numero de
+   columna que reasignar en ningun lado.
+
+   Las ~30 reglas viejas de grid-area/grid-column/grid-template-columns/
+   grid-auto-flow que quedan mas arriba en el archivo (todas atadas a
+   [data-mdj-slots="9"/"10"]) NO se borraron una por una -- localizarlas y
+   tocarlas todas sin verificar cada una en vivo era mas riesgo del que este
+   ticket pide asumir un mismo dia que ya tuvo varias regresiones reales.
+   Quedan INERTES por diseño de la propia especificacion CSS: son
+   propiedades exclusivas de un contenedor grid, y esta caja ya no lo es.
+   Misma especificidad de doble-#id que el bloque que reemplazan, para
+   seguir ganando sobre absolutamente todo lo anterior en el archivo. */
 html body #mainHeader#mainHeader.header.mdj-header-unified
   #mainNav#mainNav.mdj-mainnav-flex.nav.top-nav {
-  display: grid !important;
-  /* AJUSTADAS AL CONTENIDO, NO NUEVE FRACCIONES IGUALES.
-     Con columnas iguales y textos de distinta longitud, el aire alrededor de
-     cada palabra variaba de 7 a 32 px: las columnas eran simétricas pero la
-     lectura no. Con max-content cada puesto ocupa lo que mide su texto y la
-     SEPARACIÓN la fija el separador, idéntica en los ocho saltos.
-     Se puede hacer ahora porque los nueve puestos están SIEMPRE presentes: las
-     columnas fijas en píxeles existían para reservar sitio a slots que podían
-     aparecer, y eso ya no ocurre. La barra sigue sin temblar. */
-  grid-template-columns: repeat(9, max-content) !important;
-  /* ══ FIX-NAV-ANCHOS-01 · SAFE CENTER + DESLIZAMIENTO ══════════════════════
-     `center` a secas centra TAMBIEN cuando el contenido no cabe, y entonces el
-     desbordamiento se reparte a los dos lados: el inicio de la barra sale fuera
-     de la ventana por la izquierda y esos puestos se vuelven inalcanzables.
-     Medido con los nueve puestos (1338px fijos): a 1200px el primero quedaba en
-     X=-68, a 1000px en -170, a 885px en -227 y a 760px en -290.
-
-     `safe center` es exactamente la palabra que CSS tiene para esto: centra
-     mientras quepa y, en cuanto desborda, alinea al inicio en vez de recortar.
-     Ningun puesto queda inalcanzable.
-
-     Y el riel se vuelve deslizable, que es la decision del PO: los nueve
-     conservan su tamano completo —nada de tipografia encogida, la barra grande
-     manda— y quien no tenga ancho desliza. La barra de desplazamiento se oculta
-     como ya se hace en los otros rieles del header (ver linea 396). */
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  /* Espaciado elastico (orden PO). El separador visual "/" entre puestos
+     vive en su propio ::before con margen propio (ver bloque de
+     separadores, mas abajo en el archivo) -- ese margen se redujo a la par
+     de este gap para no sumar los dos espacios y duplicar el aire entre
+     puestos. */
+  gap: clamp(4px, 0.6vw, 10px) !important;
+  /* `safe center` sigue siendo valido en flex, con el mismo motivo que tenia
+     en grid: centra mientras el contenido quepa y, en cuanto desborda,
+     alinea al inicio en vez de dejar puestos inalcanzables fuera de la
+     ventana por la izquierda. */
   justify-content: safe center !important;
   overflow-x: auto !important;
   overflow-y: hidden !important;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none !important;
-  column-gap: 0 !important;
-  align-items: center !important;
-  /* La fila de la rejilla mide 0px (grid-auto-rows, que fija el guion). Con
-     align-content: center esa fila queda centrada en los 72px de la banda y los
-     puestos caen donde deben. Con `normal` —lo que habia por debajo de 1001px,
-     porque el center vivia en un @media de escritorio— la fila se pega arriba y
-     los puestos, centrados sobre una fila sin altura, se derraman 17px HACIA
-     ARRIBA: se metian debajo de la fila superior, que tiene mas z-index (110
-     frente a 101), y se veian cortados por la mitad. Medido a 1000px: fila
-     84→156 y enlace 67→102. Se declara aqui, que aplica en TODOS los anchos. */
-  align-content: center !important;
 }
+
+/* FIX 2026-08-30 (orden PO): el sol/luna vivia con `position:absolute`,
+   anclado a la derecha de un ANCESTRO distinto a este riel (.header-nav
+   .container). Con overflow-x:auto activo, reservarle espacio por padding no
+   sirve -- el padding no limita hasta donde se extiende visualmente el
+   contenido desbordado, medido en vivo: seguia chocando incluso con 52px de
+   padding-right y viewport de 1440px. La cura real es que deje de estar
+   "fuera" del riel: se vuelve un integrante mas del mismo flex, ultimo por
+   `order`, para que el propio algoritmo de flexbox le reserve su espacio
+   igual que a cualquier otro puesto -- dos hermanos flex nunca se solapan
+   entre si, por definicion. */
+html body #mainHeader#mainHeader.header.mdj-header-unified
+  #mainNav#mainNav.mdj-mainnav-flex.nav.top-nav > .mdj-daynight {
+  position: static !important;
+  order: 999 !important;
+  flex: 0 0 auto !important;
+  margin-left: 8px !important;
+  transform: none !important;
+}
+
+/* Cada puesto ocupa lo que mide su propio texto -- nunca se estira ni se
+   encoge para llenar espacio sobrante, y nunca se parte en dos lineas. */
+html body #mainHeader#mainHeader.header.mdj-header-unified
+  #mainNav#mainNav.mdj-mainnav-flex.nav.top-nav > [data-mdj-slot] {
+  flex: 0 0 auto !important;
+  white-space: nowrap !important;
+}
+
+/* PENDIENTE, reportado sin resolver 2026-08-30: al retirar el override que
+   metia el sol DENTRO de la rejilla (mas arriba -- ese override causaba el
+   choque MI PERFIL/STAFF), el sol vuelve a `position:absolute` y reabre el
+   problema ORIGINAL que aquel intentaba tapar: a 1280px, sol x=1214-1244 y
+   MRM IA x=1141-1251 se superponen ~30px, medido en vivo. Se intento
+   reservar espacio con padding-right en #mainNav pero no sirvio: la barra ya
+   usa overflow-x:auto + "safe center" para cuando el contenido no cabe, y el
+   padding no reduce el area de scroll, solo el area visible sin scroll --
+   el contenido desbordaba igual hacia la derecha, debajo del sol. Corregirlo
+   bien exige achicar el ANCHO del contenedor de scroll, no su padding; no se
+   improvisa esa cirugia sin volver a medir. Impacto menor (un icono y una
+   etiqueta en el borde, no dos etiquetas ilegibles) frente al choque
+   MI PERFIL/STAFF, que si esta resuelto y verificado. */
 
 #mainNav#mainNav.mdj-mainnav-flex.nav.top-nav::-webkit-scrollbar {
   display: none !important;   /* mismo criterio que los demas rieles del header */
@@ -4275,20 +4341,16 @@ html body #mainHeader#mainHeader.header.mdj-header-unified
   margin:         0           !important;
 }
 
-/* Columna de fábrica. Sin esto el navegador coloca por orden de aparición y
-   basta que una página traiga los enlaces en otro orden para barajar la barra. */
-html body #mainHeader#mainHeader.header.mdj-header-unified #mainNav#mainNav > [data-mdj-slot="1"] { grid-column: 1 !important; }
-html body #mainHeader#mainHeader.header.mdj-header-unified #mainNav#mainNav > [data-mdj-slot="2"] { grid-column: 2 !important; }
-html body #mainHeader#mainHeader.header.mdj-header-unified #mainNav#mainNav > [data-mdj-slot="3"] { grid-column: 3 !important; }
-html body #mainHeader#mainHeader.header.mdj-header-unified #mainNav#mainNav > [data-mdj-slot="4"] { grid-column: 4 !important; }
-html body #mainHeader#mainHeader.header.mdj-header-unified #mainNav#mainNav > [data-mdj-slot="5"] { grid-column: 5 !important; }
-html body #mainHeader#mainHeader.header.mdj-header-unified #mainNav#mainNav > [data-mdj-slot="6"] { grid-column: 6 !important; }
-html body #mainHeader#mainHeader.header.mdj-header-unified #mainNav#mainNav > [data-mdj-slot="7"] { grid-column: 7 !important; }
-html body #mainHeader#mainHeader.header.mdj-header-unified #mainNav#mainNav > [data-mdj-slot="8"] { grid-column: 8 !important; }
-html body #mainHeader#mainHeader.header.mdj-header-unified #mainNav#mainNav > [data-mdj-slot="9"] { grid-column: 9 !important; }
-/* El puesto 8 tiene dos identidades según haya sesión; ambas van a la misma columna. */
-html body #mainHeader#mainHeader.header.mdj-header-unified #mainNav#mainNav > a#mainNav-guest-mi-perfil-link,
-html body #mainHeader#mainHeader.header.mdj-header-unified #mainNav#mainNav > a#mainNav-mi-perfil-link { grid-column: 8 !important; }
+/* ORDEN PO 2026-08-30: bloque retirado. Asignaba `grid-column` por numero de
+   puesto fijo -- exactamente la clase de selector que causo el choque
+   MI PERFIL/STAFF (el ajuste de ayer para el puesto 8 buscaba, ademas, un id
+   que no existe en el HTML real: "#mainNav-mi-perfil-link" en vez de
+   "#mainNav-mi-portal-link", asi que ni siquiera aplicaba donde debia).
+   Sustituido por la REJILLA FLEXIBLE al final del archivo: cada puesto ocupa
+   su lugar por ORDEN DE APARICION en el DOM (que ya gobierna
+   mdjNormalizeMainNavSlots en mdjb-shared-header.js), sin mapear ningun
+   numero de columna a mano. Agregar o quitar un puesto no puede volver a
+   desalinear a ningun otro. */
 
 /* Separadores simétricos: uno delante de cada puesto salvo el primero. Como los
    nueve están siempre presentes, ninguna barra puede quedar huérfana. */
@@ -4296,14 +4358,16 @@ html body #mainHeader#mainHeader.header.mdj-header-unified #mainNav#mainNav > a[
 html body #mainHeader#mainHeader.header.mdj-header-unified #mainNav#mainNav > a#mainNav-guest-mi-perfil-link::before { content: none !important; }
 html body #mainHeader#mainHeader.header.mdj-header-unified #mainNav#mainNav > a[data-mdj-slot]:not([data-mdj-slot="1"])::before,
 html body #mainHeader#mainHeader.header.mdj-header-unified #mainNav#mainNav > a#mainNav-guest-mi-perfil-link::before {
-  /* EL SEPARADOR ES QUIEN PONE TODO EL AIRE, y lo pone simétrico: el mismo
-     margen a izquierda y derecha en los ocho saltos. Al ser la única fuente de
-     espaciado, la distancia texto→«/»→texto es idéntica de extremo a extremo.
-     En rem y no en em: con em, un puesto con fuente mayor abriría más hueco
-     que sus vecinos y volvería la disparidad por otra puerta. */
+  /* EL SEPARADOR YA NO ES LA ÚNICA FUENTE DE AIRE (2026-08-30): el riel flex
+     ahora suma su propio `gap` elástico entre puestos. Margen reducido de
+     1.05rem a 0.7rem por lado para no sumar los dos espacios y duplicar el
+     hueco -- ajuste por calculo, no medido en pantalla; pendiente de
+     confirmación visual del PO. En rem y no en em: con em, un puesto con
+     fuente mayor abriría más hueco que sus vecinos y volvería la disparidad
+     por otra puerta. */
   content: "/" !important;
   display: inline-block !important;
-  margin: 0 1.05rem !important;
+  margin: 0 0.7rem !important;
   opacity: .34 !important;
   font-weight: 400 !important;
   font-size: 1em !important;
@@ -4543,13 +4607,28 @@ html body #mainHeader.header.mdj-header-unified > .header-nav {
 
 /* 3 · El puesto 8 tiene dos identidades según la página; ambas a la columna 8
        y siempre presentes, que es lo que evita el hueco cuando falta el
-       atributo de puesto. */
-html body #mainHeader.header.mdj-header-unified #mainNav > a[data-mdj-nav="mi-portal"],
-html body #mainHeader.header.mdj-header-unified #mainNav > a[data-mdj-nav="my-profile"],
-html body #mainHeader.header.mdj-header-unified #mainNav > a#mainNav-mi-portal-link,
-html body #mainHeader.header.mdj-header-unified #mainNav > a#mainNav-guest-mi-perfil-link,
-html body #mainHeader.header.mdj-header-unified #mainNav > a#mainNav-mi-perfil-link {
+       atributo de puesto.
+   FIX-NAV-DUP-MIPERFIL-02 (2026-08-30): esto es el estándar VIEJO de 9
+   puestos. En la interna de 10 (MRM IA) MI PERFIL es la columna 7 y la 8 es
+   Staff -- por matchear directo por [data-mdj-nav="mi-portal"] (sin mirar
+   cuántos puestos tiene la barra), esta regla imponía la 8 también ahí y
+   MI PERFIL quedaba encima de Staff. Rama gemela abajo para los 10 puestos. */
+html body #mainHeader.header.mdj-header-unified #mainNav:not([data-mdj-slots="10"]) > a[data-mdj-nav="mi-portal"],
+html body #mainHeader.header.mdj-header-unified #mainNav:not([data-mdj-slots="10"]) > a[data-mdj-nav="my-profile"],
+html body #mainHeader.header.mdj-header-unified #mainNav:not([data-mdj-slots="10"]) > a#mainNav-mi-portal-link,
+html body #mainHeader.header.mdj-header-unified #mainNav:not([data-mdj-slots="10"]) > a#mainNav-guest-mi-perfil-link,
+html body #mainHeader.header.mdj-header-unified #mainNav:not([data-mdj-slots="10"]) > a#mainNav-mi-perfil-link {
   grid-column: 8 !important;
+  display: inline-flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+html body #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > a[data-mdj-nav="mi-portal"],
+html body #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > a[data-mdj-nav="my-profile"],
+html body #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > a#mainNav-mi-portal-link,
+html body #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > a#mainNav-guest-mi-perfil-link,
+html body #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > a#mainNav-mi-perfil-link {
+  grid-column: 7 !important;
   display: inline-flex !important;
   visibility: visible !important;
   opacity: 1 !important;
@@ -4719,18 +4798,16 @@ html[data-theme="day"] #mobileMenu .mobile-nav .mdj-panel-titulo { color: #6b6b7
    ESTACIONES DE TRABAJO · REJILLA DE ANCHO VARIABLE
    ──────────────────────────────────────────────────────────────────────────
    La rejilla maestra fija repeat(9, max-content) porque la barra publica tiene
-   nueve puestos. La estacion del artista tiene DIEZ, asi que el decimo caia en
-   una fila implicita de 0px y se derramaba, igual que paso con align-content.
+   nueve puestos. Nota 2026-08-30: cuando esto se escribio, "la de DIEZ" era
+   MDJ_NAV_SLOTS_ARTISTA (Bóveda Legal, revertida a 9 el 2026-08-24). Hoy la
+   de diez puestos es MDJ_NAV_SLOTS_INTERNO (MRM IA) -- el mecanismo es el
+   mismo, el nombre de la tabla que lo dispara cambio.
 
-   Se deriva del atributo que el guion ya escribe con el numero real de puestos.
-   No se toca la regla de los nueve: la publica sigue exactamente igual.
-   ══════════════════════════════════════════════════════════════════════════ */
-#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] {
-  grid-template-columns: repeat(10, max-content) !important;
-}
-#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="1"] {
-  grid-template-columns: max-content !important;
-}
+   RETIRADO 2026-08-31 (orden PO, "cero grid-template-columns: repeat(...)"):
+   la geometria del riel es flex desde el bloque «REJILLA FLEXIBLE · BLINDAJE
+   DEFINITIVO» al final del archivo -- ya no depende de cuantas columnas
+   declare grid-template-columns, y las dos reglas que vivian aqui (para
+   data-mdj-slots="10" y "1") ya no aparecen en el archivo. */
 
 /* ══════════════════════════════════════════════════════════════════════════
    VISITANTE EN UN PERFIL AJENO · BRANDING Y BUSCADOR FLOTANTES
@@ -5301,4 +5378,133 @@ body.mdj-perfil-estacion #mainHeader.header.mdj-header-unified {
     #mainNav#mainNav > a[data-mdj-slot]:not([data-mdj-slot="1"])::before {
     margin: 0 0.6rem !important;
   }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   INTERCAMBIO NAV↔HAMBURGUESA · UMBRAL REAL DE 10 PUESTOS · 2026-08-30
+   ──────────────────────────────────────────────────────────────────────────
+   Orden del PO tras el incidente de MI PERFIL/STAFF: con 10 puestos, el ancho
+   minimo para renderizar la barra completa sin tocar el logo es ~1150px. Por
+   debajo, la barra de escritorio se oculta y SOLO la hamburguesa queda
+   visible. Prohibido mostrar las dos a la vez.
+
+   POR QUÉ HACIA FALTA UNA REGLA NUEVA
+   Ya existian dos umbrales, y NO coincidian entre si:
+     - header-unified.css ocultaba `.header-nav` solo con
+       `(max-width:600px) and (pointer:coarse)` — decision PO 2026-08-20,
+       "la hamburguesa es EXCLUSIVA DE TELEFONO".
+     - styles.css mostraba `.mobile-menu-btn` con `display:flex` en DOS
+       sitios (líneas ~2938 y ~5817) bajo `(max-width:1000px)`, SIN condicion
+       de puntero.
+   Entre 601px y 1000px (y en cualquier entorno donde el puntero no se
+   reporte como "coarse" incluso por debajo de eso — asi se reprodujo aqui
+   mismo, en el navegador de verificacion) la hamburguesa ya se mostraba pero
+   la barra de escritorio TODAVIA NO se ocultaba: las dos convivian, y con 10
+   puestos en vez de 9 el logo quedaba debajo. Ese es el defecto reportado.
+
+   QUÉ HACE ESTA REGLA
+   Un tercer umbral, unico y sin condicion de puntero, en 1150px — el numero
+   que pidio el PO. Con `!important` y la MISMA especificidad que ya usaba el
+   corte de telefono (mismo selector para `.header-nav`), gana en todo el
+   rango donde se solapa con los otros dos sin necesidad de tocarlos: el
+   corte de telefono (600px+tactil) sigue intacto para sus propios ajustes de
+   espacio (logo, wordmark) que esta regla NO toca. Solo se unifica el
+   intercambio nav/hamburguesa, que es lo que pedia el ticket — no se amplia
+   el alcance a nada mas.
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 1150px) {
+  #mainHeader.header.mdj-header-unified .header-nav,
+  html body #mainHeader.header.mdj-header-unified > .header-nav {
+    display: none !important;
+  }
+  #mainHeader.header.mdj-header-unified .mobile-menu-btn {
+    display: flex !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   BOTÓN PERSISTENTE DE RIEL · CIERRA EL HUECO DE "ESTACIÓN" · 2026-08-30
+   ──────────────────────────────────────────────────────────────────────────
+   La regla de arriba (1150px) oculta `.header-nav` y muestra `.mobile-menu-
+   btn` -- pero ese botón vive DENTRO de `.header-top`, y en las páginas de
+   "estación" (una sola fila) `.header-top` está oculto SIEMPRE, con
+   `html.mdj-estacion-previa #mainHeader .header-top{display:none}`, sin
+   condición de ancho. Ahí, por debajo de 1150px, no queda ni barra ni
+   hamburguesa -- medido en vivo en academia.html y dj-tools.html.
+
+   Este botón es un HIJO DIRECTO de #mainHeader (no de .header-top ni de
+   .header-nav), así que ninguno de los dos mecanismos de ocultar lo alcanza.
+   Al pulsarlo, reutiliza el MISMO #mainNav ya construido (los mismos nodos
+   data-mdj-nav, sin lista duplicada que se pueda desincronizar como pasó con
+   el drawer viejo) como panel desplegable en vertical. */
+#mainHeader.header.mdj-header-unified > .mdj-riel-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid rgba(197, 160, 89, .35);
+  border-radius: 50%;
+  color: #c5a059;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+#mainHeader.header.mdj-header-unified > .mdj-riel-toggle svg {
+  width: 18px;
+  height: 18px;
+}
+/* CORRECCION 2026-08-31 (auditoria FASE 1, hallazgo real): sin el gate
+   `html.mdj-estacion-previa`, este boton aparecia en CUALQUIER pagina bajo
+   1150px, no solo en las de "estacion" -- verificado en vivo en index.html:
+   .mobile-menu-btn (el viejo, dentro de .header-top, que ahi SI esta
+   visible porque .header-top no se oculta fuera de estacion) y este riel
+   coexistian a la vez, exactamente lo que el punto 5 prohibe. El riel solo
+   existe para tapar el hueco que .mdj-estacion-previa abre al ocultar
+   .header-top (ver bloque de arriba, linea ~4956) -- fuera de esa condicion
+   el hamburguesa vieja ya cumple su funcion sola. */
+@media (max-width: 1150px) {
+  html.mdj-estacion-previa #mainHeader.header.mdj-header-unified > .mdj-riel-toggle {
+    display: flex !important;
+  }
+}
+/* Estado abierto: `.header-nav` deja de estar oculto y se repinta como panel
+   vertical, ancho completo, debajo del header. Gana a la regla de 1150px de
+   arriba por ir despues en el archivo con la misma especificidad de clase en
+   `.header-nav`, mas la condicion extra de `.mdj-riel-abierto`. */
+body.mdj-riel-abierto #mainHeader.header.mdj-header-unified .header-nav {
+  display: block !important;
+  position: absolute !important;
+  top: 100% !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 900 !important;
+  background: #0b0b0d !important;
+  border-top: 1px solid rgba(197, 160, 89, .25) !important;
+  max-height: calc(100vh - 100%) !important;
+  overflow-y: auto !important;
+}
+body.mdj-riel-abierto #mainHeader.header.mdj-header-unified .header-nav .container {
+  width: 100% !important;
+  max-width: none !important;
+}
+body.mdj-riel-abierto #mainHeader#mainHeader.header.mdj-header-unified
+  #mainNav#mainNav.mdj-mainnav-flex.nav.top-nav {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  overflow-x: visible !important;
+  padding: 8px 20px 20px !important;
+}
+body.mdj-riel-abierto #mainHeader.header.mdj-header-unified #mainNav > [data-mdj-slot] {
+  padding: 12px 0 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, .06) !important;
+}
+body.mdj-riel-abierto #mainHeader.header.mdj-header-unified #mainNav > [data-mdj-slot]::before {
+  display: none !important;
+}
+body.mdj-riel-abierto #mainHeader.header.mdj-header-unified #mainNav > .mdj-daynight {
+  align-self: flex-end !important;
+  margin: 8px 0 0 !important;
 }

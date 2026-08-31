@@ -83,15 +83,21 @@
       id: 'mainNav-config-link', cls: 'mdj-config-mainnav' },
     { s: 5, key: 'nav-tools',      nav: 'tools',     href: './dj-tools.html',     txt: 'DJ Tools' },
     { s: 6, key: null,             nav: 'flow',      href: './staff-agenda.html?tab=flow', txt: 'Cash Flow' },
-    { s: 7, key: null,             nav: 'fenix',     href: './elixis-console.html', txt: 'Fénix AI' },
-    { s: 8, key: 'nav-my-profile', nav: 'mi-portal', href: './account-settings.html', txt: 'MI PERFIL',
+    { s: 7, key: 'nav-my-profile', nav: 'mi-portal', href: './account-settings.html', txt: 'MI PERFIL',
       id: 'mainNav-mi-portal-link', cls: 'mdj-mi-portal-mainnav mdj-mi-portal-gold',
       alias: ['mi-portal', 'header-mi-portal'], navAlias: ['my-profile', 'profile'] },
-    /* Puesto 9 · STAFF. Lleva la clase del gate determinista por rol que ya usa
+    /* Puesto 8 · STAFF. Lleva la clase del gate determinista por rol que ya usa
        la tira de owner: artista, cliente e invitado no lo ven. Sigue pendiente
        el requisito pleno de la ley RBAC —sacarlo del DOM, no solo ocultarlo. */
-    { s: 9, key: 'nav-staff',      nav: 'staff',     href: './staff.html',        txt: 'Staff',
-      id: 'mainNav-staff-or-profile', cls: 'mdj-staff-mainnav dj-tab-btn--staff-only' }
+    { s: 8, key: 'nav-staff',      nav: 'staff',     href: './staff.html',        txt: 'Staff',
+      id: 'mainNav-staff-or-profile', cls: 'mdj-staff-mainnav dj-tab-btn--staff-only' },
+    { s: 9, key: null,             nav: 'fenix',     href: './elixis-console.html', txt: 'Fénix AI' },
+    /* Puesto 10 · MRM IA — mismo destino/clase que el puesto 9 de la barra
+       publica (linea ~50); orden confirmado por el PO 2026-08-30: Inicio,
+       Academia, Agenda, Config, DJ Tools, Cash Flow, MI PERFIL, Staff,
+       Fenix AI, MRM IA. Antes este puesto no existia en el juego interno. */
+    { s: 10, key: 'nav-roadmap',   nav: 'roadmap',   href: './road-map.html',    txt: 'MRM IA',
+      id: 'mainNav-roadmap-link', cls: 'mdj-roadmap-mainnav' }
   ];
 
   /* ══ ESTACION DE TRABAJO DEL ARTISTA ═══════════════════════════════════════
@@ -213,9 +219,13 @@
        courses.html/dj-knowledge.html — se llega por su tarjeta en
        .academia-float-tabs y conserva la barra. */
     'mdjb-music-intelligence.html': 1
-    /* shop.html NO figura: no es una vista nuestra, redirige a la tienda de
-       Shopify. Comprobado en vivo — el riel sale de la plataforma por ese puesto,
-       igual que por Inicio. La lista solo admite destinos que conserven la barra. */
+    /* shop.html NO figura todavia. Nota 2026-08-31: cuando esto se escribio,
+       redirigia a la tienda externa de Shopify (ya desactivada) y por eso
+       sacaba al artista de la plataforma. Desde que shop.html es la tienda
+       nativa (catalogo + carrito + checkout propio) esa razon ya no aplica --
+       si el artista debe conservar su barra de estacion al entrar a comprar,
+       es una decision de producto pendiente, no algo que se resuelva solo al
+       quitar el link muerto. No se agrega aqui sin que se pida. */
   };
 
   /* UNA SOLA FUENTE DE VERDAD PARA EL MENU. Antes la estacion existia en UNA sola
@@ -264,6 +274,34 @@
     return mdjEnPortalArtista() || mdjEnPortalStaff();
   }
   window.mdjEnEstacionDeTrabajo = mdjEnEstacionDeTrabajo;
+
+  /* ORDEN PO 2026-08-31 -- CLS=0, cero mutacion tardia del DOM.
+     mdjEnEstacionDeTrabajo() (arriba) exige mdjEsStaffEnVivo() Y
+     window.__mdjNavOwnUserId -- ambos llegan de la sesion, ASINCRONOS. El
+     nombre de la pagina, en cambio, se conoce YA, de forma sincrona, desde
+     el primer tick (window.location.pathname no espera a nadie).
+
+     La carrera real, medida en dj-tools.html con rol owner: el guardia
+     "Owner 9-pillar" exige window.__mdjNavOwnUserId ANTES de evaluar
+     mdjEnEstacionDeTrabajo() -- asi que si se llega hasta ahi, el uid YA
+     esta puesto. Pero mdjEsStaffEnVivo() depende de un atributo/clase
+     DISTINTO en <body> (data-mdj-nav-role / mdj-staff-nav), que no tiene
+     garantia de llegar en el MISMO tick que el uid. En esa ventana,
+     mdjEnEstacionDeTrabajo() responde false por un dato que todavia no
+     llego -- no porque la pagina no sea de estacion -- y el bloque "de otra
+     epoca" alcanza a mover MI PERFIL en el DOM (insertBefore) una vez antes
+     de que la siguiente pasada, ya con el atributo puesto, lo bloquee. Un
+     clic que caiga justo en esa ventana apunta a la posicion vieja.
+
+     Esta version SOLO mira el nombre de archivo -- cero dependencia de
+     sesion, cero ventana de carrera posible. */
+  function mdjEsVistaDeEstacionEstatica() {
+    try {
+      var pagina = String(window.location.pathname || '').split('/').pop().toLowerCase();
+      return !!(MDJ_VISTAS_INTERNAS[pagina] || MDJ_VISTAS_ARTISTA[pagina]);
+    } catch (eEst) { return false; }
+  }
+  window.mdjEsVistaDeEstacionEstatica = mdjEsVistaDeEstacionEstatica;
 
   /* LA MARCA DEBE SEÑALAR DONDE ESTAS. Auditado puesto por puesto: index marca
      Inicio, academia marca Academia, dj-tools marca DJ Tools, la agenda marca
@@ -1190,13 +1228,19 @@
       var d = document.getElementById(id);
       if (d && d.parentNode === nav && canonicos.indexOf(d) === -1) d.parentNode.removeChild(d);
     });
-    [].slice.call(nav.querySelectorAll('[data-mdj-slot="8"]')).forEach(function (el) {
+    [].slice.call(nav.querySelectorAll('[data-mdj-nav="mi-portal"]')).forEach(function (el) {
       el.classList.remove('mdj-mainnav-reserved-slot');
       el.removeAttribute('aria-hidden');
       el.removeAttribute('tabindex');
       el.style.removeProperty('display');
       el.style.removeProperty('visibility');
-      /* La etiqueta UNICA del puesto 8 es MI PERFIL, decision PO 2026-08-16.
+      /* La etiqueta UNICA de MI PERFIL, decision PO 2026-08-16. Se ubica por
+         data-mdj-nav="mi-portal" (identidad), no por numero de puesto: el
+         puesto que ocupa MI PERFIL varia segun la tabla (8 en la publica y la
+         vieja interna de 9, 7 en la interna de 10 con MRM IA). Un selector
+         posicional aqui asumia un solo numero fijo y en 2026-08-30, al sumar
+         el puesto 10 (MRM IA) a MDJ_NAV_SLOTS_INTERNO, MI PERFIL se corrio al
+         7 y Staff paso a ocupar el 8 — este bloque le robaba la etiqueta.
          Aqui se aceptaba tambien «MY PROFILE» como valida, asi que la variante
          inglesa del marcado viejo sobrevivia en rentals.html y cash-flow.html:
          dos pantallas con etiqueta distinta a las demas y, por ser mas larga,
@@ -1209,22 +1253,25 @@
       }
     });
 
-    // Slot 9 · MRM IA — visible para TODOS los roles, incluido invitado.
+    // MRM IA — visible para TODOS los roles, incluido invitado.
     // No es una herramienta de owner: es un mapa que se adapta a quien entra.
     // El owner ve el recorrido completo; el manager sólo lo que le compete; el
     // vendedor la parte comercial; el artista su modelo de pago y sus ventajas;
     // el cliente cómo contratar. Quien decide el alcance es la página destino
-    // según el rol de la sesión, no esta barra.
-    [].slice.call(nav.querySelectorAll('[data-mdj-slot="9"]')).forEach(function (el) {
+    // según el rol de la sesión, no esta barra. Ubicado por data-mdj-nav
+    // ="roadmap" (identidad), no por puesto: en la interna de 10 puestos vive
+    // en el 10, no en el 9 (2026-08-30).
+    [].slice.call(nav.querySelectorAll('[data-mdj-nav="roadmap"]')).forEach(function (el) {
       el.classList.remove('mdj-mainnav-reserved-slot');
       el.removeAttribute('aria-hidden');
       el.removeAttribute('tabindex');
     });
 
-    // Slot 8: un solo destino, decidido por rol. Se reafirma en cada pasada para
-    // que ningún pase posterior lo devuelva a la plantilla vieja.
+    // MI PERFIL: un solo destino, decidido por rol. Se reafirma en cada pasada
+    // para que ningún pase posterior lo devuelva a la plantilla vieja.
+    // Ubicado por data-mdj-nav="mi-portal" (identidad), no por puesto.
     var destino = mdjResolveMiPerfilHref();
-    [].slice.call(nav.querySelectorAll('[data-mdj-slot="8"]')).forEach(function (el) {
+    [].slice.call(nav.querySelectorAll('[data-mdj-nav="mi-portal"]')).forEach(function (el) {
       if (el.tagName === 'A') el.setAttribute('href', destino);   // respaldo estático
       mdjEngancharMiPerfil(el);                                    // la verdad, en el clic
     });
@@ -1385,18 +1432,23 @@
          retira la marca temprana: mas vale una correccion puntual que arrastrar
          una cabecera oculta a quien le corresponde verla. */
       try {
-        /* SOLO CUANDO SE SABE. En las primeras pasadas la sesion aun no ha
-           resuelto y mdjEnEstacionDeTrabajo() devuelve false por falta de datos,
-           no por ser falso: sin esta guarda, la limpieza borraba la semilla en
-           cada carga y el acordeon volvia intacto. */
-        var uidLS = String(window.__mdjNavOwnUserId || '').trim();
-        /* El ROL llega despues que el uid. Con solo el uid habia una ventana en la
-           que la sesion ya existia pero data-mdj-nav-role aun estaba vacio: ahi
-           mdjEnEstacionDeTrabajo() decia false por falta de dato y la limpieza se
-           llevaba la semilla por delante. Se exige rol resuelto. */
-        var rolPuesto = document.body ? (document.body.getAttribute('data-mdj-nav-role') || '').trim() : '';
-        var seSabe = (!!uidLS && !!rolPuesto) || _mdjHaySesion === false;
-        if (seSabe && !mdjEnEstacionDeTrabajo() && !mdjEsVisitanteDePerfil()) {
+        /* CORRECCION 2026-08-31 (auditoria FASE 1, PILAR 3.2 "sin ventanas de
+           carrera"): este era el UNICO de los 6 sitios que aun preguntaba con
+           mdjEnEstacionDeTrabajo() (async, depende de rol/sesion) en vez de
+           mdjEsVistaDeEstacionEstatica() (sincrona, solo mira el archivo).
+           Medido en vivo en academia.html con rol "management": en el primer
+           tick mdjEnEstacionDeTrabajo() daba false por falta de dato de rol
+           todavia (pese al guardia "seSabe" de abajo) y esta limpieza borraba
+           la semilla mdj-estacion-previa -- dejando sin riel Y sin hamburguesa
+           vieja alcanzable a la vez, el mismo hueco que el riel se construyo
+           para tapar. Segundos despues, ya resuelto el rol, el propio
+           mdjEnEstacionDeTrabajo() confirmaba true: la pagina siempre fue de
+           estacion, el dato solo llego tarde. La version sincrona ya es la
+           fuente de verdad para el layout en los otros 5 sitios (hide de
+           .header-top incluido) -- usarla aqui tambien alinea la limpieza de
+           memoria con lo que la pantalla ya esta mostrando, sin esperar a la
+           sesion. */
+        if (!(typeof mdjEsVistaDeEstacionEstatica === 'function' && mdjEsVistaDeEstacionEstatica()) && !mdjEsVisitanteDePerfil()) {
           localStorage.removeItem('mdj_estacion');
           document.documentElement.classList.remove('mdj-estacion-previa');
         }
@@ -1404,30 +1456,21 @@
     }
     mdjMarcarPuestoActivo();
 
-    /* El propio riel también se blinda inline: hay reglas de la era flex que le
-       devuelven display:flex, y sin display:grid las nueve columnas no existen
-       aunque grid-template-columns esté declarado. Inline gana a toda hoja. */
-    nav.style.setProperty('display', 'grid', 'important');
-    /* REJILLA · 2026-08-18 — la anchura de las columnas YA NO SE ESCRIBE AQUÍ.
-       Durante meses este archivo impuso `repeat(9, max-content) 40px` en línea y
-       con !important, lo que ganaba a las cuatro reglas que header-unified.css
-       declaraba para lo mismo. Resultado: cinco definiciones de la misma
-       propiedad y la que mandaba era esta, la última en ejecutarse.
-       Y max-content ataba el ancho al texto: medido en vivo el 2026-08-18,
-       pulsar ES|EN desplazaba el último slot 85 px, y por debajo de ~1050 px
-       los slots 8 y 9 desaparecían bajo overflow:hidden.
-       La rejilla vive ahora en UN SOLO SITIO: header-unified.css, bloque
-       «REJILLA RÍGIDA · PARIDAD BILINGÜE». Si hay que cambiar un ancho, se
-       cambia allí y en ningún otro lugar. */
-    /* justify-content y overflow TAMPOCO se escriben aquí. Los gobierna el
-       mismo bloque de header-unified.css. En línea impedían que el media
-       query de contención por debajo de 1172px pudiera cambiarlos: inline
-       con !important gana también a un media query. */
-    /* El padding TAMPOCO se escribe aqui. Escribirlo en linea con !important
-       ganaba a la hoja y a los media queries, y dejaba la ultima pestaña
-       pegada al borde de la pantalla: medido a 1703px, 0px de aire a la
-       derecha. Vive en header-unified.css, como la rejilla. */
-    nav.style.setProperty('grid-auto-rows', '0', 'important');
+    /* REFACTOR 2026-08-30 (orden PO, "cero parches temporales"): este mismo
+       bloque forzaba `display:grid` inline con !important -- un estilo
+       inline con !important gana a CUALQUIER regla de hoja de estilos sin
+       importar su especificidad, así que por más que header-unified.css se
+       reescribiera a flexbox, esto lo seguía pisando en silencio. Es
+       exactamente la razón por la que el cambio a flex en la hoja no se veía
+       reflejado en vivo -- verificado con getComputedStyle().display
+       devolviendo "grid" pese al nuevo CSS.
+       Ahora se fuerza `flex` en su lugar, por el mismo motivo original (hay
+       reglas viejas de otra era que podían reafirmar un valor distinto) pero
+       con el valor que de verdad gobierna el riel hoy. grid-auto-rows ya no
+       aplica -- es una propiedad exclusiva de grid, inerte en un contenedor
+       flex -- así que se retira en vez de dejarla como ruido. */
+    nav.style.setProperty('display', 'flex', 'important');
+    nav.style.setProperty('flex-wrap', 'nowrap', 'important');
     nav.style.setProperty('align-items', 'center', 'important');
 
     /* ── NORMALIZACIÓN CANÓNICA DE LOS 9 PUESTOS ─────────────────────────
@@ -2593,21 +2636,20 @@
       if (!show) {
         mdjHideGuestMiPerfilMainNavSlot();
       }
-      /* Staff: MI PERFIL destination by sub-role.
-         Owner  → public manager profile (dj-profile.html?id=uid).
-         Other staff (admin/manager/seller) → internal account panel. */
+      /* FIX-NAV-DUP-MIPERFIL-05 (2026-08-30). Esto era una TERCERA fuente de
+         verdad para el mismo destino, y contradecía a la declarada única
+         (mdjResolveMiPerfilHref, "decision PO 2026-08-16": owner/staff →
+         ./staff.html?vista=miperfil). Esta rama mandaba al owner a
+         dj-profile.html?id=uid (perfil público) en vez de eso -- ganaba por
+         ser la última en ejecutar, y en dj-tools.html dejaba el href
+         equivocado pegado sin importar qué arreglara el resto del riel.
+         Se une al resolvedor único: cambiar el destino es cambiar esa
+         función, no repetir la regla aquí con otro criterio. */
       var _staffIdn = window.__mdjLastPlatformIdentity;
       if (_staffIdn && _staffIdn.staffInDb) {
         var _gmpStaff = document.getElementById('mainNav-guest-mi-perfil-link');
-        if (_gmpStaff) {
-          var _ownUid = window.__mdjNavOwnUserId ? String(window.__mdjNavOwnUserId).trim() : '';
-          var _role = String(_staffIdn.dbRole || '').toLowerCase();
-          var _isOwnerDbRole = _role === 'owner' || _role === 'admin' || _role === 'manager';
-          if (_isOwnerDbRole && _ownUid) {
-            _gmpStaff.href = './dj-profile.html?id=' + encodeURIComponent(_ownUid);
-          } else {
-            _gmpStaff.href = './account-settings.html';
-          }
+        if (_gmpStaff && typeof mdjResolveMiPerfilHref === 'function') {
+          _gmpStaff.href = mdjResolveMiPerfilHref();
         }
       }
       return show;
@@ -2798,7 +2840,19 @@
         }
       }
     }
-    el.href = mdjBuildArtistPublicProfileHref();
+    /* FIX-NAV-DUP-MIPERFIL-04 (2026-08-30). Este nodo lo comparten VARIOS
+       llamadores (mdjRevealGuestMiPerfilNavSlot, el bloque "Owner 9-pillar",
+       etc.) y antes SIEMPRE caía en el href de perfil público de artista,
+       sin mirar el rol -- para un owner/staff eso es el destino EQUIVOCADO
+       (./dj-profile.html?id=... en vez de ./staff.html?vista=miperfil), y
+       como cada llamador podía volver a invocar esta función después de que
+       otro ya hubiera puesto el href correcto, el público terminaba ganando
+       por orden de ejecución (medido en dj-tools.html). mdjResolveMiPerfilHref()
+       ya es el único punto de verdad para este destino (decision PO
+       2026-08-16) — se usa aquí también, en vez de duplicar la regla. */
+    el.href = (typeof mdjResolveMiPerfilHref === 'function')
+      ? mdjResolveMiPerfilHref()
+      : mdjBuildArtistPublicProfileHref();
     try {
       if (window.i18n && typeof window.i18n.t === 'function') {
         var tx = window.i18n.t('nav-my-profile');
@@ -3133,13 +3187,21 @@
     var a = document.createElement('a');
     a.id = 'mainNav-agenda-link';
     a.setAttribute('data-mdj-nav', 'agenda');
-    a.setAttribute('data-i18n', 'dash-your-profile');
+    /* ORDEN PO 2026-08-30: "SCHEDULE" purgado -- no existe ni se autoriza en
+       ningun menu. La pestaña de calendario oficial es unicamente "Agenda"
+       (puesto 3), en español SIEMPRE, sin importar document.documentElement.lang
+       (academia.html vive con lang="en" para SEO de contenido, pero el menu
+       es español fijo -- esa es la unificacion de idioma que pidio el PO).
+       SIN data-i18n a proposito: la clave "dash-your-profile" que llevaba
+       traduce a "Schedule" en ingles en translations.js (usada tambien como
+       titulo de panel en otro lado, no se toca esa traduccion global) -- un
+       pase de i18n.updateUI() posterior volvia a pisar el texto fijo de
+       arriba. Sin la clave, ningun pase de i18n vuelve a tocar este rotulo. */
     a.className = 'mdj-agenda-mainnav mdj-mainnav-reserved-slot';
     a.href = './dj-dashboard.html?tab=dashboard';
     a.setAttribute('aria-hidden', 'true');
     a.setAttribute('tabindex', '-1');
-    var raw = document.documentElement && String(document.documentElement.lang || '').toLowerCase();
-    a.textContent = raw.indexOf('es') === 0 ? 'Agenda' : 'SCHEDULE';
+    a.textContent = 'Agenda';
     if (before && before.parentNode === nav) {
       nav.insertBefore(a, before);
     } else {
@@ -3152,6 +3214,16 @@
    * Agenda (panel): `dj-dashboard?tab=dashboard` — solo artista LITE/PRO (misma regla que CONFIG social / flujo en barra).
    */
   function mdjApplyAgendaMainNavLink(show, href) {
+    /* FIX-NAV-DUP-MIPERFIL-07 (2026-08-30). Mismo patron que
+       mdjApplyFlowMainNavLink justo abajo: en estacion de trabajo el puesto
+       "Agenda" ya lo controla, en exclusiva, la tabla de slots. */
+    /* CORRECCION 2026-08-31 (orden PO, CLS=0): mdjEsVistaDeEstacionEstatica()
+       en vez de mdjEnEstacionDeTrabajo() -- esta funcion crea/inserta un nodo
+       nuevo en el DOM (mdjEnsureAgendaMainNavNode/mdjEnsureFlowMainNavNode,
+       ver mas abajo), asi que la misma ventana de carrera de un tick que
+       afectaba al guardia "Owner 9-pillar" aplica aqui igual. Ver el
+       comentario completo junto a la definicion de la funcion. */
+    if (typeof mdjEsVistaDeEstacionEstatica === 'function' && mdjEsVistaDeEstacionEstatica()) return;
     var a = mdjEnsureAgendaMainNavNode();
     if (!a) return;
     var h = href && String(href).trim() ? String(href).trim() : './dj-dashboard.html?tab=dashboard';
@@ -3208,6 +3280,25 @@
    * Flujo de caja: `dj-dashboard?tab=flow` — solo cuentas con perfil de artista (LITE/PRO), no clientes puros.
    */
   function mdjApplyFlowMainNavLink(show, href) {
+    /* FIX-NAV-DUP-MIPERFIL-07 (2026-08-30). En estacion de trabajo (owner/
+       staff/artista con MDJ_NAV_SLOTS_INTERNO o _ARTISTA) el puesto "Cash
+       Flow" YA lo crea y controla, en exclusiva, la tabla de slots
+       (data-mdj-nav="flow" con data-mdj-slot). Esta funcion es la pestaña
+       de flujo de caja del riel de ARTISTA suelto (pre-estacion) y, llamada
+       con show=false para un owner (que no es artista), volvia a marcar
+       reservado/oculto el MISMO nodo con el href viejo (./dj-dashboard.html
+       ?tab=flow) despues de que el normalizador ya lo hubiera dejado
+       correcto (./staff-agenda.html?tab=flow) -- medido en dj-tools.html:
+       "Cash Flow" real desaparecia del riel, dejando solo su version vieja
+       oculta. Mismo patron que MI PERFIL (FIX-NAV-DUP-MIPERFIL-01): en
+       estacion de trabajo, esta funcion no interviene. */
+    /* CORRECCION 2026-08-31 (orden PO, CLS=0): mdjEsVistaDeEstacionEstatica()
+       en vez de mdjEnEstacionDeTrabajo() -- esta funcion crea/inserta un nodo
+       nuevo en el DOM (mdjEnsureAgendaMainNavNode/mdjEnsureFlowMainNavNode,
+       ver mas abajo), asi que la misma ventana de carrera de un tick que
+       afectaba al guardia "Owner 9-pillar" aplica aqui igual. Ver el
+       comentario completo junto a la definicion de la funcion. */
+    if (typeof mdjEsVistaDeEstacionEstatica === 'function' && mdjEsVistaDeEstacionEstatica()) return;
     var a = mdjEnsureFlowMainNavNode();
     if (!a) return;
     /* Owner en account-settings: CASH FLOW siempre apunta al generador de facturas.
@@ -5103,8 +5194,14 @@
             var _compactNavCheck = (function () { var _n = document.getElementById('mainNav'); return !!(_n && _n.getAttribute('data-mdj-compact-nav') === '1'); }());
             if (isBuyerSession) {
               mdjEnsureMiPortalInMainNav(miPortalHref, miPortalNavOpts);
-            } else {
-              /* Artista/staff: reset del placeholder MI PORTAL que se mostró durante la carga. */
+            } else if (!(typeof mdjEsVistaDeEstacionEstatica === 'function' && mdjEsVistaDeEstacionEstatica())) {
+              /* Artista/staff: reset del placeholder MI PORTAL que se mostró durante la carga.
+                 FIX-NAV-DUP-MIPERFIL-08 (2026-08-30): esto asumía que #mainNav-mi-portal-link
+                 es SIEMPRE el concepto "MI PORTAL" de cliente y debe ocultarse fuera de esa
+                 sesión -- cierto antes de la interna de 10 puestos, falso ahora: en estación
+                 de trabajo ese MISMO nodo es el canónico de MI PERFIL (data-mdj-nav="mi-portal"),
+                 y ocultarlo aquí ganaba la carrera contra el normalizador en account-settings.html
+                 (MI PERFIL desaparecía del riel, aunque con el href ya correcto). */
               var _portalSlot = document.getElementById('mainNav-mi-portal-link');
               if (_portalSlot) {
                 _portalSlot.classList.remove('mdj-mi-portal--hydrating');
@@ -5196,10 +5293,48 @@
              the generic path may skip revelation — this guard makes it unconditional. */
           if ((appRoleLower === 'owner' || appRoleLower === 'admin' || appRoleLower === 'manager' || isDjStaff) && window.__mdjNavOwnUserId) {
             mdjApplyConfigMainNavLink(true, settingsUrl);
-            var _ownerMp = mdjEnsureGuestMiPerfilMainNavLink();
+            /* FIX-NAV-DUP-MIPERFIL-01 (2026-08-30). En una pagina de "estacion de
+               trabajo" (MDJ_VISTAS_INTERNAS/MDJ_VISTAS_ARTISTA) MI PERFIL ya lo
+               resuelve, en exclusiva, la tabla de slots + mdjResolveMiPerfilHref()
+               (data-mdj-nav="mi-portal"). Este bloque es DE OTRA epoca ("9-pillar"):
+               crea/reubica un segundo nodo (mainNav-guest-mi-perfil-link) y le
+               fuerza el href de perfil publico -- en dj-tools.html llegaba a
+               correr ANTES de que el barrido DUPLICADOS_8 lo limpiara (carrera de
+               tiempos, no determinista) y el segundo "MI PERFIL" quedaba
+               superpuesto encima de "Staff" (texto ilegible, pestanas
+               empalmadas). Fuera de la estacion de trabajo, sigue siendo el unico
+               mecanismo que existe para el owner, asi que se queda intacto ahi.
+
+               CORRECCION 2026-08-31 (orden PO, CLS=0): aqui se usaba
+               mdjEnEstacionDeTrabajo(), que exige mdjEsStaffEnVivo() -- un
+               dato de SESION que puede llegar en un tick distinto al de
+               window.__mdjNavOwnUserId (ya exigido arriba, en el `if` que
+               envuelve este bloque). En esa ventana de un tick,
+               mdjEnEstacionDeTrabajo() respondia false SIN QUE la pagina
+               dejara de ser de estacion, y este bloque alcanzaba a mover
+               MI PERFIL en el DOM (insertBefore, mas abajo) una vez antes
+               de que la siguiente pasada lo bloqueara -- el "primer clic
+               cae en el sitio viejo" reportado en dj-tools.html con rol
+               owner. mdjEsVistaDeEstacionEstatica() solo mira el nombre de
+               archivo: cero dependencia de sesion, cero ventana. */
+            var _yaLoResuelveElArray = typeof mdjEsVistaDeEstacionEstatica === 'function' && mdjEsVistaDeEstacionEstatica();
+            var _ownerMp = _yaLoResuelveElArray ? null : mdjEnsureGuestMiPerfilMainNavLink();
             if (_ownerMp) {
+              /* FIX-NAV-DUP-MIPERFIL-03 (2026-08-30): el href fijo a perfil
+                 publico que iba aqui abajo es una carrera aparte del guard de
+                 arriba -- mdjEnPortalStaff()/mdjEsStaffEnVivo() puede resolver
+                 un tic despues de que ESTE if ya entro por appRoleLower/
+                 __mdjNavOwnUserId, así que el guard a veces no llegaba a
+                 tiempo y el href de perfil publico se quedaba pegado sin que
+                 nada lo corrigiera despues. Se usa el resolvedor único en vez
+                 de duplicar la regla: adentro de este if el rol YA es owner/
+                 admin/manager/staff, así que mdjResolveMiPerfilHref() da el
+                 destino correcto sin importar si el guard de arriba llegó a
+                 tiempo o no. */
               var _staffUid = String(window.__mdjNavOwnUserId || '').trim();
-              _ownerMp.href = './dj-profile.html?id=' + encodeURIComponent(_staffUid); /* owner → perfil público */
+              _ownerMp.href = (typeof mdjResolveMiPerfilHref === 'function')
+                ? mdjResolveMiPerfilHref()
+                : './dj-profile.html?id=' + encodeURIComponent(_staffUid); /* respaldo si el resolvedor no cargó */
               var _staffBuyerJourneyMiPerfil =
                 isDjStaff && !isBuyerSession && mdjIsBuyerJourneyPage() && !mdjIsPublicHomePage();
               if (_staffBuyerJourneyMiPerfil) {
@@ -5211,7 +5346,6 @@
                       el.removeAttribute('aria-hidden');
                       el.removeAttribute('tabindex');
                       el.style.setProperty('display', 'inline-flex', 'important');
-                      el.style.setProperty('width', '100%', 'important');
                       el.style.setProperty('min-width', '0', 'important');
                       el.style.setProperty('flex', '0 0 auto', 'important');
                       el.style.setProperty('pointer-events', 'auto', 'important');
@@ -5224,7 +5358,6 @@
                 _ownerMp.removeAttribute('aria-hidden');
                 _ownerMp.removeAttribute('tabindex');
                 _ownerMp.style.setProperty('display', 'inline-flex', 'important');
-                _ownerMp.style.setProperty('width', '100%', 'important');
                 _ownerMp.style.setProperty('min-width', '0', 'important');
                 _ownerMp.style.setProperty('flex', '0 0 auto', 'important');
                 _ownerMp.style.setProperty('pointer-events', 'auto', 'important');
@@ -5241,7 +5374,6 @@
                 _ownerMp.style.setProperty('display', 'inline-flex', 'important');
                 _ownerMp.style.setProperty('min-width', '0', 'important');
                 _ownerMp.style.setProperty('max-width', 'none', 'important');
-                _ownerMp.style.setProperty('width', '100%', 'important');
                 _ownerMp.style.setProperty('flex', '0 0 auto', 'important');
                 _ownerMp.style.setProperty('pointer-events', 'auto', 'important');
                 _ownerMp.style.removeProperty('visibility');
@@ -5315,14 +5447,21 @@
              #mainNav-guest-mi-perfil-link so keep #mainNav-mi-portal-link hidden. */
           if (isDjStaff && document.getElementById('mainNav') && !mdjIsPublicHomePage()) {
             var _isOwnerLikeRole = appRoleLower === 'owner' || appRoleLower === 'admin' || appRoleLower === 'manager';
-            if (_isOwnerLikeRole) {
+            /* FIX-NAV-DUP-MIPERFIL-08 (2026-08-30): mismo asunto que el bloque de
+               arriba (linea ~5150) -- "ocultar #mainNav-mi-portal-link para owner"
+               era correcto cuando ese nodo era solo "MI PORTAL" de cliente; en
+               estacion de trabajo es el MI PERFIL canonico y ocultarlo aqui
+               ganaba la carrera contra el normalizador (medido en
+               account-settings.html: MI PERFIL desaparecia del riel). */
+            var _yaLoResuelveElArrayPortal = typeof mdjEsVistaDeEstacionEstatica === 'function' && mdjEsVistaDeEstacionEstatica();
+            if (_isOwnerLikeRole && !_yaLoResuelveElArrayPortal) {
               var _mpPortalSlot = document.getElementById('mainNav-mi-portal-link');
               if (_mpPortalSlot) {
                 _mpPortalSlot.classList.add('mdj-mainnav-reserved-slot');
                 _mpPortalSlot.setAttribute('aria-hidden', 'true');
                 _mpPortalSlot.setAttribute('tabindex', '-1');
               }
-            } else {
+            } else if (!_isOwnerLikeRole) {
               mdjEnsureMiPortalInMainNav(miPortalHref, miPortalNavOpts);
               mdjEnsureMiPortalMobile(miPortalHref, miPortalNavOpts);
             }
@@ -5619,12 +5758,24 @@
                 _mpFinal.style.setProperty('display', 'inline-flex', 'important');
                 _mpFinal.style.setProperty('min-width', '0', 'important');
                 _mpFinal.style.setProperty('max-width', 'none', 'important');
-                _mpFinal.style.setProperty('width', '100%', 'important');
                 _mpFinal.style.setProperty('flex', '0 0 auto', 'important');
                 _mpFinal.style.setProperty('pointer-events', 'auto', 'important');
                 _mpFinal.style.removeProperty('visibility');
-                var _uid = String(window.__mdjNavOwnUserId).trim();
-                _mpFinal.href = './dj-profile.html?id=' + encodeURIComponent(_uid);
+                /* FIX-NAV-DUP-MIPERFIL-06 (2026-08-30). Esta era la CUARTA fuente
+                   de verdad para el mismo destino, y la que definia el bug en
+                   dj-tools.html: este guardia corre a proposito AL FINAL de toda
+                   la cadena async ("Owner final guard... runs after the full
+                   chain") para garantizar que el puesto quede visible -- y de
+                   paso volvia a fijar dj-profile.html?id=uid, pisando cualquier
+                   arreglo anterior en la misma carga. Se une al resolvedor unico
+                   (mdjResolveMiPerfilHref, decision PO 2026-08-16) igual que el
+                   resto de los puntos que tocaban este href. */
+                if (typeof mdjResolveMiPerfilHref === 'function') {
+                  _mpFinal.href = mdjResolveMiPerfilHref();
+                } else {
+                  var _uid = String(window.__mdjNavOwnUserId).trim();
+                  _mpFinal.href = './dj-profile.html?id=' + encodeURIComponent(_uid);
+                }
               }
             }
           }).catch(function (eChain) {
@@ -5661,7 +5812,6 @@
               _mpFinal2.style.setProperty('display', 'inline-flex', 'important');
               _mpFinal2.style.setProperty('min-width', '0', 'important');
               _mpFinal2.style.setProperty('max-width', 'none', 'important');
-              _mpFinal2.style.setProperty('width', '100%', 'important');
               _mpFinal2.style.setProperty('flex', '0 0 auto', 'important');
               _mpFinal2.style.setProperty('pointer-events', 'auto', 'important');
               _mpFinal2.style.removeProperty('visibility');
@@ -5730,7 +5880,6 @@
         _mp.style.setProperty('display', 'inline-flex', 'important');
         _mp.style.setProperty('min-width', '0', 'important');
         _mp.style.setProperty('max-width', 'none', 'important');
-        _mp.style.setProperty('width', '100%', 'important');
         _mp.style.setProperty('flex', '0 0 auto', 'important');
         _mp.style.setProperty('pointer-events', 'auto', 'important');
         _mp.style.removeProperty('visibility');
@@ -6288,28 +6437,16 @@
     var toolsEl    = c.querySelector('[data-i18n="nav-tools"]');
     var perfilEl   = c.querySelector('[data-i18n="menu-account"]')     || c.querySelector('button[data-tab="public"]');
 
-    /* ── SHOP: edificio Staff → shop interno (C-2); resto → Shopify externo ── */
-    if (shopEl) {
-      if (_staffBuildingPage) {
-        if (shopEl.tagName === 'A') {
-          shopEl.href = './shop.html';
-          shopEl.removeAttribute('target');
-          shopEl.removeAttribute('rel');
-        }
-      } else {
-        var _shopUrl = 'https://miami-dj-beat-store.myshopify.com/?shop_sign_in=true';
-        if (shopEl.tagName === 'A') {
-          shopEl.href = _shopUrl;
-          shopEl.setAttribute('target', '_blank');
-          shopEl.setAttribute('rel', 'noopener noreferrer');
-        } else {
-          shopEl.addEventListener('click', function (e) {
-            e.preventDefault();
-            e.stopImmediatePropagation();
-            window.open(_shopUrl, '_blank', 'noopener,noreferrer');
-          }, true);
-        }
-      }
+    /* ── SHOP: tienda nativa para todos (orden PO 2026-08-31) ──
+       Hasta hoy esto mandaba a quien no fuera del edificio Staff a la
+       tienda externa de Shopify (ya desactivada, HTTP 402/dominio muerto) --
+       resabio de cuando SHOP todavia no tenia checkout propio via Stripe.
+       La tienda nativa (web/shop.html) ya esta construida y es para
+       cualquier cuenta, no solo staff: se retira la bifurcacion entera. */
+    if (shopEl && shopEl.tagName === 'A') {
+      shopEl.href = './shop.html';
+      shopEl.removeAttribute('target');
+      shopEl.removeAttribute('rel');
     }
 
     /* ── MI PERFIL (owner-tabs): STAFF building — Owner → dj-profile; resto → account-profile (C-1) ── */
@@ -6450,29 +6587,14 @@
   } catch (e3) { /* ignore if not patchable */ }
 })();
 
-/* ── SHOP → Shopify externo en #mainNav (todas las páginas)
-   Parcha a[data-mdj-nav="shop"] en el nav principal para evitar la cortina interna.
-   La IIFE de owner strip cubre el mismo nodo en #owner-tabs independientemente.
-   v20260524-shop-mainnav-external */
-(function () {
-  var _SHOPIFY = 'https://miami-dj-beat-store.myshopify.com/?shop_sign_in=true';
-
-  function _patchMainNavShop() {
-    var nav = document.getElementById('mainNav');
-    if (!nav) return;
-    nav.querySelectorAll('a[data-mdj-nav="shop"]').forEach(function (a) {
-      a.href = _SHOPIFY;
-      a.setAttribute('target', '_blank');
-      a.setAttribute('rel', 'noopener noreferrer');
-    });
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', _patchMainNavShop);
-  } else {
-    _patchMainNavShop();
-  }
-})();
+/* RETIRADO (orden PO 2026-08-31): este bloque forzaba a[data-mdj-nav="shop"]
+   en #mainNav hacia la tienda externa de Shopify (miami-dj-beat-store.
+   myshopify.com), ya desactivada -- en TODAS las paginas, pisando el
+   './shop.html' que la propia tabla de puestos ya ponia correctamente. Era
+   la causa real de que "Shop" siguiera mandando afuera incluso despues de
+   reparar shop.html: esta IIFE corria despues y volvia a pisar el href. La
+   tienda nativa ya es para cualquier cuenta, no solo staff -- no hace falta
+   ningun parche aqui, el valor de la tabla es el correcto tal cual. */
 
 /* ── MDJB 2026-08-14: FÉNIX AI en la nav de STAFF (owner) — reemplaza SoundForTips ──
    SoundForTips es feature de artista; las cuentas de oficina (owner/manager/vendedor) NO la
@@ -6517,4 +6639,64 @@
   }
   window.mdjApplyFenixStaffNavTab = function () { apply(true); };
   if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', boot); } else { boot(); }
+})();
+
+/* ══════════════════════════════════════════════════════════════════════════
+   BOTÓN PERSISTENTE DE RIEL · CIERRA EL HUECO DE "ESTACIÓN" · 2026-08-30
+   ──────────────────────────────────────────────────────────────────────────
+   Ver el bloque CSS gemelo en header-unified.css ("BOTÓN PERSISTENTE DE
+   RIEL") para el porqué completo: en páginas de estación, por debajo de
+   1150px, ni la barra ni la hamburguesa vieja (dentro de .header-top,
+   oculto siempre ahí) quedaban alcanzables. Este botón es hijo directo de
+   #mainHeader, fuera de ambos mecanismos de ocultar, y reutiliza el MISMO
+   #mainNav ya construido -- sin lista duplicada que se pueda desincronizar
+   como pasó con el drawer viejo (el bug real de "SCHEDULE"/inglés de hoy). */
+(function () {
+  'use strict';
+  function crearToggle() {
+    var header = document.getElementById('mainHeader');
+    if (!header) return;
+    if (document.getElementById('mdj-riel-toggle')) return; // idempotente
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.id = 'mdj-riel-toggle';
+    btn.className = 'mdj-riel-toggle';
+    btn.setAttribute('aria-label', 'Abrir menú');
+    btn.setAttribute('aria-expanded', 'false');
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>';
+    btn.addEventListener('click', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      var abierto = document.body.classList.toggle('mdj-riel-abierto');
+      btn.setAttribute('aria-expanded', abierto ? 'true' : 'false');
+    });
+    header.appendChild(btn);
+    // Cerrar al navegar (clic en un puesto real dentro del panel) o con ESC --
+    // sin esto el panel se queda abierto encima de la pagina siguiente.
+    document.addEventListener('click', function (ev) {
+      if (!document.body.classList.contains('mdj-riel-abierto')) return;
+      if (btn.contains(ev.target)) return;
+      var nav = document.getElementById('mainNav');
+      if (nav && nav.contains(ev.target)) {
+        document.body.classList.remove('mdj-riel-abierto');
+        btn.setAttribute('aria-expanded', 'false');
+        return;
+      }
+      if (!header.contains(ev.target)) {
+        document.body.classList.remove('mdj-riel-abierto');
+        btn.setAttribute('aria-expanded', 'false');
+      }
+    }, true);
+    document.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Escape' && document.body.classList.contains('mdj-riel-abierto')) {
+        document.body.classList.remove('mdj-riel-abierto');
+        btn.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', crearToggle);
+  } else {
+    crearToggle();
+  }
 })();
