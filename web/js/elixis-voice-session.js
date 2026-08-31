@@ -212,13 +212,25 @@
           if(dicho){
             emit('onTranscript', { who:'yo', text:dicho, final:true });
             emit('onThreadLine', { rol:'yo', contenido:dicho, modo:modoActual });
-            /* Modo dialogo bajo demanda (ver PREGUNTA_CANCION_RE arriba):
-               con identidad djmago, create_response:false hace que llegar
-               hasta aca (transcripcion real, turno detectado) NO implique
-               que DjMago vaya a decir nada -- salvo que la transcripcion
-               real diga que le preguntaron por la cancion. */
-            if(identidadActual === 'djmago' && PREGUNTA_CANCION_RE.test(dicho) && dc && dc.readyState==='open'){
-              dc.send(JSON.stringify({ type:'response.create' }));
+            /* BUG REAL 2026-08-31 (reporte del PO: DjMago se queda mudo
+               fuera de Cazador Musical, en los otros 5 modos): este
+               candado nacio cuando identidadActual==='djmago' implicaba
+               SIEMPRE "estamos en Cazador Musical" -- ya no es asi desde
+               que la identidad se fijo incondicional en los 6 modos. Con
+               create_response:false, llegar hasta aca (transcripcion real,
+               turno detectado) NUNCA implica que DjMago hable solo; alguien
+               tiene que mandar response.create. Restringir ese disparo a
+               "solo si preguntan por la cancion" tiene sentido DENTRO de
+               Cazador Musical (para no narrar el music-hunter de fondo por
+               su cuenta) pero fuera de ahi silenciaba cualquier pregunta
+               real. Ahora el candado por regex solo aplica en modoActual
+               ==='cazador'; en el resto, cualquier transcripcion real
+               dispara respuesta, igual que ELIXIS. */
+            if(identidadActual === 'djmago' && dc && dc.readyState==='open'){
+              var esCazador = modoActual === 'cazador';
+              if(!esCazador || PREGUNTA_CANCION_RE.test(dicho)){
+                dc.send(JSON.stringify({ type:'response.create' }));
+              }
             }
           }
           break;
