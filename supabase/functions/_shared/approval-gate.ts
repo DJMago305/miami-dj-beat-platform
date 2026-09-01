@@ -13,6 +13,9 @@ const REGISTERED_READ_TOOLS = new Set([
     // consultar_musica: lee el catalogo publico de Apple Music a traves del
     // puente mdj-music. No toca datos del negocio ni de clientes.
     "consultar_musica",
+    // consultar_efemerides (2026-09-01): solo lee birth_date/wedding_anniversary
+    // ya guardados en client_profiles/dj_profiles. No escribe nada.
+    "consultar_efemerides",
 ]);
 const REGISTERED_WRITE_TOOLS = new Set([
     "crear_nota_lead",
@@ -23,6 +26,11 @@ const REGISTERED_WRITE_TOOLS = new Set([
     // cada fila; el porton aqui solo decide si ELIXIS puede llamarla sin
     // aprobacion humana adicional, igual que el resto de escritura auto_staff.
     "modificar_agenda_evento",
+    // gestionar_residency_schedule (2026-09-01): plantilla semanal recurrente
+    // de residencias. Ticket "aparte" que el PO ya habia diferido -- este es
+    // ese ticket. RLS de residency_schedule ya exige is_staff(); el RPC
+    // (SECURITY DEFINER, solo service_role) agrega la validacion real.
+    "gestionar_residency_schedule",
     // cambiar_precio_catalogo (2026-08-31): el porton solo decide si ELIXIS
     // puede llamarla sin aprobacion adicional -- el candado real (SOLO
     // owner/admin) esta en runCatalogPriceTool en elixis-chat, que revisa

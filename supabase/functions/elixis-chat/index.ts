@@ -159,10 +159,8 @@ Tres identidades encadenadas, no las confundas: (1) CUENTA = perfil en Supabase,
 Dos canales de cobro: CANAL 2 "Artista Pro" (incluido en la membresía) está VIVO y funciona. CANAL 1 "renta independiente" a 19,99 USD/mes está INCOMPLETO hoy: el cobro se puede crear pero la emisión automática de la clave aún lo rechaza. NUNCA prometas la renta independiente como disponible; si alguien la pide, di que está en cierre y ofrécele la vía de membresía o que el Capitán lo habilite manualmente.
 Si un cliente deja de pagar, el acceso se pausa primero y se revoca después, con un margen sin conexión: a un DJ en medio de un evento no se le corta la herramienta esa misma noche.
 
-### TUS HERRAMIENTAS — TRECE, NI UNA MAS (inventario cerrado)
-Estas son TODAS las herramientas que tienes. No hay ninguna otra -- en
-particular NO tienes forma de consultar efemerides ni cumpleanos todavia (eso
-es un ticket futuro), no lo inventes ni digas que lo puedes hacer:
+### TUS HERRAMIENTAS — QUINCE, NI UNA MAS (inventario cerrado)
+Estas son TODAS las herramientas que tienes. No hay ninguna otra:
 1. consultar_finanzas — leer cifras del negocio.
 2. consultar_agenda_artista — ver la agenda personal de un artista.
 3. registrar_evento_agenda — bloquear un hueco EN LA AGENDA INTERNA (artist_agenda).
@@ -171,21 +169,29 @@ es un ticket futuro), no lo inventes ni digas que lo puedes hacer:
    cumpleanos, notas -- con tarifa de venue y pago al DJ). Distinta de
    registrar_evento_agenda: esa es el hueco personal del DJ, esta es el evento
    de negocio con dinero de por medio.
-5. consultar_catalogo_precios — precios oficiales. Nunca inventes un precio.
-6. cambiar_precio_catalogo — cambiar el precio de un sku del catalogo. SOLO
+5. gestionar_residency_schedule — crear/actualizar/desactivar/reactivar una
+   fila de la PLANTILLA SEMANAL RECURRENTE (residency_schedule: Sundowner Key
+   Largo, Mojitos Calle 8, El Valle Restaurante...). Distinta de las dos de
+   arriba: esas son eventos de una fecha, esta es el horario que se repite
+   cada semana. Ya ves esa agenda en tu contexto (mas abajo) sin llamar nada.
+6. consultar_catalogo_precios — precios oficiales. Nunca inventes un precio.
+7. cambiar_precio_catalogo — cambiar el precio de un sku del catalogo. SOLO
    owner/admin; si te lo pide otro rol, dilo con franqueza y no lo intentes.
-7. buscar_cliente — encontrar un cliente o lead.
-8. generar_cotizacion_evento — preparar un BORRADOR de cotizacion.
-9. crear_nota_lead — dejar una nota interna en un lead existente.
-10. enviar_sms — ENCOLA un SMS real (no lo envia). El destinatario SIEMPRE
+8. buscar_cliente — encontrar un cliente o lead.
+9. generar_cotizacion_evento — preparar un BORRADOR de cotizacion.
+10. crear_nota_lead — dejar una nota interna en un lead existente.
+11. enviar_sms — ENCOLA un SMS real (no lo envia). El destinatario SIEMPRE
    sale de buscar_cliente.
-11. enviar_email — ENCOLA un email real (no lo envia). El destinatario
+12. enviar_email — ENCOLA un email real (no lo envia). El destinatario
    SIEMPRE sale de buscar_cliente; si el cliente desactivo notificaciones
    por email, la herramienta lo rechaza sola.
-12. confirmar_envio_mensaje — despacha o cancela un SMS/email ya encolado.
+13. confirmar_envio_mensaje — despacha o cancela un SMS/email ya encolado.
    Solo la llamas cuando el usuario respondio "si" o "cancelar" a tu
    pregunta de confirmacion, nunca antes.
-13. consultar_musica — catalogo REAL de Apple Music: lo mas escuchado ahora y
+14. consultar_efemerides — cumpleanos reales de clientes/staff y aniversarios
+   de boda, SOLO si estan guardados en la ficha. Si no hay nadie ese mes,
+   dilo asi -- no inventes un nombre para "completar" la respuesta.
+15. consultar_musica — catalogo REAL de Apple Music: lo mas escuchado ahora y
    busqueda de temas y artistas.
 
 ### DE MUSICA SI SABES, Y MUCHO
@@ -915,6 +921,91 @@ serve(async (req: Request) => {
         },
     };
 
+    const RESIDENCY_TOOL = {
+        name: "gestionar_residency_schedule",
+        description:
+            "Crea, actualiza, desactiva o reactiva una fila de la PLANTILLA SEMANAL RECURRENTE de " +
+            "residencias (residency_schedule: Sundowner Key Largo, Mojitos Calle 8, El Valle Restaurante, " +
+            "etc.). Distinta de modificar_agenda_evento y registrar_evento_agenda -- esas son eventos de " +
+            "una fecha concreta, esta es el horario que se repite cada semana. Ya tienes la agenda de " +
+            "residencias activa en tu contexto (mas arriba); usa esta herramienta solo cuando pidan CAMBIAR " +
+            "algo de esa plantilla, no para consultarla. Para actualizar/desactivar/reactivar, identifica la " +
+            "fila por dia+turno+venue exactos -- si no calzan con una fila real, la herramienta la rechaza, " +
+            "no inventes una.",
+        input_schema: {
+            type: "object",
+            properties: {
+                accion: {
+                    type: "string",
+                    enum: ["crear", "actualizar", "desactivar", "reactivar"],
+                    description: "crear=fila nueva. Las demas requieren dia_semana+turno+venue de una fila existente.",
+                },
+                dia_semana: {
+                    type: "number",
+                    description: "0=Domingo, 1=Lunes, 2=Martes, 3=Miercoles, 4=Jueves, 5=Viernes, 6=Sabado.",
+                },
+                turno: {
+                    type: "string",
+                    enum: ["dia", "noche"],
+                    description: "La tabla no acepta otro valor (check constraint real).",
+                },
+                venue: {
+                    type: "string",
+                    description: "Nombre del venue, ej. 'Sundowner Key Largo'.",
+                },
+                dj_nombre: {
+                    type: "string",
+                    description: "Nombre del DJ. Default DJMago305 si no se especifica.",
+                },
+                hora_inicio: {
+                    type: "string",
+                    description: "Hora de inicio, formato HH:MM (24h). Requerido para accion='crear'.",
+                },
+                hora_fin: {
+                    type: "string",
+                    description: "Hora de fin, formato HH:MM (24h). Requerido para accion='crear'.",
+                },
+                venue_pay_usd: {
+                    type: "number",
+                    description: "Lo que paga el venue, en DOLARES (no centavos -- distinto de modificar_agenda_evento).",
+                },
+                dj_pay_usd: {
+                    type: "number",
+                    description: "Lo que se le paga al DJ, en DOLARES.",
+                },
+                notas: {
+                    type: "string",
+                    description: "Nota opcional.",
+                },
+            },
+            required: ["accion", "dia_semana", "turno", "venue"],
+        },
+    };
+
+    const EFEMERIDES_TOOL = {
+        name: "consultar_efemerides",
+        description:
+            "Consulta cumpleanos reales de clientes (client_profiles.birth_date), cumpleanos de staff/DJs " +
+            "(dj_profiles.birth_date) o aniversarios de boda de clientes (client_profiles.wedding_anniversary). " +
+            "Solo devuelve gente que de verdad tiene esa fecha guardada en su ficha -- si no aparece nadie, " +
+            "dilo asi, no inventes un nombre ni una fecha.",
+        input_schema: {
+            type: "object",
+            properties: {
+                tipo: {
+                    type: "string",
+                    enum: ["cumpleanos_cliente", "cumpleanos_staff", "aniversario", "todos"],
+                    description: "Que tipo de efemeride buscar.",
+                },
+                mes: {
+                    type: "number",
+                    description: "Mes 1-12. Si no se especifica, usa el mes actual (ver FECHA Y HORA ACTUAL arriba).",
+                },
+            },
+            required: ["tipo"],
+        },
+    };
+
     const CATALOG_READ_TOOL = {
         name: "consultar_catalogo_precios",
         description:
@@ -1210,6 +1301,7 @@ serve(async (req: Request) => {
             || toolName === "consultar_catalogo_precios"
             || toolName === "buscar_cliente"
             || toolName === "consultar_musica"
+            || toolName === "consultar_efemerides"
         ) {
             return { tool: toolName, policy: "none", mode: "read" };
         }
@@ -1217,6 +1309,7 @@ serve(async (req: Request) => {
             toolName === "crear_nota_lead"
             || toolName === "registrar_evento_agenda"
             || toolName === "modificar_agenda_evento"
+            || toolName === "gestionar_residency_schedule"
             || toolName === "cambiar_precio_catalogo"
             || toolName === "generar_cotizacion_evento"
             /* enviar_sms (2026-08-31: envio autonomo, orden directa del PO).
@@ -1416,6 +1509,120 @@ serve(async (req: Request) => {
         }
         await recordActionLog("modificar_agenda_evento", target, `ok:${accion}:${eventId}`);
         return JSON.stringify({ ok: true, event_id: eventId, dj_nombre: djNombre, accion });
+    }
+
+    const ACCIONES_RESIDENCY = new Set(["crear", "actualizar", "desactivar", "reactivar"]);
+    const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+    function parseHoraSimple(value: unknown): string | null {
+        const raw = String(value ?? "").trim();
+        if (!raw || !TIME_RE.test(raw)) return null;
+        return `${raw}:00`;
+    }
+
+    async function runResidencyTool(input: Record<string, unknown>): Promise<string> {
+        const accion = String(input?.accion ?? "").trim().toLowerCase();
+        const diaSemana = Number(input?.dia_semana);
+        const turno = String(input?.turno ?? "").trim();
+        const venue = String(input?.venue ?? "").trim();
+        const djNombre = String(input?.dj_nombre ?? "").trim();
+        const notas = String(input?.notas ?? "").trim();
+        const target = `${venue}|${turno}|${diaSemana}`;
+
+        if (!ACCIONES_RESIDENCY.has(accion)) {
+            await recordActionLog("gestionar_residency_schedule", target, "error:accion_invalida");
+            return JSON.stringify({ error: "accion_invalida" });
+        }
+        if (!Number.isFinite(diaSemana) || diaSemana < 0 || diaSemana > 6) {
+            await recordActionLog("gestionar_residency_schedule", target, "error:dia_semana_invalido");
+            return JSON.stringify({ error: "dia_semana_invalido" });
+        }
+        if (!turno) {
+            return JSON.stringify({ error: "turno_requerido" });
+        }
+        if (!venue) {
+            return JSON.stringify({ error: "venue_requerido" });
+        }
+
+        const horaInicio = input?.hora_inicio != null ? parseHoraSimple(input.hora_inicio) : null;
+        const horaFin = input?.hora_fin != null ? parseHoraSimple(input.hora_fin) : null;
+        if (accion === "crear" && (!horaInicio || !horaFin)) {
+            return JSON.stringify({ error: "horario_requerido", detalle: "hora_inicio y hora_fin son obligatorios para crear, formato HH:MM." });
+        }
+        if ((input?.hora_inicio != null && !horaInicio) || (input?.hora_fin != null && !horaFin)) {
+            return JSON.stringify({ error: "horario_invalido", detalle: "Formato esperado HH:MM (24h)." });
+        }
+
+        const venuePayUsd = typeof input?.venue_pay_usd === "number" ? input.venue_pay_usd : null;
+        const djPayUsd = typeof input?.dj_pay_usd === "number" ? input.dj_pay_usd : null;
+
+        const { data: rowId, error } = await ADMIN.rpc("residency_schedule_modificar", {
+            p_accion: accion,
+            p_dia_semana: diaSemana,
+            p_turno: turno,
+            p_venue: venue,
+            p_dj_nombre: djNombre || "DJMago305",
+            p_hora_inicio: horaInicio,
+            p_hora_fin: horaFin,
+            p_venue_pay_usd: venuePayUsd,
+            p_dj_pay_usd: djPayUsd,
+            p_notas: notas || null,
+            p_staff_user_id: gate.userId,
+        });
+        if (error || !rowId) {
+            const detail = error?.message ?? "rpc";
+            await recordActionLog("gestionar_residency_schedule", target, `error:${detail}`.slice(0, 2000));
+            let code = "residencia_no_procesada";
+            if (detail.includes("residencia_no_encontrada")) code = "residencia_no_encontrada";
+            else if (detail.includes("residency_schedule_shift_check")) code = "turno_invalido:solo_dia_o_noche";
+            return JSON.stringify({ error: code });
+        }
+        await recordActionLog("gestionar_residency_schedule", target, `ok:${accion}:${rowId}`);
+        return JSON.stringify({ ok: true, id: rowId, accion, venue, turno, dia_semana: diaSemana });
+    }
+
+    const MESES_ES = ["", "enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+
+    async function runEfemeridesTool(input: Record<string, unknown>): Promise<string> {
+        const tipo = String(input?.tipo ?? "").trim().toLowerCase();
+        const mesRaw = Number(input?.mes);
+        const mes = Number.isFinite(mesRaw) && mesRaw >= 1 && mesRaw <= 12 ? mesRaw : (new Date().getUTCMonth() + 1);
+
+        if (!["cumpleanos_cliente", "cumpleanos_staff", "aniversario", "todos"].includes(tipo)) {
+            return JSON.stringify({ error: "tipo_invalido" });
+        }
+
+        const resultado: Record<string, Array<{ nombre: string; fecha: string }>> = {};
+
+        if (tipo === "cumpleanos_cliente" || tipo === "todos") {
+            const { data } = await ADMIN
+                .from("client_profiles")
+                .select("full_name, birth_date")
+                .not("birth_date", "is", null);
+            resultado.cumpleanos_cliente = (data ?? [])
+                .filter((r) => r.birth_date && new Date(`${r.birth_date}T00:00:00Z`).getUTCMonth() + 1 === mes)
+                .map((r) => ({ nombre: String(r.full_name ?? "(sin nombre)"), fecha: String(r.birth_date) }));
+        }
+        if (tipo === "cumpleanos_staff" || tipo === "todos") {
+            const { data } = await ADMIN
+                .from("dj_profiles")
+                .select("stage_name, dj_name, full_name, birth_date")
+                .not("birth_date", "is", null);
+            resultado.cumpleanos_staff = (data ?? [])
+                .filter((r) => r.birth_date && new Date(`${r.birth_date}T00:00:00Z`).getUTCMonth() + 1 === mes)
+                .map((r) => ({ nombre: String(r.stage_name || r.dj_name || r.full_name || "(sin nombre)"), fecha: String(r.birth_date) }));
+        }
+        if (tipo === "aniversario" || tipo === "todos") {
+            const { data } = await ADMIN
+                .from("client_profiles")
+                .select("full_name, wedding_anniversary")
+                .not("wedding_anniversary", "is", null);
+            resultado.aniversario = (data ?? [])
+                .filter((r) => r.wedding_anniversary && new Date(`${r.wedding_anniversary}T00:00:00Z`).getUTCMonth() + 1 === mes)
+                .map((r) => ({ nombre: String(r.full_name ?? "(sin nombre)"), fecha: String(r.wedding_anniversary) }));
+        }
+
+        return JSON.stringify({ ok: true, mes: MESES_ES[mes], resultado });
     }
 
     async function loadCatalogOverlay(): Promise<Record<string, number>> {
@@ -1841,7 +2048,7 @@ serve(async (req: Request) => {
                     // hasta este cambio de modelo. Sin este parametro, el muestreo queda en
                     // el default del modelo -- no hace falta reemplazarlo por nada.
                     system: systemContent,
-                    tools: [FINANCIAL_TOOL, LEAD_NOTE_TOOL, AGENDA_READ_TOOL, AGENDA_WRITE_TOOL, AGENDA_EVENTOS_TOOL, CATALOG_READ_TOOL, CATALOG_PRICE_TOOL, QUOTE_WRITE_TOOL, CLIENT_SEARCH_TOOL, SMS_QUEUE_TOOL, EMAIL_QUEUE_TOOL, CONFIRM_SEND_TOOL, MUSIC_TOOL],
+                    tools: [FINANCIAL_TOOL, LEAD_NOTE_TOOL, AGENDA_READ_TOOL, AGENDA_WRITE_TOOL, AGENDA_EVENTOS_TOOL, RESIDENCY_TOOL, EFEMERIDES_TOOL, CATALOG_READ_TOOL, CATALOG_PRICE_TOOL, QUOTE_WRITE_TOOL, CLIENT_SEARCH_TOOL, SMS_QUEUE_TOOL, EMAIL_QUEUE_TOOL, CONFIRM_SEND_TOOL, MUSIC_TOOL],
                     messages: convo,
                 }),
             });
@@ -1931,6 +2138,21 @@ serve(async (req: Request) => {
                     } catch {
                         failed = true;
                     }
+                    await recordAiKpi(failed ? "tool_error" : "tool_ok");
+                } else if (toolName === "gestionar_residency_schedule") {
+                    out = await runResidencyTool((b.input as Record<string, unknown>) ?? {});
+                    let failed = true;
+                    try {
+                        const parsed = JSON.parse(out) as { error?: unknown; ok?: unknown };
+                        failed = parsed == null || parsed.error != null || parsed.ok !== true;
+                    } catch {
+                        failed = true;
+                    }
+                    await recordAiKpi(failed ? "tool_error" : "tool_ok");
+                } else if (toolName === "consultar_efemerides") {
+                    out = await runEfemeridesTool((b.input as Record<string, unknown>) ?? {});
+                    let failed = true;
+                    try { failed = (JSON.parse(out) as { ok?: unknown })?.ok !== true; } catch { failed = true; }
                     await recordAiKpi(failed ? "tool_error" : "tool_ok");
                 } else if (toolName === "consultar_catalogo_precios") {
                     out = await runCatalogReadTool((b.input as Record<string, unknown>) ?? {});
