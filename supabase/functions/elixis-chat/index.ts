@@ -10,6 +10,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { approval_gate } from "../_shared/approval-gate.ts";
 import {
     bucketSums,
+    CATALOG_FALLBACK,
     computeQuoteTotals,
     mergeCatalog,
     parseCatalogOverlay,
@@ -158,17 +159,28 @@ Tres identidades encadenadas, no las confundas: (1) CUENTA = perfil en Supabase,
 Dos canales de cobro: CANAL 2 "Artista Pro" (incluido en la membresía) está VIVO y funciona. CANAL 1 "renta independiente" a 19,99 USD/mes está INCOMPLETO hoy: el cobro se puede crear pero la emisión automática de la clave aún lo rechaza. NUNCA prometas la renta independiente como disponible; si alguien la pide, di que está en cierre y ofrécele la vía de membresía o que el Capitán lo habilite manualmente.
 Si un cliente deja de pagar, el acceso se pausa primero y se revoca después, con un margen sin conexión: a un DJ en medio de un evento no se le corta la herramienta esa misma noche.
 
-### TUS HERRAMIENTAS — NUEVE, NI UNA MAS (inventario cerrado)
-Estas son TODAS las herramientas que tienes. No hay ninguna otra:
+### TUS HERRAMIENTAS — ONCE, NI UNA MAS (inventario cerrado)
+Estas son TODAS las herramientas que tienes. No hay ninguna otra -- en
+particular NO tienes forma de consultar efemerides ni cumpleanos todavia, ni
+de enviar un email real todavia (eso son tickets futuros), no lo inventes ni
+digas que lo puedes hacer:
 1. consultar_finanzas — leer cifras del negocio.
 2. consultar_agenda_artista — ver la agenda personal de un artista.
-3. registrar_evento_agenda — bloquear un hueco EN LA AGENDA INTERNA.
-4. consultar_catalogo_precios — precios oficiales. Nunca inventes un precio.
-5. buscar_cliente — encontrar un cliente o lead.
-6. generar_cotizacion_evento — preparar un BORRADOR de cotizacion.
-7. crear_nota_lead — dejar una nota interna en un lead existente.
-8. enviar_sms — ENCOLAR un SMS para que un humano lo apruebe. Tu NO lo envias.
-9. consultar_musica — catalogo REAL de Apple Music: lo mas escuchado ahora y
+3. registrar_evento_agenda — bloquear un hueco EN LA AGENDA INTERNA (artist_agenda).
+4. modificar_agenda_evento — crear/actualizar/suspender/cancelar un evento en
+   la agenda OPERATIVA (elixis_agenda_eventos: residencias, bodas, privados,
+   cumpleanos, notas -- con tarifa de venue y pago al DJ). Distinta de
+   registrar_evento_agenda: esa es el hueco personal del DJ, esta es el evento
+   de negocio con dinero de por medio.
+5. consultar_catalogo_precios — precios oficiales. Nunca inventes un precio.
+6. cambiar_precio_catalogo — cambiar el precio de un sku del catalogo. SOLO
+   owner/admin; si te lo pide otro rol, dilo con franqueza y no lo intentes.
+7. buscar_cliente — encontrar un cliente o lead.
+8. generar_cotizacion_evento — preparar un BORRADOR de cotizacion.
+9. crear_nota_lead — dejar una nota interna en un lead existente.
+10. enviar_sms — ENVIAR un SMS real de una sola vez, sin aprobacion humana
+   adicional. El destinatario SIEMPRE sale de buscar_cliente.
+11. consultar_musica — catalogo REAL de Apple Music: lo mas escuchado ahora y
    busqueda de temas y artistas.
 
 ### DE MUSICA SI SABES, Y MUCHO
@@ -244,12 +256,25 @@ que no localizaste al cliente y que hace falta darlo de alta o corregir su
 ficha. Un destinatario sin verificar es como un mensaje de la empresa acaba en
 el telefono equivocado.
 
-Cuando SI lo encuentres: encolas con enviar_sms y se acabo tu parte. No digas
-"ya lo mande" ni "queda enviado" -- queda ESPERANDO APROBACION en pantalla, y
-sale solo cuando un humano pulsa el boton.
+Cuando SI lo encuentres: llamas enviar_sms y ESA MISMA LLAMADA lo despacha --
+ya no hay un humano que lo apruebe despues (2026-08-31, orden directa del PO).
+Tu respuesta hablada tiene que reflejar EXACTAMENTE lo que la herramienta
+devolvio: si vino ok:true / estado:"enviado", di que se envio. Si vino
+ok:false / estado:"fallido" o "pendiente_de_aprobacion", dilo asi tal cual --
+NUNCA digas "enviado" si la herramienta no lo confirmo, y nunca supongas que
+salio bien solo porque la llamaste.
 
 Puedes REDACTAR cualquier cosa -- mensajes, cobros, propuestas -- y entregarla
-lista para copiar. Redactar no es enviar: dilo asi de claro.`;
+lista para copiar cuando NO haga falta mandarla de verdad. Pero si la piden
+enviada, usa la herramienta -- no la des por enviada solo por haberla redactado.
+
+### RELOJ REAL (2026-08-31, orden directa del PO)
+Cada turno te llega, mas abajo, un bloque "FECHA Y HORA ACTUAL" calculado por
+el SERVIDOR en hora de Miami (America/New_York) -- no una suposicion tuya.
+Uselo para resolver "hoy", "manana", "este sabado", cumpleanos, vencimientos,
+o cualquier fecha relativa. Tienes PROHIBIDO decir "no se que fecha es hoy" o
+"no tengo acceso a la fecha actual" -- siempre la tienes, mas abajo en tu
+propio contexto.`;
 
 // ─── ROSTER EN VIVO (artistas reales desde public_dj_profiles) ───────────────
 // Mismo patrón que booth-chat: solo campos PÚBLICOS, con la anon key que
@@ -658,6 +683,14 @@ serve(async (req: Request) => {
     // Leads / solicitudes entrantes (cacheado 1 min).
     const leadsContext = await fetchLeadsPipeline();
 
+    // Reloj real (2026-08-31): fecha/hora calculada en SERVIDOR, no confiada
+    // al modelo. Hora de Miami explícita porque es donde opera el negocio.
+    const now = new Date();
+    const dateBlock =
+        `\n\n### FECHA Y HORA ACTUAL (servidor, America/New_York)\n` +
+        `FECHA ACTUAL: ${now.toLocaleDateString("es-ES", { weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: "America/New_York" })} ` +
+        `| HORA: ${now.toLocaleTimeString("es-ES", { timeZone: "America/New_York" })}`;
+
     // Identidad del usuario actual (del candado) — para personalizar y adaptar al rol.
     const userBlock =
         `\n\n### USUARIO ACTUAL (con quien hablas AHORA)\n` +
@@ -674,6 +707,7 @@ serve(async (req: Request) => {
 
     const systemContent =
         SYSTEM_PROMPT +
+        dateBlock +
         userBlock +
         memoryContext +
         agendaContext +
@@ -770,6 +804,71 @@ serve(async (req: Request) => {
         },
     };
 
+    const AGENDA_EVENTOS_TOOL = {
+        name: "modificar_agenda_evento",
+        description:
+            "Crea, actualiza, suspende o cancela un evento en la agenda OPERATIVA de negocio " +
+            "(elixis_agenda_eventos): residencias, bodas, privados, cumpleanos o notas, con tarifa " +
+            "de venue y pago al DJ. Distinta de registrar_evento_agenda (esa es el hueco personal " +
+            "del DJ, sin dinero). Usa el nombre del DJ tal como aparece en el roster -- no inventes " +
+            "un nombre que no este ahi. accion='actualizar'/'suspender'/'reactivar'/'cancelar' " +
+            "busca el evento existente por dj+fecha_inicio+venue; si no lo encuentra, la herramienta " +
+            "devuelve error, no lo inventes.",
+        input_schema: {
+            type: "object",
+            properties: {
+                dj_nombre: {
+                    type: "string",
+                    description: "Nombre del DJ tal como aparece en el roster (stage_name/dj_name/full_name).",
+                },
+                venue: {
+                    type: "string",
+                    description: "Nombre del venue/lugar. Opcional para 'crear', recomendable para identificar el evento en updates.",
+                },
+                fecha: {
+                    type: "string",
+                    description: "Inicio del evento, ISO 8601.",
+                },
+                horario: {
+                    type: "string",
+                    description: "Fin del evento, ISO 8601 (posterior a 'fecha').",
+                },
+                accion: {
+                    type: "string",
+                    enum: ["crear", "actualizar", "suspender", "reactivar", "cancelar"],
+                    description: "crear=evento nuevo. Las demas buscan el evento existente por dj+fecha+venue.",
+                },
+                tipo: {
+                    type: "string",
+                    enum: ["residencia", "boda", "privado", "cumpleanos", "nota"],
+                    description: "Tipo de evento. Default 'nota'.",
+                },
+                estado: {
+                    type: "string",
+                    enum: ["activo", "suspendido"],
+                    description: "Estado explicito. Ignorado si accion ya lo determina (suspender/reactivar/cancelar).",
+                },
+                notas: {
+                    type: "string",
+                    description: "Detalle opcional, 1 a 2000 caracteres.",
+                },
+                tarifa_venue: {
+                    type: "number",
+                    description: "Lo que paga el venue, en DOLARES (se convierte a centavos internamente).",
+                },
+                pago_dj: {
+                    type: "number",
+                    description: "Lo que se le paga al DJ, en DOLARES (se convierte a centavos internamente).",
+                },
+                es_confidencial_staff: {
+                    type: "boolean",
+                    description: "Si es true, el DJ NO vera este evento (ni tarifas) en su propia agenda -- solo owner/admin. Default false.",
+                },
+            },
+            required: ["dj_nombre", "fecha", "horario", "accion"],
+        },
+    };
+
     const CATALOG_READ_TOOL = {
         name: "consultar_catalogo_precios",
         description:
@@ -784,6 +883,29 @@ serve(async (req: Request) => {
                     description: "Filtro opcional: talent, equipment o all (default all).",
                 },
             },
+        },
+    };
+
+    const CATALOG_PRICE_TOOL = {
+        name: "cambiar_precio_catalogo",
+        description:
+            "Cambia el precio de un SKU del catalogo oficial (platform_settings.rentals_catalog_prices). " +
+            "SOLO owner/admin -- si quien te habla es otro rol, la herramienta lo va a rechazar, no lo intentes igual. " +
+            "El sku tiene que ser uno EXISTENTE en el catalogo (consultalo con consultar_catalogo_precios si no " +
+            "estas seguro); no inventes un sku nuevo con esto.",
+        input_schema: {
+            type: "object",
+            properties: {
+                sku: {
+                    type: "string",
+                    description: "SKU canonico existente del catalogo (dj_private, hl_robot, pa_medium, etc.).",
+                },
+                nuevo_precio_usd: {
+                    type: "number",
+                    description: "Nuevo precio unitario en DOLARES.",
+                },
+            },
+            required: ["sku", "nuevo_precio_usd"],
         },
     };
 
@@ -952,12 +1074,13 @@ serve(async (req: Request) => {
     const SMS_QUEUE_TOOL = {
         name: "enviar_sms",
         description:
-            "PREPARA un SMS para un cliente y lo deja EN COLA para que el Capitan lo apruebe. " +
-            "NO envia: el envio lo dispara una persona desde la pantalla, tu nunca. " +
+            "Redacta y ENVIA un SMS real a un cliente -- de una sola vez, sin aprobacion humana " +
+            "adicional cuando el destinatario y el mensaje esten claros. " +
             "Usala cuando te pidan avisar, confirmar o recordar algo a un cliente por mensaje. " +
             "Necesitas el cliente_id, que sale de buscar_cliente: NUNCA aceptes un telefono dictado " +
-            "de viva voz, porque un digito mal oido manda el mensaje a un desconocido. " +
-            "Cuando la uses, di claramente que el mensaje queda LISTO PARA APROBAR, no enviado.",
+            "de viva voz, porque un digito mal oido manda el mensaje a un desconocido -- ese candado " +
+            "no se negocia, sea autonomo el envio o no. El resultado que te devuelve (ok/estado) es " +
+            "el envio REAL: dilo tal cual vino, nunca asumas que salio si la herramienta no lo confirma.",
         input_schema: {
             type: "object",
             properties: {
@@ -989,10 +1112,13 @@ serve(async (req: Request) => {
         if (
             toolName === "crear_nota_lead"
             || toolName === "registrar_evento_agenda"
+            || toolName === "modificar_agenda_evento"
+            || toolName === "cambiar_precio_catalogo"
             || toolName === "generar_cotizacion_evento"
-            /* enviar_sms solo ENCOLA. No sale nada al mundo, asi que no necesita
-               el porton de aprobacion aqui: la aprobacion real es humana y vive
-               en el despachador, que ELIXIS no puede llamar. */
+            /* enviar_sms (2026-08-31: envio autonomo, orden directa del PO).
+               El candado real sigue siendo que el telefono SOLO sale de
+               buscar_cliente + client_profiles -- nunca de un numero dictado
+               en la conversacion. Ese candado vive en runSmsQueueTool, no aqui. */
             || toolName === "enviar_sms"
         ) {
             return { tool: toolName, policy: "auto_staff", mode: "write" };
@@ -1124,6 +1250,68 @@ serve(async (req: Request) => {
         return JSON.stringify({ ok: true, event_id: eventId, dj_user_id: djUserId });
     }
 
+    const ACCIONES_AGENDA_EVENTO = new Set(["crear", "actualizar", "suspender", "reactivar", "cancelar"]);
+    const TIPOS_AGENDA_EVENTO = new Set(["residencia", "boda", "privado", "cumpleanos", "nota"]);
+
+    async function runAgendaEventoTool(input: Record<string, unknown>): Promise<string> {
+        const djNombre = String(input?.dj_nombre ?? "").trim();
+        const venue = String(input?.venue ?? "").trim();
+        const accion = String(input?.accion ?? "").trim().toLowerCase();
+        const tipo = String(input?.tipo ?? "nota").trim().toLowerCase();
+        const estado = String(input?.estado ?? "activo").trim().toLowerCase();
+        const notas = String(input?.notas ?? "").trim();
+        const fechaInicio = parseIso(input?.fecha);
+        const fechaFin = parseIso(input?.horario);
+        const target = djNombre || "invalid";
+
+        if (!djNombre) {
+            await recordActionLog("modificar_agenda_evento", target, "error:dj_nombre_requerido");
+            return JSON.stringify({ error: "dj_nombre_requerido" });
+        }
+        if (!ACCIONES_AGENDA_EVENTO.has(accion)) {
+            await recordActionLog("modificar_agenda_evento", target, "error:accion_invalida");
+            return JSON.stringify({ error: "accion_invalida" });
+        }
+        if (!fechaInicio || !fechaFin || fechaFin <= fechaInicio) {
+            await recordActionLog("modificar_agenda_evento", target, "error:rango_invalido");
+            return JSON.stringify({ error: "rango_invalido" });
+        }
+        if (!TIPOS_AGENDA_EVENTO.has(tipo)) {
+            await recordActionLog("modificar_agenda_evento", target, "error:tipo_invalido");
+            return JSON.stringify({ error: "tipo_invalido" });
+        }
+        if (notas && notas.length > 2000) {
+            await recordActionLog("modificar_agenda_evento", target, "error:notas_invalidas");
+            return JSON.stringify({ error: "notas_invalidas" });
+        }
+        const tarifaVenueCents = typeof input?.tarifa_venue === "number" ? Math.round(input.tarifa_venue * 100) : null;
+        const pagoDjCents = typeof input?.pago_dj === "number" ? Math.round(input.pago_dj * 100) : null;
+        const esConfidencial = typeof input?.es_confidencial_staff === "boolean" ? input.es_confidencial_staff : null;
+
+        const { data: eventId, error } = await ADMIN.rpc("elixis_agenda_evento_modificar", {
+            p_dj_nombre: djNombre,
+            p_venue_nombre: venue || null,
+            p_fecha_inicio: fechaInicio,
+            p_fecha_fin: fechaFin,
+            p_accion: accion,
+            p_tipo: tipo,
+            p_estado: estado,
+            p_notas: notas || null,
+            p_tarifa_venue_cents: tarifaVenueCents,
+            p_pago_dj_cents: pagoDjCents,
+            p_staff_user_id: gate.userId,
+            p_agent_id: "elixis",
+            p_es_confidencial_staff: esConfidencial,
+        });
+        if (error || !eventId) {
+            const detail = error?.message ?? "rpc";
+            await recordActionLog("modificar_agenda_evento", target, `error:${detail}`.slice(0, 2000));
+            return JSON.stringify({ error: detail.includes("dj_no_encontrado") ? "dj_no_encontrado" : (detail.includes("evento_no_encontrado") ? "evento_no_encontrado" : "evento_no_procesado") });
+        }
+        await recordActionLog("modificar_agenda_evento", target, `ok:${accion}:${eventId}`);
+        return JSON.stringify({ ok: true, event_id: eventId, dj_nombre: djNombre, accion });
+    }
+
     async function loadCatalogOverlay(): Promise<Record<string, number>> {
         const { data, error } = await ADMIN
             .from("platform_settings")
@@ -1236,21 +1424,102 @@ serve(async (req: Request) => {
 
         const row = Array.isArray(data) ? data[0] : data;
         const oculto = tel.slice(0, -4).replace(/\d/g, "•") + tel.slice(-4);
-        smsPendiente = {
-            id: row?.id ?? null,
-            destinatario: String(cli.full_name ?? ""),
-            telefono: oculto,
-            mensaje,
-        };
+        const smsId = String(row?.id ?? "");
+
+        /* ENVIO AUTONOMO (2026-08-31, orden directa del PO: "siempre que
+           reconozca los limites a quien le da una informacion y a quien le
+           da otras"). El destinatario ya viene DE LA FICHA (buscar_cliente +
+           client_profiles), nunca de un telefono dictado -- ese candado sigue
+           intacto. Lo que cambia es que ya no espera un click humano: llama
+           al MISMO endpoint (elixis-sms-dispatch) que antes solo apretaba una
+           persona, reusando el JWT staff/owner que ya autentico esta
+           conversacion. Si esa llamada no se puede ni intentar (red caida),
+           la fila queda pendiente de verdad y se cae al viejo camino manual
+           como red de seguridad -- nunca se inventa un "enviado". */
+        const base = (Deno.env.get("SUPABASE_URL") ?? "").replace(/\/$/, "");
+        let despacho: Record<string, unknown> | null = null;
+        if (base && smsId) {
+            try {
+                const dRes = await fetch(`${base}/functions/v1/elixis-sms-dispatch?id=${encodeURIComponent(smsId)}`, {
+                    method: "POST",
+                    headers: { Authorization: authHeader, "Content-Type": "application/json" },
+                });
+                despacho = await dRes.json().catch(() => null);
+            } catch (_e) {
+                despacho = null;
+            }
+        }
+
+        if (!despacho) {
+            // No se pudo ni intentar el despacho -- la fila sigue "pendiente" en
+            // la base de verdad. Se deja la carta de aprobacion manual como
+            // unica red de seguridad, no como flujo normal.
+            smsPendiente = { id: smsId || null, destinatario: String(cli.full_name ?? ""), telefono: oculto, mensaje };
+            await recordActionLog("enviar_sms", clienteId, "error:despacho_no_intentado");
+            return JSON.stringify({
+                ok: false,
+                estado: "pendiente_de_aprobacion",
+                id: smsId || null,
+                destinatario: cli.full_name,
+                telefono: oculto,
+                mensaje,
+                aviso: "No pude despachar el SMS de forma automatica (fallo de red). Quedo en cola para aprobacion manual en pantalla.",
+            });
+        }
+
+        const enviado = despacho?.ok === true;
+        await recordActionLog(
+            "enviar_sms",
+            clienteId,
+            (enviado ? `ok:sid=${String(despacho?.sid ?? "")}` : `error:${String(despacho?.error ?? despacho?.detalle ?? "desconocido")}`).slice(0, 2000),
+        );
         return JSON.stringify({
-            ok: true,
-            estado: "pendiente_de_aprobacion",
-            id: row?.id ?? null,
+            ok: enviado,
+            estado: enviado ? "enviado" : "fallido",
+            id: smsId || null,
             destinatario: cli.full_name,
             telefono: oculto,
             mensaje,
-            aviso: "El SMS quedo LISTO PARA APROBAR. No se ha enviado: lo despacha el Capitan.",
+            despacho,
         });
+    }
+
+    const PRICE_CHANGE_ROLES = new Set(["owner", "admin"]);
+
+    async function runCatalogPriceTool(input: Record<string, unknown>): Promise<string> {
+        const sku = String(input?.sku ?? "").trim();
+        const nuevoPrecio = Number(input?.nuevo_precio_usd);
+
+        if (!PRICE_CHANGE_ROLES.has(gate.role)) {
+            await recordActionLog("cambiar_precio_catalogo", sku || "invalid", `error:rol_no_autorizado:${gate.role}`);
+            return JSON.stringify({ error: "rol_no_autorizado", detalle: "Solo owner/admin puede cambiar precios del catalogo." });
+        }
+        if (!sku || sku.length > 64) {
+            await recordActionLog("cambiar_precio_catalogo", sku || "invalid", "error:sku_invalido");
+            return JSON.stringify({ error: "sku_invalido" });
+        }
+        if (!CATALOG_FALLBACK.some((item) => item.sku === sku)) {
+            await recordActionLog("cambiar_precio_catalogo", sku, "error:sku_desconocido");
+            return JSON.stringify({ error: "sku_desconocido", detalle: "Ese sku no existe en el catalogo oficial." });
+        }
+        if (!Number.isFinite(nuevoPrecio) || nuevoPrecio < 0 || nuevoPrecio > 100000) {
+            await recordActionLog("cambiar_precio_catalogo", sku, "error:precio_invalido");
+            return JSON.stringify({ error: "precio_invalido" });
+        }
+
+        const { data, error } = await ADMIN.rpc("platform_catalog_price_set", {
+            p_sku: sku,
+            p_unit_usd: nuevoPrecio,
+            p_staff_user_id: gate.userId,
+            p_agent_id: "elixis",
+        });
+        if (error || !data) {
+            const detail = error?.message ?? "rpc";
+            await recordActionLog("cambiar_precio_catalogo", sku, `error:${detail}`.slice(0, 2000));
+            return JSON.stringify({ error: "precio_no_actualizado" });
+        }
+        await recordActionLog("cambiar_precio_catalogo", sku, `ok:${nuevoPrecio}`);
+        return JSON.stringify({ ok: true, sku, unit_usd: nuevoPrecio });
     }
 
     function parseEventDate(value: unknown): string | null {
@@ -1401,7 +1670,7 @@ serve(async (req: Request) => {
                     // hasta este cambio de modelo. Sin este parametro, el muestreo queda en
                     // el default del modelo -- no hace falta reemplazarlo por nada.
                     system: systemContent,
-                    tools: [FINANCIAL_TOOL, LEAD_NOTE_TOOL, AGENDA_READ_TOOL, AGENDA_WRITE_TOOL, CATALOG_READ_TOOL, QUOTE_WRITE_TOOL, CLIENT_SEARCH_TOOL, SMS_QUEUE_TOOL, MUSIC_TOOL],
+                    tools: [FINANCIAL_TOOL, LEAD_NOTE_TOOL, AGENDA_READ_TOOL, AGENDA_WRITE_TOOL, AGENDA_EVENTOS_TOOL, CATALOG_READ_TOOL, CATALOG_PRICE_TOOL, QUOTE_WRITE_TOOL, CLIENT_SEARCH_TOOL, SMS_QUEUE_TOOL, MUSIC_TOOL],
                     messages: convo,
                 }),
             });
@@ -1482,8 +1751,28 @@ serve(async (req: Request) => {
                         failed = true;
                     }
                     await recordAiKpi(failed ? "tool_error" : "tool_ok");
+                } else if (toolName === "modificar_agenda_evento") {
+                    out = await runAgendaEventoTool((b.input as Record<string, unknown>) ?? {});
+                    let failed = true;
+                    try {
+                        const parsed = JSON.parse(out) as { error?: unknown; ok?: unknown };
+                        failed = parsed == null || parsed.error != null || parsed.ok !== true;
+                    } catch {
+                        failed = true;
+                    }
+                    await recordAiKpi(failed ? "tool_error" : "tool_ok");
                 } else if (toolName === "consultar_catalogo_precios") {
                     out = await runCatalogReadTool((b.input as Record<string, unknown>) ?? {});
+                    let failed = true;
+                    try {
+                        const parsed = JSON.parse(out) as { error?: unknown; ok?: unknown };
+                        failed = parsed == null || parsed.error != null || parsed.ok !== true;
+                    } catch {
+                        failed = true;
+                    }
+                    await recordAiKpi(failed ? "tool_error" : "tool_ok");
+                } else if (toolName === "cambiar_precio_catalogo") {
+                    out = await runCatalogPriceTool((b.input as Record<string, unknown>) ?? {});
                     let failed = true;
                     try {
                         const parsed = JSON.parse(out) as { error?: unknown; ok?: unknown };
@@ -1517,7 +1806,6 @@ serve(async (req: Request) => {
                         failed = true;
                     }
                     await recordAiKpi(failed ? "tool_error" : "tool_ok");
-                    await recordActionLog("enviar_sms", String((b.input as Record<string, unknown>)?.cliente_id ?? ""), failed ? "queue_failed" : "queued");
                 } else if (toolName === "generar_cotizacion_evento") {
                     out = await runQuoteWriteTool((b.input as Record<string, unknown>) ?? {});
                     let failed = true;

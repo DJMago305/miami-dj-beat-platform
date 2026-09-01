@@ -17,12 +17,23 @@ const REGISTERED_READ_TOOLS = new Set([
 const REGISTERED_WRITE_TOOLS = new Set([
     "crear_nota_lead",
     "registrar_evento_agenda",
+    // modificar_agenda_evento (2026-08-31): agenda OPERATIVA de negocio
+    // (elixis_agenda_eventos), separada de registrar_evento_agenda (hueco
+    // personal en artist_agenda). RLS ya restringe quien puede leer/escribir
+    // cada fila; el porton aqui solo decide si ELIXIS puede llamarla sin
+    // aprobacion humana adicional, igual que el resto de escritura auto_staff.
+    "modificar_agenda_evento",
+    // cambiar_precio_catalogo (2026-08-31): el porton solo decide si ELIXIS
+    // puede llamarla sin aprobacion adicional -- el candado real (SOLO
+    // owner/admin) esta en runCatalogPriceTool en elixis-chat, que revisa
+    // gate.role antes de tocar la base.
+    "cambiar_precio_catalogo",
     "generar_cotizacion_evento",
-    // enviar_sms solo ENCOLA un borrador; no sale nada al mundo. El envio real
-    // lo hace elixis-sms-dispatch, que exige owner/staff y una fila ya en cola,
-    // y que el modelo no tiene en su inventario. Sin registrarlo aqui, el
-    // porton lo negaba por "unregistered_tool" y la tarjeta de aprobacion no
-    // llegaba a aparecer nunca.
+    // enviar_sms (2026-08-31: envio autonomo, orden directa del PO). ELIXIS
+    // encola y, en el mismo turno, dispara elixis-sms-dispatch reusando el
+    // JWT staff/owner de la conversacion -- ya no espera un click humano. El
+    // candado real (telefono SOLO desde buscar_cliente, nunca dictado) sigue
+    // intacto en runSmsQueueTool, no aqui.
     "enviar_sms",
 ]);
 

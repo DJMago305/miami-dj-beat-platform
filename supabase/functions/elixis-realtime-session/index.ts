@@ -330,6 +330,15 @@ function buildInstructions(
 ): string {
     const first = String(name || "").trim().split(/\s+/)[0] || "";
     const esOwner = role === "owner";
+    // Reloj real (2026-08-31, orden directa del PO): fecha/hora de SERVIDOR en
+    // hora de Miami, nunca la suposicion del modelo.
+    const ahora = new Date();
+    const fechaHoraBlock =
+        `## FECHA Y HORA ACTUAL (servidor, America/New_York)\n` +
+        `FECHA ACTUAL: ${ahora.toLocaleDateString("es-ES", { weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: "America/New_York" })} ` +
+        `| HORA: ${ahora.toLocaleTimeString("es-ES", { timeZone: "America/New_York" })}\n` +
+        `Usala para "hoy", "manana", "este sabado", cumpleanos o cualquier fecha relativa. ` +
+        `PROHIBIDO decir "no se que fecha es hoy" -- siempre la tienes aqui arriba.`;
     const trato = esOwner
         ? `Le hablas al dueño de Miami DJ Beat${first ? `, ${first}` : ""}. Puedes llamarle "Capitán".`
         : `Le hablas a ${first || "un miembro del equipo"}, del equipo de Miami DJ Beat.`;
@@ -406,6 +415,8 @@ teoría de manual.`,
     };
 
     return `${persona.cabecera}
+
+${fechaHoraBlock}
 
 ## CÓMO HABLAS — esto es voz, no un chat
 - Habla como una persona real, con energía y calidez de Miami. Nada de tono de manual.
