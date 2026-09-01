@@ -57,7 +57,7 @@
         '        <h2 id="mdj-eb-title">Event Cart <span id="mdj-eb-order-num" class="mdj-eb-order-num"></span></h2>',
         '        <div class="mdj-eb-context-bar" role="group" aria-label="Fecha y evento">',
         '          <label class="mdj-eb-context-bar__field">',
-        '            <span class="mdj-eb-context-bar__hint">D\u00eda</span>',
+        '            <span class="mdj-eb-context-bar__hint" data-i18n="eb-opt-dia">D\u00eda</span>',
         '            <select class="mdj-eb-context-bar__select mdj-eb-context-bar__select--day" aria-label="D\u00eda" autocomplete="off">',
         '              <option value="" selected disabled>D\u00eda</option>',
         (function () {
@@ -86,7 +86,7 @@
         '            </select>',
         '          </label>',
         '          <label class="mdj-eb-context-bar__field">',
-        '            <span class="mdj-eb-context-bar__hint">A\u00f1o</span>',
+        '            <span class="mdj-eb-context-bar__hint" data-i18n="eb-opt-anio">A\u00f1o</span>',
         '            <select class="mdj-eb-context-bar__select mdj-eb-context-bar__select--year" aria-label="A\u00f1o" autocomplete="off">',
         '              <option value="" selected disabled>A\u00f1o</option>',
         '              <option value="2025">2025</option>',

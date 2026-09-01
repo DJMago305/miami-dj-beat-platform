@@ -790,7 +790,10 @@
      esto solo dice a que tarjeta pertenece cada uno. Lo que no este listado cae
      en «Navegacion», asi que un puesto nuevo aparece solo en vez de perderse. */
   var MDJ_GRUPOS_PANEL = [
-    { titulo: 'Navegación', claves: ['home', 'services', 'venues', 'shop', 'jobs', 'contact', 'academia', 'agenda', 'tools', 'flow'] },
+    // 2026-09-01: solo "Navegación" tiene data-i18n (autorizacion puntual del
+    // PO, solo texto, sin tocar orden/estructura del menu). "Tu cuenta" y
+    // "Sistema" quedan igual que siempre -- fuera de esa autorizacion.
+    { titulo: 'Navegación', i18nKey: 'nav-group-navegacion', claves: ['home', 'services', 'venues', 'shop', 'jobs', 'contact', 'academia', 'agenda', 'tools', 'flow'] },
     { titulo: 'Tu cuenta',  claves: ['config', 'mi-portal'] },
     { titulo: 'Sistema',    claves: ['roadmap', 'fenix', 'staff'] }
   ];
@@ -852,7 +855,7 @@
         }
         if (!delGrupo.length) return;
 
-        html += '<h2 class="mdj-panel-titulo">' + grupo.titulo + '</h2>' +
+        html += '<h2 class="mdj-panel-titulo"' + (grupo.i18nKey ? ' data-i18n="' + grupo.i18nKey + '"' : '') + '>' + grupo.titulo + '</h2>' +
                 '<div class="mdj-panel-tarjeta">';
         delGrupo.forEach(function (a) {
           var k = a.getAttribute('data-mdj-nav');
@@ -887,6 +890,13 @@
       panel.innerHTML = html;
       panel.setAttribute('data-mdj-panel-firma', firma);
       panel.setAttribute('data-mdj-panel-premium', '1');
+      /* 2026-09-01: el innerHTML de arriba trae data-i18n="nav-group-navegacion"
+         fresco, pero nadie vuelve a barrer el documento con las traducciones
+         despues de reconstruir -- si el idioma activo ya es distinto del
+         default en español, el titulo del panel se queda pegado hasta que
+         algo mas dispare un updateUI() (ej. tocar el switcher). Un pase aqui
+         mismo lo deja bien desde el primer open, sin esperar ese segundo evento. */
+      if (window.i18n && typeof window.i18n.updateUI === 'function') window.i18n.updateUI();
     } catch (ePanel) { /* noop */ }
   }
   window.mdjConstruirPanelMovil = mdjConstruirPanelMovil;
