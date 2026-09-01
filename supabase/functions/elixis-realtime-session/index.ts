@@ -182,6 +182,19 @@ const ADMIN = createClient(
 // es el saldo en elixis_voice_quotas. Sin fila de cuota no hay voz.
 const ALLOWED_ROLES = new Set(["owner", "admin", "manager", "seller", "artist"]);
 
+// ─── SMS por voz — mismos helpers que elixis-chat (texto), para que un
+// numero valido alli lo sea aqui y no haya dos verdades ───────────────────
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function toE164(input: string): string | null {
+    const t = (input || "").trim();
+    if (!t) return null;
+    const d = t.replace(/\D/g, "");
+    if (d.length === 10) return `+1${d}`;
+    if (d.length === 11 && d.startsWith("1")) return `+${d}`;
+    if (t.startsWith("+") && d.length >= 10 && d.length <= 15) return `+${d}`;
+    return null;
+}
+
 // El fallo del medidor no puede dejar sin voz a quien opera el negocio, pero
 // tampoco puede regalar voz de pago. Por eso: si la RPC falla, owner/staff
 // pasan y los artistas no.
@@ -677,6 +690,129 @@ serve(async (req: Request) => {
         }
     }
 
+    // ── SMS por voz (2026-09-02) — mismo candado que elixis-chat (texto):
+    // buscar_cliente -> enviar_sms (encola) -> confirmar_envio_mensaje
+    // (despacha). Repetido aqui, no reenviado a elixis-chat, porque
+    // elixis-chat es un endpoint conversacional completo (mensaje ->
+    // decide el modelo -> respuesta) sin una ruta para invocar UNA tool
+    // suelta. Las tres acciones estan cerradas a STAFF_ROLES: la tool
+    // correspondiente ni siquiera se declara para un artista (ver el
+    // arreglo de tools mas abajo), pero el candado se repite aqui por si
+    // acaso — nunca confiar solo en que el modelo no la ofrezca.
+    if (action === "buscar_cliente" || action === "enviar_sms" || action === "confirmar_envio_mensaje") {
+        if (!STAFF_ROLES.has(gate.role)) {
+            return json({ ok: false, error: "rol_no_autorizado", detalle: "Los artistas no envían SMS corporativos." }, 403);
+        }
+    }
+
+    if (action === "buscar_cliente") {
+        let q: { query?: string } = {};
+        try { q = await req.json(); } catch { /* cuerpo vacio */ }
+        const query = String(q.query ?? "").trim();
+        if (query.length < 2) return json({ ok: false, error: "query_muy_corta" }, 400);
+
+        const like = `%${query}%`;
+        const { data, error } = await ADMIN
+            .from("client_profiles")
+            .select("user_id, full_name, company_name, email, phone, city, tier_level")
+            .or(`full_name.ilike.${like},email.ilike.${like},phone.ilike.${like},company_name.ilike.${like}`)
+            .limit(10);
+        if (error) {
+            console.error("[elixis-realtime-session] buscar_cliente:", error.message);
+            return json({ ok: false, error: "client_profiles_failed" }, 200);
+        }
+        return json({ ok: true, count: data?.length ?? 0, clientes: data ?? [] }, 200);
+    }
+
+    if (action === "enviar_sms") {
+        let s: { cliente_id?: string; mensaje?: string } = {};
+        try { s = await req.json(); } catch { /* cuerpo vacio */ }
+        const clienteId = String(s.cliente_id ?? "").trim();
+        const mensaje = String(s.mensaje ?? "").trim();
+
+        if (!UUID_RE.test(clienteId)) {
+            return json({
+                ok: false, error: "cliente_id_invalido",
+                detalle: "Necesito el user_id del cliente. Búscalo primero con buscar_cliente; no acepto teléfonos dictados.",
+            }, 200);
+        }
+        if (mensaje.length < 2 || mensaje.length > 1500) {
+            return json({ ok: false, error: "mensaje_invalido" }, 200);
+        }
+
+        // El telefono sale de la BASE, nunca de lo que se dijo en voz alta.
+        const { data: cli, error: e1 } = await ADMIN
+            .from("client_profiles")
+            .select("user_id, full_name, phone")
+            .eq("user_id", clienteId)
+            .maybeSingle();
+        if (e1) {
+            console.error("[elixis-realtime-session] enviar_sms, client_profiles:", e1.message);
+            return json({ ok: false, error: "client_profiles_failed" }, 200);
+        }
+        if (!cli) return json({ ok: false, error: "cliente_no_encontrado" }, 200);
+
+        const tel = toE164(String(cli.phone ?? ""));
+        if (!tel) {
+            return json({
+                ok: false, error: "cliente_sin_telefono_valido",
+                cliente: cli.full_name, detalle: "Ese cliente no tiene un teléfono utilizable en su ficha.",
+            }, 200);
+        }
+
+        const { data, error } = await ADMIN.rpc("elixis_sms_encolar", {
+            p_solicitante: gate.userId,
+            p_dest_id: clienteId,
+            p_nombre: String(cli.full_name ?? ""),
+            p_telefono: tel,
+            p_mensaje: mensaje,
+        });
+        if (error) {
+            console.error("[elixis-realtime-session] enviar_sms, elixis_sms_encolar:", error.message);
+            return json({ ok: false, error: "cola_sms_failed" }, 200);
+        }
+
+        const row = Array.isArray(data) ? data[0] : data;
+        const oculto = tel.slice(0, -4).replace(/\d/g, "•") + tel.slice(-4);
+        const smsId = String(row?.id ?? "");
+        return json({
+            ok: true,
+            estado: "pendiente_de_confirmacion",
+            id: smsId || null,
+            destinatario: cli.full_name,
+            telefono: oculto,
+            mensaje,
+            aviso: "Encolado, NO enviado todavía. Pregunta en voz alta si lo envías antes de llamar confirmar_envio_mensaje.",
+        }, 200);
+    }
+
+    if (action === "confirmar_envio_mensaje") {
+        let c: { id?: string; accion?: string } = {};
+        try { c = await req.json(); } catch { /* cuerpo vacio */ }
+        const id = String(c.id ?? "").trim();
+        const accion2 = String(c.accion ?? "").trim().toLowerCase();
+
+        if (!UUID_RE.test(id)) return json({ ok: false, error: "id_invalido" }, 200);
+        if (accion2 !== "enviar" && accion2 !== "cancelar") return json({ ok: false, error: "accion_invalida" }, 200);
+
+        const base = (Deno.env.get("SUPABASE_URL") || SUPABASE_URL_FALLBACK).replace(/\/$/, "");
+        const qs = accion2 === "cancelar" ? `id=${encodeURIComponent(id)}&accion=cancelar` : `id=${encodeURIComponent(id)}`;
+        try {
+            const dRes = await fetch(`${base}/functions/v1/elixis-sms-dispatch?${qs}`, {
+                method: "POST",
+                headers: { Authorization: req.headers.get("Authorization") ?? "", "Content-Type": "application/json" },
+            });
+            const despacho = await dRes.json().catch(() => null);
+            if (!despacho) {
+                return json({ ok: false, error: "no_se_pudo_despachar", detalle: "Fallo de red al confirmar." }, 200);
+            }
+            return json({ ok: despacho?.ok === true, accion: accion2, despacho }, 200);
+        } catch (err) {
+            console.error("[elixis-realtime-session] confirmar_envio_mensaje, red:", err);
+            return json({ ok: false, error: "no_se_pudo_despachar" }, 200);
+        }
+    }
+
     // ── Liquidacion y latido ─────────────────────────────────────────────
     // Viven aqui y no en una funcion aparte para no duplicar candado y CORS.
     if (action === "settle" || action === "heartbeat") {
@@ -961,6 +1097,64 @@ serve(async (req: Request) => {
                     "coincidencia con suficiente confianza.",
                 parameters: { type: "object", properties: {}, required: [] },
             }] : []),
+            // ── SMS por voz (2026-09-02) — mismo candado de 3 pasos que ya
+            // corre en elixis-chat (texto): buscar_cliente -> enviar_sms
+            // (encola) -> confirmar_envio_mensaje (despacha). El telefono
+            // SIEMPRE sale de client_profiles, nunca de un numero dictado —
+            // "un digito mal oido manda el mensaje a un desconocido". Solo
+            // declaradas para roles de staff: los artistas no mandan SMS
+            // corporativos (mismo ALLOWED_ROLES que elixis-sms-dispatch).
+            ...(isStaff ? [
+                {
+                    type: "function",
+                    name: "buscar_cliente",
+                    description:
+                        "Busca un cliente/comprador registrado en Miami DJ Beat LLC por nombre, " +
+                        "email o teléfono. Devuelve datos de contacto básicos. NO inventes un " +
+                        "cliente que no aparezca en el resultado.",
+                    parameters: {
+                        type: "object",
+                        properties: {
+                            query: { type: "string", description: "Texto a buscar: nombre completo (o parcial), email o teléfono." },
+                        },
+                        required: ["query"],
+                    },
+                },
+                {
+                    type: "function",
+                    name: "enviar_sms",
+                    description:
+                        "Redacta un SMS real para un cliente y lo deja EN COLA — NO lo envía " +
+                        "todavía. Necesitas el cliente_id, que sale de buscar_cliente: NUNCA " +
+                        "aceptes un teléfono dictado de viva voz, porque un dígito mal oído manda " +
+                        "el mensaje a un desconocido. Después de llamarla, PREGUNTA en voz alta " +
+                        "\"¿Confirmas el envío a [Nombre] al número terminado en [XXXX]?\" — solo " +
+                        "si la persona confirma de palabra, llamas confirmar_envio_mensaje con accion='enviar'.",
+                    parameters: {
+                        type: "object",
+                        properties: {
+                            cliente_id: { type: "string", description: "El user_id del cliente, tal como lo devolvió buscar_cliente." },
+                            mensaje: { type: "string", description: "El texto exacto del SMS, listo para leerse tal cual. Máximo 1500 caracteres." },
+                        },
+                        required: ["cliente_id", "mensaje"],
+                    },
+                },
+                {
+                    type: "function",
+                    name: "confirmar_envio_mensaje",
+                    description:
+                        "Despacha o cancela un SMS que ya quedó EN COLA por enviar_sms. Solo " +
+                        "llámala después de que la persona confirme de viva voz que sí quiere enviarlo.",
+                    parameters: {
+                        type: "object",
+                        properties: {
+                            id: { type: "string", description: "El id que devolvió enviar_sms al encolar." },
+                            accion: { type: "string", enum: ["enviar", "cancelar"], description: "'enviar' despacha de verdad; 'cancelar' descarta la cola sin mandar nada." },
+                        },
+                        required: ["id", "accion"],
+                    },
+                },
+            ] : []),
         ],
         tool_choice: "auto",
     };

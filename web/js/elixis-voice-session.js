@@ -220,6 +220,9 @@
           ? await accion('identificar_track', { pcm_base64: pcmABase64(muestra.pcm), sample_rate: muestra.sampleRate })
           : { ok:false, motivo:'sin_audio_capturado' };
       }
+      else if(item.name==='buscar_cliente')   out = await accion('buscar_cliente', { query:String(args.query||'') });
+      else if(item.name==='enviar_sms')       out = await accion('enviar_sms', { cliente_id:String(args.cliente_id||''), mensaje:String(args.mensaje||'') });
+      else if(item.name==='confirmar_envio_mensaje') out = await accion('confirmar_envio_mensaje', { id:String(args.id||''), accion:String(args.accion||'') });
       else                                    out = { ok:false, motivo:'herramienta_desconocida' };
       emit('onTool', { nombre:item.name, args:args, ok:(out&&out.ok!==false) });
 
