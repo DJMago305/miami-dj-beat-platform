@@ -300,6 +300,30 @@
            QUE DICE EL CAPITAN, por escrito. Sin esto el chat enseñaba media
            conversacion"). Se conserva aqui para no perder esa mejora real. */
         case 'conversation.item.input_audio_transcription.completed': {
+          /* CANDADO DURO 2026-08-31 (reporte real del PO, capturas de un
+             bucle de "Hola Gerardo" -- variantes DISTINTAS entre si, no la
+             misma frase repetida): el filtro anti-eco de abajo es por
+             SIMILITUD de texto, y una transcripcion de cola de audio mal
+             cortada puede salir bastante distinta de lo que el asistente
+             dijo (ruido, palabras a medias) -- pasaba la similitud y se
+             tomaba como "el usuario dijo algo nuevo", disparando OTRA
+             respuesta nativa (create_response:true en los modos estandar).
+             hablando=false NO sirve de candado aca -- 'input_audio_buffer.
+             speech_started' ya lo apaga ANTES de que esta transcripcion
+             llegue, exactamente en el caso que mas importa. La señal real y
+             dura es el propio track del microfono: mientras siga
+             deshabilitado (ver 'response.output_audio_transcript.delta' /
+             micReactivarTimeout mas abajo, la MISMA ventana de silencio
+             fisico), nada de lo que "transcriba" el servidor en ese hueco
+             puede ser una persona real -- se descarta sin ni mirar el
+             contenido, no hace falta compararlo con nada. */
+          if(mic){
+            var pistaMic = mic.getAudioTracks()[0];
+            if(pistaMic && !pistaMic.enabled){
+              console.warn('[ElixisVoiceSession] transcripcion ignorada -- microfono deshabilitado (asistente hablando/enfriando).');
+              break;
+            }
+          }
           var dicho = (m.transcript || '').trim();
           if(dicho){
             /* FILTRO ANTI-ECO 2026-08-31 (mismo reporte de monologo infinito):
@@ -405,10 +429,25 @@
              arriba -- defensa adicional si algo se cuela de todos modos. */
           if(dc && dc.readyState==='open') dc.send(JSON.stringify({ type:'input_audio_buffer.clear' }));
           if(micReactivarTimeout){ clearTimeout(micReactivarTimeout); }
+          /* Margen ESCALADO por longitud del texto hablado (2026-08-31,
+             reporte real del PO -- el bucle seguia pasando con el margen
+             fijo de 800ms). 800ms fijo era una adivinanza pensada para un
+             "¡Hola!" corto -- una respuesta larga de verdad tarda varios
+             segundos en salir por las bocinas, y reactivar el mic a los
+             800ms de TODOS modos deja el mismo hueco de eco que esto
+             intenta cerrar. No hay evento real de "la bocina ya termino"
+             disponible (el audio de OpenAI llega como MediaStream WebRTC en
+             vivo, no como un <audio src> con duracion conocida -- nunca
+             dispara 'ended' de verdad) -- se estima a partir del texto ya
+             confirmado: ~35ms por caracter (ritmo natural de habla en
+             español, con margen), piso de 800ms (el caso corto de siempre no
+             cambia) y techo de 4s (una respuesta larguisima no debe colgar
+             el mic para siempre). */
+          var margenMs = Math.min(4000, Math.max(800, _textoElixis.trim().length * 35));
           micReactivarTimeout = setTimeout(function(){
             if(mic){ mic.getAudioTracks().forEach(function(t){ t.enabled=true; }); }
             micReactivarTimeout = null;
-          }, 800);
+          }, margenMs);
           /* Las llamadas a herramienta viajan DENTRO de response.done. Si se
              cierra el turno aqui sin mirarlas, la consulta no sale nunca. */
           var salida = (m.response && m.response.output) || [];

@@ -41,10 +41,10 @@
   <script src="./subscription.js?v=20260422-find-dj-rank"></script>
   <script src="./js/smartcrate-harmonic-engine.js?v=20260830-camelot-engine"></script>
   <script src="./js/music-hunter-ring-buffer.js?v=20260830-ring-buffer"></script>
-  <script src="./js/elixis-voice-session.js?v=20260831-hilos-historial"></script>
+  <script src="./js/elixis-voice-session.js?v=20260831-candado-eco-duro"></script>
   <script src="./js/elixis-swipe-carousel.js?v=20260827-pointer-wheel-desktop"></script>
   <script src="./js/avatar-frame-player.js?v=20260830-crossorigin-fix"></script>
-  <script src="./js/avatar-heygen-chromakey.js?v=20260830-recorte-borde-blanco"></script>
+  <script src="./js/avatar-heygen-chromakey.js?v=20260831-encuadre-por-modo"></script>
   <script src="./js/elixis-hud-transmision.js?v=20260829-hud-transmision"></script>
   <script>
     /* Sprites de boca (avatar-viseme-sprites.js + MDB_AVATAR_VISEMES)
@@ -499,7 +499,17 @@
          proporcion para seguir topando justo en este nuevo borde, nunca
          invadiendolo -- mismo principio de "limites de jurisdiccion" de la
          nota original, solo con el numero correcto. */
-      .ew-pantalla.ew-mid{left:50%; transform:translateX(-50%); width:457px; z-index:1;}
+      /* Ancho del centro subido de 457px a 640px (2026-08-31, reporte real
+         del PO: "el espacio de conversacion del centro... tiene poco
+         protagonismo y es donde mas deve haber"). El avatar NO se ve
+         afectado: .avatar-stage usa width:min(420px,92%) -- 92% de 640px ya
+         supera 420px, asi que el 420 plano sigue mandando igual que con
+         457px (esa formula solo importaba para no encoger el avatar por
+         DEBAJO de 420, nunca por crecer el contenedor de mas). Los dos
+         calc() de --ew-izq/--ew-der en ewAplicarAcordeon() tienen que usar
+         este MISMO numero (640px) para que el panel expandido siga topando
+         justo en el borde del centro -- ver ese JS mas abajo. */
+      .ew-pantalla.ew-mid{left:50%; transform:translateX(-50%); width:640px; z-index:1;}
       /* BUG REAL 2026-08-31 (reporte del PO: "los nombres estan pegados a
          los bordes... no tienen nada de aire"): el padding:0 de arriba
          estaba pensado SOLO para el panel central (avatar sin vidrio, ver
@@ -516,6 +526,12 @@
       .ew-pantalla.ew-cerrado .ew-enfoque-item .l{display:none;}
       .ew-pantalla.ew-cerrado h4{writing-mode:vertical-rl; text-orientation:mixed; margin:0 0 8px; white-space:nowrap;}
       .ew-pantalla.ew-cerrado .ew-col-body{display:none;}
+      /* "+ Nuevo Hilo" (2026-08-31, mudanza de Hilos al lateral izquierdo):
+         mismo criterio de arriba -- en 64px colapsado no hay espacio real
+         para un boton con texto, se esconde junto con la lista/etiquetas;
+         reaparece al expandir el panel (mismo gesto que ya abre Modo
+         Enfoque). */
+      .ew-pantalla.ew-cerrado #ewHiloNuevo{display:none;}
     }
     /* Flechas laterales de escritorio angosto (2026-08-28, ticket de
        soporte desktop) -- inyectadas por elixis-swipe-carousel.js mismo.
@@ -570,6 +586,15 @@
     @media (min-width:981px){ .ew-dots{display:none;} }
     .ew-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.22);border:none;padding:0;cursor:pointer;}
     .ew-dot.activo{background:var(--gold);}
+    /* "+ Nuevo Hilo" (2026-08-31): primer elemento del lateral izquierdo,
+       arriba de Modo Enfoque, mismo criterio visual que un boton "New chat"
+       -- dorado, ancho completo del panel expandido, bien visible (no la
+       pildora chica/discreta que tenia antes en el panel derecho, ahora que
+       es EL punto de entrada principal para empezar de cero). */
+    #ewHiloNuevo{width:100%; margin-bottom:10px; padding:9px 10px; font-size:12px; font-weight:700;
+      background:none; border:1px solid rgba(234,179,8,.5); border-radius:10px; color:var(--gold);
+      cursor:pointer; flex:none;}
+    #ewHiloNuevo:hover{background:rgba(234,179,8,.12);}
     .ew-enfoque{display:flex; flex-wrap:wrap; align-content:center; justify-content:center; gap:18px; height:100%;}
     .ew-enfoque-item{display:flex;flex-direction:column;align-items:center;gap:5px;width:74px;cursor:pointer;-webkit-tap-highlight-color:transparent;background:none;border:none;padding:0;font-family:inherit;}
     .ew-enfoque-icono{width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;
@@ -721,11 +746,23 @@
        encima de el. z-index 4: por encima del avatar (3) y su brillo, por
        debajo de los orbes/barra de texto (5) para que sigan siendo
        clicables. */
+    /* Sin vidrio unico detras de TODA la conversacion (2026-08-31, orden
+       directa del PO: "quitaria ese efecto cristal en toda la conversacion
+       que tienes detras... pusiera cada pregunta y respuesta por separado
+       con su propia burbuja"). El contenedor ya NO pinta fondo/blur/borde
+       propio -- solo posiciona y scrollea; el "vidrio" ahora vive en CADA
+       burbuja (.ew-linea, mas abajo), no en un panel grande de fondo. */
     .ew-chat-centro{position:absolute; top:6px; left:50%; transform:translateX(-50%);
-      width:min(460px,94%); bottom:112px; z-index:4; display:none;
-      background:var(--panel-glass, rgba(11,15,24,.62)); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
-      border:1px solid var(--line); border-radius:14px; padding:12px; box-sizing:border-box;}
-    .ew-chat-centro.ew-mostrar{display:flex; flex-direction:column; gap:8px;}
+      width:min(600px,94%); bottom:112px; z-index:4; display:none;
+      box-sizing:border-box;
+      /* padding-bottom:90px (2026-08-31, reporte real del PO con captura: el
+         ultimo mensaje quedaba pegado/tapado por la barra de texto flotante
+         de abajo). El alto de la caja no cambia (top/bottom fijos arriba) --
+         este relleno solo empuja el CONTENIDO hacia arriba por dentro, asi
+         el ultimo renglon de texto siempre termina bien lejos del borde
+         inferior real de la caja. */
+      padding:6px 4px 90px 4px;}
+    .ew-chat-centro.ew-mostrar{display:flex; flex-direction:column; gap:12px;}
     /* Fondo transparente / borde visible (2026-08-30, reporte en vivo del PO:
        "el borde... es casi invisible necesito sea transparente pero los
        bordes visibles") -- antes el relleno oscuro (rgba(11,15,24,.55)) era
@@ -750,9 +787,18 @@
     .pz.ok .pz-n .punto{background:#3ecb7f;box-shadow:0 0 8px #3ecb7f}
     .pz.mal .pz-n .punto{background:#e05252;box-shadow:0 0 8px #e05252}
     .ew-vacio{font-size:12px;color:rgba(255,255,255,.4);padding:6px 2px;}
-    .ew-linea{font-size:12.5px;line-height:1.5;color:rgba(255,255,255,.85);}
+    /* Burbuja por mensaje (2026-08-31, orden directa del PO -- ver la nota
+       de arriba en .ew-chat-centro). Cada .ew-linea es su propia tarjeta
+       -- vidrio chico (blur+fondo suave) en vez de un panel grande, tenido
+       con el MISMO color que ya usa su etiqueta (.ew-etiqueta-yo/-elixis),
+       no uno inventado aparte. Letra subida de 12.5px a 15.5px y
+       line-height mas suelto -- "protagonismo real", pedido explicito. */
+    .ew-linea{font-size:15.5px;line-height:1.6;color:rgba(255,255,255,.94);
+      padding:12px 15px;border-radius:16px;box-sizing:border-box;
+      background:rgba(197,160,89,.10);border:1px solid rgba(197,160,89,.22);
+      backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
     .ew-linea b{color:var(--gold);}
-    .ew-linea.yo{color:rgba(255,255,255,.55);}
+    .ew-linea.yo{background:rgba(63,185,230,.10);border-color:rgba(63,185,230,.24);}
     /* Etiquetas de participante (2026-08-31, orden del PO: "etiquetas de
        colores para cada uno de los participantes... opacidad 50%-100%").
        Colores NO inventados: cyan es el mismo rgba(63,185,230,a) que
@@ -1260,7 +1306,17 @@
             <canvas class="avatar-fx" id="ewAvatarFX"></canvas>
             <div class="ew-carrusel-pista">
               <div class="ew-pantalla ew-col ew-cerrado" id="ewPanelIzq">
-                <button type="button" class="ew-acordeon-toggle" id="ewToggleIzq" aria-label="Abrir Modo Enfoque">›</button>
+                <button type="button" class="ew-acordeon-toggle" id="ewToggleIzq" aria-label="Abrir Hilos y Modo Enfoque">›</button>
+                <!-- Hilos guardados (mudado aqui 2026-08-31, orden del PO --
+                     "estilo ChatGPT": el indexador de hilos vive en el
+                     lateral IZQUIERDO, no en el derecho. Mismos ids, mismo
+                     JS (ewCargarHilosLista/ewHiloNuevo/etc, ver mas abajo en
+                     el script) -- solo cambio el padre en el DOM, igual que
+                     la mudanza de #ewTranscripcion al centro el mismo dia.
+                     "+ Nuevo" queda arriba de todo, antes que Modo Enfoque,
+                     tal como se pidio. -->
+                <button type="button" id="ewHiloNuevo" title="Archivar este hilo y empezar uno nuevo en el modo activo">+ Nuevo Hilo</button>
+                <div class="ew-col-body" id="ewHilosLista" style="flex:0 0 auto;max-height:220px;"><div class="ew-vacio">Sin hilos guardados todavía.</div></div>
                 <h4>Modo Enfoque</h4>
                 <div class="ew-enfoque" id="ewEnfoque">
                   <button type="button" class="ew-enfoque-item" data-modo="correo"><span class="ew-enfoque-icono">✉️</span><span class="l">Correo</span></button>
@@ -1319,7 +1375,7 @@
                   <button type="button" class="ew-orbe" id="ewOrbePersona" title="Avatar (pendiente)" aria-label="Avatar" disabled>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
                   </button>
-                  <button type="button" class="ew-orbe" id="ewOrbeIzq" title="Modo Enfoque" aria-label="Abrir Modo Enfoque">
+                  <button type="button" class="ew-orbe" id="ewOrbeIzq" title="Hilos y Modo Enfoque" aria-label="Abrir Hilos y Modo Enfoque">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><path d="M12 12 19 5"/></svg>
                   </button>
                   <button type="button" class="ew-orbe ew-orbe-mic" id="ewMicBtn" title="Activar voz" aria-label="Activar voz">
@@ -1327,7 +1383,7 @@
                     <img class="ew-orbe-mic-fenix" src="./assets/branding/fenix-emblem-160.png" alt="">
                     <i class="ew-orbe-mic-aro"></i>
                   </button>
-                  <button type="button" class="ew-orbe" id="ewOrbeDer" title="Hilos y Transcripción" aria-label="Abrir Hilos y Transcripción">
+                  <button type="button" class="ew-orbe" id="ewOrbeDer" title="Herramientas" aria-label="Abrir Herramientas">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
                   </button>
                   <!-- Sin destino todavia: equivalente visual al icono "Mas" del
@@ -1338,22 +1394,18 @@
                 </div>
               </div>
               <div class="ew-pantalla ew-col ew-cerrado" id="ewPanelDer">
-                <button type="button" class="ew-acordeon-toggle" id="ewToggleDer" aria-label="Abrir Hilos y Transcripción">‹</button>
-                <h4>Hilos &amp; Transcripción <span id="ewModoIcono" title="Modo activo" style="margin-left:4px;">🌐</span></h4>
+                <button type="button" class="ew-acordeon-toggle" id="ewToggleDer" aria-label="Abrir Herramientas">‹</button>
+                <!-- Renombrado 2026-08-31: este panel ya NO aloja Hilos
+                     (mudados al lateral izquierdo) ni Transcripcion (mudada
+                     al centro, mismo dia) -- "Hilos & Transcripcion" habria
+                     quedado describiendo dos cosas que ya no estan aqui. Lo
+                     que sigue viviendo real: el log de herramientas
+                     (#ewProceso), el panel especializado por modo (Correo/
+                     Legal/Eventos/Distribucion) y Live Setlist (Cazador). -->
+                <h4>Herramientas <span id="ewModoIcono" title="Modo activo" style="margin-left:4px;">🌐</span></h4>
                 <div id="ewHud"></div>
                 <button type="button" id="ewHudDemo" style="font-size:9px;opacity:.5;background:none;border:1px solid var(--line);border-radius:6px;color:var(--text);padding:2px 6px;align-self:center;cursor:pointer;">demo transmisión</button>
                 <div class="ew-col-body" id="ewProceso"><div class="ew-vacio">Sin actividad todavía.</div></div>
-                <!-- Hilos guardados (2026-08-31, autorizado por el PO): un hilo
-                     por Modo de Enfoque en elixis_session_threads, estilo
-                     ChatGPT/Workspace. Click en un hilo = cambia de modo Y carga
-                     su historial (ver ewCargarHiloDeModo). "+ Nuevo" archiva
-                     (TTL logico, no borra) el hilo del modo ACTIVO nada mas. -->
-                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-                  <h4 style="margin:0;">Hilos guardados</h4>
-                  <button type="button" id="ewHiloNuevo" title="Archivar este hilo y empezar uno nuevo en el modo activo"
-                    style="font-size:9px;opacity:.5;background:none;border:1px solid var(--line);border-radius:6px;color:var(--text);padding:2px 6px;cursor:pointer;">+ Nuevo</button>
-                </div>
-                <div class="ew-col-body" id="ewHilosLista" style="flex:0 0 auto;max-height:150px;"><div class="ew-vacio">Sin hilos guardados todavía.</div></div>
                 <!-- Panel especializado por Modo de Enfoque (2026-08-31,
                      autorizado por el PO -- "paneles modulares especializados
                      por modo de enfoque"). Un solo contenedor que
@@ -2224,10 +2276,36 @@
          llama despues de CADA pintura/limpieza real (onTranscript,
          ewCargarHiloDeModo, "+ Nuevo", borrar hilo), nunca se infiere del
          estado del avatar (texto puro nunca lo toca). */
+      /* AJUSTE 2026-08-31 (reporte real del PO con captura: las burbujas de
+         texto tapaban la cara y el cuerpo del avatar durante una sesion de
+         VOZ). El chat central se pensó para texto puro (donde el avatar ya
+         se queda invisible via .avatar-stage.idle -- nada que tapar); en
+         voz, el avatar SI esta en pantalla y debe ser el protagonista, no
+         un fondo detras de burbujas. Regla real: se muestra solo si hay
+         contenido de verdad Y el avatar esta en 'idle' (invisible) -- en
+         cuanto el avatar deja de estar idle (voz activa), el chat se
+         esconde solo, sin perder nada: elixis_thread_append/onThreadLine
+         siguen escribiendo en la base igual, esto es 100% visual. */
       function ewActualizarChatCentro(){
         var box=el('ewTranscripcion'); if(!box) return;
         var hay = !!box.querySelector('.ew-linea');
-        box.classList.toggle('ew-mostrar', hay);
+        var stage = el('ewAvatarStage');
+        var avatarEnPantalla = stage && !stage.classList.contains('idle');
+        box.classList.toggle('ew-mostrar', hay && !avatarEnPantalla);
+      }
+      /* Autoscroll robusto (2026-08-31, reporte real del PO: el ultimo
+         mensaje no siempre quedaba visible). box.scrollTop=box.scrollHeight
+         de una sola vez puede leer un scrollHeight todavia viejo si el
+         navegador no termino de reflow-ear el DOM que se acaba de tocar
+         (mas notorio cuando .ew-mostrar recien cambia display:none->flex en
+         el mismo tick) -- un requestAnimationFrame de mas fuerza a esperar
+         al siguiente frame pintado, con el layout ya asentado. Un solo
+         lugar para esto, reusado en cada punto que ya haria scrollTop a
+         mano (onTranscript, ewCargarHiloDeModo). */
+      function ewScrollAlFinal(box){
+        if(!box) return;
+        box.scrollTop = box.scrollHeight;
+        requestAnimationFrame(function(){ box.scrollTop = box.scrollHeight; });
       }
       /* Acordeon de escritorio (2026-08-29, directiva del PO): izquierda
          (Modo Enfoque) la abre/cierra el usuario a mano; derecha (Hilos &
@@ -2239,17 +2317,15 @@
       function ewAplicarAcordeon(){
         var pista=document.querySelector('.ew-carrusel-pista');
         if(pista){
-          /* calc((100% - 457px) / 2) = la mitad de lo que le sobra al centro
-             (fijo en 457px, ver CSS -- ajustado 2026-08-31, antes 50%) a cada
-             lado -- topa justo en su borde, nunca lo invade ni lo desplaza
-             (ver CSS, .ew-carrusel-pista ya no es grid). Antes era el
-             literal '25%', que solo daba el resultado correcto cuando el
-             centro media 50%; con el centro en un px fijo hace falta el
-             mismo calc() en los dos lados para seguir topando exacto. 457px,
-             no 420px -- ver la nota completa en el CSS de .ew-pantalla.ew-mid
-             sobre por que 420px exactos encogian el avatar de verdad. */
-          pista.style.setProperty('--ew-izq', ewAcordeon.izq ? 'calc((100% - 457px) / 2)' : '64px');
-          pista.style.setProperty('--ew-der', ewAcordeon.der ? 'calc((100% - 457px) / 2)' : '64px');
+          /* calc((100% - 640px) / 2) = la mitad de lo que le sobra al centro
+             (fijo en 640px, ver CSS -- subido de 457px el 2026-08-31, reporte
+             del PO: mas espacio real para la conversacion) a cada lado --
+             topa justo en su borde, nunca lo invade ni lo desplaza (ver CSS,
+             .ew-carrusel-pista ya no es grid). Este numero SIEMPRE tiene que
+             coincidir con el width fijo de .ew-pantalla.ew-mid en el CSS --
+             si uno cambia, cambia el otro. */
+          pista.style.setProperty('--ew-izq', ewAcordeon.izq ? 'calc((100% - 640px) / 2)' : '64px');
+          pista.style.setProperty('--ew-der', ewAcordeon.der ? 'calc((100% - 640px) / 2)' : '64px');
         }
         var pIzq=el('ewPanelIzq'); if(pIzq) pIzq.classList.toggle('ew-cerrado', !ewAcordeon.izq);
         var pDer=el('ewPanelDer'); if(pDer) pDer.classList.toggle('ew-cerrado', !ewAcordeon.der);
@@ -2295,6 +2371,26 @@
            agrandarlo reduce el zoom y, como el contenido queda anclado al
            FONDO del canvas (ver dy en avatar-heygen-chromakey.js), el
            espacio que se libera aparece arriba de la cabeza, no abajo. */
+        /* ewOpcionesChroma vive FUERA de la IIFE (2026-08-31, reporte real
+           del PO con captura: encuadre distinto necesario para Modo Cazador
+           Musical) -- se guarda la MISMA referencia que ya recibio
+           iniciarChromaKey(), para poder mutarle propiedades despues (ver
+           ewAplicarEncuadrePorModo mas abajo) y que el tick() del propio
+           motor (que la lee de nuevo en cada cuadro) vea el cambio sin
+           reiniciar el canvas ni el video -- mismo criterio que
+           ewAplicarClipsPorModo() con window.MDB_AVATAR_CLIPS. */
+        var ewOpcionesChroma = {
+          minHue:60, maxHue:180, minSaturation:0.10, minValue:0.30,
+          suprimirSpill:1.0, fraccionAncho:0.485, zonaProtegida:undefined,
+          /* recorteInferiorPx (2026-08-30): la "linea blanca debajo del
+             avatar" reportada -- confirmado con pixeles reales que es un
+             borde horneado en el propio djmago-idle-boomerang.mp4 (filas
+             1074-1079 de 1080, blanco puro), no un bug de CSS/canvas. Ver
+             el comentario completo en dibujarCover(), avatar-heygen-
+             chromakey.js. 10px de margen sobre las ~6 filas medidas. */
+          recorteInferiorPx:10,
+          desplazamientoVerticalPct:0
+        };
         (function(){
           var stage=el('ewAvatarStage');
           if(!stage || stage._djChroma || !window.AvatarHeygenChromaKey) return;
@@ -2302,18 +2398,27 @@
           var videoA=stage.querySelector('.avatar-clip[data-capa="a"]');
           var videoB=stage.querySelector('.avatar-clip[data-capa="b"]');
           if(!canvas || !videoA || !videoB) return;
-          stage._djChroma = window.AvatarHeygenChromaKey.iniciarChromaKey([videoA, videoB], canvas, {
-            minHue:60, maxHue:180, minSaturation:0.10, minValue:0.30,
-            suprimirSpill:1.0, fraccionAncho:0.485, zonaProtegida:undefined,
-            /* recorteInferiorPx (2026-08-30): la "linea blanca debajo del
-               avatar" reportada -- confirmado con pixeles reales que es un
-               borde horneado en el propio djmago-idle-boomerang.mp4 (filas
-               1074-1079 de 1080, blanco puro), no un bug de CSS/canvas. Ver
-               el comentario completo en dibujarCover(), avatar-heygen-
-               chromakey.js. 10px de margen sobre las ~6 filas medidas. */
-            recorteInferiorPx:10
-          });
+          stage._djChroma = window.AvatarHeygenChromaKey.iniciarChromaKey([videoA, videoB], canvas, ewOpcionesChroma);
         })();
+        /* Encuadre por modo (2026-08-31): el clip de Cazador Musical
+           (elixis_cazador.mp4) es un archivo NUEVO, con su propio
+           framing/headroom -- no el mismo footage ya calibrado del idle.
+           Reporte real del PO con captura: "el DJ en cabina no queda
+           hundido ni cortado en el borde inferior" -- mas zoom
+           (fraccionAncho mas chico, ~1.3x segun el ticket) y el contenido
+           corrido hacia arriba (desplazamientoVerticalPct negativo, ver
+           dibujarCover() en avatar-heygen-chromakey.js). Fuera de Cazador,
+           vuelve exacto a los valores ya afinados del idle -- no se toca
+           ese encuadre. */
+        function ewAplicarEncuadrePorModo(modo){
+          if(modo === 'cazador'){
+            ewOpcionesChroma.fraccionAncho = 0.485/1.3;
+            ewOpcionesChroma.desplazamientoVerticalPct = -0.12;
+          } else {
+            ewOpcionesChroma.fraccionAncho = 0.485;
+            ewOpcionesChroma.desplazamientoVerticalPct = 0;
+          }
+        }
 
         /* Acumulador del Live Setlist (2026-08-30, para exportar .m3u) -- el
            DOM (#ewSetlist) es solo la vista; esto es el dato real que
@@ -2346,6 +2451,13 @@
           onState: function(estado){
             var stage=el('ewAvatarStage'); if(stage) stage.className='avatar-stage '+estado;
             ewHablando = (estado==='speaking');
+            /* El chat central se esconde/muestra segun si el avatar acaba de
+               entrar o salir de 'idle' -- ver la nota completa dentro de
+               ewActualizarChatCentro(). Tiene que llamarse ACA (no solo al
+               pintar una linea nueva) porque activar la voz cambia el
+               estado del avatar sin que necesariamente llegue texto nuevo
+               en ese mismo instante. */
+            ewActualizarChatCentro();
             /* AJUSTE 2026-08-31 (orden del PO: el panel no debe abrirse solo
                en una charla general por voz, solo saturaba la pantalla con
                subtitulos sin necesidad -- el avatar es el protagonista de
@@ -2438,7 +2550,7 @@
             if(t.who==='yo'){
               var d=document.createElement('div'); d.className='ew-linea yo';
               d.innerHTML='<span class="ew-etiqueta ew-etiqueta-yo">Tú</span>'+ewEsc(t.text);
-              box.appendChild(d); box.scrollTop=box.scrollHeight; ewActualizarChatCentro(); return;
+              box.appendChild(d); ewActualizarChatCentro(); ewScrollAlFinal(box); return;
             }
             if(t.start){
               var f=document.createElement('div'); f.className='ew-linea'; f.innerHTML='<span class="ew-etiqueta ew-etiqueta-elixis">ELIXIS</span>';
@@ -2456,8 +2568,8 @@
                 window.ElixisHudTransmision.cargar(ewHudInst, ewTxt.length / EHD_TOPE_CARGA);
               }
             }
-            box.scrollTop=box.scrollHeight;
             ewActualizarChatCentro();
+            ewScrollAlFinal(box);
           },
           onTool: function(info){
             var box=el('ewProceso'); if(!box) return;
@@ -2812,8 +2924,9 @@
           if(box){
             box.innerHTML='';
             if(!filas.length) box.innerHTML='<div class="ew-vacio">La conversación aparecerá aquí.</div>';
-            else filas.forEach(function(f){ ewPintarLineaHilo(f.rol, f.contenido); box.scrollTop=box.scrollHeight; });
+            else filas.forEach(function(f){ ewPintarLineaHilo(f.rol, f.contenido); });
             ewActualizarChatCentro();
+            ewScrollAlFinal(box);
           }
           if(ewSesion && ewSesion.cargarHistorialTexto){
             ewSesion.cargarHistorialTexto(filas.map(function(f){ return { role: f.rol==='yo' ? 'user' : 'assistant', content: f.contenido }; }));
@@ -3032,6 +3145,7 @@
         ewMostrarBloqueSetlist('general');
         ewRenderPanelEspecializado('general');
         ewAplicarClipsPorModo('general');
+        ewAplicarEncuadrePorModo('general');
         /* ewSeleccionarModo(modo): logica compartida entre el riel de Modo
            Enfoque (arriba, clic directo) y el nuevo selector de Hilos
            guardados (mas abajo) -- un solo lugar que decide que pasa al
@@ -3055,6 +3169,7 @@
           ewMostrarBloqueSetlist(modo);
           ewRenderPanelEspecializado(modo);
           ewAplicarClipsPorModo(modo);
+          ewAplicarEncuadrePorModo(modo);
           var texto = EW_CONTEXTOS[modo] || EW_CONTEXTOS.general;
           /* Identidad djmago SIEMPRE, en los 5 modos (2026-08-30, correccion
              en vivo -- reporte real: en Modo General el avatar hablaba solo

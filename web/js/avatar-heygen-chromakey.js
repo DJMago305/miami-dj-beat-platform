@@ -202,6 +202,24 @@
        "pegado arriba, prioriza no cortar la cara" de toda la vida, sin
        cambios ahi. */
     var dy = Math.max(0, ch-dh);
+    /* desplazamientoVerticalPct (2026-08-31, reporte real del PO con
+       captura -- Modo Cazador Musical: "el DJ en cabina no quede hundido ni
+       cortado en el borde inferior"). Corrimiento OPCIONAL de dy, en
+       fraccion (0-1) del alto del canvas -- negativo sube el contenido
+       (revela mas cuerpo/pecho, sacrifica aire sobre la cabeza), positivo
+       lo baja. Pensado para calibrar un clip nuevo (framing propio, headroom
+       distinto al ya afinado de djmago-idle-boomerang.mp4) SIN tocar el
+       anclaje de siempre de los demas -- sin este campo (undefined), dy
+       queda exactamente igual, cero cambio de comportamiento para HeyGen ni
+       para el idle ya calibrado. Clamp: nunca deja un hueco transparente
+       real -- ni por arriba (tope en el dy por defecto) ni por abajo (piso
+       en ch-dh, el borde inferior de la imagen nunca sube mas arriba que el
+       borde inferior del canvas). */
+    if(opciones && opciones.desplazamientoVerticalPct){
+      var dyPedido = dy + Math.round(ch * opciones.desplazamientoVerticalPct);
+      var piso = ch - dh; // puede ser negativo -- es el limite real, no 0
+      dy = Math.max(piso, Math.min(dy, dyPedido));
+    }
     ctx.clearRect(0, 0, cw, ch);
     ctx.drawImage(video, 0, 0, vw, altoFuente, dx, dy, dw, dh);
     return true;

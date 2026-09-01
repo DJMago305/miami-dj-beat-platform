@@ -89,11 +89,17 @@ const STRICT_TURN_DETECTION = {
 // voz real. La correccion principal del monologo vive en el cliente
 // (elixis-voice-session.js: cooldown + input_audio_buffer.clear antes de
 // reactivar el mic) -- esto es defensa en profundidad, no el fix completo.
+// SUBIDO 0.65->0.75 y 700->800ms (2026-08-31, reporte real del PO con
+// capturas: bucle de saludos repetidos -- 0.65 TODAVIA dejaba pasar rebotes
+// acusticos como turno nuevo). La correccion principal sigue viviendo en el
+// cliente (candado duro por mic.enabled + cooldown escalado por longitud de
+// texto, ver elixis-voice-session.js) -- esto es la misma defensa en
+// profundidad de siempre, un escalon mas arriba.
 const STANDARD_TURN_DETECTION = {
     type: "server_vad",
-    threshold: Number(Deno.env.get("ELIXIS_STANDARD_VAD_THRESHOLD") ?? "0.65"),
+    threshold: Number(Deno.env.get("ELIXIS_STANDARD_VAD_THRESHOLD") ?? "0.75"),
     prefix_padding_ms: Number(Deno.env.get("ELIXIS_STANDARD_PREFIX_PADDING_MS") ?? "300"),
-    silence_duration_ms: Number(Deno.env.get("ELIXIS_STANDARD_SILENCE_MS") ?? "700"),
+    silence_duration_ms: Number(Deno.env.get("ELIXIS_STANDARD_SILENCE_MS") ?? "800"),
     create_response: true,
     interrupt_response: true,  // barge-in: el usuario manda
 };
