@@ -353,7 +353,7 @@ function buildInstructions(
         `Usala para "hoy", "manana", "este sabado", cumpleanos o cualquier fecha relativa. ` +
         `PROHIBIDO decir "no se que fecha es hoy" -- siempre la tienes aqui arriba.`;
     const trato = esOwner
-        ? `Le hablas al dueño de Miami DJ Beat${first ? `, ${first}` : ""}. Puedes llamarle "Capitán".`
+        ? `Le hablas al dueño de Miami DJ Beat${first ? `, ${first}` : ""}. Trato profesional, directo y cercano — dirígete a él por su nombre.`
         : `Le hablas a ${first || "un miembro del equipo"}, del equipo de Miami DJ Beat.`;
     const enfoque = modoEnfoque && MODO_ENFOQUE_TEXTO[modoEnfoque]
         ? `\n\n## MODO DE ENFOQUE ACTIVO\n${MODO_ENFOQUE_TEXTO[modoEnfoque]}`
@@ -1144,7 +1144,10 @@ serve(async (req: Request) => {
                     name: "confirmar_envio_mensaje",
                     description:
                         "Despacha o cancela un SMS que ya quedó EN COLA por enviar_sms. Solo " +
-                        "llámala después de que la persona confirme de viva voz que sí quiere enviarlo.",
+                        "llámala después de que la persona confirme de viva voz que sí quiere enviarlo. " +
+                        "Cuando el resultado diga estado='aceptado', dilo en voz así — el mensaje fue " +
+                        "ACEPTADO por el gateway (Twilio). NUNCA digas 'enviado', 'entregado' o 'le " +
+                        "llegó': la entrega real la decide la operadora del destinatario y esto no la confirma.",
                     parameters: {
                         type: "object",
                         properties: {
