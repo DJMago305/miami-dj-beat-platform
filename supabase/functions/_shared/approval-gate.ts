@@ -16,6 +16,8 @@ const REGISTERED_READ_TOOLS = new Set([
     // consultar_efemerides (2026-09-01): solo lee birth_date/wedding_anniversary
     // ya guardados en client_profiles/dj_profiles. No escribe nada.
     "consultar_efemerides",
+    // consultar_historial_bitacora (2026-09-01): solo lee company_incident_log.
+    "consultar_historial_bitacora",
 ]);
 const REGISTERED_WRITE_TOOLS = new Set([
     "crear_nota_lead",
@@ -31,6 +33,11 @@ const REGISTERED_WRITE_TOOLS = new Set([
     // ese ticket. RLS de residency_schedule ya exige is_staff(); el RPC
     // (SECURITY DEFINER, solo service_role) agrega la validacion real.
     "gestionar_residency_schedule",
+    // registrar_incidente_bitacora (2026-09-01): bitacora historica de
+    // incidentes. RLS de company_incident_log ya restringe DJs a sus propios
+    // incidentes; el RPC (SECURITY DEFINER, solo service_role) valida
+    // categoria/gravedad/campos requeridos antes de insertar.
+    "registrar_incidente_bitacora",
     // cambiar_precio_catalogo (2026-08-31): el porton solo decide si ELIXIS
     // puede llamarla sin aprobacion adicional -- el candado real (SOLO
     // owner/admin) esta en runCatalogPriceTool en elixis-chat, que revisa

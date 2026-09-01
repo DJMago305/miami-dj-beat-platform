@@ -159,7 +159,7 @@ Tres identidades encadenadas, no las confundas: (1) CUENTA = perfil en Supabase,
 Dos canales de cobro: CANAL 2 "Artista Pro" (incluido en la membresía) está VIVO y funciona. CANAL 1 "renta independiente" a 19,99 USD/mes está INCOMPLETO hoy: el cobro se puede crear pero la emisión automática de la clave aún lo rechaza. NUNCA prometas la renta independiente como disponible; si alguien la pide, di que está en cierre y ofrécele la vía de membresía o que el Capitán lo habilite manualmente.
 Si un cliente deja de pagar, el acceso se pausa primero y se revoca después, con un margen sin conexión: a un DJ en medio de un evento no se le corta la herramienta esa misma noche.
 
-### TUS HERRAMIENTAS — QUINCE, NI UNA MAS (inventario cerrado)
+### TUS HERRAMIENTAS — DIECISIETE, NI UNA MAS (inventario cerrado)
 Estas son TODAS las herramientas que tienes. No hay ninguna otra:
 1. consultar_finanzas — leer cifras del negocio.
 2. consultar_agenda_artista — ver la agenda personal de un artista.
@@ -193,6 +193,13 @@ Estas son TODAS las herramientas que tienes. No hay ninguna otra:
    dilo asi -- no inventes un nombre para "completar" la respuesta.
 15. consultar_musica — catalogo REAL de Apple Music: lo mas escuchado ahora y
    busqueda de temas y artistas.
+16. registrar_incidente_bitacora — deja constancia de un incidente real
+   (tecnico, logistica, cliente, venue, cancelacion de agenda, general) en
+   la bitacora historica. No es para agendar futuro, es para dejar registro
+   de algo que YA paso.
+17. consultar_historial_bitacora — busca en esa bitacora por año, venue,
+   categoria o DJ para responder preguntas retrospectivas. Sin filtros,
+   trae lo mas reciente. Si no hay nada, dilo asi.
 
 ### DE MUSICA SI SABES, Y MUCHO
 Eres productor y DJ, no un administrativo. Sabes leer una pista y decir que
@@ -1006,6 +1013,86 @@ serve(async (req: Request) => {
         },
     };
 
+    const INCIDENT_WRITE_TOOL = {
+        name: "registrar_incidente_bitacora",
+        description:
+            "Registra un incidente en la bitacora historica de la operacion (company_incident_log): " +
+            "problemas tecnicos, de logistica, con un cliente, con un venue, cancelaciones de agenda, o " +
+            "notas generales. Usala cuando te pidan dejar constancia de algo que paso -- no para agendar " +
+            "eventos futuros, para eso estan las herramientas de agenda.",
+        input_schema: {
+            type: "object",
+            properties: {
+                categoria: {
+                    type: "string",
+                    enum: ["tecnico", "logistica", "cliente", "venue", "agenda_cancelacion", "general"],
+                    description: "Tipo de incidente.",
+                },
+                titulo: {
+                    type: "string",
+                    description: "Titulo corto, 1 a 200 caracteres.",
+                },
+                descripcion: {
+                    type: "string",
+                    description: "Que paso, con detalle. 1 a 4000 caracteres.",
+                },
+                venue: {
+                    type: "string",
+                    description: "Venue involucrado, si aplica.",
+                },
+                dj: {
+                    type: "string",
+                    description: "DJ afectado, si aplica.",
+                },
+                gravedad: {
+                    type: "string",
+                    enum: ["baja", "media", "alta", "critica"],
+                    description: "Que tan grave fue. Default 'media' si no se especifica.",
+                },
+                solucion: {
+                    type: "string",
+                    description: "Como se resolvio, si ya se resolvio.",
+                },
+                fecha_incidente: {
+                    type: "string",
+                    description: "Fecha real del incidente, YYYY-MM-DD. Si no se especifica, usa hoy (ver FECHA Y HORA ACTUAL arriba).",
+                },
+            },
+            required: ["categoria", "titulo", "descripcion"],
+        },
+    };
+
+    const INCIDENT_READ_TOOL = {
+        name: "consultar_historial_bitacora",
+        description:
+            "Consulta el historico de incidentes y notas pasadas de company_incident_log para responder " +
+            "preguntas retrospectivas (\"que paso con tal venue el año pasado\", \"cuantos incidentes tecnicos " +
+            "tuvimos\"). Todos los filtros son opcionales -- sin ninguno, trae los mas recientes. Si no aparece " +
+            "nada, dilo asi, no inventes un incidente que no esta en el resultado.",
+        input_schema: {
+            type: "object",
+            properties: {
+                anio: {
+                    type: "number",
+                    description: "Filtra por año del incidente (fecha_incidente).",
+                },
+                venue: {
+                    type: "string",
+                    description: "Filtra por venue (coincidencia parcial).",
+                },
+                categoria: {
+                    type: "string",
+                    enum: ["tecnico", "logistica", "cliente", "venue", "agenda_cancelacion", "general"],
+                    description: "Filtra por categoria.",
+                },
+                dj_nombre: {
+                    type: "string",
+                    description: "Filtra por DJ afectado (coincidencia parcial).",
+                },
+            },
+        },
+    };
+
     const CATALOG_READ_TOOL = {
         name: "consultar_catalogo_precios",
         description:
@@ -1302,6 +1389,7 @@ serve(async (req: Request) => {
             || toolName === "buscar_cliente"
             || toolName === "consultar_musica"
             || toolName === "consultar_efemerides"
+            || toolName === "consultar_historial_bitacora"
         ) {
             return { tool: toolName, policy: "none", mode: "read" };
         }
@@ -1310,6 +1398,7 @@ serve(async (req: Request) => {
             || toolName === "registrar_evento_agenda"
             || toolName === "modificar_agenda_evento"
             || toolName === "gestionar_residency_schedule"
+            || toolName === "registrar_incidente_bitacora"
             || toolName === "cambiar_precio_catalogo"
             || toolName === "generar_cotizacion_evento"
             /* enviar_sms (2026-08-31: envio autonomo, orden directa del PO).
@@ -1623,6 +1712,79 @@ serve(async (req: Request) => {
         }
 
         return JSON.stringify({ ok: true, mes: MESES_ES[mes], resultado });
+    }
+
+    const CATEGORIAS_INCIDENTE = new Set(["tecnico", "logistica", "cliente", "venue", "agenda_cancelacion", "general"]);
+    const GRAVEDADES_INCIDENTE = new Set(["baja", "media", "alta", "critica"]);
+
+    async function runIncidentWriteTool(input: Record<string, unknown>): Promise<string> {
+        const categoria = String(input?.categoria ?? "").trim().toLowerCase();
+        const titulo = String(input?.titulo ?? "").trim();
+        const descripcion = String(input?.descripcion ?? "").trim();
+        const venue = String(input?.venue ?? "").trim();
+        const dj = String(input?.dj ?? "").trim();
+        const gravedad = String(input?.gravedad ?? "media").trim().toLowerCase();
+        const solucion = String(input?.solucion ?? "").trim();
+        const fechaIncidente = parseEventDate(input?.fecha_incidente);
+        const target = titulo || "invalid";
+
+        if (!CATEGORIAS_INCIDENTE.has(categoria)) {
+            return JSON.stringify({ error: "categoria_invalida" });
+        }
+        if (!GRAVEDADES_INCIDENTE.has(gravedad)) {
+            return JSON.stringify({ error: "gravedad_invalida" });
+        }
+        if (titulo.length < 1 || titulo.length > 200) {
+            return JSON.stringify({ error: "titulo_invalido" });
+        }
+        if (descripcion.length < 1 || descripcion.length > 4000) {
+            return JSON.stringify({ error: "descripcion_invalida" });
+        }
+        if (input?.fecha_incidente != null && !fechaIncidente) {
+            return JSON.stringify({ error: "fecha_invalida", detalle: "Formato esperado YYYY-MM-DD." });
+        }
+
+        const { data: incidentId, error } = await ADMIN.rpc("company_incident_log_registrar", {
+            p_categoria: categoria,
+            p_titulo: titulo,
+            p_descripcion: descripcion,
+            p_venue: venue || null,
+            p_dj: dj || null,
+            p_gravedad: gravedad,
+            p_solucion: solucion || null,
+            p_reportado_por: gate.userId,
+            p_fecha_incidente: fechaIncidente,
+        });
+        if (error || !incidentId) {
+            const detail = error?.message ?? "rpc";
+            await recordActionLog("registrar_incidente_bitacora", target, `error:${detail}`.slice(0, 2000));
+            return JSON.stringify({ error: "incidente_no_registrado" });
+        }
+        await recordActionLog("registrar_incidente_bitacora", target, `ok:${incidentId}`);
+        return JSON.stringify({ ok: true, incident_id: incidentId, categoria, titulo });
+    }
+
+    async function runIncidentReadTool(input: Record<string, unknown>): Promise<string> {
+        const anio = Number(input?.anio);
+        const venue = String(input?.venue ?? "").trim();
+        const categoria = String(input?.categoria ?? "").trim().toLowerCase();
+        const djNombre = String(input?.dj_nombre ?? "").trim();
+
+        let q = ADMIN
+            .from("company_incident_log")
+            .select("fecha_incidente,categoria,venue_nombre,dj_afectado,titulo,descripcion_detallada,solucion_aplicada,nivel_gravedad")
+            .order("fecha_incidente", { ascending: false })
+            .limit(40);
+        if (Number.isFinite(anio) && anio > 1999 && anio < 2100) {
+            q = q.gte("fecha_incidente", `${anio}-01-01`).lte("fecha_incidente", `${anio}-12-31`);
+        }
+        if (venue) q = q.ilike("venue_nombre", `%${venue}%`);
+        if (CATEGORIAS_INCIDENTE.has(categoria)) q = q.eq("categoria", categoria);
+        if (djNombre) q = q.ilike("dj_afectado", `%${djNombre}%`);
+
+        const { data, error } = await q;
+        if (error) return JSON.stringify({ error: "bitacora_no_disponible" });
+        return JSON.stringify({ ok: true, incidentes: Array.isArray(data) ? data : [] });
     }
 
     async function loadCatalogOverlay(): Promise<Record<string, number>> {
@@ -2048,7 +2210,7 @@ serve(async (req: Request) => {
                     // hasta este cambio de modelo. Sin este parametro, el muestreo queda en
                     // el default del modelo -- no hace falta reemplazarlo por nada.
                     system: systemContent,
-                    tools: [FINANCIAL_TOOL, LEAD_NOTE_TOOL, AGENDA_READ_TOOL, AGENDA_WRITE_TOOL, AGENDA_EVENTOS_TOOL, RESIDENCY_TOOL, EFEMERIDES_TOOL, CATALOG_READ_TOOL, CATALOG_PRICE_TOOL, QUOTE_WRITE_TOOL, CLIENT_SEARCH_TOOL, SMS_QUEUE_TOOL, EMAIL_QUEUE_TOOL, CONFIRM_SEND_TOOL, MUSIC_TOOL],
+                    tools: [FINANCIAL_TOOL, LEAD_NOTE_TOOL, AGENDA_READ_TOOL, AGENDA_WRITE_TOOL, AGENDA_EVENTOS_TOOL, RESIDENCY_TOOL, EFEMERIDES_TOOL, INCIDENT_WRITE_TOOL, INCIDENT_READ_TOOL, CATALOG_READ_TOOL, CATALOG_PRICE_TOOL, QUOTE_WRITE_TOOL, CLIENT_SEARCH_TOOL, SMS_QUEUE_TOOL, EMAIL_QUEUE_TOOL, CONFIRM_SEND_TOOL, MUSIC_TOOL],
                     messages: convo,
                 }),
             });
@@ -2151,6 +2313,21 @@ serve(async (req: Request) => {
                     await recordAiKpi(failed ? "tool_error" : "tool_ok");
                 } else if (toolName === "consultar_efemerides") {
                     out = await runEfemeridesTool((b.input as Record<string, unknown>) ?? {});
+                    let failed = true;
+                    try { failed = (JSON.parse(out) as { ok?: unknown })?.ok !== true; } catch { failed = true; }
+                    await recordAiKpi(failed ? "tool_error" : "tool_ok");
+                } else if (toolName === "registrar_incidente_bitacora") {
+                    out = await runIncidentWriteTool((b.input as Record<string, unknown>) ?? {});
+                    let failed = true;
+                    try {
+                        const parsed = JSON.parse(out) as { error?: unknown; ok?: unknown };
+                        failed = parsed == null || parsed.error != null || parsed.ok !== true;
+                    } catch {
+                        failed = true;
+                    }
+                    await recordAiKpi(failed ? "tool_error" : "tool_ok");
+                } else if (toolName === "consultar_historial_bitacora") {
+                    out = await runIncidentReadTool((b.input as Record<string, unknown>) ?? {});
                     let failed = true;
                     try { failed = (JSON.parse(out) as { ok?: unknown })?.ok !== true; } catch { failed = true; }
                     await recordAiKpi(failed ? "tool_error" : "tool_ok");
