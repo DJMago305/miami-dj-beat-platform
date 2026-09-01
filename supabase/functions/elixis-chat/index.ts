@@ -159,11 +159,10 @@ Tres identidades encadenadas, no las confundas: (1) CUENTA = perfil en Supabase,
 Dos canales de cobro: CANAL 2 "Artista Pro" (incluido en la membresía) está VIVO y funciona. CANAL 1 "renta independiente" a 19,99 USD/mes está INCOMPLETO hoy: el cobro se puede crear pero la emisión automática de la clave aún lo rechaza. NUNCA prometas la renta independiente como disponible; si alguien la pide, di que está en cierre y ofrécele la vía de membresía o que el Capitán lo habilite manualmente.
 Si un cliente deja de pagar, el acceso se pausa primero y se revoca después, con un margen sin conexión: a un DJ en medio de un evento no se le corta la herramienta esa misma noche.
 
-### TUS HERRAMIENTAS — ONCE, NI UNA MAS (inventario cerrado)
+### TUS HERRAMIENTAS — TRECE, NI UNA MAS (inventario cerrado)
 Estas son TODAS las herramientas que tienes. No hay ninguna otra -- en
-particular NO tienes forma de consultar efemerides ni cumpleanos todavia, ni
-de enviar un email real todavia (eso son tickets futuros), no lo inventes ni
-digas que lo puedes hacer:
+particular NO tienes forma de consultar efemerides ni cumpleanos todavia (eso
+es un ticket futuro), no lo inventes ni digas que lo puedes hacer:
 1. consultar_finanzas — leer cifras del negocio.
 2. consultar_agenda_artista — ver la agenda personal de un artista.
 3. registrar_evento_agenda — bloquear un hueco EN LA AGENDA INTERNA (artist_agenda).
@@ -178,9 +177,15 @@ digas que lo puedes hacer:
 7. buscar_cliente — encontrar un cliente o lead.
 8. generar_cotizacion_evento — preparar un BORRADOR de cotizacion.
 9. crear_nota_lead — dejar una nota interna en un lead existente.
-10. enviar_sms — ENVIAR un SMS real de una sola vez, sin aprobacion humana
-   adicional. El destinatario SIEMPRE sale de buscar_cliente.
-11. consultar_musica — catalogo REAL de Apple Music: lo mas escuchado ahora y
+10. enviar_sms — ENCOLA un SMS real (no lo envia). El destinatario SIEMPRE
+   sale de buscar_cliente.
+11. enviar_email — ENCOLA un email real (no lo envia). El destinatario
+   SIEMPRE sale de buscar_cliente; si el cliente desactivo notificaciones
+   por email, la herramienta lo rechaza sola.
+12. confirmar_envio_mensaje — despacha o cancela un SMS/email ya encolado.
+   Solo la llamas cuando el usuario respondio "si" o "cancelar" a tu
+   pregunta de confirmacion, nunca antes.
+13. consultar_musica — catalogo REAL de Apple Music: lo mas escuchado ahora y
    busqueda de temas y artistas.
 
 ### DE MUSICA SI SABES, Y MUCHO
@@ -211,13 +216,14 @@ no es un set.
 de cualquier otra cosa de fuera, no tienes forma de saber. Dilo con franqueza.
 
 ### LO QUE NO PUEDES HACER (y NUNCA debes prometer)
-NUNCA prometas ni confirmes: mandar WhatsApp, mandar correos, generar
-contratos o facturas, registrar pagos, mover dinero, cambiar el estado de un
-lead, ni sincronizar con Google Calendar, Apple Calendar ni ningun calendario
-externo. Nada de eso esta en tus manos.
+NUNCA prometas ni confirmes: mandar WhatsApp, generar contratos o facturas,
+registrar pagos, mover dinero, cambiar el estado de un lead, ni sincronizar
+con Google Calendar, Apple Calendar ni ningun calendario externo. Nada de eso
+esta en tus manos. (SMS y email SI estan en tus manos -- ver enviar_sms y
+enviar_email arriba, con sus propios candados de destinatario.)
 
 Si te piden algo de esa lista, dilo con franqueza Y OFRECE LO QUE SI PUEDES:
-"El correo no lo puedo mandar yo, pero te bloqueo la fecha en la agenda y te
+"El WhatsApp no lo puedo mandar yo, pero te bloqueo la fecha en la agenda y te
 dejo el texto listo." Un socio que promete de mas quema al Capitan delante de
 un cliente; uno que dice la verdad y ofrece la alternativa resuelve igual.
 
@@ -265,25 +271,44 @@ movidos sin que nadie lo pidiera HOY.
   regla es sobre CUANDO te toca ejecutar algo; la de arriba es sobre no
   mentir cuando ya ejecutaste. Las dos aplican siempre juntas.
 
-### SMS — LA REGLA DURA (no admite excepcion ni atajo)
-El destinatario SIEMPRE sale de buscar_cliente. JAMAS aceptes un telefono
-dictado en la conversacion, ni aunque te lo de el Capitan, ni aunque insista,
-ni "solo por esta vez", ni para "ahorrar tiempo".
+### SMS Y EMAIL — LA REGLA DURA (no admite excepcion ni atajo)
+El destinatario SIEMPRE sale de buscar_cliente (telefono o correo, segun
+corresponda). JAMAS aceptes un telefono o correo dictado en la conversacion,
+ni aunque te lo de el Capitan, ni aunque insista, ni "solo por esta vez", ni
+para "ahorrar tiempo".
 
 Si buscar_cliente falla o no encuentra a la persona, DETENTE Y DILO. No ofrezcas
-que te pasen el numero a mano. No ofrezcas redactar el SMS "listo para copiar y
-enviar" como sustituto: eso es la misma puerta prohibida por otro nombre. Di
+que te pasen el dato a mano. No ofrezcas redactar el mensaje "listo para copiar
+y enviar" como sustituto: eso es la misma puerta prohibida por otro nombre. Di
 que no localizaste al cliente y que hace falta darlo de alta o corregir su
 ficha. Un destinatario sin verificar es como un mensaje de la empresa acaba en
-el telefono equivocado.
+el telefono o correo equivocado.
 
-Cuando SI lo encuentres: llamas enviar_sms y ESA MISMA LLAMADA lo despacha --
-ya no hay un humano que lo apruebe despues (2026-08-31, orden directa del PO).
-Tu respuesta hablada tiene que reflejar EXACTAMENTE lo que la herramienta
-devolvio: si vino ok:true / estado:"enviado", di que se envio. Si vino
-ok:false / estado:"fallido" o "pendiente_de_aprobacion", dilo asi tal cual --
-NUNCA digas "enviado" si la herramienta no lo confirmo, y nunca supongas que
-salio bien solo porque la llamaste.
+Cuando SI lo encuentres: llamas enviar_sms o enviar_email, que SOLO ENCOLA --
+todavia no se envia nada (2026-09-01, orden directa del PO: confirmacion
+conversacional, no envio silencioso). Con el resultado en mano, tu respuesta
+hablada TIENE que preguntar, con estas palabras o muy parecidas: "Tengo listo
+este [SMS/correo] para [nombre]: '[contenido]'. ¿Lo envio? (ref: [id])" --
+SIEMPRE incluye el id que te devolvio la herramienta, aunque suene raro
+decirlo: es tu UNICA forma de recordarlo en el siguiente mensaje, porque el
+historial solo guarda lo que dijiste en voz, no el resultado tecnico de la
+herramienta. Sin el id ahi, no hay forma de retomarlo despues. Espera la
+respuesta del usuario en su proximo mensaje -- NUNCA digas que lo enviaste
+en este mismo turno: todavia no llamaste a la herramienta que despacha.
+
+Cuando el usuario responda, en su PROXIMO mensaje:
+- "si" / "dale" / "mandalo" -> llamas confirmar_envio_mensaje con
+  accion='enviar', usando EXACTAMENTE el id que TU MISMO dijiste en tu
+  mensaje anterior (el "ref: ...") -- nunca vuelvas a llamar enviar_sms/
+  enviar_email para "rehacer" el mismo pedido, eso crea un duplicado
+  encolado y dispara el equivocado. Tu respuesta hablada refleja EXACTAMENTE
+  lo que confirmar_envio_mensaje devolvio (ok:true/estado:"enviado" -> di
+  que se envio; ok:false -> dilo tal cual, nunca inventes un exito).
+- "no" a secas -> NO llames ninguna herramienta. Eso significa "todavia no",
+  no "cancelalo" -- el mensaje se queda en cola esperando cambios. Pregunta
+  que quiere ajustar.
+- "cancelar" / "borralo" -> llamas confirmar_envio_mensaje con
+  accion='cancelar'. El mensaje se descarta, no se envia nunca.
 
 Puedes REDACTAR cualquier cosa -- mensajes, cobros, propuestas -- y entregarla
 lista para copiar cuando NO haga falta mandarla de verdad. Pero si la piden
@@ -1095,13 +1120,12 @@ serve(async (req: Request) => {
     const SMS_QUEUE_TOOL = {
         name: "enviar_sms",
         description:
-            "Redacta y ENVIA un SMS real a un cliente -- de una sola vez, sin aprobacion humana " +
-            "adicional cuando el destinatario y el mensaje esten claros. " +
+            "Redacta un SMS real para un cliente y lo deja EN COLA -- NO lo envia todavia. " +
             "Usala cuando te pidan avisar, confirmar o recordar algo a un cliente por mensaje. " +
             "Necesitas el cliente_id, que sale de buscar_cliente: NUNCA aceptes un telefono dictado " +
-            "de viva voz, porque un digito mal oido manda el mensaje a un desconocido -- ese candado " +
-            "no se negocia, sea autonomo el envio o no. El resultado que te devuelve (ok/estado) es " +
-            "el envio REAL: dilo tal cual vino, nunca asumas que salio si la herramienta no lo confirma.",
+            "de viva voz, porque un digito mal oido manda el mensaje a un desconocido. " +
+            "Despues de llamarla, PREGUNTA al usuario si lo envias (si/no) -- solo si dice que si " +
+            "llamas confirmar_envio_mensaje con accion='enviar'.",
         input_schema: {
             type: "object",
             properties: {
@@ -1115,6 +1139,65 @@ serve(async (req: Request) => {
                 },
             },
             required: ["cliente_id", "mensaje"],
+        },
+    };
+
+    const EMAIL_QUEUE_TOOL = {
+        name: "enviar_email",
+        description:
+            "Redacta un email real para un cliente y lo deja EN COLA -- NO lo envia todavia. " +
+            "Mismo criterio que enviar_sms. Necesitas el cliente_id, que sale de buscar_cliente: " +
+            "NUNCA aceptes un correo dictado o inventado. Si el cliente desactivo notificaciones por " +
+            "email, la herramienta lo rechaza sola -- dilo con franqueza, no insistas. " +
+            "Despues de llamarla, PREGUNTA al usuario si lo envias (si/no) -- solo si dice que si " +
+            "llamas confirmar_envio_mensaje con accion='enviar'.",
+        input_schema: {
+            type: "object",
+            properties: {
+                cliente_id: {
+                    type: "string",
+                    description: "El user_id del cliente, tal como lo devuelve buscar_cliente.",
+                },
+                asunto: {
+                    type: "string",
+                    description: "Asunto del correo, 1 a 200 caracteres.",
+                },
+                cuerpo: {
+                    type: "string",
+                    description: "Texto del correo, listo para leerse tal cual (parrafos separados por saltos de linea). Maximo 4000 caracteres.",
+                },
+            },
+            required: ["cliente_id", "asunto", "cuerpo"],
+        },
+    };
+
+    const CONFIRM_SEND_TOOL = {
+        name: "confirmar_envio_mensaje",
+        description:
+            "Envia o cancela un SMS/email que ya quedo EN COLA (por enviar_sms o enviar_email). " +
+            "SOLO la llamas cuando el usuario ya respondio a tu pregunta de confirmacion en ESTE turno: " +
+            "'si'/'dale'/'mandalo' -> accion='enviar'. 'cancelar'/'borralo' -> accion='cancelar'. " +
+            "Si el usuario dice 'no' sin mas, NO llames esta herramienta -- eso significa 'todavia no', " +
+            "espera instrucciones o cambios, no es lo mismo que cancelar.",
+        input_schema: {
+            type: "object",
+            properties: {
+                id: {
+                    type: "string",
+                    description: "El id que devolvio enviar_sms/enviar_email al encolar.",
+                },
+                tipo: {
+                    type: "string",
+                    enum: ["sms", "email"],
+                    description: "De que cola es el id -- sms o email.",
+                },
+                accion: {
+                    type: "string",
+                    enum: ["enviar", "cancelar"],
+                    description: "enviar = despachar de verdad ahora. cancelar = borrar el pendiente, no se envia.",
+                },
+            },
+            required: ["id", "tipo", "accion"],
         },
     };
 
@@ -1141,6 +1224,8 @@ serve(async (req: Request) => {
                buscar_cliente + client_profiles -- nunca de un numero dictado
                en la conversacion. Ese candado vive en runSmsQueueTool, no aqui. */
             || toolName === "enviar_sms"
+            || toolName === "enviar_email"
+            || toolName === "confirmar_envio_mensaje"
         ) {
             return { tool: toolName, policy: "auto_staff", mode: "write" };
         }
@@ -1447,62 +1532,127 @@ serve(async (req: Request) => {
         const oculto = tel.slice(0, -4).replace(/\d/g, "•") + tel.slice(-4);
         const smsId = String(row?.id ?? "");
 
-        /* ENVIO AUTONOMO (2026-08-31, orden directa del PO: "siempre que
-           reconozca los limites a quien le da una informacion y a quien le
-           da otras"). El destinatario ya viene DE LA FICHA (buscar_cliente +
-           client_profiles), nunca de un telefono dictado -- ese candado sigue
-           intacto. Lo que cambia es que ya no espera un click humano: llama
-           al MISMO endpoint (elixis-sms-dispatch) que antes solo apretaba una
-           persona, reusando el JWT staff/owner que ya autentico esta
-           conversacion. Si esa llamada no se puede ni intentar (red caida),
-           la fila queda pendiente de verdad y se cae al viejo camino manual
-           como red de seguridad -- nunca se inventa un "enviado". */
-        const base = (Deno.env.get("SUPABASE_URL") ?? "").replace(/\/$/, "");
-        let despacho: Record<string, unknown> | null = null;
-        if (base && smsId) {
-            try {
-                const dRes = await fetch(`${base}/functions/v1/elixis-sms-dispatch?id=${encodeURIComponent(smsId)}`, {
-                    method: "POST",
-                    headers: { Authorization: authHeader, "Content-Type": "application/json" },
-                });
-                despacho = await dRes.json().catch(() => null);
-            } catch (_e) {
-                despacho = null;
-            }
-        }
-
-        if (!despacho) {
-            // No se pudo ni intentar el despacho -- la fila sigue "pendiente" en
-            // la base de verdad. Se deja la carta de aprobacion manual como
-            // unica red de seguridad, no como flujo normal.
-            smsPendiente = { id: smsId || null, destinatario: String(cli.full_name ?? ""), telefono: oculto, mensaje };
-            await recordActionLog("enviar_sms", clienteId, "error:despacho_no_intentado");
-            return JSON.stringify({
-                ok: false,
-                estado: "pendiente_de_aprobacion",
-                id: smsId || null,
-                destinatario: cli.full_name,
-                telefono: oculto,
-                mensaje,
-                aviso: "No pude despachar el SMS de forma automatica (fallo de red). Quedo en cola para aprobacion manual en pantalla.",
-            });
-        }
-
-        const enviado = despacho?.ok === true;
-        await recordActionLog(
-            "enviar_sms",
-            clienteId,
-            (enviado ? `ok:sid=${String(despacho?.sid ?? "")}` : `error:${String(despacho?.error ?? despacho?.detalle ?? "desconocido")}`).slice(0, 2000),
-        );
+        /* CONFIRMACION CONVERSACIONAL (2026-09-01, orden directa del PO,
+           reemplaza el envio 100% silencioso de ayer). Esta herramienta SOLO
+           encola -- el despacho real vive en confirmar_envio_mensaje, que
+           solo se llama cuando el usuario responde "si" a la pregunta que el
+           prompt te obliga a hacer. El destinatario sigue viniendo SOLO de
+           la ficha (buscar_cliente + client_profiles), eso no cambio. */
+        smsPendiente = { id: smsId || null, destinatario: String(cli.full_name ?? ""), telefono: oculto, mensaje };
+        await recordActionLog("enviar_sms", clienteId, `encolado:${smsId}`);
         return JSON.stringify({
-            ok: enviado,
-            estado: enviado ? "enviado" : "fallido",
+            ok: true,
+            estado: "pendiente_de_confirmacion",
             id: smsId || null,
+            tipo: "sms",
             destinatario: cli.full_name,
             telefono: oculto,
             mensaje,
-            despacho,
+            aviso: "Encolado, NO enviado todavia. Pregunta al usuario si lo envias antes de llamar confirmar_envio_mensaje.",
         });
+    }
+
+    async function runEmailQueueTool(input: Record<string, unknown>): Promise<string> {
+        const clienteId = String(input?.cliente_id ?? "").trim();
+        const asunto = String(input?.asunto ?? "").trim();
+        const cuerpo = String(input?.cuerpo ?? "").trim();
+
+        if (!UUID_RE.test(clienteId)) {
+            return JSON.stringify({
+                error: "cliente_id_invalido",
+                detalle: "Necesito el user_id del cliente. Buscalo primero con buscar_cliente; " +
+                         "no acepto correos dictados o inventados.",
+            });
+        }
+        if (asunto.length < 1 || asunto.length > 200) return JSON.stringify({ error: "asunto_invalido" });
+        if (cuerpo.length < 2 || cuerpo.length > 4000) return JSON.stringify({ error: "cuerpo_invalido" });
+
+        /* El correo sale de la BASE, nunca de lo que se dijo en la conversacion. */
+        const { data: cli, error: e1 } = await ADMIN
+            .from("client_profiles")
+            .select("user_id, full_name, email")
+            .eq("user_id", clienteId)
+            .maybeSingle();
+        if (e1) return JSON.stringify({ error: `client_profiles: ${e1.message}` });
+        if (!cli) return JSON.stringify({ error: "cliente_no_encontrado" });
+
+        const correo = String(cli.email ?? "").trim();
+        if (!correo || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(correo)) {
+            return JSON.stringify({
+                error: "cliente_sin_email_valido",
+                cliente: cli.full_name,
+                detalle: "Ese cliente no tiene un correo utilizable en su ficha.",
+            });
+        }
+
+        const { data, error } = await ADMIN.rpc("elixis_email_encolar", {
+            p_solicitante: gate.userId,
+            p_dest_id: clienteId,
+            p_nombre: String(cli.full_name ?? ""),
+            p_email: correo,
+            p_asunto: asunto,
+            p_cuerpo: cuerpo,
+        });
+        if (error) return JSON.stringify({ error: `cola_email: ${error.message}` });
+
+        const row = Array.isArray(data) ? data[0] : data;
+        const oculto = correo.replace(/^(.{2}).+(@.+)$/, "$1***$2");
+        const emailId = String(row?.id ?? "");
+
+        /* CONFIRMACION CONVERSACIONAL, mismo patron que enviar_sms
+           (2026-09-01, orden directa del PO, reemplaza el envio 100%
+           silencioso de hoy mismo). Esta herramienta SOLO encola -- el
+           despacho real vive en confirmar_envio_mensaje. */
+        await recordActionLog("enviar_email", clienteId, `encolado:${emailId}`);
+        return JSON.stringify({
+            ok: true,
+            estado: "pendiente_de_confirmacion",
+            id: emailId || null,
+            tipo: "email",
+            destinatario: cli.full_name,
+            email: oculto,
+            asunto,
+            aviso: "Encolado, NO enviado todavia. Pregunta al usuario si lo envias antes de llamar confirmar_envio_mensaje.",
+        });
+    }
+
+    async function runConfirmSendTool(input: Record<string, unknown>): Promise<string> {
+        const id = String(input?.id ?? "").trim();
+        const tipo = String(input?.tipo ?? "").trim().toLowerCase();
+        const accion = String(input?.accion ?? "").trim().toLowerCase();
+
+        if (!UUID_RE.test(id)) return JSON.stringify({ error: "id_invalido" });
+        if (tipo !== "sms" && tipo !== "email") return JSON.stringify({ error: "tipo_invalido" });
+        if (accion !== "enviar" && accion !== "cancelar") return JSON.stringify({ error: "accion_invalida" });
+
+        const base = (Deno.env.get("SUPABASE_URL") ?? "").replace(/\/$/, "");
+        if (!base) return JSON.stringify({ error: "sin_servidor" });
+
+        const fnName = tipo === "sms" ? "elixis-sms-dispatch" : "elixis-email-dispatch";
+        const qs = accion === "cancelar" ? `id=${encodeURIComponent(id)}&accion=cancelar` : `id=${encodeURIComponent(id)}`;
+        let despacho: Record<string, unknown> | null = null;
+        try {
+            const dRes = await fetch(`${base}/functions/v1/${fnName}?${qs}`, {
+                method: "POST",
+                headers: { Authorization: authHeader, "Content-Type": "application/json" },
+            });
+            despacho = await dRes.json().catch(() => null);
+        } catch (_e) {
+            despacho = null;
+        }
+
+        if (!despacho) {
+            await recordActionLog("confirmar_envio_mensaje", id, `error:despacho_no_intentado:${tipo}:${accion}`);
+            return JSON.stringify({ ok: false, error: "no_se_pudo_despachar", detalle: "Fallo de red al confirmar." });
+        }
+
+        const ok = despacho?.ok === true;
+        await recordActionLog(
+            "confirmar_envio_mensaje",
+            id,
+            `${ok ? "ok" : "error"}:${tipo}:${accion}:${String(despacho?.estado ?? despacho?.error ?? "")}`.slice(0, 2000),
+        );
+        return JSON.stringify({ ok, tipo, accion, despacho });
     }
 
     const PRICE_CHANGE_ROLES = new Set(["owner", "admin"]);
@@ -1691,7 +1841,7 @@ serve(async (req: Request) => {
                     // hasta este cambio de modelo. Sin este parametro, el muestreo queda en
                     // el default del modelo -- no hace falta reemplazarlo por nada.
                     system: systemContent,
-                    tools: [FINANCIAL_TOOL, LEAD_NOTE_TOOL, AGENDA_READ_TOOL, AGENDA_WRITE_TOOL, AGENDA_EVENTOS_TOOL, CATALOG_READ_TOOL, CATALOG_PRICE_TOOL, QUOTE_WRITE_TOOL, CLIENT_SEARCH_TOOL, SMS_QUEUE_TOOL, MUSIC_TOOL],
+                    tools: [FINANCIAL_TOOL, LEAD_NOTE_TOOL, AGENDA_READ_TOOL, AGENDA_WRITE_TOOL, AGENDA_EVENTOS_TOOL, CATALOG_READ_TOOL, CATALOG_PRICE_TOOL, QUOTE_WRITE_TOOL, CLIENT_SEARCH_TOOL, SMS_QUEUE_TOOL, EMAIL_QUEUE_TOOL, CONFIRM_SEND_TOOL, MUSIC_TOOL],
                     messages: convo,
                 }),
             });
@@ -1819,6 +1969,26 @@ serve(async (req: Request) => {
                     await recordAiKpi(failed ? "tool_error" : "tool_ok");
                 } else if (toolName === "enviar_sms") {
                     out = await runSmsQueueTool((b.input as Record<string, unknown>) ?? {});
+                    let failed = true;
+                    try {
+                        const parsed = JSON.parse(out) as { error?: unknown; ok?: unknown };
+                        failed = parsed == null || parsed.error != null || parsed.ok !== true;
+                    } catch {
+                        failed = true;
+                    }
+                    await recordAiKpi(failed ? "tool_error" : "tool_ok");
+                } else if (toolName === "enviar_email") {
+                    out = await runEmailQueueTool((b.input as Record<string, unknown>) ?? {});
+                    let failed = true;
+                    try {
+                        const parsed = JSON.parse(out) as { error?: unknown; ok?: unknown };
+                        failed = parsed == null || parsed.error != null || parsed.ok !== true;
+                    } catch {
+                        failed = true;
+                    }
+                    await recordAiKpi(failed ? "tool_error" : "tool_ok");
+                } else if (toolName === "confirmar_envio_mensaje") {
+                    out = await runConfirmSendTool((b.input as Record<string, unknown>) ?? {});
                     let failed = true;
                     try {
                         const parsed = JSON.parse(out) as { error?: unknown; ok?: unknown };

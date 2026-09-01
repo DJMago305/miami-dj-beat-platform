@@ -35,6 +35,15 @@ const REGISTERED_WRITE_TOOLS = new Set([
     // candado real (telefono SOLO desde buscar_cliente, nunca dictado) sigue
     // intacto en runSmsQueueTool, no aqui.
     "enviar_sms",
+    // enviar_email (2026-09-01, mismo patron que enviar_sms): correo SOLO
+    // desde client_profiles.email via buscar_cliente. Ahora SOLO encola --
+    // el despacho real espera confirmacion conversacional (ver abajo).
+    "enviar_email",
+    // confirmar_envio_mensaje (2026-09-01, orden directa del PO: reemplaza
+    // el envio autonomo silencioso por una pregunta de si/no dentro del
+    // mismo chat). Solo dispara enviar/cancelar sobre un id YA encolado por
+    // enviar_sms/enviar_email -- nunca crea contenido nuevo.
+    "confirmar_envio_mensaje",
 ]);
 
 export type ApprovalMode = "read" | "write";
