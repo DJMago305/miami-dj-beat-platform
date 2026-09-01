@@ -95,13 +95,35 @@ const STRICT_TURN_DETECTION = {
 // cliente (candado duro por mic.enabled + cooldown escalado por longitud de
 // texto, ver elixis-voice-session.js) -- esto es la misma defensa en
 // profundidad de siempre, un escalon mas arriba.
+// SUBIDO OTRA VEZ 2026-08-31 (mismo dia, reporte real con captura: ELIXIS
+// "invento una historia de un tal Ricardo... se contestaba y se preguntaba
+// solo, yo no hable nada" + frases cortadas a la mitad). Diagnostico real
+// esta vez, no otro ajuste a ciegas: el candado por mic.enabled (cliente,
+// ver elixis-voice-session.js) SOLO protege la ventana en que ELIXIS habla
+// + se enfria -- este bug pasaba con el mic genuinamente ABIERTO y
+// escuchando, es decir RUIDO AMBIENTE REAL cruzando el umbral, no eco de su
+// propia voz (ya documentado antes, sin resolver: "ruido de TV sigue sin
+// resolver"). 0.75 no alcanzaba contra ese ambiente -- sube a 0.82, un
+// escalon por debajo del 0.85 de Cazador Musical/DJMago (que ya asume una
+// cabina ruidosa de verdad).
+// interrupt_response: false (2026-08-31, MISMO reporte -- "cortarse en los
+// finales de las frases"): con true, cada disparo falso de VAD CORTABA a
+// ELIXIS a mitad de oracion y arrancaba una respuesta nueva encima --eso
+// es lo que se veia como frases fragmentadas Y como una conversacion
+// fabricada (el modelo intentando seguir un hilo confuso de cortes
+// sucesivos). false hace que un turno nuevo espere a que la respuesta
+// actual termine antes de considerarse -- se pierde el barge-in real (el
+// usuario interrumpiendo a proposito), pero ese trade-off es correcto
+// mientras el ambiente siga generando falsos turnos: es peor una respuesta
+// completa que no se puede interrumpir a proposito, que una respuesta que
+// se fragmenta y alucina solo por ruido de fondo.
 const STANDARD_TURN_DETECTION = {
     type: "server_vad",
-    threshold: Number(Deno.env.get("ELIXIS_STANDARD_VAD_THRESHOLD") ?? "0.75"),
+    threshold: Number(Deno.env.get("ELIXIS_STANDARD_VAD_THRESHOLD") ?? "0.82"),
     prefix_padding_ms: Number(Deno.env.get("ELIXIS_STANDARD_PREFIX_PADDING_MS") ?? "300"),
-    silence_duration_ms: Number(Deno.env.get("ELIXIS_STANDARD_SILENCE_MS") ?? "800"),
+    silence_duration_ms: Number(Deno.env.get("ELIXIS_STANDARD_SILENCE_MS") ?? "900"),
     create_response: true,
-    interrupt_response: true,  // barge-in: el usuario manda
+    interrupt_response: false,
 };
 
 // UMBRAL DE DJMAGO — mas alto que el ?vad=estricto normal (2026-08-30,
@@ -126,10 +148,20 @@ const DJMAGO_VAD_THRESHOLD = Number(Deno.env.get("ELIXIS_DJMAGO_VAD_THRESHOLD") 
 // 900ms da mas margen sin sentirse lento en una respuesta real.
 const DJMAGO_SILENCE_DURATION_MS = Number(Deno.env.get("ELIXIS_DJMAGO_SILENCE_MS") ?? "900");
 
-// Filtra el audio ANTES del detector de turnos. near_field es para microfono
-// cercano (auriculares, el del portatil si hablas de frente) y ayuda a que el
-// sonido lejano —una tele al fondo— no cuente como turno.
-const NOISE_REDUCTION = Deno.env.get("ELIXIS_NOISE_REDUCTION") ?? "near_field";
+// Filtra el audio ANTES del detector de turnos (VAD y el modelo reciben la
+// señal ya limpia) -- confirmado contra la documentacion oficial actual de
+// OpenAI, no adivinado.
+// CAMBIADO near_field -> far_field (2026-08-31, reporte real repetido: bucle
+// de turnos falsos por ruido ambiente, incluso con el umbral ya subido dos
+// veces -- "ruido de TV sigue sin resolver" era un problema conocido de
+// sesiones anteriores). near_field asume boca pegada al microfono
+// (auriculares) y solo atenua sonido lejano -- si el setup real es el
+// microfono INTEGRADO de la laptop a cierta distancia (no un headset), el
+// ruido de cuarto no cuenta como "lejano" para ese filtro y se cuela igual.
+// far_field es el modo que OpenAI documenta explicitamente para "microfonos
+// de laptop o sala de conferencias" -- el caso real aca. Si el PO conecta
+// un headset real, ?nr=near_field sigue disponible por URL sin tocar codigo.
+const NOISE_REDUCTION = Deno.env.get("ELIXIS_NOISE_REDUCTION") ?? "far_field";
 const ALLOWED_NOISE = new Set(["near_field", "far_field", "off"]);
 const MAX_SDP_BYTES = 32_768; // una oferta SDP real ronda los 4 KB
 
@@ -394,6 +426,16 @@ teoría de manual.`,
 - Tolera pausas, dudas y frases a medias. Una pausa breve no es el fin de su turno.
 - Si te interrumpen, cállate en el acto y atiende lo nuevo. Sin quejarte, sin
   recapitular, sin "como te decía".
+- REGLA DURA CONTRA INVENTAR (2026-08-31, orden directa del PO -- reporte real:
+  "se invento una historia de un tal Ricardo y el mismo se contestaba y se
+  preguntaba, yo no hable nada"): a veces el canal de audio te manda un
+  fragmento sin sentido, ruido de fondo mal transcrito, o algo que no suena a
+  pregunta real. NUNCA lo conviertas en una historia, un nombre inventado o
+  una conversación completa que nadie dijo -- eso rompe la confianza mucho
+  peor que quedarte callado. Si lo que "escuchaste" no tiene un pedido claro
+  y real, di algo corto como "no te agarré bien eso, ¿me lo repites?" o
+  simplemente no respondas nada -- jamás rellenes el hueco fabricando
+  contenido.
 ${identidad === "djmago"
     ? "- Hablas SOLO en español (ver las reglas duras de más abajo -- excepción a lo bilingüe de ELIXIS)."
     : "- Bilingüe español/inglés. Cambias solo, siguiendo a quien tienes enfrente. Si mezcla,\n  mezclas. Spanglish de Miami cuando el momento lo pida."}

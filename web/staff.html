@@ -532,6 +532,14 @@
          reaparece al expandir el panel (mismo gesto que ya abre Modo
          Enfoque). */
       .ew-pantalla.ew-cerrado #ewHiloNuevo{display:none;}
+      /* Pestañas Hilos/Enfoque (2026-08-31): colapsado SIEMPRE fuerza la
+         pestaña Enfoque -- es la barra fija principal, tiene sentido como
+         riel angosto de iconos; Hilos no. Sin esto, colapsar el panel
+         mientras la pestaña Hilos esta activa dejaria el rail vacio (sin el
+         truco de "iconos siempre visibles" que si tiene Modo Enfoque). */
+      .ew-pantalla.ew-cerrado .ew-tabs-izq{display:none;}
+      .ew-pantalla.ew-cerrado [data-tab-panel="hilos"]{display:none !important;}
+      .ew-pantalla.ew-cerrado [data-tab-panel="enfoque"]{display:block !important;}
     }
     /* Flechas laterales de escritorio angosto (2026-08-28, ticket de
        soporte desktop) -- inyectadas por elixis-swipe-carousel.js mismo.
@@ -595,6 +603,16 @@
       background:none; border:1px solid rgba(234,179,8,.5); border-radius:10px; color:var(--gold);
       cursor:pointer; flex:none;}
     #ewHiloNuevo:hover{background:rgba(234,179,8,.12);}
+    /* Pestañas Hilos/Enfoque (2026-08-31): dos botones simples, uno activo a
+       la vez -- mismo lenguaje de borde dorado que el resto del panel, no
+       un componente de tabs generico e inventado aparte. */
+    .ew-tabs-izq{display:flex; gap:6px; margin-bottom:10px; flex:none;}
+    .ew-tab-btn{flex:1; padding:7px 4px; font-size:11px; font-weight:700; letter-spacing:.02em;
+      background:none; border:1px solid var(--line); border-radius:8px; color:rgba(255,255,255,.55);
+      cursor:pointer;}
+    .ew-tab-btn.activo{border-color:rgba(234,179,8,.6); color:var(--gold); background:rgba(234,179,8,.08);}
+    [data-tab-panel]{display:flex; flex-direction:column; min-height:0;}
+    [data-tab-panel="enfoque"]{flex:1;}
     .ew-enfoque{display:flex; flex-wrap:wrap; align-content:center; justify-content:center; gap:18px; height:100%;}
     .ew-enfoque-item{display:flex;flex-direction:column;align-items:center;gap:5px;width:74px;cursor:pointer;-webkit-tap-highlight-color:transparent;background:none;border:none;padding:0;font-family:inherit;}
     .ew-enfoque-icono{width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;
@@ -1307,33 +1325,50 @@
             <div class="ew-carrusel-pista">
               <div class="ew-pantalla ew-col ew-cerrado" id="ewPanelIzq">
                 <button type="button" class="ew-acordeon-toggle" id="ewToggleIzq" aria-label="Abrir Hilos y Modo Enfoque">›</button>
-                <!-- Hilos guardados (mudado aqui 2026-08-31, orden del PO --
-                     "estilo ChatGPT": el indexador de hilos vive en el
-                     lateral IZQUIERDO, no en el derecho. Mismos ids, mismo
-                     JS (ewCargarHilosLista/ewHiloNuevo/etc, ver mas abajo en
-                     el script) -- solo cambio el padre en el DOM, igual que
-                     la mudanza de #ewTranscripcion al centro el mismo dia.
-                     "+ Nuevo" queda arriba de todo, antes que Modo Enfoque,
-                     tal como se pidio. -->
-                <button type="button" id="ewHiloNuevo" title="Archivar este hilo y empezar uno nuevo en el modo activo">+ Nuevo Hilo</button>
-                <div class="ew-col-body" id="ewHilosLista" style="flex:0 0 auto;max-height:220px;"><div class="ew-vacio">Sin hilos guardados todavía.</div></div>
-                <h4>Modo Enfoque</h4>
-                <div class="ew-enfoque" id="ewEnfoque">
-                  <button type="button" class="ew-enfoque-item" data-modo="correo"><span class="ew-enfoque-icono">✉️</span><span class="l">Correo</span></button>
-                  <button type="button" class="ew-enfoque-item" data-modo="legal"><span class="ew-enfoque-icono">⚖️</span><span class="l">Legal</span></button>
-                  <button type="button" class="ew-enfoque-item" data-modo="distribucion"><span class="ew-enfoque-icono">🎵</span><span class="l">Distribución</span></button>
-                  <button type="button" class="ew-enfoque-item" data-modo="eventos"><span class="ew-enfoque-icono">📅</span><span class="l">Eventos</span></button>
-                  <!-- Cazador Musical (2026-08-30, autorizado por el PO): a diferencia
-                       de los otros modos (solo cambian el foco del prompt), este
-                       ademas prende/apaga el ciclo de fondo de Music Hunter -- ver
-                       el caso especial en el onclick de abajo. Solo tiene sentido
-                       real con identidad djmago (identificar_track no existe para
-                       ELIXIS), pero no se oculta el boton: sin sesion de voz activa
-                       o sin identidad djmago, el ciclo simplemente no encuentra
-                       musicHunterNodo y no hace nada, en vez de fingir un candado
-                       que todavia no existe (no hay selector de avatar real aqui). -->
-                  <button type="button" class="ew-enfoque-item" data-modo="cazador"><span class="ew-enfoque-icono">🎧</span><span class="l">Cazador Musical</span></button>
-                  <button type="button" class="ew-enfoque-item" data-modo="general"><span class="ew-enfoque-icono">🌐</span><span class="l">General</span></button>
+                <!-- Pestañas separadas (2026-08-31, reporte real del PO:
+                     "tenemos el hilo dentro de la pestaña de los enfoques" --
+                     antes Hilos y Modo Enfoque vivian apilados en el mismo
+                     scroll, un solo boton los abria/cerraba a los dos.
+                     Ahora son DOS pestañas reales dentro del mismo panel --
+                     Enfoque queda como "barra fija principal" (activa por
+                     defecto, ver ewSeleccionarTabIzq mas abajo), Hilos a un
+                     clic de distancia. Colapsado (64px) siempre fuerza
+                     Enfoque -- ver el CSS -- porque ese riel de iconos SI
+                     tiene sentido angosto; la lista de Hilos no. -->
+                <div class="ew-tabs-izq" id="ewTabsIzq">
+                  <button type="button" class="ew-tab-btn" data-tab="enfoque">Enfoque</button>
+                  <button type="button" class="ew-tab-btn" data-tab="hilos">Hilos</button>
+                </div>
+                <div data-tab-panel="hilos">
+                  <!-- Hilos guardados (mudado aqui 2026-08-31, orden del PO --
+                       "estilo ChatGPT": el indexador de hilos vive en el
+                       lateral IZQUIERDO, no en el derecho. Mismos ids, mismo
+                       JS (ewCargarHilosLista/ewHiloNuevo/etc, ver mas abajo
+                       en el script) -- solo cambio el padre en el DOM, igual
+                       que la mudanza de #ewTranscripcion al centro el mismo
+                       dia. -->
+                  <button type="button" id="ewHiloNuevo" title="Archivar este hilo y empezar uno nuevo en el modo activo">+ Nuevo Hilo</button>
+                  <div class="ew-col-body" id="ewHilosLista" style="flex:0 0 auto;max-height:220px;"><div class="ew-vacio">Sin hilos guardados todavía.</div></div>
+                </div>
+                <div data-tab-panel="enfoque">
+                  <h4>Modo Enfoque</h4>
+                  <div class="ew-enfoque" id="ewEnfoque">
+                    <button type="button" class="ew-enfoque-item" data-modo="correo"><span class="ew-enfoque-icono">✉️</span><span class="l">Correo</span></button>
+                    <button type="button" class="ew-enfoque-item" data-modo="legal"><span class="ew-enfoque-icono">⚖️</span><span class="l">Legal</span></button>
+                    <button type="button" class="ew-enfoque-item" data-modo="distribucion"><span class="ew-enfoque-icono">🎵</span><span class="l">Distribución</span></button>
+                    <button type="button" class="ew-enfoque-item" data-modo="eventos"><span class="ew-enfoque-icono">📅</span><span class="l">Eventos</span></button>
+                    <!-- Cazador Musical (2026-08-30, autorizado por el PO): a diferencia
+                         de los otros modos (solo cambian el foco del prompt), este
+                         ademas prende/apaga el ciclo de fondo de Music Hunter -- ver
+                         el caso especial en el onclick de abajo. Solo tiene sentido
+                         real con identidad djmago (identificar_track no existe para
+                         ELIXIS), pero no se oculta el boton: sin sesion de voz activa
+                         o sin identidad djmago, el ciclo simplemente no encuentra
+                         musicHunterNodo y no hace nada, en vez de fingir un candado
+                         que todavia no existe (no hay selector de avatar real aqui). -->
+                    <button type="button" class="ew-enfoque-item" data-modo="cazador"><span class="ew-enfoque-icono">🎧</span><span class="l">Cazador Musical</span></button>
+                    <button type="button" class="ew-enfoque-item" data-modo="general"><span class="ew-enfoque-icono">🌐</span><span class="l">General</span></button>
+                  </div>
                 </div>
               </div>
               <div class="ew-pantalla ew-col ew-mid">
@@ -2698,6 +2733,21 @@
           general: 'Modo General: sin foco específico, atiende cualquier consulta operativa.'
         };
         var ewModoAnterior = null;
+        /* Pestañas Hilos/Enfoque (2026-08-31): Enfoque activa por defecto
+           ("barra fija principal", pedido explicito del PO) -- Hilos a un
+           clic. Selector generico por data-tab/data-tab-panel, no acoplado
+           a los dos nombres especificos -- si algun dia se agrega una
+           tercera pestaña, esto no cambia. */
+        (function(){
+          var tabs = document.querySelectorAll('#ewTabsIzq .ew-tab-btn');
+          var paneles = document.querySelectorAll('[data-tab-panel]');
+          function activar(nombre){
+            tabs.forEach(function(b){ b.classList.toggle('activo', b.getAttribute('data-tab')===nombre); });
+            paneles.forEach(function(p){ p.style.display = (p.getAttribute('data-tab-panel')===nombre) ? '' : 'none'; });
+          }
+          tabs.forEach(function(b){ b.onclick=function(){ activar(b.getAttribute('data-tab')); }; });
+          activar('enfoque');
+        })();
         var enfoque=el('ewEnfoque');
         /* Hilos guardados (2026-08-31, autorizado por el PO): pinta UNA
            linea historica en #ewTranscripcion, con las MISMAS etiquetas

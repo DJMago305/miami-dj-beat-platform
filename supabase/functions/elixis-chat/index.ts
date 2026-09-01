@@ -17,11 +17,28 @@ import {
 } from "../_shared/event-quote-catalog.ts";
 
 // ─── MODELO ──────────────────────────────────────────────────────────────────
-// Haiku 4.5 = el más barato/rápido para pruebas. Para subir de nivel (más
-// razonamiento), cambia esta constante a "claude-sonnet-5" o "claude-opus-5".
-const MODEL = "claude-haiku-4-5-20251001";
+// SUBIDO Haiku 4.5 -> Sonnet 5 (2026-08-31, hallazgo real con evidencia de
+// base de datos, no una corazonada): en una conversacion real el modelo dijo
+// dos veces "voy a registrar los cambios en las agendas ahora" / "Perfecto.
+// Voy a registrar todo ahora:" -- se verifico artist_agenda y
+// agent_action_log en produccion para esa ventana de tiempo: CERO filas,
+// CERO intentos de la herramienta, ni uno fallido. El modelo narro una
+// accion de negocio real (bloqueos de agenda, $ en juego) que nunca ejecuto.
+// Haiku es mas propenso a esto por diseño (modelo chico, menos disciplina
+// real de tool-calling) -- Sonnet 5 es el salto de capacidad justificado por
+// esta falla concreta, no un ascenso especulativo. Verificado: Opus 5
+// tambien disponible si esto se repite con Sonnet.
+const MODEL = "claude-sonnet-5";
 const ANTHROPIC_VERSION = "2023-06-01";
-const MAX_TOKENS = 512;
+// SUBIDO 512->900 (2026-08-31, mismo cambio de modelo): de paso corrige un
+// orden real invertido en el governor de mas abajo -- FULL (el nivel normal,
+// bajo 80% de cuota) daba MENOS tokens (512) que SAVER (640, el nivel de
+// ahorro, 80-100% de cuota), justo al reves de lo que el propio comentario
+// del governor dice que deberia pasar ("FULL=MAX_TOKENS · SAVER=640 ·
+// ESSENTIAL=384"). Con 900, FULL > SAVER > ESSENTIAL, como el comentario ya
+// decia. Tambien le da a Sonnet 5 mas margen real para respuestas con tablas
+// (ej. la agenda semanal completa) sin cortarse a la mitad.
+const MAX_TOKENS = 900;
 
 // Public REST key for roster reads: env only (anon or publishable). No hardcoded literals.
 function envPublicRestKey(): string {
@@ -191,6 +208,29 @@ Si te piden algo de esa lista, dilo con franqueza Y OFRECE LO QUE SI PUEDES:
 "El correo no lo puedo mandar yo, pero te bloqueo la fecha en la agenda y te
 dejo el texto listo." Un socio que promete de mas quema al Capitan delante de
 un cliente; uno que dice la verdad y ofrece la alternativa resuelve igual.
+
+### REGLA DURA: NUNCA NARRES UNA ACCION QUE NO EJECUTASTE (2026-08-31, hallazgo
+real con evidencia de base de datos -- no una corazonada): en una conversacion
+real dijiste dos veces "voy a registrar los cambios en las agendas ahora" /
+"Perfecto. Voy a registrar todo ahora:" -- se verifico artist_agenda y
+agent_action_log en produccion para esa ventana exacta: CERO filas nuevas,
+CERO llamadas a la herramienta, ni una sola fallida. Dijiste que hiciste algo
+real (bloquear agendas, con dinero real de por medio) y no llamaste a NINGUNA
+herramienta. Esto es mas grave que prometer de mas -- es afirmar un hecho falso
+sobre tu propio trabajo.
+- Frases como "voy a registrarlo ahora", "perfecto, lo registro", "ya quedo
+  bloqueado" SOLO se dicen en el MISMO turno en el que de verdad llamas a la
+  herramienta correspondiente (registrar_evento_agenda, generar_cotizacion_
+  evento, crear_nota_lead, etc.) -- nunca antes, nunca como promesa para
+  "despues".
+- Si todavia te falta un dato (una fecha exacta, una confirmacion), dilo asi:
+  "Necesito que confirmes X para poder registrarlo" -- NUNCA "voy a
+  registrarlo ahora" seguido de una lista de preguntas sin resolver. Esas dos
+  cosas juntas contradicen: o ya vas a hacerlo, o todavia falta algo, nunca
+  las dos a la vez.
+- Despues de llamar una herramienta de escritura, tu respuesta hablada debe
+  reflejar el resultado REAL que te devolvio (exito o error), no lo que
+  pensabas que iba a pasar.
 
 ### SMS — LA REGLA DURA (no admite excepcion ni atajo)
 El destinatario SIEMPRE sale de buscar_cliente. JAMAS aceptes un telefono
@@ -1352,7 +1392,14 @@ serve(async (req: Request) => {
                 body: JSON.stringify({
                     model: MODEL,
                     max_tokens: govMaxTokens, // Governor: FULL=MAX_TOKENS · SAVER=640 · ESSENTIAL=384 (founder siempre FULL)
-                    temperature: 0.7,
+                    // SIN temperature (2026-08-31, bug real encontrado en vivo -- primera
+                    // llamada real con Sonnet 5 devolvia 502 "AI provider error" incluso
+                    // para un mensaje trivial sin herramientas). Confirmado contra la
+                    // referencia oficial actual de la API de Claude: en Sonnet 5, Opus 5 y
+                    // Fable 5 el muestreo (temperature/top_p/top_k) esta REMOVIDO -- la API
+                    // lo rechaza con 400. Haiku 4.5 si lo aceptaba, por eso nunca fallo
+                    // hasta este cambio de modelo. Sin este parametro, el muestreo queda en
+                    // el default del modelo -- no hace falta reemplazarlo por nada.
                     system: systemContent,
                     tools: [FINANCIAL_TOOL, LEAD_NOTE_TOOL, AGENDA_READ_TOOL, AGENDA_WRITE_TOOL, CATALOG_READ_TOOL, QUOTE_WRITE_TOOL, CLIENT_SEARCH_TOOL, SMS_QUEUE_TOOL, MUSIC_TOOL],
                     messages: convo,
@@ -1529,7 +1576,8 @@ serve(async (req: Request) => {
                 body: JSON.stringify({
                     model: MODEL,
                     max_tokens: govMaxTokens,
-                    temperature: 0.7,
+                    // SIN temperature -- ver la nota completa en la primera llamada de
+                    // arriba (Sonnet 5 la rechaza con 400).
                     system: systemContent,
                     /* sin `tools` a proposito: obliga a cerrar en texto */
                     messages: [
