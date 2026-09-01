@@ -24,6 +24,8 @@
 })();
 </script>
 <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
+<script src="./translations.js?v=20260901-coi-shell"></script>
+<script src="./i18n.js?v=20260415-CORE-CONNECTIONS"></script>
 <script>
 (function(){
   async function gate(){
@@ -323,31 +325,31 @@
     <div class="toolbar">
       <div class="tb-left">
         <div class="brand-dot" title="Miami DJ Beat">🎧</div>
-        <button class="iconbtn" id="btnRem" title="Recordatorios y notificaciones">
+        <button class="iconbtn" id="btnRem" title="Recordatorios y notificaciones" data-i18n-title="coi-tt-recordatorios">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
           <span class="badge" id="remBadge">0</span>
         </button>
-        <button class="iconbtn" id="btnCrm" title="Base de datos de clientes">
+        <button class="iconbtn" id="btnCrm" title="Base de datos de clientes" data-i18n-title="coi-tt-clientes">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 19v-1.5A3.5 3.5 0 0 0 12.5 14h-5A3.5 3.5 0 0 0 4 17.5V19"/><circle cx="10" cy="8" r="3.2"/><path d="M20 19v-1.5a3.5 3.5 0 0 0-2.5-3.35"/></svg>
         </button>
-        <button class="iconbtn" id="btnCon" title="Continuidad y engagement">
+        <button class="iconbtn" id="btnCon" title="Continuidad y engagement" data-i18n-title="coi-tt-continuidad">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5v14h16"/><path d="M7 15l3.5-4 3 2L20 7"/></svg>
         </button>
-        <button class="iconbtn" id="btnNotz" title="Notarización (solo manager)">
+        <button class="iconbtn" id="btnNotz" title="Notarización (solo manager)" data-i18n-title="coi-tt-notarizacion">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9.3 12l1.9 1.9L15 10"/></svg>
         </button>
-        <button class="iconbtn" title="Nuevo evento"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></button>
+        <button class="iconbtn" title="Nuevo evento" data-i18n-title="coi-tt-nuevo-evento"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></button>
       </div>
       <div class="seg" role="tablist" id="seg">
-        <button role="tab" data-view="dia">Día</button>
-        <button role="tab" data-view="semana">Semana</button>
-        <button role="tab" data-view="mes">Mes</button>
-        <button role="tab" data-view="ano">Año</button>
+        <button role="tab" data-view="dia" data-i18n="coi-tab-dia">Día</button>
+        <button role="tab" data-view="semana" data-i18n="coi-tab-semana">Semana</button>
+        <button role="tab" data-view="mes" data-i18n="coi-tab-mes">Mes</button>
+        <button role="tab" data-view="ano" data-i18n="coi-tab-ano">Año</button>
       </div>
       <div class="tb-right">
-        <button class="iconbtn" id="fsToggle" title="Pantalla completa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V5a1 1 0 0 1 1-1h4M20 9V5a1 1 0 0 0-1-1h-4M4 15v4a1 1 0 0 0 1 1h4M20 15v4a1 1 0 0 1-1 1h-4"/></svg></button>
-        <button class="iconbtn" id="themeToggle" title="Día / Noche"></button>
-        <button class="iconbtn" title="Buscar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg></button>
+        <button class="iconbtn" id="fsToggle" title="Pantalla completa" data-i18n-title="coi-tt-pantalla-completa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V5a1 1 0 0 1 1-1h4M20 9V5a1 1 0 0 0-1-1h-4M4 15v4a1 1 0 0 0 1 1h4M20 15v4a1 1 0 0 1-1 1h-4"/></svg></button>
+        <button class="iconbtn" id="themeToggle" title="Día / Noche" data-i18n-title="coi-tt-dia-noche"></button>
+        <button class="iconbtn" title="Buscar" data-i18n-title="coi-tt-buscar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg></button>
       </div>
     </div>
 
@@ -357,7 +359,7 @@
       <div><h1 id="title">—</h1></div>
       <div class="nav" id="nav">
         <button class="arrow" id="prev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></button>
-        <button class="today" id="today">Hoy</button>
+        <button class="today" id="today" data-i18n="coi-hoy">Hoy</button>
         <button class="arrow" id="next"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></button>
       </div>
     </div>
@@ -368,19 +370,19 @@
 
     <div class="overlay" id="overlay" hidden>
       <div class="modal">
-        <div class="tc-eyebrow">Términos y condiciones · Artista</div>
-        <h3 id="tcTitle">Permiso de uso de datos</h3>
-        <p class="mlead">Para que el sistema de <b>Miami DJ Beat</b> trabaje a tu favor, necesitamos tu autorización para registrar y usar los datos de tu agenda con fines profesionales.</p>
+        <div class="tc-eyebrow" data-i18n="coi-tc-eyebrow">Términos y condiciones · Artista</div>
+        <h3 id="tcTitle" data-i18n="coi-tc-title">Permiso de uso de datos</h3>
+        <p class="mlead" data-i18n="coi-tc-lead">Para que el sistema de <b>Miami DJ Beat</b> trabaje a tu favor, necesitamos tu autorización para registrar y usar los datos de tu agenda con fines profesionales.</p>
         <ul>
-          <li class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>Autorizas registrar tus contactos y fechas recurrentes (cumpleaños, aniversarios) para <b>generarte trabajo</b> y publicidad dirigida.</span></li>
-          <li class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>Tu calendario es <b>personal e independiente</b>: el sistema te recuerda las fechas de tus contactos para gestionarte eventos.</span></li>
-          <li class="no"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg><span>No accedes a la base de datos de <b>otros artistas</b>. Cada artista está aislado.</span></li>
-          <li class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>Miami DJ Beat (Owner) consolida la información en el <b>calendario master</b> solo para gestionar eventos futuros.</span></li>
+          <li class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span data-i18n="coi-tc-li1">Autorizas registrar tus contactos y fechas recurrentes (cumpleaños, aniversarios) para <b>generarte trabajo</b> y publicidad dirigida.</span></li>
+          <li class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span data-i18n="coi-tc-li2">Tu calendario es <b>personal e independiente</b>: el sistema te recuerda las fechas de tus contactos para gestionarte eventos.</span></li>
+          <li class="no"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg><span data-i18n="coi-tc-li3">No accedes a la base de datos de <b>otros artistas</b>. Cada artista está aislado.</span></li>
+          <li class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span data-i18n="coi-tc-li4">Miami DJ Beat (Owner) consolida la información en el <b>calendario master</b> solo para gestionar eventos futuros.</span></li>
         </ul>
-        <label class="check"><input type="checkbox" id="tcCheck"><span>He leído y acepto los términos y condiciones, y autorizo el uso profesional de mis datos.</span></label>
+        <label class="check"><input type="checkbox" id="tcCheck"><span data-i18n="coi-tc-check">He leído y acepto los términos y condiciones, y autorizo el uso profesional de mis datos.</span></label>
         <div class="mbtns">
-          <button class="accept" id="tcAccept" disabled>Aceptar y activar mi calendario</button>
-          <button class="cancel" id="tcCancel">Ahora no</button>
+          <button class="accept" id="tcAccept" disabled data-i18n="coi-tc-accept">Aceptar y activar mi calendario</button>
+          <button class="cancel" id="tcCancel" data-i18n="coi-tc-cancel">Ahora no</button>
         </div>
       </div>
     </div>

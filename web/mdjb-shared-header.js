@@ -78,11 +78,11 @@
   var MDJ_NAV_SLOTS_INTERNO = [
     { s: 1, key: 'nav-home',       nav: 'home',      href: './index.html',        txt: 'Inicio' },
     { s: 2, key: 'nav-academia',   nav: 'academia',  href: './academia.html',     txt: 'Academia' },
-    { s: 3, key: null,             nav: 'agenda',    href: './staff-agenda.html', txt: 'Agenda' },
+    { s: 3, key: 'nav-agenda',     nav: 'agenda',    href: './staff-agenda.html', txt: 'Agenda' },
     { s: 4, key: 'nav-config',     nav: 'config',    href: './account-settings.html', txt: '⚙️ Config',
       id: 'mainNav-config-link', cls: 'mdj-config-mainnav' },
     { s: 5, key: 'nav-tools',      nav: 'tools',     href: './dj-tools.html',     txt: 'DJ Tools' },
-    { s: 6, key: null,             nav: 'flow',      href: './staff-agenda.html?tab=flow', txt: 'Cash Flow' },
+    { s: 6, key: 'nav-cashflow',   nav: 'flow',      href: './staff-agenda.html?tab=flow', txt: 'Cash Flow' },
     { s: 7, key: 'nav-my-profile', nav: 'mi-portal', href: './account-settings.html', txt: 'MI PERFIL',
       id: 'mainNav-mi-portal-link', cls: 'mdj-mi-portal-mainnav mdj-mi-portal-gold',
       alias: ['mi-portal', 'header-mi-portal'], navAlias: ['my-profile', 'profile'] },
@@ -127,11 +127,11 @@
   var MDJ_NAV_SLOTS_ARTISTA = [
     { s: 1,  key: 'nav-home',       nav: 'home',      href: './index.html', txt: 'Inicio' },
     { s: 2,  key: 'nav-academia',   nav: 'academia',  href: './academia.html?mdj_nav=profile', txt: 'Academia' },
-    { s: 3,  key: null,             nav: 'agenda',    href: './dj-dashboard.html?mdj_nav=profile', txt: 'Agenda' },
+    { s: 3,  key: 'nav-agenda',     nav: 'agenda',    href: './dj-dashboard.html?mdj_nav=profile', txt: 'Agenda' },
     { s: 4,  key: 'nav-config',     nav: 'config',    href: './account-settings.html?mdj_nav=profile', txt: '⚙️ Config',
       id: 'mainNav-config-link', cls: 'mdj-config-mainnav' },
     { s: 5,  key: 'nav-tools',      nav: 'tools',     href: './dj-tools.html?mdj_nav=profile', txt: 'DJ Tools' },
-    { s: 6,  key: null,             nav: 'flow',      href: '#', txt: 'Cash Flow',      tab: 'flow' },
+    { s: 6,  key: 'nav-cashflow',   nav: 'flow',      href: '#', txt: 'Cash Flow',      tab: 'flow' },
     { s: 7,  key: null,             nav: 'sft',       href: '#', txt: 'SoundForTips™',  tab: 'sft'  },
     /* MI PERFIL se queda en el puesto 8: su resolvedor de destino y el bloque que
        fija su etiqueta direccionan por numero de slot. */

@@ -1324,7 +1324,7 @@
             <canvas class="avatar-fx" id="ewAvatarFX"></canvas>
             <div class="ew-carrusel-pista">
               <div class="ew-pantalla ew-col ew-cerrado" id="ewPanelIzq">
-                <button type="button" class="ew-acordeon-toggle" id="ewToggleIzq" aria-label="Abrir Hilos y Modo Enfoque">›</button>
+                <button type="button" class="ew-acordeon-toggle" id="ewToggleIzq" aria-label="Abrir Hilos y Modo Enfoque" data-i18n-aria="ew-orbe-izq-aria">›</button>
                 <!-- Pestañas separadas (2026-08-31, reporte real del PO:
                      "tenemos el hilo dentro de la pestaña de los enfoques" --
                      antes Hilos y Modo Enfoque vivian apilados en el mismo
@@ -1336,8 +1336,8 @@
                      Enfoque -- ver el CSS -- porque ese riel de iconos SI
                      tiene sentido angosto; la lista de Hilos no. -->
                 <div class="ew-tabs-izq" id="ewTabsIzq">
-                  <button type="button" class="ew-tab-btn" data-tab="enfoque">Enfoque</button>
-                  <button type="button" class="ew-tab-btn" data-tab="hilos">Hilos</button>
+                  <button type="button" class="ew-tab-btn" data-tab="enfoque" data-i18n="ew-tab-enfoque">Enfoque</button>
+                  <button type="button" class="ew-tab-btn" data-tab="hilos" data-i18n="ew-tab-hilos">Hilos</button>
                 </div>
                 <div data-tab-panel="hilos">
                   <!-- Hilos guardados (mudado aqui 2026-08-31, orden del PO --
@@ -1347,16 +1347,16 @@
                        en el script) -- solo cambio el padre en el DOM, igual
                        que la mudanza de #ewTranscripcion al centro el mismo
                        dia. -->
-                  <button type="button" id="ewHiloNuevo" title="Archivar este hilo y empezar uno nuevo en el modo activo">+ Nuevo Hilo</button>
-                  <div class="ew-col-body" id="ewHilosLista" style="flex:0 0 auto;max-height:220px;"><div class="ew-vacio">Sin hilos guardados todavía.</div></div>
+                  <button type="button" id="ewHiloNuevo" title="Archivar este hilo y empezar uno nuevo en el modo activo" data-i18n="ew-hilo-nuevo" data-i18n-title="ew-hilo-nuevo-title">+ Nuevo Hilo</button>
+                  <div class="ew-col-body" id="ewHilosLista" style="flex:0 0 auto;max-height:220px;"><div class="ew-vacio" data-i18n="ew-hilos-vacio">Sin hilos guardados todavía.</div></div>
                 </div>
                 <div data-tab-panel="enfoque">
-                  <h4>Modo Enfoque</h4>
+                  <h4 data-i18n="ew-modo-enfoque-title">Modo Enfoque</h4>
                   <div class="ew-enfoque" id="ewEnfoque">
-                    <button type="button" class="ew-enfoque-item" data-modo="correo"><span class="ew-enfoque-icono">✉️</span><span class="l">Correo</span></button>
-                    <button type="button" class="ew-enfoque-item" data-modo="legal"><span class="ew-enfoque-icono">⚖️</span><span class="l">Legal</span></button>
-                    <button type="button" class="ew-enfoque-item" data-modo="distribucion"><span class="ew-enfoque-icono">🎵</span><span class="l">Distribución</span></button>
-                    <button type="button" class="ew-enfoque-item" data-modo="eventos"><span class="ew-enfoque-icono">📅</span><span class="l">Eventos</span></button>
+                    <button type="button" class="ew-enfoque-item" data-modo="correo"><span class="ew-enfoque-icono">✉️</span><span class="l" data-i18n="ew-modo-correo">Correo</span></button>
+                    <button type="button" class="ew-enfoque-item" data-modo="legal"><span class="ew-enfoque-icono">⚖️</span><span class="l" data-i18n="ew-modo-legal">Legal</span></button>
+                    <button type="button" class="ew-enfoque-item" data-modo="distribucion"><span class="ew-enfoque-icono">🎵</span><span class="l" data-i18n="ew-modo-distribucion">Distribución</span></button>
+                    <button type="button" class="ew-enfoque-item" data-modo="eventos"><span class="ew-enfoque-icono">📅</span><span class="l" data-i18n="ew-modo-eventos">Eventos</span></button>
                     <!-- Cazador Musical (2026-08-30, autorizado por el PO): a diferencia
                          de los otros modos (solo cambian el foco del prompt), este
                          ademas prende/apaga el ciclo de fondo de Music Hunter -- ver
@@ -1366,8 +1366,8 @@
                          o sin identidad djmago, el ciclo simplemente no encuentra
                          musicHunterNodo y no hace nada, en vez de fingir un candado
                          que todavia no existe (no hay selector de avatar real aqui). -->
-                    <button type="button" class="ew-enfoque-item" data-modo="cazador"><span class="ew-enfoque-icono">🎧</span><span class="l">Cazador Musical</span></button>
-                    <button type="button" class="ew-enfoque-item" data-modo="general"><span class="ew-enfoque-icono">🌐</span><span class="l">General</span></button>
+                    <button type="button" class="ew-enfoque-item" data-modo="cazador"><span class="ew-enfoque-icono">🎧</span><span class="l" data-i18n="ew-modo-cazador">Cazador Musical</span></button>
+                    <button type="button" class="ew-enfoque-item" data-modo="general"><span class="ew-enfoque-icono">🌐</span><span class="l" data-i18n="ew-modo-general">General</span></button>
                   </div>
                 </div>
               </div>
@@ -1395,10 +1395,10 @@
                      es el estado en el que se queda enviarTextoSolo() a
                      proposito) -- visibilidad real via ewActualizarChatCentro()
                      mas abajo: solo aparece cuando hay lineas de verdad. -->
-                <div class="ew-col-body ew-chat-centro" id="ewTranscripcion"><div class="ew-vacio">La conversación aparecerá aquí.</div></div>
+                <div class="ew-col-body ew-chat-centro" id="ewTranscripcion"><div class="ew-vacio" data-i18n="ew-conversacion-vacia">La conversación aparecerá aquí.</div></div>
                 <div class="ew-estado" id="ewEstado">Inactivo</div>
                 <div class="ew-texto-flotante-wrap" id="ewTextoWrap">
-                  <textarea id="ewTextoInput" rows="1" placeholder="Escribe a ELIXIS…"
+                  <textarea id="ewTextoInput" rows="1" placeholder="Escribe a ELIXIS…" data-i18n-hold="ew-texto-input-placeholder"
                     enterkeyhint="send" inputmode="text" autocapitalize="sentences" autocorrect="on" spellcheck="true" autocomplete="off"></textarea>
                 </div>
                 <div class="ew-orbes-flotantes">
@@ -1407,29 +1407,29 @@
                        abre una hoja para elegir DJMago/ELIXIS. Aqui solo existe UN
                        avatar por ahora, asi que este boton queda inerte a proposito
                        hasta que se decida que hace. -->
-                  <button type="button" class="ew-orbe" id="ewOrbePersona" title="Avatar (pendiente)" aria-label="Avatar" disabled>
+                  <button type="button" class="ew-orbe" id="ewOrbePersona" title="Avatar (pendiente)" aria-label="Avatar" disabled data-i18n-title="ew-orbe-avatar-title" data-i18n-aria="ew-orbe-avatar-aria"
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
                   </button>
-                  <button type="button" class="ew-orbe" id="ewOrbeIzq" title="Hilos y Modo Enfoque" aria-label="Abrir Hilos y Modo Enfoque">
+                  <button type="button" class="ew-orbe" id="ewOrbeIzq" title="Hilos y Modo Enfoque" aria-label="Abrir Hilos y Modo Enfoque" data-i18n-title="ew-orbe-izq-title" data-i18n-aria="ew-orbe-izq-aria"
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><path d="M12 12 19 5"/></svg>
                   </button>
-                  <button type="button" class="ew-orbe ew-orbe-mic" id="ewMicBtn" title="Activar voz" aria-label="Activar voz">
+                  <button type="button" class="ew-orbe ew-orbe-mic" id="ewMicBtn" title="Activar voz" aria-label="Activar voz" data-i18n-title="ew-orbe-mic-title" data-i18n-aria="ew-orbe-mic-aria"
                     <svg class="ew-orbe-mic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/></svg>
                     <img class="ew-orbe-mic-fenix" src="./assets/branding/fenix-emblem-160.png" alt="">
                     <i class="ew-orbe-mic-aro"></i>
                   </button>
-                  <button type="button" class="ew-orbe" id="ewOrbeDer" title="Herramientas" aria-label="Abrir Herramientas">
+                  <button type="button" class="ew-orbe" id="ewOrbeDer" title="Herramientas" aria-label="Abrir Herramientas" data-i18n-title="ew-herramientas-title" data-i18n-aria="ew-orbe-der-aria"
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
                   </button>
                   <!-- Sin destino todavia: equivalente visual al icono "Mas" del
                        telefono (abre un menu secundario alli). -->
-                  <button type="button" class="ew-orbe" id="ewOrbeMas" title="Más (pendiente)" aria-label="Más" disabled>
+                  <button type="button" class="ew-orbe" id="ewOrbeMas" title="Más (pendiente)" aria-label="Más" disabled data-i18n-title="ew-orbe-mas-title" data-i18n-aria="ew-orbe-mas-aria"
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
                   </button>
                 </div>
               </div>
               <div class="ew-pantalla ew-col ew-cerrado" id="ewPanelDer">
-                <button type="button" class="ew-acordeon-toggle" id="ewToggleDer" aria-label="Abrir Herramientas">‹</button>
+                <button type="button" class="ew-acordeon-toggle" id="ewToggleDer" aria-label="Abrir Herramientas" data-i18n-aria="ew-orbe-der-aria">‹</button>
                 <!-- Renombrado 2026-08-31: este panel ya NO aloja Hilos
                      (mudados al lateral izquierdo) ni Transcripcion (mudada
                      al centro, mismo dia) -- "Hilos & Transcripcion" habria
@@ -1437,10 +1437,10 @@
                      que sigue viviendo real: el log de herramientas
                      (#ewProceso), el panel especializado por modo (Correo/
                      Legal/Eventos/Distribucion) y Live Setlist (Cazador). -->
-                <h4>Herramientas <span id="ewModoIcono" title="Modo activo" style="margin-left:4px;">🌐</span></h4>
+                <h4><span data-i18n="ew-herramientas-title">Herramientas</span> <span id="ewModoIcono" title="Modo activo" style="margin-left:4px;">🌐</span></h4>
                 <div id="ewHud"></div>
-                <button type="button" id="ewHudDemo" style="font-size:9px;opacity:.5;background:none;border:1px solid var(--line);border-radius:6px;color:var(--text);padding:2px 6px;align-self:center;cursor:pointer;">demo transmisión</button>
-                <div class="ew-col-body" id="ewProceso"><div class="ew-vacio">Sin actividad todavía.</div></div>
+                <button type="button" id="ewHudDemo" style="font-size:9px;opacity:.5;background:none;border:1px solid var(--line);border-radius:6px;color:var(--text);padding:2px 6px;align-self:center;cursor:pointer;" data-i18n="ew-hud-demo">demo transmisión</button>
+                <div class="ew-col-body" id="ewProceso"><div class="ew-vacio" data-i18n="ew-proceso-vacio">Sin actividad todavía.</div></div>
                 <!-- Panel especializado por Modo de Enfoque (2026-08-31,
                      autorizado por el PO -- "paneles modulares especializados
                      por modo de enfoque"). Un solo contenedor que
@@ -1466,19 +1466,19 @@
                      visible siempre, aunque vacio) -- ver ewMostrarBloqueSetlist(). -->
                 <div id="ewBloqueSetlist">
                   <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-                    <h4 style="margin:0;">Live Setlist</h4>
-                    <button type="button" id="ewSetlistExportar" title="Exportar setlist como M3U"
+                    <h4 style="margin:0;" data-i18n="ew-live-setlist-title">Live Setlist</h4>
+                    <button type="button" id="ewSetlistExportar" title="Exportar setlist como M3U" data-i18n-title="ew-setlist-exportar-title"
                       style="font-size:9px;opacity:.5;background:none;border:1px solid var(--line);border-radius:6px;color:var(--text);padding:2px 6px;cursor:pointer;">.m3u</button>
                   </div>
-                  <div class="ew-col-body" id="ewSetlist"><div class="ew-vacio">Activa "Cazador Musical" para ver el setlist en vivo.</div></div>
+                  <div class="ew-col-body" id="ewSetlist"><div class="ew-vacio" data-i18n="ew-setlist-vacio">Activa "Cazador Musical" para ver el setlist en vivo.</div></div>
                 </div>
               </div>
             </div>
           </div>
           <div class="ew-dots">
-            <button type="button" class="ew-dot" aria-label="Modo Enfoque"></button>
-            <button type="button" class="ew-dot" aria-label="Avatar"></button>
-            <button type="button" class="ew-dot" aria-label="Hilos"></button>
+            <button type="button" class="ew-dot" aria-label="Modo Enfoque" data-i18n-aria="ew-modo-enfoque-title"></button>
+            <button type="button" class="ew-dot" aria-label="Avatar" data-i18n-aria="ew-orbe-avatar-aria"></button>
+            <button type="button" class="ew-dot" aria-label="Hilos" data-i18n-aria="ew-tab-hilos"></button>
           </div>
         </div>
       </section>
@@ -1547,21 +1547,21 @@
         <div style="max-width:1200px;margin:0 auto;padding:32px 20px;">
           <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px;">
             <h2 class="sc-header-name" style="color:var(--gold);font-size:1.6rem;margin:0;">SmartCrate IA</h2>
-            <span style="font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.4);">Music Intelligence System</span>
+            <span style="font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.4);" data-i18n="sc-subtitle">Music Intelligence System</span>
           </div>
-          <p style="color:rgba(255,255,255,.55);font-size:13px;margin:0 0 20px;">Motor de recomendación armónica sobre tu librería real de Serato — operado por voz vía DjMago.</p>
+          <p style="color:rgba(255,255,255,.55);font-size:13px;margin:0 0 20px;" data-i18n="sc-desc">Motor de recomendación armónica sobre tu librería real de Serato — operado por voz vía DjMago.</p>
           <div id="smartcrateGate"></div>
           <div id="smartcrateApp" style="display:none;">
             <!-- Instantanea de PRUEBA (2026-08-30), no sincronizador en vivo --
                  ver web/data/smartcrate-test-tracks.json (_meta.nota). Cuando
                  el Dominio #6 entregue el sincronizador real hacia Supabase,
                  este fetch cambia de destino, no la logica de abajo. -->
-            <div style="border:1px solid rgba(197,160,89,.4);background:rgba(197,160,89,.05);border-radius:8px;padding:8px 14px;font-size:11px;color:var(--gold-lt,var(--gold));margin-bottom:8px;">
+            <div style="border:1px solid rgba(197,160,89,.4);background:rgba(197,160,89,.05);border-radius:8px;padding:8px 14px;font-size:11px;color:var(--gold-lt,var(--gold));margin-bottom:8px;" data-i18n="sc-snapshot-note">
               Instantánea de prueba — datos reales de tu librería, capturados el 2026-08-30. No es sincronización en vivo todavía.
             </div>
 
             <div class="sc-tabs" role="tablist">
-              <button type="button" class="sc-tab active" data-sc-tab="catalogo">Catálogo</button>
+              <button type="button" class="sc-tab active" data-sc-tab="catalogo" data-i18n="sc-tab-catalogo">Catálogo</button>
               <button type="button" class="sc-tab" data-sc-tab="experiences">Experiences</button>
               <button type="button" class="sc-tab" data-sc-tab="livelistening">Live Listening</button>
               <button type="button" class="sc-tab" data-sc-tab="setlist">Live Setlist</button>
@@ -1569,38 +1569,38 @@
 
             <div class="sc-panel active" id="scPanelCatalogo">
               <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
-                <input type="search" id="smartcrateBuscador" placeholder="Buscar por título, artista o género…" style="flex:1 1 220px;min-width:180px;background:var(--panel,#0b0f18);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:7px 12px;font-size:13px;" />
-                <select id="smartcrateCamelotFiltro" style="background:var(--panel,#0b0f18);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:13px;" title="Filtrar por tonalidad Camelot">
-                  <option value="">Todas las claves</option>
+                <input type="search" id="smartcrateBuscador" placeholder="Buscar por título, artista o género…" data-i18n-hold="sc-buscador-placeholder" style="flex:1 1 220px;min-width:180px;background:var(--panel,#0b0f18);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:7px 12px;font-size:13px;" />
+                <select id="smartcrateCamelotFiltro" style="background:var(--panel,#0b0f18);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:13px;" title="Filtrar por tonalidad Camelot" data-i18n-title="sc-camelot-title">
+                  <option value="" data-i18n="sc-opt-todas-claves">Todas las claves</option>
                 </select>
               </div>
               <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
-                <label style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.5);">Tipo de evento (macro — calibra el rango de BPM)</label>
+                <label style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.5);" data-i18n="sc-tipo-evento-label">Tipo de evento (macro — calibra el rango de BPM)</label>
                 <select id="smartcrateEvento" style="background:var(--panel,#0b0f18);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:13px;">
-                  <option value="quince">15s / general (±4%)</option>
-                  <option value="bodas">Bodas (±3%)</option>
-                  <option value="corporativos">Corporativos (±3%)</option>
-                  <option value="clubs_latinos">Clubs Latinos (±6%)</option>
+                  <option value="quince" data-i18n="sc-opt-quince">15s / general (±4%)</option>
+                  <option value="bodas" data-i18n="sc-opt-bodas">Bodas (±3%)</option>
+                  <option value="corporativos" data-i18n="sc-opt-corporativos">Corporativos (±3%)</option>
+                  <option value="clubs_latinos" data-i18n="sc-opt-clubs">Clubs Latinos (±6%)</option>
                   <option value="edm">EDM (±8%)</option>
                 </select>
                 <span id="smartcrateContador" style="font-size:12px;color:rgba(255,255,255,.4);margin-left:auto;"></span>
               </div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;">
                 <div>
-                  <h4 style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.5);">Catálogo (clic para ver compatibles)</h4>
+                  <h4 style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.5);" data-i18n="sc-catalogo-h4">Catálogo (clic para ver compatibles)</h4>
                   <div id="smartcrateTabla" style="max-height:520px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;"></div>
                 </div>
                 <div>
-                  <h4 style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.5);">Compatibles con la selección</h4>
+                  <h4 style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.5);" data-i18n="sc-compatibles-h4">Compatibles con la selección</h4>
                   <div id="smartcrateCompatibles" style="max-height:520px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;">
-                    <div style="padding:16px;color:rgba(255,255,255,.4);font-size:13px;">Elige un track del catálogo.</div>
+                    <div style="padding:16px;color:rgba(255,255,255,.4);font-size:13px;" data-i18n="sc-elige-track">Elige un track del catálogo.</div>
                   </div>
                 </div>
               </div>
             </div>
 
             <div class="sc-panel" id="scPanelExperiences">
-              <p style="font-size:12px;color:rgba(255,255,255,.5);margin:0 0 14px;max-width:70ch;">
+              <p style="font-size:12px;color:rgba(255,255,255,.5);margin:0 0 14px;max-width:70ch;" data-i18n="sc-experiences-desc">
                 Capa "micro" de curaduría temática (afina el estilo dentro del evento ya elegido arriba). Solo las Experiences
                 con un filtro real sobre tu catálogo están activas — el resto queda honesto como "Coming Soon" hasta que
                 el catálogo real tenga esa etiqueta (ninguna curaduría se inventa).
@@ -1611,26 +1611,26 @@
 
             <div class="sc-panel" id="scPanelLiveListening">
               <div style="border:1px solid var(--line);border-radius:10px;padding:18px;max-width:640px;">
-                <h4 style="margin:0 0 8px;font-size:13px;color:#fff;">Cazador Acústico (real, vía ACRCloud)</h4>
-                <p style="margin:0 0 14px;font-size:12px;color:rgba(255,255,255,.55);line-height:1.6;">
+                <h4 style="margin:0 0 8px;font-size:13px;color:#fff;" data-i18n="sc-cazador-title">Cazador Acústico (real, vía ACRCloud)</h4>
+                <p style="margin:0 0 14px;font-size:12px;color:rgba(255,255,255,.55);line-height:1.6;" data-i18n="sc-cazador-desc">
                   La identificación en vivo por micrófono ya existe y está verificada en producción — vive en el panel de
                   <b style="color:var(--gold-lt,var(--gold));">Elixis Console</b> (identidad DjMago, Modo A "bajo demanda" por voz
                   y Modo B "Cazador Musical" continuo cada 18s). Esta pestaña no duplica esa captura de audio — te lleva
                   directo a activarla.
                 </p>
-                <button type="button" id="scIrACazador" style="background:var(--gold);border:none;color:#0a0e16;border-radius:8px;padding:9px 18px;font-size:12.5px;font-weight:800;cursor:pointer;">Abrir Elixis Console →</button>
+                <button type="button" id="scIrACazador" style="background:var(--gold);border:none;color:#0a0e16;border-radius:8px;padding:9px 18px;font-size:12.5px;font-weight:800;cursor:pointer;" data-i18n="sc-btn-abrir-console">Abrir Elixis Console →</button>
               </div>
             </div>
 
             <div class="sc-panel" id="scPanelSetlist">
               <div style="border:1px solid var(--line);border-radius:10px;padding:18px;max-width:640px;">
-                <h4 style="margin:0 0 8px;font-size:13px;color:#fff;">Live Setlist (real, del Cazador Musical)</h4>
-                <p style="margin:0 0 14px;font-size:12px;color:rgba(255,255,255,.55);line-height:1.6;">
+                <h4 style="margin:0 0 8px;font-size:13px;color:#fff;" data-i18n="sc-setlist-title">Live Setlist (real, del Cazador Musical)</h4>
+                <p style="margin:0 0 14px;font-size:12px;color:rgba(255,255,255,.55);line-height:1.6;" data-i18n="sc-setlist-desc">
                   El registro en vivo de lo detectado por el Cazador Acústico, con exportación a <b>.m3u</b>, ya existe en el
                   panel de Elixis Console (<code>#ewSetlist</code>). Se mantiene ahí por ahora — fusionarlo físicamente aquí es
                   un paso aparte, no de este ticket, para no arriesgar el panel que ya funciona.
                 </p>
-                <button type="button" id="scIrASetlist" style="background:transparent;border:1px solid var(--gold);color:var(--gold-lt,var(--gold));border-radius:8px;padding:9px 18px;font-size:12.5px;font-weight:800;cursor:pointer;">Ver Live Setlist en Elixis Console →</button>
+                <button type="button" id="scIrASetlist" style="background:transparent;border:1px solid var(--gold);color:var(--gold-lt,var(--gold));border-radius:8px;padding:9px 18px;font-size:12.5px;font-weight:800;cursor:pointer;" data-i18n="sc-btn-ver-setlist">Ver Live Setlist en Elixis Console →</button>
               </div>
             </div>
           </div>
@@ -1656,7 +1656,7 @@
               </div>
             </div>
             <div class="pf-section">
-              <div class="pf-section-head">Bio</div>
+              <div class="pf-section-head" data-i18n="pf-bio-head">Bio</div>
               <p class="pf-bio" id="pf-bio">—</p>
             </div>
 
@@ -1665,21 +1665,21 @@
                 <div class="pf-section-head" id="pf-rev-title">Opiniones</div>
                 <div class="pf-rev-avg" id="pf-rev-avg"></div>
                 <div class="pf-rate" id="pf-rate">
-                  <div class="pf-rate-lead">Deja tu opinión</div>
-                  <div class="pf-stars-input" id="pf-stars-input" role="group" aria-label="Tu valoración de 1 a 5 estrellas">
-                    <button type="button" class="pf-star" data-star="1" aria-label="1 estrella">★</button>
-                    <button type="button" class="pf-star" data-star="2" aria-label="2 estrellas">★</button>
-                    <button type="button" class="pf-star" data-star="3" aria-label="3 estrellas">★</button>
-                    <button type="button" class="pf-star" data-star="4" aria-label="4 estrellas">★</button>
-                    <button type="button" class="pf-star" data-star="5" aria-label="5 estrellas">★</button>
+                  <div class="pf-rate-lead" data-i18n="pf-rate-lead">Deja tu opinión</div>
+                  <div class="pf-stars-input" id="pf-stars-input" role="group" aria-label="Tu valoración de 1 a 5 estrellas" data-i18n-aria="pf-stars-aria">
+                    <button type="button" class="pf-star" data-star="1" aria-label="1 estrella" data-i18n-aria="pf-star-1">★</button>
+                    <button type="button" class="pf-star" data-star="2" aria-label="2 estrellas" data-i18n-aria="pf-star-2">★</button>
+                    <button type="button" class="pf-star" data-star="3" aria-label="3 estrellas" data-i18n-aria="pf-star-3">★</button>
+                    <button type="button" class="pf-star" data-star="4" aria-label="4 estrellas" data-i18n-aria="pf-star-4">★</button>
+                    <button type="button" class="pf-star" data-star="5" aria-label="5 estrellas" data-i18n-aria="pf-star-5">★</button>
                   </div>
                   <div class="pf-rate-dialog" id="pf-rate-dialog">
                     <div class="pf-rate-picked" id="pf-rate-picked"></div>
-                    <div class="pf-rate-lowhint" id="pf-rate-lowhint">Cuéntanos: ¿por qué esa valoración y no 5 estrellas? ¿En qué podemos mejorar? Tu explicación ayuda.</div>
-                    <textarea id="pf-rate-comment" rows="3" maxlength="600" placeholder="Escribe tu comentario…"></textarea>
+                    <div class="pf-rate-lowhint" id="pf-rate-lowhint" data-i18n="pf-rate-lowhint">Cuéntanos: ¿por qué esa valoración y no 5 estrellas? ¿En qué podemos mejorar? Tu explicación ayuda.</div>
+                    <textarea id="pf-rate-comment" rows="3" maxlength="600" placeholder="Escribe tu comentario…" data-i18n-hold="pf-comment-placeholder"></textarea>
                     <div class="pf-rate-actions">
-                      <button type="button" class="pf-rate-cancel" id="pf-rate-cancel">Cancelar</button>
-                      <button type="button" class="pf-rate-submit" id="pf-rate-submit">Publicar opinión</button>
+                      <button type="button" class="pf-rate-cancel" id="pf-rate-cancel" data-i18n="pf-btn-cancelar">Cancelar</button>
+                      <button type="button" class="pf-rate-submit" id="pf-rate-submit" data-i18n="profile-review-cta-btn-user">Publicar opinión</button>
                     </div>
                     <div class="pf-rate-msg" id="pf-rate-msg"></div>
                   </div>
@@ -1687,10 +1687,10 @@
                 <div class="pf-reviews" id="pf-reviews"></div>
               </div>
               <div class="pf-section pf-qr-card">
-                <div class="pf-section-head">Interactuar</div>
+                <div class="pf-section-head" data-i18n="profile-interactuar-title">Interactuar</div>
                 <div class="pf-qr-paper"><div id="pf-qrcode"></div></div>
-                <div class="pf-qr-cap">Comparte tu enlace de invitación</div>
-                <button class="pf-share-btn" id="pf-share" type="button">Compartir enlace</button>
+                <div class="pf-qr-cap" data-i18n="pf-qr-cap">Comparte tu enlace de invitación</div>
+                <button class="pf-share-btn" id="pf-share" type="button" data-i18n="pf-btn-compartir">Compartir enlace</button>
               </div>
             </div>
           </div>
@@ -1704,85 +1704,85 @@
         <aside class="staff-side3" id="staff-side3">
           <!-- Encabezado decorativo + botón contraer -->
           <div class="side3-top">
-            <button type="button" class="side3-collapse" id="side3-collapse" title="Contraer / expandir menú" aria-label="Contraer o expandir el menú lateral">
+            <button type="button" class="side3-collapse" id="side3-collapse" title="Contraer / expandir menú" aria-label="Contraer o expandir el menú lateral" data-i18n-title="side3-collapse-title" data-i18n-aria="side3-collapse-title">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
             </button>
-            <span class="side3-brand">Staff</span>
+            <span class="side3-brand" data-i18n="staff-nav-staff">Staff</span>
           </div>
 
           <!-- Grupo GOBERNANZA (owner) → sección Permisos -->
-          <button type="button" class="side3-group open" data-group="gobernanza" title="Gobernanza">
-            <span class="side3-ic">◆</span><span class="side3-tx">Gobernanza</span><span class="side3-lock" title="Owner · desbloqueado">🔓</span><span class="side3-car">▾</span>
+          <button type="button" class="side3-group open" data-group="gobernanza" title="Gobernanza" data-i18n-title="side3-gobernanza">
+            <span class="side3-ic">◆</span><span class="side3-tx" data-i18n="side3-gobernanza">Gobernanza</span><span class="side3-lock" title="Owner · desbloqueado" data-i18n-title="side3-owner-unlocked">🔓</span><span class="side3-car">▾</span>
           </button>
           <div class="side3-items open" data-items="gobernanza">
-            <button type="button" class="side3-link active" data-sec="gob" title="Permisos"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></span><span class="side3-tx">Permisos</span></button>
+            <button type="button" class="side3-link active" data-sec="gob" title="Permisos" data-i18n-title="side3-permisos"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></span><span class="side3-tx" data-i18n="side3-permisos">Permisos</span></button>
           </div>
 
           <!-- Grupo CLIENTES -->
-          <button type="button" class="side3-group" data-group="clientes" aria-label="Clientes">
-            <span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span class="side3-tx">Clientes</span><span class="side3-car">▾</span>
+          <button type="button" class="side3-group" data-group="clientes" aria-label="Clientes" data-i18n-aria="side3-clientes">
+            <span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span class="side3-tx" data-i18n="side3-clientes">Clientes</span><span class="side3-car">▾</span>
           </button>
           <div class="side3-items" data-items="clientes">
-            <button type="button" class="side3-link" data-sec="admin" data-nav="leads" title="Leads"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span class="side3-tx">Leads</span></button>
-            <button type="button" class="side3-link" data-sec="admin" data-nav="actividad" title="Actividad"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span><span class="side3-tx">Actividad</span></button>
-            <button type="button" class="side3-link" data-sec="admin" data-nav="eb-orders" title="Órdenes Event Builder"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span><span class="side3-tx">Órdenes Event Builder</span></button>
-            <button type="button" class="side3-link" data-sec="admin" data-nav="crm" title="Base CRM"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span><span class="side3-tx">Base CRM</span></button>
+            <button type="button" class="side3-link" data-sec="admin" data-nav="leads" title="Leads" data-i18n-title="side3-leads"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span class="side3-tx" data-i18n="side3-leads">Leads</span></button>
+            <button type="button" class="side3-link" data-sec="admin" data-nav="actividad" title="Actividad" data-i18n-title="side3-actividad"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span><span class="side3-tx" data-i18n="side3-actividad">Actividad</span></button>
+            <button type="button" class="side3-link" data-sec="admin" data-nav="eb-orders" title="Órdenes Event Builder" data-i18n-title="side3-eb-orders"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span><span class="side3-tx" data-i18n="side3-eb-orders">Órdenes Event Builder</span></button>
+            <button type="button" class="side3-link" data-sec="admin" data-nav="crm" title="Base CRM" data-i18n-title="side3-crm"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span><span class="side3-tx" data-i18n="side3-crm">Base CRM</span></button>
           </div>
 
           <!-- Grupo EQUIPO -->
-          <button type="button" class="side3-group" data-group="equipo" aria-label="Equipo">
-            <span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span class="side3-tx">Equipo</span><span class="side3-car">▾</span>
+          <button type="button" class="side3-group" data-group="equipo" aria-label="Equipo" data-i18n-aria="side3-equipo">
+            <span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span class="side3-tx" data-i18n="side3-equipo">Equipo</span><span class="side3-car">▾</span>
           </button>
           <div class="side3-items" data-items="equipo">
-            <button type="button" class="side3-link" data-sec="admin" data-nav="djs" title="Gestión de DJs"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></span><span class="side3-tx">Gestión de DJs</span></button>
-            <button type="button" class="side3-link" data-sec="admin" data-nav="staff" title="Staff"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span><span class="side3-tx">Staff</span></button>
-            <button type="button" class="side3-link" data-sec="admin" data-nav="create-profiles" title="Crear Perfiles"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg></span><span class="side3-tx">Crear Perfiles</span><span class="side3-lock" title="Owner-only">🔑</span></button>
-            <button type="button" class="side3-link" data-sec="admin" data-nav="registry-section" title="Certificados"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span><span class="side3-tx">Certificados</span></button>
-            <button type="button" class="side3-link" data-sec="admin" data-nav="analytics" title="Analytics"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span><span class="side3-tx">Analytics</span></button>
+            <button type="button" class="side3-link" data-sec="admin" data-nav="djs" title="Gestión de DJs" data-i18n-title="side3-gestion-djs"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></span><span class="side3-tx" data-i18n="side3-gestion-djs">Gestión de DJs</span></button>
+            <button type="button" class="side3-link" data-sec="admin" data-nav="staff" title="Staff" data-i18n-title="staff-nav-staff"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span><span class="side3-tx" data-i18n="staff-nav-staff">Staff</span></button>
+            <button type="button" class="side3-link" data-sec="admin" data-nav="create-profiles" title="Crear Perfiles" data-i18n-title="side3-crear-perfiles"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg></span><span class="side3-tx" data-i18n="side3-crear-perfiles">Crear Perfiles</span><span class="side3-lock" title="Owner-only" data-i18n-title="side3-owner-only">🔑</span></button>
+            <button type="button" class="side3-link" data-sec="admin" data-nav="registry-section" title="Certificados" data-i18n-title="side3-certificados"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span><span class="side3-tx" data-i18n="side3-certificados">Certificados</span></button>
+            <button type="button" class="side3-link" data-sec="admin" data-nav="analytics" title="Analytics" data-i18n-title="side3-analytics"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span><span class="side3-tx" data-i18n="side3-analytics">Analytics</span></button>
           </div>
 
           <!-- Grupo OPERACIONES -->
-          <button type="button" class="side3-group" data-group="operaciones" aria-label="Operaciones">
-            <span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg></span><span class="side3-tx">Operaciones</span><span class="side3-car">▾</span>
+          <button type="button" class="side3-group" data-group="operaciones" aria-label="Operaciones" data-i18n-aria="side3-operaciones">
+            <span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg></span><span class="side3-tx" data-i18n="side3-operaciones">Operaciones</span><span class="side3-car">▾</span>
           </button>
           <div class="side3-items" data-items="operaciones">
-            <button type="button" class="side3-link" data-sec="admin" data-nav="content" title="Contenido y Precios"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></span><span class="side3-tx">Contenido y Precios</span></button>
-            <button type="button" class="side3-link" data-sec="admin" data-go="mdjpro" title="MDJPRO Descargas"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span><span class="side3-tx">MDJPRO Descargas</span><span class="side3-lock" title="Owner-only">🔑</span></button>
-            <button type="button" class="side3-link" data-sec="admin" data-nav="apps" title="Hosting de Apps"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="9" height="9" rx="1"/><rect x="13" y="2" width="9" height="9" rx="1"/><rect x="2" y="13" width="9" height="9" rx="1"/><rect x="13" y="13" width="9" height="9" rx="1"/></svg></span><span class="side3-tx">Hosting de Apps</span></button>
-            <button type="button" class="side3-link" data-sec="admin" data-nav="production" title="Producción"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span class="side3-tx">Producción</span></button>
-            <button type="button" class="side3-link" data-sec="inbox" title="Inbox · Tickets"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span><span class="side3-tx">Inbox · Tickets</span></button>
+            <button type="button" class="side3-link" data-sec="admin" data-nav="content" title="Contenido y Precios" data-i18n-title="side3-content"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></span><span class="side3-tx" data-i18n="side3-content">Contenido y Precios</span></button>
+            <button type="button" class="side3-link" data-sec="admin" data-go="mdjpro" title="MDJPRO Descargas" data-i18n-title="side3-mdjpro"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span><span class="side3-tx" data-i18n="side3-mdjpro">MDJPRO Descargas</span><span class="side3-lock" title="Owner-only" data-i18n-title="side3-owner-only">🔑</span></button>
+            <button type="button" class="side3-link" data-sec="admin" data-nav="apps" title="Hosting de Apps" data-i18n-title="side3-apps"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="9" height="9" rx="1"/><rect x="13" y="2" width="9" height="9" rx="1"/><rect x="2" y="13" width="9" height="9" rx="1"/><rect x="13" y="13" width="9" height="9" rx="1"/></svg></span><span class="side3-tx" data-i18n="side3-apps">Hosting de Apps</span></button>
+            <button type="button" class="side3-link" data-sec="admin" data-nav="production" title="Producción" data-i18n-title="side3-produccion"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span class="side3-tx" data-i18n="side3-produccion">Producción</span></button>
+            <button type="button" class="side3-link" data-sec="inbox" title="Inbox · Tickets" data-i18n-title="side3-inbox"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span><span class="side3-tx" data-i18n="side3-inbox">Inbox · Tickets</span></button>
           </div>
 
           <!-- Grupo BÓVEDA LEGAL — acordeón propio (no un link dentro de Operaciones):
                sus 5 sub-items muestran el panel #sc3-legal (mismo patrón que
                Inbox, sidebar visible) y le dicen a contracts-engine.html qué
                plantilla abrir por postMessage — ver data-legal-tpl abajo. -->
-          <button type="button" class="side3-group" data-group="legal" aria-label="Bóveda Legal">
-            <span class="side3-ic">⚖️</span><span class="side3-tx">Bóveda Legal</span><span class="side3-car">▾</span>
+          <button type="button" class="side3-group" data-group="legal" aria-label="Bóveda Legal" data-i18n-aria="side3-boveda-legal">
+            <span class="side3-ic">⚖️</span><span class="side3-tx" data-i18n="side3-boveda-legal">Bóveda Legal</span><span class="side3-car">▾</span>
           </button>
           <div class="side3-items" data-items="legal">
-            <button type="button" class="side3-link" data-legal-tpl="dj" title="Contrato Artista / DJ"><span class="side3-ic">🎧</span><span class="side3-tx">Contrato Artista / DJ</span></button>
-            <button type="button" class="side3-link" data-legal-tpl="live_band" title="Orquesta / Banda en Vivo"><span class="side3-ic">🎷</span><span class="side3-tx">Orquesta / Banda en Vivo</span></button>
-            <button type="button" class="side3-link" data-legal-tpl="solo_artist" title="Cantante / Solista"><span class="side3-ic">🎤</span><span class="side3-tx">Cantante / Solista</span></button>
-            <button type="button" class="side3-link" data-legal-tpl="subcontractor_show" title="Show / Hora Loca (Subcontratista)"><span class="side3-ic">🎪</span><span class="side3-tx">Show / Hora Loca</span></button>
-            <button type="button" class="side3-link" data-legal-tpl="venue" title="Venue / Residencia"><span class="side3-ic">🏛️</span><span class="side3-tx">Venue / Residencia</span></button>
-            <button type="button" class="side3-link" data-legal-tpl="private_event" title="Cliente Particular / Boda / 15 Años"><span class="side3-ic">💍</span><span class="side3-tx">Cliente Particular / Boda</span></button>
-            <button type="button" class="side3-link" data-legal-tpl="corporate" title="Eventos Corporativos"><span class="side3-ic">🏢</span><span class="side3-tx">Eventos Corporativos</span></button>
-            <button type="button" class="side3-link" data-legal-tpl="staff" title="Staff / Operador Técnico"><span class="side3-ic">🎚️</span><span class="side3-tx">Staff / Operador Técnico</span></button>
-            <button type="button" class="side3-link" data-legal-tpl="w9" title="Formulario IRS W-9"><span class="side3-ic">🧾</span><span class="side3-tx">Formulario IRS W-9</span></button>
+            <button type="button" class="side3-link" data-legal-tpl="dj" title="Contrato Artista / DJ" data-i18n-title="side3-legal-dj"><span class="side3-ic">🎧</span><span class="side3-tx" data-i18n="side3-legal-dj">Contrato Artista / DJ</span></button>
+            <button type="button" class="side3-link" data-legal-tpl="live_band" title="Orquesta / Banda en Vivo" data-i18n-title="side3-legal-band"><span class="side3-ic">🎷</span><span class="side3-tx" data-i18n="side3-legal-band">Orquesta / Banda en Vivo</span></button>
+            <button type="button" class="side3-link" data-legal-tpl="solo_artist" title="Cantante / Solista" data-i18n-title="side3-legal-solista"><span class="side3-ic">🎤</span><span class="side3-tx" data-i18n="side3-legal-solista">Cantante / Solista</span></button>
+            <button type="button" class="side3-link" data-legal-tpl="subcontractor_show" title="Show / Hora Loca (Subcontratista)" data-i18n-title="side3-legal-show-title"><span class="side3-ic">🎪</span><span class="side3-tx" data-i18n="side3-legal-show">Show / Hora Loca</span></button>
+            <button type="button" class="side3-link" data-legal-tpl="venue" title="Venue / Residencia" data-i18n-title="side3-legal-venue"><span class="side3-ic">🏛️</span><span class="side3-tx" data-i18n="side3-legal-venue">Venue / Residencia</span></button>
+            <button type="button" class="side3-link" data-legal-tpl="private_event" title="Cliente Particular / Boda / 15 Años" data-i18n-title="side3-legal-particular-title"><span class="side3-ic">💍</span><span class="side3-tx" data-i18n="side3-legal-particular">Cliente Particular / Boda</span></button>
+            <button type="button" class="side3-link" data-legal-tpl="corporate" title="Eventos Corporativos" data-i18n-title="side3-legal-corporate"><span class="side3-ic">🏢</span><span class="side3-tx" data-i18n="side3-legal-corporate">Eventos Corporativos</span></button>
+            <button type="button" class="side3-link" data-legal-tpl="staff" title="Staff / Operador Técnico" data-i18n-title="side3-legal-staff"><span class="side3-ic">🎚️</span><span class="side3-tx" data-i18n="side3-legal-staff">Staff / Operador Técnico</span></button>
+            <button type="button" class="side3-link" data-legal-tpl="w9" title="Formulario IRS W-9" data-i18n-title="side3-legal-w9"><span class="side3-ic">🧾</span><span class="side3-tx" data-i18n="side3-legal-w9">Formulario IRS W-9</span></button>
           </div>
 
           <!-- Grupo EVENTOS -->
-          <button type="button" class="side3-group" data-group="eventos" aria-label="Eventos">
-            <span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span><span class="side3-tx">Eventos</span><span class="side3-car">▾</span>
+          <button type="button" class="side3-group" data-group="eventos" aria-label="Eventos" data-i18n-aria="side3-eventos">
+            <span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span><span class="side3-tx" data-i18n="side3-eventos">Eventos</span><span class="side3-car">▾</span>
           </button>
           <div class="side3-items" data-items="eventos">
             <button type="button" class="side3-link" data-sec="admin" data-nav="wedding-plan" title="Wedding Plan"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span><span class="side3-tx">Wedding Plan</span></button>
-            <button type="button" class="side3-link" data-sec="admin" data-go="ev-quinceanera" data-nav="event-blueprint" title="Quinceañera"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg></span><span class="side3-tx">Quinceañera</span></button>
-            <button type="button" class="side3-link" data-sec="admin" data-go="ev-show" data-nav="event-blueprint" title="Show / Concierto"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></span><span class="side3-tx">Show / Concierto</span></button>
-            <button type="button" class="side3-link" data-sec="admin" data-go="ev-privada" data-nav="event-blueprint" title="Fiesta Privada"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span class="side3-tx">Fiesta Privada</span></button>
-            <button type="button" class="side3-link" data-sec="admin" data-go="ev-corporativa" data-nav="event-blueprint" title="Fiesta Corporativa"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg></span><span class="side3-tx">Fiesta Corporativa</span></button>
-            <button type="button" class="side3-link" data-sec="admin" data-nav="fashion-show-panel" title="Pasarela / Fashion Show"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></span><span class="side3-tx">Pasarela / Fashion Show</span></button>
+            <button type="button" class="side3-link" data-sec="admin" data-go="ev-quinceanera" data-nav="event-blueprint" title="Quinceañera" data-i18n-title="side3-quinceanera"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg></span><span class="side3-tx" data-i18n="side3-quinceanera">Quinceañera</span></button>
+            <button type="button" class="side3-link" data-sec="admin" data-go="ev-show" data-nav="event-blueprint" title="Show / Concierto" data-i18n-title="side3-show-concierto"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></span><span class="side3-tx" data-i18n="side3-show-concierto">Show / Concierto</span></button>
+            <button type="button" class="side3-link" data-sec="admin" data-go="ev-privada" data-nav="event-blueprint" title="Fiesta Privada" data-i18n-title="side3-fiesta-privada"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span class="side3-tx" data-i18n="side3-fiesta-privada">Fiesta Privada</span></button>
+            <button type="button" class="side3-link" data-sec="admin" data-go="ev-corporativa" data-nav="event-blueprint" title="Fiesta Corporativa" data-i18n-title="side3-fiesta-corp"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg></span><span class="side3-tx" data-i18n="side3-fiesta-corp">Fiesta Corporativa</span></button>
+            <button type="button" class="side3-link" data-sec="admin" data-nav="fashion-show-panel" title="Pasarela / Fashion Show" data-i18n-title="side3-fashion-show"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></span><span class="side3-tx" data-i18n="side3-fashion-show">Pasarela / Fashion Show</span></button>
           </div>
         </aside>
 
@@ -1795,34 +1795,34 @@
           <!-- 1 · Jerarquía del equipo -->
           <section class="gov-section">
             <div class="gov-head">
-              <span class="eyebrow">01 · Equipo</span>
-              <h3>Jerarquía del equipo</h3>
-              <p>El Owner en la cúspide. Managers y vendedores entrarán a este mismo edificio con vistas restringidas por rol (RBAC en la interfaz + RLS en los datos).</p>
+              <span class="eyebrow" data-i18n="gov-eyebrow-01">01 · Equipo</span>
+              <h3 data-i18n="gov-team-title">Jerarquía del equipo</h3>
+              <p data-i18n="gov-team-desc">El Owner en la cúspide. Managers y vendedores entrarán a este mismo edificio con vistas restringidas por rol (RBAC en la interfaz + RLS en los datos).</p>
             </div>
             <div class="gov-grid">
               <div class="gov-card apex">
                 <div class="who">
                   <div class="av">G</div>
-                  <div><div class="nm">Gerardo A. Valle</div><div class="sub">Cuenta Owner · SuperAdmin</div></div>
+                  <div><div class="nm">Gerardo A. Valle</div><div class="sub" data-i18n="gov-owner-sub">Cuenta Owner · SuperAdmin</div></div>
                 </div>
-                <span class="gov-chip owner">◆ Owner</span>
-                <div class="access">Acceso total: caja real, Matrix BFI, márgenes, precios, configuración y soberanía del sistema.</div>
+                <span class="gov-chip owner" data-i18n="gov-chip-owner">◆ Owner</span>
+                <div class="access" data-i18n="gov-owner-access">Acceso total: caja real, Matrix BFI, márgenes, precios, configuración y soberanía del sistema.</div>
               </div>
               <div class="gov-card ghost">
                 <div class="who">
                   <div class="av">L</div>
-                  <div><div class="nm">Lucciano Valle <span class="gov-demo">ejemplo</span></div><div class="sub">Manager (futuro)</div></div>
+                  <div><div class="nm">Lucciano Valle <span class="gov-demo" data-i18n="gov-demo-tag">ejemplo</span></div><div class="sub" data-i18n="gov-manager-sub">Manager (futuro)</div></div>
                 </div>
-                <span class="gov-chip">Manager</span>
-                <div class="access">Operaciones y supervisión. Las herramientas sensibles requieren llave temporal del Owner.</div>
+                <span class="gov-chip" data-i18n="gov-chip-manager">Manager</span>
+                <div class="access" data-i18n="gov-manager-access">Operaciones y supervisión. Las herramientas sensibles requieren llave temporal del Owner.</div>
               </div>
               <div class="gov-card ghost">
                 <div class="who">
                   <div class="av">+</div>
-                  <div><div class="nm">Vendedor</div><div class="sub">Sin vendedores todavía</div></div>
+                  <div><div class="nm" data-i18n="gov-chip-vendedor">Vendedor</div><div class="sub" data-i18n="gov-vendedor-sub">Sin vendedores todavía</div></div>
                 </div>
-                <span class="gov-chip">Vendedor</span>
-                <div class="access">Vista de ventas restringida. La invitación se habilita al conectar el backend de cuentas.</div>
+                <span class="gov-chip" data-i18n="gov-chip-vendedor">Vendedor</span>
+                <div class="access" data-i18n="gov-vendedor-access">Vista de ventas restringida. La invitación se habilita al conectar el backend de cuentas.</div>
               </div>
             </div>
           </section>
@@ -1830,53 +1830,53 @@
           <!-- 2 · Aprobación de llaves (Human-in-the-Loop) -->
           <section class="gov-section">
             <div class="gov-head">
-              <span class="eyebrow">02 · Human-in-the-Loop</span>
-              <h3>Aprobación de llaves</h3>
-              <p>Cuando un miembro del staff pide una herramienta sensible de ELIXIS (envíos masivos, cambio de precios), la solicitud aparece aquí. Tú, y solo tú, otorgas o niegas la llave temporal.</p>
+              <span class="eyebrow" data-i18n="gov-eyebrow-02">02 · Human-in-the-Loop</span>
+              <h3 data-i18n="gov-keys-title">Aprobación de llaves</h3>
+              <p data-i18n="gov-keys-desc">Cuando un miembro del staff pide una herramienta sensible de ELIXIS (envíos masivos, cambio de precios), la solicitud aparece aquí. Tú, y solo tú, otorgas o niegas la llave temporal.</p>
             </div>
             <div id="gov-requests">
               <div class="gov-req" data-req="1">
                 <div class="body">
-                  <div class="t"><b>Lucciano Valle</b> (Manager) solicita: <b>herramienta de correos masivos de ELIXIS</b> <span class="gov-demo">ejemplo</span></div>
-                  <div class="meta">Motivo: campaña de evento · llave temporal solicitada: 24 h · hace 5 min</div>
+                  <div class="t" data-i18n="gov-req1-text"><b>Lucciano Valle</b> (Manager) solicita: <b>herramienta de correos masivos de ELIXIS</b> <span class="gov-demo">ejemplo</span></div>
+                  <div class="meta" data-i18n="gov-req1-meta">Motivo: campaña de evento · llave temporal solicitada: 24 h · hace 5 min</div>
                 </div>
                 <div class="actions">
-                  <button type="button" class="gov-btn ok" data-act="ok" data-who="Lucciano Valle" data-tool="Correos masivos ELIXIS">Autorizar</button>
-                  <button type="button" class="gov-btn no" data-act="no" data-who="Lucciano Valle" data-tool="Correos masivos ELIXIS">Denegar</button>
+                  <button type="button" class="gov-btn ok" data-act="ok" data-who="Lucciano Valle" data-tool="Correos masivos ELIXIS" data-i18n="gov-btn-autorizar">Autorizar</button>
+                  <button type="button" class="gov-btn no" data-act="no" data-who="Lucciano Valle" data-tool="Correos masivos ELIXIS" data-i18n="gov-btn-denegar">Denegar</button>
                 </div>
               </div>
               <div class="gov-req" data-req="2">
                 <div class="body">
-                  <div class="t"><b>ELIXIS</b> propone: <b>cambiar precio</b> — Camiseta Tour $30 → $25 (promoción) <span class="gov-demo">ejemplo</span></div>
-                  <div class="meta">Cierre de negociación · requiere aprobación humana · hace 12 min</div>
+                  <div class="t" data-i18n="gov-req2-text"><b>ELIXIS</b> propone: <b>cambiar precio</b> — Camiseta Tour $30 → $25 (promoción) <span class="gov-demo">ejemplo</span></div>
+                  <div class="meta" data-i18n="gov-req2-meta">Cierre de negociación · requiere aprobación humana · hace 12 min</div>
                 </div>
                 <div class="actions">
-                  <button type="button" class="gov-btn ok" data-act="ok" data-who="ELIXIS" data-tool="Cambio de precio (Camiseta Tour)">Autorizar</button>
-                  <button type="button" class="gov-btn no" data-act="no" data-who="ELIXIS" data-tool="Cambio de precio (Camiseta Tour)">Denegar</button>
+                  <button type="button" class="gov-btn ok" data-act="ok" data-who="ELIXIS" data-tool="Cambio de precio (Camiseta Tour)" data-i18n="gov-btn-autorizar">Autorizar</button>
+                  <button type="button" class="gov-btn no" data-act="no" data-who="ELIXIS" data-tool="Cambio de precio (Camiseta Tour)" data-i18n="gov-btn-denegar">Denegar</button>
                 </div>
               </div>
             </div>
-            <div id="gov-requests-empty" class="gov-empty" style="display:none;">🔒 Sin solicitudes pendientes. Las nuevas peticiones de llave aparecerán aquí.</div>
+            <div id="gov-requests-empty" class="gov-empty" style="display:none;" data-i18n="gov-req-empty">🔒 Sin solicitudes pendientes. Las nuevas peticiones de llave aparecerán aquí.</div>
           </section>
 
           <!-- 3 · Registro de auditoría -->
           <section class="gov-section">
             <div class="gov-head">
-              <span class="eyebrow">03 · Trazabilidad</span>
-              <h3>Registro de auditoría</h3>
-              <p>Quién ejecutó qué, y cuándo. Cada acción de un agente (ELIXIS) o del staff queda registrada de forma transparente.</p>
+              <span class="eyebrow" data-i18n="gov-eyebrow-03">03 · Trazabilidad</span>
+              <h3 data-i18n="gov-audit-title">Registro de auditoría</h3>
+              <p data-i18n="gov-audit-desc">Quién ejecutó qué, y cuándo. Cada acción de un agente (ELIXIS) o del staff queda registrada de forma transparente.</p>
             </div>
             <div class="gov-table-wrap">
               <table class="gov-table">
-                <thead><tr><th>Fecha / Hora</th><th>Actor</th><th>Acción</th><th>Objetivo</th><th>Resultado</th></tr></thead>
+                <thead><tr><th data-i18n="gov-th-fecha">Fecha / Hora</th><th data-i18n="gov-th-actor">Actor</th><th data-i18n="gov-th-accion">Acción</th><th data-i18n="gov-th-objetivo">Objetivo</th><th data-i18n="gov-th-resultado">Resultado</th></tr></thead>
                 <tbody id="gov-audit">
-                  <tr><td>15 ago · 10:42</td><td class="who ai">ELIXIS</td><td>Cerró negociación</td><td>Evento Club Space · $1,600</td><td><span class="res wait">Pend. aprob.</span></td></tr>
-                  <tr><td>15 ago · 09:18</td><td class="who">Gerardo A. Valle</td><td>Autorizó llave</td><td>Correos masivos → Lucciano · 24h</td><td><span class="res ok">Autorizado</span></td></tr>
-                  <tr><td>14 ago · 18:05</td><td class="who ai">ELIXIS</td><td>Redactó mensajes</td><td>3 clientes · seguimiento</td><td><span class="res ok">Enviado</span></td></tr>
+                  <tr><td>15 ago · 10:42</td><td class="who ai">ELIXIS</td><td data-i18n="gov-row1-accion">Cerró negociación</td><td>Evento Club Space · $1,600</td><td><span class="res wait" data-i18n="gov-row1-res">Pend. aprob.</span></td></tr>
+                  <tr><td>15 ago · 09:18</td><td class="who">Gerardo A. Valle</td><td data-i18n="gov-row2-accion">Autorizó llave</td><td>Correos masivos → Lucciano · 24h</td><td><span class="res ok" data-i18n="gov-row-autorizado">Autorizado</span></td></tr>
+                  <tr><td>14 ago · 18:05</td><td class="who ai">ELIXIS</td><td data-i18n="gov-row3-accion">Redactó mensajes</td><td>3 clientes · seguimiento</td><td><span class="res ok" data-i18n="gov-row-enviado">Enviado</span></td></tr>
                 </tbody>
               </table>
             </div>
-            <p style="margin:12px 0 0;font-size:11px;color:rgba(255,255,255,.4);">Filas de ejemplo (demo). El registro real se llenará al conectar el backend de permisos y herramientas de ELIXIS.</p>
+            <p style="margin:12px 0 0;font-size:11px;color:rgba(255,255,255,.4);" data-i18n="gov-audit-demo-note">Filas de ejemplo (demo). El registro real se llenará al conectar el backend de permisos y herramientas de ELIXIS.</p>
           </section>
 
         </div>
@@ -1884,19 +1884,19 @@
 
           <!-- Sección de staff-admin: iframe COMPARTIDO (cambia de sección sin recargar vía __staffNav) -->
           <div class="sc3-panel" id="sc3-admin">
-            <div class="sc3-loading" id="sc3-loading"><span class="acc-spin"></span> <span id="sc3-load-tx">Cargando…</span></div>
+            <div class="sc3-loading" id="sc3-loading"><span class="acc-spin"></span> <span id="sc3-load-tx" data-i18n="staff-cargando">Cargando…</span></div>
             <iframe id="sc3-iframe" class="sc3-frame" aria-label="Sección STAFF"></iframe>
           </div>
           <!-- Inbox · Tickets: staff-config en modo bare -->
           <div class="sc3-panel" id="sc3-inbox">
-            <div class="sc3-loading" id="sc3-inbox-loading"><span class="acc-spin"></span> Cargando Inbox…</div>
+            <div class="sc3-loading" id="sc3-inbox-loading"><span class="acc-spin"></span> <span data-i18n="staff-cargando-inbox">Cargando Inbox…</span></div>
             <iframe id="sc3-inbox-iframe" class="sc3-frame" data-src="./account-settings.html?panel=notifications&bare=1" aria-label="Inbox · Tickets" loading="lazy"></iframe>
           </div>
           <!-- Bóveda Legal: motor de contratos y W-9, mismo patrón que Inbox
                (panel dedicado + iframe perezoso) — vive DENTRO de Gobernanza
                para que el sidebar siga visible, no como vista aparte. -->
           <div class="sc3-panel" id="sc3-legal">
-            <div class="sc3-loading" id="legal-loading"><span class="acc-spin"></span> Cargando Bóveda Legal…</div>
+            <div class="sc3-loading" id="legal-loading"><span class="acc-spin"></span> <span data-i18n="staff-cargando-legal">Cargando Bóveda Legal…</span></div>
             <iframe id="legal-frame" class="sc3-frame" data-src="./contracts-engine.html?v=20260826-docdock" aria-label="Bóveda Legal" loading="lazy" allow="fullscreen" allowfullscreen></iframe>
           </div>
         </div><!-- /staff-content3 -->
@@ -1909,8 +1909,8 @@
       <div class="stub-wrap">
         <div class="stub-card">
           <h2 id="stub-title">Módulo</h2>
-          <p id="stub-desc">Tu vista de staff se habilitará aquí muy pronto. La estructura RBAC ya está lista.</p>
-          <a class="go" href="./admin-dashboard.html">Ir a mi panel actual</a>
+          <p id="stub-desc" data-i18n="staff-stub-desc">Tu vista de staff se habilitará aquí muy pronto. La estructura RBAC ya está lista.</p>
+          <a class="go" href="./admin-dashboard.html" data-i18n="staff-stub-goto">Ir a mi panel actual</a>
         </div>
       </div>
     </div>
@@ -1937,6 +1937,7 @@
       var bar=el('staff-topnav');
       if(!bar) return [];
       bar.innerHTML=html;
+      if(window.i18n){ window.i18n.updateUI(); window.i18n.setupSwitchers(); }
       var topBtns=bar.querySelectorAll('button');
       topBtns.forEach(function(b){
         b.addEventListener('click', function(){
@@ -1960,11 +1961,16 @@
          porque navega fuera; paintStaffTopnav solo engancha clics a <button>,
          así que un ancla se basta sola y no necesita el pintor. */
       var start=
-        '<a href="./index.html" data-top="inicio">Inicio</a>'+
-        '<button type="button" data-href="./academia.html">Academia</button>';
+        '<a href="./index.html" data-top="inicio" data-i18n="staff-nav-inicio">Inicio</a>'+
+        '<button type="button" data-href="./academia.html" data-i18n="staff-nav-academia">Academia</button>';
+      var langSwitcher=
+        '<span class="lang-switcher" style="display:inline-flex;gap:4px;margin-left:8px;">'+
+          '<span class="lang-btn" data-lang="es" style="cursor:pointer;">ES</span>'+
+          '<span class="lang-btn" data-lang="en" style="cursor:pointer;">EN</span>'+
+        '</span>';
       if(role==='owner'){
         return start+
-          '<button type="button" data-top="agenda">Agenda</button>'+
+          '<button type="button" data-top="agenda" data-i18n="nav-agenda">Agenda</button>'+
           /* ⚙ CONFIG pasa de botón interno a ENLACE REAL. Antes era data-top,
              o sea un conmutador de vista dentro de esta misma página: NO tenía
              href, así que era imposible que llevara a la hoja de config por
@@ -1975,9 +1981,9 @@
              el flujo en dos.
              Se deja como <a>: paintStaffTopnav solo engancha clics a <button>,
              y un ancla navega sola, así que el pintor no necesita cambios. */
-          '<a href="./account-settings.html" data-top="config">⚙ Config</a>'+
-          '<button type="button" data-href="./dj-tools.html">DJ Tools</button>'+
-          '<button type="button" data-top="cashflow">Cash Flow</button>'+
+          '<a href="./account-settings.html" data-top="config" data-i18n="staff-nav-config">⚙ Config</a>'+
+          '<button type="button" data-href="./dj-tools.html" data-i18n="staff-nav-djtools">DJ Tools</button>'+
+          '<button type="button" data-top="cashflow" data-i18n="nav-cashflow">Cash Flow</button>'+
           /* MI PERFIL abre la FICHA, que vive aqui dentro (#view-miperfil): banner,
              foto, identidad y valoracion. Antes era un <a> hacia account-settings.html
              — el MISMO destino que ⚙ Config, o sea dos botones distintos llevando a la
@@ -1985,13 +1991,14 @@
              PO: pulsar MI PERFIL y aterrizar en configuraciones.
              Como <button> con data-top engancha con paintStaffTopnav y con
              sincronizarTira, igual que Agenda, Cash Flow y Fenix AI. */
-          '<button type="button" data-top="miperfil">Mi Perfil</button>'+
-          '<button type="button" data-top="gobernanza">Staff</button>'+
-          '<button type="button" data-top="elixis">Fénix AI</button>'+
+          '<button type="button" data-top="miperfil" data-i18n="staff-nav-miperfil">Mi Perfil</button>'+
+          '<button type="button" data-top="gobernanza" data-i18n="staff-nav-staff">Staff</button>'+
+          '<button type="button" data-top="elixis" data-i18n="staff-nav-fenix">Fénix AI</button>'+
           /* MRM IA baja de la barra retirada al menu: es navegacion, y la
              navegacion vive aqui. Va como <a> porque sale de la pagina;
              paintStaffTopnav solo engancha clics a <button>. */
-          '<a href="./road-map.html" id="staff-mrm-link" title="Road Master Map IA">MRM IA</a>'+
+          '<a href="./road-map.html" id="staff-mrm-link" title="Road Master Map IA" data-i18n="nav-roadmap">MRM IA</a>'+
+          langSwitcher+
           /* DIA/NOCHE al final de la tira, como pidio el PO.
              Se muda el boton DE ARRIBA (#ofm-daynight), no el ☀️ que habia aqui.
              Los dos funcionaban, pero NO son equivalentes:
@@ -2006,15 +2013,17 @@
       }
       if(role==='seller'){
         return start+
-          '<button type="button" class="active">Ventas</button>'+
-          '<button type="button" data-href="./account-profile.html">Mi Perfil</button>'+
-          '<button type="button" data-href="./admin-dashboard.html">Mi Panel</button>';
+          '<button type="button" class="active" data-i18n="staff-nav-ventas">Ventas</button>'+
+          '<button type="button" data-href="./account-profile.html" data-i18n="staff-nav-miperfil">Mi Perfil</button>'+
+          '<button type="button" data-href="./admin-dashboard.html" data-i18n="staff-nav-mipanel">Mi Panel</button>'+
+          langSwitcher;
       }
       return start+
-        '<button type="button" data-href="./dj-tools.html">DJ Tools</button>'+
-        '<button type="button" class="active">Operaciones</button>'+
-        '<button type="button" data-href="./account-profile.html">Mi Perfil</button>'+
-        '<button type="button" data-href="./admin-dashboard.html">Mi Panel</button>';
+        '<button type="button" data-href="./dj-tools.html" data-i18n="staff-nav-djtools">DJ Tools</button>'+
+        '<button type="button" class="active" data-i18n="staff-nav-operaciones">Operaciones</button>'+
+        '<button type="button" data-href="./account-profile.html" data-i18n="staff-nav-miperfil">Mi Perfil</button>'+
+        '<button type="button" data-href="./admin-dashboard.html" data-i18n="staff-nav-mipanel">Mi Panel</button>'+
+        langSwitcher;
     }
 
     /* ── Gate STAFF (solo fila dj_profiles.role, nunca JWT solo — patrón admin-dashboard) ── */
@@ -2238,7 +2247,7 @@
 
     /* ── Módulo OWNER: Matrix (BFI + Caja Real Fase 4) + ELIXIS + Gobernanza ── */
     function mountOwner(sb){
-      el('brand-sub').textContent='Owner Command Center';
+      el('brand-sub').textContent=(window.i18n && window.i18n.t('staff-owner-command-center')) || 'Owner Command Center';
       el('module-owner').classList.add('active');
 
       // switch de vistas (Financiero ⇄ ELIXIS)
@@ -2584,7 +2593,7 @@
             }
             if(t.who==='yo'){
               var d=document.createElement('div'); d.className='ew-linea yo';
-              d.innerHTML='<span class="ew-etiqueta ew-etiqueta-yo">Tú</span>'+ewEsc(t.text);
+              d.innerHTML='<span class="ew-etiqueta ew-etiqueta-yo">'+((window.i18n && window.i18n.t('ew-tu-label')) || 'Tú')+'</span>'+ewEsc(t.text);
               box.appendChild(d); ewActualizarChatCentro(); ewScrollAlFinal(box); return;
             }
             if(t.start){
@@ -2761,14 +2770,15 @@
           var d=document.createElement('div');
           if(rol==='yo'){
             d.className='ew-linea yo';
-            d.innerHTML='<span class="ew-etiqueta ew-etiqueta-yo">Tú</span>'+ewEsc(contenido);
+            d.innerHTML='<span class="ew-etiqueta ew-etiqueta-yo">'+((window.i18n && window.i18n.t('ew-tu-label')) || 'Tú')+'</span>'+ewEsc(contenido);
           } else {
             d.className='ew-linea';
             d.innerHTML='<span class="ew-etiqueta ew-etiqueta-elixis">ELIXIS</span>'+ewEsc(contenido);
           }
           box.appendChild(d);
         }
-        var EW_HILO_NOMBRES = { correo:'Correo', legal:'Legal', distribucion:'Distribución', eventos:'Eventos', cazador:'Cazador Musical', general:'General' };
+        var _hnT = function (k, f) { return (window.i18n && window.i18n.t(k)) || f; };
+        var EW_HILO_NOMBRES = { correo:_hnT('ew-modo-correo','Correo'), legal:_hnT('ew-modo-legal','Legal'), distribucion:_hnT('ew-modo-distribucion','Distribución'), eventos:_hnT('ew-modo-eventos','Eventos'), cazador:_hnT('ew-modo-cazador','Cazador Musical'), general:_hnT('ew-modo-general','General') };
         /* Lista de hilos guardados (uno por Modo de Enfoque con actividad en
            elixis_session_threads) -- fuente real: elixis_get_user_threads(),
            RPC nueva de esta migracion. Se repinta entera cada vez (lista
@@ -2790,7 +2800,8 @@
             var fila=document.createElement('div');
             fila.className='ew-hilo-fila'+((modo===ewModoAnterior || (ewModoAnterior===null && modo==='general')) ? ' activo' : '');
             fila.setAttribute('data-modo', modo);
-            var prefijo = f.ultimo_rol==='yo' ? 'Tú: ' : 'ELIXIS: ';
+            var _hT = function (k, f) { return (window.i18n && window.i18n.t(k)) || f; };
+            var prefijo = f.ultimo_rol==='yo' ? _hT('ew-hilo-prefijo-yo','Tú: ') : _hT('ew-hilo-prefijo-elixis','ELIXIS: ');
             fila.innerHTML =
               '<button type="button" class="ew-hilo-click">'
                 + '<span class="ew-hilo-ico">'+(EW_MODO_ICONOS[modo]||EW_MODO_ICONOS.general)+'</span>'
@@ -2798,12 +2809,12 @@
                 + '<span class="ew-hilo-prev">'+ewEsc(prefijo+String(f.ultimo_mensaje||'').slice(0,64))+'</span></span>'
               + '</button>'
               + '<span class="ew-hilo-n">'+f.total_mensajes+'</span>'
-              + '<button type="button" class="ew-hilo-menu-btn" title="Herramientas del hilo" aria-label="Herramientas del hilo">⋯</button>'
+              + '<button type="button" class="ew-hilo-menu-btn" title="'+_hT('ew-hilo-herramientas-title','Herramientas del hilo')+'" aria-label="'+_hT('ew-hilo-herramientas-title','Herramientas del hilo')+'">⋯</button>'
               + '<div class="ew-hilo-menu">'
-                + '<button type="button" data-accion="renombrar">✏️ Renombrar hilo</button>'
-                + '<button type="button" data-accion="copiar">📋 Copiar conversación</button>'
-                + '<button type="button" data-accion="resumir">📑 Resumir</button>'
-                + '<button type="button" class="peligro" data-accion="borrar">🗑️ Borrar hilo</button>'
+                + '<button type="button" data-accion="renombrar">✏️ '+_hT('ew-hilo-renombrar','Renombrar hilo')+'</button>'
+                + '<button type="button" data-accion="copiar">📋 '+_hT('ew-hilo-copiar-conv','Copiar conversación')+'</button>'
+                + '<button type="button" data-accion="resumir">📑 '+_hT('ew-hilo-resumir','Resumir')+'</button>'
+                + '<button type="button" class="peligro" data-accion="borrar">🗑️ '+_hT('ew-hilo-borrar','Borrar hilo')+'</button>'
               + '</div>';
             fila.querySelector('.ew-hilo-click').onclick=function(){ ewSeleccionarModo(modo); };
             fila.querySelector('.ew-hilo-menu-btn').onclick=function(e){
@@ -2905,8 +2916,9 @@
           }
           var previo = fila.querySelector('.ew-hilo-resumen'); if(previo) previo.remove();
           var caja=document.createElement('div'); caja.className='ew-hilo-resumen';
-          if(!filas.length){ caja.textContent='Sin mensajes que resumir.'; fila.appendChild(caja); return; }
-          caja.textContent='Generando resumen…';
+          var _ewT = function (k, f) { return (window.i18n && window.i18n.t(k)) || f; };
+          if(!filas.length){ caja.textContent=_ewT('ew-hilo-sin-mensajes','Sin mensajes que resumir.'); fila.appendChild(caja); return; }
+          caja.textContent=_ewT('ew-hilo-generando','Generando resumen…');
           fila.appendChild(caja);
           var texto = filas.slice(-30).map(function(f){
             return (f.rol==='yo'?'Usuario':'ELIXIS')+': '+String(f.contenido).slice(0,180);
@@ -2914,23 +2926,23 @@
           var mensaje = 'Resume esta conversación en puntos clave ejecutivos (acuerdos, presupuestos, fechas, notas importantes) en una lista corta:\n\n'+texto;
           try{
             var url = window.mdbSupabaseFunctionUrl ? window.mdbSupabaseFunctionUrl('elixis-orchestrator') : null;
-            if(!url){ caja.textContent='No pude ubicar el servidor de texto.'; return; }
+            if(!url){ caja.textContent=_ewT('ew-hilo-sin-servidor','No pude ubicar el servidor de texto.'); return; }
             var h = await ewHeaders();
             var res = await fetch(url, { method:'POST', headers:h, body:JSON.stringify({ message:mensaje }) });
             var d = {}; try{ d = await res.json(); }catch(_){}
-            if(!res.ok || !d.reply){ caja.textContent='No se pudo generar el resumen.'; return; }
+            if(!res.ok || !d.reply){ caja.textContent=_ewT('ew-hilo-fallo-resumen','No se pudo generar el resumen.'); return; }
             caja.textContent = d.reply;
             var copiarBtn=document.createElement('button');
-            copiarBtn.type='button'; copiarBtn.className='ew-hilo-resumen-copiar'; copiarBtn.textContent='Copiar resumen';
+            copiarBtn.type='button'; copiarBtn.className='ew-hilo-resumen-copiar'; copiarBtn.textContent=_ewT('ew-hilo-copiar-resumen','Copiar resumen');
             copiarBtn.onclick=async function(e){
               e.stopPropagation();
-              try{ await navigator.clipboard.writeText(d.reply); ewToastHilo(fila,'Copiado ✓'); }
-              catch(err){ ewToastHilo(fila,'No se pudo copiar'); }
+              try{ await navigator.clipboard.writeText(d.reply); ewToastHilo(fila,_ewT('ew-toast-copiado','Copiado ✓')); }
+              catch(err){ ewToastHilo(fila,_ewT('ew-toast-no-copiado','No se pudo copiar')); }
             };
             caja.appendChild(document.createElement('br'));
             caja.appendChild(copiarBtn);
           }catch(e){
-            caja.textContent='No pude conectar con el texto.';
+            caja.textContent=_ewT('ew-hilo-sin-conexion','No pude conectar con el texto.');
           }
         }
         /* Borrar hilo (2026-08-31): ticket del PO dice explicito "archiva/
@@ -2963,7 +2975,7 @@
            camino). */
         async function ewCargarHiloDeModo(modo, textoBase){
           var box=el('ewTranscripcion');
-          if(box) box.innerHTML='<div class="ew-vacio">Cargando hilo…</div>';
+          if(box) box.innerHTML='<div class="ew-vacio">'+((window.i18n && window.i18n.t('ew-hilo-cargando')) || 'Cargando hilo…')+'</div>';
           var sb=getSb();
           var filas=[];
           if(sb && sb.rpc){
@@ -3164,7 +3176,7 @@
           });
           html += '<div class="ew-form-acciones">'
             + '<button type="button" class="principal" data-accion="copiar">'+ewEsc(cfg.copiarEtiqueta)+'</button>'
-            + '<button type="button" data-accion="insertar">Insertar último de ELIXIS</button>'
+            + '<button type="button" data-accion="insertar">'+((window.i18n && window.i18n.t('ew-insertar-ultimo')) || 'Insertar último de ELIXIS')+'</button>'
             + '</div><div class="ew-form-nota">'+ewEsc(cfg.nota)+'</div>';
           cont.innerHTML = html;
           function valoresActuales(){
@@ -3296,7 +3308,7 @@
         if(ewSetlistExportarBtn) ewSetlistExportarBtn.onclick = function(){
           if(!ewSetlistTracks.length){
             var original = ewSetlistExportarBtn.textContent;
-            ewSetlistExportarBtn.textContent = 'vacío';
+            ewSetlistExportarBtn.textContent = (window.i18n && window.i18n.t('ew-setlist-btn-vacio')) || 'vacío';
             setTimeout(function(){ ewSetlistExportarBtn.textContent = original; }, 1500);
             return;
           }
@@ -3367,10 +3379,10 @@
         if(smartcrateIniciado) return; smartcrateIniciado = true;
         var caja = el('smartcrateGate');
         if(!caja) return;
-        caja.innerHTML = '<p style="color:rgba(255,255,255,.4);font-size:13px;">Verificando tu plan…</p>';
+        caja.innerHTML = '<p style="color:rgba(255,255,255,.4);font-size:13px;">'+((window.i18n && window.i18n.t('sc-verificando-plan')) || 'Verificando tu plan…')+'</p>';
         var sb = getSb();
         var sess = sb ? (await sb.auth.getSession()).data.session : null;
-        if(!sb || !sess){ caja.innerHTML = '<p style="color:rgba(255,255,255,.55);font-size:13px;">Inicia sesión para continuar.</p>'; return; }
+        if(!sb || !sess){ caja.innerHTML = '<p style="color:rgba(255,255,255,.55);font-size:13px;">'+((window.i18n && window.i18n.t('sc-inicia-sesion')) || 'Inicia sesión para continuar.')+'</p>'; return; }
         var perfil = null;
         try{
           var r = await sb.from('dj_profiles').select('*').eq('user_id', sess.user.id).maybeSingle();
@@ -3393,8 +3405,8 @@
         if(!esPremium){
           caja.innerHTML =
             '<div style="border:1px solid var(--gold);border-radius:12px;padding:20px;background:rgba(197,160,89,.05);">' +
-              '<p style="margin:0 0 10px;font-weight:700;color:var(--gold-lt,var(--gold));">SmartCrate IA es exclusivo de cuentas PRO/ELITE.</p>' +
-              '<p style="margin:0;color:rgba(255,255,255,.6);font-size:13px;">Activa tu plan para desbloquear el motor de recomendación armónica sobre tu propia librería de Serato.</p>' +
+              '<p style="margin:0 0 10px;font-weight:700;color:var(--gold-lt,var(--gold));">'+((window.i18n && window.i18n.t('sc-gate-exclusivo')) || 'SmartCrate IA es exclusivo de cuentas PRO/ELITE.')+'</p>' +
+              '<p style="margin:0;color:rgba(255,255,255,.6);font-size:13px;">'+((window.i18n && window.i18n.t('sc-gate-activa-plan')) || 'Activa tu plan para desbloquear el motor de recomendación armónica sobre tu propia librería de Serato.')+'</p>' +
             '</div>';
           return;
         }
@@ -3413,7 +3425,7 @@
           smartcrateCatalogo = (datos && datos.tracks) || [];
         }catch(e){
           console.error('[SmartCrate IA] no se pudo cargar la instantánea de prueba:', e);
-          if(app) app.innerHTML = '<p style="color:rgba(255,150,140,.8);font-size:13px;">No se pudo cargar el catálogo de prueba.</p>';
+          if(app) app.innerHTML = '<p style="color:rgba(255,150,140,.8);font-size:13px;">'+((window.i18n && window.i18n.t('sc-no-cargo-catalogo')) || 'No se pudo cargar el catálogo de prueba.')+'</p>';
           return;
         }
         smartcrateLlenarFiltroCamelot();
@@ -3488,7 +3500,7 @@
             '<span style="color:rgba(255,255,255,.45);flex:0 0 auto;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + ewEsc(t.artist || '') + '</span>' +
             '<span style="flex:0 0 auto;color:rgba(255,255,255,.5);font-family:var(--mono,monospace);">' + (t.bpm ? Math.round(t.bpm) : '—') + '</span>' +
             '<span style="flex:0 0 auto;min-width:34px;text-align:center;font-family:var(--mono,monospace);font-weight:700;border-radius:6px;padding:2px 6px;' + (camelot ? 'background:rgba(197,160,89,.18);color:var(--gold-lt,var(--gold));' : 'background:rgba(255,255,255,.05);color:rgba(255,255,255,.3);') + '">' + (camelot || '—') + '</span>' +
-            '<span title="' + (etiquetaNivel ? 'Energía: ' + etiquetaNivel : 'Energía desconocida (sin BPM)') + '" style="flex:0 0 auto;min-width:22px;text-align:center;font-family:var(--mono,monospace);font-weight:700;font-size:11px;border-radius:6px;padding:2px 5px;' + (nivel ? ('background:' + ENERGIA_COLOR[nivel] + '22;color:' + ENERGIA_COLOR[nivel] + ';') : 'background:rgba(255,255,255,.05);color:rgba(255,255,255,.3);') + '">' + (nivel || '—') + '</span>' +
+            '<span title="' + (etiquetaNivel ? (((window.i18n && window.i18n.t('sc-energia-label')) || 'Energía:') + ' ' + etiquetaNivel) : ((window.i18n && window.i18n.t('sc-energia-desconocida')) || 'Energía desconocida (sin BPM)')) + '" style="flex:0 0 auto;min-width:22px;text-align:center;font-family:var(--mono,monospace);font-weight:700;font-size:11px;border-radius:6px;padding:2px 5px;' + (nivel ? ('background:' + ENERGIA_COLOR[nivel] + '22;color:' + ENERGIA_COLOR[nivel] + ';') : 'background:rgba(255,255,255,.05);color:rgba(255,255,255,.3);') + '">' + (nivel || '—') + '</span>' +
           '</div>';
         }).join('');
         tabla.innerHTML = html || ('<div style="padding:16px;color:rgba(255,255,255,.4);font-size:13px;">' + (smartcrateCatalogo.length ? 'Sin resultados para este filtro.' : 'Catálogo vacío.') + '</div>');
@@ -3515,11 +3527,11 @@
         var tipoEvento = sel ? sel.value : 'quince';
         var codigoActual = window.SmartCrateHarmonicEngine.claveACamelot(trackActual.key);
         if(!codigoActual){
-          caja.innerHTML = '<div style="padding:16px;color:rgba(255,255,255,.4);font-size:13px;">"' + ewEsc(trackActual.key || 'sin tonalidad') + '" no se reconoce en el diccionario Camelot — no se puede calcular compatibilidad.</div>';
+          caja.innerHTML = '<div style="padding:16px;color:rgba(255,255,255,.4);font-size:13px;">"' + ewEsc(trackActual.key || ((window.i18n && window.i18n.t('sc-sin-tonalidad')) || 'sin tonalidad')) + '" ' + ((window.i18n && window.i18n.t('sc-camelot-no-reconocida')) || 'no se reconoce en el diccionario Camelot — no se puede calcular compatibilidad.') + '</div>';
           return;
         }
         var compatibles = window.SmartCrateHarmonicEngine.calcularTracksCompatibles(trackActual, smartcrateCatalogo, { tipoEvento: tipoEvento });
-        var encabezado = '<div style="padding:10px;font-size:11px;color:rgba(255,255,255,.5);border-bottom:1px solid var(--line);">Base: <b style="color:var(--gold-lt,var(--gold));">' + ewEsc(trackActual.title||'') + '</b> · ' + codigoActual + ' · ' + Math.round(trackActual.bpm||0) + ' bpm</div>';
+        var encabezado = '<div style="padding:10px;font-size:11px;color:rgba(255,255,255,.5);border-bottom:1px solid var(--line);">'+((window.i18n && window.i18n.t('sc-base-label')) || 'Base:')+' <b style="color:var(--gold-lt,var(--gold));">' + ewEsc(trackActual.title||'') + '</b> · ' + codigoActual + ' · ' + Math.round(trackActual.bpm||0) + ' bpm</div>';
         var filas = compatibles.map(function(c){
           return '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--line);font-size:12.5px;">' +
             '<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);">' + ewEsc(c.track.title || '') + '</span>' +
@@ -3528,7 +3540,7 @@
             '<span style="flex:0 0 auto;font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:rgba(255,255,255,.4);">' + (SMARTCRATE_ETIQUETAS_COMPAT[c.tipoCompatibilidad]||c.tipoCompatibilidad) + '</span>' +
           '</div>';
         }).join('');
-        caja.innerHTML = encabezado + (filas || '<div style="padding:16px;color:rgba(255,255,255,.4);font-size:13px;">Sin coincidencias con este rango de BPM/evento.</div>');
+        caja.innerHTML = encabezado + (filas || '<div style="padding:16px;color:rgba(255,255,255,.4);font-size:13px;">'+((window.i18n && window.i18n.t('sc-sin-coincidencias-bpm')) || 'Sin coincidencias con este rango de BPM/evento.')+'</div>');
       }
 
       /* Pestañas de SmartCrate IA (2026-08-30 b) -- transportadas del prototipo
@@ -3604,8 +3616,8 @@
               '<span style="color:rgba(255,255,255,.4);font-size:10.5px;text-transform:uppercase;">' + ewEsc(t.genre || '') + '</span>' +
               '<span style="color:rgba(255,255,255,.4);font-family:var(--mono,monospace);">' + (t.bpm ? Math.round(t.bpm) : '—') + '</span>' +
             '</div>';
-          }).join('') : '<div style="color:rgba(255,255,255,.4);font-size:12px;">Sin coincidencias de género en la instantánea actual.</div>') +
-          (coincidencias.length > 40 ? '<div style="padding-top:8px;font-size:11px;color:rgba(255,255,255,.35);">+' + (coincidencias.length - 40) + ' más, no listados.</div>' : '') +
+          }).join('') : '<div style="color:rgba(255,255,255,.4);font-size:12px;">'+((window.i18n && window.i18n.t('sc-sin-coincidencias-genero')) || 'Sin coincidencias de género en la instantánea actual.')+'</div>') +
+          (coincidencias.length > 40 ? '<div style="padding-top:8px;font-size:11px;color:rgba(255,255,255,.35);">+' + (coincidencias.length - 40) + ' ' + ((window.i18n && window.i18n.t('sc-mas-no-listados')) || 'más, no listados.') + '</div>' : '') +
         '</div>';
         box.innerHTML = html;
       }
@@ -3693,7 +3705,7 @@
       /* carga una sección de staff-admin en el iframe COMPARTIDO (sin recargar si ya está montado) */
       function loadAdmin(opt, label){
         showPanel('admin');
-        if(loading){ loading.classList.remove('hidden'); if(loadTx) loadTx.textContent='Cargando '+(label||'')+'…'; }
+        if(loading){ loading.classList.remove('hidden'); if(loadTx) loadTx.textContent=((window.i18n && window.i18n.t('staff-cargando-prefix')) || 'Cargando')+' '+(label||'')+'…'; }
         if(!iframe) return;
         if(!iframe.__loaded){
           var url='./staff-admin.html';
@@ -3901,8 +3913,9 @@
     /* ── Módulo STUB: manager/vendedor (estructura lista, vista por construir) ── */
     function mountStub(role){
       var isSeller = (role==='seller');
-      el('brand-sub').textContent = isSeller ? 'Ventas' : 'Operaciones';
-      el('stub-title').textContent = isSeller ? 'Módulo de Ventas' : 'Módulo de Operaciones';
+      var _stT = function (k, f) { return (window.i18n && window.i18n.t(k)) || f; };
+      el('brand-sub').textContent = isSeller ? _stT('staff-nav-ventas','Ventas') : _stT('staff-nav-operaciones','Operaciones');
+      el('stub-title').textContent = isSeller ? _stT('staff-stub-title-ventas','Módulo de Ventas') : _stT('staff-stub-title-operaciones','Módulo de Operaciones');
       el('module-stub').classList.add('active');
       paintStaffTopnav(staffTopnavHtml(role));
     }
@@ -3922,5 +3935,7 @@
        header-smart-search.js se deja: sigue enganchado al #header-smart-search
        de .staff-flota (oculto, no removido). -->
   <script src="./header-smart-search.js?v=20260820-owner"></script>
+  <script src="./translations.js?v=20260901-staff-i18n"></script>
+  <script src="./i18n.js?v=20260427-lang-default"></script>
 </body>
 </html>
