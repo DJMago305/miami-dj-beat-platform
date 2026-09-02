@@ -41,7 +41,7 @@
   <script src="./subscription.js?v=20260422-find-dj-rank"></script>
   <script src="./js/smartcrate-harmonic-engine.js?v=20260830-camelot-engine"></script>
   <script src="./js/music-hunter-ring-buffer.js?v=20260830-ring-buffer"></script>
-  <script src="./js/elixis-voice-session.js?v=20260831-candado-eco-duro"></script>
+  <script src="./js/elixis-voice-session.js?v=20260902-turno-unico"></script>
   <script src="./js/elixis-swipe-carousel.js?v=20260827-pointer-wheel-desktop"></script>
   <script src="./js/avatar-frame-player.js?v=20260830-crossorigin-fix"></script>
   <script src="./js/avatar-heygen-chromakey.js?v=20260831-encuadre-por-modo"></script>
@@ -570,7 +570,22 @@
        pidio ver limpia (2026-08-29, reporte en vivo del PO). El vidrio se
        queda en los laterales (Enfoque/Hilos), que si necesitan legibilidad
        de texto sobre el fondo. */
-    .ew-col.ew-mid{align-items:center; background:none; backdrop-filter:none; -webkit-backdrop-filter:none; border-color:transparent;}
+    /* justify-content:center (2026-09-02): reemplaza el margin-top fijo de
+       .avatar-stage (170px -> 230px -> se salia del .ew-grid con overflow:
+       hidden y le cortaba la chaqueta abajo -- reportado en vivo por el PO).
+       Un numero fijo en px se rompe en cuanto cambia el alto real disponible
+       (ventana mas chica, DevTools abierto, etc.) -- centrar por flexbox usa
+       el alto REAL de la columna en cada caso, nunca se sale. En flujo
+       normal dentro de esta columna solo queda .avatar-stage (.ew-estado ya
+       esta display:none, el resto de hijos son position:absolute y no
+       cuentan para este calculo), asi que centra exactamente lo que se ve. */
+    /* justify-content:center -> flex-end (2026-09-02, pedido del PO: "poco
+       espacio de aire entre el avatar y el search" -- centrado en medio de
+       toda la columna dejaba demasiado aire abajo, no era lo que pedia).
+       padding-bottom reserva sitio para .ew-texto-flotante-wrap (bottom:96px
+       + su propio alto, ~45px, mas un respiro chico) para que el avatar
+       anclado abajo no quede tapado por el recuadro de texto flotante. */
+    .ew-col.ew-mid{align-items:center; justify-content:flex-end; padding-bottom:150px; background:none; backdrop-filter:none; -webkit-backdrop-filter:none; border-color:transparent;}
     .ew-col h4{font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--gold); margin:0 0 10px; font-weight:700;}
     .ew-col-body{flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:8px;}
     .ew-col-body::-webkit-scrollbar{display:none}
@@ -622,13 +637,60 @@
     .ew-proceso-mini{font-size:11px;color:rgba(255,255,255,.5);margin-bottom:8px;}
     /* Agrandado (2026-08-29, directiva del PO: "ubicarlo... ampliado...
        falta la parte de abajo del torso"): antes era una cajita fija de
-       230x220px flotando en medio de un panel mucho mas grande. Ahora
-       crece con flex:1 para llenar el alto disponible de su columna --
-       avatar-heygen-chromakey.js ya ancla el contenido dibujado al FONDO
-       del canvas cuando fraccionAncho deja hueco vertical (ver dy en ese
-       archivo), asi que una caja mas alta revela mas torso solo por tener
-       mas alto real, sin tocar el zoom. */
-    .avatar-stage{position:relative;width:min(420px,92%);flex:1;min-height:0;margin:4px auto 10px;}
+       230x220px flotando en medio de un panel mucho mas grande. Se hizo
+       crecer con flex:1 para llenar el alto disponible de su columna.
+       REVERTIDO 2026-09-01 (orden directa y repetida del PO, con captura:
+       "los videos que tienes son 16x9, no 9x16 -- por que metes mi avatar
+       dentro de un cuadro vertical?"). flex:1 en una columna de 640px de
+       ancho producia una caja MUY alta y angosta (retrato) para un video
+       nativamente horizontal -- sin importar cuanto se ajustara
+       fraccionAncho/desplazamientoVerticalPct en avatar-heygen-chromakey.js,
+       "cover" siempre tenia que recortar muchisimo a los costados para
+       llenar ese alto de sobra, cortando brazos/codos en cualquier pose
+       que no fuera perfectamente pegada al cuerpo. aspect-ratio:16/9 hace
+       que la caja tenga la MISMA forma que el video real -- "cover" ya no
+       necesita recortar nada por defecto. Los overrides de fraccionAncho/
+       desplazamientoVerticalPct en ewOpcionesChroma (mas abajo en el JS)
+       quedan reseteados a neutro por la misma razon: existian solo para
+       compensar la forma equivocada de esta caja. */
+    /* Ampliado 420px->580px->620px y bajado 4px->56px->100px (2026-09-01,
+       dos rondas en vivo con el PO). CORREGIDO en la misma edicion: el
+       616px de contenido real de .ew-col (640px de columna menos 24px de
+       padding, box-sizing:border-box) hacia que el "92%" de este min()
+       resolviera a ~567px -- MENOR que el propio 580px/620px que se
+       intentaba subir, asi que el tope real nunca cambio hasta ahora
+       (92% mandaba, no el numero en pixeles). Subido a 97% (~598px) para
+       que el nuevo numero en pixeles si tenga efecto real. */
+    /* Bajado otra vez 100px->170px (2026-09-01, pedido explicito del PO:
+       "bajalo, no le cortes la cabeza" -- esto mueve la POSICION de la caja
+       en la pagina via margin-top, no toca el zoom/encuadre interno del
+       video (ese es desplazamientoVerticalPct en ewAplicarEncuadrePorModo,
+       sin tocar aqui para no arriesgar la cabeza). */
+    /* aspect-ratio 16/9 -> ~1606/1080 (2026-09-01, reporte del PO: "cambiaste
+       el problema de brazos mutilados por cabeza mutilada"). 16:9 era la
+       proporcion del ARCHIVO crudo (1920x1080) -- pero una vez recortado el
+       borde blanco horneado de los lados (medido con ffprobe/pixeles: ~8.3%
+       izq + ~8.0% der, ver ewAplicarEncuadrePorModo mas abajo), el
+       CONTENIDO real que queda ya no es 16:9, es ~1606x1080 (~1.487:1, mas
+       cuadrado). Una caja 16:9 le quedaba corta de alto a ese contenido
+       real, obligando a recortar cabeza o pecho -- una caja con la
+       proporcion real del contenido (sin el borde inutil) no necesita
+       recortar ninguno de los dos. */
+    /* margin-top fijo retirado (2026-09-02): lo reemplaza justify-content:
+       flex-end en .ew-col.ew-mid (ver ese comentario) -- un numero en px se
+       salia del .ew-grid (overflow:hidden) y cortaba la chaqueta abajo.
+       CORREGIDO el mismo dia (reporte del PO: "bajalo mas que quede cerca
+       del search" -- quedaba flotando a media pantalla, lejos del
+       recuadro de texto de abajo): margin:auto en los 4 lados es un
+       auto-margin en el eje VERTICAL del flex column padre, y eso
+       ANULA justify-content:flex-end -- el item se autocentra entero,
+       ignorando que el padre pide "pegate abajo". Con margin:0 auto
+       (autocentrado SOLO horizontal), el padre si controla el eje
+       vertical: el avatar baja hasta pegar contra el padding-bottom:150px
+       reservado para .ew-texto-flotante-wrap (ver ese comentario, un poco
+       mas abajo en este archivo) -- cerca del cuadro de texto, sin
+       taparlo. */
+    .avatar-stage{position:relative;width:min(620px,97%);aspect-ratio:1606/1080;flex:none;min-height:0;margin:0 auto;}
     .avatar-fx{position:absolute;top:0;right:0;bottom:0;left:0;width:100%;height:100%;z-index:1}
     .avatar-baseglow{position:absolute;left:50%;bottom:5%;transform:translateX(-50%);width:74%;height:44%;z-index:2;
       background:radial-gradient(closest-side,var(--gold-glow),transparent 72%);filter:blur(11px);opacity:.6;transition:.45s ease}
@@ -668,7 +730,11 @@
        capa que se prende SOLO mientras ELIXIS habla de verdad. Sin fotogramas
        reales configurados, se queda en opacity:0 para siempre. */
     .avatar-viseme{position:absolute;top:0;right:0;bottom:0;left:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;z-index:4;opacity:0;transition:opacity .04s linear;pointer-events:none}
-    .ew-estado{text-align:center;font-family:var(--mono,monospace);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);margin-top:2px;}
+    /* Ocultado (2026-09-02, pedido explicito del PO: "le quitaria el cartel
+       de abajo que dice escuchando y pensando"). Se deja el elemento y su
+       JS intactos (ewEstado.textContent sigue actualizandose) por si se
+       quiere reactivar despues -- solo se apaga visualmente. */
+    .ew-estado{display:none;text-align:center;font-family:var(--mono,monospace);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);margin-top:2px;}
     /* Barra de orbes flotantes (2026-08-29, directiva del PO: "los botones
        del sistema del telefono inteligente" -- mismo patron de mdj-commander
        .html, #bottomnav/.nav-orb, pero sin etiquetas de texto y solo con las
@@ -2493,14 +2559,21 @@
            ewAplicarClipsPorModo() con window.MDB_AVATAR_CLIPS. */
         var ewOpcionesChroma = {
           minHue:60, maxHue:180, minSaturation:0.10, minValue:0.30,
-          suprimirSpill:1.0, fraccionAncho:0.485, zonaProtegida:undefined,
-          /* recorteInferiorPx (2026-08-30): la "linea blanca debajo del
-             avatar" reportada -- confirmado con pixeles reales que es un
-             borde horneado en el propio djmago-idle-boomerang.mp4 (filas
-             1074-1079 de 1080, blanco puro), no un bug de CSS/canvas. Ver
-             el comentario completo en dibujarCover(), avatar-heygen-
-             chromakey.js. 10px de margen sobre las ~6 filas medidas. */
-          recorteInferiorPx:10,
+          /* fraccionAncho:0.485 -> undefined -> 0.82 -> undefined (2026-09-02,
+             tercera vuelta -- ticket del PO: "recortalo desde la fuente raiz,
+             no parches"). El 0.82/recorteInferiorPx de abajo existian solo
+             para TAPAR un defecto real horneado en djmago-idle-boomerang.mp4
+             (borde blanco solido: ~8.3% izq/~8.0% der/6px abajo, medido con
+             ffprobe+pixeles reales). Ese archivo se REEMPLAZO hoy en Supabase
+             Storage por una version recortada de verdad (ffmpeg crop, medido
+             0% de borde en los 3 lados tras el corte) y rellenada de vuelta a
+             1920x1080 con el MISMO verde de croma (no el blanco viejo) para
+             no romper el aspect-ratio real de la caja -- el defecto ya no
+             existe en el archivo, asi que compensarlo en codigo dejaria de
+             tapar un borde y empezaria a recortar cuerpo real de mas.
+             suprimirSpill se queda (no tiene relacion con el borde, limpia
+             tinte verde real en orejas/cuello) -- ver zonaProtegida arriba. */
+          suprimirSpill:1.0, fraccionAncho:undefined, zonaProtegida:undefined,
           desplazamientoVerticalPct:0
         };
         (function(){
@@ -2522,13 +2595,130 @@
            dibujarCover() en avatar-heygen-chromakey.js). Fuera de Cazador,
            vuelve exacto a los valores ya afinados del idle -- no se toca
            ese encuadre. */
+        /* RESETEADO otra vez 2026-09-02: el fraccionAncho:0.82 del ramal de
+           oficina de abajo (y recorteInferiorPx, ver ewOpcionesChroma mas
+           arriba) existian solo para compensar el borde blanco horneado de
+           djmago-idle-boomerang.mp4 (~8.3% izq/~8.0% der/6px abajo, medido
+           con ffprobe -- ver historial de este comentario en versiones
+           previas). Ese archivo se reemplazo hoy en Supabase Storage por
+           una version recortada de verdad y rellenada de vuelta a 16:9 con
+           el mismo verde de croma -- el defecto ya no existe en el archivo,
+           asi que la compensacion en codigo paso de tapar un borde a
+           recortar cuerpo real de mas. Con fraccionAncho:undefined en los
+           dos ramales, "cover" usa el propio aspect-ratio de .avatar-stage
+           (1606/1080) contra el video real (1920x1080, 16:9) para decidir
+           cuanto mostrar -- da una fraccion visible de ~0.8365 (1606/1920),
+           centrada, PRACTICAMENTE identica al 0.82 de antes (verificado a
+           mano antes de aplicar, no a ciegas) -- mismo encuadre visual, sin
+           parche por un defecto que ya no existe. elixis_cazador.mp4
+           (1280x720, tambien 16:9) sigue igual de limpio que siempre. */
         function ewAplicarEncuadrePorModo(modo){
           if(modo === 'cazador'){
-            ewOpcionesChroma.fraccionAncho = 0.485/1.3;
-            ewOpcionesChroma.desplazamientoVerticalPct = -0.12;
-          } else {
-            ewOpcionesChroma.fraccionAncho = 0.485;
+            /* fraccionAncho undefined -> 0.75 (2026-09-02, segunda vuelta:
+               el PO pidio "un chin mas a la izquierda" otra vez sobre el
+               -0.15 de abajo -- BUG REAL encontrado revisando la
+               aritmetica de dibujarCover(), no un numero que faltaba subir.
+               Con fraccionAncho undefined, "cover" usa el eje que necesita
+               MAS zoom (aca el alto: escala=ch/vh=0.4486 > cw/vw=0.375),
+               lo que da dw=575 sobre un canvas de cw=480 -- solo 95px de
+               sobra (cw-dw) para mover. -0.15 de canvas pedia 72px +
+               el offset base de centrado (~48px) = 120px, MAS que esos 95px
+               disponibles -- el clamp de la linea de abajo lo topaba en
+               -95 SIEMPRE, sin importar que tan negativo se pidiera. El
+               pedido de "mas a la izquierda" nunca se estaba aplicando de
+               verdad. fraccionAncho:0.75 fuerza mas zoom horizontal
+               (dw=640 en vez de 575), dando 160px de sobra real -- ahora
+               si hay margen para moverse sin toparse contra el limite. */
+            ewOpcionesChroma.fraccionAncho = 0.75;
             ewOpcionesChroma.desplazamientoVerticalPct = 0;
+            /* Pedido en vivo del PO (2026-09-02): "necesita moverse un poco
+               mas a la izquierda, no importa que el brazo sobrepase el
+               limite del centro, eso es a proposito" -- y en la misma
+               sesion, mas tarde: "recuerda no le cortes los brazos". Con el
+               fraccionAncho de arriba ya destrabado, -0.12 mueve el
+               contenido real y notoriamente mas a la izquierda que el
+               -0.15 viejo (que nunca se aplicaba, ver comentario arriba)
+               sin ser el maximo posible -- deja margen a proposito por el
+               segundo pedido. Negativo = izquierda (ver dibujarCover() en
+               avatar-heygen-chromakey.js). */
+            ewOpcionesChroma.desplazamientoHorizontalPct = -0.12;
+            /* zonaProtegida (2026-09-02, reporte del PO con video: "el
+               audifono de la derecha... se cuela el croma"). Mismo
+               mecanismo que la elipse de la oreja del idle (ver
+               dentroDeElipse() en avatar-heygen-chromakey.js), calibrado
+               para ESTE video y este encuadre. Medido de verdad, no a
+               ciegas: reproduje el algoritmo HSV real (mismo minHue/
+               maxHue/minSaturation/minValue de arriba) sobre 65 cuadros
+               reales repartidos en todo el clip (cada 5 cuadros, cubre los
+               323 completos), mapeados al espacio del canvas con esta
+               misma formula de dibujarCover() (fraccionAncho 0.75, pct
+               -0.12). El aro exterior brilloso del audifono derecho
+               refleja el verde del estudio con una saturacion/brillo casi
+               identica al fondo real (h~120, s~0.80-0.85 vs el fondo
+               ~0.98) -- es la MISMA situacion ya documentada para la oreja
+               del idle: "subir umbrales no sirve, el pixel es tan verde
+               como el fondo real".
+               PRIMER INTENTO, descartado en la misma sesion: una elipse
+               centrada en la caja (bounding box) de los agujeros detectados
+               por deteccion de componentes conexas (flood fill que no toca
+               el borde del canvas) en los 65 cuadros. El agujero real
+               resulto ser una MEDIALUNA angosta pegada al borde curvo del
+               audifono (visible en el mapa de calor por frecuencia), no un
+               blob compacto -- una elipse centrada en su bounding box cubria
+               tambien el hueco VACIO en el medio de esa medialuna, que
+               resulto ser fondo real y abierto (verificado: pixel de
+               canvas (350,75) sale verde puro (15,250,7) en el video crudo
+               y tiene frecuencia CERO de ser agujero en los 65 cuadros) --
+               protegerlo de mas convertia fondo real en una mancha oscura
+               opaca nueva, un regreso, no una mejora.
+               CORREGIDO con centroide+desviacion real ponderados por
+               frecuencia (no el punto medio de una caja): media_x=342,
+               media_y=160, sigma_x=16.4, sigma_y=37.7 sobre los pixeles con
+               >=30% de frecuencia del lado derecho -- elipse a 1.8 sigma.
+               Verificado visualmente en 3 cuadros reales del clip
+               (incluido el peor caso, el cuadro con el agujero mas grande
+               detectado) despues de re-simular el algoritmo COMPLETO
+               (esFondo + zonaProtegida + suprimirSpill), no solo mirar
+               numeros: agujero cerrado, sin mancha nueva arriba. No se toca
+               zonaProtegida fuera de Cazador -- el idle tiene la suya
+               propia, distinta, que hoy vive indefinida (undefined) porque
+               su encuadre cambio al reemplazar el video en Storage (ver
+               ewOpcionesChroma base mas arriba). */
+            /* Ampliada de 1.8 a 2.2 sigma (2026-09-02, mismo dia -- el PO
+               reporto que en video/movimiento real todavia se colaba el
+               croma, aunque en foto fija ya no se veia). No pude reproducir
+               el escape en cuadros extraidos estaticos del archivo (los
+               323 completos, verificados de nuevo) -- el limite de 2.2
+               sigma es el mayor margen real que cabe sin empezar a proteger
+               el punto de canvas (350,75), confirmado 100% fondo abierto
+               (nunca agujero en ninguno de los 323 cuadros, verde puro sin
+               procesar) -- 2.31 sigma es el techo matematico exacto antes
+               de tocar ese punto real. Pendiente: grabacion de pantalla del
+               PO en el momento real donde se ve, igual que la que
+               resolvio la barra blanca -- una elipse mas grande no
+               reemplaza saber la causa exacta si esto no alcanza. */
+            ewOpcionesChroma.zonaProtegida = { cx:0.7127, cy:0.4963, rx:0.0747, ry:0.2568 };
+          } else {
+            /* desplazamientoVerticalPct de vuelta a 0 (2026-09-01, tercera
+               vuelta -- reporte del PO: "cambiaste brazos mutilados por
+               cabeza mutilada"). El -0.18 anterior compensaba que la caja
+               (16:9) quedaba mas CORTA que el contenido real ya recortado
+               de bordes (~1.487:1) -- root cause real, no este numero.
+               Corregido en el CSS de .avatar-stage (aspect-ratio ahora
+               1606/1080, la proporcion real del contenido sin el borde
+               inutil) -- con la caja ya del tamano correcto, dh~=ch de
+               nuevo y este desplazamiento ya no hace falta ni debe
+               reintroducirse sin volver a medir. */
+            ewOpcionesChroma.fraccionAncho = undefined;
+            ewOpcionesChroma.desplazamientoVerticalPct = 0;
+            /* Reset explicito (2026-09-02): el desplazamiento horizontal y
+               la zona protegida son exclusivos de Cazador (ver arriba) --
+               sin este reset, cambiar de Cazador a un modo de oficina
+               dejaria el corrimiento y la elipse de Cazador pegados,
+               porque ewOpcionesChroma es el mismo objeto mutado, no uno
+               nuevo por modo. */
+            ewOpcionesChroma.desplazamientoHorizontalPct = 0;
+            ewOpcionesChroma.zonaProtegida = undefined;
           }
         }
 
@@ -3299,7 +3489,60 @@
           ewMostrarBloqueSetlist(modo);
           ewRenderPanelEspecializado(modo);
           ewAplicarClipsPorModo(modo);
-          ewAplicarEncuadrePorModo(modo);
+          /* Espera al video REAL, no a un cronometro (2026-09-02, reporte
+             del PO con video: "barra blanca a la derecha al cambiar a
+             Cazador" -- confirmado leyendo el codigo, no a ciegas).
+             ewAplicarClipsPorModo (arriba) solo ARRANCA el cruce de
+             opacidad entre los dos <video> -- el video VIEJO sigue siendo
+             el mas visible (el que dibujarCover() realmente lee, ver
+             elegirFuente() en avatar-heygen-chromakey.js) hasta que
+             reproducirClip() confirma que el nuevo ya esta reproduciendo
+             (su propio play().then(), tiempo de red variable -- NO son los
+             200ms fijos de la transicion CSS, con el clip sin cachear
+             (primera vez que pide elixis_cazador.mp4 a Supabase Storage)
+             tarda bastante mas). Un primer intento con setTimeout(220)
+             fallo por esto mismo: en la prueba real el video nuevo tardo
+             ~600ms en volverse el mas visible, mucho mas que el retraso
+             fijo -- se probo con el propio hook de drawImage() antes de
+             darlo por bueno, no se asumio.
+             ewAplicarEncuadrePorModo() cambia fraccionAncho/pct -- al
+             momento de encontrar este bug, si se venia de General (idle),
+             ese video SI tenia un borde blanco horneado real (~8.3%izq/
+             ~8.0%der) que solo quedaba tapado con su propio fraccionAncho
+             calibrado; con los parametros de Cazador puestos DE MAS
+             mientras el video viejo seguia siendo el dibujado, se
+             destapaba una tira real de ese borde (el archivo se corrigio
+             de raiz el mismo dia, ver ewOpcionesChroma mas arriba -- pero
+             el problema DE FONDO, parametros de recorte cambiando antes de
+             que el video nuevo sea el visible, sigue siendo real para
+             cualquier clip futuro que sí necesite un recorte distinto por
+             modo). Por eso se espera aca al mismo criterio que ya usa
+             elegirFuente() (opacidad computada real de las dos capas) en
+             vez de adivinar un numero de milisegundos: se aplica el
+             encuadre nuevo justo cuando el video nuevo ya es, de verdad, el
+             que se esta dibujando -- nunca antes. Tope de 3s por si el
+             video no carga (offline, 404, autoplay bloqueado): mejor un
+             encuadre tarde que una espera infinita. */
+          if(window.__ewEncuadrePoll) clearInterval(window.__ewEncuadrePoll);
+          (function(modoPedido){
+            var stage = el('ewAvatarStage');
+            var intentos = 0;
+            window.__ewEncuadrePoll = setInterval(function(){
+              intentos++;
+              var afp = stage && stage._afp;
+              var capaA = afp && afp.a, capaB = afp && afp.b;
+              var opA = capaA ? (parseFloat(getComputedStyle(capaA).opacity)||0) : 0;
+              var opB = capaB ? (parseFloat(getComputedStyle(capaB).opacity)||0) : 0;
+              var ganadora = opA >= opB ? capaA : capaB;
+              var archivoEsperado = window.MDB_AVATAR_CLIPS && afp && afp.estado && window.MDB_AVATAR_CLIPS[afp.estado];
+              var yaEsElNuevo = ganadora && archivoEsperado && ganadora.getAttribute('data-clip-file') === archivoEsperado && (opA>0.5 || opB>0.5);
+              if(yaEsElNuevo || intentos>=90){
+                clearInterval(window.__ewEncuadrePoll);
+                window.__ewEncuadrePoll = null;
+                ewAplicarEncuadrePorModo(modoPedido);
+              }
+            }, 33);
+          })(modo);
           var texto = EW_CONTEXTOS[modo] || EW_CONTEXTOS.general;
           /* Identidad djmago SIEMPRE, en los 5 modos (2026-08-30, correccion
              en vivo -- reporte real: en Modo General el avatar hablaba solo
