@@ -1015,15 +1015,27 @@ serve(async (req: Request) => {
                 // proposito, ver elixis-voice-session.js) -- en silencio
                 // total, la propia voz de DJMago saliendo por las bocinas es
                 // la UNICA señal que hay en el cuarto, limpia y facil de
-                // confundir con que el PO hablo. Antes esta dureza solo
-                // aplicaba a Cazador (musica real cerca del microfono); el
-                // mismo mecanismo de eco aplica igual de fuerte sin musica de
-                // por medio. Ver el disparo manual de respuesta en
+                // confundir con que el PO hablo.
+                //
+                // CORREGIDO EN LA MISMA SESION: la primera version de este
+                // cambio copio TAMBIEN el umbral 0.85 de Cazador (calibrado
+                // contra musica FUERTE en la cabina) a los modos de oficina --
+                // resultado real, reportado de inmediato: DJMago se quedaba
+                // "escuchando" para siempre, la voz normal en silencio nunca
+                // cruzaba un umbral pensado contra musica. Los modos de
+                // oficina usan el umbral ESTANDAR (0.82, ya probado contra
+                // ruido de TV) que si detecta voz normal -- solo se cambia
+                // create_response a false (el mecanismo anti-eco), sin tocar
+                // la sensibilidad. Cazador es el UNICO modo con el umbral
+                // 0.85, porque es el UNICO con musica real cerca del
+                // microfono. Ver el disparo manual de respuesta en
                 // elixis-voice-session.js (ya no exclusivo de Cazador) para
                 // que DJMago siga conversando de verdad en modos de oficina.
-                turn_detection: (identidad === "djmago")
+                turn_detection: (identidad === "djmago" && modoReq === "cazador")
                     ? { ...STRICT_TURN_DETECTION, threshold: DJMAGO_VAD_THRESHOLD, silence_duration_ms: DJMAGO_SILENCE_DURATION_MS, create_response: false }
-                    : estricto ? STRICT_TURN_DETECTION : STANDARD_TURN_DETECTION,
+                    : (identidad === "djmago")
+                        ? { ...(estricto ? STRICT_TURN_DETECTION : STANDARD_TURN_DETECTION), create_response: false }
+                        : estricto ? STRICT_TURN_DETECTION : STANDARD_TURN_DETECTION,
                 ...(nrMode === "off" ? {} : { noise_reduction: { type: nrMode } }),
                 // REMOVIDO (2026-08-30, sesion real: la llamada completa a
                 // OpenAI devolvia 500 sin CORS -- ver el try/catch global
