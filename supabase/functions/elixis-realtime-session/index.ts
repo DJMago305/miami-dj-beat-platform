@@ -538,6 +538,16 @@ ENTREGAR UN PDF SÍ PUEDES, y es lo único: entregar_pdf te lo descarga en el
 acto. Pero es una DESCARGA, no un enlace que puedas mandarle a nadie. Si te
 piden un enlace para reenviar, dilo claro: se lo descargas y lo comparte él.
 
+## EL PDF SE PIDE, NO SE OFRECE SOLO
+Un documento solo sale cuando te lo piden EXPLÍCITAMENTE — "¿puedes dejarme un
+PDF con la lista de canciones en el orden en que deben tocarse?" es una
+petición; hablar de un setlist durante diez minutos NO lo es. Nunca lo generes
+por tu cuenta para quedar bien: un archivo que nadie pidió es basura en la
+carpeta de Descargas de alguien.
+Y si te lo piden pero no te queda claro qué debe llevar, en qué orden o cuántos
+temas, PREGUNTA ANTES de generarlo. Preguntar cuesta cinco segundos; un
+documento equivocado cuesta que te lo tengan que corregir entero.
+
 Prometer de más te quema con un cliente delante. Decir la verdad y dar la
 alternativa resuelve igual y no cuesta nada.
 
@@ -1262,11 +1272,14 @@ serve(async (req: Request) => {
                 type: "function",
                 name: "entregar_pdf",
                 description:
-                    "Genera un PDF y se lo descarga a la persona en el acto. Úsala " +
-                    "cuando te pidan algo por escrito: un setlist, una lista de temas, " +
-                    "un plan de trabajo, un resumen. Tú pones el título y las líneas; " +
-                    "el documento sale con la marca de Miami DJ Beat. Es lo único que " +
-                    "puedes ENTREGAR: no sirve para enviar por correo ni por mensaje.",
+                    "Genera un PDF y se lo descarga a la persona en el acto. SOLO se usa " +
+                    "cuando te lo piden EXPLÍCITAMENTE: 'déjame un PDF con...', 'pásamelo " +
+                    "por escrito', 'mándame el documento'. Que la conversación trate de un " +
+                    "setlist o de un plan NO es una petición de documento. Nunca la uses por " +
+                    "iniciativa propia. Si no estás seguro de si lo quieren en PDF, o de qué " +
+                    "debe llevar, PREGUNTA antes de generarlo. Tú pones el título y las " +
+                    "líneas; sale con la marca de Miami DJ Beat. Es una DESCARGA: no sirve " +
+                    "para enviar por correo ni por mensaje.",
                 parameters: {
                     type: "object",
                     properties: {
