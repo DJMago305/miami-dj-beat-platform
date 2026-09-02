@@ -958,6 +958,24 @@ serve(async (req: Request) => {
         instructions: buildInstructions(gate.name, gate.role, memoria, modoEnfoque, identidad),
         audio: {
             input: {
+                // FALTABA POR COMPLETO (encontrado 2026-09-01, mismo sintoma
+                // que el bug de abajo: "Escuchando" activo, cero actividad
+                // en Hilos & Transcripcion). audio.input.transcription se
+                // habia quitado el 2026-08-30 por un 500 de schema -- pero
+                // el comentario de esa vez (ver mas abajo, "REMOVIDO") dice
+                // que lo sospechoso era el sub-campo .language, no el objeto
+                // entero; se termino quitando los dos juntos. Sin este
+                // campo, OpenAI JAMAS transcribe la voz del usuario -- el
+                // VAD (speech_started/stopped, turn_detection de abajo) SI
+                // funciona sin el (son features separadas), asi que el
+                // sintoma real es exactamente este: se detecta que alguien
+                // hablo, el turno se cierra, pero no hay
+                // conversation.item.input_audio_transcription.completed
+                // -- confirmado en consola real del PO, cero eventos de
+                // transcripcion tras hablar. whisper-1 es el modelo de
+                // transcripcion mas estable/antiguo de la API Realtime, sin
+                // el campo .language que causo el 500 la vez pasada.
+                transcription: { model: "whisper-1" },
                 // BUG REAL 2026-08-31 (reporte del PO: microfono activo,
                 // "Escuchando", panel de Hilos & Transcripcion sin ninguna
                 // actividad -- ni una transcripcion, en ningun modo). Este
