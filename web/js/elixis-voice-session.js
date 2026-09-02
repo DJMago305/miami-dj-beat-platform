@@ -121,6 +121,26 @@
     var micTrack = null;      // la pista viva, para devolverla al sender
     var bargeinCuadros = 0;   // cuadros seguidos de voz por encima de la bocina
     var reintentoTrasCorte = false; // permite UN reintento si OpenAI rechaza tras cancelar
+    /* ¿Hay una respuesta abierta AHORA MISMO? (2026-09-02, visto en las capturas
+       del PO: "Conversation already has an active response in progress: resp_...
+       Wait until the response is finished").
+       Con create_response:false el navegador es quien abre cada turno, y tiene
+       DOS disparadores que pueden solaparse: la transcripcion del usuario y el
+       resultado de una herramienta. Si los dos caen dentro del mismo turno --
+       DJMago consulta el catalogo mientras el PO sigue hablando -- el segundo
+       response.create llega con uno vivo y OpenAI lo rechaza con ese error.
+       Se lleva la cuenta con los eventos del propio servidor, no adivinando. */
+    var respuestaActiva = false;
+    function pedirRespuesta(motivo){
+      if(!dc || dc.readyState !== 'open') return false;
+      if(respuestaActiva){
+        console.warn('[ElixisVoiceSession] no se pide respuesta (' + motivo + '): ya hay una en curso');
+        return false;
+      }
+      respuestaActiva = true;
+      dc.send(JSON.stringify({ type:'response.create' }));
+      return true;
+    }
     var micArmadoEn = 0;      // Date.now() del ultimo micTx(true)
     var turnoSospechoso = false;
 
@@ -262,7 +282,6 @@
         var archivo = titulo.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,48) || 'documento';
         archivo += '.pdf';
         doc.save(archivo);
-        emit('onTool', { nombre:'entregar_pdf', args:{ titulo:titulo }, ok:true });
         return { ok:true, archivo:archivo, lineas:lineas.length };
       }catch(e){
         console.error('[ElixisVoiceSession] entregar_pdf:', e);
@@ -477,7 +496,7 @@
       if(!dc || dc.readyState!=='open') return;
       dc.send(JSON.stringify({ type:'conversation.item.create',
         item:{ type:'function_call_output', call_id:item.call_id, output:JSON.stringify(out) } }));
-      dc.send(JSON.stringify({ type:'response.create' }));   /* sin esto se queda mudo */
+      pedirRespuesta('resultado de herramienta');   /* sin esto se queda mudo */
     }
 
     /* Watchdog de "Pensando" (2026-08-31, reporte real del PO: el avatar se
@@ -647,10 +666,10 @@
             if(identidadActual === 'djmago' && dc && dc.readyState==='open'){
               if(modoActual === 'cazador'){
                 if(PREGUNTA_CANCION_RE.test(dicho)){
-                  dc.send(JSON.stringify({ type:'response.create' }));
+                  pedirRespuesta('pregunta por la cancion');
                 }
               } else {
-                dc.send(JSON.stringify({ type:'response.create' }));
+                pedirRespuesta('turno del usuario');
               }
             }
           }
@@ -722,7 +741,12 @@
           emit('onTranscript', { who:'elixis', delta:(m.delta||'') });
           emit('onState','speaking'); break;
 
+        case 'response.created':
+          respuestaActiva = true;
+          break;
+
         case 'response.done': {
+          respuestaActiva = false;
           limpiarWatchdogPensando();
           /* BUG REAL 2026-08-31 (reporte del PO con captura: monologo
              infinito -- ELIXIS respondiendose a si misma, "Uff, boda!"...
@@ -858,7 +882,8 @@
             reintentoTrasCorte = false;
             console.warn('[ElixisVoiceSession] reintentando la respuesta tras el corte');
             setTimeout(function(){
-              if(dc && dc.readyState==='open') dc.send(JSON.stringify({ type:'response.create' }));
+              respuestaActiva = false;   // el rechazo cerro la anterior
+              pedirRespuesta('reintento tras el corte');
             }, 250);
           }
           emit('onError', (m.error && m.error.message) || 'Error en el canal de voz');
@@ -1030,7 +1055,7 @@
       if(musicHunterNodo && window.MusicHunterRingBuffer){
         window.MusicHunterRingBuffer.desconectar(musicHunterNodo); musicHunterNodo=null;
       }
-      audioSender=null; micTrack=null; bargeinCuadros=0;
+      audioSender=null; micTrack=null; bargeinCuadros=0; respuestaActiva=false;
       if(mic){ mic.getTracks().forEach(function(t){ try{ t.stop(); }catch(_){ } }); mic=null; }
       if(spk){ try{ spk.pause(); spk.srcObject=null; }catch(_){ } }
       hablando=false;
@@ -1081,6 +1106,7 @@
       }catch(_){ return false; }
       if(micReactivarTimeout){ clearTimeout(micReactivarTimeout); micReactivarTimeout=null; }
       audioSalidaActiva = false;
+      respuestaActiva = false;   // la cancelacion cierra la respuesta en curso
       hablando = false;
       /* BUG REAL 2026-09-02 (reporte en vivo del PO: "me respondio alzando yo
          un poco la voz pero despues se quedo callado"). Al interrumpir, lo que
@@ -1262,7 +1288,7 @@
       }
       dc.send(JSON.stringify({ type:'conversation.item.create',
         item:{ type:'message', role:'user', content:[{ type:'input_text', text:texto }] } }));
-      dc.send(JSON.stringify({ type:'response.create' }));
+      pedirRespuesta('texto escrito');
     }
 
     /* Modo escritura SIN sesion de voz (2026-08-31, orden del PO: escribir
