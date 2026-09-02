@@ -74,7 +74,37 @@
        del canal de control). El mic se abria mientras el ultimo pedazo de la
        voz de ELIXIS seguia sonando, se volvia a captar, y arrancaba un turno
        nuevo. Dos variables para la defensa de abajo: */
-    var micReactivarTimeout=null; // temporizador pendiente de reactivar el mic (response.done)
+    var micReactivarTimeout=null; // red de seguridad si output_audio_buffer.stopped no llega
+
+    /* GUARDA ACUSTICA (2026-09-02). Cuando las bocinas terminan de sonar, el
+       CUARTO todavia no se ha callado: quedan reverberacion, reflexiones y
+       cola de decay. Abrir el mic en el mismo instante en que se drena el
+       buffer vuelve a meter esa cola en el VAD. 400ms es un punto de partida
+       de ingenieria, NO un numero oficial de OpenAI -- depende de la sala y
+       del equipo. Se calibra en vivo sin tocar codigo ni redesplegar:
+         localStorage.setItem('elixis_guarda_ms','250')   // 250/400/600/800
+       Techo de 2s para que una calibracion mal escrita no cuelgue el mic. */
+    function guardaAcusticaMs(){
+      var v = parseInt(localStorage.getItem('elixis_guarda_ms'), 10);
+      return (isFinite(v) && v >= 0 && v <= 2000) ? v : 400;
+    }
+    function micTx(encendido){
+      if(mic) mic.getAudioTracks().forEach(function(t){ t.enabled = !!encendido; });
+    }
+    function limpiarBufferEntrada(){
+      if(dc && dc.readyState==='open') dc.send(JSON.stringify({ type:'input_audio_buffer.clear' }));
+    }
+    /* El unico camino que vuelve a abrir el microfono. Todo lo que quiera
+       reactivarlo pasa por aqui, para que la guarda no se pueda saltar. */
+    function abrirMicTrasGuarda(){
+      if(micReactivarTimeout){ clearTimeout(micReactivarTimeout); }
+      limpiarBufferEntrada();                     // (1) tira el residuo ya acumulado
+      micReactivarTimeout = setTimeout(function(){
+        limpiarBufferEntrada();                   // (2) y lo que entro durante la guarda
+        micTx(true);
+        micReactivarTimeout = null;
+      }, guardaAcusticaMs());
+    }
     var historialAsistente=[]; // últimas frases de ELIXIS/DjMago con su hora, para el filtro anti-eco
     /* Default 'djmago', no null (2026-08-30, correccion en vivo -- reporte
        real: hablar sin haber tocado antes un boton de Modo dejaba
@@ -436,27 +466,33 @@
              se reactiva 800ms despues, no de inmediato, dandole margen real
              a las bocinas. Ver tambien esTextoParecido()/historialAsistente
              arriba -- defensa adicional si algo se cuela de todos modos. */
-          if(dc && dc.readyState==='open') dc.send(JSON.stringify({ type:'input_audio_buffer.clear' }));
+          /* CORREGIDO 2026-09-02. Lo de arriba decia que "no hay evento real
+             de 'la bocina ya termino' disponible" y estimaba el final del
+             audio a ~35ms por caracter. Es FALSO: en WebRTC existe
+             output_audio_buffer.stopped, que dispara cuando el buffer de
+             salida se drena de verdad. La estimacion era justo el hueco del
+             eco -- en una respuesta larga el mic volvia mientras la bocina
+             todavia sonaba. El mic ya NO se reabre aqui: se reabre en
+             output_audio_buffer.stopped (mas abajo), con guarda acustica.
+
+             response.done significa "termino de GENERARSE", no "termino de
+             SONAR": el audio viaja por la pista WebRTC, un camino distinto
+             del canal de datos, y puede seguir reproduciendose despues.
+
+             RED DE SEGURIDAD: una respuesta SIN audio (solo texto, o una
+             llamada a herramienta) nunca dispara output_audio_buffer.stopped.
+             Sin esto el mic se quedaria mudo para siempre. Se arma el margen
+             viejo como TECHO -- output_audio_buffer.stopped lo cancela y toma
+             el control apenas llega, asi que en el camino normal no se usa. */
+          limpiarBufferEntrada();
           if(micReactivarTimeout){ clearTimeout(micReactivarTimeout); }
-          /* Margen ESCALADO por longitud del texto hablado (2026-08-31,
-             reporte real del PO -- el bucle seguia pasando con el margen
-             fijo de 800ms). 800ms fijo era una adivinanza pensada para un
-             "¡Hola!" corto -- una respuesta larga de verdad tarda varios
-             segundos en salir por las bocinas, y reactivar el mic a los
-             800ms de TODOS modos deja el mismo hueco de eco que esto
-             intenta cerrar. No hay evento real de "la bocina ya termino"
-             disponible (el audio de OpenAI llega como MediaStream WebRTC en
-             vivo, no como un <audio src> con duracion conocida -- nunca
-             dispara 'ended' de verdad) -- se estima a partir del texto ya
-             confirmado: ~35ms por caracter (ritmo natural de habla en
-             español, con margen), piso de 800ms (el caso corto de siempre no
-             cambia) y techo de 4s (una respuesta larguisima no debe colgar
-             el mic para siempre). */
-          var margenMs = Math.min(4000, Math.max(800, _textoElixis.trim().length * 35));
+          var techoMs = Math.min(4000, Math.max(800, _textoElixis.trim().length * 35)) + guardaAcusticaMs();
           micReactivarTimeout = setTimeout(function(){
-            if(mic){ mic.getAudioTracks().forEach(function(t){ t.enabled=true; }); }
+            console.warn('[ElixisVoiceSession] output_audio_buffer.stopped no llego en ' + techoMs + 'ms; reabriendo el mic por la red de seguridad');
+            limpiarBufferEntrada();
+            micTx(true);
             micReactivarTimeout = null;
-          }, margenMs);
+          }, techoMs);
           /* Las llamadas a herramienta viajan DENTRO de response.done. Si se
              cierra el turno aqui sin mirarlas, la consulta no sale nunca. */
           var salida = (m.response && m.response.output) || [];
@@ -474,6 +510,27 @@
           hablando=false;
           emit('onState','listening'); break;
         }
+        /* ── EVENTOS REALES DE REPRODUCCION (WebRTC) ──────────────────
+           Estos tres son la unica fuente de verdad sobre lo que suena de
+           verdad por las bocinas. No confundir:
+             · stopped  → la reproduccion NORMAL termino y el buffer se dreno.
+                          ESTE es el que reabre el microfono.
+             · cleared  → el audio se corto (cancelacion / interrupcion). NO
+                          significa "termino bien", pero tambien deja de
+                          sonar, asi que tambien pasa por la guarda.
+             · started  → empezo a sonar. El mic ya deberia estar cerrado por
+                          el delta de transcripcion; esto lo asegura para el
+                          caso en que el audio salga antes que el texto. */
+        case 'output_audio_buffer.started':
+          if(micReactivarTimeout){ clearTimeout(micReactivarTimeout); micReactivarTimeout=null; }
+          micTx(false);
+          break;
+
+        case 'output_audio_buffer.stopped':
+        case 'output_audio_buffer.cleared':
+          abrirMicTrasGuarda();
+          break;
+
         case 'error':
           /* BUG REAL 2026-08-31 (reporte del PO con captura: avatar colgado
              en "Pensando" indefinidamente). Antes este caso solo avisaba
@@ -490,7 +547,7 @@
           emit('onError', (m.error && m.error.message) || 'Error en el canal de voz');
           emit('onState','listening');
           if(micReactivarTimeout){ clearTimeout(micReactivarTimeout); micReactivarTimeout=null; }
-          if(mic){ mic.getAudioTracks().forEach(function(t){ t.enabled=true; }); } // no dejar el mic mudo si el error llego a mitad de la respuesta
+          micTx(true); // no dejar el mic mudo si el error llego a mitad de la respuesta
           break;
       }
     }

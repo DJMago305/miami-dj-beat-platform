@@ -531,6 +531,33 @@ Un socio de verdad no te miente para quedar bien.
 La calidez nunca es excusa para inventar. Eso no es ser buen socio, es ser un problema.${enfoque}`;
 }
 
+// ─── REEMBOLSO DE UNA SESION QUE NUNCA LLEGO A EXISTIR ───────────────────────
+// OJO: `ADMIN.rpc(...)` devuelve un PostgrestFilterBuilder. Es *thenable* (tiene
+// .then) pero NO es una Promise: NO tiene .catch. Escribir `.rpc(...).catch(...)`
+// lanza "TypeError: ...catch is not a function" EN EJECUCION, no al compilar.
+//
+// BUG REAL (2026-08-30 al 2026-09-02, visto en los logs de produccion): eso
+// estaba escrito justo aqui, en la via que corre cuando OpenAI RECHAZA la
+// sesion. Al reventar, el handler moria sin responder -- el navegador no
+// recibia ni el 502 ni las cabeceras CORS, no quedaba ni rastro en
+// function_edge_logs, y sobre todo LA RESERVA DE 900s NUNCA SE LIBERABA.
+// Resultado medido: 25 sesiones colgadas en `open` y 22.500s (6h15m) retenidos
+// contra el tope de seguridad del propio usuario, por sesiones que jamas
+// existieron. Cuanto peor iba OpenAI (429 sin credito), mas caro salia.
+//
+// Un fallo al devolver el saldo no puede tumbar la respuesta de error: el
+// usuario tiene que enterarse de que la voz fallo, y el reembolso se reintenta
+// solo cuando el barrendero pase por la sesion abandonada.
+async function devolverReserva(sessionId: string | null): Promise<void> {
+    if (!sessionId) return;
+    try {
+        const { error } = await ADMIN.rpc("elixis_voice_settle", { p_session: sessionId, p_used: 0 });
+        if (error) console.error("[elixis-realtime-session] reembolso rechazado:", error.message);
+    } catch (err) {
+        console.error("[elixis-realtime-session] reembolso, excepcion:", err);
+    }
+}
+
 // ─── HANDLER ─────────────────────────────────────────────────────────────────
 serve(async (req: Request) => {
     const cors = buildCorsHeaders(req);
@@ -1233,10 +1260,7 @@ serve(async (req: Request) => {
                 `[elixis-realtime-session] OpenAI ${upstream.status} · user=${gate.userId} · ${answer.slice(0, 500)}`,
             );
             // La sesion nunca llego a existir: no se le puede cobrar al usuario.
-            if (sessionId) {
-                await ADMIN.rpc("elixis_voice_settle", { p_session: sessionId, p_used: 0 })
-                    .catch(() => {});
-            }
+            await devolverReserva(sessionId);
             return json({ ok: false, error: "voice_upstream_error", detail: upstream.status }, 502);
         }
 
@@ -1257,9 +1281,7 @@ serve(async (req: Request) => {
         });
     } catch (err) {
         console.error("[elixis-realtime-session] fallo de red hacia OpenAI:", err);
-        if (sessionId) {
-            await ADMIN.rpc("elixis_voice_settle", { p_session: sessionId, p_used: 0 }).catch(() => {});
-        }
+        await devolverReserva(sessionId);
         return json({ ok: false, error: "voice_unreachable" }, 502);
     }
     } catch (err) {
