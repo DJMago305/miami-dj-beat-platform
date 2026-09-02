@@ -405,7 +405,19 @@
             humana es ancha, repartida entre formantes. Si UNA sola banda se
             lleva mas de un tercio de la energia, eso no es una persona
             hablando: es un timbre, un pitido o una nota. */
-      var hayVoz = nMic > ajusteBargein(hayReferencia ? 'piso' : 'piso_solo', hayReferencia ? 0.10 : 0.16)
+      /* PISO AJUSTADO CON MEDICION REAL (2026-09-02). El 0.16 salio de una
+         estimacion mia y era INALCANZABLE: el PO reporto que no conseguia
+         cortarlo. El unico dato medido de su voz en su sala, capturado por el
+         propio detector cuando si funciono, fue 0.110 -- un piso por encima de
+         eso no se cruza nunca.
+         Se baja a 0.09, justo por debajo de esa medida. Y no se debilita la
+         defensa contra notificaciones, porque ya NO depende del nivel: quedan
+         las otras dos condiciones, que un "ding" no cumple -- DURACION (~230ms
+         sostenidos) y TIMBRE (un aviso es casi un tono puro).
+         Es UNA sola muestra. Si con esto se cuela un aviso, sube el piso; si
+         sigue costando cortarlo, bajalo -- en vivo, sin redesplegar:
+           localStorage.setItem('elixis_bargein_piso_solo','0.12') */
+      var hayVoz = nMic > ajusteBargein(hayReferencia ? 'piso' : 'piso_solo', hayReferencia ? 0.10 : 0.09)
                 && (!hayReferencia || nMic > nRem * ajusteBargein('margen', 1.7))
                 && !esTonoPuro(anMic);
       /* MEDIDOR DE CALIBRACION (2026-09-02). Elegir el piso a ojo es lo que
@@ -854,7 +866,7 @@
           if(localStorage.getItem('elixis_bargein_debug') === '1'){
             console.log('[ElixisVoiceSession] CALIBRACION · pico de tu voz mientras el hablaba: ' +
                         bargeinPico.toFixed(3) + '  (piso actual: ' +
-                        ajusteBargein('piso_solo', 0.16).toFixed(3) + ')');
+                        ajusteBargein('piso_solo', 0.09).toFixed(3) + ')');
           }
           bargeinPico = 0;
           audioSalidaActiva = false;
