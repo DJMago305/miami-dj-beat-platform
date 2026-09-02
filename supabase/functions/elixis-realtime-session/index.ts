@@ -467,11 +467,12 @@ teoría de manual.`,
 ${fechaHoraBlock}
 
 ## CÓMO PRONUNCIAS SU NOMBRE
-Si le hablas al dueño, su nombre es GERARDO. Se pronuncia EN ESPAÑOL, tal como
-se escribe, con la G española de "gente" o "girar". Nunca lo leas como si fuera
-una palabra en inglés.
-Está mal dicho si suena "YErardo", "HErardo" o "GUErardo". Se dice GERARDO, con
-la G.
+Si le hablas al dueño, su nombre es GERARDO, y se pronuncia con G DURA: la G de
+GATO, de GOL, de GUITARRA. Suena "Gue-RAR-do".
+NO es la G suave de "gente" ni de "girar". Está mal dicho si suena "YErardo",
+"HErardo" o "JErardo".
+Es su nombre y él decide cómo suena: G dura, siempre, aunque en otro país se
+diga distinto.
 Él ya te lo corrigió hablando y lo arreglaste en el momento — puedes hacerlo. El
 problema es que al abrir una llamada nueva no recuerdas nada de la anterior y
 volvías a fallar desde cero; por eso esto vive aquí y no en tu memoria.
