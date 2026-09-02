@@ -350,17 +350,23 @@
             }
             emit('onTranscript', { who:'yo', text:dicho, final:true });
             emit('onThreadLine', { rol:'yo', contenido:dicho, modo:modoActual });
-            /* CORRECCION 2026-08-31 (server: elixis-realtime-session ahora
-               solo pone create_response:false cuando modoReq==='cazador' --
-               ver ese archivo para el porque completo). En los otros 5
-               modos OpenAI genera la respuesta el solo (create_response:
-               true, flujo nativo) -- mandar este response.create manual ahi
-               TAMBIEN seria redundante (y arriesga un error real de OpenAI,
-               "ya hay una respuesta activa", si el nativo ya iba a
-               disparar). El disparo manual queda EXCLUSIVO de Cazador
-               Musical, donde el servidor de verdad se queda mudo sin el. */
-            if(identidadActual === 'djmago' && modoActual === 'cazador' && dc && dc.readyState==='open'){
-              if(PREGUNTA_CANCION_RE.test(dicho)){
+            /* CORRECCION 2026-08-31, EXTENDIDA 2026-09-01 (server:
+               elixis-realtime-session ahora pone create_response:false para
+               TODA identidad djmago, no solo Cazador -- ver ese archivo para
+               el porque completo: eco acustico real en silencio total,
+               bocinas+microfono sin cancelacion de eco). Con el servidor
+               mudo en los 6 modos de djmago, el disparo manual de aqui ya no
+               es exclusivo de Cazador -- sin el, DJMago se quedaria callado
+               tambien en modos de oficina. Cazador conserva su propia regla
+               (solo responder si preguntan por la cancion, directiva
+               explicita del PO); el resto de los modos responde a cualquier
+               transcripcion real (ya filtrada de eco arriba). */
+            if(identidadActual === 'djmago' && dc && dc.readyState==='open'){
+              if(modoActual === 'cazador'){
+                if(PREGUNTA_CANCION_RE.test(dicho)){
+                  dc.send(JSON.stringify({ type:'response.create' }));
+                }
+              } else {
                 dc.send(JSON.stringify({ type:'response.create' }));
               }
             }
