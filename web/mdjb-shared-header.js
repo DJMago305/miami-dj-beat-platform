@@ -43,12 +43,17 @@
        destino: cliente→su cuenta, artista→su portal, staff→staff, invitado→login. */
     { s: 8, key: 'nav-my-profile', nav: 'mi-portal', href: './login.html',  txt: 'MI PERFIL',
       id: 'mainNav-mi-portal-link', cls: 'mdj-mi-portal-mainnav mdj-mi-portal-gold',
-      alias: ['mi-portal', 'header-mi-portal'], navAlias: ['my-profile', 'profile'] },
-    /* Slot 9 · MRM IA — Master Road Map IA (decisión PO 2026-08-16). Visible para
-       todos los roles:
-       el mapa se adapta a quien entra y enseña sólo lo que a ese rol le compete. */
-    { s: 9, key: 'nav-roadmap',  nav: 'roadmap',   href: './road-map.html', txt: 'MRM IA',
-      id: 'mainNav-roadmap-link', cls: 'mdj-roadmap-mainnav' }
+      alias: ['mi-portal', 'header-mi-portal'], navAlias: ['my-profile', 'profile'] }
+    /* Slot 9 · MRM IA RETIRADO de esta barra (2026-09-02, orden directa del
+       PO: "sacala y dejala solo en menu de inicio... borra todo lo que
+       tenga que ver con la posicion vieja para evitar errores"). Vivía aquí
+       desde 2026-08-16 como "visible para todos los roles" -- el PO decidió
+       que un manual/tour por rol no pertenece a la barra compartida de
+       TODAS las páginas, sino solo a Inicio (index.html), donde ahora vive
+       como bloque propio de esa página. Vuelve esta tabla a los 8 slots
+       canónicos originales que ya describía el comentario de arriba (línea
+       21) antes de que este slot se agregara. Ver docs/ESTADO_MAESTRO.md
+       para el historial completo. */
   ];
 
   /* ══ JUEGO INTERNO DEL SISTEMA (decisión PO 2026-08-19) ══════════════════════
@@ -91,13 +96,13 @@
        el requisito pleno de la ley RBAC —sacarlo del DOM, no solo ocultarlo. */
     { s: 8, key: 'nav-staff',      nav: 'staff',     href: './staff.html',        txt: 'Staff',
       id: 'mainNav-staff-or-profile', cls: 'mdj-staff-mainnav dj-tab-btn--staff-only' },
-    { s: 9, key: null,             nav: 'fenix',     href: './elixis-console.html', txt: 'Fénix AI' },
-    /* Puesto 10 · MRM IA — mismo destino/clase que el puesto 9 de la barra
-       publica (linea ~50); orden confirmado por el PO 2026-08-30: Inicio,
-       Academia, Agenda, Config, DJ Tools, Cash Flow, MI PERFIL, Staff,
-       Fenix AI, MRM IA. Antes este puesto no existia en el juego interno. */
-    { s: 10, key: 'nav-roadmap',   nav: 'roadmap',   href: './road-map.html',    txt: 'MRM IA',
-      id: 'mainNav-roadmap-link', cls: 'mdj-roadmap-mainnav' }
+    { s: 9, key: null,             nav: 'fenix',     href: './elixis-console.html', txt: 'Fénix AI' }
+    /* Puesto 10 · MRM IA RETIRADO (2026-09-02, orden directa del PO -- ver
+       nota completa junto a MDJ_NAV_SLOTS arriba). Vivía aquí desde
+       2026-08-30 con el mismo destino/clase que el puesto 9 de la barra
+       pública; el orden vigente hoy es: Inicio, Academia, Agenda, Config,
+       DJ Tools, Cash Flow, MI PERFIL, Staff, Fénix AI -- 9 puestos, no 10.
+       MRM IA vive ahora solo en index.html (Inicio). */
   ];
 
   /* ══ ESTACION DE TRABAJO DEL ARTISTA ═══════════════════════════════════════
@@ -750,6 +755,74 @@
     }, true);
   }
 
+  /* ══ DESTINO DE AGENDA / CASH FLOW · MISMA CURA, PUESTO 3 Y 6 ═══════════════
+     El PO reporto en vivo (2026-09-02): "la pestaña Agenda al aplastarla por
+     primera vez me lleva a Mi Perfil, despues me vuelve a llevar a Agenda" --
+     el mismo sintoma exacto que ya se documento y curo para MI PERFIL/CONFIG
+     arriba (ventana de un tick donde el rol/uid aun no resuelven). Este
+     puesto usaba el patron viejo -- precalcular un href de respaldo al crear
+     el nodo (mdjEnsureAgendaMainNavNode) y corregirlo despues, en cuanto la
+     sesion resuelve (mdjApplyAgendaMainNavLink) -- que es exactamente el
+     patron que la propia nota de FIX-NAV-CONFIG-01 (arriba) senala como
+     fragil por diseño: si el clic real cae ANTES de esa correccion, viaja
+     con el href viejo. `mdjEsVistaDeEstacionEstatica()` ya protege este
+     puesto contra la carrera de REORDENAMIENTO del DOM en paginas de
+     estacion (dj-tools.html, academia.html, etc.) -- pero `staff.html` NO
+     esta en esa lista (no es una "vista de estacion", usa su propia tira
+     #staff-topnav para el panel interno), asi que en esa pagina especifica
+     el riel suelto de abajo SI corre, sin esa proteccion. Misma cura que
+     Mi Perfil/Config: resolver EN EL CLIC, en vivo, sin depender de ningun
+     href precalculado. */
+  async function mdjDestinoAgendaEnVivo(tab) {
+    var supa = (typeof window.getSupabaseClient === 'function') ? window.getSupabaseClient() : null;
+    if (!supa) return './login.html';
+    var ses = null;
+    try { var r = await supa.auth.getSession(); ses = r && r.data ? r.data.session : null; } catch (e) {}
+    if (!ses) return './login.html';
+    var uid = ses.user && ses.user.id ? String(ses.user.id) : '';
+    var rol = '';
+    try {
+      var pr = await supa.from('dj_profiles').select('role').eq('user_id', uid).maybeSingle();
+      rol = String(((pr && pr.data) || {}).role || '').toLowerCase().trim();
+    } catch (e) {}
+    var base = tab === 'flow' ? './staff-agenda.html?tab=flow' : './staff-agenda.html';
+    if (rol === 'owner' || rol === 'admin' || rol === 'manager' || rol === 'management' || rol === 'seller') {
+      return base;
+    }
+    if (rol) {                                     // cualquier otro rol con perfil = artista
+      var dest = tab === 'flow' ? './dj-dashboard.html?tab=flow' : './dj-dashboard.html?tab=dashboard';
+      try {
+        if (mdjEnPortalArtista() && !/mdj_nav=profile/.test(dest)) {
+          dest = mdjArtistNavWithProfileContext(dest);
+        }
+      } catch (eCtxAg) { /* noop */ }
+      return dest;
+    }
+    return './login.html';                         // sin rol/perfil: este puesto no le corresponde
+  }
+
+  function mdjEngancharAgendaOFlow(el, tab) {
+    var flagProp = tab === 'flow' ? '__mdjFlowHook' : '__mdjAgendaHook';
+    if (!el || el[flagProp]) return;
+    el[flagProp] = true;
+    el.addEventListener('click', function (ev) {
+      if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button === 1) return;   // abrir en pestaña nueva
+      ev.preventDefault();
+      ev.stopPropagation();
+      var previo = el.getAttribute('href');
+      el.setAttribute('aria-busy', 'true');
+      mdjDestinoAgendaEnVivo(tab).then(function (dest) {
+        el.removeAttribute('aria-busy');
+        window.location.href = dest;
+      }).catch(function () {
+        el.removeAttribute('aria-busy');
+        window.location.href = previo || './login.html';
+      });
+    }, true);
+  }
+  function mdjEngancharAgenda(el) { mdjEngancharAgendaOFlow(el, 'agenda'); }
+  function mdjEngancharFlow(el) { mdjEngancharAgendaOFlow(el, 'flow'); }
+
   /* ══ PANEL PREMIUM DE LA HAMBURGUESA ═══════════════════════════════════════
      Decision PO 2026-08-20. El desplegable era una lista plana de diez enlaces
      —cero encabezados de seccion, cero iconos— y debe seguir el patron
@@ -777,7 +850,6 @@
     jobs:     'M20 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2',
     contact:  'M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM2 7l10 6 10-6',
     'mi-portal': 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
-    roadmap:  'M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14',
     staff:    'M12 21.5s7.5-3.75 7.5-9.5V5.25L12 2.5 4.5 5.25V12c0 5.75 7.5 9.5 7.5 9.5z',
     academia: 'M22 9 12 4 2 9l10 5 10-5zM6 11v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5',
     agenda:   'M8 3v4M16 3v4M3 10h18M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z',
@@ -795,7 +867,9 @@
     // "Sistema" quedan igual que siempre -- fuera de esa autorizacion.
     { titulo: 'Navegación', i18nKey: 'nav-group-navegacion', claves: ['home', 'services', 'venues', 'shop', 'jobs', 'contact', 'academia', 'agenda', 'tools', 'flow'] },
     { titulo: 'Tu cuenta',  claves: ['config', 'mi-portal'] },
-    { titulo: 'Sistema',    claves: ['roadmap', 'fenix', 'staff'] }
+    /* 'roadmap' retirado del grupo (2026-09-02) -- MRM IA ya no vive en
+       ninguna barra compartida, ver nota junto a MDJ_NAV_SLOTS arriba. */
+    { titulo: 'Sistema',    claves: ['fenix', 'staff'] }
   ];
 
   function mdjIconoPanel(clave) {
@@ -1263,19 +1337,9 @@
       }
     });
 
-    // MRM IA — visible para TODOS los roles, incluido invitado.
-    // No es una herramienta de owner: es un mapa que se adapta a quien entra.
-    // El owner ve el recorrido completo; el manager sólo lo que le compete; el
-    // vendedor la parte comercial; el artista su modelo de pago y sus ventajas;
-    // el cliente cómo contratar. Quien decide el alcance es la página destino
-    // según el rol de la sesión, no esta barra. Ubicado por data-mdj-nav
-    // ="roadmap" (identidad), no por puesto: en la interna de 10 puestos vive
-    // en el 10, no en el 9 (2026-08-30).
-    [].slice.call(nav.querySelectorAll('[data-mdj-nav="roadmap"]')).forEach(function (el) {
-      el.classList.remove('mdj-mainnav-reserved-slot');
-      el.removeAttribute('aria-hidden');
-      el.removeAttribute('tabindex');
-    });
+    // MRM IA retirado de esta barra (2026-09-02, orden del PO) -- ya no hay
+    // ningun elemento data-mdj-nav="roadmap" que gobernar aqui. Vive ahora
+    // solo en index.html (Inicio). Ver docs/ESTADO_MAESTRO.md.
 
     // MI PERFIL: un solo destino, decidido por rol. Se reafirma en cada pasada
     // para que ningún pase posterior lo devuelva a la plantilla vieja.
@@ -1483,16 +1547,18 @@
     nav.style.setProperty('flex-wrap', 'nowrap', 'important');
     nav.style.setProperty('align-items', 'center', 'important');
 
-    /* ── NORMALIZACIÓN CANÓNICA DE LOS 9 PUESTOS ─────────────────────────
-       Estándar inmutable (PO 2026-08-18), idéntico en TODAS las vistas:
+    /* ── NORMALIZACIÓN CANÓNICA DE LOS 8 PUESTOS ─────────────────────────
+       Estándar inmutable (PO 2026-08-18, actualizado 2026-09-02 al retirar
+       MRM IA de esta barra), idéntico en TODAS las vistas:
          1 HOME · 2 SERVICES · 3 EVENTS · 4 SHOP · 5 ⚙ CONFIG ·
-         6 JOBS · 7 CONTACT · 8 MI PERFIL · 9 MRM IA
+         6 JOBS · 7 CONTACT · 8 MI PERFIL
 
        Por qué hace falta esto: el puesto 8 llega con DOS identidades según la
        página —#mainNav-mi-perfil-link con sesión y #mainNav-guest-mi-perfil-link
        sin ella— y la variante de invitado venía SIN data-mdj-slot. Sin ese
        atributo la rejilla no la coloca, su columna 8 se queda vacía y aparece
-       el hueco de 170 px antes de MRM IA que se veía en login.html.
+       un hueco de 170 px al final del riel (el mismo síntoma que antes se
+       describía "antes de MRM IA", visible en login.html).
        Aquí se le pone el puesto que le toca y se fijan los destinos canónicos.
        No se crea ningún enlace: solo se etiqueta el que ya existe. */
     (function normalizarPuestos() {
@@ -3209,6 +3275,7 @@
        arriba. Sin la clave, ningun pase de i18n vuelve a tocar este rotulo. */
     a.className = 'mdj-agenda-mainnav mdj-mainnav-reserved-slot';
     a.href = './dj-dashboard.html?tab=dashboard';
+    mdjEngancharAgenda(a);                          // resuelve destino EN EL CLIC -- ver nota arriba
     a.setAttribute('aria-hidden', 'true');
     a.setAttribute('tabindex', '-1');
     a.textContent = 'Agenda';
@@ -3270,6 +3337,7 @@
     a.setAttribute('data-i18n', 'flow-dash');
     a.className = 'mdj-flow-mainnav mdj-mainnav-reserved-slot';
     a.href = './dj-dashboard.html?tab=flow';
+    mdjEngancharFlow(a);                            // resuelve destino EN EL CLIC -- ver nota arriba
     a.setAttribute('aria-hidden', 'true');
     a.setAttribute('tabindex', '-1');
     var raw = document.documentElement && String(document.documentElement.lang || '').toLowerCase();

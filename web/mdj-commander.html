@@ -2238,6 +2238,73 @@
     var sesion=null, nivelBloque=0, hb=0, t0=0;
     var hablando=false;
 
+    /* ═══ ANTI-ECO / GUARDA ACUSTICA (2026-09-02, portado de elixis-voice-
+       session.js -- mismo bug real reportado por el PO en esta pantalla:
+       "hipo", frases cortadas sin dialogo estable, "cualquier ruido lo
+       corta". Causa real: CONSTRAINTS_MIC_RAW (mas abajo) tiene echo/noise/
+       AGC en false a proposito (para no cortar Serato via reconfiguracion
+       de CoreAudio) -- sin cancelacion de eco, las bocinas reproducen la
+       voz del agente, el mismo microfono la vuelve a captar, y el VAD del
+       servidor interpreta ese eco como que el usuario empezo a hablar,
+       cortando la respuesta en bucle. El fix NO toca el servidor ni las
+       constraints: corta el ENVIO del microfono mientras el agente habla
+       (RTCRtpSender.replaceTrack, no track.enabled -- asi el analizador
+       local sigue oyendo) y lo reabre recien cuando el audio de salida
+       terminó de sonar DE VERDAD (output_audio_buffer.stopped, no
+       response.done -- ver el comentario real en elixis-voice-session.js,
+       response.done es del canal de datos y puede quedar audio pendiente
+       de reproducirse). Ver [[project_mic_prewarm_serato_glitch]] Ronda 4. */
+    var audioSalidaActiva=false; // true mientras output_audio_buffer.started..stopped
+    var micReactivarTimeout=null; // red de seguridad: solo para respuestas SIN audio
+    var audioSender=null, micTrack=null; // para cortar el ENVIO sin apagar el track
+    var micArmadoEn=0; // Date.now() de la ultima vez que se re-armo el envio
+    var turnoSospechoso=false; // el turno actual nacio con la bocina sonando
+    var historialAsistente=[]; // ultimas frases del agente, defensa adicional anti-eco
+    var TOPE_CUELGUE_MS = 45000; // techo absoluto si el evento de fin nunca llega
+
+    function guardaAcusticaMs(){
+      var v = parseInt(localStorage.getItem('elixis_guarda_ms'), 10);
+      return (isFinite(v) && v>=0 && v<=2000) ? v : 400;
+    }
+    function micTx(encendido){
+      if(audioSender){
+        try{ audioSender.replaceTrack(encendido ? micTrack : null); }
+        catch(_){ if(mic) mic.getAudioTracks().forEach(function(t){ t.enabled=!!encendido; }); }
+      } else if(mic){
+        mic.getAudioTracks().forEach(function(t){ t.enabled=!!encendido; });
+      }
+      if(encendido) micArmadoEn = Date.now();
+    }
+    function limpiarBufferEntrada(){
+      if(dc && dc.readyState==='open') dc.send(JSON.stringify({ type:'input_audio_buffer.clear' }));
+    }
+    function abrirMicTrasGuarda(){
+      if(micReactivarTimeout){ clearTimeout(micReactivarTimeout); }
+      limpiarBufferEntrada();
+      micReactivarTimeout = setTimeout(function(){
+        limpiarBufferEntrada();
+        micTx(true);
+        micReactivarTimeout=null;
+      }, guardaAcusticaMs());
+    }
+    /* Defensa ADICIONAL, no la principal (esa es el candado por tiempo de
+       arriba): si lo transcrito se parece a algo que el propio agente dijo
+       hace poco, es probable cola de eco mal cortada. No exige coincidencia
+       exacta -- el STT de audio mal cortado rara vez transcribe identico. */
+    function esTextoParecido(a, b){
+      if(!a || !b) return false;
+      var limpiar = function(s){ return s.replace(/[.,!?¡¿"'();:]/g,'').trim(); };
+      var la=limpiar(a), lb=limpiar(b);
+      if(!la || !lb) return false;
+      if(la===lb) return true;
+      if(la.length>6 && lb.indexOf(la)!==-1) return true;
+      if(lb.length>6 && la.indexOf(lb)!==-1) return true;
+      var pa=la.split(/\s+/).filter(Boolean), pb=lb.split(/\s+/).filter(Boolean);
+      if(!pa.length || !pb.length || Math.min(pa.length,pb.length)<3) return false;
+      var comunes = pa.filter(function(w){ return pb.indexOf(w)!==-1; }).length;
+      return (comunes/Math.min(pa.length,pb.length)) >= 0.6;
+    }
+
     function fnUrl(accion){
       if(!window.mdbSupabaseFunctionUrl) return null;
       var u = window.mdbSupabaseFunctionUrl('elixis-realtime-session');
@@ -2430,10 +2497,34 @@
            mitad de la conversacion. */
         case 'conversation.item.input_audio_transcription.completed': {
           var dicho = (m.transcript || '').trim();
-          if(dicho) guardarHilo('yo', dicho);
+          if(dicho){
+            /* Candado duro primero (ver turnoSospechoso, marcado en
+               speech_started): si el turno nacio con la bocina sonando o
+               con el mic recien armado, ni se mira el texto -- es eco, no
+               una persona. */
+            if(turnoSospechoso){
+              turnoSospechoso=false;
+              console.warn('[RT] transcripcion DESCARTADA: el turno nacio mientras sonaba el asistente:', dicho);
+              break;
+            }
+            var dichoNorm = dicho.toLowerCase();
+            var esEco = historialAsistente.some(function(h){
+              return (Date.now()-h.ts) < 12000 && esTextoParecido(dichoNorm, h.texto);
+            });
+            if(esEco){
+              console.warn('[RT] transcripcion descartada por eco probable del propio asistente:', dicho);
+              break;
+            }
+            guardarHilo('yo', dicho);
+          }
           break;
         }
         case 'input_audio_buffer.speech_started':
+          /* Se anota AQUI, en el instante del hecho, si este turno pudo
+             haber nacido sucio -- se decide al completarse la
+             transcripcion (arriba). */
+          turnoSospechoso = audioSalidaActiva || (Date.now() < micArmadoEn);
+          if(turnoSospechoso) console.warn('[RT] turno nacido con la bocina sonando o el mic sin armar -- marcado como eco');
           hablando=false; state.agentReply=null; state.agentLine=null; state._hgEnviado=0;
           rotulo(T('Te escucho','Listening'));
           setAvatar('listening'); break;
@@ -2444,7 +2535,15 @@
 
         case 'response.output_audio_transcript.delta':
           if(!hablando){ hablando=true; state.agentReply=''; state.agentLine='real'; state._hgEnviado=0;
-            RT._fila = linea('', 'line'); rotulo(T('Hablando','Speaking')); }
+            RT._fila = linea('', 'line'); rotulo(T('Hablando','Speaking'));
+            /* Cancela un cooldown de reactivacion pendiente de la respuesta
+               ANTERIOR -- si no, ese timer viejo reabriria el mic a mitad
+               de esta respuesta nueva, justo la ventana de eco que se
+               esta cerrando. micTx(false) corta el ENVIO (no el track): el
+               analizador local sigue oyendo, el servidor ya no. */
+            if(micReactivarTimeout){ clearTimeout(micReactivarTimeout); micReactivarTimeout=null; }
+            micTx(false);
+          }
           state.agentReply += (m.delta||'');
           /* La preferencia de "sonrisa" que esto fijaba ya no la lee nadie
              (pintarNivel(), el unico consumidor, se apago mas abajo en
@@ -2481,6 +2580,30 @@
              por turno, no una por fragmento. state.agentReply ya trae el
              texto acumulado, no hace falta un buffer nuevo. */
           if(hablando && state.agentReply) guardarHilo('elixis', state.agentReply);
+          /* response.done es del CANAL DE DATOS -- no garantiza que las
+             bocinas ya terminaron de reproducir el audio real (WebRTC, un
+             camino separado). El mic NO se reabre aca: se reabre en
+             output_audio_buffer.stopped (mas abajo), con guarda acustica.
+             Esta red de seguridad es SOLO para respuestas SIN audio (texto
+             suelto o una llamada a herramienta), donde ese evento no llega
+             nunca porque nunca hubo nada que sonar -- si el audio si
+             empezo a sonar (audioSalidaActiva), no hay cronometro que
+             valga, se espera al evento real con un tope largo contra un
+             cuelgue de verdad, no contra una respuesta larga. */
+          if(hablando && state.agentReply){
+            historialAsistente.push({ texto: state.agentReply.trim().toLowerCase(), ts: Date.now() });
+            if(historialAsistente.length > 6) historialAsistente.shift();
+          }
+          limpiarBufferEntrada();
+          if(micReactivarTimeout){ clearTimeout(micReactivarTimeout); }
+          var techoMs = audioSalidaActiva ? TOPE_CUELGUE_MS
+              : Math.min(4000, Math.max(800, (state.agentReply||'').trim().length * 35)) + guardaAcusticaMs();
+          micReactivarTimeout = setTimeout(function(){
+            audioSalidaActiva=false;
+            limpiarBufferEntrada();
+            micTx(true);
+            micReactivarTimeout=null;
+          }, techoMs);
           /* Solo el RESTO que las oraciones ya mandadas en cada delta todavia
              no cubrieron (ej. la ultima frase corta que cierra recien aca, o
              una respuesta de una sola oracion que nunca disparo el envio de
@@ -2493,8 +2616,28 @@
           hablando=false; RT._fila=null; rotulo(T('Te escucho','Listening'));
           setAvatar('listening'); break;
 
+        /* ── Eventos reales de reproduccion (WebRTC) -- la unica fuente de
+           verdad sobre lo que suena de verdad por las bocinas. started
+           cierra el envio del mic apenas empieza a sonar (por si el audio
+           sale antes que el texto); stopped/cleared son los que lo
+           reabren, con guarda acustica -- ver abrirMicTrasGuarda(). */
+        case 'output_audio_buffer.started':
+          audioSalidaActiva=true;
+          if(micReactivarTimeout){ clearTimeout(micReactivarTimeout); micReactivarTimeout=null; }
+          micTx(false);
+          break;
+
+        case 'output_audio_buffer.stopped':
+        case 'output_audio_buffer.cleared':
+          audioSalidaActiva=false;
+          abrirMicTrasGuarda();
+          break;
+
         case 'error':
-          toast(T('Error en el canal de voz','Voice channel error'),'warn'); break;
+          toast(T('Error en el canal de voz','Voice channel error'),'warn');
+          if(micReactivarTimeout){ clearTimeout(micReactivarTimeout); micReactivarTimeout=null; }
+          micTx(true); /* no dejar el mic mudo si el error llego a mitad de una respuesta */
+          break;
       }
     }
 
@@ -2618,7 +2761,12 @@
         try{ spk.srcObject = ev.streams[0]; spk.play(); }catch(_){ }
         anRem = analizador(ev.streams[0]);   /* la voz de ELIXIS mueve el orbe */
       };
-      mic.getAudioTracks().forEach(function(t){ pc.addTrack(t, mic); });
+      /* audioSender guardado para poder cortar SOLO el envio con
+         replaceTrack(null) mientras el agente habla (ver micTx) -- sin
+         volver a pedir hardware ni tocar el track en si. */
+      micTrack = mic.getAudioTracks()[0] || null;
+      if(micTrack) audioSender = pc.addTrack(micTrack, mic);
+      audioSalidaActiva=false; turnoSospechoso=false; micArmadoEn=Date.now();
       anMic = analizador(mic);               /* tu voz lo mueve mientras escucha */
 
       dc = pc.createDataChannel('oai-events');
@@ -2686,6 +2834,7 @@
 
     function stop(silencioso){
       liquidar();
+      if(micReactivarTimeout){ clearTimeout(micReactivarTimeout); micReactivarTimeout=null; }
       if(dc){ try{ dc.close(); }catch(_){ } dc=null; }
       if(pc){ try{ pc.close(); }catch(_){ } pc=null; }
       /* NO se llama t.stop() -- eso libera el hardware de verdad, y la
@@ -2695,6 +2844,7 @@
          sigue vivo para la proxima llamada. */
       if(mic){ try{ mic.getAudioTracks().forEach(function(t){ t.enabled=false; }); }catch(_){ } mic=null; }
       if(spk){ try{ spk.pause(); spk.srcObject=null; }catch(_){ } }
+      audioSender=null; micTrack=null; audioSalidaActiva=false; turnoSospechoso=false;
       hablando=false;
       apagar();
       linea(T('Canal de voz cerrado.','Voice channel closed.'),'sys');
