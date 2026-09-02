@@ -620,3 +620,63 @@ Estado general: Operativo / En consolidación
   - **Dejado explícitamente fuera de alcance, anotado para no perderlo**: dentro del mismo cajón de `mdj-event-builder-shell.js` quedan sin traducir "Mes" (paralelo a Día/Año, mismo mecanismo), "Asignar a evento"/"Asignar", y los 12 nombres de mes abreviados (Ene/Feb/Mar...) -- se encontraron al arreglar Día/Año pero extenderse a todos habría sido abrir un cajón bastante más grande sin una autorización específica para esa pieza. Sin tocar.
   - **Archivo real excluido del commit, encontrado por accidente**: `web/shop.html` tiene un bloque real de GA4/Search Console (`G-7XRWGTCQ5L`) sin comitear de una sesión ANTERIOR (el pendiente "GA4 en shop.html" ya anotado más arriba) -- no se tocó hoy, se identificó y se dejó fuera del commit de este sprint para no mezclarlo.
   - Pendiente de aprobación de commit: `web/index.html`, `web/services.html`, `web/mdjb-shared-header.js`, `web/translations.js`, `web/js/mdj-event-builder.js`, `web/js/mdj-event-builder-shell.js`, este documento. `web/contact.html` no requiere commit (su único hueco se resolvió en el archivo compartido). `web/shop.html` excluido a propósito (ver arriba).
+
+## TICKET FUTURO — ELIXIS lee y filtra correo entrante (propio, no vía Make/n8n/Zapier)
+- [ ] **[2026-09-02] Visión registrada por el PO**: quiere que ELIXIS (el propio sistema, no una plataforma de automatización de terceros) lea, filtre y proponga respuestas a los correos que llegan a `djmago305@gmail.com` / el corporativo de Miami DJ Beat LLC. Encaja directo con la visión ya registrada de "ELIXIS empleado de oficina real" -- es la mitad de LECTURA que falta, ya que hoy (`elixis-email-dispatch`, 2026-09-01) solo existe la mitad de ENVÍO.
+  - **Requiere real, no bosquejado todavía**: conexión OAuth a la API de Gmail (no un tercero), una función que reciba notificaciones de correo nuevo (push/watch de Gmail o polling), y -- esto es lo importante -- el MISMO patrón de aprobación humana que ya existe para SMS/email saliente (`enviar_sms`/`enviar_email`: ELIXIS solo encola/propone, un humano aprueba antes de que salga). Leer es más seguro que responder solo; contestar sin revisión humana es donde hay que tener cuidado real.
+  - **Decisión explícita del PO**: no abrir esto ahora ("mucho trabajo aquí, debemos trabajar seguros y confiados sin errores para poder avanzar") -- queda anotado para retomar en su propia sesión dedicada, no mezclado con los tickets de voz/avatar/email ya abiertos.
+
+## [2026-09-02] Investigación cerrada: queja de "-34" (Elixis Voice Agent Blueprint) sobre interferencia de otro agente
+- **Orden del PO**: "el agente especialista encargado de elixis y djmago se está quejando de que otro agente tocó su proyecto mientras estaba trabajando y eso causó problemas para él, tú tienes la jerarquía, investiga qué pasó." Investigado por el Hilo Maestro (esta sesión) contactando directamente a -34 y a -93 vía `SendMessage`, no solo inspeccionando archivos.
+- **Veredicto: NO hubo corrupción ni pisado de trabajo entre sesiones.** -34 mismo aclaró que nunca reportó que otro agente le corrompiera código -- su propia auditoría de marcadores (`audioSender`, `vigilarBargein`, `turnoSospechoso`, `interrumpir`, `replaceTrack`) coincide con la mía: intacto.
+- **Lo que sí encontró -34**: un bloque "sin dueño conocido" en `web/js/elixis-voice-session.js` (console.warn `"transcripcion ignorada -- microfono deshabilitado"`, guardia sobre `pistaMic.enabled`) que -93 tampoco reconocía como propio. **Resuelto por este hilo con `git log -S"transcripcion ignorada"`**: es código del commit `e5e973a` (31-ago 20:08, "hard-lock mic VAD cooldown"), ya en `origin/fix/mobile-ui-cleanup` desde antes de que la sesión de -34 existiera hoy -- no es un misterio ni una inserción de una supuesta sesión "-12", es historial viejo que -34 no había rastreado con `git blame`/`git log -S` antes de reportarlo.
+- **Causa real del síntoma ("se quedó callado" con el PO)**: bug propio de -34, ya admitido y corregido -- una línea vieja seguía forzando `pistaMic.enabled=false` a mano en paralelo al nuevo transporte por `RTCRtpSender.replaceTrack()`, dejando el track en el estado exacto que el candado de agosto (arriba) interpreta como "deshabilitado" y descarta sin mirar el contenido. Con el mic así, el detector de barge-in de -34 también quedaba sordo (por eso el PO tuvo que alzar la voz). No fue otro agente.
+- **Despliegues de `elixis-realtime-session` de -34 esta noche**: dos, ambos autorizados por el PO directamente en su chat (v56 reembolso de voz; luego `transcription.language:"es"`). Sin evidencia de que otra sesión haya desplegado encima.
+- **El relay de "pausa" de -93**: -93 recibió del PO un pedido directo ("avisale por interno que nadie toque nada, tú eres el especialista ahora") sobre el dominio de eco/interrupción que -93 trabaja en paralelo para `mdj-commander.html`, y lo reenvió tal cual a los peers visibles, siendo explícito de que era un relay. -34 hizo lo correcto: no lo acató por relay, se lo confirmó al propio PO antes de actuar, y el PO respondió "sigue". Protocolo de dos sesiones funcionando como debe -- ningún peer debe frenar solo por un aviso de segunda mano sin verificarlo con el PO.
+- **Nota aparte, sin relación con la queja**: -93 mandó un mensaje con un glitch de generación (texto repetido sin sentido) durante esta investigación; se autocorrigió al notarlo. No tenía contenido instructivo, ignorado sin acción.
+- **Aviso operativo de -34 para cualquier hilo que coordine esta noche**: todo el trabajo de voz de las últimas horas (transporte por `replaceTrack`, barge-in por nivel, candado por aritmética de tiempo, interrupción por barra espaciadora, cache-bust de `staff.html`) sigue **sin comitear** en el working tree del PO, probado en vivo pero no en ningún commit. Nadie debe hacer `checkout`/`stash`/`clean` sobre `fix/mobile-ui-cleanup` sin coordinar con -34 primero -- ahí sí se perdería de verdad.
+
+---
+
+## 🔊 MOTOR DE VOZ ELIXIS/DJMago — 2026-09-02 (Dominio: Realtime/Audio)
+
+**Estado: desplegado en producción y aprobado por el PO. PR abierto: #294.**
+Rama `fix/elixis-motor-voz-anti-eco`, creada desde `origin/main` limpio con
+cherry-pick — NO desde `fix/mobile-ui-cleanup`, que arrastra 41 ficheros de
+otras sesiones. Alcance del PR: 4 ficheros, y de `web/staff.html` solo el `?v=`.
+
+### Lo que se arregló (cada punto salió de un síntoma real reportado hablando)
+| # | Síntoma del PO | Causa |
+|---|---|---|
+| 1 | "arranca a contar una historia solo" | el mic se reabría por un cálculo (35ms/carácter) en vez de esperar `output_audio_buffer.stopped` |
+| 2 | "se quedó callado en la segunda pregunta" | una línea vieja muteaba con `.enabled=false` saltándose el transporte nuevo; un candado de agosto (e5e973a) leía eso como "mic deshabilitado" y descartaba sus preguntas |
+| 3 | "intenté interrumpirlo y no me escuchó" | half-duplex: sin AEC no se puede tener las dos cosas. Barge-in por nivel + barra espaciadora |
+| 4 | una notificación de macOS cortó la conversación | el nivel solo no distingue un "ding" de una voz → + duración + timbre |
+| 5 | "volvió a saludar tras despedirse" | Whisper **inventa** ante silencio ("Gracias.") y eso disparaba turno |
+| 6 | "me da artistas, no canciones" | `mdj-music` + `consultar_musica` existían… solo en el cerebro de TEXTO |
+| 7 | "déjame un PDF" | no tenía herramienta de entrega → `entregar_pdf` con jsPDF en el navegador |
+| 8 | "me llama Yerardo" | sí puede corregirse, pero no recuerda entre llamadas → vive en el prompt |
+| 9 | respondía en inglés | `transcription` sin `language` |
+| 10 | (no visible) reservas de voz sin liberar | `ADMIN.rpc(...).catch()` no existe: builder thenable ≠ Promise. **25 sesiones, 22.500s retenidos** |
+| 11 | "Conversation already has an active response" | dos disparadores de turno solapados → una sola puerta, `pedirRespuesta()` |
+| 12 | herramienta duplicada en el panel | doble `emit('onTool')` |
+
+### Hechos técnicos que costaron horas (no repetir el descubrimiento)
+- **`output_audio_buffer.stopped`** es el único evento fiable de "la bocina calló".
+  `response.done` = terminó de *generarse*, no de *sonar*.
+- **Safari NO mide el stream remoto de WebRTC** (`mic 0.110 vs bocina 0.000`).
+  Cualquier comparación relativa mic-vs-bocina es inerte ahí.
+- Cortar el ENVÍO con `replaceTrack(null)`, nunca `.enabled=false`: mutear deja
+  sordo al analizador local y sin él no hay barge-in.
+- No llamar `getUserMedia` de nuevo: reconfigura CoreAudio y **corta a Serato en vivo**.
+
+### PENDIENTE — lo único que queda
+El umbral del barge-in está en valores de arranque, **sin calibrar con el oído
+del PO**. Todo se mueve en vivo por `localStorage`, sin redesplegar:
+`elixis_guarda_ms` · `elixis_bargein_piso_solo` · `_margen` · `_cuadros` ·
+`elixis_bargein=off` · `elixis_bargein_debug=1` (imprime el pico real de su voz).
+
+### Limpieza hecha
+Retirados el worktree y la rama `feat/elixis-cazador-silencioso` — trabajo
+duplicado del arranque de la sesión, superado por `fe9a248` y nunca fusionado.
+Ficheros de prueba del scratchpad, borrados.
