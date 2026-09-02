@@ -6604,7 +6604,13 @@
    la causa real de que "Shop" siguiera mandando afuera incluso despues de
    reparar shop.html: esta IIFE corria despues y volvia a pisar el href. La
    tienda nativa ya es para cualquier cuenta, no solo staff -- no hace falta
-   ningun parche aqui, el valor de la tabla es el correcto tal cual. */
+   ningun parche aqui, el valor de la tabla es el correcto tal cual.
+   (Nota de merge 2026-09-01: `origin/main` conservaba, 4 dias antes de esta
+   nota, una version mas cautelosa de este mismo parche -- solo para limpiar
+   sesiones con bfcache viejo, ya forzando './shop.html' y no la URL externa.
+   Se prioriza esta version mas reciente por ser el analisis mas completo del
+   mismo tema; si el PO prefiere restaurar esa red de seguridad, esta en el
+   historial de `origin/main` antes de este merge.) */
 
 /* ── MDJB 2026-08-14: FÉNIX AI en la nav de STAFF (owner) — reemplaza SoundForTips ──
    SoundForTips es feature de artista; las cuentas de oficina (owner/manager/vendedor) NO la
@@ -6708,5 +6714,167 @@
     document.addEventListener('DOMContentLoaded', crearToggle);
   } else {
     crearToggle();
+  }
+})();
+
+/* ── MDJB 2026-08-29: Dropdown flotante "Servicios" (Fase 2, Plan Maestro GEO/SEO) ──
+   Decisión de arquitectura del PO: el panel vive FUERA de #mainNav a propósito.
+   El normalizador de slots (arriba, mdjNormalizeMainNavSlots) barre cualquier
+   <a>/<button> dentro de #mainNav que no sea uno de los 9 slots canónicos, y
+   además mueve cada slot canónico a ser HIJO DIRECTO de #mainNav en cada pasada
+   (nav.appendChild). Envolver el link de Servicios en un wrapper con submenú
+   se perdería en la siguiente pasada del normalizador — root cause real de la
+   inestabilidad de menú ya documentada en esta sesión.
+
+   Este panel se ancla a document.body (nunca dentro de #mainNav) y se
+   posiciona con JS contra las coordenadas reales del link "Servicios" al
+   pasar el mouse o tocar. Cero cambios al normalizador, cero riesgo de
+   colisión. Solo se activa si encuentra [data-mdj-nav="services"] dentro de
+   #mainNav — en las estaciones internas (staff/artista) ese slot no existe
+   con ese nav, así que ahí no hace nada. */
+(function mdjServicesDropdown() {
+  'use strict';
+
+  var SERVICES = [
+    { href: './events.html', key: 'nav-svc-events', txt: 'Event Production' },
+    { href: './rentals.html', key: 'nav-svc-rentals', txt: 'DJ Equipment Rental' },
+    { href: './weddings.html', key: 'nav-svc-weddings', txt: 'Wedding DJ Services' },
+    { href: './corporate.html', key: 'nav-svc-corporate', txt: 'Corporate DJ & AV' },
+    { href: './latin-dj.html', key: 'nav-svc-latin', txt: 'Latin & Open-Format DJ' },
+    { href: './florida-keys.html', key: 'nav-svc-keys', txt: 'Florida Keys Destination DJ' }
+  ];
+
+  var panel = null;
+  var closeTimer = null;
+  var CLOSE_DELAY_MS = 260;
+  var styleInjected = false;
+
+  function injectStyle() {
+    if (styleInjected) return;
+    styleInjected = true;
+    var s = document.createElement('style');
+    s.id = 'mdj-services-dropdown-style';
+    /* .nav-dropdown-menu a (bare, sin ancestro) SI aplica y ya da el color/
+       padding/hover correcto a cada link — reusado gratis. Pero el fondo,
+       borde, blur y sombra del PANEL viven bajo el selector descendiente
+       .nav-item-dropdown .nav-dropdown-menu en styles.css: como este panel
+       no cuelga de un .nav-item-dropdown, esas reglas nunca lo alcanzan.
+       Se replican aquí explícitas (mismos valores que styles.css) en vez de
+       depender de un ancestro que no existe. */
+    s.textContent =
+      '#services-dropdown-panel.nav-dropdown-menu{position:fixed;transform:translateX(-50%);' +
+      'background:rgba(10,10,10,0.95);border:1px solid rgba(197,160,89,0.3);border-radius:12px;' +
+      'padding:10px 0;min-width:220px;box-shadow:0 10px 30px rgba(0,0,0,0.8);' +
+      '-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);' +
+      'transition:opacity .3s cubic-bezier(.4,0,.2,1),visibility .3s cubic-bezier(.4,0,.2,1);' +
+      'opacity:0;visibility:hidden;pointer-events:none;z-index:3000;}' +
+      '#services-dropdown-panel.nav-dropdown-menu.is-open{opacity:1;visibility:visible;pointer-events:auto;}';
+    document.head.appendChild(s);
+  }
+
+  function buildPanel() {
+    if (panel) return panel;
+    injectStyle();
+    panel = document.createElement('div');
+    panel.id = 'services-dropdown-panel';
+    panel.className = 'nav-dropdown-menu';
+    panel.setAttribute('role', 'menu');
+    panel.setAttribute('aria-label', 'Servicios');
+    SERVICES.forEach(function (svc) {
+      var a = document.createElement('a');
+      a.href = svc.href;
+      a.setAttribute('role', 'menuitem');
+      a.setAttribute('data-i18n', svc.key);
+      a.textContent = svc.txt;
+      panel.appendChild(a);
+    });
+    document.body.appendChild(panel);
+    panel.addEventListener('mouseenter', cancelClose);
+    panel.addEventListener('mouseleave', scheduleClose);
+    return panel;
+  }
+
+  function position(anchor) {
+    var r = anchor.getBoundingClientRect();
+    var p = buildPanel();
+    p.style.top = (r.bottom + 8) + 'px';
+    p.style.left = (r.left + r.width / 2) + 'px';
+  }
+
+  function open(anchor) {
+    cancelClose();
+    position(anchor);
+    panel.classList.add('is-open');
+    anchor.setAttribute('aria-expanded', 'true');
+  }
+
+  function scheduleClose() {
+    cancelClose();
+    closeTimer = setTimeout(close, CLOSE_DELAY_MS);
+  }
+
+  function cancelClose() {
+    if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; }
+  }
+
+  function close() {
+    if (panel) panel.classList.remove('is-open');
+    var anchor = document.querySelector('#mainNav [data-mdj-nav="services"]');
+    if (anchor) anchor.setAttribute('aria-expanded', 'false');
+  }
+
+  function isFinePointer() {
+    return !!(window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches);
+  }
+
+  function attach() {
+    var anchor = document.querySelector('#mainNav [data-mdj-nav="services"]');
+    if (!anchor || anchor.__mdjServicesHooked) return;
+    anchor.__mdjServicesHooked = true;
+    anchor.setAttribute('aria-haspopup', 'true');
+    anchor.setAttribute('aria-expanded', 'false');
+
+    anchor.addEventListener('mouseenter', function () { open(anchor); });
+    anchor.addEventListener('mouseleave', scheduleClose);
+    anchor.addEventListener('focus', function () { open(anchor); });
+    anchor.addEventListener('blur', scheduleClose);
+
+    // Touch/tablet sin hover: el primer toque abre el panel en vez de navegar;
+    // con el panel ya abierto, un segundo toque sobre el propio link deja
+    // pasar la navegación normal a rentals.html.
+    anchor.addEventListener('click', function (ev) {
+      if (isFinePointer()) return; // escritorio con mouse: el href manda, el hover ya lo abrió
+      if (panel && panel.classList.contains('is-open')) return;
+      ev.preventDefault();
+      open(anchor);
+    });
+
+    document.addEventListener('click', function (ev) {
+      if (!panel || !panel.classList.contains('is-open')) return;
+      if (ev.target === anchor || anchor.contains(ev.target)) return;
+      if (panel.contains(ev.target)) return;
+      close();
+    });
+
+    window.addEventListener('scroll', close, { passive: true });
+    window.addEventListener('resize', close);
+  }
+
+  function boot() {
+    attach();
+    // El normalizador de slots puede correr despues de este script en algunas
+    // paginas; reintentar un rato corto es gratis y cubre ese orden.
+    var n = 0;
+    var iv = setInterval(function () {
+      n++;
+      attach();
+      if (n >= 10) clearInterval(iv);
+    }, 300);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
   }
 })();

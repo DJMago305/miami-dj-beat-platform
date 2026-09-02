@@ -47,6 +47,30 @@
 (function () {
   'use strict';
 
+  /* El botón y la marca son un FAILSAFE — solo deben existir cuando el header
+     real (#mainHeader/.header-top) está genuinamente inalcanzable (los 3 modos
+     descritos arriba). Si el header real ya se ve normal (la mayoría de las
+     páginas públicas, sin gating de sesión), montar el duplicado fijo encima
+     solo produce una marca+menú superpuestos sobre los reales — confirmado en
+     vivo en las páginas GEO/SEO (rentals/weddings/corporate/latin-dj/
+     florida-keys/events), donde el header nunca se oculta. */
+  function isRealHeaderUsable() {
+    function usable(el) {
+      if (!el) return false;
+      var r = el.getBoundingClientRect();
+      return r.width > 0 && r.height > 0;
+    }
+    return usable(document.getElementById('mobileMenuBtn')) &&
+      usable(document.querySelector('#mainHeader .brand'));
+  }
+
+  function removeFabsIfPresent() {
+    var fab = document.getElementById('mdjMobileMenuFab');
+    var brand = document.getElementById('mdjMobileBrandFab');
+    if (fab) fab.parentNode.removeChild(fab);
+    if (brand) brand.parentNode.removeChild(brand);
+  }
+
   function init() {
     try {
       // 1) Mover el panel real fuera de cualquier ancestro que pueda ocultarlo.
@@ -73,6 +97,22 @@
           '@media (max-width:768px){.mdj-mobile-menu-fab{display:flex;}.mdj-mobile-brand-fab{display:flex;}}'
         ].join('\n');
         document.head.appendChild(style);
+      }
+
+      mountOrRemoveFabs();
+      // Reintento: "visitante persistente" y el parpadeo .mdj-estacion-previa
+      // resuelven el estado real del header DESPUÉS de este DOMContentLoaded
+      // inicial — sin este reintento, una página que empieza oculta y luego
+      // se revela se quedaría con el failsafe montado de más (o al revés).
+      setTimeout(mountOrRemoveFabs, 400);
+    } catch (e) { /* si algo falla, el header original sigue como estaba */ }
+  }
+
+  function mountOrRemoveFabs() {
+    try {
+      if (isRealHeaderUsable()) {
+        removeFabsIfPresent();
+        return;
       }
 
       // 3) Botón de menú independiente.

@@ -1133,6 +1133,38 @@ serve(async (req: Request) => {
         },
     };
 
+    /* ── MEMORIA: la mitad que faltaba ────────────────────────────────────
+       elixis-chat LEIA agent_memory en cada turno pero NADIE escribia en ella,
+       asi que la tabla estaba condenada a quedarse vacia y la consola de texto
+       arrancaba de cero en cada conversacion. El motor de VOZ si escribe la
+       suya (elixis_memory_write); esta es su equivalente en texto.
+
+       HECHOS CURADOS, NO TRANSCRIPCIONES: la memoria se relee entera en cada
+       turno, asi que una que crece sin limite no es solo desordenada, es cara.
+       Un socio no recuerda cada palabra: recuerda lo que importa. */
+    const MEMORY_TOOL = {
+        name: "recordar_hecho",
+        description:
+            "Guarda UN hecho duradero sobre este miembro del staff para recordarlo en futuras " +
+            "conversaciones: una preferencia, un criterio de trabajo, un dato estable de su operacion. " +
+            "Usalo cuando Gerardo diga algo que valga la pena recordar manana, NO para resumir la " +
+            "conversacion de hoy. Si el hecho ya existe con la misma clave, se actualiza en vez de duplicarse. " +
+            "NO guardes datos sensibles, ni cosas efimeras, ni lo que ya vive en la base de datos.",
+        input_schema: {
+            type: "object",
+            properties: {
+                clave: {
+                    type: "string",
+                    description:
+                        "Identificador corto y estable, en minusculas con guiones bajos. " +
+                        "Ej: 'prefiere_sms_sobre_email'. Reusa la misma clave para actualizar un hecho.",
+                },
+                hecho: { type: "string", description: "El hecho en UNA frase, maximo 300 caracteres." },
+            },
+            required: ["clave", "hecho"],
+        },
+    };
+
     const CLIENT_SEARCH_TOOL = {
         name: "buscar_cliente",
         description:
@@ -1412,6 +1444,11 @@ serve(async (req: Request) => {
             || toolName === "enviar_sms"
             || toolName === "enviar_email"
             || toolName === "confirmar_envio_mensaje"
+            /* recordar_hecho escribe SOLO en la memoria del propio staff que
+               esta hablando: p_staff_user_id sale del porton, no del modelo,
+               asi que ELIXIS no puede tocar la memoria de nadie mas aunque se
+               lo pidan. Mismo trato que las demas escrituras de staff. */
+            || toolName === "recordar_hecho"
         ) {
             return { tool: toolName, policy: "auto_staff", mode: "write" };
         }
@@ -1835,6 +1872,25 @@ serve(async (req: Request) => {
         return JSON.stringify({ ok: true, count: data?.length ?? 0, clientes: data ?? [] });
     }
 
+    async function runMemoryTool(input: Record<string, unknown>): Promise<string> {
+        const clave = String(input?.clave ?? "").trim().toLowerCase()
+            .replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 128);
+        const hecho = String(input?.hecho ?? "").trim();
+        if (clave.length < 2) return JSON.stringify({ error: "clave demasiado corta" });
+        if (hecho.length < 2) return JSON.stringify({ error: "hecho vacio" });
+        if (hecho.length > 300) {
+            return JSON.stringify({ error: "hecho demasiado largo: maximo 300 caracteres. Resumelo." });
+        }
+        const { error } = await ADMIN.rpc("agent_memory_upsert", {
+            p_agent_id: "elixis",
+            p_staff_user_id: gate.userId,
+            p_mem_key: clave,
+            p_mem_value: hecho,
+        });
+        if (error) return JSON.stringify({ error: `agent_memory: ${error.message}` });
+        return JSON.stringify({ ok: true, clave, guardado: true });
+    }
+
     /* Convierte a E.164. Misma logica que send-sft-client-sms, para que un
        numero valido alli lo sea aqui y no haya dos verdades. */
     function toE164(input: string): string | null {
@@ -2214,7 +2270,7 @@ serve(async (req: Request) => {
                     // hasta este cambio de modelo. Sin este parametro, el muestreo queda en
                     // el default del modelo -- no hace falta reemplazarlo por nada.
                     system: systemContent,
-                    tools: [FINANCIAL_TOOL, LEAD_NOTE_TOOL, AGENDA_READ_TOOL, AGENDA_WRITE_TOOL, AGENDA_EVENTOS_TOOL, RESIDENCY_TOOL, EFEMERIDES_TOOL, INCIDENT_WRITE_TOOL, INCIDENT_READ_TOOL, CATALOG_READ_TOOL, CATALOG_PRICE_TOOL, QUOTE_WRITE_TOOL, CLIENT_SEARCH_TOOL, SMS_QUEUE_TOOL, EMAIL_QUEUE_TOOL, CONFIRM_SEND_TOOL, MUSIC_TOOL],
+                    tools: [FINANCIAL_TOOL, LEAD_NOTE_TOOL, AGENDA_READ_TOOL, AGENDA_WRITE_TOOL, AGENDA_EVENTOS_TOOL, RESIDENCY_TOOL, EFEMERIDES_TOOL, INCIDENT_WRITE_TOOL, INCIDENT_READ_TOOL, CATALOG_READ_TOOL, CATALOG_PRICE_TOOL, QUOTE_WRITE_TOOL, CLIENT_SEARCH_TOOL, SMS_QUEUE_TOOL, EMAIL_QUEUE_TOOL, CONFIRM_SEND_TOOL, MUSIC_TOOL, MEMORY_TOOL],
                     messages: convo,
                 }),
             });
@@ -2362,6 +2418,16 @@ serve(async (req: Request) => {
                     await recordAiKpi(failed ? "tool_error" : "tool_ok");
                 } else if (toolName === "buscar_cliente") {
                     out = await runClientSearchTool((b.input as Record<string, unknown>) ?? {});
+                    let failed = true;
+                    try {
+                        const parsed = JSON.parse(out) as { error?: unknown; ok?: unknown };
+                        failed = parsed == null || parsed.error != null || parsed.ok !== true;
+                    } catch {
+                        failed = true;
+                    }
+                    await recordAiKpi(failed ? "tool_error" : "tool_ok");
+                } else if (toolName === "recordar_hecho") {
+                    out = await runMemoryTool((b.input as Record<string, unknown>) ?? {});
                     let failed = true;
                     try {
                         const parsed = JSON.parse(out) as { error?: unknown; ok?: unknown };

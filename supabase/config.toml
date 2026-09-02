@@ -373,6 +373,10 @@ verify_jwt = false
 [functions.create-course-checkout]
 verify_jwt = false
 
+# Público: Stripe Checkout para el carrito de Shopping Miami DJ Beat (sin JWT)
+[functions.create-merch-checkout]
+verify_jwt = false
+
 # Solo DJs autenticados (Authorization: Bearer access_token) pueden enviar SMS al fan
 [functions.send-sft-client-sms]
 verify_jwt = true

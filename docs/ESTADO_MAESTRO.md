@@ -1,5 +1,5 @@
 # ESTADO MAESTRO — MIAMI DJ BEAT LLC (SSOT)
-Última actualización: 2026-08-31
+Última actualización: 2026-09-01
 Estado general: Operativo / En consolidación
 
 ## 1. Módulos y Estado Técnico
@@ -257,6 +257,69 @@ Estado general: Operativo / En consolidación
       autorización expresa del PO.
 - [x] Libro de Operaciones — Fase 1 (esquema) + Fase 4 (reconciliación EBO)
       + RPC `get_my_cashflow_ledger` (PR #242, fusionado)
+- [x] **Shopping Miami DJ Beat — tienda nativa de merch (PR #287, fusionado 2026-08-28)**
+      — Retira la tienda "Plan A" (`web/shop.html` se auto-redirigía a
+      `miami-dj-beat-store.myshopify.com`, HTTP 402, cuenta congelada — hallazgo
+      cruzado con el hilo de avatares, ya documentado como "V12" en el Road
+      Master Map) y reactiva un catálogo nativo (5 productos reales, camiseta/
+      gorras/hoodie/sudadera) que ya existía en el archivo, solo enterrado
+      detrás del redirect. Checkout real vía Stripe (`create-merch-checkout`,
+      re-precificado 100% en servidor — el precio del carrito del cliente
+      nunca se confía). **Aislamiento deliberado de llaves**: usa
+      `STRIPE_SECRET_KEY_MERCH` propia, NUNCA la `STRIPE_SECRET_KEY`
+      compartida por `create-checkout`/`create-course-checkout`/
+      `create-event-payment`/etc. — así la tienda de merch se puede probar en
+      modo Stripe Test sin arriesgar ni un pago real de suscripción/depósito/
+      propina de la plataforma. **`stripe-webhook`** ganó un branch nuevo para
+      `checkout.session.completed` de merch: escritura única en `merch_orders`
+      solo con el pago ya confirmado (un carrito abandonado nunca genera fila),
+      verificando la firma contra la llave live O contra `STRIPE_WEBHOOK_SECRET_MERCH`
+      (su propio endpoint de prueba) — la live se revisa primero, así que la
+      verificación de eventos reales no se tocó. Tabla `merch_orders` +
+      columna `is_read` (para la campana de notificaciones, ver abajo). Nueva
+      pantalla `web/staff-merch-orders.html` (lista + "Marcar enviado").
+      **Grupo "Pedidos" nuevo en el sidebar de Staff**, con espacio propio (no
+      anidado en Operaciones) y 3 accesos directos (Pendientes/Enviados/Todos)
+      que comunican con el panel por `postMessage` — mismo patrón que ya usa
+      Bóveda Legal para sus plantillas. **Campana de notificaciones** ahora
+      también cuenta pedidos sin leer junto a los contratos pendientes de
+      firma; el número solo se borra cuando staff abre el panel de Pedidos de
+      verdad (columna `is_read`), no al marcar un pedido como enviado.
+      **Probado de punta a punta en modo Stripe Test** con el PO en su propia
+      sesión: catálogo → carrito → checkout → tarjeta 4242 → webhook → fila en
+      `merch_orders` → visible en Staff.
+      **Pendiente, no bloqueante:** (1) el modelo de etiqueta de las píldoras
+      de estado del pedido — el PO quiere otro estilo, aún sin definir; (2) el
+      formulario interno de checkout pide nombre/teléfono/dirección aunque el
+      cliente elija Tarjeta, y Stripe se los vuelve a pedir en su propia
+      pantalla — redundancia real, ya diagnosticada, sin tocar todavía
+      (afecta solo la ruta de Tarjeta; Zelle sí necesita esos datos); (3)
+      `shop.html` no se agregó a `MDJ_VISTAS_INTERNAS` — decisión deliberada,
+      fuera del alcance de este ticket; (4) `STRIPE_SECRET_KEY_MERCH` sigue en
+      modo Test — falta un paso de corte a Live antes de aceptar pagos reales
+      de merch (llave nueva `sk_live_` + su propio webhook en modo Live).
+- [x] **Config/Inbox·Tickets — header duplicado dentro de Staff (PR #286, fusionado 2026-08-28)**
+      — Encontrado en vivo durante la auditoría del ticket de Shopping (arriba):
+      `web/account-settings.html` no tenía forma de saber que estaba embebida
+      dentro de `staff.html` (vista CONFIG y OPERACIONES→"Inbox · Tickets"), así
+      que pintaba su propio `#mainHeader` y una marca flotante
+      (`#mdj-flotante-visitante`) ENCIMA del header real del portal. Arreglo:
+      mismo patrón `window.self!==window.top` + candado `MutationObserver` que
+      ya usa `staff-agenda.html` para el mismo problema (`mdjb-shared-header.js`
+      re-muestra el header tras resolver la sesión de login — un escondido de
+      una sola vez no bastaba). Auditado también `staff-admin.html`
+      (ya tenía el candado completo, nunca vulnerable) y `contracts-engine.html`
+      (ni siquiera pinta su propio header — no puede tener este bug): **no
+      queda ningún archivo conocido con esta vulnerabilidad**. Segundo hallazgo
+      en el mismo ticket: el parámetro `?bare=1` que "Inbox · Tickets" ya le
+      mandaba al iframe nunca se leía en ningún lado — mostraba TODO Config
+      (Cuenta/Categoría/Recompensas/...) en vez de solo los tickets; ahora sí
+      esconde el sidebar interno cuando `bare=1` está presente. Tercer hallazgo
+      cosmético: la etiqueta interna decía "Notificaciones" para un contenido
+      que siempre fue de tickets (confirmado por la lógica del badge, que
+      cuenta `platform_inbox_messages`, no notificaciones genéricas) — renombrada
+      a "Inbox · Tickets" para que coincida con el ítem real del riel de
+      OPERACIONES, que ya decía bien.
       — 2026-08-23 (Hilo Maestro): versión limpia de lo que traía el PR #240
       (cerrado, ver bitácora). Fase 1: tabla `libro_operaciones` (mismo
       candado RLS+cero-políticas que `platform_incidents`), única entrada
@@ -272,6 +335,73 @@ Estado general: Operativo / En consolidación
       `amount_paid_usd` (margen de la empresa). Dependencia real
       (`mdj_profile_de_usuario`, de M2) resuelta al fusionar el PR #241
       justo antes. Cabecera de entorno: **PRUEBA** en las 3 migraciones.
+
+- [ ] **VISIÓN — ELIXIS/DJMago: catálogo del DJ desde su propio software (Serato/VirtualDJ/Rekordbox), sin motor de fingerprinting pago**
+      — 2026-08-28 (Hilo Maestro, sin ticket de construcción abierto todavía —
+      solo visión registrada a pedido del PO). Origen: el PO preguntó por
+      Spotify Web API / ACRCloud (motor tipo Shazam) para que ELIXIS pudiera
+      catalogar su librería personal de ~4TB y armar sets. Investigación real
+      (no del entrenamiento, con fuentes) descartó ambos caminos como
+      **innecesarios** para ese objetivo específico:
+      - **Spotify Web API / ACRCloud NO existen en el repo** (verificado por
+        grep completo — solo iconos decorativos de "Spotify"). El único motor
+        de música real desplegado es `supabase/functions/mdj-music/index.ts`,
+        puente JWT a Apple Music (catálogo, no fingerprinting).
+      - **ACRCloud es pago-por-uso, no un plan fijo** (confirmado en su propia
+        consola): $3/1000 peticiones (primeras 20k), bajando por volumen;
+        +80% de recargo si el proyecto usa su "Music bucket" comercial; y el
+        dato clave para 4TB — **cobra mensualmente por HORAS de audio
+        cargadas a su bucket**, no por espacio. Con miles de horas reales,
+        esto sale caro y RECURRENTE — choca con la meta explícita del PO de
+        cuidar el margen de MDJB.
+      - **Hallazgo que resuelve el problema real, gratis**: Serato ya genera
+        su propia base de datos binaria compacta al importar/analizar cada
+        canción — `database V2` (catálogo completo: rutas, BPM, tonalidad,
+        tags) y `history.database` (qué se tocó, cuándo, por sesión). Es solo
+        metadata (nunca el audio), por eso pesa poco pese a un catálogo de
+        4TB. El formato ya está documentado/reverse-engineered, con librería
+        de referencia open source ([`serato-connect`](https://github.com/chrisle/serato-connect),
+        [formato Serato en el wiki de Mixxx](https://github.com/mixxxdj/mixxx/wiki/Serato-Database-Format)).
+        **Conclusión: si la librería del DJ ya está organizada en Serato, no
+        hace falta pagarle a nadie para catalogarla — ese trabajo ya está
+        hecho.**
+      - **VirtualDJ** guarda su historial en texto plano legible
+        (`history.txt`/`tracklisting.txt` + `.m3u` por fecha) — el más fácil
+        de leer de los tres, cero necesidad de librería especial
+        ([manual oficial](https://virtualdj.com/manuals/virtualdj/interface/database/history.html)).
+      - **Rekordbox** es el más difícil: exportación XML retirada desde la
+        versión 6 (la importación sigue viva), base de datos moderna cifrada
+        (SQLCipher). Hay proyectos de terceros que ya lo resolvieron
+        ([`rekordbox-mcp`](https://github.com/davehenke/rekordbox-mcp)), pero
+        requiere más ingeniería que los otros dos — arrancar por XML
+        exportado a mano, no por lectura directa de su base de datos.
+      **Arquitectura de la visión (sin construir todavía):** el DJ hace UNA
+      acción de una sola vez (dar permiso a una carpeta, o instalar un
+      ayudante local ligero) — después de eso, invisible y automático, el DJ
+      nunca vuelve a tocar nada técnico. Es honesto decir que "cero acción,
+      nunca" no es técnicamente posible (los navegadores no pueden leer
+      archivos locales sin al menos un permiso explícito) — se documenta así
+      para no prometer algo que no se puede cumplir. Un parser server-side
+      lee el archivo (`database V2`/history/`.m3u`) y guarda la metadata
+      estructurada en Supabase, ligada al perfil del DJ, como fuente de
+      conocimiento real para ELIXIS/DJMago — que la usa en conversación para
+      armar playlists nuevas y detectar patrones de mezcla. **Entregable
+      pedido por el PO:** ELIXIS arma la playlist y se la entrega en el chat
+      como PDF o PNG descargable — sin que el DJ tenga que saber ni ver nada
+      del proceso técnico detrás.
+      **Nota de alcance:** el mecanismo de lectura local (agente/ayudante en
+      la máquina del DJ) es territorio de MDJPRO (app de escritorio, hoy
+      pausada — un proyecto a la vez, ver regla vigente), no de la plataforma
+      web actual. Esta entrada documenta la visión para cuando le toque su
+      turno; no autoriza ni empieza su construcción.
+      **Segunda pieza, separada y de menor prioridad — reconocimiento "Shazam"
+      bajo demanda:** el PO planteó un caso de uso distinto y válido:
+      identificar qué canción está tocando OTRO DJ en vivo (no monitoreo
+      continuo). Con volumen bajo y ocasional (el DJ aprieta un botón, se
+      capturan unos segundos), tanto ACRCloud como AudD salen a centavos al
+      mes — ahí sí tendría sentido un motor de fingerprinting pago, pero como
+      función aparte y opcional, nunca como reemplazo del catálogo propio de
+      Serato. Sin ticket abierto, solo registrado.
 
 ## 2. Bitácora de Sincronización entre Cajas
 - [2026-08-22] Inicialización del Hub Central de sincronización multi-hilo.
@@ -338,6 +468,11 @@ Estado general: Operativo / En consolidación
     - Verificación con sesión real de DJ: el widget de compliance, "Bóveda Legal" en la Cabina DJ, y el menú móvil (ítem cancelado por seguridad, ver arriba) — nadie los ha visto todavía con una cuenta de artista real logueada; toda la verificación de este bloque se hizo con datos reales pero sesión de invitado o de owner, nunca de DJ.
     - "Fénix AI" para artistas: decisión de producto pendiente del PO (ver arriba, item cancelado).
   - **Árbol de trabajo:** limpio para todo lo de esta sesión (contratos/W-9/perfil de DJ). Quedan sin trackear 6 elementos ajenos (`.claude/`, `MiamiDJBeat-MigracionV2/`, `docs/constitucion-plan-produccion-m1-m5.md`, 5 scripts `constitucion_*.sql`) — con fecha 16-23 de agosto, de OTRO hilo (dominio Constitución/migraciones), presentes desde antes de que esta sesión empezara. No se tocaron: protocolo de colisión entre sesiones paralelas prohíbe tocar trabajo ajeno sin confirmación explícita del PO.
+- [2026-08-27/28] **Hilo Maestro — Shopping Miami DJ Beat + Config/Inbox·Tickets, ambos fusionados a `main` (PR #287, #286, ver módulos arriba).** Todo el trabajo se hizo en dos worktrees aislados dentro de `.worktrees/` (`shopping-native-store`, `fix-config-inbox-label`), nunca en el directorio de trabajo compartido — ese directorio seguía (y sigue) en `fix/mobile-ui-cleanup`, con el hilo de avatares trabajando en vivo sobre `mdj-commander.html`/ELIXIS. Ambos PRs, antes de fusionar, se rebasaron sobre `origin/main` actualizado (regla del §8 de `CLAUDE.md`) — el de Shopping había nacido antes de que el de Config se fusionara, y sin el rebase habría revertido ese arreglo por accidente al fusionar.
+  - **Hallazgo crítico de seguridad financiera, ya resuelto:** el mismo `STRIPE_SECRET_KEY` alimentaba TODOS los cobros de la plataforma (suscripciones, depósitos de eventos, propinas, y ahora merch) — confirmado en modo **LIVE** (`cs_live_...`) antes de tocar nada. Se creó `STRIPE_SECRET_KEY_MERCH` (llave de prueba, `sk_test_...`, generada por el propio PO desde el modo de prueba de su cuenta real "MIAMI DJ BEAT" en Stripe — nunca una cuenta nueva) exclusivamente para `create-merch-checkout`, dejando la llave compartida intacta. Regla para cualquier hilo futuro que agregue un cobro nuevo: **nunca reusar `STRIPE_SECRET_KEY` para algo que necesite probarse** — darle su propia llave con sufijo del dominio, como aquí.
+  - **Incidente de confusión de entorno, resuelto por diagnóstico, no por código:** el PO reportó varias veces "el header duplicado sigue ahí" mostrando capturas de `localhost` (sin puerto) — resultó ser una pestaña de un ambiente completamente distinto (`http://localhost:8124/mdj-commander.html`, sirviendo el directorio de trabajo COMPARTIDO en `fix/mobile-ui-cleanup`, no cualquiera de los dos worktrees donde vivía el arreglo real). Verificado con `lsof` que no hay nada en el puerto 80, y con `git diff --stat` que ese directorio compartido tiene `web/staff.html` (203 líneas) y `web/mdj-commander.html` (1165 líneas) sin comitear, del hilo de avatares. **No se tocó nada de ese directorio** — se relevó al hilo de avatares (`miami-dj-beat-platform-6d`) el reporte de inestabilidad de menú del PO más el contexto de que su copia local de `staff.html` va detrás de los dos PRs recién fusionados, para que no lo confunda con una regresión real.
+  - **Pendiente de decisión/verificación del hilo de avatares** (relevado, no resuelto por el Hilo Maestro): estado actual del trabajo de ELIXIS/avatares en `mdj-commander.html`, y si la inestabilidad de menú que reporta el PO en `localhost:8124` es del cambio en curso de ese hilo o solo un artefacto de estar detrás de `main`.
+- [2026-08-28] **Visión registrada — ELIXIS/DJMago catalogando la librería del DJ vía Serato/VirtualDJ/Rekordbox, sin motor de fingerprinting pago (ver módulo arriba).** El PO preguntó por Spotify Web API/ACRCloud para catalogar su librería personal de 4TB; investigación real (no de entrenamiento, con fuentes citadas) confirmó que ninguno de los dos existe en el repo hoy, que ACRCloud cobra mensualmente por horas de audio cargadas (caro y recurrente a esa escala), y que Serato ya resuelve el problema gratis con su propia base de datos de metadata (`database V2`/`history.database`). Sin ticket de construcción abierto — el mecanismo de lectura local es territorio de MDJPRO (pausado). Segunda pieza registrada aparte: reconocimiento tipo Shazam bajo demanda (no continuo) para identificar sets de otros DJs, de bajo costo por su volumen ocasional — sin ticket tampoco.
 - [2026-08-29] **CIERRE DE SESIÓN — ELIXIS Core & UI, workspace nativo de `staff.html` (panel FÉNIX AI).** Rama `fix/mobile-ui-cleanup` (worktree compartido con el hilo de avatar/voz), **todo sin comitear** — el PO pidió explícitamente no comitear todavía ("todavía no"). Nada de esto se ha empujado a `origin` ni tocado en producción; todo verificado en local (`localhost:8124`).
   - **Acordeón de escritorio (3 paneles: Modo Enfoque / Avatar / Hilos)**: reescrito de CSS Grid a posicionamiento absoluto independiente — el centro (avatar) queda fijo al 50% del ancho SIEMPRE, los laterales son overlays propios que topan justo en su borde sin invadirlo ni desplazarlo (directiva explícita del PO: "el avatar siempre es protagonista"). Encontrado y corregido un bug real de especificidad CSS en el camino (`.ew-col{position:relative}` empataba con `.ew-pantalla{position:absolute}` y ganaba por orden de archivo — resuelto subiendo especificidad, no reordenando).
   - **Simulador energético HUD** (`web/js/elixis-hud-transmision.js`, nuevo): sobre/carga/haz/receptor en SVG+CSS keyframes + canvas para la rejilla de fondo, conectado a `onTranscript`/`onTool` reales. Honesto: hoy `onTool` es el mejor proxy disponible de "orden lanzada" porque `elixis-realtime-session` todavía no tiene una tool real de envío.

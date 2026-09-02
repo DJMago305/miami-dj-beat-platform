@@ -167,6 +167,11 @@ serve(async (req) => {
     if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
     const STRIPE_WEBHOOK_SECRET = Deno.env.get("STRIPE_WEBHOOK_SECRET")!;
+    // Separate test-mode endpoint for Shopping Miami DJ Beat (create-merch-checkout runs on
+    // STRIPE_SECRET_KEY_MERCH, a sk_test_ key) — Stripe issues its own signing secret per
+    // endpoint, so a test-mode checkout.session.completed never matches the live secret above.
+    // Optional: absent in prod until the PO sets up the merch test webhook.
+    const STRIPE_WEBHOOK_SECRET_MERCH = Deno.env.get("STRIPE_WEBHOOK_SECRET_MERCH") || "";
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
@@ -212,8 +217,13 @@ serve(async (req) => {
         }
     }
 
-    const isValid = await verifyStripeSignature(body, signature || "", STRIPE_WEBHOOK_SECRET);
+    const matchedLive = await verifyStripeSignature(body, signature || "", STRIPE_WEBHOOK_SECRET);
+    const matchedMerch = !!STRIPE_WEBHOOK_SECRET_MERCH && (await verifyStripeSignature(body, signature || "", STRIPE_WEBHOOK_SECRET_MERCH));
+    const isValid = matchedLive || matchedMerch;
     if (!isValid) {
+        console.error(
+            `[Webhook] Invalid signature | hasSigHeader=${!!signature} | merchSecretConfigured=${!!STRIPE_WEBHOOK_SECRET_MERCH} | merchSecretLen=${STRIPE_WEBHOOK_SECRET_MERCH.length}`,
+        );
         return new Response("Invalid signature", { status: 400 });
     }
 
@@ -362,6 +372,78 @@ serve(async (req) => {
                         console.error("[Webhook] soundfortips_fan_requests:", sftUpdErr.message);
                     } else {
                         console.log(`✅ SoundForTips card paid → paid_pending_acceptance DJ queue: ${sftRid}`);
+                    }
+                    break;
+                }
+
+                // ── Branch: Shopping Miami DJ Beat (merch, one-time Stripe Checkout) ──
+                // Escribe merch_orders SOLO aquí, con el pago ya confirmado — nunca antes.
+                // El carrito viaja re-precificado en metadata[merch_items_N] (chunkeado por
+                // el límite de 500 chars/valor de Stripe, ver create-merch-checkout) para no
+                // necesitar otra llamada a la API de Stripe a buscar los line items.
+                if (session.metadata?.product === "miami_dj_beat_merch") {
+                    const chunkCount = parseInt(String(session.metadata?.merch_items_chunks || "0"), 10) || 0;
+                    let itemsJson = "";
+                    for (let idx = 0; idx < chunkCount; idx++) {
+                        itemsJson += String(session.metadata?.[`merch_items_${idx}`] || "");
+                    }
+                    let items: unknown[] = [];
+                    try {
+                        items = itemsJson ? JSON.parse(itemsJson) : [];
+                    } catch (e) {
+                        console.error("[Webhook] merch_orders: no se pudo parsear merch_items metadata", e);
+                    }
+
+                    const shipping = (session as { shipping_details?: unknown }).shipping_details ?? null;
+                    const { error: moErr } = await supabase.from("merch_orders").insert({
+                        stripe_session_id: session.id,
+                        stripe_payment_intent_id: (session.payment_intent as string) ?? null,
+                        items,
+                        subtotal_cents: parseInt(String(session.metadata?.subtotal_cents || "0"), 10) || 0,
+                        tax_cents: parseInt(String(session.metadata?.tax_cents || "0"), 10) || 0,
+                        total_cents: session.amount_total ?? 0,
+                        currency: session.currency ?? "usd",
+                        customer_name: (session.customer_details?.name as string | undefined) ?? null,
+                        customer_email: (session.customer_details?.email as string | undefined) ?? null,
+                        customer_phone: (session.customer_details?.phone as string | undefined) ?? null,
+                        shipping_address: shipping,
+                        status: "paid_pending_fulfillment",
+                    });
+                    if (moErr) {
+                        console.error("[Webhook] merch_orders insert:", moErr.message);
+                    } else {
+                        console.log(`✅ Merch order paid: ${session.id} | $${((session.amount_total ?? 0) / 100).toFixed(2)}`);
+                        // Aviso a staff — mismo Resend/env ya usado por notify-new-lead.
+                        // Si el correo falla, el pedido ya quedó registrado igual (no bloquea).
+                        try {
+                            const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
+                            const MANAGER_EMAIL = Deno.env.get("MANAGER_EMAIL") ?? "";
+                            const FROM_EMAIL = Deno.env.get("FROM_EMAIL") || "Miami DJ Beat <no-reply@miamidjbeat.com>";
+                            if (RESEND_API_KEY && MANAGER_EMAIL) {
+                                const amountStr = `$${((session.amount_total ?? 0) / 100).toFixed(2)}`;
+                                const custName = (session.customer_details?.name as string | undefined) || "—";
+                                const custEmail = (session.customer_details?.email as string | undefined) || "—";
+                                const itemsSummary = (items as { i?: string; s?: string; c?: string; q?: number }[])
+                                    .map((it) => `${it.q ?? 1}× ${it.i ?? "?"} (${it.c ?? "?"}/${it.s ?? "?"})`)
+                                    .join("<br>");
+                                await fetch("https://api.resend.com/emails", {
+                                    method: "POST",
+                                    headers: { "Authorization": `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+                                    body: JSON.stringify({
+                                        from: FROM_EMAIL,
+                                        to: [MANAGER_EMAIL],
+                                        subject: `🛍️ Nuevo pedido Shopping Miami DJ Beat — ${amountStr}`,
+                                        html: `<h2>Nuevo pedido pagado</h2>
+<p><b>Cliente:</b> ${custName} (${custEmail})</p>
+<p><b>Total:</b> ${amountStr}</p>
+<p><b>Artículos:</b><br>${itemsSummary || "—"}</p>
+<p><a href="https://miamidjbeat.com/staff.html?vista=merch-orders">Abrir pedidos pendientes →</a></p>`,
+                                    }),
+                                });
+                            }
+                        } catch (notifyErr) {
+                            console.error("[Webhook] merch order notify email failed:", notifyErr);
+                        }
                     }
                     break;
                 }
