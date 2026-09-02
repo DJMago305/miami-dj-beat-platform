@@ -10,6 +10,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { approval_gate } from "../_shared/approval-gate.ts";
 import {
     bucketSums,
+    CATALOG_FALLBACK,
     computeQuoteTotals,
     mergeCatalog,
     parseCatalogOverlay,
@@ -17,11 +18,28 @@ import {
 } from "../_shared/event-quote-catalog.ts";
 
 // ─── MODELO ──────────────────────────────────────────────────────────────────
-// Haiku 4.5 = el más barato/rápido para pruebas. Para subir de nivel (más
-// razonamiento), cambia esta constante a "claude-sonnet-5" o "claude-opus-5".
-const MODEL = "claude-haiku-4-5-20251001";
+// SUBIDO Haiku 4.5 -> Sonnet 5 (2026-08-31, hallazgo real con evidencia de
+// base de datos, no una corazonada): en una conversacion real el modelo dijo
+// dos veces "voy a registrar los cambios en las agendas ahora" / "Perfecto.
+// Voy a registrar todo ahora:" -- se verifico artist_agenda y
+// agent_action_log en produccion para esa ventana de tiempo: CERO filas,
+// CERO intentos de la herramienta, ni uno fallido. El modelo narro una
+// accion de negocio real (bloqueos de agenda, $ en juego) que nunca ejecuto.
+// Haiku es mas propenso a esto por diseño (modelo chico, menos disciplina
+// real de tool-calling) -- Sonnet 5 es el salto de capacidad justificado por
+// esta falla concreta, no un ascenso especulativo. Verificado: Opus 5
+// tambien disponible si esto se repite con Sonnet.
+const MODEL = "claude-sonnet-5";
 const ANTHROPIC_VERSION = "2023-06-01";
-const MAX_TOKENS = 512;
+// SUBIDO 512->900 (2026-08-31, mismo cambio de modelo): de paso corrige un
+// orden real invertido en el governor de mas abajo -- FULL (el nivel normal,
+// bajo 80% de cuota) daba MENOS tokens (512) que SAVER (640, el nivel de
+// ahorro, 80-100% de cuota), justo al reves de lo que el propio comentario
+// del governor dice que deberia pasar ("FULL=MAX_TOKENS · SAVER=640 ·
+// ESSENTIAL=384"). Con 900, FULL > SAVER > ESSENTIAL, como el comentario ya
+// decia. Tambien le da a Sonnet 5 mas margen real para respuestas con tablas
+// (ej. la agenda semanal completa) sin cortarse a la mitad.
+const MAX_TOKENS = 900;
 
 // Public REST key for roster reads: env only (anon or publishable). No hardcoded literals.
 function envPublicRestKey(): string {
@@ -103,21 +121,29 @@ function isRateLimited(req: Request): boolean {
 const SYSTEM_PROMPT = `Eres ELIXIS, el Agente Ejecutivo de Inteligencia del ecosistema FÉNIX AI, propiedad de Miami DJ Beat LLC.
 
 ### IDENTIDAD
-- Te diriges al dueño como "Capitán". Eres su copiloto estratégico, no un chatbot genérico.
+- Te diriges al dueño por su nombre, Gerardo. Eres su copiloto estratégico, no un chatbot genérico.
 - Tono: profesional, directo, sereno y con autoridad. Elegancia de Miami. Cero relleno.
 - Hablas SIEMPRE en el idioma del usuario (si escribe en español, respondes en español; si en inglés, en inglés).
 
 ### MISIÓN
 - Ayudar a GESTIONAR, DECIDIR y EJECUTAR las operaciones de Miami DJ Beat LLC: bookings, artistas, cursos, equipo, finanzas y estrategia.
-- Priorizas la acción concreta y la claridad. Cuando algo requiera una decisión del Capitán, se la presentas clara (opciones + tu recomendación).
+- Priorizas la acción concreta y la claridad. Cuando algo requiera una decisión de Gerardo, se la presentas clara (opciones + tu recomendación).
 
 ### HONESTIDAD (regla absoluta)
 - Nunca inventes datos, cifras ni nombres. Si no tienes un dato, dilo y explica cómo conseguirlo.
 - Si una acción tiene riesgo o es irreversible, adviértelo ANTES y pide confirmación.
 
 ### ESTILO DE RESPUESTA
-- Conciso: 2 a 5 oraciones por respuesta salvo que el Capitán pida detalle.
+- Conciso: 2 a 5 oraciones por respuesta salvo que Gerardo pida detalle.
 - Humano y cálido, no un manual técnico. Directo al grano.
+- Si el mensaje es un saludo simple o no pide nada concreto ("hola", "buenos
+  días", "¿qué tal?", "todo bien por aquí"), responde SOLO con el saludo y
+  una pregunta abierta corta -- ej. "¡Buenos días, Gerardo! ¿Qué tenemos en
+  mente hoy?". NUNCA sueltes ahí un listado de todo lo que sabes hacer
+  (agenda, cotizaciones, música, etc.) -- eso es una venta de menú, no una
+  conversación real, y quema la sensación de estar hablando con alguien.
+  Menciona una capacidad concreta solo cuando de verdad resuelve lo que se
+  pregunta, no como catálogo de bienvenida.
 
 ### ADAPTACIÓN AL INTERLOCUTOR (muy importante — te hace sentir humano)
 Lee CÓMO te habla la persona y refleja su estilo, manteniendo siempre tu identidad:
@@ -130,21 +156,50 @@ Refleja su registro (formalidad, longitud, energía, si usa emojis o no). Nunca 
 ### MDJPRO — EL PRODUCTO DE ESCRITORIO (conócelo, es el único que vive fuera del navegador)
 MDJPRO ("Magic DJ Pro") es la app NATIVA de macOS de Miami DJ Beat LLC: se descarga e instala en el ordenador del DJ. No es una página web. Organiza y audita la librería musical y prepara Serato/Rekordbox/VirtualDJ. Su función de pago es el Library Wizard (6 modos de carpetas). Requisito duro: macOS 12+ y SOLO Apple Silicon (M1-M4) — en Mac Intel NO funciona, dilo antes de que alguien compre.
 Tres identidades encadenadas, no las confundas: (1) CUENTA = perfil en Supabase, decide el derecho; (2) SESIÓN WEB = navegador desde el que entra, por ahí viaja la activación; (3) HARDWARE ID = número de serie de la Mac, decide en qué máquina corre. El derecho se concede en la cuenta y se ejerce en la máquina.
-Dos canales de cobro: CANAL 2 "Artista Pro" (incluido en la membresía) está VIVO y funciona. CANAL 1 "renta independiente" a 19,99 USD/mes está INCOMPLETO hoy: el cobro se puede crear pero la emisión automática de la clave aún lo rechaza. NUNCA prometas la renta independiente como disponible; si alguien la pide, di que está en cierre y ofrécele la vía de membresía o que el Capitán lo habilite manualmente.
+Dos canales de cobro: CANAL 2 "Artista Pro" (incluido en la membresía) está VIVO y funciona. CANAL 1 "renta independiente" a 19,99 USD/mes está INCOMPLETO hoy: el cobro se puede crear pero la emisión automática de la clave aún lo rechaza. NUNCA prometas la renta independiente como disponible; si alguien la pide, di que está en cierre y ofrécele la vía de membresía o que Gerardo lo habilite manualmente.
 Si un cliente deja de pagar, el acceso se pausa primero y se revoca después, con un margen sin conexión: a un DJ en medio de un evento no se le corta la herramienta esa misma noche.
 
-### TUS HERRAMIENTAS — NUEVE, NI UNA MAS (inventario cerrado)
+### TUS HERRAMIENTAS — DIECISIETE, NI UNA MAS (inventario cerrado)
 Estas son TODAS las herramientas que tienes. No hay ninguna otra:
 1. consultar_finanzas — leer cifras del negocio.
 2. consultar_agenda_artista — ver la agenda personal de un artista.
-3. registrar_evento_agenda — bloquear un hueco EN LA AGENDA INTERNA.
-4. consultar_catalogo_precios — precios oficiales. Nunca inventes un precio.
-5. buscar_cliente — encontrar un cliente o lead.
-6. generar_cotizacion_evento — preparar un BORRADOR de cotizacion.
-7. crear_nota_lead — dejar una nota interna en un lead existente.
-8. enviar_sms — ENCOLAR un SMS para que un humano lo apruebe. Tu NO lo envias.
-9. consultar_musica — catalogo REAL de Apple Music: lo mas escuchado ahora y
+3. registrar_evento_agenda — bloquear un hueco EN LA AGENDA INTERNA (artist_agenda).
+4. modificar_agenda_evento — crear/actualizar/suspender/cancelar un evento en
+   la agenda OPERATIVA (elixis_agenda_eventos: residencias, bodas, privados,
+   cumpleanos, notas -- con tarifa de venue y pago al DJ). Distinta de
+   registrar_evento_agenda: esa es el hueco personal del DJ, esta es el evento
+   de negocio con dinero de por medio.
+5. gestionar_residency_schedule — crear/actualizar/desactivar/reactivar una
+   fila de la PLANTILLA SEMANAL RECURRENTE (residency_schedule: Sundowner Key
+   Largo, Mojitos Calle 8, El Valle Restaurante...). Distinta de las dos de
+   arriba: esas son eventos de una fecha, esta es el horario que se repite
+   cada semana. Ya ves esa agenda en tu contexto (mas abajo) sin llamar nada.
+6. consultar_catalogo_precios — precios oficiales. Nunca inventes un precio.
+7. cambiar_precio_catalogo — cambiar el precio de un sku del catalogo. SOLO
+   owner/admin; si te lo pide otro rol, dilo con franqueza y no lo intentes.
+8. buscar_cliente — encontrar un cliente o lead.
+9. generar_cotizacion_evento — preparar un BORRADOR de cotizacion.
+10. crear_nota_lead — dejar una nota interna en un lead existente.
+11. enviar_sms — ENCOLA un SMS real (no lo envia). El destinatario SIEMPRE
+   sale de buscar_cliente.
+12. enviar_email — ENCOLA un email real (no lo envia). El destinatario
+   SIEMPRE sale de buscar_cliente; si el cliente desactivo notificaciones
+   por email, la herramienta lo rechaza sola.
+13. confirmar_envio_mensaje — despacha o cancela un SMS/email ya encolado.
+   Solo la llamas cuando el usuario respondio "si" o "cancelar" a tu
+   pregunta de confirmacion, nunca antes.
+14. consultar_efemerides — cumpleanos reales de clientes/staff y aniversarios
+   de boda, SOLO si estan guardados en la ficha. Si no hay nadie ese mes,
+   dilo asi -- no inventes un nombre para "completar" la respuesta.
+15. consultar_musica — catalogo REAL de Apple Music: lo mas escuchado ahora y
    busqueda de temas y artistas.
+16. registrar_incidente_bitacora — deja constancia de un incidente real
+   (tecnico, logistica, cliente, venue, cancelacion de agenda, general) en
+   la bitacora historica. No es para agendar futuro, es para dejar registro
+   de algo que YA paso.
+17. consultar_historial_bitacora — busca en esa bitacora por año, venue,
+   categoria o DJ para responder preguntas retrospectivas. Sin filtros,
+   trae lo mas reciente. Si no hay nada, dilo asi.
 
 ### DE MUSICA SI SABES, Y MUCHO
 Eres productor y DJ, no un administrativo. Sabes leer una pista y decir que
@@ -162,7 +217,7 @@ proponlo por bloques con su logica: apertura, subida, pico, bajada, cierre.
 PARA LO QUE SUENA AHORA, MIRA -- NO ADIVINES. Tienes consultar_musica, que
 consulta el catalogo REAL de Apple Music. Usala siempre que hables de lo que
 esta sonando esta semana, de un artista concreto o de si un tema existe.
-Inventarse un top 10 o un titulo es la clase de mentira que quema al Capitan
+Inventarse un top 10 o un titulo es la clase de mentira que quema a Gerardo
 delante de un cliente: si no vino en el resultado, no existe para esa
 respuesta.
 
@@ -174,34 +229,111 @@ no es un set.
 de cualquier otra cosa de fuera, no tienes forma de saber. Dilo con franqueza.
 
 ### LO QUE NO PUEDES HACER (y NUNCA debes prometer)
-NUNCA prometas ni confirmes: mandar WhatsApp, mandar correos, generar
-contratos o facturas, registrar pagos, mover dinero, cambiar el estado de un
-lead, ni sincronizar con Google Calendar, Apple Calendar ni ningun calendario
-externo. Nada de eso esta en tus manos.
+NUNCA prometas ni confirmes: mandar WhatsApp, generar contratos o facturas,
+registrar pagos, mover dinero, cambiar el estado de un lead, ni sincronizar
+con Google Calendar, Apple Calendar ni ningun calendario externo. Nada de eso
+esta en tus manos. (SMS y email SI estan en tus manos -- ver enviar_sms y
+enviar_email arriba, con sus propios candados de destinatario.)
 
 Si te piden algo de esa lista, dilo con franqueza Y OFRECE LO QUE SI PUEDES:
-"El correo no lo puedo mandar yo, pero te bloqueo la fecha en la agenda y te
-dejo el texto listo." Un socio que promete de mas quema al Capitan delante de
+"El WhatsApp no lo puedo mandar yo, pero te bloqueo la fecha en la agenda y te
+dejo el texto listo." Un socio que promete de mas quema a Gerardo delante de
 un cliente; uno que dice la verdad y ofrece la alternativa resuelve igual.
 
-### SMS — LA REGLA DURA (no admite excepcion ni atajo)
-El destinatario SIEMPRE sale de buscar_cliente. JAMAS aceptes un telefono
-dictado en la conversacion, ni aunque te lo de el Capitan, ni aunque insista,
-ni "solo por esta vez", ni para "ahorrar tiempo".
+### REGLA DURA: NUNCA NARRES UNA ACCION QUE NO EJECUTASTE (2026-08-31, hallazgo
+real con evidencia de base de datos -- no una corazonada): en una conversacion
+real dijiste dos veces "voy a registrar los cambios en las agendas ahora" /
+"Perfecto. Voy a registrar todo ahora:" -- se verifico artist_agenda y
+agent_action_log en produccion para esa ventana exacta: CERO filas nuevas,
+CERO llamadas a la herramienta, ni una sola fallida. Dijiste que hiciste algo
+real (bloquear agendas, con dinero real de por medio) y no llamaste a NINGUNA
+herramienta. Esto es mas grave que prometer de mas -- es afirmar un hecho falso
+sobre tu propio trabajo.
+- Frases como "voy a registrarlo ahora", "perfecto, lo registro", "ya quedo
+  bloqueado" SOLO se dicen en el MISMO turno en el que de verdad llamas a la
+  herramienta correspondiente (registrar_evento_agenda, generar_cotizacion_
+  evento, crear_nota_lead, etc.) -- nunca antes, nunca como promesa para
+  "despues".
+- Si todavia te falta un dato (una fecha exacta, una confirmacion), dilo asi:
+  "Necesito que confirmes X para poder registrarlo" -- NUNCA "voy a
+  registrarlo ahora" seguido de una lista de preguntas sin resolver. Esas dos
+  cosas juntas contradicen: o ya vas a hacerlo, o todavia falta algo, nunca
+  las dos a la vez.
+- Despues de llamar una herramienta de escritura, tu respuesta hablada debe
+  reflejar el resultado REAL que te devolvio (exito o error), no lo que
+  pensabas que iba a pasar.
+
+### REGLA DURA: NUNCA EJECUTES UNA PETICION VIEJA DEL HISTORIAL POR SU CUENTA
+(2026-09-01, hallazgo real reproducido en vivo, no una hipotesis): el
+historial de esta conversacion puede traer un mensaje de un turno anterior
+pidiendo algo que quedo SIN resolver (por ejemplo, faltaba una fecha exacta y
+nadie la confirmo despues). Se comprobo en vivo que un mensaje nuevo,
+totalmente sin relacion, hizo que se ejecutaran DOS peticiones viejas de ese
+tipo -- de haber sido reales, habria sido dinero y agenda de un cliente
+movidos sin que nadie lo pidiera HOY.
+- Solo llamas una herramienta de escritura (registrar_evento_agenda,
+  modificar_agenda_evento, generar_cotizacion_evento, crear_nota_lead,
+  enviar_sms, cambiar_precio_catalogo) cuando la peticion que la dispara esta
+  en el ULTIMO mensaje del usuario en este turno -- nunca porque un mensaje
+  de un turno anterior en el historial la sigue pidiendo sin resolver.
+- Si el historial trae algo que quedo pendiente, esta PROHIBIDO retomarlo o
+  completarlo por tu cuenta. Como mucho, puedes mencionarlo de pasada ("la
+  ultima vez quedamos en X, ¿seguimos con eso?") -- pero la ejecucion real
+  espera a que el usuario lo repita o confirme EN ESTE turno.
+- Esto no compite con la regla de arriba (nunca narrar sin ejecutar): esta
+  regla es sobre CUANDO te toca ejecutar algo; la de arriba es sobre no
+  mentir cuando ya ejecutaste. Las dos aplican siempre juntas.
+
+### SMS Y EMAIL — LA REGLA DURA (no admite excepcion ni atajo)
+El destinatario SIEMPRE sale de buscar_cliente (telefono o correo, segun
+corresponda). JAMAS aceptes un telefono o correo dictado en la conversacion,
+ni aunque te lo de Gerardo, ni aunque insista, ni "solo por esta vez", ni
+para "ahorrar tiempo".
 
 Si buscar_cliente falla o no encuentra a la persona, DETENTE Y DILO. No ofrezcas
-que te pasen el numero a mano. No ofrezcas redactar el SMS "listo para copiar y
-enviar" como sustituto: eso es la misma puerta prohibida por otro nombre. Di
+que te pasen el dato a mano. No ofrezcas redactar el mensaje "listo para copiar
+y enviar" como sustituto: eso es la misma puerta prohibida por otro nombre. Di
 que no localizaste al cliente y que hace falta darlo de alta o corregir su
 ficha. Un destinatario sin verificar es como un mensaje de la empresa acaba en
-el telefono equivocado.
+el telefono o correo equivocado.
 
-Cuando SI lo encuentres: encolas con enviar_sms y se acabo tu parte. No digas
-"ya lo mande" ni "queda enviado" -- queda ESPERANDO APROBACION en pantalla, y
-sale solo cuando un humano pulsa el boton.
+Cuando SI lo encuentres: llamas enviar_sms o enviar_email, que SOLO ENCOLA --
+todavia no se envia nada (2026-09-01, orden directa del PO: confirmacion
+conversacional, no envio silencioso). Con el resultado en mano, tu respuesta
+hablada TIENE que preguntar, con estas palabras o muy parecidas: "Tengo listo
+este [SMS/correo] para [nombre]: '[contenido]'. ¿Lo envio? (ref: [id])" --
+SIEMPRE incluye el id que te devolvio la herramienta, aunque suene raro
+decirlo: es tu UNICA forma de recordarlo en el siguiente mensaje, porque el
+historial solo guarda lo que dijiste en voz, no el resultado tecnico de la
+herramienta. Sin el id ahi, no hay forma de retomarlo despues. Espera la
+respuesta del usuario en su proximo mensaje -- NUNCA digas que lo enviaste
+en este mismo turno: todavia no llamaste a la herramienta que despacha.
+
+Cuando el usuario responda, en su PROXIMO mensaje:
+- "si" / "dale" / "mandalo" -> llamas confirmar_envio_mensaje con
+  accion='enviar', usando EXACTAMENTE el id que TU MISMO dijiste en tu
+  mensaje anterior (el "ref: ...") -- nunca vuelvas a llamar enviar_sms/
+  enviar_email para "rehacer" el mismo pedido, eso crea un duplicado
+  encolado y dispara el equivocado. Tu respuesta hablada refleja EXACTAMENTE
+  lo que confirmar_envio_mensaje devolvio (ok:true/estado:"enviado" -> di
+  que se envio; ok:false -> dilo tal cual, nunca inventes un exito).
+- "no" a secas -> NO llames ninguna herramienta. Eso significa "todavia no",
+  no "cancelalo" -- el mensaje se queda en cola esperando cambios. Pregunta
+  que quiere ajustar.
+- "cancelar" / "borralo" -> llamas confirmar_envio_mensaje con
+  accion='cancelar'. El mensaje se descarta, no se envia nunca.
 
 Puedes REDACTAR cualquier cosa -- mensajes, cobros, propuestas -- y entregarla
-lista para copiar. Redactar no es enviar: dilo asi de claro.`;
+lista para copiar cuando NO haga falta mandarla de verdad. Pero si la piden
+enviada, usa la herramienta -- no la des por enviada solo por haberla redactado.
+
+### RELOJ REAL (2026-08-31, orden directa del PO)
+Cada turno te llega, mas abajo, un bloque "FECHA Y HORA ACTUAL" calculado por
+el SERVIDOR en hora de Miami (America/New_York) -- no una suposicion tuya.
+Uselo para resolver "hoy", "manana", "este sabado", cumpleanos, vencimientos,
+o cualquier fecha relativa. Tienes PROHIBIDO decir "no se que fecha es hoy" o
+"no tengo acceso a la fecha actual" -- siempre la tienes, mas abajo en tu
+propio contexto.`;
 
 // ─── ROSTER EN VIVO (artistas reales desde public_dj_profiles) ───────────────
 // Mismo patrón que booth-chat: solo campos PÚBLICOS, con la anon key que
@@ -280,9 +412,9 @@ async function fetchProRoster(): Promise<string> {
 
         _rosterCache =
             "\n\n### ROSTER REAL DE TU PLATAFORMA — Artistas registrados en Miami DJ Beat (datos en vivo)\n" +
-            "Estos son los artistas reales del Capitán. El UUID entre corchetes es dj_profiles.user_id (para consultar_agenda_artista / registrar_evento_agenda).\n" +
+            "Estos son los artistas reales de Gerardo. El UUID entre corchetes es dj_profiles.user_id (para consultar_agenda_artista / registrar_evento_agenda).\n" +
             "REGLA ABSOLUTA: NUNCA inventes nombres ni datos. Si no hay artistas de la categoría pedida, dilo con honestidad.\n" +
-            "ELITE y PRO son los de pago; LITE los gratuitos. Filtra por ciudad/bio si el Capitán lo pide.\n\n" +
+            "ELITE y PRO son los de pago; LITE los gratuitos. Filtra por ciudad/bio si Gerardo lo pide.\n\n" +
             lines.join("\n\n");
 
         _rosterCacheAt = now;
@@ -610,12 +742,20 @@ serve(async (req: Request) => {
     // Leads / solicitudes entrantes (cacheado 1 min).
     const leadsContext = await fetchLeadsPipeline();
 
+    // Reloj real (2026-08-31): fecha/hora calculada en SERVIDOR, no confiada
+    // al modelo. Hora de Miami explícita porque es donde opera el negocio.
+    const now = new Date();
+    const dateBlock =
+        `\n\n### FECHA Y HORA ACTUAL (servidor, America/New_York)\n` +
+        `FECHA ACTUAL: ${now.toLocaleDateString("es-ES", { weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: "America/New_York" })} ` +
+        `| HORA: ${now.toLocaleTimeString("es-ES", { timeZone: "America/New_York" })}`;
+
     // Identidad del usuario actual (del candado) — para personalizar y adaptar al rol.
     const userBlock =
         `\n\n### USUARIO ACTUAL (con quien hablas AHORA)\n` +
         `Nombre: ${gate.name || "sin nombre"}\n` +
         `Rol: ${gate.role}\n` +
-        `Trátalo por su nombre. Si su rol es 'owner' es el dueño (el Capitán): confianza y acceso totales. ` +
+        `Trátalo por su nombre. Si su rol es 'owner' es el dueño (Gerardo): confianza y acceso totales. ` +
         `Si es admin/manager/seller es staff: ayúdalo dentro de lo que le corresponde a su rol.`;
 
     // Agenda: solo residency_schedule. Sin filas o con error → contexto honesto, sin inventar.
@@ -626,6 +766,7 @@ serve(async (req: Request) => {
 
     const systemContent =
         SYSTEM_PROMPT +
+        dateBlock +
         userBlock +
         memoryContext +
         agendaContext +
@@ -722,6 +863,236 @@ serve(async (req: Request) => {
         },
     };
 
+    const AGENDA_EVENTOS_TOOL = {
+        name: "modificar_agenda_evento",
+        description:
+            "Crea, actualiza, suspende o cancela un evento en la agenda OPERATIVA de negocio " +
+            "(elixis_agenda_eventos): residencias, bodas, privados, cumpleanos o notas, con tarifa " +
+            "de venue y pago al DJ. Distinta de registrar_evento_agenda (esa es el hueco personal " +
+            "del DJ, sin dinero). Usa el nombre del DJ tal como aparece en el roster -- no inventes " +
+            "un nombre que no este ahi. accion='actualizar'/'suspender'/'reactivar'/'cancelar' " +
+            "busca el evento existente por dj+fecha_inicio+venue; si no lo encuentra, la herramienta " +
+            "devuelve error, no lo inventes.",
+        input_schema: {
+            type: "object",
+            properties: {
+                dj_nombre: {
+                    type: "string",
+                    description: "Nombre del DJ tal como aparece en el roster (stage_name/dj_name/full_name).",
+                },
+                venue: {
+                    type: "string",
+                    description: "Nombre del venue/lugar. Opcional para 'crear', recomendable para identificar el evento en updates.",
+                },
+                fecha: {
+                    type: "string",
+                    description: "Inicio del evento, ISO 8601.",
+                },
+                horario: {
+                    type: "string",
+                    description: "Fin del evento, ISO 8601 (posterior a 'fecha').",
+                },
+                accion: {
+                    type: "string",
+                    enum: ["crear", "actualizar", "suspender", "reactivar", "cancelar"],
+                    description: "crear=evento nuevo. Las demas buscan el evento existente por dj+fecha+venue.",
+                },
+                tipo: {
+                    type: "string",
+                    enum: ["residencia", "boda", "privado", "cumpleanos", "nota"],
+                    description: "Tipo de evento. Default 'nota'.",
+                },
+                estado: {
+                    type: "string",
+                    enum: ["activo", "suspendido"],
+                    description: "Estado explicito. Ignorado si accion ya lo determina (suspender/reactivar/cancelar).",
+                },
+                notas: {
+                    type: "string",
+                    description: "Detalle opcional, 1 a 2000 caracteres.",
+                },
+                tarifa_venue: {
+                    type: "number",
+                    description: "Lo que paga el venue, en DOLARES (se convierte a centavos internamente).",
+                },
+                pago_dj: {
+                    type: "number",
+                    description: "Lo que se le paga al DJ, en DOLARES (se convierte a centavos internamente).",
+                },
+                es_confidencial_staff: {
+                    type: "boolean",
+                    description: "Si es true, el DJ NO vera este evento (ni tarifas) en su propia agenda -- solo owner/admin. Default false.",
+                },
+            },
+            required: ["dj_nombre", "fecha", "horario", "accion"],
+        },
+    };
+
+    const RESIDENCY_TOOL = {
+        name: "gestionar_residency_schedule",
+        description:
+            "Crea, actualiza, desactiva o reactiva una fila de la PLANTILLA SEMANAL RECURRENTE de " +
+            "residencias (residency_schedule: Sundowner Key Largo, Mojitos Calle 8, El Valle Restaurante, " +
+            "etc.). Distinta de modificar_agenda_evento y registrar_evento_agenda -- esas son eventos de " +
+            "una fecha concreta, esta es el horario que se repite cada semana. Ya tienes la agenda de " +
+            "residencias activa en tu contexto (mas arriba); usa esta herramienta solo cuando pidan CAMBIAR " +
+            "algo de esa plantilla, no para consultarla. Para actualizar/desactivar/reactivar, identifica la " +
+            "fila por dia+turno+venue exactos -- si no calzan con una fila real, la herramienta la rechaza, " +
+            "no inventes una.",
+        input_schema: {
+            type: "object",
+            properties: {
+                accion: {
+                    type: "string",
+                    enum: ["crear", "actualizar", "desactivar", "reactivar"],
+                    description: "crear=fila nueva. Las demas requieren dia_semana+turno+venue de una fila existente.",
+                },
+                dia_semana: {
+                    type: "number",
+                    description: "0=Domingo, 1=Lunes, 2=Martes, 3=Miercoles, 4=Jueves, 5=Viernes, 6=Sabado.",
+                },
+                turno: {
+                    type: "string",
+                    enum: ["dia", "noche"],
+                    description: "La tabla no acepta otro valor (check constraint real).",
+                },
+                venue: {
+                    type: "string",
+                    description: "Nombre del venue, ej. 'Sundowner Key Largo'.",
+                },
+                dj_nombre: {
+                    type: "string",
+                    description: "Nombre del DJ. Default DJMago305 si no se especifica.",
+                },
+                hora_inicio: {
+                    type: "string",
+                    description: "Hora de inicio, formato HH:MM (24h). Requerido para accion='crear'.",
+                },
+                hora_fin: {
+                    type: "string",
+                    description: "Hora de fin, formato HH:MM (24h). Requerido para accion='crear'.",
+                },
+                venue_pay_usd: {
+                    type: "number",
+                    description: "Lo que paga el venue, en DOLARES (no centavos -- distinto de modificar_agenda_evento).",
+                },
+                dj_pay_usd: {
+                    type: "number",
+                    description: "Lo que se le paga al DJ, en DOLARES.",
+                },
+                notas: {
+                    type: "string",
+                    description: "Nota opcional.",
+                },
+            },
+            required: ["accion", "dia_semana", "turno", "venue"],
+        },
+    };
+
+    const EFEMERIDES_TOOL = {
+        name: "consultar_efemerides",
+        description:
+            "Consulta cumpleanos reales de clientes (client_profiles.birth_date), cumpleanos de staff/DJs " +
+            "(dj_profiles.birth_date) o aniversarios de boda de clientes (client_profiles.wedding_anniversary). " +
+            "Solo devuelve gente que de verdad tiene esa fecha guardada en su ficha -- si no aparece nadie, " +
+            "dilo asi, no inventes un nombre ni una fecha.",
+        input_schema: {
+            type: "object",
+            properties: {
+                tipo: {
+                    type: "string",
+                    enum: ["cumpleanos_cliente", "cumpleanos_staff", "aniversario", "todos"],
+                    description: "Que tipo de efemeride buscar.",
+                },
+                mes: {
+                    type: "number",
+                    description: "Mes 1-12. Si no se especifica, usa el mes actual (ver FECHA Y HORA ACTUAL arriba).",
+                },
+            },
+            required: ["tipo"],
+        },
+    };
+
+    const INCIDENT_WRITE_TOOL = {
+        name: "registrar_incidente_bitacora",
+        description:
+            "Registra un incidente en la bitacora historica de la operacion (company_incident_log): " +
+            "problemas tecnicos, de logistica, con un cliente, con un venue, cancelaciones de agenda, o " +
+            "notas generales. Usala cuando te pidan dejar constancia de algo que paso -- no para agendar " +
+            "eventos futuros, para eso estan las herramientas de agenda.",
+        input_schema: {
+            type: "object",
+            properties: {
+                categoria: {
+                    type: "string",
+                    enum: ["tecnico", "logistica", "cliente", "venue", "agenda_cancelacion", "general"],
+                    description: "Tipo de incidente.",
+                },
+                titulo: {
+                    type: "string",
+                    description: "Titulo corto, 1 a 200 caracteres.",
+                },
+                descripcion: {
+                    type: "string",
+                    description: "Que paso, con detalle. 1 a 4000 caracteres.",
+                },
+                venue: {
+                    type: "string",
+                    description: "Venue involucrado, si aplica.",
+                },
+                dj: {
+                    type: "string",
+                    description: "DJ afectado, si aplica.",
+                },
+                gravedad: {
+                    type: "string",
+                    enum: ["baja", "media", "alta", "critica"],
+                    description: "Que tan grave fue. Default 'media' si no se especifica.",
+                },
+                solucion: {
+                    type: "string",
+                    description: "Como se resolvio, si ya se resolvio.",
+                },
+                fecha_incidente: {
+                    type: "string",
+                    description: "Fecha real del incidente, YYYY-MM-DD. Si no se especifica, usa hoy (ver FECHA Y HORA ACTUAL arriba).",
+                },
+            },
+            required: ["categoria", "titulo", "descripcion"],
+        },
+    };
+
+    const INCIDENT_READ_TOOL = {
+        name: "consultar_historial_bitacora",
+        description:
+            "Consulta el historico de incidentes y notas pasadas de company_incident_log para responder " +
+            "preguntas retrospectivas (\"que paso con tal venue el año pasado\", \"cuantos incidentes tecnicos " +
+            "tuvimos\"). Todos los filtros son opcionales -- sin ninguno, trae los mas recientes. Si no aparece " +
+            "nada, dilo asi, no inventes un incidente que no esta en el resultado.",
+        input_schema: {
+            type: "object",
+            properties: {
+                anio: {
+                    type: "number",
+                    description: "Filtra por año del incidente (fecha_incidente).",
+                },
+                venue: {
+                    type: "string",
+                    description: "Filtra por venue (coincidencia parcial).",
+                },
+                categoria: {
+                    type: "string",
+                    enum: ["tecnico", "logistica", "cliente", "venue", "agenda_cancelacion", "general"],
+                    description: "Filtra por categoria.",
+                },
+                dj_nombre: {
+                    type: "string",
+                    description: "Filtra por DJ afectado (coincidencia parcial).",
+                },
+            },
+        },
+    };
+
     const CATALOG_READ_TOOL = {
         name: "consultar_catalogo_precios",
         description:
@@ -739,6 +1110,29 @@ serve(async (req: Request) => {
         },
     };
 
+    const CATALOG_PRICE_TOOL = {
+        name: "cambiar_precio_catalogo",
+        description:
+            "Cambia el precio de un SKU del catalogo oficial (platform_settings.rentals_catalog_prices). " +
+            "SOLO owner/admin -- si quien te habla es otro rol, la herramienta lo va a rechazar, no lo intentes igual. " +
+            "El sku tiene que ser uno EXISTENTE en el catalogo (consultalo con consultar_catalogo_precios si no " +
+            "estas seguro); no inventes un sku nuevo con esto.",
+        input_schema: {
+            type: "object",
+            properties: {
+                sku: {
+                    type: "string",
+                    description: "SKU canonico existente del catalogo (dj_private, hl_robot, pa_medium, etc.).",
+                },
+                nuevo_precio_usd: {
+                    type: "number",
+                    description: "Nuevo precio unitario en DOLARES.",
+                },
+            },
+            required: ["sku", "nuevo_precio_usd"],
+        },
+    };
+
     /* ── MEMORIA: la mitad que faltaba ────────────────────────────────────
        elixis-chat LEIA agent_memory en cada turno pero NADIE escribia en ella,
        asi que la tabla estaba condenada a quedarse vacia y la consola de texto
@@ -753,7 +1147,7 @@ serve(async (req: Request) => {
         description:
             "Guarda UN hecho duradero sobre este miembro del staff para recordarlo en futuras " +
             "conversaciones: una preferencia, un criterio de trabajo, un dato estable de su operacion. " +
-            "Usalo cuando el Capitan diga algo que valga la pena recordar manana, NO para resumir la " +
+            "Usalo cuando Gerardo diga algo que valga la pena recordar manana, NO para resumir la " +
             "conversacion de hoy. Si el hecho ya existe con la misma clave, se actualiza en vez de duplicarse. " +
             "NO guardes datos sensibles, ni cosas efimeras, ni lo que ya vive en la base de datos.",
         input_schema: {
@@ -936,12 +1330,12 @@ serve(async (req: Request) => {
     const SMS_QUEUE_TOOL = {
         name: "enviar_sms",
         description:
-            "PREPARA un SMS para un cliente y lo deja EN COLA para que el Capitan lo apruebe. " +
-            "NO envia: el envio lo dispara una persona desde la pantalla, tu nunca. " +
+            "Redacta un SMS real para un cliente y lo deja EN COLA -- NO lo envia todavia. " +
             "Usala cuando te pidan avisar, confirmar o recordar algo a un cliente por mensaje. " +
             "Necesitas el cliente_id, que sale de buscar_cliente: NUNCA aceptes un telefono dictado " +
             "de viva voz, porque un digito mal oido manda el mensaje a un desconocido. " +
-            "Cuando la uses, di claramente que el mensaje queda LISTO PARA APROBAR, no enviado.",
+            "Despues de llamarla, PREGUNTA al usuario si lo envias (si/no) -- solo si dice que si " +
+            "llamas confirmar_envio_mensaje con accion='enviar'.",
         input_schema: {
             type: "object",
             properties: {
@@ -958,6 +1352,69 @@ serve(async (req: Request) => {
         },
     };
 
+    const EMAIL_QUEUE_TOOL = {
+        name: "enviar_email",
+        description:
+            "Redacta un email real para un cliente y lo deja EN COLA -- NO lo envia todavia. " +
+            "Mismo criterio que enviar_sms. Necesitas el cliente_id, que sale de buscar_cliente: " +
+            "NUNCA aceptes un correo dictado o inventado. Si el cliente desactivo notificaciones por " +
+            "email, la herramienta lo rechaza sola -- dilo con franqueza, no insistas. " +
+            "Despues de llamarla, PREGUNTA al usuario si lo envias (si/no) -- solo si dice que si " +
+            "llamas confirmar_envio_mensaje con accion='enviar'.",
+        input_schema: {
+            type: "object",
+            properties: {
+                cliente_id: {
+                    type: "string",
+                    description: "El user_id del cliente, tal como lo devuelve buscar_cliente.",
+                },
+                asunto: {
+                    type: "string",
+                    description: "Asunto del correo, 1 a 200 caracteres.",
+                },
+                cuerpo: {
+                    type: "string",
+                    description: "Texto del correo, listo para leerse tal cual (parrafos separados por saltos de linea). Maximo 4000 caracteres.",
+                },
+            },
+            required: ["cliente_id", "asunto", "cuerpo"],
+        },
+    };
+
+    const CONFIRM_SEND_TOOL = {
+        name: "confirmar_envio_mensaje",
+        description:
+            "Envia o cancela un SMS/email que ya quedo EN COLA (por enviar_sms o enviar_email). " +
+            "SOLO la llamas cuando el usuario ya respondio a tu pregunta de confirmacion en ESTE turno: " +
+            "'si'/'dale'/'mandalo' -> accion='enviar'. 'cancelar'/'borralo' -> accion='cancelar'. " +
+            "Si el usuario dice 'no' sin mas, NO llames esta herramienta -- eso significa 'todavia no', " +
+            "espera instrucciones o cambios, no es lo mismo que cancelar. " +
+            "Cuando el resultado de un SMS diga estado='aceptado', dile al usuario exactamente eso -- " +
+            "que el mensaje fue ACEPTADO por el gateway (Twilio). NUNCA digas 'enviado', 'entregado' o " +
+            "'le llegó': la entrega real la decide la operadora del destinatario y esta herramienta no " +
+            "la confirma. Si el resultado trae estado_operadora, puedes mencionarlo tal cual.",
+        input_schema: {
+            type: "object",
+            properties: {
+                id: {
+                    type: "string",
+                    description: "El id que devolvio enviar_sms/enviar_email al encolar.",
+                },
+                tipo: {
+                    type: "string",
+                    enum: ["sms", "email"],
+                    description: "De que cola es el id -- sms o email.",
+                },
+                accion: {
+                    type: "string",
+                    enum: ["enviar", "cancelar"],
+                    description: "enviar = despachar de verdad ahora. cancelar = borrar el pendiente, no se envia.",
+                },
+            },
+            required: ["id", "tipo", "accion"],
+        },
+    };
+
     const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
     function toolGateInput(toolName: string): { tool: string; policy: string; mode: "read" | "write" } {
@@ -967,17 +1424,26 @@ serve(async (req: Request) => {
             || toolName === "consultar_catalogo_precios"
             || toolName === "buscar_cliente"
             || toolName === "consultar_musica"
+            || toolName === "consultar_efemerides"
+            || toolName === "consultar_historial_bitacora"
         ) {
             return { tool: toolName, policy: "none", mode: "read" };
         }
         if (
             toolName === "crear_nota_lead"
             || toolName === "registrar_evento_agenda"
+            || toolName === "modificar_agenda_evento"
+            || toolName === "gestionar_residency_schedule"
+            || toolName === "registrar_incidente_bitacora"
+            || toolName === "cambiar_precio_catalogo"
             || toolName === "generar_cotizacion_evento"
-            /* enviar_sms solo ENCOLA. No sale nada al mundo, asi que no necesita
-               el porton de aprobacion aqui: la aprobacion real es humana y vive
-               en el despachador, que ELIXIS no puede llamar. */
+            /* enviar_sms (2026-08-31: envio autonomo, orden directa del PO).
+               El candado real sigue siendo que el telefono SOLO sale de
+               buscar_cliente + client_profiles -- nunca de un numero dictado
+               en la conversacion. Ese candado vive en runSmsQueueTool, no aqui. */
             || toolName === "enviar_sms"
+            || toolName === "enviar_email"
+            || toolName === "confirmar_envio_mensaje"
             /* recordar_hecho escribe SOLO en la memoria del propio staff que
                esta hablando: p_staff_user_id sale del porton, no del modelo,
                asi que ELIXIS no puede tocar la memoria de nadie mas aunque se
@@ -1113,6 +1579,255 @@ serve(async (req: Request) => {
         return JSON.stringify({ ok: true, event_id: eventId, dj_user_id: djUserId });
     }
 
+    const ACCIONES_AGENDA_EVENTO = new Set(["crear", "actualizar", "suspender", "reactivar", "cancelar"]);
+    const TIPOS_AGENDA_EVENTO = new Set(["residencia", "boda", "privado", "cumpleanos", "nota"]);
+
+    async function runAgendaEventoTool(input: Record<string, unknown>): Promise<string> {
+        const djNombre = String(input?.dj_nombre ?? "").trim();
+        const venue = String(input?.venue ?? "").trim();
+        const accion = String(input?.accion ?? "").trim().toLowerCase();
+        const tipo = String(input?.tipo ?? "nota").trim().toLowerCase();
+        const estado = String(input?.estado ?? "activo").trim().toLowerCase();
+        const notas = String(input?.notas ?? "").trim();
+        const fechaInicio = parseIso(input?.fecha);
+        const fechaFin = parseIso(input?.horario);
+        const target = djNombre || "invalid";
+
+        if (!djNombre) {
+            await recordActionLog("modificar_agenda_evento", target, "error:dj_nombre_requerido");
+            return JSON.stringify({ error: "dj_nombre_requerido" });
+        }
+        if (!ACCIONES_AGENDA_EVENTO.has(accion)) {
+            await recordActionLog("modificar_agenda_evento", target, "error:accion_invalida");
+            return JSON.stringify({ error: "accion_invalida" });
+        }
+        if (!fechaInicio || !fechaFin || fechaFin <= fechaInicio) {
+            await recordActionLog("modificar_agenda_evento", target, "error:rango_invalido");
+            return JSON.stringify({ error: "rango_invalido" });
+        }
+        if (!TIPOS_AGENDA_EVENTO.has(tipo)) {
+            await recordActionLog("modificar_agenda_evento", target, "error:tipo_invalido");
+            return JSON.stringify({ error: "tipo_invalido" });
+        }
+        if (notas && notas.length > 2000) {
+            await recordActionLog("modificar_agenda_evento", target, "error:notas_invalidas");
+            return JSON.stringify({ error: "notas_invalidas" });
+        }
+        const tarifaVenueCents = typeof input?.tarifa_venue === "number" ? Math.round(input.tarifa_venue * 100) : null;
+        const pagoDjCents = typeof input?.pago_dj === "number" ? Math.round(input.pago_dj * 100) : null;
+        const esConfidencial = typeof input?.es_confidencial_staff === "boolean" ? input.es_confidencial_staff : null;
+
+        const { data: eventId, error } = await ADMIN.rpc("elixis_agenda_evento_modificar", {
+            p_dj_nombre: djNombre,
+            p_venue_nombre: venue || null,
+            p_fecha_inicio: fechaInicio,
+            p_fecha_fin: fechaFin,
+            p_accion: accion,
+            p_tipo: tipo,
+            p_estado: estado,
+            p_notas: notas || null,
+            p_tarifa_venue_cents: tarifaVenueCents,
+            p_pago_dj_cents: pagoDjCents,
+            p_staff_user_id: gate.userId,
+            p_agent_id: "elixis",
+            p_es_confidencial_staff: esConfidencial,
+        });
+        if (error || !eventId) {
+            const detail = error?.message ?? "rpc";
+            await recordActionLog("modificar_agenda_evento", target, `error:${detail}`.slice(0, 2000));
+            return JSON.stringify({ error: detail.includes("dj_no_encontrado") ? "dj_no_encontrado" : (detail.includes("evento_no_encontrado") ? "evento_no_encontrado" : "evento_no_procesado") });
+        }
+        await recordActionLog("modificar_agenda_evento", target, `ok:${accion}:${eventId}`);
+        return JSON.stringify({ ok: true, event_id: eventId, dj_nombre: djNombre, accion });
+    }
+
+    const ACCIONES_RESIDENCY = new Set(["crear", "actualizar", "desactivar", "reactivar"]);
+    const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+    function parseHoraSimple(value: unknown): string | null {
+        const raw = String(value ?? "").trim();
+        if (!raw || !TIME_RE.test(raw)) return null;
+        return `${raw}:00`;
+    }
+
+    async function runResidencyTool(input: Record<string, unknown>): Promise<string> {
+        const accion = String(input?.accion ?? "").trim().toLowerCase();
+        const diaSemana = Number(input?.dia_semana);
+        const turno = String(input?.turno ?? "").trim();
+        const venue = String(input?.venue ?? "").trim();
+        const djNombre = String(input?.dj_nombre ?? "").trim();
+        const notas = String(input?.notas ?? "").trim();
+        const target = `${venue}|${turno}|${diaSemana}`;
+
+        if (!ACCIONES_RESIDENCY.has(accion)) {
+            await recordActionLog("gestionar_residency_schedule", target, "error:accion_invalida");
+            return JSON.stringify({ error: "accion_invalida" });
+        }
+        if (!Number.isFinite(diaSemana) || diaSemana < 0 || diaSemana > 6) {
+            await recordActionLog("gestionar_residency_schedule", target, "error:dia_semana_invalido");
+            return JSON.stringify({ error: "dia_semana_invalido" });
+        }
+        if (!turno) {
+            return JSON.stringify({ error: "turno_requerido" });
+        }
+        if (!venue) {
+            return JSON.stringify({ error: "venue_requerido" });
+        }
+
+        const horaInicio = input?.hora_inicio != null ? parseHoraSimple(input.hora_inicio) : null;
+        const horaFin = input?.hora_fin != null ? parseHoraSimple(input.hora_fin) : null;
+        if (accion === "crear" && (!horaInicio || !horaFin)) {
+            return JSON.stringify({ error: "horario_requerido", detalle: "hora_inicio y hora_fin son obligatorios para crear, formato HH:MM." });
+        }
+        if ((input?.hora_inicio != null && !horaInicio) || (input?.hora_fin != null && !horaFin)) {
+            return JSON.stringify({ error: "horario_invalido", detalle: "Formato esperado HH:MM (24h)." });
+        }
+
+        const venuePayUsd = typeof input?.venue_pay_usd === "number" ? input.venue_pay_usd : null;
+        const djPayUsd = typeof input?.dj_pay_usd === "number" ? input.dj_pay_usd : null;
+
+        const { data: rowId, error } = await ADMIN.rpc("residency_schedule_modificar", {
+            p_accion: accion,
+            p_dia_semana: diaSemana,
+            p_turno: turno,
+            p_venue: venue,
+            p_dj_nombre: djNombre || "DJMago305",
+            p_hora_inicio: horaInicio,
+            p_hora_fin: horaFin,
+            p_venue_pay_usd: venuePayUsd,
+            p_dj_pay_usd: djPayUsd,
+            p_notas: notas || null,
+            p_staff_user_id: gate.userId,
+        });
+        if (error || !rowId) {
+            const detail = error?.message ?? "rpc";
+            await recordActionLog("gestionar_residency_schedule", target, `error:${detail}`.slice(0, 2000));
+            let code = "residencia_no_procesada";
+            if (detail.includes("residencia_no_encontrada")) code = "residencia_no_encontrada";
+            else if (detail.includes("residency_schedule_shift_check")) code = "turno_invalido:solo_dia_o_noche";
+            return JSON.stringify({ error: code });
+        }
+        await recordActionLog("gestionar_residency_schedule", target, `ok:${accion}:${rowId}`);
+        return JSON.stringify({ ok: true, id: rowId, accion, venue, turno, dia_semana: diaSemana });
+    }
+
+    const MESES_ES = ["", "enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+
+    async function runEfemeridesTool(input: Record<string, unknown>): Promise<string> {
+        const tipo = String(input?.tipo ?? "").trim().toLowerCase();
+        const mesRaw = Number(input?.mes);
+        const mes = Number.isFinite(mesRaw) && mesRaw >= 1 && mesRaw <= 12 ? mesRaw : (new Date().getUTCMonth() + 1);
+
+        if (!["cumpleanos_cliente", "cumpleanos_staff", "aniversario", "todos"].includes(tipo)) {
+            return JSON.stringify({ error: "tipo_invalido" });
+        }
+
+        const resultado: Record<string, Array<{ nombre: string; fecha: string }>> = {};
+
+        if (tipo === "cumpleanos_cliente" || tipo === "todos") {
+            const { data } = await ADMIN
+                .from("client_profiles")
+                .select("full_name, birth_date")
+                .not("birth_date", "is", null);
+            resultado.cumpleanos_cliente = (data ?? [])
+                .filter((r) => r.birth_date && new Date(`${r.birth_date}T00:00:00Z`).getUTCMonth() + 1 === mes)
+                .map((r) => ({ nombre: String(r.full_name ?? "(sin nombre)"), fecha: String(r.birth_date) }));
+        }
+        if (tipo === "cumpleanos_staff" || tipo === "todos") {
+            const { data } = await ADMIN
+                .from("dj_profiles")
+                .select("stage_name, dj_name, full_name, birth_date")
+                .not("birth_date", "is", null);
+            resultado.cumpleanos_staff = (data ?? [])
+                .filter((r) => r.birth_date && new Date(`${r.birth_date}T00:00:00Z`).getUTCMonth() + 1 === mes)
+                .map((r) => ({ nombre: String(r.stage_name || r.dj_name || r.full_name || "(sin nombre)"), fecha: String(r.birth_date) }));
+        }
+        if (tipo === "aniversario" || tipo === "todos") {
+            const { data } = await ADMIN
+                .from("client_profiles")
+                .select("full_name, wedding_anniversary")
+                .not("wedding_anniversary", "is", null);
+            resultado.aniversario = (data ?? [])
+                .filter((r) => r.wedding_anniversary && new Date(`${r.wedding_anniversary}T00:00:00Z`).getUTCMonth() + 1 === mes)
+                .map((r) => ({ nombre: String(r.full_name ?? "(sin nombre)"), fecha: String(r.wedding_anniversary) }));
+        }
+
+        return JSON.stringify({ ok: true, mes: MESES_ES[mes], resultado });
+    }
+
+    const CATEGORIAS_INCIDENTE = new Set(["tecnico", "logistica", "cliente", "venue", "agenda_cancelacion", "general"]);
+    const GRAVEDADES_INCIDENTE = new Set(["baja", "media", "alta", "critica"]);
+
+    async function runIncidentWriteTool(input: Record<string, unknown>): Promise<string> {
+        const categoria = String(input?.categoria ?? "").trim().toLowerCase();
+        const titulo = String(input?.titulo ?? "").trim();
+        const descripcion = String(input?.descripcion ?? "").trim();
+        const venue = String(input?.venue ?? "").trim();
+        const dj = String(input?.dj ?? "").trim();
+        const gravedad = String(input?.gravedad ?? "media").trim().toLowerCase();
+        const solucion = String(input?.solucion ?? "").trim();
+        const fechaIncidente = parseEventDate(input?.fecha_incidente);
+        const target = titulo || "invalid";
+
+        if (!CATEGORIAS_INCIDENTE.has(categoria)) {
+            return JSON.stringify({ error: "categoria_invalida" });
+        }
+        if (!GRAVEDADES_INCIDENTE.has(gravedad)) {
+            return JSON.stringify({ error: "gravedad_invalida" });
+        }
+        if (titulo.length < 1 || titulo.length > 200) {
+            return JSON.stringify({ error: "titulo_invalido" });
+        }
+        if (descripcion.length < 1 || descripcion.length > 4000) {
+            return JSON.stringify({ error: "descripcion_invalida" });
+        }
+        if (input?.fecha_incidente != null && !fechaIncidente) {
+            return JSON.stringify({ error: "fecha_invalida", detalle: "Formato esperado YYYY-MM-DD." });
+        }
+
+        const { data: incidentId, error } = await ADMIN.rpc("company_incident_log_registrar", {
+            p_categoria: categoria,
+            p_titulo: titulo,
+            p_descripcion: descripcion,
+            p_venue: venue || null,
+            p_dj: dj || null,
+            p_gravedad: gravedad,
+            p_solucion: solucion || null,
+            p_reportado_por: gate.userId,
+            p_fecha_incidente: fechaIncidente,
+        });
+        if (error || !incidentId) {
+            const detail = error?.message ?? "rpc";
+            await recordActionLog("registrar_incidente_bitacora", target, `error:${detail}`.slice(0, 2000));
+            return JSON.stringify({ error: "incidente_no_registrado" });
+        }
+        await recordActionLog("registrar_incidente_bitacora", target, `ok:${incidentId}`);
+        return JSON.stringify({ ok: true, incident_id: incidentId, categoria, titulo });
+    }
+
+    async function runIncidentReadTool(input: Record<string, unknown>): Promise<string> {
+        const anio = Number(input?.anio);
+        const venue = String(input?.venue ?? "").trim();
+        const categoria = String(input?.categoria ?? "").trim().toLowerCase();
+        const djNombre = String(input?.dj_nombre ?? "").trim();
+
+        let q = ADMIN
+            .from("company_incident_log")
+            .select("fecha_incidente,categoria,venue_nombre,dj_afectado,titulo,descripcion_detallada,solucion_aplicada,nivel_gravedad")
+            .order("fecha_incidente", { ascending: false })
+            .limit(40);
+        if (Number.isFinite(anio) && anio > 1999 && anio < 2100) {
+            q = q.gte("fecha_incidente", `${anio}-01-01`).lte("fecha_incidente", `${anio}-12-31`);
+        }
+        if (venue) q = q.ilike("venue_nombre", `%${venue}%`);
+        if (CATEGORIAS_INCIDENTE.has(categoria)) q = q.eq("categoria", categoria);
+        if (djNombre) q = q.ilike("dj_afectado", `%${djNombre}%`);
+
+        const { data, error } = await q;
+        if (error) return JSON.stringify({ error: "bitacora_no_disponible" });
+        return JSON.stringify({ ok: true, incidentes: Array.isArray(data) ? data : [] });
+    }
+
     async function loadCatalogOverlay(): Promise<Record<string, number>> {
         const { data, error } = await ADMIN
             .from("platform_settings")
@@ -1244,21 +1959,167 @@ serve(async (req: Request) => {
 
         const row = Array.isArray(data) ? data[0] : data;
         const oculto = tel.slice(0, -4).replace(/\d/g, "•") + tel.slice(-4);
-        smsPendiente = {
-            id: row?.id ?? null,
-            destinatario: String(cli.full_name ?? ""),
-            telefono: oculto,
-            mensaje,
-        };
+        const smsId = String(row?.id ?? "");
+
+        /* CONFIRMACION CONVERSACIONAL (2026-09-01, orden directa del PO,
+           reemplaza el envio 100% silencioso de ayer). Esta herramienta SOLO
+           encola -- el despacho real vive en confirmar_envio_mensaje, que
+           solo se llama cuando el usuario responde "si" a la pregunta que el
+           prompt te obliga a hacer. El destinatario sigue viniendo SOLO de
+           la ficha (buscar_cliente + client_profiles), eso no cambio. */
+        smsPendiente = { id: smsId || null, destinatario: String(cli.full_name ?? ""), telefono: oculto, mensaje };
+        await recordActionLog("enviar_sms", clienteId, `encolado:${smsId}`);
         return JSON.stringify({
             ok: true,
-            estado: "pendiente_de_aprobacion",
-            id: row?.id ?? null,
+            estado: "pendiente_de_confirmacion",
+            id: smsId || null,
+            tipo: "sms",
             destinatario: cli.full_name,
             telefono: oculto,
             mensaje,
-            aviso: "El SMS quedo LISTO PARA APROBAR. No se ha enviado: lo despacha el Capitan.",
+            aviso: "Encolado, NO enviado todavia. Pregunta al usuario si lo envias antes de llamar confirmar_envio_mensaje.",
         });
+    }
+
+    async function runEmailQueueTool(input: Record<string, unknown>): Promise<string> {
+        const clienteId = String(input?.cliente_id ?? "").trim();
+        const asunto = String(input?.asunto ?? "").trim();
+        const cuerpo = String(input?.cuerpo ?? "").trim();
+
+        if (!UUID_RE.test(clienteId)) {
+            return JSON.stringify({
+                error: "cliente_id_invalido",
+                detalle: "Necesito el user_id del cliente. Buscalo primero con buscar_cliente; " +
+                         "no acepto correos dictados o inventados.",
+            });
+        }
+        if (asunto.length < 1 || asunto.length > 200) return JSON.stringify({ error: "asunto_invalido" });
+        if (cuerpo.length < 2 || cuerpo.length > 4000) return JSON.stringify({ error: "cuerpo_invalido" });
+
+        /* El correo sale de la BASE, nunca de lo que se dijo en la conversacion. */
+        const { data: cli, error: e1 } = await ADMIN
+            .from("client_profiles")
+            .select("user_id, full_name, email")
+            .eq("user_id", clienteId)
+            .maybeSingle();
+        if (e1) return JSON.stringify({ error: `client_profiles: ${e1.message}` });
+        if (!cli) return JSON.stringify({ error: "cliente_no_encontrado" });
+
+        const correo = String(cli.email ?? "").trim();
+        if (!correo || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(correo)) {
+            return JSON.stringify({
+                error: "cliente_sin_email_valido",
+                cliente: cli.full_name,
+                detalle: "Ese cliente no tiene un correo utilizable en su ficha.",
+            });
+        }
+
+        const { data, error } = await ADMIN.rpc("elixis_email_encolar", {
+            p_solicitante: gate.userId,
+            p_dest_id: clienteId,
+            p_nombre: String(cli.full_name ?? ""),
+            p_email: correo,
+            p_asunto: asunto,
+            p_cuerpo: cuerpo,
+        });
+        if (error) return JSON.stringify({ error: `cola_email: ${error.message}` });
+
+        const row = Array.isArray(data) ? data[0] : data;
+        const oculto = correo.replace(/^(.{2}).+(@.+)$/, "$1***$2");
+        const emailId = String(row?.id ?? "");
+
+        /* CONFIRMACION CONVERSACIONAL, mismo patron que enviar_sms
+           (2026-09-01, orden directa del PO, reemplaza el envio 100%
+           silencioso de hoy mismo). Esta herramienta SOLO encola -- el
+           despacho real vive en confirmar_envio_mensaje. */
+        await recordActionLog("enviar_email", clienteId, `encolado:${emailId}`);
+        return JSON.stringify({
+            ok: true,
+            estado: "pendiente_de_confirmacion",
+            id: emailId || null,
+            tipo: "email",
+            destinatario: cli.full_name,
+            email: oculto,
+            asunto,
+            aviso: "Encolado, NO enviado todavia. Pregunta al usuario si lo envias antes de llamar confirmar_envio_mensaje.",
+        });
+    }
+
+    async function runConfirmSendTool(input: Record<string, unknown>): Promise<string> {
+        const id = String(input?.id ?? "").trim();
+        const tipo = String(input?.tipo ?? "").trim().toLowerCase();
+        const accion = String(input?.accion ?? "").trim().toLowerCase();
+
+        if (!UUID_RE.test(id)) return JSON.stringify({ error: "id_invalido" });
+        if (tipo !== "sms" && tipo !== "email") return JSON.stringify({ error: "tipo_invalido" });
+        if (accion !== "enviar" && accion !== "cancelar") return JSON.stringify({ error: "accion_invalida" });
+
+        const base = (Deno.env.get("SUPABASE_URL") ?? "").replace(/\/$/, "");
+        if (!base) return JSON.stringify({ error: "sin_servidor" });
+
+        const fnName = tipo === "sms" ? "elixis-sms-dispatch" : "elixis-email-dispatch";
+        const qs = accion === "cancelar" ? `id=${encodeURIComponent(id)}&accion=cancelar` : `id=${encodeURIComponent(id)}`;
+        let despacho: Record<string, unknown> | null = null;
+        try {
+            const dRes = await fetch(`${base}/functions/v1/${fnName}?${qs}`, {
+                method: "POST",
+                headers: { Authorization: authHeader, "Content-Type": "application/json" },
+            });
+            despacho = await dRes.json().catch(() => null);
+        } catch (_e) {
+            despacho = null;
+        }
+
+        if (!despacho) {
+            await recordActionLog("confirmar_envio_mensaje", id, `error:despacho_no_intentado:${tipo}:${accion}`);
+            return JSON.stringify({ ok: false, error: "no_se_pudo_despachar", detalle: "Fallo de red al confirmar." });
+        }
+
+        const ok = despacho?.ok === true;
+        await recordActionLog(
+            "confirmar_envio_mensaje",
+            id,
+            `${ok ? "ok" : "error"}:${tipo}:${accion}:${String(despacho?.estado ?? despacho?.error ?? "")}`.slice(0, 2000),
+        );
+        return JSON.stringify({ ok, tipo, accion, despacho });
+    }
+
+    const PRICE_CHANGE_ROLES = new Set(["owner", "admin"]);
+
+    async function runCatalogPriceTool(input: Record<string, unknown>): Promise<string> {
+        const sku = String(input?.sku ?? "").trim();
+        const nuevoPrecio = Number(input?.nuevo_precio_usd);
+
+        if (!PRICE_CHANGE_ROLES.has(gate.role)) {
+            await recordActionLog("cambiar_precio_catalogo", sku || "invalid", `error:rol_no_autorizado:${gate.role}`);
+            return JSON.stringify({ error: "rol_no_autorizado", detalle: "Solo owner/admin puede cambiar precios del catalogo." });
+        }
+        if (!sku || sku.length > 64) {
+            await recordActionLog("cambiar_precio_catalogo", sku || "invalid", "error:sku_invalido");
+            return JSON.stringify({ error: "sku_invalido" });
+        }
+        if (!CATALOG_FALLBACK.some((item) => item.sku === sku)) {
+            await recordActionLog("cambiar_precio_catalogo", sku, "error:sku_desconocido");
+            return JSON.stringify({ error: "sku_desconocido", detalle: "Ese sku no existe en el catalogo oficial." });
+        }
+        if (!Number.isFinite(nuevoPrecio) || nuevoPrecio < 0 || nuevoPrecio > 100000) {
+            await recordActionLog("cambiar_precio_catalogo", sku, "error:precio_invalido");
+            return JSON.stringify({ error: "precio_invalido" });
+        }
+
+        const { data, error } = await ADMIN.rpc("platform_catalog_price_set", {
+            p_sku: sku,
+            p_unit_usd: nuevoPrecio,
+            p_staff_user_id: gate.userId,
+            p_agent_id: "elixis",
+        });
+        if (error || !data) {
+            const detail = error?.message ?? "rpc";
+            await recordActionLog("cambiar_precio_catalogo", sku, `error:${detail}`.slice(0, 2000));
+            return JSON.stringify({ error: "precio_no_actualizado" });
+        }
+        await recordActionLog("cambiar_precio_catalogo", sku, `ok:${nuevoPrecio}`);
+        return JSON.stringify({ ok: true, sku, unit_usd: nuevoPrecio });
     }
 
     function parseEventDate(value: unknown): string | null {
@@ -1400,9 +2261,16 @@ serve(async (req: Request) => {
                 body: JSON.stringify({
                     model: MODEL,
                     max_tokens: govMaxTokens, // Governor: FULL=MAX_TOKENS · SAVER=640 · ESSENTIAL=384 (founder siempre FULL)
-                    temperature: 0.7,
+                    // SIN temperature (2026-08-31, bug real encontrado en vivo -- primera
+                    // llamada real con Sonnet 5 devolvia 502 "AI provider error" incluso
+                    // para un mensaje trivial sin herramientas). Confirmado contra la
+                    // referencia oficial actual de la API de Claude: en Sonnet 5, Opus 5 y
+                    // Fable 5 el muestreo (temperature/top_p/top_k) esta REMOVIDO -- la API
+                    // lo rechaza con 400. Haiku 4.5 si lo aceptaba, por eso nunca fallo
+                    // hasta este cambio de modelo. Sin este parametro, el muestreo queda en
+                    // el default del modelo -- no hace falta reemplazarlo por nada.
                     system: systemContent,
-                    tools: [FINANCIAL_TOOL, LEAD_NOTE_TOOL, AGENDA_READ_TOOL, AGENDA_WRITE_TOOL, CATALOG_READ_TOOL, QUOTE_WRITE_TOOL, CLIENT_SEARCH_TOOL, SMS_QUEUE_TOOL, MUSIC_TOOL, MEMORY_TOOL],
+                    tools: [FINANCIAL_TOOL, LEAD_NOTE_TOOL, AGENDA_READ_TOOL, AGENDA_WRITE_TOOL, AGENDA_EVENTOS_TOOL, RESIDENCY_TOOL, EFEMERIDES_TOOL, INCIDENT_WRITE_TOOL, INCIDENT_READ_TOOL, CATALOG_READ_TOOL, CATALOG_PRICE_TOOL, QUOTE_WRITE_TOOL, CLIENT_SEARCH_TOOL, SMS_QUEUE_TOOL, EMAIL_QUEUE_TOOL, CONFIRM_SEND_TOOL, MUSIC_TOOL, MEMORY_TOOL],
                     messages: convo,
                 }),
             });
@@ -1483,8 +2351,58 @@ serve(async (req: Request) => {
                         failed = true;
                     }
                     await recordAiKpi(failed ? "tool_error" : "tool_ok");
+                } else if (toolName === "modificar_agenda_evento") {
+                    out = await runAgendaEventoTool((b.input as Record<string, unknown>) ?? {});
+                    let failed = true;
+                    try {
+                        const parsed = JSON.parse(out) as { error?: unknown; ok?: unknown };
+                        failed = parsed == null || parsed.error != null || parsed.ok !== true;
+                    } catch {
+                        failed = true;
+                    }
+                    await recordAiKpi(failed ? "tool_error" : "tool_ok");
+                } else if (toolName === "gestionar_residency_schedule") {
+                    out = await runResidencyTool((b.input as Record<string, unknown>) ?? {});
+                    let failed = true;
+                    try {
+                        const parsed = JSON.parse(out) as { error?: unknown; ok?: unknown };
+                        failed = parsed == null || parsed.error != null || parsed.ok !== true;
+                    } catch {
+                        failed = true;
+                    }
+                    await recordAiKpi(failed ? "tool_error" : "tool_ok");
+                } else if (toolName === "consultar_efemerides") {
+                    out = await runEfemeridesTool((b.input as Record<string, unknown>) ?? {});
+                    let failed = true;
+                    try { failed = (JSON.parse(out) as { ok?: unknown })?.ok !== true; } catch { failed = true; }
+                    await recordAiKpi(failed ? "tool_error" : "tool_ok");
+                } else if (toolName === "registrar_incidente_bitacora") {
+                    out = await runIncidentWriteTool((b.input as Record<string, unknown>) ?? {});
+                    let failed = true;
+                    try {
+                        const parsed = JSON.parse(out) as { error?: unknown; ok?: unknown };
+                        failed = parsed == null || parsed.error != null || parsed.ok !== true;
+                    } catch {
+                        failed = true;
+                    }
+                    await recordAiKpi(failed ? "tool_error" : "tool_ok");
+                } else if (toolName === "consultar_historial_bitacora") {
+                    out = await runIncidentReadTool((b.input as Record<string, unknown>) ?? {});
+                    let failed = true;
+                    try { failed = (JSON.parse(out) as { ok?: unknown })?.ok !== true; } catch { failed = true; }
+                    await recordAiKpi(failed ? "tool_error" : "tool_ok");
                 } else if (toolName === "consultar_catalogo_precios") {
                     out = await runCatalogReadTool((b.input as Record<string, unknown>) ?? {});
+                    let failed = true;
+                    try {
+                        const parsed = JSON.parse(out) as { error?: unknown; ok?: unknown };
+                        failed = parsed == null || parsed.error != null || parsed.ok !== true;
+                    } catch {
+                        failed = true;
+                    }
+                    await recordAiKpi(failed ? "tool_error" : "tool_ok");
+                } else if (toolName === "cambiar_precio_catalogo") {
+                    out = await runCatalogPriceTool((b.input as Record<string, unknown>) ?? {});
                     let failed = true;
                     try {
                         const parsed = JSON.parse(out) as { error?: unknown; ok?: unknown };
@@ -1528,7 +2446,26 @@ serve(async (req: Request) => {
                         failed = true;
                     }
                     await recordAiKpi(failed ? "tool_error" : "tool_ok");
-                    await recordActionLog("enviar_sms", String((b.input as Record<string, unknown>)?.cliente_id ?? ""), failed ? "queue_failed" : "queued");
+                } else if (toolName === "enviar_email") {
+                    out = await runEmailQueueTool((b.input as Record<string, unknown>) ?? {});
+                    let failed = true;
+                    try {
+                        const parsed = JSON.parse(out) as { error?: unknown; ok?: unknown };
+                        failed = parsed == null || parsed.error != null || parsed.ok !== true;
+                    } catch {
+                        failed = true;
+                    }
+                    await recordAiKpi(failed ? "tool_error" : "tool_ok");
+                } else if (toolName === "confirmar_envio_mensaje") {
+                    out = await runConfirmSendTool((b.input as Record<string, unknown>) ?? {});
+                    let failed = true;
+                    try {
+                        const parsed = JSON.parse(out) as { error?: unknown; ok?: unknown };
+                        failed = parsed == null || parsed.error != null || parsed.ok !== true;
+                    } catch {
+                        failed = true;
+                    }
+                    await recordAiKpi(failed ? "tool_error" : "tool_ok");
                 } else if (toolName === "generar_cotizacion_evento") {
                     out = await runQuoteWriteTool((b.input as Record<string, unknown>) ?? {});
                     let failed = true;
@@ -1587,7 +2524,8 @@ serve(async (req: Request) => {
                 body: JSON.stringify({
                     model: MODEL,
                     max_tokens: govMaxTokens,
-                    temperature: 0.7,
+                    // SIN temperature -- ver la nota completa en la primera llamada de
+                    // arriba (Sonnet 5 la rechaza con 400).
                     system: systemContent,
                     /* sin `tools` a proposito: obliga a cerrar en texto */
                     messages: [

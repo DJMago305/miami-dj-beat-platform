@@ -467,6 +467,66 @@ serve(async (req) => {
                     break;
                 }
 
+                // ── Branch: Merch de la tienda (Checkout, create-merch-checkout) ──
+                // merch_orders YA EXISTE (creada en una sesion anterior, junto con
+                // create-merch-checkout) -- 2026-09-01: se encontro con una fila real
+                // de una compra de prueba (2026-08-28) antes de tocar nada. Se usa el
+                // esquema REAL de esa tabla (subtotal_cents/tax_cents/total_cents/
+                // status con su propio DEFAULT), no uno inventado de cero.
+                if (session.metadata?.product === "miami_dj_beat_merch") {
+                    // create-merch-checkout parte el carrito en trozos de <=450
+                    // caracteres (metadata[merch_items_N]) porque Stripe limita cada
+                    // valor de metadata a 500 caracteres -- se reensamblan aqui.
+                    const chunkCount = Number(session.metadata?.merch_items_chunks ?? 0);
+                    let itemsJson = "";
+                    for (let i = 0; i < chunkCount; i++) {
+                        itemsJson += String(session.metadata?.[`merch_items_${i}`] ?? "");
+                    }
+                    let items: unknown = [];
+                    try {
+                        items = itemsJson ? JSON.parse(itemsJson) : [];
+                    } catch (parseErr) {
+                        console.error("[Webhook] merch_orders: items de metadata invalidos:", parseErr);
+                    }
+
+                    // shipping_details se movio a collected_information.shipping_details
+                    // en la API "basil" de Stripe (2025-03-31) -- se revisan los dos
+                    // nombres de campo porque esta funcion no fija Stripe-Version y no
+                    // hay forma de saber cual usa la cuenta sin probarlo en vivo.
+                    const shipping =
+                        (session as { collected_information?: { shipping_details?: unknown } }).collected_information?.shipping_details
+                        ?? (session as { shipping_details?: unknown }).shipping_details
+                        ?? null;
+
+                    const email =
+                        (session.customer_details?.email as string | undefined) ||
+                        (session.customer_email as string | undefined) ||
+                        null;
+
+                    const { error: merchErr } = await supabase.from("merch_orders").upsert({
+                        stripe_session_id: session.id,
+                        stripe_payment_intent_id: (session.payment_intent as string) ?? null,
+                        customer_email: email,
+                        customer_name: (session.metadata?.customer_name as string | undefined) || session.customer_details?.name || null,
+                        customer_phone: session.customer_details?.phone || null,
+                        shipping_address: shipping,
+                        items,
+                        subtotal_cents: Number(session.metadata?.subtotal_cents ?? 0),
+                        tax_cents: Number(session.metadata?.tax_cents ?? 0),
+                        total_cents: session.amount_total ?? 0,
+                        currency: session.currency ?? "usd",
+                        // status: SIN fijar -- se deja el DEFAULT real de la tabla
+                        // ('paid_pending_fulfillment'), igual que la fila existente.
+                    }, { onConflict: "stripe_session_id" });
+
+                    if (merchErr) {
+                        console.error("[Webhook] merch_orders:", merchErr.message);
+                    } else {
+                        console.log(`✅ Merch order: ${session.id} | ${email} | $${((session.amount_total ?? 0) / 100).toFixed(2)}`);
+                    }
+                    break;
+                }
+
                 // ── Branch B: MDJ Pro (artista) — metadata product_line; default legacy = artist
                 const subId = session.subscription;
                 const referrerId = (session.metadata?.referrer_id || "") as string;

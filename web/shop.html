@@ -50,7 +50,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=optional"
         rel="stylesheet" />
     <link rel="stylesheet" href="./styles.css?v=20260823-hero-card-altura" />
-  <link rel="stylesheet" href="./header-unified.css?v=20260824-marca-fab-important" />
+  <link rel="stylesheet" href="./header-unified.css?v=20260831-riel-gate-fix" />
     <link rel="stylesheet" href="./profile.css?v=20260820-ancho-total" />
 </head>
 
@@ -2540,6 +2540,7 @@
             renderShop();
             updateAmazonDelivery();
             renderSideCart();
+            manejarRetornoStripe();
         });
 
         // ── 5. MOTOR LATERAL (SIDE DRAWER CART) E-COMMERCE LOGIC ──
@@ -2612,8 +2613,8 @@
                     const imgStr = catalogRef ? catalogRef.image : "./assets/branding/logo-transparent.png";
 
                     let printName = item.name;
-                    if (catalogRef) {
-                        let base = lang === 'en' ? catalogRef.nameEn : catalogRef.nameEs;
+                    if (catalogRef && catalogRef.title) {
+                        let base = (lang === 'en' ? catalogRef.title.en : catalogRef.title.es) || item.name;
                         let match = item.name.match(/\((.*)\)/);
                         if (match) {
                             let vars = match[1].replace(/Color/g, dict.shop_color).replace(/Talla/g, dict.shop_size);
@@ -2659,6 +2660,39 @@
 
                 subtotalEl.innerHTML = htmlMath;
             }
+        }
+
+        /* Retorno de Stripe Checkout (success_url/cancel_url armadas en
+           launchCommerceAction, ver ?merch_payment=). Se llama una sola vez
+           al cargar la pagina -- si el customer refresca despues, el
+           history.replaceState ya quito el parametro de la URL, asi que no
+           se re-dispara ni vuelve a vaciar un carrito nuevo. */
+        function manejarRetornoStripe() {
+            const params = new URLSearchParams(window.location.search);
+            const estado = params.get('merch_payment');
+            if (!estado) return;
+
+            if (estado === 'success') {
+                sessionStorage.removeItem('mdjpro_checkout_cart');
+                sessionStorage.removeItem('mdjpro_active_promo');
+                activePromoDiscount = 0;
+                renderSideCart();
+
+                document.getElementById('txLoading').style.display = 'none';
+                document.getElementById('txSuccess').style.display = 'none';
+                document.getElementById('txError').style.display = 'none';
+                document.getElementById('txMerchSuccess').style.display = 'block';
+                document.getElementById('txResultOverlay').classList.add('active');
+            } else if (estado === 'cancelled') {
+                const banner = document.getElementById('merchCancelledBanner');
+                banner.style.display = 'block';
+                setTimeout(() => { banner.style.display = 'none'; }, 6000);
+            }
+
+            params.delete('merch_payment');
+            const nuevaQuery = params.toString();
+            const nuevaUrl = window.location.pathname + (nuevaQuery ? '?' + nuevaQuery : '') + window.location.hash;
+            window.history.replaceState({}, document.title, nuevaUrl);
         }
 
         function removeCartItem(index) {
@@ -3239,7 +3273,31 @@
                     <button class="tx-btn tx-btn-close" onclick="closeTodoElSistema()"
                         data-i18n="tx_btn_close_error">Cerrar Sistema</button>
                 </div>
+
+                <!-- Merch Success State (retorno real de Stripe Checkout, ver
+                     manejarRetornoStripe() -- NO reutiliza #txSuccess porque ese
+                     panel promete un recibo por email/PDF que ese pipeline
+                     (armarEstructuraInvoice) nunca corre para este flujo; Stripe
+                     ya manda su propio recibo, no hay que inventar uno. -->
+                <div id="txMerchSuccess" style="display:none;">
+                    <div class="tx-checkmark">✓</div>
+                    <h2 data-i18n="merch_payment_success_title"
+                        style="font-size:26px; font-weight:900; margin:0 0 10px; color:#fff;">¡Pago recibido!</h2>
+                    <p data-i18n="merch_payment_success_desc" style="color:#aaa; font-size:14px; margin:0 0 30px;">
+                        Gracias por tu compra. Stripe te enviará el recibo a tu correo.</p>
+                    <button class="tx-btn tx-btn-close" onclick="closeTodoElSistema()"
+                        data-i18n="tx_btn_close">X Finalizar y Cerrar</button>
+                </div>
             </div>
+        </div>
+
+        <!-- Banner discreto de pago cancelado (retorno de Stripe con
+             merch_payment=cancelled) -- a proposito NO es el overlay de
+             pantalla completa de arriba: el carrito sigue intacto, no es un
+             error real, solo informa. Ver manejarRetornoStripe(). -->
+        <div id="merchCancelledBanner"
+            style="display:none; position:fixed; top:18px; left:50%; transform:translateX(-50%); z-index:5600; background:#181818; border:1px solid #333; border-radius:10px; padding:12px 18px; color:#fff; font-size:13px; box-shadow:0 12px 30px rgba(0,0,0,.5); max-width:90vw;">
+            <span data-i18n="merch_payment_cancelled">Pago cancelado — tu carrito sigue intacto.</span>
         </div>
 
         <!-- ── UNIVERSAL INVOICE MODAL (HAUTE COUTURE) ── -->
@@ -3340,7 +3398,7 @@
 
     <script defer src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
   <script defer src="./mdj-identity.js?v=20260617-buyer-artist-fix-1"></script>
-      <script defer src="./mdjb-shared-header.js?v=20260825-nav-9-slots"></script>
+      <script defer src="./mdjb-shared-header.js?v=20260831-seed-race-fix"></script>
   <script defer src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
   <script defer src="./mdj-mainnav-infinite.js?v=20260818-nav-canonico"></script>
     <script defer src="./mdj-owner-tabs-marquee.js?v=20260818-nav-canonico"></script>

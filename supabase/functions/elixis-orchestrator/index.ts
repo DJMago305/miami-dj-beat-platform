@@ -42,9 +42,20 @@ const ALLOWED_ORIGINS = [
     "http://127.0.0.1:8000",
 ];
 
+// El laboratorio/panel local corre en el primer puerto libre, que cambia
+// segun que mas este corriendo (8124, 8210, 8240... visto en la misma
+// maquina en una sola sesion). Una lista fija de puertos es fragil: el dia
+// que cambie, el fallo es un CORS opaco ("No pude conectar") sin pista de
+// por que. Mismo patron ya probado en elixis-realtime-session: cualquier
+// http://localhost:<puerto> u http://127.0.0.1:<puerto> se acepta -- una
+// pagina atacante no puede servirse desde el localhost de la victima, asi
+// que esto no amplia la superficie real.
+const LOCALHOST_ORIGIN = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
+
 function buildCorsHeaders(req: Request): Record<string, string> {
     const origin = req.headers.get("origin") ?? "";
-    const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+    const isAllowed = ALLOWED_ORIGINS.includes(origin) || LOCALHOST_ORIGIN.test(origin);
+    const allowed = isAllowed ? origin : ALLOWED_ORIGINS[0];
     return {
         "Access-Control-Allow-Origin": allowed,
         "Access-Control-Allow-Headers":

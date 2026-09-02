@@ -32,6 +32,17 @@ web/assets/**/*.mov
 web/assets/**/*.webm
 web/assets/**/*.m4v
 web/assets/**/*.mkv
+
+# Material de la sesion de green-screen de DJMago (renombrada 2026-08-29,
+# antes decia "Elixis IA" por error -- el contenido real es DJMago, no
+# ELIXIS). Mezcla fotos/videos de referencia descartados CON el clip real
+# en uso (djmago-idle-boomerang.mp4, referenciado en staff.html y
+# mdj-commander.html) -- por eso sigue ignorada como carpeta (los videos
+# van a Storage, no a git, regla ya existente arriba), pero el archivo en
+# uso real no es solo "material crudo". Los 5 sprites .webp de boca que SI
+# se versionan en git viven fuera de esta carpeta, en
+# web/assets/elixis-boca-*.webp.
+web/assets/DJMago IA/
 .aider*
 .env*.local
 
@@ -50,10 +61,20 @@ MiamiDJBeat-MigracionV2/
 # Worktrees de agentes: deben vivir en .worktrees/ (raiz, fuera de git) o en
 # el scratchpad temporal del agente — nunca en el escritorio. Ver
 # auditoria de worktrees 2026-08-25 (11 carpetas huerfanas encontradas ahi).
+# La regla de abajo (.claude/worktrees/) no cubria la ruta real donde de
+# hecho viven (.worktrees/, raiz) -- brecha real encontrada 2026-08-29 al
+# ir a comitear (235MB sin ignorar). Corregida.
+.worktrees/
 .claude/worktrees/
 .claude/*.bak
+.claude/settings.local.json
 
 # Cualquier variante de archivo de entorno con secretos, sin importar el
 # sufijo — .env*.local (arriba) no cubria .env ni .env.production sueltos.
 *.env
 *.env.*
+
+# Fixtures de prueba de Serato para SmartCrate IA (.crate, "database V2"):
+# binarios/bases de datos de la libreria real de un DJ, no codigo -- no
+# deben filtrarse al historial de Git. Ver auditoria 2026-08-31.
+test-serato/

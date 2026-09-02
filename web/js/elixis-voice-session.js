@@ -19,6 +19,19 @@
 
   var ESTADOS = ['idle','listening','transcribing','understanding','confirmation','executing','speaking'];
 
+  /* Disparador de "modo dialogo" para DjMago (2026-08-30, directiva del PO
+     tras el reporte real "hablo solo, las canciones que identifico no son
+     las que han sonado"): con create_response:false para identidad djmago
+     (ver elixis-realtime-session/index.ts), OpenAI transcribe cada turno
+     pero NUNCA genera una respuesta hablada por su cuenta -- esto evita el
+     bug de raiz (la API generaba y reproducia ALGO en cada turno detectado,
+     sin importar lo que dijera el prompt sobre quedarse callado). Este
+     patron es el UNICO lugar donde se decide, mirando la transcripcion REAL
+     ya recibida, si de verdad preguntaron por la cancion -- si matchea, el
+     cliente manda response.create a mano (mismo mecanismo que ya usa
+     herramienta() tras una tool-call) para que DjMago SI responda esa vez. */
+  var PREGUNTA_CANCION_RE = /qu[ée]\s+(canci[oó]n|tema|track|rola|disco)|qu[ée]\s+(es|era)\s+(esta|esa|eso)|qu[ée]\s+(est[aá]|esta)\s+(sonando|tocando|pasando)|c[oó]mo se llama (esta|esa)|what('?s| is)\s+(this|that)?\s*(song|track|playing)/i;
+
   function crear(handlers){
     handlers = handlers || {};
     function emit(nombre, arg){
@@ -33,7 +46,89 @@
     var pc=null, dc=null, mic=null, spk=null;
     var ac=null, sink=null, anMic=null, anRem=null, buf=null, rafPulso=0;
     var sesion=null, hb=0, t0=0;
-    var hablando=false, vivo=false, pulso=0;
+    /* Default 'general', no null (2026-08-31, orden del PO: el modo de
+       enfoque real es criterio del usuario -- pero SIN elegir ninguno
+       todavia, el comportamiento debe ser el generico, nunca el candado
+       estricto de Cazador Musical). Ver mismo criterio en identidadActual
+       un poco mas abajo. */
+    var hablando=false, vivo=false, pulso=0, modoActual='general', _textoElixis='';
+    var conectando=false, micPrecalentado=null;
+    /* Continuidad de texto puro entre turnos (2026-08-31, autorizado por el
+       PO -- sistema de hilos estilo ChatGPT). Mismo formato exacto que
+       mdj-commander.html usa para _elixisHistory ({role:'user'|'assistant',
+       content}), pasado como "history" al mismo elixis-orchestrator -- este
+       ya reenvia el body COMPLETO a elixis-chat (ver el propio orchestrator),
+       que ya sabe leer "history" desde antes; enviarTextoSolo() solo no lo
+       estaba mandando todavia. staff.html llena esto con cargarHistorialTexto()
+       al cargar un hilo guardado o al cambiar de Modo de Enfoque -- este
+       modulo no sabe nada de hilos/Supabase, solo mantiene el buffer. */
+    var historialTexto=[];
+    var watchdogPensando=null; // ver limpiarWatchdogPensando()/evento()
+    /* BUG REAL 2026-08-31 (reporte del PO con captura: monologo infinito --
+       ELIXIS respondiendose a si misma, "Uff, boda!"..."Si, para romperla de
+       verdad..."). El mute de anoche (arriba, response.output_audio_
+       transcript.delta) corta el eco MIENTRAS habla, pero reactivaba el mic
+       de inmediato en response.done -- ese evento es del CANAL DE DATOS, no
+       garantiza que las bocinas ya terminaron de reproducir la cola de audio
+       real (buffer de audio propio del hardware/WebRTC, un camino separado
+       del canal de control). El mic se abria mientras el ultimo pedazo de la
+       voz de ELIXIS seguia sonando, se volvia a captar, y arrancaba un turno
+       nuevo. Dos variables para la defensa de abajo: */
+    var micReactivarTimeout=null; // temporizador pendiente de reactivar el mic (response.done)
+    var historialAsistente=[]; // últimas frases de ELIXIS/DjMago con su hora, para el filtro anti-eco
+    /* Default 'djmago', no null (2026-08-30, correccion en vivo -- reporte
+       real: hablar sin haber tocado antes un boton de Modo dejaba
+       identidadActual en null, el servidor caia a DEFAULT_IDENTIDAD='elixis'
+       y perdia el VAD estricto de DJMAGO_VAD_THRESHOLD). No hay todavia un
+       selector real de avatar (ver ewOrbePersona en staff.html, deshabilitado
+       a proposito) -- hoy DjMago es la unica identidad real de este panel. */
+    var identidadActual='djmago', musicHunterNodo=null;
+
+    /* Pre-calentado de microfono + constraints RAW (2026-08-30, portado de
+       mdj-commander.html/precalentarMic() -- mismo bug real reportado hoy
+       en staff.html: "el microfono pide permiso y se cae la musica en
+       Serato al ejecutar". Este modulo se extraio ANTES de que esa funcion
+       existiera ahi (ver cabecera del archivo), asi que nunca la heredo.
+       Mismas 3 piezas probadas en vivo, sin inventar nada nuevo:
+       (1) constraints con TODO el procesamiento de voz apagado -- eso es
+       lo que dispara la reconfiguracion de CoreAudio que corta a Serato;
+       (2) evitar por nombre las interfaces de DJ/USB (comparten reloj de
+       audio con Serato, causa real de glitches, no solo el primer golpe);
+       (3) pedir el permiso UNA vez y reusar el mismo stream entre
+       start()/stop() -- solo el primerisimo click en la sesion sigue
+       tocando hardware nuevo (limite real de macOS, no arreglable en JS),
+       pero ya no cada activacion. */
+    var CONSTRAINTS_MIC_RAW = { audio:{ echoCancellation:false, noiseSuppression:false, autoGainControl:false, channelCount:1 } };
+    function elegirMicrofono(dispositivos){
+      var EVITAR = /pioneer|serato|rane|ddj|flx|denon|xdj|traktor|djm|numark|reloop|hercules|usb audio|aggregate device/i;
+      var PREFERIR = /built-?in|integrad|macbook|airpods/i;
+      var entradas = dispositivos.filter(function(d){ return d.kind==='audioinput' && d.label; });
+      if(!entradas.length) return null;
+      var preferido = entradas.filter(function(d){ return PREFERIR.test(d.label); })[0];
+      if(preferido) return preferido.deviceId;
+      var seguro = entradas.filter(function(d){ return !EVITAR.test(d.label); })[0];
+      return seguro ? seguro.deviceId : null;
+    }
+    async function precalentarMic(){
+      if(micPrecalentado && micPrecalentado.getAudioTracks().some(function(t){ return t.readyState==='live'; })){
+        return micPrecalentado;
+      }
+      try{
+        var constraints = CONSTRAINTS_MIC_RAW;
+        try{
+          var deviceId = elegirMicrofono(await navigator.mediaDevices.enumerateDevices());
+          if(deviceId){
+            constraints = { audio: Object.assign({}, CONSTRAINTS_MIC_RAW.audio, { deviceId: { exact: deviceId } }) };
+          }
+        }catch(e){ /* enumerateDevices puede fallar sin permiso -- seguir con el default */ }
+        var s = await navigator.mediaDevices.getUserMedia(constraints);
+        s.getAudioTracks().forEach(function(t){ t.enabled=false; });
+        micPrecalentado = s;
+        return s;
+      }catch(e){
+        return null;
+      }
+    }
 
     function fnUrl(accion){
       if(!window.mdbSupabaseFunctionUrl) return null;
@@ -42,6 +137,18 @@
       return accion ? u + (u.indexOf('?')===-1?'?':'&') + 'action=' + accion : u;
     }
     function usados(){ return t0 ? Math.max(0, Math.round((Date.now()-t0)/1000)) : 0; }
+
+    /* Float32Array -> base64 (2026-08-30, Music Hunter): en trozos, no de un
+       tiro -- String.fromCharCode.apply(null, arregloEnorme) puede reventar
+       la pila con los ~1MB reales que salen de 6s de audio a 44.1kHz. */
+    function pcmABase64(float32Array){
+      var bytes = new Uint8Array(float32Array.buffer, float32Array.byteOffset, float32Array.byteLength);
+      var CHUNK = 0x8000, binario = '';
+      for(var i=0; i<bytes.length; i+=CHUNK){
+        binario += String.fromCharCode.apply(null, bytes.subarray(i, i+CHUNK));
+      }
+      return btoa(binario);
+    }
 
     /* Mismo sumidero mudo que las dos copias originales: sin el, algunos
        navegadores no alimentan un analizador que no llega a los parlantes. */
@@ -101,6 +208,21 @@
       if(item.name==='consultar_elixis')      out = await accion('consultar',     { pregunta:String(args.pregunta||'') });
       else if(item.name==='recordar')         out = await accion('memory_write',  { clave:String(args.clave||''), hecho:String(args.hecho||'') });
       else if(item.name==='olvidar')          out = await accion('memory_forget', { clave:String(args.clave||'') });
+      else if(item.name==='identificar_track'){
+        /* Modo A ("bajo demanda") de Music Hunter -- Modo B (ciclo continuo
+           de 15-20s / setlist logger) es el item 4, todavia sin autorizar.
+           Usa la misma instantanea que expone obtenerMuestraMusicHunter(),
+           leyendo musicHunterNodo directo (misma closure, sin pasar por la
+           API publica que es para quien llama desde afuera). */
+        var muestra = (musicHunterNodo && window.MusicHunterRingBuffer)
+          ? await window.MusicHunterRingBuffer.obtenerInstantanea(musicHunterNodo) : null;
+        out = muestra
+          ? await accion('identificar_track', { pcm_base64: pcmABase64(muestra.pcm), sample_rate: muestra.sampleRate })
+          : { ok:false, motivo:'sin_audio_capturado' };
+      }
+      else if(item.name==='buscar_cliente')   out = await accion('buscar_cliente', { query:String(args.query||'') });
+      else if(item.name==='enviar_sms')       out = await accion('enviar_sms', { cliente_id:String(args.cliente_id||''), mensaje:String(args.mensaje||'') });
+      else if(item.name==='confirmar_envio_mensaje') out = await accion('confirmar_envio_mensaje', { id:String(args.id||''), accion:String(args.accion||'') });
       else                                    out = { ok:false, motivo:'herramienta_desconocida' };
       emit('onTool', { nombre:item.name, args:args, ok:(out&&out.ok!==false) });
 
@@ -110,55 +232,286 @@
       dc.send(JSON.stringify({ type:'response.create' }));   /* sin esto se queda mudo */
     }
 
+    /* Watchdog de "Pensando" (2026-08-31, reporte real del PO: el avatar se
+       quedaba en PENSANDO para siempre y la unica pista visible era un
+       placeholder de 3.2s en la caja de texto -- facil de no ver si se esta
+       mirando el avatar). Dos capas de defensa, no una sola:
+       1) el 'error' de abajo ahora SI resetea el estado (la causa real mas
+          probable: OpenAI devuelve error tras el response.create manual y
+          nada lo escuchaba).
+       2) este watchdog cubre cualquier otro silencio sin evento -- conexion
+          caida sin disparar onconnectionstatechange, respuesta que nunca
+          llega, etc. 5s es suficiente margen sobre cualquier respuesta real
+          (la primera transcripcion de audio suele llegar en <2s). */
+    function limpiarWatchdogPensando(){
+      if(watchdogPensando){ clearTimeout(watchdogPensando); watchdogPensando=null; }
+    }
+
+    /* Filtro anti-eco (2026-08-31, ver historialAsistente arriba): compara lo
+       que OpenAI transcribio como "dijo el usuario" contra las ultimas frases
+       reales del asistente. No exige coincidencia exacta -- el STT de la cola
+       de audio mal cortada rara vez transcribe identico a la frase original --
+       alcanza con que una contenga a la otra o que compartan la mayoria de
+       las palabras. */
+    function esTextoParecido(a, b){
+      if(!a || !b) return false;
+      /* BUG REAL encontrado en la propia verificacion de este fix (simulacion
+         con node antes de comitear): una transcripcion real trae puntuacion
+         ("boda!", "verdad,") que .split(/\s+/) sola no separa del texto --
+         "boda!" != "boda" como palabras, y el filtro fallaba justo en el caso
+         mas comun. Se quita toda puntuacion antes de comparar, no solo de
+         separar. */
+      var limpiar = function(s){ return s.replace(/[.,!?¡¿"'();:]/g,'').trim(); };
+      var la = limpiar(a), lb = limpiar(b);
+      if(!la || !lb) return false;
+      if(la === lb) return true;
+      if(la.length > 6 && lb.indexOf(la) !== -1) return true;
+      if(lb.length > 6 && la.indexOf(lb) !== -1) return true;
+      var pa = la.split(/\s+/).filter(Boolean), pb = lb.split(/\s+/).filter(Boolean);
+      /* SEGUNDO BUG encontrado en la misma simulacion: con el minimo de
+         palabras en el denominador, una respuesta corta y real del usuario
+         ("si", "no", "dale") comparte UNA palabra con cualquier frase larga
+         del asistente y sale ratio=1.0 -- se descartaria una respuesta real
+         creyendola eco. Las frases de 1-2 palabras solo pueden caer por el
+         chequeo de substring de arriba (que ya exige >6 caracteres); la
+         proporcion de palabras en comun solo aplica de 3 palabras en
+         adelante, donde de verdad distingue eco de respuesta real. */
+      if(!pa.length || !pb.length || Math.min(pa.length, pb.length) < 3) return false;
+      var comunes = pa.filter(function(w){ return pb.indexOf(w) !== -1; }).length;
+      return (comunes / Math.min(pa.length, pb.length)) >= 0.6;
+    }
+    function armarWatchdogPensando(){
+      limpiarWatchdogPensando();
+      watchdogPensando = setTimeout(function(){
+        console.warn('[ElixisVoiceSession] watchdog: 5s en "Pensando" sin respuesta -- reseteando a escuchando.');
+        watchdogPensando=null;
+        emit('onState','listening');
+      }, 5000);
+    }
+
     function evento(m){
+      /* Log exhaustivo (2026-08-31, pedido explicito del PO): TODO evento
+         entrante del canal de datos de OpenAI, no solo los que este switch
+         ya sabe manejar -- la unica forma de ver, la proxima vez que esto
+         pase, cual mensaje llego de verdad (incluye 'response.created',
+         'rate_limits.updated', 'conversation.item.created', etc. que hoy no
+         tienen case propio y antes se descartaban en silencio). */
+      console.log('[ElixisVoiceSession][evento]', m.type, m);
       switch(m.type){
         /* Lo que dice el humano, por escrito — la copia de mdj-commander no
            la tenia, la de elixis-console si (ver su propio comentario "LO
            QUE DICE EL CAPITAN, por escrito. Sin esto el chat enseñaba media
            conversacion"). Se conserva aqui para no perder esa mejora real. */
         case 'conversation.item.input_audio_transcription.completed': {
+          /* CANDADO DURO 2026-08-31 (reporte real del PO, capturas de un
+             bucle de "Hola Gerardo" -- variantes DISTINTAS entre si, no la
+             misma frase repetida): el filtro anti-eco de abajo es por
+             SIMILITUD de texto, y una transcripcion de cola de audio mal
+             cortada puede salir bastante distinta de lo que el asistente
+             dijo (ruido, palabras a medias) -- pasaba la similitud y se
+             tomaba como "el usuario dijo algo nuevo", disparando OTRA
+             respuesta nativa (create_response:true en los modos estandar).
+             hablando=false NO sirve de candado aca -- 'input_audio_buffer.
+             speech_started' ya lo apaga ANTES de que esta transcripcion
+             llegue, exactamente en el caso que mas importa. La señal real y
+             dura es el propio track del microfono: mientras siga
+             deshabilitado (ver 'response.output_audio_transcript.delta' /
+             micReactivarTimeout mas abajo, la MISMA ventana de silencio
+             fisico), nada de lo que "transcriba" el servidor en ese hueco
+             puede ser una persona real -- se descarta sin ni mirar el
+             contenido, no hace falta compararlo con nada. */
+          if(mic){
+            var pistaMic = mic.getAudioTracks()[0];
+            if(pistaMic && !pistaMic.enabled){
+              console.warn('[ElixisVoiceSession] transcripcion ignorada -- microfono deshabilitado (asistente hablando/enfriando).');
+              break;
+            }
+          }
           var dicho = (m.transcript || '').trim();
-          if(dicho) emit('onTranscript', { who:'yo', text:dicho, final:true });
+          if(dicho){
+            /* FILTRO ANTI-ECO 2026-08-31 (mismo reporte de monologo infinito):
+               si lo que OpenAI transcribio como "dijo el usuario" se parece a
+               algo que el propio asistente dijo en los ultimos 3s, es casi
+               seguro cola de audio mal cortada, no una persona real -- se
+               descarta antes de mostrarlo en el hilo o de poder disparar
+               nada (el response.create manual de Cazador, mas abajo). Esto
+               es defensa ADICIONAL, no la correccion principal: el cooldown
+               + input_audio_buffer.clear de response.done (mas abajo) es lo
+               que ataca la causa real (mic reabierto antes de que las
+               bocinas terminen); esto solo tapa lo que se cuele de todos
+               modos. */
+            var dichoNorm = dicho.toLowerCase();
+            var esEco = historialAsistente.some(function(h){
+              return (Date.now() - h.ts) < 3000 && esTextoParecido(dichoNorm, h.texto);
+            });
+            if(esEco){
+              console.warn('[ElixisVoiceSession] transcripcion descartada por eco probable del propio asistente:', dicho);
+              break;
+            }
+            emit('onTranscript', { who:'yo', text:dicho, final:true });
+            emit('onThreadLine', { rol:'yo', contenido:dicho, modo:modoActual });
+            /* CORRECCION 2026-08-31 (server: elixis-realtime-session ahora
+               solo pone create_response:false cuando modoReq==='cazador' --
+               ver ese archivo para el porque completo). En los otros 5
+               modos OpenAI genera la respuesta el solo (create_response:
+               true, flujo nativo) -- mandar este response.create manual ahi
+               TAMBIEN seria redundante (y arriesga un error real de OpenAI,
+               "ya hay una respuesta activa", si el nativo ya iba a
+               disparar). El disparo manual queda EXCLUSIVO de Cazador
+               Musical, donde el servidor de verdad se queda mudo sin el. */
+            if(identidadActual === 'djmago' && modoActual === 'cazador' && dc && dc.readyState==='open'){
+              if(PREGUNTA_CANCION_RE.test(dicho)){
+                dc.send(JSON.stringify({ type:'response.create' }));
+              }
+            }
+          }
           break;
         }
         case 'input_audio_buffer.speech_started':
           hablando=false;
+          limpiarWatchdogPensando();
           emit('onTranscript', { who:'elixis', reset:true });
           emit('onState','listening'); break;
 
         case 'input_audio_buffer.speech_stopped':
+          armarWatchdogPensando();
           emit('onState','understanding'); break;
 
         case 'response.output_audio_transcript.delta':
-          if(!hablando){ hablando=true; emit('onTranscript', { who:'elixis', start:true }); }
+          limpiarWatchdogPensando();
+          if(!hablando){
+            hablando=true; _textoElixis=''; emit('onTranscript', { who:'elixis', start:true });
+            /* BUG REAL 2026-08-31 (reporte del PO con captura: bucle de
+               "Hola Gerardo..." cortandose solo, una y otra vez). NO es un
+               disparador duplicado -- se busco y no existe ningun otro sitio
+               que mande response.create sin que el usuario hable. Es eco
+               acustico real: las bocinas reproducen a DjMago/Elixis, el
+               mismo microfono lo vuelve a captar, y con create_response:true
+               + interrupt_response:true (flujo nativo, ver elixis-realtime-
+               session) OpenAI interpreta su propia voz como que el usuario
+               interrumpio -- corta la respuesta a medias Y dispara una
+               nueva, en bucle. NO se soluciona pidiendo echoCancellation:
+               true/noiseSuppression:true/autoGainControl:true en
+               getUserMedia -- CONSTRAINTS_MIC_RAW (arriba) las tiene TODAS
+               en false a proposito, porque encenderlas es justo lo que
+               dispara la reconfiguracion de CoreAudio que corta a Serato en
+               vivo (ver el comentario de precalentarMic()). Mutear el track
+               por software mientras el asistente habla logra el mismo
+               resultado (el eco nunca llega al VAD) sin tocar constraints
+               ni CoreAudio. Efecto secundario aceptado: mientras el
+               asistente habla, no se puede interrumpir por voz (hay que
+               esperar a que termine) -- es el precio de cortar el eco sin
+               arriesgar el audio de Serato. */
+            /* Cancela un cooldown de reactivacion pendiente (ver response.done
+               mas abajo): si un nuevo response.output_audio_transcript.delta
+               llega mientras todavia se esperaba el margen de 800ms de la
+               respuesta ANTERIOR, ese timer viejo reactivaria el mic a media
+               respuesta nueva -- justo la ventana de eco que se esta
+               cerrando. */
+            if(micReactivarTimeout){ clearTimeout(micReactivarTimeout); micReactivarTimeout=null; }
+            if(mic){ mic.getAudioTracks().forEach(function(t){ t.enabled=false; }); }
+          }
+          _textoElixis += (m.delta||'');
           emit('onTranscript', { who:'elixis', delta:(m.delta||'') });
           emit('onState','speaking'); break;
 
         case 'response.done': {
+          limpiarWatchdogPensando();
+          /* BUG REAL 2026-08-31 (reporte del PO con captura: monologo
+             infinito -- ELIXIS respondiendose a si misma, "Uff, boda!"...
+             "Si, para romperla de verdad..."). response.done es del CANAL DE
+             DATOS -- no garantiza que las bocinas ya terminaron de reproducir
+             la cola de audio real (via WebRTC, un camino separado del canal
+             de control). Reactivar el mic de inmediato aqui (como hacia
+             anoche) lo abria mientras el ultimo pedazo de la voz de ELIXIS
+             seguia sonando, se volvia a captar, y arrancaba un turno nuevo.
+             Dos capas: (1) input_audio_buffer.clear descarta cualquier
+             residuo que el servidor ya haya empezado a acumular; (2) el mic
+             se reactiva 800ms despues, no de inmediato, dandole margen real
+             a las bocinas. Ver tambien esTextoParecido()/historialAsistente
+             arriba -- defensa adicional si algo se cuela de todos modos. */
+          if(dc && dc.readyState==='open') dc.send(JSON.stringify({ type:'input_audio_buffer.clear' }));
+          if(micReactivarTimeout){ clearTimeout(micReactivarTimeout); }
+          /* Margen ESCALADO por longitud del texto hablado (2026-08-31,
+             reporte real del PO -- el bucle seguia pasando con el margen
+             fijo de 800ms). 800ms fijo era una adivinanza pensada para un
+             "¡Hola!" corto -- una respuesta larga de verdad tarda varios
+             segundos en salir por las bocinas, y reactivar el mic a los
+             800ms de TODOS modos deja el mismo hueco de eco que esto
+             intenta cerrar. No hay evento real de "la bocina ya termino"
+             disponible (el audio de OpenAI llega como MediaStream WebRTC en
+             vivo, no como un <audio src> con duracion conocida -- nunca
+             dispara 'ended' de verdad) -- se estima a partir del texto ya
+             confirmado: ~35ms por caracter (ritmo natural de habla en
+             español, con margen), piso de 800ms (el caso corto de siempre no
+             cambia) y techo de 4s (una respuesta larguisima no debe colgar
+             el mic para siempre). */
+          var margenMs = Math.min(4000, Math.max(800, _textoElixis.trim().length * 35));
+          micReactivarTimeout = setTimeout(function(){
+            if(mic){ mic.getAudioTracks().forEach(function(t){ t.enabled=true; }); }
+            micReactivarTimeout = null;
+          }, margenMs);
           /* Las llamadas a herramienta viajan DENTRO de response.done. Si se
              cierra el turno aqui sin mirarlas, la consulta no sale nunca. */
           var salida = (m.response && m.response.output) || [];
           var llamadas = salida.filter(function(i){ return i && i.type==='function_call'; });
           if(llamadas.length){ llamadas.forEach(herramienta); break; }
+          /* El hilo se guarda completo aqui, no en cada delta -- una fila
+             por turno, no una por fragmento de texto. Se guarda tambien en
+             historialAsistente (arriba) para el filtro anti-eco. */
+          if(hablando && _textoElixis.trim()){
+            var _textoFinal = _textoElixis.trim();
+            emit('onThreadLine', { rol:'elixis', contenido:_textoFinal, modo:modoActual });
+            historialAsistente.push({ texto: _textoFinal.toLowerCase(), ts: Date.now() });
+            if(historialAsistente.length > 6) historialAsistente.shift();
+          }
           hablando=false;
           emit('onState','listening'); break;
         }
         case 'error':
-          emit('onError', (m.error && m.error.message) || 'Error en el canal de voz'); break;
+          /* BUG REAL 2026-08-31 (reporte del PO con captura: avatar colgado
+             en "Pensando" indefinidamente). Antes este caso solo avisaba
+             (onError, un placeholder de 3.2s en la caja de texto -- facil de
+             no ver si se esta mirando el avatar) SIN tocar el estado. Si
+             OpenAI rechaza el response.create manual (create_response:false
+             para djmago) a mitad de turno, el aviso pasaba y "entendiendo"
+             se quedaba pintado para siempre -- el watchdog de arriba habria
+             tapado el sintoma en 5s, pero esto ataca la causa real: hay
+             conexion viva (dc/pc siguen abiertos), asi que basta con volver
+             a "escuchando", no hace falta tirar la sesion entera con stop(). */
+          limpiarWatchdogPensando();
+          console.error('[ElixisVoiceSession] error del canal de voz:', m.error || m);
+          emit('onError', (m.error && m.error.message) || 'Error en el canal de voz');
+          emit('onState','listening');
+          if(micReactivarTimeout){ clearTimeout(micReactivarTimeout); micReactivarTimeout=null; }
+          if(mic){ mic.getAudioTracks().forEach(function(t){ t.enabled=true; }); } // no dejar el mic mudo si el error llego a mitad de la respuesta
+          break;
       }
     }
 
     async function start(){
-      if(pc) return;
+      /* conectando (2026-08-30, portado de mdj-commander.html -- mismo bug
+         real ya resuelto ahi, "hey hey hey" en loop): "if(pc) return" solo
+         no alcanza -- pc se asigna DESPUES de esperar el microfono, y
+         durante esa espera un segundo toque al orbe pasa el mismo guard
+         sin problema, creando dos sesiones en paralelo. conectando se pone
+         en true ANTES de cualquier await (sincronico, cierra la ventana
+         del todo) y se resetea en el finally de abajo pase lo que pase. */
+      if(pc || conectando) return;
+      conectando = true;
+      try{
       var url = fnUrl(null);
       if(!url){ emit('onError','No pude ubicar el servidor de voz'); return; }
       url += (url.indexOf('?')===-1?'?':'&') + 'voice=' + (localStorage.getItem('elixis_voice')||'ash')
-           + '&vad=' + (localStorage.getItem('elixis_vad')||'medium');
+           + '&vad=' + (localStorage.getItem('elixis_vad')||'medium')
+           + (modoActual ? '&modo=' + encodeURIComponent(modoActual) : '')
+           + (identidadActual ? '&identidad=' + encodeURIComponent(identidadActual) : '');
 
       emit('onState','understanding');
       try{
-        mic = await navigator.mediaDevices.getUserMedia({
-          audio:{ echoCancellation:true, noiseSuppression:true, autoGainControl:true } });
+        mic = await precalentarMic();
+        if(!mic) throw new Error('sin_stream');
+        mic.getAudioTracks().forEach(function(t){ t.enabled=true; });
       }catch(e){
         emit('onError','Necesito permiso de micrófono');
         emit('onState','idle'); return;
@@ -167,14 +520,62 @@
       pc = new RTCPeerConnection();
       spk = handlers.getAudioEl ? handlers.getAudioEl() : null;
       pc.ontrack = function(ev){
-        if(spk){ try{ spk.srcObject = ev.streams[0]; spk.play(); }catch(_){ } }
+        /* .play() devuelve una Promise -- si Safari bloquea el autoplay
+           (NotAllowedError), rechaza SIN tirar una excepcion sincronica, asi
+           que el try/catch de aqui nunca la atrapaba: el audio de respuesta
+           se perdia en silencio total, sin ni una linea en consola (2026-08-
+           31, mismo reporte del PO: "no hay salida de audio"). Ahora se
+           loguea de verdad si esto pasa. */
+        if(spk){
+          try{
+            spk.srcObject = ev.streams[0];
+            var p = spk.play();
+            if(p && typeof p.catch === 'function'){
+              p.catch(function(e){ console.warn('[ElixisVoiceSession] audio remoto bloqueado (autoplay):', e && e.message); });
+            }
+          }catch(_){ }
+        }
         anRem = analizador(ev.streams[0]);
       };
       mic.getAudioTracks().forEach(function(t){ pc.addTrack(t, mic); });
       anMic = analizador(mic);
 
+      /* Music Hunter, Rama B (2026-08-30, autorizado por el PO): conecta el
+         MISMO stream de mic -- ninguna captura nueva, ningun permiso extra --
+         a un buffer circular de 6s (ver music-hunter-ring-buffer.js).
+
+         SOLO identidad==='djmago' (2026-08-30, correccion en vivo -- reporte
+         real: "al activar el modo Cazador y conectar el microfono, el audio
+         general del sistema/musica se corta"). Antes esto se conectaba en
+         TODA sesion de voz, ELIXIS incluido, sin necesidad real -- un
+         AudioWorkletNode activo (aunque mudo) sigue procesando cada bloque de
+         audio en el hilo de tiempo real del navegador, y sumarle eso a
+         CUALQUIER sesion es exponer a Serato a un riesgo que solo tiene
+         sentido pagar cuando Cazador Musical de verdad se va a usar. Acotar
+         el alcance no prueba por si solo cual era la causa exacta (no hay
+         forma de perfilar el audio real del PO desde aca), pero es la unica
+         correccion honesta posible sin esa sesion en vivo: menos sesiones
+         tocan esta rama, menos sesiones pueden verse afectadas. */
+      if(window.MusicHunterRingBuffer && anMic && identidadActual === 'djmago'){
+        window.MusicHunterRingBuffer.conectar(ac, mic).then(function(nodo){
+          musicHunterNodo = nodo;
+          console.log('[ElixisVoiceSession] Music Hunter ring buffer conectado:', !!nodo);
+        }).catch(function(e){
+          console.error('[ElixisVoiceSession] Music Hunter ring buffer, fallo al conectar:', e);
+        });
+      }
+
       dc = pc.createDataChannel('oai-events');
       dc.onopen = function(){
+        /* Log de auditoria (2026-08-30, pedido explicito del PO: confirmar
+           que esto es la conexion WebRTC real contra OpenAI Realtime y no
+           un mock de consola). Este evento solo dispara cuando el canal de
+           datos de verdad completo su handshake -- oferta/respuesta SDP
+           real intercambiada con el backend (elixis-realtime-session) mas
+           ICE/DTLS conectado -- no es un valor fijo ni un placeholder. */
+        console.log('[ELIXIS-WEBRTC] Connected:', true, {
+          session: sesion, iceConnectionState: pc.iceConnectionState, connectionState: pc.connectionState
+        });
         emit('onSystem','Canal de voz conectado. Habla con normalidad.');
         encender();
         emit('onState','listening');
@@ -217,6 +618,7 @@
           });
         }, 4*60*1000);
       }
+      }finally{ conectando = false; }
     }
 
     /* keepalive: la liquidacion sale aunque se cierre la pestaña. Sin esto se
@@ -236,8 +638,13 @@
 
     function stop(silencioso){
       liquidar();
+      if(micReactivarTimeout){ clearTimeout(micReactivarTimeout); micReactivarTimeout=null; } // mic=null mas abajo ya lo haria inofensivo, pero mejor no dejarlo pendiente
+      detenerCazadorMusical(); // el ciclo de fondo no puede sobrevivir a musicHunterNodo
       if(dc){ try{ dc.close(); }catch(_){ } dc=null; }
       if(pc){ try{ pc.close(); }catch(_){ } pc=null; }
+      if(musicHunterNodo && window.MusicHunterRingBuffer){
+        window.MusicHunterRingBuffer.desconectar(musicHunterNodo); musicHunterNodo=null;
+      }
       if(mic){ mic.getTracks().forEach(function(t){ try{ t.stop(); }catch(_){ } }); mic=null; }
       if(spk){ try{ spk.pause(); spk.srcObject=null; }catch(_){ } }
       hablando=false;
@@ -252,12 +659,247 @@
        -- solo cambia lo que ELIXIS tiene en mente para el siguiente turno. */
     function actualizarContexto(instrucciones){
       if(!dc || dc.readyState!=='open') return false;
-      dc.send(JSON.stringify({ type:'session.update', session:{ instructions:String(instrucciones||'') } }));
+      /* BUG REAL 2026-08-31 (reporte del PO, error textual de OpenAI en
+         consola: "Missing required parameter: 'session.type'."). Confirmado
+         contra la documentacion oficial actual (developers.openai.com/api/
+         reference/resources/realtime/client-events), no adivinado: el objeto
+         `session` de un session.update ahora es una union de dos formas
+         (RealtimeSessionCreateRequest / RealtimeTranscriptionSessionCreateRequest)
+         y exige `type:"realtime"` para distinguir cual es -- antes esto no
+         hacia falta, cambio de esquema de OpenAI, no un bug de este archivo.
+         Sin este campo, OpenAI rechazaba CUALQUIER cambio de Modo de Enfoque
+         a media llamada con un error real -- que antes de hoy pasaba
+         inadvertido (ver el fix de 'error' que ahora si resetea el estado). */
+      dc.send(JSON.stringify({ type:'session.update', session:{ type:'realtime', instructions:String(instrucciones||'') } }));
       return true;
     }
 
     window.addEventListener('beforeunload', liquidar);
-    return { start:start, stop:stop, activa:function(){ return !!pc; }, actualizarContexto:actualizarContexto };
+    /* Guarda el modo para el PROXIMO start() (va en la URL de sesion, ver
+       arriba) Y, si ya hay sesion viva, lo aplica de una vez via
+       actualizarContexto (session.update no reinicia la llamada). El texto
+       humano del modo lo trae quien llama (ya lo tiene: EW_CONTEXTOS en
+       staff.html, MC_CONTEXTOS en mdj-commander.html) -- este modulo no
+       duplica ese mapa, solo decide CUANDO aplicarlo. */
+    function fijarModo(nombre, textoInstrucciones){
+      modoActual = nombre || null;
+      if(dc && dc.readyState==='open' && textoInstrucciones) actualizarContexto(textoInstrucciones);
+    }
+
+    /* Identidad ('elixis'|'djmago', 2026-08-30, fork autorizado por el PO):
+       a diferencia de fijarModo(), esto NO se puede aplicar a media sesion
+       via session.update -- la identidad completa (quien es, que sabe, que
+       tools tiene) se arma UNA vez en el servidor al abrir la llamada
+       (buildInstructions() + el arreglo de tools en elixis-realtime-session),
+       igual que la voz (?voice=): cambiarla de verdad implica una conexion
+       nueva. fijarIdentidad() solo decide con que identidad arranca el
+       PROXIMO start() -- quien llama (staff.html, segun que avatar este
+       activo) la fija antes de tocar el orbe. */
+    function fijarIdentidad(nombre){
+      identidadActual = nombre || null;
+    }
+
+    /* Instantanea de audio crudo para Music Hunter (Rama B) -- devuelve
+       null si no hay sesion de voz activa o si el archivo del ring buffer
+       no esta cargado en la pagina. La maquina de estados de "Cazador
+       Musical" (item 4, no autorizado aun) es quien decide CUANDO llamar
+       esto; este modulo solo expone el dato. */
+    function obtenerMuestraMusicHunter(){
+      return (musicHunterNodo && window.MusicHunterRingBuffer)
+        ? window.MusicHunterRingBuffer.obtenerInstantanea(musicHunterNodo)
+        : Promise.resolve(null);
+    }
+
+    /* Cazador Musical, Modo B ("continuo" / setlist logger, 2026-08-30,
+       autorizado por el PO): un ciclo de fondo cada 18s (dentro del rango
+       15-20s pedido) que llama a identificar_track SIN pasar por el modelo
+       de voz -- esto es deliberado, no un atajo: el pedido explicito fue
+       "silenciar respuestas de voz automaticas durante el modo continuo
+       para no interferir en cabina". Si esto fuera una tool-call real (como
+       el Modo A "bajo demanda"), cada deteccion forzaria una respuesta
+       hablada de DjMago sobre una cancion que nadie pidio identificar.
+       En cambio esto llama accion('identificar_track', ...) DIRECTO (el
+       mismo helper HTTP que usan consultar/memory_write) y solo avisa por
+       el evento onMusicHunterTrack -- quien escuche (staff.html) decide
+       que hacer (hoy: una fila en la tabla de Live Setlist), sin que la
+       voz de la sesion diga una palabra.
+
+       RE-VERIFICADO (2026-08-30, reporte en vivo del PO con capturas): la
+       narracion en ingles ("no hay match todavia, Gerardo"/"dejame escuchar
+       de nuevo") que se vio en produccion NO vino de aca -- esta funcion
+       nunca toco `dc`. Vino del Modo A (herramienta(), mas abajo): el VAD
+       normal confundio letras/voces de la musica de fondo con el DJ
+       hablandole al avatar, y el modelo penso que le habian preguntado.
+       El arreglo real esta del lado del servidor (umbral de VAD mas alto
+       para identidad djmago + regla dura de silencio en el prompt, ver
+       elixis-realtime-session/index.ts) -- este modulo no necesito cambios,
+       ya estaba desacoplado como debia. */
+    var CAZADOR_INTERVALO_MS = 18000;
+    /* Piso de confianza (2026-08-30, reporte real: "las canciones que
+       identifico no son las que han sonado en el ambiente") -- antes se
+       aceptaba CUALQUIER match con artista/titulo, sin mirar la confianza.
+       Verificado en una prueba anterior con un tono sintetico (sin musica
+       real): ACRCloud devolvio un match REAL pero completamente falso, con
+       confidence:0.28 -- exactamente el tipo de resultado que esta pasando
+       en vivo. La causa de fondo probablemente sigue siendo la fuente de
+       audio (mic ambiente/built-in, elegido a proposito para no tocar la
+       interfaz de Serato -- ver elegirMicrofono() -- pero lejos y de baja
+       fidelidad para fingerprinting real), no algo que este piso arregle
+       del todo; pero al menos deja de registrar como "identificado" algo
+       que ACRCloud en el fondo tampoco esta seguro de que sea. */
+    var CAZADOR_CONFIANZA_MINIMA = 0.5;
+    var cazadorTimer = 0, cazadorUltimoId = null, cazadorOrden = 0, cazadorCiclo = 0;
+    function iniciarCazadorMusical(){
+      if(cazadorTimer){ console.log('[CazadorMusical] iniciarCazadorMusical(): ya estaba corriendo, no hace nada.'); return; }
+      console.log('[CazadorMusical] ciclo iniciado, cada', CAZADOR_INTERVALO_MS, 'ms. musicHunterNodo activo:', !!musicHunterNodo);
+      cazadorTimer = setInterval(async function(){
+        cazadorCiclo += 1;
+        var etiqueta = '[CazadorMusical] ciclo #' + cazadorCiclo;
+        /* Logs pedidos explicitamente (2026-08-30, reporte "playlist vacia,
+           el ciclo de 18s no esta logrando identificar pistas") -- antes de
+           esto no habia forma de saber, con datos reales, en que paso se
+           estaba perdiendo: si musicHunterNodo nunca se conecto, si el
+           buffer llegaba vacio, o si llegaba lleno pero ACRCloud de verdad
+           no encontraba coincidencia (muy real con musica mezclada/pitcheada
+           en vivo -- el fingerprint de un DJ set no calza igual que el de la
+           grabacion de estudio original). */
+        if(!musicHunterNodo){ console.warn(etiqueta, 'sin musicHunterNodo -- el ring buffer nunca se conecto en este start().'); return; }
+        var muestra = await obtenerMuestraMusicHunter();
+        if(!muestra || !muestra.pcm || !muestra.pcm.length){
+          console.warn(etiqueta, 'obtenerMuestraMusicHunter() no devolvio PCM utilizable:', muestra);
+          return;
+        }
+        console.log(etiqueta, 'PCM listo -- muestras:', muestra.pcm.length, '· sampleRate:', muestra.sampleRate, '· segundos reales:', muestra.segundos.toFixed(2));
+        var resultado = await accion('identificar_track', {
+          pcm_base64: pcmABase64(muestra.pcm), sample_rate: muestra.sampleRate,
+        });
+        console.log(etiqueta, 'respuesta de identificar_track:', resultado);
+        if(!resultado || resultado.ok === false){ console.warn(etiqueta, 'la Edge Function respondio fallo.'); return; }
+        if(resultado.mock){ console.warn(etiqueta, 'ACRCloud sin configurar (modo mock) -- nada real que registrar.'); return; }
+        if(!resultado.artist && !resultado.title){ console.log(etiqueta, 'sin coincidencia real en ACRCloud para esta muestra.'); return; }
+        if((resultado.confidence||0) < CAZADOR_CONFIANZA_MINIMA){
+          console.warn(etiqueta, 'match descartado por confianza baja ('+resultado.confidence+' < '+CAZADOR_CONFIANZA_MINIMA+'):', resultado.artist, '-', resultado.title);
+          return;
+        }
+        /* Anti-duplicado por ID/título (pedido explicito): isrc si vino,
+           si no artista+titulo normalizado -- mientras siga sonando el
+           MISMO track, cada ciclo de 18s vuelve a "detectarlo" y no debe
+           generar una fila nueva cada vez. */
+        var idNuevo = (resultado.isrc || (resultado.artist||'') + '|' + (resultado.title||'')).toLowerCase();
+        if(idNuevo === cazadorUltimoId){ console.log(etiqueta, 'mismo track que el anterior, no se duplica fila.'); return; }
+        cazadorUltimoId = idNuevo;
+        cazadorOrden += 1;
+        console.log(etiqueta, 'track NUEVO -> fila #' + cazadorOrden, resultado.artist, '-', resultado.title);
+        emit('onMusicHunterTrack', {
+          orden: cazadorOrden, hora: new Date(), artist: resultado.artist, title: resultado.title,
+          bpm: resultado.bpm, musical_key: resultado.musical_key, genre: resultado.genre,
+          isrc: resultado.isrc, confidence: resultado.confidence,
+        });
+      }, CAZADOR_INTERVALO_MS);
+    }
+    function detenerCazadorMusical(){
+      if(cazadorTimer){ clearInterval(cazadorTimer); cazadorTimer=0; }
+      cazadorUltimoId = null; cazadorOrden = 0; cazadorCiclo = 0;
+    }
+
+    /* enviarTexto(): via de entrada de TEXTO para el mismo turno de voz --
+       conversation.item.create con role:user + input_text es el mecanismo
+       real y documentado de la Realtime API para mezclar texto y voz en la
+       misma sesion (no es un endpoint aparte).
+       NO arranca start() por su cuenta (revertido 2026-08-29, incidente real
+       del PO: escribir texto sin sesion activa disparaba getUserMedia() por
+       primera vez en la pestana -- eso corto el audio de Serato un instante
+       en vivo, DJ tocando en ese momento). Requiere sesion YA activa
+       (activa()===true, el usuario prendio la voz a mano con el orbe) --
+       nunca toca el microfono como efecto secundario de escribir. */
+    function enviarTexto(texto){
+      texto = String(texto||'').trim();
+      if(!texto) return;
+      if(!dc || dc.readyState!=='open'){
+        enviarTextoSolo(texto);
+        return;
+      }
+      dc.send(JSON.stringify({ type:'conversation.item.create',
+        item:{ type:'message', role:'user', content:[{ type:'input_text', text:texto }] } }));
+      dc.send(JSON.stringify({ type:'response.create' }));
+    }
+
+    /* Modo escritura SIN sesion de voz (2026-08-31, orden del PO: escribir
+       no debe exigir microfono). NO se implemento como pedia el ticket
+       literal ("conecta la sesion WebRTC en segundo plano" / "modo solo-
+       datos sin audio") -- el comentario de arriba documenta el incidente
+       REAL que puso este candado en primer lugar (2026-08-29: escribir sin
+       sesion activa disparaba getUserMedia() por primera vez en la pestana y
+       corto el audio de Serato en vivo). Cualquier camino que termine
+       llamando a start() como efecto secundario de escribir reabre EXACTAMENTE
+       ese incidente. En vez de eso, reusa el MISMO backend de texto puro que
+       ya usa mdj-commander.html (askElixis() -> elixis-orchestrator, HTTP
+       plano) -- nunca toca WebRTC, RTCPeerConnection ni getUserMedia. La
+       Realtime API tampoco documenta un modo "solo texto, sin audio" real
+       para WebRTC -- forzar eso a ciegas habria arriesgado el mismo tipo de
+       error de esquema que ya costo una sesion completa (session.type). */
+    async function enviarTextoSolo(texto){
+      var url = window.mdbSupabaseFunctionUrl ? window.mdbSupabaseFunctionUrl('elixis-orchestrator') : null;
+      if(!url){ emit('onError','No pude ubicar el servidor de texto.'); return; }
+      /* BUG REAL 2026-08-31 (reporte del PO: "sale el avatar por un segundo,
+         no sale nada en el chat... esto es chat escrito, no se necesita
+         avatar aqui"). Dos causas, dos fixes:
+         (1) el flag textoSolo:true en los onTranscript de abajo -- staff.html
+             lo usa para ABRIR el panel de Hilos & Transcripcion, que ahora
+             arranca cerrado por defecto (commit anterior, mismo dia). Sin
+             este flag el texto SI se escribia en el DOM (confirmado en la
+             verificacion previa) pero quedaba oculto dentro del panel
+             colapsado -- el usuario nunca lo veia.
+         (2) se quitaron los emit('onState', 'understanding'/'idle') que
+             habia antes: eso es lo que prendia y apagaba la caja del avatar
+             un instante (.avatar-stage deja de ser 'idle' -> opacity:1,
+             vuelve a 'idle' -> opacity:0). En una conversacion de solo
+             texto no hay nada que el avatar deba actuar -- el PO lo dijo
+             explicito, esto es chat escrito. */
+      emit('onTranscript', { who:'yo', text:texto, final:true, textoSolo:true });
+      emit('onThreadLine', { rol:'yo', contenido:texto, modo:modoActual, textoSolo:true });
+      try{
+        var h = await headers();
+        var res = await fetch(url, { method:'POST', headers:h, body:JSON.stringify({ message:texto, history:historialTexto.slice(-20) }) });
+        if(res.status===401){ emit('onUnauthorized'); return; }
+        var d = {}; try{ d = await res.json(); }catch(_){}
+        if(!res.ok || !d.reply){
+          emit('onError', (d && d.error==='forbidden_not_staff') ? 'Esta cuenta no tiene acceso de staff/owner.' : 'No se pudo obtener respuesta de texto.');
+          return;
+        }
+        emit('onTranscript', { who:'elixis', start:true, textoSolo:true });
+        emit('onTranscript', { who:'elixis', delta:d.reply, textoSolo:true });
+        emit('onThreadLine', { rol:'elixis', contenido:d.reply, modo:modoActual, textoSolo:true });
+        historialTexto.push({ role:'user', content:texto });
+        historialTexto.push({ role:'assistant', content:d.reply });
+        if(historialTexto.length > 40) historialTexto = historialTexto.slice(-40);
+      }catch(e){
+        emit('onError','No pude conectar con el texto.');
+      }
+    }
+
+    /* Siembra/reemplaza el buffer de continuidad de texto -- llamado por
+       staff.html al cargar el historial real de un hilo (elixis_get_thread_
+       history) o al archivar uno nuevo (arreglo vacio). No dispara red ni
+       toca la sesion de voz; solo el buffer que enviarTextoSolo() manda como
+       "history" en el proximo turno. */
+    function cargarHistorialTexto(mensajes){
+      historialTexto = Array.isArray(mensajes) ? mensajes.slice(-20) : [];
+    }
+
+    /* Dispara el pre-calentado al entrar al workspace, no al primer clic
+       del orbe -- mismo momento que "al entrar a Comando" en
+       mdj-commander.html. crear() solo corre una vez por carga de pagina
+       (ver el guard ewIniciado en staff.html), asi que esto tampoco se
+       repite. Sin await: corre en segundo plano, silencioso (los errores
+       ya los traga precalentarMic() a proposito), listo para cuando el
+       usuario si toque el orbe. */
+    precalentarMic();
+
+    return { start:start, stop:stop, activa:function(){ return !!pc; }, actualizarContexto:actualizarContexto,
+      fijarModo:fijarModo, fijarIdentidad:fijarIdentidad, obtenerMuestraMusicHunter:obtenerMuestraMusicHunter,
+      iniciarCazadorMusical:iniciarCazadorMusical, detenerCazadorMusical:detenerCazadorMusical,
+      enviarTexto:enviarTexto, cargarHistorialTexto:cargarHistorialTexto };
   }
 
   window.ElixisVoiceSession = { crear:crear, ESTADOS:ESTADOS };

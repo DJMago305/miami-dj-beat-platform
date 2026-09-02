@@ -741,7 +741,8 @@
             var j;
             for (j = 0; j < dopts.length; j++) {
                 if (!dopts[j].value && dopts[j].disabled) {
-                    dopts[j].textContent = 'Día';
+                    dopts[j].setAttribute('data-i18n', 'eb-opt-dia');
+                    dopts[j].textContent = (window.i18n && window.i18n.t('eb-opt-dia')) || 'Día';
                 }
             }
         }
@@ -750,7 +751,8 @@
             var k;
             for (k = 0; k < yopts.length; k++) {
                 if (!yopts[k].value && yopts[k].disabled) {
-                    yopts[k].textContent = 'Año';
+                    yopts[k].setAttribute('data-i18n', 'eb-opt-anio');
+                    yopts[k].textContent = (window.i18n && window.i18n.t('eb-opt-anio')) || 'Año';
                 }
             }
         }
@@ -1402,6 +1404,22 @@
         general:     'Servicios Adicionales'
     };
 
+    // Claves de traduccion por nombre de cajon (2026-09-01) -- el nombre en
+    // español sigue siendo la llave interna real (CAJON_ORDER/EB_CAJON_LABELS
+    // no cambian), esto solo mapea a la clave del diccionario para pintar el
+    // titulo visible en el idioma activo.
+    var EB_CAJON_I18N = {
+        'Entretenimiento y Talento':   'eb-cajon-entretenimiento',
+        'Audio y Sonido Profesional':  'eb-cajon-audio',
+        'Iluminación y Pantallas LED': 'eb-cajon-iluminacion',
+        'Mobiliario y Decoración':     'eb-cajon-mobiliario',
+        'Efectos Especiales':          'eb-cajon-efectos',
+        'Carpas y Estructuras':        'eb-cajon-carpas',
+        'Stage & Event Structures':    'eb-cajon-stage',
+        'Castillos Inflables':         'eb-cajon-castillos',
+        'Servicios Adicionales':       'eb-cajon-adicionales'
+    };
+
     // Orden canónico de cajones + catch-all
     var CAJON_ORDER = [
         'Entretenimiento y Talento',
@@ -1419,28 +1437,28 @@
         '<thead>' +
         '<tr class="mdj-eb-crm-thead-row">' +
         '<th class="mdj-eb-crm-th mdj-eb-crm-th--ln">#</th>' +
-        '<th class="mdj-eb-crm-th mdj-eb-crm-th--svc">Servicio / Add-on</th>' +
-        '<th class="mdj-eb-crm-th mdj-eb-crm-th--desc">Descripción</th>' +
-        '<th class="mdj-eb-crm-th mdj-eb-crm-th--qty">Cant.</th>' +
-        '<th class="mdj-eb-crm-th mdj-eb-crm-th--upr">P. Unit</th>' +
-        '<th class="mdj-eb-crm-th mdj-eb-crm-th--sub">Subtotal</th>' +
-        '<th class="mdj-eb-crm-th mdj-eb-crm-th--sta">Estado</th>' +
-        '<th class="mdj-eb-crm-th mdj-eb-crm-th--prv">Proveedor</th>' +
-        '<th class="mdj-eb-crm-th mdj-eb-crm-th--nts">Notas</th>' +
-        '<th class="mdj-eb-crm-th mdj-eb-crm-th--act">Acción</th>' +
+        '<th class="mdj-eb-crm-th mdj-eb-crm-th--svc" data-i18n="eb-th-servicio">Servicio / Add-on</th>' +
+        '<th class="mdj-eb-crm-th mdj-eb-crm-th--desc" data-i18n="eb-th-descripcion">Descripción</th>' +
+        '<th class="mdj-eb-crm-th mdj-eb-crm-th--qty" data-i18n="eb-th-cant">Cant.</th>' +
+        '<th class="mdj-eb-crm-th mdj-eb-crm-th--upr" data-i18n="eb-th-punit">P. Unit</th>' +
+        '<th class="mdj-eb-crm-th mdj-eb-crm-th--sub" data-i18n="eb-th-subtotal">Subtotal</th>' +
+        '<th class="mdj-eb-crm-th mdj-eb-crm-th--sta" data-i18n="eb-th-estado">Estado</th>' +
+        '<th class="mdj-eb-crm-th mdj-eb-crm-th--prv" data-i18n="eb-th-proveedor">Proveedor</th>' +
+        '<th class="mdj-eb-crm-th mdj-eb-crm-th--nts" data-i18n="eb-th-notas">Notas</th>' +
+        '<th class="mdj-eb-crm-th mdj-eb-crm-th--act" data-i18n="eb-th-accion">Acción</th>' +
         '</tr>' +
         '</thead>';
 
     var EB_STATUS_CONFIG = {
-        cotizado:      { label: 'Cotizado',      cls: 'mdj-eb-crm-badge--cotizado' },
-        en_proceso:    { label: 'En proceso',    cls: 'mdj-eb-crm-badge--proceso' },
-        confirmado:    { label: 'Confirmado',    cls: 'mdj-eb-crm-badge--confirmado' },
-        no_disponible: { label: 'No disponible', cls: 'mdj-eb-crm-badge--nodisponible' }
+        cotizado:      { label: 'Cotizado',      i18nKey: 'eb-status-cotizado',      cls: 'mdj-eb-crm-badge--cotizado' },
+        en_proceso:    { label: 'En proceso',    i18nKey: 'eb-status-en-proceso',    cls: 'mdj-eb-crm-badge--proceso' },
+        confirmado:    { label: 'Confirmado',    i18nKey: 'eb-status-confirmado',    cls: 'mdj-eb-crm-badge--confirmado' },
+        no_disponible: { label: 'No disponible', i18nKey: 'eb-status-no-disponible', cls: 'mdj-eb-crm-badge--nodisponible' }
     };
 
     function mdjEbStatusBadge(status) {
         var cfg = EB_STATUS_CONFIG[String(status || 'cotizado')] || EB_STATUS_CONFIG['cotizado'];
-        return '<span class="mdj-eb-crm-badge ' + cfg.cls + '">' + cfg.label + '</span>';
+        return '<span class="mdj-eb-crm-badge ' + cfg.cls + '" data-i18n="' + cfg.i18nKey + '">' + cfg.label + '</span>';
     }
 
     function renderLines(container) {
@@ -1559,12 +1577,12 @@
                 ? '<span class="mdj-eb-cajon-title-bar__count mdj-eb-cajon-title-bar__count--empty">—</span>'
                 : '<span class="mdj-eb-cajon-title-bar__count">' + lines.length + ' servicio' + (lines.length !== 1 ? 's' : '') + '</span>';
             var bodyContent = isEmpty
-                ? '<tr class="mdj-eb-crm-row--empty"><td colspan="10" class="mdj-eb-crm-td--empty">Sin servicios seleccionados</td></tr>'
+                ? '<tr class="mdj-eb-crm-row--empty"><td colspan="10" class="mdj-eb-crm-td--empty" data-i18n="eb-sin-servicios">Sin servicios seleccionados</td></tr>'
                 : lines.map(renderCrmRow).join('');
             return (
                 '<section class="mdj-eb-cajon-section' + (isEmpty ? ' mdj-eb-cajon-section--empty' : '') + '">' +
                 '<div class="mdj-eb-cajon-title-bar">' +
-                '<span class="mdj-eb-cajon-title-bar__name">' + escapeHtml(cajonName) + '</span>' +
+                '<span class="mdj-eb-cajon-title-bar__name"' + (EB_CAJON_I18N[cajonName] ? ' data-i18n="' + EB_CAJON_I18N[cajonName] + '"' : '') + '>' + escapeHtml(cajonName) + '</span>' +
                 countLabel +
                 '</div>' +
                 '<div class="mdj-eb-crm-scroll">' +

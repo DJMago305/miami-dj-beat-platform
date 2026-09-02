@@ -44,7 +44,7 @@
        sustituta del sistema y el texto salia ~2% mas ancho, desplazando el eje X. -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=optional" rel="stylesheet" />
   <link rel="stylesheet" href="./styles.css?v=20260823-hero-card-altura" />
-  <link rel="stylesheet" href="./header-unified.css?v=20260824-marca-fab-important" />
+  <link rel="stylesheet" href="./header-unified.css?v=20260831-riel-gate-fix" />
   <!-- Antes el JS inyectaba esto tras el primer paint → CLS (gap/búsqueda en ≥1200px); VIP ya va por @import en styles.css -->
   <link rel="stylesheet" id="mdj-header-desktop-audit-css" href="./mdj-header-desktop-audit.css?v=20260818-nav-canonico" />
   <link rel="stylesheet" href="./profile.css?v=20260820-ancho-total" />
@@ -828,9 +828,10 @@
     <section id="dj-types" class="section alt">
       <!-- LOCKED SECTION: DO NOT MODIFY -->
       <div class="container">
-        <h2 style="text-align:center;margin-bottom:10px;">Tipos de DJ</h2>
+        <h2 style="text-align:center;margin-bottom:10px;" data-i18n="djtypes-title">Tipos de DJ</h2>
         <p
-          style="text-align:center;color:var(--muted);margin-bottom:40px;max-width:580px;margin-left:auto;margin-right:auto;line-height:1.6;">
+          style="text-align:center;color:var(--muted);margin-bottom:40px;max-width:580px;margin-left:auto;margin-right:auto;line-height:1.6;"
+          data-i18n="djtypes-intro">
           Antes de tocar un mixer, debes entender algo crítico: no todos los DJs hacen lo mismo. Uno de los errores más
           comunes es querer estar en todos los escenarios sin dominar ninguno.
         </p>
@@ -842,10 +843,10 @@
             <div class="exp-img" style="background-image:url('./assets/course/reel-slide4-wedding.png');"></div>
             <div class="exp-content">
               <div class="exp-venue">Wedding & Social DJ</div>
-              <div class="exp-type">Bodas · Quinces · Eventos sociales</div>
-              <p class="exp-quote">El DJ que actúa como director de experiencia. Coordina entrada, brindis, primer baile
+              <div class="exp-type" data-i18n="djtypes-wedding-type">Bodas · Quinces · Eventos sociales</div>
+              <p class="exp-quote" data-i18n="djtypes-wedding-quote">El DJ que actúa como director de experiencia. Coordina entrada, brindis, primer baile
                 y mantiene la energía del evento con precisión protocolar.</p>
-              <div style="margin-top:10px;font-size:12px;color:var(--gold);font-weight:700;">✓ Ideal si buscas:
+              <div style="margin-top:10px;font-size:12px;color:var(--gold);font-weight:700;" data-i18n="djtypes-wedding-ideal">✓ Ideal si buscas:
                 elegancia, emoción y coordinación perfecta</div>
             </div>
           </div>
@@ -855,10 +856,10 @@
             <div class="exp-img" style="background-image:url('./assets/course/reel-slide3-club.png');"></div>
             <div class="exp-content">
               <div class="exp-venue">Club / Resident DJ</div>
-              <div class="exp-type">Clubs · Bares · Residencias nocturnas</div>
-              <p class="exp-quote">Especialista en mantener la pista llena de principio a fin. Domina la lectura del
+              <div class="exp-type" data-i18n="djtypes-club-type">Clubs · Bares · Residencias nocturnas</div>
+              <p class="exp-quote" data-i18n="djtypes-club-quote">Especialista en mantener la pista llena de principio a fin. Domina la lectura del
                 público y la mezcla fluida para maximizar la energía del lugar.</p>
-              <div style="margin-top:10px;font-size:12px;color:var(--gold);font-weight:700;">✓ Ideal si buscas: alta
+              <div style="margin-top:10px;font-size:12px;color:var(--gold);font-weight:700;" data-i18n="djtypes-club-ideal">✓ Ideal si buscas: alta
                 energía y pista de baile que no para</div>
             </div>
           </div>
@@ -868,10 +869,10 @@
             <div class="exp-img" style="background-image:url('./assets/course/reel-slide5-clubbing.png');"></div>
             <div class="exp-content">
               <div class="exp-venue">Open Format DJ</div>
-              <div class="exp-type">Fiestas privadas · Corporativos · Brunchs</div>
-              <p class="exp-quote">El DJ versátil. Fluye entre géneros — salsa, reggaeton, hip-hop, pop — leyendo la
+              <div class="exp-type" data-i18n="djtypes-open-type">Fiestas privadas · Corporativos · Brunchs</div>
+              <p class="exp-quote" data-i18n="djtypes-open-quote">El DJ versátil. Fluye entre géneros — salsa, reggaeton, hip-hop, pop — leyendo la
                 sala en tiempo real y adaptándose a cualquier audiencia.</p>
-              <div style="margin-top:10px;font-size:12px;color:var(--gold);font-weight:700;">✓ Ideal si buscas: variedad
+              <div style="margin-top:10px;font-size:12px;color:var(--gold);font-weight:700;" data-i18n="djtypes-open-ideal">✓ Ideal si buscas: variedad
                 musical y flexibilidad total</div>
             </div>
           </div>
@@ -881,10 +882,10 @@
             <div class="exp-img" style="background-image:url('./assets/course/reel-slide2-festival.png');"></div>
             <div class="exp-content">
               <div class="exp-venue">Festival / Performance DJ</div>
-              <div class="exp-type">Festivales · Grandes eventos · Conciertos</div>
-              <p class="exp-quote">Diseñado para el escenario grande. Maneja multitudes masivas, producción en vivo y
+              <div class="exp-type" data-i18n="djtypes-festival-type">Festivales · Grandes eventos · Conciertos</div>
+              <p class="exp-quote" data-i18n="djtypes-festival-quote">Diseñado para el escenario grande. Maneja multitudes masivas, producción en vivo y
                 momentos de impacto máximo con setlists de alto octanaje.</p>
-              <div style="margin-top:10px;font-size:12px;color:var(--gold);font-weight:700;">✓ Ideal si buscas: impacto
+              <div style="margin-top:10px;font-size:12px;color:var(--gold);font-weight:700;" data-i18n="djtypes-festival-ideal">✓ Ideal si buscas: impacto
                 visual y sonoro a gran escala</div>
             </div>
           </div>
@@ -894,10 +895,10 @@
             <div class="exp-img" style="background-image:url('./assets/course/tipo06-corporate.png');"></div>
             <div class="exp-content">
               <div class="exp-venue">DJ Corporativo</div>
-              <div class="exp-type">Lanzamientos · Convenciones · Networking</div>
-              <p class="exp-quote">Imagen impecable y protocolo empresarial. El DJ más sobre-exigido en presentación —
+              <div class="exp-type" data-i18n="djtypes-corporate-type">Lanzamientos · Convenciones · Networking</div>
+              <p class="exp-quote" data-i18n="djtypes-corporate-quote">Imagen impecable y protocolo empresarial. El DJ más sobre-exigido en presentación —
                 aquí tu presencia es el contrato.</p>
-              <div style="margin-top:10px;font-size:12px;color:var(--gold);font-weight:700;">✓ Ideal si buscas:
+              <div style="margin-top:10px;font-size:12px;color:var(--gold);font-weight:700;" data-i18n="djtypes-corporate-ideal">✓ Ideal si buscas:
                 profesionalismo, elegancia ejecutiva y marca</div>
             </div>
           </div>
@@ -907,10 +908,10 @@
             <div class="exp-img" style="background-image:url('./assets/course/tipo07-animator.png');"></div>
             <div class="exp-content">
               <div class="exp-venue">DJ Animador / MC</div>
-              <div class="exp-type">Fiestas · Shows en vivo · Hora loca</div>
-              <p class="exp-quote">El showman. Combina DJ con animación, dinámicas y hora loca. El alma visible del
+              <div class="exp-type" data-i18n="djtypes-animator-type">Fiestas · Shows en vivo · Hora loca</div>
+              <p class="exp-quote" data-i18n="djtypes-animator-quote">El showman. Combina DJ con animación, dinámicas y hora loca. El alma visible del
                 evento — carisma genuino o no improvises este rol.</p>
-              <div style="margin-top:10px;font-size:12px;color:var(--gold);font-weight:700;">✓ Ideal si buscas: energía
+              <div style="margin-top:10px;font-size:12px;color:var(--gold);font-weight:700;" data-i18n="djtypes-animator-ideal">✓ Ideal si buscas: energía
                 extrema, participación total del público</div>
             </div>
           </div>
@@ -918,9 +919,9 @@
         </div>
 
         <div style="text-align:center;margin-top:40px;">
-          <p style="color:var(--muted);margin-bottom:16px;font-size:14px;">¿No estás seguro cuál DJ es el correcto para
+          <p style="color:var(--muted);margin-bottom:16px;font-size:14px;" data-i18n="djtypes-cta-text">¿No estás seguro cuál DJ es el correcto para
             tu evento?</p>
-          <a href="login.html" class="btn-pill" style="padding:12px 32px;font-size:14px;">Consúltanos gratis →</a>
+          <a href="login.html" class="btn-pill" style="padding:12px 32px;font-size:14px;" data-i18n="djtypes-cta-btn">Consúltanos gratis →</a>
         </div>
       </div>
     </section>
@@ -1483,7 +1484,7 @@
   <script defer src="./form-handler.js?v=20260420-deploy"></script>
   <script defer src="./header-smart-search.js?v=20260515-unified-header-geometry-1"></script>
   <script defer src="./mdj-identity.js?v=20260617-buyer-artist-fix-1"></script>
-  <script defer src="./mdjb-shared-header.js?v=20260825-nav-9-slots"></script>
+  <script defer src="./mdjb-shared-header.js?v=20260831-seed-race-fix"></script>
   <script>
     /* Inicio: trinquete en #mainNav (scroll + flechas); no reactiva tick en otros carruseles por scroll. */
     window.MDJ_ENABLE_NAV_TICK_AUDIO = true;

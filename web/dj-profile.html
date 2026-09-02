@@ -130,7 +130,7 @@
         })();
     </script>
     <link rel="stylesheet" href="./styles.css?v=20260823-hero-card-altura" />
-    <link rel="stylesheet" href="./header-unified.css?v=20260824-marca-fab-important" />
+    <link rel="stylesheet" href="./header-unified.css?v=20260831-riel-gate-fix" />
     <link rel="stylesheet" href="./profile.css?v=20260825-share-btn-gold" />
     <style id="mdj-qr-view-header-shield">
         /* Blindaje definitivo: especificidad mayor que #mainHeader.header.mdj-header-unified { display:flex !important } en header-unified.css */
@@ -3483,11 +3483,11 @@
                             <div class="cert-badge-block">
                                 <span class="cert-badge-icon">🏆</span>
                                 <div class="cert-badge-info">
-                                    <div class="cert-badge-title" id="display-cert-title">Miami DJ Beat Certified DJ
+                                    <div class="cert-badge-title" id="display-cert-title" data-i18n="profile-cert-badge-title">Miami DJ Beat Certified DJ
                                     </div>
                                     <div class="cert-badge-id" id="display-cert-id">Credential ID: MDB-2025-001</div>
                                     <div class="cert-badge-status">
-                                        <span id="display-cert-status-label">Verified Credential</span>
+                                        <span id="display-cert-status-label" data-i18n="profile-cert-badge-status">Verified Credential</span>
                                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
                                             stroke="currentColor" stroke-width="3" stroke-linecap="round"
                                             stroke-linejoin="round">
@@ -3504,12 +3504,12 @@
                         <div class="founder-badge">
                             <span style="font-size:20px;">🏆</span>
                             <div>
-                                <div class="f-title">FOUNDING MEMBER</div>
+                                <div class="f-title" data-i18n="profile-founder-title">FOUNDING MEMBER</div>
                                 <div class="f-sub" id="pub-member-number"
                                     style="display:flex; align-items:center; gap:8px;">
                                     <img loading="lazy" src="./assets/certified-badge.png"
                                         style="width:24px; height:24px; object-fit:contain;" alt="Certified Badge">
-                                    <span>Miami DJ Beat Certified · #1 of 10</span>
+                                    <span data-i18n="profile-founder-rank">Miami DJ Beat Certified · #1 of 10</span>
                                 </div>
                             </div>
                         </div>
@@ -3528,7 +3528,7 @@
 
             <!-- Columna principal (valoración → Bio → venues; opiniones hero arriba) -->
             <div class="dj-main-col">
-                <a href="./dj-dashboard.html" class="back-btn" id="back-dashboard-btn" style="display:none;">← Volver al panel</a>
+                <a href="./dj-dashboard.html" class="back-btn" id="back-dashboard-btn" style="display:none;" data-i18n="profile-back-to-panel">← Volver al panel</a>
 
                 <!-- ══ NOTA DE FUTURO · RESENAS CON INICIO DE SESION DE GOOGLE ═══════
                      NO CONSTRUIR. Es solo la pista de aterrizaje, dejada a peticion
@@ -3569,7 +3569,7 @@
                         <details class="pub-mobile-section-details" id="pub-reviews-details" open>
                             <summary class="pub-mobile-section-summary">
                                 <span class="pub-mobile-section-summary-head">
-                                    <span class="pub-mobile-section-title">OPINIONES</span>
+                                    <span class="pub-mobile-section-title" data-i18n="profile-opiniones-title">OPINIONES</span>
                                 </span>
                                 <span class="pub-mobile-section-rule" aria-hidden="true"></span>
                                 <span class="pub-mobile-section-chevron" aria-hidden="true">▼</span>
@@ -3632,13 +3632,13 @@
                     <details class="pub-mobile-section-details" id="pub-venues-details">
                         <summary class="pub-mobile-section-summary">
                             <span class="pub-mobile-section-summary-head">
-                                <span class="pub-mobile-section-title">ACTUALMENTE TRABAJA EN</span>
+                                <span class="pub-mobile-section-title" data-i18n="profile-currently-at-title">ACTUALMENTE TRABAJA EN</span>
                             </span>
                             <span class="pub-mobile-section-rule" aria-hidden="true"></span>
                             <span class="pub-mobile-section-chevron" aria-hidden="true">▼</span>
                         </summary>
                         <div class="pub-mobile-section-body">
-                            <div class="dj-card-label">ACTUALMENTE TRABAJANDO EN</div>
+                            <div class="dj-card-label" data-i18n="profile-currently-at-label">ACTUALMENTE TRABAJANDO EN</div>
                             <div id="pub-venues-body">
                                 <!-- populated by JS -->
                             </div>
@@ -3651,7 +3651,7 @@
                     <details class="pub-mobile-section-details" id="pub-avail-details" open>
                         <summary class="pub-mobile-section-summary">
                             <span class="pub-mobile-section-summary-head">
-                                <span class="pub-mobile-section-title">DISPONIBILIDAD</span>
+                                <span class="pub-mobile-section-title" data-i18n="profile-disponibilidad-title">DISPONIBILIDAD</span>
                             </span>
                             <span class="pub-mobile-section-rule" aria-hidden="true"></span>
                             <span class="pub-mobile-section-chevron" aria-hidden="true">▼</span>
@@ -3664,27 +3664,27 @@
                             <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:4px;">
                                 <select id="dj-avail-month"
                                     style="flex:1;min-width:80px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#fff;padding:8px 10px;border-radius:8px;font-size:12px;font-family:inherit;">
-                                    <option value="" disabled selected>Mes</option>
-                                    <option value="1">Enero</option>
-                                    <option value="2">Febrero</option>
-                                    <option value="3">Marzo</option>
-                                    <option value="4">Abril</option>
-                                    <option value="5">Mayo</option>
-                                    <option value="6">Junio</option>
-                                    <option value="7">Julio</option>
-                                    <option value="8">Agosto</option>
-                                    <option value="9">Septiembre</option>
-                                    <option value="10">Octubre</option>
-                                    <option value="11">Noviembre</option>
-                                    <option value="12">Diciembre</option>
+                                    <option value="" disabled selected data-i18n="option-month">Mes</option>
+                                    <option value="1" data-i18n="month-1">Enero</option>
+                                    <option value="2" data-i18n="month-2">Febrero</option>
+                                    <option value="3" data-i18n="month-3">Marzo</option>
+                                    <option value="4" data-i18n="month-4">Abril</option>
+                                    <option value="5" data-i18n="month-5">Mayo</option>
+                                    <option value="6" data-i18n="month-6">Junio</option>
+                                    <option value="7" data-i18n="month-7">Julio</option>
+                                    <option value="8" data-i18n="month-8">Agosto</option>
+                                    <option value="9" data-i18n="month-9">Septiembre</option>
+                                    <option value="10" data-i18n="month-10">Octubre</option>
+                                    <option value="11" data-i18n="month-11">Noviembre</option>
+                                    <option value="12" data-i18n="month-12">Diciembre</option>
                                 </select>
                                 <select id="dj-avail-day"
                                     style="flex:1;min-width:60px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#fff;padding:8px 10px;border-radius:8px;font-size:12px;font-family:inherit;">
-                                    <option value="" disabled selected>Día</option>
+                                    <option value="" disabled selected data-i18n="option-day">Día</option>
                                 </select>
                                 <select id="dj-avail-year"
                                     style="flex:1;min-width:70px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#fff;padding:8px 10px;border-radius:8px;font-size:12px;font-family:inherit;">
-                                    <option value="" disabled selected>Año</option>
+                                    <option value="" disabled selected data-i18n="option-year">Año</option>
                                 </select>
                             </div>
                             <button id="dj-avail-check-btn" onclick="checkDJAvailability()"
@@ -3702,7 +3702,7 @@
             <div class="dj-side-col">
             <!-- Public Action Buttons (SOUNDFORTIPS & Re-Routing) -->
             <div class="dj-card" id="public-action-buttons" style="margin-top:20px;">
-                <div class="dj-card-label"
+                <div class="dj-card-label" data-i18n="profile-interactuar-title"
                     style="text-align:center; justify-content:center; letter-spacing:4px; margin-bottom: 8px;">
                     INTERACTUAR</div>
                 <p id="sft-public-interact-hint" class="sft-public-interact-hint" data-i18n="sft-public-interact-hint" aria-hidden="true"
@@ -3771,20 +3771,20 @@
                         style="width:100%; display:flex; align-items:center; justify-content:center; gap:8px; background:rgba(197,160,89,0.08); color:#fff; border:1px solid rgba(197,160,89,0.45); padding:10px 12px; border-radius:10px; font-size:12px; font-weight:900; letter-spacing:0.08em; cursor:pointer; text-transform:uppercase; transition:all 0.2s ease; margin-bottom:12px;"
                         onmouseover="this.style.background='rgba(197,160,89,0.22)'; this.style.boxShadow='0 5px 18px rgba(197,160,89,0.28)'"
                         onmouseout="this.style.background='rgba(197,160,89,0.08)'; this.style.boxShadow='none'">
-                        <span style="font-size:14px;">📅</span> CHECK DISPONIBILIDAD
+                        <span style="font-size:14px;">📅</span> <span data-i18n="profile-owner-check-avail">CHECK DISPONIBILIDAD</span>
                     </button>
                     <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
                         <div>
-                            <div class="dj-card-label" style="margin:0;">OWNER MODE</div>
-                            <div style="margin-top:6px; font-weight:900; color:#fff; font-size:14px; line-height:1.2;">
+                            <div class="dj-card-label" style="margin:0;" data-i18n="profile-owner-mode-label">OWNER MODE</div>
+                            <div style="margin-top:6px; font-weight:900; color:#fff; font-size:14px; line-height:1.2;" data-i18n="profile-owner-mode-title">
                                 Profile Management
                             </div>
                         </div>
-                        <div style="font-weight:900; color:var(--gold); font-size:11px; letter-spacing:1.5px;">
+                        <div style="font-weight:900; color:var(--gold); font-size:11px; letter-spacing:1.5px;" data-i18n="profile-owner-mode-badge">
                             DJ
                         </div>
                     </div>
-                    <a class="btn-dash" href="./dj-dashboard.html" style="margin-top:-2px;">
+                    <a class="btn-dash" href="./dj-dashboard.html" style="margin-top:-2px;" data-i18n="profile-owner-open-dashboard">
                         Open Dashboard
                     </a>
                     <div
@@ -3794,8 +3794,8 @@
                                 <div style="flex:1; min-width:0;">
                                     <div
                                         style="font-size:11px; font-weight:800; color:var(--gold); letter-spacing:0.06em;">
-                                        SOUNDFORTIPS™ LIVE <span style="opacity:0.75;">· PRO</span></div>
-                                    <div style="font-size:11px; color:rgba(255,255,255,0.48); margin-top:5px; line-height:1.35;">
+                                        SOUNDFORTIPS™ LIVE <span style="opacity:0.75;" data-i18n="profile-sft-pro-suffix">· PRO</span></div>
+                                    <div style="font-size:11px; color:rgba(255,255,255,0.48); margin-top:5px; line-height:1.35;" data-i18n="profile-sft-onoff-hint">
                                         ON = el público puede enviar peticiones. OFF = no recibes pedidos. El interruptor también está en la cabina.</div>
                                 </div>
                                 <label class="sft-owner-switch" title="SoundForTips ON / OFF">
@@ -3804,27 +3804,27 @@
                                 </label>
                             </div>
                             <p style="font-size:10px;margin:10px 0 0;line-height:1.4;color:rgba(255,255,255,0.42);">
-                                <a href="./dj-dashboard.html?tab=settings&amp;panel=soundfortips" style="color:var(--gold);font-weight:800;text-decoration:underline;">Zelle / Venmo / PayPal → configurar en CONFIG</a>
+                                <a href="./dj-dashboard.html?tab=settings&amp;panel=soundfortips" style="color:var(--gold);font-weight:800;text-decoration:underline;" data-i18n="profile-sft-config-link">Zelle / Venmo / PayPal → configurar en CONFIG</a>
                             </p>
                         </div>
                         <div id="sft-owner-lite-block" style="display:none;">
-                            <div style="font-size:11px; font-weight:800; color:var(--gold); letter-spacing:0.06em;">SOUNDFORTIPS™ LIVE <span style="opacity:0.75;">· PRO de pago</span></div>
-                            <p style="font-size:11px; color:rgba(255,255,255,0.55); margin:8px 0 0; line-height:1.4;">
+                            <div style="font-size:11px; font-weight:800; color:var(--gold); letter-spacing:0.06em;">SOUNDFORTIPS™ LIVE <span style="opacity:0.75;" data-i18n="profile-sft-pro-paid-suffix">· PRO de pago</span></div>
+                            <p style="font-size:11px; color:rgba(255,255,255,0.55); margin:8px 0 0; line-height:1.4;" data-i18n="profile-sft-lite-notice">
                                 SoundForTips es solo para <strong>DJ PRO con suscripción de pago</strong> (MDJPRO): peticiones con propina, cabina, SMS al fan y registro de la noche. LITE no incluye esta función.</p>
-                            <a href="./dj-dashboard.html#panel-billing" style="display:inline-block;margin-top:10px;font-size:12px;font-weight:800;color:var(--gold);text-decoration:underline;">Activar PRO →</a>
+                            <a href="./dj-dashboard.html#panel-billing" style="display:inline-block;margin-top:10px;font-size:12px;font-weight:800;color:var(--gold);text-decoration:underline;" data-i18n="profile-sft-activate-pro">Activar PRO →</a>
                         </div>
                     </div>
                 </div>
 
                 <!-- Economía (solo dueño): saldo acreditado + acumulado de sesión (cabina) -->
                 <div class="dj-card" id="owner-wallet-card" style="display:none;">
-                    <div class="dj-card-label">ECONOMÍA · SOUNDFORTIPS</div>
-                    <p class="owner-wallet-sub" style="margin:0 0 6px;font-size:11px;">Saldo acreditado (tips ya abonados tras cerrar cabina)</p>
+                    <div class="dj-card-label" data-i18n="profile-wallet-title">ECONOMÍA · SOUNDFORTIPS</div>
+                    <p class="owner-wallet-sub" style="margin:0 0 6px;font-size:11px;" data-i18n="profile-wallet-balance-hint">Saldo acreditado (tips ya abonados tras cerrar cabina)</p>
                     <div id="owner-wallet-balance" class="owner-wallet-luxury">$0.00</div>
                     <div id="owner-wallet-session-wrap" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.1);">
-                        <div style="font-size:10px;font-weight:800;letter-spacing:0.08em;color:rgba(197,160,89,0.95);">ENTRANDO ESTA NOCHE (sesión cabina)</div>
+                        <div style="font-size:10px;font-weight:800;letter-spacing:0.08em;color:rgba(197,160,89,0.95);" data-i18n="profile-wallet-tonight-label">ENTRANDO ESTA NOCHE (sesión cabina)</div>
                         <div id="owner-wallet-session-pending" style="font-size:20px;font-weight:900;color:#86efac;margin-top:6px;">+$0.00</div>
-                        <p class="owner-wallet-sub" style="margin-top:8px;">Suma de la noche: se abona a tu saldo de golpe al <strong>cerrar la pestaña</strong> SoundForTips (fin de sesión).</p>
+                        <p class="owner-wallet-sub" style="margin-top:8px;" data-i18n="profile-wallet-tonight-hint">Suma de la noche: se abona a tu saldo de golpe al <strong>cerrar la pestaña</strong> SoundForTips (fin de sesión).</p>
                     </div>
                 </div>
 
@@ -3832,11 +3832,11 @@
                      misma RPC de solo lectura ya usada en account-settings.html, sin
                      duplicar la lista completa aquí. Solo un resumen + enlace. -->
                 <div class="dj-card" id="legal-compliance-card" style="display:none;">
-                    <div class="dj-card-label">DOCUMENTACIÓN LEGAL &amp; W-9</div>
+                    <div class="dj-card-label" data-i18n="profile-legal-title">DOCUMENTACIÓN LEGAL &amp; W-9</div>
                     <div id="legal-compliance-rows" style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
-                        <div style="font-size:11px;color:rgba(255,255,255,0.35);">Cargando…</div>
+                        <div style="font-size:11px;color:rgba(255,255,255,0.35);" data-i18n="profile-legal-loading">Cargando…</div>
                     </div>
-                    <a href="./account-settings.html#legal" style="display:inline-block;margin-top:12px;font-size:12px;font-weight:800;color:var(--gold);text-decoration:underline;">Ver todos mis documentos →</a>
+                    <a href="./account-settings.html#legal" style="display:inline-block;margin-top:12px;font-size:12px;font-weight:800;color:var(--gold);text-decoration:underline;" data-i18n="profile-legal-view-all">Ver todos mis documentos →</a>
                 </div>
 
                 <!-- Staff/manager: criterios de venta (teléfono/directo) — no incluye Cash Flow del artista. -->
@@ -3954,11 +3954,11 @@
                         </div>
                     </div>
                     <div class="qr-label" id="seasonal-qr-subtitle">$20 DE DESCUENTO</div>
-                    <div class="qr-sublabel">Aprovecha esta oferta por tiempo limitado</div>
+                    <div class="qr-sublabel" data-i18n="profile-promo-sublabel">Aprovecha esta oferta por tiempo limitado</div>
                 </div>
 
                 <!-- TOAST PARA NOTIFICACIONES (COMPARTIR) -->
-                <div id="share-toast" class="toast">¡Enlace copiado!</div>
+                <div id="share-toast" class="toast" data-i18n="profile-toast-link-copied">¡Enlace copiado!</div>
             </div> <!-- closes sidebar-stack -->
             </div> <!-- closes dj-side-col -->
         </div> <!-- closes dj-body -->
@@ -4766,16 +4766,17 @@
                 if (error || !docs) { rows.innerHTML = '<div style="font-size:11px;color:rgba(255,80,80,0.6);">Error al cargar.</div>'; return; }
                 const hasContract = docs.some(d => LEGAL_SERVICE_TYPES.has(d.contract_type) && LEGAL_SIGNED_STATUSES.has(d.status));
                 const hasW9 = docs.some(d => d.contract_type === 'W9' && LEGAL_SIGNED_STATUSES.has(d.status));
+                const _t = (k, f) => (window.i18n && window.i18n.t(k)) || f;
                 const row = (label, ok) => (
                     '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">' +
                         '<span style="font-size:12px;color:rgba(255,255,255,0.7);">' + label + '</span>' +
                         '<span style="font-size:10px;font-weight:800;letter-spacing:.03em;padding:3px 9px;border-radius:999px;' +
                             (ok ? 'background:rgba(34,197,94,0.14);color:#4ade80;border:1px solid rgba(34,197,94,0.35);'
                                 : 'background:rgba(251,146,60,0.12);color:#fb923c;border:1px solid rgba(251,146,60,0.3);') +
-                        '">' + (ok ? '✓ FIRMADO' : 'PENDIENTE') + '</span>' +
+                        '">' + (ok ? _t('profile-legal-status-signed', '✓ FIRMADO') : _t('profile-legal-status-pending', 'PENDIENTE')) + '</span>' +
                     '</div>'
                 );
-                rows.innerHTML = row('Contrato de Servicios', hasContract) + row('Formulario W-9', hasW9);
+                rows.innerHTML = row(_t('profile-legal-row-contract', 'Contrato de Servicios'), hasContract) + row(_t('profile-legal-row-w9', 'Formulario W-9'), hasW9);
             } catch (e) {
                 console.warn('[legal-compliance] load:', e);
                 rows.innerHTML = '<div style="font-size:11px;color:rgba(255,80,80,0.6);">Error al cargar.</div>';
@@ -5555,7 +5556,12 @@
             function mdjParseWeeklyResidencyRows(weeklyRaw) {
                 var weekly = mdjParseMaybeJson(weeklyRaw);
                 if (!weekly || typeof weekly !== 'object') return [];
-                var dayLabels = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+                var _tdow = function (k, f) { return (window.i18n && window.i18n.t(k)) || f; };
+                var dayLabels = [
+                    _tdow('profile-dow-sun', 'SUN'), _tdow('profile-dow-mon', 'MON'), _tdow('profile-dow-tue', 'TUE'),
+                    _tdow('profile-dow-wed', 'WED'), _tdow('profile-dow-thu', 'THU'), _tdow('profile-dow-fri', 'FRI'),
+                    _tdow('profile-dow-sat', 'SAT')
+                ];
                 var rows = [];
                 for (var d = 0; d < 7; d++) {
                     var dayArr = weekly[String(d)] || weekly[d];
@@ -5666,14 +5672,16 @@
             }
 
             function mdjResidencyShiftLabel(shift) {
-                if (shift === 'D') return 'DAY';
-                if (shift === 'N') return 'NIGHT';
+                var _t = function (k, f) { return (window.i18n && window.i18n.t(k)) || f; };
+                if (shift === 'D') return _t('profile-res-shift-day', 'DAY');
+                if (shift === 'N') return _t('profile-res-shift-night', 'NIGHT');
                 return '-';
             }
 
             function mdjBuildResidencyTableHtml(rows, todayIndex) {
+                var _t = function (k, f) { return (window.i18n && window.i18n.t(k)) || f; };
                 var ti = todayIndex != null ? todayIndex : new Date().getDay();
-                var header = '<div class="res-row header"><div>DAY</div><div>SHIFT</div><div>VENUE</div></div>';
+                var header = '<div class="res-row header"><div>' + _t('profile-res-col-day', 'DAY') + '</div><div>' + _t('profile-res-col-shift', 'SHIFT') + '</div><div>' + _t('profile-res-col-venue', 'VENUE') + '</div></div>';
                 var body = rows.map(function (r) {
                     var isToday = r.dayIndex >= 0 && r.dayIndex === ti;
                     var dayCell = (r.dayIndex >= 0 && r.dayLabel) ? mdjEscapeHtml(r.dayLabel) : '-';
@@ -5693,7 +5701,9 @@
                 var n = rows.length;
                 var todayIndex = new Date().getDay();
                 var tableHtml = mdjBuildResidencyTableHtml(rows, todayIndex);
-                var head = hasResident ? 'RESIDENTE' : 'ACTIVO';
+                var head = hasResident
+                    ? ((window.i18n && window.i18n.t('profile-res-head-resident')) || 'RESIDENTE')
+                    : ((window.i18n && window.i18n.t('profile-res-head-active')) || 'ACTIVO');
                 var bodyList = '<details class="mdj-residency-details"><summary class="res-summary">' + head + ' (' + n + ')</summary><div class="mdj-residency-list">' + tableHtml + '</div></details>';
                 return '<div class="venue-card" style="margin-top:0;">' + bodyList + '</div>';
             }
@@ -6455,7 +6465,9 @@
             var el = document.getElementById('pub-rate-summary');
             if (!el) return;
             if (count > 0 && avgText) {
-                el.textContent = '★ ' + avgText + ' promedio · ' + count + (count === 1 ? ' opinión' : ' opiniones');
+                var _avgW = (window.i18n && window.i18n.t('profile-reviews-avg-label-lc')) || 'promedio';
+                var _revW = (window.i18n && window.i18n.t(count === 1 ? 'profile-reviews-count-one' : 'profile-reviews-count-many')) || (count === 1 ? 'opinión' : 'opiniones');
+                el.textContent = '★ ' + avgText + ' ' + _avgW + ' · ' + count + ' ' + _revW;
                 el.style.display = 'block';
             } else {
                 el.textContent = '';
@@ -6783,7 +6795,9 @@
             const avg = (officialRating != null) ? officialRating.toFixed(1) : '—';
 
             const titleEl = document.getElementById('pub-reviews-title');
-            if (titleEl) titleEl.textContent = hasReviews ? 'OPINIONES DE CLIENTES' : 'OPINIONES DE CLIENTES · SIN RESEÑAS AÚN';
+            if (titleEl) titleEl.textContent = hasReviews
+                ? ((window.i18n && window.i18n.t('profile-reviews-header')) || 'OPINIONES DE CLIENTES')
+                : ((window.i18n && window.i18n.t('profile-reviews-header-empty')) || 'OPINIONES DE CLIENTES · SIN RESEÑAS AÚN');
 
             const carousel = document.getElementById('pub-reviews-carousel');
             if (carousel) {
@@ -6797,8 +6811,8 @@
             const avgLabel = document.getElementById('pub-reviews-avg');
             if (avgLabel) {
                 avgLabel.innerText = hasReviews
-                    ? ('★ ' + avg + ' PROMEDIO')
-                    : 'Sin reseñas aún';
+                    ? ('★ ' + avg + ' ' + ((window.i18n && window.i18n.t('profile-reviews-avg-label')) || 'PROMEDIO'))
+                    : ((window.i18n && window.i18n.t('profile-reviews-none-yet')) || 'Sin reseñas aún');
             }
 
             if (typeof mdjPubReviewPaintRateSummary === 'function') {
@@ -6850,18 +6864,18 @@
             <!-- HEADER & RANGE SELECTOR -->
             <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:40px;">
                 <div>
-                    <h1 style="font-size:32px; font-weight:900; color:#fff; margin:0; letter-spacing:-1px;">
+                    <h1 style="font-size:32px; font-weight:900; color:#fff; margin:0; letter-spacing:-1px;" data-i18n="cf-mock-title">
                         Salud Profesional</h1>
-                    <p style="color:rgba(255,255,255,0.4); margin-top:6px; font-size:14px;">Análisis de tu
+                    <p style="color:rgba(255,255,255,0.4); margin-top:6px; font-size:14px;" data-i18n="profile-flow-intro">Análisis de tu
                         posicionamiento, ingresos y engagement en MDJPRO.</p>
                 </div>
                 <div style="display:flex; gap:10px;">
                     <select id="metrics-range" onchange="loadFlowData(this.value)"
                         style="background:#111114; border:1px solid rgba(255,255,255,0.1); color:#fff; padding:12px 24px; border-radius:12px; font-size:13px; font-weight:700; outline:none; cursor:pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
-                        <option value="7d">ÚLTIMOS 7 DÍAS</option>
-                        <option value="30d" selected>ÚLTIMOS 30 DÍAS</option>
-                        <option value="90d">ÚLTIMOS 90 DÍAS</option>
-                        <option value="1y">VISTA ANUAL</option>
+                        <option value="7d" data-i18n="profile-flow-range-7d">ÚLTIMOS 7 DÍAS</option>
+                        <option value="30d" selected data-i18n="profile-flow-range-30d">ÚLTIMOS 30 DÍAS</option>
+                        <option value="90d" data-i18n="profile-flow-range-90d">ÚLTIMOS 90 DÍAS</option>
+                        <option value="1y" data-i18n="profile-flow-range-1y">VISTA ANUAL</option>
                     </select>
                 </div>
             </div>
@@ -6869,62 +6883,62 @@
             <!-- 🔹 BLOQUE 1 — KPI CARDS (6 cards) -->
             <div class="flow-grid">
                 <div class="flow-card">
-                    <div class="flow-card-label">Ingresos Totales</div>
+                    <div class="flow-card-label" data-i18n="profile-flow-kpi-gross">Ingresos Totales</div>
                     <div id="kpi-gross" class="flow-card-value">$0.00</div>
                     <div id="trend-gross" class="flow-card-trend">
                         <span>•••</span>
                     </div>
                 </div>
                 <div class="flow-card">
-                    <div class="flow-card-label">Eventos Completados</div>
+                    <div class="flow-card-label" data-i18n="profile-flow-kpi-events-done">Eventos Completados</div>
                     <div id="kpi-events-done" class="flow-card-value">0</div>
                     <div id="trend-events" class="flow-card-trend">
                         <span>•••</span>
                     </div>
                 </div>
                 <div class="flow-card">
-                    <div class="flow-card-label">Eventos Pendientes</div>
+                    <div class="flow-card-label" data-i18n="profile-flow-kpi-events-pending">Eventos Pendientes</div>
                     <div id="kpi-events-pending" class="flow-card-value">0</div>
-                    <div class="flow-card-trend" style="color:rgba(255,255,255,0.3)">Próximos</div>
+                    <div class="flow-card-trend" style="color:rgba(255,255,255,0.3)" data-i18n="profile-flow-trend-upcoming">Próximos</div>
                 </div>
                 <div class="flow-card">
-                    <div class="flow-card-label">Días con residencia / sem</div>
+                    <div class="flow-card-label" data-i18n="profile-flow-kpi-residency-days">Días con residencia / sem</div>
                     <div id="kpi-residency-days" class="flow-card-value" style="color:#e9d5ff;">0</div>
-                    <div id="trend-residency" class="flow-card-trend" style="color:rgba(255,255,255,0.35)">Agenda +
+                    <div id="trend-residency" class="flow-card-trend" style="color:rgba(255,255,255,0.35)" data-i18n="profile-flow-trend-agenda-profile">Agenda +
                         perfil</div>
                 </div>
                 <div class="flow-card">
-                    <div class="flow-card-label">Turnos residente</div>
+                    <div class="flow-card-label" data-i18n="profile-flow-kpi-residency-slots">Turnos residente</div>
                     <div id="kpi-residency-slots" class="flow-card-value" style="color:#d8b4fe;">0</div>
-                    <div class="flow-card-trend" style="color:rgba(255,255,255,0.3)">Slots activos en agenda</div>
+                    <div class="flow-card-trend" style="color:rgba(255,255,255,0.3)" data-i18n="profile-flow-trend-slots">Slots activos en agenda</div>
                 </div>
                 <div class="flow-card">
-                    <div class="flow-card-label">Venues en perfil</div>
+                    <div class="flow-card-label" data-i18n="profile-flow-kpi-residency-venues">Venues en perfil</div>
                     <div id="kpi-residency-venues" class="flow-card-value" style="color:#c4b5fd;">0</div>
-                    <div class="flow-card-trend" style="color:rgba(255,255,255,0.3)">Red social / club</div>
+                    <div class="flow-card-trend" style="color:rgba(255,255,255,0.3)" data-i18n="profile-flow-trend-venues">Red social / club</div>
                 </div>
                 <div class="flow-card">
-                    <div class="flow-card-label">Comisión Platform</div>
+                    <div class="flow-card-label" data-i18n="profile-flow-kpi-comm-rate">Comisión Platform</div>
                     <div id="kpi-comm-rate" class="flow-card-value">0%</div>
-                    <div class="flow-card-trend" style="color:rgba(255,255,255,0.3)">Tasa Actual</div>
+                    <div class="flow-card-trend" style="color:rgba(255,255,255,0.3)" data-i18n="profile-flow-trend-current-rate">Tasa Actual</div>
                 </div>
                 <div class="flow-card">
-                    <div class="flow-card-label">Balance Disponible</div>
+                    <div class="flow-card-label" data-i18n="profile-flow-kpi-available">Balance Disponible</div>
                     <div id="kpi-available" class="flow-card-value" style="color:#00ff88;">$0.00</div>
-                    <div class="flow-card-trend" style="color:rgba(255,255,255,0.3)">Listo para retiro</div>
+                    <div class="flow-card-trend" style="color:rgba(255,255,255,0.3)" data-i18n="profile-flow-trend-ready">Listo para retiro</div>
                 </div>
                 <div class="flow-card">
-                    <div class="flow-card-label">Propinas (Tips)</div>
+                    <div class="flow-card-label" data-i18n="profile-flow-kpi-tips">Propinas (Tips)</div>
                     <div id="kpi-tips" class="flow-card-value" style="color:#f0cc80;">$0.00</div>
-                    <div id="trend-tips" class="flow-card-trend" style="color:rgba(255,255,255,0.3)">SoundForTips™ aceptadas · tu parte (~90%)</div>
+                    <div id="trend-tips" class="flow-card-trend" style="color:rgba(255,255,255,0.3)" data-i18n="profile-flow-trend-tips">SoundForTips™ aceptadas · tu parte (~90%)</div>
                 </div>
                 <div class="flow-card">
-                    <div class="flow-card-label">Comisiones Referidos</div>
+                    <div class="flow-card-label" data-i18n="profile-flow-kpi-commissions">Comisiones Referidos</div>
                     <div id="kpi-commissions" class="flow-card-value" style="color:#f0cc80;">$0.00</div>
-                    <div class="flow-card-trend" style="color:rgba(255,255,255,0.3)">Vía QR / Enlaces</div>
+                    <div class="flow-card-trend" style="color:rgba(255,255,255,0.3)" data-i18n="profile-flow-trend-qr">Vía QR / Enlaces</div>
                 </div>
                 <div class="flow-card">
-                    <div class="flow-card-label">Ticket Promedio</div>
+                    <div class="flow-card-label" data-i18n="profile-flow-kpi-avg-ticket">Ticket Promedio</div>
                     <div id="kpi-avg-ticket" class="flow-card-value">$0.00</div>
                     <div id="trend-avg" class="flow-card-trend">
                         <span>•••</span>
@@ -7349,6 +7363,32 @@
                 </div>
                 <div id="documentos-list" style="display:flex;flex-direction:column;gap:12px;">
                     <div style="text-align:center;padding:40px 0;color:rgba(255,255,255,0.25);font-size:13px;">Cargando documentos…</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Integraciones de calendario (2026-09-01): fase de infraestructura -- botones
+             deliberadamente inactivos (disabled). El flujo OAuth real y el despacho de
+             webhooks se construyen en una fase aparte, todavia sin arrancar. -->
+        <section style="padding:40px 0;background:#000;min-height:40vh;">
+            <div class="container" style="padding:0 56px;">
+                <div style="margin-bottom:24px;">
+                    <h2 style="font-size:32px;font-weight:900;color:#fff;margin:0;">🗓️ Integraciones</h2>
+                    <p style="color:rgba(255,255,255,0.4);margin-top:8px;">Conecta tu calendario para sincronizar tu agenda automáticamente. Próximamente.</p>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:12px;max-width:520px;">
+                    <button type="button" disabled title="Próximamente"
+                        style="display:flex;align-items:center;gap:14px;padding:16px 20px;border-radius:12px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.03);color:rgba(255,255,255,0.4);font-size:15px;font-weight:700;cursor:not-allowed;text-align:left;">
+                        <span style="font-size:22px;line-height:1;">🍎</span>
+                        <span style="flex:1;">Conectar Apple Calendar</span>
+                        <span style="font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:rgba(197,160,89,0.7);border:1px solid rgba(197,160,89,0.3);border-radius:999px;padding:3px 10px;">Próximamente</span>
+                    </button>
+                    <button type="button" disabled title="Próximamente"
+                        style="display:flex;align-items:center;gap:14px;padding:16px 20px;border-radius:12px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.03);color:rgba(255,255,255,0.4);font-size:15px;font-weight:700;cursor:not-allowed;text-align:left;">
+                        <span style="font-size:22px;line-height:1;">🗓️</span>
+                        <span style="flex:1;">Conectar Google Calendar</span>
+                        <span style="font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:rgba(197,160,89,0.7);border:1px solid rgba(197,160,89,0.3);border-radius:999px;padding:3px 10px;">Próximamente</span>
+                    </button>
                 </div>
             </div>
         </section>
@@ -14717,7 +14757,7 @@
     <script defer src="./monetization.js?v=20260422-sft-math"></script>
 
     <script defer src="./header-smart-search.js?v=20260415-CORE-CONNECTIONS"></script>
-    <script defer src="./mdjb-shared-header.js?v=20260825-nav-9-slots"></script>
+    <script defer src="./mdjb-shared-header.js?v=20260831-seed-race-fix"></script>
   <script defer src="./mdj-owner-tabs-marquee.js?v=20260818-nav-canonico"></script>
   <script defer src="./mdj-social-bar.js?v=20260819-social-contact-only"></script>
   <!-- Cart pill: badge + redirect to rentals (no heavy scripts needed here) -->

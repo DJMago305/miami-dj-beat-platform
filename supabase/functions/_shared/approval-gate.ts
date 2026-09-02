@@ -13,17 +13,52 @@ const REGISTERED_READ_TOOLS = new Set([
     // consultar_musica: lee el catalogo publico de Apple Music a traves del
     // puente mdj-music. No toca datos del negocio ni de clientes.
     "consultar_musica",
+    // consultar_efemerides (2026-09-01): solo lee birth_date/wedding_anniversary
+    // ya guardados en client_profiles/dj_profiles. No escribe nada.
+    "consultar_efemerides",
+    // consultar_historial_bitacora (2026-09-01): solo lee company_incident_log.
+    "consultar_historial_bitacora",
 ]);
 const REGISTERED_WRITE_TOOLS = new Set([
     "crear_nota_lead",
     "registrar_evento_agenda",
+    // modificar_agenda_evento (2026-08-31): agenda OPERATIVA de negocio
+    // (elixis_agenda_eventos), separada de registrar_evento_agenda (hueco
+    // personal en artist_agenda). RLS ya restringe quien puede leer/escribir
+    // cada fila; el porton aqui solo decide si ELIXIS puede llamarla sin
+    // aprobacion humana adicional, igual que el resto de escritura auto_staff.
+    "modificar_agenda_evento",
+    // gestionar_residency_schedule (2026-09-01): plantilla semanal recurrente
+    // de residencias. Ticket "aparte" que el PO ya habia diferido -- este es
+    // ese ticket. RLS de residency_schedule ya exige is_staff(); el RPC
+    // (SECURITY DEFINER, solo service_role) agrega la validacion real.
+    "gestionar_residency_schedule",
+    // registrar_incidente_bitacora (2026-09-01): bitacora historica de
+    // incidentes. RLS de company_incident_log ya restringe DJs a sus propios
+    // incidentes; el RPC (SECURITY DEFINER, solo service_role) valida
+    // categoria/gravedad/campos requeridos antes de insertar.
+    "registrar_incidente_bitacora",
+    // cambiar_precio_catalogo (2026-08-31): el porton solo decide si ELIXIS
+    // puede llamarla sin aprobacion adicional -- el candado real (SOLO
+    // owner/admin) esta en runCatalogPriceTool en elixis-chat, que revisa
+    // gate.role antes de tocar la base.
+    "cambiar_precio_catalogo",
     "generar_cotizacion_evento",
-    // enviar_sms solo ENCOLA un borrador; no sale nada al mundo. El envio real
-    // lo hace elixis-sms-dispatch, que exige owner/staff y una fila ya en cola,
-    // y que el modelo no tiene en su inventario. Sin registrarlo aqui, el
-    // porton lo negaba por "unregistered_tool" y la tarjeta de aprobacion no
-    // llegaba a aparecer nunca.
+    // enviar_sms (2026-08-31: envio autonomo, orden directa del PO). ELIXIS
+    // encola y, en el mismo turno, dispara elixis-sms-dispatch reusando el
+    // JWT staff/owner de la conversacion -- ya no espera un click humano. El
+    // candado real (telefono SOLO desde buscar_cliente, nunca dictado) sigue
+    // intacto en runSmsQueueTool, no aqui.
     "enviar_sms",
+    // enviar_email (2026-09-01, mismo patron que enviar_sms): correo SOLO
+    // desde client_profiles.email via buscar_cliente. Ahora SOLO encola --
+    // el despacho real espera confirmacion conversacional (ver abajo).
+    "enviar_email",
+    // confirmar_envio_mensaje (2026-09-01, orden directa del PO: reemplaza
+    // el envio autonomo silencioso por una pregunta de si/no dentro del
+    // mismo chat). Solo dispara enviar/cancelar sobre un id YA encolado por
+    // enviar_sms/enviar_email -- nunca crea contenido nuevo.
+    "confirmar_envio_mensaje",
 ]);
 
 export type ApprovalMode = "read" | "write";
