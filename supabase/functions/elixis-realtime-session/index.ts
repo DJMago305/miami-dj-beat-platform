@@ -386,7 +386,31 @@ Show -- presentación de DJ en vivo integrando tecnología, visuales y elementos
 mundo del espectáculo, no solo mezclar. Cuando hay música sonando de verdad en la
 cabina, puedes identificarla con identificar_track y llevar el setlist cronológico
 del evento. Hablas desde el oficio, con ejemplos concretos, no con lugares comunes
-ni con teoría de manual.`,
+ni con teoría de manual.
+
+## LOS TEMAS SE CONSULTAN, NO SE RECUERDAN
+Tienes consultar_musica, el catálogo REAL de Apple Music. Un DJ no recomienda
+artistas, recomienda TEMAS: nombre del track, y por qué entra ahí.
+- Si vas a nombrar una canción concreta, consúltala ANTES. Aunque creas saberla.
+  Un título mal dicho delante de un cliente te quema igual que un precio inventado.
+- Si te preguntan qué está pegando ahora, tira de charts. No de tu recuerdo.
+- Mientras esperas, di algo corto y natural: "déjame ver qué está sonando",
+  "dame un segundo". No te quedes mudo, que se siente como una llamada colgada.
+- Y cuando el trabajo lleva su tiempo -- armar un set, pensar un cierre -- DILO
+  ANTES de ponerte: "dame un momento y te lo armo". El silencio sin aviso parece
+  que se cortó la llamada.
+El catálogo te dice qué suena; el criterio de qué va en TU cabina es tuyo.
+
+## DESPEDIRSE ES CERRAR, NO REINICIAR
+Cuando te despiden -- "descansa", "hasta luego", "nos vemos" -- te despides y
+SE ACABA. No vuelves a abrir la conversación por tu cuenta unos segundos
+después, y muchísimo menos saludando de nuevo como si acabaras de llegar. Eso no
+es atento: es raro, y deja la sensación de que no escuchaste que te dijeron
+adiós.
+Si después de una despedida te llega algo que no es una petición clara, no
+arranques tema nuevo. Lo correcto es callarte y esperar. Y si tienes que decir
+algo, que sea corto y sin abrir puerta: "sigo aquí para lo que necesites".
+Nunca "¿qué quieres probar ahora?", nunca un saludo nuevo.`,
         // Reglas duras (2026-08-30, corrección en vivo del PO, con capturas):
         // "Cazador Musical" con música real sonando disparó turnos falsos --
         // el modelo oyó letras/voces de la canción como si el DJ le hablara,
@@ -441,6 +465,17 @@ teoría de manual.`,
     return `${persona.cabecera}
 
 ${fechaHoraBlock}
+
+## CÓMO PRONUNCIAS SU NOMBRE
+Si le hablas al dueño, su nombre es GERARDO, y se pronuncia con G DURA: la G de
+GATO, de GOL, de GUITARRA. Suena "Gue-RAR-do".
+NO es la G suave de "gente" ni de "girar". Está mal dicho si suena "YErardo",
+"HErardo" o "JErardo".
+Es su nombre y él decide cómo suena: G dura, siempre, aunque en otro país se
+diga distinto.
+Él ya te lo corrigió hablando y lo arreglaste en el momento — puedes hacerlo. El
+problema es que al abrir una llamada nueva no recuerdas nada de la anterior y
+volvías a fallar desde cero; por eso esto vive aquí y no en tu memoria.
 
 ## CÓMO HABLAS — esto es voz, no un chat
 - Habla como una persona real, con energía y calidez de Miami. Nada de tono de manual.
@@ -503,6 +538,20 @@ Cuando te pidan algo así, dilo de frente Y OFRECE LO QUE SÍ PUEDES: "el mensaj
 no lo mando yo, pero te bloqueo la fecha y te dejo el texto listo para que lo
 mandes tú". Redactar no es enviar, y hay que decirlo así de claro.
 
+ENTREGAR UN PDF SÍ PUEDES, y es lo único: entregar_pdf te lo descarga en el
+acto. Pero es una DESCARGA, no un enlace que puedas mandarle a nadie. Si te
+piden un enlace para reenviar, dilo claro: se lo descargas y lo comparte él.
+
+## EL PDF SE PIDE, NO SE OFRECE SOLO
+Un documento solo sale cuando te lo piden EXPLÍCITAMENTE — "¿puedes dejarme un
+PDF con la lista de canciones en el orden en que deben tocarse?" es una
+petición; hablar de un setlist durante diez minutos NO lo es. Nunca lo generes
+por tu cuenta para quedar bien: un archivo que nadie pidió es basura en la
+carpeta de Descargas de alguien.
+Y si te lo piden pero no te queda claro qué debe llevar, en qué orden o cuántos
+temas, PREGUNTA ANTES de generarlo. Preguntar cuesta cinco segundos; un
+documento equivocado cuesta que te lo tengan que corregir entero.
+
 Prometer de más te quema con un cliente delante. Decir la verdad y dar la
 alternativa resuelve igual y no cuesta nada.
 
@@ -529,6 +578,33 @@ Un socio de verdad no te miente para quedar bien.
 - Nunca digas que ejecutaste una acción externa: enviar, cobrar, publicar o borrar.
   Puedes consultar y preparar; ejecutar lo hace una persona.
 La calidez nunca es excusa para inventar. Eso no es ser buen socio, es ser un problema.${enfoque}`;
+}
+
+// ─── REEMBOLSO DE UNA SESION QUE NUNCA LLEGO A EXISTIR ───────────────────────
+// OJO: `ADMIN.rpc(...)` devuelve un PostgrestFilterBuilder. Es *thenable* (tiene
+// .then) pero NO es una Promise: NO tiene .catch. Escribir `.rpc(...).catch(...)`
+// lanza "TypeError: ...catch is not a function" EN EJECUCION, no al compilar.
+//
+// BUG REAL (2026-08-30 al 2026-09-02, visto en los logs de produccion): eso
+// estaba escrito justo aqui, en la via que corre cuando OpenAI RECHAZA la
+// sesion. Al reventar, el handler moria sin responder -- el navegador no
+// recibia ni el 502 ni las cabeceras CORS, no quedaba ni rastro en
+// function_edge_logs, y sobre todo LA RESERVA DE 900s NUNCA SE LIBERABA.
+// Resultado medido: 25 sesiones colgadas en `open` y 22.500s (6h15m) retenidos
+// contra el tope de seguridad del propio usuario, por sesiones que jamas
+// existieron. Cuanto peor iba OpenAI (429 sin credito), mas caro salia.
+//
+// Un fallo al devolver el saldo no puede tumbar la respuesta de error: el
+// usuario tiene que enterarse de que la voz fallo, y el reembolso se reintenta
+// solo cuando el barrendero pase por la sesion abandonada.
+async function devolverReserva(sessionId: string | null): Promise<void> {
+    if (!sessionId) return;
+    try {
+        const { error } = await ADMIN.rpc("elixis_voice_settle", { p_session: sessionId, p_used: 0 });
+        if (error) console.error("[elixis-realtime-session] reembolso rechazado:", error.message);
+    } catch (err) {
+        console.error("[elixis-realtime-session] reembolso, excepcion:", err);
+    }
 }
 
 // ─── HANDLER ─────────────────────────────────────────────────────────────────
@@ -664,6 +740,82 @@ serve(async (req: Request) => {
     // ACRCloud). El JWT del usuario NO hace falta reenviarlo: music-fingerprint
     // no toca la base de datos de Miami DJ Beat, solo credenciales de terceros
     // que viven en sus propios secrets.
+    // ── Catalogo real de Apple Music (2026-09-02, autorizado por el PO) ──
+    // DJMago hablado recomendaba ARTISTAS pero no TEMAS, y decia en voz "no
+    // estoy conectado a una base de datos real". Era verdad SOBRE SI MISMO: el
+    // cerebro de TEXTO (elixis-chat) ya tenia `consultar_musica` colgada del
+    // puente mdj-music desde hace tiempo -- con las credenciales de Apple del
+    // PO, ya pagadas con su membresia de desarrollador -- pero la sesion de VOZ
+    // nunca tuvo esa herramienta en su lista.
+    //
+    // POR QUE UN PROXY DIRECTO Y NO PASAR POR consultar_elixis: esa ruta va
+    // navegador -> orchestrator -> elixis-chat -> mdj-music -> Apple. Cuatro
+    // saltos con un modelo de texto razonando en medio. En una conversacion
+    // hablada eso son varios segundos de silencio incomodo. Este proxy es un
+    // salto: mdj-music guarda la credencial, aqui solo se le pide.
+    //
+    // Se RECORTA la respuesta a proposito. Apple devuelve un JSON enorme
+    // (artwork, previews, urls, ids de todo). Realtime relee TODO el contexto
+    // en cada turno, asi que cada campo inutil se paga muchas veces. Van solo
+    // los campos con los que un DJ decide: titulo, artista, album, genero, año.
+    if (action === "consultar_musica") {
+        let a: { recurso?: string; q?: string; genero?: string; limite?: number } = {};
+        try { a = await req.json(); } catch { /* cuerpo vacio */ }
+
+        const recurso = a.recurso === "buscar" || a.recurso === "generos" ? a.recurso : "charts";
+        if (recurso === "buscar" && !String(a.q ?? "").trim()) {
+            return json({ ok: false, motivo: "falta_busqueda" }, 200);
+        }
+
+        const base = (Deno.env.get("SUPABASE_URL") || SUPABASE_URL_FALLBACK).replace(/\/$/, "");
+        const u = new URL(`${base}/functions/v1/mdj-music`);
+        u.searchParams.set("recurso", recurso);
+        u.searchParams.set("limite", String(Math.min(10, Math.max(1, Number(a.limite) || 8))));
+        if (recurso === "buscar") u.searchParams.set("q", String(a.q).trim().slice(0, 120));
+        if (recurso === "charts" && /^\d{1,6}$/.test(String(a.genero ?? ""))) {
+            u.searchParams.set("genero", String(a.genero));
+        }
+
+        try {
+            const r = await fetch(u.toString(), { headers: { "X-MDJ-Source": "elixis-voice" } });
+            const payload = await r.json().catch(() => ({}));
+            if (!r.ok) {
+                console.error(`[elixis-realtime-session] consultar_musica ${r.status}`);
+                return json({ ok: false, motivo: "fallo",
+                    detalle: "El catálogo de música no respondió." }, 200);
+            }
+
+            // Apple anida distinto segun el recurso; se recorre lo que haya.
+            const temas: Array<Record<string, unknown>> = [];
+            const visitar = (nodo: unknown): void => {
+                if (!nodo || typeof nodo !== "object" || temas.length >= 10) return;
+                const n = nodo as Record<string, unknown>;
+                const at = n.attributes as Record<string, unknown> | undefined;
+                if (at && typeof at.name === "string" && typeof at.artistName === "string") {
+                    temas.push({
+                        titulo: at.name,
+                        artista: at.artistName,
+                        album: typeof at.albumName === "string" ? at.albumName : undefined,
+                        genero: Array.isArray(at.genreNames) ? at.genreNames[0] : undefined,
+                        anio: typeof at.releaseDate === "string" ? at.releaseDate.slice(0, 4) : undefined,
+                    });
+                    return;
+                }
+                for (const v of Object.values(n)) {
+                    if (v && typeof v === "object") visitar(v);
+                }
+            };
+            visitar(payload);
+
+            if (!temas.length) return json({ ok: true, temas: [], motivo: "sin_resultados" }, 200);
+            return json({ ok: true, recurso, temas }, 200);
+        } catch (err) {
+            console.error("[elixis-realtime-session] consultar_musica, red:", err);
+            return json({ ok: false, motivo: "fallo",
+                detalle: "No se pudo alcanzar el catálogo de música." }, 200);
+        }
+    }
+
     if (action === "identificar_track") {
         let a: { pcm_base64?: string; sample_rate?: number } = {};
         try { a = await req.json(); } catch { /* cuerpo vacio */ }
@@ -958,6 +1110,36 @@ serve(async (req: Request) => {
         instructions: buildInstructions(gate.name, gate.role, memoria, modoEnfoque, identidad),
         audio: {
             input: {
+                // FALTABA POR COMPLETO (encontrado 2026-09-01, mismo sintoma
+                // que el bug de abajo: "Escuchando" activo, cero actividad
+                // en Hilos & Transcripcion). audio.input.transcription se
+                // habia quitado el 2026-08-30 por un 500 de schema -- pero
+                // el comentario de esa vez (ver mas abajo, "REMOVIDO") dice
+                // que lo sospechoso era el sub-campo .language, no el objeto
+                // entero; se termino quitando los dos juntos. Sin este
+                // campo, OpenAI JAMAS transcribe la voz del usuario -- el
+                // VAD (speech_started/stopped, turn_detection de abajo) SI
+                // funciona sin el (son features separadas), asi que el
+                // sintoma real es exactamente este: se detecta que alguien
+                // hablo, el turno se cierra, pero no hay
+                // conversation.item.input_audio_transcription.completed
+                // -- confirmado en consola real del PO, cero eventos de
+                // transcripcion tras hablar. whisper-1 es el modelo de
+                // transcripcion mas estable/antiguo de la API Realtime, sin
+                // el campo .language que causo el 500 la vez pasada.
+                // IDIOMA FIJADO (2026-09-02, regresion cazada con captura del PO:
+                // DJMago respondiendo en INGLES -- "If you want, I can keep going
+                // and turn this into a...", y la propia transcripcion del PO
+                // saliendo en ingles). Sin `language`, whisper ADIVINA el idioma
+                // en cada turno; con musica en ingles cerca del microfono, o con
+                // la cola de su propia voz, se engancha al ingles. A partir de
+                // ahi el modelo cree que le hablaron en ingles y contesta en
+                // ingles -- la regla del prompt no puede ganarle a lo que el
+                // sistema le dice que oyo.
+                // El campo estaba puesto el 30-ago (fe9a248), se quito por
+                // sospechoso, y al restaurarse el 1-sep (860eb75) volvio SOLO
+                // con el modelo. Esto repone la mitad que faltaba.
+                transcription: { model: "whisper-1", language: "es" },
                 // BUG REAL 2026-08-31 (reporte del PO: microfono activo,
                 // "Escuchando", panel de Hilos & Transcripcion sin ninguna
                 // actividad -- ni una transcripcion, en ningun modo). Este
@@ -1000,12 +1182,42 @@ serve(async (req: Request) => {
                 // NOTA 2026-08-31: se evaluo quitar esto tambien en Cazador
                 // (orden del PO, controlar todo solo por prompt) pero el
                 // parrafo de arriba es el resultado de una prueba real que ya
-                // demostro que el prompt solo no alcanza -- queda tal cual
-                // hasta que el PO confirme explicitamente que acepta ese
-                // riesgo conocido.
+                // demostro que el prompt solo no alcanza.
+                //
+                // EXTENDIDO A TODOS LOS MODOS DE DJMAGO (2026-09-01, aprobado
+                // explicitamente por el PO tras reproducir el bug con logs
+                // reales de consola): "hablando solo" en silencio total, en
+                // modos de oficina (no Cazador) -- confirmado con
+                // input_audio_buffer.speech_started seguido de
+                // output_audio_buffer.cleared/conversation.item.truncated,
+                // osea interrupciones reales, no fantasmas. La variable real
+                // no es ruido ambiente (en el carro, con ruido de verdad, NO
+                // pasa) sino bocinas abiertas + microfono abierto sin
+                // cancelacion de eco (CONSTRAINTS_MIC_RAW la tiene apagada a
+                // proposito, ver elixis-voice-session.js) -- en silencio
+                // total, la propia voz de DJMago saliendo por las bocinas es
+                // la UNICA señal que hay en el cuarto, limpia y facil de
+                // confundir con que el PO hablo.
+                //
+                // CORREGIDO EN LA MISMA SESION: la primera version de este
+                // cambio copio TAMBIEN el umbral 0.85 de Cazador (calibrado
+                // contra musica FUERTE en la cabina) a los modos de oficina --
+                // resultado real, reportado de inmediato: DJMago se quedaba
+                // "escuchando" para siempre, la voz normal en silencio nunca
+                // cruzaba un umbral pensado contra musica. Los modos de
+                // oficina usan el umbral ESTANDAR (0.82, ya probado contra
+                // ruido de TV) que si detecta voz normal -- solo se cambia
+                // create_response a false (el mecanismo anti-eco), sin tocar
+                // la sensibilidad. Cazador es el UNICO modo con el umbral
+                // 0.85, porque es el UNICO con musica real cerca del
+                // microfono. Ver el disparo manual de respuesta en
+                // elixis-voice-session.js (ya no exclusivo de Cazador) para
+                // que DJMago siga conversando de verdad en modos de oficina.
                 turn_detection: (identidad === "djmago" && modoReq === "cazador")
                     ? { ...STRICT_TURN_DETECTION, threshold: DJMAGO_VAD_THRESHOLD, silence_duration_ms: DJMAGO_SILENCE_DURATION_MS, create_response: false }
-                    : estricto ? STRICT_TURN_DETECTION : STANDARD_TURN_DETECTION,
+                    : (identidad === "djmago")
+                        ? { ...(estricto ? STRICT_TURN_DETECTION : STANDARD_TURN_DETECTION), create_response: false }
+                        : estricto ? STRICT_TURN_DETECTION : STANDARD_TURN_DETECTION,
                 ...(nrMode === "off" ? {} : { noise_reduction: { type: nrMode } }),
                 // REMOVIDO (2026-08-30, sesion real: la llamada completa a
                 // OpenAI devolvia 500 sin CORS -- ver el try/catch global
@@ -1050,6 +1262,46 @@ serve(async (req: Request) => {
                     required: ["pregunta"],
                 },
             },
+            // ENTREGA DE DOCUMENTOS (2026-09-02, autorizado por el PO: "dejame
+            // un link descargable en pdf con la lista de canciones o con el plan
+            // de trabajo"). El PDF se arma EN EL NAVEGADOR con jsPDF -- la misma
+            // libreria que ya usa contracts-engine.html -- y se descarga al
+            // instante. No pasa por el servidor: no hay nada que subir, nada que
+            // almacenar y ningun permiso nuevo que gestionar.
+            // Va a las DOS identidades a proposito: entregar un documento no es
+            // una habilidad de oficio (como identificar_track o consultar_musica,
+            // que son de DJMago), es un medio de entrega -- un setlist lo pide
+            // DJMago y un plan de trabajo lo pide ELIXIS.
+            {
+                type: "function",
+                name: "entregar_pdf",
+                description:
+                    "Genera un PDF y se lo descarga a la persona en el acto. SOLO se usa " +
+                    "cuando te lo piden EXPLÍCITAMENTE: 'déjame un PDF con...', 'pásamelo " +
+                    "por escrito', 'mándame el documento'. Que la conversación trate de un " +
+                    "setlist o de un plan NO es una petición de documento. Nunca la uses por " +
+                    "iniciativa propia. Si no estás seguro de si lo quieren en PDF, o de qué " +
+                    "debe llevar, PREGUNTA antes de generarlo. Tú pones el título y las " +
+                    "líneas; sale con la marca de Miami DJ Beat. Es una DESCARGA: no sirve " +
+                    "para enviar por correo ni por mensaje.",
+                parameters: {
+                    type: "object",
+                    properties: {
+                        titulo: {
+                            type: "string",
+                            description: "Título del documento. Corto y concreto, p. ej. 'Setlist boda Pérez'.",
+                        },
+                        lineas: {
+                            type: "array",
+                            items: { type: "string" },
+                            description:
+                                "Cada línea del documento, en orden. Una idea o un tema por línea. " +
+                                "Para un setlist: 'Artista — Título'. Máximo 60 líneas.",
+                        },
+                    },
+                    required: ["titulo", "lineas"],
+                },
+            },
             {
                 type: "function",
                 name: "recordar",
@@ -1086,7 +1338,33 @@ serve(async (req: Request) => {
             // music-fingerprint / ACRCloud) todavia no esta construido -- ver
             // el 'action==="identificar_track"' mas abajo, que hoy responde un
             // stub honesto en vez de dejar la tool declarada sin adonde ir.
+            // Catalogo de Apple Music -- SOLO djmago, mismo criterio que
+            // identificar_track: ELIXIS lleva oficina, no recomienda repertorio.
             ...(identidad === "djmago" ? [{
+                type: "function",
+                name: "consultar_musica",
+                description:
+                    "Catálogo REAL de Apple Music. Úsala SIEMPRE que tengas que nombrar " +
+                    "un tema concreto, recomendar repertorio o hablar de lo que está " +
+                    "sonando en la industria. Nunca respondas de memoria: los títulos se " +
+                    "consultan, como los precios. recurso='charts' para lo más escuchado " +
+                    "ahora, recurso='buscar' con q para un artista, tema o estilo.",
+                parameters: {
+                    type: "object",
+                    properties: {
+                        recurso: {
+                            type: "string",
+                            enum: ["charts", "buscar"],
+                            description: "'charts' = lo más sonado ahora. 'buscar' = búsqueda concreta.",
+                        },
+                        q: {
+                            type: "string",
+                            description: "Qué buscar (artista, tema o estilo). Solo con recurso='buscar'.",
+                        },
+                    },
+                    required: ["recurso"],
+                },
+            }, {
                 type: "function",
                 name: "identificar_track",
                 description:
@@ -1185,10 +1463,7 @@ serve(async (req: Request) => {
                 `[elixis-realtime-session] OpenAI ${upstream.status} · user=${gate.userId} · ${answer.slice(0, 500)}`,
             );
             // La sesion nunca llego a existir: no se le puede cobrar al usuario.
-            if (sessionId) {
-                await ADMIN.rpc("elixis_voice_settle", { p_session: sessionId, p_used: 0 })
-                    .catch(() => {});
-            }
+            await devolverReserva(sessionId);
             return json({ ok: false, error: "voice_upstream_error", detail: upstream.status }, 502);
         }
 
@@ -1209,9 +1484,7 @@ serve(async (req: Request) => {
         });
     } catch (err) {
         console.error("[elixis-realtime-session] fallo de red hacia OpenAI:", err);
-        if (sessionId) {
-            await ADMIN.rpc("elixis_voice_settle", { p_session: sessionId, p_used: 0 }).catch(() => {});
-        }
+        await devolverReserva(sessionId);
         return json({ ok: false, error: "voice_unreachable" }, 502);
     }
     } catch (err) {
