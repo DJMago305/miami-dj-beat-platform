@@ -1000,10 +1000,28 @@ serve(async (req: Request) => {
                 // NOTA 2026-08-31: se evaluo quitar esto tambien en Cazador
                 // (orden del PO, controlar todo solo por prompt) pero el
                 // parrafo de arriba es el resultado de una prueba real que ya
-                // demostro que el prompt solo no alcanza -- queda tal cual
-                // hasta que el PO confirme explicitamente que acepta ese
-                // riesgo conocido.
-                turn_detection: (identidad === "djmago" && modoReq === "cazador")
+                // demostro que el prompt solo no alcanza.
+                //
+                // EXTENDIDO A TODOS LOS MODOS DE DJMAGO (2026-09-01, aprobado
+                // explicitamente por el PO tras reproducir el bug con logs
+                // reales de consola): "hablando solo" en silencio total, en
+                // modos de oficina (no Cazador) -- confirmado con
+                // input_audio_buffer.speech_started seguido de
+                // output_audio_buffer.cleared/conversation.item.truncated,
+                // osea interrupciones reales, no fantasmas. La variable real
+                // no es ruido ambiente (en el carro, con ruido de verdad, NO
+                // pasa) sino bocinas abiertas + microfono abierto sin
+                // cancelacion de eco (CONSTRAINTS_MIC_RAW la tiene apagada a
+                // proposito, ver elixis-voice-session.js) -- en silencio
+                // total, la propia voz de DJMago saliendo por las bocinas es
+                // la UNICA señal que hay en el cuarto, limpia y facil de
+                // confundir con que el PO hablo. Antes esta dureza solo
+                // aplicaba a Cazador (musica real cerca del microfono); el
+                // mismo mecanismo de eco aplica igual de fuerte sin musica de
+                // por medio. Ver el disparo manual de respuesta en
+                // elixis-voice-session.js (ya no exclusivo de Cazador) para
+                // que DJMago siga conversando de verdad en modos de oficina.
+                turn_detection: (identidad === "djmago")
                     ? { ...STRICT_TURN_DETECTION, threshold: DJMAGO_VAD_THRESHOLD, silence_duration_ms: DJMAGO_SILENCE_DURATION_MS, create_response: false }
                     : estricto ? STRICT_TURN_DETECTION : STANDARD_TURN_DETECTION,
                 ...(nrMode === "off" ? {} : { noise_reduction: { type: nrMode } }),
