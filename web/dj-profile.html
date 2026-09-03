@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-    <script src="./mdj-estacion-preflight.js?v=20260902-sync-fix"></script>
+    <script src="./mdj-estacion-preflight.js?v=20260903-manager-oficina"></script>
 <script>/* SEMILLA DE ESTACION · antes del primer pintado.
    El guion del header va con defer y al final del documento: cuando decide que
    esta es una estacion de trabajo, la pagina YA se pinto con la cabecera de dos
@@ -6071,6 +6071,27 @@
                 try { console.warn('[RATING DIAG]', eRateLog); } catch (e2) { void e2; }
             }
 
+            /* Dueño: el hero pasa a reflejar el mismo índice MDJ que Flujo de caja. Precarga para no
+               depender de abrir la pestaña.
+               2026-09-03 (auditoria pantalla blanca ~1.5s en MI PERFIL): esto ANTES esperaba a que
+               renderDynamicReviewsAndKPI terminara su RPC (get_dj_public_review_bundle) y encima
+               metía un setTimeout(80ms) antes de arrancar -- medido en vivo, la cadena de Flujo de
+               caja (dj_profiles + dj_ledger + leads + soundfortips + refresh_rollups en
+               flow-handler.js, ~4-5 llamadas encadenadas) no empezaba a correr hasta que esa RPC de
+               reseñas ya había terminado, sumando en vez de solapar. Dos cadenas de red sin relación
+               entre sí (reseñas del hero vs. salud financiera) no tenían por qué ir una detrás de la
+               otra. Se dispara aquí, ANTES del await de reseñas, para que ambas corran en paralelo.
+               No es un Promise.all clásico porque loadFlowData ya es "fire and forget" (no se
+               espera su resultado en este punto, igual que antes) -- el efecto es el mismo: ambas
+               peticiones salen en el mismo tick en lugar de una tras otra.
+               Sin riesgo de carrera visual: mdjPaintProfileHeroStarsFromHealth (flow-handler.js)
+               ya respeta window.__MDJ_PUBLIC_RATING_LOCK y se auto-descarta si renderDynamicReviewsAndKPI
+               ya pintó el hero -- ese candado existe precisamente para este cruce, no se tocó. */
+            if (isOwner && !isPublicQrView && typeof window.loadFlowData === 'function' && window.currentProfileDJId) {
+                try {
+                    window.loadFlowData('30d', window.currentProfileDJId);
+                } catch (eFlow) { void eFlow; }
+            }
             await renderDynamicReviewsAndKPI(p, !!(isOwner && !isPublicQrView), db, targetId);
             window._mdjPubReviewSession = session;
             window._mdjPubReviewOwner = !!(isOwner && !isPublicQrView);
@@ -6078,14 +6099,6 @@
             window._mdjPubReviewPublicFanView = !!isPublicQrView;
             if (typeof mdjInitPubLeaveReviewCta === 'function') {
                 mdjInitPubLeaveReviewCta(session, !!isOwner, !!isPublicQrView);
-            }
-            /* Dueño: el hero pasa a reflejar el mismo índice MDJ que Flujo de caja (tras loadFlowData). Precarga para no depender de abrir la pestaña. */
-            if (isOwner && !isPublicQrView && typeof window.loadFlowData === 'function' && window.currentProfileDJId) {
-                setTimeout(function () {
-                    try {
-                        window.loadFlowData('30d', window.currentProfileDJId);
-                    } catch (eFlow) { void eFlow; }
-                }, 80);
             }
             const pubReviewsWrap = document.getElementById('pub-reviews-wrap');
             if (pubReviewsWrap) pubReviewsWrap.classList.add('pub-reviews-visible');
@@ -14756,7 +14769,7 @@
     <script defer src="./monetization.js?v=20260422-sft-math"></script>
 
     <script defer src="./header-smart-search.js?v=20260415-CORE-CONNECTIONS"></script>
-    <script defer src="./mdjb-shared-header.js?v=20260903-dual-active-fix"></script>
+    <script defer src="./mdjb-shared-header.js?v=20260903-config-slot-race-fix"></script>
   <script defer src="./mdj-owner-tabs-marquee.js?v=20260818-nav-canonico"></script>
   <script defer src="./mdj-social-bar.js?v=20260819-social-contact-only"></script>
   <!-- Cart pill: badge + redirect to rentals (no heavy scripts needed here) -->

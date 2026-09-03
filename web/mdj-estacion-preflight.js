@@ -38,12 +38,25 @@
     { s: 4, href: './account-settings.html?mdj_nav=profile',       i18n: 'nav-config',     nav: 'config',    txt: '⚙️ CONFIG',
       id: 'mainNav-config-link', cls: 'mdj-config-mainnav' },
     { s: 5, href: './dj-tools.html?mdj_nav=profile',               i18n: 'nav-tools',      nav: 'tools',     txt: 'DJ Tools' },
-    { s: 6, href: './dj-dashboard.html?tab=flow',                  i18n: null,             nav: 'flow',      txt: 'Cash Flow',
+    /* CORTINA REAL 2026-09-03 (auditoria de Artista): apuntaba a
+       './dj-dashboard.html?tab=flow' -- una pagina DISTINTA a donde termina
+       yendo de verdad. MDJ_NAV_SLOTS_ARTISTA define este puesto como pestaña
+       interna (href:'#', tab:'flow') y mdjHrefDeSlot() la resuelve, fuera de
+       dj-profile.html, a './dj-profile.html?mdj_nav=profile&tab=flow' -- el
+       prevuelo síncrono pintaba un destino distinto al que el JS corrige un
+       instante después. Un clic en esa ventana (milisegundos) navegaba al
+       lugar equivocado. Mismo destino ya resuelto, no uno nuevo. */
+    { s: 6, href: './dj-profile.html?mdj_nav=profile&tab=flow',    i18n: null,             nav: 'flow',      txt: 'Cash Flow',
       id: 'mainNav-flow-link', cls: 'mdj-flow-mainnav' },
     { s: 7, href: './dj-profile.html?mdj_nav=profile&tab=sft',     i18n: null,             nav: 'sft',       txt: 'SoundForTips™' },
     { s: 8, href: './dj-profile.html?mdj_nav=profile',             i18n: 'nav-my-profile', nav: 'mi-portal', txt: 'MI PERFIL',
       id: 'mainNav-mi-portal-link', cls: 'mdj-mi-portal-mainnav mdj-mi-portal-gold' },
-    { s: 9, href: './shop.html?mdj_nav=profile',                   i18n: 'nav-shop',       nav: 'shop',      txt: 'Shop' }
+    /* Puesto 9 · AGENTE.IA, no Shop (PO 2026-09-03) -- calzado EXACTO con
+       MDJ_NAV_SLOTS_ARTISTA en mdjb-shared-header.js. Ver el comentario
+       completo ahí: son la misma barra vista en dos momentos, y desalinearlas
+       fue exactamente la causa del ciclo infinito encontrado hoy mismo en
+       Staff/MI PERFIL -- no se repite ese error aquí. */
+    { s: 9, href: './agente-ia.html?mdj_nav=profile',              i18n: null,             nav: 'agente-ia', txt: 'AGENTE.IA' }
   ];
 
 
@@ -114,7 +127,18 @@
       if (!nav) return;
       if (nav.querySelector('a[data-mdj-nav="sft"], a[data-mdj-nav="fenix"]')) return;
 
-      var oficina = (ses.rol === 'owner' || ses.rol === 'management' || ses.rol === 'seller' || ses.rol === 'admin');
+      /* CORTINA REAL 2026-09-03 (auditoria de Artista): esta lista solo
+         reconocia 'management', no 'manager' -- en las otras 4 instancias del
+         mismo chequeo en mdjb-shared-header.js (lineas ~722, 814, 886, y el
+         guardia del puesto Staff) SIEMPRE van juntos, 'manager' Y
+         'management', como el mismo rol de oficina. Confirmado con el PO
+         (2026-09-03): "una sola cuenta por mail resuelve ese problema... para
+         no mezclar cuentas ni crear ese tipo de conflictos" -- una cuenta
+         'manager' que TAMBIEN aparezca como dueña de un perfil de artista es
+         un dato mezclado por error de prueba, no un caso hibrido real que el
+         codigo deba arbitrar. 'manager' es oficina, sin excepcion, igual que
+         en el resto del archivo. */
+      var oficina = (ses.rol === 'owner' || ses.rol === 'management' || ses.rol === 'manager' || ses.rol === 'seller' || ses.rol === 'admin');
       var esArtista = (ses.rol === 'artist' || ses.rol === 'dj' || ses.rol === 'talent');
       /* CLIENTE (o cualquier rol sin match arriba) -- bug real encontrado en
          auditoria (2026-09-02, a pedido del PO de revisar que artista y

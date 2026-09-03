@@ -175,7 +175,13 @@
     { s: 1,  key: 'nav-home',       nav: 'home',      href: './index.html', txt: 'Inicio' },
     { s: 2,  key: 'nav-academia',   nav: 'academia',  href: './academia.html?mdj_nav=profile', txt: 'Academia' },
     { s: 3,  key: null,             nav: 'agenda',    href: './dj-dashboard.html?mdj_nav=profile', txt: 'Agenda' },
-    { s: 4,  key: 'nav-config',     nav: 'config',    href: './account-settings.html?mdj_nav=profile', txt: '⚙️ Config',
+    /* '⚙️ CONFIG' en mayúsculas, no '⚙️ Config' -- encontrado desalineado
+       contra ESTACION (mdj-estacion-preflight.js) en la auditoría del
+       2026-09-03: mismo puesto, mayúsculas en el prevuelo síncrono, minúsculas
+       acá. Mismo patrón de "la barra en dos momentos" que ya se corrigió hoy
+       para Staff/MI PERFIL/AGENTE.IA -- no se repite el error de dejarlas
+       desalineadas. */
+    { s: 4,  key: 'nav-config',     nav: 'config',    href: './account-settings.html?mdj_nav=profile', txt: '⚙️ CONFIG',
       id: 'mainNav-config-link', cls: 'mdj-config-mainnav' },
     { s: 5,  key: 'nav-tools',      nav: 'tools',     href: './dj-tools.html?mdj_nav=profile', txt: 'DJ Tools' },
     { s: 6,  key: null,             nav: 'flow',      href: '#', txt: 'Cash Flow',      tab: 'flow' },
@@ -185,12 +191,18 @@
     { s: 8,  key: 'nav-my-profile', nav: 'mi-portal', href: '#', txt: 'MI PERFIL',      tab: 'public',
       id: 'mainNav-mi-portal-link', cls: 'mdj-mi-portal-mainnav mdj-mi-portal-gold',
       alias: ['mi-portal', 'header-mi-portal'], navAlias: ['my-profile', 'profile'] },
-    /* Trabajos NO vive aqui (orden del PO 2026-08-19): pertenece al menu de
-       Inicio, la vitrina publica, donde ya ocupa su puesto 6. Shop sube del 10 al
-       9, con lo que la estacion queda en NUEVE puestos y MI PERFIL no se mueve
-       del 8 — que es donde su resolvedor de destino y su etiqueta lo buscan, por
-       numero de slot. */
-    { s: 9,  key: 'nav-shop',       nav: 'shop',      href: './shop.html?mdj_nav=profile', txt: 'Shop' }
+    /* Puesto 9 · AGENTE.IA (orden del PO 2026-09-03: "falta un cambio... tiene
+       la pestaña de shop eso pertenece al menu de inicio... reemplázala por
+       AGENTE.IA... las cuentas pro podrán usar el avatar pero con las
+       restricciones necesarias, no será Elixis, solo DJMago, y no tendrán
+       información confidencial del staff"). Shop se retira de la estación de
+       artista -- ya vive en el menú de Inicio (puesto 4 de MDJ_NAV_SLOTS), no
+       hacía falta duplicarlo aquí. Alcance de HOY, acordado con el PO: solo el
+       rótulo y una página de destino ("agente-ia.html", "Próximamente") -- el
+       acceso restringido de verdad (solo DJMago, sin datos de staff) queda
+       como ticket aparte, no se construye a ciegas en el mismo cambio que un
+       rótulo de menú. */
+    { s: 9,  key: null,             nav: 'agente-ia', href: './agente-ia.html?mdj_nav=profile', txt: 'AGENTE.IA' }
     /* Bóveda Legal NO vive aqui: el slot 10 agregado el 2026-08-24 desbordaba
        la rejilla rigida de #mainNav (repeat(9, ...) — nunca se actualizo a
        10 columnas) y el puesto quedaba montado sobre Shop. El acceso ya
@@ -265,7 +277,12 @@
        es "continuación natural de academia.html" por el mismo motivo que
        courses.html/dj-knowledge.html — se llega por su tarjeta en
        .academia-float-tabs y conserva la barra. */
-    'mdjb-music-intelligence.html': 1
+    'mdjb-music-intelligence.html': 1,
+    /* Cuarto destino de Academia (PO 2026-09-03, puesto 9 nuevo "AGENTE.IA"):
+       placeholder "Próximamente" mientras se construye el acceso restringido
+       al avatar de DJMago para cuentas PRO. Lleva mdj-artist-academy en el
+       <body> (ver LEY DE ACADEMIA arriba) igual que el resto de esta lista. */
+    'agente-ia.html': 1
     /* shop.html NO figura todavia. Nota 2026-08-31: cuando esto se escribio,
        redirigia a la tienda externa de Shopify (ya desactivada) y por eso
        sacaba al artista de la plataforma. Desde que shop.html es la tienda
@@ -538,7 +555,28 @@
       /* El artista en SU perfil recibe su estacion de trabajo. Va ANTES del
          filtro de staff: un artista no es staff, y con esa comprobacion por
          delante nunca llegaria aqui. */
-      if (mdjEnPortalArtista()) return MDJ_NAV_SLOTS_ARTISTA;
+      /* CORTINA REAL 2026-09-03 (auditoria de Artista, cuenta djmago305 con
+         dato de prueba viejo: role='manager' en el JWT). El preflight
+         sincrono (mdj-estacion-preflight.js) decide data-mdj-estacion SOLO
+         una vez, leyendo el rol del JWT sin red -- si ese rol dice
+         'manager'/'owner'/etc., deja la marca en "oficina". mdjEnPortalArtista()
+         de aqui abajo es el chequeo de verdad, asincrono, basado en dueño de
+         perfil real (mdjEsArtistaEnVivo()) -- puede corregir el CONTENIDO del
+         riel (esta funcion) sin que nadie corrija la MARCA. Resultado medido
+         en vivo (dj-tools.html, cuenta djmago305): el riel ya pintaba
+         SoundForTips/AGENTE.IA (correcto) pero data-mdj-estacion se quedaba
+         en "oficina" los 2s completos de la prueba -- el CSS de header-unified.css
+         que lee ese atributo (alturas, franja flotante, hamburguesa) seguia
+         calculando el layout de oficina sobre contenido de artista: la
+         discrepancia/salto que reporto el PO en DJ Tools, Config, Agenda y
+         Academia. Se sincroniza aqui, en el mismo punto donde se decide el
+         riel real, para que marca y contenido nunca vuelvan a desacoplarse. */
+      if (mdjEnPortalArtista()) {
+        if (document.body && document.body.getAttribute('data-mdj-estacion') !== 'artista') {
+          document.body.setAttribute('data-mdj-estacion', 'artista');
+        }
+        return MDJ_NAV_SLOTS_ARTISTA;
+      }
       /* ORDEN DEL PO 2026-08-21 — «academia sigue mandando la barra de menu de
          inicio». Causa medida: mdjEnPortalArtista() exige que la sesion ya este
          resuelta, y esa resolucion es ASINCRONA. Hasta que llega, la pagina de
@@ -5101,18 +5139,30 @@
         if (authZone) authZone.style.display = 'inline-flex';
 
         try {
-          var pr = await sb.from('dj_profiles').select('role, photo_url, dj_name, stage_name, username, plan_type, plan, plan_status, plan_expires_at, is_premium, hardware_token').eq('user_id', session.user.id).maybeSingle();
-          var p = pr.data;
-          var djProfileErr = pr && pr.error ? pr.error : null;
-          var clientRow = null;
-          try {
-            var cpr = await sb
-              .from('client_profiles')
+          /* CORTINA REAL 2026-09-03 (turbo pedido por el PO para el hueco en
+             blanco de Mi Perfil): estas dos consultas son independientes
+             (clientRow nunca depende de p, ni al reves) pero estaban con
+             await una detras de otra -- mismo patron ya corregido hoy en
+             dj-profile.html (reseñas antes de Cash Flow). Medido en vivo:
+             esta funcion corre en TODAS las paginas de estacion, asi que el
+             ahorro no es solo para Mi Perfil. Promise.resolve(...).then(...)
+             en vez de .catch() sobre el builder -- el builder de supabase-js
+             es thenable, no Promise real, y no siempre trae .catch(). */
+          var clientProfileReq = Promise.resolve(
+            sb.from('client_profiles')
               .select('user_id, full_name, email, photo_url, avatar_url, username')
               .eq('user_id', session.user.id)
-              .maybeSingle();
-            clientRow = cpr && cpr.data ? cpr.data : null;
-          } catch (cErr) { /* ignore */ }
+              .maybeSingle()
+          ).then(function (r) { return r; }, function (e) { return { data: null, error: e }; });
+          var results = await Promise.all([
+            sb.from('dj_profiles').select('role, photo_url, dj_name, stage_name, username, plan_type, plan, plan_status, plan_expires_at, is_premium, hardware_token').eq('user_id', session.user.id).maybeSingle(),
+            clientProfileReq
+          ]);
+          var pr = results[0];
+          var cpr = results[1];
+          var p = pr.data;
+          var djProfileErr = pr && pr.error ? pr.error : null;
+          var clientRow = cpr && cpr.data ? cpr.data : null;
           var hasClientRow = !!(clientRow && clientRow.user_id);
           var metaUt = session.user && session.user.user_metadata && session.user.user_metadata.user_type;
           var appRole = session.user && session.user.app_metadata && session.user.app_metadata.role;
@@ -5450,25 +5500,50 @@
           /* hasClientRow ya no excluye artistas (pueden tener ambas filas); isBuyerSession es la fuente correcta. */
           var showConfigOnHome =
             onPublicHome && !!window.__mdjNavOwnUserId && !isBuyerSession;
-          mdjApplyAgendaMainNavLink(
-            !!showArtistDashMainNav && !onPublicHome && !isCompactNav && !showArtistHeaderNav,
-            './dj-dashboard.html?tab=dashboard'
-          );
-          if (isBuyerSession) {
+          /* CORTINA REAL 2026-09-03 (temblor pedido calibrar por el PO): en
+             paginas "compactas" (data-mdj-compact-nav="1" -- dj-tools.html,
+             services.html, events.html) con sesion de artista, las tres
+             cuentas de arriba (showArtistDashMainNav && !isCompactNav && ...)
+             dan siempre false, asi que estas tres funciones "legacy" de
+             puesto individual (mdjApply*MainNavLink) le agregaban
+             mdj-mainnav-reserved-slot + aria-hidden a CONFIG/AGENDA/FLOW --
+             pero un instante despues (o antes, la carrera es real) la tabla
+             de estacion (mdjTablaDeSlots()/MDJ_NAV_SLOTS_ARTISTA) repinta el
+             riel entero con nodos NUEVOS y limpios para esos mismos puestos.
+             Medido en vivo (dj-tools.html vs dj-profile.html, cuenta
+             djmago305 ya con role='artist' real): CONFIG se quedaba con la
+             clase reservada en dj-tools.html y sin ella en dj-profile.html --
+             mismo texto, mismo CSS computado, pero el ancho final no
+             coincidia entre paginas (2-3px), el tipo exacto de "desajuste
+             pequeño entre pestañas" que reporto el PO. La tabla de estacion
+             es la fuente de verdad para estos tres puestos en cualquier
+             pagina de MDJ_VISTAS_ARTISTA -- estas tres llamadas legacy no
+             deben competir ahi. */
+          var estacionArtistaActiva = (typeof mdjEnPortalArtista === 'function') && mdjEnPortalArtista();
+          if (!estacionArtistaActiva) {
+            mdjApplyAgendaMainNavLink(
+              !!showArtistDashMainNav && !onPublicHome && !isCompactNav && !showArtistHeaderNav,
+              './dj-dashboard.html?tab=dashboard'
+            );
+            if (isBuyerSession) {
+              mdjApplyConfigMainNavLink(false);
+              mdjApplyBuyerConfigMainNavLink(true);
+            } else {
+              mdjApplyConfigMainNavLink(
+                (!!showArtistDashMainNav && !onPublicHome && !isCompactNav && !showArtistHeaderNav) ||
+                  showConfigOnHome ||
+                  (isCompactNav && !!window.__mdjNavOwnUserId && !showArtistDashMainNav),
+                settingsUrl
+              );
+            }
+            mdjApplyFlowMainNavLink(
+              !!showArtistDashMainNav && !onPublicHome && !isCompactNav && !showArtistHeaderNav,
+              './dj-dashboard.html?tab=flow'
+            );
+          } else if (isBuyerSession) {
             mdjApplyConfigMainNavLink(false);
             mdjApplyBuyerConfigMainNavLink(true);
-          } else {
-            mdjApplyConfigMainNavLink(
-              (!!showArtistDashMainNav && !onPublicHome && !isCompactNav && !showArtistHeaderNav) ||
-                showConfigOnHome ||
-                (isCompactNav && !!window.__mdjNavOwnUserId && !showArtistDashMainNav),
-              settingsUrl
-            );
           }
-          mdjApplyFlowMainNavLink(
-            !!showArtistDashMainNav && !onPublicHome && !isCompactNav && !showArtistHeaderNav,
-            './dj-dashboard.html?tab=flow'
-          );
           mdjApplyArtistHeaderRow2(!!showArtistHeaderNav);
           mdjApplyArtistSessionNav(showMyArtisticProfileMainNav, publicProfileUrl);
           /* Clientes y clientes comerciales: MI PERFIL no aplica — su destino es MY PORTAL. */
@@ -6921,6 +6996,7 @@
     { href: './events.html', key: 'nav-svc-events', txt: 'Event Production' },
     { href: './rentals.html', key: 'nav-svc-rentals', txt: 'DJ Equipment Rental' },
     { href: './weddings.html', key: 'nav-svc-weddings', txt: 'Wedding DJ Services' },
+    { href: './quinceanera.html', key: 'nav-svc-quince', txt: 'Quinceañera DJ' },
     { href: './corporate.html', key: 'nav-svc-corporate', txt: 'Corporate DJ & AV' },
     { href: './latin-dj.html', key: 'nav-svc-latin', txt: 'Latin & Open-Format DJ' },
     { href: './florida-keys.html', key: 'nav-svc-keys', txt: 'Florida Keys Destination DJ' }

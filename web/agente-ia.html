@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <script src="./mdj-estacion-preflight.js?v=20260903-manager-oficina"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
+    <script>
+    /* FIX-LEGACY-SUPABASE-01 (2026-08-19) · el respaldo entra cuando falta la
+       LIBRERIA, no cuando falta la sintaxis. Ver dj-knowledge.html para la nota
+       completa -- mismo patron, copiado literal. */
+    (function () {
+        var mdjLibAusente = !(window.supabase &&
+            typeof window.supabase.createClient === 'function');
+        if (mdjLibAusente) {
+            document.write('<script src="./vendor/supabase-js-2.112.3.legacy.js?v=20260818-safari-legacy"><\/script>');
+        }
+    })();
+    </script>
+    <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>AGENTE.IA — Miami DJ Beat</title>
+    <meta name="robots" content="noindex" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=optional" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css?v=20260823-hero-card-altura" />
+    <link rel="stylesheet" href="./header-unified.css?v=20260902-cortinas" />
+    <link rel="stylesheet" href="./profile.css?v=20260820-ancho-total" />
+    <style>
+        .agente-ia-hero {
+            min-height: calc(100dvh - var(--header-height, 84px));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 80px 24px;
+            background: #050403;
+        }
+        .agente-ia-inner { max-width: 640px; }
+        .agente-ia-eyebrow {
+            font-family: "IBM Plex Mono", ui-monospace, monospace;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.5em;
+            text-transform: uppercase;
+            color: rgba(197, 160, 89, 0.95);
+            margin-bottom: 20px;
+        }
+        .agente-ia-inner h1 {
+            font-family: "Syne", Inter, system-ui, sans-serif;
+            font-size: clamp(2rem, 5vw, 3.25rem);
+            font-weight: 800;
+            letter-spacing: 0.02em;
+            margin: 0 0 22px;
+            color: #f7f5f0;
+        }
+        .agente-ia-inner p {
+            font-size: 15px;
+            line-height: 1.7;
+            color: rgba(255, 255, 255, 0.72);
+            margin: 0 auto 12px;
+            max-width: 46em;
+        }
+        .agente-ia-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 28px;
+            padding: 10px 20px;
+            border: 1px solid rgba(197, 160, 89, 0.4);
+            border-radius: 999px;
+            color: #c5a059;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+
+<body class="notranslate mdj-artist-academy" style="background:#000;color:#fff;font-family:Inter,sans-serif;">
+    <header class="header mdj-header-unified" id="mainHeader">
+        <div class="header-top">
+            <div class="container">
+                <div class="brand">
+                    <a href="./index.html"><img src="./assets/branding/logo-transparent.png" alt="Miami DJ Beat Logo" class="logo-img-eagle" /></a>
+                </div>
+                <div class="header-actions"></div>
+            </div>
+        </div>
+        <div class="header-nav">
+            <div class="container">
+                <nav class="nav top-nav mdj-mainnav-flex" id="mainNav">
+                    <!-- EL HTML TRAE LA BARRA PUBLICA A PROPOSITO -- ver mdj-estacion-preflight.js -->
+                    <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home" data-mdj-slot="1">Inicio</a>
+                    <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services" data-mdj-slot="2">Servicios</a>
+                    <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues" data-mdj-slot="3">Eventos</a>
+                    <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-i18n="nav-shop" data-mdj-nav="shop" data-mdj-slot="4">Shop</a>
+                    <a href="./client-account.html" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" data-mdj-slot="5" aria-hidden="true" tabindex="-1">⚙️ CONFIG</a>
+                    <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs" data-mdj-slot="6">Trabajos</a>
+                    <a href="./contact.html" data-i18n="nav-contact" data-mdj-nav="contact" data-mdj-slot="7">Contacto</a>
+                    <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="./client-portal.html" data-mdj-nav="mi-portal" data-mdj-slot="8" aria-hidden="true" tabindex="-1">MI PERFIL</a>
+                </nav>
+                <script>/* Decide la barra antes de pintarla. Ver mdj-estacion-preflight.js */
+                    try { window.mdjPrevueloEstacion && window.mdjPrevueloEstacion(); } catch (e) {}
+                </script>
+            </div>
+        </div>
+    </header>
+
+    <main class="agente-ia-hero">
+        <div class="agente-ia-inner">
+            <div class="agente-ia-eyebrow">Agente.IA</div>
+            <h1>Próximamente</h1>
+            <p>Las cuentas PRO van a poder hablar con el avatar de DJMago directo desde su propia estación —
+               con las restricciones necesarias: sin acceso a información confidencial de staff, y sin ELIXIS.
+               Esta pestaña queda reservada para esa experiencia mientras se termina de construir.</p>
+            <div class="agente-ia-badge">🔒 Acceso restringido, en desarrollo</div>
+        </div>
+    </main>
+
+    <script src="./mdj-identity.js?v=20260617-buyer-artist-fix-1"></script>
+    <script src="./mdjb-shared-header.js?v=20260903-config-slot-race-fix"></script>
+</body>
+
+</html>
