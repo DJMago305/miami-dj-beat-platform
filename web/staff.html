@@ -308,7 +308,12 @@
        · La franja de la barra horizontal se RESERVA. Si no, al aparecer crece la
          tira y todo el menu da un salto. Es el mismo comentario que dejo el
          perfil de artista, y la razon del temblor al cambiar de pestana. */
-    .staff-topnav{display:flex;align-items:center;justify-content:safe center;gap:0;
+    .staff-topnav{display:flex;align-items:center;justify-content:safe center;
+      /* Mismo gap que #mainNav (header-unified.css, "#mainNav#mainNav...{gap:
+         clamp(4px,0.6vw,10px)}") -- antes 0, y el espaciado entre pestañas lo
+         daba solo el relleno lateral de cada una: dos modelos de espaciado
+         distintos que nunca iban a coincidir por casualidad. */
+      gap:clamp(4px,0.6vw,10px);
       flex:0 0 72px;height:72px;min-height:72px;max-height:72px;padding:0 clamp(12px,2vw,32px) 6px;
       background:transparent;border-bottom:none;
       overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;
@@ -318,21 +323,50 @@
          Antes: clamp(13px,1.05vw,16px), ls .07em y font-family:inherit — o sea,
          la de sistema del body, no Inter. La barra del owner era la unica del
          ecosistema con otra letra y otro tamano. */
-      /* CALIBRACION AUTOMATICA A PANTALLA COMPLETA.
-         Antes era 20px/2.8px FIJOS. Medido: con las 11 pestanas el menu ocupa
-         1463px, asi que por debajo de ~1470px de ventana se salian tres. Ahora
-         escala de forma continua en vez de dar el salto brusco del media query:
-           · >=1470px -> 20px/2.8px, IDENTICO a hoy. No se pierde la unificacion
-             tipografica con el riel maestro, que fue una decision deliberada.
-           · 1280px   -> ~17px/1.8px, que es el punto exacto donde deja de
-             salirse (medido en vivo, no estimado).
-           · por debajo, sigue bajando hasta el minimo y entra el scroll. */
-      font-size:clamp(13px, calc(1.58vw - 3.2px), 20px);font-weight:800;
-      letter-spacing:clamp(1px, calc(0.48vw - 5.0px), 2.8px);cursor:pointer;text-transform:uppercase;
+      /* ESTABILIZACION 2026-09-03 (orden del PO: "estabiliza las barras de
+         menu que todo quede en la misma posicion tamano tipografia
+         distancia... quiero estabilidad en el menu"). La calibracion
+         continua de abajo (18-08-30) se calculo para ONCE pestanas
+         (1463px de ancho); hoy #staff-topnav tiene NUEVE, exactamente las
+         mismas que #mainNav (ver MDJ_NAV_SLOTS_INTERNO en mdjb-shared-
+         header.js) desde el chequeo de posiciones del 2026-09-02 -- la
+         razon original para encoger antes que el riel maestro ya no
+         aplica. Medido en vivo, mismo ancho de ventana (1440px), ambas
+         barras: #mainNav daba 20px / 1.8px de espaciado / gap 8.64px /
+         relleno "4px 0 8px"; #staff-topnav daba 19.552px / 1.912px / gap
+         0 / relleno "4px 6.48px 8px" -- cifras cercanas pero no iguales,
+         el "salto" residual que seguia notandose al pasar de una pagina a
+         otra. Se reemplaza la formula continua propia por las MISMAS
+         variables y el MISMO quiebre que ya usa #mainNav en
+         header-unified.css (:root, linea ~26, y el tramo 1340-1500px de
+         letter-spacing) -- no una aproximacion nueva, el mismo numero. */
+      font-size:var(--mdj-nav-font-size, 20px);font-weight:var(--mdj-nav-font-weight, 800);
+      letter-spacing:var(--mdj-nav-letter-spacing, 0.14em);cursor:pointer;text-transform:uppercase;
       font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
       position:relative;transition:color .2s ease;display:flex;align-items:center;justify-content:center;
-      padding:4px clamp(4px,0.45vw,7px) 8px;white-space:nowrap;flex-shrink:0;}
-    .staff-topnav button + button::before,.staff-topnav a + button::before,.staff-topnav button + a::before,.staff-topnav a + a::before{content:"/";color:rgba(197,160,89,.4);font-weight:500;margin-right:.68em;line-height:1;}
+      /* SIN relleno lateral propio, a proposito -- igual que #mainNav (header-
+         unified.css ~linea 4353: "sin aire propio... una sola fuente de
+         espaciado, el separador, es lo que hace los saltos identicos"). Medido
+         antes: con clamp(4px,0.45vw,7px) de relleno propio MAS el gap nuevo,
+         el hueco entre pestañas quedaba mas ancho que en #mainNav (padding
+         propio + gap, dos fuentes sumadas en vez de una). */
+      padding:4px 0 8px;white-space:nowrap;flex-shrink:0;}
+    /* Mismo quiebre que #mainNav (header-unified.css ~linea 5272): en este
+       tramo el riel maestro aplana el espaciado a 1.8px para que quepan
+       todas las pestañas sin recortar "MRM IA" -- aunque ese puesto ya no
+       vive aqui, se copia el mismo numero para no crear un tercer valor. */
+    @media (min-width:1340px) and (max-width:1500px){
+      .staff-topnav{ --mdj-nav-letter-spacing: 1.8px; }
+    }
+    /* ESTABILIZACION 2026-09-03 (PO: "corrige agenda se te va de lugar"):
+       el separador de #mainNav lleva margen a LOS DOS LADOS (11.2px cada
+       uno, medido en vivo a 1440px Y 1800px sin cambiar -- no depende del
+       ancho en ese rango), no solo a la derecha. Con solo margin-right:.68em
+       (13.6px) este separador aportaba 8.8px menos de aire por pestaña que
+       el de #mainNav -- ocho separadores por fila, ~70px de diferencia
+       total, que es lo que corría "Academia" y las demás pestañas hacia la
+       derecha en el centrado automático de la barra. */
+    .staff-topnav button + button::before,.staff-topnav a + button::before,.staff-topnav button + a::before,.staff-topnav a + a::before{content:"/";color:rgba(197,160,89,.4);font-weight:500;margin-left:11.2px;margin-right:11.2px;line-height:1;}
     .staff-topnav .tab-help{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;
       border:1.5px solid currentColor;border-radius:50%;font-size:9px;font-weight:800;letter-spacing:0;margin-left:7px;line-height:1;}
     /* El dia/noche es un EMOJI, no una letra. Heredaba `font-family:Inter` y el
@@ -353,7 +387,24 @@
     }
 
     /* ── Main + módulos/vistas ── */
-    .staff-main{flex:1;min-height:0;position:relative;}
+    /* ESTABILIZACION 2026-09-03 (PO: "al cambiar academia agenda y config
+       todavia queda rastro, algo se mueve raro"): medido en vivo, mismo
+       ancho de ventana -- en las páginas de estación (#mainHeader) el
+       contenido arranca en y=84px (72 del riel + 12 de aire propios de la
+       cabecera, ya documentado en header-unified.css: "la estación mide 84,
+       no 72"). Aquí .staff-topnav mide 72px y .staff-main arrancaba pegado
+       justo después, en y=72 -- doce píxeles menos. Al ir de Academia a
+       Agenda (staff.html) el contenido saltaba 12px hacia arriba respecto a
+       su posición en la página anterior; volver a Config lo devolvía. Se
+       agrega el mismo aire que reserva el riel maestro, no un valor nuevo.
+       CON !important: styles.css tiene "main{margin-top:0 !important}"
+       (linea ~7761, un parche viejo de la pagina Services escrito sin
+       acotar a esa pagina -- pisa el <main> de CUALQUIER pagina que cargue
+       styles.css, staff.html incluido). Sin el !important aqui, esa regla
+       vieja ganaba y el margen no se aplicaba pese a estar en la hoja. No
+       se tocó esa regla ajena -- es de otra pagina y tocarla es otro
+       ticket. */
+    .staff-main{flex:1;min-height:0;position:relative;margin-top:12px !important;}
     .staff-module{display:none;height:100%;}
     .staff-module.active{display:block;}
     .staff-view{display:none;height:100%;}
@@ -2044,11 +2095,17 @@
       var start=
         '<a href="./index.html" data-top="inicio" data-i18n="staff-nav-inicio">Inicio</a>'+
         '<button type="button" data-href="./academia.html" data-i18n="staff-nav-academia">Academia</button>';
-      var langSwitcher=
-        '<span class="lang-switcher" style="display:inline-flex;gap:4px;margin-left:8px;">'+
-          '<span class="lang-btn" data-lang="es" style="cursor:pointer;">ES</span>'+
-          '<span class="lang-btn" data-lang="en" style="cursor:pointer;">EN</span>'+
-        '</span>';
+      /* langSwitcher RETIRADO de esta tira (2026-09-02, orden directa del
+         PO: "esta pestaña de idioma debe estar configurándose solamente en
+         dos lugares, menú de inicio... y configuraciones de los perfiles,
+         no hay necesidad de agregar más pestañas de idioma"). Vivía
+         repetido en las 3 ramas de rol de abajo (owner/seller/manager) --
+         un tercer switch redundante, propio de staff.html porque esta
+         página no monta #mainHeader (ver nota arriba) y por lo tanto nunca
+         tuvo el switch global de la cabecera compartida. Quien esté en
+         staff.html y quiera cambiar de idioma ya puede hacerlo desde Inicio
+         o desde ⚙ Config (account-settings.html, que tiene el suyo propio)
+         -- no hace falta un tercero aquí. */
       if(role==='owner'){
         return start+
           '<button type="button" data-top="agenda" data-i18n="nav-agenda">Agenda</button>'+
@@ -2062,9 +2119,23 @@
              el flujo en dos.
              Se deja como <a>: paintStaffTopnav solo engancha clics a <button>,
              y un ancla navega sola, así que el pintor no necesita cambios. */
-          '<a href="./account-settings.html" data-top="config" data-i18n="staff-nav-config">⚙ Config</a>'+
+          /* "⚙️ CONFIG" en mayúsculas, no "⚙️ Config" -- medido en vivo
+             (2026-09-03, pulido final del PO): #mainNav renderiza el nodo
+             de Config en mayúsculas de verdad (no es solo text-transform
+             CSS, el propio textContent ya llega así), y la diferencia de
+             ancho contra la versión en minúsculas de aquí era la ÚNICA
+             pestaña con más de 0.2px de diferencia entre las dos barras. */
+          '<a href="./account-settings.html" data-top="config" data-i18n="staff-nav-config">⚙️ CONFIG</a>'+
           '<button type="button" data-href="./dj-tools.html" data-i18n="staff-nav-djtools">DJ Tools</button>'+
-          '<button type="button" data-top="cashflow" data-i18n="nav-cashflow">Cash Flow</button>'+
+          /* SIN data-i18n a propósito (2026-09-03, mismo criterio que ya se
+             documentó para este puesto: "para que i18n no le vacíe el
+             rótulo"). Tenía data-i18n="nav-cashflow", una clave COMPARTIDA
+             con #mainNav -- pero #mainNav nunca la traduce (su tabla en
+             mdjb-shared-header.js pinta el texto crudo "Cash Flow" sin pasar
+             por i18n), así que este botón terminaba siendo el ÚNICO lugar
+             donde "Cash Flow" se veía como "Flujo de Caja": mismo puesto,
+             mismo destino, dos rótulos distintos según de qué página venías. */
+          '<button type="button" data-top="cashflow">Cash Flow</button>'+
           /* MI PERFIL abre la FICHA, que vive aqui dentro (#view-miperfil): banner,
              foto, identidad y valoracion. Antes era un <a> hacia account-settings.html
              — el MISMO destino que ⚙ Config, o sea dos botones distintos llevando a la
@@ -2072,8 +2143,22 @@
              PO: pulsar MI PERFIL y aterrizar en configuraciones.
              Como <button> con data-top engancha con paintStaffTopnav y con
              sincronizarTira, igual que Agenda, Cash Flow y Fenix AI. */
-          '<button type="button" data-top="miperfil" data-i18n="staff-nav-miperfil">Mi Perfil</button>'+
+          /* ORDEN 2026-09-03: Staff antes de MI PERFIL, para calzar con el
+             swap que ya se hizo en MDJ_NAV_SLOTS_INTERNO (mdjb-shared-
+             header.js, "chequeo de posiciones" del 2026-09-02) -- ese
+             cambio actualizó la tabla canónica pero no esta tira propia de
+             staff.html, así que quedaron en orden CONTRARIO entre las dos
+             barras: medido en vivo a 1440px, "Staff" caía en x=933 en
+             #mainNav pero en x=1091 aquí, y "MI PERFIL" al revés (1045 vs
+             938) -- el salto de posición más grande de toda esta ronda. */
           '<button type="button" data-top="gobernanza" data-i18n="staff-nav-staff">Staff</button>'+
+          /* MI PERFIL es la etiqueta ÚNICA e INVARIABLE del puesto en TODO el
+             ecosistema, decisión PO 2026-08-16 ("el texto nunca cambia") --
+             MDJ_NAV_SLOTS_INTERNO la escribe literal, sin key de i18n, para
+             que ningún idioma se la toque. Aquí sí llevaba data-i18n propio
+             (traducía a "Mi Perfil"/"My Profile") -- mismo puesto, mismo
+             destino, tercer rótulo distinto según la página. */
+          '<button type="button" data-top="miperfil">MI PERFIL</button>'+
           '<button type="button" data-top="elixis" data-i18n="staff-nav-fenix">Fénix AI</button>'+
           /* MRM IA RETIRADO de este menu (2026-09-02, orden directa del PO:
              "sacala y dejala solo en menu de inicio... borra todo lo que
@@ -2082,7 +2167,6 @@
              considero que un manual/tour por rol no pertenece dentro de un
              portal especifico como este. Ver docs/ESTADO_MAESTRO.md para el
              historial completo del cambio. */
-          langSwitcher+
           /* DIA/NOCHE al final de la tira, como pidio el PO.
              Se muda el boton DE ARRIBA (#ofm-daynight), no el ☀️ que habia aqui.
              Los dos funcionaban, pero NO son equivalentes:
@@ -2098,16 +2182,14 @@
       if(role==='seller'){
         return start+
           '<button type="button" class="active" data-i18n="staff-nav-ventas">Ventas</button>'+
-          '<button type="button" data-href="./account-profile.html" data-i18n="staff-nav-miperfil">Mi Perfil</button>'+
-          '<button type="button" data-href="./admin-dashboard.html" data-i18n="staff-nav-mipanel">Mi Panel</button>'+
-          langSwitcher;
+          '<button type="button" data-href="./account-profile.html">MI PERFIL</button>'+
+          '<button type="button" data-href="./admin-dashboard.html" data-i18n="staff-nav-mipanel">Mi Panel</button>';
       }
       return start+
         '<button type="button" data-href="./dj-tools.html" data-i18n="staff-nav-djtools">DJ Tools</button>'+
         '<button type="button" class="active" data-i18n="staff-nav-operaciones">Operaciones</button>'+
-        '<button type="button" data-href="./account-profile.html" data-i18n="staff-nav-miperfil">Mi Perfil</button>'+
-        '<button type="button" data-href="./admin-dashboard.html" data-i18n="staff-nav-mipanel">Mi Panel</button>'+
-        langSwitcher;
+        '<button type="button" data-href="./account-profile.html">MI PERFIL</button>'+
+        '<button type="button" data-href="./admin-dashboard.html" data-i18n="staff-nav-mipanel">Mi Panel</button>';
     }
 
     /* ── Gate STAFF (solo fila dj_profiles.role, nunca JWT solo — patrón admin-dashboard) ── */

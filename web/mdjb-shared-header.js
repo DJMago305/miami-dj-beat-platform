@@ -83,25 +83,67 @@
   var MDJ_NAV_SLOTS_INTERNO = [
     { s: 1, key: 'nav-home',       nav: 'home',      href: './index.html',        txt: 'Inicio' },
     { s: 2, key: 'nav-academia',   nav: 'academia',  href: './academia.html',     txt: 'Academia' },
-    { s: 3, key: 'nav-agenda',     nav: 'agenda',    href: './staff-agenda.html', txt: 'Agenda' },
+    /* Agenda y Cash Flow apuntaban a staff-agenda.html DIRECTO (2026-09-02,
+       reporte del PO: "voy de Academia a Agenda y las pestañas se mueven de
+       lugar, no cambian los nombres, es un problema de posicionamiento").
+       Causa real, no a ciegas: staff-agenda.html tiene su propio candado de
+       iframe (linea ~484: "if (window.self === window.top) { location.
+       replace('./staff.html'); }") -- esta pensada para vivir DENTRO del
+       iframe #agenda-frame de staff.html, no como pagina de tope. Un clic
+       directo en este puesto navegaba a staff-agenda.html y esa misma
+       pagina se auto-redirigia de inmediato a staff.html SIN ?vista=,
+       aterrizando en Mi Perfil por defecto (no Agenda) -- y de paso
+       cambiando la cabecera entera de #mainNav (mdjb-shared-header.js, la
+       de Academia) a la cabecera propia de staff.html (#staff-topnav, otro
+       componente con su propio CSS) -- dos implementaciones distintas del
+       "mismo" menu, con metricas de fuente/espaciado propias, es lo que se
+       percibia como "las pestañas se corren" sin que cambiara ningun
+       rotulo. Corregido apuntando directo a staff.html con el ?vista= que
+       corresponde -- mismo destino real, sin el salto de pagina extra ni
+       el aterrizaje equivocado en Mi Perfil. */
+    /* CORTINA REAL 2026-09-03 (PO: "todavía desde config veo flujo de caja"):
+       Agenda y Cash Flow SÍ tenían key de i18n pese a que el comentario de
+       cabecera de este archivo ("Las claves nav-agenda, nav-flow y nav-fenix
+       NO existen en translations.js... a propósito, para que i18n no les
+       vacíe el rótulo") ya advertía que no debían tenerla. En algún punto se
+       les agregó `key` y, sin que nadie lo notara, alguien completó las
+       traducciones correspondientes en translations.js -- resultado medido:
+       `academia.html` pinta "Cash Flow" (nunca corre el paso de traducción
+       sobre el riel), pero `account-settings.html` SÍ lo traduce a "Flujo de
+       Caja" -- el mismo puesto, la misma tabla, dos rótulos según de qué
+       página se mire. `key: null` (mismo patrón que Fénix AI, línea de
+       abajo) saca el `data-i18n` del nodo por completo: ninguna página, sin
+       importar cuándo corra su propio paso de traducción, puede volver a
+       tocarlo. */
+    { s: 3, key: null,             nav: 'agenda',    href: './staff.html?vista=agenda', txt: 'Agenda' },
     { s: 4, key: 'nav-config',     nav: 'config',    href: './account-settings.html', txt: '⚙️ Config',
       id: 'mainNav-config-link', cls: 'mdj-config-mainnav' },
     { s: 5, key: 'nav-tools',      nav: 'tools',     href: './dj-tools.html',     txt: 'DJ Tools' },
-    { s: 6, key: 'nav-cashflow',   nav: 'flow',      href: './staff-agenda.html?tab=flow', txt: 'Cash Flow' },
-    { s: 7, key: 'nav-my-profile', nav: 'mi-portal', href: './account-settings.html', txt: 'MI PERFIL',
-      id: 'mainNav-mi-portal-link', cls: 'mdj-mi-portal-mainnav mdj-mi-portal-gold',
-      alias: ['mi-portal', 'header-mi-portal'], navAlias: ['my-profile', 'profile'] },
-    /* Puesto 8 · STAFF. Lleva la clase del gate determinista por rol que ya usa
+    { s: 6, key: null,             nav: 'flow',      href: './staff.html?vista=cashflow', txt: 'Cash Flow' },
+    /* Puesto 7 · STAFF. Lleva la clase del gate determinista por rol que ya usa
        la tira de owner: artista, cliente e invitado no lo ven. Sigue pendiente
        el requisito pleno de la ley RBAC —sacarlo del DOM, no solo ocultarlo. */
-    { s: 8, key: 'nav-staff',      nav: 'staff',     href: './staff.html',        txt: 'Staff',
+    { s: 7, key: 'nav-staff',      nav: 'staff',     href: './staff.html',        txt: 'Staff',
       id: 'mainNav-staff-or-profile', cls: 'mdj-staff-mainnav dj-tab-btn--staff-only' },
+    /* MI PERFIL vuelve al puesto 8 (2026-09-02, chequeo pedido por el PO tras
+       cerrar las cortinas de arranque: "que los puestos esten en la misma
+       posicion para los dos menus"). Antes de hoy estaba en el 7 mientras
+       Staff ocupaba el 8 -- desalineado contra el menu público Y el de
+       Artista, donde MI PERFIL YA vivía en el 8. De paso corrige un bug real
+       ya existente, no solo cosmético: header-unified.css tiene una regla de
+       ancho fija por número de puesto con el comentario "ancho de MI
+       PERFIL" apuntando al puesto 8 — con Staff ahí, esa regla le daba a
+       Staff el ancho pensado para el texto más largo "MI PERFIL". Ver
+       docs/ESTADO_MAESTRO.md para el detalle completo. */
+    { s: 8, key: 'nav-my-profile', nav: 'mi-portal', href: './account-settings.html', txt: 'MI PERFIL',
+      id: 'mainNav-mi-portal-link', cls: 'mdj-mi-portal-mainnav mdj-mi-portal-gold',
+      alias: ['mi-portal', 'header-mi-portal'], navAlias: ['my-profile', 'profile'] },
     { s: 9, key: null,             nav: 'fenix',     href: './elixis-console.html', txt: 'Fénix AI' }
     /* Puesto 10 · MRM IA RETIRADO (2026-09-02, orden directa del PO -- ver
        nota completa junto a MDJ_NAV_SLOTS arriba). Vivía aquí desde
        2026-08-30 con el mismo destino/clase que el puesto 9 de la barra
        pública; el orden vigente hoy es: Inicio, Academia, Agenda, Config,
-       DJ Tools, Cash Flow, MI PERFIL, Staff, Fénix AI -- 9 puestos, no 10.
+       DJ Tools, Cash Flow, Staff, MI PERFIL, Fénix AI -- 9 puestos, no 10.
        MRM IA vive ahora solo en index.html (Inicio). */
   ];
 
@@ -132,11 +174,11 @@
   var MDJ_NAV_SLOTS_ARTISTA = [
     { s: 1,  key: 'nav-home',       nav: 'home',      href: './index.html', txt: 'Inicio' },
     { s: 2,  key: 'nav-academia',   nav: 'academia',  href: './academia.html?mdj_nav=profile', txt: 'Academia' },
-    { s: 3,  key: 'nav-agenda',     nav: 'agenda',    href: './dj-dashboard.html?mdj_nav=profile', txt: 'Agenda' },
+    { s: 3,  key: null,             nav: 'agenda',    href: './dj-dashboard.html?mdj_nav=profile', txt: 'Agenda' },
     { s: 4,  key: 'nav-config',     nav: 'config',    href: './account-settings.html?mdj_nav=profile', txt: '⚙️ Config',
       id: 'mainNav-config-link', cls: 'mdj-config-mainnav' },
     { s: 5,  key: 'nav-tools',      nav: 'tools',     href: './dj-tools.html?mdj_nav=profile', txt: 'DJ Tools' },
-    { s: 6,  key: 'nav-cashflow',   nav: 'flow',      href: '#', txt: 'Cash Flow',      tab: 'flow' },
+    { s: 6,  key: null,             nav: 'flow',      href: '#', txt: 'Cash Flow',      tab: 'flow' },
     { s: 7,  key: null,             nav: 'sft',       href: '#', txt: 'SoundForTips™',  tab: 'sft'  },
     /* MI PERFIL se queda en el puesto 8: su resolvedor de destino y el bloque que
        fija su etiqueta direccionan por numero de slot. */
@@ -514,6 +556,28 @@
           document.body.getAttribute('data-mdj-estacion') === 'artista') {
         return MDJ_NAV_SLOTS_ARTISTA;
       }
+      /* MISMA CURA, CASO QUE FALTABA (2026-09-02, reporte insistente del PO:
+         "efecto chicle, salto, inestabilidad, imantada al moverse de
+         pestaña en pestaña" -- lo seguia sufriendo como owner, aunque el
+         artista ya no desde 2026-08-21). mdj-estacion-preflight.js pinta la
+         barra INTERNO correcta de forma sincrona para owner/management/
+         seller/admin (lee el rol del JWT en localStorage, sin red) y ahora
+         TAMBIEN deja la marca data-mdj-estacion="oficina" en ese mismo
+         instante -- el gemelo exacto de "artista" arriba. Sin este atajo,
+         mdjEsStaffEnVivo() (que depende de data-mdj-nav-role, escrito
+         ASINCRONO mucho despues) devolvia false en la primera pasada,
+         mdjTablaDeSlots() caia a MDJ_NAV_SLOTS (la publica, 8 puestos sin
+         Academia/Agenda/DJ Tools/Cash Flow/Staff/Fenix AI), y
+         mdjAssertNavSlots() normalizaba el riel ya pintado bien hacia esa
+         forma equivocada -- para saltar de vuelta al INTERNO correcto un
+         instante despues, cuando el rol al fin resolvia. Ese doble salto
+         VISIBLE es el chicle. Igual que con "artista", esto no da permisos:
+         solo evita repintar dos veces lo que el preflight ya acerto. */
+      if (!mdjEsStaffEnVivo() &&
+          document.body &&
+          document.body.getAttribute('data-mdj-estacion') === 'oficina') {
+        return MDJ_NAV_SLOTS_INTERNO;
+      }
       if (!mdjEsStaffEnVivo()) return MDJ_NAV_SLOTS;
       var pagina = String(window.location.pathname || '').split('/').pop().toLowerCase();
       if (MDJ_VISTAS_INTERNAS[pagina]) return MDJ_NAV_SLOTS_INTERNO;
@@ -566,7 +630,15 @@
     if (esStaff) return './staff.html?vista=miperfil';
     if (esArtista) return uid ? './dj-profile.html?id=' + encodeURIComponent(uid) : './dj-profile.html';
     if (uid) return './client-portal.html';
-    return './login.html';
+    /* CORTINA REAL 2026-09-02 (mismo pedido del PO que Config: "si se entro
+       por mi perfil, esa entrada es dentro de mi perfil despues de login").
+       './login.html?redirect=dj-profile' reusa el guardia YA existente
+       ("El owner no aterriza en dj-profile.html", linea ~1072): si quien
+       inicia sesion resulta ser owner, ese guardia lo devuelve solo a
+       staff.html -- no hace falta un destino distinto por rol aqui, el
+       propio dj-profile.html ya sabe redirigir owner y mostrar perfil propio
+       a artista. */
+    return './login.html?redirect=dj-profile';
   }
 
   /* Se normaliza CUALQUIER riel de navegación, no sólo #mainNav. En ventanas
@@ -698,16 +770,24 @@
        de mas a cada artista. */
     if (esArtista) return './account-settings.html';
     if (uid) return './client-account.html';
-    return './login.html';
+    /* CORTINA REAL 2026-09-02 (orden del PO: "config debe llevar a login pero
+       una vez logeado dentro de mi perfil... esa entrada es dentro de mi
+       perfil despues de login"): un invitado sin sesion mandaba a
+       './login.html' a secas -- login.html YA soporta volver al destino
+       original con '?redirect=<pagina>' (linea ~1889, el mismo mecanismo que
+       ya usa el flujo de Jobs), pero Config nunca se lo pedia. Sin esto, tras
+       iniciar sesion el invitado caia donde login.html cae por defecto, no
+       de vuelta en Config/MI PERFIL como pidio el PO. */
+    return './login.html?redirect=account-settings';
   }
   window.mdjResolveConfigHref = mdjResolveConfigHref;
 
   async function mdjDestinoConfigEnVivo() {
     var supa = (typeof window.getSupabaseClient === 'function') ? window.getSupabaseClient() : null;
-    if (!supa) return './login.html';
+    if (!supa) return './login.html?redirect=account-settings';
     var ses = null;
     try { var r = await supa.auth.getSession(); ses = r && r.data ? r.data.session : null; } catch (e) {}
-    if (!ses) return './login.html';
+    if (!ses) return './login.html?redirect=account-settings';
     var uid = ses.user && ses.user.id ? String(ses.user.id) : '';
     var rol = '';
     try {
@@ -718,7 +798,7 @@
       return './account-settings.html';
     }
     if (rol) return './account-settings.html';       // cualquier otro rol con perfil = artista
-    return uid ? './client-account.html' : './login.html';
+    return uid ? './client-account.html' : './login.html?redirect=account-settings';
   }
 
   function mdjEngancharConfig(el) {
@@ -1283,7 +1363,24 @@
     if (esInterno) {
       var aqui = String(window.location.pathname || '').split('/').pop().toLowerCase();
       canonicos.forEach(function (el) {
-        var destino = String(el.getAttribute('href') || '').split('?')[0].split('/').pop().toLowerCase();
+        /* CORTINA REAL 2026-09-03 (PO, con video: "CONFIG y MI PERFIL los dos
+           marcados como activos a la vez"). MI PERFIL declara un href
+           ESTATICO de respaldo ('./account-settings.html') identico al de
+           CONFIG -- su destino REAL para owner/staff se resuelve aparte, en
+           el clic, con mdjResolveMiPerfilHref() ('./staff.html?vista=
+           miperfil'). Comparar el href crudo contra la pagina actual hacia
+           que, al aterrizar en account-settings.html por Config, MI PERFIL
+           calzara TAMBIEN por casualidad de compartir el mismo respaldo --
+           dos pestañas doradas a la vez, sin que ninguna se hubiera pulsado
+           de verdad. Para el puesto mi-portal se usa el destino YA
+           resuelto (mismo criterio con el que ya navega el clic real), no
+           el href crudo que nunca se actualiza preventivamente. */
+        var destino;
+        if (el.getAttribute('data-mdj-nav') === 'mi-portal' && typeof mdjResolveMiPerfilHref === 'function') {
+          destino = String(mdjResolveMiPerfilHref() || '').split('?')[0].split('/').pop().toLowerCase();
+        } else {
+          destino = String(el.getAttribute('href') || '').split('?')[0].split('/').pop().toLowerCase();
+        }
         var activo = !!destino && destino === aqui;
         el.classList.toggle('active', activo);
         if (activo) el.setAttribute('aria-current', 'page');
@@ -1497,9 +1594,26 @@
 
     /* Visitante en un perfil ajeno: el logo y el buscador flotantes sustituyen a
        la barra de marketing. Se monta despues del riel para poder mover el
-       buscador ya inicializado. */
+       buscador ya inicializado.
+       CORTINA REAL 2026-09-02 (reporte del PO, tercera ronda: "todavia queda
+       algun salto... eliminen las fotos que queden"): mdjArtistaEnSuPerfil()
+       es mdjEnEstacionDeTrabajo(), la MISMA función async marcada desde el
+       31 de agosto como fuente de "mutación tardía" -- el hide de .header-top
+       (arreglado hace un rato con data-mdj-estacion) ya no esperaba a esta
+       función, pero EL MONTAJE DE LA FRANJA FLOTANTE (el logo/buscador que
+       reemplaza a .header-top) seguía esperándola: medido en vivo en
+       academia.html, .header-top se ocultaba a los 36ms pero la franja no
+       aparecía hasta los 1397ms -- 1.36 segundos con la cabecera SIN logo ni
+       buscador, el hueco que antes tapaba el propio .header-top (todavía
+       visible) y que mi arreglo anterior dejó al descubierto sin querer.
+       data-mdj-estacion ya es la fuente de verdad síncrona para el layout en
+       los otros puntos de esta misma función (ver el "sitio 6" documentado
+       abajo) -- se usa también aquí, en el único punto que faltaba. */
     if (mdjEsVisitanteDePerfil()) mdjMontarFlotanteVisitante();
-    else if (mdjArtistaEnSuPerfil()) mdjMontarFranjaFlotante('artista');
+    else if (mdjArtistaEnSuPerfil() ||
+             (document.body && document.body.getAttribute('data-mdj-estacion'))) {
+      mdjMontarFranjaFlotante('artista');
+    }
     else {
       mdjDesmontarFlotanteVisitante();   /* fuera del perfil, todo vuelve a su sitio */
       /* Y si esta pagina NO es estacion para quien mira, se borra la memoria y se

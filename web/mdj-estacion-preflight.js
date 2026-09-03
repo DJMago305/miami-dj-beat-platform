@@ -58,11 +58,23 @@
       id: 'mainNav-config-link', cls: 'mdj-config-mainnav' },
     { s: 5, href: './dj-tools.html',             i18n: 'nav-tools',      nav: 'tools',     txt: 'DJ Tools' },
     { s: 6, href: './staff-agenda.html?tab=flow',i18n: null,             nav: 'flow',      txt: 'Cash Flow' },
-    { s: 7, href: './elixis-console.html',       i18n: null,             nav: 'fenix',     txt: 'Fénix AI' },
+    /* 2026-09-02: Staff/MI PERFIL/Fénix AI reordenados para calzar EXACTO con
+       MDJ_NAV_SLOTS_INTERNO (mdjb-shared-header.js) — esta copia se había
+       desalineado de esa tabla (7=Fénix AI/8=MI PERFIL/9=Staff aquí, contra
+       7=MI PERFIL/8=Staff/9=Fénix AI allá, antes del chequeo de posiciones de
+       hoy). El comentario de este archivo ya exige que sean la misma barra
+       vista en dos momentos: cuando MI PERFIL se movió al puesto 8 en la
+       tabla canónica, esta copia se quedó atrás y el vigilante de
+       `mdjWatchOne()` (mdjb-shared-header.js) detectaba "orden sucio" sin
+       parar — normalizaba, la próxima mutación volvía a verse sucia, y así
+       en un ciclo infinito cada ~200-300ms (medido en vivo, nunca se
+       detenía): el efecto "se corrige un segundo y se regresa el error"
+       que reportó el PO. */
+    { s: 7, href: './staff.html',                i18n: 'nav-staff',      nav: 'staff',     txt: 'Staff',
+      cls: 'dj-tab-btn--staff-only' },
     { s: 8, href: './account-settings.html',     i18n: 'nav-my-profile', nav: 'mi-portal', txt: 'MI PERFIL',
       id: 'mainNav-mi-portal-link', cls: 'mdj-mi-portal-mainnav mdj-mi-portal-gold' },
-    { s: 9, href: './staff.html',                i18n: 'nav-staff',      nav: 'staff',     txt: 'Staff',
-      cls: 'dj-tab-btn--staff-only' }
+    { s: 9, href: './elixis-console.html',       i18n: null,             nav: 'fenix',     txt: 'Fénix AI' }
   ];
 
   /* Hay sesion? Se mira SOLO en localStorage y de forma sincrona. Cualquier
@@ -103,6 +115,34 @@
       if (nav.querySelector('a[data-mdj-nav="sft"], a[data-mdj-nav="fenix"]')) return;
 
       var oficina = (ses.rol === 'owner' || ses.rol === 'management' || ses.rol === 'seller' || ses.rol === 'admin');
+      var esArtista = (ses.rol === 'artist' || ses.rol === 'dj' || ses.rol === 'talent');
+      /* CLIENTE (o cualquier rol sin match arriba) -- bug real encontrado en
+         auditoria (2026-09-02, a pedido del PO de revisar que artista y
+         cliente no sufrieran el mismo chicle que el owner). Antes de esta
+         linea, `juego = oficina ? INTERNO : ESTACION` no dejaba tercera
+         opcion -- un cliente real (sin fila en dj_profiles) recibia la
+         barra de ARTISTA (Agenda, Cash Flow, SoundForTips, Shop de
+         artista...) pintada aqui mismo, y como data-mdj-estacion="artista"
+         NUNCA se revisa de nuevo en mdjTablaDeSlots() (ver ese archivo),
+         un cliente se quedaba con el menu de artista de forma PERMANENTE
+         en las 8 paginas de estacion, no solo un salto visual pasajero.
+         Para cliente no se reescribe #mainNav (la tabla publica que ya
+         trae el HTML es la correcta) y no se deja ninguna marca de
+         estacion -- solo se revela CONFIG y MI PERFIL de inmediato
+         (mismo criterio: la sesion SI se sabe sincrona, sin red, aunque el
+         rol exacto todavia no), para no sufrir el otro chicle real que
+         encontro la auditoria: esos dos puestos aparecian recien cuando
+         checkSessionForNav() (asincrono) los revelaba mas tarde. */
+      if (!oficina && !esArtista) {
+        ['mainNav-config-link', 'mainNav-mi-portal-link'].forEach(function (id) {
+          var el = document.getElementById(id);
+          if (!el) return;
+          el.classList.remove('mdj-mainnav-reserved-slot');
+          el.removeAttribute('aria-hidden');
+          el.removeAttribute('tabindex');
+        });
+        return;
+      }
       var juego = oficina ? INTERNO : ESTACION;
       var html = '';
       for (var i = 0; i < juego.length; i++) {
@@ -114,7 +154,29 @@
                 ' data-mdj-nav="' + p.nav + '" data-mdj-slot="' + p.s + '">' + p.txt + '</a>';
       }
       nav.innerHTML = html;
-      if (!oficina && document.body) document.body.setAttribute('data-mdj-estacion', 'artista');
+      /* «Chicle» del owner/staff (2026-09-02, reporte insistente del PO:
+         "efecto chicle, salto, inestabilidad, imantada al moverse de
+         pestaña en pestaña"). El caso de artista YA marca data-mdj-estacion
+         ="artista" aqui mismo desde 2026-08-22 -- mdjTablaDeSlots() en
+         mdjb-shared-header.js lo lee de forma SINCRONA y corta camino antes
+         de esperar a mdjEsStaffEnVivo() (que depende de data-mdj-nav-role,
+         escrito de forma ASINCRONA, mucho despues). El caso "oficina" de
+         aqui arriba (owner/management/seller/admin) pinta la barra INTERNO
+         correcta en este mismo instante sincrono -- pero nunca dejaba la
+         marca equivalente, asi que mdjTablaDeSlots() no tenia forma de
+         saberlo: en su primera pasada (antes de que data-mdj-nav-role
+         resuelva) mdjEsStaffEnVivo() daba false y devolvia la tabla
+         PUBLICA, que mdjAssertNavSlots() aplicaba sobre el riel que este
+         guion ya habia llenado bien -- normalizando Academia/Agenda/DJ
+         Tools/Cash Flow/Staff/Fenix AI hacia el juego de 8 puestos publico
+         (que ni siquiera tiene esos puestos) y de vuelta al INTERNO
+         correcto un instante despues, cuando el rol al fin resuelve. ESE
+         doble salto es el chicle que seguia sufriendo el owner -- el
+         artista ya no lo sufre desde agosto porque su marca sincrona si
+         existia. Misma cura, mismo mecanismo, para el caso que faltaba. */
+      if (document.body) {
+        document.body.setAttribute('data-mdj-estacion', oficina ? 'oficina' : 'artista');
+      }
     } catch (e) { /* si algo falla, se queda la publica: el lado seguro */ }
   };
 
