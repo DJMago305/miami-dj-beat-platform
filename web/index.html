@@ -44,7 +44,7 @@
        sustituta del sistema y el texto salia ~2% mas ancho, desplazando el eje X. -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=optional" rel="stylesheet" />
   <link rel="stylesheet" href="./styles.css?v=20260823-hero-card-altura" />
-  <link rel="stylesheet" href="./header-unified.css?v=20260831-riel-gate-fix" />
+  <link rel="stylesheet" href="./header-unified.css?v=20260902-cortinas" />
   <!-- Antes el JS inyectaba esto tras el primer paint → CLS (gap/búsqueda en ≥1200px); VIP ya va por @import en styles.css -->
   <link rel="stylesheet" id="mdj-header-desktop-audit-css" href="./mdj-header-desktop-audit.css?v=20260818-nav-canonico" />
   <link rel="stylesheet" href="./profile.css?v=20260820-ancho-total" />
@@ -616,7 +616,6 @@
     <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs" data-mdj-slot="6">Trabajos</a>
     <a href="./contact.html" data-i18n="nav-contact" data-mdj-nav="contact" data-mdj-slot="7">Contacto</a>
     <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="./client-portal.html" data-mdj-nav="mi-portal" data-mdj-slot="8" aria-hidden="true" tabindex="-1">MI PERFIL</a>
-    <a href="./road-map.html" id="mainNav-roadmap-link" class="mdj-roadmap-mainnav" data-i18n="nav-roadmap" data-mdj-nav="roadmap" data-mdj-slot="9">MRM IA</a>
   </nav>
       </div>
     </div>
@@ -1328,6 +1327,20 @@
           <div class="action-card-title" data-i18n="card-pay-title">Make a Payment</div>
         </div>
       </a>
+      <!-- MRM IA (2026-09-02, orden directa del PO): retirado de la barra
+           compartida de navegación (mdjb-shared-header.js, staff.html) --
+           un manual/tour por rol no pertenece ahí, vive solo en Inicio.
+           Mismo patrón visual que las 3 tarjetas de arriba; sin foto propia
+           en web/assets, usa un degradado de marca (.mrm-bg en styles.css)
+           en vez de inventar una ruta de imagen inexistente. Destino y
+           filtrado por rol los decide road-map.html, no esta tarjeta. -->
+      <a href="./road-map.html" class="action-card">
+        <div class="action-card-bg mrm-bg"></div>
+        <div class="action-card-content">
+          <div class="action-card-sub" data-i18n="card-mrm-sub">Guide</div>
+          <div class="action-card-title" data-i18n="card-mrm-title">How the Platform Works</div>
+        </div>
+      </a>
     </div>
   </section>
 
@@ -1484,7 +1497,7 @@
   <script defer src="./form-handler.js?v=20260420-deploy"></script>
   <script defer src="./header-smart-search.js?v=20260515-unified-header-geometry-1"></script>
   <script defer src="./mdj-identity.js?v=20260617-buyer-artist-fix-1"></script>
-  <script defer src="./mdjb-shared-header.js?v=20260831-seed-race-fix"></script>
+  <script defer src="./mdjb-shared-header.js?v=20260903-dual-active-fix"></script>
   <script>
     /* Inicio: trinquete en #mainNav (scroll + flechas); no reactiva tick en otros carruseles por scroll. */
     window.MDJ_ENABLE_NAV_TICK_AUDIO = true;

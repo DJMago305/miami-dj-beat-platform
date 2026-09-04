@@ -12,39 +12,80 @@
        sustituta del sistema y el texto sale ~2% mas estrecho, desplazando el eje X. -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=optional" rel="stylesheet" />
 <link rel="stylesheet" href="./styles.css?v=20260823-hero-card-altura" />
-  <link rel="stylesheet" href="./header-unified.css?v=20260831-riel-gate-fix" />
+  <link rel="stylesheet" href="./header-unified.css?v=20260902-cortinas" />
   <link rel="stylesheet" href="./mdj-outlined-fields.css?v=20260421-account-forms" />
   <style>
     body.mdj-client-account-page {
       background: #0a0e1a;
-      --ca-relief-border: #dbe3ef;
       --ca-relief-radius: 14px;
+      /* ── Tokens de tema para .ca-main (contenido de Config): por defecto modo
+         noche (oscuro), igual que el resto de la plataforma. El botón sol/luna
+         de la barra pone data-theme="day" en <html> -- ese bloque más abajo
+         redefine estos mismos tokens con la paleta clara original de esta
+         página. La barra lateral (.ca-sidebar/.ca-nav) NO usa estos tokens:
+         se queda oscura siempre, igual que en account-settings.html. ── */
+      --ca-bg: #0d1220;
+      --ca-text: #eef1f8;
+      --ca-text-soft: rgba(238,241,248,0.78);
+      --ca-muted: rgba(238,241,248,0.58);
+      --ca-card-bg: #141a2c;
+      --ca-head-bg: rgba(255,255,255,0.06);
+      --ca-head-text: rgba(238,241,248,0.78);
+      --ca-stripe-bg: rgba(255,255,255,0.03);
+      --ca-soft-bg: rgba(255,255,255,0.05);
+      --ca-border-soft: rgba(255,255,255,0.12);
+      --ca-border-mid: rgba(255,255,255,0.24);
+      --ca-input-border: rgba(255,255,255,0.18);
+      --ca-link: #8ab4ff;
+      --ca-btn-sec-text: #eef1f8;
+      --ca-btn-sec-text-hover: #ffffff;
+      --ca-btn-sec-bg: rgba(255,255,255,0.06);
+      --ca-card-highlight: rgba(255,255,255,0.06);
+      --ca-switch-track: rgba(255,255,255,0.15);
+      --ca-relief-border: rgba(255,255,255,0.10);
+      --ca-relief-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.35),
+        0 10px 24px rgba(0, 0, 0, 0.45);
+    }
+    html[data-theme="day"] body.mdj-client-account-page {
+      --ca-bg: #f4f6fa;
+      --ca-text: #1a2238;
+      --ca-text-soft: #334155;
+      --ca-muted: #64748b;
+      --ca-card-bg: #ffffff;
+      --ca-head-bg: #f1f5f9;
+      --ca-head-text: #475569;
+      --ca-stripe-bg: #fafbfc;
+      --ca-soft-bg: #f8fafc;
+      --ca-border-soft: #e2e8f0;
+      --ca-border-mid: #94a3b8;
+      --ca-input-border: #cbd5e1;
+      --ca-link: #2563eb;
+      --ca-btn-sec-text: #1e293b;
+      --ca-btn-sec-text-hover: #0f172a;
+      --ca-btn-sec-bg: #ffffff;
+      --ca-card-highlight: rgba(255,255,255,0.9);
+      --ca-switch-track: rgba(0,0,0,0.14);
+      --ca-relief-border: #dbe3ef;
       --ca-relief-shadow:
         0 1px 2px rgba(15, 23, 42, 0.05),
         0 10px 28px rgba(15, 23, 42, 0.09);
     }
 
     /*
-     * Riel alineado con cabecera (1200px base) pero el lienzo de datos usa más ancho en pantallas grandes.
+     * A todo el ancho de pantalla (igual que .acct-wrap en account-settings.html:
+     * sin max-width, solo el padding de safe-area) -- pedido explícito del PO
+     * 2026-09-03: "necesito que uses toda la pantalla para esta pagina".
      */
     body.mdj-client-account-page .ca-shell {
       display: grid;
       grid-template-columns: minmax(248px, 288px) minmax(0, 1fr);
       gap: 0;
       width: 100%;
-      max-width: min(1440px, calc(100vw - max(32px, env(safe-area-inset-left, 0px) + env(safe-area-inset-right, 0px))));
-      margin-left: auto;
-      margin-right: auto;
       min-height: calc(100vh - var(--header-height) - var(--header-nav-band));
       padding-left: max(16px, env(safe-area-inset-left, 0px));
       padding-right: max(16px, env(safe-area-inset-right, 0px));
       box-sizing: border-box;
-    }
-
-    @media (min-width: 1400px) {
-      body.mdj-client-account-page .ca-shell {
-        max-width: min(1520px, calc(100vw - max(40px, env(safe-area-inset-left, 0px) + env(safe-area-inset-right, 0px))));
-      }
     }
 
     body.mdj-client-account-page .ca-sidebar {
@@ -135,9 +176,38 @@
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
     }
 
+    body.mdj-client-account-page .ca-nav button svg { flex-shrink: 0; opacity: .65; }
+    body.mdj-client-account-page .ca-nav button.is-active svg { opacity: 1; }
+
+    /* Sidebar colapsable — mismo patrón reutilizable de account-settings.html
+       (comentario original: "Sidebar colapsable (staff/owner) — recuerda el
+       estado. Reutilizable en otras vistas con sidebar."). Misma clase
+       .acct-side-toggle, mismo localStorage, mismo comportamiento. */
+    body.mdj-client-account-page .acct-side-toggle {
+      display: flex; align-items: center; justify-content: center;
+      width: 38px; height: 38px; margin: 0 0 16px; padding: 0;
+      border: 1px solid rgba(255,255,255,0.12); border-radius: 10px;
+      background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.7);
+      cursor: pointer; transition: background .15s,color .15s,border-color .15s; flex-shrink: 0;
+    }
+    body.mdj-client-account-page .acct-side-toggle:hover { color: #fff; background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.22); }
+    body.mdj-client-account-page .acct-side-toggle svg { width: 20px; height: 20px; }
+    body.mdj-client-account-page .ca-shell { transition: grid-template-columns .22s ease; }
+    body.mdj-client-account-page .ca-shell.mdj-side-collapsed { grid-template-columns: 64px minmax(0, 1fr); }
+    body.mdj-client-account-page .ca-shell.mdj-side-collapsed .acct-side-toggle { margin: 0 auto 14px; }
+    body.mdj-client-account-page .ca-shell.mdj-side-collapsed .ca-sidebar { padding: 16px 8px; }
+    body.mdj-client-account-page .ca-shell.mdj-side-collapsed #ca-sidebar-avatar { width: 40px; height: 40px; margin: 0 auto; }
+    body.mdj-client-account-page .ca-shell.mdj-side-collapsed #ca-sidebar-name,
+    body.mdj-client-account-page .ca-shell.mdj-side-collapsed #ca-sidebar-email { display: none; }
+    body.mdj-client-account-page .ca-shell.mdj-side-collapsed .ca-nav button { justify-content: center; gap: 0; padding: 13px 0; font-size: 0; }
+    body.mdj-client-account-page .ca-shell.mdj-side-collapsed .ca-nav button svg { opacity: .8; }
+    @media (max-width: 900px) {
+      body.mdj-client-account-page .acct-side-toggle { display: none; }
+    }
+
     body.mdj-client-account-page .ca-main {
-      background: #f4f6fa;
-      color: #1a2238;
+      background: var(--ca-bg);
+      color: var(--ca-text);
       padding-top: clamp(28px, 3.5vw, 52px);
       padding-bottom: clamp(28px, 3.5vw, 52px);
       padding-left: clamp(20px, 2.5vw, 40px);
@@ -159,7 +229,7 @@
     body.mdj-client-account-page .ca-main h1 {
       font-size: clamp(1.35rem, 2.2vw, 1.75rem);
       margin: 0 0 22px;
-      color: #1a2238;
+      color: var(--ca-text);
       font-weight: 800;
     }
 
@@ -177,8 +247,8 @@
     }
 
     body.mdj-client-account-page .ca-overview-card {
-      background: #fff;
-      border: 1px solid #e2e8f0;
+      background: var(--ca-card-bg);
+      border: 1px solid var(--ca-border-soft);
       border-radius: 14px;
       padding: 0;
       min-height: clamp(160px, 18vh, 220px);
@@ -192,11 +262,10 @@
     body.mdj-client-account-page #ca-panel-profile .ca-profile-contact-tile,
     body.mdj-client-account-page .ca-events-block,
     body.mdj-client-account-page .ca-rewards-tier,
-    body.mdj-client-account-page .ca-panel .system-card,
-    body.mdj-client-account-page .ca-edit-toggle {
+    body.mdj-client-account-page .ca-panel .system-card {
       border: 1px solid var(--ca-relief-border) !important;
       border-radius: var(--ca-relief-radius);
-      background: #fff;
+      background: var(--ca-card-bg);
       box-shadow: var(--ca-relief-shadow) !important;
     }
 
@@ -215,8 +284,8 @@
       gap: 10px;
       margin-bottom: 0;
       padding: 10px 12px;
-      background: #f1f5f9;
-      border-bottom: 1px solid #dbe3ef;
+      background: var(--ca-head-bg);
+      border-bottom: 1px solid var(--ca-relief-border);
     }
 
     body.mdj-client-account-page .ca-overview-card__head h2 {
@@ -225,13 +294,13 @@
       font-weight: 800;
       letter-spacing: 0.06em;
       text-transform: uppercase;
-      color: #475569;
+      color: var(--ca-head-text);
     }
 
     body.mdj-client-account-page .ca-overview-card__action {
       border: none;
       background: none;
-      color: #2563eb;
+      color: var(--ca-link);
       font-size: 12px;
       font-weight: 700;
       cursor: pointer;
@@ -244,11 +313,11 @@
       align-items: center;
       justify-content: center;
       text-align: center;
-      color: #334155;
+      color: var(--ca-text-soft);
       font-size: 14px;
       line-height: 1.45;
       padding: clamp(18px, 2vw, 26px);
-      background: #fff;
+      background: var(--ca-card-bg);
     }
 
     body.mdj-client-account-page #ca-overview-avatar {
@@ -256,11 +325,11 @@
       height: 112px;
       border-radius: 50%;
       overflow: hidden;
-      border: 1px solid #dbe3ef;
+      border: 1px solid var(--ca-relief-border);
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #f8fafc;
+      background: var(--ca-soft-bg);
     }
 
     body.mdj-client-account-page #ca-overview-avatar img {
@@ -274,11 +343,11 @@
       height: 112px;
       border-radius: 50%;
       overflow: hidden;
-      border: 1px solid #dbe3ef;
+      border: 1px solid var(--ca-relief-border);
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #f8fafc;
+      background: var(--ca-soft-bg);
     }
 
     body.mdj-client-account-page #ca-profile-avatar img {
@@ -309,24 +378,24 @@
       letter-spacing: 0.03em;
       border-radius: 7px;
       white-space: nowrap;
-      color: #1e293b;
-      background: #ffffff;
-      border: 1px solid #94a3b8;
+      color: var(--ca-btn-sec-text);
+      background: var(--ca-btn-sec-bg);
+      border: 1px solid var(--ca-border-mid);
       box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
     }
 
     body.mdj-client-account-page #ca-profile-photo-card .sys-btn:hover {
-      color: #0f172a;
-      background: #f8fafc;
-      border-color: #64748b;
+      color: var(--ca-btn-sec-text-hover);
+      background: var(--ca-soft-bg);
+      border-color: var(--ca-border-mid);
     }
 
     body.mdj-client-account-page .ca-panel .system-card {
-      background: #fff;
+      background: var(--ca-card-bg);
       border: 1px solid var(--ca-relief-border) !important;
       border-radius: var(--ca-relief-radius);
       box-shadow: var(--ca-relief-shadow) !important;
-      color: #1a2238;
+      color: var(--ca-text);
       width: 100%;
       max-width: none;
       margin-bottom: 0;
@@ -337,26 +406,52 @@
       align-items: flex-start;
       gap: 10px;
       padding: clamp(16px, 2vw, 22px) clamp(20px, 2.5vw, 32px);
-      border-top: 1px solid #e2e8f0;
-      background: #fafbfc;
+      border-top: 1px solid var(--ca-border-soft);
+      background: var(--ca-stripe-bg);
     }
 
-    body.mdj-client-account-page .ca-edit-toggle {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      padding: 14px 16px;
-      margin-bottom: 10px;
-      border-radius: 12px !important;
-      font-size: 14px;
-      font-weight: 600;
-      color: #1a2238;
-      cursor: pointer;
+    /* Interruptor unificado -- mismo componente .apple-switch/.slider que
+       account-settings.html, homogeneidad de plataforma pedida explícitamente
+       por el PO (2026-09-04): "no puedes usar un sistema en un lugar y en el
+       otro otro, somos homogéneos". Solo el color de texto usa los tokens de
+       tema de esta página (account-settings.html es siempre oscura y no lo
+       necesita); el interruptor en sí -- pista, perilla, verde al activar --
+       es idéntico en ambas páginas. */
+    body.mdj-client-account-page .toggle-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 0;
     }
-
-    body.mdj-client-account-page .ca-edit-toggle:last-child {
-      margin-bottom: 0;
+    body.mdj-client-account-page .toggle-row .toggle-label {
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    body.mdj-client-account-page .toggle-row .toggle-label span {
+      font-size: 14px; font-weight: 500; color: var(--ca-text);
+    }
+    body.mdj-client-account-page .toggle-row .toggle-label p {
+      margin: 0; font-size: 13px; color: var(--ca-muted);
+    }
+    body.mdj-client-account-page .apple-switch {
+      position: relative; display: inline-block;
+      width: 44px; height: 24px; flex-shrink: 0;
+    }
+    body.mdj-client-account-page .apple-switch input {
+      opacity: 0; width: 0; height: 0;
+    }
+    body.mdj-client-account-page .apple-switch .slider {
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background-color: var(--ca-switch-track);
+      transition: .2s; border-radius: 34px;
+    }
+    body.mdj-client-account-page .apple-switch .slider:before {
+      position: absolute; content: ""; height: 20px; width: 20px; left: 2px; bottom: 2px;
+      background-color: #fff; transition: .2s; border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    body.mdj-client-account-page .apple-switch input:checked + .slider {
+      background-color: #30D158;
+    }
+    body.mdj-client-account-page .apple-switch input:checked + .slider:before {
+      transform: translateX(20px);
     }
 
     body.mdj-client-account-page #ca-panel-notifications .system-card-footer {
@@ -420,9 +515,9 @@
     body.mdj-client-account-page #ca-panel-email .sys-btn.secondary,
     body.mdj-client-account-page #ca-panel-password .sys-btn.secondary,
     body.mdj-client-account-page .ca-profile-panel-footer .sys-btn.secondary.ca-cancel-overview {
-      color: #1e293b;
-      background: #ffffff;
-      border: 1px solid #94a3b8;
+      color: var(--ca-btn-sec-text);
+      background: var(--ca-btn-sec-bg);
+      border: 1px solid var(--ca-border-mid);
       box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
     }
 
@@ -431,9 +526,9 @@
     body.mdj-client-account-page #ca-panel-email .sys-btn.secondary:hover,
     body.mdj-client-account-page #ca-panel-password .sys-btn.secondary:hover,
     body.mdj-client-account-page .ca-profile-panel-footer .sys-btn.secondary.ca-cancel-overview:hover {
-      color: #0f172a;
-      background: #f8fafc;
-      border-color: #64748b;
+      color: var(--ca-btn-sec-text-hover);
+      background: var(--ca-soft-bg);
+      border-color: var(--ca-border-mid);
     }
 
     body.mdj-client-account-page #ca-panel-payments .sys-btn.primary,
@@ -464,14 +559,14 @@
     body.mdj-client-account-page .ca-panel .system-card h3,
     body.mdj-client-account-page .ca-panel label,
     body.mdj-client-account-page .ca-panel .mdj-field-outlined__label {
-      color: #1a2238;
+      color: var(--ca-text);
     }
 
     body.mdj-client-account-page .ca-panel .sys-input,
     body.mdj-client-account-page .ca-panel .mdj-field-outlined input {
-      background: #fff;
-      color: #1a2238;
-      border-color: #cbd5e1;
+      background: var(--ca-card-bg);
+      color: var(--ca-text);
+      border-color: var(--ca-input-border);
     }
 
     body.mdj-client-account-page .footer {
@@ -480,7 +575,7 @@
 
     body.mdj-client-account-page .ca-events-block {
       margin-top: clamp(28px, 3vw, 40px);
-      background: #fff;
+      background: var(--ca-card-bg);
       border: 1px solid var(--ca-relief-border);
       border-radius: var(--ca-relief-radius);
       box-shadow: var(--ca-relief-shadow);
@@ -515,7 +610,7 @@
 
     body.mdj-client-account-page .ca-events-block__head {
       padding: 18px clamp(16px, 2vw, 24px);
-      border-bottom: 1px solid #e2e8f0;
+      border-bottom: 1px solid var(--ca-border-soft);
     }
 
     body.mdj-client-account-page .ca-events-block__head h2 {
@@ -524,14 +619,14 @@
       font-weight: 800;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: #64748b;
+      color: var(--ca-muted);
     }
 
     body.mdj-client-account-page .ca-events-block__head p {
       margin: 0;
       font-size: 14px;
       line-height: 1.5;
-      color: #334155;
+      color: var(--ca-text-soft);
     }
 
     body.mdj-client-account-page .ca-events-table-wrap {
@@ -544,12 +639,12 @@
       min-width: 880px;
       border-collapse: collapse;
       font-size: 13px;
-      color: #1a2238;
+      color: var(--ca-text);
     }
 
     body.mdj-client-account-page .ca-events-table th,
     body.mdj-client-account-page .ca-events-table td {
-      border: 1px solid #dbe3ef;
+      border: 1px solid var(--ca-relief-border);
       padding: 10px 12px;
       text-align: left;
       vertical-align: middle;
@@ -557,19 +652,19 @@
     }
 
     body.mdj-client-account-page .ca-events-table th {
-      background: #f1f5f9;
+      background: var(--ca-head-bg);
       font-size: 11px;
       font-weight: 800;
       letter-spacing: 0.06em;
       text-transform: uppercase;
-      color: #475569;
+      color: var(--ca-head-text);
       position: sticky;
       top: 0;
       z-index: 1;
     }
 
     body.mdj-client-account-page .ca-events-table tbody tr:nth-child(even) td {
-      background: #fafbfc;
+      background: var(--ca-stripe-bg);
     }
 
     body.mdj-client-account-page .ca-events-table td.ca-events-num {
@@ -579,14 +674,14 @@
     }
 
     body.mdj-client-account-page .ca-events-table a {
-      color: #2563eb;
+      color: var(--ca-link);
       font-weight: 700;
       text-decoration: none;
     }
 
     body.mdj-client-account-page .ca-events-empty td {
       text-align: center;
-      color: #64748b;
+      color: var(--ca-muted);
       padding: 28px 16px;
       white-space: normal;
     }
@@ -596,7 +691,7 @@
     }
 
     body.mdj-client-account-page .ca-events-block--past .ca-events-block__head h2 {
-      color: #94a3b8;
+      color: var(--ca-muted);
     }
 
     body.mdj-client-account-page .ca-rewards-tier {
@@ -605,19 +700,19 @@
       gap: 10px;
       padding: 12px 16px;
       margin-bottom: clamp(20px, 2.5vw, 28px);
-      background: #fff;
+      background: var(--ca-card-bg);
       border: 1px solid var(--ca-relief-border);
       border-radius: var(--ca-relief-radius);
       box-shadow: var(--ca-relief-shadow);
       font-size: 14px;
       font-weight: 700;
-      color: #1a2238;
+      color: var(--ca-text);
     }
 
     body.mdj-client-account-page .ca-rewards-tier__meta {
       font-size: 12px;
       font-weight: 600;
-      color: #64748b;
+      color: var(--ca-muted);
     }
 
     body.mdj-client-account-page .ca-profile-panel--name-only #ca-profile-address-card,
@@ -656,7 +751,7 @@
       padding: 16px 18px;
       border-radius: var(--ca-relief-radius);
       border: 1px solid var(--ca-relief-border);
-      background: #fff;
+      background: var(--ca-card-bg);
       box-shadow: var(--ca-relief-shadow);
     }
 
@@ -692,13 +787,13 @@
       font-weight: 800;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: #64748b;
+      color: var(--ca-muted);
     }
 
     body.mdj-client-account-page .ca-profile-contact-tile__action {
       border: none;
       background: transparent;
-      color: #2563eb;
+      color: var(--ca-link);
       font-size: 12px;
       font-weight: 700;
       cursor: pointer;
@@ -714,7 +809,7 @@
       margin: 0;
       font-size: 15px;
       font-weight: 700;
-      color: #1a2238;
+      color: var(--ca-text);
       line-height: 1.4;
       word-break: break-word;
     }
@@ -722,8 +817,8 @@
     body.mdj-client-account-page .ca-profile-contact-tile--phone .sys-input {
       margin-top: 2px;
       border-radius: 10px;
-      border-color: #cbd5e1;
-      background: #fff;
+      border-color: var(--ca-input-border);
+      background: var(--ca-card-bg);
       font-size: 15px;
       font-weight: 600;
     }
@@ -734,19 +829,19 @@
 
     body.mdj-client-account-page .ca-profile-contact-tile--mail {
       border-color: var(--ca-relief-border);
-      background: #fff;
+      background: var(--ca-card-bg);
     }
 
     body.mdj-client-account-page .ca-profile-contact-tile--mail .ca-profile-contact-tile__icon {
       background: rgba(37, 99, 235, 0.1);
       border-color: rgba(37, 99, 235, 0.22);
-      color: #2563eb;
+      color: var(--ca-link);
     }
 
     body.mdj-client-account-page .ca-profile-section__head {
       padding: 10px 12px;
-      background: #f1f5f9;
-      border-bottom: 1px solid #dbe3ef;
+      background: var(--ca-head-bg);
+      border-bottom: 1px solid var(--ca-relief-border);
     }
 
     body.mdj-client-account-page .ca-profile-section__head h2 {
@@ -755,7 +850,7 @@
       font-weight: 800;
       letter-spacing: 0.06em;
       text-transform: uppercase;
-      color: #475569;
+      color: var(--ca-head-text);
     }
 
     body.mdj-client-account-page .ca-profile-panel-footer {
@@ -790,7 +885,7 @@
       margin: 0 0 18px;
       font-size: clamp(1.35rem, 2.2vw, 1.75rem);
       font-weight: 700;
-      color: #1a2238;
+      color: var(--ca-text);
       letter-spacing: -0.02em;
     }
 
@@ -800,21 +895,21 @@
       font-weight: 800;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: #94a3b8;
+      color: var(--ca-muted);
     }
 
     body.mdj-client-account-page .ca-payments-accept {
       margin: 0 0 16px;
       font-size: 14px;
       line-height: 1.5;
-      color: #64748b;
+      color: var(--ca-muted);
     }
 
     body.mdj-client-account-page .ca-payments-empty {
       margin: 0;
       font-size: 14px;
       line-height: 1.55;
-      color: #64748b;
+      color: var(--ca-muted);
     }
 
     body.mdj-client-account-page .ca-payments-empty[hidden],
@@ -835,23 +930,23 @@
       align-items: center;
       gap: 16px;
       padding: 14px 16px;
-      border: 1px solid #dbe3ef;
+      border: 1px solid var(--ca-relief-border);
       border-radius: 10px;
-      background: #fff;
+      background: var(--ca-card-bg);
       box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        inset 0 1px 0 var(--ca-card-highlight),
         0 1px 2px rgba(15, 23, 42, 0.04);
     }
 
     body.mdj-client-account-page .ca-saved-card-row__brand {
       width: 52px;
       height: 34px;
-      border: 1px solid #e2e8f0;
+      border: 1px solid var(--ca-border-soft);
       border-radius: 6px;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #f8fafc;
+      background: var(--ca-soft-bg);
       flex-shrink: 0;
     }
 
@@ -866,7 +961,7 @@
       font-weight: 900;
       letter-spacing: 0.06em;
       text-transform: uppercase;
-      color: #334155;
+      color: var(--ca-text-soft);
     }
 
     body.mdj-client-account-page .ca-saved-card-row__lines {
@@ -877,13 +972,13 @@
       margin: 0 0 2px;
       font-size: 15px;
       font-weight: 600;
-      color: #1a2238;
+      color: var(--ca-text);
     }
 
     body.mdj-client-account-page .ca-saved-card-row__exp {
       margin: 0;
       font-size: 13px;
-      color: #64748b;
+      color: var(--ca-muted);
     }
 
     body.mdj-client-account-page .ca-saved-card-row__actions {
@@ -900,16 +995,16 @@
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
-      color: #2563eb;
+      color: var(--ca-link);
     }
 
     body.mdj-client-account-page .ca-saved-card-row__actions button:disabled {
-      color: #94a3b8;
+      color: var(--ca-muted);
       cursor: default;
     }
 
     body.mdj-client-account-page .ca-saved-card-row__actions button[data-ca-card-delete] {
-      color: #2563eb;
+      color: var(--ca-link);
     }
 
     body.mdj-client-account-page .ca-payments-add-link {
@@ -919,7 +1014,7 @@
       padding: 0;
       font-size: 13px;
       font-weight: 700;
-      color: #2563eb;
+      color: var(--ca-link);
       cursor: pointer;
     }
 
@@ -931,7 +1026,7 @@
       margin: 0 0 16px;
       font-size: 13px;
       line-height: 1.5;
-      color: #64748b;
+      color: var(--ca-muted);
     }
 
     body.mdj-client-account-page .ca-billing-differs-toggle {
@@ -940,10 +1035,10 @@
       gap: 10px;
       margin-top: 14px;
       padding: 12px 14px;
-      border: 1px solid #dbe3ef;
+      border: 1px solid var(--ca-relief-border);
       border-radius: 10px;
-      background: #f8fafc;
-      color: #1a2238;
+      background: var(--ca-soft-bg);
+      color: var(--ca-text);
       font-size: 14px;
       font-weight: 700;
       cursor: pointer;
@@ -959,7 +1054,7 @@
     body.mdj-client-account-page .ca-billing-address-block {
       margin-top: 16px;
       padding-top: 16px;
-      border-top: 1px solid #e2e8f0;
+      border-top: 1px solid var(--ca-border-soft);
     }
 
     body.mdj-client-account-page .ca-billing-address-block__title {
@@ -968,7 +1063,7 @@
       font-weight: 800;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: #64748b;
+      color: var(--ca-muted);
     }
 
     body.mdj-client-account-page #ca-panel-payments .ca-payments-billing-footer {
@@ -1095,9 +1190,9 @@
 
         <div class="mobile-overlay" id="mobileMenu">
           <nav class="mobile-nav">
-            <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Home</a>
-            <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Services</a>
-            <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues">Events</a>
+            <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Inicio</a>
+            <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Servicios</a>
+            <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues">Eventos</a>
             <a href="./shop.html" style="color:#c5a059;font-weight:800;" data-mdj-nav="shop">Shop</a>
             <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
             <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
@@ -1120,14 +1215,17 @@
     <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs" data-mdj-slot="6">Trabajos</a>
     <a href="./contact.html" data-i18n="nav-contact" data-mdj-nav="contact" data-mdj-slot="7">Contacto</a>
     <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="./client-portal.html" data-mdj-nav="mi-portal" data-mdj-slot="8" aria-hidden="true" tabindex="-1">MI PERFIL</a>
-    <a href="./road-map.html" id="mainNav-roadmap-link" class="mdj-roadmap-mainnav" data-i18n="nav-roadmap" data-mdj-nav="roadmap" data-mdj-slot="9">MRM IA</a>
   </nav>
+
       </div>
     </div>
   </header>
 
   <main class="ca-shell">
     <aside class="ca-sidebar" aria-label="Client account navigation">
+      <button class="acct-side-toggle" id="caSideToggle" type="button" title="Contraer / expandir menú" aria-label="Contraer o expandir el menú lateral">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="9" y1="4" x2="9" y2="20"/></svg>
+      </button>
       <div class="ca-sidebar-user">
         <div id="ca-sidebar-avatar" aria-hidden="true">
           <img src="./assets/dj-avatar-placeholder.png" alt="" />
@@ -1136,11 +1234,26 @@
         <p id="ca-sidebar-email">—</p>
       </div>
       <ul class="ca-nav" role="tablist">
-        <li><button type="button" class="is-active" data-ca-panel="overview" aria-selected="true" data-i18n="client-account-nav-account">Account</button></li>
-        <li><button type="button" data-ca-panel="rewards" aria-selected="false" data-i18n="client-account-nav-rewards">Rewards</button></li>
-        <li><button type="button" data-ca-panel="profile" aria-selected="false" data-i18n="client-account-nav-profile">Profile & address</button></li>
-        <li><button type="button" data-ca-panel="payments" aria-selected="false" data-i18n="client-account-nav-payments">Payments</button></li>
-        <li><button type="button" data-ca-panel="notifications" aria-selected="false" data-i18n="client-account-nav-notifications">Notifications</button></li>
+        <li><button type="button" data-ca-panel="profile" aria-selected="false">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          <span data-i18n="client-account-nav-profile">Perfil</span>
+        </button></li>
+        <li><button type="button" class="is-active" data-ca-panel="overview" aria-selected="true">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+          <span data-i18n="client-account-nav-account">Account</span>
+        </button></li>
+        <li><button type="button" data-ca-panel="rewards" aria-selected="false">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <span data-i18n="client-account-nav-rewards">Rewards</span>
+        </button></li>
+        <li><button type="button" data-ca-panel="payments" aria-selected="false">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          <span data-i18n="client-account-nav-payments">Payments</span>
+        </button></li>
+        <li><button type="button" data-ca-panel="notifications" aria-selected="false">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span data-i18n="client-account-nav-notifications">Notifications</span>
+        </button></li>
       </ul>
     </aside>
 
@@ -1235,7 +1348,7 @@
       </section>
 
       <section class="ca-panel" id="ca-panel-profile" data-ca-panel="profile" role="tabpanel" hidden>
-        <h1 data-i18n="client-account-nav-profile">Profile & address</h1>
+        <h1 data-i18n="client-account-nav-profile">Profile</h1>
         <div class="ca-profile-grid">
           <div class="ca-profile-col" id="ca-profile-left-col">
             <div class="system-card ca-profile-section ca-profile-photo-card" id="ca-profile-photo-card">
@@ -1344,6 +1457,151 @@
             <p class="ca-profile-contact-tile__value" id="ca-profile-email-display">—</p>
           </div>
         </div>
+
+        <!-- Preferencias / Autorizaciones -- movido aquí, al final de Perfil, por pedido
+             explícito del PO (2026-09-04): "debajo de perfil al final es que van las
+             autorizaciones". Vivía en la pestaña Notificaciones; se retiró de ahí. -->
+        <div class="system-card">
+          <div class="ca-profile-section__head">
+            <h2 data-i18n="client-account-notify-title">Notifications</h2>
+          </div>
+          <div class="system-card-body">
+            <div class="toggle-row">
+              <div class="toggle-label"><span data-i18n="account-pref-email-title">Email notifications</span></div>
+              <label class="apple-switch">
+                <input type="checkbox" id="ca-notify-bookings" checked />
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-label"><span data-i18n="account-pref-marketing-title">Marketing updates</span></div>
+              <label class="apple-switch">
+                <input type="checkbox" id="ca-notify-marketing" checked />
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-label"><span data-i18n="account-pref-sms-title">SMS alerts</span></div>
+              <label class="apple-switch">
+                <input type="checkbox" id="ca-notify-sms" checked />
+                <span class="slider"></span>
+              </label>
+            </div>
+            <!-- Calendario de Google (2026-09-03, simplificado el mismo dia tras
+                 feedback del PO: "deberia estar ahi con apariencia switch igual
+                 que los demas"). Un solo interruptor, SIEMPRE visible desde el
+                 primer pintado, igual que los de arriba -- nunca escondido en lo
+                 que el JS decide un estado. Apagado = no conectado o pausado;
+                 encenderlo por primera vez dispara el flujo real de Google
+                 (calendar-oauth-init); si ya esta conectado, solo pausa/reanuda
+                 -- nunca borra el token guardado. Interruptor mismo componente
+                 .apple-switch de account-settings.html -- homogeneidad de plataforma
+                 pedida explícitamente por el PO (2026-09-04). -->
+            <div class="toggle-row">
+              <div class="toggle-label">
+                <span data-i18n="account-pref-calendar-title">Sincronizar Calendario de Google</span>
+                <p id="ca-calendar-sync-hint" style="display:none;margin:2px 0 0;font-size:12px;"></p>
+              </div>
+              <label class="apple-switch">
+                <input type="checkbox" id="ca-notify-calendar-sync" />
+                <span class="slider"></span>
+              </label>
+            </div>
+            <script>
+            (function () {
+                var cb = document.getElementById('ca-notify-calendar-sync');
+                var hint = document.getElementById('ca-calendar-sync-hint');
+                if (!cb) return;
+                function setHint(msg, isError) {
+                    if (!hint) return;
+                    if (!msg) { hint.style.display = 'none'; hint.textContent = ''; return; }
+                    hint.textContent = msg;
+                    hint.style.color = isError ? 'rgba(255,150,130,0.95)' : '';
+                    hint.style.display = 'block';
+                }
+                async function getClientAndSession() {
+                    try {
+                        var sb = window.getSupabaseClient && window.getSupabaseClient();
+                        if (!sb) return null;
+                        var res = await sb.auth.getSession();
+                        var session = res && res.data && res.data.session;
+                        if (!session) return null;
+                        return { sb: sb, session: session };
+                    } catch (e) { return null; }
+                }
+                async function loadState() {
+                    var ctx = await getClientAndSession();
+                    if (!ctx) return;
+                    try {
+                        var q = await ctx.sb
+                            .from('user_calendar_integrations')
+                            .select('status')
+                            .eq('user_id', ctx.session.user.id)
+                            .eq('provider', 'google')
+                            .maybeSingle();
+                        cb.checked = !!(q && q.data && q.data.status === 'active');
+                    } catch (e) { /* si falla la lectura, se queda apagado por defecto */ }
+                }
+                cb.addEventListener('change', async function () {
+                    var ctx = await getClientAndSession();
+                    if (!ctx) { cb.checked = false; window.location.href = './login.html?redirect=client-account'; return; }
+                    if (!cb.checked) {
+                        cb.disabled = true;
+                        try {
+                            await ctx.sb.from('user_calendar_integrations')
+                                .update({ status: 'paused', updated_at: new Date().toISOString() })
+                                .eq('user_id', ctx.session.user.id).eq('provider', 'google');
+                            setHint('');
+                        } catch (e) { /* silencioso: si no habia fila, no hay nada que pausar */ }
+                        cb.disabled = false;
+                        return;
+                    }
+                    cb.disabled = true;
+                    try {
+                        var q = await ctx.sb.from('user_calendar_integrations').select('status')
+                            .eq('user_id', ctx.session.user.id).eq('provider', 'google').maybeSingle();
+                        if (q && q.data) {
+                            await ctx.sb.from('user_calendar_integrations')
+                                .update({ status: 'active', updated_at: new Date().toISOString() })
+                                .eq('user_id', ctx.session.user.id).eq('provider', 'google');
+                            setHint('');
+                            cb.disabled = false;
+                            return;
+                        }
+                        var base = window.mdbSupabaseFunctionUrl ? window.mdbSupabaseFunctionUrl('calendar-oauth-init') : '';
+                        var res = await fetch(base + '?provider=google', { headers: { Authorization: 'Bearer ' + ctx.session.access_token } });
+                        var body = await res.json().catch(function () { return null; });
+                        if (body && body.ok && body.url) { window.location.href = body.url; return; }
+                        cb.checked = false;
+                        setHint((body && body.error === 'calendar_oauth_not_configured')
+                            ? 'La conexión con Google Calendar todavía no está activada del lado del servidor.'
+                            : 'No se pudo conectar. Intenta de nuevo.', true);
+                    } catch (e) {
+                        cb.checked = false;
+                        setHint('No se pudo conectar. Intenta de nuevo.', true);
+                    } finally {
+                        cb.disabled = false;
+                    }
+                });
+                loadState();
+            })();
+            </script>
+            <!-- Avisos del navegador. NO se guarda con el boton de abajo: el
+                 permiso lo concede el navegador y vale para ESTE equipo, no
+                 para la cuenta. Por eso actua al momento y no espera a Guardar. -->
+            <div class="toggle-row">
+              <div class="toggle-label"><span data-i18n="account-pref-push-title">Avisos en este dispositivo</span></div>
+              <label class="apple-switch">
+                <input type="checkbox" id="ca-notify-push" />
+                <span class="slider"></span>
+              </label>
+            </div>
+            <p id="ca-push-hint" class="fineprint" style="margin:8px 0 0;line-height:1.5;" aria-live="polite"></p>
+          </div>
+          <div class="system-card-footer">
+            <p id="ca-notify-status" class="fineprint" style="display:none;" aria-live="polite"></p>
+            <button type="button" class="sys-btn primary" id="ca-save-notify-btn" data-i18n="client-account-save-notify">Save notification preferences</button>
+          </div>
         </div>
 
         <div class="ca-profile-panel-footer">
@@ -1456,38 +1714,9 @@
           </div>
         </div>
 
-        <!-- Preferencias de notificación (conservadas) -->
-        <div class="system-card">
-          <div class="ca-profile-section__head">
-            <h2 data-i18n="client-account-notify-title">Notifications</h2>
-          </div>
-          <div class="system-card-body">
-            <label class="ca-edit-toggle toggle-row">
-              <span data-i18n="account-pref-email-title">Email notifications</span>
-              <input type="checkbox" id="ca-notify-bookings" checked />
-            </label>
-            <label class="ca-edit-toggle toggle-row">
-              <span data-i18n="account-pref-marketing-title">Marketing updates</span>
-              <input type="checkbox" id="ca-notify-marketing" checked />
-            </label>
-            <label class="ca-edit-toggle toggle-row">
-              <span data-i18n="account-pref-sms-title">SMS alerts</span>
-              <input type="checkbox" id="ca-notify-sms" checked />
-            </label>
-            <!-- Avisos del navegador. NO se guarda con el boton de abajo: el
-                 permiso lo concede el navegador y vale para ESTE equipo, no
-                 para la cuenta. Por eso actua al momento y no espera a Guardar. -->
-            <label class="ca-edit-toggle toggle-row">
-              <span data-i18n="account-pref-push-title">Avisos en este dispositivo</span>
-              <input type="checkbox" id="ca-notify-push" />
-            </label>
-            <p id="ca-push-hint" class="fineprint" style="margin:8px 0 0;line-height:1.5;" aria-live="polite"></p>
-          </div>
-          <div class="system-card-footer">
-            <p id="ca-notify-status" class="fineprint" style="display:none;" aria-live="polite"></p>
-            <button type="button" class="sys-btn primary" id="ca-save-notify-btn" data-i18n="client-account-save-notify">Save notification preferences</button>
-          </div>
-        </div>
+        <!-- Las autorizaciones (email/marketing/SMS/calendario/push) se movieron
+             al final de la pestaña Perfil -- pedido explícito del PO (2026-09-04).
+             Esta pestaña se queda solo con el acceso al Hub de Soporte. -->
       </section>
 
       <section class="ca-panel" id="ca-panel-email" data-ca-panel="email" role="tabpanel" hidden>
@@ -1550,6 +1779,23 @@
     </div>
   </main>
 
+  <script>
+    /* ── Sidebar colapsable (staff/owner) — recuerda el estado. Reutilizable en otras vistas con sidebar. ──
+       Copiado literal del mismo bloque en account-settings.html: misma clave de localStorage,
+       para que el estado contraído/expandido se recuerde igual en ambas páginas de Config. */
+    (function(){
+      var wrap=document.querySelector('.ca-shell'), btn=document.getElementById('caSideToggle');
+      if(!wrap||!btn) return;
+      var KEY='mdjSettingsSidebarCollapsed';
+      try{ if(localStorage.getItem(KEY)==='1') wrap.classList.add('mdj-side-collapsed'); }catch(e){}
+      btn.addEventListener('click', function(){
+        var collapsed=wrap.classList.toggle('mdj-side-collapsed');
+        btn.setAttribute('aria-expanded', collapsed?'false':'true');
+        try{ localStorage.setItem(KEY, collapsed?'1':'0'); }catch(e){}
+      });
+    })();
+  </script>
+
   <footer class="footer">
     <div class="container" style="text-align:center;">
       <p>© 2026 Miami DJ Beat LLC.</p>
@@ -1579,18 +1825,18 @@
   </script>
   <script src="./supabase-config.js?v=20260602-auth-gate-1"></script>
   <script src="./role-guard.js" data-role="client"></script>
-  <script src="./translations.js?v=20260820-unificacion"></script>
+  <script src="./translations.js?v=20260903-perfil-label"></script>
   <script src="./i18n.js?v=20260415-CORE-CONNECTIONS"></script>
   <script src="./js/mdj-account-forms.js?v=20260421-account-forms"></script>
   <script src="./account-address-data.js?v=20260429"></script>
   <script src="./account-address-selectors.js?v=20260422-country-select-only"></script>
-  <script src="./js/client-account.js?v=20260514-client-account-payments-edge"></script>
+  <script src="./js/client-account.js?v=20260903-perfil-label"></script>
 <script src="./push-config.js?v=20260820-push-1"></script>
 <script src="./js/mdj-push.js?v=20260820-push-1"></script>
-<script src="./js/mdj-push-cliente.js?v=20260820-push-1"></script>
+<script src="./js/mdj-push-cliente.js?v=20260904-toggle-timeout"></script>
   <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
   <script src="./mdj-identity.js?v=20260617-buyer-artist-fix-1"></script>
-  <script src="./mdjb-shared-header.js?v=20260831-seed-race-fix"></script>
+  <script src="./mdjb-shared-header.js?v=20260903-config-slot-race-fix"></script>
   <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
   <script src="./mdj-mainnav-infinite.js?v=20260818-nav-canonico"></script>
   <script src="./mdj-social-bar.js?v=20260819-social-contact-only"></script>

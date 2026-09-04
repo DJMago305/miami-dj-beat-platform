@@ -85,7 +85,7 @@ serve(async (req: Request) => {
     // La fila manda. El correo y el texto salen de aqui, no de la peticion.
     const { data: fila, error: e1 } = await ADMIN
         .from("elixis_email_pending")
-        .select("id, destinatario_email, destinatario_nombre, asunto, cuerpo, estado")
+        .select("id, destinatario_id, destinatario_email, destinatario_nombre, asunto, cuerpo, estado")
         .eq("id", id).maybeSingle();
     if (e1) return json({ ok: false, error: "queue_read_failed" }, 500);
     if (!fila) return json({ ok: false, error: "not_found" }, 404);

@@ -1,6 +1,6 @@
 # MIAMI DJ BEAT PLATFORM — PRIVACY POLICY
 
-Last Updated: February 23, 2026
+Last Updated: September 4, 2026
 
 At Miami DJ Beat ("the Platform"), we take your privacy and data security seriously. This Privacy Policy describes how we collect, use, and protect your information across our website, client portal, and management tools.
 
@@ -44,11 +44,21 @@ To protect the privacy of all parties and prevent data leakage or off-platform s
 - **Correction**: You can update your professional profile, technical rider, or contact info via the DJ Dashboard or Client Portal.
 - **Deletion**: You may request account deletion. Note that certain transactional data (invoices, agreements) may be retained for legal and fulfillment reasons.
 
-## 6. DISPUTE RESOLUTION
+## 6. GOOGLE CALENDAR INTEGRATION
+
+If you choose to connect your Google Calendar ("Sync Google Calendar" in your account settings), the Platform requests limited access to your calendar through Google's OAuth system:
+
+- **What we access**: Only your event data (`calendar.events` scope) — the ability to read and create calendar entries. We do **not** request access to your Gmail, Google Drive, contacts, or any other Google product.
+- **Why we access it**: To display your own booked events on your Platform calendar, and to reflect a confirmed booking automatically once you complete a purchase, so you have one place to see your schedule.
+- **How it's stored**: Your Google OAuth tokens are stored encrypted in our Supabase database, protected by Row Level Security, and are never visible to other users or DJs/staff outside your own account.
+- **How to disconnect**: You can turn this off at any time from the same "Sync Google Calendar" switch in your account settings, or by revoking the Platform's access directly from your [Google Account permissions page](https://myaccount.google.com/permissions). Turning it off pauses the connection; it does not delete your Google Calendar data.
+- **No sharing**: We never sell, share, or use your Google Calendar data for advertising or any purpose other than displaying it back to you within the Platform.
+
+## 7. DISPUTE RESOLUTION
 
 Any disputes regarding data privacy will be handled in accordance with the **Binding Arbitration** clause found in our [Client Terms](CLIENT_TERMS.md) and [DJ Service Agreement](DJ_AGREEMENT.md), governed by the laws of the State of Florida.
 
-## 7. CONTACT US
+## 8. CONTACT US
 
 For any questions regarding your privacy, contact our support team at:
 **miamidjbeat@gmail.com**

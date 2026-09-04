@@ -39,6 +39,27 @@
     return s ? s.access_token : null;
   }
 
+  // sub.unsubscribe()/subscribe() a veces se quedan colgados sin resolver ni
+  // rechazar (visto en el reporte real: el switch nunca se apagaba en vivo,
+  // pero SI aparecia apagado al recargar -- la accion real si funciono, la
+  // promesa de esta pestana nunca aviso). Con limite de tiempo, la interfaz
+  // ya no se queda esperando para siempre: si se agota, se confia en la
+  // intencion del cliente y se avisa que puede tardar en confirmarse.
+  function conLimite(promesa, ms) {
+    return new Promise(function (resolve) {
+      var yaResolvio = false;
+      var venceTimeout = setTimeout(function () {
+        if (yaResolvio) return;
+        yaResolvio = true;
+        resolve({ __agotado: true });
+      }, ms);
+      promesa.then(
+        function (r) { if (yaResolvio) return; yaResolvio = true; clearTimeout(venceTimeout); resolve(r); },
+        function (e) { if (yaResolvio) return; yaResolvio = true; clearTimeout(venceTimeout); resolve({ __error: e }); }
+      );
+    });
+  }
+
   async function pintar() {
     if (!window.MDJPush) { decir(t("push-sin-soporte", "Este navegador no admite avisos.")); return; }
 
@@ -70,7 +91,16 @@
       if (quiere) {
         var tok = await token();
         if (!tok) { casilla.checked = false; decir(t("push-necesita-sesion", "Vuelve a iniciar sesion para activar los avisos."), "mal"); return; }
-        var r = await window.MDJPush.activar(tok);
+        var r = await conLimite(window.MDJPush.activar(tok), 7000);
+        if (r && r.__agotado) {
+          // Se agoto el tiempo sin que el navegador confirme ni falle. Se
+          // deja prendido (es lo que el cliente pidio) con un aviso, en vez
+          // de trancar la interfaz esperando para siempre.
+          casilla.checked = true;
+          decir(t("push-tardando", "Esto puede tardar unos segundos en confirmarse. Si no llegan avisos, vuelve a intentarlo."), null);
+          return;
+        }
+        if (r && r.__error) { casilla.checked = false; decir("No se pudo activar: " + ((r.__error && r.__error.message) || r.__error), "mal"); return; }
         if (!r.ok) {
           // Se devuelve el interruptor a su sitio: dejarlo marcado cuando la
           // activacion fallo es prometer avisos que no van a llegar.
@@ -78,17 +108,33 @@
           decir(r.motivo, "mal");
           return;
         }
+        // Se marca EXPLICITO segun lo que acaba de pasar -- no se vuelve a
+        // preguntar al navegador "esta activo?" para redibujar. getSubscription()
+        // justo despues de subscribe()/unsubscribe() puede devolver un estado
+        // todavia no asentado en algunos navegadores; confiar en que la promesa
+        // resolvio sin error ya dice que la accion funciono.
+        casilla.checked = true;
+        decir(t("account-pref-push-on", "Activados en este equipo. Te avisaremos de tu evento aunque no tengas la web abierta."), "ok");
       } else {
-        await window.MDJPush.desactivar();
+        var r2 = await conLimite(window.MDJPush.desactivar(), 7000);
+        // Apagar siempre se refleja de inmediato: si sub.unsubscribe() se
+        // queda colgado, no hay razon para creer que sigue activo -- el
+        // reporte real confirmo que al recargar SI quedaba apagado.
+        casilla.checked = false;
+        if (r2 && r2.__agotado) {
+          decir(t("push-tardando-off", "Puede tardar unos segundos en confirmarse del todo."), null);
+        } else if (r2 && r2.__error) {
+          decir("No se pudo confirmar el apagado: " + ((r2.__error && r2.__error.message) || r2.__error), "mal");
+        } else {
+          decir(t("account-pref-push-off", "Recibe la confirmacion de tu evento al instante, sin depender del SMS."), null);
+        }
       }
     } catch (e) {
       casilla.checked = !quiere;
       decir("No se pudo cambiar: " + ((e && e.message) || e), "mal");
-      return;
     } finally {
       casilla.disabled = false;
     }
-    await pintar();
   }
 
   function arrancar() {

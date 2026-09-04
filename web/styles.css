@@ -2668,7 +2668,7 @@ a.residency-card--map:focus-visible {
 
 .action-cards-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 30px;
 }
 
@@ -2721,6 +2721,14 @@ a.residency-card--map:focus-visible {
 
 .action-card:hover .action-card-bg {
   transform: scale(1.1);
+}
+
+/* MRM IA (2026-09-02): tarjeta nueva, sin foto propia en web/assets -- las
+   otras tres usan una imagen real, esta usa un degradado con los mismos
+   tonos de marca (--gold sobre el fondo oscuro) en vez de inventar una ruta
+   de imagen que no existe. */
+.action-card-bg.mrm-bg {
+  background-image: linear-gradient(135deg, rgba(197, 160, 89, 0.35), rgba(10, 14, 22, 0.95));
 }
 
 .action-card-content {

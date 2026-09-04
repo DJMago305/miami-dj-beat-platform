@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-    <script src="./mdj-estacion-preflight.js?v=20260822-prevuelo-b"></script>
+    <script src="./mdj-estacion-preflight.js?v=20260903-manager-oficina"></script>
 <script>/* SEMILLA DE ESTACION · antes del primer pintado.
    El guion del header va con defer y al final del documento: cuando decide que
    esta es una estacion de trabajo, la pagina YA se pinto con la cabecera de dos
@@ -19,7 +19,7 @@
        sustituta del sistema y el texto salia ~2% mas ancho, desplazando el eje X. -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=optional" rel="stylesheet" />
     <link rel="stylesheet" href="./styles.css?v=20260823-hero-card-altura" />
-  <link rel="stylesheet" href="./header-unified.css?v=20260831-riel-gate-fix" />
+  <link rel="stylesheet" href="./header-unified.css?v=20260902-cortinas" />
     <link rel="stylesheet" href="./profile.css?v=20260820-ancho-total" />
     <style>
         /* Pro Features — equal-height tiles; CTAs aligned on bottom row with breathing room */
@@ -201,9 +201,9 @@
 
       <div class="mobile-overlay" id="mobileMenu">
         <nav class="mobile-nav">
-          <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Home</a>
-          <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Services</a>
-          <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues">Events</a>
+          <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Inicio</a>
+          <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Servicios</a>
+          <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues">Eventos</a>
           <a href="./shop.html" style="color:#c5a059;font-weight:800;" data-mdj-nav="shop">Shop</a>
           <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
           <a href="./contact.html" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
@@ -234,7 +234,6 @@
     <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs" data-mdj-slot="6">Trabajos</a>
     <a href="./contact.html" data-i18n="nav-contact" data-mdj-nav="contact" data-mdj-slot="7">Contacto</a>
     <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="./client-portal.html" data-mdj-nav="mi-portal" data-mdj-slot="8" aria-hidden="true" tabindex="-1">MI PERFIL</a>
-    <a href="./road-map.html" id="mainNav-roadmap-link" class="mdj-roadmap-mainnav" data-i18n="nav-roadmap" data-mdj-nav="roadmap" data-mdj-slot="9">MRM IA</a>
   </nav>
   <script>/* Decide la barra antes de pintarla. Ver mdj-estacion-preflight.js */
     try { window.mdjPrevueloEstacion && window.mdjPrevueloEstacion(); } catch (e) {}
@@ -621,7 +620,7 @@
 
 
     <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
-      <script src="./mdjb-shared-header.js?v=20260831-seed-race-fix"></script>
+      <script src="./mdjb-shared-header.js?v=20260903-config-slot-race-fix"></script>
   <script id="mdj-vista-cero-guest-nav-restore">
 (function () {
   function mdjVistaCeroGuest() {
@@ -637,6 +636,19 @@
     if (b.classList.contains('mdj-buyer-session') || b.classList.contains('mdj-is-client')) return false;
     if (window.__mdjLastBuyerSession === true) return false;
     if (b.classList.contains('mdj-artist-nav') || b.classList.contains('mdj-staff-nav')) return false;
+    /* CORTINA REAL 2026-09-03 (residuo de la fuga de Fenix AI, cuenta djmago305
+       ya con role='artist' correcto): esta guarda solo miraba señales
+       ASINCRONAS (data-mdj-nav-role, clases de artista/staff), todas escritas
+       mucho despues de que mdj-estacion-preflight.js ya resolvio la sesion
+       SIN RED. En esa ventana (medida en vivo: ~30ms en dj-tools.html) Vista
+       Cero se creia frente a un invitado, arrancaba DJ Tools/MI PERFIL e
+       inyectaba Eventos -- para deshacerse un instante despues, y volver a
+       hacerlo cada vez que sus propios temporizadores (0/50/200/500/1200ms)
+       lo re-evaluaban antes de que el async terminara: el "un poco de
+       inestabilidad" que seguia viendo el PO ya sin la fuga de Fenix AI.
+       data-mdj-estacion (oficina U artista) es la MISMA marca sincrona que ya
+       usa el resto del sitio para esto -- se le agrega aqui tambien. */
+    if (b.getAttribute('data-mdj-estacion')) return false;
     if ((b.getAttribute('data-mdj-nav-role') || '').trim()) return false;
     return true;
   }

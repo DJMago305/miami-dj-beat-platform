@@ -773,11 +773,20 @@
     overflow: hidden !important;
   }
 
-  /* BOOT MASK: hides tab row while session resolves; removed by JS finally + autodetect cleanup */
-  body.mdj-nav-booting #mainHeader.header.mdj-header-unified .header-nav,
+  /* BOOT MASK: hides tab row while session resolves; removed by JS finally + autodetect cleanup.
+     EXCEPCIÓN 2026-09-02 (bug "la pestaña se hunde y sube", reportado con video real):
+     cuando data-mdj-estacion YA está puesto (artista/oficina), el prevuelo síncrono
+     (mdj-estacion-preflight.js) pintó la tabla de pestañas correcta ANTES de que este
+     script corriera. Tapar #mainNav aquí no evita ningún parpadeo -- lo CREA: medido en
+     vivo (academia.html, sesión owner), #mainNav ya tenía sus 9 pestañas reales a los
+     29ms, pero esta máscara las ocultaba igual hasta ~700ms después sin que el
+     contenido cambiara -- el "hundimiento" que reportó el PO. .header-actions y
+     #header-auth-zone (avatar/login) no dependen del prevuelo, así que se excluyen
+     solo del riel de pestañas. */
+  body.mdj-nav-booting:not([data-mdj-estacion]) #mainHeader.header.mdj-header-unified .header-nav,
+  html.mdj-auth-resolving body:not([data-mdj-estacion]) #mainHeader.header.mdj-header-unified .header-nav,
   body.mdj-nav-booting #mainHeader.header.mdj-header-unified .header-actions,
   body.mdj-nav-booting #mainHeader.header.mdj-header-unified #header-auth-zone,
-  html.mdj-auth-resolving #mainHeader.header.mdj-header-unified .header-nav,
   html.mdj-auth-resolving #mainHeader.header.mdj-header-unified .header-actions,
   html.mdj-auth-resolving #mainHeader.header.mdj-header-unified #header-auth-zone {
     visibility: hidden !important;
@@ -3329,8 +3338,13 @@ body.mdj-staff-nav.page-admin-dashboard
    al iniciar o cerrar sesión. Con min-width fijo en el propio slot, la celda
    mantiene su tamaño esté visible o no: la barra no se mueve nunca.
    ══════════════════════════════════════════════════════════════════════════ */
-#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot="5"] ,
-#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > [data-mdj-slot="5"]{
+/* CORREGIDO 2026-09-02: apuntaba al puesto 5, pero CONFIG vive en el puesto 4
+   en las dos tablas de estación (Owner/Staff y Artista) desde que Academia
+   se agregó al puesto 2 -- esta regla llevaba tiempo dándole el ancho de
+   "CONFIG" (104px) a "DJ Tools" (el que de verdad ocupa el puesto 5 hoy),
+   sin que nadie lo notara porque DJ Tools es igual de ancho o más. */
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot="4"] ,
+#mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > [data-mdj-slot="4"]{
   min-width: 104px !important;   /* ancho de "⚙️ CONFIG" */
 }
 #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="9"] > [data-mdj-slot="8"] ,
@@ -4959,6 +4973,27 @@ html.mdj-estacion-previa #booth-hero-container { margin-top: 84px !important; }
 html.mdj-estacion-previa .acct-body { padding-top: 104px !important; }
 html.mdj-estacion-previa .acct-side { top: 188px !important; }
 
+/* CORTINA REAL 2026-09-02 (reporte del PO, "se hunde y sube", confirmado con
+   video y medido en vivo): la geometria de arriba SOLO se aplicaba via
+   html.mdj-estacion-previa (adivinanza de la ULTIMA visita, guardada en
+   localStorage por mdjMontarFranjaFlotante — una funcion de otro feature, la
+   franja flotante de visitante de perfil) o via mdjEnEstacionDeTrabajo(),
+   que exige mdjEsStaffEnVivo() + __mdjNavOwnUserId — datos async que, medido
+   en academia.html con sesion de owner real, tardaron 1647ms en resolver.
+   Resultado medido: #mainNav nacia a 84px del viewport, se quedaba ahi 1.6
+   segundos con la tabla YA correcta debajo, y de golpe saltaba a 0px cuando
+   por fin llegaba el dato async — el salto de 84px que reporto el PO.
+   data-mdj-estacion ya lo pone mdj-estacion-preflight.js de forma SINCRONA
+   (JWT leido directo de localStorage, sin red) a los ~30-40ms, para artista
+   Y oficina por igual — es el mismo dato que ya estabiliza la tabla de
+   pestañas. Usarlo tambien aqui cierra el hueco de 1.6s a ~30-40ms, sin
+   tocar la funcion async (que sigue corriendo y solo reafirma lo mismo). */
+body[data-mdj-estacion] #mainHeader .header-top { display: none !important; }
+body[data-mdj-estacion] #tab-dashboard #booth-hero-container,
+body[data-mdj-estacion] #booth-hero-container { margin-top: 84px !important; }
+body[data-mdj-estacion] .acct-body { padding-top: 104px !important; }
+body[data-mdj-estacion] .acct-side { top: 188px !important; }
+
 #mdj-flotante-visitante .mdj-flotante-marca {
   display: inline-flex;
   align-items: center;
@@ -5154,7 +5189,11 @@ html.mdj-nav-lista #mainHeader.header.mdj-header-unified #mainNav > * {
    y la lateral en 188—, medido asi durante toda la sesion. Fijarlo en 72 metia un
    desfase de 12px en cascada. */
 html.mdj-estacion-previa #mainHeader.header.mdj-header-unified,
-body.mdj-perfil-estacion #mainHeader.header.mdj-header-unified {
+body.mdj-perfil-estacion #mainHeader.header.mdj-header-unified,
+/* CORTINA REAL 2026-09-02: mismo hueco de 1.6s que arriba — body.mdj-perfil-estacion
+   la pone mdjMontarFranjaFlotante(), colgada de la cadena async lenta. data-mdj-estacion
+   ya resuelve esto mismo de forma sincrona, a los ~30-40ms. */
+body[data-mdj-estacion] #mainHeader.header.mdj-header-unified {
   height: 84px !important;
   min-height: 84px !important;
   max-height: 84px !important;
@@ -5465,7 +5504,11 @@ body.mdj-perfil-estacion #mainHeader.header.mdj-header-unified {
    .header-top (ver bloque de arriba, linea ~4956) -- fuera de esa condicion
    el hamburguesa vieja ya cumple su funcion sola. */
 @media (max-width: 1150px) {
-  html.mdj-estacion-previa #mainHeader.header.mdj-header-unified > .mdj-riel-toggle {
+  html.mdj-estacion-previa #mainHeader.header.mdj-header-unified > .mdj-riel-toggle,
+  /* CORTINA REAL 2026-09-02: mismo hueco de 1.6s -- este botón solo debía
+     aparecer cuando .header-top ya está oculto (ver data-mdj-estacion arriba,
+     línea ~4979); sin esto se quedaba sin hamburguesa ni barra ese mismo rato. */
+  body[data-mdj-estacion] #mainHeader.header.mdj-header-unified > .mdj-riel-toggle {
     display: flex !important;
   }
 }

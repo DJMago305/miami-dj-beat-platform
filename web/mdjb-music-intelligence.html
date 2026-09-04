@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-    <script src="./mdj-estacion-preflight.js?v=20260822-prevuelo-b"></script>
+    <script src="./mdj-estacion-preflight.js?v=20260903-manager-oficina"></script>
 <script>/* SEMILLA DE ESTACION · antes del primer pintado.
    El guion del header va con defer y al final del documento: cuando decide que
    esta es una estacion de trabajo, la pagina YA se pinto con la cabecera de dos
@@ -58,7 +58,7 @@
        sustituta del sistema y el texto salia ~2% mas ancho, desplazando el eje X. -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=optional" rel="stylesheet" />
     <link rel="stylesheet" href="./styles.css?v=20260823-hero-card-altura" />
-  <link rel="stylesheet" href="./header-unified.css?v=20260831-riel-gate-fix" />
+  <link rel="stylesheet" href="./header-unified.css?v=20260902-cortinas" />
     <link rel="stylesheet" href="./profile.css?v=20260820-ancho-total" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -235,6 +235,12 @@
   }#mi-cockpit .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}#mi-cockpit ::-webkit-scrollbar{width:9px;height:9px;}#mi-cockpit ::-webkit-scrollbar-track{background:transparent;}#mi-cockpit ::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:5px;}#mi-cockpit ::-webkit-scrollbar-thumb:hover{background:var(--text-faint);}
 
       /* ---- PRO/ELITE access gate (same pattern as courses.html #exam-gate) ---- */
+      /* La franja flotante de marca+buscador (#mdj-flotante-visitante) es un
+         componente COMPARTIDO por varias paginas de la estacion -- no se toca
+         el componente en si (blast radius cero). Se apaga SOLO en esta pagina,
+         via la clase propia del body, porque el cockpit ya trae su propia marca
+         en su topbar interno; duplicarla dejaba espacio muerto. */
+      body.page-mdjb-music-intelligence #mdj-flotante-visitante{display:none !important;}
       .mi-gate-wrap{max-width:640px;margin:64px auto;padding:0 20px;}
       .mi-gate-card{
         background:rgba(197,160,89,0.06); border:1px solid rgba(197,160,89,0.3);
@@ -258,7 +264,7 @@
     </style>
 </head>
 
-<body class="notranslate mdj-academia-hub mdj-artist-academy">
+<body class="notranslate mdj-academia-hub mdj-artist-academy page-mdjb-music-intelligence">
     <!-- MDJ canonical site header — verbatim from academia.html #mainHeader -->
     <header class="header mdj-header-unified" id="mainHeader">
         <div class="header-top">
@@ -316,9 +322,9 @@
 
                 <div class="mobile-overlay" id="mobileMenu">
                     <nav class="mobile-nav">
-                        <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Home</a>
-                        <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Services</a>
-                        <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues">Events</a>
+                        <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Inicio</a>
+                        <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Servicios</a>
+                        <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues">Eventos</a>
                         <a href="./shop.html" style="color:#c5a059;font-weight:800;" data-mdj-nav="shop">Shop</a>
                         <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
                         <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
@@ -351,7 +357,6 @@
     <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs" data-mdj-slot="6">Trabajos</a>
     <a href="./contact.html" data-i18n="nav-contact" data-mdj-nav="contact" data-mdj-slot="7">Contacto</a>
     <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="./client-portal.html" data-mdj-nav="mi-portal" data-mdj-slot="8" aria-hidden="true" tabindex="-1">MI PERFIL</a>
-    <a href="./road-map.html" id="mainNav-roadmap-link" class="mdj-roadmap-mainnav" data-i18n="nav-roadmap" data-mdj-nav="roadmap" data-mdj-slot="9">MRM IA</a>
   </nav>
   <script>/* Decide la barra antes de pintarla. Ver mdj-estacion-preflight.js */
     try { window.mdjPrevueloEstacion && window.mdjPrevueloEstacion(); } catch (e) {}
@@ -360,7 +365,15 @@
         </div>
     </header>
 
-    <div class="mi-page-wrap">
+    <!-- SIN padding-top propio: body{} ya reserva el hueco exacto del header fijo
+         via `padding-top:calc(var(--header-height) + var(--header-nav-band))`
+         (web/styles.css:52-59), igual que todas las demas paginas reales del sitio.
+         Ponerle padding-top aqui tambien DUPLICABA el hueco (84 del body + 92
+         propios = 176px de espacio muerto, medido en vivo el 2026-08-30). La unica
+         pieza que de verdad se salia de esa cuenta era la franja flotante de marca
+         +buscador (#mdj-flotante-visitante, ver la regla que la apaga arriba) --
+         ya resuelta ahi, no hacia falta nada mas aqui. -->
+    <div class="mi-page-wrap" id="miPageWrap">
 
     <div class="mi-gate-wrap" id="mi-gate">
       <div class="mi-gate-card">
@@ -446,7 +459,7 @@
     <script src="./i18n.js?v=20260330"></script>
     <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
     <script src="./mdj-identity.js?v=20260617-buyer-artist-fix-1"></script>
-    <script src="./mdjb-shared-header.js?v=20260831-seed-race-fix"></script>
+    <script src="./mdjb-shared-header.js?v=20260903-config-slot-race-fix"></script>
     <script src="./js/mdj-profile-owner-link.js?v=20260516-perf-ab-1"></script>
     <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
     <script src="./mdj-mainnav-infinite.js?v=20260818-nav-canonico"></script>
@@ -894,11 +907,7 @@ function renderExperienceGrid(){
 function renderHome(){
   var el = document.getElementById('view-home');
   el.innerHTML =
-    '<div class="hero">'+
-      '<h1>MDJB MUSIC INTELLIGENCE</h1>'+
-      '<p>DJ Programming &amp; Floor Intelligence System</p>'+
-    '</div>'+
-    '<div class="view-head" style="justify-content:center;text-align:center;display:block;">'+
+    '<div class="view-head" style="justify-content:center;text-align:center;display:block;margin-top:8px;">'+
       '<span class="eyebrow">Choose Your Music Experience</span>'+
     '</div>'+
     '<div class="exp-grid">'+renderExperienceGrid()+'</div>';

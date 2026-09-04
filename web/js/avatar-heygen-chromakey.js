@@ -173,6 +173,21 @@
        garantiza dw/dh >= cw/ch siempre, sin excepcion. */
     var dw = Math.ceil(vw*escala), dh = Math.ceil(vh*escala);
     var dx = Math.round((cw-dw)/2);
+    /* desplazamientoHorizontalPct (2026-09-02, pedido en vivo del PO --
+       Cazador Musical: "necesita moverse un poco mas a la izquierda, no
+       importa que el brazo sobrepase el limite del centro, eso es a
+       proposito"). Mismo mecanismo que desplazamientoVerticalPct pero en el
+       eje X: negativo mueve el CONTENIDO hacia la izquierda (revela mas del
+       lado derecho del video), positivo hacia la derecha. Clampeado entre
+       las dos posiciones donde "cover" deja de tener recorte de sobra que
+       mover (cw-dw a la izquierda del todo, 0 a la derecha del todo) -- el
+       PO ya dijo que un recorte agresivo (el brazo saliendose) es
+       intencional aqui, asi que el clamp solo evita hueco transparente
+       real, no protege composicion. */
+    if(opciones && opciones.desplazamientoHorizontalPct){
+      var dxPedido = dx + Math.round(cw * opciones.desplazamientoHorizontalPct);
+      dx = Math.max(cw-dw, Math.min(0, dxPedido));
+    }
     /* recorteInferiorPx (2026-08-30, "linea blanca debajo del avatar"
        reportada en vivo por el PO): NO es un bug de este dibujado -- es un
        borde blanco solido de 5-6px de alto que ya viene HORNEADO en el
