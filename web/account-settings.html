@@ -1857,6 +1857,106 @@
           </label>
         </div>
 
+        <!-- Calendario de Google (2026-09-03, corregido el mismo dia, simplificado
+             el mismo dia tras feedback del PO: "deberia estar ahi con apariencia
+             switch igual que los demas"). Un solo interruptor, SIEMPRE visible
+             desde el primer pintado -- igual que Avisos por correo/SMS -- nunca
+             escondido en lo que el JS decide un estado. Apagado = no conectado
+             o pausado; encenderlo por primera vez dispara el flujo real de
+             Google (calendar-oauth-init); si ya esta conectado, solo pausa o
+             reanuda -- nunca borra el token guardado. -->
+        <div class="toggle-row">
+          <div class="toggle-label">
+            <span id="pref-notify-calendar-title" data-i18n="account-pref-calendar-title">Sync Google Calendar</span>
+            <p id="pref-calendar-sync-hint" style="display:none;"></p>
+          </div>
+          <label class="apple-switch">
+            <input type="checkbox" id="pref-notify-calendar-sync" aria-labelledby="pref-notify-calendar-title" />
+            <span class="slider"></span>
+          </label>
+        </div>
+        <script>
+        (function () {
+            var cb = document.getElementById('pref-notify-calendar-sync');
+            var hint = document.getElementById('pref-calendar-sync-hint');
+            if (!cb) return;
+            function setHint(msg, isError) {
+                if (!hint) return;
+                if (!msg) { hint.style.display = 'none'; hint.textContent = ''; return; }
+                hint.textContent = msg;
+                hint.style.color = isError ? 'rgba(255,150,130,0.95)' : '';
+                hint.style.display = 'block';
+            }
+            async function getClientAndSession() {
+                try {
+                    var sb = window.getSupabaseClient && window.getSupabaseClient();
+                    if (!sb) return null;
+                    var res = await sb.auth.getSession();
+                    var session = res && res.data && res.data.session;
+                    if (!session) return null;
+                    return { sb: sb, session: session };
+                } catch (e) { return null; }
+            }
+            async function loadState() {
+                var ctx = await getClientAndSession();
+                if (!ctx) return;
+                try {
+                    var q = await ctx.sb
+                        .from('user_calendar_integrations')
+                        .select('status')
+                        .eq('user_id', ctx.session.user.id)
+                        .eq('provider', 'google')
+                        .maybeSingle();
+                    cb.checked = !!(q && q.data && q.data.status === 'active');
+                } catch (e) { /* si falla la lectura, se queda apagado por defecto */ }
+            }
+            cb.addEventListener('change', async function () {
+                var ctx = await getClientAndSession();
+                if (!ctx) { cb.checked = false; window.location.href = './login.html?redirect=account-settings'; return; }
+                if (!cb.checked) {
+                    // Apagar: si ya estaba conectado, solo pausa (nunca borra el token).
+                    cb.disabled = true;
+                    try {
+                        await ctx.sb.from('user_calendar_integrations')
+                            .update({ status: 'paused', updated_at: new Date().toISOString() })
+                            .eq('user_id', ctx.session.user.id).eq('provider', 'google');
+                        setHint('');
+                    } catch (e) { /* silencioso: si no habia fila, no hay nada que pausar */ }
+                    cb.disabled = false;
+                    return;
+                }
+                // Encender: si ya hay fila activa, solo la reactiva; si no, dispara el flujo real de Google.
+                cb.disabled = true;
+                try {
+                    var q = await ctx.sb.from('user_calendar_integrations').select('status')
+                        .eq('user_id', ctx.session.user.id).eq('provider', 'google').maybeSingle();
+                    if (q && q.data) {
+                        await ctx.sb.from('user_calendar_integrations')
+                            .update({ status: 'active', updated_at: new Date().toISOString() })
+                            .eq('user_id', ctx.session.user.id).eq('provider', 'google');
+                        setHint('');
+                        cb.disabled = false;
+                        return;
+                    }
+                    var base = window.mdbSupabaseFunctionUrl ? window.mdbSupabaseFunctionUrl('calendar-oauth-init') : '';
+                    var res = await fetch(base + '?provider=google', { headers: { Authorization: 'Bearer ' + ctx.session.access_token } });
+                    var body = await res.json().catch(function () { return null; });
+                    if (body && body.ok && body.url) { window.location.href = body.url; return; }
+                    cb.checked = false;
+                    setHint((body && body.error === 'calendar_oauth_not_configured')
+                        ? 'La conexión con Google Calendar todavía no está activada del lado del servidor.'
+                        : 'No se pudo conectar. Intenta de nuevo.', true);
+                } catch (e) {
+                    cb.checked = false;
+                    setHint('No se pudo conectar. Intenta de nuevo.', true);
+                } finally {
+                    cb.disabled = false;
+                }
+            });
+            loadState();
+        })();
+        </script>
+
       </div>
     </div>
 
@@ -2874,7 +2974,7 @@
   <script src="./js/mdj-account-forms.js?v=20260421-account-forms"></script>
   <script src="./mdj-identity.js?v=20260617-buyer-artist-fix-1"></script>
   <script src="./auth.js?v=20260820-unificacion"></script>
-  <script src="./translations.js?v=20260820-unificacion"></script>
+  <script src="./translations.js?v=20260903-perfil-label"></script>
   <script src="./i18n.js?v=20260415-CORE-CONNECTIONS"></script>
   <script src="./account-billing.js?v=20260415-CORE-CONNECTIONS"></script>
   <script src="./account-address-data.js?v=20260429"></script>

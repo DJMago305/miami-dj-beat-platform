@@ -43,6 +43,60 @@ async function mdjproUsuarioDeSuscripcion(
 }
 
 /**
+ * Pieza 2 del diseño de calendario de cliente (docs/diseno-calendario-cliente-fase2.md):
+ * cuando un lead pasa a CONFIRMED (pago completo), el reflejo en el calendario del
+ * cliente ya es automático -- client-portal.js lee `leads` fresco en cada carga.
+ * Lo que faltaba era la ALERTA. Reutiliza infraestructura existente en vez de crear
+ * un canal nuevo: inserta en event_reminders_queue (registro auditable) y en
+ * portal_messages con sender_role de staff, para que notify-portal-message dispare
+ * el correo real al cliente solo.
+ */
+async function notifyClientBookingConfirmed(
+    supabase: SupabaseClient,
+    leadId: string,
+    clientUserId: string | null | undefined,
+    eventType: string | null | undefined,
+    eventDate: string | null | undefined,
+): Promise<void> {
+    if (!clientUserId) return;
+
+    try {
+        await supabase.from("event_reminders_queue").insert({
+            client_user_id: clientUserId,
+            event_id: leadId,
+            reminder_type: "booking_confirmed",
+            status: "sent",
+            scheduled_for: new Date().toISOString(),
+            sent_at: new Date().toISOString(),
+        });
+    } catch (qErr) {
+        console.error("[Webhook] event_reminders_queue insert failed:", qErr);
+    }
+
+    try {
+        const { data: owner } = await supabase
+            .from("dj_profiles")
+            .select("user_id")
+            .eq("role", "owner")
+            .limit(1)
+            .maybeSingle();
+        const senderId = owner?.user_id as string | undefined;
+        if (!senderId) return;
+        const label = [eventType, eventDate].filter(Boolean).join(" · ");
+        const body = `¡Tu evento quedó confirmado! 🎉 ${label ? label + " ya" : "Ya"} está en tu calendario del Portal — puedes verlo cuando quieras.`;
+        await supabase.from("portal_messages").insert({
+            lead_id: leadId,
+            sender_id: senderId,
+            sender_role: "owner",
+            body,
+            is_read: false,
+        });
+    } catch (mErr) {
+        console.error("[Webhook] portal_messages booking_confirmed insert failed:", mErr);
+    }
+}
+
+/**
  * Auto-issue MDJPRO license after Artist PRO checkout.
  * Pre-check is mandatory: mdjpro_issue_license rotates keys when a row already exists.
  */
@@ -284,7 +338,7 @@ serve(async (req) => {
                     if (leadId) {
                         const { data: lead } = await supabase
                             .from("leads")
-                            .select("balance_paid, total_amount, staff_invoice_id")
+                            .select("balance_paid, total_amount, staff_invoice_id, client_user_id, event_type, event_date")
                             .eq("id", leadId)
                             .single();
                         const prevPaid = parseFloat(lead?.balance_paid ?? 0);
@@ -302,6 +356,9 @@ serve(async (req) => {
                                 .from("mdj_staff_manual_invoices")
                                 .update({ status: "paid" })
                                 .eq("id", lead.staff_invoice_id);
+                        }
+                        if (newStatus === "PAID") {
+                            await notifyClientBookingConfirmed(supabase, leadId, lead?.client_user_id, lead?.event_type, lead?.event_date);
                         }
                     }
 
@@ -327,7 +384,7 @@ serve(async (req) => {
                     // Fetch current lead to add paid amount
                     const { data: lead } = await supabase
                         .from("leads")
-                        .select("balance_paid, total_amount, staff_invoice_id")
+                        .select("balance_paid, total_amount, staff_invoice_id, client_user_id, event_type, event_date")
                         .eq("id", leadId)
                         .single();
 
@@ -348,6 +405,10 @@ serve(async (req) => {
                             .from("mdj_staff_manual_invoices")
                             .update({ status: "paid" })
                             .eq("id", lead.staff_invoice_id);
+                    }
+
+                    if (newStatus === "PAID") {
+                        await notifyClientBookingConfirmed(supabase, leadId, lead?.client_user_id, lead?.event_type, lead?.event_date);
                     }
 
                     console.log(`✅ Event deposit paid: lead ${leadId} | $${amountPaid} | status → ${newStatus}`);

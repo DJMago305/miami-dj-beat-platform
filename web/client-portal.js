@@ -11,6 +11,382 @@ function portalEscapeHtml(s) {
         .replace(/'/g, '&#39;');
 }
 
+/**
+ * Calendario del Portal de Cliente -- pedido explícito del PO (2026-09-04):
+ * "creamos un calendario inteligente parecido al modelo Apple en los
+ * artefactos... puedes copiarlo de la cuenta de Artista, pero esta vez las
+ * plantillas son separadas para evitar errores". La referencia real es
+ * calendario-operacional-inteligente.html (vista Mes: función renderMonth,
+ * clases .month/.mcell/.chip), copiada aquí como plantilla propia (.portal-coi)
+ * -- NO es un iframe al archivo del artista, es HTML/CSS/JS independiente con
+ * los mismos tokens de color y misma estructura de celda. Solo la categoría
+ * "Sets/Reservas" (los propios eventos del cliente, de Próximos/Historial);
+ * sin "Mis clientes"/capas financieras/Staff-Producción-Pagos -- esas son
+ * herramientas operativas del artista, no aplican a lo que un cliente ve de
+ * sí mismo.
+ */
+var _portalCoiState = null; // { date: Date, view: 'dia'|'semana'|'mes'|'anio' }
+var _portalCoiLeads = [];
+var _portalCoiImportant = [];
+
+var PORTAL_COI_MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+var PORTAL_COI_MONTHS_L = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+var PORTAL_COI_DOW1 = ['d', 'l', 'm', 'm', 'j', 'v', 's'];
+var PORTAL_COI_DOWL = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+var PORTAL_COI_DATE_TYPES = { birthday: 'Cumpleaños', anniversary: 'Aniversario', other: '' };
+var PORTAL_COI_START = 8, PORTAL_COI_END = 27, PORTAL_COI_HPX = 48;
+
+function portalCoiKey(d) {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function portalCoiAddDays(d, n) {
+    var r = new Date(d);
+    r.setDate(r.getDate() + n);
+    return r;
+}
+function portalCoiSameDay(a, b) {
+    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+function portalCoiStartOfWeek(d) { return portalCoiAddDays(d, -d.getDay()); }
+function portalCoiTimeDec(t) {
+    if (!t) return null;
+    var parts = String(t).split(':');
+    var h = parseInt(parts[0], 10), mnt = parts[1] ? parseInt(parts[1], 10) : 0;
+    if (isNaN(h)) return null;
+    return h + mnt / 60;
+}
+function portalCoiFmtHour(h) {
+    h = ((h % 24) + 24) % 24;
+    if (h === 0) return '12 a.m.';
+    if (h === 12) return '12 p.m.';
+    if (h < 12) return h + ' a.m.';
+    return (h - 12) + ' p.m.';
+}
+function portalCoiFmtT(h) {
+    var hh = ((h % 24) + 24) % 24, mnt = Math.round((h - Math.floor(h)) * 60);
+    var ap = hh < 12 ? 'a' : 'p';
+    var d = Math.floor(hh) % 12; if (d === 0) d = 12;
+    return d + (mnt ? ':' + String(mnt).padStart(2, '0') : '') + ' ' + ap + '.m.';
+}
+function portalCoiEventLabel(l) {
+    var evTypeMap = { 'After-Party': 'After Party' };
+    return l.event_type ? (evTypeMap[l.event_type] || l.event_type) : 'Evento';
+}
+/* Devuelve los eventos de un día, normalizados: los del cliente (fecha exacta,
+   categoría "Sets/Reservas" rosa) + las fechas importantes agregadas a mano
+   (recurrentes por mes/día, categoría "Clientes cumple/aniv." azul -- mismo
+   código de color que usa calendario-operacional-inteligente.html). */
+function portalCoiEventsOn(dateObj) {
+    var key = portalCoiKey(dateObj);
+    var out = [];
+    _portalCoiLeads.forEach(function (l) {
+        if (l.event_date !== key) return;
+        var s = portalCoiTimeDec(l.event_start_time);
+        var e = portalCoiTimeDec(l.event_end_time);
+        var ad = (s === null);
+        if (s !== null && e !== null && e <= s) e += 24;
+        out.push({ _kind: 'lead', cal: 'set', t: portalCoiEventLabel(l), ad: ad, s: s, e: e });
+    });
+    var mo = dateObj.getMonth() + 1, da = dateObj.getDate();
+    _portalCoiImportant.forEach(function (imp) {
+        if (imp.month !== mo || imp.day !== da) return;
+        var tLabel = PORTAL_COI_DATE_TYPES[imp.date_type] || '';
+        out.push({ _kind: 'important', cal: 'cliente', t: imp.name + (tLabel ? ' · ' + tLabel : ''), ad: true, s: null, e: null });
+    });
+    return out;
+}
+
+function renderPortalCalendar(leads, importantDates) {
+    var host = document.getElementById('portal-calendar-widget') || document.getElementById('portal-calendar-widget-single');
+    if (!host) return;
+    if (Array.isArray(leads)) _portalCoiLeads = leads;
+    if (Array.isArray(importantDates)) _portalCoiImportant = importantDates;
+    if (!_portalCoiState) _portalCoiState = { date: new Date(), view: 'mes' };
+
+    var view = _portalCoiState.view;
+    var built = (view === 'anio') ? portalCoiBuildYear()
+        : (view === 'semana') ? portalCoiBuildTimeline(7)
+        : (view === 'dia') ? portalCoiBuildTimeline(1)
+        : portalCoiBuildMonth();
+
+    var VIEWS = [['dia', 'Día'], ['semana', 'Semana'], ['mes', 'Mes'], ['anio', 'Año']];
+    var segHtml = VIEWS.map(function (v) {
+        return '<button type="button" data-view="' + v[0] + '"' + (v[0] === view ? ' aria-selected="true"' : '') + ' onclick="portalCoiSetView(\'' + v[0] + '\')">' + v[1] + '</button>';
+    }).join('');
+
+    host.innerHTML =
+        '<div class="coi-toolbar">' +
+        '<div class="coi-brand">🎧</div>' +
+        '<div class="seg-wrap"><div class="seg">' + segHtml + '</div></div>' +
+        '<button type="button" class="coi-icon-btn" onclick="portalCoiOpenAddModal()" aria-label="Agregar fecha importante" title="Agregar fecha importante">+</button>' +
+        '</div>' +
+        '<div class="head">' + built.title +
+        '<div class="nav">' +
+        '<button type="button" class="arrow" onclick="portalCoiPrev()" aria-label="Anterior">&#8249;</button>' +
+        '<button type="button" class="today" onclick="portalCoiToday()">Hoy</button>' +
+        '<button type="button" class="arrow" onclick="portalCoiNext()" aria-label="Siguiente">&#8250;</button>' +
+        '</div></div>' +
+        built.body +
+        '<div class="coi-legend">' +
+        '<span class="coi-legend-item"><span class="dot"></span>Sets / Reservas</span>' +
+        '<span class="coi-legend-item cliente"><span class="dot"></span>Clientes (cumple/aniv.)</span>' +
+        '</div>';
+
+    if (built.afterRender) built.afterRender(host);
+}
+
+function portalCoiSetView(v) {
+    if (!_portalCoiState) _portalCoiState = { date: new Date(), view: 'mes' };
+    _portalCoiState.view = v;
+    renderPortalCalendar();
+}
+
+function portalCoiBuildMonth() {
+    var d0 = _portalCoiState.date, today = new Date();
+    var y = d0.getFullYear(), m = d0.getMonth();
+    var dowHtml = PORTAL_COI_DOW1.map(function (l) { return '<span>' + l + '</span>'; }).join('');
+    var first = new Date(y, m, 1);
+    var cur = portalCoiAddDays(first, -first.getDay());
+    var html = '<div class="month"><div class="dow">' + dowHtml + '</div><div class="weeks">';
+    for (var w = 0; w < 6; w++) {
+        html += '<div class="wk">';
+        for (var d = 0; d < 7; d++) {
+            var out = cur.getMonth() !== m;
+            var isToday = portalCoiSameDay(cur, today);
+            html += '<div class="mcell' + (out ? ' out' : '') + (isToday ? ' today' : '') + '"><div class="dnum">' + cur.getDate() + '</div>';
+            var list = portalCoiEventsOn(cur);
+            list.slice(0, 3).forEach(function (ev) {
+                if (ev.cal === 'cliente') {
+                    html += '<div class="chip cliente"><span class="sq"></span><span>' + portalEscapeHtml(ev.t) + '</span></div>';
+                } else {
+                    var tm = (ev.s !== null) ? '<span class="tm">' + portalCoiFmtT(ev.s).replace(':00', '') + '</span> ' : '';
+                    html += '<div class="chip"><span class="sq"></span>' + tm + '<span>' + portalEscapeHtml(ev.t) + '</span></div>';
+                }
+            });
+            if (list.length > 3) html += '<div class="more">y ' + (list.length - 3) + ' más</div>';
+            html += '</div>';
+            cur = portalCoiAddDays(cur, 1);
+        }
+        html += '</div>';
+    }
+    html += '</div></div>';
+    return { title: '<h1>' + PORTAL_COI_MONTHS[m] + ' de ' + y + '</h1>', body: html };
+}
+
+function portalCoiBuildYear() {
+    var y = _portalCoiState.date.getFullYear(), today = new Date();
+    var html = '<div class="year-grid">';
+    for (var m = 0; m < 12; m++) {
+        html += '<div class="mini"><h3 data-m="' + m + '" onclick="portalCoiGoToMonth(' + m + ')">' + PORTAL_COI_MONTHS[m] + '</h3><div class="mdow">';
+        for (var i = 0; i < 7; i++) html += '<span>' + PORTAL_COI_DOW1[i] + '</span>';
+        html += '</div><div class="mcells">';
+        var first = new Date(y, m, 1), lead = first.getDay(), dim = new Date(y, m + 1, 0).getDate(), prevDim = new Date(y, m, 0).getDate();
+        for (var c = 0; c < 42; c++) {
+            var dnum, cls = '', dt;
+            if (c < lead) { dnum = prevDim - lead + 1 + c; cls = 'out'; dt = new Date(y, m - 1, dnum); }
+            else if (c - lead < dim) { dnum = c - lead + 1; dt = new Date(y, m, dnum); }
+            else { dnum = c - lead - dim + 1; cls = 'out'; dt = new Date(y, m + 1, dnum); }
+            if (!cls && portalCoiSameDay(dt, today)) cls = 'today';
+            var evs = (!cls || cls === 'today') ? portalCoiEventsOn(dt) : [];
+            var dotCls = evs.some(function (e) { return e.cal === 'cliente'; }) ? ' cliente' : '';
+            var dot = evs.length ? '<span class="dot' + dotCls + '"></span>' : '';
+            html += '<button type="button" class="' + cls + '" onclick="portalCoiGoToDay(\'' + portalCoiKey(dt) + '\')">' + dnum + dot + '</button>';
+        }
+        html += '</div></div>';
+    }
+    html += '</div>';
+    return { title: '<h1>' + y + '</h1>', body: html };
+}
+
+function portalCoiGoToMonth(m) {
+    _portalCoiState.date = new Date(_portalCoiState.date.getFullYear(), m, 1);
+    _portalCoiState.view = 'mes';
+    renderPortalCalendar();
+}
+function portalCoiGoToDay(key) {
+    var p = key.split('-');
+    _portalCoiState.date = new Date(+p[0], +p[1] - 1, +p[2]);
+    _portalCoiState.view = 'dia';
+    renderPortalCalendar();
+}
+
+/* Semana (n=7) y Día (n=1) comparten la misma línea de tiempo -- simplificada
+   respecto al artista: sin divisor arrastrable ni "capas de inteligencia"
+   (financiero/staff), esas son herramientas operativas que no aplican aquí.
+   El detalle del día se muestra como tarjetas simples debajo. */
+function portalCoiBuildTimeline(n) {
+    var today = new Date();
+    var days = [];
+    if (n === 7) {
+        var sow = portalCoiStartOfWeek(_portalCoiState.date);
+        for (var i = 0; i < 7; i++) days.push(portalCoiAddDays(sow, i));
+    } else {
+        days.push(_portalCoiState.date);
+    }
+
+    var titleHtml;
+    if (n === 1) {
+        var d = days[0];
+        titleHtml = '<h1>' + d.getDate() + ' de ' + PORTAL_COI_MONTHS_L[d.getMonth()] + ', ' + d.getFullYear() + ' <span class="sub">' + PORTAL_COI_DOWL[d.getDay()] + '</span></h1>';
+    } else {
+        titleHtml = '<h1>' + PORTAL_COI_MONTHS[days[0].getMonth()] + ' de ' + days[0].getFullYear() + '</h1>';
+    }
+
+    var html = '<div class="tl"><div class="allday"><div class="lbl">todo el día</div><div class="ad-cols colhead" style="grid-template-columns:repeat(' + n + ',1fr)">';
+    days.forEach(function (dt) {
+        var t = portalCoiSameDay(dt, today);
+        html += '<div class="h' + (t ? ' today' : '') + '"><span class="wd">' + PORTAL_COI_DOWL[dt.getDay()] + '</span><span class="dn">' + dt.getDate() + '</span></div>';
+    });
+    html += '</div></div><div class="allday"><div class="lbl"></div><div class="ad-cols" style="grid-template-columns:repeat(' + n + ',1fr)">';
+    days.forEach(function (dt) {
+        html += '<div class="ad-col">';
+        portalCoiEventsOn(dt).filter(function (e) { return e.ad; }).forEach(function (e) {
+            html += '<div class="chip' + (e.cal === 'cliente' ? ' cliente' : '') + '"><span class="sq"></span><span>' + portalEscapeHtml(e.t) + '</span></div>';
+        });
+        html += '</div>';
+    });
+    html += '</div></div><div class="grid-scroll"><div class="grid-body"><div class="hours">';
+    for (var h = PORTAL_COI_START; h <= PORTAL_COI_END; h++) html += '<div class="hr">' + portalCoiFmtHour(h) + '</div>';
+    html += '</div><div class="cols" style="grid-template-columns:repeat(' + n + ',1fr)">';
+    days.forEach(function (dt) {
+        html += '<div class="col"><div class="hlines">';
+        for (var hh = PORTAL_COI_START; hh < PORTAL_COI_END; hh++) html += '<i></i>';
+        html += '</div>';
+        portalCoiEventsOn(dt).filter(function (e) { return !e.ad && e.s !== null; }).forEach(function (e) {
+            var top = (e.s - PORTAL_COI_START) * PORTAL_COI_HPX;
+            var hgt = Math.max(((e.e !== null ? e.e : e.s + 1) - e.s) * PORTAL_COI_HPX - 3, 26);
+            html += '<div class="tev ' + e.cal + '" style="top:' + top + 'px;height:' + hgt + 'px"><b>' + portalEscapeHtml(e.t) + '</b><span>' + portalCoiFmtT(e.s) + (e.e !== null ? ' – ' + portalCoiFmtT(e.e) : '') + '</span></div>';
+        });
+        html += '</div>';
+    });
+    html += '</div></div></div></div>';
+
+    if (n === 1) {
+        var dayEvents = portalCoiEventsOn(days[0]);
+        if (dayEvents.length) {
+            html += '<div class="day-cards">' + dayEvents.map(function (e) {
+                var when = e.ad ? 'Todo el día' : (portalCoiFmtT(e.s) + (e.e !== null ? ' – ' + portalCoiFmtT(e.e) : ''));
+                return '<div class="day-card' + (e.cal === 'cliente' ? ' cliente' : '') + '">' +
+                    '<span class="dc-cat"><span class="sq"></span>' + (e.cal === 'cliente' ? 'Clientes cumple/aniv.' : 'Sets / Reservas') + '</span>' +
+                    '<h4>' + portalEscapeHtml(e.t) + '</h4><div class="dc-when">' + when + '</div></div>';
+            }).join('') + '</div>';
+        } else {
+            html += '<div class="day-empty">Sin eventos este día.</div>';
+        }
+    }
+
+    return {
+        title: titleHtml, body: html,
+        afterRender: function (host) {
+            var gs = host.querySelector('.grid-scroll');
+            if (gs) gs.scrollTop = Math.max(0, (17 - PORTAL_COI_START) * PORTAL_COI_HPX);
+        }
+    };
+}
+
+function portalCoiPrev() {
+    if (!_portalCoiState) return;
+    var v = _portalCoiState.view, d = _portalCoiState.date;
+    if (v === 'anio') _portalCoiState.date = new Date(d.getFullYear() - 1, d.getMonth(), 1);
+    else if (v === 'mes') _portalCoiState.date = new Date(d.getFullYear(), d.getMonth() - 1, 1);
+    else if (v === 'semana') _portalCoiState.date = portalCoiAddDays(d, -7);
+    else _portalCoiState.date = portalCoiAddDays(d, -1);
+    renderPortalCalendar();
+}
+function portalCoiNext() {
+    if (!_portalCoiState) return;
+    var v = _portalCoiState.view, d = _portalCoiState.date;
+    if (v === 'anio') _portalCoiState.date = new Date(d.getFullYear() + 1, d.getMonth(), 1);
+    else if (v === 'mes') _portalCoiState.date = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+    else if (v === 'semana') _portalCoiState.date = portalCoiAddDays(d, 7);
+    else _portalCoiState.date = portalCoiAddDays(d, 1);
+    renderPortalCalendar();
+}
+function portalCoiToday() {
+    if (!_portalCoiState) _portalCoiState = { date: new Date(), view: 'mes' };
+    _portalCoiState.date = new Date();
+    renderPortalCalendar();
+}
+
+/* Modal "Agregar fecha importante" -- cumpleaños de un hijo, aniversario, un
+   amigo, cualquier fecha que el cliente no quiera olvidar. Recurrente por
+   mes/día (no un evento de un solo año). Guarda en client_profiles.important_dates
+   (columna jsonb agregada 2026-09-04, aprobada por el PO). */
+function portalCoiOpenAddModal() {
+    if (document.getElementById('portalCoiModalBackdrop')) return;
+    var wrap = document.createElement('div');
+    wrap.innerHTML =
+        '<div class="coi-modal-backdrop" id="portalCoiModalBackdrop">' +
+        '<div class="coi-modal">' +
+        '<h3>Agregar fecha importante</h3>' +
+        '<p class="hint">Cumpleaños, aniversario o cualquier fecha que no quieras olvidar de alguien especial. Se repite cada año.</p>' +
+        '<div class="coi-field"><label>Nombre</label><input type="text" id="coiDateName" placeholder="Ej. Mi hijo Mateo" maxlength="60" /></div>' +
+        '<div class="coi-field"><label>Tipo</label><select id="coiDateType">' +
+        '<option value="birthday">Cumpleaños</option>' +
+        '<option value="anniversary">Aniversario</option>' +
+        '<option value="other">Otra fecha especial</option>' +
+        '</select></div>' +
+        '<div class="coi-field"><label>Fecha</label><input type="date" id="coiDateValue" /></div>' +
+        '<p class="coi-error" id="coiDateError"></p>' +
+        '<div class="coi-actions">' +
+        '<button type="button" class="coi-btn cancel" onclick="portalCoiCloseModal()">Cancelar</button>' +
+        '<button type="button" class="coi-btn save" id="coiDateSaveBtn" onclick="portalCoiSaveImportantDate()">Guardar</button>' +
+        '</div></div></div>';
+    var backdrop = wrap.firstElementChild;
+    backdrop.addEventListener('click', function (ev) { if (ev.target === backdrop) portalCoiCloseModal(); });
+    document.body.appendChild(backdrop);
+    setTimeout(function () { var el = document.getElementById('coiDateName'); if (el) el.focus(); }, 30);
+}
+function portalCoiCloseModal() {
+    var el = document.getElementById('portalCoiModalBackdrop');
+    if (el) el.remove();
+}
+async function portalCoiSaveImportantDate() {
+    var nameEl = document.getElementById('coiDateName');
+    var typeEl = document.getElementById('coiDateType');
+    var dateEl = document.getElementById('coiDateValue');
+    var errEl = document.getElementById('coiDateError');
+    var btn = document.getElementById('coiDateSaveBtn');
+    function showErr(msg) { if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; } }
+
+    var name = nameEl ? nameEl.value.trim() : '';
+    var type = typeEl ? typeEl.value : 'other';
+    var dateVal = dateEl ? dateEl.value : '';
+    if (!name) { showErr('Escribe un nombre.'); return; }
+    if (!dateVal) { showErr('Elige una fecha.'); return; }
+    var parts = dateVal.split('-');
+    var month = parseInt(parts[1], 10), day = parseInt(parts[2], 10);
+    if (!month || !day) { showErr('Fecha inválida.'); return; }
+
+    if (btn) { btn.disabled = true; btn.textContent = 'Guardando…'; }
+    try {
+        var db = window.getSupabaseClient ? window.getSupabaseClient() : null;
+        if (!db) throw new Error('no-db-client');
+        var sessRes = await db.auth.getSession();
+        var sess = sessRes && sessRes.data && sessRes.data.session;
+        if (!sess) { window.location.href = './login.html?redirect=client-portal'; return; }
+
+        var current = await db.from('client_profiles').select('important_dates').eq('user_id', sess.user.id).maybeSingle();
+        var list = (current && current.data && Array.isArray(current.data.important_dates)) ? current.data.important_dates.slice() : [];
+        var entry = {
+            id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
+            name: name, date_type: type, month: month, day: day,
+            created_at: new Date().toISOString()
+        };
+        list.push(entry);
+        var upd = await db.from('client_profiles').update({ important_dates: list }).eq('user_id', sess.user.id);
+        if (upd.error) throw upd.error;
+
+        _portalCoiImportant = list;
+        portalCoiCloseModal();
+        renderPortalCalendar();
+    } catch (eSave) {
+        showErr('No se pudo guardar. Intenta de nuevo.');
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'Guardar'; }
+    }
+}
+
 async function portalDeleteLead(leadId, btn) {
     if (!confirm('¿Eliminar esta orden? Esta acción no se puede deshacer.')) return;
     var db = window.getSupabaseClient ? window.getSupabaseClient() : null;
@@ -1450,6 +1826,7 @@ const PortalApp = {
             this.renderLeadInfo();
             this.updatePayments();
             this.startCountdown();
+            try { renderPortalCalendar([leadData], (this.clientProfile && this.clientProfile.important_dates) || []); } catch (eCalSingle) { /* no bloquea el resto del portal */ }
             if (this.isManager) {
                 this.setupManagerBillingBarrier();
             }
@@ -3356,11 +3733,13 @@ const PortalApp = {
         if (main) {
             main.innerHTML =
                 '<div style="width:100%;max-width:none;padding:20px 32px 60px;box-sizing:border-box;">' +
+                '<div id="portal-calendar-widget" class="portal-coi"></div>' +
                 '<div id="events-list" class="portal-events-list">' +
                 sectionUp +
                 sectionPast +
                 '</div></div>';
             this.portalInjectDupWeddingIfNeeded(leads, session, clientRow, main);
+            try { renderPortalCalendar(leads || [], (clientRow && clientRow.important_dates) || []); } catch (eCal) { /* no bloquea el resto del portal */ }
         }
         try {
             var cb = document.getElementById('countdown');

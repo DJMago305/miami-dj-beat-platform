@@ -110,7 +110,7 @@
           profileTitle.textContent = t('client-account-overview-name', 'Display name');
         } else {
           profileTitle.setAttribute('data-i18n', 'client-account-nav-profile');
-          profileTitle.textContent = t('client-account-nav-profile', 'Profile & address');
+          profileTitle.textContent = t('client-account-nav-profile', 'Profile');
         }
       }
     }
