@@ -12,7 +12,7 @@
 - Nota: el worktree raíz del repo está en `fix/mobile-ui-cleanup` con cambios sin commitear ajenos a este hilo (tocan `supabase/functions/elixis-*`) — **no tocar, no mezclar**. Este hilo opera exclusivamente dentro de `.worktrees/main-consolidation`.
 - `main` local está 9 commits adelante de `origin/main` (sin publicar).
 
-## Los 6 activos de captación
+## Los 7 activos de captación
 
 | # | Activo | Archivo | Estado |
 |---|--------|---------|--------|
@@ -22,6 +22,7 @@
 | 4 | Latin DJ | `web/latin-dj.html` | ✅ presente (21.0 KB) |
 | 5 | Florida Keys | `web/florida-keys.html` | ✅ presente (20.7 KB) |
 | 6 | Events | `web/events.html` | ✅ presente (34.8 KB) |
+| 7 | Quinceañera | `web/quinceanera.html` | ✅ creado 2026-09-03 |
 
 ## Infraestructura SEO compartida
 
@@ -160,3 +161,12 @@ De ese total, **3,729.1 KB (3.6 MB) ya están en vivo y sin riesgo** (logo + let
 - Confirmados en Storage: `Weeding_Baner.webp` (46.7 KB), `Weeding_DJ.webp` (39.0 KB), `Weeding_studios.webp` (36.2 KB), `wedding_blurred_ambient.webp` (75.9 KB), `home_hero_4k_wide.webp` (48.5 KB) — coinciden con los tamaños de este tracker.
 - **El bloqueo de "Lighthouse después" queda levantado** — las imágenes ya no estarán rotas al re-medir.
 - Nota aparte (no de este hilo): aviso de seguridad de Supabase en el bucket `assets` ("Clients can list all files") — no se encontró una política RLS específica de `assets` vía `pg_policies`; se recomendó al PO usar el botón "Remove policy" del propio dashboard en vez de tocar RLS por SQL a ciegas en producción.
+
+### 2026-09-03 — Activo #7: quinceanera.html creado (Fase 7, GEO/SEO/AEO completo)
+- Nota de entorno: el worktree dedicado (`.worktrees/main-consolidation`) fue eliminado por otro hilo en algún punto de la sesión; el trabajo desde el hallazgo del bug de header móvil en adelante (incluyendo todo lo de abajo) se hizo directo en el repo raíz (`fix/mobile-ui-cleanup`, sincronizado con `main` por un proceso externo a este hilo — ver hallazgo del mismo día).
+- Contexto: la tarjeta "Quinceañera" en index.html #dj-types quedó pendiente hace varios turnos (sin destino — ningún activo GEO/SEO cubría quinceañeras específicamente). El PO entregó 3 fotos reales de eventos (`/Users/djmago/Desktop/Quinceanera /`), pidió crear la página dedicada y el SEO/AEO completo ("chat gpt siri gogle").
+- `web/quinceanera.html` creado calcado de weddings.html (mismo patrón editorial, misma estructura): JSON-LD Service + FAQPage (4 preguntas: vals, corte/damas y chambelanes, sorpresas, MC bilingüe), meta description, canonical, GA4, mosaico de 3 fotos reales optimizadas (900x600 + 2×720x540, recortadas de originales de 3.2-5.7 MB a 70-115 KB c/u).
+- Mesh de enlaces interno completado (matching el patrón `feat(nav): implement detached floating services dropdown` de la Fase 2): agregado a `SERVICES` en `mdjb-shared-header.js` (el dropdown real de "SERVICIOS" — la única puerta de navegación entre estas páginas), footer cross-link en las 6 páginas existentes + la nueva, tarjeta del home ahora sí enlaza a `quinceanera.html`, entrada en `sitemap.xml`.
+- Incidente de nombres de carpeta: el PO renombró `web/assets/quinceanera/` → `Quinceañera/` (mayúscula+ñ) en Finder; al intentar crear esa misma carpeta en el dashboard de Supabase Storage, el botón "New folder" la rechazó — su validación de nombre es más estricta que la API de subida directa. Revertido a `quinceanera/` (minúsculas, sin acento) para igualar la convención del resto del sitio y evitar el problema de raíz permanentemente.
+- Todo verificado en vivo en `localhost:8000` (único puerto autorizado): JSON-LD parsea sin error, mosaico carga las 3 fotos, dropdown de Servicios lista las 7 páginas, footer y tarjeta del home enlazan correctamente.
+- ⚠️ Pendiente de Storage: 3 `.webp` en `assets/quinceanera/fotos/` necesitan subirse antes de producción — mismo patrón del resto del sprint. Video de quinceañera pendiente de que el PO lo busque.
