@@ -214,6 +214,11 @@
             line-height: 1.6;
             margin-top: 12px;
         }
+        .residency-zone {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.55);
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 
@@ -343,27 +348,6 @@
           <h2 data-i18n="section-venues-title">EVENTOS / VENUES / PATROCINADORES</h2>
           <p class="sub" data-i18n="section-venues-sub">Asociaciones con venues destacados y producción integral de eventos en el Sur de la Florida.</p>
         </div>
-        <div class="mdj-wedding-plan-band"
-          style="margin-bottom:clamp(18px,2.5vw,28px);padding:clamp(14px,2vw,20px) clamp(20px,3.5vw,36px);border-radius:18px;border:1px solid rgba(197,160,89,0.28);background:rgba(15,22,35,0.55);box-shadow:0 12px 40px rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:space-between;gap:clamp(16px,3vw,32px);flex-wrap:wrap;">
-          <div style="flex:1;min-width:240px;">
-            <p class="fineprint"
-              style="margin:0 0 8px;letter-spacing:0.14em;text-transform:uppercase;color:rgba(197,160,89,0.95);font-weight:800;font-size:11px;"
-              data-i18n="wedding-plan-band-eyebrow"></p>
-            <h3
-              style="margin:0 0 10px;color:var(--gold);font-size:clamp(1.1rem,2.4vw,1.5rem);font-weight:800;line-height:1.25;"
-              data-i18n="wedding-plan-band-title"></h3>
-            <p class="sub"
-              style="margin:0;max-width:64ch;line-height:1.5;font-size:clamp(0.84rem,1.3vw,0.92rem);opacity:0.88;"
-              data-i18n="wedding-plan-band-lead"></p>
-          </div>
-          <div style="flex-shrink:0;">
-            <a href="./wedding-planning.html"
-              style="display:inline-flex;align-items:center;justify-content:center;padding:14px 28px;border-radius:50px;background:linear-gradient(135deg,rgba(197,160,89,0.95),rgba(160,120,55,0.9));color:#0a0a0c;font-weight:800;font-size:clamp(0.85rem,1.4vw,0.95rem);letter-spacing:0.04em;text-transform:uppercase;text-decoration:none;box-shadow:0 4px 20px rgba(197,160,89,0.35);transition:box-shadow 0.2s,transform 0.15s;white-space:nowrap;"
-              onmouseover="this.style.boxShadow='0 6px 28px rgba(197,160,89,0.55)';this.style.transform='translateY(-1px)'"
-              onmouseout="this.style.boxShadow='0 4px 20px rgba(197,160,89,0.35)';this.style.transform=''"
-              data-i18n="wedding-plan-band-cta"></a>
-          </div>
-        </div>
         <!-- Pila: (1) reels verticales (2) residencias semanales (3) hero fotos — ver LEEME en eventos-venues-patrocinadores/ -->
         <div class="mdj-experience-stack">
           <div class="mdj-experience-cards-zone">
@@ -435,11 +419,21 @@
                 <div class="mdj-residencies-carousel__viewport" id="mdjResidenciesViewport" role="region" tabindex="0"
                   aria-labelledby="mdjResidenciesHeading" data-mdj-ui-tick-scroll>
                   <div class="mdj-residencies-carousel__track">
+                <a class="tile residency-card residency-card--map" href="https://www.google.com/maps/search/?api=1&amp;query=103900%20Overseas%20Hwy%2C%20Key%20Largo%2C%20FL%2033037"
+                  target="_blank" rel="noopener noreferrer" data-i18n-aria="residencies-map-aria-sundowners"
+                  aria-label="Open Sundowners Key Largo in Google Maps">
+                  <div class="residency-day" data-i18n="residencies-sundowners-when">Brunch Fri–Sun · Dinner Thu</div>
+                  <div class="residency-venue">Sundowners Key Largo</div>
+                  <div class="residency-zone">Key Largo, Florida Keys</div>
+                  <div class="residency-time" data-i18n="residencies-sundowners-brunch-hours">Brunch: 12:00 PM – 5:00 PM</div>
+                  <p data-i18n="residencies-desc-sundowners">The Ultimate Waterfront Weekend Brunch Experience.</p>
+                </a>
                 <a class="tile residency-card residency-card--map" href="https://www.google.com/maps/search/?api=1&amp;query=8000%20SW%208th%20St%2C%20Miami%2C%20FL%2033144"
                   target="_blank" rel="noopener noreferrer" data-i18n-aria="residencies-map-aria-mojitos"
                   aria-label="Open Mojitos Calle 8 in Google Maps">
                   <div class="residency-day" data-i18n="residencies-friday">Every Friday</div>
                   <div class="residency-venue">Mojitos Calle 8</div>
+                  <div class="residency-zone">Little Havana, Miami</div>
                   <p data-i18n="residencies-desc-mojitos">Miami Latin Vibes & Open Format Mastery.</p>
                 </a>
                 <a class="tile residency-card residency-card--map" href="https://www.google.com/maps/search/?api=1&amp;query=4260%20W%2012th%20Ave%2C%20Hialeah%2C%20FL%2033012"
@@ -447,21 +441,15 @@
                   aria-label="Open El Valle Restaurant in Google Maps">
                   <div class="residency-day" data-i18n="residencies-saturday">Every Saturday</div>
                   <div class="residency-venue">El Valle Restaurant</div>
+                  <div class="residency-zone">Hialeah, Miami-Dade</div>
                   <p data-i18n="residencies-desc-valle">Premium Gastronomy & Sophisticated Beats.</p>
-                </a>
-                <a class="tile residency-card residency-card--map" href="https://www.google.com/maps/search/?api=1&amp;query=103900%20Overseas%20Hwy%2C%20Key%20Largo%2C%20FL%2033037"
-                  target="_blank" rel="noopener noreferrer" data-i18n-aria="residencies-map-aria-sundowners"
-                  aria-label="Open Sundowners Key Largo in Google Maps">
-                  <div class="residency-day" data-i18n="residencies-sundowners-when">Brunch Fri–Sun · Dinner Thu</div>
-                  <div class="residency-venue">Sundowners Key Largo</div>
-                  <div class="residency-time" data-i18n="residencies-sundowners-brunch-hours">Brunch: 12:00 PM – 5:00 PM</div>
-                  <p data-i18n="residencies-desc-sundowners">The Ultimate Waterfront Weekend Brunch Experience.</p>
                 </a>
                 <a class="tile residency-card residency-card--map" href="https://www.google.com/maps/search/?api=1&amp;query=7911%20NW%2072nd%20Ave%20%23224%2C%20Medley%2C%20FL%2033166"
                   target="_blank" rel="noopener noreferrer" data-i18n-aria="residencies-map-aria-baila"
                   aria-label="Open Baila Con Micho in Google Maps">
                   <div class="residency-day" data-i18n="residencies-baila-when">Dance school · DJ for events</div>
                   <div class="residency-venue">Baila Con Micho</div>
+                  <div class="residency-zone">Medley, Miami-Dade</div>
                   <p data-i18n="residencies-desc-baila">Dance school that books our DJs for parties and showcases.</p>
                 </a>
                 <a class="tile residency-card residency-card--map" href="https://www.google.com/maps/search/?api=1&amp;query=6200%20SW%20122nd%20Ave%2C%20Miami%2C%20FL%2033183"
@@ -469,6 +457,7 @@
                   aria-label="Open Ebenezer Family Farm in Google Maps">
                   <div class="residency-day" data-i18n="residencies-ebenezer-when">Farm · petting zoo · parties</div>
                   <div class="residency-venue" data-i18n="exp-venue-title-ebenezer">Ebenezer Family Farm</div>
+                  <div class="residency-zone">Miami-Dade</div>
                   <p data-i18n="residencies-desc-ebenezer">Family-friendly farm with animals and space for celebrations.</p>
                 </a>
                   </div>
