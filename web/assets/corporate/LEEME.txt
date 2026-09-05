@@ -1,0 +1,37 @@
+Media dedicada a corporate.html (Corporate Event DJ Miami) — creada 2026-09-03
+a pedido del PO, para que el contenido corporativo viva en un solo lugar en
+vez de disperso por el resto de web/assets/.
+
+Estructura:
+  fotos/
+    tipo06-corporate.png    — usada en index.html #dj-types, tarjeta "DJ Corporativo"
+                               (movida desde web/assets/course/)
+    corporate_featured.png  — usada en corporate.html, imagen debajo del hero
+                               (movida desde la raíz de web/assets/)
+  videos/
+    porsche-north-miami-reel.mp4 — armado con ffmpeg a partir de 12 clips
+    HDR crudos del PO (2026-09-03): showroom → F4/Porsche North Miami →
+    Miami DJ Beat trabajando el evento → cierre en showroom. 77.6s, muda
+    (mismo patrón de loop sin audio que el resto del sitio). El HDR del
+    iPhone venía sobreexpuesto al procesarlo con filtros normales — se le
+    aplicó una corrección de gamma/contraste/saturación aproximada (este
+    ffmpeg no tiene zscale para un tonemap HDR→SDR colorimétricamente
+    exacto). Pendiente de aprobación visual del PO antes de reemplazar el
+    hero de corporate.html (hoy usa Fashion_Show.mp4).
+
+El video de fondo del hero (Fashion Show, un venue donde también organizamos
+fiestas anuales) SIGUE en
+web/assets/eventos-venues-patrocinadores/reels/Fashion_Show.mp4 — no se
+mueve porque también es contenido de venue compartido con otra categoría;
+corporate.html lo referencia directo desde ahí (<video id="corporate-hero-kb-bg">).
+Todo lo que sea EXCLUSIVO de corporate.html va en esta carpeta; lo que sirva
+a otra categoría también se queda donde ya vive y se referencia cruzado.
+
+⚠️ Al mover fotos/ ambos archivos de su ubicación original, dejan de estar
+sincronizados con Supabase Storage en la ruta nueva — necesitan re-subirse
+a `assets/corporate/fotos/tipo06-corporate.png` y
+`assets/corporate/fotos/corporate_featured.png` en el bucket `assets`
+antes de que carguen en producción (mismo patrón que el resto del Sprint).
+
+Convención de nombres si se agrega algo nuevo: minúsculas, guiones, sin
+espacios (ej. corporate-gala-reel.mp4), igual que el resto del sitio.

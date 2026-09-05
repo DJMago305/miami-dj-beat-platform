@@ -1033,6 +1033,7 @@ Ficheros de prueba del scratchpad, borrados.
 - **Verificado en vivo, en las 6 páginas, a los 2.5s de carga**: las 9 pestañas miden EXACTAMENTE lo mismo (mismo left, mismo width, hasta el centésimo de pixel) en las 6 — `dj-profile.html`, `dj-tools.html`, `academia.html`, `dj-dashboard.html`, `account-settings.html` y `agente-ia.html` ya son pixel-idénticas.
 - Pendiente de aprobación de commit: `web/mdjb-shared-header.js`, las 48 páginas con `?v=` actualizado, este documento.
 - **Pendiente real**: confirmación visual del PO cambiando de pestaña en las 6 páginas — con las 9 pestañas ya pixel-idénticas en las 6, el efecto de "temblor" no debería tener ninguna causa restante conocida.
+
 ## [2026-09-03] Reporte del hilo GEO·SEO·IA — jornada completa: Sprint #1, corporate.html, quinceanera.html nueva, restauración de video con IA, toolkit de IA instalado permanentemente
 
 - **Jurisdicción de este hilo**: `web/*.html`, CSS, media, `translations.js`, `sitemap.xml`. Sin tocar Supabase, Edge Functions, Stripe ni barras de navegación compartidas (`mdjb-shared-header.js`) — ver aclaración abajo sobre "Agenda" en el menú de Artista, no es trabajo de este hilo.
@@ -1136,3 +1137,81 @@ Ficheros de prueba del scratchpad, borrados.
 - El PO corrió el `UPDATE dj_profiles SET bio_short = bio WHERE user_id = '3f5d5196-...'` directo en el SQL Editor de Supabase (producción). Verificado de forma independiente leyendo el dato real después: `bio_short` ahora coincide con `bio`, sin ninguna mención de SoundCaribe.
 - Corrección de código (prioridad `bio || bio_short` en vez de `bio_short || bio`, aplicada antes en `tools/dj-profiles/build.mjs`) queda como salvaguarda permanente — aunque un campo secundario vuelva a desincronizarse en el futuro, el campo activo/editable (`bio`) siempre gana.
 - Pendiente de aprobación de commit: nada nuevo de código en esta entrada (el fix de prioridad ya se documentó antes; esto es el cierre del dato).
+
+## [2026-09-04] Fase 5 avanzada: Florida Keys y Latin DJ con material real — falta subir a Storage
+
+- **Florida Keys**: 0 fotos/videos propios antes (usaba el fondo genérico de Home). Encontrados y usados assets reales sin usar: `keys_featured.png` (DJ real tocando en Sundowners Key Largo al atardecer, con el gráfico real "Brunch with DJ, cada domingo") y `Sundowners_Key_Largo.mp4` (venue real frente al mar). Optimizados a webp (164KB hero / 97KB card, desde 1.96MB) y mp4 comprimido (3MB, sin audio, 10s). Fondo de hero reemplazado + nueva sección de prueba visual (foto + video) junto al texto que ya afirmaba la residencia en Sundowners, ahora con respaldo visual real.
+- **Latin DJ**: agregado `Mojitos_calle_8.mp4` (pareja bailando salsa en Mojitos Calle 8, Little Havana — venue real, contenido auténtico) como tercera pieza del mosaico existente (antes 2 fotos, ahora 2 fotos + 1 video).
+- **`verify.html` desbloqueado en `robots.txt`** — estaba bloqueado sin razón (no tiene guardia de sesión), pese a que `directory.html` lo enlaza públicamente como "Ver certificado".
+- **Verificado en vivo, y encontrado un patrón real a tener en cuenta**: los 4 archivos nuevos (2 de Florida Keys + 1 video de Latin DJ, comprobado con `curl` directo a Storage) devuelven 400 — no están subidos todavía. El código en sí está completo y correcto; confirmado que `resolveMdAssetPublicUrl` reescribe las rutas a Storage con un timing inconsistente (a veces el visitante ve el archivo local antes de que la reescritura falle, a veces no) — mismo patrón de "pendiente de Storage" que ya se documentó varias veces esta sesión para otros assets nuevos.
+- Pendiente de aprobación de commit: `web/florida-keys.html`, `web/latin-dj.html`, `web/robots.txt`, `web/assets/florida-keys/*`, `web/assets/latin-dj/*`, este documento.
+- **Pendiente real, no de código**: subir a Supabase Storage los 4 archivos nuevos (`assets/florida-keys/keys-sundowners-hero.webp`, `assets/florida-keys/keys-sundowners-card.webp`, `assets/florida-keys/sundowners-key-largo.mp4`, `assets/latin-dj/mojitos-calle-8.mp4`) — sin esto, un visitante real puede ver espacios vacíos donde debería haber foto/video.
+
+## [2026-09-04] Fotos nuevas de DJMago305 (IA + croma verde) — filtro de calidad real aplicado, 1 descartada
+
+- **El PO compartió 4 imágenes** (croma verde + IA, para trabajar rápido mientras llegan fotos naturales) con instrucción explícita: cualquiera con algo raro que pueda perder la confianza del cliente se descarta.
+- **Revisión con zoom, no superficial**: de las 4, una ("Boceto") resultó ser una hoja de concepto en baja resolución (5 miniaturas, 2 de ellas — boda y quinceañera — sin archivo individual disponible). De las 3 restantes en alta resolución, se revisó cada letrero/texto con acercamiento x2-x3 buscando errores típicos de IA:
+  - `djmago305-pioneer-booth`: limpia, texto correcto en dos letreros distintos.
+  - `djmago305-club-mix`: **descartada** — el letrero pequeño dice "ENTERTAINMENT & EVENTU CORPUATION" (debería decir "EVENTS CORPORATION"), error real de IA visible al acercarse. Borrada de `web/assets/djmago305/`.
+  - `djmago305-good-vibes-laptop`: limpia, texto correcto en letrero, laptop ("DJMAGO305") y neón ("Music People Good Vibes").
+- **Organizadas por carpeta de sección** (regla explícita del PO, reforzada dos veces en la misma conversación): `web/assets/djmago305/` para las de marca general; copia de la aprobada para club en `web/assets/latin-dj/djmago305-club-vibes.webp`, agregada al mosaico de esa página (ahora 2x2: 2 fotos + 1 video + esta nueva).
+- Pendiente de aprobación de commit: `web/latin-dj.html`, `web/assets/djmago305/*`, `web/assets/latin-dj/djmago305-club-vibes.webp`, este documento.
+- **Pendiente real (mismo patrón de siempre)**: subir a Storage — se suma a la lista ya existente (Florida Keys x2, Latin DJ video) — ahora también `assets/djmago305/djmago305-pioneer-booth-*.webp`, `assets/djmago305/djmago305-good-vibes-laptop-*.webp`, `assets/latin-dj/djmago305-club-vibes.webp`.
+- **Pendiente de decisión del PO**: dónde usar la segunda foto aprobada (`djmago305-pioneer-booth`) — quedó sin asignar.
+
+## [2026-09-04] Segunda foto de DJMago305 asignada: tarjeta "Club / Resident DJ" en Home
+
+- **El PO señaló** la tarjeta "Club / Resident DJ" en `index.html` (sección "Tipos de DJ", LOCKED SECTION) como buen lugar para la segunda foto aprobada.
+- **Verificado antes de tocar**: el archivo real (`assets/course/reel-slide3-club.png`) no era la imagen fea que el PO mostró primero (esa no se encontró en el código — probablemente caché vieja o de otro lugar) — pero SÍ era una foto de un modelo genérico/stock, no del PO. Cambiarla por la foto real de DJMago305 es una mejora genuina de autenticidad de todos modos.
+- **Corregido**: `web/index.html` — la tarjeta ahora usa `assets/index/club-resident-djmago305.webp` (copia organizada por sección, carpeta nueva `web/assets/index/`). Verificado en vivo, se ve correctamente.
+- Pendiente de aprobación de commit: `web/index.html`, `web/assets/index/club-resident-djmago305.webp`, este documento.
+- **Pendiente real**: sumar `assets/index/club-resident-djmago305.webp` a la lista de subida a Storage.
+
+## [2026-09-04] Consistencia de carpetas: florida-keys y latin-dj reorganizadas en fotos/videos
+
+- **El PO notó** que `florida-keys` y `latin-dj` mezclaban fotos y videos sueltos en la raíz, inconsistente con el patrón ya establecido en `corporate/` y `quinceanera/` (subcarpetas `fotos/`/`videos/`, regla del PO de hace tiempo: "evitar el desorden").
+- **Corregido en local**: `web/assets/florida-keys/{fotos,videos}/` y `web/assets/latin-dj/{fotos,videos}/`, con las rutas actualizadas en `web/florida-keys.html` y `web/latin-dj.html`. `djmago305/` e `index/` se quedan sin subdividir (solo tienen fotos, no hay video que separar).
+- Pendiente de aprobación de commit: `web/florida-keys.html`, `web/latin-dj.html`, este documento.
+- **Pendiente real**: el PO ya había subido 3 archivos de `florida-keys` sueltos en la raíz de esa carpeta en Storage — hay que moverlos a las subcarpetas `fotos`/`videos` ahí también (o volver a subirlos ya en su lugar correcto).
+
+## [2026-09-04] Storage sincronizado — verificado en vivo, extremo a extremo
+
+- **Confirmado por mi cuenta, no solo por el reporte del PO**: los 10 archivos nuevos (Florida Keys x3, Latin DJ x2, DJMago305 x4, Index x1) devuelven 200 directo contra Storage, ya reorganizados en `fotos/`/`videos/` donde corresponde.
+- **Verificado en el navegador, cargando de verdad desde Storage** (no localhost): `florida-keys.html` (foto + video de Sundowners), `latin-dj.html` (video de Mojitos + foto de DJMago305), `index.html` (tarjeta Club/Resident DJ) — las 3 páginas muestran el contenido real, sin espacios vacíos.
+- **Cierra la Fase 5 del informe SEO** (multimedia por intención) para las 6 páginas GEO/SEO — todas tienen ahora fotos/video reales y propios.
+- Todo el trabajo de hoy sigue local, sin commitear el lote más reciente (florida-keys, latin-dj, index, djmago305) — pendiente de la palabra del PO.
+
+## [2026-09-04] Latin DJ: fondo de hero real (Clubs & Nightlife) reemplaza el video vertical mal encajado
+
+- **El PO notó**: el video de Mojitos Calle 8 es vertical (576x1024) y en la caja horizontal chica del mosaico le cortaba la cabeza a la gente — mala idea ahí. Propuso usar el video que ya usa en "Clubs & Nightlife" (event-builder, `web/js/rentals.js`) como FONDO del hero en vez de una foto/video en el mosaico.
+- **Encontrado**: `assets/DJ_Performance/clubs_nightlife.mp4` (1920x1080, horizontal, real). Revisado cuadro por cuadro antes de usarlo — el segundo 0-5 tiene un plano cerrado algo subido de tono, se evitó recortando el clip para empezar en el segundo 6.
+- **Corregido**: `web/latin-dj.html` — el fondo estático (`home_hero_4k_wide.webp`) se reemplazó por un `<video>` real (mismo patrón exacto que `corporate.html`, incluido el script de reintento para el bug de timing de reescritura de Storage). El video vertical de Mojitos se quitó del mosaico (vuelve a 3 fotos, cuadrícula de 3 columnas).
+- Video recortado y comprimido: `assets/latin-dj/videos/clubs-nightlife-hero.mp4` (11MB, 15s, sin audio, desde 20MB original).
+- Pendiente de aprobación de commit: `web/latin-dj.html`, `web/assets/latin-dj/videos/clubs-nightlife-hero.mp4`, este documento.
+- **Pendiente real**: subir `assets/latin-dj/videos/clubs-nightlife-hero.mp4` a Storage (misma carpeta `latin-dj/videos/` ya creada). El archivo viejo de Mojitos (`mojitos-calle-8.mp4`) ya no se usa en el código — se puede dejar en Storage sin problema, o borrarlo si prefieres limpiar.
+
+## [2026-09-04] Latin DJ: título reposicionado — de "periódico" a lo que se vende
+
+- **El PO**: "DJ Latino y Animación Bilingüe en Miami" suena a encabezado de periódico, no vende lo que se ofrece — pidió "DJ Latino para Club y Fiestas Privadas", aclarando que MC/animación bilingüe es un tema aparte, no debe mezclarse en el título.
+- **Corregido en las 4 fuentes** (para que quede consistente en ambos idiomas y no dependa de que cargue el JS a tiempo): `<title>`, H1 hardcodeado en el HTML, y las llaves `latin-dj-h1` en `translations.js` (ES y EN). El resto del copy (lead, FAQ, servicios) no se tocó — el pedido era específicamente sobre el título.
+- **Nota aparte, no se toca ahora**: el PO mencionó la categoría "Weddings & Corporate" del event-builder (`web/js/rentals.js`) — le parece que debería estar separada en dos, pero es un cambio a futuro con su propio ticket, confirmado explícitamente que no se ataca hoy.
+- Pendiente de aprobación de commit: `web/latin-dj.html`, `web/translations.js`, este documento.
+
+## [2026-09-04] Latin DJ: agregada pregunta de FAQ sobre clubes/vida nocturna
+
+- **El PO**: "algo de clubs también, esa es la temática de esta página" — el FAQ tenía 4 preguntas genéricas (selección musical, peticiones, bilingüe, cobertura) pero ninguna sobre clubes/vida nocturna, pese a que el título ya se reposicionó hoy hacia "Clubes y Fiestas Privadas".
+- **Agregada 5ª pregunta**, consistente en las 3 fuentes: JSON-LD FAQPage, bloque `<details>` visible, y `translations.js` (ES/EN) — "¿Tocan en clubes latinos y fiestas privadas nocturnas?" con respuesta anclada en experiencia real de club (leer la pista, mantenerla llena, mezcla continua salsa/reggaetón/Latin house).
+- Verificado en vivo: la pregunta se abre y muestra la respuesta correctamente.
+- Pendiente de aprobación de commit: `web/latin-dj.html`, `web/translations.js`, este documento.
+
+## [2026-09-04] Latin DJ: mosaico corregido de raíz — cada foto ahora corresponde a su categoría, cierra Fase 5
+
+- **El PO encontró un problema real de contenido, no cosmético**: la foto del medio del mosaico (`reel-slide5-clubbing.png`, chicas bailando en atuendo de club con confeti y láser) caía visualmente justo encima de la tarjeta "Quinceañeras y Sweet 16s" — podía leerse como si esa fuera la representación de una quinceañera, lo cual es falso y le podía costar confianza a un padre buscando DJ para la quince de su hija.
+- **Primer intento (insuficiente, revertido)**: se agregó un texto aclaratorio ("fotos generales de ambiente, no ligadas a una categoría") y se reordenó el mosaico para alejar esa foto de "Quinceañeras". Quedó mejor pero seguía sin ser una foto real de quinceañera ni de boda — el mosaico entero seguía sin representar lo que ofrecen las categorías de abajo.
+- **Solución real, a pedido del PO**: reemplazar por fotos que sí correspondan. Se encontró `Quinces amira Baila Con Micho.png` (foto real, ya existente en `web/assets/quinceanera/fotos/` del ticket de `quinceanera.html`) — vals de quinceañera con efectos de chispa fría, alta calidad, sin defectos. Recortada/optimizada a `amira-vals-baila-micho-card.webp` (900x600, con Python/Pillow — no hay `cwebp` disponible en el entorno).
+- **Foto de boda**: no existía ninguna auténtica en el repo (solo stock genérico viejo: `luxury_miami_wedding_hero_v2.png`, `wedding_blurred_ambient.png` — se descartó usarlas por no cumplir el estándar de esta fase). El PO trajo 3 opciones nuevas a Downloads ("Latin Wedding.jpg", "Latin Wedding Vol 2.jpg", "Latin Weeding vol 1.jpg"). Revisadas las 3 con el mismo filtro de calidad de siempre (zoom a esquinas buscando marca de agua, zoom a rostros buscando artefactos) — las 3 limpias, sin defectos. Se eligió "Latin Wedding.jpg" (beso en la frente + brindis) por ser la que mejor se lee como "boda" incluso en la casilla pequeña del mosaico; ya optimizada a `latin-wedding-toast-card.webp` en `web/assets/latin-dj/fotos/` (su relación de aspecto original, 3:2, ya coincidía con la casilla — solo redimensionada, sin recorte).
+- **Se retiró el texto aclaratorio** del primer intento — ya no aplica, las fotos ahora sí representan sus categorías 1 a 1: DJ/laptop → Selección Musical, quinceañera → Quinceañeras y Sweet 16s, boda → Bodas Latinas y Bilingües.
+- **Verificado en vivo, dos veces** (antes y después de que el PO subiera cada archivo a Storage): ambos devuelven 200 contra Storage y las 3 fotos cargan correctamente alineadas con su tarjeta en `localhost:8000/latin-dj.html`, viewport de escritorio.
+- **Cierra Fase 5 del informe SEO** (multimedia por intención) de forma completa y correcta — las 6 páginas GEO/SEO tienen ahora fotos/video reales, propios, y sin ninguna representación engañosa.
+- **El PO dio la palabra "aprobado"** para comitear este lote — sin push, sin PR, esperando autorización aparte para eso.
+- Pendiente de aprobación de commit: `web/latin-dj.html`, `web/translations.js`, `web/assets/quinceanera/fotos/amira-vals-baila-micho-card.webp`, `web/assets/latin-dj/fotos/latin-wedding-toast-card.webp`, este documento.
