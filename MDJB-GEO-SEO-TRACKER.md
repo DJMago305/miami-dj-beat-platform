@@ -12,7 +12,7 @@
 - Nota: el worktree raíz del repo está en `fix/mobile-ui-cleanup` con cambios sin commitear ajenos a este hilo (tocan `supabase/functions/elixis-*`) — **no tocar, no mezclar**. Este hilo opera exclusivamente dentro de `.worktrees/main-consolidation`.
 - `main` local está 9 commits adelante de `origin/main` (sin publicar).
 
-## Los 7 activos de captación
+## Los 6 activos de captación
 
 | # | Activo | Archivo | Estado |
 |---|--------|---------|--------|
@@ -22,7 +22,6 @@
 | 4 | Latin DJ | `web/latin-dj.html` | ✅ presente (21.0 KB) |
 | 5 | Florida Keys | `web/florida-keys.html` | ✅ presente (20.7 KB) |
 | 6 | Events | `web/events.html` | ✅ presente (34.8 KB) |
-| 7 | Quinceañera | `web/quinceanera.html` | ✅ creado 2026-09-03 |
 
 ## Infraestructura SEO compartida
 
@@ -63,8 +62,27 @@
 - [x] Auditar todas las imágenes hero de los 6 activos (formato actual, peso, dimensiones servidas vs. renderizadas).
 - [x] Convertir heroes/logo compartido a WebP (resize a tamaño real medido en navegador, sin `<picture>` fallback — WebP directo, consistente con `elixis-avatar.webp` ya en uso en el sitio).
 - [x] Inyectar `fetchpriority="high"` / `<link rel="preload">` en los elementos LCP; `loading="lazy"` + `decoding="async"` en secundarios; `width`/`height` explícitos anti-CLS.
-- [ ] ⚠️ **BLOQUEADO** — re-medir Lighthouse "después" en vivo (ver hallazgo crítico abajo).
-- [ ] Actualizar esta tabla de baseline con los nuevos puntajes una vez resuelto el bloqueo de sincronización con Storage.
+- [x] Re-medir Lighthouse "después" en vivo — desbloqueado, los 5 `.webp` confirmados en Storage (ver tabla y caveat abajo).
+- [x] Tabla de baseline actualizada.
+
+## Auditoría Lighthouse — Después (Sprint #1 cerrado)
+
+| Activo | Performance | Accesibilidad | Best Practices | SEO |
+|---|---|---|---|---|
+| rentals | 57 | 98 | 96 | 100 |
+| weddings | 56 | 98 | 96 | 100 |
+| corporate | 57 | 98 | 96 | 100 |
+| latin-dj | 62 | 98 | 96 | 100 |
+| florida-keys | 63 | 98 | 96 | 100 |
+| events | 56 | 100 | 96 | 100 |
+
+**Accesibilidad/Best Practices/SEO — confiables, estables entre corridas.** A11y subió en las 6 (94-96 → 98-100, probablemente por los `alt`/`width`/`height` agregados). BP y SEO se mantienen idénticos al baseline.
+
+**⚠️ Performance/LCP — NO confiables como comparación limpia contra el baseline.** Medidos con `npx lighthouse` local contra `localhost:8877` en esta máquina de desarrollo compartida (con la app de Claude Code, Chrome, y otros procesos corriendo en paralelo) — el LCP reportado va de 9.9s a **49s**, absurdo para páginas de este peso. Repetí `corporate.html` dos veces: 48/CLS 0.174 → 57/CLS 0 — la variación entre corridas consecutivas de la MISMA página, sin ningún cambio de código entre medio, confirma que es ruido de máquina/contención de CPU, no una medición real. El baseline original tampoco fue verificado de forma independiente por este hilo (fue relayado por el Hilo Maestro) — comparar un número no confiable de "antes" contra uno no confiable de "después" no produce una conclusión válida.
+
+**Evidencia confiable del impacto real del Sprint #1** — no depende de la máquina ni del momento: el [reporte de ahorro en KB/MB](#reporte-de-ahorro--sprint-1-medido-por-tamaño-de-archivo-no-depende-de-servir-en-vivo) de arriba (8.7 MB → 309 KB, 96.5%), que es aritmética de archivo, no una medición de red simulada.
+
+**Recomendación:** para un número de Performance que sí sirva de comparación real, correr Lighthouse contra un deploy real (Vercel preview) con PageSpeed Insights o Lighthouse CI en un runner dedicado, no en esta máquina de desarrollo compartida.
 
 ### ⚠️ Hallazgo crítico — dependencia de Supabase Storage (fuera de jurisdicción de este hilo)
 
@@ -162,11 +180,10 @@ De ese total, **3,729.1 KB (3.6 MB) ya están en vivo y sin riesgo** (logo + let
 - **El bloqueo de "Lighthouse después" queda levantado** — las imágenes ya no estarán rotas al re-medir.
 - Nota aparte (no de este hilo): aviso de seguridad de Supabase en el bucket `assets` ("Clients can list all files") — no se encontró una política RLS específica de `assets` vía `pg_policies`; se recomendó al PO usar el botón "Remove policy" del propio dashboard en vez de tocar RLS por SQL a ciegas en producción.
 
-### 2026-09-03 — Activo #7: quinceanera.html creado (Fase 7, GEO/SEO/AEO completo)
-- Nota de entorno: el worktree dedicado (`.worktrees/main-consolidation`) fue eliminado por otro hilo en algún punto de la sesión; el trabajo desde el hallazgo del bug de header móvil en adelante (incluyendo todo lo de abajo) se hizo directo en el repo raíz (`fix/mobile-ui-cleanup`, sincronizado con `main` por un proceso externo a este hilo — ver hallazgo del mismo día).
-- Contexto: la tarjeta "Quinceañera" en index.html #dj-types quedó pendiente hace varios turnos (sin destino — ningún activo GEO/SEO cubría quinceañeras específicamente). El PO entregó 3 fotos reales de eventos (`/Users/djmago/Desktop/Quinceanera /`), pidió crear la página dedicada y el SEO/AEO completo ("chat gpt siri gogle").
-- `web/quinceanera.html` creado calcado de weddings.html (mismo patrón editorial, misma estructura): JSON-LD Service + FAQPage (4 preguntas: vals, corte/damas y chambelanes, sorpresas, MC bilingüe), meta description, canonical, GA4, mosaico de 3 fotos reales optimizadas (900x600 + 2×720x540, recortadas de originales de 3.2-5.7 MB a 70-115 KB c/u).
-- Mesh de enlaces interno completado (matching el patrón `feat(nav): implement detached floating services dropdown` de la Fase 2): agregado a `SERVICES` en `mdjb-shared-header.js` (el dropdown real de "SERVICIOS" — la única puerta de navegación entre estas páginas), footer cross-link en las 6 páginas existentes + la nueva, tarjeta del home ahora sí enlaza a `quinceanera.html`, entrada en `sitemap.xml`.
-- Incidente de nombres de carpeta: el PO renombró `web/assets/quinceanera/` → `Quinceañera/` (mayúscula+ñ) en Finder; al intentar crear esa misma carpeta en el dashboard de Supabase Storage, el botón "New folder" la rechazó — su validación de nombre es más estricta que la API de subida directa. Revertido a `quinceanera/` (minúsculas, sin acento) para igualar la convención del resto del sitio y evitar el problema de raíz permanentemente.
-- Todo verificado en vivo en `localhost:8000` (único puerto autorizado): JSON-LD parsea sin error, mosaico carga las 3 fotos, dropdown de Servicios lista las 7 páginas, footer y tarjeta del home enlazan correctamente.
-- ⚠️ Pendiente de Storage: 3 `.webp` en `assets/quinceanera/fotos/` necesitan subirse antes de producción — mismo patrón del resto del sprint. Video de quinceañera pendiente de que el PO lo busque.
+### 2026-08-29/09-03 — Cierre del Sprint #1: verificación en vivo + Lighthouse final
+- El worktree `.worktrees/main-consolidation` había sido eliminado (probablemente por otro hilo haciendo fast-forward de `main`) — recreado limpio desde `main` (`a147803`) para poder servir y probar las páginas; mi commit `88f4026` seguía intacto en el historial, `main` ya había avanzado con 2 commits más (GA4 + Search Console) encima.
+- Re-verifiqué los 5 `.webp` yo mismo antes de confiar en el reporte del Hilo Maestro (GET directo, sin caché) — coincide exactamente con lo que él confirmó por SQL.
+- Verificación visual en las 6 páginas: mosaico de weddings.html carga las 4 imágenes con `naturalWidth` correcto (ya no rotas), fondos difuminados de rentals/corporate/latin-dj/florida-keys cargan y se ven nítidos.
+- Corrección a mi propio análisis anterior: el fondo difuminado (`background-image` inline) **nunca pasa por el rewrite de Supabase Storage** — ese mecanismo solo toca `<img>`/`<video>`/`<source>` (confirmado leyendo `mdjBootstrapRemoteAssets` en `supabase-config.js`). Mi preocupación original de que `home_hero_4k_wide` estaba "roto en prod" pudo estar equivocada — ese archivo siempre se sirvió como asset estático normal, no vía Storage. No afectó nada en la práctica, pero corrijo la imprecisión.
+- Hallazgo aparte (no de este sprint, no tocado): `corporate_featured.png` está roto en Storage (400) — imagen no relacionada a los 6 activos GEO/SEO ni a este sprint.
+- Lighthouse "después" corrido con `npx lighthouse` en las 6 páginas. Performance/LCP resultó no confiable por ruido de la máquina local (confirmado repitiendo `corporate.html` dos veces con resultados muy distintos sin cambios de código entre medio) — documentado con el caveat completo arriba en vez de presentarlo como un número limpio.
