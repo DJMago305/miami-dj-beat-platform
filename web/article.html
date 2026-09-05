@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Beats & Tips — Miami DJ Beat Magazine</title>
     <meta name="description" content="Beats & Tips — historias, cultura y consejos del mundo DJ, por Miami DJ Beat." id="article-meta-description" />
-    <link rel="canonical" href="https://miamidjbeat.com/article.html" id="article-canonical" />
+    <link rel="canonical" href="https://www.miamidjbeat.com/article.html" id="article-canonical" />
     <meta property="og:type" content="article" id="article-og-type" />
     <meta property="og:title" content="Beats & Tips — Miami DJ Beat Magazine" id="article-og-title" />
     <meta property="og:description" content="Beats & Tips — historias, cultura y consejos del mundo DJ, por Miami DJ Beat." id="article-og-description" />
@@ -354,7 +354,7 @@
 
                 document.title = `${article.title} — Miami DJ Beat`;
 
-                const canonicalUrl = `https://miamidjbeat.com/article.html?slug=${encodeURIComponent(slug)}`;
+                const canonicalUrl = `https://www.miamidjbeat.com/article.html?slug=${encodeURIComponent(slug)}`;
                 const description = article.excerpt || article.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 160);
                 const absoluteImage = article.image_url
                     ? new URL(article.image_url, window.location.origin).href
