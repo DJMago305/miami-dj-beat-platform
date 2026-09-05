@@ -1313,4 +1313,14 @@ Ficheros de prueba del scratchpad, borrados.
 - **Enlace bidireccional real**: la tarjeta de "One Hit Wonder" en `events.html` ahora enlaza a esta página (`Learn More`/`Saber Más`); la página nueva enlaza de regreso a `events.html` (`Events & Venues`). Verificado en vivo el viaje ida y vuelta, sin errores de consola nuevos.
 - **15 llaves i18n nuevas** en `translations.js`, verificadas ES/EN.
 - Pendiente de aprobación de commit: `web/one-hit-wonder.html`, `web/events.html`, `web/translations.js`, este documento.
+- **PR [#304](https://github.com/DJMago305/miami-dj-beat-platform/pull/304)** abierto (rama aislada separada, porque #303 ya se había mergeado antes de empujar este commit — no se puede "anexar" a un PR cerrado). Sin merge.
+
+## [2026-09-05] Hero banner horizontal en events.html — video real, degradado ajustado por feedback visual, activo pesado optimizado
+
+- **Video provisional real, aportado por el PO**: `assets/eventos-venues-patrocinadores/Venues Home/Venues_Home-Vidz.mp4` (ya en Storage, confirmado 200 antes de usarlo). Revisado cuadro por cuadro (8 capturas) antes de integrarlo — venue real, performers con traje LED, contenido apropiado.
+- **Hallazgo real durante la prueba en vivo, no asumido**: el archivo crudo (39MB/40s) hacía que Chrome lo pausara y reanudara cada ~1 segundo por la política de ahorro de batería para "video-only background media" — medido contando eventos reales (4 pausas/4 reproducciones en 4 segundos), no solo "se ve trabado". Comprimido y recortado a 15s/9MB (mismo tratamiento que los demás heroes de video de hoy) → `events-hero-optimized.mp4`, guardado junto al original sin borrar nada.
+- **Feedback visual del PO tras la primera versión**: el degradado oscuro de abajo (`rgba(5,5,5,0.92)` en el 100%) tapaba demasiado detalle del video. Aligerado a `0.55` en el 100% (y proporcionalmente en los otros stops) — verificado visualmente apuntando de forma temporal al archivo original (el optimizado aún no estaba en Storage) para confirmar el resultado antes de reportarlo, luego restaurado el nombre de archivo correcto.
+- **El PO reportó haber subido `events-hero-optimized.mp4` a Storage — verificado de forma independiente y es falso todavía**: `curl` directo contra la URL sigue devolviendo 400, no 200. Reportado con honestidad en vez de asumir que ya estaba.
+- Pendiente de aprobación de commit: `web/events.html` (diff +40/-3), este documento.
+- **Pendiente real, no de código**: subir de verdad `assets/eventos-venues-patrocinadores/Venues Home/events-hero-optimized.mp4` a Storage — sin esto el hero se ve vacío/negro en producción.
 - **Sin cambios de código propios en esta entrada** — el trabajo real ya está hecho, mergeado y verificado por otro camino. Nada pendiente de aprobación de commit.
