@@ -61,14 +61,16 @@ async function notifyClientBookingConfirmed(
     if (!clientUserId) return;
 
     try {
-        await supabase.from("event_reminders_queue").insert({
+        const { error: qErr } = await supabase.from("event_reminders_queue").insert({
             client_user_id: clientUserId,
             event_id: leadId,
+            dedup_key: `booking_confirmed:${leadId}`,
             reminder_type: "booking_confirmed",
             status: "sent",
             scheduled_for: new Date().toISOString(),
             sent_at: new Date().toISOString(),
         });
+        if (qErr) console.error("[Webhook] event_reminders_queue insert failed:", qErr);
     } catch (qErr) {
         console.error("[Webhook] event_reminders_queue insert failed:", qErr);
     }

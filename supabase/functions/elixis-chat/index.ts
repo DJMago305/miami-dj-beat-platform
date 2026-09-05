@@ -200,6 +200,14 @@ Estas son TODAS las herramientas que tienes. No hay ninguna otra:
 17. consultar_historial_bitacora — busca en esa bitacora por año, venue,
    categoria o DJ para responder preguntas retrospectivas. Sin filtros,
    trae lo mas reciente. Si no hay nada, dilo asi.
+18. consultar_seguimiento_anual — la cola REAL de seguimiento anual que un
+   cron llena a diario (cumpleanos/aniversarios de clientes y aniversarios
+   de eventos ya realizados, dentro de los proximos 14 dias). Usala para
+   avisar PROACTIVAMENTE de quien conviene contactar pronto, sin que te lo
+   pregunten primero -- si esta vacia, dilo asi.
+19. consultar_libro_evento — el historial documentado (event_notes) de un
+   cliente especifico, para personalizar un evento nuevo o redactar un
+   mensaje con contexto real. El client_user_id sale de buscar_cliente.
 
 ### DE MUSICA SI SABES, Y MUCHO
 Eres productor y DJ, no un administrativo. Sabes leer una pista y decir que
@@ -1013,6 +1021,49 @@ serve(async (req: Request) => {
         },
     };
 
+    const SEGUIMIENTO_ANUAL_TOOL = {
+        name: "consultar_seguimiento_anual",
+        description:
+            "Consulta la cola real de seguimiento anual (event_reminders_queue, reminder_type='yearly_recall') " +
+            "que un cron llena a diario: cumpleanos/aniversarios de clientes y aniversarios de eventos ya " +
+            "realizados que caen dentro de los proximos 14 dias. Usala para avisar PROACTIVAMENTE de que " +
+            "clientes conviene contactar pronto -- no inventes nombres ni fechas si la lista vuelve vacia.",
+        input_schema: {
+            type: "object",
+            properties: {
+                estado: {
+                    type: "string",
+                    enum: ["pending", "sent", "todos"],
+                    description: "Filtra por estado del recordatorio. Default 'pending'.",
+                },
+            },
+            required: [],
+        },
+    };
+
+    const LIBRO_EVENTO_TOOL = {
+        name: "consultar_libro_evento",
+        description:
+            "Consulta el 'libro' de notas de eventos (event_notes) de un cliente especifico -- el historial " +
+            "documentado de lo que se ha hecho con el/ella, para personalizar un evento nuevo o redactar un " +
+            "mensaje con contexto real. El client_user_id sale de buscar_cliente (campo user_id). Si no hay " +
+            "notas, dilo asi -- no inventes historial.",
+        input_schema: {
+            type: "object",
+            properties: {
+                client_user_id: {
+                    type: "string",
+                    description: "UUID del cliente, tal como lo devuelve buscar_cliente (campo user_id).",
+                },
+                limite: {
+                    type: "number",
+                    description: "Cuantas notas traer como maximo, de 1 a 50. Por defecto 20.",
+                },
+            },
+            required: ["client_user_id"],
+        },
+    };
+
     const INCIDENT_WRITE_TOOL = {
         name: "registrar_incidente_bitacora",
         description:
@@ -1426,6 +1477,8 @@ serve(async (req: Request) => {
             || toolName === "consultar_musica"
             || toolName === "consultar_efemerides"
             || toolName === "consultar_historial_bitacora"
+            || toolName === "consultar_seguimiento_anual"
+            || toolName === "consultar_libro_evento"
         ) {
             return { tool: toolName, policy: "none", mode: "read" };
         }
@@ -1753,6 +1806,79 @@ serve(async (req: Request) => {
         }
 
         return JSON.stringify({ ok: true, mes: MESES_ES[mes], resultado });
+    }
+
+    async function runSeguimientoAnualTool(input: Record<string, unknown>): Promise<string> {
+        const estado = String(input?.estado ?? "pending").trim().toLowerCase();
+        let query = ADMIN
+            .from("event_reminders_queue")
+            .select("client_user_id, event_id, dedup_key, status, scheduled_for")
+            .eq("reminder_type", "yearly_recall")
+            .order("scheduled_for", { ascending: true })
+            .limit(50);
+        if (estado !== "todos") query = query.eq("status", estado);
+
+        const { data, error } = await query;
+        if (error) return JSON.stringify({ error: `event_reminders_queue: ${error.message}` });
+
+        const rows = data ?? [];
+        if (rows.length === 0) return JSON.stringify({ ok: true, count: 0, recordatorios: [] });
+
+        const clientIds = Array.from(new Set(rows.map((r) => r.client_user_id).filter(Boolean)));
+        const nombresPorId: Record<string, string> = {};
+        if (clientIds.length > 0) {
+            const { data: perfiles } = await ADMIN
+                .from("client_profiles")
+                .select("user_id, full_name")
+                .in("user_id", clientIds);
+            for (const p of perfiles ?? []) nombresPorId[String(p.user_id)] = String(p.full_name ?? "(sin nombre)");
+        }
+
+        // dedup_key tiene forma "<tipo>:<id>:<anio>" (birthday/anniversary/event_anniversary).
+        // Para event_anniversary, event_id YA es el uuid real del lead -- se resuelve para
+        // dar el tipo/fecha real del evento, no solo el id crudo.
+        const leadIds = rows
+            .filter((r) => String(r.dedup_key ?? "").startsWith("event_anniversary:") && r.event_id)
+            .map((r) => String(r.event_id));
+        const leadsPorId: Record<string, { event_type: string | null; event_date: string | null }> = {};
+        if (leadIds.length > 0) {
+            const { data: leads } = await ADMIN
+                .from("leads")
+                .select("id, event_type, event_date")
+                .in("id", leadIds);
+            for (const l of leads ?? []) leadsPorId[String(l.id)] = { event_type: l.event_type, event_date: l.event_date };
+        }
+
+        const recordatorios = rows.map((r) => {
+            const tipo = String(r.dedup_key ?? "").split(":")[0] || "desconocido";
+            const nombre = r.client_user_id ? (nombresPorId[String(r.client_user_id)] ?? "(sin nombre)") : "(sin nombre)";
+            const lead = tipo === "event_anniversary" && r.event_id ? leadsPorId[String(r.event_id)] : undefined;
+            return {
+                cliente: nombre,
+                tipo,
+                estado: r.status,
+                detectado: r.scheduled_for,
+                detalle: lead ? [lead.event_type, lead.event_date].filter(Boolean).join(" · ") : null,
+            };
+        });
+
+        return JSON.stringify({ ok: true, count: recordatorios.length, recordatorios });
+    }
+
+    async function runLibroEventoTool(input: Record<string, unknown>): Promise<string> {
+        const clientUserId = String(input?.client_user_id ?? "").trim();
+        if (!UUID_RE.test(clientUserId)) return JSON.stringify({ error: "client_user_id_invalido" });
+        const limite = Math.min(50, Math.max(1, Number(input?.limite) || 20));
+
+        const { data, error } = await ADMIN
+            .from("event_notes")
+            .select("type, title, body, priority, created_at")
+            .eq("client_user_id", clientUserId)
+            .order("created_at", { ascending: false })
+            .limit(limite);
+        if (error) return JSON.stringify({ error: `event_notes: ${error.message}` });
+
+        return JSON.stringify({ ok: true, count: data?.length ?? 0, notas: data ?? [] });
     }
 
     const CATEGORIAS_INCIDENTE = new Set(["tecnico", "logistica", "cliente", "venue", "agenda_cancelacion", "general"]);
@@ -2270,7 +2396,7 @@ serve(async (req: Request) => {
                     // hasta este cambio de modelo. Sin este parametro, el muestreo queda en
                     // el default del modelo -- no hace falta reemplazarlo por nada.
                     system: systemContent,
-                    tools: [FINANCIAL_TOOL, LEAD_NOTE_TOOL, AGENDA_READ_TOOL, AGENDA_WRITE_TOOL, AGENDA_EVENTOS_TOOL, RESIDENCY_TOOL, EFEMERIDES_TOOL, INCIDENT_WRITE_TOOL, INCIDENT_READ_TOOL, CATALOG_READ_TOOL, CATALOG_PRICE_TOOL, QUOTE_WRITE_TOOL, CLIENT_SEARCH_TOOL, SMS_QUEUE_TOOL, EMAIL_QUEUE_TOOL, CONFIRM_SEND_TOOL, MUSIC_TOOL, MEMORY_TOOL],
+                    tools: [FINANCIAL_TOOL, LEAD_NOTE_TOOL, AGENDA_READ_TOOL, AGENDA_WRITE_TOOL, AGENDA_EVENTOS_TOOL, RESIDENCY_TOOL, EFEMERIDES_TOOL, INCIDENT_WRITE_TOOL, INCIDENT_READ_TOOL, CATALOG_READ_TOOL, CATALOG_PRICE_TOOL, QUOTE_WRITE_TOOL, CLIENT_SEARCH_TOOL, SMS_QUEUE_TOOL, EMAIL_QUEUE_TOOL, CONFIRM_SEND_TOOL, MUSIC_TOOL, MEMORY_TOOL, SEGUIMIENTO_ANUAL_TOOL, LIBRO_EVENTO_TOOL],
                     messages: convo,
                 }),
             });
@@ -2388,6 +2514,16 @@ serve(async (req: Request) => {
                     await recordAiKpi(failed ? "tool_error" : "tool_ok");
                 } else if (toolName === "consultar_historial_bitacora") {
                     out = await runIncidentReadTool((b.input as Record<string, unknown>) ?? {});
+                    let failed = true;
+                    try { failed = (JSON.parse(out) as { ok?: unknown })?.ok !== true; } catch { failed = true; }
+                    await recordAiKpi(failed ? "tool_error" : "tool_ok");
+                } else if (toolName === "consultar_seguimiento_anual") {
+                    out = await runSeguimientoAnualTool((b.input as Record<string, unknown>) ?? {});
+                    let failed = true;
+                    try { failed = (JSON.parse(out) as { ok?: unknown })?.ok !== true; } catch { failed = true; }
+                    await recordAiKpi(failed ? "tool_error" : "tool_ok");
+                } else if (toolName === "consultar_libro_evento") {
+                    out = await runLibroEventoTool((b.input as Record<string, unknown>) ?? {});
                     let failed = true;
                     try { failed = (JSON.parse(out) as { ok?: unknown })?.ok !== true; } catch { failed = true; }
                     await recordAiKpi(failed ? "tool_error" : "tool_ok");
