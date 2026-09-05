@@ -3973,7 +3973,7 @@
     </footer>
 
     <!-- Translations & Base Logic -->
-    <script defer src="./translations.js?v=20260820-unificacion"></script>
+    <script defer src="./translations.js?v=20260903-perfil-label"></script>
     <script defer src="./i18n.js?v=20260427-lang-default"></script>
     <script>
         // 🔧 Motor Principal de Logout (A prueba de fallos)
@@ -4020,11 +4020,11 @@
                 var u = new URL(location.origin);
                 var h = (u.hostname || '').replace(/^\[|\]$/g, '').toLowerCase();
                 if (h === 'localhost' || h === '127.0.0.1' || h === '::1') {
-                    return 'https://miamidjbeat.com';
+                    return 'https://www.miamidjbeat.com';
                 }
             } catch (e) { void e; }
             if (typeof location !== 'undefined' && location.origin) return String(location.origin).replace(/\/$/, '');
-            return 'https://miamidjbeat.com';
+            return 'https://www.miamidjbeat.com';
         }
 
         /** Conteo visibilidad: 1 por sesión y origen (profile | sft_qr). */
@@ -4059,7 +4059,7 @@
             if (!baseRaw && typeof mdbPublicProfileQrBase === 'function') {
                 baseRaw = mdbPublicProfileQrBase();
             }
-            if (!baseRaw) baseRaw = 'https://miamidjbeat.com';
+            if (!baseRaw) baseRaw = 'https://www.miamidjbeat.com';
             var base = baseRaw.replace(/\/$/, '');
             var path = (typeof window !== 'undefined' && window.MDB_QR_PROFILE_PATH) ? window.MDB_QR_PROFILE_PATH : '/dj-profile.html';
             if (path.charAt(0) !== '/') path = '/' + path;
@@ -14769,7 +14769,7 @@
     <script defer src="./monetization.js?v=20260422-sft-math"></script>
 
     <script defer src="./header-smart-search.js?v=20260415-CORE-CONNECTIONS"></script>
-    <script defer src="./mdjb-shared-header.js?v=20260903-config-slot-race-fix"></script>
+    <script defer src="./mdjb-shared-header.js?v=20260903-revert-nav-agenda"></script>
   <script defer src="./mdj-owner-tabs-marquee.js?v=20260818-nav-canonico"></script>
   <script defer src="./mdj-social-bar.js?v=20260819-social-contact-only"></script>
   <!-- Cart pill: badge + redirect to rentals (no heavy scripts needed here) -->

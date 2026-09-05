@@ -44,7 +44,17 @@
     { s: 8, key: 'nav-my-profile', nav: 'mi-portal', href: './login.html',  txt: 'MI PERFIL',
       id: 'mainNav-mi-portal-link', cls: 'mdj-mi-portal-mainnav mdj-mi-portal-gold',
       alias: ['mi-portal', 'header-mi-portal'], navAlias: ['my-profile', 'profile'] }
-    /* Slot 9 · MRM IA RETIRADO de esta barra (2026-09-02, orden directa del
+    /* Slot 9 · Agenda de Cliente, agregada y RETIRADA el mismo dia (2026-09-03):
+       el PO pidio la funcion de Google Calendar, pero nunca una pestaña nueva
+       en esta barra -- "no era necesario hacerlo ahi... yo queria eso en
+       Config de perfiles, en todos, no en barra de menu." Ademas goteo un bug
+       real de CSS (aria-hidden="true" puesto correctamente, pero un selector
+       de header-unified.css force-mostraba data-mdj-slot="9" de todas formas
+       -- probablemente una regla vieja pensada para AGENTE.IA, mismo numero
+       de puesto en la tabla de Artista). El boton de Google Calendar vive
+       ahora dentro de Config/Cuenta (client-account.html, account-settings.html),
+       no en el menu. Vuelve esta tabla a los 8 slots canonicos.
+    /* Slot 9 (anterior) · MRM IA RETIRADO de esta barra (2026-09-02, orden directa del
        PO: "sacala y dejala solo en menu de inicio... borra todo lo que
        tenga que ver con la posicion vieja para evitar errores"). Vivía aquí
        desde 2026-08-16 como "visible para todos los roles" -- el PO decidió
