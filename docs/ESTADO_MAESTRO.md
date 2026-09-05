@@ -1334,4 +1334,12 @@ Ficheros de prueba del scratchpad, borrados.
 - **Verificado que `residencies-carousel.js` no se rompe**: revisé el JS antes de tocar el HTML — solo consulta el contenedor y las tarjetas completas por clase, no posiciones internas específicas, así que agregar una línea de zona por tarjeta era seguro.
 - **Reintento de subida del video reportado por el PO — verificado de nuevo y sigue sin reflejar el cambio**: `curl` muestra `content-length: 8990891` (el tamaño viejo de 9MB), no los ~4.8MB esperados del archivo reoptimizado — a pesar de que el PO reportó haber borrado y vuelto a subir. Reportado con honestidad, no dado por resuelto.
 - Pendiente de aprobación de commit: `web/events.html` (diff +18/-29), este documento.
+
+## [2026-09-05] Cache-busting por nombre de archivo para el video hero — el PO diagnosticó el CDN de Storage cacheando por URL
+
+- **Diagnóstico correcto del PO**: el CDN de Supabase Storage cachea por URL con `Cache-Control: max-age` alto, así que sobreescribir el mismo nombre (`events-hero-optimized.mp4`) no invalida la caché — por eso `curl` seguía devolviendo el tamaño viejo pese a reintentos de subida. Solución: nombre de archivo nuevo (`events-hero-720p.mp4`) para forzar una URL nueva sin colisión.
+- **Renombrado local + referencia actualizada en `events.html`** — verificado en vivo que el `<video>` ya apunta a la URL nueva.
+- **Aclarada la política de merge de una vez por todas**: el PO confirmó explícitamente que los merges a `main` los hace él siempre desde GitHub tras revisar el preview de Vercel — este hilo nunca ejecuta `gh pr merge`, el flujo termina en dejar el PR limpio y documentado.
+- **Verificación rigurosa del nuevo archivo, con la API directa de Storage, no solo `curl` genérico**: `events-hero-720p.mp4` responde `404 NoSuchKey` — genuinamente no subido todavía, a pesar de que el PO reportó haberlo subido. Confirmado que la carpeta y el acceso público sí funcionan (los otros 2 archivos de esa misma carpeta responden 200) — así que el problema es específico de ese archivo/nombre, no de permisos ni de la ruta. Reportado con honestidad, pedí al PO que revise el nombre exacto en el dashboard.
+- Pendiente de aprobación de commit: `web/events.html` (diff +1/-1), este documento.
 - **Sin cambios de código propios en esta entrada** — el trabajo real ya está hecho, mergeado y verificado por otro camino. Nada pendiente de aprobación de commit.
