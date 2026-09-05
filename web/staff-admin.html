@@ -1763,6 +1763,10 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                 <a href="#production" class="side-link" data-i18n="prod-sidebar-production" style="display:flex;align-items:center;gap:9px;">
                   <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                 </a>
+                <a href="#venues" class="side-link" onclick="loadVenues()" style="display:flex;align-items:center;gap:9px;">
+                  <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>
+                  Venues
+                </a>
                 <!-- Owner-only: Promociones -->
                 <a href="./documents/campaign-center.html" id="sidebar-promociones" class="side-link"
                    style="display:none;align-items:center;gap:9px;color:#c5a059;border-left:2px solid rgba(197,160,89,0.35);">
@@ -2520,6 +2524,43 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                 <div class="admin-card" id="production" style="display:none;">
                     <h3 style="margin-top:0;" data-i18n="prod-admin-title"></h3>
                     <div id="production-module-host"></div>
+                </div>
+
+                <!-- ══ VENUES / SALAS / TAQUILLA (Modulo de Salas Aisladas, QR y Ticketing) ══ -->
+                <div class="admin-card" id="venues" style="display:none;">
+                    <h3 style="margin-top:0;">🏛️ Venues, Salas y Taquilla</h3>
+                    <p class="fineprint">Cada venue se segmenta en salas independientes -- slug propio, canal de WhatsApp exclusivo, QR propio. Cada sala tiene sus eventos, y cada evento sus tipos de entrada.</p>
+
+                    <div style="border:1px dashed var(--line);border-radius:10px;padding:16px;margin-bottom:20px;">
+                        <strong style="display:block;margin-bottom:10px;">+ Agregar Venue</strong>
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;">
+                            <input type="text" id="venue-new-name" placeholder="Nombre" oninput="mdjVenueSuggestSlug(this.value,'venue-new-slug')">
+                            <input type="text" id="venue-new-slug" placeholder="slug-limpio">
+                            <input type="text" id="venue-new-zone" placeholder="Zona (ej. Key Largo, Florida Keys)">
+                            <input type="text" id="venue-new-address" placeholder="Dirección">
+                            <input type="text" id="venue-new-city" placeholder="Ciudad" value="Miami, FL">
+                            <input type="text" id="venue-new-whatsapp" placeholder="Link de WhatsApp (opcional)">
+                        </div>
+                        <button class="btn primary" style="margin-top:10px;" onclick="mdjCreateVenue()">+ Agregar Venue</button>
+                    </div>
+
+                    <div id="venues-list">Cargando venues…</div>
+
+                    <hr style="border-color:var(--line);margin:28px 0;">
+
+                    <h3>🎪 Eventos itinerantes (sin sala)</h3>
+                    <p class="fineprint">Marcas como "One Hit Wonder" que aun no tienen sala asignada -- se identifican por <code>brand_slug</code>, no por venue.</p>
+                    <div style="border:1px dashed var(--line);border-radius:10px;padding:16px;margin-bottom:16px;">
+                        <strong style="display:block;margin-bottom:10px;">+ Agregar Evento Itinerante</strong>
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;">
+                            <input type="text" id="ohw-new-title" placeholder="Título del evento">
+                            <input type="text" id="ohw-new-brand" placeholder="brand_slug (ej. one-hit-wonder)">
+                            <input type="date" id="ohw-new-date" placeholder="Fecha (opcional)">
+                            <input type="text" id="ohw-new-team" placeholder="Equipo/Promotor (opcional)">
+                        </div>
+                        <button class="btn primary" style="margin-top:10px;" onclick="mdjCreateItinerantEvent()">+ Agregar</button>
+                    </div>
+                    <div id="ohw-events-list">Cargando eventos itinerantes…</div>
                 </div>
 
                 <!-- Wedding Plan Panel — full viewport via CSS -->
@@ -4403,7 +4444,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     const target = hrefRaw.replace('#', '');
                     if (!target) return;
                     // Show target section, hide others — with anti-CLS fade
-                    const sections = ['leads', 'actividad', 'eb-orders', 'crm', 'djs', 'staff', 'registry-section', 'analytics', 'content', 'apps', 'production', 'wedding-plan', 'create-profiles', 'event-blueprint', 'fashion-show-panel'];
+                    const sections = ['leads', 'actividad', 'eb-orders', 'crm', 'djs', 'staff', 'registry-section', 'analytics', 'content', 'apps', 'production', 'venues', 'wedding-plan', 'create-profiles', 'event-blueprint', 'fashion-show-panel'];
                     const eventPanels = ['event-blueprint', 'fashion-show-panel'];
                     sections.forEach(id => {
                         const el = document.getElementById(id);
@@ -6430,6 +6471,406 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     table.style.display = 'none';
                     icon.style.transform = 'rotate(0deg)';
                 }
+            };
+
+            // ══ VENUES / SALAS / TAQUILLA — CRUD anidado de 4 niveles ══════════════
+            // Escritura directa via supabase.from(...) -- sin RPC intermedia, mismo
+            // patron que residency_schedule (RLS is_staff() ya lo protege).
+            function mdjSlugify(s) {
+                return String(s || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+            }
+            window.mdjVenueSuggestSlug = function(name, targetId) {
+                const el = document.getElementById(targetId);
+                if (el && !el.value) el.value = mdjSlugify(name);
+            };
+
+            window.loadVenues = async function() {
+                const db = window.getSupabaseClient();
+                if (!db) return;
+                const listEl = document.getElementById('venues-list');
+                const { data, error } = await db.from('venues').select('*').order('name', { ascending: true });
+                if (error) { listEl.textContent = 'Error: ' + error.message; return; }
+                mdjRenderVenuesList(data || []);
+                mdjLoadItinerantEvents();
+            };
+
+            function mdjRenderVenuesList(venues) {
+                const listEl = document.getElementById('venues-list');
+                if (!venues.length) { listEl.innerHTML = '<p class="fineprint">Sin venues todavía.</p>'; return; }
+                listEl.innerHTML = venues.map(v => `
+                    <div style="border:1px solid var(--line);border-radius:10px;margin-bottom:10px;overflow:hidden;">
+                        <div onclick="mdjToggleVenueRooms('${v.id}')" style="cursor:pointer;padding:14px;display:flex;justify-content:space-between;align-items:center;">
+                            <div>
+                                <strong>${v.name}</strong> <span class="fineprint">/venues/${v.slug}</span><br>
+                                <span class="fineprint">${v.zone || ''} ${v.address ? '· ' + v.address : ''}</span>
+                            </div>
+                            <div style="display:flex;gap:8px;align-items:center;" onclick="event.stopPropagation();">
+                                <button class="btn-pill" onclick="mdjEditVenue('${v.id}')">✏️ Editar</button>
+                                <button class="btn-pill red" onclick="mdjDeleteVenue('${v.id}')">🗑️</button>
+                                <span id="venue-icon-${v.id}" style="transition:transform .2s;">▼</span>
+                            </div>
+                        </div>
+                        <div id="venue-rooms-${v.id}" data-venue-id="${v.id}" data-loaded="0" style="display:none;padding:0 14px 14px 14px;">
+                            <p class="fineprint">Cargando salas…</p>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            window.mdjCreateVenue = async function() {
+                const db = window.getSupabaseClient();
+                if (!db) return;
+                const name = document.getElementById('venue-new-name').value.trim();
+                const slug = mdjSlugify(document.getElementById('venue-new-slug').value || name);
+                if (!name || !slug) { alert('❌ Falta nombre o slug.'); return; }
+                const { error } = await db.from('venues').insert({
+                    name, slug,
+                    zone: document.getElementById('venue-new-zone').value.trim() || null,
+                    address: document.getElementById('venue-new-address').value.trim() || null,
+                    city: document.getElementById('venue-new-city').value.trim() || 'Miami, FL',
+                    whatsapp_link: document.getElementById('venue-new-whatsapp').value.trim() || null,
+                });
+                if (error) { alert('❌ Error: ' + error.message); return; }
+                ['venue-new-name','venue-new-slug','venue-new-zone','venue-new-address','venue-new-whatsapp'].forEach(id => document.getElementById(id).value = '');
+                alert('✅ Venue creado.');
+                loadVenues();
+            };
+
+            window.mdjEditVenue = async function(id) {
+                const db = window.getSupabaseClient();
+                if (!db) return;
+                const { data: v } = await db.from('venues').select('*').eq('id', id).maybeSingle();
+                if (!v) return;
+                const name = prompt('Nombre:', v.name); if (name === null) return;
+                const zone = prompt('Zona:', v.zone || ''); if (zone === null) return;
+                const address = prompt('Dirección:', v.address || ''); if (address === null) return;
+                const whatsapp = prompt('Link de WhatsApp:', v.whatsapp_link || ''); if (whatsapp === null) return;
+                const { error } = await db.from('venues').update({ name, zone: zone || null, address: address || null, whatsapp_link: whatsapp || null }).eq('id', id);
+                if (error) { alert('❌ Error: ' + error.message); return; }
+                alert('✅ Actualizado.');
+                loadVenues();
+            };
+
+            window.mdjDeleteVenue = async function(id) {
+                if (!confirm('¿Eliminar este venue y TODAS sus salas/eventos/entradas? No se puede deshacer.')) return;
+                const db = window.getSupabaseClient();
+                const { error } = await db.from('venues').delete().eq('id', id);
+                if (error) { alert('❌ Error: ' + error.message); return; }
+                loadVenues();
+            };
+
+            window.mdjToggleVenueRooms = async function(venueId) {
+                const el = document.getElementById('venue-rooms-' + venueId);
+                const icon = document.getElementById('venue-icon-' + venueId);
+                if (!el) return;
+                if (el.style.display === 'none') {
+                    el.style.display = 'block';
+                    icon.style.transform = 'rotate(180deg)';
+                    if (el.dataset.loaded !== '1') { el.dataset.loaded = '1'; await mdjLoadRooms(venueId); }
+                } else {
+                    el.style.display = 'none';
+                    icon.style.transform = 'rotate(0deg)';
+                }
+            };
+
+            async function mdjLoadRooms(venueId) {
+                const db = window.getSupabaseClient();
+                const el = document.getElementById('venue-rooms-' + venueId);
+                const { data, error } = await db.from('venue_rooms').select('*').eq('venue_id', venueId).order('name');
+                if (error) { el.textContent = 'Error: ' + error.message; return; }
+                const rooms = data || [];
+                el.innerHTML = `
+                    <div style="border:1px dashed var(--line);border-radius:8px;padding:12px;margin-bottom:10px;">
+                        <strong style="display:block;margin-bottom:8px;font-size:13px;">+ Agregar Sala</strong>
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;">
+                            <input type="text" id="room-new-name-${venueId}" placeholder="Nombre" oninput="mdjVenueSuggestSlug(this.value,'room-new-slug-${venueId}')">
+                            <input type="text" id="room-new-slug-${venueId}" placeholder="slug-limpio">
+                            <input type="number" id="room-new-capacity-${venueId}" placeholder="Capacidad">
+                            <input type="text" id="room-new-whatsapp-${venueId}" placeholder="WhatsApp exclusivo">
+                        </div>
+                        <button class="btn primary" style="margin-top:8px;" onclick="mdjCreateRoom('${venueId}')">+ Agregar Sala</button>
+                    </div>
+                    <div id="rooms-list-${venueId}"></div>
+                `;
+                mdjRenderRoomsList(venueId, rooms);
+            }
+
+            function mdjRenderRoomsList(venueId, rooms) {
+                const el = document.getElementById('rooms-list-' + venueId);
+                if (!rooms.length) { el.innerHTML = '<p class="fineprint">Sin salas todavía.</p>'; return; }
+                el.innerHTML = rooms.map(r => `
+                    <div style="border:1px solid var(--line);border-radius:8px;margin-bottom:8px;">
+                        <div onclick="mdjToggleRoomEvents('${r.id}')" style="cursor:pointer;padding:10px;display:flex;justify-content:space-between;align-items:center;">
+                            <div><strong>${r.name}</strong> <span class="fineprint">/venues/${r.venue_id}/${r.slug} · cap ${r.capacity || '—'}</span></div>
+                            <div style="display:flex;gap:6px;align-items:center;" onclick="event.stopPropagation();">
+                                <button class="btn-pill" onclick="mdjEditRoom('${r.id}')">✏️</button>
+                                <button class="btn-pill red" onclick="mdjDeleteRoom('${r.id}','${venueId}')">🗑️</button>
+                                <span id="room-icon-${r.id}">▼</span>
+                            </div>
+                        </div>
+                        <div id="room-events-${r.id}" data-loaded="0" style="display:none;padding:0 10px 10px 10px;">
+                            <p class="fineprint">Cargando eventos…</p>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            window.mdjCreateRoom = async function(venueId) {
+                const db = window.getSupabaseClient();
+                const name = document.getElementById('room-new-name-' + venueId).value.trim();
+                const slug = mdjSlugify(document.getElementById('room-new-slug-' + venueId).value || name);
+                if (!name || !slug) { alert('❌ Falta nombre o slug.'); return; }
+                const capacityRaw = document.getElementById('room-new-capacity-' + venueId).value;
+                const { error } = await db.from('venue_rooms').insert({
+                    venue_id: venueId, name, slug,
+                    capacity: capacityRaw ? parseInt(capacityRaw, 10) : null,
+                    whatsapp_link: document.getElementById('room-new-whatsapp-' + venueId).value.trim() || null,
+                });
+                if (error) { alert('❌ Error: ' + error.message); return; }
+                alert('✅ Sala creada.');
+                mdjLoadRooms(venueId);
+            };
+
+            window.mdjEditRoom = async function(id) {
+                const db = window.getSupabaseClient();
+                const { data: r } = await db.from('venue_rooms').select('*').eq('id', id).maybeSingle();
+                if (!r) return;
+                const name = prompt('Nombre:', r.name); if (name === null) return;
+                const capacity = prompt('Capacidad:', r.capacity || ''); if (capacity === null) return;
+                const whatsapp = prompt('WhatsApp exclusivo:', r.whatsapp_link || ''); if (whatsapp === null) return;
+                const { error } = await db.from('venue_rooms').update({ name, capacity: capacity ? parseInt(capacity, 10) : null, whatsapp_link: whatsapp || null }).eq('id', id);
+                if (error) { alert('❌ Error: ' + error.message); return; }
+                alert('✅ Actualizado.');
+                mdjLoadRooms(r.venue_id);
+            };
+
+            window.mdjDeleteRoom = async function(id, venueId) {
+                if (!confirm('¿Eliminar esta sala y sus eventos/entradas? No se puede deshacer.')) return;
+                const db = window.getSupabaseClient();
+                const { error } = await db.from('venue_rooms').delete().eq('id', id);
+                if (error) { alert('❌ Error: ' + error.message); return; }
+                mdjLoadRooms(venueId);
+            };
+
+            window.mdjToggleRoomEvents = async function(roomId) {
+                const el = document.getElementById('room-events-' + roomId);
+                const icon = document.getElementById('room-icon-' + roomId);
+                if (!el) return;
+                if (el.style.display === 'none') {
+                    el.style.display = 'block';
+                    icon.style.transform = 'rotate(180deg)';
+                    if (el.dataset.loaded !== '1') { el.dataset.loaded = '1'; await mdjLoadEvents(roomId); }
+                } else {
+                    el.style.display = 'none';
+                    icon.style.transform = 'rotate(0deg)';
+                }
+            };
+
+            async function mdjLoadEvents(roomId) {
+                const db = window.getSupabaseClient();
+                const el = document.getElementById('room-events-' + roomId);
+                const { data, error } = await db.from('venue_events').select('*').eq('room_id', roomId).order('event_date', { ascending: true, nullsFirst: true });
+                if (error) { el.textContent = 'Error: ' + error.message; return; }
+                const events = data || [];
+                el.innerHTML = `
+                    <div style="border:1px dashed var(--line);border-radius:8px;padding:10px;margin-bottom:8px;">
+                        <strong style="display:block;margin-bottom:6px;font-size:12px;">+ Agregar Evento</strong>
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:6px;">
+                            <input type="text" id="ev-new-title-${roomId}" placeholder="Título">
+                            <input type="date" id="ev-new-date-${roomId}">
+                            <select id="ev-new-status-${roomId}">
+                                <option value="waitlist">Lista de espera</option>
+                                <option value="announced">Anunciado</option>
+                            </select>
+                            <input type="text" id="ev-new-team-${roomId}" placeholder="Equipo/Promotor (opcional)">
+                        </div>
+                        <button class="btn primary" style="margin-top:6px;" onclick="mdjCreateEvent('${roomId}')">+ Agregar</button>
+                    </div>
+                    <div id="events-list-${roomId}"></div>
+                `;
+                mdjRenderEventsList(roomId, events);
+            }
+
+            function mdjRenderEventsList(roomId, events) {
+                const el = document.getElementById('events-list-' + roomId);
+                if (!events.length) { el.innerHTML = '<p class="fineprint">Sin eventos todavía.</p>'; return; }
+                el.innerHTML = events.map(e => `
+                    <div style="border:1px solid var(--line);border-radius:6px;margin-bottom:6px;">
+                        <div onclick="mdjToggleEventTickets('${e.id}')" style="cursor:pointer;padding:8px;display:flex;justify-content:space-between;align-items:center;">
+                            <div><strong>${e.title}</strong> <span class="fineprint">${e.event_date || 'Por anunciar'} · ${e.status}${e.team_label ? ' · ' + e.team_label : ''}</span></div>
+                            <div style="display:flex;gap:6px;align-items:center;" onclick="event.stopPropagation();">
+                                <button class="btn-pill" onclick="mdjEditEvent('${e.id}')">✏️</button>
+                                <button class="btn-pill red" onclick="mdjDeleteEvent('${e.id}','${roomId}')">🗑️</button>
+                                <span id="event-icon-${e.id}">▼</span>
+                            </div>
+                        </div>
+                        <div id="event-tickets-${e.id}" data-loaded="0" style="display:none;padding:0 8px 8px 8px;">
+                            <p class="fineprint">Cargando tipos de entrada…</p>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            window.mdjCreateEvent = async function(roomId) {
+                const db = window.getSupabaseClient();
+                const title = document.getElementById('ev-new-title-' + roomId).value.trim();
+                if (!title) { alert('❌ Falta el título.'); return; }
+                const dateVal = document.getElementById('ev-new-date-' + roomId).value;
+                const { error } = await db.from('venue_events').insert({
+                    room_id: roomId, title,
+                    event_date: dateVal || null,
+                    status: document.getElementById('ev-new-status-' + roomId).value,
+                    team_label: document.getElementById('ev-new-team-' + roomId).value.trim() || null,
+                });
+                if (error) { alert('❌ Error: ' + error.message); return; }
+                alert('✅ Evento creado.');
+                mdjLoadEvents(roomId);
+            };
+
+            window.mdjEditEvent = async function(id) {
+                const db = window.getSupabaseClient();
+                const { data: e } = await db.from('venue_events').select('*').eq('id', id).maybeSingle();
+                if (!e) return;
+                const title = prompt('Título:', e.title); if (title === null) return;
+                const status = prompt('Estado (waitlist/announced/sold_out/completed/cancelled):', e.status); if (status === null) return;
+                const team = prompt('Equipo/Promotor:', e.team_label || ''); if (team === null) return;
+                const { error } = await db.from('venue_events').update({ title, status, team_label: team || null }).eq('id', id);
+                if (error) { alert('❌ Error: ' + error.message); return; }
+                alert('✅ Actualizado.');
+                if (e.room_id) mdjLoadEvents(e.room_id); else mdjLoadItinerantEvents();
+            };
+
+            window.mdjDeleteEvent = async function(id, roomId) {
+                if (!confirm('¿Eliminar este evento y sus tipos de entrada? No se puede deshacer.')) return;
+                const db = window.getSupabaseClient();
+                const { error } = await db.from('venue_events').delete().eq('id', id);
+                if (error) { alert('❌ Error: ' + error.message); return; }
+                if (roomId) mdjLoadEvents(roomId); else mdjLoadItinerantEvents();
+            };
+
+            window.mdjToggleEventTickets = async function(eventId) {
+                const el = document.getElementById('event-tickets-' + eventId);
+                const icon = document.getElementById('event-icon-' + eventId);
+                if (!el) return;
+                if (el.style.display === 'none') {
+                    el.style.display = 'block';
+                    icon.style.transform = 'rotate(180deg)';
+                    if (el.dataset.loaded !== '1') { el.dataset.loaded = '1'; await mdjLoadTicketTypes(eventId); }
+                } else {
+                    el.style.display = 'none';
+                    icon.style.transform = 'rotate(0deg)';
+                }
+            };
+
+            async function mdjLoadTicketTypes(eventId) {
+                const db = window.getSupabaseClient();
+                const el = document.getElementById('event-tickets-' + eventId);
+                const { data, error } = await db.from('venue_ticket_types').select('*').eq('event_id', eventId).order('price_cents');
+                if (error) { el.textContent = 'Error: ' + error.message; return; }
+                const types = data || [];
+                el.innerHTML = `
+                    <div style="border:1px dashed var(--line);border-radius:6px;padding:8px;margin-bottom:6px;">
+                        <strong style="display:block;margin-bottom:6px;font-size:11px;">+ Agregar Tipo de Entrada</strong>
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:6px;">
+                            <input type="text" id="tt-new-label-${eventId}" placeholder="Etiqueta (General/VIP)">
+                            <input type="number" step="0.01" id="tt-new-price-${eventId}" placeholder="Precio USD">
+                            <input type="number" id="tt-new-qty-${eventId}" placeholder="Disponibles (opcional)">
+                            <input type="text" id="tt-new-zone-${eventId}" placeholder="Zona (opcional)">
+                        </div>
+                        <button class="btn primary" style="margin-top:6px;" onclick="mdjCreateTicketType('${eventId}')">+ Agregar</button>
+                    </div>
+                    <div id="tickets-list-${eventId}"></div>
+                `;
+                mdjRenderTicketTypesList(eventId, types);
+            }
+
+            function mdjRenderTicketTypesList(eventId, types) {
+                const el = document.getElementById('tickets-list-' + eventId);
+                if (!types.length) { el.innerHTML = '<p class="fineprint">Sin tipos de entrada todavía.</p>'; return; }
+                el.innerHTML = types.map(t => `
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px;">
+                        <span>${t.label}${t.zone_label ? ' · ' + t.zone_label : ''} — $${(t.price_cents / 100).toFixed(2)} (${t.quantity_sold}/${t.quantity_available ?? '∞'})</span>
+                        <span style="display:flex;gap:6px;">
+                            <button class="btn-pill" onclick="mdjEditTicketType('${t.id}')">✏️</button>
+                            <button class="btn-pill red" onclick="mdjDeleteTicketType('${t.id}','${eventId}')">🗑️</button>
+                        </span>
+                    </div>
+                `).join('');
+            }
+
+            window.mdjCreateTicketType = async function(eventId) {
+                const db = window.getSupabaseClient();
+                const label = document.getElementById('tt-new-label-' + eventId).value.trim();
+                const priceRaw = document.getElementById('tt-new-price-' + eventId).value;
+                if (!label || !priceRaw) { alert('❌ Falta etiqueta o precio.'); return; }
+                const qtyRaw = document.getElementById('tt-new-qty-' + eventId).value;
+                const { error } = await db.from('venue_ticket_types').insert({
+                    event_id: eventId, label,
+                    price_cents: Math.round(parseFloat(priceRaw) * 100),
+                    quantity_available: qtyRaw ? parseInt(qtyRaw, 10) : null,
+                    zone_label: document.getElementById('tt-new-zone-' + eventId).value.trim() || null,
+                });
+                if (error) { alert('❌ Error: ' + error.message); return; }
+                alert('✅ Tipo de entrada creado.');
+                mdjLoadTicketTypes(eventId);
+            };
+
+            window.mdjEditTicketType = async function(id) {
+                const db = window.getSupabaseClient();
+                const { data: t } = await db.from('venue_ticket_types').select('*').eq('id', id).maybeSingle();
+                if (!t) return;
+                const label = prompt('Etiqueta:', t.label); if (label === null) return;
+                const price = prompt('Precio USD:', (t.price_cents / 100).toFixed(2)); if (price === null) return;
+                const zone = prompt('Zona:', t.zone_label || ''); if (zone === null) return;
+                const { error } = await db.from('venue_ticket_types').update({ label, price_cents: Math.round(parseFloat(price) * 100), zone_label: zone || null }).eq('id', id);
+                if (error) { alert('❌ Error: ' + error.message); return; }
+                alert('✅ Actualizado.');
+                mdjLoadTicketTypes(t.event_id);
+            };
+
+            window.mdjDeleteTicketType = async function(id, eventId) {
+                if (!confirm('¿Eliminar este tipo de entrada?')) return;
+                const db = window.getSupabaseClient();
+                const { error } = await db.from('venue_ticket_types').delete().eq('id', id);
+                if (error) { alert('❌ Error: ' + error.message); return; }
+                mdjLoadTicketTypes(eventId);
+            };
+
+            // ── Eventos itinerantes (room_id NULL, ej. One Hit Wonder) ──────────
+            window.mdjCreateItinerantEvent = async function() {
+                const db = window.getSupabaseClient();
+                const title = document.getElementById('ohw-new-title').value.trim();
+                const brand = document.getElementById('ohw-new-brand').value.trim();
+                if (!title || !brand) { alert('❌ Falta título o brand_slug.'); return; }
+                const dateVal = document.getElementById('ohw-new-date').value;
+                const { error } = await db.from('venue_events').insert({
+                    room_id: null, title, brand_slug: brand,
+                    event_date: dateVal || null,
+                    status: dateVal ? 'announced' : 'waitlist',
+                    team_label: document.getElementById('ohw-new-team').value.trim() || null,
+                });
+                if (error) { alert('❌ Error: ' + error.message); return; }
+                ['ohw-new-title','ohw-new-brand','ohw-new-date','ohw-new-team'].forEach(id => document.getElementById(id).value = '');
+                alert('✅ Evento itinerante creado.');
+                mdjLoadItinerantEvents();
+            };
+
+            window.mdjLoadItinerantEvents = async function() {
+                const db = window.getSupabaseClient();
+                const el = document.getElementById('ohw-events-list');
+                const { data, error } = await db.from('venue_events').select('*').is('room_id', null).order('created_at', { ascending: false });
+                if (error) { el.textContent = 'Error: ' + error.message; return; }
+                const events = data || [];
+                if (!events.length) { el.innerHTML = '<p class="fineprint">Sin eventos itinerantes todavía.</p>'; return; }
+                el.innerHTML = events.map(e => `
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);">
+                        <span><strong>${e.title}</strong> <span class="fineprint">${e.brand_slug} · ${e.event_date || 'Por anunciar'} · ${e.status}${e.team_label ? ' · ' + e.team_label : ''}</span></span>
+                        <span style="display:flex;gap:6px;">
+                            <button class="btn-pill" onclick="mdjEditEvent('${e.id}')">✏️</button>
+                            <button class="btn-pill red" onclick="mdjDeleteEvent('${e.id}', null)">🗑️</button>
+                        </span>
+                    </div>
+                `).join('');
             };
 
             window.loadCertificationRegistry = async function() {
