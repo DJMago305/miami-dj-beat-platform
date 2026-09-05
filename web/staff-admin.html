@@ -233,6 +233,150 @@
             padding: 10px 14px !important;
         }
 
+        /* Panel de Venues — formulario en grid de 2 columnas con labels */
+        .mdj-venue-form-card {
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .mdj-venue-form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(220px, 1fr));
+            gap: 14px 18px;
+        }
+        @media (max-width: 680px) {
+            .mdj-venue-form-grid { grid-template-columns: 1fr; }
+        }
+        .mdj-venue-form-grid label {
+            display: block;
+            font-size: 12px !important;
+            font-weight: 700;
+            color: rgba(255,255,255,.55);
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            margin-bottom: 6px;
+        }
+        .mdj-venue-form-grid input,
+        .mdj-venue-form-grid select {
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* Tarjeta de Venue registrado */
+        .mdj-venue-card {
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            margin-bottom: 14px;
+            overflow: hidden;
+            background: rgba(255,255,255,.02);
+        }
+        .mdj-venue-card-head {
+            padding: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .mdj-venue-badge {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            color: var(--gold);
+            background: rgba(197,160,89,.12);
+            border: 1px solid rgba(197,160,89,.3);
+            border-radius: 99px;
+            padding: 3px 10px;
+            margin-left: 8px;
+        }
+        .mdj-venue-stats {
+            display: flex;
+            gap: 18px;
+            font-size: 12px;
+            color: rgba(255,255,255,.5);
+            margin-top: 8px;
+        }
+        .mdj-venue-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 14px;
+        }
+
+        /* Action Tiles (mismo patron que Cash Flow / Invoices) */
+        .mdj-action-tile {
+            border-radius: 12px;
+            padding: 14px 18px;
+            min-width: 110px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            text-align: center;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(212,175,55,0.35);
+            transition: all 0.2s ease;
+        }
+        .mdj-action-tile:hover {
+            border-color: #d4af37;
+            background: rgba(255,255,255,0.06);
+        }
+        .mdj-action-tile svg {
+            width: 24px;
+            height: 24px;
+            stroke: #d4af37;
+            fill: none;
+            stroke-width: 1.5;
+        }
+        .mdj-action-tile span {
+            font-size: 12px;
+            color: rgba(240,224,180,0.85);
+            font-weight: 600;
+        }
+        .mdj-action-tile.mdj-tile-danger:hover {
+            border-color: rgba(239,68,68,0.65);
+        }
+        .mdj-action-tile.mdj-tile-danger:hover svg {
+            stroke: #ef4444;
+        }
+        .mdj-action-tile.mdj-tile-danger:hover span {
+            color: #ff9c9c;
+        }
+
+        /* Tarjeta de Sala (mismo lenguaje visual que la de Venue, mas compacta) */
+        .mdj-room-card {
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            overflow: hidden;
+            background: rgba(255,255,255,.015);
+        }
+        .mdj-room-card-head {
+            padding: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        /* Modal de QR (staff-facing preview, mismo destino que la Fase 3 publica) */
+        .mdj-qr-modal-backdrop {
+            position: fixed; inset: 0; background: rgba(0,0,0,.7);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 9999;
+        }
+        .mdj-qr-modal {
+            background: #111; border: 1px solid var(--line); border-radius: 14px;
+            padding: 28px; text-align: center; max-width: 320px;
+        }
+        .mdj-qr-modal img, .mdj-qr-modal canvas { border-radius: 8px; background: #fff; padding: 8px; }
+
         .price-input {
             font-size: 15px !important;
             padding: 10px 14px !important;
@@ -2529,38 +2673,91 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                 <!-- ══ VENUES / SALAS / TAQUILLA (Modulo de Salas Aisladas, QR y Ticketing) ══ -->
                 <div class="admin-card" id="venues" style="display:none;">
                     <h3 style="margin-top:0;">🏛️ Venues, Salas y Taquilla</h3>
-                    <p class="fineprint">Cada venue se segmenta en salas independientes -- slug propio, canal de WhatsApp exclusivo, QR propio. Cada sala tiene sus eventos, y cada evento sus tipos de entrada.</p>
+                    <p class="fineprint">Cada venue se segmenta en salas independientes -- canal de WhatsApp exclusivo y QR propio por sala. Cada sala tiene sus eventos, y cada evento sus tipos de entrada.</p>
 
-                    <div style="border:1px dashed var(--line);border-radius:10px;padding:16px;margin-bottom:20px;">
-                        <strong style="display:block;margin-bottom:10px;">+ Agregar Venue</strong>
-                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;">
-                            <input type="text" id="venue-new-name" placeholder="Nombre" oninput="mdjVenueSuggestSlug(this.value,'venue-new-slug')">
-                            <input type="text" id="venue-new-slug" placeholder="slug-limpio">
-                            <input type="text" id="venue-new-zone" placeholder="Zona (ej. Key Largo, Florida Keys)">
-                            <input type="text" id="venue-new-address" placeholder="Dirección">
-                            <input type="text" id="venue-new-city" placeholder="Ciudad" value="Miami, FL">
-                            <input type="text" id="venue-new-whatsapp" placeholder="Link de WhatsApp (opcional)">
+                    <div class="mdj-venue-form-card">
+                        <strong style="display:block;margin-bottom:14px;font-size:15px;">+ Agregar Venue</strong>
+                        <div class="mdj-venue-form-grid">
+                            <div>
+                                <label for="venue-new-name">Nombre del Venue</label>
+                                <input type="text" id="venue-new-name" placeholder="ej. Mojitos Calle 8">
+                            </div>
+                            <div>
+                                <label for="venue-new-category">Categoría</label>
+                                <select id="venue-new-category">
+                                    <option value="">Seleccionar…</option>
+                                    <option value="nightclub">Nightclub</option>
+                                    <option value="restaurant_bar">Restaurant-Bar</option>
+                                    <option value="lounge">Lounge</option>
+                                    <option value="rooftop">Rooftop</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="venue-new-address">Dirección completa</label>
+                                <input type="text" id="venue-new-address" placeholder="ej. 8000 SW 8th St">
+                            </div>
+                            <div>
+                                <label for="venue-new-zone">Zona / Vecindario</label>
+                                <input type="text" id="venue-new-zone" placeholder="ej. Westchester / Little Havana">
+                            </div>
+                            <div>
+                                <label for="venue-new-city">Ciudad</label>
+                                <input type="text" id="venue-new-city" placeholder="Miami, FL" value="Miami, FL">
+                            </div>
+                            <div>
+                                <label for="venue-new-zip">ZIP Code</label>
+                                <input type="text" id="venue-new-zip" placeholder="ej. 33144">
+                            </div>
+                            <div>
+                                <label for="venue-new-phone">Teléfono de contacto / Reservas</label>
+                                <input type="tel" id="venue-new-phone" placeholder="ej. +1 305 000 0000">
+                            </div>
+                            <div>
+                                <label for="venue-new-restriction">Restricción</label>
+                                <select id="venue-new-restriction">
+                                    <option value="">Seleccionar…</option>
+                                    <option value="21+">21+</option>
+                                    <option value="All Ages">All Ages</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="venue-new-whatsapp">Enlace directo de WhatsApp</label>
+                                <input type="text" id="venue-new-whatsapp" placeholder="https://wa.me/1305…">
+                            </div>
+                            <div>
+                                <label for="venue-new-cover">URL de imagen / flyer de portada</label>
+                                <input type="text" id="venue-new-cover" placeholder="https://…">
+                            </div>
                         </div>
-                        <button class="btn primary" style="margin-top:10px;" onclick="mdjCreateVenue()">+ Agregar Venue</button>
+                        <button class="btn primary" style="margin-top:14px;" onclick="mdjCreateVenue()">+ Agregar Venue</button>
                     </div>
 
-                    <div id="venues-list">Cargando venues…</div>
+                    <div id="venues-list" style="margin-top:20px;">Cargando venues…</div>
 
-                    <hr style="border-color:var(--line);margin:28px 0;">
-
-                    <h3>🎪 Eventos itinerantes (sin sala)</h3>
-                    <p class="fineprint">Marcas como "One Hit Wonder" que aun no tienen sala asignada -- se identifican por <code>brand_slug</code>, no por venue.</p>
-                    <div style="border:1px dashed var(--line);border-radius:10px;padding:16px;margin-bottom:16px;">
-                        <strong style="display:block;margin-bottom:10px;">+ Agregar Evento Itinerante</strong>
-                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;">
-                            <input type="text" id="ohw-new-title" placeholder="Título del evento">
-                            <input type="text" id="ohw-new-brand" placeholder="brand_slug (ej. one-hit-wonder)">
-                            <input type="date" id="ohw-new-date" placeholder="Fecha (opcional)">
-                            <input type="text" id="ohw-new-team" placeholder="Equipo/Promotor (opcional)">
+                    <div class="mdj-venue-form-card" style="margin-top:28px;background:rgba(197,160,89,0.04);border-color:rgba(197,160,89,0.25);">
+                        <h3 style="margin:0 0 4px;">🎪 Eventos itinerantes / Marcas</h3>
+                        <p class="fineprint" style="margin-top:0;">Marcas como "One Hit Wonder" que aún no tienen sala asignada -- se identifican por marca (brand), no por venue.</p>
+                        <div class="mdj-venue-form-grid" style="margin-top:14px;">
+                            <div>
+                                <label for="ohw-new-title">Título del evento</label>
+                                <input type="text" id="ohw-new-title" placeholder="ej. One Hit Wonder — Edición Miami">
+                            </div>
+                            <div>
+                                <label for="ohw-new-brand">Marca</label>
+                                <input type="text" id="ohw-new-brand" placeholder="ej. One Hit Wonder">
+                            </div>
+                            <div>
+                                <label for="ohw-new-date">Fecha (opcional)</label>
+                                <input type="date" id="ohw-new-date">
+                            </div>
+                            <div>
+                                <label for="ohw-new-team">Equipo/Promotor (opcional)</label>
+                                <input type="text" id="ohw-new-team" placeholder="ej. Team Marlon">
+                            </div>
                         </div>
-                        <button class="btn primary" style="margin-top:10px;" onclick="mdjCreateItinerantEvent()">+ Agregar</button>
+                        <button class="btn primary" style="margin-top:14px;" onclick="mdjCreateItinerantEvent()">+ Agregar Evento Itinerante</button>
+                        <div id="ohw-events-list" style="margin-top:16px;">Cargando eventos itinerantes…</div>
                     </div>
-                    <div id="ohw-events-list">Cargando eventos itinerantes…</div>
                 </div>
 
                 <!-- Wedding Plan Panel — full viewport via CSS -->
@@ -2943,6 +3140,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
         </footer>
 
         <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
         <script>
     /* FIX-LEGACY-SUPABASE-01 (2026-08-19) · el respaldo entra cuando falta la
        LIBRERIA, no cuando falta la sintaxis.
@@ -6479,10 +6677,18 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
             function mdjSlugify(s) {
                 return String(s || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
             }
-            window.mdjVenueSuggestSlug = function(name, targetId) {
-                const el = document.getElementById(targetId);
-                if (el && !el.value) el.value = mdjSlugify(name);
+
+            // Action Tiles -- mismo patron visual que Cash Flow / Invoices, iconos SVG de trazo fino.
+            const MDJ_TILE_ICONS = {
+                door: '<path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/>',
+                calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+                pencil: '<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+                trash: '<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>',
+                qr: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><line x1="14" y1="14" x2="14" y2="21"/><line x1="21" y1="14" x2="21" y2="21"/><line x1="17" y1="14" x2="17" y2="17"/><line x1="14" y1="17" x2="17" y2="17"/><line x1="17" y1="21" x2="21" y2="21"/>',
             };
+            function mdjTile(icon, label, onclick, danger) {
+                return `<div class="mdj-action-tile${danger ? ' mdj-tile-danger' : ''}" onclick="${onclick}"><svg viewBox="0 0 24 24">${MDJ_TILE_ICONS[icon]}</svg><span>${label}</span></div>`;
+            }
 
             window.loadVenues = async function() {
                 const db = window.getSupabaseClient();
@@ -6490,28 +6696,50 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 const listEl = document.getElementById('venues-list');
                 const { data, error } = await db.from('venues').select('*').order('name', { ascending: true });
                 if (error) { listEl.textContent = 'Error: ' + error.message; return; }
-                mdjRenderVenuesList(data || []);
+                await mdjRenderVenuesList(data || []);
                 mdjLoadItinerantEvents();
             };
 
-            function mdjRenderVenuesList(venues) {
+            const MDJ_VENUE_CATEGORY_LABEL = { nightclub: 'Nightclub', restaurant_bar: 'Restaurant-Bar', lounge: 'Lounge', rooftop: 'Rooftop' };
+
+            async function mdjRenderVenuesList(venues) {
                 const listEl = document.getElementById('venues-list');
                 if (!venues.length) { listEl.innerHTML = '<p class="fineprint">Sin venues todavía.</p>'; return; }
-                listEl.innerHTML = venues.map(v => `
-                    <div style="border:1px solid var(--line);border-radius:10px;margin-bottom:10px;overflow:hidden;">
-                        <div onclick="mdjToggleVenueRooms('${v.id}')" style="cursor:pointer;padding:14px;display:flex;justify-content:space-between;align-items:center;">
+                const db = window.getSupabaseClient();
+                // Contador de salas activas + eventos programados por venue -- una consulta chica por venue, N es bajo.
+                const stats = await Promise.all(venues.map(async v => {
+                    const { count: roomCount } = await db.from('venue_rooms').select('id', { count: 'exact', head: true }).eq('venue_id', v.id);
+                    const { data: rooms } = await db.from('venue_rooms').select('id').eq('venue_id', v.id);
+                    const roomIds = (rooms || []).map(r => r.id);
+                    let eventCount = 0;
+                    if (roomIds.length) {
+                        const { count } = await db.from('venue_events').select('id', { count: 'exact', head: true }).in('room_id', roomIds);
+                        eventCount = count || 0;
+                    }
+                    return { roomCount: roomCount || 0, eventCount };
+                }));
+                listEl.innerHTML = venues.map((v, i) => `
+                    <div class="mdj-venue-card">
+                        <div class="mdj-venue-card-head">
                             <div>
-                                <strong>${v.name}</strong> <span class="fineprint">/venues/${v.slug}</span><br>
-                                <span class="fineprint">${v.zone || ''} ${v.address ? '· ' + v.address : ''}</span>
+                                <strong style="font-size:16px;">${v.name}</strong>
+                                ${v.zone ? `<span class="mdj-venue-badge">${v.zone}</span>` : ''}
+                                ${v.category ? `<span class="mdj-venue-badge">${MDJ_VENUE_CATEGORY_LABEL[v.category] || v.category}</span>` : ''}
+                                <div class="fineprint" style="margin-top:4px;">${v.address || ''}${v.city ? (v.address ? ' · ' : '') + v.city : ''}${v.zip_code ? ' ' + v.zip_code : ''}</div>
+                                <div class="mdj-venue-stats">
+                                    <span>🚪 ${stats[i].roomCount} sala${stats[i].roomCount === 1 ? '' : 's'} activa${stats[i].roomCount === 1 ? '' : 's'}</span>
+                                    <span>📅 ${stats[i].eventCount} evento${stats[i].eventCount === 1 ? '' : 's'} programado${stats[i].eventCount === 1 ? '' : 's'}</span>
+                                </div>
                             </div>
-                            <div style="display:flex;gap:8px;align-items:center;" onclick="event.stopPropagation();">
-                                <button class="btn-pill" onclick="mdjEditVenue('${v.id}')">✏️ Editar</button>
-                                <button class="btn-pill red" onclick="mdjDeleteVenue('${v.id}')">🗑️</button>
-                                <span id="venue-icon-${v.id}" style="transition:transform .2s;">▼</span>
+                            <div class="mdj-venue-actions">
+                                ${mdjTile('door', 'Administrar salas', `mdjToggleVenueRooms('${v.id}')`)}
+                                ${mdjTile('calendar', 'Ver eventos', `mdjToggleVenueRooms('${v.id}', true)`)}
+                                ${mdjTile('pencil', 'Editar venue', `mdjEditVenue('${v.id}')`)}
+                                ${mdjTile('trash', 'Eliminar', `mdjDeleteVenue('${v.id}')`, true)}
                             </div>
                         </div>
-                        <div id="venue-rooms-${v.id}" data-venue-id="${v.id}" data-loaded="0" style="display:none;padding:0 14px 14px 14px;">
-                            <p class="fineprint">Cargando salas…</p>
+                        <div id="venue-rooms-${v.id}" data-venue-id="${v.id}" data-loaded="0" style="display:none;padding:0 18px 18px 18px;border-top:1px solid var(--line);">
+                            <p class="fineprint" style="margin-top:14px;">Cargando salas…</p>
                         </div>
                     </div>
                 `).join('');
@@ -6521,17 +6749,25 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 const db = window.getSupabaseClient();
                 if (!db) return;
                 const name = document.getElementById('venue-new-name').value.trim();
-                const slug = mdjSlugify(document.getElementById('venue-new-slug').value || name);
-                if (!name || !slug) { alert('❌ Falta nombre o slug.'); return; }
+                if (!name) { alert('❌ Falta el nombre del venue.'); return; }
+                const slug = mdjSlugify(name);
                 const { error } = await db.from('venues').insert({
                     name, slug,
+                    category: document.getElementById('venue-new-category').value || null,
                     zone: document.getElementById('venue-new-zone').value.trim() || null,
                     address: document.getElementById('venue-new-address').value.trim() || null,
                     city: document.getElementById('venue-new-city').value.trim() || 'Miami, FL',
+                    zip_code: document.getElementById('venue-new-zip').value.trim() || null,
+                    phone: document.getElementById('venue-new-phone').value.trim() || null,
+                    age_restriction: document.getElementById('venue-new-restriction').value || null,
                     whatsapp_link: document.getElementById('venue-new-whatsapp').value.trim() || null,
+                    cover_image_url: document.getElementById('venue-new-cover').value.trim() || null,
                 });
                 if (error) { alert('❌ Error: ' + error.message); return; }
-                ['venue-new-name','venue-new-slug','venue-new-zone','venue-new-address','venue-new-whatsapp'].forEach(id => document.getElementById(id).value = '');
+                ['venue-new-name','venue-new-zone','venue-new-address','venue-new-zip','venue-new-phone','venue-new-whatsapp','venue-new-cover'].forEach(id => document.getElementById(id).value = '');
+                document.getElementById('venue-new-category').value = '';
+                document.getElementById('venue-new-restriction').value = '';
+                document.getElementById('venue-new-city').value = 'Miami, FL';
                 alert('✅ Venue creado.');
                 loadVenues();
             };
@@ -6559,57 +6795,78 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 loadVenues();
             };
 
-            window.mdjToggleVenueRooms = async function(venueId) {
+            window.mdjToggleVenueRooms = async function(venueId, focusEvents) {
                 const el = document.getElementById('venue-rooms-' + venueId);
-                const icon = document.getElementById('venue-icon-' + venueId);
                 if (!el) return;
-                if (el.style.display === 'none') {
+                const wasHidden = el.style.display === 'none';
+                if (wasHidden || focusEvents) {
                     el.style.display = 'block';
-                    icon.style.transform = 'rotate(180deg)';
                     if (el.dataset.loaded !== '1') { el.dataset.loaded = '1'; await mdjLoadRooms(venueId); }
+                    if (focusEvents) {
+                        // "Ver Eventos": abre de una vez los eventos de cada sala, no solo la lista de salas.
+                        const roomToggles = el.querySelectorAll('[data-room-toggle]');
+                        roomToggles.forEach(btn => btn.click());
+                    }
                 } else {
                     el.style.display = 'none';
-                    icon.style.transform = 'rotate(0deg)';
                 }
             };
 
             async function mdjLoadRooms(venueId) {
                 const db = window.getSupabaseClient();
                 const el = document.getElementById('venue-rooms-' + venueId);
-                const { data, error } = await db.from('venue_rooms').select('*').eq('venue_id', venueId).order('name');
+                const [{ data, error }, { data: venueRow }] = await Promise.all([
+                    db.from('venue_rooms').select('*').eq('venue_id', venueId).order('name'),
+                    db.from('venues').select('slug').eq('id', venueId).maybeSingle(),
+                ]);
                 if (error) { el.textContent = 'Error: ' + error.message; return; }
                 const rooms = data || [];
+                const venueSlug = venueRow ? venueRow.slug : '';
                 el.innerHTML = `
-                    <div style="border:1px dashed var(--line);border-radius:8px;padding:12px;margin-bottom:10px;">
-                        <strong style="display:block;margin-bottom:8px;font-size:13px;">+ Agregar Sala</strong>
-                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;">
-                            <input type="text" id="room-new-name-${venueId}" placeholder="Nombre" oninput="mdjVenueSuggestSlug(this.value,'room-new-slug-${venueId}')">
-                            <input type="text" id="room-new-slug-${venueId}" placeholder="slug-limpio">
-                            <input type="number" id="room-new-capacity-${venueId}" placeholder="Capacidad">
-                            <input type="text" id="room-new-whatsapp-${venueId}" placeholder="WhatsApp exclusivo">
+                    <div class="mdj-venue-form-card" style="margin-top:14px;">
+                        <strong style="display:block;margin-bottom:10px;font-size:13px;">+ Agregar Sala</strong>
+                        <div class="mdj-venue-form-grid">
+                            <div>
+                                <label>Nombre de la sala</label>
+                                <input type="text" id="room-new-name-${venueId}" placeholder="ej. Sala Principal">
+                            </div>
+                            <div>
+                                <label>Capacidad</label>
+                                <input type="number" id="room-new-capacity-${venueId}" placeholder="ej. 120">
+                            </div>
+                            <div style="grid-column:1/-1;">
+                                <label>Canal de WhatsApp exclusivo</label>
+                                <input type="text" id="room-new-whatsapp-${venueId}" placeholder="https://wa.me/1305…">
+                            </div>
                         </div>
-                        <button class="btn primary" style="margin-top:8px;" onclick="mdjCreateRoom('${venueId}')">+ Agregar Sala</button>
+                        <button class="btn primary" style="margin-top:10px;" onclick="mdjCreateRoom('${venueId}')">+ Agregar Sala</button>
                     </div>
-                    <div id="rooms-list-${venueId}"></div>
+                    <div id="rooms-list-${venueId}" style="margin-top:12px;"></div>
                 `;
-                mdjRenderRoomsList(venueId, rooms);
+                mdjRenderRoomsList(venueId, rooms, venueSlug);
             }
 
-            function mdjRenderRoomsList(venueId, rooms) {
+            function mdjRenderRoomsList(venueId, rooms, venueSlug) {
                 const el = document.getElementById('rooms-list-' + venueId);
                 if (!rooms.length) { el.innerHTML = '<p class="fineprint">Sin salas todavía.</p>'; return; }
                 el.innerHTML = rooms.map(r => `
-                    <div style="border:1px solid var(--line);border-radius:8px;margin-bottom:8px;">
-                        <div onclick="mdjToggleRoomEvents('${r.id}')" style="cursor:pointer;padding:10px;display:flex;justify-content:space-between;align-items:center;">
-                            <div><strong>${r.name}</strong> <span class="fineprint">/venues/${r.venue_id}/${r.slug} · cap ${r.capacity || '—'}</span></div>
-                            <div style="display:flex;gap:6px;align-items:center;" onclick="event.stopPropagation();">
-                                <button class="btn-pill" onclick="mdjEditRoom('${r.id}')">✏️</button>
-                                <button class="btn-pill red" onclick="mdjDeleteRoom('${r.id}','${venueId}')">🗑️</button>
-                                <span id="room-icon-${r.id}">▼</span>
+                    <div class="mdj-room-card">
+                        <div class="mdj-room-card-head">
+                            <div>
+                                <strong>${r.name}</strong>
+                                <span class="mdj-venue-badge">👥 ${r.capacity || '—'}</span>
+                                ${r.whatsapp_link ? '<span class="mdj-venue-badge">💬 WhatsApp</span>' : ''}
+                                <div class="fineprint" style="margin-top:4px;">/venues/${venueSlug}/${r.slug}</div>
+                            </div>
+                            <div class="mdj-venue-actions">
+                                <div class="mdj-action-tile" data-room-toggle onclick="mdjToggleRoomEvents('${r.id}')"><svg viewBox="0 0 24 24">${MDJ_TILE_ICONS.calendar}</svg><span>Ver eventos</span></div>
+                                ${mdjTile('qr', 'Ver QR', `mdjShowRoomQR('${venueSlug}','${r.slug}','${r.name.replace(/'/g, "\\'")}')`)}
+                                ${mdjTile('pencil', 'Editar sala', `mdjEditRoom('${r.id}')`)}
+                                ${mdjTile('trash', 'Eliminar', `mdjDeleteRoom('${r.id}','${venueId}')`, true)}
                             </div>
                         </div>
-                        <div id="room-events-${r.id}" data-loaded="0" style="display:none;padding:0 10px 10px 10px;">
-                            <p class="fineprint">Cargando eventos…</p>
+                        <div id="room-events-${r.id}" data-loaded="0" style="display:none;padding:0 14px 14px 14px;border-top:1px solid var(--line);">
+                            <p class="fineprint" style="margin-top:12px;">Cargando eventos…</p>
                         </div>
                     </div>
                 `).join('');
@@ -6618,8 +6875,8 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
             window.mdjCreateRoom = async function(venueId) {
                 const db = window.getSupabaseClient();
                 const name = document.getElementById('room-new-name-' + venueId).value.trim();
-                const slug = mdjSlugify(document.getElementById('room-new-slug-' + venueId).value || name);
-                if (!name || !slug) { alert('❌ Falta nombre o slug.'); return; }
+                if (!name) { alert('❌ Falta el nombre de la sala.'); return; }
+                const slug = mdjSlugify(name);
                 const capacityRaw = document.getElementById('room-new-capacity-' + venueId).value;
                 const { error } = await db.from('venue_rooms').insert({
                     venue_id: venueId, name, slug,
@@ -6652,17 +6909,45 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 mdjLoadRooms(venueId);
             };
 
+            /* Vista previa de QR para Staff -- mismo destino final que la pagina
+               publica de la Fase 3 (/venues/<venue>/<sala>), aunque esa pagina
+               todavia no existe: el QR ya se puede imprimir de una vez, apunta
+               al mismo lugar cuando se publique. Reutiliza qrcodejs (CDN), el
+               mismo patron que ya usa dj-profile.html. */
+            window.mdjShowRoomQR = function(venueSlug, roomSlug, roomName) {
+                const url = 'https://www.miamidjbeat.com/venues/' + venueSlug + '/' + roomSlug;
+                const old = document.getElementById('mdj-qr-modal-backdrop');
+                if (old) old.remove();
+                const backdrop = document.createElement('div');
+                backdrop.id = 'mdj-qr-modal-backdrop';
+                backdrop.className = 'mdj-qr-modal-backdrop';
+                backdrop.onclick = function(e) { if (e.target === backdrop) backdrop.remove(); };
+                backdrop.innerHTML = `
+                    <div class="mdj-qr-modal">
+                        <strong style="display:block;margin-bottom:4px;">${roomName}</strong>
+                        <p class="fineprint" style="margin:0 0 14px;word-break:break-all;">${url}</p>
+                        <div id="mdj-qr-canvas" style="display:flex;justify-content:center;"></div>
+                        <p class="fineprint" style="margin:14px 0 0;color:rgba(255,255,255,.4);">Esta URL se activa cuando se publique la página pública de la sala (Fase 3).</p>
+                        <button class="btn secondary small" style="margin-top:14px;" onclick="document.getElementById('mdj-qr-modal-backdrop').remove()">Cerrar</button>
+                    </div>
+                `;
+                document.body.appendChild(backdrop);
+                if (window.QRCode) {
+                    new QRCode(document.getElementById('mdj-qr-canvas'), { text: url, width: 200, height: 200, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+                } else {
+                    document.getElementById('mdj-qr-canvas').innerHTML = '<p class="fineprint">Cargando generador de QR…</p>';
+                    setTimeout(() => { if (window.QRCode) mdjShowRoomQR(venueSlug, roomSlug, roomName); }, 400);
+                }
+            };
+
             window.mdjToggleRoomEvents = async function(roomId) {
                 const el = document.getElementById('room-events-' + roomId);
-                const icon = document.getElementById('room-icon-' + roomId);
                 if (!el) return;
                 if (el.style.display === 'none') {
                     el.style.display = 'block';
-                    icon.style.transform = 'rotate(180deg)';
                     if (el.dataset.loaded !== '1') { el.dataset.loaded = '1'; await mdjLoadEvents(roomId); }
                 } else {
                     el.style.display = 'none';
-                    icon.style.transform = 'rotate(0deg)';
                 }
             };
 
@@ -6840,11 +7125,11 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
             window.mdjCreateItinerantEvent = async function() {
                 const db = window.getSupabaseClient();
                 const title = document.getElementById('ohw-new-title').value.trim();
-                const brand = document.getElementById('ohw-new-brand').value.trim();
-                if (!title || !brand) { alert('❌ Falta título o brand_slug.'); return; }
+                const brandName = document.getElementById('ohw-new-brand').value.trim();
+                if (!title || !brandName) { alert('❌ Falta título o marca.'); return; }
                 const dateVal = document.getElementById('ohw-new-date').value;
                 const { error } = await db.from('venue_events').insert({
-                    room_id: null, title, brand_slug: brand,
+                    room_id: null, title, brand_slug: mdjSlugify(brandName),
                     event_date: dateVal || null,
                     status: dateVal ? 'announced' : 'waitlist',
                     team_label: document.getElementById('ohw-new-team').value.trim() || null,
@@ -6866,8 +7151,8 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);">
                         <span><strong>${e.title}</strong> <span class="fineprint">${e.brand_slug} · ${e.event_date || 'Por anunciar'} · ${e.status}${e.team_label ? ' · ' + e.team_label : ''}</span></span>
                         <span style="display:flex;gap:6px;">
-                            <button class="btn-pill" onclick="mdjEditEvent('${e.id}')">✏️</button>
-                            <button class="btn-pill red" onclick="mdjDeleteEvent('${e.id}', null)">🗑️</button>
+                            <button class="btn-pill" onclick="mdjEditEvent('${e.id}')">✏️ Editar</button>
+                            <button class="btn-pill red" onclick="mdjDeleteEvent('${e.id}', null)">🗑️ Eliminar</button>
                         </span>
                     </div>
                 `).join('');
