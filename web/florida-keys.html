@@ -117,8 +117,11 @@
             font-size: 14px;
             background: rgba(197, 160, 89, 0.08);
         }
+        @media (max-width: 760px) {
+            .fk-proof-grid { grid-template-columns: 1fr !important; }
+        }
     </style>
-  <link rel="preload" as="image" href="./assets/home_hero_4k_wide.webp" fetchpriority="high">
+  <link rel="preload" as="image" href="./assets/florida-keys/fotos/keys-sundowners-hero.webp" fetchpriority="high">
 </head>
 
 <body class="notranslate page-florida-keys">
@@ -203,12 +206,13 @@
     <a href="./contact.html" data-i18n="nav-contact" data-mdj-nav="contact" data-mdj-slot="7">Contacto</a>
     <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="./client-portal.html" data-mdj-nav="mi-portal" data-mdj-slot="8" aria-hidden="true" tabindex="-1">MI PERFIL</a>
   </nav>
+
     </div>
   </div>
 </header>
 
     <div id="fk-hero-kb-bg" class="hero-kb-bg"
-        style="position: fixed; inset: 0; z-index: 1; pointer-events: none; background-image: url('./assets/home_hero_4k_wide.webp'); background-size: cover; background-position: center; opacity: 0.3; filter: blur(5px);"></div>
+        style="position: fixed; inset: 0; z-index: 1; pointer-events: none; background-image: url('./assets/florida-keys/fotos/keys-sundowners-hero.webp'); background-size: cover; background-position: center; opacity: 0.35; filter: blur(5px);"></div>
     <div class="hero-video-overlay"
         style="position: fixed; inset: 0; z-index: 3; pointer-events: none; background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.8) 100%);"></div>
 
@@ -245,6 +249,15 @@
                 <h3 data-i18n="fk-cat4-title" style="font-family: 'Playfair Display', serif; font-size: 22px; margin-bottom: 8px;">Premium Logistics</h3>
                 <p data-i18n="fk-cat4-desc" style="color: rgba(255,255,255,0.7); line-height: 1.6;">Travel time and equipment transport from Miami are planned into your schedule in advance, so setup starts on time for your event.</p>
             </div>
+        </div>
+
+        <!-- Prueba real de la residencia en Sundowners (evidencia visual, no solo texto) -->
+        <div style="max-width: 1100px; margin: 60px auto 0; display: grid; grid-template-columns: 1.4fr 1fr; gap: 24px; align-items: center;" class="fk-proof-grid">
+            <figure style="margin: 0; border-radius: 16px; overflow: hidden; border: 1px solid rgba(197,160,89,0.25);">
+                <img src="./assets/florida-keys/fotos/keys-sundowners-card.webp" alt="DJ de Miami DJ Beat tocando en Sundowners, Key Largo, con vista al mar" loading="lazy" width="900" height="600" style="display:block; width:100%; height:auto;" />
+                <figcaption style="padding: 10px 14px; font-size: 13px; color: rgba(255,255,255,0.6);">Residencia semanal en vivo — Sundowners, Key Largo, brunch con DJ los domingos.</figcaption>
+            </figure>
+            <video src="./assets/florida-keys/videos/sundowners-key-largo.mp4" poster="./assets/florida-keys/fotos/keys-sundowners-card.webp" autoplay muted loop playsinline preload="metadata" style="width:100%; border-radius: 16px; border: 1px solid rgba(197,160,89,0.25); display:block;"></video>
         </div>
 
         <div style="text-align: center; margin-top: 50px;">
@@ -292,6 +305,7 @@
         <a href="./events.html" data-i18n="footer-svc-events" style="color:inherit;text-decoration:none;">Event Production</a> ·
                 <a href="./rentals.html" data-i18n="footer-svc-rentals" style="color:inherit;text-decoration:none;">DJ Equipment Rental</a> ·
         <a href="./weddings.html" data-i18n="footer-svc-weddings" style="color:inherit;text-decoration:none;">Wedding DJ</a> ·
+        <a href="./quinceanera.html" data-i18n="footer-svc-quince" style="color:inherit;text-decoration:none;">Quinceañera DJ</a> ·
         <a href="./corporate.html" data-i18n="footer-svc-corporate" style="color:inherit;text-decoration:none;">Corporate Events</a> ·
         <a href="./latin-dj.html" data-i18n="footer-svc-latin" style="color:inherit;text-decoration:none;">Latin &amp; Open-Format DJ</a> ·
         <a href="./florida-keys.html" data-i18n="footer-svc-keys" style="color:inherit;text-decoration:none;">Florida Keys Destination DJ</a>
@@ -314,12 +328,12 @@
     })();
     </script>
     <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
-    <script src="./translations.js?v=20260820-unificacion"></script>
+    <script src="./translations.js?v=20260903-perfil-label"></script>
     <script src="./i18n.js?v=20260420-index-experience-rutas"></script>
     <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
     <script src="./mdj-identity.js?v=20260617-buyer-artist-fix-1"></script>
     <script src="./auth.js?v=20260820-unificacion"></script>
-    <script src="./mdjb-shared-header.js?v=20260903-config-slot-race-fix"></script>
+    <script src="./mdjb-shared-header.js?v=20260903-revert-nav-agenda"></script>
     <script src="./mdj-mainnav-infinite.js?v=20260818-nav-canonico"></script>
     <script src="./mdj-social-bar.js?v=20260819-social-contact-only"></script>
     <script src="./mdj-mobile-header-fix.js?v=20260825-a"></script>
