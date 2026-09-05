@@ -224,4 +224,14 @@
       window.mdjPrevueloEstacion();
     } catch (e) { /* si algo falla, se queda la publica */ }
   };
+
+  /* mdjPrevueloPublico() -- pestaña "Agenda" de Cliente en la barra publica:
+     construida y RETIRADA el mismo dia (2026-09-03). El PO nunca pidio una
+     pestaña nueva en el menu compartido -- "yo queria eso en Config de
+     perfiles, en todos, no en barra de menu." Ademas goteo un bug real de
+     CSS (aria-hidden="true" puesto bien, pero un selector viejo de
+     header-unified.css forzaba visible cualquier data-mdj-slot="9",
+     pensado para AGENTE.IA en la tabla de Artista). La funcion de Google
+     Calendar vive ahora dentro de Config/Cuenta (client-account.html,
+     account-settings.html) -- ver docs/ESTADO_MAESTRO.md. */
 })();
