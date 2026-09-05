@@ -302,9 +302,19 @@
   </div>
 </header>
     <main id="app" data-mdj-page="events" class="mdj-events-page-mount" aria-label="Events">
-<div class="container" style="padding-top:40px;text-align:center;">
-  <h1 data-i18n="event-prod-h1" style="font-family:'Playfair Display',serif;font-size:clamp(30px,4.2vw,50px);color:var(--gold);margin:0 0 14px;">Turnkey Event Production & Venue Audio-Visual Services</h1>
-  <p data-i18n="event-prod-lead" style="color:rgba(255,255,255,0.75);font-size:16px;max-width:66ch;margin:0 auto;line-height:1.6;">Full-scale event production — audio, lighting, and staging — built on real, ongoing venue partnerships across Miami-Dade, Broward, and the Florida Keys.</p>
+<!-- Hero banner horizontal -- video provisional real (Venues Home), independiente del
+     carrusel de reels verticales 9:16 mas abajo. Se reemplaza por la pieza definitiva
+     cuando este lista, sin tocar el resto de la maqueta. -->
+<div id="events-hero-banner" style="position:relative;width:100%;height:clamp(320px,44vw,520px);border-radius:0 0 28px 28px;overflow:hidden;margin-top:-1px;">
+  <video id="events-hero-video" autoplay muted loop playsinline preload="metadata"
+      style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">
+      <source src="./assets/eventos-venues-patrocinadores/Venues Home/events-hero-optimized.mp4" type="video/mp4">
+  </video>
+  <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,5,5,0.35) 0%,rgba(5,5,5,0.15) 45%,rgba(5,5,5,0.55) 100%);"></div>
+  <div class="container" style="position:relative;z-index:2;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px 18px;">
+    <h1 data-i18n="event-prod-h1" style="font-family:'Playfair Display',serif;font-size:clamp(30px,4.2vw,50px);color:var(--gold);margin:0 0 14px;text-shadow:0 4px 18px rgba(0,0,0,0.7);">Turnkey Event Production & Venue Audio-Visual Services</h1>
+    <p data-i18n="event-prod-lead" style="color:rgba(255,255,255,0.9);font-size:16px;max-width:66ch;margin:0 auto;line-height:1.6;text-shadow:0 2px 10px rgba(0,0,0,0.6);">Full-scale event production — audio, lighting, and staging — built on real, ongoing venue partnerships across Miami-Dade, Broward, and the Florida Keys.</p>
+  </div>
 </div>
 
 <!-- Contenedor "Proximos Eventos" -- listo para recibir fechas reales cuando existan.
@@ -589,6 +599,33 @@
     </script>
     <script src="./js/mdj-safe-storage.js?v=20260616-1"></script>
     <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
+    <script>
+    (function () {
+        function kick() {
+            var v = document.getElementById('events-hero-video');
+            if (!v) return;
+            /* Chrome pausa video-only "de fondo" para ahorrar bateria (goo.gl/LdLk22)
+               -- mismo fix que weddings/latin-dj/corporate. */
+            function attemptPlay() {
+                var p = v.play();
+                if (p && p.catch) {
+                    p.catch(function () {
+                        setTimeout(function () { v.play().catch(function () {}); }, 250);
+                    });
+                }
+            }
+            try { v.load(); attemptPlay(); } catch (e) { /* noop */ }
+            v.addEventListener('pause', function () {
+                if (!document.hidden) attemptPlay();
+            });
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', kick);
+        } else {
+            kick();
+        }
+    })();
+    </script>
     <script defer src="./translations.js?v=20260903-perfil-label"></script>
     <script defer src="./i18n.js?v=20260415-MAGIC-HOVER-UNIFIED"></script>
     <script>
