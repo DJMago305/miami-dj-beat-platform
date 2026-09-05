@@ -1,0 +1,33 @@
+Media dedicada a quinceanera.html (activo GEO/SEO #7) y a la tarjeta
+"Quinceañera" en index.html #dj-types — creada 2026-09-03 a pedido del PO,
+mismo patrón que web/assets/corporate/.
+
+Estructura:
+  fotos/
+    juliano-astc-card.webp   — recorte optimizado (900x600, 115 KB), pieza
+                                hero del mosaico y de la tarjeta del home.
+    juliano-astc-2-card.webp — recorte optimizado (720x540, 70 KB).
+    eduardo-hija-card.webp   — recorte optimizado (720x540, 79 KB).
+    juliano-astc.jpg / juliano-astc-2.jpg / eduardo-hija.jpg
+                              — originales del PO, sin tocar (3.2-5.7 MB c/u).
+  videos/
+    (pendiente) el PO va a buscar un video de quinceañera ya hecho.
+
+⚠️ Carpeta renombrada DOS VECES el 2026-09-03: primero el PO la cambió a
+`Quinceañera/` (mayúscula + ñ) manualmente en Finder; después falló al
+crear esa misma carpeta en el dashboard de Supabase Storage (el botón
+"New folder" valida con un set de caracteres más estricto que la API —
+rechaza la ñ aunque el resto del sitio use UTF-8 sin problema vía subida
+directa). Revertida a `quinceanera/` (minúsculas, sin acento) para
+igualar la convención del resto del sitio y evitar el problema de raíz.
+
+La tarjeta del home YA enlaza a quinceanera.html (antes quedaba sin
+destino — ver log de sesión). El footer de las 6 páginas GEO/SEO
+existentes + esta nueva se actualizó con el link cruzado a
+"Quinceañera DJ".
+
+⚠️ Pendiente de subir a Storage en `assets/quinceanera/fotos/` (3 archivos
+.webp) antes de que carguen en producción — mismo patrón del resto del
+sprint.
+
+Convención de nombres: minúsculas, guiones, sin espacios.
