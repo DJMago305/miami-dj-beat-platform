@@ -68,6 +68,11 @@
     <meta name="google-site-verification" content="BMMzSc4HzEcFPH2SaRYWVi1ORPiIOF2ghKycMgeojn8" />
   <meta name="description"
     content="Bilingual wedding DJ and MC in Miami-Dade and Broward: ceremony, cocktail hour, and reception coverage with custom music, professional sound, wireless microphones, and uplighting. Get a quote from Miami DJ Beat LLC." />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Wedding DJ Miami | Bilingual DJ & MC, Sound & Lighting | Miami DJ Beat" />
+  <meta property="og:description" content="Bilingual wedding DJ and MC in Miami-Dade and Broward: ceremony, cocktail hour, and reception coverage with custom music, professional sound, wireless microphones, and uplighting." />
+  <meta property="og:url" content="https://miamidjbeat.com/weddings.html" />
+  <meta property="og:image" content="https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/assets/eventos-venues-patrocinadores/galeria/Weeding_DJ.webp" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -80,311 +85,108 @@
   <link rel="stylesheet" href="./header-unified.css?v=20260902-cortinas" />
   <link rel="stylesheet" href="./mdj-assistant.css?v=20260306-1" />
   <style>
-    /* Editorial "papel" -- mismo patron visual que wedding-planning.html, activo distinto (DJ, no coordinacion) */
-    body.page-weddings-dj {
-      background: linear-gradient(175deg, #c9c4bc 0%, #a8a298 18%, #8f8a82 55%, #6e6a63 100%);
-      min-height: 100vh;
+    /* Arquitectura unificada con latin-dj.html/corporate.html: video real detrás
+       (hero-kb-bg), contenido directo sobre el fondo oscuro (sin tarjeta sólida) */
+    .weddings-hero-copy {
+      text-align: center;
+      max-width: 720px;
+      margin: 0 auto 50px;
     }
 
-    .mdj-wp-shell {
-      padding: 24px clamp(14px, 3vw, 28px) 88px;
-      box-sizing: border-box;
-    }
-
-    .mdj-wp-editorial {
-      max-width: 1100px;
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: minmax(0, 1.12fr) minmax(260px, 0.88fr);
-      gap: clamp(28px, 4vw, 52px);
-      align-items: start;
-      padding: clamp(28px, 4vw, 48px) clamp(22px, 3.5vw, 44px) clamp(32px, 4vw, 52px);
-      background: linear-gradient(180deg, #fffefb 0%, #faf7f2 48%, #f3efe8 100%);
-      border-radius: 28px;
-      box-shadow:
-        0 4px 0 rgba(255, 255, 255, 0.65) inset,
-        0 32px 64px rgba(20, 18, 14, 0.22),
-        0 1px 0 rgba(0, 0, 0, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.85);
-    }
-
-    .mdj-wp-copy {
-      min-width: 0;
-      font-family: 'Outfit', system-ui, sans-serif;
-      color: #2c2833;
-    }
-
-    .mdj-wp-breadcrumb {
+    .weddings-hero-copy .mdj-wp-breadcrumb {
       font-size: 11px;
       letter-spacing: 0.14em;
       text-transform: uppercase;
-      margin-bottom: 22px;
-      color: rgba(44, 40, 51, 0.55);
+      margin-bottom: 18px;
+      color: rgba(255, 255, 255, 0.55);
       font-weight: 600;
     }
 
-    .mdj-wp-breadcrumb a {
-      color: #7a6140;
+    .weddings-hero-copy .mdj-wp-breadcrumb a {
+      color: var(--gold);
       font-weight: 700;
       text-decoration: none;
-      border-bottom: 1px solid rgba(122, 97, 64, 0.35);
     }
 
-    .mdj-wp-breadcrumb a:hover {
-      color: #4a3928;
-      border-bottom-color: rgba(74, 57, 40, 0.55);
-    }
-
-    .mdj-wp-copy h1 {
+    .weddings-hero-copy h1 {
       font-family: 'Cormorant Garamond', 'Times New Roman', serif;
-      font-size: clamp(2.1rem, 4.2vw, 2.85rem);
+      font-size: clamp(2.4rem, 5vw, 3.6rem);
       font-weight: 600;
-      color: #1a1614;
-      margin: 0 0 16px;
+      color: #fff;
+      margin: 0 0 18px;
       line-height: 1.08;
-      letter-spacing: 0.02em;
+      text-shadow: 0 4px 15px rgba(0, 0, 0, 0.8);
     }
 
-    .mdj-wp-lead {
-      font-size: 1.02rem;
+    .weddings-hero-copy .mdj-wp-lead {
+      font-size: 1.05rem;
       line-height: 1.65;
-      color: rgba(44, 40, 51, 0.78);
-      margin: 0 0 36px;
-      max-width: 52ch;
+      color: rgba(255, 255, 255, 0.8);
+      margin: 0 auto;
+      max-width: 56ch;
       font-weight: 400;
     }
 
-    .mdj-wp-tier {
-      margin-bottom: 32px;
-      padding: 0 0 4px;
-      border: none;
-      background: transparent;
+    .weddings-mosaic {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+      max-width: 1100px;
+      margin: 0 auto 60px;
     }
 
-    .mdj-wp-tier h2 {
+    .weddings-mosaic img {
+      width: 100%;
+      height: 260px;
+      object-fit: cover;
+      border-radius: 18px;
+      box-shadow: 0 22px 48px rgba(0, 0, 0, 0.4);
+    }
+
+    @media (max-width: 640px) {
+      .weddings-mosaic { grid-template-columns: 1fr; }
+    }
+
+    .weddings-tiers h2 {
       font-family: 'Cormorant Garamond', 'Times New Roman', serif;
-      font-size: clamp(1.35rem, 2.4vw, 1.65rem);
-      font-weight: 700;
-      color: #141210;
-      margin: 0 0 12px;
-      line-height: 1.2;
-      padding-bottom: 8px;
-      border-bottom: 1px solid rgba(197, 160, 89, 0.45);
-      display: inline-block;
-      min-width: 0;
+      font-size: 22px;
+      color: #fff;
+      margin: 0 0 8px;
     }
 
-    .mdj-wp-tier p {
+    .weddings-tiers p {
+      color: rgba(255, 255, 255, 0.75);
+      font-size: 15px;
+      line-height: 1.6;
       margin: 0;
-      font-size: 0.98rem;
-      line-height: 1.78;
-      color: rgba(35, 32, 38, 0.88);
-      max-width: 54ch;
     }
 
-    .mdj-wp-addons {
-      margin-top: 8px;
-      margin-bottom: 8px;
-      padding-top: 8px;
-    }
-
-    .mdj-wp-addons h3 {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.35rem;
-      font-weight: 700;
-      color: #141210;
-      margin: 0 0 14px;
-      letter-spacing: 0.03em;
-    }
-
-    .mdj-wp-addons ul {
+    .weddings-tiers ul {
       margin: 0;
-      padding: 0 0 0 1.15rem;
-      color: rgba(35, 32, 38, 0.88);
-      font-size: 0.98rem;
-      line-height: 1.75;
+      padding-left: 1.1rem;
+      color: rgba(255, 255, 255, 0.75);
+      font-size: 15px;
+      line-height: 1.7;
     }
 
-    .mdj-wp-addons li {
-      margin-bottom: 8px;
-    }
-
-    .mdj-wp-cta-wrap {
-      margin-top: 32px;
+    .weddings-cta-wrap {
+      margin-top: 40px;
       display: flex;
       flex-wrap: wrap;
       gap: 12px;
       align-items: center;
-    }
-
-    body.page-weddings-dj .mdj-wp-copy .btn.primary {
-      background: linear-gradient(135deg, #2a241c, #1a1612);
-      color: #faf6ef;
-      border: 1px solid rgba(197, 160, 89, 0.55);
-      font-weight: 700;
-    }
-
-    body.page-weddings-dj .mdj-wp-copy .btn.primary:hover {
-      filter: brightness(1.08);
-    }
-
-    body.page-weddings-dj .mdj-wp-copy .btn.outline {
-      border-color: rgba(44, 40, 51, 0.25);
-      color: #2c2833;
-      background: rgba(255, 255, 255, 0.55);
-    }
-
-    body.page-weddings-dj .mdj-wp-copy .btn.outline:hover {
-      border-color: rgba(197, 160, 89, 0.65);
-      color: #5c4a32;
-    }
-
-    /* Columna derecha: sello + collage escalonado */
-    .mdj-wp-mosaicWrap {
-      position: relative;
-      min-height: 200px;
-      padding-top: 8px;
-    }
-
-    .mdj-wp-seal {
-      position: absolute;
-      top: -6px;
-      right: 8px;
-      width: 112px;
-      height: 112px;
-      border-radius: 50%;
-      background: radial-gradient(circle at 35% 30%, #fffef8, #e8dcc4 55%, #c5a059 120%);
-      border: 3px double rgba(90, 72, 48, 0.55);
-      box-shadow: 0 12px 28px rgba(40, 32, 20, 0.2);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
       justify-content: center;
+    }
+
+    .weddings-related {
+      margin-top: 24px;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.6);
       text-align: center;
-      padding: 10px;
-      z-index: 6;
-      font-family: 'Outfit', sans-serif;
-      line-height: 1.15;
     }
 
-    .mdj-wp-seal .mdj-wp-seal-k {
-      display: block;
-      font-size: 8px;
-      font-weight: 800;
-      letter-spacing: 0.12em;
-      color: #3d3226;
-    }
-
-    .mdj-wp-seal .mdj-wp-seal-m {
-      display: block;
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 15px;
-      font-weight: 700;
-      color: #1a1410;
-      margin: 4px 0;
-      line-height: 1.1;
-    }
-
-    .mdj-wp-mosaic {
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-      padding-top: 52px;
-      position: relative;
-    }
-
-    .mdj-wp-mosaic figure {
-      margin: 0;
-      border-radius: 14px;
-      overflow: hidden;
-      border: 4px solid #fff;
-      box-shadow: 0 22px 48px rgba(25, 22, 18, 0.18);
-      background: #e8e4dc;
-      position: relative;
-      z-index: 1;
-    }
-
-    .mdj-wp-mosaic figure img {
-      width: 100%;
-      height: auto;
-      display: block;
-      object-fit: cover;
-      aspect-ratio: 4 / 3;
-      vertical-align: middle;
-    }
-
-    .mdj-wp-mosaic__piece--1 {
-      width: 92%;
-      align-self: flex-start;
-      transform: rotate(-1.2deg);
-      z-index: 1;
-    }
-
-    .mdj-wp-mosaic__piece--2 {
-      width: 88%;
-      align-self: flex-end;
-      margin-top: -18px;
-      margin-right: 4%;
-      transform: translateX(-6%) rotate(1.4deg);
-      z-index: 2;
-    }
-
-    .mdj-wp-mosaic__piece--3 {
-      width: 86%;
-      align-self: flex-start;
-      margin-top: -14px;
-      margin-left: 6%;
-      transform: translateX(4%) rotate(-0.8deg);
-      z-index: 3;
-    }
-
-    .mdj-wp-mosaic__piece--4 {
-      width: 90%;
-      align-self: center;
-      margin-top: -12px;
-      transform: rotate(0.6deg);
-      z-index: 4;
-    }
-
-    @media (max-width: 920px) {
-      .mdj-wp-editorial {
-        grid-template-columns: 1fr;
-        padding: 28px 22px 36px;
-      }
-
-      .mdj-wp-mosaicWrap {
-        max-width: 420px;
-        margin: 0 auto;
-      }
-
-      .mdj-wp-seal {
-        position: relative;
-        top: 0;
-        right: auto;
-        margin: 0 auto 20px;
-      }
-
-      .mdj-wp-mosaic {
-        padding-top: 0;
-      }
-
-      .mdj-wp-mosaic__piece--2,
-      .mdj-wp-mosaic__piece--3 {
-        transform: none;
-        margin-left: 0;
-        margin-right: 0;
-      }
-
-      .mdj-wp-mosaic figure {
-        width: 100% !important;
-        align-self: stretch !important;
-        margin-top: 12px !important;
-        transform: none !important;
-      }
-
-      .mdj-wp-mosaic__piece--1 {
-        margin-top: 0;
-      }
+    .weddings-related a {
+      color: var(--gold);
     }
 
     body.page-weddings-dj .footer {
@@ -396,31 +198,31 @@
       color: rgba(255, 250, 240, 0.82);
     }
 
-    /* FAQ (mismo patron que rentals.html) */
+    /* FAQ (mismo patron oscuro que latin-dj.html/rentals.html) */
     .weddings-faq-item {
-      border: 1px solid rgba(197, 160, 89, 0.35);
+      border: 1px solid rgba(197, 160, 89, 0.25);
       border-radius: 12px;
       padding: 16px 20px;
       margin-bottom: 12px;
-      background: rgba(255, 255, 255, 0.5);
+      background: rgba(255, 255, 255, 0.03);
     }
 
     .weddings-faq-item summary {
       font-family: 'Cormorant Garamond', serif;
       font-size: 18px;
       font-weight: 700;
-      color: #1a1614;
+      color: #fff;
       cursor: pointer;
     }
 
     .weddings-faq-item p {
-      color: rgba(35, 32, 38, 0.85);
+      color: rgba(255, 255, 255, 0.75);
       line-height: 1.65;
       margin-top: 10px;
     }
 
     .weddings-faq-item a {
-      color: #7a6140;
+      color: var(--gold);
       font-weight: 700;
     }
 
@@ -523,83 +325,75 @@
     <a href="./contact.html" data-i18n="nav-contact" data-mdj-nav="contact" data-mdj-slot="7">Contacto</a>
     <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="./client-portal.html" data-mdj-nav="mi-portal" data-mdj-slot="8" aria-hidden="true" tabindex="-1">MI PERFIL</a>
   </nav>
+
       </div>
     </div>
   </header>
 
-  <div class="mdj-wp-shell">
-    <div class="mdj-wp-editorial">
-      <div class="mdj-wp-copy">
-        <div class="mdj-wp-breadcrumb">
-          <a href="./index.html" data-i18n="nav-home">Home</a>
-          ·
-          <a href="./rentals.html" data-i18n="nav-services">Services</a>
-        </div>
-        <h1 data-i18n="wedding-dj-h1">Wedding DJ Miami</h1>
-        <p class="mdj-wp-lead" data-i18n="wedding-dj-lead">Bilingual DJ and MC coverage for your ceremony, cocktail hour, and reception — professional sound, uplighting, and music curated to your story, serving weddings across Miami-Dade and Broward.</p>
+    <video id="weddings-hero-kb-bg" class="hero-shell-video hero-kb-bg" autoplay muted loop playsinline preload="metadata"
+        poster="./assets/weddings/fotos/weddings-hero-poster.webp"
+        style="position: fixed; inset: 0; z-index: 1; pointer-events: none; width: 100%; height: 100%; object-fit: cover; opacity: 0.45; filter: blur(2px);">
+        <source src="./assets/weddings/videos/weddings-hero.mp4" type="video/mp4">
+    </video>
+    <div class="hero-video-overlay"
+        style="position: fixed; inset: 0; z-index: 3; pointer-events: none; background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.8) 100%);"></div>
 
-        <article class="mdj-wp-tier">
-          <h2 data-i18n="wedding-dj-tier1-h2">Ceremony — Wireless Microphones</h2>
-          <p data-i18n="wedding-dj-tier1-p">Clear, reliable wireless microphone coverage for officiants, vows, and readings, coordinated with your ceremony timeline.</p>
-        </article>
-        <article class="mdj-wp-tier">
-          <h2 data-i18n="wedding-dj-tier2-h2">Cocktail Hour</h2>
-          <p data-i18n="wedding-dj-tier2-p">Ambient music and sound coverage while your guests mingle, with a smooth transition into your reception.</p>
-        </article>
-        <article class="mdj-wp-tier">
-          <h2 data-i18n="wedding-dj-tier3-h2">Reception — Bilingual MC &amp; Dance Floor</h2>
-          <p data-i18n="wedding-dj-tier3-p">A bilingual MC (English &amp; Spanish) who guides your reception program — introductions, toasts, first dance, and an open dance floor built around your music taste.</p>
-        </article>
-
-        <section class="mdj-wp-addons">
-          <h3 data-i18n="wedding-dj-addons-h2">Production Add-Ons</h3>
-          <ul>
-            <li data-i18n="wedding-dj-addons-li1">Ambient uplighting for your ceremony or reception space</li>
-            <li data-i18n="wedding-dj-addons-li2">Cold spark effects for your first dance or grand entrance</li>
-            <li data-i18n="wedding-dj-addons-li3">Professional sound systems sized to your venue</li>
-          </ul>
-        </section>
-
-        <div class="mdj-wp-cta-wrap">
-          <a href="tel:+13056071780" class="btn primary" data-i18n="wedding-dj-cta-call">Call (305) 607-1780</a>
-          <a href="mailto:miamidjbeat@gmail.com" class="btn outline" data-i18n="wedding-dj-cta-email">Email for a Quote</a>
-        </div>
-
-        <p class="mdj-wp-related" style="margin-top:28px;font-size:14px;color:rgba(44,40,51,0.65);">
-          <span data-i18n="wedding-dj-related-1">Need sound, lighting, or staging for your wedding? See our </span><a href="./rentals.html" data-i18n="wedding-dj-related-1-link">Equipment Rental</a>.
-          <span data-i18n="wedding-dj-related-2"> Planning a beach ceremony? Explore </span><a href="./florida-keys.html" data-i18n="wedding-dj-related-2-link">Destination Weddings in the Florida Keys</a>.
-        </p>
+  <main class="container" style="padding: 100px 18px; position: relative; z-index: 10;">
+    <div class="weddings-hero-copy">
+      <div class="mdj-wp-breadcrumb">
+        <a href="./index.html" data-i18n="nav-home">Home</a>
+        ·
+        <a href="./rentals.html" data-i18n="nav-services">Services</a>
       </div>
+      <h1 data-i18n="wedding-dj-h1">Wedding DJ Miami</h1>
+      <p class="mdj-wp-lead" data-i18n="wedding-dj-lead">Bilingual DJ and MC coverage for your ceremony, cocktail hour, and reception — professional sound, uplighting, and music curated to your story, serving weddings across Miami-Dade and Broward.</p>
+    </div>
 
-      <div class="mdj-wp-mosaicWrap">
-        <div class="mdj-wp-seal">
-          <span class="mdj-wp-seal-k">MIAMI DJ BEAT</span>
-          <span class="mdj-wp-seal-m">Weddings</span>
-        </div>
-        <div class="mdj-wp-mosaic" aria-label="Wedding DJ gallery">
-          <figure class="mdj-wp-mosaic__piece--1">
-            <img src="./assets/eventos-venues-patrocinadores/galeria/Weeding_DJ.webp"
-              alt="DJ en boda de lujo en Miami" width="900" height="600" loading="eager" fetchpriority="high" decoding="async" />
-          </figure>
-          <figure class="mdj-wp-mosaic__piece--2">
-            <img src="./assets/eventos-venues-patrocinadores/galeria/wedding_blurred_ambient.webp"
-              alt="Celebración y ambiente de boda" width="720" height="540" loading="lazy" decoding="async" />
-          </figure>
-          <figure class="mdj-wp-mosaic__piece--3">
-            <img src="./assets/eventos-venues-patrocinadores/galeria/Weeding_studios.webp"
-              alt="Producción técnica de boda Miami DJ Beat" width="720" height="540" loading="lazy" decoding="async" />
-          </figure>
-          <figure class="mdj-wp-mosaic__piece--4">
-            <img src="./assets/eventos-venues-patrocinadores/galeria/Weeding_Baner.webp"
-              alt="Boda de lujo Miami DJ Beat" width="800" height="600" loading="lazy" decoding="async" />
-          </figure>
-        </div>
+    <div class="weddings-mosaic">
+      <img src="./assets/eventos-venues-patrocinadores/galeria/Weeding_DJ.webp"
+        alt="DJ en boda de lujo en Miami" width="900" height="600" loading="eager" fetchpriority="high" decoding="async" />
+      <img src="./assets/eventos-venues-patrocinadores/galeria/wedding_blurred_ambient.webp"
+        alt="Celebración y ambiente de boda" width="720" height="540" loading="lazy" decoding="async" />
+      <img src="./assets/latin-dj/fotos/latin-wedding-toast-card.webp"
+        alt="Brindis de los novios en una boda en Miami" width="900" height="600" loading="lazy" decoding="async" />
+    </div>
+
+    <div class="grid3 weddings-tiers" style="gap: 30px; max-width: 1100px; margin: 0 auto;">
+      <div class="tile glass-card" style="padding: 24px !important;">
+        <h2 data-i18n="wedding-dj-tier1-h2">Ceremony — Wireless Microphones</h2>
+        <p data-i18n="wedding-dj-tier1-p">Clear, reliable wireless microphone coverage for officiants, vows, and readings, coordinated with your ceremony timeline.</p>
+      </div>
+      <div class="tile glass-card" style="padding: 24px !important;">
+        <h2 data-i18n="wedding-dj-tier2-h2">Cocktail Hour</h2>
+        <p data-i18n="wedding-dj-tier2-p">Ambient music and sound coverage while your guests mingle, with a smooth transition into your reception.</p>
+      </div>
+      <div class="tile glass-card" style="padding: 24px !important;">
+        <h2 data-i18n="wedding-dj-tier3-h2">Reception — Bilingual MC &amp; Dance Floor</h2>
+        <p data-i18n="wedding-dj-tier3-p">A bilingual MC (English &amp; Spanish) who guides your reception program — introductions, toasts, first dance, and an open dance floor built around your music taste.</p>
+      </div>
+      <div class="tile glass-card" style="padding: 24px !important;">
+        <h2 data-i18n="wedding-dj-addons-h2">Production Add-Ons</h2>
+        <ul>
+          <li data-i18n="wedding-dj-addons-li1">Ambient uplighting for your ceremony or reception space</li>
+          <li data-i18n="wedding-dj-addons-li2">Cold spark effects for your first dance or grand entrance</li>
+          <li data-i18n="wedding-dj-addons-li3">Professional sound systems sized to your venue</li>
+        </ul>
       </div>
     </div>
 
+    <div class="weddings-cta-wrap">
+      <a href="tel:+13056071780" class="btn primary" data-i18n="wedding-dj-cta-call">Call (305) 607-1780</a>
+      <a href="mailto:miamidjbeat@gmail.com" class="btn outline" data-i18n="wedding-dj-cta-email">Email for a Quote</a>
+    </div>
+
+    <p class="weddings-related">
+      <span data-i18n="wedding-dj-related-1">Need sound, lighting, or staging for your wedding? See our </span><a href="./rentals.html" data-i18n="wedding-dj-related-1-link">Equipment Rental</a>.
+      <span data-i18n="wedding-dj-related-2"> Planning a beach ceremony? Explore </span><a href="./florida-keys.html" data-i18n="wedding-dj-related-2-link">Destination Weddings in the Florida Keys</a>.
+    </p>
+
     <!-- ══ GEO/AEO FAQ — bodas (Fase 2, activo #2, Plan Maestro GEO·SEO·IA) ══ -->
     <section id="weddings-faq" style="max-width: 760px; margin: 48px auto 0;">
-      <h2 style="font-family: 'Cormorant Garamond', serif; color: #1a1614; font-size: 28px; margin-bottom: 24px; text-align: center;" data-i18n="wedding-dj-faq-title">Wedding DJ FAQ</h2>
+      <h2 style="font-family: 'Cormorant Garamond', serif; color: #fff; font-size: 28px; margin-bottom: 24px; text-align: center;" data-i18n="wedding-dj-faq-title">Wedding DJ FAQ</h2>
 
       <details class="weddings-faq-item">
         <summary data-i18n="wedding-dj-faq-q1">How do we choose the music for our wedding?</summary>
@@ -621,7 +415,7 @@
         <p data-i18n="wedding-dj-faq-a4">Yes. Our MCs host in both English and Spanish, moving smoothly between languages so every guest feels included. <a href="tel:+13056071780">(305) 607-1780</a> · <a href="mailto:miamidjbeat@gmail.com">miamidjbeat@gmail.com</a></p>
       </details>
     </section>
-  </div>
+  </main>
 
   <footer class="footer">
     <div class="container" style="text-align:center;padding:24px 16px;">
@@ -629,6 +423,7 @@
         <a href="./events.html" data-i18n="footer-svc-events" style="color:inherit;text-decoration:none;">Event Production</a> ·
                 <a href="./rentals.html" data-i18n="footer-svc-rentals" style="color:inherit;text-decoration:none;">DJ Equipment Rental</a> ·
         <a href="./weddings.html" data-i18n="footer-svc-weddings" style="color:inherit;text-decoration:none;">Wedding DJ</a> ·
+        <a href="./quinceanera.html" data-i18n="footer-svc-quince" style="color:inherit;text-decoration:none;">Quinceañera DJ</a> ·
         <a href="./corporate.html" data-i18n="footer-svc-corporate" style="color:inherit;text-decoration:none;">Corporate Events</a> ·
         <a href="./latin-dj.html" data-i18n="footer-svc-latin" style="color:inherit;text-decoration:none;">Latin &amp; Open-Format DJ</a> ·
         <a href="./florida-keys.html" data-i18n="footer-svc-keys" style="color:inherit;text-decoration:none;">Florida Keys Destination DJ</a>
@@ -671,12 +466,42 @@
   })();
   </script>
   <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
-  <script src="./translations.js?v=20260820-unificacion"></script>
+    <script>
+    (function () {
+        function kick() {
+            var v = document.getElementById('weddings-hero-kb-bg');
+            if (!v) return;
+            /* Chrome pausa video-only "de fondo" para ahorrar bateria
+               (goo.gl/LdLk22) -- el primer play() casi siempre es rechazado
+               por esto, un segundo intento inmediato despues normalmente
+               funciona. Se re-intenta tambien si el navegador lo vuelve a
+               pausar mas tarde en la sesion (mientras la pestana este visible). */
+            function attemptPlay() {
+                var p = v.play();
+                if (p && p.catch) {
+                    p.catch(function () {
+                        setTimeout(function () { v.play().catch(function () {}); }, 250);
+                    });
+                }
+            }
+            try { v.load(); attemptPlay(); } catch (e) { /* noop */ }
+            v.addEventListener('pause', function () {
+                if (!document.hidden) attemptPlay();
+            });
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', kick);
+        } else {
+            kick();
+        }
+    })();
+    </script>
+  <script src="./translations.js?v=20260903-perfil-label"></script>
   <script src="./i18n.js?v=20260420-index-experience-rutas"></script>
   <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
   <script src="./mdj-identity.js?v=20260617-buyer-artist-fix-1"></script>
   <script src="./auth.js?v=20260820-unificacion"></script>
-  <script src="./mdjb-shared-header.js?v=20260903-config-slot-race-fix"></script>
+  <script src="./mdjb-shared-header.js?v=20260903-revert-nav-agenda"></script>
   <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
   <script src="./mdj-mainnav-infinite.js?v=20260818-nav-canonico"></script>
   <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
