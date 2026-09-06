@@ -30,26 +30,143 @@
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "Course",
-      "name": "Método de Cabina — Disciplina Profesional del DJ",
-      "description": "Manual formativo de Miami DJ Beat Academy: Ley Cero, 18 reglas operativas, 12 módulos de enseñanza y rúbrica de evaluación para la disciplina profesional del DJ en cabina.",
-      "url": "https://www.miamidjbeat.com/metodo-cabina.html",
-      "inLanguage": ["es", "en"],
-      "isAccessibleForFree": true,
-      "provider": {
-        "@type": "EducationalOrganization",
-        "name": "Miami DJ Beat Academy",
-        "sameAs": "https://www.miamidjbeat.com/academia.html"
-      },
-      "hasPart": [
-        { "@type": "LearningResource", "name": "Ley Cero y Propósito", "isAccessibleForFree": true },
-        { "@type": "LearningResource", "name": "18 Reglas Operativas del DJ", "isAccessibleForFree": true },
-        { "@type": "LearningResource", "name": "Diagramas técnicos de cabina", "isAccessibleForFree": true },
-        { "@type": "LearningResource", "name": "12 Módulos de Enseñanza", "isAccessibleForFree": true },
-        { "@type": "LearningResource", "name": "Rúbrica de Autoevaluación (0–5)", "isAccessibleForFree": true }
+      "@graph": [
+        {
+          "@type": "Course",
+          "@id": "https://www.miamidjbeat.com/metodo-cabina.html#course",
+          "name": "Método de Cabina — Disciplina Profesional del DJ",
+          "description": "Manual formativo de Miami DJ Beat Academy: Ley Cero, 18 reglas operativas, 12 módulos de enseñanza y rúbrica de evaluación para la disciplina profesional del DJ en cabina.",
+          "url": "https://www.miamidjbeat.com/metodo-cabina.html",
+          "inLanguage": ["es", "en"],
+          "isAccessibleForFree": true,
+          "provider": {
+            "@type": "EducationalOrganization",
+            "name": "Miami DJ Beat Academy",
+            "url": "https://www.miamidjbeat.com/academia.html",
+            "parentOrganization": {
+              "@type": "LocalBusiness",
+              "name": "Miami DJ Beat LLC",
+              "url": "https://www.miamidjbeat.com/",
+              "telephone": "+1-305-607-1780",
+              "address": {
+                "@type": "PostalAddress",
+                "addressLocality": "Miami",
+                "addressRegion": "FL",
+                "addressCountry": "US"
+              },
+              "geo": { "@type": "GeoCoordinates", "latitude": 25.7617, "longitude": -80.1918 },
+              "areaServed": [
+                { "@type": "City", "name": "Miami" },
+                { "@type": "City", "name": "Miami Beach" },
+                { "@type": "Place", "name": "Brickell" },
+                { "@type": "Place", "name": "Wynwood" },
+                { "@type": "City", "name": "Coral Gables" },
+                { "@type": "City", "name": "Doral" },
+                { "@type": "City", "name": "Fort Lauderdale" },
+                { "@type": "AdministrativeArea", "name": "Miami-Dade County" },
+                { "@type": "AdministrativeArea", "name": "Broward County" },
+                { "@type": "AdministrativeArea", "name": "South Florida" }
+              ]
+            }
+          },
+          "hasPart": [
+            { "@type": "LearningResource", "name": "Ley Cero y Propósito", "isAccessibleForFree": true },
+            { "@type": "LearningResource", "name": "18 Reglas Operativas del DJ", "isAccessibleForFree": true },
+            { "@type": "LearningResource", "name": "Diagramas técnicos de cabina", "isAccessibleForFree": true },
+            { "@type": "LearningResource", "name": "12 Módulos de Enseñanza", "isAccessibleForFree": true },
+            { "@type": "LearningResource", "name": "Rúbrica de Autoevaluación (0–5)", "isAccessibleForFree": true }
+          ]
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "https://www.miamidjbeat.com/metodo-cabina.html#faq",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "¿Qué es el Método de Cabina para DJs?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Es el manual operativo y pedagógico de Miami DJ Beat Academy: la Ley Cero, 18 reglas operativas, 12 módulos de enseñanza y una rúbrica de autoevaluación que organizan el trabajo profesional del DJ desde la preparación en casa hasta el cierre del evento."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "¿Dónde estudiar para ser DJ profesional en Miami?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Miami DJ Beat Academy ofrece formación de DJ profesional en Miami a través de su curso de 12 módulos, este Método de Cabina como doctrina de estudio, y un examen de certificación oficial, todo dentro de la plataforma Miami DJ Beat LLC."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "¿Cómo funciona el protocolo de rescate en pista de baile?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Cuando una selección musical falla, el DJ recurre a un tema de rescate ya conocido por esa sala para reconstruir confianza de inmediato, sin encadenar dos experimentos fallidos seguidos. Corregir rápido y con elegancia es profesionalismo, no derrota."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "¿Qué certificaciones ofrece Miami DJ Beat Academy?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "La Academia evalúa formalmente en dos etapas complementarias: un examen teórico de certificación y una evaluación práctica presencial en cabina guiada por un instructor, con niveles que van de No Apto a Graduado PRO."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "¿El Método de Cabina es gratuito?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Sí. El contenido completo del manual es de acceso libre y gratuito para cualquier visitante."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "¿El Método de Cabina prepara para bodas, fiestas de 15 y eventos corporativos en Miami?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Sí. El método enseña lectura de sala, timing de protocolo, diplomacia con clientes y transiciones musicales específicas para eventos sociales de alta exigencia, quinceañeras y galas corporativas en el sur de la Florida."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "¿Qué diferencia a un DJ de club frente a un DJ de eventos privados según el método?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "La versatilidad de repertorio (Open Format, urbano, salsa, anglo), el control de la dinámica sonora para evitar fatiga auditiva y la capacidad de sostener arcos de energía sin agotar los temas clave antes del momento cumbre."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "¿Cómo certificarse como DJ profesional en Miami con este manual?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "El estudiante domina las 18 reglas operativas y los 12 módulos prácticos, defiende su criterio musical en la Academia y valida sus competencias en la evaluación práctica presencial en cabina real."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "¿Qué protocolos de emergencia y respaldo técnico exige la Academia?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Todo DJ profesional certificado debe operar con Plan A, Plan B de conmutación inmediata, duplicado de librerías y gain staging calibrado para proteger el sistema de sonido del venue."
+              }
+            }
+          ]
+        }
       ]
     }
     </script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Método de Cabina: El ADN del DJ Profesional | Miami DJ Beat Academy" />
+    <meta property="og:description" content="Aprende disciplina de cabina, psicología de pista, gain staging y protocolos de rescate con más de 30 años de experiencia en la escena nocturna de Miami." />
+    <meta property="og:url" content="https://www.miamidjbeat.com/metodo-cabina.html" />
+    <meta property="og:image" content="https://www.miamidjbeat.com/assets/djmago305/djmago305-good-vibes-laptop-hero.webp" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Método de Cabina: El ADN del DJ Profesional | Miami DJ Beat Academy" />
+    <meta name="twitter:description" content="Aprende disciplina de cabina, psicología de pista, gain staging y protocolos de rescate con más de 30 años de experiencia en la escena nocturna de Miami." />
+    <meta name="twitter:image" content="https://www.miamidjbeat.com/assets/djmago305/djmago305-good-vibes-laptop-hero.webp" />
     <!-- GEO/SEO Fase 6 -- medicion: GA4 activo desde 2026-08-29 (ID real). -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-7XRWGTCQ5L"></script>
     <script>
@@ -68,16 +185,17 @@
 
         .cab-hero {
             position: relative;
-            min-height: 460px;
+            min-height: 100vh;
+            margin-top: calc(-1 * (var(--header-height) + var(--header-nav-band)));
             display: flex;
-            align-items: center;
+            flex-direction: column;
             justify-content: center;
-            padding: 130px 20px 90px;
+            align-items: center;
+            padding: calc(var(--header-height) + var(--header-nav-band) + 160px) 24px 140px;
             text-align: center;
             background:
-                linear-gradient(180deg, rgba(11,14,20,0.45) 0%, rgba(11,14,20,0.70) 65%, rgba(11,14,20,0.95) 100%),
-                radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(5,7,10,0.55) 100%),
-                url('./assets/djmago305/djmago305-good-vibes-laptop-hero.webp') center 32% / cover no-repeat,
+                linear-gradient(180deg, rgba(11,14,20,0.25) 0%, rgba(11,14,20,0.40) 50%, rgba(11,14,20,0.95) 100%),
+                url('./assets/djmago305/djmago305-good-vibes-laptop-hero.webp') center 10% / cover no-repeat,
                 #05070a;
         }
         .cab-hero-eyebrow {
@@ -87,7 +205,7 @@
             color: var(--gold);
             text-transform: uppercase;
             margin-bottom: 18px;
-            text-shadow: 0 2px 12px rgba(0,0,0,0.95), 0 0 25px rgba(0,0,0,0.85);
+            text-shadow: 0 4px 20px rgba(0,0,0,0.95), 0 2px 6px rgba(0,0,0,1);
         }
         .cab-hero h1 {
             font-family: 'Playfair Display', serif;
@@ -97,7 +215,7 @@
             margin: 0 0 22px;
             color: #fff;
             letter-spacing: -0.01em;
-            text-shadow: 0 2px 12px rgba(0,0,0,0.95), 0 0 25px rgba(0,0,0,0.85);
+            text-shadow: 0 4px 20px rgba(0,0,0,0.95), 0 2px 6px rgba(0,0,0,1);
         }
         .cab-hero-quote {
             font-size: clamp(18px, 2.4vw, 24px);
@@ -106,7 +224,7 @@
             line-height: 1.5;
             color: #fff;
             font-weight: 700;
-            text-shadow: 0 2px 12px rgba(0,0,0,0.95), 0 0 25px rgba(0,0,0,0.85);
+            text-shadow: 0 4px 20px rgba(0,0,0,0.95), 0 2px 6px rgba(0,0,0,1);
         }
         .cab-hero-sub {
             font-size: 15px;
@@ -114,7 +232,7 @@
             margin: 0 auto;
             line-height: 1.7;
             color: var(--muted);
-            text-shadow: 0 2px 12px rgba(0,0,0,0.95), 0 0 25px rgba(0,0,0,0.85);
+            text-shadow: 0 4px 20px rgba(0,0,0,0.95), 0 2px 6px rgba(0,0,0,1);
         }
 
         .cab-section {
@@ -145,6 +263,32 @@
             max-width: 780px;
             margin: 0 auto;
             text-align: center;
+        }
+
+        .cab-usecase-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            max-width: 1080px;
+            margin: 30px auto 0;
+        }
+        .cab-usecase-tile {
+            display: block;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 20px 18px;
+            text-decoration: none;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .cab-usecase-tile:hover { border-color: rgba(197,160,89,0.4); background: rgba(197,160,89,0.04); }
+        .cab-usecase-tile h3 { color: var(--gold); font-size: 13.5px; font-weight: 800; line-height: 1.4; margin: 0 0 8px; }
+        .cab-usecase-tile p { color: rgba(255,255,255,0.65); font-size: 12px; line-height: 1.6; margin: 0; }
+        @media (max-width: 900px) {
+            .cab-usecase-grid { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 560px) {
+            .cab-usecase-grid { grid-template-columns: 1fr; }
         }
 
         .cab-hierarchy-box {
@@ -715,12 +859,33 @@
     </section>
 
     <section class="cab-section">
+        <h2 class="cab-section-title" style="font-size:22px;" data-i18n="cabina-purpose-h2">Formación de DJ Profesional en Miami</h2>
         <p class="cab-lead" data-i18n="cabina-purpose">Este método organiza el trabajo profesional del DJ desde antes de salir de casa hasta el cierre del evento. No es una playlist ni una fórmula rígida: es un sistema de preparación, lectura de sala, construcción de energía, corrección, conducta y toma de decisiones. Se aplica a clubes, bodas, quinceañeras, corporativos, restaurantes, residencias y eventos temáticos.</p>
+
+        <div class="cab-usecase-grid">
+            <a class="cab-usecase-tile" href="./weddings.html">
+                <h3 data-i18n="cabina-usecase-weddings-title">DJ para Bodas y Quinceañeras en Miami</h3>
+                <p data-i18n="cabina-usecase-weddings-body">Timing de protocolo, diplomacia con clientes y transiciones para celebraciones sociales de alta exigencia.</p>
+            </a>
+            <a class="cab-usecase-tile" href="#reglas-operativas">
+                <h3 data-i18n="cabina-usecase-clubs-title">Control de Cabina en Clubes Nocturnos</h3>
+                <p data-i18n="cabina-usecase-clubs-body">Gain staging, protección del pico y arcos de energía sostenidos durante sets largos.</p>
+            </a>
+            <a class="cab-usecase-tile" href="./corporate.html">
+                <h3 data-i18n="cabina-usecase-corporate-title">Eventos Corporativos de Alto Impacto</h3>
+                <p data-i18n="cabina-usecase-corporate-body">Lectura de sala y conducta profesional para galas, activaciones de marca y audiencias ejecutivas.</p>
+            </a>
+            <a class="cab-usecase-tile" href="./latin-dj.html">
+                <h3 data-i18n="cabina-usecase-openformat-title">DJ Open Format Profesional</h3>
+                <p data-i18n="cabina-usecase-openformat-body">Versatilidad de repertorio — salsa, urbano, anglo — sin perder narrativa ni coherencia musical.</p>
+            </a>
+        </div>
     </section>
 
     <!-- JERARQUÍA ACADÉMICA -->
     <section class="cab-section" style="padding-top:0;">
         <div class="cab-hierarchy-box">
+            <h3 style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.45);margin:0 0 8px;" data-i18n="cabina-hierarchy-eyebrow">Doctrina de Cabina y Eventos en Vivo</h3>
             <h3 data-i18n="cabina-hierarchy-title">Jerarquía Académica del Método</h3>
             <p data-i18n="cabina-hierarchy-body">Este manual es la doctrina teórica y operativa del DJ profesional de Miami DJ Beat. Se estudia aquí, se practica en los 12 módulos, y se evalúa formalmente de dos maneras complementarias: la teoría en el examen de certificación, y la ejecución real en la evaluación práctica presencial en cabina, guiada por un instructor.</p>
             <div class="cab-hierarchy-links">
@@ -787,7 +952,11 @@
     <section class="cab-section" id="reglas-operativas">
         <h2 class="cab-section-title" data-i18n="cabina-rules-title">18 Reglas Operativas del DJ</h2>
         <p class="cab-section-intro" data-i18n="cabina-rules-intro">Toca cada regla para expandirla.</p>
-        <div class="cab-rules-grid" id="cab-rules-grid-open"></div>
+        <div class="cab-rules-grid" id="cab-rules-grid-open">
+            <div class="cab-rule-card"><button type="button" class="cab-rule-toggle" aria-expanded="false"><span class="cab-rule-num">1</span><span class="cab-rule-title" data-i18n="cabina-rule-1-title">El trabajo empieza en casa — Preparación</span><span class="cab-rule-chevron">▾</span></button><div class="cab-rule-body" data-i18n="cabina-rule-1-body">El DJ profesional no comienza cuando conecta el controlador — comienza días antes, estudiando el evento: horario, público probable, edades, cultura, venue, formato y expectativas reales del cliente. A partir de ahí construye rutas musicales flexibles, nunca una lista cerrada, y separa música de rescate por género y nivel de energía.<br><br><strong>La Maleta Blindada — lo que nunca falta en la bolsa de equipo:</strong><ul><li>Dos pendrives duplicados con la misma librería, nunca uno solo.</li><li>Cables balanceados de repuesto (RCA, XLR, jack) — un cable suelto no debe parar un evento.</li><li>Adaptadores universales (USB-C, Lightning, múltiples formatos de corriente).</li><li>Ground lift para eliminar zumbido de tierra en sistemas de sonido ajenos.</li><li>Fuente de poder o batería de respaldo para el equipo personal.</li><li>Plan A (el set ideal), Plan B (alternativa completa si cambia el contexto) y Plan C (salida de emergencia si todo lo demás falla).</li></ul><strong>Anatomía técnica del track — lo que el DJ debe conocer de cada canción antes de tocarla:</strong> intro (cuántos compases libres hay para mezclar), vocal mix-in (el punto exacto donde entra la voz), build-up (la tensión antes del clímax), break (el respiro estructural del tema), drop (el pico de impacto) y out-marker (el punto de salida seguro hacia el siguiente tema). Conocer esto de memoria es lo que separa una transición técnica de una improvisada.</div></div>
+            <div class="cab-rule-card"><button type="button" class="cab-rule-toggle" aria-expanded="false"><span class="cab-rule-num">2</span><span class="cab-rule-title" data-i18n="cabina-rule-2-title">Puntualidad y logística</span><span class="cab-rule-chevron">▾</span></button><div class="cab-rule-body" data-i18n="cabina-rule-2-body">La hora de inicio nunca es la hora de llegada. El DJ profesional calcula hacia atrás desde el primer beat: tiempo de viaje con margen de tráfico, tiempo de carga y descarga del equipo, montaje completo, prueba de sonido con el sistema del venue, coordinación final con el staff, y un margen extra reservado exclusivamente para fallos — un cable que no prende, un puerto que no responde, una escalera que no estaba. Debe estar listo antes de que el cliente siquiera se pregunte si estará listo. Llegar temprano no es una cortesía: es lo que permite resolver problemas en privado, sin convertir al público en espectador involuntario del montaje.</div></div>
+            <div class="cab-rule-card"><button type="button" class="cab-rule-toggle" aria-expanded="false"><span class="cab-rule-num">3</span><span class="cab-rule-title" data-i18n="cabina-rule-3-title">Observa antes de imponer</span><span class="cab-rule-chevron">▾</span></button><div class="cab-rule-body" data-i18n="cabina-rule-3-body">Al entrar al venue se lee la sala completa antes de tocar una sola nota: densidad, edades, grupos, lenguaje corporal, conversaciones, consumo, nivel de atención, música previa y momento exacto del evento. La programación comienza con observación, no con ego.<br><br><strong>Protocolo con el equipo del venue:</strong> el DJ profesional coordina brevemente con el Floor Manager sobre horarios críticos (brindis, entradas, anuncios) y con los bartenders, cuyo ritmo de venta en barra es un termómetro real de la energía de la sala — una barra saturada de pedidos suele anticipar una pista a punto de despoblarse, mientras que una barra tranquila con la pista llena confirma que el momento de riesgo musical es ahora. El personal de seguridad también aporta lectura útil: ellos ven primero el flujo de entrada y salida, y cualquier zona de fricción antes de que se vuelva visible desde la cabina.</div></div>
+        </div>
     </section>
 
     <!-- MURO DE VISTA PREVIA: a partir de aqui, doctrina completa para DJs suscritos -->
@@ -795,7 +964,23 @@
         <div class="cab-gate-content" id="cab-gate-content">
 
             <section class="cab-section" style="padding-top:0;">
-                <div class="cab-rules-grid" id="cab-rules-grid-gated"></div>
+                <div class="cab-rules-grid" id="cab-rules-grid-gated">
+                <div class="cab-rule-card"><button type="button" class="cab-rule-toggle" aria-expanded="false"><span class="cab-rule-num">4</span><span class="cab-rule-title" data-i18n="cabina-rule-4-title">Arranque con intención</span><span class="cab-rule-chevron">▾</span></button><div class="cab-rule-body" data-i18n="cabina-rule-4-body">Los primeros temas abren la puerta; no deben gastar toda la munición de la noche. En una pista vacía, exigir baile total desde el primer track es el error más común de un DJ inexperto — el objetivo real del arranque es generar movimiento, reconocimiento y comodidad: que la gente empiece a moverse aunque sea sutilmente, que reconozca algo familiar, que sienta que puede acercarse a la pista sin sentirse expuesta. Ese primer bloque construye la confianza sobre la que se sostendrá todo lo demás.</div></div>
+                <div class="cab-rule-card"><button type="button" class="cab-rule-toggle" aria-expanded="false"><span class="cab-rule-num">5</span><span class="cab-rule-title" data-i18n="cabina-rule-5-title">Construcción de energía</span><span class="cab-rule-chevron">▾</span></button><div class="cab-rule-body" data-i18n="cabina-rule-5-body">La energía se administra en arcos, no en una rampa recta hacia arriba: construir, sostener, liberar y volver a construir. No todo momento de la noche debe ser un pico — de hecho, no puede serlo, porque el oído y el cuerpo del público se fatigan. Quemar todos los himnos conocidos en la primera hora reduce drásticamente las opciones para el resto de la noche; un DJ que gasta su mejor material temprano se queda sin herramientas justo cuando más las necesita, en el cierre.</div></div>
+                <div class="cab-rule-card"><button type="button" class="cab-rule-toggle" aria-expanded="false"><span class="cab-rule-num">6</span><span class="cab-rule-title" data-i18n="cabina-rule-6-title">Regla diagnóstica de los 15 segundos</span><span class="cab-rule-chevron">▾</span></button><div class="cab-rule-body" data-i18n="cabina-rule-6-body">Cuando entra un tema decisivo, los primeros 15 segundos ofrecen microseñales reales: pies que se mueven, cabezas que asienten, manos que se levantan, coros espontáneos, gente que se acerca a la pista o que la abandona hacia la barra. Si no aparece reacción suficiente, el DJ prepara una salida — sin pánico, y sin cortar de forma brusca o sin criterio. Los 15 segundos son diagnóstico, nunca una sentencia mecánica ni una excusa para reaccionar de forma impulsiva.</div></div>
+                <div class="cab-rule-card"><button type="button" class="cab-rule-toggle" aria-expanded="false"><span class="cab-rule-num">7</span><span class="cab-rule-title" data-i18n="cabina-rule-7-title">Protocolo de rescate</span><span class="cab-rule-chevron">▾</span></button><div class="cab-rule-body" data-i18n="cabina-rule-7-body">Si una selección falla, la siguiente decisión debe recuperar confianza, no arriesgar de nuevo. Nunca se encadenan dos experimentos fallidos seguidos: tras un fallo, el DJ vuelve a un tema de rescate conocido por esa sala específica, reconstruye la base y solo entonces vuelve a intentar algo nuevo. Corregir rápido y con elegancia — sin comentarios en el micrófono, sin gestos de frustración — es profesionalismo puro, no una derrota.</div></div>
+                <div class="cab-rule-card"><button type="button" class="cab-rule-toggle" aria-expanded="false"><span class="cab-rule-num">8</span><span class="cab-rule-title" data-i18n="cabina-rule-8-title">Energía sobre BPM</span><span class="cab-rule-chevron">▾</span></button><div class="cab-rule-body" data-i18n="cabina-rule-8-body">El BPM no equivale a energía, y confundirlos es uno de los mitos más costosos en la cabina. Un tema más lento con el groove correcto puede levantar una sala dormida, y uno más rápido pero desconectado del momento puede vaciarla en segundos. El DJ decide por impacto emocional, groove, reconocimiento cultural y momento exacto de la noche, usando el BPM como una herramienta técnica de mezcla — nunca como el criterio que manda sobre la programación.</div></div>
+                <div class="cab-rule-card"><button type="button" class="cab-rule-toggle" aria-expanded="false"><span class="cab-rule-num">9</span><span class="cab-rule-title" data-i18n="cabina-rule-9-title">Transiciones con narrativa</span><span class="cab-rule-chevron">▾</span></button><div class="cab-rule-body" data-i18n="cabina-rule-9-body">Cambiar de género es válido cuando existe un puente musical, rítmico, cultural o emocional real que lo justifique — nunca porque sí. Una mezcla técnicamente perfecta en beatmatching no compensa una decisión musical incoherente: la pista siente la falta de lógica narrativa incluso cuando no puede explicarla con palabras. Cada transición debe sentirse como una frase dentro de una conversación, no como un corte aleatorio.</div></div>
+                <div class="cab-rule-card"><button type="button" class="cab-rule-toggle" aria-expanded="false"><span class="cab-rule-num">10</span><span class="cab-rule-title" data-i18n="cabina-rule-10-title">Pensar tres canciones adelante</span><span class="cab-rule-chevron">▾</span></button><div class="cab-rule-body" data-i18n="cabina-rule-10-body">El DJ mantiene siempre una hipótesis de tres pasos: lo que suena ahora, lo que sigue, y lo que viene después de eso. Esto no significa encadenarse rígidamente a un plan — si la pista cambia de humor, la ruta se aborta sin drama y se reconstruye desde el momento presente. Pensar hacia adelante evita quedarse sin salida en pleno pico, y permite construir secuencias con dirección real en lugar de ir improvisando canción por canción.</div></div>
+                <div class="cab-rule-card"><button type="button" class="cab-rule-toggle" aria-expanded="false"><span class="cab-rule-num">11</span><span class="cab-rule-title" data-i18n="cabina-rule-11-title">Reconocimiento y sorpresa</span><span class="cab-rule-chevron">▾</span></button><div class="cab-rule-body" data-i18n="cabina-rule-11-body">El reconocimiento genera confianza inmediata; la sorpresa genera descubrimiento y memoria. La proporción correcta entre ambos depende enteramente de la sala: una pista que todavía no confía en el DJ necesita referencias conocidas antes de aceptar riesgos mayores, mientras que una sala ya entregada puede sostener sorpresas más audaces sin perder el hilo.</div></div>
+                <div class="cab-rule-card"><button type="button" class="cab-rule-toggle" aria-expanded="false"><span class="cab-rule-num">12</span><span class="cab-rule-title" data-i18n="cabina-rule-12-title">Peticiones del público</span><span class="cab-rule-chevron">▾</span></button><div class="cab-rule-body" data-i18n="cabina-rule-12-body">Toda petición se escucha con respeto genuino; ninguna petición gobierna automáticamente la pista completa. El DJ evalúa si esa canción representa realmente el momento de la sala, si cabe en el arco actual, y si puede integrarse sin romper la narrativa construida hasta ahí. Una persona pidiendo algo con insistencia no representa necesariamente a las otras noventa y nueve que sí están bailando.</div></div>
+                <div class="cab-rule-card"><button type="button" class="cab-rule-toggle" aria-expanded="false"><span class="cab-rule-num">13</span><span class="cab-rule-title" data-i18n="cabina-rule-13-title">Neutralidad emocional y control del ego</span><span class="cab-rule-chevron">▾</span></button><div class="cab-rule-body" data-i18n="cabina-rule-13-body">El DJ no castiga a la pista porque una canción personal favorita no funcionó, ni fuerza su género preferido solo para demostrar conocimiento musical. La sala entrega datos constantemente — reacción, indiferencia, abandono — y el trabajo del DJ es interpretarlos con frialdad profesional y decidir en función de ellos. El orgullo personal nunca debe competir con el objetivo real del evento.</div></div>
+                <div class="cab-rule-card"><button type="button" class="cab-rule-toggle" aria-expanded="false"><span class="cab-rule-num">14</span><span class="cab-rule-title" data-i18n="cabina-rule-14-title">Conducta profesional en cabina</span><span class="cab-rule-chevron">▾</span></button><div class="cab-rule-body" data-i18n="cabina-rule-14-body">No se discute en público, no se muestra frustración visible, y no se abandona la cabina sin control ni aviso. El DJ mantiene orden, presencia física, y comunicación profesional constante con el staff y el cliente — nunca convierte el puesto de trabajo en una fiesta privada ajena al evento que se está sirviendo. La conducta en cabina también forma parte de la experiencia que el cliente está pagando, tanto como la música misma.</div></div>
+                <div class="cab-rule-card"><button type="button" class="cab-rule-toggle" aria-expanded="false"><span class="cab-rule-num">15</span><span class="cab-rule-title" data-i18n="cabina-rule-15-title">Comunicación no verbal</span><span class="cab-rule-chevron">▾</span></button><div class="cab-rule-body" data-i18n="cabina-rule-15-body">La mirada, la postura, una sonrisa genuina, el uso de las manos y la presencia física refuerzan la conexión con la pista sin convertir al DJ en el protagonista absoluto de la noche. El DJ acompaña la energía de la sala y transmite seguridad silenciosa — la confianza se siente antes de escucharse.</div></div>
+                <div class="cab-rule-card"><button type="button" class="cab-rule-toggle" aria-expanded="false"><span class="cab-rule-num">16</span><span class="cab-rule-title" data-i18n="cabina-rule-16-title">Volumen, dinámica y fatiga</span><span class="cab-rule-chevron">▾</span></button><div class="cab-rule-body" data-i18n="cabina-rule-16-body">Más volumen no significa más energía — es uno de los errores más comunes y más costosos para el oído del público. Niveles excesivos sostenidos fatigan al público físicamente y destruyen el contraste dinámico que hace que un pico se sienta como pico. El DJ controla el gain staging con disciplina, deja respirar el oído en los momentos correctos, y reserva el impacto real para cuando de verdad se necesita.</div></div>
+                <div class="cab-rule-card"><button type="button" class="cab-rule-toggle" aria-expanded="false"><span class="cab-rule-num">17</span><span class="cab-rule-title" data-i18n="cabina-rule-17-title">Protección del pico</span><span class="cab-rule-chevron">▾</span></button><div class="cab-rule-body" data-i18n="cabina-rule-17-body">Cuando la pista alcanza un pico real, el objetivo nunca es subir indefinidamente — es físicamente imposible y musicalmente contraproducente. Se sostiene el momento con criterio, se administran los himnos disponibles con cuidado, y se identifica con precisión cuándo conviene liberar presión antes de que el pico se desgaste. Un pico sostenido demasiado tiempo deja de sentirse como pico y empieza a sentirse como fatiga.</div></div>
+                <div class="cab-rule-card"><button type="button" class="cab-rule-toggle" aria-expanded="false"><span class="cab-rule-num">18</span><span class="cab-rule-title" data-i18n="cabina-rule-18-title">Cierre consciente</span><span class="cab-rule-chevron">▾</span></button><div class="cab-rule-body" data-i18n="cabina-rule-18-body">El final de la noche se diseña, no se improvisa. El DJ identifica la hora real de cierre (que rara vez coincide exactamente con la hora contractual), conserva el material adecuado para ese momento específico, y conduce a la sala activamente hacia una conclusión con sentido — en lugar de tocar hasta agotar tanto al público como el catálogo disponible. Terminar bien es tan parte del show como cualquier pico de la noche; es lo último que el público recuerda.</div></div>
+            </div>
             </section>
 
             <!-- DIAGRAMA 2: 15 SEGUNDOS + RESCATE -->
@@ -944,7 +1129,20 @@
             <section class="cab-section" id="modulos-ensenanza">
                 <h2 class="cab-section-title" data-i18n="cabina-mods-title">12 Módulos de Enseñanza</h2>
                 <p class="cab-section-intro" data-i18n="cabina-mods-intro">La base de la certificación práctica de la Academia.</p>
-                <div class="cab-mods-grid" id="cab-mods-grid"></div>
+                <div class="cab-mods-grid" id="cab-mods-grid">
+                <div class="cab-mod-card"><div class="cab-mod-num"><span data-i18n="cabina-mod-num-label">MÓDULO</span> 1</div><h3 data-i18n="cabina-mod-1-title">Preparación desde casa</h3><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-context-label">Contexto</span><p data-i18n="cabina-mod-1-context">Recibes, sin previo aviso, la ficha de un evento real: tipo (boda, quinceañera, corporativo, club), horario, ubicación y perfil aproximado del público.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-trigger-label">Detonante de crisis</span><p data-i18n="cabina-mod-1-trigger">Tienes 20 minutos antes de tener que presentar tu plan completo — como si el cliente llamara hoy mismo confirmando la fecha.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-goal-label">Objetivo a resolver</span><p data-i18n="cabina-mod-1-goal">Entregar un perfil de público, Plan A, Plan B, rutas musicales flexibles, música de rescate, backups técnicos y un checklist de equipo — todo justificado, no solo listado.</p></div></div>
+                <div class="cab-mod-card"><div class="cab-mod-num"><span data-i18n="cabina-mod-num-label">MÓDULO</span> 2</div><h3 data-i18n="cabina-mod-2-title">Puntualidad y logística</h3><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-context-label">Contexto</span><p data-i18n="cabina-mod-2-context">Te dan una hora contractual de inicio y una dirección real del venue, sin más contexto.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-trigger-label">Detonante de crisis</span><p data-i18n="cabina-mod-2-trigger">Debes calcular, hacia atrás, cada bloque de tiempo — viaje, carga, montaje, soundcheck — hasta llegar a la hora exacta en la que debiste salir de casa.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-goal-label">Objetivo a resolver</span><p data-i18n="cabina-mod-2-goal">Presentar un cronograma con margen de contingencia explícito, no solo una hora de salida estimada a ojo.</p></div></div>
+                <div class="cab-mod-card"><div class="cab-mod-num"><span data-i18n="cabina-mod-num-label">MÓDULO</span> 3</div><h3 data-i18n="cabina-mod-3-title">Lectura de sala</h3><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-context-label">Contexto</span><p data-i18n="cabina-mod-3-context">Observas una sala real o una simulación grabada, sin sonar todavía ni una sola canción.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-trigger-label">Detonante de crisis</span><p data-i18n="cabina-mod-3-trigger">El instructor te pide justificar, en el momento, qué pondrías primero — y por qué, con evidencia observada, no con intuición.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-goal-label">Objetivo a resolver</span><p data-i18n="cabina-mod-3-goal">Documentar microseñales reales (densidad, edades, lenguaje corporal) y usarlas como evidencia para el primer bloque musical.</p></div></div>
+                <div class="cab-mod-card"><div class="cab-mod-num"><span data-i18n="cabina-mod-num-label">MÓDULO</span> 4</div><h3 data-i18n="cabina-mod-4-title">De cero a pista activa</h3><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-context-label">Contexto</span><p data-i18n="cabina-mod-4-context">Arrancas con una pista completamente vacía y silenciosa.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-trigger-label">Detonante de crisis</span><p data-i18n="cabina-mod-4-trigger">Tienes prohibido tocar cualquiera de los tres himnos más fuertes de tu set durante los primeros 20 minutos.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-goal-label">Objetivo a resolver</span><p data-i18n="cabina-mod-4-goal">Construir energía progresivamente hasta llenar la pista sin haber gastado tu mejor material — se evalúa paciencia, secuencia y timing.</p></div></div>
+                <div class="cab-mod-card"><div class="cab-mod-num"><span data-i18n="cabina-mod-num-label">MÓDULO</span> 5</div><h3 data-i18n="cabina-mod-5-title">Regla de 15 segundos y rescate</h3><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-context-label">Contexto</span><p data-i18n="cabina-mod-5-context">Estás en pleno set, con la pista respondiendo bien.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-trigger-label">Detonante de crisis</span><p data-i18n="cabina-mod-5-trigger">El instructor introduce, sin avisar, una &quot;reacción fallida&quot; simulada — el equivalente a una pista que se vacía tras tu selección.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-goal-label">Objetivo a resolver</span><p data-i18n="cabina-mod-5-goal">Detectar el fallo dentro de los primeros 15 segundos simulados, preparar una salida y recuperar la pista sin encadenar un segundo error.</p></div></div>
+                <div class="cab-mod-card"><div class="cab-mod-num"><span data-i18n="cabina-mod-num-label">MÓDULO</span> 6</div><h3 data-i18n="cabina-mod-6-title">Energía sobre BPM</h3><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-context-label">Contexto</span><p data-i18n="cabina-mod-6-context">Se te presenta una secuencia de temas donde el BPM sube pero la energía real de la sala no acompaña.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-trigger-label">Detonante de crisis</span><p data-i18n="cabina-mod-6-trigger">Debes decidir, en vivo, si mantener el BPM ascendente o romper el patrón con un tema más lento pero más efectivo.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-goal-label">Objetivo a resolver</span><p data-i18n="cabina-mod-6-goal">Justificar cada selección por impacto emocional y groove — no por el número de BPM en pantalla.</p></div></div>
+                <div class="cab-mod-card"><div class="cab-mod-num"><span data-i18n="cabina-mod-num-label">MÓDULO</span> 7</div><h3 data-i18n="cabina-mod-7-title">Narrativa y tres canciones adelante</h3><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-context-label">Contexto</span><p data-i18n="cabina-mod-7-context">Se te pide construir una cadena de tres temas con una narrativa clara (género, cultura o emoción conectados).</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-trigger-label">Detonante de crisis</span><p data-i18n="cabina-mod-7-trigger">A mitad de la cadena, el escenario cambia — la pista simulada reacciona distinto a lo esperado.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-goal-label">Objetivo a resolver</span><p data-i18n="cabina-mod-7-goal">Demostrar capacidad real de abandonar la cadena planeada sin perder la coherencia narrativa del momento.</p></div></div>
+                <div class="cab-mod-card"><div class="cab-mod-num"><span data-i18n="cabina-mod-num-label">MÓDULO</span> 8</div><h3 data-i18n="cabina-mod-8-title">Peticiones y presión externa</h3><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-context-label">Contexto</span><p data-i18n="cabina-mod-8-context">Actores simulan ser cliente, invitados y Staff, todos pidiendo canciones distintas y contradictorias al mismo tiempo.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-trigger-label">Detonante de crisis</span><p data-i18n="cabina-mod-8-trigger">El cliente insiste en una canción que no encaja con el momento actual de la pista, frente a testigos.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-goal-label">Objetivo a resolver</span><p data-i18n="cabina-mod-8-goal">Resolver con diplomacia visible y criterio musical, sin ceder automáticamente ni ser rígido sin razón.</p></div></div>
+                <div class="cab-mod-card"><div class="cab-mod-num"><span data-i18n="cabina-mod-num-label">MÓDULO</span> 9</div><h3 data-i18n="cabina-mod-9-title">Conducta y control emocional</h3><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-context-label">Contexto</span><p data-i18n="cabina-mod-9-context">Se evalúa de forma continua, durante todos los demás módulos, sin aviso previo de cuándo.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-trigger-label">Detonante de crisis</span><p data-i18n="cabina-mod-9-trigger">El instructor provoca deliberadamente un error técnico o una crítica dura en medio de un ejercicio.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-goal-label">Objetivo a resolver</span><p data-i18n="cabina-mod-9-goal">Mantener presencia, orden y comunicación profesional sin mostrar frustración visible ante el error o la crítica.</p></div></div>
+                <div class="cab-mod-card"><div class="cab-mod-num"><span data-i18n="cabina-mod-num-label">MÓDULO</span> 10</div><h3 data-i18n="cabina-mod-10-title">Volumen y fatiga</h3><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-context-label">Contexto</span><p data-i18n="cabina-mod-10-context">Se te entrega control total de gain staging en un sistema de sonido real o simulado.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-trigger-label">Detonante de crisis</span><p data-i18n="cabina-mod-10-trigger">La tentación estructural del ejercicio es subir el volumen cada vez que la energía baja — el camino fácil y equivocado.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-goal-label">Objetivo a resolver</span><p data-i18n="cabina-mod-10-goal">Sostener contraste dinámico real a lo largo de un arco completo sin recurrir al volumen como muleta.</p></div></div>
+                <div class="cab-mod-card"><div class="cab-mod-num"><span data-i18n="cabina-mod-num-label">MÓDULO</span> 11</div><h3 data-i18n="cabina-mod-11-title">Arte del cierre</h3><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-context-label">Contexto</span><p data-i18n="cabina-mod-11-context">Se te da una hora de cierre real y un catálogo limitado de material restante.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-trigger-label">Detonante de crisis</span><p data-i18n="cabina-mod-11-trigger">Faltan 15 minutos para el cierre contractual y la pista sigue completamente llena.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-goal-label">Objetivo a resolver</span><p data-i18n="cabina-mod-11-goal">Diseñar los últimos bloques y ejecutar una conclusión con dirección clara, sin quedarte sin material ni prolongar por inercia.</p></div></div>
+                <div class="cab-mod-card"><div class="cab-mod-num"><span data-i18n="cabina-mod-num-label">MÓDULO</span> 12</div><h3 data-i18n="cabina-mod-12-title">Simulación final de cabina</h3><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-context-label">Contexto</span><p data-i18n="cabina-mod-12-context">Evento simulado de principio a fin, con cambios de público, peticiones, fallos de selección y sorpresas combinadas.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-trigger-label">Detonante de crisis</span><p data-i18n="cabina-mod-12-trigger">Todo lo anterior ocurre en una sola sesión, sin previo aviso de en qué orden ni en qué momento.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-goal-label">Objetivo a resolver</span><p data-i18n="cabina-mod-12-goal">Demostrar cómo piensas, lees, corriges y explicas cada decisión — no solamente cómo mezclas técnicamente.</p></div></div>
+            </div>
             </section>
 
             <!-- RÚBRICA -->
@@ -1050,21 +1248,11 @@
     <script src="./i18n.js?v=20260226-1"></script>
     <script>
     (function () {
-        // ---------- 18 rules data (rendered client-side to keep translations.js as single source of truth) ----------
-        // Reglas 1-3: grid abierto/indexable. Reglas 4-18: grid dentro del muro de vista previa.
-        function renderRuleCards(grid, nums) {
-            nums.forEach(function (n) {
-                var card = document.createElement('div');
-                card.className = 'cab-rule-card';
-                card.innerHTML =
-                    '<button type="button" class="cab-rule-toggle" aria-expanded="false">' +
-                        '<span class="cab-rule-num">' + n + '</span>' +
-                        '<span class="cab-rule-title" data-i18n="cabina-rule-' + n + '-title"></span>' +
-                        '<span class="cab-rule-chevron">▾</span>' +
-                    '</button>' +
-                    '<div class="cab-rule-body" data-i18n="cabina-rule-' + n + '-body"></div>';
-                grid.appendChild(card);
-            });
+        // ---------- 18 rules + 12 modules: renderizados ESTATICOS en el HTML (SEO/AEO --
+        // Googlebot y otros crawlers deben leer el texto real sin ejecutar JS). Este bloque
+        // solo adjunta el comportamiento de acordeon a las tarjetas que ya existen en el DOM. ----------
+        function bindRuleAccordion(grid) {
+            if (!grid) return;
             grid.addEventListener('click', function (e) {
                 var btn = e.target.closest('.cab-rule-toggle');
                 if (!btn) return;
@@ -1073,23 +1261,8 @@
                 btn.setAttribute('aria-expanded', open ? 'true' : 'false');
             });
         }
-        renderRuleCards(document.getElementById('cab-rules-grid-open'), [1, 2, 3]);
-        renderRuleCards(document.getElementById('cab-rules-grid-gated'), [4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]);
-
-        // ---------- 12 modules ----------
-        var MODS = [1,2,3,4,5,6,7,8,9,10,11,12];
-        var modsGrid = document.getElementById('cab-mods-grid');
-        MODS.forEach(function (n) {
-            var card = document.createElement('div');
-            card.className = 'cab-mod-card';
-            card.innerHTML =
-                '<div class="cab-mod-num"><span data-i18n="cabina-mod-num-label">MÓDULO</span> ' + n + '</div>' +
-                '<h3 data-i18n="cabina-mod-' + n + '-title"></h3>' +
-                '<div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-context-label">Contexto</span><p data-i18n="cabina-mod-' + n + '-context"></p></div>' +
-                '<div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-trigger-label">Detonante de crisis</span><p data-i18n="cabina-mod-' + n + '-trigger"></p></div>' +
-                '<div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-goal-label">Objetivo a resolver</span><p data-i18n="cabina-mod-' + n + '-goal"></p></div>';
-            modsGrid.appendChild(card);
-        });
+        bindRuleAccordion(document.getElementById('cab-rules-grid-open'));
+        bindRuleAccordion(document.getElementById('cab-rules-grid-gated'));
 
         // ---------- Diagram 1: energy arc ----------
         document.querySelectorAll('#arco-energia .cab-node').forEach(function (node) {
