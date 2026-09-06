@@ -1,0 +1,1433 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <script src="./mdj-estacion-preflight.js?v=20260903-manager-oficina"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
+    <script>
+    (function () {
+        var mdjLibAusente = !(window.supabase &&
+            typeof window.supabase.createClient === 'function');
+        if (mdjLibAusente) {
+            document.write('<script src="./vendor/supabase-js-2.112.3.legacy.js?v=20260818-safari-legacy"><\/script>');
+        }
+    })();
+    </script>
+    <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Método de Cabina — Disciplina Profesional del DJ | Miami DJ Beat Academy</title>
+    <meta name="description" content="Manual formativo de Miami DJ Beat Academy: Ley Cero, 18 reglas operativas, 12 módulos de enseñanza y rúbrica de evaluación para la disciplina profesional del DJ en cabina." />
+    <link rel="canonical" href="https://www.miamidjbeat.com/metodo-cabina.html" />
+    <meta name="geo.region" content="US-FL" />
+    <meta name="geo.placename" content="Miami" />
+    <meta name="geo.position" content="25.7617;-80.1918" />
+    <meta name="ICBM" content="25.7617, -80.1918" />
+    <!-- Nota real: la vista "vista previa/muro" de esta pagina es puramente visual (blur decorativo +
+         CTA de login/registro), sin verificacion de sesion ni restriccion real de acceso -- el HTML
+         completo se sirve igual a visitantes y crawlers. isAccessibleForFree es "true" a proposito,
+         no "false", porque afirmar lo contrario seria una declaracion de datos estructurados falsa. -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Course",
+          "@id": "https://www.miamidjbeat.com/metodo-cabina.html#course",
+          "name": "Método de Cabina — Disciplina Profesional del DJ",
+          "description": "Manual formativo de Miami DJ Beat Academy: Ley Cero, 18 reglas operativas, 12 módulos de enseñanza y rúbrica de evaluación para la disciplina profesional del DJ en cabina.",
+          "url": "https://www.miamidjbeat.com/metodo-cabina.html",
+          "inLanguage": ["es", "en"],
+          "isAccessibleForFree": true,
+          "provider": {
+            "@type": "EducationalOrganization",
+            "name": "Miami DJ Beat Academy",
+            "url": "https://www.miamidjbeat.com/academia.html",
+            "parentOrganization": {
+              "@type": "LocalBusiness",
+              "name": "Miami DJ Beat LLC",
+              "url": "https://www.miamidjbeat.com/",
+              "telephone": "+1-305-607-1780",
+              "address": {
+                "@type": "PostalAddress",
+                "addressLocality": "Miami",
+                "addressRegion": "FL",
+                "addressCountry": "US"
+              },
+              "geo": { "@type": "GeoCoordinates", "latitude": 25.7617, "longitude": -80.1918 },
+              "areaServed": [
+                { "@type": "City", "name": "Miami" },
+                { "@type": "City", "name": "Miami Beach" },
+                { "@type": "Place", "name": "Brickell" },
+                { "@type": "Place", "name": "Wynwood" },
+                { "@type": "City", "name": "Coral Gables" },
+                { "@type": "City", "name": "Doral" },
+                { "@type": "City", "name": "Fort Lauderdale" },
+                { "@type": "AdministrativeArea", "name": "Miami-Dade County" },
+                { "@type": "AdministrativeArea", "name": "Broward County" },
+                { "@type": "AdministrativeArea", "name": "South Florida" }
+              ]
+            }
+          },
+          "hasPart": [
+            { "@type": "LearningResource", "name": "Ley Cero y Propósito", "isAccessibleForFree": true },
+            { "@type": "LearningResource", "name": "18 Reglas Operativas del DJ", "isAccessibleForFree": true },
+            { "@type": "LearningResource", "name": "Diagramas técnicos de cabina", "isAccessibleForFree": true },
+            { "@type": "LearningResource", "name": "12 Módulos de Enseñanza", "isAccessibleForFree": true },
+            { "@type": "LearningResource", "name": "Rúbrica de Autoevaluación (0–5)", "isAccessibleForFree": true }
+          ]
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "https://www.miamidjbeat.com/metodo-cabina.html#faq",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "¿Qué es el Método de Cabina para DJs?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Es el manual operativo y pedagógico de Miami DJ Beat Academy: la Ley Cero, 18 reglas operativas, 12 módulos de enseñanza y una rúbrica de autoevaluación que organizan el trabajo profesional del DJ desde la preparación en casa hasta el cierre del evento."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "¿Dónde estudiar para ser DJ profesional en Miami?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Miami DJ Beat Academy ofrece formación de DJ profesional en Miami a través de su curso de 12 módulos, este Método de Cabina como doctrina de estudio, y un examen de certificación oficial, todo dentro de la plataforma Miami DJ Beat LLC."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "¿Cómo funciona el protocolo de rescate en pista de baile?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Cuando una selección musical falla, el DJ recurre a un tema de rescate ya conocido por esa sala para reconstruir confianza de inmediato, sin encadenar dos experimentos fallidos seguidos. Corregir rápido y con elegancia es profesionalismo, no derrota."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "¿Qué certificaciones ofrece Miami DJ Beat Academy?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "La Academia evalúa formalmente en dos etapas complementarias: un examen teórico de certificación y una evaluación práctica presencial en cabina guiada por un instructor, con niveles que van de No Apto a Graduado PRO."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "¿El Método de Cabina es gratuito?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Sí. El contenido completo del manual es de acceso libre y gratuito para cualquier visitante."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "¿El Método de Cabina prepara para bodas, fiestas de 15 y eventos corporativos en Miami?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Sí. El método enseña lectura de sala, timing de protocolo, diplomacia con clientes y transiciones musicales específicas para eventos sociales de alta exigencia, quinceañeras y galas corporativas en el sur de la Florida."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "¿Qué diferencia a un DJ de club frente a un DJ de eventos privados según el método?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "La versatilidad de repertorio (Open Format, urbano, salsa, anglo), el control de la dinámica sonora para evitar fatiga auditiva y la capacidad de sostener arcos de energía sin agotar los temas clave antes del momento cumbre."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "¿Cómo certificarse como DJ profesional en Miami con este manual?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "El estudiante domina las 18 reglas operativas y los 12 módulos prácticos, defiende su criterio musical en la Academia y valida sus competencias en la evaluación práctica presencial en cabina real."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "¿Qué protocolos de emergencia y respaldo técnico exige la Academia?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Todo DJ profesional certificado debe operar con Plan A, Plan B de conmutación inmediata, duplicado de librerías y gain staging calibrado para proteger el sistema de sonido del venue."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Método de Cabina: El ADN del DJ Profesional | Miami DJ Beat Academy" />
+    <meta property="og:description" content="Aprende disciplina de cabina, psicología de pista, gain staging y protocolos de rescate con más de 30 años de experiencia en la escena nocturna de Miami." />
+    <meta property="og:url" content="https://www.miamidjbeat.com/metodo-cabina.html" />
+    <meta property="og:image" content="https://www.miamidjbeat.com/assets/djmago305/djmago305-good-vibes-laptop-hero.webp" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Método de Cabina: El ADN del DJ Profesional | Miami DJ Beat Academy" />
+    <meta name="twitter:description" content="Aprende disciplina de cabina, psicología de pista, gain staging y protocolos de rescate con más de 30 años de experiencia en la escena nocturna de Miami." />
+    <meta name="twitter:image" content="https://www.miamidjbeat.com/assets/djmago305/djmago305-good-vibes-laptop-hero.webp" />
+    <!-- GEO/SEO Fase 6 -- medicion: GA4 activo desde 2026-08-29 (ID real). -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7XRWGTCQ5L"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-7XRWGTCQ5L');
+    </script>
+    <meta name="google-site-verification" content="BMMzSc4HzEcFPH2SaRYWVi1ORPiIOF2ghKycMgeojn8" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=optional" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css?v=20260823-hero-card-altura" />
+    <link rel="stylesheet" href="./header-unified.css?v=20260902-cortinas" />
+    <link rel="stylesheet" href="./profile.css?v=20260820-ancho-total" />
+    <style>
+        html { scroll-behavior: smooth; }
+
+        .cab-hero {
+            position: relative;
+            min-height: 100vh;
+            margin-top: calc(-1 * (var(--header-height) + var(--header-nav-band)));
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: calc(var(--header-height) + var(--header-nav-band) + 160px) 24px 140px;
+            text-align: center;
+            background:
+                linear-gradient(180deg, rgba(11,14,20,0.25) 0%, rgba(11,14,20,0.40) 50%, rgba(11,14,20,0.95) 100%),
+                url('./assets/djmago305/djmago305-good-vibes-laptop-hero.webp') center 10% / cover no-repeat,
+                #05070a;
+        }
+        .cab-hero-eyebrow {
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 3px;
+            color: var(--gold);
+            text-transform: uppercase;
+            margin-bottom: 18px;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.95), 0 2px 6px rgba(0,0,0,1);
+        }
+        .cab-hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(42px, 8vw, 88px);
+            font-weight: 900;
+            line-height: 1;
+            margin: 0 0 22px;
+            color: #fff;
+            letter-spacing: -0.01em;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.95), 0 2px 6px rgba(0,0,0,1);
+        }
+        .cab-hero-quote {
+            font-size: clamp(18px, 2.4vw, 24px);
+            max-width: 720px;
+            margin: 0 auto 14px;
+            line-height: 1.5;
+            color: #fff;
+            font-weight: 700;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.95), 0 2px 6px rgba(0,0,0,1);
+        }
+        .cab-hero-sub {
+            font-size: 15px;
+            max-width: 620px;
+            margin: 0 auto;
+            line-height: 1.7;
+            color: var(--muted);
+            text-shadow: 0 4px 20px rgba(0,0,0,0.95), 0 2px 6px rgba(0,0,0,1);
+        }
+
+        .cab-section {
+            max-width: 1080px;
+            margin: 0 auto;
+            padding: 70px 20px;
+        }
+        .cab-section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(26px, 4vw, 36px);
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+        .cab-section-intro {
+            color: var(--muted);
+            font-size: 15px;
+            line-height: 1.75;
+            max-width: 720px;
+            margin: 0 auto 40px;
+            text-align: center;
+        }
+        .cab-lead {
+            color: rgba(255,255,255,0.85);
+            font-size: 16px;
+            line-height: 1.8;
+            max-width: 780px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .cab-usecase-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            max-width: 1080px;
+            margin: 30px auto 0;
+        }
+        .cab-usecase-tile {
+            display: block;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 20px 18px;
+            text-decoration: none;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .cab-usecase-tile:hover { border-color: rgba(197,160,89,0.4); background: rgba(197,160,89,0.04); }
+        .cab-usecase-tile h3 { color: var(--gold); font-size: 13.5px; font-weight: 800; line-height: 1.4; margin: 0 0 8px; }
+        .cab-usecase-tile p { color: rgba(255,255,255,0.65); font-size: 12px; line-height: 1.6; margin: 0; }
+        @media (max-width: 900px) {
+            .cab-usecase-grid { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 560px) {
+            .cab-usecase-grid { grid-template-columns: 1fr; }
+        }
+
+        .cab-hierarchy-box {
+            max-width: 780px;
+            margin: 0 auto;
+            text-align: center;
+            background: rgba(197,160,89,0.04);
+            border: 1px solid rgba(197,160,89,0.18);
+            border-radius: 18px;
+            padding: 26px 30px;
+        }
+        .cab-hierarchy-box h3 { color: var(--gold); font-size: 15px; font-weight: 800; margin: 0 0 10px; letter-spacing: 0.5px; }
+        .cab-hierarchy-box p { color: rgba(255,255,255,0.78); font-size: 14px; line-height: 1.75; margin: 0 0 16px; }
+        .cab-hierarchy-links { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; }
+        .cab-hierarchy-links a { color: var(--gold); font-weight: 700; font-size: 13px; text-decoration: none; }
+        .cab-hierarchy-links a:hover { text-decoration: underline; }
+
+        /* --- Diagram shared --- */
+        .cab-diagram-wrap {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 24px;
+            padding: 36px 28px 30px;
+        }
+        .cab-svg { width: 100%; height: auto; display: block; margin-bottom: 8px; }
+        .cab-node {
+            cursor: pointer;
+            outline: none;
+        }
+        .cab-node circle {
+            fill: rgba(197,160,89,0.12);
+            stroke: var(--gold);
+            stroke-width: 2;
+            transition: fill 0.2s, stroke-width 0.2s;
+        }
+        .cab-node text {
+            fill: #fff;
+            font-size: 13px;
+            font-weight: 800;
+            text-anchor: middle;
+        }
+        .cab-node.active circle {
+            fill: var(--gold);
+            stroke-width: 3;
+        }
+        .cab-node.active text { fill: #0a0c10; }
+        .cab-node:focus-visible circle { stroke: #fff; stroke-width: 3; }
+        .cab-arc-path, .cab-chain-path { fill: none; stroke: rgba(197,160,89,0.35); stroke-width: 2; }
+
+        .cab-detail-panel {
+            display: none;
+            background: rgba(197,160,89,0.05);
+            border-left: 3px solid var(--gold);
+            border-radius: 0 16px 16px 0;
+            padding: 22px 26px;
+            margin-top: 18px;
+        }
+        .cab-detail-panel.active { display: block; }
+        .cab-detail-panel h4 {
+            color: var(--gold);
+            font-size: 16px;
+            font-weight: 800;
+            margin: 0 0 14px;
+        }
+        .cab-detail-row { margin-bottom: 12px; }
+        .cab-detail-row:last-child { margin-bottom: 0; }
+        .cab-detail-label {
+            display: block;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.45);
+            margin-bottom: 4px;
+        }
+        .cab-detail-row p {
+            margin: 0;
+            font-size: 14.5px;
+            line-height: 1.65;
+            color: rgba(255,255,255,0.85);
+        }
+        .cab-hint {
+            text-align: center;
+            font-size: 12px;
+            color: rgba(255,255,255,0.4);
+            margin-top: 6px;
+        }
+
+        /* --- Diagram 2 branches --- */
+        .cab-branch-row {
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 22px 0 4px;
+        }
+        .cab-branch-btn {
+            border: 1px solid rgba(255,255,255,0.18);
+            background: rgba(255,255,255,0.03);
+            color: #fff;
+            font-size: 13.5px;
+            font-weight: 700;
+            padding: 12px 22px;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .cab-branch-btn:hover { border-color: var(--gold); }
+        .cab-branch-btn.active { background: var(--gold); color: #0a0c10; border-color: var(--gold); }
+        .cab-signal-list { color: rgba(255,255,255,0.75); font-size: 14px; line-height: 1.9; margin: 0 0 20px; padding-left: 20px; }
+        .cab-rescue-box {
+            margin-top: 22px;
+            padding: 22px 26px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+        }
+        .cab-rescue-box h4 { color: var(--gold); font-size: 14px; margin: 0 0 12px; }
+        .cab-rescue-box ol { margin: 0; padding-left: 20px; color: rgba(255,255,255,0.8); font-size: 14px; line-height: 1.8; }
+
+        /* --- Diagram 3 Plan B toggle --- */
+        .cab-planb-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            justify-content: center;
+            margin: 26px 0 6px;
+        }
+        .cab-toggle {
+            position: relative;
+            width: 50px;
+            height: 28px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.15);
+            border: none;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .cab-toggle::after {
+            content: '';
+            position: absolute;
+            top: 3px; left: 3px;
+            width: 22px; height: 22px;
+            border-radius: 50%;
+            background: #fff;
+            transition: transform 0.2s;
+        }
+        .cab-toggle.on { background: var(--gold); }
+        .cab-toggle.on::after { transform: translateX(22px); }
+        .cab-planb-label { font-size: 13.5px; color: rgba(255,255,255,0.8); font-weight: 600; }
+        .cab-planb-steps { display: none; margin-top: 20px; }
+        .cab-planb-steps.active { display: block; }
+        .cab-node.planb-active circle { fill: #00e87a; stroke: #00e87a; }
+        .cab-node.planb-active text { fill: #0a0c10; }
+
+        /* --- 18 rules --- */
+        .cab-rules-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+        .cab-rule-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        .cab-rule-toggle {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 18px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            text-align: left;
+            color: #fff;
+        }
+        .cab-rule-num {
+            flex-shrink: 0;
+            width: 30px; height: 30px;
+            border-radius: 50%;
+            background: rgba(197,160,89,0.12);
+            color: var(--gold);
+            font-weight: 800;
+            font-size: 13px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .cab-rule-title { flex: 1; font-size: 14.5px; font-weight: 700; }
+        .cab-rule-chevron { color: var(--gold); transition: transform 0.2s; flex-shrink: 0; }
+        .cab-rule-card.open .cab-rule-chevron { transform: rotate(180deg); }
+        .cab-rule-body {
+            display: none;
+            padding: 0 20px 20px 64px;
+            font-size: 13.5px;
+            line-height: 1.7;
+            color: rgba(255,255,255,0.72);
+        }
+        .cab-rule-card.open .cab-rule-body { display: block; }
+
+        /* --- 12 modules --- */
+        .cab-mods-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
+        }
+        .cab-mod-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 18px;
+            padding: 24px 22px;
+        }
+        .cab-mod-num {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            color: var(--gold);
+            margin-bottom: 10px;
+        }
+        .cab-mod-card h3 { font-size: 15.5px; font-weight: 800; color: #fff; margin: 0 0 14px; }
+        .cab-mod-field { margin-bottom: 12px; }
+        .cab-mod-field:last-child { margin-bottom: 0; }
+        .cab-mod-field-label {
+            display: block;
+            font-size: 9.5px;
+            font-weight: 800;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            color: var(--gold);
+            opacity: 0.8;
+            margin-bottom: 4px;
+        }
+        .cab-mod-card p { font-size: 13.5px; line-height: 1.6; color: rgba(255,255,255,0.7); margin: 0; }
+
+        /* --- Rubric --- */
+        .cab-rubric-table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+        .cab-rubric-table th, .cab-rubric-table td { padding: 12px 8px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .cab-rubric-table th { font-size: 11px; letter-spacing: 1px; color: rgba(255,255,255,0.45); text-transform: uppercase; }
+        .cab-rubric-label { font-size: 14px; font-weight: 700; color: #fff; white-space: nowrap; }
+        .cab-score-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+        .cab-score-btn {
+            width: 34px; height: 34px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.18);
+            background: rgba(255,255,255,0.02);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .cab-score-btn.selected { background: var(--gold); border-color: var(--gold); color: #0a0c10; }
+        .cab-rubric-result {
+            background: rgba(197,160,89,0.06);
+            border: 1px solid rgba(197,160,89,0.2);
+            border-radius: 18px;
+            padding: 26px;
+            text-align: center;
+        }
+        .cab-rubric-avg { font-size: 42px; font-weight: 900; color: var(--gold); line-height: 1; margin-bottom: 6px; }
+        .cab-rubric-tier { font-size: 14.5px; color: #fff; font-weight: 700; margin-bottom: 16px; }
+        .cab-rubric-notes { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; font-size: 13px; color: rgba(255,255,255,0.75); }
+        .cab-rubric-notes strong { color: var(--gold); }
+        .cab-rubric-reset {
+            margin-top: 18px;
+            background: none;
+            border: 1px solid rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.7);
+            font-size: 12px;
+            padding: 8px 18px;
+            border-radius: 30px;
+            cursor: pointer;
+        }
+
+        /* --- Defensa de Criterio --- */
+        .cab-criterio-box {
+            margin-top: 24px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 24px;
+            padding: 32px 28px;
+        }
+        .cab-criterio-title { color: var(--gold); font-size: 18px; font-weight: 800; margin: 0 0 10px; text-align: center; }
+        .cab-criterio-intro { color: var(--muted); font-size: 13.5px; line-height: 1.7; max-width: 680px; margin: 0 auto 24px; text-align: center; }
+        .cab-criterio-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .cab-criterio-label { display: block; font-size: 12.5px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+        .cab-criterio-textarea {
+            width: 100%;
+            resize: vertical;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 10px;
+            color: #fff;
+            font-family: inherit;
+            font-size: 13px;
+            padding: 10px 12px;
+            line-height: 1.5;
+        }
+        .cab-criterio-textarea:focus { outline: none; border-color: var(--gold); }
+        .cab-criterio-textarea::placeholder { color: rgba(255,255,255,0.35); }
+        @media (max-width: 700px) { .cab-criterio-grid { grid-template-columns: 1fr; } }
+
+        /* --- Faults / use case / credo --- */
+        .cab-faults-box {
+            background: rgba(255,80,80,0.04);
+            border: 1px solid rgba(255,80,80,0.2);
+            border-radius: 18px;
+            padding: 28px 30px;
+        }
+        .cab-faults-box p { color: rgba(255,255,255,0.78); font-size: 14.5px; line-height: 1.8; margin: 0 0 16px; }
+        .cab-faults-link { color: #ff8a8a; font-weight: 700; font-size: 13.5px; text-decoration: none; }
+        .cab-faults-link:hover { text-decoration: underline; }
+
+        .cab-usecase-box {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 18px;
+            padding: 30px;
+            text-align: center;
+        }
+        .cab-usecase-box h3 { color: var(--gold); font-size: 18px; margin: 0 0 12px; }
+        .cab-usecase-box p { color: rgba(255,255,255,0.75); font-size: 14.5px; line-height: 1.75; max-width: 640px; margin: 0 auto 18px; }
+        .cab-usecase-box a { color: var(--gold); font-weight: 700; text-decoration: none; font-size: 14px; }
+        .cab-usecase-box a:hover { text-decoration: underline; }
+
+        .cab-credo {
+            text-align: center;
+            padding: 80px 20px 100px;
+            background: radial-gradient(circle at 50% 50%, rgba(197,160,89,0.06) 0%, transparent 60%);
+        }
+        .cab-credo-eyebrow { font-size: 12px; font-weight: 800; letter-spacing: 3px; color: var(--gold); text-transform: uppercase; margin-bottom: 20px; }
+        .cab-credo p {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(18px, 2.6vw, 26px);
+            line-height: 1.7;
+            color: #fff;
+            max-width: 760px;
+            margin: 0 auto;
+        }
+
+        /* --- Zonificación del salón --- */
+        .cab-zoning-map {
+            display: grid;
+            grid-template-columns: 1fr 1.6fr 1fr;
+            grid-template-areas:
+                "booth   booth   booth"
+                "bar     floor   vip"
+                "entrance entrance entrance";
+            gap: 14px;
+        }
+        .cab-zone-booth { grid-area: booth; }
+        .cab-zone-bar-l { grid-area: bar; }
+        .cab-zone-floor { grid-area: floor; }
+        .cab-zone-vip { grid-area: vip; }
+        .cab-zone-entrance { grid-area: entrance; }
+        .cab-zone {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 20px;
+        }
+        .cab-zone-floor { background: rgba(197,160,89,0.06); border-color: rgba(197,160,89,0.25); }
+        .cab-zone-name { color: var(--gold); font-size: 13px; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 8px; }
+        .cab-zone-detail { color: rgba(255,255,255,0.72); font-size: 13px; line-height: 1.65; margin: 0; }
+        @media (max-width: 700px) {
+            .cab-zoning-map {
+                grid-template-columns: 1fr;
+                grid-template-areas: "booth" "floor" "bar" "vip" "entrance";
+            }
+        }
+
+        /* --- Protocolo de cierre --- */
+        .cab-closing-flow {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            counter-reset: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px;
+            padding: 8px 28px;
+        }
+        .cab-closing-flow li {
+            display: flex;
+            align-items: flex-start;
+            gap: 18px;
+            padding: 18px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .cab-closing-flow li:last-child { border-bottom: none; }
+        .cab-closing-num {
+            flex-shrink: 0;
+            width: 30px; height: 30px;
+            border-radius: 50%;
+            background: rgba(197,160,89,0.12);
+            color: var(--gold);
+            font-weight: 800;
+            font-size: 13px;
+            display: flex; align-items: center; justify-content: center;
+            margin-top: 2px;
+        }
+        .cab-closing-flow p { margin: 0; font-size: 14px; line-height: 1.7; color: rgba(255,255,255,0.8); padding-top: 4px; }
+
+        /* --- Muro de vista previa (teaser visual, sin restriccion real de acceso) --- */
+        .cab-gate-wrap {
+            position: relative;
+        }
+        .cab-gate-content {
+            pointer-events: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        .cab-gate-overlay {
+            position: absolute;
+            inset: 0;
+            -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(8px);
+            background: rgba(5,7,10,0.35);
+            display: flex;
+            justify-content: center;
+            padding-top: 12vh;
+            pointer-events: none;
+        }
+        .cab-gate-card {
+            pointer-events: auto;
+            position: sticky;
+            top: 30vh;
+            align-self: flex-start;
+            width: min(440px, 88vw);
+            background: rgba(11,14,20,0.92);
+            border: 1px solid rgba(197,160,89,0.35);
+            border-radius: 24px;
+            padding: 40px 34px;
+            text-align: center;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+        }
+        .cab-gate-icon { font-size: 30px; margin-bottom: 14px; }
+        .cab-gate-card h3 { color: #fff; font-size: 19px; font-weight: 800; margin: 0 0 12px; }
+        .cab-gate-card p { color: var(--muted); font-size: 14px; line-height: 1.7; margin: 0 0 26px; }
+        .cab-gate-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+        .cab-gate-btn {
+            font-size: 13.5px;
+            font-weight: 800;
+            padding: 12px 24px;
+            border-radius: 30px;
+            text-decoration: none;
+        }
+        .cab-gate-btn-gold { background: var(--gold); color: #0a0c10; }
+        .cab-gate-btn-outline { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,0.3); }
+        .cab-gate-btn-gold:hover { filter: brightness(1.08); }
+        .cab-gate-btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+
+        @media (max-width: 900px) {
+            .cab-rules-grid, .cab-mods-grid { grid-template-columns: 1fr; }
+            .cab-rubric-table { display: block; overflow-x: auto; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- MDJ canonical site header — keep in sync with index #mainHeader; use ./index.html# anchors for subpages -->
+<header class="header mdj-header-unified" id="mainHeader">
+  <div class="header-top">
+    <div class="container">
+      <div class="brand">
+        <img src="./assets/branding/logo-transparent.png" alt="Miami DJ Beat Logo" class="logo-img-eagle">
+        <div class="brand-letters-wrapper">
+          <img src="./assets/branding/logo-transparent Letras.png" alt="Miami DJ Beat Letters" class="brand-letters-img">
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <a href="./login.html?plan=pro" class="btn-pill gold" id="header-get-pro-btn" data-i18n="btn-get-pro">Get PRO</a>
+        <a href="./login.html?signup=free" class="btn-pill" id="header-subscribe-free-btn" data-i18n="btn-subscribe-free">Suscripción gratis</a>
+        <span id="header-djpro-badge" class="header-djpro-badge" style="display: none;" aria-label="DJPRO">DJPRO</span>
+        <div class="mdj-header-r1-auth-cluster">
+
+          <div class="lang-switcher">
+          <span class="lang-btn" data-lang="es">ES</span>
+          <span class="lang-pipe">|</span>
+          <span class="lang-btn active" data-lang="en">EN</span>
+        </div>
+
+          <a href="./login.html" id="header-login-btn" class="btn-pill gold" data-i18n="btn-login">Log in</a>
+
+          <div class="account session-pending" id="header-auth-zone" style="display: none;">
+            <a class="account-btn" id="accountBtn" href="./dj-profile.html" title="Mi perfil" aria-label="Mi perfil">
+              <img class="avatar" src="./assets/dj-avatar-placeholder.png" alt="" />
+            </a>
+</div>
+
+        </div>
+
+        <div class="header-avatar-cart-row" aria-label="Account and cart">
+<a href="./shop.html" id="header-cart-link" class="header-cart-btn" title="Cart" aria-label="Shopping cart">
+            <span aria-hidden="true">🛒</span>
+            <span id="header-cart-count" class="header-cart-count" hidden></span>
+          </a>
+        </div>
+        <div class="header-search-wrap">
+          <input type="search" id="header-smart-search" class="header-smart-search"
+            placeholder="Search DJs, gear, services…" autocomplete="off" enterkeyhint="search" />
+        </div>
+      </div>
+
+      <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <div class="mobile-overlay" id="mobileMenu">
+        <nav class="mobile-nav">
+          <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home">Inicio</a>
+          <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services">Servicios</a>
+          <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues">Eventos</a>
+          <a href="./shop.html" style="color:#c5a059;font-weight:800;" data-mdj-nav="shop">Shop</a>
+          <a href="./dj-tools.html" data-i18n="nav-tools" data-mdj-nav="tools">DJ Tools</a>
+          <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs">Jobs</a>
+          <a href="./contact.html" data-i18n="nav-contact" data-mdj-nav="contact">Contacto</a>
+          <a href="./login.html?signup=free" id="header-subscribe-free-mobile" data-i18n="btn-subscribe-free"
+            style="color:rgba(255,255,255,0.88); font-weight:800;">Suscripción gratis</a>
+          <a href="./login.html" id="header-login-btn-mobile" data-i18n="btn-login"
+            style="color:var(--gold); font-weight:800;">Entrar</a>
+          <a href="./dj-profile.html" id="nav-my-profile-mobile"
+            style="display:none; color:var(--gold); font-weight:900;" data-i18n="menu-account">MY PROFILE</a>
+        </nav>
+      </div>
+    </div>
+  </div>
+  <div class="header-nav">
+    <div class="container">
+      <nav class="nav top-nav mdj-mainnav-flex" id="mainNav">
+    <!-- EL HTML TRAE LA BARRA PUBLICA A PROPOSITO. Quien tenga sesion recibe la
+         de su estacion en el prevuelo de aqui abajo, que corre ANTES del primer
+         pintado. Se escribe la publica y no la de estacion porque asi se falla
+         del lado seguro: si el prevuelo fallara, un desconocido veria la barra
+         que le toca y como mucho un artista veria el relevo tarde. -->
+
+    <a href="./index.html" data-i18n="nav-home" data-mdj-nav="home" data-mdj-slot="1">Inicio</a>
+    <a href="./rentals.html" data-i18n="nav-services" data-mdj-nav="services" data-mdj-slot="2">Servicios</a>
+    <a href="./events.html" data-i18n="nav-rentals" data-mdj-nav="venues" data-mdj-slot="3">Eventos</a>
+    <a href="./shop.html" style="color:var(--gold);font-weight:800;" data-i18n="nav-shop" data-mdj-nav="shop" data-mdj-slot="4">Shop</a>
+    <a href="./client-account.html" id="mainNav-config-link" class="mdj-config-mainnav mdj-mainnav-reserved-slot" data-mdj-nav="config" data-i18n="nav-config" data-mdj-slot="5" aria-hidden="true" tabindex="-1">⚙️ CONFIG</a>
+    <a href="./jobs.html" data-i18n="nav-jobs" data-mdj-nav="jobs" data-mdj-slot="6">Trabajos</a>
+    <a href="./contact.html" data-i18n="nav-contact" data-mdj-nav="contact" data-mdj-slot="7">Contacto</a>
+    <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="./client-portal.html" data-mdj-nav="mi-portal" data-mdj-slot="8" aria-hidden="true" tabindex="-1">MI PERFIL</a>
+  </nav>
+  <script>/* Decide la barra antes de pintarla. Ver mdj-estacion-preflight.js */
+    try { window.mdjPrevueloEstacion && window.mdjPrevueloEstacion(); } catch (e) {}
+  </script>
+    </div>
+  </div>
+</header>
+
+    <!-- LEY CERO -->
+    <section class="cab-hero">
+        <div class="container">
+            <p class="cab-hero-eyebrow" data-i18n="cabina-hero-eyebrow">MÉTODO DE CABINA</p>
+            <h1 data-i18n="cabina-hero-title">Ley Cero</h1>
+            <p class="cab-hero-quote" data-i18n="cabina-hero-quote">El DJ no toca canciones. Administra energía colectiva.</p>
+            <p class="cab-hero-sub" data-i18n="cabina-hero-sub">La técnica sirve al criterio; el criterio sirve a la pista; y la pista manda sobre el ego del DJ.</p>
+        </div>
+    </section>
+
+    <section class="cab-section">
+        <h2 class="cab-section-title" style="font-size:22px;" data-i18n="cabina-purpose-h2">Formación de DJ Profesional en Miami</h2>
+        <p class="cab-lead" data-i18n="cabina-purpose">Este método organiza el trabajo profesional del DJ desde antes de salir de casa hasta el cierre del evento. No es una playlist ni una fórmula rígida: es un sistema de preparación, lectura de sala, construcción de energía, corrección, conducta y toma de decisiones. Se aplica a clubes, bodas, quinceañeras, corporativos, restaurantes, residencias y eventos temáticos.</p>
+
+        <div class="cab-usecase-grid">
+            <a class="cab-usecase-tile" href="./weddings.html">
+                <h3 data-i18n="cabina-usecase-weddings-title">DJ para Bodas y Quinceañeras en Miami</h3>
+                <p data-i18n="cabina-usecase-weddings-body">Timing de protocolo, diplomacia con clientes y transiciones para celebraciones sociales de alta exigencia.</p>
+            </a>
+            <a class="cab-usecase-tile" href="#reglas-operativas">
+                <h3 data-i18n="cabina-usecase-clubs-title">Control de Cabina en Clubes Nocturnos</h3>
+                <p data-i18n="cabina-usecase-clubs-body">Gain staging, protección del pico y arcos de energía sostenidos durante sets largos.</p>
+            </a>
+            <a class="cab-usecase-tile" href="./corporate.html">
+                <h3 data-i18n="cabina-usecase-corporate-title">Eventos Corporativos de Alto Impacto</h3>
+                <p data-i18n="cabina-usecase-corporate-body">Lectura de sala y conducta profesional para galas, activaciones de marca y audiencias ejecutivas.</p>
+            </a>
+            <a class="cab-usecase-tile" href="./latin-dj.html">
+                <h3 data-i18n="cabina-usecase-openformat-title">DJ Open Format Profesional</h3>
+                <p data-i18n="cabina-usecase-openformat-body">Versatilidad de repertorio — salsa, urbano, anglo — sin perder narrativa ni coherencia musical.</p>
+            </a>
+        </div>
+    </section>
+
+    <!-- JERARQUÍA ACADÉMICA -->
+    <section class="cab-section" style="padding-top:0;">
+        <div class="cab-hierarchy-box">
+            <h3 style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.45);margin:0 0 8px;" data-i18n="cabina-hierarchy-eyebrow">Doctrina de Cabina y Eventos en Vivo</h3>
+            <h3 data-i18n="cabina-hierarchy-title">Jerarquía Académica del Método</h3>
+            <p data-i18n="cabina-hierarchy-body">Este manual es la doctrina teórica y operativa del DJ profesional de Miami DJ Beat. Se estudia aquí, se practica en los 12 módulos, y se evalúa formalmente de dos maneras complementarias: la teoría en el examen de certificación, y la ejecución real en la evaluación práctica presencial en cabina, guiada por un instructor.</p>
+            <div class="cab-hierarchy-links">
+                <a href="./practical-evaluation.html" data-i18n="cabina-hierarchy-link-practical">Evaluación práctica presencial →</a>
+                <a href="./certification-about.html" data-i18n="cabina-hierarchy-link-cert">Examen de certificación →</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- DIAGRAMA 1: ARCO DE ENERGÍA -->
+    <section class="cab-section" id="arco-energia">
+        <h2 class="cab-section-title" data-i18n="cabina-arc-title">Diagrama 1 · El Arco de Energía Colectiva</h2>
+        <p class="cab-section-intro" data-i18n="cabina-arc-intro">La energía se administra en arcos, no en una línea recta hacia arriba. Toca cada fase para ver la intención técnica, la psicología de pista y la gestión de fatiga sonora detrás de la decisión.</p>
+        <div class="cab-diagram-wrap">
+            <svg class="cab-svg" viewBox="0 0 800 200" role="img" aria-label="Arco de energía: construir, sostener, liberar, reconstruir">
+                <path class="cab-arc-path" d="M 60 150 Q 220 30 400 100 T 740 60" />
+                <g class="cab-node active" data-phase="1" tabindex="0" role="button" aria-pressed="true">
+                    <circle cx="80" cy="150" r="34" />
+                    <text x="80" y="155" data-i18n="cabina-arc-phase1-name">Construir</text>
+                </g>
+                <g class="cab-node" data-phase="2" tabindex="0" role="button" aria-pressed="false">
+                    <circle cx="330" cy="55" r="34" />
+                    <text x="330" y="60" data-i18n="cabina-arc-phase2-name">Sostener</text>
+                </g>
+                <g class="cab-node" data-phase="3" tabindex="0" role="button" aria-pressed="false">
+                    <circle cx="530" cy="140" r="34" />
+                    <text x="530" y="145" data-i18n="cabina-arc-phase3-name">Liberar</text>
+                </g>
+                <g class="cab-node" data-phase="4" tabindex="0" role="button" aria-pressed="false">
+                    <circle cx="730" cy="60" r="34" />
+                    <text x="730" y="65" data-i18n="cabina-arc-phase4-name">Reconstruir</text>
+                </g>
+            </svg>
+            <p class="cab-hint" data-i18n="cabina-arc-hint">Toca cada fase para ver el detalle</p>
+
+            <div class="cab-detail-panel active" data-panel="1">
+                <h4 data-i18n="cabina-arc-phase1-name">Construir</h4>
+                <div class="cab-detail-row"><span class="cab-detail-label" data-i18n="cabina-arc-label-tech">Intención técnica</span><p data-i18n="cabina-arc-phase1-tech">Selección de temas de arranque que abren la puerta sin agotar la munición principal — generan reconocimiento y comodidad antes de exigir baile total.</p></div>
+                <div class="cab-detail-row"><span class="cab-detail-label" data-i18n="cabina-arc-label-psych">Psicología de pista</span><p data-i18n="cabina-arc-phase1-psych">La pista aún no confía en el DJ. El objetivo es generar movimiento y reconocimiento, no un pico inmediato.</p></div>
+                <div class="cab-detail-row"><span class="cab-detail-label" data-i18n="cabina-arc-label-fatigue">Gestión de fatiga sonora</span><p data-i18n="cabina-arc-phase1-fatigue">Volumen y densidad moderados — el oído del público recién empieza a calibrarse a la sala.</p></div>
+            </div>
+            <div class="cab-detail-panel" data-panel="2">
+                <h4 data-i18n="cabina-arc-phase2-name">Sostener</h4>
+                <div class="cab-detail-row"><span class="cab-detail-label" data-i18n="cabina-arc-label-tech">Intención técnica</span><p data-i18n="cabina-arc-phase2-tech">Se administran los himnos disponibles sin quemarlos todos — cada tema decisivo se elige pensando en lo que viene después.</p></div>
+                <div class="cab-detail-row"><span class="cab-detail-label" data-i18n="cabina-arc-label-psych">Psicología de pista</span><p data-i18n="cabina-arc-phase2-psych">La confianza ya existe. El riesgo se puede aumentar gradualmente sin perder a la sala.</p></div>
+                <div class="cab-detail-row"><span class="cab-detail-label" data-i18n="cabina-arc-label-fatigue">Gestión de fatiga sonora</span><p data-i18n="cabina-arc-phase2-fatigue">Se reserva impacto — no todo momento debe ser un pico; los descansos controlados preparan el siguiente ascenso.</p></div>
+            </div>
+            <div class="cab-detail-panel" data-panel="3">
+                <h4 data-i18n="cabina-arc-phase3-name">Liberar</h4>
+                <div class="cab-detail-row"><span class="cab-detail-label" data-i18n="cabina-arc-label-tech">Intención técnica</span><p data-i18n="cabina-arc-phase3-tech">Se identifica cuándo conviene liberar presión en vez de sostener el pico indefinidamente — un pico demasiado largo deja de sentirse como pico.</p></div>
+                <div class="cab-detail-row"><span class="cab-detail-label" data-i18n="cabina-arc-label-psych">Psicología de pista</span><p data-i18n="cabina-arc-phase3-psych">El público necesita procesar la energía alcanzada; liberar con intención deja memoria en vez de agotamiento.</p></div>
+                <div class="cab-detail-row"><span class="cab-detail-label" data-i18n="cabina-arc-label-fatigue">Gestión de fatiga sonora</span><p data-i18n="cabina-arc-phase3-fatigue">Se deja respirar el oído — bajar la dinámica momentáneamente reserva impacto para el siguiente ascenso.</p></div>
+            </div>
+            <div class="cab-detail-panel" data-panel="4">
+                <h4 data-i18n="cabina-arc-phase4-name">Reconstruir</h4>
+                <div class="cab-detail-row"><span class="cab-detail-label" data-i18n="cabina-arc-label-tech">Intención técnica</span><p data-i18n="cabina-arc-phase4-tech">Se vuelve a construir desde una base segura, usando lo aprendido en el arco anterior sobre qué funcionó en esa sala específica.</p></div>
+                <div class="cab-detail-row"><span class="cab-detail-label" data-i18n="cabina-arc-label-psych">Psicología de pista</span><p data-i18n="cabina-arc-phase4-psych">La sala ya tiene una relación establecida con el DJ — el segundo arco puede asumir más riesgo que el primero.</p></div>
+                <div class="cab-detail-row"><span class="cab-detail-label" data-i18n="cabina-arc-label-fatigue">Gestión de fatiga sonora</span><p data-i18n="cabina-arc-phase4-fatigue">Se recalibra el volumen tras el descanso, evitando fatiga acumulada por exceso sostenido.</p></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 18 REGLAS: PRIMERAS 3, ABIERTAS/INDEXABLES -->
+    <section class="cab-section" id="reglas-operativas">
+        <h2 class="cab-section-title" data-i18n="cabina-rules-title">18 Reglas Operativas del DJ</h2>
+        <p class="cab-section-intro" data-i18n="cabina-rules-intro">Toca cada regla para expandirla.</p>
+        <div class="cab-rules-grid" id="cab-rules-grid-open">
+            <div class="cab-rule-card"><button type="button" class="cab-rule-toggle" aria-expanded="false"><span class="cab-rule-num">1</span><span class="cab-rule-title" data-i18n="cabina-rule-1-title">El trabajo empieza en casa — Preparación</span><span class="cab-rule-chevron">▾</span></button><div class="cab-rule-body" data-i18n="cabina-rule-1-body">El DJ profesional no comienza cuando conecta el controlador — comienza días antes, estudiando el evento: horario, público probable, edades, cultura, venue, formato y expectativas reales del cliente. A partir de ahí construye rutas musicales flexibles, nunca una lista cerrada, y separa música de rescate por género y nivel de energía.<br><br><strong>La Maleta Blindada — lo que nunca falta en la bolsa de equipo:</strong><ul><li>Dos pendrives duplicados con la misma librería, nunca uno solo.</li><li>Cables balanceados de repuesto (RCA, XLR, jack) — un cable suelto no debe parar un evento.</li><li>Adaptadores universales (USB-C, Lightning, múltiples formatos de corriente).</li><li>Ground lift para eliminar zumbido de tierra en sistemas de sonido ajenos.</li><li>Fuente de poder o batería de respaldo para el equipo personal.</li><li>Plan A (el set ideal), Plan B (alternativa completa si cambia el contexto) y Plan C (salida de emergencia si todo lo demás falla).</li></ul><strong>Anatomía técnica del track — lo que el DJ debe conocer de cada canción antes de tocarla:</strong> intro (cuántos compases libres hay para mezclar), vocal mix-in (el punto exacto donde entra la voz), build-up (la tensión antes del clímax), break (el respiro estructural del tema), drop (el pico de impacto) y out-marker (el punto de salida seguro hacia el siguiente tema). Conocer esto de memoria es lo que separa una transición técnica de una improvisada.</div></div>
+            <div class="cab-rule-card"><button type="button" class="cab-rule-toggle" aria-expanded="false"><span class="cab-rule-num">2</span><span class="cab-rule-title" data-i18n="cabina-rule-2-title">Puntualidad y logística</span><span class="cab-rule-chevron">▾</span></button><div class="cab-rule-body" data-i18n="cabina-rule-2-body">La hora de inicio nunca es la hora de llegada. El DJ profesional calcula hacia atrás desde el primer beat: tiempo de viaje con margen de tráfico, tiempo de carga y descarga del equipo, montaje completo, prueba de sonido con el sistema del venue, coordinación final con el staff, y un margen extra reservado exclusivamente para fallos — un cable que no prende, un puerto que no responde, una escalera que no estaba. Debe estar listo antes de que el cliente siquiera se pregunte si estará listo. Llegar temprano no es una cortesía: es lo que permite resolver problemas en privado, sin convertir al público en espectador involuntario del montaje.</div></div>
+            <div class="cab-rule-card"><button type="button" class="cab-rule-toggle" aria-expanded="false"><span class="cab-rule-num">3</span><span class="cab-rule-title" data-i18n="cabina-rule-3-title">Observa antes de imponer</span><span class="cab-rule-chevron">▾</span></button><div class="cab-rule-body" data-i18n="cabina-rule-3-body">Al entrar al venue se lee la sala completa antes de tocar una sola nota: densidad, edades, grupos, lenguaje corporal, conversaciones, consumo, nivel de atención, música previa y momento exacto del evento. La programación comienza con observación, no con ego.<br><br><strong>Protocolo con el equipo del venue:</strong> el DJ profesional coordina brevemente con el Floor Manager sobre horarios críticos (brindis, entradas, anuncios) y con los bartenders, cuyo ritmo de venta en barra es un termómetro real de la energía de la sala — una barra saturada de pedidos suele anticipar una pista a punto de despoblarse, mientras que una barra tranquila con la pista llena confirma que el momento de riesgo musical es ahora. El personal de seguridad también aporta lectura útil: ellos ven primero el flujo de entrada y salida, y cualquier zona de fricción antes de que se vuelva visible desde la cabina.</div></div>
+        </div>
+    </section>
+
+    <!-- MURO DE VISTA PREVIA: a partir de aqui, doctrina completa para DJs suscritos -->
+    <div class="cab-gate-wrap" id="cab-gate-wrap">
+        <div class="cab-gate-content" id="cab-gate-content">
+
+            <section class="cab-section" style="padding-top:0;">
+                <div class="cab-rules-grid" id="cab-rules-grid-gated">
+                <div class="cab-rule-card"><button type="button" class="cab-rule-toggle" aria-expanded="false"><span class="cab-rule-num">4</span><span class="cab-rule-title" data-i18n="cabina-rule-4-title">Arranque con intención</span><span class="cab-rule-chevron">▾</span></button><div class="cab-rule-body" data-i18n="cabina-rule-4-body">Los primeros temas abren la puerta; no deben gastar toda la munición de la noche. En una pista vacía, exigir baile total desde el primer track es el error más común de un DJ inexperto — el objetivo real del arranque es generar movimiento, reconocimiento y comodidad: que la gente empiece a moverse aunque sea sutilmente, que reconozca algo familiar, que sienta que puede acercarse a la pista sin sentirse expuesta. Ese primer bloque construye la confianza sobre la que se sostendrá todo lo demás.</div></div>
+                <div class="cab-rule-card"><button type="button" class="cab-rule-toggle" aria-expanded="false"><span class="cab-rule-num">5</span><span class="cab-rule-title" data-i18n="cabina-rule-5-title">Construcción de energía</span><span class="cab-rule-chevron">▾</span></button><div class="cab-rule-body" data-i18n="cabina-rule-5-body">La energía se administra en arcos, no en una rampa recta hacia arriba: construir, sostener, liberar y volver a construir. No todo momento de la noche debe ser un pico — de hecho, no puede serlo, porque el oído y el cuerpo del público se fatigan. Quemar todos los himnos conocidos en la primera hora reduce drásticamente las opciones para el resto de la noche; un DJ que gasta su mejor material temprano se queda sin herramientas justo cuando más las necesita, en el cierre.</div></div>
+                <div class="cab-rule-card"><button type="button" class="cab-rule-toggle" aria-expanded="false"><span class="cab-rule-num">6</span><span class="cab-rule-title" data-i18n="cabina-rule-6-title">Regla diagnóstica de los 15 segundos</span><span class="cab-rule-chevron">▾</span></button><div class="cab-rule-body" data-i18n="cabina-rule-6-body">Cuando entra un tema decisivo, los primeros 15 segundos ofrecen microseñales reales: pies que se mueven, cabezas que asienten, manos que se levantan, coros espontáneos, gente que se acerca a la pista o que la abandona hacia la barra. Si no aparece reacción suficiente, el DJ prepara una salida — sin pánico, y sin cortar de forma brusca o sin criterio. Los 15 segundos son diagnóstico, nunca una sentencia mecánica ni una excusa para reaccionar de forma impulsiva.</div></div>
+                <div class="cab-rule-card"><button type="button" class="cab-rule-toggle" aria-expanded="false"><span class="cab-rule-num">7</span><span class="cab-rule-title" data-i18n="cabina-rule-7-title">Protocolo de rescate</span><span class="cab-rule-chevron">▾</span></button><div class="cab-rule-body" data-i18n="cabina-rule-7-body">Si una selección falla, la siguiente decisión debe recuperar confianza, no arriesgar de nuevo. Nunca se encadenan dos experimentos fallidos seguidos: tras un fallo, el DJ vuelve a un tema de rescate conocido por esa sala específica, reconstruye la base y solo entonces vuelve a intentar algo nuevo. Corregir rápido y con elegancia — sin comentarios en el micrófono, sin gestos de frustración — es profesionalismo puro, no una derrota.</div></div>
+                <div class="cab-rule-card"><button type="button" class="cab-rule-toggle" aria-expanded="false"><span class="cab-rule-num">8</span><span class="cab-rule-title" data-i18n="cabina-rule-8-title">Energía sobre BPM</span><span class="cab-rule-chevron">▾</span></button><div class="cab-rule-body" data-i18n="cabina-rule-8-body">El BPM no equivale a energía, y confundirlos es uno de los mitos más costosos en la cabina. Un tema más lento con el groove correcto puede levantar una sala dormida, y uno más rápido pero desconectado del momento puede vaciarla en segundos. El DJ decide por impacto emocional, groove, reconocimiento cultural y momento exacto de la noche, usando el BPM como una herramienta técnica de mezcla — nunca como el criterio que manda sobre la programación.</div></div>
+                <div class="cab-rule-card"><button type="button" class="cab-rule-toggle" aria-expanded="false"><span class="cab-rule-num">9</span><span class="cab-rule-title" data-i18n="cabina-rule-9-title">Transiciones con narrativa</span><span class="cab-rule-chevron">▾</span></button><div class="cab-rule-body" data-i18n="cabina-rule-9-body">Cambiar de género es válido cuando existe un puente musical, rítmico, cultural o emocional real que lo justifique — nunca porque sí. Una mezcla técnicamente perfecta en beatmatching no compensa una decisión musical incoherente: la pista siente la falta de lógica narrativa incluso cuando no puede explicarla con palabras. Cada transición debe sentirse como una frase dentro de una conversación, no como un corte aleatorio.</div></div>
+                <div class="cab-rule-card"><button type="button" class="cab-rule-toggle" aria-expanded="false"><span class="cab-rule-num">10</span><span class="cab-rule-title" data-i18n="cabina-rule-10-title">Pensar tres canciones adelante</span><span class="cab-rule-chevron">▾</span></button><div class="cab-rule-body" data-i18n="cabina-rule-10-body">El DJ mantiene siempre una hipótesis de tres pasos: lo que suena ahora, lo que sigue, y lo que viene después de eso. Esto no significa encadenarse rígidamente a un plan — si la pista cambia de humor, la ruta se aborta sin drama y se reconstruye desde el momento presente. Pensar hacia adelante evita quedarse sin salida en pleno pico, y permite construir secuencias con dirección real en lugar de ir improvisando canción por canción.</div></div>
+                <div class="cab-rule-card"><button type="button" class="cab-rule-toggle" aria-expanded="false"><span class="cab-rule-num">11</span><span class="cab-rule-title" data-i18n="cabina-rule-11-title">Reconocimiento y sorpresa</span><span class="cab-rule-chevron">▾</span></button><div class="cab-rule-body" data-i18n="cabina-rule-11-body">El reconocimiento genera confianza inmediata; la sorpresa genera descubrimiento y memoria. La proporción correcta entre ambos depende enteramente de la sala: una pista que todavía no confía en el DJ necesita referencias conocidas antes de aceptar riesgos mayores, mientras que una sala ya entregada puede sostener sorpresas más audaces sin perder el hilo.</div></div>
+                <div class="cab-rule-card"><button type="button" class="cab-rule-toggle" aria-expanded="false"><span class="cab-rule-num">12</span><span class="cab-rule-title" data-i18n="cabina-rule-12-title">Peticiones del público</span><span class="cab-rule-chevron">▾</span></button><div class="cab-rule-body" data-i18n="cabina-rule-12-body">Toda petición se escucha con respeto genuino; ninguna petición gobierna automáticamente la pista completa. El DJ evalúa si esa canción representa realmente el momento de la sala, si cabe en el arco actual, y si puede integrarse sin romper la narrativa construida hasta ahí. Una persona pidiendo algo con insistencia no representa necesariamente a las otras noventa y nueve que sí están bailando.</div></div>
+                <div class="cab-rule-card"><button type="button" class="cab-rule-toggle" aria-expanded="false"><span class="cab-rule-num">13</span><span class="cab-rule-title" data-i18n="cabina-rule-13-title">Neutralidad emocional y control del ego</span><span class="cab-rule-chevron">▾</span></button><div class="cab-rule-body" data-i18n="cabina-rule-13-body">El DJ no castiga a la pista porque una canción personal favorita no funcionó, ni fuerza su género preferido solo para demostrar conocimiento musical. La sala entrega datos constantemente — reacción, indiferencia, abandono — y el trabajo del DJ es interpretarlos con frialdad profesional y decidir en función de ellos. El orgullo personal nunca debe competir con el objetivo real del evento.</div></div>
+                <div class="cab-rule-card"><button type="button" class="cab-rule-toggle" aria-expanded="false"><span class="cab-rule-num">14</span><span class="cab-rule-title" data-i18n="cabina-rule-14-title">Conducta profesional en cabina</span><span class="cab-rule-chevron">▾</span></button><div class="cab-rule-body" data-i18n="cabina-rule-14-body">No se discute en público, no se muestra frustración visible, y no se abandona la cabina sin control ni aviso. El DJ mantiene orden, presencia física, y comunicación profesional constante con el staff y el cliente — nunca convierte el puesto de trabajo en una fiesta privada ajena al evento que se está sirviendo. La conducta en cabina también forma parte de la experiencia que el cliente está pagando, tanto como la música misma.</div></div>
+                <div class="cab-rule-card"><button type="button" class="cab-rule-toggle" aria-expanded="false"><span class="cab-rule-num">15</span><span class="cab-rule-title" data-i18n="cabina-rule-15-title">Comunicación no verbal</span><span class="cab-rule-chevron">▾</span></button><div class="cab-rule-body" data-i18n="cabina-rule-15-body">La mirada, la postura, una sonrisa genuina, el uso de las manos y la presencia física refuerzan la conexión con la pista sin convertir al DJ en el protagonista absoluto de la noche. El DJ acompaña la energía de la sala y transmite seguridad silenciosa — la confianza se siente antes de escucharse.</div></div>
+                <div class="cab-rule-card"><button type="button" class="cab-rule-toggle" aria-expanded="false"><span class="cab-rule-num">16</span><span class="cab-rule-title" data-i18n="cabina-rule-16-title">Volumen, dinámica y fatiga</span><span class="cab-rule-chevron">▾</span></button><div class="cab-rule-body" data-i18n="cabina-rule-16-body">Más volumen no significa más energía — es uno de los errores más comunes y más costosos para el oído del público. Niveles excesivos sostenidos fatigan al público físicamente y destruyen el contraste dinámico que hace que un pico se sienta como pico. El DJ controla el gain staging con disciplina, deja respirar el oído en los momentos correctos, y reserva el impacto real para cuando de verdad se necesita.</div></div>
+                <div class="cab-rule-card"><button type="button" class="cab-rule-toggle" aria-expanded="false"><span class="cab-rule-num">17</span><span class="cab-rule-title" data-i18n="cabina-rule-17-title">Protección del pico</span><span class="cab-rule-chevron">▾</span></button><div class="cab-rule-body" data-i18n="cabina-rule-17-body">Cuando la pista alcanza un pico real, el objetivo nunca es subir indefinidamente — es físicamente imposible y musicalmente contraproducente. Se sostiene el momento con criterio, se administran los himnos disponibles con cuidado, y se identifica con precisión cuándo conviene liberar presión antes de que el pico se desgaste. Un pico sostenido demasiado tiempo deja de sentirse como pico y empieza a sentirse como fatiga.</div></div>
+                <div class="cab-rule-card"><button type="button" class="cab-rule-toggle" aria-expanded="false"><span class="cab-rule-num">18</span><span class="cab-rule-title" data-i18n="cabina-rule-18-title">Cierre consciente</span><span class="cab-rule-chevron">▾</span></button><div class="cab-rule-body" data-i18n="cabina-rule-18-body">El final de la noche se diseña, no se improvisa. El DJ identifica la hora real de cierre (que rara vez coincide exactamente con la hora contractual), conserva el material adecuado para ese momento específico, y conduce a la sala activamente hacia una conclusión con sentido — en lugar de tocar hasta agotar tanto al público como el catálogo disponible. Terminar bien es tan parte del show como cualquier pico de la noche; es lo último que el público recuerda.</div></div>
+            </div>
+            </section>
+
+            <!-- DIAGRAMA 2: 15 SEGUNDOS + RESCATE -->
+            <section class="cab-section" id="diagnostico-15s">
+                <h2 class="cab-section-title" data-i18n="cabina-flow-title">Diagrama 2 · Diagnóstico de 15 Segundos y Protocolo de Rescate</h2>
+                <p class="cab-section-intro" data-i18n="cabina-flow-intro">Cuando entra un tema decisivo, los primeros 15 segundos son diagnóstico, no sentencia. Elige la reacción que observarías en la pista para ver la ruta que sigue el DJ.</p>
+                <div class="cab-diagram-wrap">
+                    <p style="text-align:center;font-weight:700;color:#fff;font-size:15px;margin:0 0 18px;" data-i18n="cabina-flow-start-label">Entra un tema decisivo →</p>
+                    <p class="cab-detail-label" style="text-align:center;" data-i18n="cabina-flow-signal-title">Microseñales a observar</p>
+                    <ul class="cab-signal-list" style="text-align:center;list-style:none;padding:0;">
+                        <li data-i18n="cabina-flow-signal-list">Pies, cabezas, manos, coros, acercamiento o abandono de pista.</li>
+                    </ul>
+                    <div class="cab-branch-row">
+                        <button type="button" class="cab-branch-btn active" data-branch="strong" data-i18n="cabina-flow-branch-strong">Reacción fuerte</button>
+                        <button type="button" class="cab-branch-btn" data-branch="weak" data-i18n="cabina-flow-branch-weak">Reacción débil o nula</button>
+                    </div>
+
+                    <div class="cab-detail-panel active" data-branch-panel="strong">
+                        <h4 data-i18n="cabina-flow-outcome-strong-title">Continuar y construir</h4>
+                        <p data-i18n="cabina-flow-outcome-strong-body">La sala respondió. El DJ sostiene la dirección, piensa tres canciones adelante y sigue construyendo el arco sin gastar toda la munición de una vez.</p>
+                    </div>
+                    <div class="cab-detail-panel" data-branch-panel="weak">
+                        <h4 data-i18n="cabina-flow-outcome-weak-title">Preparar salida — no entrar en pánico</h4>
+                        <p data-i18n="cabina-flow-outcome-weak-body">No hay sentencia mecánica: el DJ prepara una salida con criterio, no corta en seco.</p>
+                        <div class="cab-rescue-box">
+                            <h4 data-i18n="cabina-flow-rescue-title">Protocolo de rescate</h4>
+                            <ol>
+                                <li data-i18n="cabina-flow-rescue-step1">Un tema de rescate conocido por esa sala específica reconstruye confianza de inmediato.</li>
+                                <li data-i18n="cabina-flow-rescue-step2">No se encadenan dos experimentos fallidos seguidos — la siguiente decisión debe recuperar, no arriesgar de nuevo.</li>
+                                <li data-i18n="cabina-flow-rescue-step3">Corregir rápido y con elegancia es profesionalismo, no derrota.</li>
+                            </ol>
+                        </div>
+                        <div class="cab-rescue-box" style="margin-top:14px;">
+                            <h4 data-i18n="cabina-flow-examples-title">Ejemplos reales de transición de rescate</h4>
+                            <ul style="margin:0;padding-left:20px;color:rgba(255,255,255,0.8);font-size:14px;line-height:1.8;">
+                                <li data-i18n="cabina-flow-example-1">De Open Format anglo sin tracción → rescate Latino/Urbano infalible: cuando un bloque de pop/house internacional no prende, un corte directo a reggaetón o Latin house de alto reconocimiento suele reconstruir la pista de inmediato.</li>
+                                <li data-i18n="cabina-flow-example-2">De pista saturada → tema puente de tempo medio: en vez de otro pico, un track de tempo medio limpia el aire sensorial sin vaciar el salón, preparando el terreno para el siguiente ascenso.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- DIAGRAMA 3: CADENA DE SEÑAL + PLAN B -->
+            <section class="cab-section" id="cadena-senal">
+                <h2 class="cab-section-title" data-i18n="cabina-chain-title">Diagrama 3 · Ergonomía de Cabina y Cadena de Señal</h2>
+                <p class="cab-section-intro" data-i18n="cabina-chain-intro">Toca cada eslabón de la cadena para ver su función, y activa la simulación de Plan B para ver el protocolo de conmutación al reproductor de respaldo.</p>
+                <div class="cab-diagram-wrap">
+                    <svg class="cab-svg" viewBox="0 0 900 140" role="img" aria-label="Cadena de señal de la cabina">
+                        <path class="cab-chain-path" d="M 70 70 L 830 70" />
+                        <g class="cab-node active" data-chain="1" tabindex="0" role="button" aria-pressed="true">
+                            <circle cx="70" cy="70" r="32" />
+                            <text x="70" y="75" data-i18n="cabina-chain-node1-name" style="font-size:11px;">Fuente</text>
+                        </g>
+                        <g class="cab-node" data-chain="2" tabindex="0" role="button" aria-pressed="false">
+                            <circle cx="222" cy="70" r="32" />
+                            <text x="222" y="75" data-i18n="cabina-chain-node2-name" style="font-size:11px;">Trim</text>
+                        </g>
+                        <g class="cab-node" data-chain="3" tabindex="0" role="button" aria-pressed="false">
+                            <circle cx="374" cy="70" r="32" />
+                            <text x="374" y="75" data-i18n="cabina-chain-node3-name" style="font-size:11px;">EQ</text>
+                        </g>
+                        <g class="cab-node" data-chain="4" tabindex="0" role="button" aria-pressed="false">
+                            <circle cx="526" cy="70" r="32" />
+                            <text x="526" y="75" data-i18n="cabina-chain-node4-name" style="font-size:11px;">Master</text>
+                        </g>
+                        <g class="cab-node" data-chain="5" tabindex="0" role="button" aria-pressed="false">
+                            <circle cx="678" cy="70" r="32" />
+                            <text x="678" y="75" data-i18n="cabina-chain-node5-name" style="font-size:11px;">Booth</text>
+                        </g>
+                        <g class="cab-node" data-chain="6" tabindex="0" role="button" aria-pressed="false">
+                            <circle cx="830" cy="70" r="32" />
+                            <text x="830" y="75" data-i18n="cabina-chain-node6-name" style="font-size:11px;">Main PA</text>
+                        </g>
+                    </svg>
+                    <p class="cab-hint" data-i18n="cabina-arc-hint">Toca cada fase para ver el detalle</p>
+
+                    <div class="cab-detail-panel active" data-chain-panel="1"><h4 data-i18n="cabina-chain-node1-name">Fuente</h4><p data-i18n="cabina-chain-node1-detail">El punto de partida de la señal — la calidad del archivo y su ganancia de origen determinan todo lo que sigue en la cadena.</p></div>
+                    <div class="cab-detail-panel" data-chain-panel="2"><h4 data-i18n="cabina-chain-node2-name">Trim</h4><p data-i18n="cabina-chain-node2-detail">El trim ajusta el nivel de entrada de cada canal antes del EQ — evita clipping temprano y establece la base de gain staging correcto.</p></div>
+                    <div class="cab-detail-panel" data-chain-panel="3"><h4 data-i18n="cabina-chain-node3-name">EQ</h4><p data-i18n="cabina-chain-node3-detail">Se moldea el tono del canal sin perder la señal limpia que entró — un EQ agresivo compensa una mala selección de trim, no la reemplaza.</p></div>
+                    <div class="cab-detail-panel" data-chain-panel="4"><h4 data-i18n="cabina-chain-node4-name">Master</h4><p data-i18n="cabina-chain-node4-detail">El master reúne todos los canales — aquí se protege contra el clipping general de la mezcla completa.</p></div>
+                    <div class="cab-detail-panel" data-chain-panel="5"><h4 data-i18n="cabina-chain-node5-name">Booth</h4><p data-i18n="cabina-chain-node5-detail">El booth monitor es la referencia real del DJ — mezclar solo por el sistema principal desde lejos genera decisiones erróneas de nivel.</p></div>
+                    <div class="cab-detail-panel" data-chain-panel="6"><h4 data-i18n="cabina-chain-node6-name">Main PA</h4><p data-i18n="cabina-chain-node6-detail">La salida hacia el público — el resultado final de toda la cadena de gain staging, no el único punto de control.</p></div>
+
+                    <div class="cab-planb-row">
+                        <button type="button" class="cab-toggle" id="cab-planb-toggle" role="switch" aria-checked="false"></button>
+                        <span class="cab-planb-label" data-i18n="cabina-chain-planb-toggle-label">Simular fallo del reproductor principal</span>
+                    </div>
+                    <div class="cab-planb-steps" id="cab-planb-steps">
+                        <div class="cab-rescue-box">
+                            <h4 data-i18n="cabina-chain-planb-title">Conmutación a Plan B</h4>
+                            <ol>
+                                <li data-i18n="cabina-chain-planb-step1">Detectar el fallo sin pánico — el protocolo existe precisamente para este momento.</li>
+                                <li data-i18n="cabina-chain-planb-step2">Conmutar al reproductor de respaldo ya cargado con música de rescate.</li>
+                                <li data-i18n="cabina-chain-planb-step3">Verificar nivel de salida del respaldo antes de subir el fader — evita un salto brusco de volumen.</li>
+                                <li data-i18n="cabina-chain-planb-step4">Continuar el set desde una base segura mientras se resuelve el equipo principal, si es posible.</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ZONIFICACIÓN Y LECTURA DEL SALÓN -->
+            <section class="cab-section" id="zonificacion-salon">
+                <h2 class="cab-section-title" data-i18n="cabina-zoning-title">Zonificación y Lectura del Salón</h2>
+                <p class="cab-section-intro" data-i18n="cabina-zoning-intro">Cada zona del venue entrega información distinta. Leer solo la pista es leer a medias.</p>
+                <div class="cab-zoning-map">
+                    <div class="cab-zone cab-zone-booth">
+                        <div class="cab-zone-name" data-i18n="cabina-zoning-booth-name">Booth / Cabina</div>
+                        <p class="cab-zone-detail" data-i18n="cabina-zoning-booth-detail">Punto de observación central: desde aquí se cruza toda la información de las demás zonas con la selección musical en tiempo real.</p>
+                    </div>
+                    <div class="cab-zone cab-zone-floor">
+                        <div class="cab-zone-name" data-i18n="cabina-zoning-floor-name">Pista Central</div>
+                        <p class="cab-zone-detail" data-i18n="cabina-zoning-floor-detail">Centro de la energía: aquí se leen pies, manos y coros en tiempo real — la señal más directa, pero no la única.</p>
+                    </div>
+                    <div class="cab-zone cab-zone-bar-l">
+                        <div class="cab-zone-name" data-i18n="cabina-zoning-bar-name">Barra Perimetral</div>
+                        <p class="cab-zone-detail" data-i18n="cabina-zoning-bar-detail">Termómetro indirecto: el ritmo de pedidos en barra suele anticipar la energía de la pista antes de que el cambio sea visible desde la cabina.</p>
+                    </div>
+                    <div class="cab-zone cab-zone-vip">
+                        <div class="cab-zone-name" data-i18n="cabina-zoning-vip-name">Mesas / Zona VIP</div>
+                        <p class="cab-zone-detail" data-i18n="cabina-zoning-vip-detail">Reconocimiento sutil: aplausos, brindis y miradas hacia la cabina indican picos sociales, no solo picos musicales.</p>
+                    </div>
+                    <div class="cab-zone cab-zone-entrance">
+                        <div class="cab-zone-name" data-i18n="cabina-zoning-entrance-name">Entrada / Puntos Ciegos</div>
+                        <p class="cab-zone-detail" data-i18n="cabina-zoning-entrance-detail">Flujo de entrada y salida — un aumento súbito de gente saliendo hacia la entrada suele anticipar una caída de energía antes de que sea visible en la pista.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PROTOCOLO DE CIERRE Y TRASPASO -->
+            <section class="cab-section" id="protocolo-cierre">
+                <h2 class="cab-section-title" data-i18n="cabina-closing-title">Protocolo de Cierre y Traspaso de Cabina</h2>
+                <p class="cab-section-intro" data-i18n="cabina-closing-intro">El cierre se ejecuta en secuencia, no de golpe — tanto si hay relevo de otro DJ como si es el cierre total del evento.</p>
+                <ol class="cab-closing-flow">
+                    <li><span class="cab-closing-num">1</span><p data-i18n="cabina-closing-step1">Anunciar el cierre con anticipación (última canción o último bloque) — sin sorprender a la pista.</p></li>
+                    <li><span class="cab-closing-num">2</span><p data-i18n="cabina-closing-step2">Bajar la ganancia del canal saliente a cero de forma gradual, nunca cortar en seco.</p></li>
+                    <li><span class="cab-closing-num">3</span><p data-i18n="cabina-closing-step3">Si hay traspaso a otro DJ: verificar el nivel de salida de su fuente antes de subir su fader — el mismo protocolo que la conmutación a Plan B.</p></li>
+                    <li><span class="cab-closing-num">4</span><p data-i18n="cabina-closing-step4">Entregar contexto verbal breve al DJ entrante: qué funcionó, qué evitar, estado real de la sala en ese momento.</p></li>
+                    <li><span class="cab-closing-num">5</span><p data-i18n="cabina-closing-step5">Si es cierre total (sin relevo): apagar la amplificación en orden — monitores de cabina primero, sistema principal después — nunca al revés, para evitar picos audibles.</p></li>
+                    <li><span class="cab-closing-num">6</span><p data-i18n="cabina-closing-step6">Verificar que el equipo personal (la Maleta Blindada) esté completo antes de desmontar — ningún cable se queda atrás.</p></li>
+                </ol>
+            </section>
+
+            <!-- 12 MÓDULOS -->
+            <section class="cab-section" id="modulos-ensenanza">
+                <h2 class="cab-section-title" data-i18n="cabina-mods-title">12 Módulos de Enseñanza</h2>
+                <p class="cab-section-intro" data-i18n="cabina-mods-intro">La base de la certificación práctica de la Academia.</p>
+                <div class="cab-mods-grid" id="cab-mods-grid">
+                <div class="cab-mod-card"><div class="cab-mod-num"><span data-i18n="cabina-mod-num-label">MÓDULO</span> 1</div><h3 data-i18n="cabina-mod-1-title">Preparación desde casa</h3><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-context-label">Contexto</span><p data-i18n="cabina-mod-1-context">Recibes, sin previo aviso, la ficha de un evento real: tipo (boda, quinceañera, corporativo, club), horario, ubicación y perfil aproximado del público.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-trigger-label">Detonante de crisis</span><p data-i18n="cabina-mod-1-trigger">Tienes 20 minutos antes de tener que presentar tu plan completo — como si el cliente llamara hoy mismo confirmando la fecha.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-goal-label">Objetivo a resolver</span><p data-i18n="cabina-mod-1-goal">Entregar un perfil de público, Plan A, Plan B, rutas musicales flexibles, música de rescate, backups técnicos y un checklist de equipo — todo justificado, no solo listado.</p></div></div>
+                <div class="cab-mod-card"><div class="cab-mod-num"><span data-i18n="cabina-mod-num-label">MÓDULO</span> 2</div><h3 data-i18n="cabina-mod-2-title">Puntualidad y logística</h3><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-context-label">Contexto</span><p data-i18n="cabina-mod-2-context">Te dan una hora contractual de inicio y una dirección real del venue, sin más contexto.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-trigger-label">Detonante de crisis</span><p data-i18n="cabina-mod-2-trigger">Debes calcular, hacia atrás, cada bloque de tiempo — viaje, carga, montaje, soundcheck — hasta llegar a la hora exacta en la que debiste salir de casa.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-goal-label">Objetivo a resolver</span><p data-i18n="cabina-mod-2-goal">Presentar un cronograma con margen de contingencia explícito, no solo una hora de salida estimada a ojo.</p></div></div>
+                <div class="cab-mod-card"><div class="cab-mod-num"><span data-i18n="cabina-mod-num-label">MÓDULO</span> 3</div><h3 data-i18n="cabina-mod-3-title">Lectura de sala</h3><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-context-label">Contexto</span><p data-i18n="cabina-mod-3-context">Observas una sala real o una simulación grabada, sin sonar todavía ni una sola canción.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-trigger-label">Detonante de crisis</span><p data-i18n="cabina-mod-3-trigger">El instructor te pide justificar, en el momento, qué pondrías primero — y por qué, con evidencia observada, no con intuición.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-goal-label">Objetivo a resolver</span><p data-i18n="cabina-mod-3-goal">Documentar microseñales reales (densidad, edades, lenguaje corporal) y usarlas como evidencia para el primer bloque musical.</p></div></div>
+                <div class="cab-mod-card"><div class="cab-mod-num"><span data-i18n="cabina-mod-num-label">MÓDULO</span> 4</div><h3 data-i18n="cabina-mod-4-title">De cero a pista activa</h3><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-context-label">Contexto</span><p data-i18n="cabina-mod-4-context">Arrancas con una pista completamente vacía y silenciosa.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-trigger-label">Detonante de crisis</span><p data-i18n="cabina-mod-4-trigger">Tienes prohibido tocar cualquiera de los tres himnos más fuertes de tu set durante los primeros 20 minutos.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-goal-label">Objetivo a resolver</span><p data-i18n="cabina-mod-4-goal">Construir energía progresivamente hasta llenar la pista sin haber gastado tu mejor material — se evalúa paciencia, secuencia y timing.</p></div></div>
+                <div class="cab-mod-card"><div class="cab-mod-num"><span data-i18n="cabina-mod-num-label">MÓDULO</span> 5</div><h3 data-i18n="cabina-mod-5-title">Regla de 15 segundos y rescate</h3><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-context-label">Contexto</span><p data-i18n="cabina-mod-5-context">Estás en pleno set, con la pista respondiendo bien.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-trigger-label">Detonante de crisis</span><p data-i18n="cabina-mod-5-trigger">El instructor introduce, sin avisar, una &quot;reacción fallida&quot; simulada — el equivalente a una pista que se vacía tras tu selección.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-goal-label">Objetivo a resolver</span><p data-i18n="cabina-mod-5-goal">Detectar el fallo dentro de los primeros 15 segundos simulados, preparar una salida y recuperar la pista sin encadenar un segundo error.</p></div></div>
+                <div class="cab-mod-card"><div class="cab-mod-num"><span data-i18n="cabina-mod-num-label">MÓDULO</span> 6</div><h3 data-i18n="cabina-mod-6-title">Energía sobre BPM</h3><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-context-label">Contexto</span><p data-i18n="cabina-mod-6-context">Se te presenta una secuencia de temas donde el BPM sube pero la energía real de la sala no acompaña.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-trigger-label">Detonante de crisis</span><p data-i18n="cabina-mod-6-trigger">Debes decidir, en vivo, si mantener el BPM ascendente o romper el patrón con un tema más lento pero más efectivo.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-goal-label">Objetivo a resolver</span><p data-i18n="cabina-mod-6-goal">Justificar cada selección por impacto emocional y groove — no por el número de BPM en pantalla.</p></div></div>
+                <div class="cab-mod-card"><div class="cab-mod-num"><span data-i18n="cabina-mod-num-label">MÓDULO</span> 7</div><h3 data-i18n="cabina-mod-7-title">Narrativa y tres canciones adelante</h3><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-context-label">Contexto</span><p data-i18n="cabina-mod-7-context">Se te pide construir una cadena de tres temas con una narrativa clara (género, cultura o emoción conectados).</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-trigger-label">Detonante de crisis</span><p data-i18n="cabina-mod-7-trigger">A mitad de la cadena, el escenario cambia — la pista simulada reacciona distinto a lo esperado.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-goal-label">Objetivo a resolver</span><p data-i18n="cabina-mod-7-goal">Demostrar capacidad real de abandonar la cadena planeada sin perder la coherencia narrativa del momento.</p></div></div>
+                <div class="cab-mod-card"><div class="cab-mod-num"><span data-i18n="cabina-mod-num-label">MÓDULO</span> 8</div><h3 data-i18n="cabina-mod-8-title">Peticiones y presión externa</h3><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-context-label">Contexto</span><p data-i18n="cabina-mod-8-context">Actores simulan ser cliente, invitados y Staff, todos pidiendo canciones distintas y contradictorias al mismo tiempo.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-trigger-label">Detonante de crisis</span><p data-i18n="cabina-mod-8-trigger">El cliente insiste en una canción que no encaja con el momento actual de la pista, frente a testigos.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-goal-label">Objetivo a resolver</span><p data-i18n="cabina-mod-8-goal">Resolver con diplomacia visible y criterio musical, sin ceder automáticamente ni ser rígido sin razón.</p></div></div>
+                <div class="cab-mod-card"><div class="cab-mod-num"><span data-i18n="cabina-mod-num-label">MÓDULO</span> 9</div><h3 data-i18n="cabina-mod-9-title">Conducta y control emocional</h3><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-context-label">Contexto</span><p data-i18n="cabina-mod-9-context">Se evalúa de forma continua, durante todos los demás módulos, sin aviso previo de cuándo.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-trigger-label">Detonante de crisis</span><p data-i18n="cabina-mod-9-trigger">El instructor provoca deliberadamente un error técnico o una crítica dura en medio de un ejercicio.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-goal-label">Objetivo a resolver</span><p data-i18n="cabina-mod-9-goal">Mantener presencia, orden y comunicación profesional sin mostrar frustración visible ante el error o la crítica.</p></div></div>
+                <div class="cab-mod-card"><div class="cab-mod-num"><span data-i18n="cabina-mod-num-label">MÓDULO</span> 10</div><h3 data-i18n="cabina-mod-10-title">Volumen y fatiga</h3><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-context-label">Contexto</span><p data-i18n="cabina-mod-10-context">Se te entrega control total de gain staging en un sistema de sonido real o simulado.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-trigger-label">Detonante de crisis</span><p data-i18n="cabina-mod-10-trigger">La tentación estructural del ejercicio es subir el volumen cada vez que la energía baja — el camino fácil y equivocado.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-goal-label">Objetivo a resolver</span><p data-i18n="cabina-mod-10-goal">Sostener contraste dinámico real a lo largo de un arco completo sin recurrir al volumen como muleta.</p></div></div>
+                <div class="cab-mod-card"><div class="cab-mod-num"><span data-i18n="cabina-mod-num-label">MÓDULO</span> 11</div><h3 data-i18n="cabina-mod-11-title">Arte del cierre</h3><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-context-label">Contexto</span><p data-i18n="cabina-mod-11-context">Se te da una hora de cierre real y un catálogo limitado de material restante.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-trigger-label">Detonante de crisis</span><p data-i18n="cabina-mod-11-trigger">Faltan 15 minutos para el cierre contractual y la pista sigue completamente llena.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-goal-label">Objetivo a resolver</span><p data-i18n="cabina-mod-11-goal">Diseñar los últimos bloques y ejecutar una conclusión con dirección clara, sin quedarte sin material ni prolongar por inercia.</p></div></div>
+                <div class="cab-mod-card"><div class="cab-mod-num"><span data-i18n="cabina-mod-num-label">MÓDULO</span> 12</div><h3 data-i18n="cabina-mod-12-title">Simulación final de cabina</h3><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-context-label">Contexto</span><p data-i18n="cabina-mod-12-context">Evento simulado de principio a fin, con cambios de público, peticiones, fallos de selección y sorpresas combinadas.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-trigger-label">Detonante de crisis</span><p data-i18n="cabina-mod-12-trigger">Todo lo anterior ocurre en una sola sesión, sin previo aviso de en qué orden ni en qué momento.</p></div><div class="cab-mod-field"><span class="cab-mod-field-label" data-i18n="cabina-mod-goal-label">Objetivo a resolver</span><p data-i18n="cabina-mod-12-goal">Demostrar cómo piensas, lees, corriges y explicas cada decisión — no solamente cómo mezclas técnicamente.</p></div></div>
+            </div>
+            </section>
+
+            <!-- RÚBRICA -->
+            <section class="cab-section" id="rubrica-evaluacion">
+                <h2 class="cab-section-title" data-i18n="cabina-rubric-title">Rúbrica de Autoevaluación (0–5)</h2>
+                <p class="cab-section-intro" data-i18n="cabina-rubric-intro">Puntúa cada disciplina y calcula tu promedio. Esta rúbrica es una herramienta de autorreflexión — no reemplaza la evaluación práctica presencial de la Academia.</p>
+                <div class="cab-diagram-wrap">
+                    <table class="cab-rubric-table">
+                        <thead>
+                            <tr>
+                                <th data-i18n="cabina-rubric-th-discipline">Disciplina</th>
+                                <th data-i18n="cabina-rubric-th-score">Puntaje (0–5)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cab-rubric-body"></tbody>
+                    </table>
+                    <div class="cab-rubric-result" id="cab-rubric-result" style="display:none;">
+                        <div class="cab-rubric-avg" id="cab-rubric-avg">0.0</div>
+                        <div class="cab-rubric-tier" id="cab-rubric-tier"></div>
+                        <div class="cab-rubric-notes" id="cab-rubric-notes"></div>
+                        <button type="button" class="cab-rubric-reset" id="cab-rubric-reset" data-i18n="cabina-rubric-reset">Reiniciar</button>
+                    </div>
+                </div>
+
+                <div class="cab-criterio-box">
+                    <h3 class="cab-criterio-title" data-i18n="cabina-criterio-title">Defensa de Criterio — El "¿Por Qué?"</h3>
+                    <p class="cab-criterio-intro" data-i18n="cabina-criterio-intro">La ejecución técnica no es suficiente para certificar a un DJ. Por cada decisión importante del set, debe poder responder estas cinco preguntas con evidencia real — este es el criterio que evalúa un instructor en la práctica presencial.</p>
+                    <div class="cab-criterio-grid">
+                        <div class="cab-criterio-field">
+                            <label class="cab-criterio-label" for="cab-criterio-q1" data-i18n="cabina-criterio-q1-label">1. Lectura de sala</label>
+                            <textarea id="cab-criterio-q1" class="cab-criterio-textarea" rows="2" data-i18n-hold="cabina-criterio-q1-placeholder" placeholder="¿Qué observaste exactamente antes de decidir? (densidad, edades, lenguaje corporal...)"></textarea>
+                        </div>
+                        <div class="cab-criterio-field">
+                            <label class="cab-criterio-label" for="cab-criterio-q2" data-i18n="cabina-criterio-q2-label">2. Intención musical</label>
+                            <textarea id="cab-criterio-q2" class="cab-criterio-textarea" rows="2" data-i18n-hold="cabina-criterio-q2-placeholder" placeholder="¿Qué buscabas lograr con esa selección específica?"></textarea>
+                        </div>
+                        <div class="cab-criterio-field">
+                            <label class="cab-criterio-label" for="cab-criterio-q3" data-i18n="cabina-criterio-q3-label">3. Nivel de riesgo asumido</label>
+                            <textarea id="cab-criterio-q3" class="cab-criterio-textarea" rows="2" data-i18n-hold="cabina-criterio-q3-placeholder" placeholder="¿Qué tan arriesgada era la decisión frente a la opción segura?"></textarea>
+                        </div>
+                        <div class="cab-criterio-field">
+                            <label class="cab-criterio-label" for="cab-criterio-q4" data-i18n="cabina-criterio-q4-label">4. Plan de alternativa (Plan B)</label>
+                            <textarea id="cab-criterio-q4" class="cab-criterio-textarea" rows="2" data-i18n-hold="cabina-criterio-q4-placeholder" placeholder="¿Qué tenías preparado si esto no funcionaba?"></textarea>
+                        </div>
+                        <div class="cab-criterio-field" style="grid-column:1 / -1;">
+                            <label class="cab-criterio-label" for="cab-criterio-q5" data-i18n="cabina-criterio-q5-label">5. Maniobra de corrección aplicada</label>
+                            <textarea id="cab-criterio-q5" class="cab-criterio-textarea" rows="2" data-i18n-hold="cabina-criterio-q5-placeholder" placeholder="Si algo falló, ¿cómo corregiste exactamente?"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- FALTAS CRÍTICAS -->
+            <section class="cab-section" id="faltas-criticas">
+                <h2 class="cab-section-title" data-i18n="cabina-faults-title">Faltas Críticas</h2>
+                <div class="cab-faults-box">
+                    <p data-i18n="cabina-faults-intro">La Academia considera faltas críticas: impuntualidad grave, ausencia de preparación básica, conducta insegura, abandono injustificado de cabina, niveles sonoros irresponsables, incapacidad reiterada para corregir una pista, y conducta irrespetuosa con cliente, público o Staff.</p>
+                    <a class="cab-faults-link" href="./standards.html" data-i18n="cabina-faults-link">Ver sanciones, suspensión y revocación en el Código de Conducta MDB →</a>
+                </div>
+            </section>
+
+            <!-- CASO DE USO: ONE HIT WONDER -->
+            <section class="cab-section" id="caso-de-uso">
+                <div class="cab-usecase-box">
+                    <h3 data-i18n="cabina-usecase-title">Caso de uso: One Hit Wonder</h3>
+                    <p data-i18n="cabina-usecase-body">El show en vivo One Hit Wonder de DJMago305 es un ejemplo práctico de aplicación del método — no su origen. La construcción de energía, la lectura de sala y el cierre consciente se aplican igual en un club, una boda o esta producción itinerante de himnos de un solo hit.</p>
+                    <a href="./one-hit-wonder.html" data-i18n="cabina-usecase-link">Conocer One Hit Wonder →</a>
+                </div>
+            </section>
+
+            <!-- CREDO -->
+            <section class="cab-credo">
+                <div class="container">
+                    <p class="cab-credo-eyebrow" data-i18n="cabina-credo-eyebrow">CREDO DEL MÉTODO DE CABINA</p>
+                    <p data-i18n="cabina-credo-body">Me preparo antes de llegar. Observo antes de imponer. Construyo antes de exigir. Leo antes de reaccionar. Corrijo sin ego. Protejo la pista antes que mi orgullo. Pienso hacia adelante. Y cierro con intención.</p>
+                </div>
+            </section>
+
+        </div>
+
+        <div class="cab-gate-overlay" aria-hidden="false">
+            <div class="cab-gate-card">
+                <div class="cab-gate-icon">🔒</div>
+                <h3 data-i18n="cabina-gate-title">Contenido Exclusivo para DJs Suscritos</h3>
+                <p data-i18n="cabina-gate-subtitle">Desbloquea la doctrina completa de cabina, protocolos de rescate y la rúbrica de certificación.</p>
+                <div class="cab-gate-actions">
+                    <a href="./login.html" class="cab-gate-btn cab-gate-btn-gold" data-i18n="cabina-gate-login">Iniciar Sesión</a>
+                    <a href="./login.html?signup=free" class="cab-gate-btn cab-gate-btn-outline" data-i18n="cabina-gate-signup">Registrarse</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <!-- LOCKED SECTION: DO NOT MODIFY -->
+        <div class="container" style="text-align: center;">
+            <div>© 2026 Miami DJ Beat LLC · Academia de DJs Profesionales</div>
+        </div>
+    </footer>
+
+    <script src="./translations.js?v=20260906-cabina-method"></script>
+    <script src="./i18n.js?v=20260226-1"></script>
+    <script>
+    (function () {
+        // ---------- 18 rules + 12 modules: renderizados ESTATICOS en el HTML (SEO/AEO --
+        // Googlebot y otros crawlers deben leer el texto real sin ejecutar JS). Este bloque
+        // solo adjunta el comportamiento de acordeon a las tarjetas que ya existen en el DOM. ----------
+        function bindRuleAccordion(grid) {
+            if (!grid) return;
+            grid.addEventListener('click', function (e) {
+                var btn = e.target.closest('.cab-rule-toggle');
+                if (!btn) return;
+                var card = btn.closest('.cab-rule-card');
+                var open = card.classList.toggle('open');
+                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+        }
+        bindRuleAccordion(document.getElementById('cab-rules-grid-open'));
+        bindRuleAccordion(document.getElementById('cab-rules-grid-gated'));
+
+        // ---------- Diagram 1: energy arc ----------
+        document.querySelectorAll('#arco-energia .cab-node').forEach(function (node) {
+            function activate() {
+                document.querySelectorAll('#arco-energia .cab-node').forEach(function (n) {
+                    n.classList.remove('active');
+                    n.setAttribute('aria-pressed', 'false');
+                });
+                node.classList.add('active');
+                node.setAttribute('aria-pressed', 'true');
+                var phase = node.getAttribute('data-phase');
+                document.querySelectorAll('#arco-energia .cab-detail-panel').forEach(function (p) {
+                    p.classList.toggle('active', p.getAttribute('data-panel') === phase);
+                });
+            }
+            node.addEventListener('click', activate);
+            node.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); }
+            });
+        });
+
+        // ---------- Diagram 2: 15s decision flow ----------
+        document.querySelectorAll('.cab-branch-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                document.querySelectorAll('.cab-branch-btn').forEach(function (b) { b.classList.remove('active'); });
+                btn.classList.add('active');
+                var branch = btn.getAttribute('data-branch');
+                document.querySelectorAll('[data-branch-panel]').forEach(function (p) {
+                    p.classList.toggle('active', p.getAttribute('data-branch-panel') === branch);
+                });
+            });
+        });
+
+        // ---------- Diagram 3: signal chain ----------
+        document.querySelectorAll('#cadena-senal .cab-node').forEach(function (node) {
+            function activate() {
+                document.querySelectorAll('#cadena-senal .cab-node').forEach(function (n) {
+                    n.classList.remove('active');
+                    n.setAttribute('aria-pressed', 'false');
+                });
+                node.classList.add('active');
+                node.setAttribute('aria-pressed', 'true');
+                var chain = node.getAttribute('data-chain');
+                document.querySelectorAll('[data-chain-panel]').forEach(function (p) {
+                    p.classList.toggle('active', p.getAttribute('data-chain-panel') === chain);
+                });
+            }
+            node.addEventListener('click', activate);
+            node.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); }
+            });
+        });
+
+        var planbToggle = document.getElementById('cab-planb-toggle');
+        var planbSteps = document.getElementById('cab-planb-steps');
+        var sourceNode = document.querySelector('#cadena-senal .cab-node[data-chain="1"]');
+        planbToggle.addEventListener('click', function () {
+            var on = planbToggle.classList.toggle('on');
+            planbToggle.setAttribute('aria-checked', on ? 'true' : 'false');
+            planbSteps.classList.toggle('active', on);
+            if (sourceNode) sourceNode.classList.toggle('planb-active', on);
+        });
+
+        // ---------- Rubric ----------
+        var DISCIPLINES = ['prep', 'punt', 'lectura', 'energia', 'correccion', 'narrativa', 'conducta', 'cierre'];
+        var rubricBody = document.getElementById('cab-rubric-body');
+        var scores = {};
+        DISCIPLINES.forEach(function (key) {
+            var tr = document.createElement('tr');
+            var scoreBtns = '';
+            for (var s = 0; s <= 5; s++) {
+                scoreBtns += '<button type="button" class="cab-score-btn" data-key="' + key + '" data-score="' + s + '">' + s + '</button>';
+            }
+            tr.innerHTML =
+                '<td class="cab-rubric-label" data-i18n="cabina-rubric-' + key + '"></td>' +
+                '<td><div class="cab-score-btns">' + scoreBtns + '</div></td>';
+            rubricBody.appendChild(tr);
+        });
+
+        function renderRubricResult() {
+            var keys = Object.keys(scores);
+            var resultBox = document.getElementById('cab-rubric-result');
+            if (!keys.length) { resultBox.style.display = 'none'; return; }
+            resultBox.style.display = 'block';
+            var sum = 0;
+            var best = null, worst = null;
+            DISCIPLINES.forEach(function (k) {
+                if (scores[k] === undefined) return;
+                sum += scores[k];
+                if (best === null || scores[k] > scores[best]) best = k;
+                if (worst === null || scores[k] < scores[worst]) worst = k;
+            });
+            var avg = sum / keys.length;
+            document.getElementById('cab-rubric-avg').textContent = avg.toFixed(1);
+            var tierKey = avg >= 4 ? 'cabina-rubric-tier-high' : (avg >= 2.5 ? 'cabina-rubric-tier-mid' : 'cabina-rubric-tier-low');
+            document.getElementById('cab-rubric-tier').textContent = window.i18n ? window.i18n.t(tierKey) : '';
+            var notes = document.getElementById('cab-rubric-notes');
+            notes.innerHTML = '';
+            if (keys.length >= 2 && window.i18n) {
+                var strengthLabel = window.i18n.t('cabina-rubric-strength-label');
+                var weakLabel = window.i18n.t('cabina-rubric-weak-label');
+                var bestLabel = window.i18n.t('cabina-rubric-' + best);
+                var worstLabel = window.i18n.t('cabina-rubric-' + worst);
+                notes.innerHTML =
+                    '<span><strong>' + strengthLabel + '</strong> ' + bestLabel + '</span>' +
+                    '<span><strong>' + weakLabel + '</strong> ' + worstLabel + '</span>';
+            }
+        }
+
+        rubricBody.addEventListener('click', function (e) {
+            var btn = e.target.closest('.cab-score-btn');
+            if (!btn) return;
+            var key = btn.getAttribute('data-key');
+            var score = Number(btn.getAttribute('data-score'));
+            scores[key] = score;
+            var row = btn.closest('tr');
+            row.querySelectorAll('.cab-score-btn').forEach(function (b) { b.classList.remove('selected'); });
+            btn.classList.add('selected');
+            renderRubricResult();
+        });
+
+        document.getElementById('cab-rubric-reset').addEventListener('click', function () {
+            scores = {};
+            document.querySelectorAll('.cab-score-btn.selected').forEach(function (b) { b.classList.remove('selected'); });
+            document.getElementById('cab-rubric-result').style.display = 'none';
+        });
+
+        document.addEventListener('languageChanged', function () {
+            renderRubricResult();
+        });
+    })();
+    </script>
+
+    <link rel="stylesheet" href="./mdj-assistant.css?v=20260411-booth-policy" />
+    <div id="mdj-assistant-booth">
+        <div class="booth-window">
+            <div class="booth-header">
+                <div class="status-dot"></div>
+                <div style="flex: 1;">
+                    <h3>Booth Assistant</h3>
+                    <div style="font-size: 10px; color: rgba(255,255,255,0.4); font-weight: 700;">Sales &amp; Negotiation Expert</div>
+                </div>
+            </div>
+            <div class="booth-messages"></div>
+            <div class="booth-input-area">
+                <input type="text" placeholder="Hablemos de negocios / Let's talk business..." />
+                <button type="button" class="booth-send-btn">➔</button>
+            </div>
+        </div>
+        <div class="booth-trigger" title="Hablar con Booth Assistant">
+            <div class="avatar-glow"></div>
+            <div style="font-size: 30px; z-index: 10;">🤖</div>
+        </div>
+    </div>
+    <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
+    <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
+  <script src="./mdj-identity.js?v=20260617-buyer-artist-fix-1"></script>
+      <script src="./mdjb-shared-header.js?v=20260903-revert-nav-agenda"></script>
+      <script src="./js/mdj-profile-owner-link.js?v=20260516-perf-ab-1"></script>
+  <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
+  <script src="./mdj-mainnav-infinite.js?v=20260818-nav-canonico"></script>
+  <script src="./mdj-owner-tabs-marquee.js?v=20260818-nav-canonico"></script>
+  <script src="./mdj-social-bar.js?v=20260819-social-contact-only"></script>
+  <script defer src="./js/mdj-cart-pill.js?v=20260616-pill-5"></script>
+  <script src="./mdj-mobile-header-fix.js?v=20260825-a"></script>
+</body>
+
+</html>
