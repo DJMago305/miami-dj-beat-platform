@@ -7145,4 +7145,45 @@
   } else {
     boot();
   }
+
+  /* ══ COPIAR AL PORTAPAPELES — helper centralizado ═══════════════════════════
+     Existia duplicado 4 veces (copyReferral en profile-loader.js, dj-dashboard.html,
+     staff-agenda.html, weather-lab.html) sin ningun lugar comun. Se centraliza aqui
+     para no agregar una quinta copia (Modulo de Salas/QR/Taquilla, 2026-09-05).
+     feedbackEl es opcional: si se pasa, muestra brevemente "¡Copiado!" en su texto
+     y lo restaura, en vez de un alert() bloqueante. */
+  window.mdjCopyToClipboard = function (text, feedbackEl) {
+    var restore = feedbackEl ? feedbackEl.textContent : null;
+    function ok() {
+      if (feedbackEl) {
+        feedbackEl.textContent = '¡Copiado!';
+        setTimeout(function () { feedbackEl.textContent = restore; }, 1600);
+      }
+    }
+    function fail() {
+      if (feedbackEl) {
+        feedbackEl.textContent = 'No se pudo copiar';
+        setTimeout(function () { feedbackEl.textContent = restore; }, 1600);
+      } else {
+        alert('No se pudo copiar el enlace.');
+      }
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(ok, fail);
+    } else {
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        ok();
+      } catch (e) {
+        fail();
+      }
+    }
+  };
 })();
