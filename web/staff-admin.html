@@ -6873,19 +6873,31 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
             }
 
             window.mdjCreateRoom = async function(venueId) {
-                const db = window.getSupabaseClient();
-                const name = document.getElementById('room-new-name-' + venueId).value.trim();
-                if (!name) { alert('❌ Falta el nombre de la sala.'); return; }
-                const slug = mdjSlugify(name);
-                const capacityRaw = document.getElementById('room-new-capacity-' + venueId).value;
-                const { error } = await db.from('venue_rooms').insert({
-                    venue_id: venueId, name, slug,
-                    capacity: capacityRaw ? parseInt(capacityRaw, 10) : null,
-                    whatsapp_link: document.getElementById('room-new-whatsapp-' + venueId).value.trim() || null,
-                });
-                if (error) { alert('❌ Error: ' + error.message); return; }
-                alert('✅ Sala creada.');
-                mdjLoadRooms(venueId);
+                try {
+                    console.log('[mdjCreateRoom] click recibido, venueId=', venueId);
+                    const db = window.getSupabaseClient();
+                    if (!db) { alert('❌ Supabase todavía no está listo, espera un segundo e intenta de nuevo.'); console.error('[mdjCreateRoom] getSupabaseClient() devolvió null/undefined'); return; }
+                    const nameEl = document.getElementById('room-new-name-' + venueId);
+                    if (!nameEl) { alert('❌ Error interno: no se encontró el campo de nombre (room-new-name-' + venueId + ').'); console.error('[mdjCreateRoom] input no encontrado, id esperado: room-new-name-' + venueId); return; }
+                    const name = nameEl.value.trim();
+                    if (!name) { alert('❌ Falta el nombre de la sala.'); return; }
+                    const slug = mdjSlugify(name);
+                    const capacityRaw = document.getElementById('room-new-capacity-' + venueId).value;
+                    const payload = {
+                        venue_id: venueId, name, slug,
+                        capacity: capacityRaw ? parseInt(capacityRaw, 10) : null,
+                        whatsapp_link: document.getElementById('room-new-whatsapp-' + venueId).value.trim() || null,
+                    };
+                    console.log('[mdjCreateRoom] insertando:', payload);
+                    const { data, error } = await db.from('venue_rooms').insert(payload).select();
+                    if (error) { console.error('[mdjCreateRoom] error de Supabase:', error); alert('❌ Error: ' + error.message + (error.details ? ' (' + error.details + ')' : '') + (error.hint ? ' — pista: ' + error.hint : '')); return; }
+                    console.log('[mdjCreateRoom] insert exitoso, fila devuelta:', data);
+                    alert('✅ Sala creada. ID: ' + (data && data[0] ? data[0].id : '¿?'));
+                    mdjLoadRooms(venueId);
+                } catch (e) {
+                    console.error('[mdjCreateRoom] excepcion no capturada:', e);
+                    alert('❌ Excepción inesperada: ' + (e && e.message ? e.message : e));
+                }
             };
 
             window.mdjEditRoom = async function(id) {
@@ -6925,10 +6937,13 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 backdrop.innerHTML = `
                     <div class="mdj-qr-modal">
                         <strong style="display:block;margin-bottom:4px;">${roomName}</strong>
-                        <p class="fineprint" style="margin:0 0 14px;word-break:break-all;">${url}</p>
+                        <a href="${url}" target="_blank" rel="noopener" class="fineprint" style="display:block;margin:0 0 14px;word-break:break-all;color:var(--gold);text-decoration:underline;">${url}</a>
                         <div id="mdj-qr-canvas" style="display:flex;justify-content:center;"></div>
                         <p class="fineprint" style="margin:14px 0 0;color:rgba(255,255,255,.4);">Esta URL se activa cuando se publique la página pública de la sala (Fase 3).</p>
-                        <button class="btn secondary small" style="margin-top:14px;" onclick="document.getElementById('mdj-qr-modal-backdrop').remove()">Cerrar</button>
+                        <div style="display:flex;gap:10px;justify-content:center;margin-top:14px;">
+                            <button class="btn primary small" onclick="mdjDownloadRoomQR('${roomName.replace(/'/g, "\\'")}')">⬇️ Descargar PNG</button>
+                            <button class="btn secondary small" onclick="document.getElementById('mdj-qr-modal-backdrop').remove()">Cerrar</button>
+                        </div>
                     </div>
                 `;
                 document.body.appendChild(backdrop);
@@ -6938,6 +6953,17 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     document.getElementById('mdj-qr-canvas').innerHTML = '<p class="fineprint">Cargando generador de QR…</p>';
                     setTimeout(() => { if (window.QRCode) mdjShowRoomQR(venueSlug, roomSlug, roomName); }, 400);
                 }
+            };
+
+            /* Exporta el QR ya renderizado (canvas de qrcodejs) a PNG -- mismo
+               patron de descarga que window.downloadMyQR en dj-profile.html. */
+            window.mdjDownloadRoomQR = function(roomName) {
+                const canvas = document.querySelector('#mdj-qr-canvas canvas');
+                if (!canvas) { alert('❌ El QR todavía no terminó de generarse, intenta de nuevo en un segundo.'); return; }
+                const link = document.createElement('a');
+                link.download = 'qr-' + mdjSlugify(roomName) + '.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
             };
 
             window.mdjToggleRoomEvents = async function(roomId) {
