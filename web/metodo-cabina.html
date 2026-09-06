@@ -704,6 +704,15 @@
             -webkit-user-select: none;
             user-select: none;
         }
+        /* DJ con sesion activa: el HTML de fondo (18 reglas, talleres, etc.) nunca cambia --
+           esto solo apaga la mascara visual para que Googlebot y el resto del rastreo no dependan
+           de este estado. Ver script "Auth gate" al final del archivo. */
+        .cab-gate-wrap.cab-gate-unlocked .cab-gate-overlay { display: none; }
+        .cab-gate-wrap.cab-gate-unlocked .cab-gate-content {
+            pointer-events: auto;
+            -webkit-user-select: auto;
+            user-select: auto;
+        }
         .cab-gate-overlay {
             position: absolute;
             inset: 0;
@@ -1575,6 +1584,39 @@
                 }
             });
         }
+    })();
+    </script>
+
+    <!-- Auth gate: DJ con sesion activa ve la doctrina completa sin el muro. El HTML de fondo
+         (18 reglas + talleres) NUNCA se toca aqui -- solo se agrega/quita una clase que apaga
+         la mascara visual. Reutiliza window.getSupabaseClient(), el mismo punto de entrada
+         sincrono que usa el resto del sitio (ej. mdjb-shared-header.js), no un cliente nuevo. -->
+    <script>
+    (function () {
+        var gateWrap = document.getElementById('cab-gate-wrap');
+        if (!gateWrap) return;
+
+        function applyGateState(hasSession) {
+            gateWrap.classList.toggle('cab-gate-unlocked', !!hasSession);
+        }
+
+        function checkSession(retriesLeft) {
+            var supa = (typeof window.getSupabaseClient === 'function') ? window.getSupabaseClient() : null;
+            if (!supa) {
+                if (retriesLeft > 0) setTimeout(function () { checkSession(retriesLeft - 1); }, 250);
+                return;
+            }
+            supa.auth.getSession().then(function (r) {
+                applyGateState(!!(r && r.data && r.data.session));
+            }).catch(function () {});
+            try {
+                supa.auth.onAuthStateChange(function (_event, session) {
+                    applyGateState(!!session);
+                });
+            } catch (e) {}
+        }
+
+        checkSession(6);
     })();
     </script>
 
