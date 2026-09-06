@@ -36,7 +36,8 @@
         .vr-card p, .vr-card li { color: rgba(255,255,255,0.75); line-height: 1.6; font-size: 15px; }
         .vr-qr-box { display:flex; justify-content:center; padding: 16px; background:#fff; border-radius: 14px; margin-bottom: 14px; }
         .vr-link { display:block; text-align:center; word-break:break-all; color: var(--gold); text-decoration: underline; font-size: 14px; margin-bottom: 18px; }
-        .vr-share-row { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+        .vr-share-row { display:flex; gap:8px; justify-content:center; }
+        @media (max-width:420px) { .vr-share-row { flex-wrap:wrap; } .vr-tile { flex:1 1 40%; } }
         .vr-share-btn {
             display:inline-flex; align-items:center; gap:8px; padding: 10px 18px;
             border-radius: 50px; border: 1px solid rgba(197,160,89,0.4); color:#fff;
@@ -44,6 +45,16 @@
             text-decoration:none; transition: all .2s ease;
         }
         .vr-share-btn:hover { border-color: var(--gold); background: rgba(255,255,255,0.08); }
+        /* Mismo patrón visual que los Action Tiles de staff-admin.html (Venues CRUD) */
+        .vr-tile {
+            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+            flex: 1 1 0; min-width: 0; padding: 10px 4px; border-radius: 12px;
+            border: 1px solid rgba(197,160,89,0.4); background: rgba(255,255,255,0.03);
+            color: rgba(240,224,180,0.9); cursor:pointer; text-decoration:none;
+            font-size: 11px; font-weight: 700; text-align:center; white-space:nowrap; transition: all .2s ease;
+        }
+        .vr-tile:hover { border-color: var(--gold); background: rgba(255,255,255,0.07); }
+        .vr-tile svg { width: 20px; height: 20px; stroke: var(--gold); fill:none; stroke-width: 1.6; }
         .vr-ticket-row { display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid rgba(255,255,255,0.08); }
         .vr-ticket-row:last-child { border-bottom:none; }
         .vr-ticket-qty { display:flex; align-items:center; gap:8px; }
@@ -119,11 +130,11 @@
             <div class="vr-qr-box" id="vr-qr-box"></div>
             <a id="vr-canonical-link" class="vr-link" href="#" target="_blank" rel="noopener"></a>
             <div class="vr-share-row">
-                <button class="vr-share-btn" id="vr-btn-share">📤 Compartir</button>
-                <a class="vr-share-btn" id="vr-btn-whatsapp" href="#" target="_blank" rel="noopener">WhatsApp</a>
-                <a class="vr-share-btn" id="vr-btn-sms" href="#">SMS</a>
-                <button class="vr-share-btn" id="vr-btn-copy">🔗 Copiar enlace</button>
-                <button class="vr-share-btn" id="vr-btn-download">⬇️ Descargar QR</button>
+                <button class="vr-tile" id="vr-btn-share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg><span>Compartir</span></button>
+                <a class="vr-tile" id="vr-btn-whatsapp" href="#" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg><span>WhatsApp</span></a>
+                <a class="vr-tile" id="vr-btn-sms" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>SMS</span></a>
+                <button class="vr-tile" id="vr-btn-copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span>Copiar enlace</span></button>
+                <button class="vr-tile" id="vr-btn-download"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Descargar QR</span></button>
             </div>
         </div>
 
@@ -221,7 +232,7 @@
         document.getElementById('vr-btn-whatsapp').href = 'https://wa.me/?text=' + encodeURIComponent(text + ' ' + url);
         document.getElementById('vr-btn-sms').href = 'sms:?body=' + encodeURIComponent(text + ' ' + url);
         document.getElementById('vr-btn-copy').onclick = function () {
-            window.mdjCopyToClipboard(url, document.getElementById('vr-btn-copy'));
+            window.mdjCopyToClipboard(url, document.querySelector('#vr-btn-copy span'));
         };
         document.getElementById('vr-btn-download').onclick = function () {
             var canvas = document.querySelector('#vr-qr-box canvas');
