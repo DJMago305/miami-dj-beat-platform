@@ -18,6 +18,10 @@ const REGISTERED_READ_TOOLS = new Set([
     "consultar_efemerides",
     // consultar_historial_bitacora (2026-09-01): solo lee company_incident_log.
     "consultar_historial_bitacora",
+    // consultar_eventos_venue (2026-09-05): solo lee venue_events/venue_ticket_types
+    // (status=announced, active=true) -- da los ids reales que reservar_entradas_venue
+    // necesita, no toca datos de clientes.
+    "consultar_eventos_venue",
 ]);
 const REGISTERED_WRITE_TOOLS = new Set([
     "crear_nota_lead",
@@ -59,6 +63,12 @@ const REGISTERED_WRITE_TOOLS = new Set([
     // mismo chat). Solo dispara enviar/cancelar sobre un id YA encolado por
     // enviar_sms/enviar_email -- nunca crea contenido nuevo.
     "confirmar_envio_mensaje",
+    // reservar_entradas_venue (2026-09-05): no escribe ninguna fila -- solo
+    // genera un link de Stripe Checkout reusando create-venue-ticket-checkout
+    // (misma re-precificacion server-side de la compra publica). La orden
+    // real la crea stripe-webhook cuando el cliente paga, nunca esta
+    // herramienta, asi que no hay riesgo de escritura directa que aprobar.
+    "reservar_entradas_venue",
 ]);
 
 export type ApprovalMode = "read" | "write";
