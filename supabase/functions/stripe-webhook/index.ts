@@ -61,14 +61,16 @@ async function notifyClientBookingConfirmed(
     if (!clientUserId) return;
 
     try {
-        await supabase.from("event_reminders_queue").insert({
+        const { error: qErr } = await supabase.from("event_reminders_queue").insert({
             client_user_id: clientUserId,
             event_id: leadId,
+            dedup_key: `booking_confirmed:${leadId}`,
             reminder_type: "booking_confirmed",
             status: "sent",
             scheduled_for: new Date().toISOString(),
             sent_at: new Date().toISOString(),
         });
+        if (qErr) console.error("[Webhook] event_reminders_queue insert failed:", qErr);
     } catch (qErr) {
         console.error("[Webhook] event_reminders_queue insert failed:", qErr);
     }
@@ -584,6 +586,68 @@ serve(async (req) => {
                         console.error("[Webhook] merch_orders:", merchErr.message);
                     } else {
                         console.log(`✅ Merch order: ${session.id} | ${email} | $${((session.amount_total ?? 0) / 100).toFixed(2)}`);
+                    }
+                    break;
+                }
+
+                // ── Branch: Entradas de sala (Checkout, create-venue-ticket-checkout) ──
+                // Modulo de Salas/QR/Taquilla (docs/ESTADO_MAESTRO.md ~1321). Misma
+                // disciplina que merch/quote: escribe venue_ticket_orders SOLO aqui,
+                // con el pago ya confirmado, y solo entonces incrementa
+                // quantity_sold -- nunca antes, para que el conteo de disponibilidad
+                // nunca se adelante a un pago real.
+                if (session.metadata?.product === "venue_ticket") {
+                    const eventIdTicket = String(session.metadata?.event_id ?? "");
+                    const chunkCount = Number(session.metadata?.ticket_items_chunks ?? 0);
+                    let itemsJson = "";
+                    for (let i = 0; i < chunkCount; i++) {
+                        itemsJson += String(session.metadata?.[`ticket_items_${i}`] ?? "");
+                    }
+                    let items: { id: string; label: string; qty: number; price_cents: number }[] = [];
+                    try {
+                        items = itemsJson ? JSON.parse(itemsJson) : [];
+                    } catch (parseErr) {
+                        console.error("[Webhook] venue_ticket_orders: items de metadata invalidos:", parseErr);
+                    }
+
+                    const email =
+                        (session.customer_details?.email as string | undefined) ||
+                        (session.customer_email as string | undefined) ||
+                        null;
+
+                    const { error: ticketOrderErr } = await supabase.from("venue_ticket_orders").upsert({
+                        event_id: eventIdTicket || null,
+                        stripe_session_id: session.id,
+                        stripe_payment_intent_id: (session.payment_intent as string) ?? null,
+                        items,
+                        customer_name: session.customer_details?.name || null,
+                        customer_email: email,
+                        customer_phone: session.customer_details?.phone || null,
+                        subtotal_cents: Number(session.metadata?.subtotal_cents ?? 0),
+                        total_cents: session.amount_total ?? 0,
+                        currency: session.currency ?? "usd",
+                    }, { onConflict: "stripe_session_id" });
+
+                    if (ticketOrderErr) {
+                        console.error("[Webhook] venue_ticket_orders:", ticketOrderErr.message);
+                    } else {
+                        console.log(`✅ Venue ticket order: ${session.id} | ${email} | $${((session.amount_total ?? 0) / 100).toFixed(2)}`);
+                        // Incrementa quantity_sold por linea -- one-at-a-time (no RPC
+                        // atomica todavia) es aceptable aqui: el pago ya se confirmo,
+                        // esto solo ajusta el contador de disponibilidad restante.
+                        for (const line of items) {
+                            const { data: current } = await supabase
+                                .from("venue_ticket_types")
+                                .select("quantity_sold")
+                                .eq("id", line.id)
+                                .maybeSingle();
+                            if (current) {
+                                await supabase
+                                    .from("venue_ticket_types")
+                                    .update({ quantity_sold: (current.quantity_sold || 0) + line.qty })
+                                    .eq("id", line.id);
+                            }
+                        }
                     }
                     break;
                 }

@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Sala — Miami DJ Beat</title>
+    <meta name="description" content="Escanea o comparte para ver esta sala: entradas, lista de espera y comunidad de WhatsApp." />
+    <meta name="robots" content="noindex" />
+    <!-- noindex a proposito: cada sala es una pagina de destino de QR/flyer fisico,
+         no una pagina editorial pensada para posicionar en buscadores por su cuenta. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=optional" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&display=optional" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css?v=20260823-hero-card-altura" />
+    <link rel="stylesheet" href="./header-unified.css?v=20260902-cortinas" />
+    <style>
+        body.page-venue-room {
+            background: radial-gradient(ellipse at top, rgba(197,160,89,0.08) 0%, transparent 55%), #050505;
+            min-height: 100vh;
+        }
+        .vr-wrap { max-width: 640px; margin: 0 auto; padding: 100px 18px 60px; }
+        .vr-eyebrow {
+            display: inline-block; padding: 6px 16px; border-radius: 50px;
+            background: rgba(197,160,89,0.15); border: 1px solid rgba(197,160,89,0.4);
+            color: var(--gold); font-size: 12px; font-weight: 800; letter-spacing: 0.14em;
+            text-transform: uppercase; margin-bottom: 14px;
+        }
+        .vr-card {
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 20px;
+            background: rgba(255,255,255,0.03); padding: clamp(22px,4vw,32px);
+            margin-bottom: 20px;
+        }
+        .vr-card h2 { font-family:'Playfair Display',serif; color: var(--gold); font-size: 20px; margin: 0 0 12px; }
+        .vr-card p, .vr-card li { color: rgba(255,255,255,0.75); line-height: 1.6; font-size: 15px; }
+        .vr-qr-box { display:flex; justify-content:center; padding: 16px; background:#fff; border-radius: 14px; margin-bottom: 14px; }
+        .vr-link { display:block; text-align:center; word-break:break-all; color: var(--gold); text-decoration: underline; font-size: 14px; margin-bottom: 18px; }
+        .vr-share-row { display:flex; gap:8px; justify-content:center; }
+        @media (max-width:420px) { .vr-share-row { flex-wrap:wrap; } .vr-tile { flex:1 1 40%; } }
+        .vr-share-btn {
+            display:inline-flex; align-items:center; gap:8px; padding: 10px 18px;
+            border-radius: 50px; border: 1px solid rgba(197,160,89,0.4); color:#fff;
+            background: rgba(255,255,255,0.04); cursor:pointer; font-size: 13px; font-weight: 700;
+            text-decoration:none; transition: all .2s ease;
+        }
+        .vr-share-btn:hover { border-color: var(--gold); background: rgba(255,255,255,0.08); }
+        /* Mismo patrón visual que los Action Tiles de staff-admin.html (Venues CRUD) */
+        .vr-tile {
+            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+            flex: 1 1 0; min-width: 0; padding: 10px 4px; border-radius: 12px;
+            border: 1px solid rgba(197,160,89,0.4); background: rgba(255,255,255,0.03);
+            color: rgba(240,224,180,0.9); cursor:pointer; text-decoration:none;
+            font-size: 11px; font-weight: 700; text-align:center; white-space:nowrap; transition: all .2s ease;
+        }
+        .vr-tile:hover { border-color: var(--gold); background: rgba(255,255,255,0.07); }
+        .vr-tile svg { width: 20px; height: 20px; stroke: var(--gold); fill:none; stroke-width: 1.6; }
+        .vr-ticket-row { display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid rgba(255,255,255,0.08); }
+        .vr-ticket-row:last-child { border-bottom:none; }
+        .vr-ticket-qty { display:flex; align-items:center; gap:8px; }
+        .vr-ticket-qty button { width:28px; height:28px; border-radius:50%; border:1px solid rgba(197,160,89,0.4); background:transparent; color:var(--gold); font-weight:800; cursor:pointer; }
+        .vr-form input { width:100%; box-sizing:border-box; padding:12px 14px; border-radius:8px; border:1px solid rgba(255,255,255,0.15); background:rgba(0,0,0,0.3); color:#fff; margin-bottom:12px; font-size:15px; }
+        .vr-form label { display:block; font-size:12px; font-weight:700; color:rgba(255,255,255,0.55); text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px; }
+    </style>
+</head>
+
+<body class="notranslate page-venue-room">
+<header class="header mdj-header-unified" id="mainHeader">
+  <div class="header-top">
+    <div class="container">
+      <div class="brand">
+        <img src="./assets/branding/logo-transparent.webp" alt="Miami DJ Beat Logo" class="logo-img-eagle" width="256" height="256">
+        <div class="brand-letters-wrapper">
+          <img src="./assets/branding/logo-transparent-letras.webp" alt="Miami DJ Beat Letters" class="brand-letters-img" width="384" height="384">
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="mdj-header-r1-auth-cluster">
+          <div class="lang-switcher">
+            <span class="lang-btn" data-lang="es">ES</span>
+            <span class="lang-pipe">|</span>
+            <span class="lang-btn" data-lang="en">EN</span>
+          </div>
+          <a href="./login.html" id="header-login-btn" class="btn-pill gold" data-auth-btn>Log in</a>
+          <div class="account session-pending" id="header-auth-zone" style="display: none;">
+            <a class="account-btn" id="accountBtn" href="./dj-profile.html" title="Mi perfil" aria-label="Mi perfil">
+              <img class="avatar" src="./assets/dj-avatar-placeholder.png" alt="" />
+            </a>
+          </div>
+        </div>
+      </div>
+      <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="mobile-overlay" id="mobileMenu">
+        <nav class="mobile-nav">
+          <a href="./index.html" data-mdj-nav="home">Home</a>
+          <a href="./events.html" data-mdj-nav="venues">Eventos</a>
+          <a href="./contact.html" data-mdj-nav="contact">Contacto</a>
+        </nav>
+      </div>
+    </div>
+  </div>
+  <div class="header-nav">
+    <div class="container">
+      <nav class="nav top-nav mdj-mainnav-flex" id="mainNav" aria-label="Navegación principal">
+        <a href="./index.html" data-mdj-nav="home" data-mdj-slot="1">Inicio</a>
+        <a href="./events.html" data-mdj-nav="venues" data-mdj-slot="2">Eventos</a>
+        <a href="./contact.html" data-mdj-nav="contact" data-mdj-slot="3">Contacto</a>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<main class="vr-wrap">
+    <div id="vr-loading" style="text-align:center;padding:60px 0;color:rgba(255,255,255,.5);">Cargando…</div>
+    <div id="vr-not-found" style="display:none;text-align:center;padding:60px 0;">
+        <h1 style="font-family:'Playfair Display',serif;color:#fff;">Sala no encontrada</h1>
+        <p style="color:rgba(255,255,255,.6);">Verifica el enlace o escanea el QR de nuevo.</p>
+    </div>
+    <div id="vr-content" style="display:none;">
+        <div style="text-align:center;">
+            <div class="vr-eyebrow" id="vr-venue-name">Venue</div>
+            <h1 id="vr-room-name" style="font-family:'Playfair Display',serif;color:#fff;font-size:clamp(28px,5vw,42px);margin:0 0 8px;">Sala</h1>
+            <p id="vr-venue-address" style="color:rgba(255,255,255,.6);font-size:14px;margin:0 0 30px;"></p>
+        </div>
+
+        <div class="vr-card">
+            <h2>Comparte esta sala</h2>
+            <div class="vr-qr-box" id="vr-qr-box"></div>
+            <a id="vr-canonical-link" class="vr-link" href="#" target="_blank" rel="noopener"></a>
+            <div class="vr-share-row">
+                <button class="vr-tile" id="vr-btn-share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg><span>Compartir</span></button>
+                <a class="vr-tile" id="vr-btn-whatsapp" href="#" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg><span>WhatsApp</span></a>
+                <a class="vr-tile" id="vr-btn-sms" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>SMS</span></a>
+                <button class="vr-tile" id="vr-btn-copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span>Copiar enlace</span></button>
+                <button class="vr-tile" id="vr-btn-download"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Descargar QR</span></button>
+            </div>
+        </div>
+
+        <div class="vr-card" id="vr-whatsapp-card" style="display:none;">
+            <h2>Comunidad de WhatsApp</h2>
+            <p>Únete al canal exclusivo de esta sala para enterarte de próximos eventos.</p>
+            <a class="vr-share-btn" id="vr-whatsapp-join" href="#" target="_blank" rel="noopener" style="display:inline-flex;">💬 Unirme al canal</a>
+        </div>
+
+        <div class="vr-card" id="vr-tickets-card" style="display:none;">
+            <h2>Entradas</h2>
+            <div id="vr-tickets-list"></div>
+            <button class="btn primary" id="vr-btn-buy" style="margin-top:16px;width:100%;" disabled>Selecciona al menos 1 entrada</button>
+            <p style="font-size:12px;color:rgba(255,255,255,.4);margin-top:8px;">Pago seguro procesado por Stripe.</p>
+        </div>
+
+        <div class="vr-card" id="vr-waitlist-card" style="display:none;">
+            <h2>Fecha por anunciar</h2>
+            <p id="vr-waitlist-msg">Todavía no hay fecha confirmada para esta sala. Déjanos tu contacto y te avisamos apenas se anuncie.</p>
+            <div class="vr-form">
+                <label>Nombre</label>
+                <input type="text" id="vr-wl-name" placeholder="Tu nombre">
+                <label>Email</label>
+                <input type="email" id="vr-wl-email" placeholder="tu@email.com">
+                <label>Teléfono (opcional)</label>
+                <input type="tel" id="vr-wl-phone" placeholder="+1 305 000 0000">
+                <button class="btn primary" id="vr-btn-waitlist" style="width:100%;">Avísenme</button>
+            </div>
+        </div>
+
+        <div class="vr-card" id="vr-empty-card" style="display:none;">
+            <h2>Sin eventos programados</h2>
+            <p>Esta sala todavía no tiene una fecha activa. Vuelve pronto.</p>
+        </div>
+    </div>
+</main>
+
+<footer class="footer">
+    <div class="container" style="text-align: center;">
+        <div data-i18n="footer-rights-llc">© 2026 Miami DJ Beat LLC. Pro Division Access.</div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
+<script>
+(function () {
+    var mdjLibAusente = !(window.supabase && typeof window.supabase.createClient === 'function');
+    if (mdjLibAusente) {
+        document.write('<script src="./vendor/supabase-js-2.112.3.legacy.js?v=20260818-safari-legacy"><\/script>');
+    }
+})();
+</script>
+<script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
+<script src="./mdjb-shared-header.js?v=20260905-venue-room-clipboard"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+<script>
+(function () {
+    function getVenueRoomSlugs() {
+        var parts = location.pathname.split('/').filter(Boolean);
+        var qs = new URLSearchParams(location.search);
+        if (parts[0] === 'venues' && parts[1] && parts[2]) {
+            return { venueSlug: parts[1], roomSlug: parts[2] };
+        }
+        // Fallback por query string -- para pruebas locales antes de que el
+        // rewrite de vercel.json este activo en produccion.
+        return { venueSlug: qs.get('venue') || '', roomSlug: qs.get('room') || '' };
+    }
+
+    function canonicalUrl(venueSlug, roomSlug) {
+        return 'https://www.miamidjbeat.com/venues/' + venueSlug + '/' + roomSlug;
+    }
+
+    function renderQr(url) {
+        function tryRender() {
+            if (window.QRCode) {
+                new QRCode(document.getElementById('vr-qr-box'), { text: url, width: 200, height: 200, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+            } else {
+                setTimeout(tryRender, 300);
+            }
+        }
+        tryRender();
+    }
+
+    function wireShare(url, roomName, venueName) {
+        var text = 'Mira ' + roomName + ' en ' + venueName + ' — Miami DJ Beat';
+        document.getElementById('vr-canonical-link').textContent = url;
+        document.getElementById('vr-canonical-link').href = url;
+        document.getElementById('vr-btn-share').onclick = function () {
+            if (navigator.share) {
+                navigator.share({ title: roomName, text: text, url: url }).catch(function () {});
+            } else {
+                window.mdjCopyToClipboard(url, null);
+            }
+        };
+        document.getElementById('vr-btn-whatsapp').href = 'https://wa.me/?text=' + encodeURIComponent(text + ' ' + url);
+        document.getElementById('vr-btn-sms').href = 'sms:?body=' + encodeURIComponent(text + ' ' + url);
+        document.getElementById('vr-btn-copy').onclick = function () {
+            window.mdjCopyToClipboard(url, document.querySelector('#vr-btn-copy span'));
+        };
+        document.getElementById('vr-btn-download').onclick = function () {
+            var canvas = document.querySelector('#vr-qr-box canvas');
+            if (!canvas) { alert('El QR todavía no terminó de generarse.'); return; }
+            var link = document.createElement('a');
+            link.download = 'qr-' + roomName.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        };
+    }
+
+    var _vrCart = {};
+
+    function renderTicketSelector(types, eventId) {
+        document.getElementById('vr-tickets-card').style.display = 'block';
+        _vrCart = {};
+        types.forEach(function (t) { _vrCart[t.id] = 0; });
+
+        function redraw() {
+            document.getElementById('vr-tickets-list').innerHTML = types.map(function (t) {
+                var remaining = t.quantity_available !== null ? (t.quantity_available - (t.quantity_sold || 0)) : null;
+                var soldOut = remaining !== null && remaining <= 0;
+                return '<div class="vr-ticket-row">' +
+                    '<span>' + t.label + (t.zone_label ? ' · ' + t.zone_label : '') + '<br><small style="color:rgba(255,255,255,.5);">$' + (t.price_cents / 100).toFixed(2) + (soldOut ? ' · Agotado' : '') + '</small></span>' +
+                    (soldOut ? '' :
+                        '<div class="vr-ticket-qty">' +
+                        '<button data-vr-dec="' + t.id + '">−</button>' +
+                        '<span id="vr-qty-' + t.id + '">' + (_vrCart[t.id] || 0) + '</span>' +
+                        '<button data-vr-inc="' + t.id + '">+</button>' +
+                        '</div>') +
+                    '</div>';
+            }).join('');
+
+            document.querySelectorAll('[data-vr-inc]').forEach(function (btn) {
+                btn.onclick = function () { _vrCart[btn.dataset.vrInc]++; updateQtyAndTotal(); };
+            });
+            document.querySelectorAll('[data-vr-dec]').forEach(function (btn) {
+                btn.onclick = function () { if (_vrCart[btn.dataset.vrDec] > 0) _vrCart[btn.dataset.vrDec]--; updateQtyAndTotal(); };
+            });
+        }
+
+        function updateQtyAndTotal() {
+            types.forEach(function (t) {
+                var el = document.getElementById('vr-qty-' + t.id);
+                if (el) el.textContent = _vrCart[t.id] || 0;
+            });
+            var totalQty = Object.values(_vrCart).reduce(function (a, b) { return a + b; }, 0);
+            var btn = document.getElementById('vr-btn-buy');
+            btn.disabled = totalQty === 0;
+            btn.textContent = totalQty === 0 ? 'Selecciona al menos 1 entrada' : 'Comprar (' + totalQty + ')';
+        }
+
+        redraw();
+        updateQtyAndTotal();
+        document.getElementById('vr-btn-buy').onclick = function () { startTicketCheckout(eventId); };
+    }
+
+    async function startTicketCheckout(eventId) {
+        var items = Object.keys(_vrCart).filter(function (id) { return _vrCart[id] > 0; })
+            .map(function (id) { return { ticket_type_id: id, quantity: _vrCart[id] }; });
+        if (!items.length) { alert('❌ Selecciona al menos una entrada.'); return; }
+        var btn = document.getElementById('vr-btn-buy');
+        btn.disabled = true;
+        try {
+            var db = window.getSupabaseClient();
+            var { data, error } = await db.functions.invoke('create-venue-ticket-checkout', {
+                body: { event_id: eventId, items: items },
+            });
+            if (error || !data || !data.ok) { alert('❌ ' + ((data && data.error) || (error && error.message) || 'No se pudo iniciar el pago.')); btn.disabled = false; return; }
+            window.location.href = data.url;
+        } catch (e) {
+            alert('❌ Error de red: ' + e.message);
+            btn.disabled = false;
+        }
+    }
+
+    async function submitWaitlist(eventId, venueId, roomId) {
+        var email = document.getElementById('vr-wl-email').value.trim();
+        if (!email) { alert('❌ Falta tu email.'); return; }
+        var btn = document.getElementById('vr-btn-waitlist');
+        btn.disabled = true;
+        try {
+            var db = window.getSupabaseClient();
+            var { data, error } = await db.functions.invoke('venue-waitlist-signup', {
+                body: {
+                    event_id: eventId || null,
+                    venue_id: venueId || null,
+                    room_id: roomId || null,
+                    name: document.getElementById('vr-wl-name').value.trim() || null,
+                    email: email,
+                    phone: document.getElementById('vr-wl-phone').value.trim() || null,
+                },
+            });
+            if (error || (data && data.error)) { alert('❌ ' + ((data && data.error) || error.message || 'No se pudo registrar.')); btn.disabled = false; return; }
+            alert('✅ ¡Listo! Te avisamos apenas se confirme la fecha.');
+            document.getElementById('vr-wl-name').value = '';
+            document.getElementById('vr-wl-email').value = '';
+            document.getElementById('vr-wl-phone').value = '';
+        } catch (e) {
+            alert('❌ Error de red: ' + e.message);
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    async function boot() {
+        var db = window.getSupabaseClient();
+        var slugs = getVenueRoomSlugs();
+        if (!db || !slugs.venueSlug || !slugs.roomSlug) {
+            document.getElementById('vr-loading').style.display = 'none';
+            document.getElementById('vr-not-found').style.display = 'block';
+            return;
+        }
+        var venueRes = await db.from('venues').select('*').eq('slug', slugs.venueSlug).maybeSingle();
+        var venue = venueRes.data;
+        if (!venue) {
+            document.getElementById('vr-loading').style.display = 'none';
+            document.getElementById('vr-not-found').style.display = 'block';
+            return;
+        }
+        var roomRes = await db.from('venue_rooms').select('*').eq('venue_id', venue.id).eq('slug', slugs.roomSlug).maybeSingle();
+        var room = roomRes.data;
+        if (!room) {
+            document.getElementById('vr-loading').style.display = 'none';
+            document.getElementById('vr-not-found').style.display = 'block';
+            return;
+        }
+
+        document.getElementById('vr-venue-name').textContent = venue.name;
+        document.getElementById('vr-room-name').textContent = room.name;
+        document.getElementById('vr-venue-address').textContent = [venue.address, venue.city].filter(Boolean).join(' · ');
+
+        var url = canonicalUrl(slugs.venueSlug, slugs.roomSlug);
+        renderQr(url);
+        wireShare(url, room.name, venue.name);
+
+        var whatsapp = room.whatsapp_link || venue.whatsapp_link;
+        if (whatsapp) {
+            document.getElementById('vr-whatsapp-card').style.display = 'block';
+            document.getElementById('vr-whatsapp-join').href = whatsapp;
+        }
+
+        var eventsRes = await db.from('venue_events').select('*').eq('room_id', room.id).order('event_date', { ascending: true, nullsFirst: true });
+        var events = eventsRes.data || [];
+        var activeEvent = events.find(function (e) { return e.status === 'announced'; }) || events.find(function (e) { return e.status === 'waitlist'; });
+
+        if (activeEvent && activeEvent.status === 'announced') {
+            var ticketsRes = await db.from('venue_ticket_types').select('*').eq('event_id', activeEvent.id).eq('active', true).order('price_cents');
+            var types = ticketsRes.data || [];
+            if (types.length) {
+                renderTicketSelector(types, activeEvent.id);
+            } else {
+                document.getElementById('vr-empty-card').style.display = 'block';
+            }
+        } else if (activeEvent && activeEvent.status === 'waitlist') {
+            document.getElementById('vr-waitlist-card').style.display = 'block';
+            document.getElementById('vr-btn-waitlist').onclick = function () { submitWaitlist(activeEvent.id, venue.id, room.id); };
+        } else {
+            // Sin evento activo en esta sala -- de todas formas se ofrece la
+            // lista de espera general de la sala (event_id null).
+            document.getElementById('vr-waitlist-card').style.display = 'block';
+            document.getElementById('vr-waitlist-msg').textContent = 'Sé el primero en enterarte cuando se anuncie un evento en esta sala.';
+            document.getElementById('vr-btn-waitlist').onclick = function () { submitWaitlist(null, venue.id, room.id); };
+        }
+
+        document.getElementById('vr-loading').style.display = 'none';
+        document.getElementById('vr-content').style.display = 'block';
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', boot);
+    } else {
+        boot();
+    }
+})();
+</script>
+</body>
+</html>

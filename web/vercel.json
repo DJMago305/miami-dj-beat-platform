@@ -1,4 +1,8 @@
 {
+  "rewrites": [
+    { "source": "/venues/:venueSlug/:roomSlug", "destination": "/venue-room.html" },
+    { "source": "/:page([^.]+)", "destination": "/:page.html" }
+  ],
   "headers": [
     {
       "source": "/(.*)\\.html",

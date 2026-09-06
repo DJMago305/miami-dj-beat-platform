@@ -59,13 +59,12 @@ function targetMonthDays(): string[] {
   return out;
 }
 
-async function alreadyQueued(clientUserId: string, kind: string, yearTag: string): Promise<boolean> {
+async function alreadyQueued(dedupKey: string): Promise<boolean> {
   const { data } = await ADMIN
     .from("event_reminders_queue")
     .select("id")
-    .eq("client_user_id", clientUserId)
     .eq("reminder_type", "yearly_recall")
-    .eq("event_id", `${kind}:${clientUserId}:${yearTag}`)
+    .eq("dedup_key", dedupKey)
     .maybeSingle();
   return !!data;
 }
@@ -102,16 +101,21 @@ serve(async (req: Request) => {
         if (!wanted.has(monthDay(d))) continue;
 
         const yearTag = String(thisYear);
-        if (await alreadyQueued(p.user_id, kind, yearTag)) continue;
+        const dedupKey = `${kind}:${p.user_id}:${yearTag}`;
+        if (await alreadyQueued(dedupKey)) continue;
 
         const label = kind === "birthday" ? "cumpleaños" : "aniversario de boda";
-        await ADMIN.from("event_reminders_queue").insert({
+        const { error: insErr } = await ADMIN.from("event_reminders_queue").insert({
           client_user_id: p.user_id,
-          event_id: `${kind}:${p.user_id}:${yearTag}`,
+          dedup_key: dedupKey,
           reminder_type: "yearly_recall",
           status: "pending",
           scheduled_for: new Date().toISOString(),
         });
+        if (insErr) {
+          console.error(`[mdj-yearly-recall] insert failed (${dedupKey}):`, insErr);
+          continue;
+        }
         console.log(`[mdj-yearly-recall] ${label} próximo: ${p.full_name ?? p.user_id}`);
         queued++;
       }
@@ -134,15 +138,21 @@ serve(async (req: Request) => {
       if (!wanted.has(monthDay(d))) continue;
 
       const yearTag = String(thisYear);
-      if (await alreadyQueued(ev.client_user_id, "event_anniversary", `${ev.id}:${yearTag}`)) continue;
+      const dedupKey = `event_anniversary:${ev.id}:${yearTag}`;
+      if (await alreadyQueued(dedupKey)) continue;
 
-      await ADMIN.from("event_reminders_queue").insert({
+      const { error: insErr } = await ADMIN.from("event_reminders_queue").insert({
         client_user_id: ev.client_user_id,
-        event_id: `event_anniversary:${ev.id}:${yearTag}`,
+        event_id: ev.id,
+        dedup_key: dedupKey,
         reminder_type: "yearly_recall",
         status: "pending",
         scheduled_for: new Date().toISOString(),
       });
+      if (insErr) {
+        console.error(`[mdj-yearly-recall] insert failed (${dedupKey}):`, insErr);
+        continue;
+      }
       console.log(`[mdj-yearly-recall] aniversario de evento (${ev.event_type ?? "evento"}) próximo: lead ${ev.id}`);
       queued++;
     }
