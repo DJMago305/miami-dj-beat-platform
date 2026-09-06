@@ -63,8 +63,27 @@
 - [x] Auditar todas las imágenes hero de los 6 activos (formato actual, peso, dimensiones servidas vs. renderizadas).
 - [x] Convertir heroes/logo compartido a WebP (resize a tamaño real medido en navegador, sin `<picture>` fallback — WebP directo, consistente con `elixis-avatar.webp` ya en uso en el sitio).
 - [x] Inyectar `fetchpriority="high"` / `<link rel="preload">` en los elementos LCP; `loading="lazy"` + `decoding="async"` en secundarios; `width`/`height` explícitos anti-CLS.
-- [ ] ⚠️ **BLOQUEADO** — re-medir Lighthouse "después" en vivo (ver hallazgo crítico abajo).
-- [ ] Actualizar esta tabla de baseline con los nuevos puntajes una vez resuelto el bloqueo de sincronización con Storage.
+- [x] Re-medir Lighthouse "después" en vivo — desbloqueado, los 5 `.webp` confirmados en Storage (ver tabla y caveat abajo).
+- [x] Tabla de baseline actualizada.
+
+## Auditoría Lighthouse — Después (Sprint #1 cerrado)
+
+| Activo | Performance | Accesibilidad | Best Practices | SEO |
+|---|---|---|---|---|
+| rentals | 57 | 98 | 96 | 100 |
+| weddings | 56 | 98 | 96 | 100 |
+| corporate | 57 | 98 | 96 | 100 |
+| latin-dj | 62 | 98 | 96 | 100 |
+| florida-keys | 63 | 98 | 96 | 100 |
+| events | 56 | 100 | 96 | 100 |
+
+**Accesibilidad/Best Practices/SEO — confiables, estables entre corridas.** A11y subió en las 6 (94-96 → 98-100, probablemente por los `alt`/`width`/`height` agregados). BP y SEO se mantienen idénticos al baseline.
+
+**⚠️ Performance/LCP — NO confiables como comparación limpia contra el baseline.** Medidos con `npx lighthouse` local contra `localhost:8877` en esta máquina de desarrollo compartida (con la app de Claude Code, Chrome, y otros procesos corriendo en paralelo) — el LCP reportado va de 9.9s a **49s**, absurdo para páginas de este peso. Repetí `corporate.html` dos veces: 48/CLS 0.174 → 57/CLS 0 — la variación entre corridas consecutivas de la MISMA página, sin ningún cambio de código entre medio, confirma que es ruido de máquina/contención de CPU, no una medición real. El baseline original tampoco fue verificado de forma independiente por este hilo (fue relayado por el Hilo Maestro) — comparar un número no confiable de "antes" contra uno no confiable de "después" no produce una conclusión válida.
+
+**Evidencia confiable del impacto real del Sprint #1** — no depende de la máquina ni del momento: el [reporte de ahorro en KB/MB](#reporte-de-ahorro--sprint-1-medido-por-tamaño-de-archivo-no-depende-de-servir-en-vivo) de arriba (8.7 MB → 309 KB, 96.5%), que es aritmética de archivo, no una medición de red simulada.
+
+**Recomendación:** para un número de Performance que sí sirva de comparación real, correr Lighthouse contra un deploy real (Vercel preview) con PageSpeed Insights o Lighthouse CI en un runner dedicado, no en esta máquina de desarrollo compartida.
 
 ### ⚠️ Hallazgo crítico — dependencia de Supabase Storage (fuera de jurisdicción de este hilo)
 
