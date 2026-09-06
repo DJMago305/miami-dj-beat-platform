@@ -136,8 +136,8 @@
         <div class="vr-card" id="vr-tickets-card" style="display:none;">
             <h2>Entradas</h2>
             <div id="vr-tickets-list"></div>
-            <button class="btn primary" id="vr-btn-buy" style="margin-top:16px;width:100%;" disabled>Comprar — Próximamente</button>
-            <p style="font-size:12px;color:rgba(255,255,255,.4);margin-top:8px;">El checkout todavía no está activo — esta sección muestra los tipos de entrada reales, la compra se habilita en la próxima etapa.</p>
+            <button class="btn primary" id="vr-btn-buy" style="margin-top:16px;width:100%;" disabled>Selecciona al menos 1 entrada</button>
+            <p style="font-size:12px;color:rgba(255,255,255,.4);margin-top:8px;">Pago seguro procesado por Stripe.</p>
         </div>
 
         <div class="vr-card" id="vr-waitlist-card" style="display:none;">
@@ -233,6 +233,71 @@
         };
     }
 
+    var _vrCart = {};
+
+    function renderTicketSelector(types, eventId) {
+        document.getElementById('vr-tickets-card').style.display = 'block';
+        _vrCart = {};
+        types.forEach(function (t) { _vrCart[t.id] = 0; });
+
+        function redraw() {
+            document.getElementById('vr-tickets-list').innerHTML = types.map(function (t) {
+                var remaining = t.quantity_available !== null ? (t.quantity_available - (t.quantity_sold || 0)) : null;
+                var soldOut = remaining !== null && remaining <= 0;
+                return '<div class="vr-ticket-row">' +
+                    '<span>' + t.label + (t.zone_label ? ' · ' + t.zone_label : '') + '<br><small style="color:rgba(255,255,255,.5);">$' + (t.price_cents / 100).toFixed(2) + (soldOut ? ' · Agotado' : '') + '</small></span>' +
+                    (soldOut ? '' :
+                        '<div class="vr-ticket-qty">' +
+                        '<button data-vr-dec="' + t.id + '">−</button>' +
+                        '<span id="vr-qty-' + t.id + '">' + (_vrCart[t.id] || 0) + '</span>' +
+                        '<button data-vr-inc="' + t.id + '">+</button>' +
+                        '</div>') +
+                    '</div>';
+            }).join('');
+
+            document.querySelectorAll('[data-vr-inc]').forEach(function (btn) {
+                btn.onclick = function () { _vrCart[btn.dataset.vrInc]++; updateQtyAndTotal(); };
+            });
+            document.querySelectorAll('[data-vr-dec]').forEach(function (btn) {
+                btn.onclick = function () { if (_vrCart[btn.dataset.vrDec] > 0) _vrCart[btn.dataset.vrDec]--; updateQtyAndTotal(); };
+            });
+        }
+
+        function updateQtyAndTotal() {
+            types.forEach(function (t) {
+                var el = document.getElementById('vr-qty-' + t.id);
+                if (el) el.textContent = _vrCart[t.id] || 0;
+            });
+            var totalQty = Object.values(_vrCart).reduce(function (a, b) { return a + b; }, 0);
+            var btn = document.getElementById('vr-btn-buy');
+            btn.disabled = totalQty === 0;
+            btn.textContent = totalQty === 0 ? 'Selecciona al menos 1 entrada' : 'Comprar (' + totalQty + ')';
+        }
+
+        redraw();
+        updateQtyAndTotal();
+        document.getElementById('vr-btn-buy').onclick = function () { startTicketCheckout(eventId); };
+    }
+
+    async function startTicketCheckout(eventId) {
+        var items = Object.keys(_vrCart).filter(function (id) { return _vrCart[id] > 0; })
+            .map(function (id) { return { ticket_type_id: id, quantity: _vrCart[id] }; });
+        if (!items.length) { alert('❌ Selecciona al menos una entrada.'); return; }
+        var btn = document.getElementById('vr-btn-buy');
+        btn.disabled = true;
+        try {
+            var db = window.getSupabaseClient();
+            var { data, error } = await db.functions.invoke('create-venue-ticket-checkout', {
+                body: { event_id: eventId, items: items },
+            });
+            if (error || !data || !data.ok) { alert('❌ ' + ((data && data.error) || (error && error.message) || 'No se pudo iniciar el pago.')); btn.disabled = false; return; }
+            window.location.href = data.url;
+        } catch (e) {
+            alert('❌ Error de red: ' + e.message);
+            btn.disabled = false;
+        }
+    }
+
     async function submitWaitlist(eventId, venueId, roomId) {
         var email = document.getElementById('vr-wl-email').value.trim();
         if (!email) { alert('❌ Falta tu email.'); return; }
@@ -307,10 +372,7 @@
             var ticketsRes = await db.from('venue_ticket_types').select('*').eq('event_id', activeEvent.id).eq('active', true).order('price_cents');
             var types = ticketsRes.data || [];
             if (types.length) {
-                document.getElementById('vr-tickets-card').style.display = 'block';
-                document.getElementById('vr-tickets-list').innerHTML = types.map(function (t) {
-                    return '<div class="vr-ticket-row"><span>' + t.label + (t.zone_label ? ' · ' + t.zone_label : '') + '<br><small style="color:rgba(255,255,255,.5);">$' + (t.price_cents / 100).toFixed(2) + '</small></span></div>';
-                }).join('');
+                renderTicketSelector(types, activeEvent.id);
             } else {
                 document.getElementById('vr-empty-card').style.display = 'block';
             }
