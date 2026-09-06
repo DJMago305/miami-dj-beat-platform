@@ -19,6 +19,37 @@
     <title>Método de Cabina — Disciplina Profesional del DJ | Miami DJ Beat Academy</title>
     <meta name="description" content="Manual formativo de Miami DJ Beat Academy: Ley Cero, 18 reglas operativas, 12 módulos de enseñanza y rúbrica de evaluación para la disciplina profesional del DJ en cabina." />
     <link rel="canonical" href="https://www.miamidjbeat.com/metodo-cabina.html" />
+    <meta name="geo.region" content="US-FL" />
+    <meta name="geo.placename" content="Miami" />
+    <meta name="geo.position" content="25.7617;-80.1918" />
+    <meta name="ICBM" content="25.7617, -80.1918" />
+    <!-- Nota real: la vista "vista previa/muro" de esta pagina es puramente visual (blur decorativo +
+         CTA de login/registro), sin verificacion de sesion ni restriccion real de acceso -- el HTML
+         completo se sirve igual a visitantes y crawlers. isAccessibleForFree es "true" a proposito,
+         no "false", porque afirmar lo contrario seria una declaracion de datos estructurados falsa. -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Course",
+      "name": "Método de Cabina — Disciplina Profesional del DJ",
+      "description": "Manual formativo de Miami DJ Beat Academy: Ley Cero, 18 reglas operativas, 12 módulos de enseñanza y rúbrica de evaluación para la disciplina profesional del DJ en cabina.",
+      "url": "https://www.miamidjbeat.com/metodo-cabina.html",
+      "inLanguage": ["es", "en"],
+      "isAccessibleForFree": true,
+      "provider": {
+        "@type": "EducationalOrganization",
+        "name": "Miami DJ Beat Academy",
+        "sameAs": "https://www.miamidjbeat.com/academia.html"
+      },
+      "hasPart": [
+        { "@type": "LearningResource", "name": "Ley Cero y Propósito", "isAccessibleForFree": true },
+        { "@type": "LearningResource", "name": "18 Reglas Operativas del DJ", "isAccessibleForFree": true },
+        { "@type": "LearningResource", "name": "Diagramas técnicos de cabina", "isAccessibleForFree": true },
+        { "@type": "LearningResource", "name": "12 Módulos de Enseñanza", "isAccessibleForFree": true },
+        { "@type": "LearningResource", "name": "Rúbrica de Autoevaluación (0–5)", "isAccessibleForFree": true }
+      ]
+    }
+    </script>
     <!-- GEO/SEO Fase 6 -- medicion: GA4 activo desde 2026-08-29 (ID real). -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-7XRWGTCQ5L"></script>
     <script>
@@ -37,14 +68,16 @@
 
         .cab-hero {
             position: relative;
-            min-height: 420px;
+            min-height: 460px;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 130px 20px 90px;
             text-align: center;
             background:
-                radial-gradient(circle at 50% 0%, rgba(197,160,89,0.12) 0%, transparent 55%),
+                linear-gradient(180deg, rgba(11,14,20,0.45) 0%, rgba(11,14,20,0.70) 65%, rgba(11,14,20,0.95) 100%),
+                radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(5,7,10,0.55) 100%),
+                url('./assets/djmago305/djmago305-good-vibes-laptop-hero.webp') center 32% / cover no-repeat,
                 #05070a;
         }
         .cab-hero-eyebrow {
@@ -54,6 +87,7 @@
             color: var(--gold);
             text-transform: uppercase;
             margin-bottom: 18px;
+            text-shadow: 0 2px 12px rgba(0,0,0,0.95), 0 0 25px rgba(0,0,0,0.85);
         }
         .cab-hero h1 {
             font-family: 'Playfair Display', serif;
@@ -63,6 +97,7 @@
             margin: 0 0 22px;
             color: #fff;
             letter-spacing: -0.01em;
+            text-shadow: 0 2px 12px rgba(0,0,0,0.95), 0 0 25px rgba(0,0,0,0.85);
         }
         .cab-hero-quote {
             font-size: clamp(18px, 2.4vw, 24px);
@@ -71,6 +106,7 @@
             line-height: 1.5;
             color: #fff;
             font-weight: 700;
+            text-shadow: 0 2px 12px rgba(0,0,0,0.95), 0 0 25px rgba(0,0,0,0.85);
         }
         .cab-hero-sub {
             font-size: 15px;
@@ -78,6 +114,7 @@
             margin: 0 auto;
             line-height: 1.7;
             color: var(--muted);
+            text-shadow: 0 2px 12px rgba(0,0,0,0.95), 0 0 25px rgba(0,0,0,0.85);
         }
 
         .cab-section {
@@ -514,6 +551,55 @@
         }
         .cab-closing-flow p { margin: 0; font-size: 14px; line-height: 1.7; color: rgba(255,255,255,0.8); padding-top: 4px; }
 
+        /* --- Muro de vista previa (teaser visual, sin restriccion real de acceso) --- */
+        .cab-gate-wrap {
+            position: relative;
+        }
+        .cab-gate-content {
+            pointer-events: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        .cab-gate-overlay {
+            position: absolute;
+            inset: 0;
+            -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(8px);
+            background: rgba(5,7,10,0.35);
+            display: flex;
+            justify-content: center;
+            padding-top: 12vh;
+            pointer-events: none;
+        }
+        .cab-gate-card {
+            pointer-events: auto;
+            position: sticky;
+            top: 30vh;
+            align-self: flex-start;
+            width: min(440px, 88vw);
+            background: rgba(11,14,20,0.92);
+            border: 1px solid rgba(197,160,89,0.35);
+            border-radius: 24px;
+            padding: 40px 34px;
+            text-align: center;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+        }
+        .cab-gate-icon { font-size: 30px; margin-bottom: 14px; }
+        .cab-gate-card h3 { color: #fff; font-size: 19px; font-weight: 800; margin: 0 0 12px; }
+        .cab-gate-card p { color: var(--muted); font-size: 14px; line-height: 1.7; margin: 0 0 26px; }
+        .cab-gate-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+        .cab-gate-btn {
+            font-size: 13.5px;
+            font-weight: 800;
+            padding: 12px 24px;
+            border-radius: 30px;
+            text-decoration: none;
+        }
+        .cab-gate-btn-gold { background: var(--gold); color: #0a0c10; }
+        .cab-gate-btn-outline { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,0.3); }
+        .cab-gate-btn-gold:hover { filter: brightness(1.08); }
+        .cab-gate-btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+
         @media (max-width: 900px) {
             .cab-rules-grid, .cab-mods-grid { grid-template-columns: 1fr; }
             .cab-rubric-table { display: block; overflow-x: auto; }
@@ -697,237 +783,260 @@
         </div>
     </section>
 
-    <!-- DIAGRAMA 2: 15 SEGUNDOS + RESCATE -->
-    <section class="cab-section" id="diagnostico-15s">
-        <h2 class="cab-section-title" data-i18n="cabina-flow-title">Diagrama 2 · Diagnóstico de 15 Segundos y Protocolo de Rescate</h2>
-        <p class="cab-section-intro" data-i18n="cabina-flow-intro">Cuando entra un tema decisivo, los primeros 15 segundos son diagnóstico, no sentencia. Elige la reacción que observarías en la pista para ver la ruta que sigue el DJ.</p>
-        <div class="cab-diagram-wrap">
-            <p style="text-align:center;font-weight:700;color:#fff;font-size:15px;margin:0 0 18px;" data-i18n="cabina-flow-start-label">Entra un tema decisivo →</p>
-            <p class="cab-detail-label" style="text-align:center;" data-i18n="cabina-flow-signal-title">Microseñales a observar</p>
-            <ul class="cab-signal-list" style="text-align:center;list-style:none;padding:0;">
-                <li data-i18n="cabina-flow-signal-list">Pies, cabezas, manos, coros, acercamiento o abandono de pista.</li>
-            </ul>
-            <div class="cab-branch-row">
-                <button type="button" class="cab-branch-btn active" data-branch="strong" data-i18n="cabina-flow-branch-strong">Reacción fuerte</button>
-                <button type="button" class="cab-branch-btn" data-branch="weak" data-i18n="cabina-flow-branch-weak">Reacción débil o nula</button>
-            </div>
-
-            <div class="cab-detail-panel active" data-branch-panel="strong">
-                <h4 data-i18n="cabina-flow-outcome-strong-title">Continuar y construir</h4>
-                <p data-i18n="cabina-flow-outcome-strong-body">La sala respondió. El DJ sostiene la dirección, piensa tres canciones adelante y sigue construyendo el arco sin gastar toda la munición de una vez.</p>
-            </div>
-            <div class="cab-detail-panel" data-branch-panel="weak">
-                <h4 data-i18n="cabina-flow-outcome-weak-title">Preparar salida — no entrar en pánico</h4>
-                <p data-i18n="cabina-flow-outcome-weak-body">No hay sentencia mecánica: el DJ prepara una salida con criterio, no corta en seco.</p>
-                <div class="cab-rescue-box">
-                    <h4 data-i18n="cabina-flow-rescue-title">Protocolo de rescate</h4>
-                    <ol>
-                        <li data-i18n="cabina-flow-rescue-step1">Un tema de rescate conocido por esa sala específica reconstruye confianza de inmediato.</li>
-                        <li data-i18n="cabina-flow-rescue-step2">No se encadenan dos experimentos fallidos seguidos — la siguiente decisión debe recuperar, no arriesgar de nuevo.</li>
-                        <li data-i18n="cabina-flow-rescue-step3">Corregir rápido y con elegancia es profesionalismo, no derrota.</li>
-                    </ol>
-                </div>
-                <div class="cab-rescue-box" style="margin-top:14px;">
-                    <h4 data-i18n="cabina-flow-examples-title">Ejemplos reales de transición de rescate</h4>
-                    <ul style="margin:0;padding-left:20px;color:rgba(255,255,255,0.8);font-size:14px;line-height:1.8;">
-                        <li data-i18n="cabina-flow-example-1">De Open Format anglo sin tracción → rescate Latino/Urbano infalible: cuando un bloque de pop/house internacional no prende, un corte directo a reggaetón o Latin house de alto reconocimiento suele reconstruir la pista de inmediato.</li>
-                        <li data-i18n="cabina-flow-example-2">De pista saturada → tema puente de tempo medio: en vez de otro pico, un track de tempo medio limpia el aire sensorial sin vaciar el salón, preparando el terreno para el siguiente ascenso.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- DIAGRAMA 3: CADENA DE SEÑAL + PLAN B -->
-    <section class="cab-section" id="cadena-senal">
-        <h2 class="cab-section-title" data-i18n="cabina-chain-title">Diagrama 3 · Ergonomía de Cabina y Cadena de Señal</h2>
-        <p class="cab-section-intro" data-i18n="cabina-chain-intro">Toca cada eslabón de la cadena para ver su función, y activa la simulación de Plan B para ver el protocolo de conmutación al reproductor de respaldo.</p>
-        <div class="cab-diagram-wrap">
-            <svg class="cab-svg" viewBox="0 0 900 140" role="img" aria-label="Cadena de señal de la cabina">
-                <path class="cab-chain-path" d="M 70 70 L 830 70" />
-                <g class="cab-node active" data-chain="1" tabindex="0" role="button" aria-pressed="true">
-                    <circle cx="70" cy="70" r="32" />
-                    <text x="70" y="75" data-i18n="cabina-chain-node1-name" style="font-size:11px;">Fuente</text>
-                </g>
-                <g class="cab-node" data-chain="2" tabindex="0" role="button" aria-pressed="false">
-                    <circle cx="222" cy="70" r="32" />
-                    <text x="222" y="75" data-i18n="cabina-chain-node2-name" style="font-size:11px;">Trim</text>
-                </g>
-                <g class="cab-node" data-chain="3" tabindex="0" role="button" aria-pressed="false">
-                    <circle cx="374" cy="70" r="32" />
-                    <text x="374" y="75" data-i18n="cabina-chain-node3-name" style="font-size:11px;">EQ</text>
-                </g>
-                <g class="cab-node" data-chain="4" tabindex="0" role="button" aria-pressed="false">
-                    <circle cx="526" cy="70" r="32" />
-                    <text x="526" y="75" data-i18n="cabina-chain-node4-name" style="font-size:11px;">Master</text>
-                </g>
-                <g class="cab-node" data-chain="5" tabindex="0" role="button" aria-pressed="false">
-                    <circle cx="678" cy="70" r="32" />
-                    <text x="678" y="75" data-i18n="cabina-chain-node5-name" style="font-size:11px;">Booth</text>
-                </g>
-                <g class="cab-node" data-chain="6" tabindex="0" role="button" aria-pressed="false">
-                    <circle cx="830" cy="70" r="32" />
-                    <text x="830" y="75" data-i18n="cabina-chain-node6-name" style="font-size:11px;">Main PA</text>
-                </g>
-            </svg>
-            <p class="cab-hint" data-i18n="cabina-arc-hint">Toca cada fase para ver el detalle</p>
-
-            <div class="cab-detail-panel active" data-chain-panel="1"><h4 data-i18n="cabina-chain-node1-name">Fuente</h4><p data-i18n="cabina-chain-node1-detail">El punto de partida de la señal — la calidad del archivo y su ganancia de origen determinan todo lo que sigue en la cadena.</p></div>
-            <div class="cab-detail-panel" data-chain-panel="2"><h4 data-i18n="cabina-chain-node2-name">Trim</h4><p data-i18n="cabina-chain-node2-detail">El trim ajusta el nivel de entrada de cada canal antes del EQ — evita clipping temprano y establece la base de gain staging correcto.</p></div>
-            <div class="cab-detail-panel" data-chain-panel="3"><h4 data-i18n="cabina-chain-node3-name">EQ</h4><p data-i18n="cabina-chain-node3-detail">Se moldea el tono del canal sin perder la señal limpia que entró — un EQ agresivo compensa una mala selección de trim, no la reemplaza.</p></div>
-            <div class="cab-detail-panel" data-chain-panel="4"><h4 data-i18n="cabina-chain-node4-name">Master</h4><p data-i18n="cabina-chain-node4-detail">El master reúne todos los canales — aquí se protege contra el clipping general de la mezcla completa.</p></div>
-            <div class="cab-detail-panel" data-chain-panel="5"><h4 data-i18n="cabina-chain-node5-name">Booth</h4><p data-i18n="cabina-chain-node5-detail">El booth monitor es la referencia real del DJ — mezclar solo por el sistema principal desde lejos genera decisiones erróneas de nivel.</p></div>
-            <div class="cab-detail-panel" data-chain-panel="6"><h4 data-i18n="cabina-chain-node6-name">Main PA</h4><p data-i18n="cabina-chain-node6-detail">La salida hacia el público — el resultado final de toda la cadena de gain staging, no el único punto de control.</p></div>
-
-            <div class="cab-planb-row">
-                <button type="button" class="cab-toggle" id="cab-planb-toggle" role="switch" aria-checked="false"></button>
-                <span class="cab-planb-label" data-i18n="cabina-chain-planb-toggle-label">Simular fallo del reproductor principal</span>
-            </div>
-            <div class="cab-planb-steps" id="cab-planb-steps">
-                <div class="cab-rescue-box">
-                    <h4 data-i18n="cabina-chain-planb-title">Conmutación a Plan B</h4>
-                    <ol>
-                        <li data-i18n="cabina-chain-planb-step1">Detectar el fallo sin pánico — el protocolo existe precisamente para este momento.</li>
-                        <li data-i18n="cabina-chain-planb-step2">Conmutar al reproductor de respaldo ya cargado con música de rescate.</li>
-                        <li data-i18n="cabina-chain-planb-step3">Verificar nivel de salida del respaldo antes de subir el fader — evita un salto brusco de volumen.</li>
-                        <li data-i18n="cabina-chain-planb-step4">Continuar el set desde una base segura mientras se resuelve el equipo principal, si es posible.</li>
-                    </ol>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ZONIFICACIÓN Y LECTURA DEL SALÓN -->
-    <section class="cab-section" id="zonificacion-salon">
-        <h2 class="cab-section-title" data-i18n="cabina-zoning-title">Zonificación y Lectura del Salón</h2>
-        <p class="cab-section-intro" data-i18n="cabina-zoning-intro">Cada zona del venue entrega información distinta. Leer solo la pista es leer a medias.</p>
-        <div class="cab-zoning-map">
-            <div class="cab-zone cab-zone-booth">
-                <div class="cab-zone-name" data-i18n="cabina-zoning-booth-name">Booth / Cabina</div>
-                <p class="cab-zone-detail" data-i18n="cabina-zoning-booth-detail">Punto de observación central: desde aquí se cruza toda la información de las demás zonas con la selección musical en tiempo real.</p>
-            </div>
-            <div class="cab-zone cab-zone-floor">
-                <div class="cab-zone-name" data-i18n="cabina-zoning-floor-name">Pista Central</div>
-                <p class="cab-zone-detail" data-i18n="cabina-zoning-floor-detail">Centro de la energía: aquí se leen pies, manos y coros en tiempo real — la señal más directa, pero no la única.</p>
-            </div>
-            <div class="cab-zone cab-zone-bar-l">
-                <div class="cab-zone-name" data-i18n="cabina-zoning-bar-name">Barra Perimetral</div>
-                <p class="cab-zone-detail" data-i18n="cabina-zoning-bar-detail">Termómetro indirecto: el ritmo de pedidos en barra suele anticipar la energía de la pista antes de que el cambio sea visible desde la cabina.</p>
-            </div>
-            <div class="cab-zone cab-zone-vip">
-                <div class="cab-zone-name" data-i18n="cabina-zoning-vip-name">Mesas / Zona VIP</div>
-                <p class="cab-zone-detail" data-i18n="cabina-zoning-vip-detail">Reconocimiento sutil: aplausos, brindis y miradas hacia la cabina indican picos sociales, no solo picos musicales.</p>
-            </div>
-            <div class="cab-zone cab-zone-entrance">
-                <div class="cab-zone-name" data-i18n="cabina-zoning-entrance-name">Entrada / Puntos Ciegos</div>
-                <p class="cab-zone-detail" data-i18n="cabina-zoning-entrance-detail">Flujo de entrada y salida — un aumento súbito de gente saliendo hacia la entrada suele anticipar una caída de energía antes de que sea visible en la pista.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- PROTOCOLO DE CIERRE Y TRASPASO -->
-    <section class="cab-section" id="protocolo-cierre">
-        <h2 class="cab-section-title" data-i18n="cabina-closing-title">Protocolo de Cierre y Traspaso de Cabina</h2>
-        <p class="cab-section-intro" data-i18n="cabina-closing-intro">El cierre se ejecuta en secuencia, no de golpe — tanto si hay relevo de otro DJ como si es el cierre total del evento.</p>
-        <ol class="cab-closing-flow">
-            <li><span class="cab-closing-num">1</span><p data-i18n="cabina-closing-step1">Anunciar el cierre con anticipación (última canción o último bloque) — sin sorprender a la pista.</p></li>
-            <li><span class="cab-closing-num">2</span><p data-i18n="cabina-closing-step2">Bajar la ganancia del canal saliente a cero de forma gradual, nunca cortar en seco.</p></li>
-            <li><span class="cab-closing-num">3</span><p data-i18n="cabina-closing-step3">Si hay traspaso a otro DJ: verificar el nivel de salida de su fuente antes de subir su fader — el mismo protocolo que la conmutación a Plan B.</p></li>
-            <li><span class="cab-closing-num">4</span><p data-i18n="cabina-closing-step4">Entregar contexto verbal breve al DJ entrante: qué funcionó, qué evitar, estado real de la sala en ese momento.</p></li>
-            <li><span class="cab-closing-num">5</span><p data-i18n="cabina-closing-step5">Si es cierre total (sin relevo): apagar la amplificación en orden — monitores de cabina primero, sistema principal después — nunca al revés, para evitar picos audibles.</p></li>
-            <li><span class="cab-closing-num">6</span><p data-i18n="cabina-closing-step6">Verificar que el equipo personal (la Maleta Blindada) esté completo antes de desmontar — ningún cable se queda atrás.</p></li>
-        </ol>
-    </section>
-
-    <!-- 18 REGLAS -->
+    <!-- 18 REGLAS: PRIMERAS 3, ABIERTAS/INDEXABLES -->
     <section class="cab-section" id="reglas-operativas">
         <h2 class="cab-section-title" data-i18n="cabina-rules-title">18 Reglas Operativas del DJ</h2>
         <p class="cab-section-intro" data-i18n="cabina-rules-intro">Toca cada regla para expandirla.</p>
-        <div class="cab-rules-grid" id="cab-rules-grid"></div>
+        <div class="cab-rules-grid" id="cab-rules-grid-open"></div>
     </section>
 
-    <!-- 12 MÓDULOS -->
-    <section class="cab-section" id="modulos-ensenanza">
-        <h2 class="cab-section-title" data-i18n="cabina-mods-title">12 Módulos de Enseñanza</h2>
-        <p class="cab-section-intro" data-i18n="cabina-mods-intro">La base de la certificación práctica de la Academia.</p>
-        <div class="cab-mods-grid" id="cab-mods-grid"></div>
-    </section>
+    <!-- MURO DE VISTA PREVIA: a partir de aqui, doctrina completa para DJs suscritos -->
+    <div class="cab-gate-wrap" id="cab-gate-wrap">
+        <div class="cab-gate-content" id="cab-gate-content">
 
-    <!-- RÚBRICA -->
-    <section class="cab-section" id="rubrica-evaluacion">
-        <h2 class="cab-section-title" data-i18n="cabina-rubric-title">Rúbrica de Autoevaluación (0–5)</h2>
-        <p class="cab-section-intro" data-i18n="cabina-rubric-intro">Puntúa cada disciplina y calcula tu promedio. Esta rúbrica es una herramienta de autorreflexión — no reemplaza la evaluación práctica presencial de la Academia.</p>
-        <div class="cab-diagram-wrap">
-            <table class="cab-rubric-table">
-                <thead>
-                    <tr>
-                        <th data-i18n="cabina-rubric-th-discipline">Disciplina</th>
-                        <th data-i18n="cabina-rubric-th-score">Puntaje (0–5)</th>
-                    </tr>
-                </thead>
-                <tbody id="cab-rubric-body"></tbody>
-            </table>
-            <div class="cab-rubric-result" id="cab-rubric-result" style="display:none;">
-                <div class="cab-rubric-avg" id="cab-rubric-avg">0.0</div>
-                <div class="cab-rubric-tier" id="cab-rubric-tier"></div>
-                <div class="cab-rubric-notes" id="cab-rubric-notes"></div>
-                <button type="button" class="cab-rubric-reset" id="cab-rubric-reset" data-i18n="cabina-rubric-reset">Reiniciar</button>
+            <section class="cab-section" style="padding-top:0;">
+                <div class="cab-rules-grid" id="cab-rules-grid-gated"></div>
+            </section>
+
+            <!-- DIAGRAMA 2: 15 SEGUNDOS + RESCATE -->
+            <section class="cab-section" id="diagnostico-15s">
+                <h2 class="cab-section-title" data-i18n="cabina-flow-title">Diagrama 2 · Diagnóstico de 15 Segundos y Protocolo de Rescate</h2>
+                <p class="cab-section-intro" data-i18n="cabina-flow-intro">Cuando entra un tema decisivo, los primeros 15 segundos son diagnóstico, no sentencia. Elige la reacción que observarías en la pista para ver la ruta que sigue el DJ.</p>
+                <div class="cab-diagram-wrap">
+                    <p style="text-align:center;font-weight:700;color:#fff;font-size:15px;margin:0 0 18px;" data-i18n="cabina-flow-start-label">Entra un tema decisivo →</p>
+                    <p class="cab-detail-label" style="text-align:center;" data-i18n="cabina-flow-signal-title">Microseñales a observar</p>
+                    <ul class="cab-signal-list" style="text-align:center;list-style:none;padding:0;">
+                        <li data-i18n="cabina-flow-signal-list">Pies, cabezas, manos, coros, acercamiento o abandono de pista.</li>
+                    </ul>
+                    <div class="cab-branch-row">
+                        <button type="button" class="cab-branch-btn active" data-branch="strong" data-i18n="cabina-flow-branch-strong">Reacción fuerte</button>
+                        <button type="button" class="cab-branch-btn" data-branch="weak" data-i18n="cabina-flow-branch-weak">Reacción débil o nula</button>
+                    </div>
+
+                    <div class="cab-detail-panel active" data-branch-panel="strong">
+                        <h4 data-i18n="cabina-flow-outcome-strong-title">Continuar y construir</h4>
+                        <p data-i18n="cabina-flow-outcome-strong-body">La sala respondió. El DJ sostiene la dirección, piensa tres canciones adelante y sigue construyendo el arco sin gastar toda la munición de una vez.</p>
+                    </div>
+                    <div class="cab-detail-panel" data-branch-panel="weak">
+                        <h4 data-i18n="cabina-flow-outcome-weak-title">Preparar salida — no entrar en pánico</h4>
+                        <p data-i18n="cabina-flow-outcome-weak-body">No hay sentencia mecánica: el DJ prepara una salida con criterio, no corta en seco.</p>
+                        <div class="cab-rescue-box">
+                            <h4 data-i18n="cabina-flow-rescue-title">Protocolo de rescate</h4>
+                            <ol>
+                                <li data-i18n="cabina-flow-rescue-step1">Un tema de rescate conocido por esa sala específica reconstruye confianza de inmediato.</li>
+                                <li data-i18n="cabina-flow-rescue-step2">No se encadenan dos experimentos fallidos seguidos — la siguiente decisión debe recuperar, no arriesgar de nuevo.</li>
+                                <li data-i18n="cabina-flow-rescue-step3">Corregir rápido y con elegancia es profesionalismo, no derrota.</li>
+                            </ol>
+                        </div>
+                        <div class="cab-rescue-box" style="margin-top:14px;">
+                            <h4 data-i18n="cabina-flow-examples-title">Ejemplos reales de transición de rescate</h4>
+                            <ul style="margin:0;padding-left:20px;color:rgba(255,255,255,0.8);font-size:14px;line-height:1.8;">
+                                <li data-i18n="cabina-flow-example-1">De Open Format anglo sin tracción → rescate Latino/Urbano infalible: cuando un bloque de pop/house internacional no prende, un corte directo a reggaetón o Latin house de alto reconocimiento suele reconstruir la pista de inmediato.</li>
+                                <li data-i18n="cabina-flow-example-2">De pista saturada → tema puente de tempo medio: en vez de otro pico, un track de tempo medio limpia el aire sensorial sin vaciar el salón, preparando el terreno para el siguiente ascenso.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- DIAGRAMA 3: CADENA DE SEÑAL + PLAN B -->
+            <section class="cab-section" id="cadena-senal">
+                <h2 class="cab-section-title" data-i18n="cabina-chain-title">Diagrama 3 · Ergonomía de Cabina y Cadena de Señal</h2>
+                <p class="cab-section-intro" data-i18n="cabina-chain-intro">Toca cada eslabón de la cadena para ver su función, y activa la simulación de Plan B para ver el protocolo de conmutación al reproductor de respaldo.</p>
+                <div class="cab-diagram-wrap">
+                    <svg class="cab-svg" viewBox="0 0 900 140" role="img" aria-label="Cadena de señal de la cabina">
+                        <path class="cab-chain-path" d="M 70 70 L 830 70" />
+                        <g class="cab-node active" data-chain="1" tabindex="0" role="button" aria-pressed="true">
+                            <circle cx="70" cy="70" r="32" />
+                            <text x="70" y="75" data-i18n="cabina-chain-node1-name" style="font-size:11px;">Fuente</text>
+                        </g>
+                        <g class="cab-node" data-chain="2" tabindex="0" role="button" aria-pressed="false">
+                            <circle cx="222" cy="70" r="32" />
+                            <text x="222" y="75" data-i18n="cabina-chain-node2-name" style="font-size:11px;">Trim</text>
+                        </g>
+                        <g class="cab-node" data-chain="3" tabindex="0" role="button" aria-pressed="false">
+                            <circle cx="374" cy="70" r="32" />
+                            <text x="374" y="75" data-i18n="cabina-chain-node3-name" style="font-size:11px;">EQ</text>
+                        </g>
+                        <g class="cab-node" data-chain="4" tabindex="0" role="button" aria-pressed="false">
+                            <circle cx="526" cy="70" r="32" />
+                            <text x="526" y="75" data-i18n="cabina-chain-node4-name" style="font-size:11px;">Master</text>
+                        </g>
+                        <g class="cab-node" data-chain="5" tabindex="0" role="button" aria-pressed="false">
+                            <circle cx="678" cy="70" r="32" />
+                            <text x="678" y="75" data-i18n="cabina-chain-node5-name" style="font-size:11px;">Booth</text>
+                        </g>
+                        <g class="cab-node" data-chain="6" tabindex="0" role="button" aria-pressed="false">
+                            <circle cx="830" cy="70" r="32" />
+                            <text x="830" y="75" data-i18n="cabina-chain-node6-name" style="font-size:11px;">Main PA</text>
+                        </g>
+                    </svg>
+                    <p class="cab-hint" data-i18n="cabina-arc-hint">Toca cada fase para ver el detalle</p>
+
+                    <div class="cab-detail-panel active" data-chain-panel="1"><h4 data-i18n="cabina-chain-node1-name">Fuente</h4><p data-i18n="cabina-chain-node1-detail">El punto de partida de la señal — la calidad del archivo y su ganancia de origen determinan todo lo que sigue en la cadena.</p></div>
+                    <div class="cab-detail-panel" data-chain-panel="2"><h4 data-i18n="cabina-chain-node2-name">Trim</h4><p data-i18n="cabina-chain-node2-detail">El trim ajusta el nivel de entrada de cada canal antes del EQ — evita clipping temprano y establece la base de gain staging correcto.</p></div>
+                    <div class="cab-detail-panel" data-chain-panel="3"><h4 data-i18n="cabina-chain-node3-name">EQ</h4><p data-i18n="cabina-chain-node3-detail">Se moldea el tono del canal sin perder la señal limpia que entró — un EQ agresivo compensa una mala selección de trim, no la reemplaza.</p></div>
+                    <div class="cab-detail-panel" data-chain-panel="4"><h4 data-i18n="cabina-chain-node4-name">Master</h4><p data-i18n="cabina-chain-node4-detail">El master reúne todos los canales — aquí se protege contra el clipping general de la mezcla completa.</p></div>
+                    <div class="cab-detail-panel" data-chain-panel="5"><h4 data-i18n="cabina-chain-node5-name">Booth</h4><p data-i18n="cabina-chain-node5-detail">El booth monitor es la referencia real del DJ — mezclar solo por el sistema principal desde lejos genera decisiones erróneas de nivel.</p></div>
+                    <div class="cab-detail-panel" data-chain-panel="6"><h4 data-i18n="cabina-chain-node6-name">Main PA</h4><p data-i18n="cabina-chain-node6-detail">La salida hacia el público — el resultado final de toda la cadena de gain staging, no el único punto de control.</p></div>
+
+                    <div class="cab-planb-row">
+                        <button type="button" class="cab-toggle" id="cab-planb-toggle" role="switch" aria-checked="false"></button>
+                        <span class="cab-planb-label" data-i18n="cabina-chain-planb-toggle-label">Simular fallo del reproductor principal</span>
+                    </div>
+                    <div class="cab-planb-steps" id="cab-planb-steps">
+                        <div class="cab-rescue-box">
+                            <h4 data-i18n="cabina-chain-planb-title">Conmutación a Plan B</h4>
+                            <ol>
+                                <li data-i18n="cabina-chain-planb-step1">Detectar el fallo sin pánico — el protocolo existe precisamente para este momento.</li>
+                                <li data-i18n="cabina-chain-planb-step2">Conmutar al reproductor de respaldo ya cargado con música de rescate.</li>
+                                <li data-i18n="cabina-chain-planb-step3">Verificar nivel de salida del respaldo antes de subir el fader — evita un salto brusco de volumen.</li>
+                                <li data-i18n="cabina-chain-planb-step4">Continuar el set desde una base segura mientras se resuelve el equipo principal, si es posible.</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ZONIFICACIÓN Y LECTURA DEL SALÓN -->
+            <section class="cab-section" id="zonificacion-salon">
+                <h2 class="cab-section-title" data-i18n="cabina-zoning-title">Zonificación y Lectura del Salón</h2>
+                <p class="cab-section-intro" data-i18n="cabina-zoning-intro">Cada zona del venue entrega información distinta. Leer solo la pista es leer a medias.</p>
+                <div class="cab-zoning-map">
+                    <div class="cab-zone cab-zone-booth">
+                        <div class="cab-zone-name" data-i18n="cabina-zoning-booth-name">Booth / Cabina</div>
+                        <p class="cab-zone-detail" data-i18n="cabina-zoning-booth-detail">Punto de observación central: desde aquí se cruza toda la información de las demás zonas con la selección musical en tiempo real.</p>
+                    </div>
+                    <div class="cab-zone cab-zone-floor">
+                        <div class="cab-zone-name" data-i18n="cabina-zoning-floor-name">Pista Central</div>
+                        <p class="cab-zone-detail" data-i18n="cabina-zoning-floor-detail">Centro de la energía: aquí se leen pies, manos y coros en tiempo real — la señal más directa, pero no la única.</p>
+                    </div>
+                    <div class="cab-zone cab-zone-bar-l">
+                        <div class="cab-zone-name" data-i18n="cabina-zoning-bar-name">Barra Perimetral</div>
+                        <p class="cab-zone-detail" data-i18n="cabina-zoning-bar-detail">Termómetro indirecto: el ritmo de pedidos en barra suele anticipar la energía de la pista antes de que el cambio sea visible desde la cabina.</p>
+                    </div>
+                    <div class="cab-zone cab-zone-vip">
+                        <div class="cab-zone-name" data-i18n="cabina-zoning-vip-name">Mesas / Zona VIP</div>
+                        <p class="cab-zone-detail" data-i18n="cabina-zoning-vip-detail">Reconocimiento sutil: aplausos, brindis y miradas hacia la cabina indican picos sociales, no solo picos musicales.</p>
+                    </div>
+                    <div class="cab-zone cab-zone-entrance">
+                        <div class="cab-zone-name" data-i18n="cabina-zoning-entrance-name">Entrada / Puntos Ciegos</div>
+                        <p class="cab-zone-detail" data-i18n="cabina-zoning-entrance-detail">Flujo de entrada y salida — un aumento súbito de gente saliendo hacia la entrada suele anticipar una caída de energía antes de que sea visible en la pista.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PROTOCOLO DE CIERRE Y TRASPASO -->
+            <section class="cab-section" id="protocolo-cierre">
+                <h2 class="cab-section-title" data-i18n="cabina-closing-title">Protocolo de Cierre y Traspaso de Cabina</h2>
+                <p class="cab-section-intro" data-i18n="cabina-closing-intro">El cierre se ejecuta en secuencia, no de golpe — tanto si hay relevo de otro DJ como si es el cierre total del evento.</p>
+                <ol class="cab-closing-flow">
+                    <li><span class="cab-closing-num">1</span><p data-i18n="cabina-closing-step1">Anunciar el cierre con anticipación (última canción o último bloque) — sin sorprender a la pista.</p></li>
+                    <li><span class="cab-closing-num">2</span><p data-i18n="cabina-closing-step2">Bajar la ganancia del canal saliente a cero de forma gradual, nunca cortar en seco.</p></li>
+                    <li><span class="cab-closing-num">3</span><p data-i18n="cabina-closing-step3">Si hay traspaso a otro DJ: verificar el nivel de salida de su fuente antes de subir su fader — el mismo protocolo que la conmutación a Plan B.</p></li>
+                    <li><span class="cab-closing-num">4</span><p data-i18n="cabina-closing-step4">Entregar contexto verbal breve al DJ entrante: qué funcionó, qué evitar, estado real de la sala en ese momento.</p></li>
+                    <li><span class="cab-closing-num">5</span><p data-i18n="cabina-closing-step5">Si es cierre total (sin relevo): apagar la amplificación en orden — monitores de cabina primero, sistema principal después — nunca al revés, para evitar picos audibles.</p></li>
+                    <li><span class="cab-closing-num">6</span><p data-i18n="cabina-closing-step6">Verificar que el equipo personal (la Maleta Blindada) esté completo antes de desmontar — ningún cable se queda atrás.</p></li>
+                </ol>
+            </section>
+
+            <!-- 12 MÓDULOS -->
+            <section class="cab-section" id="modulos-ensenanza">
+                <h2 class="cab-section-title" data-i18n="cabina-mods-title">12 Módulos de Enseñanza</h2>
+                <p class="cab-section-intro" data-i18n="cabina-mods-intro">La base de la certificación práctica de la Academia.</p>
+                <div class="cab-mods-grid" id="cab-mods-grid"></div>
+            </section>
+
+            <!-- RÚBRICA -->
+            <section class="cab-section" id="rubrica-evaluacion">
+                <h2 class="cab-section-title" data-i18n="cabina-rubric-title">Rúbrica de Autoevaluación (0–5)</h2>
+                <p class="cab-section-intro" data-i18n="cabina-rubric-intro">Puntúa cada disciplina y calcula tu promedio. Esta rúbrica es una herramienta de autorreflexión — no reemplaza la evaluación práctica presencial de la Academia.</p>
+                <div class="cab-diagram-wrap">
+                    <table class="cab-rubric-table">
+                        <thead>
+                            <tr>
+                                <th data-i18n="cabina-rubric-th-discipline">Disciplina</th>
+                                <th data-i18n="cabina-rubric-th-score">Puntaje (0–5)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cab-rubric-body"></tbody>
+                    </table>
+                    <div class="cab-rubric-result" id="cab-rubric-result" style="display:none;">
+                        <div class="cab-rubric-avg" id="cab-rubric-avg">0.0</div>
+                        <div class="cab-rubric-tier" id="cab-rubric-tier"></div>
+                        <div class="cab-rubric-notes" id="cab-rubric-notes"></div>
+                        <button type="button" class="cab-rubric-reset" id="cab-rubric-reset" data-i18n="cabina-rubric-reset">Reiniciar</button>
+                    </div>
+                </div>
+
+                <div class="cab-criterio-box">
+                    <h3 class="cab-criterio-title" data-i18n="cabina-criterio-title">Defensa de Criterio — El "¿Por Qué?"</h3>
+                    <p class="cab-criterio-intro" data-i18n="cabina-criterio-intro">La ejecución técnica no es suficiente para certificar a un DJ. Por cada decisión importante del set, debe poder responder estas cinco preguntas con evidencia real — este es el criterio que evalúa un instructor en la práctica presencial.</p>
+                    <div class="cab-criterio-grid">
+                        <div class="cab-criterio-field">
+                            <label class="cab-criterio-label" for="cab-criterio-q1" data-i18n="cabina-criterio-q1-label">1. Lectura de sala</label>
+                            <textarea id="cab-criterio-q1" class="cab-criterio-textarea" rows="2" data-i18n-hold="cabina-criterio-q1-placeholder" placeholder="¿Qué observaste exactamente antes de decidir? (densidad, edades, lenguaje corporal...)"></textarea>
+                        </div>
+                        <div class="cab-criterio-field">
+                            <label class="cab-criterio-label" for="cab-criterio-q2" data-i18n="cabina-criterio-q2-label">2. Intención musical</label>
+                            <textarea id="cab-criterio-q2" class="cab-criterio-textarea" rows="2" data-i18n-hold="cabina-criterio-q2-placeholder" placeholder="¿Qué buscabas lograr con esa selección específica?"></textarea>
+                        </div>
+                        <div class="cab-criterio-field">
+                            <label class="cab-criterio-label" for="cab-criterio-q3" data-i18n="cabina-criterio-q3-label">3. Nivel de riesgo asumido</label>
+                            <textarea id="cab-criterio-q3" class="cab-criterio-textarea" rows="2" data-i18n-hold="cabina-criterio-q3-placeholder" placeholder="¿Qué tan arriesgada era la decisión frente a la opción segura?"></textarea>
+                        </div>
+                        <div class="cab-criterio-field">
+                            <label class="cab-criterio-label" for="cab-criterio-q4" data-i18n="cabina-criterio-q4-label">4. Plan de alternativa (Plan B)</label>
+                            <textarea id="cab-criterio-q4" class="cab-criterio-textarea" rows="2" data-i18n-hold="cabina-criterio-q4-placeholder" placeholder="¿Qué tenías preparado si esto no funcionaba?"></textarea>
+                        </div>
+                        <div class="cab-criterio-field" style="grid-column:1 / -1;">
+                            <label class="cab-criterio-label" for="cab-criterio-q5" data-i18n="cabina-criterio-q5-label">5. Maniobra de corrección aplicada</label>
+                            <textarea id="cab-criterio-q5" class="cab-criterio-textarea" rows="2" data-i18n-hold="cabina-criterio-q5-placeholder" placeholder="Si algo falló, ¿cómo corregiste exactamente?"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- FALTAS CRÍTICAS -->
+            <section class="cab-section" id="faltas-criticas">
+                <h2 class="cab-section-title" data-i18n="cabina-faults-title">Faltas Críticas</h2>
+                <div class="cab-faults-box">
+                    <p data-i18n="cabina-faults-intro">La Academia considera faltas críticas: impuntualidad grave, ausencia de preparación básica, conducta insegura, abandono injustificado de cabina, niveles sonoros irresponsables, incapacidad reiterada para corregir una pista, y conducta irrespetuosa con cliente, público o Staff.</p>
+                    <a class="cab-faults-link" href="./standards.html" data-i18n="cabina-faults-link">Ver sanciones, suspensión y revocación en el Código de Conducta MDB →</a>
+                </div>
+            </section>
+
+            <!-- CASO DE USO: ONE HIT WONDER -->
+            <section class="cab-section" id="caso-de-uso">
+                <div class="cab-usecase-box">
+                    <h3 data-i18n="cabina-usecase-title">Caso de uso: One Hit Wonder</h3>
+                    <p data-i18n="cabina-usecase-body">El show en vivo One Hit Wonder de DJMago305 es un ejemplo práctico de aplicación del método — no su origen. La construcción de energía, la lectura de sala y el cierre consciente se aplican igual en un club, una boda o esta producción itinerante de himnos de un solo hit.</p>
+                    <a href="./one-hit-wonder.html" data-i18n="cabina-usecase-link">Conocer One Hit Wonder →</a>
+                </div>
+            </section>
+
+            <!-- CREDO -->
+            <section class="cab-credo">
+                <div class="container">
+                    <p class="cab-credo-eyebrow" data-i18n="cabina-credo-eyebrow">CREDO DEL MÉTODO DE CABINA</p>
+                    <p data-i18n="cabina-credo-body">Me preparo antes de llegar. Observo antes de imponer. Construyo antes de exigir. Leo antes de reaccionar. Corrijo sin ego. Protejo la pista antes que mi orgullo. Pienso hacia adelante. Y cierro con intención.</p>
+                </div>
+            </section>
+
+        </div>
+
+        <div class="cab-gate-overlay" aria-hidden="false">
+            <div class="cab-gate-card">
+                <div class="cab-gate-icon">🔒</div>
+                <h3 data-i18n="cabina-gate-title">Contenido Exclusivo para DJs Suscritos</h3>
+                <p data-i18n="cabina-gate-subtitle">Desbloquea la doctrina completa de cabina, protocolos de rescate y la rúbrica de certificación.</p>
+                <div class="cab-gate-actions">
+                    <a href="./login.html" class="cab-gate-btn cab-gate-btn-gold" data-i18n="cabina-gate-login">Iniciar Sesión</a>
+                    <a href="./login.html?signup=free" class="cab-gate-btn cab-gate-btn-outline" data-i18n="cabina-gate-signup">Registrarse</a>
+                </div>
             </div>
         </div>
-
-        <div class="cab-criterio-box">
-            <h3 class="cab-criterio-title" data-i18n="cabina-criterio-title">Defensa de Criterio — El "¿Por Qué?"</h3>
-            <p class="cab-criterio-intro" data-i18n="cabina-criterio-intro">La ejecución técnica no es suficiente para certificar a un DJ. Por cada decisión importante del set, debe poder responder estas cinco preguntas con evidencia real — este es el criterio que evalúa un instructor en la práctica presencial.</p>
-            <div class="cab-criterio-grid">
-                <div class="cab-criterio-field">
-                    <label class="cab-criterio-label" for="cab-criterio-q1" data-i18n="cabina-criterio-q1-label">1. Lectura de sala</label>
-                    <textarea id="cab-criterio-q1" class="cab-criterio-textarea" rows="2" data-i18n-hold="cabina-criterio-q1-placeholder" placeholder="¿Qué observaste exactamente antes de decidir? (densidad, edades, lenguaje corporal...)"></textarea>
-                </div>
-                <div class="cab-criterio-field">
-                    <label class="cab-criterio-label" for="cab-criterio-q2" data-i18n="cabina-criterio-q2-label">2. Intención musical</label>
-                    <textarea id="cab-criterio-q2" class="cab-criterio-textarea" rows="2" data-i18n-hold="cabina-criterio-q2-placeholder" placeholder="¿Qué buscabas lograr con esa selección específica?"></textarea>
-                </div>
-                <div class="cab-criterio-field">
-                    <label class="cab-criterio-label" for="cab-criterio-q3" data-i18n="cabina-criterio-q3-label">3. Nivel de riesgo asumido</label>
-                    <textarea id="cab-criterio-q3" class="cab-criterio-textarea" rows="2" data-i18n-hold="cabina-criterio-q3-placeholder" placeholder="¿Qué tan arriesgada era la decisión frente a la opción segura?"></textarea>
-                </div>
-                <div class="cab-criterio-field">
-                    <label class="cab-criterio-label" for="cab-criterio-q4" data-i18n="cabina-criterio-q4-label">4. Plan de alternativa (Plan B)</label>
-                    <textarea id="cab-criterio-q4" class="cab-criterio-textarea" rows="2" data-i18n-hold="cabina-criterio-q4-placeholder" placeholder="¿Qué tenías preparado si esto no funcionaba?"></textarea>
-                </div>
-                <div class="cab-criterio-field" style="grid-column:1 / -1;">
-                    <label class="cab-criterio-label" for="cab-criterio-q5" data-i18n="cabina-criterio-q5-label">5. Maniobra de corrección aplicada</label>
-                    <textarea id="cab-criterio-q5" class="cab-criterio-textarea" rows="2" data-i18n-hold="cabina-criterio-q5-placeholder" placeholder="Si algo falló, ¿cómo corregiste exactamente?"></textarea>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- FALTAS CRÍTICAS -->
-    <section class="cab-section" id="faltas-criticas">
-        <h2 class="cab-section-title" data-i18n="cabina-faults-title">Faltas Críticas</h2>
-        <div class="cab-faults-box">
-            <p data-i18n="cabina-faults-intro">La Academia considera faltas críticas: impuntualidad grave, ausencia de preparación básica, conducta insegura, abandono injustificado de cabina, niveles sonoros irresponsables, incapacidad reiterada para corregir una pista, y conducta irrespetuosa con cliente, público o Staff.</p>
-            <a class="cab-faults-link" href="./standards.html" data-i18n="cabina-faults-link">Ver sanciones, suspensión y revocación en el Código de Conducta MDB →</a>
-        </div>
-    </section>
-
-    <!-- CASO DE USO: ONE HIT WONDER -->
-    <section class="cab-section" id="caso-de-uso">
-        <div class="cab-usecase-box">
-            <h3 data-i18n="cabina-usecase-title">Caso de uso: One Hit Wonder</h3>
-            <p data-i18n="cabina-usecase-body">El show en vivo One Hit Wonder de DJMago305 es un ejemplo práctico de aplicación del método — no su origen. La construcción de energía, la lectura de sala y el cierre consciente se aplican igual en un club, una boda o esta producción itinerante de himnos de un solo hit.</p>
-            <a href="./one-hit-wonder.html" data-i18n="cabina-usecase-link">Conocer One Hit Wonder →</a>
-        </div>
-    </section>
-
-    <!-- CREDO -->
-    <section class="cab-credo">
-        <div class="container">
-            <p class="cab-credo-eyebrow" data-i18n="cabina-credo-eyebrow">CREDO DEL MÉTODO DE CABINA</p>
-            <p data-i18n="cabina-credo-body">Me preparo antes de llegar. Observo antes de imponer. Construyo antes de exigir. Leo antes de reaccionar. Corrijo sin ego. Protejo la pista antes que mi orgullo. Pienso hacia adelante. Y cierro con intención.</p>
-        </div>
-    </section>
+    </div>
 
     <!-- FOOTER -->
     <footer class="footer">
@@ -942,27 +1051,30 @@
     <script>
     (function () {
         // ---------- 18 rules data (rendered client-side to keep translations.js as single source of truth) ----------
-        var RULES = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18];
-        var rulesGrid = document.getElementById('cab-rules-grid');
-        RULES.forEach(function (n) {
-            var card = document.createElement('div');
-            card.className = 'cab-rule-card';
-            card.innerHTML =
-                '<button type="button" class="cab-rule-toggle" aria-expanded="false">' +
-                    '<span class="cab-rule-num">' + n + '</span>' +
-                    '<span class="cab-rule-title" data-i18n="cabina-rule-' + n + '-title"></span>' +
-                    '<span class="cab-rule-chevron">▾</span>' +
-                '</button>' +
-                '<div class="cab-rule-body" data-i18n="cabina-rule-' + n + '-body"></div>';
-            rulesGrid.appendChild(card);
-        });
-        rulesGrid.addEventListener('click', function (e) {
-            var btn = e.target.closest('.cab-rule-toggle');
-            if (!btn) return;
-            var card = btn.closest('.cab-rule-card');
-            var open = card.classList.toggle('open');
-            btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-        });
+        // Reglas 1-3: grid abierto/indexable. Reglas 4-18: grid dentro del muro de vista previa.
+        function renderRuleCards(grid, nums) {
+            nums.forEach(function (n) {
+                var card = document.createElement('div');
+                card.className = 'cab-rule-card';
+                card.innerHTML =
+                    '<button type="button" class="cab-rule-toggle" aria-expanded="false">' +
+                        '<span class="cab-rule-num">' + n + '</span>' +
+                        '<span class="cab-rule-title" data-i18n="cabina-rule-' + n + '-title"></span>' +
+                        '<span class="cab-rule-chevron">▾</span>' +
+                    '</button>' +
+                    '<div class="cab-rule-body" data-i18n="cabina-rule-' + n + '-body"></div>';
+                grid.appendChild(card);
+            });
+            grid.addEventListener('click', function (e) {
+                var btn = e.target.closest('.cab-rule-toggle');
+                if (!btn) return;
+                var card = btn.closest('.cab-rule-card');
+                var open = card.classList.toggle('open');
+                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+        }
+        renderRuleCards(document.getElementById('cab-rules-grid-open'), [1, 2, 3]);
+        renderRuleCards(document.getElementById('cab-rules-grid-gated'), [4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]);
 
         // ---------- 12 modules ----------
         var MODS = [1,2,3,4,5,6,7,8,9,10,11,12];

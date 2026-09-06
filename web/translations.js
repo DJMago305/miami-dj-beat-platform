@@ -2819,8 +2819,13 @@ const translations = {
         "cabina-closing-step6": "Verificar que el equipo personal (la Maleta Blindada) esté completo antes de desmontar — ningún cable se queda atrás.",
         "cabina-courses-banner-title": "📖 Lectura Obligatoria: El Método de Cabina",
         "cabina-courses-banner-body": "Antes de presentar tu evaluación práctica, domina la doctrina completa — Ley Cero, 18 reglas operativas y los 12 módulos de entrenamiento del DJ profesional.",
-        "cabina-courses-banner-cta": "Leer el Método de Cabina →"
-    },    en: {
+        "cabina-courses-banner-cta": "Leer el Método de Cabina →",
+        "cabina-gate-title": "Área Exclusiva para DJs Suscritos",
+        "cabina-gate-subtitle": "Accede a los protocolos tácticos de rescate, talleres de crisis y la rúbrica de certificación oficial.",
+        "cabina-gate-login": "Iniciar Sesión",
+        "cabina-gate-signup": "Registrarse"
+    },
+    en: {
         "horaloca_hero_eyebrow": "ELEVATING CELEBRATIONS TO UNFORGETTABLE EXPERIENCES",
         "horaloca_hero_title": "HORA LOCA SHOW IN MIAMI",
         "horaloca_hero_subtitle": "Select the type of talent you wish to add to your package.",
@@ -5640,6 +5645,10 @@ const translations = {
         "cabina-closing-step6": "Check that personal gear (the Armored Bag) is complete before breaking down — no cable gets left behind.",
         "cabina-courses-banner-title": "📖 Required Reading: The Booth Method",
         "cabina-courses-banner-body": "Before taking your practical evaluation, master the full doctrine — Rule Zero, 18 operating rules, and the 12 training modules of the professional DJ.",
-        "cabina-courses-banner-cta": "Read the Booth Method →"
+        "cabina-courses-banner-cta": "Read the Booth Method →",
+        "cabina-gate-title": "Exclusive Area for Subscribed DJs",
+        "cabina-gate-subtitle": "Access tactical rescue protocols, crisis workshops, and the official certification rubric.",
+        "cabina-gate-login": "Log In",
+        "cabina-gate-signup": "Sign Up"
     }
 };
