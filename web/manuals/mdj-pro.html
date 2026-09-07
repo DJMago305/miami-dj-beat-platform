@@ -1,23 +1,72 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
 
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>MDJPRO — Manual Web</title>
+    <title>MDJPRO Manual — Miami DJ Beat</title>
+    <!-- Router puro, sin contenido propio que indexar: que Google no lo trate
+         como pagina real, pero SI siga los enlaces de abajo hacia las 6
+         versiones de idioma reales (esas si llevan su propio SEO completo). -->
+    <meta name="robots" content="noindex,follow" />
 
-    <!-- Stable redirect to the real manual file -->
-    <meta http-equiv="refresh" content="0; url=./MANUAL_OFICIAL_MDJPRO_V3.html">
+    <!--
+      Router de idioma del manual de MDJPRO (2026-09-07).
+      Reemplaza el stub viejo que apuntaba a MANUAL_OFICIAL_MDJPRO_V3.html,
+      un archivo que nunca existio en el repo (confirmado por auditoria
+      forense antes de tocar esto).
 
-    <!-- Fallback for browsers that ignore meta refresh -->
+      Orden de deteccion:
+        1) Preferencia real del sitio (localStorage.mdjpro_lang, la misma
+           llave que ya usa i18n.js en todo el sitio) -- hoy solo vale 'es'/'en',
+           pero el manual soporta 6, asi que se acepta cualquiera de las 6 si
+           algun dia el selector del sitio crece.
+        2) Idioma del navegador (navigator.languages), para fr/de/it/pt --
+           el sitio no tiene selector para esos 4 todavia, esta es su unica
+           via de deteccion real.
+        3) Ingles, por defecto.
+      Sin JS: no hay meta-refresh a proposito (uno fijo interferiria con que
+      Google descubra las 6 versiones via hreflang) -- el enlace visible del
+      body es el unico respaldo para ese caso, apuntando a EN por defecto.
+
+      El redirect va ANTES que cualquier otra cosa: este script corre en
+      <head>, antes de que <body> exista, asi que tocar el <a> de mas abajo
+      aqui mismo lanzaba "Cannot read properties of null" y cortaba el
+      redirect entero a mitad de camino (bug real, encontrado probando el
+      clic real antes de dar esto por terminado). Ese enlace no necesitaba
+      actualizarse de todos modos: si JS corrio, ya estamos navegando: si JS
+      no corrio, esta funcion tampoco corrio.
+    -->
     <script>
-        window.location.replace("./MANUAL_OFICIAL_MDJPRO_V3.html");
+    (function () {
+        var SUPPORTED = ['en', 'es', 'fr', 'de', 'it', 'pt'];
+
+        function detectarIdioma() {
+            try {
+                var pref = localStorage.getItem('mdjpro_lang');
+                if (pref && SUPPORTED.indexOf(pref) !== -1) return pref;
+            } catch (e) { /* localStorage bloqueado -- seguir con el navegador */ }
+
+            var listas = (navigator.languages && navigator.languages.length)
+                ? navigator.languages
+                : [navigator.language || navigator.userLanguage || ''];
+            for (var i = 0; i < listas.length; i++) {
+                var codigo = String(listas[i]).slice(0, 2).toLowerCase();
+                if (SUPPORTED.indexOf(codigo) !== -1) return codigo;
+            }
+            return 'en';
+        }
+
+        var idioma = detectarIdioma();
+        var destino = './MDJPRO_Manual/' + idioma + '/index.html';
+        window.location.replace(destino);
+    })();
     </script>
 </head>
 
 <body>
-    <p>Redirigiendo al manual…</p>
-    <p><a href="./MANUAL_OFICIAL_MDJPRO_V3.html">Abrir manual</a></p>
+    <p>Redirecting to the manual… / Redirigiendo al manual…</p>
+    <p><a id="mdj-manual-fallback-link" href="./MDJPRO_Manual/en/index.html">Open manual / Abrir manual</a></p>
 </body>
 
 </html>
