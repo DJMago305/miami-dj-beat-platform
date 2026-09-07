@@ -3362,6 +3362,7 @@
 
                     <!-- PRO GATE: Not logged in or not PRO -->
                     <div id="exam-gate" style="
+                    display:none;
                     background: rgba(197,160,89,0.06);
                     border: 1px solid rgba(197,160,89,0.3);
                     border-radius: 24px;
@@ -3636,10 +3637,18 @@
         }
 
         // ── Init: check PRO status + cooldown ───────────────────────────
+        /* FOUC fix (2026-09-07): #exam-gate nace oculto (style="display:none" en
+           el HTML) -- antes nacia visible y esta funcion solo lo dejaba asi por
+           omision, sin decidir nada, asi que cualquier DJ PRO_VERIFIED veia el
+           candado un instante en cada carga. Mismo patron ya aplicado en
+           account-settings.html (billing-upgrade-btn) y mdjb-music-intelligence.html
+           (mi-gate): ahora cada rama que concluye "sin acceso" lo revela de
+           verdad, en vez de asumir que ya estaba visible. */
         async function initExam() {
+            const gateEl = document.getElementById('exam-gate');
             try {
                 const { data: { session } } = await supabase.auth.getSession();
-                if (!session) return; // Gate stays visible (not logged in)
+                if (!session) { if (gateEl) gateEl.style.display = 'block'; return; }
 
                 const { data: profile } = await supabase
                     .from('dj_profiles')
@@ -3648,7 +3657,7 @@
                     .single();
 
                 const isPRO = profile && profile.plan === 'PRO' && profile.status === 'PRO_VERIFIED';
-                if (!isPRO) return; // Gate stays visible (not PRO)
+                if (!isPRO) { if (gateEl) gateEl.style.display = 'block'; return; }
 
                 // Check cooldown
                 if (profile.exam_retry_after) {
@@ -3673,6 +3682,7 @@
 
             } catch (e) {
                 console.log('Exam init error:', e.message);
+                if (gateEl) gateEl.style.display = 'block';
             }
         }
 
