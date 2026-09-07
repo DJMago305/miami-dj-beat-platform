@@ -549,12 +549,7 @@ async function initAgendaEngine() {
             if (weeklyShift) return weeklyShift;
             const withVenue = pool.find(function (ev) {
                 const ep = ev.extendedProps || {};
-                if ((!startTime || !endTime) && window.mdjAgendaEngineContext && window.mdjAgendaEngineContext.profile) {
-                const pref = mdjAgendaPreferredTimes(window.mdjAgendaEngineContext.profile);
-                if (!startTime && pref.prefStart) startTime = pref.prefStart;
-                if (!endTime && pref.prefEnd) endTime = pref.prefEnd;
-            }
-            const venue = (ep.venue || '').trim();
+                const venue = (ep.venue || '').trim();
                 return venue.length > 0;
             });
             if (withVenue) return withVenue;

@@ -6,6 +6,25 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Pedidos Merch — Miami DJ Beat</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
+    <script>
+    /* P2.2 · WebKit legacy no puede ni PARSEAR el bundle del CDN de arriba
+       (?. y ??, 133 veces en la build 2.112.3 -- se resuelve sola, sin
+       version fijada) -- ese <script> falla entero y en silencio antes de
+       ejecutar una sola linea. Deteccion indirecta (try/catch): escribir
+       ?. / ?? aqui mismo tambien rompería ESTE script en el mismo motor. Si
+       falta soporte, se inyecta -- mismo origen -- una copia local
+       transpilada (mismo 2.112.3, downlevel a ES2019, verificada
+       funcionalmente identica). Mismo bloque exacto que login.html/index.html
+       -- esta pagina era la unica de 65 que carga Supabase sin este respaldo
+       (hallazgo de auditoria 2026-09-07, no aplicado antes por omision). */
+    (function () {
+        var mdjLibAusente = !(window.supabase &&
+            typeof window.supabase.createClient === 'function');
+        if (mdjLibAusente) {
+            document.write('<script src="./vendor/supabase-js-2.112.3.legacy.js?v=20260818-safari-legacy"><\/script>');
+        }
+    })();
+    </script>
     <script src="./js/mdj-safe-storage.js?v=20260616-1"></script>
     <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />

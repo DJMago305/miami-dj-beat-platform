@@ -7196,3 +7196,59 @@
     }
   };
 })();
+
+/* ══════════════════════════════════════════════════════════════════════════
+   SONDEO DE VERSIÓN · 2026-09-07 (orden directa del PO) · cuentas existentes
+   nunca deben quedarse pegadas en una versión vieja del sitio.
+   ──────────────────────────────────────────────────────────────────────────
+   El sitio es HTML/JS/CSS estático sin build ni service worker: hasta hoy, un
+   navegador que ya tenía cacheado un .js/.css (o simplemente una pestaña que
+   alguien dejó abierta días) podía seguir corriendo código viejo para siempre
+   -- el único mecanismo existente era el `?v=` manual por archivo, que solo
+   ayuda si el USUARIO recarga.
+   Mecanismo: `web/site-version.json` (cache:no-store, un archivo minúsculo)
+   se lee al cargar la página para fijar la versión con la que se abrió, y
+   despues cada 5 minutos. Si cambia, recarga sola -- orden explícita del PO:
+   "recarga automática y silenciosa", sin banner ni confirmación. Único
+   resguardo real: nunca recarga mientras el usuario está escribiendo (input/
+   textarea/contenteditable enfocado), para no borrarle algo a mitad de
+   teclear -- eso no es la UX descartada (el banner), es solo no destruir
+   datos activos.
+   Para forzar que todas las cuentas actualicen: subir el valor "v" de
+   site-version.json (cualquier string nuevo sirve, no hace falta que sea
+   secuencial). No hace falta tocar este script para cada deploy futuro. */
+(function () {
+  'use strict';
+  if (window.__mdjVersionCheckStarted) return;
+  window.__mdjVersionCheckStarted = true;
+
+  var CHECK_INTERVAL_MS = 5 * 60 * 1000;
+  var loadedVersion = null;
+
+  function fetchVersion() {
+    return fetch('./site-version.json?t=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) { return (j && j.v) ? String(j.v) : null; })
+      .catch(function () { return null; });
+  }
+
+  function usuarioEscribiendo() {
+    var el = document.activeElement;
+    if (!el) return false;
+    var tag = el.tagName;
+    return tag === 'INPUT' || tag === 'TEXTAREA' || !!el.isContentEditable;
+  }
+
+  function checkVersion() {
+    fetchVersion().then(function (v) {
+      if (!v) return; // sin dato real, no se decide nada
+      if (loadedVersion === null) { loadedVersion = v; return; } // primera lectura: fija la base
+      if (v !== loadedVersion && !usuarioEscribiendo()) {
+        location.reload();
+      }
+    });
+  }
+
+  checkVersion();
+  setInterval(checkVersion, CHECK_INTERVAL_MS);
+})();
