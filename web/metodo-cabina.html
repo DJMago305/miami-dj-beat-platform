@@ -1317,7 +1317,7 @@
 
         </div>
 
-        <div class="cab-gate-overlay" aria-hidden="false">
+        <div class="cab-gate-overlay" id="cab-gate-overlay" aria-hidden="false" style="display:none;">
             <div class="cab-gate-card">
                 <div class="cab-gate-icon">🔒</div>
                 <h3 data-i18n="cabina-gate-title">Contenido Exclusivo para DJs Suscritos</h3>
@@ -1596,19 +1596,29 @@
         var gateWrap = document.getElementById('cab-gate-wrap');
         if (!gateWrap) return;
 
+        /* FOUC fix (2026-09-07): el overlay ahora nace oculto (style="display:none"
+           en el HTML) -- antes nacia visible y solo se apagaba tras confirmar
+           sesion, asi que un DJ logueado veia el muro de "Acceso Exclusivo" un
+           instante en cada carga. La clase .cab-gate-unlocked sigue gobernando
+           .cab-gate-content (pointer-events), pero el overlay necesita su propio
+           display explicito porque ahora arranca con un estilo inline que la
+           clase sola no puede pisar. */
         function applyGateState(hasSession) {
             gateWrap.classList.toggle('cab-gate-unlocked', !!hasSession);
+            var overlay = document.getElementById('cab-gate-overlay');
+            if (overlay) overlay.style.display = hasSession ? 'none' : 'block';
         }
 
         function checkSession(retriesLeft) {
             var supa = (typeof window.getSupabaseClient === 'function') ? window.getSupabaseClient() : null;
             if (!supa) {
-                if (retriesLeft > 0) setTimeout(function () { checkSession(retriesLeft - 1); }, 250);
+                if (retriesLeft > 0) { setTimeout(function () { checkSession(retriesLeft - 1); }, 250); return; }
+                applyGateState(false); // Supabase nunca cargo: candado por defecto, no overlay hueco.
                 return;
             }
             supa.auth.getSession().then(function (r) {
                 applyGateState(!!(r && r.data && r.data.session));
-            }).catch(function () {});
+            }).catch(function () { applyGateState(false); });
             try {
                 supa.auth.onAuthStateChange(function (_event, session) {
                     applyGateState(!!session);

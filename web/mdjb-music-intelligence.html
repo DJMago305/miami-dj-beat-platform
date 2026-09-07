@@ -132,7 +132,19 @@
     height:var(--header-h);flex:none;display:flex;align-items:center;
     padding:0 18px 0 16px;gap:18px;border-bottom:1px solid var(--border);
     background:var(--bg-elevated);position:relative;z-index:20;
-  }#mi-cockpit .brand{display:flex;align-items:center;gap:10px;min-width:0;}#mi-cockpit .brand-mark{
+  }
+  /* FOUC/overlap fix (2026-09-07): en "estacion" (html.mdj-estacion-previa /
+     body[data-mdj-estacion]) bajo 768px, mdj-mobile-header-fix.js monta un logo
+     de respaldo fixed (top:14px) cuyo PNG de letras se fuerza a height:140px
+     con overflow:visible -- pinta hasta ~y=154, mientras el topbar propio del
+     cockpit arranca en y=84 (el hueco reservado normal del header). Se
+     solapaban en vivo (confirmado con getBoundingClientRect, ~22px de overlap
+     real). Empujar el topbar del cockpit, no encoger el logo compartido: ese
+     logo lo usan 8 paginas de estacion mas que toleran el overflow bien. */
+  @media (max-width:768px){
+    #mi-cockpit .topbar{margin-top:44px;}
+  }
+  #mi-cockpit .brand{display:flex;align-items:center;gap:10px;min-width:0;}#mi-cockpit .brand-mark{
     width:38px;height:38px;flex:none;
     display:flex;align-items:center;justify-content:center;
   }#mi-cockpit .brand-mark img{width:100%;height:100%;object-fit:contain;display:block;}#mi-cockpit .brand-text{display:flex;flex-direction:column;line-height:1.15;min-width:0;}#mi-cockpit .brand-text .b-name{font-family:var(--font-display);font-weight:800;font-size:15.5px;letter-spacing:.03em;white-space:nowrap;}#mi-cockpit .brand-text .b-sub{font-size:9.5px;color:var(--text-dim);letter-spacing:.09em;text-transform:uppercase;white-space:nowrap;}#mi-cockpit .topbar-center{
