@@ -82,6 +82,25 @@
             stroke: #d99aff;
         }
 
+        /* Insignia de app de origen (2026-09-07, orden del PO) -- las tarjetas de
+           "Pro Features" son manuales/explicaciones, no portales; esta insignia
+           aclara a que app pertenece cada una. Dos familias: MDJPRO (Load Root,
+           Library Cleaning, Smart Crates) y MDJB.IA (SmartCrate IA, MDJB Music
+           Intelligence -- la app nueva que viene, confirmado por el PO que
+           ambas pertenecen ahi). Cash Flow queda sin insignia -- producto web
+           propio, no parte de ninguna de las dos apps. */
+        body.page-dj-tools .dj-tools-app-badge {
+            font-size: 9.5px;
+            font-weight: 800;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            padding: 2px 8px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            color: rgba(255,255,255,.45);
+            white-space: nowrap;
+        }
+
         /* Loading spinner — visible while session resolves (TICKET-DJTOOLS-006 anti-flash) */
         #dj-tools-gate-loader {
             display: flex;
@@ -299,17 +318,26 @@
                         <a href="#" class="btn" style="padding: 16px 32px; font-size: 18px;"
                             data-i18n="tools-btn-early-access"
                             onclick="event.preventDefault(); if(typeof mdjCheckoutPro === 'function') mdjCheckoutPro('app_monthly');">Acceso Anticipado</a>
+                        <!-- Puerta de entrada real a MDJB Music Intelligence (2026-09-07, orden
+                             directa del PO) -- distinta del tile de "Funciones Pro" mas abajo, que
+                             queda como manual/explicacion. Hoy la experiencia vive 100% en el web
+                             (mdjb-music-intelligence.html); una version descargable llegara despues. -->
+                        <a href="./mdjb-music-intelligence.html" class="btn" style="padding: 16px 32px; font-size: 18px;"
+                            data-i18n="tools-btn-music-intel">MDJB Music Intelligence</a>
                     </div>
                 </div>
 
                 <h2 style="text-align: center; margin-bottom: 40px;" data-i18n="tools-features-title">Pro Features</h2>
                 <div class="grid4">
                     <div class="tile" style="border: 1px solid rgba(255,159,67,0.45); background: rgba(255,120,40,0.06);">
-                        <div class="mdjpro-feat-icon mdjpro-feat-icon--orange" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M4 7h5l2 2h9v10H4V7z" />
-                                <path d="M4 7V5a2 2 0 012-2h4" />
-                            </svg>
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                            <div class="mdjpro-feat-icon mdjpro-feat-icon--orange" aria-hidden="true" style="margin-bottom: 0;">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M4 7h5l2 2h9v10H4V7z" />
+                                    <path d="M4 7V5a2 2 0 012-2h4" />
+                                </svg>
+                            </div>
+                            <span class="dj-tools-app-badge" data-i18n="tools-badge-mdjpro">MDJPRO</span>
                         </div>
                         <h3 style="color: #ff9f43;" data-i18n="tools-feature-lr-title">Load Root</h3>
                         <p data-i18n="tools-feature-lr-teaser">Load Root — point MDJPRO at your master music folder on Mac. macOS security bookmark, one pick, local-only. Required before Scan, Wizard, and Tag Master.</p>
@@ -317,11 +345,14 @@
                             style="padding: 8px 16px; font-size: 13px;" data-i18n="tools-feature-lr-cta">Explore Load Root</a>
                     </div>
                     <div class="tile" style="border: 1px solid rgba(175,82,222,0.35); background: rgba(175,82,222,0.05);">
-                        <div class="mdjpro-feat-icon mdjpro-feat-icon--purple" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M3 7l9-4 9 4v10l-9 4-9-4V7z" />
-                                <circle cx="12" cy="11" r="1.5" />
-                            </svg>
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                            <div class="mdjpro-feat-icon mdjpro-feat-icon--purple" aria-hidden="true" style="margin-bottom: 0;">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M3 7l9-4 9 4v10l-9 4-9-4V7z" />
+                                    <circle cx="12" cy="11" r="1.5" />
+                                </svg>
+                            </div>
+                            <span class="dj-tools-app-badge" data-i18n="tools-badge-mdjpro">MDJPRO</span>
                         </div>
                         <h3 style="color: #d99aff;" data-i18n="tools-feature-clean-title">Library Cleaning</h3>
                         <p data-i18n="tools-feature-clean-teaser">Tag Master — batch ID3, metadata hygiene, and local Save before the gig. The cleaning room your library deserves.</p>
@@ -329,13 +360,16 @@
                             style="padding: 8px 16px; font-size: 13px;" data-i18n="tools-feature-clean-cta">Explore Tag Master</a>
                     </div>
                     <div class="tile" style="border: 1px solid rgba(197,160,89,0.4); background: rgba(197,160,89,0.04);">
-                        <div class="mdjpro-feat-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <rect x="3" y="3" width="7" height="7" rx="1.5" />
-                                <rect x="14" y="3" width="7" height="7" rx="1.5" />
-                                <rect x="3" y="14" width="7" height="7" rx="1.5" />
-                                <rect x="14" y="14" width="7" height="7" rx="1.5" />
-                            </svg>
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                            <div class="mdjpro-feat-icon" aria-hidden="true" style="margin-bottom: 0;">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                                    <rect x="14" y="3" width="7" height="7" rx="1.5" />
+                                    <rect x="3" y="14" width="7" height="7" rx="1.5" />
+                                    <rect x="14" y="14" width="7" height="7" rx="1.5" />
+                                </svg>
+                            </div>
+                            <span class="dj-tools-app-badge" data-i18n="tools-badge-mdjpro">MDJPRO</span>
                         </div>
                         <h3 style="color: var(--gold);" data-i18n="tools-feature-smart-title">Smart Crates</h3>
                         <p data-i18n="tools-feature-smart-teaser">The phonoteca shelf a pro DJ builds over years — deployed on your drive in seconds. MDJPRO Premium DNA.</p>
@@ -362,15 +396,37 @@
                          principio 4. No confundir con el tile "Smart Crates" de arriba, que es
                          una funcion distinta y anterior de MDJPRO (library-wizard.html). -->
                     <div class="tile" style="border: 1px solid rgba(197,160,89,0.4); background: rgba(197,160,89,0.04);">
-                        <div class="mdjpro-feat-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M3 13h2l2-7 3 14 3-11 2 6h6" />
-                            </svg>
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                            <div class="mdjpro-feat-icon" aria-hidden="true" style="margin-bottom: 0;">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M3 13h2l2-7 3 14 3-11 2 6h6" />
+                                </svg>
+                            </div>
+                            <span class="dj-tools-app-badge" data-i18n="tools-badge-musicintel">MDJB.IA</span>
                         </div>
                         <h3 style="color: var(--gold);" data-i18n="tools-feature-smartcrate-title">SmartCrate IA</h3>
                         <p data-i18n="tools-feature-smartcrate-teaser">Music Intelligence System — Camelot harmonic matching, event-aware BPM ranges, and thematic Experiences over your real Serato library. Exclusive to PRO/ELITE accounts.</p>
                         <a href="./staff.html?vista=smartcrate" class="btn primary dj-tools-feature-cta"
                             style="padding: 8px 16px; font-size: 13px;" data-i18n="tools-feature-smartcrate-cta">Explore SmartCrate IA</a>
+                    </div>
+                    <!-- Pestana movida desde academia.html (2026-09-07, orden directa del PO) --
+                         antes vivia en la botonera de Academia; se retiro de ahi porque es una
+                         herramienta, no un curso. Mismo destino de siempre (mdjb-music-intelligence.html),
+                         sin renombrar ni fusionar con el tile de SmartCrate IA de arriba. -->
+                    <div class="tile" style="border: 1px solid rgba(197,160,89,0.4); background: rgba(197,160,89,0.04);">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                            <div class="mdjpro-feat-icon" aria-hidden="true" style="margin-bottom: 0;">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <rect x="7" y="7" width="10" height="10" rx="1.5" />
+                                    <path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2" />
+                                </svg>
+                            </div>
+                            <span class="dj-tools-app-badge" data-i18n="tools-badge-musicintel">MDJB.IA</span>
+                        </div>
+                        <h3 style="color: var(--gold);" data-i18n="tools-feature-musicintel-title">MDJB Music Intelligence</h3>
+                        <p data-i18n="tools-feature-musicintel-teaser">DJ programming and floor intelligence cockpit — live listening, track discovery, and library tools. Plan Pro / Elite exclusive.</p>
+                        <a href="./mdjb-music-intelligence.html" class="btn primary dj-tools-feature-cta"
+                            style="padding: 8px 16px; font-size: 13px;" data-i18n="tools-feature-musicintel-cta">Explore Music Intelligence</a>
                     </div>
                 </div>
             </div>
