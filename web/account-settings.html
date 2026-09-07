@@ -62,7 +62,7 @@
        sustituta del sistema y el texto salia ~2% mas ancho, desplazando el eje X. -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=optional" rel="stylesheet" />
   <link rel="stylesheet" href="./styles.css?v=20260823-hero-card-altura" />
-  <link rel="stylesheet" href="./header-unified.css?v=20260902-cortinas" />
+  <link rel="stylesheet" href="./header-unified.css?v=20260907-fouc-fix" />
   <link rel="stylesheet" href="./mdj-outlined-fields.css?v=20260421-account-forms" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
   <script>
@@ -2378,7 +2378,7 @@
         </div>
         <div class="acct-row" style="border-top:1px solid rgba(255,255,255,0.04);">
           <div class="acct-row-info"><div class="acct-lbl">Ciclo de facturación</div><div class="acct-val" id="billing-cadence">—</div></div>
-          <a id="billing-upgrade-btn" class="acct-edit" href="./dj-dashboard.html#panel-billing">Upgrade →</a>
+          <a id="billing-upgrade-btn" class="acct-edit" href="./dj-dashboard.html#panel-billing" style="display:none;">Upgrade →</a>
         </div>
       </div>
 
@@ -5574,9 +5574,10 @@
             else if (_plUp === 'PRO' || _plUp === 'ELITE') eyebrowEl.textContent = 'Artist PRO Web';
             else eyebrowEl.textContent = 'Plan Artista';
           }
-          /* Ocultar botón Upgrade para owner/PRO */
+          /* Nace oculto (style="display:none" en el HTML, FOUC fix 2026-09-07) -- aqui se
+             decide POSITIVAMENTE si se muestra, nunca al reves. Mismo patron que fx-upgrade-btn. */
           var upBtn = document.getElementById('billing-upgrade-btn');
-          if (upBtn && (_role === 'owner' || pl.toUpperCase() === 'PRO' || pl.toUpperCase() === 'ELITE')) upBtn.style.display = 'none';
+          if (upBtn) upBtn.style.display = (_role !== 'owner' && pl.toUpperCase() !== 'PRO' && pl.toUpperCase() !== 'ELITE') ? '' : 'none';
         }
         var statEl = document.getElementById('billing-status');
         if (statEl) {
@@ -7959,7 +7960,7 @@
     </script>
     <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
     <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
-      <script src="./mdjb-shared-header.js?v=20260903-revert-nav-agenda"></script>
+      <script src="./mdjb-shared-header.js?v=20260907-fouc-fix"></script>
   <script src="./mdj-profile-nav-context.js?v=20260818-nav-canonico"></script>
   <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
   <script src="./mdj-mainnav-infinite.js?v=20260818-nav-canonico"></script>

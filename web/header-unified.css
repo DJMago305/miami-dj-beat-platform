@@ -48,6 +48,21 @@
   display: none !important;
 }
 
+/*
+ * FOUC fix (2026-09-07): el drawer movil (#header-subscribe-free-mobile) nunca tuvo
+ * ocultacion inicial por CSS -- solo lo escondia el JS (checkSessionForNav) despues
+ * de resolver la sesion, asi que un usuario PRO/staff podia verlo un instante en el
+ * HTML estatico si abria el menu antes de que la promesa terminara.
+ * A PROPOSITO sin !important (a diferencia del bloque de arriba, que suprime la fila
+ * de escritorio para siempre): a este si lo revela mdjHeaderMonetizationCtaMarkVisible
+ * en mdjb-shared-header.js con un `el.style.display = 'inline-flex'` normal cuando
+ * corresponde (visitante anonimo o plan gratis) -- un !important aqui lo dejaria
+ * oculto para siempre, igual que el bug que se esta corrigiendo.
+ */
+#header-subscribe-free-mobile {
+  display: none;
+}
+
 /* Pastilla editorial de plan/rol (mdjApplyNavTierStatusBadge): no en fila 1 unificada — solapa la marca. */
 #mainHeader.header.mdj-header-unified .header-actions #header-tier-status-badge {
   display: none !important;
