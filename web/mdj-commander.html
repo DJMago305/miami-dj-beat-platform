@@ -2739,6 +2739,14 @@
       if(pc || conectando) return;
       conectando = true;
       try{
+      /* Preflight de capacidad (2026-09-07, auditoria de hardware): antes,
+         un navegador sin WebRTC (Safari muy viejo, o getUserMedia bloqueado
+         por politica) fallaba en silencio mas abajo -- ni toast ni pista de
+         que paso. Mismo patron que el chequeo de "url" de aqui debajo. */
+      if(typeof RTCPeerConnection === 'undefined' || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+        toast(T('Este navegador no soporta llamadas de voz en vivo. Probá con una versión más reciente de Safari o Chrome.','This browser doesn\'t support live voice calls. Try a newer version of Safari or Chrome.'),'warn');
+        return;
+      }
       var url = fnUrl(null);
       if(!url){ toast(T('No pude ubicar el servidor de voz','Voice server not found'),'warn'); return; }
       url += (url.indexOf('?')===-1?'?':'&') + 'voice=' + (localStorage.getItem('elixis_voice')||'ash')
