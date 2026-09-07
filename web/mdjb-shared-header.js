@@ -5811,9 +5811,18 @@
         var getProBtn = document.getElementById('header-get-pro-btn');
         var subFreeDesk2 = document.getElementById('header-subscribe-free-btn');
         if (djproBadge) mdjHeaderMonetizationCtaMarkHidden(djproBadge);
-        /* Sin sesión: desktop sin PRO/GRATIS en fila superior; drawer móvil (#header-subscribe-free-mobile) intacto. */
+        /* Sin sesión: desktop sin PRO/GRATIS en fila superior; drawer móvil (#header-subscribe-free-mobile) SI se muestra. */
         mdjHeaderMonetizationCtaMarkHidden(getProBtn);
         mdjHeaderMonetizationCtaMarkHidden(subFreeDesk2);
+        /* FOUC fix (2026-09-07): antes este link nacia visible en el HTML (sin CSS de
+           por medio) y nadie lo revelaba explicitamente -- funcionaba de pura suerte
+           porque nunca se ocultaba para el visitante anonimo. Ahora que header-unified.css
+           lo oculta por defecto (display:none, sin !important a proposito), aqui se
+           revela de verdad para quien de verdad no tiene sesion. No usar
+           mdjHeaderMonetizationCtaMarkVisible: esa funcion oculta sola en header
+           unificado (logica pensada para la fila 1 de escritorio, no para este link). */
+        var subFreeMobGuest = document.getElementById('header-subscribe-free-mobile');
+        if (subFreeMobGuest) subFreeMobGuest.style.display = 'inline';
         mdjSyncClientLoyaltyIndicator(false);
         var npmGuest = document.getElementById('nav-my-profile-mobile');
         if (npmGuest) npmGuest.style.display = 'none';
