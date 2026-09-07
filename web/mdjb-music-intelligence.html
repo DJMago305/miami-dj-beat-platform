@@ -375,7 +375,7 @@
          ya resuelta ahi, no hacia falta nada mas aqui. -->
     <div class="mi-page-wrap" id="miPageWrap">
 
-    <div class="mi-gate-wrap" id="mi-gate">
+    <div class="mi-gate-wrap" id="mi-gate" style="display:none;">
       <div class="mi-gate-card">
         <div class="mi-gate-icon">🔒</div>
         <h2>MDJB Music Intelligence — Acceso Plan PRO</h2>
@@ -469,31 +469,38 @@
 
     <script>
     (function(){
+      /* FOUC fix (2026-09-07): #mi-gate nace oculto (style="display:none" en el HTML)
+         -- antes nacia visible y esta funcion solo lo ESCONDIA tras confirmar PRO, asi
+         que una cuenta PRO/owner veia el candado un instante en cada carga/refresh.
+         Ahora se decide POSITIVAMENTE: el gate se queda oculto salvo que denyAccess()
+         lo revele de verdad (sin sesion, sin perfil, o plan no-PRO). */
+      function mdjMiSetAccess(granted){
+        var gate = document.getElementById('mi-gate');
+        var cockpit = document.getElementById('mi-cockpit');
+        if (gate) gate.style.display = granted ? 'none' : '';
+        if (cockpit) cockpit.style.display = granted ? '' : 'none';
+      }
       async function mdjMiCheckAccess(){
         try {
           var sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
-          if (!sb) return;
+          if (!sb) { mdjMiSetAccess(false); return; }
           var sess = await sb.auth.getSession();
           var session = sess && sess.data ? sess.data.session : null;
-          if (!session) return; // gate stays visible
+          if (!session) { mdjMiSetAccess(false); return; }
 
           var res = await sb.from('dj_profiles').select('plan, role').eq('user_id', session.user.id).single();
           var p = res && res.data;
-          if (!p) return;
+          if (!p) { mdjMiSetAccess(false); return; }
 
           /* Owner y sus variantes de rol (admin/manager, ver account-settings.html:6887
              y mdjb-shared-header.js ~2599) son la única cuenta de desbloqueo total —
              owner ya es PRO por definición, sin importar su campo .plan. */
           var esOwnerOVariante = ['owner', 'admin', 'manager'].includes(p.role);
           var isPro = esOwnerOVariante || ['PRO', 'ELITE'].includes(p.plan);
-          if (!isPro) return; // gate stays visible
-
-          var gate = document.getElementById('mi-gate');
-          var cockpit = document.getElementById('mi-cockpit');
-          if (gate) gate.style.display = 'none';
-          if (cockpit) cockpit.style.display = '';
+          mdjMiSetAccess(isPro);
         } catch (e) {
           console.log('MDJB Music Intelligence access check error:', e && e.message);
+          mdjMiSetAccess(false);
         }
       }
       if (document.readyState === 'loading') {
