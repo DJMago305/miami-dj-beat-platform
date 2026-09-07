@@ -54,21 +54,28 @@
      solo produce una marca+menú superpuestos sobre los reales — confirmado en
      vivo en las páginas GEO/SEO (rentals/weddings/corporate/latin-dj/
      florida-keys/events), donde el header nunca se oculta. */
-  function isRealHeaderUsable() {
-    function usable(el) {
-      if (!el) return false;
-      var r = el.getBoundingClientRect();
-      return r.width > 0 && r.height > 0;
-    }
-    return usable(document.getElementById('mobileMenuBtn')) &&
-      usable(document.querySelector('#mainHeader .brand'));
+  function elUsable(el) {
+    if (!el) return false;
+    var r = el.getBoundingClientRect();
+    return r.width > 0 && r.height > 0;
   }
 
-  function removeFabsIfPresent() {
-    var fab = document.getElementById('mdjMobileMenuFab');
-    var brand = document.getElementById('mdjMobileBrandFab');
-    if (fab) fab.parentNode.removeChild(fab);
-    if (brand) brand.parentNode.removeChild(brand);
+  /* Doble candado real (2026-09-07, hallazgo del PO en vivo): en páginas de
+     "estación" bajo 1150px, mdjb-shared-header.js YA monta su propio botón de
+     respaldo (#mdj-riel-toggle, hijo de #mainHeader, abre #mainNav) cuando
+     .header-top queda oculto. Esta función nunca sabía de su existencia, así
+     que en esas páginas montaba TAMBIÉN su propio FAB de menú encima del
+     riel-toggle -- dos hamburguesas dibujadas una sobre otra, ambas reales,
+     ninguna "mal hecha". El riel-toggle existe siempre en el DOM pero mide
+     0x0 (display:none) fuera de esa condición, así que este chequeo no
+     cambia nada en las páginas donde nunca aparece. */
+  function isMenuReachable() {
+    return elUsable(document.getElementById('mobileMenuBtn')) ||
+      elUsable(document.getElementById('mdj-riel-toggle'));
+  }
+
+  function isBrandReachable() {
+    return elUsable(document.querySelector('#mainHeader .brand'));
   }
 
   function init() {
@@ -110,13 +117,12 @@
 
   function mountOrRemoveFabs() {
     try {
-      if (isRealHeaderUsable()) {
-        removeFabsIfPresent();
-        return;
-      }
-
-      // 3) Botón de menú independiente.
-      if (!document.getElementById('mdjMobileMenuFab')) {
+      // 3) Botón de menú independiente -- solo si NINGÚN mecanismo real
+      //    (hamburguesa vieja o riel-toggle de estación) es alcanzable.
+      if (isMenuReachable()) {
+        var existingFab = document.getElementById('mdjMobileMenuFab');
+        if (existingFab) existingFab.parentNode.removeChild(existingFab);
+      } else if (!document.getElementById('mdjMobileMenuFab')) {
         var fab = document.createElement('button');
         fab.type = 'button';
         fab.id = 'mdjMobileMenuFab';
@@ -134,8 +140,12 @@
         document.body.appendChild(fab);
       }
 
-      // 4) Marca independiente.
-      if (!document.getElementById('mdjMobileBrandFab')) {
+      // 4) Marca independiente -- criterio propio (el riel-toggle no resuelve
+      //    la visibilidad del logo, solo la del menú).
+      if (isBrandReachable()) {
+        var existingBrand = document.getElementById('mdjMobileBrandFab');
+        if (existingBrand) existingBrand.parentNode.removeChild(existingBrand);
+      } else if (!document.getElementById('mdjMobileBrandFab')) {
         var brand = document.createElement('a');
         brand.id = 'mdjMobileBrandFab';
         brand.className = 'mdj-mobile-brand-fab';
