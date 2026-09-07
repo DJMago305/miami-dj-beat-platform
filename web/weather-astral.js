@@ -15,6 +15,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!sunEl || !moonEl) return;
 
+    /* Equipos de estudio viejos (2026-09-07, auditoria de hardware): sol y
+       luna apilan hasta 3 drop-shadow a la vez sobre un elemento que se
+       redibuja constantemente -- pesado en GPUs integradas viejas.
+       hardwareConcurrency es la unica señal de capacidad que Safari expone
+       (deviceMemory no existe ahi); <=2 nucleos es un umbral conservador
+       para "equipo debil", nunca penaliza una Mac moderna real. */
+    const LOW_END_DEVICE = !!(navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2);
+
     // --- Core Astro Variables ---
     const sunriseHour = 7.1; // 7:06 AM
     const sunsetHour = 18.7; // 6:42 PM
@@ -116,7 +124,10 @@ document.addEventListener('DOMContentLoaded', () => {
         sunEl.style.transform = `translate(-50%, -50%) scale(${sun.scale})`;
 
         // Arquitectura de Cristal: Capas de resplandor apiladas (Rays + Core Glow + Ambient)
-        sunEl.style.filter = `brightness(${sun.brightness}) drop-shadow(0 0 60px rgba(255, 230, 150, 0.9)) drop-shadow(0 0 120px rgba(255, 255, 255, 0.5)) drop-shadow(0 0 20px rgba(255, 255, 255, 1))`;
+        // Equipo debil: solo la capa principal, sin las dos de resplandor extra.
+        sunEl.style.filter = LOW_END_DEVICE
+            ? `brightness(${sun.brightness}) drop-shadow(0 0 60px rgba(255, 230, 150, 0.9))`
+            : `brightness(${sun.brightness}) drop-shadow(0 0 60px rgba(255, 230, 150, 0.9)) drop-shadow(0 0 120px rgba(255, 255, 255, 0.5)) drop-shadow(0 0 20px rgba(255, 255, 255, 1))`;
     }
 
     function getMoonPositionByTime(currentHour) {
@@ -189,8 +200,10 @@ document.addEventListener('DOMContentLoaded', () => {
             sunEl.style.top = `${sun.y}%`;
             sunEl.style.transform = `translate(-50%, -50%) scale(${sun.scale})`;
 
-            // Arquitectura Dinámica por Calor
-            sunEl.style.filter = `brightness(${sun.brightness}) drop-shadow(0 0 60px rgba(${coreColor}, 0.9)) drop-shadow(0 0 120px rgba(${glowColor}, 0.6)) drop-shadow(0 0 30px rgba(255, 255, 255, 1))`;
+            // Arquitectura Dinámica por Calor -- misma reduccion en equipo debil que applySunVisuals.
+            sunEl.style.filter = LOW_END_DEVICE
+                ? `brightness(${sun.brightness}) drop-shadow(0 0 60px rgba(${coreColor}, 0.9))`
+                : `brightness(${sun.brightness}) drop-shadow(0 0 60px rgba(${coreColor}, 0.9)) drop-shadow(0 0 120px rgba(${glowColor}, 0.6)) drop-shadow(0 0 30px rgba(255, 255, 255, 1))`;
 
             if (sunBodyEl) sunBodyEl.style.opacity = '0'; // Clean old unused elements
             if (sunRaysEl) sunRaysEl.style.opacity = '0'; // Clean old unused elements
@@ -230,7 +243,9 @@ document.addEventListener('DOMContentLoaded', () => {
             moonEl.style.transition = 'left 20s linear, top 20s linear, transform 20s linear, opacity .8s ease';
             const currentTemp = weatherData?.main?.temp || null;
             applyMoonPhase(astralDate, currentTemp); // Llama al motor unificado de fases y temperatura
-            moonEl.style.filter = `
+            moonEl.style.filter = LOW_END_DEVICE
+                ? `drop-shadow(0 0 8px rgba(255,255,255,0.5))`
+                : `
                 drop-shadow(0 0 6px rgba(255,255,255,0.6))
                 drop-shadow(0 0 12px rgba(255,255,255,0.3))
                 blur(0.5px)

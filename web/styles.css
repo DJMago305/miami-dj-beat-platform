@@ -4946,29 +4946,29 @@ video.hero-shell-video.live-fade-out {
 }
 
 /* Solución CSS-Only (Module-Scoped) para internacionalización de botones de Live Music parseados por JS */
-body:has(.lang-btn.active[data-lang="es"]) #roster-modal .live-tab[data-live-tab="sax"] {
+html[lang="es"] #roster-modal .live-tab[data-live-tab="sax"] {
   font-size: 0 !important;
 }
 
-body:has(.lang-btn.active[data-lang="es"]) #roster-modal .live-tab[data-live-tab="sax"]::after {
+html[lang="es"] #roster-modal .live-tab[data-live-tab="sax"]::after {
   content: "Saxofón";
   font-size: 13px;
 }
 
-body:has(.lang-btn.active[data-lang="es"]) #roster-modal .live-tab[data-live-tab="percussion"] {
+html[lang="es"] #roster-modal .live-tab[data-live-tab="percussion"] {
   font-size: 0 !important;
 }
 
-body:has(.lang-btn.active[data-lang="es"]) #roster-modal .live-tab[data-live-tab="percussion"]::after {
+html[lang="es"] #roster-modal .live-tab[data-live-tab="percussion"]::after {
   content: "Percusión";
   font-size: 13px;
 }
 
-body:has(.lang-btn.active[data-lang="es"]) #roster-modal .live-tab[data-live-tab="singer"] {
+html[lang="es"] #roster-modal .live-tab[data-live-tab="singer"] {
   font-size: 0 !important;
 }
 
-body:has(.lang-btn.active[data-lang="es"]) #roster-modal .live-tab[data-live-tab="singer"]::after {
+html[lang="es"] #roster-modal .live-tab[data-live-tab="singer"]::after {
   content: "Cantante";
   font-size: 13px;
 }
@@ -5723,11 +5723,15 @@ svg {
  * Contexto perfil (dj-profile y satélites con mdj_nav=profile):
  * sin fila #mainNav — offset = altura real de .header-top.
  * Escritorio: 90px. ≤1000px: fila alta móvil/tablet (140px).
- * Nunca aplica en inicio: excluido con :not(:has(body.page-home)).
+ * Selector directo sobre el body (2026-09-07, antes usaba :has() -- sin
+ * soporte antes de Safari 15.4, real riesgo en Mac de estudio viejas).
+ * page-home y dj-profile/mdj-from-profile nunca coinciden en el mismo body
+ * (son paginas distintas), asi que el excluir "inicio" explicitamente ya
+ * no hacia falta -- lo hacia el propio :has() de forma indirecta.
  */
 @media (min-width: 1001px) {
-  html:not(:has(body.page-home)):has(body.dj-profile),
-  html:not(:has(body.page-home)):has(body.mdj-from-profile) {
+  body.dj-profile,
+  body.mdj-from-profile {
     --header-height: 84px;
     --header-nav-band: 0px;
   }
@@ -5749,8 +5753,8 @@ svg {
    Sigue haciendo falta `pointer: coarse`: sin el, un portatil con la ventana a
    500px recibiria la hamburguesa, que es justo lo que se descarto. */
 @media (max-width: 600px) and (pointer: coarse) {
-  html:not(:has(body.page-home)):has(body.dj-profile),
-  html:not(:has(body.page-home)):has(body.mdj-from-profile) {
+  body.dj-profile,
+  body.mdj-from-profile {
     --header-height: 80px;
     --header-nav-band: 0px;
   }
@@ -5765,8 +5769,8 @@ svg {
    Media Queries 4 no la entienden los motores antiguos, y este proyecto
    arrastra Safari viejos —lo comprobamos hoy mismo con el bundle de Supabase. */
 @media (orientation: landscape) and (max-height: 480px) and (pointer: coarse) {
-  html:not(:has(body.page-home)):has(body.dj-profile),
-  html:not(:has(body.page-home)):has(body.mdj-from-profile) {
+  body.dj-profile,
+  body.mdj-from-profile {
     --header-height: 80px;
     --header-nav-band: 0px;
   }
