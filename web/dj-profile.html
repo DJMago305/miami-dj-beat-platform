@@ -65,7 +65,10 @@
         html[data-mdj-boot-tab="sft"] #tab-sft.dj-panel.sft-tab-root {
             display: flex !important;
             position: fixed;
-            inset: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
             z-index: 11000;
             flex-direction: column;
             align-items: center;
@@ -559,7 +562,10 @@
         /* Foto full-bleed de fondo */
         .dj-hero-bg-photo {
             position: absolute;
-            inset: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
             width: 100%;
             height: 100%;
             object-fit: cover;
@@ -581,7 +587,10 @@
         /* Gradiente sobre la foto: más oscuro a izq y abajo */
         .dj-hero-overlay {
             position: absolute;
-            inset: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
             background:
                 linear-gradient(to right, rgba(0, 0, 0, 0.4) 0%, transparent 40%, transparent 100%),
                 linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, transparent 40%);
@@ -590,7 +599,10 @@
         /* Contenido del hero encima */
         .dj-hero-content {
             position: absolute;
-            inset: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
             display: flex;
             align-items: flex-end;
             padding: 0 56px 40px;
@@ -2512,7 +2524,10 @@
         .sft-owner-switch-slider {
             position: absolute;
             cursor: pointer;
-            inset: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
             background: rgba(255, 255, 255, 0.12);
             border-radius: 26px;
             transition: 0.25s;
@@ -7750,7 +7765,10 @@
     <style>
         .sft-overlay {
             position: fixed;
-            inset: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
             width: 100%;
             min-height: 100vh;
             min-height: 100dvh;
@@ -8539,7 +8557,10 @@
         #tab-sft.sft-tab-root::before {
             content: "";
             position: absolute;
-            inset: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
             background-image:
                 linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
@@ -9110,7 +9131,10 @@
         .sft-am-overlay {
             display: none;
             position: fixed;
-            inset: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
             z-index: 12000;
             flex-direction: column;
             background: #000000;
@@ -9129,7 +9153,10 @@
         .sft-am-overlay::before {
             content: "";
             position: absolute;
-            inset: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
             background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, transparent 22%);
             pointer-events: none;
         }
@@ -14353,7 +14380,7 @@
 
                         var ov = document.createElement('div');
                         ov.id = 'sft-manual-pay-overlay';
-                        ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(7,9,14,0.97);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;box-sizing:border-box;overflow-y:auto;';
+                        ov.style.cssText = 'position:fixed;top:0;right:0;bottom:0;left:0;z-index:99999;background:rgba(7,9,14,0.97);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;box-sizing:border-box;overflow-y:auto;';
                         var closeVisible = (method !== 'Zelle') ? 'display:block;' : 'display:none;';
                         ov.innerHTML = [
                             '<div style="width:100%;max-width:420px;text-align:center;">',
