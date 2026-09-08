@@ -104,7 +104,7 @@ async function resolveMacInstallerPkgUrl(fallbackFromJson, catalog) {
         ? window.MDB_INSTALLER_MAC_PKG_URL
         : fallbackFromJson;
     var app = (catalog && catalog.app) || 'MDJPRO';
-    var version = (catalog && catalog.version) || 'V.2.6.6';
+    var version = (catalog && catalog.version) || 'V.2.6.7';
     var filename = buildPkgDownloadFilename(app, version);
     var localVersioned = pageUrl('./installers/' + encodeURIComponent(filename));
     var localLegacy = pageUrl('./installers/MDJPRO_Installer.pkg');
@@ -296,7 +296,7 @@ var _downloadsCatalogCache = null;
 
 async function loadDownloadData() {
     try {
-        var response = await fetch(pageUrl('./data/downloads.json?v=dl-catalog-v265'));
+        var response = await fetch(pageUrl('./data/downloads.json?v=dl-catalog-v267'));
         var base = await response.json();
         var override = await fetchMdjproDownloadsOverride();
         var data = resolveDownloadsCatalog(base, override);
