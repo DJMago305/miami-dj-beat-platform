@@ -90,6 +90,8 @@
     }
 
     .mdj-wp-shell {
+      position: relative;
+      z-index: 10;
       padding: 24px clamp(14px, 3vw, 28px) 88px;
       box-sizing: border-box;
     }
@@ -383,6 +385,8 @@
     }
 
     body.page-quinceanera-dj .footer {
+      position: relative;
+      z-index: 10;
       background: rgba(12, 11, 10, 0.55);
       border-top: 1px solid rgba(255, 255, 255, 0.08);
     }
@@ -521,6 +525,22 @@
       </div>
     </div>
   </header>
+
+  <!-- Hero temporal: todavia no existe el video real de esta pagina (no hay
+       ./assets/quinceanera/videos/, a diferencia de weddings/latin-dj/corporate).
+       Mientras llega, se usa una foto de quinceañera como fondo fijo -- respeta
+       la misma paleta calida del gradiente de esta pagina (no el overlay negro
+       de weddings.html) para no romper la estetica "papel" editorial.
+       <picture> con fallback a .jpg: el .webp solo no se ve en Safari < 14
+       (macOS anterior a Big Sur), el mismo hueco encontrado en el resto del sitio. -->
+  <picture>
+    <source srcset="./assets/quinceanera/fotos/amira-vals-cold-spark-card.webp" type="image/webp">
+    <img id="quinceanera-hero-kb-bg" class="hero-kb-bg" src="./assets/quinceanera/fotos/amira-vals-cold-spark-card.jpg"
+      alt=""
+      style="position: fixed; inset: 0; z-index: 1; pointer-events: none; width: 100%; height: 100%; object-fit: cover; opacity: 0.6;">
+  </picture>
+  <div class="hero-video-overlay"
+    style="position: fixed; inset: 0; z-index: 2; pointer-events: none; background: linear-gradient(175deg, rgba(201,196,188,0.78) 0%, rgba(168,162,152,0.75) 18%, rgba(143,138,130,0.78) 55%, rgba(110,106,99,0.85) 100%);"></div>
 
   <div class="mdj-wp-shell">
     <div class="mdj-wp-editorial">
