@@ -444,9 +444,15 @@
     <div class="header-top">
       <div class="container">
         <div class="brand">
-          <img src="./assets/branding/logo-transparent.webp" alt="Miami DJ Beat Logo" class="logo-img-eagle" width="256" height="256">
+          <picture>
+            <source srcset="./assets/branding/logo-transparent.webp" type="image/webp">
+            <img src="./assets/branding/logo-transparent-fallback.png" alt="Miami DJ Beat Logo" class="logo-img-eagle" width="256" height="256">
+          </picture>
           <div class="brand-letters-wrapper">
-            <img src="./assets/branding/logo-transparent-letras.webp" alt="Miami DJ Beat Letters" class="brand-letters-img" width="384" height="384">
+            <picture>
+              <source srcset="./assets/branding/logo-transparent-letras.webp" type="image/webp">
+              <img src="./assets/branding/logo-transparent-letras.png" alt="Miami DJ Beat Letters" class="brand-letters-img" width="384" height="384">
+            </picture>
           </div>
         </div>
 
@@ -597,12 +603,18 @@
               alt="Vals de quinceañera con chispas frías, Miami DJ Beat" width="900" height="600" loading="eager" fetchpriority="high" decoding="async" />
           </figure>
           <figure class="mdj-wp-mosaic__piece--2">
-            <img src="./assets/quinceanera/fotos/magi-miami-dj-card.webp"
-              alt="Miami DJ Beat con la quinceañera en su fiesta" width="720" height="540" loading="lazy" decoding="async" />
+            <picture>
+              <source srcset="./assets/quinceanera/fotos/magi-miami-dj-card.webp" type="image/webp">
+              <img src="./assets/quinceanera/fotos/magi-miami-dj-card.jpg"
+                alt="Miami DJ Beat con la quinceañera en su fiesta" width="720" height="540" loading="lazy" decoding="async" />
+            </picture>
           </figure>
           <figure class="mdj-wp-mosaic__piece--3">
-            <img src="./assets/quinceanera/fotos/juliano-astc-2-card.webp"
-              alt="Corte celebrando con la quinceañera" width="720" height="540" loading="lazy" decoding="async" />
+            <picture>
+              <source srcset="./assets/quinceanera/fotos/juliano-astc-2-card.webp" type="image/webp">
+              <img src="./assets/quinceanera/fotos/juliano-astc-2-card.jpg"
+                alt="Corte celebrando con la quinceañera" width="720" height="540" loading="lazy" decoding="async" />
+            </picture>
           </figure>
         </div>
       </div>

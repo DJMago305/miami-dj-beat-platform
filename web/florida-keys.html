@@ -145,9 +145,15 @@
   <div class="header-top">
     <div class="container">
       <div class="brand">
-        <img src="./assets/branding/logo-transparent.webp" alt="Miami DJ Beat Logo" class="logo-img-eagle" width="256" height="256">
+        <picture>
+          <source srcset="./assets/branding/logo-transparent.webp" type="image/webp">
+          <img src="./assets/branding/logo-transparent-fallback.png" alt="Miami DJ Beat Logo" class="logo-img-eagle" width="256" height="256">
+        </picture>
         <div class="brand-letters-wrapper">
-          <img src="./assets/branding/logo-transparent-letras.webp" alt="Miami DJ Beat Letters" class="brand-letters-img" width="384" height="384">
+          <picture>
+            <source srcset="./assets/branding/logo-transparent-letras.webp" type="image/webp">
+            <img src="./assets/branding/logo-transparent-letras.png" alt="Miami DJ Beat Letters" class="brand-letters-img" width="384" height="384">
+          </picture>
         </div>
       </div>
 
@@ -226,7 +232,7 @@
   </div>
 </header>
 
-    <div id="fk-hero-kb-bg" class="hero-kb-bg"
+    <div id="fk-hero-kb-bg" class="hero-kb-bg" data-mdj-webp-fallback="./assets/florida-keys/fotos/keys-sundowners-hero.jpg"
         style="position: fixed; inset: 0; z-index: 1; pointer-events: none; background-image: url('./assets/florida-keys/fotos/keys-sundowners-hero.webp'); background-size: cover; background-position: center; opacity: 0.35; filter: blur(5px);"></div>
     <div class="hero-video-overlay"
         style="position: fixed; inset: 0; z-index: 3; pointer-events: none; background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.8) 100%);"></div>
@@ -269,7 +275,10 @@
         <!-- Prueba real de la residencia en Sundowners (evidencia visual, no solo texto) -->
         <div style="max-width: 1100px; margin: 60px auto 0; display: grid; grid-template-columns: 1.4fr 1fr; gap: 24px; align-items: center;" class="fk-proof-grid">
             <figure style="margin: 0; border-radius: 16px; overflow: hidden; border: 1px solid rgba(197,160,89,0.25);">
-                <img src="./assets/florida-keys/fotos/keys-sundowners-card.webp" alt="DJ de Miami DJ Beat tocando en Sundowners, Key Largo, con vista al mar" loading="lazy" width="900" height="600" style="display:block; width:100%; height:auto;" />
+                <picture>
+                  <source srcset="./assets/florida-keys/fotos/keys-sundowners-card.webp" type="image/webp">
+                  <img src="./assets/florida-keys/fotos/keys-sundowners-card.jpg" alt="DJ de Miami DJ Beat tocando en Sundowners, Key Largo, con vista al mar" loading="lazy" width="900" height="600" style="display:block; width:100%; height:auto;" />
+                </picture>
                 <figcaption style="padding: 10px 14px; font-size: 13px; color: rgba(255,255,255,0.6);">Residencia semanal en vivo — Sundowners, Key Largo, brunch con DJ los domingos.</figcaption>
             </figure>
             <video src="./assets/florida-keys/videos/sundowners-key-largo.mp4" poster="./assets/florida-keys/fotos/keys-sundowners-card.webp" autoplay muted loop playsinline preload="metadata" style="width:100%; border-radius: 16px; border: 1px solid rgba(197,160,89,0.25); display:block;"></video>
@@ -352,6 +361,24 @@
     <script src="./mdj-mainnav-infinite.js?v=20260818-nav-canonico"></script>
     <script src="./mdj-social-bar.js?v=20260819-social-contact-only"></script>
     <script src="./mdj-mobile-header-fix.js?v=20260825-a"></script>
+    <script>
+    /* FIX-WEBP-BG-FALLBACK-01 (2026-09-08): mismo snippet que index.html --
+       background-image no admite <picture>; deteccion real de soporte .webp
+       para el fondo fijo del hero (Safari 13.1.2 / macOS High Sierra 10.13.6
+       no lo soporta). No toca nada si el navegador SI soporta .webp. */
+    (function () {
+      var els = document.querySelectorAll('[data-mdj-webp-fallback]');
+      if (!els.length) return;
+      var testImg = new Image();
+      testImg.onload = testImg.onerror = function () {
+        if (testImg.width > 0 && testImg.height > 0) return;
+        els.forEach(function (el) {
+          el.style.backgroundImage = "url('" + el.getAttribute('data-mdj-webp-fallback') + "')";
+        });
+      };
+      testImg.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+    })();
+    </script>
 </body>
 
 </html>
