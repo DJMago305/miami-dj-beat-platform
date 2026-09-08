@@ -861,7 +861,7 @@
 
           <!-- Club / Resident DJ -->
           <div class="experience-card">
-            <div class="exp-img" style="background-image:url('./assets/index/club-resident-djmago305.webp');"></div>
+            <div class="exp-img" style="background-image:url('./assets/index/club-resident-djmago305.webp');" data-mdj-webp-fallback="./assets/index/club-resident-djmago305.jpg"></div>
             <div class="exp-content">
               <div class="exp-venue">Club / Resident DJ</div>
               <div class="exp-type" data-i18n="djtypes-club-type">Clubs · Bares · Residencias nocturnas</div>
@@ -931,7 +931,7 @@
           <!-- Quinceañera -->
           <a href="./quinceanera.html" style="text-decoration:none;color:inherit;display:block;" aria-label="Ver DJ para Quinceañeras">
           <div class="experience-card">
-            <div class="exp-img" style="background-image:url('./assets/quinceanera/fotos/juliano-astc-card.webp');"></div>
+            <div class="exp-img" style="background-image:url('./assets/quinceanera/fotos/juliano-astc-card.webp');" data-mdj-webp-fallback="./assets/quinceanera/fotos/juliano-astc-card.jpg"></div>
             <div class="exp-content">
               <div class="exp-venue">Quinceañera</div>
               <div class="exp-type" data-i18n="djtypes-quince-type">Vals · Sorpresas · Baile con la corte</div>
@@ -2024,6 +2024,26 @@
   <!-- Cart pill: badge + redirect to rentals (no heavy scripts needed here) -->
   <script defer src="./js/mdj-cart-pill.js?v=20260616-pill-5"></script>
   <script src="./mdj-mobile-header-fix.js?v=20260825-a"></script>
+  <script>
+  /* FIX-WEBP-BG-FALLBACK-01 (2026-09-08): background-image no admite <picture>,
+     asi que las tarjetas con foto de fondo (Club/Resident DJ, Quinceañera)
+     necesitan deteccion real de soporte .webp -- Safari 13.1.2 (tope real de
+     macOS High Sierra 10.13.6) no lo soporta y se quedan en blanco/negro.
+     Snippet de deteccion estandar (imagen webp minima de 1x1, la misma que
+     recomienda Google) -- no toca nada si el navegador SI soporta .webp. */
+  (function () {
+    var els = document.querySelectorAll('[data-mdj-webp-fallback]');
+    if (!els.length) return;
+    var testImg = new Image();
+    testImg.onload = testImg.onerror = function () {
+      if (testImg.width > 0 && testImg.height > 0) return;
+      els.forEach(function (el) {
+        el.style.backgroundImage = "url('" + el.getAttribute('data-mdj-webp-fallback') + "')";
+      });
+    };
+    testImg.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+  })();
+  </script>
 </body>
 
 </html>

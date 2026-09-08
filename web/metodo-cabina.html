@@ -198,6 +198,18 @@
                 url('./assets/djmago305/djmago305-good-vibes-laptop-hero.webp') center 10% / cover no-repeat,
                 #05070a;
         }
+
+        /* FIX-WEBP-BG-FALLBACK-01 (2026-09-08): background-image no admite
+           <picture> -- Safari 13.1.2 (macOS High Sierra 10.13.6) no soporta
+           .webp y se queda solo con el color solido de fondo (#05070a), sin
+           la foto. html.mdj-no-webp lo agrega un script minimo mas abajo
+           tras detectar soporte real. */
+        html.mdj-no-webp .cab-hero {
+            background:
+                linear-gradient(180deg, rgba(11,14,20,0.25) 0%, rgba(11,14,20,0.40) 50%, rgba(11,14,20,0.95) 100%),
+                url('./assets/djmago305/djmago305-good-vibes-laptop-hero.jpg') center 10% / cover no-repeat,
+                #05070a;
+        }
         .cab-hero-eyebrow {
             font-size: 13px;
             font-weight: 800;
@@ -1662,6 +1674,20 @@
   <script src="./mdj-social-bar.js?v=20260819-social-contact-only"></script>
   <script defer src="./js/mdj-cart-pill.js?v=20260616-pill-5"></script>
   <script src="./mdj-mobile-header-fix.js?v=20260825-a"></script>
+  <script>
+  /* FIX-WEBP-BG-FALLBACK-01 (2026-09-08): deteccion real de soporte .webp
+     (Safari 13.1.2 / macOS High Sierra 10.13.6 no lo soporta) -- agrega
+     html.mdj-no-webp, que activa el fallback .jpg del hero en la regla CSS
+     de mas arriba. No toca nada si el navegador SI soporta .webp. */
+  (function () {
+    var testImg = new Image();
+    testImg.onload = testImg.onerror = function () {
+      if (testImg.width > 0 && testImg.height > 0) return;
+      document.documentElement.classList.add('mdj-no-webp');
+    };
+    testImg.src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+  })();
+  </script>
 </body>
 
 </html>

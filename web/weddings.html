@@ -254,9 +254,15 @@
     <div class="header-top">
       <div class="container">
         <div class="brand">
-          <img src="./assets/branding/logo-transparent.webp" alt="Miami DJ Beat Logo" class="logo-img-eagle" width="256" height="256">
+          <picture>
+            <source srcset="./assets/branding/logo-transparent.webp" type="image/webp">
+            <img src="./assets/branding/logo-transparent-fallback.png" alt="Miami DJ Beat Logo" class="logo-img-eagle" width="256" height="256">
+          </picture>
           <div class="brand-letters-wrapper">
-            <img src="./assets/branding/logo-transparent-letras.webp" alt="Miami DJ Beat Letters" class="brand-letters-img" width="384" height="384">
+            <picture>
+              <source srcset="./assets/branding/logo-transparent-letras.webp" type="image/webp">
+              <img src="./assets/branding/logo-transparent-letras.png" alt="Miami DJ Beat Letters" class="brand-letters-img" width="384" height="384">
+            </picture>
           </div>
         </div>
 
@@ -356,12 +362,21 @@
     </div>
 
     <div class="weddings-mosaic">
-      <img src="./assets/eventos-venues-patrocinadores/galeria/Weeding_DJ.webp"
-        alt="DJ en boda de lujo en Miami" width="900" height="600" loading="eager" fetchpriority="high" decoding="async" />
-      <img src="./assets/eventos-venues-patrocinadores/galeria/wedding_blurred_ambient.webp"
-        alt="Celebración y ambiente de boda" width="720" height="540" loading="lazy" decoding="async" />
-      <img src="./assets/latin-dj/fotos/latin-wedding-toast-card.webp"
-        alt="Brindis de los novios en una boda en Miami" width="900" height="600" loading="lazy" decoding="async" />
+      <picture>
+        <source srcset="./assets/eventos-venues-patrocinadores/galeria/Weeding_DJ.webp" type="image/webp">
+        <img src="./assets/eventos-venues-patrocinadores/galeria/Weeding_DJ.png"
+          alt="DJ en boda de lujo en Miami" width="900" height="600" loading="eager" fetchpriority="high" decoding="async" />
+      </picture>
+      <picture>
+        <source srcset="./assets/eventos-venues-patrocinadores/galeria/wedding_blurred_ambient.webp" type="image/webp">
+        <img src="./assets/eventos-venues-patrocinadores/galeria/wedding_blurred_ambient.png"
+          alt="Celebración y ambiente de boda" width="720" height="540" loading="lazy" decoding="async" />
+      </picture>
+      <picture>
+        <source srcset="./assets/latin-dj/fotos/latin-wedding-toast-card.webp" type="image/webp">
+        <img src="./assets/latin-dj/fotos/latin-wedding-toast-card.jpg"
+          alt="Brindis de los novios en una boda en Miami" width="900" height="600" loading="lazy" decoding="async" />
+      </picture>
     </div>
 
     <div class="grid3 weddings-tiers" style="gap: 30px; max-width: 1100px; margin: 0 auto;">
