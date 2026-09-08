@@ -89,6 +89,88 @@
       min-height: 100vh;
     }
 
+    /* Hero — bloque propio arriba, no fondo fijo de pagina completa (2026-09-08) */
+    #quinceanera-hero {
+      position: relative;
+      height: clamp(420px, 78vh, 820px);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    #quinceanera-hero .quince-hero-media {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+    }
+
+    #quinceanera-hero .quince-hero-media img,
+    #quinceanera-hero .quince-hero-media video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+    }
+
+    #quinceanera-hero .quince-hero-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      background: linear-gradient(180deg, rgba(15, 12, 10, 0.15) 0%, rgba(15, 12, 10, 0.35) 55%, rgba(15, 12, 10, 0.85) 100%);
+    }
+
+    #quinceanera-hero .quince-hero-copy {
+      position: relative;
+      z-index: 3;
+      text-align: center;
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 24px 56px;
+    }
+
+    #quinceanera-hero .quince-hero-copy .mdj-wp-breadcrumb {
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 18px;
+      color: rgba(255, 255, 255, 0.55);
+      font-weight: 600;
+    }
+
+    #quinceanera-hero .quince-hero-copy .mdj-wp-breadcrumb a {
+      color: var(--gold);
+      font-weight: 700;
+      text-decoration: none;
+      border-bottom: none;
+    }
+
+    #quinceanera-hero .quince-hero-copy h1 {
+      font-family: 'Cormorant Garamond', 'Times New Roman', serif;
+      font-size: clamp(2.4rem, 5vw, 3.6rem);
+      font-weight: 600;
+      color: #fff;
+      margin: 0 0 18px;
+      line-height: 1.08;
+      text-shadow: 0 4px 15px rgba(0, 0, 0, 0.8);
+    }
+
+    #quinceanera-hero .quince-hero-copy .mdj-wp-lead {
+      font-size: 1.05rem;
+      line-height: 1.65;
+      color: rgba(255, 255, 255, 0.85);
+      margin: 0 auto;
+      max-width: 56ch;
+      font-weight: 400;
+    }
+
+    @media (max-width: 640px) {
+      #quinceanera-hero {
+        height: clamp(380px, 68vh, 620px);
+      }
+    }
+
     .mdj-wp-shell {
       position: relative;
       z-index: 10;
@@ -532,33 +614,44 @@
     </div>
   </header>
 
-  <!-- Hero temporal: todavia no existe el video real de esta pagina (no hay
-       ./assets/quinceanera/videos/, a diferencia de weddings/latin-dj/corporate).
-       Mientras llega, se usa una foto de quinceañera como fondo fijo -- respeta
-       la misma paleta calida del gradiente de esta pagina (no el overlay negro
-       de weddings.html) para no romper la estetica "papel" editorial.
-       <picture> con fallback a .jpg: el .webp solo no se ve en Safari < 14
-       (macOS anterior a Big Sur), el mismo hueco encontrado en el resto del sitio. -->
-  <picture>
-    <source srcset="./assets/quinceanera/fotos/amira-vals-cold-spark-card.webp" type="image/webp">
-    <img id="quinceanera-hero-kb-bg" class="hero-kb-bg" src="./assets/quinceanera/fotos/amira-vals-cold-spark-card.jpg"
-      alt=""
-      style="position: fixed; inset: 0; z-index: 1; pointer-events: none; width: 100%; height: 100%; object-fit: cover; opacity: 0.6;">
-  </picture>
-  <div class="hero-video-overlay"
-    style="position: fixed; inset: 0; z-index: 2; pointer-events: none; background: linear-gradient(175deg, rgba(201,196,188,0.78) 0%, rgba(168,162,152,0.75) 18%, rgba(143,138,130,0.78) 55%, rgba(110,106,99,0.85) 100%);"></div>
+  <!-- ═══ HERO — foto real 16:9 (corte celebrando el vals), pre-video ═══
+       Reemplaza el fondo fijo de pagina completa de la version anterior (PR #329):
+       ahora es un bloque propio de altura acotada (70-80vh), igual al patron
+       hero-arriba/editorial-abajo del resto del sitio, en vez de un watermark
+       detras de toda la pagina. object-fit:cover + object-position:center evita
+       cualquier estiramiento sin importar el aspect-ratio real de la foto.
+       Cuando exista el video real del vals/ambientacion: descomentar el <video>
+       de abajo (con su <source> real) -- el CSS de #quinceanera-hero ya esta
+       listo para recibirlo, no hace falta tocar nada mas. -->
+  <section id="quinceanera-hero">
+    <div class="quince-hero-media">
+      <!--
+      <video autoplay muted loop playsinline preload="metadata"
+        poster="./assets/quinceanera/fotos/quinceanera-hero-court.jpg">
+        <source src="./assets/quinceanera/videos/quinceanera-hero.mp4" type="video/mp4">
+      </video>
+      -->
+      <picture>
+        <source srcset="./assets/quinceanera/fotos/quinceanera-hero-court.webp" type="image/webp">
+        <img src="./assets/quinceanera/fotos/quinceanera-hero-court.jpg"
+          alt="Corte celebrando con la quinceañera durante su vals, Miami DJ Beat" />
+      </picture>
+    </div>
+    <div class="quince-hero-overlay"></div>
+    <div class="quince-hero-copy">
+      <div class="mdj-wp-breadcrumb">
+        <a href="./index.html" data-i18n="nav-home">Home</a>
+        ·
+        <a href="./rentals.html" data-i18n="nav-services">Services</a>
+      </div>
+      <h1 data-i18n="quince-dj-h1">Quinceañera DJ Miami</h1>
+      <p class="mdj-wp-lead" data-i18n="quince-dj-lead">Bilingual DJ and MC coverage for the vals, court presentation, and reception — professional sound, uplighting, and music curated to her story, serving quinceañeras across Miami-Dade and Broward.</p>
+    </div>
+  </section>
 
   <div class="mdj-wp-shell">
     <div class="mdj-wp-editorial">
       <div class="mdj-wp-copy">
-        <div class="mdj-wp-breadcrumb">
-          <a href="./index.html" data-i18n="nav-home">Home</a>
-          ·
-          <a href="./rentals.html" data-i18n="nav-services">Services</a>
-        </div>
-        <h1 data-i18n="quince-dj-h1">Quinceañera DJ Miami</h1>
-        <p class="mdj-wp-lead" data-i18n="quince-dj-lead">Bilingual DJ and MC coverage for the vals, court presentation, and reception — professional sound, uplighting, and music curated to her story, serving quinceañeras across Miami-Dade and Broward.</p>
-
         <article class="mdj-wp-tier">
           <h2 data-i18n="quince-dj-tier1-h2">Vals — El Primer Baile</h2>
           <p data-i18n="quince-dj-tier1-p">Your choreographed waltz cued precisely to the rehearsed timing, coordinated with you or your choreographer so the entrance and every transition land exactly on beat.</p>
@@ -599,8 +692,11 @@
         </div>
         <div class="mdj-wp-mosaic" aria-label="Quinceañera DJ gallery">
           <figure class="mdj-wp-mosaic__piece--1">
-            <img src="./assets/quinceanera/fotos/amira-vals-cold-spark-card.webp"
-              alt="Vals de quinceañera con chispas frías, Miami DJ Beat" width="900" height="600" loading="eager" fetchpriority="high" decoding="async" />
+            <picture>
+              <source srcset="./assets/quinceanera/fotos/amira-vals-cold-spark-card.webp" type="image/webp">
+              <img src="./assets/quinceanera/fotos/amira-vals-cold-spark-card.jpg"
+                alt="Vals de quinceañera con chispas frías, Miami DJ Beat" width="900" height="600" loading="eager" fetchpriority="high" decoding="async" />
+            </picture>
           </figure>
           <figure class="mdj-wp-mosaic__piece--2">
             <picture>
