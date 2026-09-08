@@ -83,54 +83,19 @@
   <link rel="stylesheet" href="./header-unified.css?v=20260902-cortinas" />
   <link rel="stylesheet" href="./mdj-assistant.css?v=20260306-1" />
   <style>
-    /* Editorial "papel" -- mismo patron que weddings.html, activo distinto (quinceañera) */
-    body.page-quinceanera-dj {
-      background: linear-gradient(175deg, #c9c4bc 0%, #a8a298 18%, #8f8a82 55%, #6e6a63 100%);
-      min-height: 100vh;
-    }
-
-    /* Hero — bloque propio arriba, no fondo fijo de pagina completa (2026-09-08) */
-    #quinceanera-hero {
-      position: relative;
-      height: clamp(420px, 78vh, 820px);
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
-      overflow: hidden;
-    }
-
-    #quinceanera-hero .quince-hero-media {
-      position: absolute;
-      inset: 0;
-      z-index: 1;
-    }
-
-    #quinceanera-hero .quince-hero-media img,
-    #quinceanera-hero .quince-hero-media video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: center;
-      display: block;
-    }
-
-    #quinceanera-hero .quince-hero-overlay {
-      position: absolute;
-      inset: 0;
-      z-index: 2;
-      background: linear-gradient(180deg, rgba(15, 12, 10, 0.15) 0%, rgba(15, 12, 10, 0.35) 55%, rgba(15, 12, 10, 0.85) 100%);
-    }
-
-    #quinceanera-hero .quince-hero-copy {
-      position: relative;
-      z-index: 3;
+    /* Arquitectura unificada con weddings.html/latin-dj.html/corporate.html
+       (2026-09-08, a pedido explicito del PO): foto real fija detras
+       (hero-kb-bg), contenido flotando encima al hacer scroll -- se retira
+       por completo la tarjeta blanca "papel editorial" de la version
+       anterior. Sin fondo de body propio: hereda el fondo oscuro global
+       (--bg) del sitio, igual que weddings.html. */
+    .quince-hero-copy {
       text-align: center;
       max-width: 720px;
-      margin: 0 auto;
-      padding: 0 24px 56px;
+      margin: 0 auto 50px;
     }
 
-    #quinceanera-hero .quince-hero-copy .mdj-wp-breadcrumb {
+    .quince-hero-copy .mdj-wp-breadcrumb {
       font-size: 11px;
       letter-spacing: 0.14em;
       text-transform: uppercase;
@@ -139,14 +104,13 @@
       font-weight: 600;
     }
 
-    #quinceanera-hero .quince-hero-copy .mdj-wp-breadcrumb a {
+    .quince-hero-copy .mdj-wp-breadcrumb a {
       color: var(--gold);
       font-weight: 700;
       text-decoration: none;
-      border-bottom: none;
     }
 
-    #quinceanera-hero .quince-hero-copy h1 {
+    .quince-hero-copy h1 {
       font-family: 'Cormorant Garamond', 'Times New Roman', serif;
       font-size: clamp(2.4rem, 5vw, 3.6rem);
       font-weight: 600;
@@ -156,314 +120,77 @@
       text-shadow: 0 4px 15px rgba(0, 0, 0, 0.8);
     }
 
-    #quinceanera-hero .quince-hero-copy .mdj-wp-lead {
+    .quince-hero-copy .mdj-wp-lead {
       font-size: 1.05rem;
       line-height: 1.65;
-      color: rgba(255, 255, 255, 0.85);
+      color: rgba(255, 255, 255, 0.8);
       margin: 0 auto;
       max-width: 56ch;
       font-weight: 400;
     }
 
+    .quince-mosaic {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+      max-width: 1100px;
+      margin: 0 auto 60px;
+    }
+
+    .quince-mosaic img {
+      width: 100%;
+      height: 260px;
+      object-fit: cover;
+      border-radius: 18px;
+      box-shadow: 0 22px 48px rgba(0, 0, 0, 0.4);
+    }
+
     @media (max-width: 640px) {
-      #quinceanera-hero {
-        height: clamp(380px, 68vh, 620px);
+      .quince-mosaic {
+        grid-template-columns: 1fr;
       }
     }
 
-    .mdj-wp-shell {
-      position: relative;
-      z-index: 10;
-      padding: 24px clamp(14px, 3vw, 28px) 88px;
-      box-sizing: border-box;
-    }
-
-    .mdj-wp-editorial {
-      max-width: 1100px;
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: minmax(0, 1.12fr) minmax(260px, 0.88fr);
-      gap: clamp(28px, 4vw, 52px);
-      align-items: start;
-      padding: clamp(28px, 4vw, 48px) clamp(22px, 3.5vw, 44px) clamp(32px, 4vw, 52px);
-      background: linear-gradient(180deg, #fffefb 0%, #faf7f2 48%, #f3efe8 100%);
-      border-radius: 28px;
-      box-shadow:
-        0 4px 0 rgba(255, 255, 255, 0.65) inset,
-        0 32px 64px rgba(20, 18, 14, 0.22),
-        0 1px 0 rgba(0, 0, 0, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.85);
-    }
-
-    .mdj-wp-copy {
-      min-width: 0;
-      font-family: 'Outfit', system-ui, sans-serif;
-      color: #2c2833;
-    }
-
-    .mdj-wp-breadcrumb {
-      font-size: 11px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      margin-bottom: 22px;
-      color: rgba(44, 40, 51, 0.55);
-      font-weight: 600;
-    }
-
-    .mdj-wp-breadcrumb a {
-      color: #7a6140;
-      font-weight: 700;
-      text-decoration: none;
-      border-bottom: 1px solid rgba(122, 97, 64, 0.35);
-    }
-
-    .mdj-wp-breadcrumb a:hover {
-      color: #4a3928;
-      border-bottom-color: rgba(74, 57, 40, 0.55);
-    }
-
-    .mdj-wp-copy h1 {
+    .quince-tiers h2 {
       font-family: 'Cormorant Garamond', 'Times New Roman', serif;
-      font-size: clamp(2.1rem, 4.2vw, 2.85rem);
-      font-weight: 600;
-      color: #1a1614;
-      margin: 0 0 16px;
-      line-height: 1.08;
-      letter-spacing: 0.02em;
+      font-size: 22px;
+      color: #fff;
+      margin: 0 0 8px;
     }
 
-    .mdj-wp-lead {
-      font-size: 1.02rem;
-      line-height: 1.65;
-      color: rgba(44, 40, 51, 0.78);
-      margin: 0 0 36px;
-      max-width: 52ch;
-      font-weight: 400;
-    }
-
-    .mdj-wp-tier {
-      margin-bottom: 32px;
-      padding: 0 0 4px;
-      border: none;
-      background: transparent;
-    }
-
-    .mdj-wp-tier h2 {
-      font-family: 'Cormorant Garamond', 'Times New Roman', serif;
-      font-size: clamp(1.35rem, 2.4vw, 1.65rem);
-      font-weight: 700;
-      color: #141210;
-      margin: 0 0 12px;
-      line-height: 1.2;
-      padding-bottom: 8px;
-      border-bottom: 1px solid rgba(197, 160, 89, 0.45);
-      display: inline-block;
-      min-width: 0;
-    }
-
-    .mdj-wp-tier p {
+    .quince-tiers p {
+      color: rgba(255, 255, 255, 0.75);
+      font-size: 15px;
+      line-height: 1.6;
       margin: 0;
-      font-size: 0.98rem;
-      line-height: 1.78;
-      color: rgba(35, 32, 38, 0.88);
-      max-width: 54ch;
     }
 
-    .mdj-wp-addons {
-      margin-top: 8px;
-      margin-bottom: 8px;
-      padding-top: 8px;
-    }
-
-    .mdj-wp-addons h3 {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.35rem;
-      font-weight: 700;
-      color: #141210;
-      margin: 0 0 14px;
-      letter-spacing: 0.03em;
-    }
-
-    .mdj-wp-addons ul {
+    .quince-tiers ul {
       margin: 0;
-      padding: 0 0 0 1.15rem;
-      color: rgba(35, 32, 38, 0.88);
-      font-size: 0.98rem;
-      line-height: 1.75;
+      padding-left: 1.1rem;
+      color: rgba(255, 255, 255, 0.75);
+      font-size: 15px;
+      line-height: 1.7;
     }
 
-    .mdj-wp-addons li {
-      margin-bottom: 8px;
-    }
-
-    .mdj-wp-cta-wrap {
-      margin-top: 32px;
+    .quince-cta-wrap {
+      margin-top: 40px;
       display: flex;
       flex-wrap: wrap;
       gap: 12px;
       align-items: center;
-    }
-
-    body.page-quinceanera-dj .mdj-wp-copy .btn.primary {
-      background: linear-gradient(135deg, #2a241c, #1a1612);
-      color: #faf6ef;
-      border: 1px solid rgba(197, 160, 89, 0.55);
-      font-weight: 700;
-    }
-
-    body.page-quinceanera-dj .mdj-wp-copy .btn.primary:hover {
-      filter: brightness(1.08);
-    }
-
-    body.page-quinceanera-dj .mdj-wp-copy .btn.outline {
-      border-color: rgba(44, 40, 51, 0.25);
-      color: #2c2833;
-      background: rgba(255, 255, 255, 0.55);
-    }
-
-    body.page-quinceanera-dj .mdj-wp-copy .btn.outline:hover {
-      border-color: rgba(197, 160, 89, 0.65);
-      color: #5c4a32;
-    }
-
-    /* Columna derecha: sello + collage escalonado */
-    .mdj-wp-mosaicWrap {
-      position: relative;
-      min-height: 200px;
-      padding-top: 8px;
-    }
-
-    .mdj-wp-seal {
-      position: absolute;
-      top: -6px;
-      right: 8px;
-      width: 112px;
-      height: 112px;
-      border-radius: 50%;
-      background: radial-gradient(circle at 35% 30%, #fffef8, #e8dcc4 55%, #c5a059 120%);
-      border: 3px double rgba(90, 72, 48, 0.55);
-      box-shadow: 0 12px 28px rgba(40, 32, 20, 0.2);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
       justify-content: center;
+    }
+
+    .quince-related {
+      margin-top: 24px;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.6);
       text-align: center;
-      padding: 10px;
-      z-index: 6;
-      font-family: 'Outfit', sans-serif;
-      line-height: 1.15;
     }
 
-    .mdj-wp-seal .mdj-wp-seal-k {
-      display: block;
-      font-size: 8px;
-      font-weight: 800;
-      letter-spacing: 0.12em;
-      color: #3d3226;
-    }
-
-    .mdj-wp-seal .mdj-wp-seal-m {
-      display: block;
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 15px;
-      font-weight: 700;
-      color: #1a1410;
-      margin: 4px 0;
-      line-height: 1.1;
-    }
-
-    .mdj-wp-mosaic {
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-      padding-top: 52px;
-      position: relative;
-    }
-
-    .mdj-wp-mosaic figure {
-      margin: 0;
-      border-radius: 14px;
-      overflow: hidden;
-      border: 4px solid #fff;
-      box-shadow: 0 22px 48px rgba(25, 22, 18, 0.18);
-      background: #e8e4dc;
-      position: relative;
-      z-index: 1;
-    }
-
-    .mdj-wp-mosaic figure img {
-      width: 100%;
-      height: auto;
-      display: block;
-      object-fit: cover;
-      aspect-ratio: 4 / 3;
-      vertical-align: middle;
-    }
-
-    .mdj-wp-mosaic__piece--1 {
-      width: 92%;
-      align-self: flex-start;
-      transform: rotate(-1.2deg);
-      z-index: 1;
-    }
-
-    .mdj-wp-mosaic__piece--2 {
-      width: 88%;
-      align-self: flex-end;
-      margin-top: -18px;
-      margin-right: 4%;
-      transform: translateX(-6%) rotate(1.4deg);
-      z-index: 2;
-    }
-
-    .mdj-wp-mosaic__piece--3 {
-      width: 86%;
-      align-self: flex-start;
-      margin-top: -14px;
-      margin-left: 6%;
-      transform: translateX(4%) rotate(-0.8deg);
-      z-index: 3;
-    }
-
-    @media (max-width: 920px) {
-      .mdj-wp-editorial {
-        grid-template-columns: 1fr;
-        padding: 28px 22px 36px;
-      }
-
-      .mdj-wp-mosaicWrap {
-        max-width: 420px;
-        margin: 0 auto;
-      }
-
-      .mdj-wp-seal {
-        position: relative;
-        top: 0;
-        right: auto;
-        margin: 0 auto 20px;
-      }
-
-      .mdj-wp-mosaic {
-        padding-top: 0;
-      }
-
-      .mdj-wp-mosaic__piece--2,
-      .mdj-wp-mosaic__piece--3 {
-        transform: none;
-        margin-left: 0;
-        margin-right: 0;
-      }
-
-      .mdj-wp-mosaic figure {
-        width: 100% !important;
-        align-self: stretch !important;
-        margin-top: 12px !important;
-        transform: none !important;
-      }
-
-      .mdj-wp-mosaic__piece--1 {
-        margin-top: 0;
-      }
+    .quince-related a {
+      color: var(--gold);
     }
 
     body.page-quinceanera-dj .footer {
@@ -477,31 +204,31 @@
       color: rgba(255, 250, 240, 0.82);
     }
 
-    /* FAQ (mismo patron que weddings.html/rentals.html) */
+    /* FAQ (mismo patron oscuro que weddings.html/latin-dj.html/rentals.html) */
     .quinceanera-faq-item {
-      border: 1px solid rgba(197, 160, 89, 0.35);
+      border: 1px solid rgba(197, 160, 89, 0.25);
       border-radius: 12px;
       padding: 16px 20px;
       margin-bottom: 12px;
-      background: rgba(255, 255, 255, 0.5);
+      background: rgba(255, 255, 255, 0.03);
     }
 
     .quinceanera-faq-item summary {
       font-family: 'Cormorant Garamond', serif;
       font-size: 18px;
       font-weight: 700;
-      color: #1a1614;
+      color: #fff;
       cursor: pointer;
     }
 
     .quinceanera-faq-item p {
-      color: rgba(35, 32, 38, 0.85);
+      color: rgba(255, 255, 255, 0.75);
       line-height: 1.65;
       margin-top: 10px;
     }
 
     .quinceanera-faq-item a {
-      color: #7a6140;
+      color: var(--gold);
       font-weight: 700;
     }
 
@@ -614,30 +341,32 @@
     </div>
   </header>
 
-  <!-- ═══ HERO — foto real 16:9 (corte celebrando el vals), pre-video ═══
-       Reemplaza el fondo fijo de pagina completa de la version anterior (PR #329):
-       ahora es un bloque propio de altura acotada (70-80vh), igual al patron
-       hero-arriba/editorial-abajo del resto del sitio, en vez de un watermark
-       detras de toda la pagina. object-fit:cover + object-position:center evita
-       cualquier estiramiento sin importar el aspect-ratio real de la foto.
-       Cuando exista el video real del vals/ambientacion: descomentar el <video>
-       de abajo (con su <source> real) -- el CSS de #quinceanera-hero ya esta
-       listo para recibirlo, no hace falta tocar nada mas. -->
-  <section id="quinceanera-hero">
-    <div class="quince-hero-media">
-      <!--
-      <video autoplay muted loop playsinline preload="metadata"
-        poster="./assets/quinceanera/fotos/quinceanera-hero-court.jpg">
-        <source src="./assets/quinceanera/videos/quinceanera-hero.mp4" type="video/mp4">
-      </video>
-      -->
-      <picture>
-        <source srcset="./assets/quinceanera/fotos/quinceanera-hero-court.webp" type="image/webp">
-        <img src="./assets/quinceanera/fotos/quinceanera-hero-court.jpg"
-          alt="Corte celebrando con la quinceañera durante su vals, Miami DJ Beat" />
-      </picture>
-    </div>
-    <div class="quince-hero-overlay"></div>
+  <!-- ═══ Fondo fijo de pagina completa (hero real 16:9) ═══
+       Arquitectura unificada con weddings.html/latin-dj.html/corporate.html,
+       a pedido explicito del PO (2026-09-08): la foto queda fija detras de
+       TODA la pagina (position:fixed;inset:0), el contenido se desplaza
+       encima en tarjetas flotantes -- se retira la tarjeta blanca "papel
+       editorial" de la version anterior por completo.
+       Cuando exista el video real del vals/ambientacion: reemplazar el
+       <picture> por el <video> ya preparado (comentado abajo) -- mismo id,
+       mismas clases, el CSS no cambia. -->
+  <!--
+  <video id="quinceanera-hero-kb-bg" class="hero-shell-video hero-kb-bg" autoplay muted loop playsinline preload="metadata"
+      poster="./assets/quinceanera/fotos/quinceanera-hero-court.jpg"
+      style="position: fixed; inset: 0; z-index: 1; pointer-events: none; width: 100%; height: 100%; object-fit: cover; opacity: 0.45; filter: blur(2px);">
+      <source src="./assets/quinceanera/videos/quinceanera-hero.mp4" type="video/mp4">
+  </video>
+  -->
+  <picture>
+    <source srcset="./assets/quinceanera/fotos/quinceanera-hero-court.webp" type="image/webp">
+    <img id="quinceanera-hero-kb-bg" class="hero-kb-bg" src="./assets/quinceanera/fotos/quinceanera-hero-court.jpg"
+      alt=""
+      style="position: fixed; inset: 0; z-index: 1; pointer-events: none; width: 100%; height: 100%; object-fit: cover; opacity: 0.55; filter: blur(2px);">
+  </picture>
+  <div class="hero-video-overlay"
+      style="position: fixed; inset: 0; z-index: 3; pointer-events: none; background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.8) 100%);"></div>
+
+  <main class="container" style="padding: 100px 18px; position: relative; z-index: 10;">
     <div class="quince-hero-copy">
       <div class="mdj-wp-breadcrumb">
         <a href="./index.html" data-i18n="nav-home">Home</a>
@@ -647,78 +376,62 @@
       <h1 data-i18n="quince-dj-h1">Quinceañera DJ Miami</h1>
       <p class="mdj-wp-lead" data-i18n="quince-dj-lead">Bilingual DJ and MC coverage for the vals, court presentation, and reception — professional sound, uplighting, and music curated to her story, serving quinceañeras across Miami-Dade and Broward.</p>
     </div>
-  </section>
 
-  <div class="mdj-wp-shell">
-    <div class="mdj-wp-editorial">
-      <div class="mdj-wp-copy">
-        <article class="mdj-wp-tier">
-          <h2 data-i18n="quince-dj-tier1-h2">Vals — El Primer Baile</h2>
-          <p data-i18n="quince-dj-tier1-p">Your choreographed waltz cued precisely to the rehearsed timing, coordinated with you or your choreographer so the entrance and every transition land exactly on beat.</p>
-        </article>
-        <article class="mdj-wp-tier">
-          <h2 data-i18n="quince-dj-tier2-h2">Presentación de la Corte</h2>
-          <p data-i18n="quince-dj-tier2-p">A bilingual MC who handles the grand entrance and introductions for damas y chambelanes, working with your court beforehand so every cue lands clean.</p>
-        </article>
-        <article class="mdj-wp-tier">
-          <h2 data-i18n="quince-dj-tier3-h2">Sorpresas &amp; Recepción</h2>
-          <p data-i18n="quince-dj-tier3-p">Surprise dances, a shoe-change moment, or a choreographed reveal — built into the reception program alongside an open dance floor tuned to her music taste.</p>
-        </article>
+    <div class="quince-mosaic" aria-label="Quinceañera DJ gallery">
+      <picture>
+        <source srcset="./assets/quinceanera/fotos/amira-vals-cold-spark-card.webp" type="image/webp">
+        <img src="./assets/quinceanera/fotos/amira-vals-cold-spark-card.jpg"
+          alt="Vals de quinceañera con chispas frías, Miami DJ Beat" width="900" height="600" loading="eager" fetchpriority="high" decoding="async" />
+      </picture>
+      <picture>
+        <source srcset="./assets/quinceanera/fotos/magi-miami-dj-card.webp" type="image/webp">
+        <img src="./assets/quinceanera/fotos/magi-miami-dj-card.jpg"
+          alt="Miami DJ Beat con la quinceañera en su fiesta" width="720" height="540" loading="lazy" decoding="async" />
+      </picture>
+      <picture>
+        <source srcset="./assets/quinceanera/fotos/juliano-astc-2-card.webp" type="image/webp">
+        <img src="./assets/quinceanera/fotos/juliano-astc-2-card.jpg"
+          alt="Corte celebrando con la quinceañera" width="720" height="540" loading="lazy" decoding="async" />
+      </picture>
+    </div>
 
-        <section class="mdj-wp-addons">
-          <h3 data-i18n="quince-dj-addons-h2">Production Add-Ons</h3>
-          <ul>
-            <li data-i18n="quince-dj-addons-li1">Ambient uplighting for the ballroom or reception space</li>
-            <li data-i18n="quince-dj-addons-li2">Cold spark effects for the vals or grand entrance</li>
-            <li data-i18n="quince-dj-addons-li3">Hora loca props and high-energy closing set</li>
-          </ul>
-        </section>
-
-        <div class="mdj-wp-cta-wrap">
-          <a href="tel:+13056071780" class="btn primary" data-i18n="quince-dj-cta-call">Call (305) 607-1780</a>
-          <a href="mailto:miamidjbeat@gmail.com" class="btn outline" data-i18n="quince-dj-cta-email">Email for a Quote</a>
-        </div>
-
-        <p class="mdj-wp-related" style="margin-top:28px;font-size:14px;color:rgba(44,40,51,0.65);">
-          <span data-i18n="quince-dj-related-1">Need sound, lighting, or staging for her big day? See our </span><a href="./rentals.html" data-i18n="quince-dj-related-1-link">Equipment Rental</a>.
-          <span data-i18n="quince-dj-related-2"> Planning a bilingual family celebration? Explore our </span><a href="./weddings.html" data-i18n="quince-dj-related-2-link">Wedding &amp; Social DJ</a> coverage.
-        </p>
+    <div class="grid3 quince-tiers" style="gap: 30px; max-width: 1100px; margin: 0 auto;">
+      <div class="tile glass-card" style="padding: 24px !important;">
+        <h2 data-i18n="quince-dj-tier1-h2">Vals — El Primer Baile</h2>
+        <p data-i18n="quince-dj-tier1-p">Your choreographed waltz cued precisely to the rehearsed timing, coordinated with you or your choreographer so the entrance and every transition land exactly on beat.</p>
       </div>
-
-      <div class="mdj-wp-mosaicWrap">
-        <div class="mdj-wp-seal">
-          <span class="mdj-wp-seal-k">MIAMI DJ BEAT</span>
-          <span class="mdj-wp-seal-m">Quinces</span>
-        </div>
-        <div class="mdj-wp-mosaic" aria-label="Quinceañera DJ gallery">
-          <figure class="mdj-wp-mosaic__piece--1">
-            <picture>
-              <source srcset="./assets/quinceanera/fotos/amira-vals-cold-spark-card.webp" type="image/webp">
-              <img src="./assets/quinceanera/fotos/amira-vals-cold-spark-card.jpg"
-                alt="Vals de quinceañera con chispas frías, Miami DJ Beat" width="900" height="600" loading="eager" fetchpriority="high" decoding="async" />
-            </picture>
-          </figure>
-          <figure class="mdj-wp-mosaic__piece--2">
-            <picture>
-              <source srcset="./assets/quinceanera/fotos/magi-miami-dj-card.webp" type="image/webp">
-              <img src="./assets/quinceanera/fotos/magi-miami-dj-card.jpg"
-                alt="Miami DJ Beat con la quinceañera en su fiesta" width="720" height="540" loading="lazy" decoding="async" />
-            </picture>
-          </figure>
-          <figure class="mdj-wp-mosaic__piece--3">
-            <picture>
-              <source srcset="./assets/quinceanera/fotos/juliano-astc-2-card.webp" type="image/webp">
-              <img src="./assets/quinceanera/fotos/juliano-astc-2-card.jpg"
-                alt="Corte celebrando con la quinceañera" width="720" height="540" loading="lazy" decoding="async" />
-            </picture>
-          </figure>
-        </div>
+      <div class="tile glass-card" style="padding: 24px !important;">
+        <h2 data-i18n="quince-dj-tier2-h2">Presentación de la Corte</h2>
+        <p data-i18n="quince-dj-tier2-p">A bilingual MC who handles the grand entrance and introductions for damas y chambelanes, working with your court beforehand so every cue lands clean.</p>
+      </div>
+      <div class="tile glass-card" style="padding: 24px !important;">
+        <h2 data-i18n="quince-dj-tier3-h2">Sorpresas &amp; Recepción</h2>
+        <p data-i18n="quince-dj-tier3-p">Surprise dances, a shoe-change moment, or a choreographed reveal — built into the reception program alongside an open dance floor tuned to her music taste.</p>
       </div>
     </div>
 
+    <div class="tile glass-card quince-tiers" style="max-width: 1100px; margin: 30px auto 0; padding: 24px !important;">
+      <h2 data-i18n="quince-dj-addons-h2">Production Add-Ons</h2>
+      <ul>
+        <li data-i18n="quince-dj-addons-li1">Ambient uplighting for the ballroom or reception space</li>
+        <li data-i18n="quince-dj-addons-li2">Cold spark effects for the vals or grand entrance</li>
+        <li data-i18n="quince-dj-addons-li3">Hora loca props and high-energy closing set</li>
+      </ul>
+    </div>
+
+    <div class="quince-cta-wrap">
+      <a href="tel:+13056071780" class="btn primary" data-i18n="quince-dj-cta-call">Call (305) 607-1780</a>
+      <a href="mailto:miamidjbeat@gmail.com" class="btn outline" data-i18n="quince-dj-cta-email">Email for a Quote</a>
+    </div>
+
+    <p class="quince-related">
+      <span data-i18n="quince-dj-related-1">Need sound, lighting, or staging for her big day? See our </span><a href="./rentals.html" data-i18n="quince-dj-related-1-link">Equipment Rental</a>.
+      <span data-i18n="quince-dj-related-2"> Planning a bilingual family celebration? Explore our </span><a href="./weddings.html" data-i18n="quince-dj-related-2-link">Wedding &amp; Social DJ</a> coverage.
+    </p>
+
     <!-- ══ GEO/AEO FAQ — quinceañera (Fase 7, activo #7, Plan Maestro GEO·SEO·IA) ══ -->
-    <section id="quinceanera-faq" style="max-width: 760px; margin: 48px auto 0;">
-      <h2 style="font-family: 'Cormorant Garamond', serif; color: #1a1614; font-size: 28px; margin-bottom: 24px; text-align: center;" data-i18n="quince-dj-faq-title">Quinceañera DJ FAQ</h2>
+    <section id="quinceanera-faq" style="max-width: 760px; margin: 60px auto 0;">
+      <h2 style="font-family: 'Cormorant Garamond', serif; color: #fff; font-size: 28px; margin-bottom: 24px; text-align: center;" data-i18n="quince-dj-faq-title">Quinceañera DJ FAQ</h2>
 
       <details class="quinceanera-faq-item">
         <summary data-i18n="quince-dj-faq-q1">How do you coordinate the choreographed waltz (vals)?</summary>
@@ -740,7 +453,7 @@
         <p data-i18n="quince-dj-faq-a4">Yes. Our MCs host in both English and Spanish, moving smoothly between languages so every guest — abuelos included — feels part of the celebration. <a href="tel:+13056071780">(305) 607-1780</a> · <a href="mailto:miamidjbeat@gmail.com">miamidjbeat@gmail.com</a></p>
       </details>
     </section>
-  </div>
+  </main>
 
   <footer class="footer">
     <div class="container" style="text-align:center;padding:24px 16px;">
