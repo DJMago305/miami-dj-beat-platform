@@ -221,6 +221,11 @@ window.resolveMdAssetPublicUrl = function (path) {
     // fallback adicional por seguridad
     if (rel && rel.toLowerCase().startsWith('weather/')) return path;
     if (/^branding\//i.test(rel) || /^dj-avatar-placeholder\./i.test(rel)) return path;
+    /* FIX-CORPORATE-STORAGE-01 (2026-09-08): corporate_featured.png/tipo06-corporate.png
+       se movieron a esta carpeta el 2026-09-03 (ver assets/corporate/LEEME.txt) y nunca
+       se re-subieron al bucket de Storage -- <img> normal (no <picture>) confirmado roto
+       en TODO navegador, no solo Safari 13 (naturalWidth:0 incluso en Chrome). */
+    if (/^corporate\/fotos\//i.test(rel)) return path;
     var segments = m[1].split("/").map(function (seg) {
         try {
             return encodeURIComponent(decodeURIComponent(seg));

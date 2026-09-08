@@ -116,6 +116,33 @@
             position: relative;
             z-index: 10;
         }
+
+        /* Mosaico de 2 fotos reales de eventos corporativos (2026-09-08) --
+           mismo patron que .weddings-mosaic: grid + object-fit:cover, para
+           que ambas se vean parejas sin importar su relacion de aspecto
+           nativa (corporate_featured.png es 16:9, tipo06-corporate.png es
+           cuadrada). */
+        .corporate-mosaic {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            max-width: 900px;
+            margin: 0 auto 60px;
+        }
+
+        .corporate-mosaic img {
+            width: 100%;
+            height: 320px;
+            object-fit: cover;
+            border-radius: 18px;
+            box-shadow: 0 22px 48px rgba(0, 0, 0, 0.4);
+        }
+
+        @media (max-width: 640px) {
+            .corporate-mosaic {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
   <link rel="preload" as="image" href="./assets/home_hero_4k_wide.webp" fetchpriority="high">
 </head>
@@ -230,9 +257,9 @@
                 Professional, punctual, and camera-ready — wireless microphones for speakers and executives, ambient music for networking, and high-energy transitions for brand activations, across Miami-Dade and Broward.</p>
         </div>
 
-        <div style="max-width: 900px; margin: 0 auto 60px;">
-            <img src="./assets/corporate/fotos/corporate_featured.png" alt="Corporate event production by Miami DJ Beat" loading="eager" decoding="async"
-                style="width: 100%; height: auto; border-radius: 18px; box-shadow: 0 22px 48px rgba(0,0,0,0.4);" />
+        <div class="corporate-mosaic">
+            <img src="./assets/corporate/fotos/corporate_featured.png" alt="Race car activation at the Porsche North Miami corporate event, Miami DJ Beat" loading="eager" fetchpriority="high" decoding="async" />
+            <img src="./assets/corporate/fotos/tipo06-corporate.png" alt="Miami DJ Beat DJ set at a corporate gala with city skyline view" loading="lazy" decoding="async" />
         </div>
 
         <div class="grid3" style="gap: 30px; max-width: 1100px; margin: 0 auto;">
