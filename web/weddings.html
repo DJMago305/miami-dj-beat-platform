@@ -190,6 +190,12 @@
     }
 
     body.page-weddings-dj .footer {
+      /* FIX-FOOTER-STACKING-01 (2026-09-08): sin esto, el footer queda fuera
+         del <main position:relative;z-index:10> de mas arriba y el hero-kb-bg
+         (fixed, z:1) + su overlay (fixed, z:3) lo pintan encima -- confirmado
+         visualmente antes de este fix, no solo por lectura de CSS. */
+      position: relative;
+      z-index: 10;
       background: rgba(12, 11, 10, 0.55);
       border-top: 1px solid rgba(255, 255, 255, 0.08);
     }
