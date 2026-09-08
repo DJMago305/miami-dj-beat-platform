@@ -129,6 +129,16 @@ Riesgo: romper carga del catálogo.
         }
 
         /* Gallery carousel styles: see #rentals-gallery-carousel */
+
+        /* FIX-FOOTER-STACKING-01 (2026-09-08): el <footer> vive fuera del
+           <main position:relative;z-index:10> de mas arriba, asi que el
+           hero-kb-bg (fixed, z:1) + su overlay (fixed, z:3) lo pintan
+           encima -- confirmado visualmente en weddings.html antes de este
+           fix (mismo patron exacto), no solo por lectura de CSS. */
+        body.page-mdj-rentals .footer {
+            position: relative;
+            z-index: 10;
+        }
     </style>
     <style id="rentals-gallery-carousel">
         #rentals-gallery .rentals-gallery-shell {

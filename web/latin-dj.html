@@ -129,6 +129,16 @@
         @media (max-width: 640px) {
             .latin-dj-mosaic { grid-template-columns: 1fr; }
         }
+
+        /* FIX-FOOTER-STACKING-01 (2026-09-08): el <footer> vive fuera del
+           <main position:relative;z-index:10> de mas arriba, asi que el
+           hero-kb-bg (fixed, z:1) + su overlay (fixed, z:3) lo pintan
+           encima -- confirmado visualmente en weddings.html antes de este
+           fix (mismo patron exacto), no solo por lectura de CSS. */
+        body.page-latin-dj .footer {
+            position: relative;
+            z-index: 10;
+        }
     </style>
   <link rel="preload" as="image" href="./assets/home_hero_4k_wide.webp" fetchpriority="high">
 </head>

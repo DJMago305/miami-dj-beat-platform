@@ -125,6 +125,16 @@
         @media (max-width: 760px) {
             .fk-proof-grid { grid-template-columns: 1fr !important; }
         }
+
+        /* FIX-FOOTER-STACKING-01 (2026-09-08): el <footer> vive fuera del
+           <main position:relative;z-index:10> de mas arriba, asi que el
+           hero-kb-bg (fixed, z:1) + su overlay (fixed, z:3) lo pintan
+           encima -- confirmado visualmente en weddings.html antes de este
+           fix (mismo patron exacto), no solo por lectura de CSS. */
+        body.page-florida-keys .footer {
+            position: relative;
+            z-index: 10;
+        }
     </style>
   <link rel="preload" as="image" href="./assets/florida-keys/fotos/keys-sundowners-hero.webp" fetchpriority="high">
 </head>
