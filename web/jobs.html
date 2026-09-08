@@ -5318,7 +5318,7 @@
                 const { data } = await sup
                     .from('platform_settings')
                     .select('key, value')
-                    .in('key', ['hero_video_url', 'hero_video_volume', 'hero_title_es', 'hero_title_en', 'hero_active']);
+                    .in('key', ['hero_video_url', 'hero_video_volume', 'hero_title_es', 'hero_title_en', 'hero_active', 'hero_audio_source', 'hero_muted', 'global_video_volume']);
                 if (!data || data.length === 0) return;
 
                 const settings = {};
@@ -5331,13 +5331,25 @@
                 const configVol = parseFloat(settings['hero_video_volume'] || '0') || 0;
                 const isHeroActive = settings['hero_active'] !== 'false';
 
+                // MDJB: Ticket "Sistema de Audio de Videos" — Fuente de Audio + Mute.
+                // "ambient" en jobs.html equivale a silencio: esta ruta nunca carga el módulo de
+                // música ambiental (FIX-AUDIO-01, restringido a home), así que elegir Ambiental
+                // aquí respeta esa misma política sin tocar el módulo compartido.
+                const isMuted = settings['hero_muted'] === 'true';
+                const audioSource = settings['hero_audio_source'] || 'native';
+                // Volumen Global (Intensidad) — multiplicador maestro sobre TODOS los videos del
+                // sistema (Staff > Marca y Medios > Videos del Sitio > Controles Globales).
+                const globalVol = settings['global_video_volume'] !== undefined
+                    ? (parseFloat(settings['global_video_volume']) || 0) : 1;
+                const effectiveVol = (isMuted || audioSource === 'ambient') ? 0 : (configVol * globalVol);
+
                 if (video && videoUrl && isHeroActive) {
                     if (kbBg) kbBg.classList.add('hidden');
                     video.src = videoUrl;
-                    
-                    if (configVol > 0) {
+
+                    if (effectiveVol > 0) {
                         video.setAttribute('data-mdj-allow-audio', '1');
-                        video.volume = configVol;
+                        video.volume = effectiveVol;
                         video.muted = false;
                         video.removeAttribute('muted');
                     } else {
@@ -5347,18 +5359,18 @@
                         video.defaultMuted = true;
                         video.setAttribute('muted', '');
                     }
-                    
+
                     video.load();
                     video.play().catch(() => {
                         video.muted = true;
                         video.play().catch(() => { });
                     });
 
-                    if (section && configVol > 0 && 'IntersectionObserver' in window) {
+                    if (section && effectiveVol > 0 && 'IntersectionObserver' in window) {
                         const observer = new IntersectionObserver(
                             ([entry]) => {
                                 if (entry.isIntersecting) {
-                                    video.volume = configVol;
+                                    video.volume = effectiveVol;
                                     video.muted = false;
                                 } else {
                                     video.muted = true;
