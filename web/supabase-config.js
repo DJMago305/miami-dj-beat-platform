@@ -259,6 +259,15 @@ window.resolveMdAssetImageUrl = window.resolveMdAssetPublicUrl;
             if (u && u.indexOf("./assets/") === 0) el.setAttribute("src", fn(u));
         });
         document.querySelectorAll("img[src]").forEach(function (el) {
+            /* FIX-PICTURE-FALLBACK-01 (2026-09-08): el <img> de respaldo dentro de
+               un <picture> (patron Safari-13/.webp, ver quinceanera.html y demas)
+               debe quedarse en la ruta relativa servida por Vercel/Git -- reescribirlo
+               al bucket de Storage rompe el fallback en cualquier navegador que caiga
+               a este <img> (sin soporte .webp), porque esos archivos nunca se suben
+               a Storage, solo viven en el repo. El <source srcset> de al lado nunca
+               pasa por aqui (esta funcion no toca srcset), asi que los navegadores
+               con soporte .webp jamas veian este bug -- por eso pasó inadvertido. */
+            if (el.closest("picture")) return;
             var is = el.getAttribute("src");
             if (is && /weather\//i.test(is)) return;
             if (is && is.indexOf("./assets/") === 0) el.src = fn(is);
