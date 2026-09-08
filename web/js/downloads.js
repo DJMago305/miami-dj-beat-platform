@@ -104,7 +104,7 @@ async function resolveMacInstallerPkgUrl(fallbackFromJson, catalog) {
         ? window.MDB_INSTALLER_MAC_PKG_URL
         : fallbackFromJson;
     var app = (catalog && catalog.app) || 'MDJPRO';
-    var version = (catalog && catalog.version) || 'V.2.6.5';
+    var version = (catalog && catalog.version) || 'V.2.6.6';
     var filename = buildPkgDownloadFilename(app, version);
     var localVersioned = pageUrl('./installers/' + encodeURIComponent(filename));
     var localLegacy = pageUrl('./installers/MDJPRO_Installer.pkg');
