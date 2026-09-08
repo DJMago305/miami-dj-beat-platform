@@ -1903,9 +1903,25 @@
       function enforceHeroMute() {
         if (!video || !isHomeActive) return;
         const configVol = parseFloat(settings.home_hero_video_volume || '0') || 0;
-        if (configVol > 0) {
+        // MDJB: Ticket "Sistema de Audio de Videos" — Fuente de Audio (video propio vs
+        // Música Ambiental del sitio, mutuamente excluyentes) + Mute rápido.
+        const isMuted = settings.home_hero_muted === 'true';
+        const audioSource = settings.home_hero_audio_source || 'native';
+        const nativeAudioWanted = !isMuted && audioSource === 'native';
+        // Volumen Global (Intensidad) — multiplicador maestro sobre TODOS los videos del sistema
+        // (Staff > Marca y Medios > Videos del Sitio > Controles Globales).
+        const globalVol = settings.global_video_volume !== undefined
+          ? (parseFloat(settings.global_video_volume) || 0) : 1;
+        const effectiveVol = nativeAudioWanted ? (configVol * globalVol) : 0;
+
+        // Bloquea/libera la Música Ambiental (mdj-ambient-music.js) para que nunca suene a la
+        // vez que el audio nativo del Hero — mismo mecanismo que ya usa el sitio para silenciar
+        // ambiental durante Cash Flow / trabajo de artista (mdjAmbientBlockedByArtistWork()).
+        window.MDJ_HOME_HERO_NATIVE_AUDIO_ACTIVE = effectiveVol > 0;
+
+        if (effectiveVol > 0) {
           video.setAttribute('data-mdj-allow-audio', '1');
-          video.volume = configVol;
+          video.volume = effectiveVol;
           video.muted = false;
           video.removeAttribute('muted');
         } else {

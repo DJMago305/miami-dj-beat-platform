@@ -108,6 +108,10 @@
     if (cashFlowAmbientBlocked) return true;
     if (isDjDashboardPage()) return true;
     if (isDjProfilePage()) return true;
+    // MDJB: Ticket "Sistema de Audio de Videos" — el Home Hero puede elegir "Audio del Video
+    // Oficial" como fuente (Staff > Marca y Medios > Videos del Sitio). Mientras esté activo,
+    // la ambiental se bloquea igual que durante Cash Flow, para que nunca suenen a la vez.
+    if (typeof window !== 'undefined' && window.MDJ_HOME_HERO_NATIVE_AUDIO_ACTIVE) return true;
     return isDjDashboardCashFlowActive();
   }
 

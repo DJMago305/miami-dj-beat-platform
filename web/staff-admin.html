@@ -215,6 +215,124 @@
             line-height: 1.55;
         }
 
+        /* Ícono de ayuda "?" — ley de formato: los títulos de sección van solos, sin párrafo
+           explicativo visible; la explicación aparece al pasar el mouse (o foco/teclado) sobre
+           este círculo dorado. Global y reutilizable en cualquier admin-card. */
+        .mdj-help {
+            position: relative;
+            display: inline-flex;
+            flex: 0 0 auto;
+            align-items: center;
+            justify-content: center;
+            cursor: help;
+            outline: none;
+            vertical-align: middle;
+            margin-left: 8px;
+        }
+        .mdj-help-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 1px solid rgba(197, 160, 89, 0.55);
+            background: rgba(197, 160, 89, 0.12);
+            color: rgba(197, 160, 89, 0.98);
+            font-size: 11px;
+            font-weight: 800;
+            line-height: 1;
+        }
+        .mdj-help-tip {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            z-index: 60;
+            width: min(300px, calc(100vw - 48px));
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(197, 160, 89, 0.42);
+            background: rgba(8, 12, 20, 0.97);
+            color: rgba(248, 250, 252, 0.92);
+            font-size: 12px !important;
+            font-weight: 500;
+            line-height: 1.45;
+            text-transform: none;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.15s ease, visibility 0.15s ease;
+        }
+        .mdj-help:hover .mdj-help-tip,
+        .mdj-help:focus .mdj-help-tip,
+        .mdj-help:focus-within .mdj-help-tip {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Switch on/off (mismo componente que ya usa account-settings.html — reutilizado, no
+           reinventado). Dos "labels" a los lados marcan el significado de cada estado. */
+        .mdj-switch-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 6px;
+        }
+        .mdj-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+        .mdj-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .mdj-switch-slider {
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 24px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .mdj-switch-slider:before {
+            content: '';
+            position: absolute;
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background: #fff;
+            border-radius: 50%;
+            transition: 0.2s;
+        }
+        .mdj-switch input:checked + .mdj-switch-slider {
+            background: var(--gold, #c5a059);
+        }
+        .mdj-switch input:checked + .mdj-switch-slider:before {
+            transform: translateX(20px);
+        }
+        .mdj-switch-label-off,
+        .mdj-switch-label-on {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.35);
+            transition: color 0.2s;
+        }
+        .mdj-switch-row:has(input:checked) .mdj-switch-label-on {
+            color: var(--gold, #c5a059);
+        }
+        .mdj-switch-row:not(:has(input:checked)) .mdj-switch-label-off {
+            color: #fff;
+        }
+        /* Mute usa rojo/peligro en vez de dorado cuando está activo — distingue visualmente
+           "silenciado" (algo apagado) de "fuente elegida" (algo activo/normal). */
+        .mdj-switch.mdj-switch--mute input:checked + .mdj-switch-slider {
+            background: #d9534f;
+        }
+
         .admin-card label {
             font-size: 13px !important;
         }
@@ -1723,11 +1841,9 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
       function runGo(go){
         try{
           if(EVENTS[go]){ clickLink('#event-blueprint'); if(typeof loadEventBlueprint==='function') loadEventBlueprint(EVENTS[go]); return; }
-          if(go==='mdjpro'){ clickLink('#content');   /* el panel MDJPRO vive DENTRO de #content (Contenido y Precios) */
-            var el=document.getElementById('mdjpro-downloads-panel');
-            if(el){ el.style.display='block';
-              try{ if(typeof loadMdjproDownloadsCatalog==='function') loadMdjproDownloadsCatalog(); }catch(_){}
-              setTimeout(function(){ try{ el.scrollIntoView({block:'start'}); }catch(_){} }, 250); } return; }
+          if(go==='mdjpro'){ clickLink('#mdjpro-downloads-panel');   /* MDJPRO ahora es su propio admin-card, ya no vive dentro de #content */
+            try{ if(typeof loadMdjproDownloadsCatalog==='function') loadMdjproDownloadsCatalog(); }catch(_){}
+            return; }
         }catch(e){}
       }
       /* API que llama el portal padre para cambiar de sección SIN recargar el iframe */
@@ -1898,7 +2014,11 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                 <a href="#mdjpro-downloads-panel" id="sidebar-mdjpro-downloads" class="side-link"
                    style="display:none;align-items:center;gap:9px;color:#c5a059;border-left:2px solid rgba(197,160,89,0.35);">
                   <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                  MDJPRO Descargas
+                  MDJPRO
+                </a>
+                <a href="#site-media" class="side-link" style="display:flex;align-items:center;gap:9px;">
+                  <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                  Marca y Medios
                 </a>
                 <a href="#apps" class="side-link" style="display:flex;align-items:center;gap:9px;">
                   <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="2" width="9" height="9" rx="1"/><rect x="13" y="2" width="9" height="9" rx="1"/><rect x="2" y="13" width="9" height="9" rx="1"/><rect x="13" y="13" width="9" height="9" rx="1"/></svg>
@@ -2368,64 +2488,6 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                         </div>
                     </div>
 
-                    <!-- ── HERO BRANDING MANAGER ─────────────────────────────── -->
-                    <div style="margin-top:28px;border-top:1px solid var(--line);padding-top:22px;">
-                        <h4 style="color:var(--gold);margin-bottom:4px;font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">HERO VIDEO & BRANDING</h4>
-                        <p class="fineprint" style="margin-bottom:16px;">
-                            El video corre en loop automático. Sin controles visibles para el usuario. Volumen 0 =
-                            silencio total.
-                        </p>
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-                            <div class="tile" style="grid-column:1/-1;">
-                                <label class="fineprint">URL del Video (VIDEO JOBS)</label>
-                                <input type="text" id="setting-hero_video_url" class="price-input settings-input"
-                                    data-setting="hero_video_url" placeholder="URL del video"
-                                    style="font-size:13px;width:100%;margin-top:6px;">
-                            </div>
-                            <div class="tile">
-                                <label class="fineprint">Volumen</label>
-                                <div style="display:flex; align-items:center; gap:10px; margin-top:6px;">
-                                    <input type="range" id="setting-hero_video_volume" class="settings-input mdj-fader"
-                                        data-setting="hero_video_volume" min="0" max="1" step="0.01" value="0"
-                                        oninput="this.nextElementSibling.textContent = Math.round(this.value * 100) + '%'">
-                                    <span style="color:var(--gold); font-family:monospace; font-size:12px; width:35px; text-align:right;">0%</span>
-                                </div>
-                                <small style="color:rgba(255,255,255,0.3);font-size:10px;">
-                                    ⚠️ Audio &gt;0 requiere que el usuario haya interactuado con la página primero.
-                                </small>
-                            </div>
-                            <div class="tile">
-                                <label class="fineprint">Título (ES)</label>
-                                <input type="text" id="setting-hero_title_es" class="price-input settings-input"
-                                    data-setting="hero_title_es" placeholder="DOMINA EL MERCADO DJ"
-                                    style="font-size:13px;margin-top:6px;">
-                            </div>
-                            <div class="tile">
-                                <label class="fineprint">Título (EN)</label>
-                                <input type="text" id="setting-hero_title_en" class="price-input settings-input"
-                                    data-setting="hero_title_en" placeholder="DOMINATE THE DJ MARKET"
-                                    style="font-size:13px;margin-top:6px;">
-                            </div>
-                            <div class="tile"
-                                style="grid-column:1/-1; border:1px dashed var(--gold); background:rgba(197,160,89,0.05);">
-                                <label class="fineprint" style="color:var(--gold);">⚠️ ESTADO DE PUBLICIDAD
-                                    (QUARANTINE)</label>
-                                <select id="setting-hero_active" class="price-input settings-input"
-                                    data-setting="hero_active"
-                                    style="width:100%; margin-top:6px; background:#000; border-color:var(--gold);">
-                                    <option value="true">✅ ACTIVA (Mostrar Video y Títulos)</option>
-                                    <option value="false">🚫 EN CUARENTENA (Mostrar Placeholder/Ken Burns)</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div style="margin-top:14px;display:flex;align-items:center;gap:14px;">
-                            <button class="btn primary" onclick="savePlatformSettings(this)">SAVE</button>
-                            <small class="save-status-msg" style="color:var(--admin-accent);display:none;">✅ Guardado en Supabase</small>
-                            <small style="color:rgba(255,255,255,0.4);font-size:11px;">Cambios activos en
-                                jobs.html</small>
-                        </div>
-                    </div>
-
                     <!-- ── TALENT & HORA LOCA INVENTORY ─────────────────────────────── -->
                     <div style="margin-top:28px;border-top:1px solid var(--line);padding-top:22px;">
                         <h4 style="color:var(--gold);margin-bottom:4px;">🎭 Inventario de Hora Loca y Talento</h4>
@@ -2465,12 +2527,168 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                         </div>
                     </div>
 
+                </div>
+
+                <!-- MDJPRO — separado de #content (antes vivía escondido al final del catálogo de
+                     precios; ver runGo('mdjpro') más abajo, ya actualizado a este nuevo id). -->
+                <div class="admin-card" id="mdjpro-downloads-panel" style="display:none;">
+                        <h4 style="color:var(--gold);margin-bottom:16px;font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">MDJPRO<span class="mdj-help" tabindex="0"><span class="mdj-help-icon">?</span><span class="mdj-help-tip">Edita versión y novedades en vivo. El peso del .pkg se calcula automático desde Supabase/local. Plataforma Mac hasta release Windows.</span></span></h4>
+                        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-bottom:14px;">
+                            <div class="tile">
+                                <label class="fineprint">Versión pública</label>
+                                <input type="text" id="mdjpro-dl-version" class="price-input" placeholder="V.2.1.0" style="margin-top:6px;width:100%;">
+                            </div>
+                            <div class="tile">
+                                <label class="fineprint">Fecha publicación</label>
+                                <input type="date" id="mdjpro-dl-released" class="price-input" style="margin-top:6px;width:100%;">
+                            </div>
+                            <div class="tile">
+                                <label class="fineprint">Plataforma</label>
+                                <input type="text" id="mdjpro-dl-platform" class="price-input" value="mac" readonly style="margin-top:6px;width:100%;opacity:0.7;">
+                            </div>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                            <div class="tile">
+                                <label class="fineprint">Título novedades (ES) — MAYÚSCULAS</label>
+                                <input type="text" id="mdjpro-dl-title-es" class="price-input" placeholder="NOVEDADES EN MDJPRO V.2.1.0" style="margin-top:6px;width:100%;text-transform:uppercase;">
+                            </div>
+                            <div class="tile">
+                                <label class="fineprint">Release title (EN)</label>
+                                <input type="text" id="mdjpro-dl-title-en" class="price-input" placeholder="WHAT'S NEW IN MDJPRO V.2.1.0" style="margin-top:6px;width:100%;">
+                            </div>
+                            <div class="tile">
+                                <label class="fineprint">Novedades (ES) — una por línea</label>
+                                <textarea id="mdjpro-dl-items-es" rows="8" class="price-input" style="margin-top:6px;width:100%;resize:vertical;font-size:13px;line-height:1.45;"></textarea>
+                            </div>
+                            <div class="tile">
+                                <label class="fineprint">Release notes (EN) — one per line</label>
+                                <textarea id="mdjpro-dl-items-en" rows="8" class="price-input" style="margin-top:6px;width:100%;resize:vertical;font-size:13px;line-height:1.45;"></textarea>
+                            </div>
+                        </div>
+                        <div style="margin-top:14px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+                            <button class="btn primary" type="button" onclick="saveMdjproDownloadsCatalog()">SAVE</button>
+                            <small id="mdjpro-dl-save-status" style="color:var(--admin-accent);display:none;">✅ Publicado en Supabase</small>
+                            <a href="./downloads.html" target="_blank" rel="noopener" class="btn secondary small">DOWNLOADS</a>
+                        </div>
+                </div>
+
+                <!-- Marca y Medios — agrupa branding/video/audio/QR que antes vivían dentro de
+                     "Contenido y Precios" sin relación alguna con precios. -->
+                <div class="admin-card" id="site-media" style="display:none;">
+                    <h3 style="margin:0 0 16px 0;">🎨 Marca y Medios<span class="mdj-help" tabindex="0"><span class="mdj-help-icon">?</span><span class="mdj-help-tip">Video, audio y branding del sitio — separado del catálogo de precios.</span></span></h3>
+
+                    <!-- ── 🎬 VIDEOS DEL SITIO — sistema estándar de audio (Fuente + Volumen + Mute) ──
+                         Lugar único donde vivirán los controles de audio de CUALQUIER video del
+                         sitio que necesite sonido real. Hoy: Hero Jobs + Home Hero (los únicos 2
+                         videos del sitio con audio propio configurable — el resto son loops de
+                         fondo silenciados a nivel de HTML, sin necesidad de este sistema).
+                         EXCLUSIÓN EXPLÍCITA: los 5 videos verticales de Venues NUNCA se agregan
+                         aquí — trabajan juntos en simultáneo y sería caos de audio (orden Capitán). -->
+                    <h3 style="margin:24px 0 4px 0;">🎬 Videos del Sitio<span class="mdj-help" tabindex="0"><span class="mdj-help-icon">?</span><span class="mdj-help-tip">Sistema estándar de audio para todo video del sitio que necesite sonido real: elige su fuente (audio propio del video, o la música ambiental del sitio), su volumen y un mute rápido. Aquí es donde se agregan los controles de cualquier video futuro. Excluidos a propósito: los 5 videos verticales de Venues (trabajan juntos — sería caos de audio).</span></span></h3>
+
+                    <div class="tile" style="margin-bottom:22px;border:1px dashed var(--gold);background:rgba(197,160,89,0.05);">
+                        <h5 style="color:var(--gold);margin-bottom:10px;">🌐 Controles Globales<span class="mdj-help" tabindex="0"><span class="mdj-help-icon">?</span><span class="mdj-help-tip">Aplican a todos los videos de este sistema a la vez. El volumen global multiplica el volumen individual de cada video (intensidad general). "Silenciar Todo" es una acción de un clic: apaga el sonido de todos ahora mismo, pero cada uno se puede volver a activar por separado después — no queda bloqueado.</span></span></h5>
+                        <div style="display:grid;grid-template-columns:1fr auto;gap:20px;align-items:end;">
+                            <div>
+                                <label class="fineprint">Volumen Global (Intensidad)</label>
+                                <div style="display:flex; align-items:center; gap:10px; margin-top:6px;">
+                                    <input type="range" id="setting-global_video_volume" class="settings-input mdj-fader"
+                                        data-setting="global_video_volume" min="0" max="1" step="0.01" value="1"
+                                        oninput="this.nextElementSibling.textContent = Math.round(this.value * 100) + '%'">
+                                    <span style="color:var(--gold); font-family:monospace; font-size:12px; width:35px; text-align:right;">100%</span>
+                                </div>
+                            </div>
+                            <button class="btn primary" type="button" onclick="muteAllSiteVideos()" style="background:#d9534f;border-color:#d9534f;white-space:nowrap;">🔇 Silenciar Todo</button>
+                        </div>
+                        <div style="margin-top:14px;display:flex;align-items:center;gap:14px;">
+                            <button class="btn primary" onclick="savePlatformSettings(this)">SAVE</button>
+                            <small class="save-status-msg" style="color:var(--admin-accent);display:none;">✅ Guardado en Supabase</small>
+                        </div>
+                    </div>
+
+                    <div style="border-top:1px solid var(--line);padding-top:22px;">
+                        <h4 style="color:var(--gold);margin-bottom:16px;font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">HERO VIDEO & BRANDING<span class="mdj-help" tabindex="0"><span class="mdj-help-icon">?</span><span class="mdj-help-tip">El video corre en loop automático. Sin controles visibles para el usuario. Volumen 0 = silencio total.</span></span></h4>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                            <div class="tile" style="grid-column:1/-1;">
+                                <label class="fineprint">URL del Video (VIDEO JOBS)</label>
+                                <input type="text" id="setting-hero_video_url" class="price-input settings-input"
+                                    data-setting="hero_video_url" placeholder="URL del video"
+                                    style="font-size:13px;width:100%;margin-top:6px;">
+                            </div>
+                            <div class="tile">
+                                <label class="fineprint">Fuente de Audio</label>
+                                <div class="mdj-switch-row">
+                                    <span class="mdj-switch-label-off">🎬 Video Oficial</span>
+                                    <label class="mdj-switch">
+                                        <input type="checkbox" id="setting-hero_audio_source" class="settings-input"
+                                            data-setting="hero_audio_source" data-on-value="ambient" data-off-value="native">
+                                        <span class="mdj-switch-slider"></span>
+                                    </label>
+                                    <span class="mdj-switch-label-on">🎵 Ambiental del Sitio</span>
+                                </div>
+                                <small style="color:rgba(255,255,255,0.3);font-size:10px;">
+                                    jobs.html no tiene ambiental configurada hoy — "Ambiental" aquí equivale a silencio.
+                                </small>
+                            </div>
+                            <div class="tile">
+                                <label class="fineprint">Volumen (si la fuente es el video)</label>
+                                <div style="display:flex; align-items:center; gap:10px; margin-top:6px;">
+                                    <input type="range" id="setting-hero_video_volume" class="settings-input mdj-fader"
+                                        data-setting="hero_video_volume" min="0" max="1" step="0.01" value="0"
+                                        oninput="this.nextElementSibling.textContent = Math.round(this.value * 100) + '%'">
+                                    <span style="color:var(--gold); font-family:monospace; font-size:12px; width:35px; text-align:right;">0%</span>
+                                </div>
+                                <small style="color:rgba(255,255,255,0.3);font-size:10px;">
+                                    ⚠️ Audio &gt;0 requiere que el usuario haya interactuado con la página primero.
+                                </small>
+                            </div>
+                            <div class="tile">
+                                <label class="fineprint">Silenciar (Mute)</label>
+                                <div class="mdj-switch-row">
+                                    <span class="mdj-switch-label-off">🔊 Activo</span>
+                                    <label class="mdj-switch mdj-switch--mute">
+                                        <input type="checkbox" id="setting-hero_muted" class="settings-input"
+                                            data-setting="hero_muted">
+                                        <span class="mdj-switch-slider"></span>
+                                    </label>
+                                    <span class="mdj-switch-label-on">🔇 Silenciado</span>
+                                </div>
+                            </div>
+                            <div class="tile">
+                                <label class="fineprint">Título (ES)</label>
+                                <input type="text" id="setting-hero_title_es" class="price-input settings-input"
+                                    data-setting="hero_title_es" placeholder="DOMINA EL MERCADO DJ"
+                                    style="font-size:13px;margin-top:6px;">
+                            </div>
+                            <div class="tile">
+                                <label class="fineprint">Título (EN)</label>
+                                <input type="text" id="setting-hero_title_en" class="price-input settings-input"
+                                    data-setting="hero_title_en" placeholder="DOMINATE THE DJ MARKET"
+                                    style="font-size:13px;margin-top:6px;">
+                            </div>
+                            <div class="tile"
+                                style="grid-column:1/-1; border:1px dashed var(--gold); background:rgba(197,160,89,0.05);">
+                                <label class="fineprint" style="color:var(--gold);">⚠️ ESTADO DE PUBLICIDAD
+                                    (QUARANTINE)</label>
+                                <select id="setting-hero_active" class="price-input settings-input"
+                                    data-setting="hero_active"
+                                    style="width:100%; margin-top:6px; background:#000; border-color:var(--gold);">
+                                    <option value="true">✅ ACTIVA (Mostrar Video y Títulos)</option>
+                                    <option value="false">🚫 EN CUARENTENA (Mostrar Placeholder/Ken Burns)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="margin-top:14px;display:flex;align-items:center;gap:14px;">
+                            <button class="btn primary" onclick="savePlatformSettings(this)">SAVE</button>
+                            <small class="save-status-msg" style="color:var(--admin-accent);display:none;">✅ Guardado en Supabase</small>
+                            <small style="color:rgba(255,255,255,0.4);font-size:11px;">Cambios activos en
+                                jobs.html</small>
+                        </div>
+                    </div>
+
                     <!-- ── HOME HERO BRANDING MANAGER ────────────────────────── -->
                     <div style="margin-top:28px;border-top:1px solid var(--line);padding-top:22px;">
-                        <h4 style="color:var(--gold);margin-bottom:4px;font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">HOME HERO BRANDING</h4>
-                        <p class="fineprint" style="margin-bottom:16px;">
-                            Configura el video y los textos publicitarios de la página principal.
-                        </p>
+                        <h4 style="color:var(--gold);margin-bottom:16px;font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">HOME HERO BRANDING<span class="mdj-help" tabindex="0"><span class="mdj-help-icon">?</span><span class="mdj-help-tip">Configura el video y los textos publicitarios de la página principal.</span></span></h4>
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
                             <div class="tile" style="grid-column:1/-1;">
                                 <label class="fineprint">URL del Video (VIDEO HOME)</label>
@@ -2479,12 +2697,39 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                                     style="font-size:13px;width:100%;margin-top:6px;">
                             </div>
                             <div class="tile">
-                                <label class="fineprint">Volumen</label>
+                                <label class="fineprint">Fuente de Audio</label>
+                                <div class="mdj-switch-row">
+                                    <span class="mdj-switch-label-off">🎬 Video Oficial</span>
+                                    <label class="mdj-switch">
+                                        <input type="checkbox" id="setting-home_hero_audio_source" class="settings-input"
+                                            data-setting="home_hero_audio_source" data-on-value="ambient" data-off-value="native">
+                                        <span class="mdj-switch-slider"></span>
+                                    </label>
+                                    <span class="mdj-switch-label-on">🎵 Ambiental del Sitio</span>
+                                </div>
+                                <small style="color:rgba(255,255,255,0.3);font-size:10px;">
+                                    Mutuamente excluyente: en Ambiental se escucha la Música Ambiental (abajo) y el video queda mudo.
+                                </small>
+                            </div>
+                            <div class="tile">
+                                <label class="fineprint">Volumen (si la fuente es el video)</label>
                                 <div style="display:flex; align-items:center; gap:10px; margin-top:6px;">
                                     <input type="range" id="setting-home_hero_video_volume" class="settings-input mdj-fader"
                                         data-setting="home_hero_video_volume" min="0" max="1" step="0.01" value="0"
                                         oninput="this.nextElementSibling.textContent = Math.round(this.value * 100) + '%'">
                                     <span style="color:var(--gold); font-family:monospace; font-size:12px; width:35px; text-align:right;">0%</span>
+                                </div>
+                            </div>
+                            <div class="tile">
+                                <label class="fineprint">Silenciar (Mute)</label>
+                                <div class="mdj-switch-row">
+                                    <span class="mdj-switch-label-off">🔊 Activo</span>
+                                    <label class="mdj-switch mdj-switch--mute">
+                                        <input type="checkbox" id="setting-home_hero_muted" class="settings-input"
+                                            data-setting="home_hero_muted">
+                                        <span class="mdj-switch-slider"></span>
+                                    </label>
+                                    <span class="mdj-switch-label-on">🔇 Silenciado</span>
                                 </div>
                             </div>
                             <div class="tile">
@@ -2520,10 +2765,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
 
                     <!-- ── AMBIENT MUSIC MANAGER ─────────────────────────────── -->
                     <div style="margin-top:28px;border-top:1px solid var(--line);padding-top:22px;">
-                        <h4 style="color:var(--gold);margin-bottom:4px;font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">MÚSICA AMBIENTAL</h4>
-                        <p class="fineprint" style="margin-bottom:16px;">
-                            Configura las pistas de audio y sus volúmenes. La pista de apertura suena al entrar al Home, el loop general en el resto.
-                        </p>
+                        <h4 style="color:var(--gold);margin-bottom:16px;font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">MÚSICA AMBIENTAL<span class="mdj-help" tabindex="0"><span class="mdj-help-icon">?</span><span class="mdj-help-tip">Configura las pistas de audio y sus volúmenes. La pista de apertura suena al entrar al Home, el loop general en el resto.</span></span></h4>
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
                             <div class="tile" style="grid-column:1/-1;">
                                 <label class="fineprint">Archivo de Apertura (Home)</label>
@@ -2565,11 +2807,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
 
                     <!-- ── SEASONAL QR MANAGER ──────────────────────────────── -->
                     <div style="margin-top:28px;border-top:1px solid var(--line);padding-top:22px;">
-                        <h4 style="color:var(--gold);margin-bottom:4px;">🎁 QR de Temporada (Global Promo)</h4>
-                        <p class="fineprint" style="margin-bottom:16px;">
-                            Configura la promoción que verán todos los visitantes. El QR se genera automáticamente con
-                            este link.
-                        </p>
+                        <h4 style="color:var(--gold);margin-bottom:16px;">🎁 QR de Temporada (Global Promo)<span class="mdj-help" tabindex="0"><span class="mdj-help-icon">?</span><span class="mdj-help-tip">Configura la promoción que verán todos los visitantes. El QR se genera automáticamente con este link.</span></span></h4>
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
                             <div class="tile" style="grid-column:1/-1;">
                                 <label class="fineprint">Link de Destino (ej: Subscripción con promo)</label>
@@ -2602,52 +2840,6 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                         <div style="margin-top:14px;display:flex;align-items:center;gap:14px;">
                             <button class="btn primary" onclick="savePlatformSettings(this)">SAVE</button>
                             <small class="save-status-msg" style="color:var(--admin-accent);display:none;">✅ Actualizado</small>
-                        </div>
-                    </div>
-
-                    <!-- MDJPRO downloads catalog — Owner editable (downloads.html) -->
-                    <div id="mdjpro-downloads-panel" style="display:none;margin-top:28px;border-top:1px solid var(--line);padding-top:22px;">
-                        <h4 style="color:var(--gold);margin-bottom:4px;font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">MDJPRO</h4>
-                        <p class="fineprint" style="margin-bottom:16px;">
-                            Edita versión y novedades en vivo. El peso del .pkg se calcula automático desde Supabase/local.
-                            Plataforma Mac hasta release Windows.
-                        </p>
-                        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-bottom:14px;">
-                            <div class="tile">
-                                <label class="fineprint">Versión pública</label>
-                                <input type="text" id="mdjpro-dl-version" class="price-input" placeholder="V.2.1.0" style="margin-top:6px;width:100%;">
-                            </div>
-                            <div class="tile">
-                                <label class="fineprint">Fecha publicación</label>
-                                <input type="date" id="mdjpro-dl-released" class="price-input" style="margin-top:6px;width:100%;">
-                            </div>
-                            <div class="tile">
-                                <label class="fineprint">Plataforma</label>
-                                <input type="text" id="mdjpro-dl-platform" class="price-input" value="mac" readonly style="margin-top:6px;width:100%;opacity:0.7;">
-                            </div>
-                        </div>
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-                            <div class="tile">
-                                <label class="fineprint">Título novedades (ES) — MAYÚSCULAS</label>
-                                <input type="text" id="mdjpro-dl-title-es" class="price-input" placeholder="NOVEDADES EN MDJPRO V.2.1.0" style="margin-top:6px;width:100%;text-transform:uppercase;">
-                            </div>
-                            <div class="tile">
-                                <label class="fineprint">Release title (EN)</label>
-                                <input type="text" id="mdjpro-dl-title-en" class="price-input" placeholder="WHAT'S NEW IN MDJPRO V.2.1.0" style="margin-top:6px;width:100%;">
-                            </div>
-                            <div class="tile">
-                                <label class="fineprint">Novedades (ES) — una por línea</label>
-                                <textarea id="mdjpro-dl-items-es" rows="8" class="price-input" style="margin-top:6px;width:100%;resize:vertical;font-size:13px;line-height:1.45;"></textarea>
-                            </div>
-                            <div class="tile">
-                                <label class="fineprint">Release notes (EN) — one per line</label>
-                                <textarea id="mdjpro-dl-items-en" rows="8" class="price-input" style="margin-top:6px;width:100%;resize:vertical;font-size:13px;line-height:1.45;"></textarea>
-                            </div>
-                        </div>
-                        <div style="margin-top:14px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
-                            <button class="btn primary" type="button" onclick="saveMdjproDownloadsCatalog()">SAVE</button>
-                            <small id="mdjpro-dl-save-status" style="color:var(--admin-accent);display:none;">✅ Publicado en Supabase</small>
-                            <a href="./downloads.html" target="_blank" rel="noopener" class="btn secondary small">DOWNLOADS</a>
                         </div>
                     </div>
 
@@ -3984,7 +4176,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
 
                 window.saveMdjproDownloadsCatalog = async () => {
                     if (String(window._mdjAdminRole || '').toLowerCase() !== 'owner') {
-                        alert('Solo Owner puede editar MDJPRO Descargas.');
+                        alert('Solo Owner puede editar MDJPRO.');
                         return;
                     }
                     const version = (document.getElementById('mdjpro-dl-version') || {}).value || 'V.2.1.0';
@@ -4010,7 +4202,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     }, { onConflict: 'key' });
                     const status = document.getElementById('mdjpro-dl-save-status');
                     if (error) {
-                        alert('Error guardando MDJPRO Descargas: ' + error.message);
+                        alert('Error guardando MDJPRO: ' + error.message);
                         return;
                     }
                     if (status) {
@@ -4025,7 +4217,17 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     const upserts = [];
                     inputs.forEach(inp => {
                         if (inp.dataset.setting) {
-                            upserts.push({ key: inp.dataset.setting, value: inp.value, updated_at: new Date().toISOString() });
+                            // MDJB: checkboxes (switches) guardan por .checked, no por .value
+                            // (que siempre es 'on' independientemente del estado). Por defecto
+                            // 'true'/'false'; si el switch trae data-on-value/data-off-value
+                            // (ej. el switch de Fuente de Audio: native/ambient) usa esos en vez.
+                            let val = inp.value;
+                            if (inp.type === 'checkbox') {
+                                const onVal = inp.dataset.onValue || 'true';
+                                const offVal = inp.dataset.offValue || 'false';
+                                val = inp.checked ? onVal : offVal;
+                            }
+                            upserts.push({ key: inp.dataset.setting, value: val, updated_at: new Date().toISOString() });
                         }
                     });
                     const { error } = await supabase.from('platform_settings').upsert(upserts, { onConflict: 'key' });
@@ -4056,12 +4258,39 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     data.forEach(row => {
                         const inp = document.getElementById('setting-' + row.key);
                         if (inp) {
-                            inp.value = row.value;
+                            if (inp.type === 'checkbox') {
+                                const onVal = inp.dataset.onValue || 'true';
+                                inp.checked = (row.value === onVal);
+                            } else {
+                                inp.value = row.value;
+                            }
                             if (inp.classList.contains('mdj-fader') && inp.nextElementSibling) {
                                 inp.nextElementSibling.textContent = Math.round(row.value * 100) + '%';
                             }
                         }
                     });
+                };
+
+                // MDJB: Ticket "Sistema de Audio de Videos" — acción de un clic: silencia TODOS
+                // los videos del sistema ahora mismo (escritura inmediata en Supabase, no espera
+                // al botón SAVE de cada sección). Cada uno queda libre de reactivarse por
+                // separado después — esto NO es un candado permanente, solo un atajo masivo.
+                window.muteAllSiteVideos = async () => {
+                    const muteIds = ['setting-hero_muted', 'setting-home_hero_muted'];
+                    const upserts = [];
+                    muteIds.forEach(id => {
+                        const inp = document.getElementById(id);
+                        if (!inp) return;
+                        inp.checked = true;
+                        upserts.push({ key: inp.dataset.setting, value: 'true', updated_at: new Date().toISOString() });
+                    });
+                    if (upserts.length === 0) return;
+                    const { error } = await supabase.from('platform_settings').upsert(upserts, { onConflict: 'key' });
+                    if (error) {
+                        alert('Error silenciando todo: ' + error.message);
+                    } else {
+                        alert('🔇 Todos los videos silenciados. Puedes reactivar cada uno por separado con su propio switch.');
+                    }
                 };
 
                 // Pricing Persistence Logic (invoice prices — localStorage)
@@ -4557,7 +4786,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     if (window.userRole === 'SALES_STAFF') {
                         roleBadge.textContent = "Acceso: Equipo de Ventas (seller) — Producción incluida (cotización / alta de cliente Mi Portal)";
                         // Hide sensitive sections (manager/admin only); sellers keep Leads, CRM, DJs, registry, Producción
-                        const itemsToHide = ['content', 'analytics', 'apps', 'staff', 'registry-section', 'mdjpro-downloads-panel'];
+                        const itemsToHide = ['content', 'analytics', 'apps', 'staff', 'registry-section', 'mdjpro-downloads-panel', 'site-media'];
                         itemsToHide.forEach(id => {
                             const el = document.getElementById(id);
                             if (el) el.style.display = 'none';
@@ -4642,7 +4871,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     const target = hrefRaw.replace('#', '');
                     if (!target) return;
                     // Show target section, hide others — with anti-CLS fade
-                    const sections = ['leads', 'actividad', 'eb-orders', 'crm', 'djs', 'staff', 'registry-section', 'analytics', 'content', 'apps', 'production', 'venues', 'wedding-plan', 'create-profiles', 'event-blueprint', 'fashion-show-panel'];
+                    const sections = ['leads', 'actividad', 'eb-orders', 'crm', 'djs', 'staff', 'registry-section', 'analytics', 'content', 'mdjpro-downloads-panel', 'site-media', 'apps', 'production', 'venues', 'wedding-plan', 'create-profiles', 'event-blueprint', 'fashion-show-panel'];
                     const eventPanels = ['event-blueprint', 'fashion-show-panel'];
                     sections.forEach(id => {
                         const el = document.getElementById(id);
