@@ -1280,16 +1280,23 @@ a:hover {
 }
 
 @keyframes revealText {
+  /* FIX-REVEALTEXT-BLUR-01 (2026-09-08): filter:blur() animado junto con
+     opacity/transform en varios elementos a la vez es una causa conocida de
+     fallos de composicion en Safari sobre GPU vieja/debil (confirmado real
+     en un iMac 2011, Radeon HD 6970M) -- el elemento se queda atascado en
+     el estado "from" (opacity:0), invisible para siempre, en vez de
+     completar la animacion. Se quita el blur, se conserva el fundido +
+     desplazamiento (igual de elegante, sin el riesgo de composicion).
+     Afecta a index.html (.hero-text-block h1), rentals.html y
+     services.html (tarjetas de servicios) -- los 3 usan este keyframe. */
   from {
     opacity: 0;
     transform: translateY(30px);
-    filter: blur(10px);
   }
 
   to {
     opacity: 1;
     transform: translateY(0);
-    filter: blur(0);
   }
 }
 
