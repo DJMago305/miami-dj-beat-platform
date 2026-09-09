@@ -1859,21 +1859,21 @@ window.rentalCatalogs = {
         title: "Iluminación y Pantallas LED",
         subtitle: "Professional lighting, LED screens, and visual systems to elevate your event experience.",
         items: [
-            { id: "led_panel_small", name: "LED Panel Screen (Small)", price: 300, img: "./assets/lighting/led-small.jpg", video: "./assets/lighting/led-small.mp4", category: "lighting", unit: "u" },
-            { id: "led_panel_large", name: "LED Panel Screen (Large)", price: 800, img: "./assets/lighting/led-large.jpg", video: "./assets/lighting/led-large.mp4", category: "lighting", unit: "u" },
-            { id: "moving_heads", name: "Moving Head Lights (Pair)", price: 150, img: "./assets/lighting/moving-heads.jpg", video: "./assets/lighting/moving-heads.mp4", category: "lighting", unit: "u" },
-            { id: "uplighting_pack", name: "Uplighting Pack (10 Units)", price: 200, img: "./assets/lighting/uplighting.jpg", video: "./assets/lighting/uplighting.mp4", category: "lighting", unit: "u" },
-            { id: "laser_show", name: "Laser Show System", price: 250, img: "./assets/lighting/laser.jpg", video: "./assets/lighting/laser.mp4", category: "lighting", unit: "u" },
-            { id: "fog_machine", name: "Fog Machine (Smoke)", price: 60, img: "./assets/lighting/fog.jpg", video: "./assets/lighting/fog.mp4", category: "lighting", unit: "u" },
-            { id: "low_fog_machine", name: "Low-Lying Fog (Dry Ice)", price: 250, img: "./assets/lighting/low-fog.jpg", video: "./assets/lighting/low-fog.mp4", category: "lighting", unit: "u" },
-            { id: "bubble_machine", name: "Pro Bubble Machine", price: 45, img: "./assets/lighting/bubble-machine.jpg", video: "./assets/lighting/bubble-machine.mp4", category: "lighting", unit: "u" },
-            { id: "spark_machine", name: "Cold Spark Machines (Pair)", price: 250, img: "./assets/lighting/spark-machine.jpg", video: "./assets/lighting/spark-machine.mp4", category: "lighting", unit: "pair" },
-            { id: "led_video_small", name: "LED Video Wall (Small)", price: 500, img: "./assets/lighting/led-video-small.jpg", video: "./assets/lighting/led-video-small.mp4", category: "lighting", unit: "u" },
-            { id: "led_video_medium", name: "LED Video Wall (Medium)", price: 950, img: "./assets/lighting/led-video-medium.jpg", video: "./assets/lighting/led-video-medium.mp4", category: "lighting", unit: "u" },
-            { id: "led_video_large", name: "LED Video Wall (Large)", price: 1800, img: "./assets/lighting/led-video-large.jpg", video: "./assets/lighting/led-video-large.mp4", category: "lighting", unit: "u" },
-            { id: "indoor_led_screen", name: "Indoor LED Screen", price: 650, img: "./assets/lighting/indoor-led-screen.jpg", video: "./assets/lighting/indoor-led-screen.mp4", category: "lighting", unit: "u" },
-            { id: "outdoor_led_screen", name: "Outdoor LED Screen", price: 1200, img: "./assets/lighting/outdoor-led-screen.jpg", video: "./assets/lighting/outdoor-led-screen.mp4", category: "lighting", unit: "u" },
-            { id: "led_tv_stand", name: "LED TV Display Stand", price: 220, img: "./assets/lighting/led-tv-stand.jpg", video: "./assets/lighting/led-tv-stand.mp4", category: "lighting", unit: "u" }
+            { id: "led_panel_small", name: "LED Panel Screen (Small)", price: 300, img: "./assets/lighting/fotos/led-small.jpg", video: "./assets/lighting/led-small.mp4", category: "lighting", unit: "u" },
+            { id: "led_panel_large", name: "LED Panel Screen (Large)", price: 800, img: "./assets/lighting/fotos/led-large.jpg", video: "./assets/lighting/led-large.mp4", category: "lighting", unit: "u" },
+            { id: "moving_heads", name: "Moving Head Lights (Pair)", price: 150, img: "./assets/lighting/fotos/moving-heads.jpg", video: "./assets/lighting/moving-heads.mp4", category: "lighting", unit: "u" },
+            { id: "uplighting_pack", name: "Uplighting Pack (10 Units)", price: 200, img: "./assets/lighting/fotos/uplighting.jpg", video: "./assets/lighting/uplighting.mp4", category: "lighting", unit: "u" },
+            { id: "laser_show", name: "Laser Show System", price: 250, img: "./assets/lighting/fotos/laser.jpg", video: "./assets/lighting/laser.mp4", category: "lighting", unit: "u" },
+            { id: "fog_machine", name: "Fog Machine (Smoke)", price: 60, img: "./assets/lighting/fotos/fog.jpg", video: "./assets/lighting/fog.mp4", category: "lighting", unit: "u" },
+            { id: "low_fog_machine", name: "Low-Lying Fog (Dry Ice)", price: 250, img: "./assets/lighting/fotos/low-fog.jpg", video: "./assets/lighting/low-fog.mp4", category: "lighting", unit: "u" },
+            { id: "bubble_machine", name: "Pro Bubble Machine", price: 45, img: "./assets/lighting/fotos/bubble-machine.jpg", video: "./assets/lighting/bubble-machine.mp4", category: "lighting", unit: "u" },
+            { id: "spark_machine", name: "Cold Spark Machines (Pair)", price: 250, img: "./assets/lighting/fotos/spark-machine.jpg", video: "./assets/lighting/spark-machine.mp4", category: "lighting", unit: "pair" },
+            { id: "led_video_small", name: "LED Video Wall (Small)", price: 500, img: "./assets/lighting/fotos/led-video-small.jpg", video: "./assets/lighting/led-video-small.mp4", category: "lighting", unit: "u" },
+            { id: "led_video_medium", name: "LED Video Wall (Medium)", price: 950, img: "./assets/lighting/fotos/led-video-medium.jpg", video: "./assets/lighting/led-video-medium.mp4", category: "lighting", unit: "u" },
+            { id: "led_video_large", name: "LED Video Wall (Large)", price: 1800, img: "./assets/lighting/fotos/led-video-large.jpg", video: "./assets/lighting/led-video-large.mp4", category: "lighting", unit: "u" },
+            { id: "indoor_led_screen", name: "Indoor LED Screen", price: 650, img: "./assets/lighting/fotos/indoor-led-screen.jpg", video: "./assets/lighting/indoor-led-screen.mp4", category: "lighting", unit: "u" },
+            { id: "outdoor_led_screen", name: "Outdoor LED Screen", price: 1200, img: "./assets/lighting/fotos/outdoor-led-screen.jpg", video: "./assets/lighting/outdoor-led-screen.mp4", category: "lighting", unit: "u" },
+            { id: "led_tv_stand", name: "LED TV Display Stand", price: 220, img: "./assets/lighting/fotos/led-tv-stand.jpg", video: "./assets/lighting/led-tv-stand.mp4", category: "lighting", unit: "u" }
         ]
     }
 };
