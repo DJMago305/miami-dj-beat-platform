@@ -3585,7 +3585,7 @@
             // Show plan badge + upgrade teaser for LITE
             const { data: profile } = await supabase
                 .from('dj_profiles').select('plan').eq('user_id', user.id).single();
-            const plan = (profile?.plan || 'LITE').toUpperCase();
+            const plan = ((profile && profile.plan) || 'LITE').toUpperCase();
             const badge = document.getElementById('vis-plan-badge');
             if (plan === 'PRO') {
                 badge.textContent = '⭐ PRO';
@@ -3885,7 +3885,11 @@
             const { data: { session } } = await sb.auth.getSession();
             if (!session) return;
 
-            const get = id => document.getElementById(id)?.value.trim() || null;
+            const get = id => {
+                const el = document.getElementById(id);
+                const v = el && el.value.trim();
+                return v || null;
+            };
 
             const legalName = get('cfg-dj-name');
             const stageName = get('cfg-dj-alias');
@@ -4005,7 +4009,8 @@
 
         function formatCard(input) {
             let v = input.value.replace(/\D/g, '').substring(0, 16);
-            input.value = v.match(/.{1,4}/g)?.join(' ') || v;
+            const parts = v.match(/.{1,4}/g);
+            input.value = (parts && parts.join(' ')) || v;
         }
         function formatExpiry(input) {
             let v = input.value.replace(/\D/g, '');

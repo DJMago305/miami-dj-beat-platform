@@ -557,18 +557,24 @@ async function saveDoc() {
     if (sb) {
       const { data: { session } } = await sb.auth.getSession();
       if (session) {
-        const brand = (document.getElementById('f-protagonist')?.value || '').trim() || _type;
+        const fProtagonistEl = document.getElementById('f-protagonist');
+        const brand = (fProtagonistEl && fProtagonistEl.value || '').trim() || _type;
+        const fDateEl = document.getElementById('f-date');
+        const fTimeEl = document.getElementById('f-time');
+        const fVenueEl = document.getElementById('f-venue');
+        const fDjEl = document.getElementById('f-dj');
+        const fFormatEl = document.getElementById('f-format');
         await sb.from('event_show_plans').upsert({
           user_id: session.user.id,
           event_type: _type,
           event_name: brand,
           client_profile_id: _assignedClient ? _assignedClient.id : null,
           assigned_client_email: _assignedClient ? _assignedClient.email : null,
-          event_date_text: document.getElementById('f-date')?.value || null,
-          schedule: document.getElementById('f-time')?.value || null,
-          venue: document.getElementById('f-venue')?.value || null,
-          dj_name: document.getElementById('f-dj')?.value || null,
-          music_format: document.getElementById('f-format')?.value || null,
+          event_date_text: (fDateEl && fDateEl.value) || null,
+          schedule: (fTimeEl && fTimeEl.value) || null,
+          venue: (fVenueEl && fVenueEl.value) || null,
+          dj_name: (fDjEl && fDjEl.value) || null,
+          music_format: (fFormatEl && fFormatEl.value) || null,
           cue_blocks: state, // Save the entire form state here
           updated_at: new Date().toISOString()
         }, { onConflict: 'user_id,event_name' });

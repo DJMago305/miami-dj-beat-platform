@@ -1633,7 +1633,7 @@
 
   // ──────────────────────────────────────────
   window.addEventListener('DOMContentLoaded', async () => {
-    console.log('[WEDDING-DB]: Inicializando módulo con rol:', window.__mdjLastPlatformIdentity?.dbRole || 'No auth');
+    console.log('[WEDDING-DB]: Inicializando módulo con rol:', (window.__mdjLastPlatformIdentity && window.__mdjLastPlatformIdentity.dbRole) || 'No auth');
     setLang('es');
     const restored = await loadDoc();
     if (!restored) {

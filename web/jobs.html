@@ -4192,8 +4192,10 @@
                     window.location.href = JOBS_GUEST_SIGNUP_URL + '&plan=' + _proGuestPlan;
                     return;
                 }
-                const billing = document.getElementById('billing-period')?.value || 'monthly';
-                const refCode = (document.getElementById('referral-code-input')?.value || '').trim().toUpperCase();
+                const billingPeriodEl1 = document.getElementById('billing-period');
+                const billing = (billingPeriodEl1 && billingPeriodEl1.value) || 'monthly';
+                const referralCodeEl1 = document.getElementById('referral-code-input');
+                const refCode = ((referralCodeEl1 && referralCodeEl1.value) || '').trim().toUpperCase();
                 const returnUrl = new URL('dj-dashboard.html', window.location.origin + '/');
                 const checkoutFn =
                     typeof window.mdbSupabaseFunctionUrl === 'function' ? window.mdbSupabaseFunctionUrl('create-checkout') : '';
@@ -4717,23 +4719,33 @@
             const entries = document.querySelectorAll('.experience-entry');
             let summary = '';
             entries.forEach(entry => {
-                const venue = entry.querySelector('.exp-venue')?.value.trim() || '';
-                const role = entry.querySelector('.exp-role')?.value.trim() || '';
-                const sY = entry.querySelector('.exp-start-year')?.value || '';
-                const sM = entry.querySelector('.exp-start-month')?.value || '';
-                const sD = entry.querySelector('.exp-start-day')?.value || '';
+                const venueEl = entry.querySelector('.exp-venue');
+                const venue = (venueEl && venueEl.value.trim()) || '';
+                const roleEl = entry.querySelector('.exp-role');
+                const role = (roleEl && roleEl.value.trim()) || '';
+                const sYEl = entry.querySelector('.exp-start-year');
+                const sY = (sYEl && sYEl.value) || '';
+                const sMEl = entry.querySelector('.exp-start-month');
+                const sM = (sMEl && sMEl.value) || '';
+                const sDEl = entry.querySelector('.exp-start-day');
+                const sD = (sDEl && sDEl.value) || '';
                 const start = (sY && sM && sD) ? `${sY}-${sM}-${sD}` : '';
 
-                const isPresent = entry.querySelector('.exp-present')?.checked;
+                const expPresentEl = entry.querySelector('.exp-present');
+                const isPresent = expPresentEl && expPresentEl.checked;
                 let end = 'Presente';
                 if (!isPresent) {
-                    const eY = entry.querySelector('.exp-end-year')?.value || '';
-                    const eM = entry.querySelector('.exp-end-month')?.value || '';
-                    const eD = entry.querySelector('.exp-end-day')?.value || '';
+                    const eYEl = entry.querySelector('.exp-end-year');
+                    const eY = (eYEl && eYEl.value) || '';
+                    const eMEl = entry.querySelector('.exp-end-month');
+                    const eM = (eMEl && eMEl.value) || '';
+                    const eDEl = entry.querySelector('.exp-end-day');
+                    const eD = (eDEl && eDEl.value) || '';
                     end = (eY && eM && eD) ? `${eY}-${eM}-${eD}` : '';
                 }
 
-                const link = entry.querySelector('.exp-link')?.value.trim() || '';
+                const linkEl = entry.querySelector('.exp-link');
+                const link = (linkEl && linkEl.value.trim()) || '';
                 const days = [...entry.querySelectorAll('.day-chip input:checked')].map(c => c.value).join('/');
 
                 if (venue || role) {
@@ -4822,8 +4834,8 @@
                 return [...document.querySelectorAll(`.tech-${cssClass}`)].map(input => {
                     const row = input.closest('.tech-item-row');
                     const name = input.value.trim();
-                    const fileEl = row?.querySelector('input[type="file"]');
-                    const photo = fileEl?.dataset.base64 || null;
+                    const fileEl = row && row.querySelector('input[type="file"]');
+                    const photo = (fileEl && fileEl.dataset.base64) || null;
                     return name ? { name, photo } : null;
                 }).filter(Boolean);
             }
@@ -4839,7 +4851,7 @@
 
             // Set photo
             const setFileInput = document.getElementById('set-photo-input');
-            const setPhotoData = setFileInput?.dataset.base64 || '';
+            const setPhotoData = (setFileInput && setFileInput.dataset.base64) || '';
             const setHidden = document.getElementById('set-photo-data');
             if (setHidden) setHidden.value = setPhotoData;
 
@@ -4881,14 +4893,20 @@
         if (bornInInput && displayBornIn) {
             // bornInInput might be the birthday selects now, we can update it to show a formatted date
             const updateBornDisplay = () => {
-                const d = document.getElementById('birth-day')?.value;
-                const m = document.getElementById('birth-month')?.value;
-                const y = document.getElementById('birth-year')?.value;
+                const birthDayEl1 = document.getElementById('birth-day');
+                const d = birthDayEl1 && birthDayEl1.value;
+                const birthMonthEl1 = document.getElementById('birth-month');
+                const m = birthMonthEl1 && birthMonthEl1.value;
+                const birthYearEl1 = document.getElementById('birth-year');
+                const y = birthYearEl1 && birthYearEl1.value;
                 if (d && m && y) displayBornIn.textContent = `${d}/${m}/${y}`;
             };
-            document.getElementById('birth-day')?.addEventListener('change', updateBornDisplay);
-            document.getElementById('birth-month')?.addEventListener('change', updateBornDisplay);
-            document.getElementById('birth-year')?.addEventListener('change', updateBornDisplay);
+            const birthDayEl2 = document.getElementById('birth-day');
+            if (birthDayEl2) birthDayEl2.addEventListener('change', updateBornDisplay);
+            const birthMonthEl2 = document.getElementById('birth-month');
+            if (birthMonthEl2) birthMonthEl2.addEventListener('change', updateBornDisplay);
+            const birthYearEl2 = document.getElementById('birth-year');
+            if (birthYearEl2) birthYearEl2.addEventListener('change', updateBornDisplay);
         }
         if (basedInInput && displayBasedIn) {
             basedInInput.addEventListener('input', (e) => {
@@ -4991,16 +5009,22 @@
 
                 // ── Unified validation with visible error banner ────────
                 const errors = [];
-                const firstName = document.getElementById('first-name')?.value.trim() || '';
-                const lastName = document.getElementById('last-name')?.value.trim() || '';
-                const emailVal = document.getElementById('job-email')?.value.trim() || '';
-                const passwordVal = document.getElementById('job-password')?.value || '';
-                const passwordConfirmVal = document.getElementById('job-password-confirm')?.value || '';
+                const firstNameEl = document.getElementById('first-name');
+                const firstName = (firstNameEl && firstNameEl.value.trim()) || '';
+                const lastNameEl = document.getElementById('last-name');
+                const lastName = (lastNameEl && lastNameEl.value.trim()) || '';
+                const emailValEl = document.getElementById('job-email');
+                const emailVal = (emailValEl && emailValEl.value.trim()) || '';
+                const passwordValEl = document.getElementById('job-password');
+                const passwordVal = (passwordValEl && passwordValEl.value) || '';
+                const passwordConfirmValEl = document.getElementById('job-password-confirm');
+                const passwordConfirmVal = (passwordConfirmValEl && passwordConfirmValEl.value) || '';
 
                 if (!firstName) errors.push('Nombre (First Name) es requerido');
                 if (!lastName) errors.push('Apellido (Last Name) es requerido');
                 if (!emailVal) errors.push('Email es requerido');
-                const stateVal = document.getElementById('job-state')?.value || '';
+                const stateValEl = document.getElementById('job-state');
+                const stateVal = (stateValEl && stateValEl.value) || '';
                 if (!stateVal) errors.push('Selecciona estado o provincia');
 
                 const selectedRoles = Array.from(document.querySelectorAll('input[name="roles"]:checked')).map(cb => cb.value);
@@ -5012,10 +5036,14 @@
                 if (!photoBase64) errors.push('Sube tu foto de perfil (haz clic en el círculo)');
 
                 const socialFields = ['social-instagram', 'social-facebook', 'social-tiktok', 'social-youtube', 'social-soundcloud', 'social-mixcloud', 'social-apple', 'social-spotify', 'social-others'];
-                const hasSocial = socialFields.some(id => (document.getElementById(id)?.value || '').trim() !== '');
+                const hasSocial = socialFields.some(id => {
+                    const socialEl = document.getElementById(id);
+                    return ((socialEl && socialEl.value) || '').trim() !== '';
+                });
                 if (!hasSocial) errors.push('Añade al menos una red social o plataforma de música');
 
-                const privacyChecked = document.getElementById('privacy-policy')?.checked;
+                const privacyCheckedEl = document.getElementById('privacy-policy');
+                const privacyChecked = privacyCheckedEl && privacyCheckedEl.checked;
                 if (!privacyChecked) errors.push('Acepta los Protocolos de Seguridad (checkbox de privacidad)');
 
                 // Show errors if any
@@ -5075,13 +5103,15 @@
                     submitBtn.disabled = true;
                     submitBtn.innerHTML = '⚙️ Creando cuenta...';
 
+                    const stageNameEl1 = document.getElementById('stage-name');
+                    const artisticNameVal = ((stageNameEl1 && stageNameEl1.value) || '').trim() || firstName;
                     const { data: signUpData, error: signUpError } = await _supa.auth.signUp({
                         email: emailVal,
                         password: passwordVal,
                         options: {
                             data: {
                                 full_name: (firstName + ' ' + lastName).trim(),
-                                artistic_name: (document.getElementById('stage-name')?.value || '').trim() || firstName,
+                                artistic_name: artisticNameVal,
                                 user_type: 'talent',
                                 plan: 'LITE',
                                 username: emailVal.split('@')[0]
@@ -5156,17 +5186,37 @@
                 const techSoftware = document.getElementById('tech-software').value;
                 const techExtra = document.getElementById('tech-extra').value;
 
-                const planSelected = document.getElementById('selected-plan-hidden')?.value || 'PRO';
+                const selectedPlanHiddenEl = document.getElementById('selected-plan-hidden');
+                const planSelected = (selectedPlanHiddenEl && selectedPlanHiddenEl.value) || 'PRO';
 
-                const bY = document.getElementById('birth-year')?.value;
-                const bM = document.getElementById('birth-month')?.value;
-                const bD = document.getElementById('birth-day')?.value;
+                const bYEl = document.getElementById('birth-year');
+                const bY = bYEl && bYEl.value;
+                const bMEl = document.getElementById('birth-month');
+                const bM = bMEl && bMEl.value;
+                const bDEl = document.getElementById('birth-day');
+                const bD = bDEl && bDEl.value;
                 const birthDate = (bY && bM && bD) ? `${bY}-${bM}-${bD}` : null;
 
                 aggregateExperience();
-                const experienceData = document.getElementById('experience-data-hidden')?.value || '';
+                const experienceDataHiddenEl = document.getElementById('experience-data-hidden');
+                const experienceData = (experienceDataHiddenEl && experienceDataHiddenEl.value) || '';
 
-                const billingPeriodVal = (document.getElementById('billing-period')?.value || 'monthly').toLowerCase();
+                const billingPeriodEl2 = document.getElementById('billing-period');
+                const billingPeriodVal = ((billingPeriodEl2 && billingPeriodEl2.value) || 'monthly').toLowerCase();
+
+                const jobPhoneEl = document.getElementById('job-phone');
+                const physAddressEl = document.getElementById('phys-address');
+                const socialInstagramEl = document.getElementById('social-instagram');
+                const socialFacebookEl = document.getElementById('social-facebook');
+                const socialTiktokEl = document.getElementById('social-tiktok');
+                const socialYoutubeEl = document.getElementById('social-youtube');
+                const socialSoundcloudEl = document.getElementById('social-soundcloud');
+                const socialMixcloudEl = document.getElementById('social-mixcloud');
+                const socialAppleEl = document.getElementById('social-apple');
+                const socialSpotifyEl = document.getElementById('social-spotify');
+                const socialOthersEl = document.getElementById('social-others');
+                const bioShortEl = document.getElementById('bio-short');
+                const bioLongEl = document.getElementById('bio-long');
 
                 const { error } = await _supa
                     .from('dj_profiles')
@@ -5185,25 +5235,25 @@
                         experience_summary: experienceData,
                         dj_name: stageName,
                         stage_name: stageName,
-                        phone: document.getElementById('job-phone')?.value || '',
-                        address: document.getElementById('phys-address')?.value || '',
+                        phone: (jobPhoneEl && jobPhoneEl.value) || '',
+                        address: (physAddressEl && physAddressEl.value) || '',
                         photo_url: photoBase64 || null,
                         tech_rider: { console: techConsole, software: techSoftware, extra: techExtra },
                         social_links: {
-                            instagram: document.getElementById('social-instagram')?.value || '',
-                            facebook: document.getElementById('social-facebook')?.value || '',
-                            tiktok: document.getElementById('social-tiktok')?.value || '',
-                            youtube: document.getElementById('social-youtube')?.value || '',
-                            soundcloud: document.getElementById('social-soundcloud')?.value || '',
-                            mixcloud: document.getElementById('social-mixcloud')?.value || '',
-                            apple_music: document.getElementById('social-apple')?.value || '',
-                            spotify: document.getElementById('social-spotify')?.value || '',
-                            web: document.getElementById('social-others')?.value || ''
+                            instagram: (socialInstagramEl && socialInstagramEl.value) || '',
+                            facebook: (socialFacebookEl && socialFacebookEl.value) || '',
+                            tiktok: (socialTiktokEl && socialTiktokEl.value) || '',
+                            youtube: (socialYoutubeEl && socialYoutubeEl.value) || '',
+                            soundcloud: (socialSoundcloudEl && socialSoundcloudEl.value) || '',
+                            mixcloud: (socialMixcloudEl && socialMixcloudEl.value) || '',
+                            apple_music: (socialAppleEl && socialAppleEl.value) || '',
+                            spotify: (socialSpotifyEl && socialSpotifyEl.value) || '',
+                            web: (socialOthersEl && socialOthersEl.value) || ''
                         },
                         // bio field (always exists in schema)
                         bio: [
-                            document.getElementById('bio-short')?.value?.trim(),
-                            document.getElementById('bio-long')?.value?.trim()
+                            bioShortEl && bioShortEl.value && bioShortEl.value.trim(),
+                            bioLongEl && bioLongEl.value && bioLongEl.value.trim()
                         ].filter(Boolean).join('\n\n') || `Roles: ${rolesString} | Idiomas: ${langsString}`,
                         roles: rolesString,
                         artist_specialty: mdjJobsBuildArtistSpecialtyLine() || null,
@@ -5213,11 +5263,13 @@
 
                 // Try saving extended bio fields silently (columns may not exist yet)
                 try {
+                    const bioLanguageEl = document.getElementById('bio-language');
+                    const bioAutoTranslateEl = document.getElementById('bio-auto-translate');
                     await _supa.from('dj_profiles').update({
-                        bio_short: (document.getElementById('bio-short')?.value || '').trim(),
-                        bio_long: (document.getElementById('bio-long')?.value || '').trim(),
-                        bio_language: document.getElementById('bio-language')?.value || 'es',
-                        bio_auto_translate: document.getElementById('bio-auto-translate')?.checked || false,
+                        bio_short: ((bioShortEl && bioShortEl.value) || '').trim(),
+                        bio_long: ((bioLongEl && bioLongEl.value) || '').trim(),
+                        bio_language: (bioLanguageEl && bioLanguageEl.value) || 'es',
+                        bio_auto_translate: (bioAutoTranslateEl && bioAutoTranslateEl.checked) || false,
                     }).eq('user_id', currentSession.user.id);
                 } catch (e) { /* columns not yet in schema — ok */ }
 
@@ -5258,8 +5310,10 @@
                         submitBtn.innerHTML = 'Redirigiendo a pago...';
                         try {
                             const { data: { session: authSession } } = await _supa.auth.getSession();
-                            const billing = document.getElementById('billing-period')?.value || 'monthly';
-                            const refCode = (document.getElementById('referral-code-input')?.value || '').trim().toUpperCase();
+                            const billingPeriodEl3 = document.getElementById('billing-period');
+                            const billing = (billingPeriodEl3 && billingPeriodEl3.value) || 'monthly';
+                            const referralCodeEl2 = document.getElementById('referral-code-input');
+                            const refCode = ((referralCodeEl2 && referralCodeEl2.value) || '').trim().toUpperCase();
                             const returnUrl = new URL('jobs.html', window.location.origin + '/');
                             returnUrl.searchParams.set('stripe_return', '1');
                             const checkoutFn2 =

@@ -2857,7 +2857,7 @@
 
                 if (!isStaffPortal) {
                     document.documentElement.classList.remove('mdj-admin-gate-pending');
-                    const ut = String(session.user?.user_metadata?.user_type || '').toLowerCase();
+                    const ut = String((session.user && session.user.user_metadata && session.user.user_metadata.user_type) || '').toLowerCase();
                     const staffEntryLogin = './login.html?next=./admin-dashboard.html&mdj_staff_entry=1';
                     /* Sin rol staff: puerta login staff — nunca CONFIG artista (ART-007B). */
                     if (profile && !profileError) {
@@ -3084,7 +3084,7 @@
                 };
 
                 window.showCartLines = (id) => {
-                    document.getElementById('cart-lines-modal')?.remove();
+                    (document.getElementById('cart-lines-modal') && document.getElementById('cart-lines-modal').remove());
                     const lead = leads.find(l => l.id == id);
                     if (!lead || !lead.notes) return;
                     let notes;
@@ -3162,7 +3162,7 @@
                     try {
                         // Re-fetch fresh notes to avoid overwrite race
                         const { data: fresh, error: fetchErr } = await db.from('leads').select('notes').eq('id', leadId).maybeSingle();
-                        if (fetchErr || !fresh) throw new Error(fetchErr?.message || 'No data');
+                        if (fetchErr || !fresh) throw new Error((fetchErr && fetchErr.message) || 'No data');
                         let notes = fresh.notes;
                         if (typeof notes === 'string') notes = JSON.parse(notes);
                         if (!notes || !Array.isArray(notes.selected_services)) throw new Error('No services');
@@ -3203,7 +3203,7 @@
                     const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
                     if (!db) { container.innerHTML = '<p class="fineprint">Supabase no disponible.</p>'; return; }
 
-                    const statusFilter = document.getElementById('ebo-status-filter')?.value || '';
+                    const statusFilter = (document.getElementById('ebo-status-filter') && document.getElementById('ebo-status-filter').value) || '';
                     let query = db
                         .from('event_builder_orders')
                         .select('id, draft_id, order_status, payment_status, total_usd, deposit_usd, amount_paid_usd, event_date, created_at, updated_at, staff_notes, lines, user_id, lead_id')
@@ -3332,7 +3332,7 @@
                     const fmt = (v) => v != null ? '$' + Number(v).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '—';
                     const ordNum = ord.draft_id ? ord.draft_id.substring(0, 13).toUpperCase() : ord.id.substring(0, 8).toUpperCase();
 
-                    document.getElementById('ebo-detail-modal')?.remove();
+                    (document.getElementById('ebo-detail-modal') && document.getElementById('ebo-detail-modal').remove());
                     const modal = document.createElement('div');
                     modal.id = 'ebo-detail-modal';
                     modal.style = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.88);display:flex;align-items:center;justify-content:center;z-index:3000;backdrop-filter:blur(6px);';
@@ -3410,7 +3410,7 @@
                 // ─────────────────────────────────────────────────────────────
                 window.openMatchModal = async (leadId, eventType, eventDate) => {
                     // Remove stale modal if exists
-                    document.getElementById('match-modal')?.remove();
+                    (document.getElementById('match-modal') && document.getElementById('match-modal').remove());
 
                     const modal = document.createElement('div');
                     modal.id = 'match-modal';
@@ -3491,7 +3491,7 @@
                 };
 
                 window.filterDJCards = () => {
-                    const q = document.getElementById('match-search')?.value.toLowerCase() || '';
+                    const q = (document.getElementById('match-search') && document.getElementById('match-search').value.toLowerCase()) || '';
                     const filtered = (window._matchDJList || []).filter(dj => {
                         const name = (dj.stage_name || dj.dj_name || '').toLowerCase();
                         return name.includes(q);
@@ -3540,7 +3540,7 @@
                     const activeLead = leads.find(l => l.id == leadId) || { id: leadId };
                     await window.syncBookingFromLead(activeLead, { id: djId, name: djName });
 
-                    document.getElementById('match-modal')?.remove();
+                    (document.getElementById('match-modal') && document.getElementById('match-modal').remove());
 
                     // ── Fire notification email to DJ & Manager ──────────
                     const NOTIFY_FN =
@@ -3554,7 +3554,7 @@
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${session?.access_token ?? ''}`,
+                                'Authorization': `Bearer ${mdjNvl((session && session.access_token), '')}`,
                             },
                             body: JSON.stringify({
                                 lead_id: leadId,
@@ -5275,7 +5275,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 if (!item) return;
                 state.selectedIndex = itemIndex;
 
-                document.getElementById('owner-ops-detail-drawer')?.remove();
+                (document.getElementById('owner-ops-detail-drawer') && document.getElementById('owner-ops-detail-drawer').remove());
 
                 var backdrop = document.createElement('div');
                 backdrop.id = 'owner-ops-detail-drawer';
@@ -5353,21 +5353,21 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
             };
 
             window.ownerOpsNavLeadsSection = function () {
-                document.getElementById('owner-ops-detail-drawer')?.remove();
+                (document.getElementById('owner-ops-detail-drawer') && document.getElementById('owner-ops-detail-drawer').remove());
                 var link = document.querySelector('.side-link[href="#leads"]');
                 if (link) link.click();
                 else window.location.hash = 'leads';
             };
 
             window.ownerOpsNavCrm = function () {
-                document.getElementById('owner-ops-detail-drawer')?.remove();
+                (document.getElementById('owner-ops-detail-drawer') && document.getElementById('owner-ops-detail-drawer').remove());
                 var link = document.querySelector('.side-link[href="#crm"]');
                 if (link) link.click();
                 else window.location.hash = 'crm';
             };
 
             window.ownerOpsNavAnalytics = function () {
-                document.getElementById('owner-ops-detail-drawer')?.remove();
+                (document.getElementById('owner-ops-detail-drawer') && document.getElementById('owner-ops-detail-drawer').remove());
                 var link = document.querySelector('.side-link[href="#analytics"]');
                 if (link) link.click();
                 else window.location.hash = 'analytics';
@@ -5764,7 +5764,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         { icon: '💰', label: 'Ingresos Cobrados', value: '$' + totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }), color: '#22c55e' },
                         { icon: '⏳', label: 'Por Cobrar', value: '$' + pendingRevenue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }), color: '#f59e0b' },
                         { icon: '📋', label: 'Total Leads', value: totalLeads, color: '#c5a059' },
-                        { icon: '🎧', label: 'DJs Activos', value: djCount ?? '—', color: '#818cf8' },
+                        { icon: '🎧', label: 'DJs Activos', value: mdjNvl(djCount, '—'), color: '#818cf8' },
                         { icon: '🎯', label: 'Tasa Conversión', value: conversionRate + '%', color: conversionRate >= 50 ? '#22c55e' : '#f59e0b' },
                         { icon: '✅', label: 'Matcheados', value: matchedLeads, color: '#22c55e' },
                     ];
@@ -6319,7 +6319,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
             };
 
             window.filterRegistry = () => {
-                const q = document.getElementById('registry-search')?.value.toLowerCase() || '';
+                const q = (document.getElementById('registry-search') && document.getElementById('registry-search').value.toLowerCase()) || '';
                 const filtered = (window._fullRegistryData || []).filter(c => {
                     const sName = (c.student_name || '').toLowerCase();
                     const aName = (c.dj_name || '').toLowerCase();
