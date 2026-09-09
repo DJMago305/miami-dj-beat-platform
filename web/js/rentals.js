@@ -1864,10 +1864,10 @@ window.rentalCatalogs = {
             { id: "moving_heads", name: "Moving Head Lights (Pair)", price: 150, img: "./assets/lighting/Fotos/moving-heads.jpg", video: "./assets/lighting/moving-heads.mp4", category: "lighting", unit: "u" },
             { id: "uplighting_pack", name: "Uplighting Pack (10 Units)", price: 200, img: "./assets/lighting/Fotos/uplighting.jpg", video: "./assets/lighting/uplighting.mp4", category: "lighting", unit: "u" },
             { id: "laser_show", name: "Laser Show System", price: 250, img: "./assets/lighting/Fotos/laser.jpg", video: "./assets/lighting/laser.mp4", category: "lighting", unit: "u" },
-            { id: "fog_machine", name: "Fog Machine (Smoke)", price: 60, img: "./assets/lighting/Fotos/fog.jpg", video: "./assets/lighting/fog.mp4", category: "lighting", unit: "u" },
-            { id: "low_fog_machine", name: "Low-Lying Fog (Dry Ice)", price: 250, img: "./assets/lighting/Fotos/low-fog.jpg", video: "./assets/lighting/low-fog.mp4", category: "lighting", unit: "u" },
-            { id: "bubble_machine", name: "Pro Bubble Machine", price: 45, img: "./assets/lighting/Fotos/bubble-machine.jpg", video: "./assets/lighting/bubble-machine.mp4", category: "lighting", unit: "u" },
-            { id: "spark_machine", name: "Cold Spark Machines (Pair)", price: 250, img: "./assets/lighting/Fotos/spark-machine.jpg", video: "./assets/lighting/spark-machine.mp4", category: "lighting", unit: "pair" },
+            /* fog_machine, low_fog_machine, bubble_machine, spark_machine: removidos 2026-09-09
+               (TICKET-FIX-RENTALS-VIDEOS-01, a pedido del PO) -- no son iluminacion, son maquinas
+               de efectos/atmosfera. Ya existen con video real en window.fxItems (#fx-modal,
+               "Efectos Especiales" dentro de Entretenimiento y Talento): smoke, fog, bubble, sparks. */
             { id: "led_video_small", name: "LED Video Wall (Small)", price: 500, img: "./assets/lighting/Fotos/led-video-small.jpg", video: "./assets/lighting/led-video-small.mp4", category: "lighting", unit: "u" },
             { id: "led_video_medium", name: "LED Video Wall (Medium)", price: 950, img: "./assets/lighting/Fotos/led-video-medium.jpg", video: "./assets/lighting/led-video-medium.mp4", category: "lighting", unit: "u" },
             { id: "led_video_large", name: "LED Video Wall (Large)", price: 1800, img: "./assets/lighting/Fotos/led-video-large.jpg", video: "./assets/lighting/led-video-large.mp4", category: "lighting", unit: "u" },
@@ -2203,10 +2203,6 @@ window.renderRentalCatalog = (categoryId) => {
         'moving_heads': '🔦',
         'uplighting_pack': '💡',
         'laser_show': '🎇',
-        'fog_machine': '🌫️',
-        'low_fog_machine': '☁️',
-        'bubble_machine': '🫧',
-        'spark_machine': '✨',
         'led_video_small': '📱',
         'led_video_medium': '🖥️',
         'led_video_large': '🎬',
