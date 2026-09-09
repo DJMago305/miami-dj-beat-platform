@@ -1854,28 +1854,12 @@ window.rentalCatalogs = {
             { id: "dj_monitor", name: "DJ Monitor Speaker", price: 95, img: "./assets/audio/dj-monitor.jpg", video: "./assets/audio/dj-monitor.mp4", category: "audio", unit: "u" },
             { id: "audio_mixer", name: "Audio Mixer", price: 120, img: "./assets/audio/audio-mixer.jpg", video: "./assets/audio/audio-mixer.mp4", category: "audio", unit: "u" }
         ]
-    },
-    lighting: {
-        title: "Iluminación y Pantallas LED",
-        subtitle: "Professional lighting, LED screens, and visual systems to elevate your event experience.",
-        items: [
-            { id: "led_panel_small", name: "LED Panel Screen (Small)", price: 300, img: "./assets/lighting/Fotos/led-small.jpg", video: "./assets/lighting/led-small.mp4", category: "lighting", unit: "u" },
-            { id: "led_panel_large", name: "LED Panel Screen (Large)", price: 800, img: "./assets/lighting/Fotos/led-large.jpg", video: "./assets/lighting/led-large.mp4", category: "lighting", unit: "u" },
-            { id: "moving_heads", name: "Moving Head Lights (Pair)", price: 150, img: "./assets/lighting/Fotos/moving-heads.jpg", video: "./assets/lighting/moving-heads.mp4", category: "lighting", unit: "u" },
-            { id: "uplighting_pack", name: "Uplighting Pack (10 Units)", price: 200, img: "./assets/lighting/Fotos/uplighting.jpg", video: "./assets/lighting/uplighting.mp4", category: "lighting", unit: "u" },
-            { id: "laser_show", name: "Laser Show System", price: 250, img: "./assets/lighting/Fotos/laser.jpg", video: "./assets/lighting/laser.mp4", category: "lighting", unit: "u" },
-            /* fog_machine, low_fog_machine, bubble_machine, spark_machine: removidos 2026-09-09
-               (TICKET-FIX-RENTALS-VIDEOS-01, a pedido del PO) -- no son iluminacion, son maquinas
-               de efectos/atmosfera. Ya existen con video real en window.fxItems (#fx-modal,
-               "Efectos Especiales" dentro de Entretenimiento y Talento): smoke, fog, bubble, sparks. */
-            { id: "led_video_small", name: "LED Video Wall (Small)", price: 500, img: "./assets/lighting/Fotos/led-video-small.jpg", video: "./assets/lighting/led-video-small.mp4", category: "lighting", unit: "u" },
-            { id: "led_video_medium", name: "LED Video Wall (Medium)", price: 950, img: "./assets/lighting/Fotos/led-video-medium.jpg", video: "./assets/lighting/led-video-medium.mp4", category: "lighting", unit: "u" },
-            { id: "led_video_large", name: "LED Video Wall (Large)", price: 1800, img: "./assets/lighting/Fotos/led-video-large.jpg", video: "./assets/lighting/led-video-large.mp4", category: "lighting", unit: "u" },
-            { id: "indoor_led_screen", name: "Indoor LED Screen", price: 650, img: "./assets/lighting/Fotos/indoor-led-screen.jpg", video: "./assets/lighting/indoor-led-screen.mp4", category: "lighting", unit: "u" },
-            { id: "outdoor_led_screen", name: "Outdoor LED Screen", price: 1200, img: "./assets/lighting/Fotos/outdoor-led-screen.jpg", video: "./assets/lighting/outdoor-led-screen.mp4", category: "lighting", unit: "u" },
-            { id: "led_tv_stand", name: "LED TV Display Stand", price: 220, img: "./assets/lighting/Fotos/led-tv-stand.jpg", video: "./assets/lighting/led-tv-stand.mp4", category: "lighting", unit: "u" }
-        ]
     }
+    /* "lighting" (Iluminación y Pantallas LED, 11-15 items) eliminado 2026-09-09
+       (TICKET-FIX-RENTALS-VIDEOS-01, a pedido del PO): codigo muerto -- ninguna
+       tarjeta/boton del sitio real lo abria (la tarjeta "Iluminación y Pantallas LED"
+       del home usa data-action="open-lighting-modal", que abre #lighting-modal /
+       window.lightingItems, un sistema completamente distinto). Nadie lo vio nunca. */
 };
 
 window.rentalDraftQty = {}; // Universal draft quantity memory string
@@ -1904,22 +1888,13 @@ window.renderRentalCatalog = (categoryId) => {
         categoryId === 'tents' ||
         categoryId === 'stages' ||
         categoryId === 'inflatables';
-    /* Categorias sin video subido (solo fotos por ahora): mismo hero-shell, se cablea a
-       .rental-bg-img en vez de .rental-bg-vid. Agregar aqui cuando llegue el video real
-       de cada una. Ver TICKET-FIX-RENTALS-VIDEOS-01, 2026-09-09. */
-    const showRentalHeroImage = categoryId === 'lighting';
     if (rentalModal) {
-        rentalModal.classList.toggle('mdj-rental-hero-video-on', showRentalHeroVideo || showRentalHeroImage);
+        rentalModal.classList.toggle('mdj-rental-hero-video-on', showRentalHeroVideo);
     }
     const skipBgVideo = rentalModal && rentalModal.getAttribute('data-mdj-catalog-no-bg') === '1' && !showRentalHeroVideo;
     const videoContainer = document.getElementById('rental-multi-video-container');
     if (videoContainer && typeof window.mdjBindHeroVideoErrorFallback === 'function') {
         videoContainer.querySelectorAll('.rental-bg-vid').forEach(window.mdjBindHeroVideoErrorFallback);
-    }
-    if (videoContainer) {
-        videoContainer.querySelectorAll('.rental-bg-img').forEach(function (img) {
-            img.classList.toggle('active-vid', img.getAttribute('data-category') === categoryId);
-        });
     }
     if (videoContainer && !skipBgVideo) {
         const allVideos = videoContainer.querySelectorAll('.rental-bg-vid');
@@ -2196,20 +2171,7 @@ window.renderRentalCatalog = (categoryId) => {
         'wireless_mic': '🎤',
         'dj_monitor': '📻',
         'audio_mixer': '🎚️',
-        
-        // Lighting & FX
-        'led_panel_small': '📺',
-        'led_panel_large': '🖥️',
-        'moving_heads': '🔦',
-        'uplighting_pack': '💡',
-        'laser_show': '🎇',
-        'led_video_small': '📱',
-        'led_video_medium': '🖥️',
-        'led_video_large': '🎬',
-        'indoor_led_screen': '📟',
-        'outdoor_led_screen': '🏟️',
-        'led_tv_stand': '🖥️',
-        
+
         // Furniture
         'f_chairs': '🪑',
         'f_cocktail': '🍸',
