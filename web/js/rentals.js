@@ -1611,6 +1611,38 @@ window.renderHoraLocaCatalogue = () => {
     if (window.hlPackages.length > 0) {
         window.updateHoraLocaHero(window.hlPackages[0].id);
     }
+
+    if (typeof window._bindHoraLocaGridHeroHover === 'function') {
+        window._bindHoraLocaGridHeroHover();
+    }
+};
+
+/** Hora Loca (#horaloca-grid): antes solo actualizaba el hero al hacer click
+ * (select-hl-package) -- a diferencia de DJ/Staff/Payasos/etc., nunca tuvo su
+ * propio hover. Mismo patron que _bindDjRosterHeroHover, reusando
+ * updateHoraLocaHero() (ya actualiza video + texto + tarjeta activa junto). */
+window._bindHoraLocaGridHeroHover = function () {
+    const gridEl = document.getElementById('horaloca-grid');
+    if (!gridEl || !window.hlPackages) return;
+    if (gridEl._mdjHoraLocaHoverBound) return;
+    gridEl._mdjHoraLocaHoverBound = true;
+
+    let lastKey = null;
+
+    gridEl.addEventListener('pointerover', function (e) {
+        const card = e.target.closest && e.target.closest('.hl-type-card[data-action="select-hl-package"]');
+        if (!card || !gridEl.contains(card)) return;
+        const key = card.getAttribute('data-id');
+        if (!key || key === lastKey) return;
+        lastKey = key;
+        if (window.updateHoraLocaHero) window.updateHoraLocaHero(key);
+    });
+
+    gridEl.addEventListener('pointerout', function (e) {
+        const rt = e.relatedTarget;
+        if (rt && gridEl.contains(rt)) return;
+        lastKey = null;
+    });
 };
 
 window.updateHoraLocaHero = (id) => {
