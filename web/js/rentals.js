@@ -709,7 +709,7 @@ window._lightingHeroPreviewOnly = function (key, hoveredCard) {
     const subtitleEl = document.getElementById("lighting-hero-subtitle");
     const eyebrowEl = document.getElementById("lighting-hero-eyebrow");
     const activeVideo =
-        item.video || "./assets/Special_Effects/Iluminacio\u0301n.mp4";
+        item.video || "./assets/Special_Effects/Iluminacion.mp4";
     const activeResolved = mdjV(activeVideo);
     if (eyebrowEl) {
         eyebrowEl.setAttribute("data-i18n", "lighting_eyebrow");
@@ -1326,7 +1326,7 @@ window.fxItems = {
         id: "fx_uplighting",
         nameKey: "data_light_up_name",
         ctaKey: "btn_add_to_pack",
-        video: "./assets/Special_Effects/Iluminación.mp4",
+        video: "./assets/Special_Effects/Iluminacion.mp4",
         fallbackName: "Uplighting Arquitectónico",
         fallbackDesc: "Elegant, wireless perimeter lighting designed to bathe your walls in the precise color palette of your event.",
         price: 350,
@@ -1476,7 +1476,7 @@ window.renderLightingHero = (currentTabKey = 'movingHeads', animate = true) => {
             window.mdjTeardownLightingCarousel();
         }
 
-        let activeVideo = dataset[currentTabKey] && dataset[currentTabKey].video ? dataset[currentTabKey].video : "./assets/Special_Effects/Iluminación.mp4";
+        let activeVideo = dataset[currentTabKey] && dataset[currentTabKey].video ? dataset[currentTabKey].video : "./assets/Special_Effects/Iluminacion.mp4";
 
         if (gridEl && dataset) {
             gridEl.innerHTML = Object.entries(dataset).map(([key, item]) => {
