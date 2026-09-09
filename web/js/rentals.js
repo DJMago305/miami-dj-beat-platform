@@ -1904,16 +1904,22 @@ window.renderRentalCatalog = (categoryId) => {
         categoryId === 'tents' ||
         categoryId === 'stages' ||
         categoryId === 'inflatables';
+    /* Categorias sin video subido (solo fotos por ahora): mismo hero-shell, se cablea a
+       .rental-bg-img en vez de .rental-bg-vid. Agregar aqui cuando llegue el video real
+       de cada una. Ver TICKET-FIX-RENTALS-VIDEOS-01, 2026-09-09. */
+    const showRentalHeroImage = categoryId === 'lighting';
     if (rentalModal) {
-        rentalModal.classList.toggle('mdj-rental-hero-video-on', showRentalHeroVideo);
+        rentalModal.classList.toggle('mdj-rental-hero-video-on', showRentalHeroVideo || showRentalHeroImage);
     }
     const skipBgVideo = rentalModal && rentalModal.getAttribute('data-mdj-catalog-no-bg') === '1' && !showRentalHeroVideo;
     const videoContainer = document.getElementById('rental-multi-video-container');
     if (videoContainer && typeof window.mdjBindHeroVideoErrorFallback === 'function') {
-        /* Cablear el fallback en TODAS, sin importar la rama (categorias como "lighting" nunca
-           llegan a .play() aqui, pero <source preload="none"> igual puede quedar pidiendose
-           en Safari viejo -- ver TICKET FIX-RENTALS-VIDEOS-01, 2026-09-09). */
         videoContainer.querySelectorAll('.rental-bg-vid').forEach(window.mdjBindHeroVideoErrorFallback);
+    }
+    if (videoContainer) {
+        videoContainer.querySelectorAll('.rental-bg-img').forEach(function (img) {
+            img.classList.toggle('active-vid', img.getAttribute('data-category') === categoryId);
+        });
     }
     if (videoContainer && !skipBgVideo) {
         const allVideos = videoContainer.querySelectorAll('.rental-bg-vid');
