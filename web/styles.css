@@ -2153,7 +2153,10 @@ select:focus {
 
 .mdj-venue-photo-hero__slide {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   z-index: 1;
   opacity: 0;
   pointer-events: none;
@@ -3251,13 +3254,19 @@ a.residency-card--map:focus-visible {
 /* ── DYNAMIC WEATHER LAYERS (Hybrid Architecture) ── */
 .sky-base-css {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   z-index: 0;
 }
 
 .sky-atmosphere {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   z-index: 1;
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
@@ -3269,7 +3278,10 @@ a.residency-card--map:focus-visible {
 /* Base PNG Layer Container */
 .weather-png-layer {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   z-index: 2;
   pointer-events: none;
   overflow: hidden;
@@ -3278,7 +3290,10 @@ a.residency-card--map:focus-visible {
 /* Specific Sub-layers within PNG Layer */
 .sky-stars {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   z-index: 1;
   pointer-events: none;
   background-image: url('./assets/weather/stars-night.png');
@@ -3290,7 +3305,10 @@ a.residency-card--map:focus-visible {
 
 .sky-astral {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   z-index: 2;
   pointer-events: none;
 }
@@ -3307,7 +3325,10 @@ a.residency-card--map:focus-visible {
 
 .sky-clouds-back {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   z-index: 3;
   pointer-events: none;
   opacity: 0;
@@ -3318,7 +3339,10 @@ a.residency-card--map:focus-visible {
   position: absolute;
   /* Make it wider to accommodate drifting without showing edges */
   width: 200%;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   z-index: 4;
   pointer-events: none;
   opacity: 0.8;
@@ -3382,14 +3406,20 @@ a.residency-card--map:focus-visible {
 /* Moon Phase Mask (Sweeps horizontally across the real PNG) */
 .moon-phase-wrapper {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   border-radius: 50%;
   overflow: hidden;
 }
 
 .moon-phase-mask {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
 
   border-radius: 50%;
   /* Manipulating boxShadow inset will create the phases dynamically via JS */
@@ -4142,7 +4172,10 @@ a.residency-card--map:focus-visible {
 
 .hero-shell-video {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -4154,7 +4187,10 @@ a.residency-card--map:focus-visible {
 
 .hero-shell-overlay {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   background: linear-gradient(to bottom, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.2));
   z-index: 2;
   pointer-events: none;
@@ -4388,7 +4424,10 @@ a.residency-card--map:focus-visible {
 
 .hl-hero-video {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -4397,7 +4436,10 @@ a.residency-card--map:focus-visible {
 
 .hl-hero-overlay {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   background: linear-gradient(to bottom, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.2));
   z-index: 2;
   pointer-events: none;
@@ -4502,7 +4544,10 @@ a.residency-card--map:focus-visible {
 .hl-types-container::before {
   content: '';
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   bottom: -50px;
   background: linear-gradient(to top, rgba(0, 0, 0, 1) 20%, rgba(0, 0, 0, 0) 100%);
   z-index: -1;
@@ -4542,7 +4587,10 @@ a.residency-card--map:focus-visible {
 .hl-type-card::before {
   content: "";
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   border-radius: inherit;
   pointer-events: none;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
@@ -4739,7 +4787,10 @@ a.residency-card--map:focus-visible {
 .live-hero-video,
 .hero-shell-video {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -4791,7 +4842,10 @@ a.residency-card--map:focus-visible {
 
 .live-hero-overlay {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   z-index: 2;
   background: linear-gradient(to bottom, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.2));
 }
@@ -5130,7 +5184,10 @@ html[lang="es"] #roster-modal .live-tab[data-live-tab="singer"]::after {
 .talent-hero::after {
   content: "";
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   background: linear-gradient(to top,
       rgba(0, 0, 0, 0.55) 0%,
       rgba(0, 0, 0, 0.18) 35%,
@@ -7043,7 +7100,10 @@ body.mdj-artist-academy .dj-owner-tabs .container::-webkit-scrollbar-thumb {
 
 .mdj-hero-media-layer {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -7055,7 +7115,10 @@ body.mdj-artist-academy .dj-owner-tabs .container::-webkit-scrollbar-thumb {
 .mdj-hero-media-layer .hl-hero-overlay,
 .mdj-hero-media-layer .live-hero-overlay {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   z-index: 1;
   pointer-events: none;
 }
@@ -7123,7 +7186,10 @@ body.mdj-artist-academy .dj-owner-tabs .container::-webkit-scrollbar-thumb {
 
 .mdj-hero-media-layer--shell {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   display: flex;
   align-items: center;
   justify-content: center;
