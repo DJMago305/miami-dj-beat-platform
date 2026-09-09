@@ -280,7 +280,7 @@ window.visualTabs = {
         descKey: "data_vis_magic_mirror_desc",
         priceLabelKey: "vis_magic_mirror_price",
         ctaKey: "btn_add_to_pack",
-        video: "./assets/capture-visuals/espejo-magico.mp4",
+        video: "./assets/capture-visuals/Espejo_Magico.mp4",
         fallbackName: "Magic Mirror",
         fallbackSubtitle: "Select the coverage talent you wish to add.",
         fallbackDesc: "Interactive full-length mirror photo experience for your guests.",
