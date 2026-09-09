@@ -38,6 +38,19 @@ web/assets/**/*.webm
 web/assets/**/*.m4v
 web/assets/**/*.mkv
 
+# EXCEPCION puntual (2026-09-08): 3 heroes nuevos (club-dj, mc-dj,
+# festival-dj) bloqueados en produccion porque nadie con acceso de
+# escritura a Supabase Storage los subio todavia -- el PO pidio una
+# solucion inmediata sin depender de ese paso manual. Se comitean estos 3
+# directo a Git/Vercel en vez de Storage, con la exclusion correspondiente
+# en supabase-config.js (resolveMdAssetPublicUrl) para que no se
+# reescriban a una URL de Storage que no existe. Revertir esta excepcion
+# (borrar estas 3 lineas + los archivos) el dia que se suban a Storage de
+# verdad, para no duplicar el mismo video en dos lugares.
+!web/assets/club-dj/videos/club-halloween-hero.mp4
+!web/assets/mc-dj/videos/mc-host-hero.mp4
+!web/assets/festival-dj/videos/festival-stage-hero.mp4
+
 # Material de la sesion de green-screen de DJMago (renombrada 2026-08-29,
 # antes decia "Elixis IA" por error -- el contenido real es DJMago, no
 # ELIXIS). Mezcla fotos/videos de referencia descartados CON el clip real
