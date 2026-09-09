@@ -29,7 +29,15 @@ if (!window.MDJ_RENTALS_TALENT_HUB_CONTRACT) {
     });
 }
 
-const t = (k, def) => (window.translations?.[window.i18n?.currentLang]?.[k]) || def;
+/* FIX-SAFARI13-OPTIONAL-CHAINING-01 (2026-09-09): "?." no existe en Safari
+   13 -- el motor lanza SyntaxError al PARSEAR el archivo entero (no un
+   error en runtime), asi que ninguna funcion de este archivo llegaba a
+   ejecutarse en Mac vieja, no solo esta linea. Reescrito sin "?.". */
+const t = (k, def) => {
+    var lang = window.i18n && window.i18n.currentLang;
+    var dict = (lang && window.translations) ? window.translations[lang] : null;
+    return (dict && dict[k]) || def;
+};
 
 /** Antepone window.MDB_ASSETS_URL (bucket Storage `assets`) a rutas ./assets/... (vídeo o imagen). */
 const mdjV = (u) => (typeof window.resolveMdAssetPublicUrl === "function" ? window.resolveMdAssetPublicUrl(u) : (typeof window.resolveMdAssetVideoUrl === "function" ? window.resolveMdAssetVideoUrl(u) : u));
@@ -3950,7 +3958,7 @@ document.addEventListener('click', async (e) => {
     // OPEN HORA LOCA
     if (e.target.closest('[data-action="open-horaloca"]')) {
         window.premiumTransition('talent-selector-modal', 'horaloca-modal', () => {
-            if (window.hlPackages?.length && window.updateHoraLocaHero) {
+            if (window.hlPackages && window.hlPackages.length && window.updateHoraLocaHero) {
                 window.updateHoraLocaHero(window.hlPackages[0].id);
             }
         });

@@ -99,7 +99,7 @@ function computeResidencyMetrics(profile) {
     const ws = profile.weekly_schedule;
     if (ws && typeof ws === 'object') {
         for (let d = 0; d < 7; d++) {
-            const slots = ws[String(d)] ?? ws[d];
+            const slots = mdjNvl(ws[String(d)], ws[d]);
             if (!Array.isArray(slots)) continue;
             let n = 0;
             slots.forEach(function (s) {
