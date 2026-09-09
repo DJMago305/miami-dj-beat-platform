@@ -2134,16 +2134,38 @@ select:focus {
   background: #0a0a0c;
 }
 
+/* FIX-AGE-COMPAT-01 (2026-09-09): aspect-ratio no existe en Safari <15 --
+   sin esto el frame se queda en height:0 (nada mas define su alto) y toda
+   la galeria colapsa a invisible en Mac vieja. Mismo hallazgo de hoy con
+   inset:0 (PR #335) -- fallback con el truco clasico de padding-top solo
+   para navegadores que de verdad no soportan aspect-ratio. */
+@supports not (aspect-ratio: 1 / 1) {
+  .mdj-venue-photo-hero__frame {
+    height: 0;
+    padding-top: 42.857%;
+    overflow: hidden;
+  }
+}
+
 @media (max-width: 720px) {
   .mdj-venue-photo-hero__frame {
     aspect-ratio: 16 / 9;
     max-height: min(42vh, 380px);
   }
+
+  @supports not (aspect-ratio: 1 / 1) {
+    .mdj-venue-photo-hero__frame {
+      padding-top: 56.25%;
+    }
+  }
 }
 
 .mdj-venue-photo-hero__slide {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   z-index: 1;
   opacity: 0;
   pointer-events: none;
