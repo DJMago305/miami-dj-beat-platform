@@ -62,16 +62,16 @@ function renderGrid() {
 
 function attachGlobalEventListeners() {
     // 1. Delegación de Navegación de Tabs
-    document.getElementById('services-tabs-nav')?.addEventListener('click', (e) => {
+    (document.getElementById('services-tabs-nav') && document.getElementById('services-tabs-nav').addEventListener('click', (e) => {
         const btn = e.target.closest('.svc-tab-btn');
         if(!btn) return;
         currentCategory = btn.dataset.categoryId;
         renderTabs();
         renderGrid();
-    });
+    }));
 
     // 2. Delegación Dinámica de Grid (Botones "Ver más" y "Agregar")
-    document.getElementById('services-grid')?.addEventListener('click', (e) => {
+    (document.getElementById('services-grid') && document.getElementById('services-grid').addEventListener('click', (e) => {
         const viewBtn = e.target.closest('.view-more-btn');
         const addBtn = e.target.closest('.add-item-btn');
         
@@ -80,10 +80,10 @@ function attachGlobalEventListeners() {
         } else if (addBtn) {
             alert('Agregado a la orden (Fase 2) - ID: ' + addBtn.dataset.itemId);
         }
-    });
+    }));
 
     // 3. Cierre de Modal General
-    document.getElementById('close-service-modal')?.addEventListener('click', () => {
+    (document.getElementById('close-service-modal') && document.getElementById('close-service-modal').addEventListener('click', () => {
         const modal = document.getElementById('service-detail-modal');
         if (modal) {
             modal.classList.add('hidden-modal');
@@ -92,14 +92,14 @@ function attachGlobalEventListeners() {
         document.body.style.overflow = '';
         currentItem = null;
         document.getElementById('modal-media-container').innerHTML = ''; // Detener frames
-    });
+    }));
     
     // 4. Add desde dentro del Modal
-    document.getElementById('modal-add-btn')?.addEventListener('click', () => {
+    (document.getElementById('modal-add-btn') && document.getElementById('modal-add-btn').addEventListener('click', () => {
         if(currentItem) {
             alert('Agregado a la orden (Fase 2) - ID: ' + currentItem.id);
         }
-    });
+    }));
 }
 
 function openDetailModal(itemId) {

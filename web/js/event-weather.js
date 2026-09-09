@@ -87,7 +87,7 @@ function computeForecastTransitionHint(data) {
     const nowDt = data.dt || Math.floor(Date.now() / 1000);
     for (let i = 0; i < Math.min(12, list.length); i++) {
         const blk = list[i];
-        const nextMain = blk.weather?.[0]?.main;
+        const nextMain = (blk.weather && blk.weather[0] && blk.weather[0].main);
         if (!nextMain || nextMain === curMain) continue;
         const hours = Math.max(0, (blk.dt - nowDt) / 3600);
         return { nextMain, hoursApprox: Math.round(hours * 10) / 10 };
@@ -214,14 +214,14 @@ async function getWeatherForecast(city, eventDateStr, lat = null, lon = null) {
  * el sunset se ignora. 
  * ====================================================================== */
 function mapWeatherToScene(data) {
-    const main = data.weather?.[0]?.main || "Clear";
+    const main = (data.weather && data.weather[0] && data.weather[0].main) || "Clear";
     const blockTime = data.dt || Math.floor(Date.now() / 1000);
-    const sunrise = data.sys?.sunrise || 0;
-    const sunset = data.sys?.sunset || 0;
+    const sunrise = (data.sys && data.sys.sunrise) || 0;
+    const sunset = (data.sys && data.sys.sunset) || 0;
 
     const isNight = (sunrise > 0 && sunset > 0)
         ? (blockTime < sunrise || blockTime > sunset)
-        : (data.weather?.[0]?.icon?.endsWith("n") || false);
+        : ((data.weather && data.weather[0] && data.weather[0].icon && data.weather[0].icon.endsWith("n")) || false);
 
     // Detect sunset transition window
     const isSunset = sunset > 0 && (blockTime >= sunset - 2700 && blockTime <= sunset + 900);
@@ -232,8 +232,8 @@ function mapWeatherToScene(data) {
     if (main === "Thunderstorm") return isNight ? "storm" : "storm-day";
     
     // EXTREME WEATHER PROTOCOL: Inundación o vientos fuertes (> 30mph) activan alerta roja
-    const weatherId = data.weather?.[0]?.id || 500;
-    const windSpeed = data.wind?.speed || 0;
+    const weatherId = (data.weather && data.weather[0] && data.weather[0].id) || 500;
+    const windSpeed = (data.wind && data.wind.speed) || 0;
     
     if (main === "Rain" && (weatherId >= 502 || windSpeed > 30)) {
         return isNight ? "storm" : "storm-day";
@@ -247,8 +247,8 @@ function mapWeatherToScene(data) {
     if (main === "Rain") return isNight ? "rain-night" : "rain";
 
     if (main === "Clouds") {
-        const cloudId = data.weather?.[0]?.id;
-        const desc = (data.weather?.[0]?.description || "").toLowerCase();
+        const cloudId = (data.weather && data.weather[0] && data.weather[0].id);
+        const desc = ((data.weather && data.weather[0] && data.weather[0].description) || "").toLowerCase();
         // OWM: 801 few, 802 scattered, 803 broken → más cielo; 804 overcast → muy nublado
         const partly =
             cloudId === 801 ||
@@ -284,19 +284,19 @@ function mdjLocalDayKeyFromUnix(unixSec) {
  * Si no hay slots coincidentes: fallback a main.temp_min / temp_max del snapshot de /weather.
  */
 function getDailyMinMaxFromForecast(data) {
-    const list = Array.isArray(data?.fullForecast) ? data.fullForecast : [];
-    const refSec = data?.dt != null ? data.dt : Math.floor(Date.now() / 1000);
+    const list = Array.isArray(data && data.fullForecast) ? data.fullForecast : [];
+    const refSec = (data && data.dt) != null ? data.dt : Math.floor(Date.now() / 1000);
     const dayKey = mdjLocalDayKeyFromUnix(refSec);
 
     const temps = list
         .filter((item) => item && item.dt != null && mdjLocalDayKeyFromUnix(item.dt) === dayKey)
-        .map((item) => item?.main?.temp)
+        .map((item) => (item && item.main && item.main.temp))
         .filter((t) => typeof t === 'number' && !Number.isNaN(t));
 
     if (!temps.length) {
         return {
-            min: data?.main?.temp_min,
-            max: data?.main?.temp_max
+            min: (data && data.main && data.main.temp_min),
+            max: (data && data.main && data.main.temp_max)
         };
     }
 
@@ -307,7 +307,7 @@ function getDailyMinMaxFromForecast(data) {
 }
 
 function getDisplayConditionLabel(data) {
-    const w0 = data.weather?.[0];
+    const w0 = (data.weather && data.weather[0]);
     if (!w0) return "Despejado";
     const id = w0.id;
     if (id === 801 || id === 802) return "Parcialmente nublado";
@@ -325,23 +325,23 @@ function renderWeatherWidget(data, eventOrDate) {
     const heroHL = document.getElementById('weather-high-low');
     const locationLbl = document.getElementById('weather-location');
 
-    const temp = Math.round(data.main?.temp || 78);
+    const temp = Math.round((data.main && data.main.temp) || 78);
     const dailyRange = getDailyMinMaxFromForecast(data);
-    const tempMax = Math.round(dailyRange.max ?? (data.main?.temp_max) ?? (temp + 5));
-    const tempMin = Math.round(dailyRange.min ?? (data.main?.temp_min) ?? (temp - 5));
-    const conditionMain = data.weather?.[0]?.main || "Clear";
+    const tempMax = Math.round(dailyRange.max ?? (data.main && data.main.temp_max) ?? (temp + 5));
+    const tempMin = Math.round(dailyRange.min ?? (data.main && data.main.temp_min) ?? (temp - 5));
+    const conditionMain = (data.weather && data.weather[0] && data.weather[0].main) || "Clear";
 
     const iconImg = document.getElementById('weather-icon-img');
     const predictBox = document.getElementById('weather-predict');
 
-    const displayCity = window.userBaseLocation?.city || data.name || "Miami";
+    const displayCity = (window.userBaseLocation && window.userBaseLocation.city) || data.name || "Miami";
     const displayLoc = `${displayCity}, FL`.toUpperCase();
     if (heroCity) heroCity.textContent = displayLoc;
     if (locationLbl) locationLbl.textContent = displayLoc;
     if (heroTemp) heroTemp.textContent = `${temp}°`;
 
     // 1a. Inyectar Icono Real de la API
-    const iconCode = data.weather?.[0]?.icon;
+    const iconCode = (data.weather && data.weather[0] && data.weather[0].icon);
     if (iconImg && iconCode) {
         iconImg.src = `https://openweathermap.org/img/wn/${iconCode}@4x.png`;
         iconImg.style.display = 'block';
@@ -349,7 +349,7 @@ function renderWeatherWidget(data, eventOrDate) {
 
     const capitalizedDesc = getDisplayConditionLabel(data);
     if (heroCond) heroCond.textContent = capitalizedDesc;
-    if (predictBox) predictBox.innerHTML = `TELEMETRÍA: <strong>${capitalizedDesc}</strong> | Viento: <strong>${Math.round(data.wind?.speed || 0)} mph</strong> | Humedad: <strong>${data.main?.humidity || '--'}%</strong>`;
+    if (predictBox) predictBox.innerHTML = `TELEMETRÍA: <strong>${capitalizedDesc}</strong> | Viento: <strong>${Math.round((data.wind && data.wind.speed) || 0)} mph</strong> | Humedad: <strong>${(data.main && data.main.humidity) || '--'}%</strong>`;
 
     if (heroHL) heroHL.textContent = `Máx: ${tempMax}° Mín: ${tempMin}°`;
 
@@ -359,9 +359,9 @@ function renderWeatherWidget(data, eventOrDate) {
     const elVis = document.getElementById('w-val-visibility');
     const elWind = document.getElementById('w-val-wind');
 
-    if (elHumi) elHumi.textContent = `${data.main?.humidity || 50}%`;
-    if (elFeels) elFeels.textContent = `${Math.round(data.main?.feels_like || temp)}°`;
-    if (elWind) elWind.textContent = `${Math.round(data.wind?.speed || 0)} mph`;
+    if (elHumi) elHumi.textContent = `${(data.main && data.main.humidity) || 50}%`;
+    if (elFeels) elFeels.textContent = `${Math.round((data.main && data.main.feels_like) || temp)}°`;
+    if (elWind) elWind.textContent = `${Math.round((data.wind && data.wind.speed) || 0)} mph`;
 
     if (elVis) {
         // Convertir visibilidad de Metros a Millas (y redondear a 1 decimal máximo o número entero)
@@ -378,7 +378,7 @@ function renderWeatherWidget(data, eventOrDate) {
     const isEvent = !!eventOrDate.title;
     const dateStr = isEvent ? (eventOrDate.startStr || (eventOrDate.start ? eventOrDate.start.toISOString().split('T')[0] : '')) : eventOrDate;
     const eventTitle = isEvent
-        ? ((eventOrDate.extendedProps?.event_name || eventOrDate.title || '').trim() || 'Sin título')
+        ? (((eventOrDate.extendedProps && eventOrDate.extendedProps.event_name) || eventOrDate.title || '').trim() || 'Sin título')
         : 'Día sin evento en agenda';
 
     let cardIcon = '☀️';
@@ -416,9 +416,9 @@ function renderWeatherWidget(data, eventOrDate) {
             }
         }
     }
-    const bufferTime = (isEvent && eventOrDate.extendedProps?.buffer_time) ? `+${eventOrDate.extendedProps.buffer_time}m` : '—';
+    const bufferTime = (isEvent && eventOrDate.extendedProps && eventOrDate.extendedProps.buffer_time) ? `+${eventOrDate.extendedProps.buffer_time}m` : '—';
     const evCity = isEvent
-        ? ((eventOrDate.extendedProps?.venue || '').trim() || 'Sin venue')
+        ? (((eventOrDate.extendedProps && eventOrDate.extendedProps.venue) || '').trim() || 'Sin venue')
         : (data.name || '—');
     const dashPage = ((window.location.pathname || '').split('/').pop() || '').toLowerCase();
     const showStaffDjAlertBtn = isEvent && dashPage !== 'dj-dashboard.html';
@@ -487,14 +487,14 @@ function renderWeatherWidget(data, eventOrDate) {
                 <div>
                     <div style="font-size: 10px; color: var(--gold); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">Atardecer</div>
                     <div style="font-size: 15px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 6px;">
-                        <span>🌇</span> ${formatTimestamp(data.sys?.sunset)}
+                        <span>🌇</span> ${formatTimestamp(data.sys && data.sys.sunset)}
                     </div>
                 </div>
 
                 <!-- ALERTA MOVIL SMS (solo staff / manager — no en dashboard del artista) -->
                 ${showStaffDjAlertBtn ? `
                 <div style="grid-column: 1 / -1; margin-top: 15px;">
-                    <button onclick="window.triggerDJMobileAlert('${eventOrDate.extendedProps?.eventId || ''}')" class="btn primary full" style="padding: 14px; font-size: 13px; font-weight: 800; background: rgba(197, 160, 89, 0.15); border: 1px solid var(--gold); color: var(--gold); border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s ease;">
+                    <button onclick="window.triggerDJMobileAlert('${(eventOrDate.extendedProps && eventOrDate.extendedProps.eventId) || ''}')" class="btn primary full" style="padding: 14px; font-size: 13px; font-weight: 800; background: rgba(197, 160, 89, 0.15); border: 1px solid var(--gold); color: var(--gold); border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s ease;">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
                         ENVIAR RECORDATORIO AL DJ
                     </button>
@@ -676,10 +676,10 @@ function formatTimestamp(unixTimestamp) {
 }
 
 function calculateLogisticsAlerts(data, city) {
-    const windSpeedMph = data.wind?.speed || 0;
+    const windSpeedMph = (data.wind && data.wind.speed) || 0;
     const windSpeedMs = windSpeedMph * 0.44704; // Convert mph to m/s for rules
-    const condition = data.weather?.[0]?.main || "Clear";
-    const tempF = data.main?.temp || 78;
+    const condition = (data.weather && data.weather[0] && data.weather[0].main) || "Clear";
+    const tempF = (data.main && data.main.temp) || 78;
     const tempC = (tempF - 32) * 5 / 9;
 
     const cityStr = city.toLowerCase();
@@ -796,7 +796,7 @@ function applyWeatherScene(scene, weatherMain, data) {
             }
 
             // 2. Flujo de Viento (Velocidad de Animación de Capas)
-            const windSpeed = data.wind?.speed || 0;
+            const windSpeed = (data.wind && data.wind.speed) || 0;
             let cloudSpeed = 60 - (windSpeed * 8);
             if (cloudSpeed < 3) cloudSpeed = 3;
 
@@ -809,7 +809,7 @@ function applyWeatherScene(scene, weatherMain, data) {
             });
 
             // Carrusel panorámico: viento mph → duración; wind.deg → animation-direction (horizontal, sin rotar el strip)
-            const wind = data.wind?.speed || 0;
+            const wind = (data.wind && data.wind.speed) || 0;
             let duration;
             if (wind <= 5) {
                 duration = 360;
@@ -823,7 +823,7 @@ function applyWeatherScene(scene, weatherMain, data) {
 
             const clouds = weatherContainer.querySelector('.nubes-largas-fast-container');
             if (clouds) {
-                const windDeg = data.wind?.deg;
+                const windDeg = (data.wind && data.wind.deg);
                 if (windDeg != null && !Number.isNaN(Number(windDeg))) {
                     const deg = Number(windDeg);
                     const blowToward = (deg + 180) % 360;
@@ -844,7 +844,7 @@ function applyWeatherScene(scene, weatherMain, data) {
             if (cloudsClr) cloudsClr.style.removeProperty('animation-direction');
         }
 
-        if (data?.weather?.[0] && String(scene).includes("rain")) {
+        if ((data && data.weather && data.weather[0]) && String(scene).includes("rain")) {
             const wid = data.weather[0].id || 500;
             let intensity = "light";
             if (wid >= 502) intensity = "heavy";
@@ -1145,7 +1145,7 @@ window.handleEventWeather = async function (eventOrDate) {
         if (heroCond) heroCond.textContent = "Servicio meteorológico no disponible";
         if (heroTemp) heroTemp.textContent = "—";
         if (locLbl) {
-            const errCity = window.userBaseLocation?.city || "Miami";
+            const errCity = (window.userBaseLocation && window.userBaseLocation.city) || "Miami";
             locLbl.textContent = `${errCity}, FL`.toUpperCase();
         }
         return;
@@ -1168,7 +1168,7 @@ window.handleEventWeather = async function (eventOrDate) {
 
     // Cache nombre de ciudad: no pisan Nominatim/GPS si ya hay área real guardada
     if (!isEvent && targetLat != null && !window.userBaseLocation.cityCached) {
-        if (!window.userBaseLocation.isGPS || !window.userBaseLocation?.city) {
+        if (!window.userBaseLocation.isGPS || !(window.userBaseLocation && window.userBaseLocation.city)) {
             window.userBaseLocation.city = data.name || "Miami";
         }
         window.userBaseLocation.cityCached = true;
@@ -1185,7 +1185,7 @@ window.handleEventWeather = async function (eventOrDate) {
         if (dailyEl) delete dailyEl.dataset.loading;
 
         renderWeatherWidget(data, eventOrDate);
-        applyWeatherScene(scene, data.weather?.[0]?.main || "Clear", data);
+        applyWeatherScene(scene, (data.weather && data.weather[0] && data.weather[0].main) || "Clear", data);
 
         const ww = document.querySelector('.weather-widget');
         if (ww) {
@@ -1304,8 +1304,8 @@ function generateHourlyTimelineOptions(data) {
     if (!hourlyScroller) return;
 
     if (!data.fullForecast || data.fullForecast.length === 0) {
-        const temp = Math.round(data.main?.temp || 78);
-        const iconCode = data.weather?.[0]?.icon || '01d';
+        const temp = Math.round((data.main && data.main.temp) || 78);
+        const iconCode = (data.weather && data.weather[0] && data.weather[0].icon) || '01d';
         const defaultVisual = mdjHourlyIconHtml(iconCode, new Date(), temp);
 
         hourlyScroller.innerHTML = `
@@ -1323,7 +1323,7 @@ function generateHourlyTimelineOptions(data) {
     const hoursData = nextBlocks.map((block, index) => {
         const dateObj = new Date(block.dt * 1000);
         const label = mdjFormatHourlyLabel(dateObj, index === 0);
-        const icon = (index === 0 && data.weather?.[0]?.icon) ? data.weather[0].icon : block.weather[0].icon;
+        const icon = (index === 0 && data.weather && data.weather[0] && data.weather[0].icon) ? data.weather[0].icon : block.weather[0].icon;
         const visualHtml = mdjHourlyIconHtml(icon, dateObj, block.main.temp);
 
         return {
@@ -1421,8 +1421,8 @@ window.fetchAndRenderEventNotes = async function (eventId, contextEp) {
         return;
     }
 
-    const goldColor = window.CALENDAR_THEMES?.resident?.color || '#c5a059';
-    const redColor = window.CALENDAR_THEMES?.locked?.color || '#ff5555';
+    const goldColor = (window.CALENDAR_THEMES && window.CALENDAR_THEMES.resident && window.CALENDAR_THEMES.resident.color) || '#c5a059';
+    const redColor = (window.CALENDAR_THEMES && window.CALENDAR_THEMES.locked && window.CALENDAR_THEMES.locked.color) || '#ff5555';
 
     container.innerHTML = data.map(note => `
         <div style="background: ${goldColor}0D; border-left: 3px solid ${note.priority === 'high' ? redColor : goldColor}; padding: 12px 15px; border-radius: 6px; margin-bottom: 10px;">

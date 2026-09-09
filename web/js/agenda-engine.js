@@ -716,7 +716,7 @@ async function initAgendaEngine() {
             displayEventTime: false,
             showNonCurrentDates: true,
             events: function (info, successCallback) {
-                const safeProfile = window.mdjAgendaEngineContext?.profile || {};
+                const safeProfile = (window.mdjAgendaEngineContext && window.mdjAgendaEngineContext.profile) || {};
                 const weekly = safeProfile.weekly_schedule || {};
                 const isDbResident = safeProfile.is_resident === true;
                 const vStart = safeProfile.vacation_start ? new Date(safeProfile.vacation_start + 'T00:00:00') : null;
@@ -728,10 +728,10 @@ async function initAgendaEngine() {
                     safeProfile.availability_schedule && typeof safeProfile.availability_schedule === 'object'
                         ? safeProfile.availability_schedule
                         : null;
-                const vStartJson = availSched?.vacation_start
+                const vStartJson = (availSched && availSched.vacation_start)
                     ? new Date(availSched.vacation_start + 'T00:00:00')
                     : null;
-                let vEndJson = availSched?.vacation_end
+                let vEndJson = (availSched && availSched.vacation_end)
                     ? new Date(availSched.vacation_end + 'T00:00:00')
                     : null;
                 if (vEndJson) {
@@ -763,8 +763,8 @@ async function initAgendaEngine() {
                 const events = [];
                 let d = new Date(info.start.valueOf());
 
-                const availability = safeProfile.availability_schedule?.schedule || {};
-                const recurring = safeProfile.availability_schedule?.recurring_days || [];
+                const availability = (safeProfile.availability_schedule && safeProfile.availability_schedule.schedule) || {};
+                const recurring = (safeProfile.availability_schedule && safeProfile.availability_schedule.recurring_days) || [];
                 const mapR = { sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6 };
                 const recurringSet = new Set();
                 if (Array.isArray(recurring)) {

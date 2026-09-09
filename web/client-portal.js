@@ -1212,12 +1212,13 @@ const PortalApp = {
         var discount = 0;
         var discountNote = '';
         const refEligible =
-            this.clientProfile?.source_ref && this.clientProfile?.discount_eligible !== false;
+            (this.clientProfile && this.clientProfile.source_ref) &&
+            (this.clientProfile && this.clientProfile.discount_eligible) !== false;
         if (refEligible) {
             discount += 30;
             discountNote += '• Crédito referido MDJ (1ª compra): -$30.00<br>';
         }
-        if ((this.clientProfile?.total_events_booked || 0) > 0) {
+        if (((this.clientProfile && this.clientProfile.total_events_booked) || 0) > 0) {
             const loyaltyDisc = sub * 0.05;
             discount += loyaltyDisc;
             discountNote += '• Beneficio Cliente Oficial (5%): -$' + loyaltyDisc.toFixed(2) + '<br>';
@@ -1878,7 +1879,7 @@ const PortalApp = {
                 this.clientProfile && this.clientProfile.language_preference
             );
         } catch (eLang) { /* ignore */ }
-        this.renderLoyaltyBadge(this.clientProfile?.total_events_booked || 1);
+        this.renderLoyaltyBadge((this.clientProfile && this.clientProfile.total_events_booked) || 1);
         this.renderCart();
         if (typeof this.renderPortalWelcomeAvatar === 'function') {
             this.renderPortalWelcomeAvatar();
@@ -3295,7 +3296,8 @@ const PortalApp = {
             });
         });
 
-        document.getElementById('submit-review')?.addEventListener('click', async () => {
+        const submitReviewBtn = document.getElementById('submit-review');
+        submitReviewBtn && submitReviewBtn.addEventListener('click', async () => {
             if (selectedRating === 0) return alert("Por favor selecciona una calificación.");
             alert("¡Gracias por tu reseña! Ha sido enviada al equipo de MDJPRO.");
         });
@@ -3304,8 +3306,8 @@ const PortalApp = {
         const chatSend = document.getElementById('chat-send');
         const chatInput = document.getElementById('chat-input');
 
-        chatSend?.addEventListener('click', () => this.handleChatMessage());
-        chatInput?.addEventListener('keypress', (e) => {
+        chatSend && chatSend.addEventListener('click', () => this.handleChatMessage());
+        chatInput && chatInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') this.handleChatMessage();
         });
 
@@ -4089,7 +4091,8 @@ const PortalApp = {
     },
 
     async searchByEmail() {
-        const email = document.getElementById('portal-email-input')?.value.trim().toLowerCase();
+        const emailInputEl = document.getElementById('portal-email-input');
+        const email = emailInputEl && emailInputEl.value.trim().toLowerCase();
         const statusEl = document.getElementById('portal-search-status');
         if (!email) return;
 
