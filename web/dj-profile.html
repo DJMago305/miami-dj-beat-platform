@@ -5858,7 +5858,7 @@
             async function loadSeasonalQR() {
                 const { data: settings } = await db.from('platform_settings').select('key, value');
                 if (!settings) return;
-                const getSet = k => settings.find(s => s.key === k)?.value;
+                const getSet = k => { const found = settings.find(s => s.key === k); return found && found.value; };
 
                 if (getSet('seasonal_qr_active') === 'true') {
                     const sqCard = document.getElementById('seasonal-qr-card');
@@ -6214,9 +6214,12 @@
         }
         // ── CHECK button handler ──
         function checkDJAvailability() {
-            const m = document.getElementById('dj-avail-month')?.value;
-            const d = document.getElementById('dj-avail-day')?.value;
-            const y = document.getElementById('dj-avail-year')?.value;
+            const monthEl = document.getElementById('dj-avail-month');
+            const m = monthEl && monthEl.value;
+            const dayEl = document.getElementById('dj-avail-day');
+            const d = dayEl && dayEl.value;
+            const yearEl = document.getElementById('dj-avail-year');
+            const y = yearEl && yearEl.value;
             const result = document.getElementById('dj-avail-result');
             // Remove previous reserve button if any
             const oldBtn = document.getElementById('dj-avail-reserve-btn');
@@ -6350,7 +6353,7 @@
             if (!confirm(confirmMsg)) return;
 
             const { data: { user } } = await db.auth.getUser();
-            const instructorId = user?.id;
+            const instructorId = user && user.id;
 
             const scores = {
                 tech: document.getElementById('score-tech').value,
@@ -6379,7 +6382,7 @@
             if (result === 'PASS') {
                 // Generate Security Hash (Paso 2)
                 const { data: certData } = await db.from('certificates').select('cert_number').eq('user_id', targetDJ).single();
-                const secHash = await generateSecurityHash(certData?.cert_number || 'UNKNOWN', targetDJ, instructorId);
+                const secHash = await generateSecurityHash((certData && certData.cert_number) || 'UNKNOWN', targetDJ, instructorId);
 
                 const { error: certError } = await db.from('certificates')
                     .update({

@@ -1294,7 +1294,7 @@ Riesgo: romper carga del catálogo.
         // ── 1) UTILIDADES DE SESIÓN & SEGURIDAD ──
         async function getSessionSafe() {
             try {
-                const db = window.getSupabaseClient?.();
+                const db = (window.getSupabaseClient && window.getSupabaseClient());
                 if (!db) return null;
                 const { data: { session } } = await db.auth.getSession();
                 return session || null;
@@ -1369,7 +1369,7 @@ Riesgo: romper carga del catálogo.
                 const session = await getSessionSafe();
                 if (!session) return;
 
-                const db = window.getSupabaseClient?.();
+                const db = (window.getSupabaseClient && window.getSupabaseClient());
                 if (!db) return;
 
                 const loginBtn = document.getElementById('header-login-btn');
@@ -1378,7 +1378,7 @@ Riesgo: romper carga del catálogo.
                 if (authZone) authZone.style.display = 'block';
 
                 const { data: dj } = await db.from('dj_profiles').select('photo_url').eq('user_id', session.user.id).single();
-                if (dj?.photo_url) {
+                if (dj && dj.photo_url) {
                     if (typeof window.mdjHeaderVipApplyPhotoUrl === 'function') {
                         window.mdjHeaderVipApplyPhotoUrl(dj.photo_url);
                     } else {
@@ -1447,12 +1447,14 @@ Riesgo: romper carga del catálogo.
             };
 
             // Botones de cierre manual
-            document.getElementById('close-mc-modal')?.addEventListener('click', () => closeModal('mc-modal'));
+            const closeMcModalBtn = document.getElementById('close-mc-modal');
+            if (closeMcModalBtn) closeMcModalBtn.addEventListener('click', () => closeModal('mc-modal'));
 
             // Categorías de talento (movidas al router delegador)
 
             // Lógica interna del MC Modal
-            document.getElementById('check-mc-availability-btn')?.addEventListener('click', async () => {
+            const checkMcAvailabilityBtn = document.getElementById('check-mc-availability-btn');
+            if (checkMcAvailabilityBtn) checkMcAvailabilityBtn.addEventListener('click', async () => {
                 const c1 = document.getElementById('mc-check-view');
                 const c2 = document.getElementById('mc-loading');
                 const c3 = document.getElementById('mc-result-view');

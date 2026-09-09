@@ -2384,7 +2384,7 @@
         // ── MOTOR DE CARRITO NATIVO (checkout real vía Stripe, ver checkoutCartAndRedirect) ──
         (function () {
             function normalize(value) {
-                return String(value ?? "").trim().toLowerCase();
+                return String((value === null || value === undefined) ? "" : value).trim().toLowerCase();
             }
 
             function resolveVariantFlexible(product, selectedSize, selectedColor) {
@@ -2428,10 +2428,10 @@
                     productKey: product.key || product.id,
                     name: `${getLocalizedField(product.title, 'en')} (${variant.color || ''} / ${variant.size || ''})`.replace(' ( / )', ''),
                     title: getLocalizedField(product.title, 'en'),
-                    image: product.image || product.images?.[0] || "",
+                    image: product.image || (product.images && product.images[0]) || "",
                     size: variant.size || "",
                     color: variant.color || "",
-                    price: Number(variant.price ?? product.price ?? 0),
+                    price: Number((variant.price === null || variant.price === undefined) ? ((product.price === null || product.price === undefined) ? 0 : product.price) : variant.price),
                     quantity
                 };
             }

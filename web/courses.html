@@ -4018,8 +4018,8 @@
 
         function tCourse(key, def) {
             try {
-                const lang = window.i18n?.currentLang || 'es';
-                return window.translations?.[lang]?.[key] || def;
+                const lang = (window.i18n && window.i18n.currentLang) || 'es';
+                return (window.translations && window.translations[lang] && window.translations[lang][key]) || def;
             } catch (_) {
                 return def;
             }

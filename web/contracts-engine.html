@@ -4344,7 +4344,7 @@ function init(){
     $("#recordViewVeil").hidden=true;
   });
   $("#recordFullscreenBtn").addEventListener("click", ()=>{
-    if(!document.fullscreenElement){ $("#recordViewerWrap").requestFullscreen?.(); }
+    if(!document.fullscreenElement){ ($("#recordViewerWrap").requestFullscreen && $("#recordViewerWrap").requestFullscreen()); }
     else{ document.exitFullscreen(); }
   });
   document.addEventListener("fullscreenchange", ()=>{

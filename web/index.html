@@ -1844,9 +1844,12 @@
     }
 
     function checkBigDayAvailability() {
-      const m = document.getElementById('avail_month')?.value;
-      const d = document.getElementById('avail_day')?.value;
-      const y = document.getElementById('avail_year')?.value;
+      const elAvailMonth = document.getElementById('avail_month');
+      const m = elAvailMonth && elAvailMonth.value;
+      const elAvailDay = document.getElementById('avail_day');
+      const d = elAvailDay && elAvailDay.value;
+      const elAvailYear = document.getElementById('avail_year');
+      const y = elAvailYear && elAvailYear.value;
       if (m && d && y && !isNaN(parseInt(m)) && !isNaN(parseInt(d)) && !isNaN(parseInt(y))) {
         window.location.href = `./shop.html?date=${y}-${m}-${d}`;
       } else {
@@ -1961,8 +1964,9 @@
 
       // Headlines (Dynamic Text) — Respect Quarantine
       if (isHomeActive) {
-        const isEnglish = document.documentElement.lang === 'en' ||
-          (document.querySelector('.lang-btn[data-lang="en"]')?.classList.contains('active'));
+        const elLangBtnEn = document.querySelector('.lang-btn[data-lang="en"]');
+        const isLangBtnEnActive = elLangBtnEn && elLangBtnEn.classList.contains('active');
+        const isEnglish = document.documentElement.lang === 'en' || isLangBtnEnActive;
 
         if (isEnglish && settings.home_hero_title_en && headline) {
           headline.innerHTML = settings.home_hero_title_en;
