@@ -56,6 +56,14 @@ window.mdjHeroVideoPrime = function (el) {
     } catch (e) { /* ignore */ }
 };
 
+/** Si el asset del hero video falla (faltante/400/404), oculta el <video> en vez de dejar un recuadro roto. Idempotente. */
+window.mdjBindHeroVideoErrorFallback = function (el) {
+    if (!el || el.dataset.mdjErrorFallbackBound === "1") return;
+    el.dataset.mdjErrorFallbackBound = "1";
+    el.addEventListener("error", function () { el.style.display = "none"; });
+    el.addEventListener("loadeddata", function () { el.style.display = ""; });
+};
+
 window.djTabs = {
     weddings: {
         id: "dj_weddings",
@@ -272,7 +280,7 @@ window.visualTabs = {
         descKey: "data_vis_magic_mirror_desc",
         priceLabelKey: "vis_magic_mirror_price",
         ctaKey: "btn_add_to_pack",
-        video: "./assets/capture-visuals/Espejo_M\u00e1gico.mp4",
+        video: "./assets/capture-visuals/Espejo_Magico.mp4",
         fallbackName: "Magic Mirror",
         fallbackSubtitle: "Select the coverage talent you wish to add.",
         fallbackDesc: "Interactive full-length mirror photo experience for your guests.",
@@ -418,6 +426,7 @@ window.renderStaffHero = function (tabKey = "bartender", animate = true) {
         const changed = videoEl.getAttribute("src") !== rv;
         if (changed) videoEl.src = rv;
         if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
+        if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
         if (changed) videoEl.load();
         if (typeof window.mdjActivateVideo === 'function') { window.mdjActivateVideo(videoEl); } else { videoEl.play().catch(() => {}); }
     }
@@ -495,6 +504,7 @@ window.renderPayasosHero = function (tabKey = "gif", animate = true) {
         const changed = videoEl.getAttribute("src") !== rv;
         if (changed) videoEl.src = rv;
         if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
+        if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
         if (changed) videoEl.load();
         if (typeof window.mdjActivateVideo === 'function') { window.mdjActivateVideo(videoEl); } else { videoEl.play().catch(() => {}); }
     }
@@ -587,6 +597,7 @@ window._rosterHeroPreviewOnly = function (key, hoveredCard) {
         const changed = videoEl.getAttribute("src") !== rv;
         if (changed) videoEl.src = rv;
         if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
+        if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
         if (changed) videoEl.load();
         if (typeof window.mdjActivateVideo === 'function') { window.mdjActivateVideo(videoEl); } else { videoEl.play().catch(() => {}); }
     }
@@ -671,6 +682,7 @@ window._djHeroPreviewOnly = function (key, hoveredCard) {
             videoEl.innerHTML = `<source src="${String(rv).replace(/"/g, "&quot;")}" type="video/mp4">`;
         }
         if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
+        if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
         if (changed) videoEl.load();
         if (typeof window.mdjActivateVideo === 'function') { window.mdjActivateVideo(videoEl); } else { videoEl.play().catch(() => {}); }
     }
@@ -697,7 +709,7 @@ window._lightingHeroPreviewOnly = function (key, hoveredCard) {
     const subtitleEl = document.getElementById("lighting-hero-subtitle");
     const eyebrowEl = document.getElementById("lighting-hero-eyebrow");
     const activeVideo =
-        item.video || "./assets/Special_Effects/Iluminacio\u0301n.mp4";
+        item.video || "./assets/Special_Effects/Iluminacion.mp4";
     const activeResolved = mdjV(activeVideo);
     if (eyebrowEl) {
         eyebrowEl.setAttribute("data-i18n", "lighting_eyebrow");
@@ -720,6 +732,7 @@ window._lightingHeroPreviewOnly = function (key, hoveredCard) {
         const changed = videoEl.getAttribute("src") !== rv;
         if (changed) videoEl.src = rv;
         if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
+        if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
         if (changed) videoEl.load();
         if (typeof window.mdjActivateVideo === 'function') { window.mdjActivateVideo(videoEl); } else { videoEl.play().catch(() => {}); }
     }
@@ -763,6 +776,7 @@ window._fxHeroPreviewOnly = function (key, hoveredCard) {
         const changed = videoEl.getAttribute("src") !== rv;
         if (changed) videoEl.src = rv;
         if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
+        if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
         if (changed) videoEl.load();
         if (typeof window.mdjActivateVideo === 'function') { window.mdjActivateVideo(videoEl); } else { videoEl.play().catch(() => {}); }
     }
@@ -1009,6 +1023,7 @@ window.renderLiveHero = (tabKey = null, animate = true) => {
             const changed = videoEl.getAttribute("src") !== rv;
             if (changed) videoEl.src = rv;
             if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
+        if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
             if (changed) videoEl.load();
             if (typeof window.mdjActivateVideo === 'function') { window.mdjActivateVideo(videoEl); } else { videoEl.play().catch(() => {}); }
         }
@@ -1167,6 +1182,7 @@ window.renderDjHero = (tabKey = 'weddings', animate = true) => {
                 videoEl.innerHTML = `<source src="${String(rv).replace(/"/g, "&quot;")}" type="video/mp4">`;
             }
             if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
+        if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
             if (changed) videoEl.load();
             if (typeof window.mdjActivateVideo === 'function') { window.mdjActivateVideo(videoEl); } else { videoEl.play().catch(() => {}); }
         }
@@ -1310,7 +1326,7 @@ window.fxItems = {
         id: "fx_uplighting",
         nameKey: "data_light_up_name",
         ctaKey: "btn_add_to_pack",
-        video: "./assets/Special_Effects/Iluminación.mp4",
+        video: "./assets/Special_Effects/Iluminacion.mp4",
         fallbackName: "Uplighting Arquitectónico",
         fallbackDesc: "Elegant, wireless perimeter lighting designed to bathe your walls in the precise color palette of your event.",
         price: 350,
@@ -1391,6 +1407,7 @@ window.renderFxHero = (currentTabKey = 'sparks', animate = true) => {
             const changed = videoEl.getAttribute("src") !== rv;
             if (changed) videoEl.src = rv;
             if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
+        if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
             if (changed) videoEl.load();
             if (typeof window.mdjActivateVideo === 'function') { window.mdjActivateVideo(videoEl); } else { videoEl.play().catch(() => {}); }
         }
@@ -1459,7 +1476,7 @@ window.renderLightingHero = (currentTabKey = 'movingHeads', animate = true) => {
             window.mdjTeardownLightingCarousel();
         }
 
-        let activeVideo = dataset[currentTabKey] && dataset[currentTabKey].video ? dataset[currentTabKey].video : "./assets/Special_Effects/Iluminación.mp4";
+        let activeVideo = dataset[currentTabKey] && dataset[currentTabKey].video ? dataset[currentTabKey].video : "./assets/Special_Effects/Iluminacion.mp4";
 
         if (gridEl && dataset) {
             gridEl.innerHTML = Object.entries(dataset).map(([key, item]) => {
@@ -1497,6 +1514,7 @@ window.renderLightingHero = (currentTabKey = 'movingHeads', animate = true) => {
             const changed = videoEl.getAttribute("src") !== rv;
             if (changed) videoEl.src = rv;
             if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
+        if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
             if (changed) videoEl.load();
             if (typeof window.mdjActivateVideo === 'function') { window.mdjActivateVideo(videoEl); } else { videoEl.play().catch(() => {}); }
         }
@@ -1673,6 +1691,7 @@ window.updateHoraLocaHero = (id) => {
         const changed = videoEl.getAttribute('src') !== rv;
         if (changed) videoEl.src = rv;
         if (typeof window.mdjHeroVideoPrime === 'function') window.mdjHeroVideoPrime(videoEl);
+        if (typeof window.mdjBindHeroVideoErrorFallback === 'function') window.mdjBindHeroVideoErrorFallback(videoEl);
         if (changed) videoEl.load();
         if (typeof window.mdjActivateVideo === 'function') { window.mdjActivateVideo(videoEl); } else { videoEl.play().catch(() => {}); }
     }
@@ -1867,28 +1886,12 @@ window.rentalCatalogs = {
             { id: "dj_monitor", name: "DJ Monitor Speaker", price: 95, img: "./assets/audio/dj-monitor.jpg", video: "./assets/audio/dj-monitor.mp4", category: "audio", unit: "u" },
             { id: "audio_mixer", name: "Audio Mixer", price: 120, img: "./assets/audio/audio-mixer.jpg", video: "./assets/audio/audio-mixer.mp4", category: "audio", unit: "u" }
         ]
-    },
-    lighting: {
-        title: "Iluminación y Pantallas LED",
-        subtitle: "Professional lighting, LED screens, and visual systems to elevate your event experience.",
-        items: [
-            { id: "led_panel_small", name: "LED Panel Screen (Small)", price: 300, img: "./assets/lighting/led-small.jpg", video: "./assets/lighting/led-small.mp4", category: "lighting", unit: "u" },
-            { id: "led_panel_large", name: "LED Panel Screen (Large)", price: 800, img: "./assets/lighting/led-large.jpg", video: "./assets/lighting/led-large.mp4", category: "lighting", unit: "u" },
-            { id: "moving_heads", name: "Moving Head Lights (Pair)", price: 150, img: "./assets/lighting/moving-heads.jpg", video: "./assets/lighting/moving-heads.mp4", category: "lighting", unit: "u" },
-            { id: "uplighting_pack", name: "Uplighting Pack (10 Units)", price: 200, img: "./assets/lighting/uplighting.jpg", video: "./assets/lighting/uplighting.mp4", category: "lighting", unit: "u" },
-            { id: "laser_show", name: "Laser Show System", price: 250, img: "./assets/lighting/laser.jpg", video: "./assets/lighting/laser.mp4", category: "lighting", unit: "u" },
-            { id: "fog_machine", name: "Fog Machine (Smoke)", price: 60, img: "./assets/lighting/fog.jpg", video: "./assets/lighting/fog.mp4", category: "lighting", unit: "u" },
-            { id: "low_fog_machine", name: "Low-Lying Fog (Dry Ice)", price: 250, img: "./assets/lighting/low-fog.jpg", video: "./assets/lighting/low-fog.mp4", category: "lighting", unit: "u" },
-            { id: "bubble_machine", name: "Pro Bubble Machine", price: 45, img: "./assets/lighting/bubble-machine.jpg", video: "./assets/lighting/bubble-machine.mp4", category: "lighting", unit: "u" },
-            { id: "spark_machine", name: "Cold Spark Machines (Pair)", price: 250, img: "./assets/lighting/spark-machine.jpg", video: "./assets/lighting/spark-machine.mp4", category: "lighting", unit: "pair" },
-            { id: "led_video_small", name: "LED Video Wall (Small)", price: 500, img: "./assets/lighting/led-video-small.jpg", video: "./assets/lighting/led-video-small.mp4", category: "lighting", unit: "u" },
-            { id: "led_video_medium", name: "LED Video Wall (Medium)", price: 950, img: "./assets/lighting/led-video-medium.jpg", video: "./assets/lighting/led-video-medium.mp4", category: "lighting", unit: "u" },
-            { id: "led_video_large", name: "LED Video Wall (Large)", price: 1800, img: "./assets/lighting/led-video-large.jpg", video: "./assets/lighting/led-video-large.mp4", category: "lighting", unit: "u" },
-            { id: "indoor_led_screen", name: "Indoor LED Screen", price: 650, img: "./assets/lighting/indoor-led-screen.jpg", video: "./assets/lighting/indoor-led-screen.mp4", category: "lighting", unit: "u" },
-            { id: "outdoor_led_screen", name: "Outdoor LED Screen", price: 1200, img: "./assets/lighting/outdoor-led-screen.jpg", video: "./assets/lighting/outdoor-led-screen.mp4", category: "lighting", unit: "u" },
-            { id: "led_tv_stand", name: "LED TV Display Stand", price: 220, img: "./assets/lighting/led-tv-stand.jpg", video: "./assets/lighting/led-tv-stand.mp4", category: "lighting", unit: "u" }
-        ]
     }
+    /* "lighting" (Iluminación y Pantallas LED, 11-15 items) eliminado 2026-09-09
+       (TICKET-FIX-RENTALS-VIDEOS-01, a pedido del PO): codigo muerto -- ninguna
+       tarjeta/boton del sitio real lo abria (la tarjeta "Iluminación y Pantallas LED"
+       del home usa data-action="open-lighting-modal", que abre #lighting-modal /
+       window.lightingItems, un sistema completamente distinto). Nadie lo vio nunca. */
 };
 
 window.rentalDraftQty = {}; // Universal draft quantity memory string
@@ -1922,6 +1925,9 @@ window.renderRentalCatalog = (categoryId) => {
     }
     const skipBgVideo = rentalModal && rentalModal.getAttribute('data-mdj-catalog-no-bg') === '1' && !showRentalHeroVideo;
     const videoContainer = document.getElementById('rental-multi-video-container');
+    if (videoContainer && typeof window.mdjBindHeroVideoErrorFallback === 'function') {
+        videoContainer.querySelectorAll('.rental-bg-vid').forEach(window.mdjBindHeroVideoErrorFallback);
+    }
     if (videoContainer && !skipBgVideo) {
         const allVideos = videoContainer.querySelectorAll('.rental-bg-vid');
         let hasActive = false;
@@ -2197,24 +2203,7 @@ window.renderRentalCatalog = (categoryId) => {
         'wireless_mic': '🎤',
         'dj_monitor': '📻',
         'audio_mixer': '🎚️',
-        
-        // Lighting & FX
-        'led_panel_small': '📺',
-        'led_panel_large': '🖥️',
-        'moving_heads': '🔦',
-        'uplighting_pack': '💡',
-        'laser_show': '🎇',
-        'fog_machine': '🌫️',
-        'low_fog_machine': '☁️',
-        'bubble_machine': '🫧',
-        'spark_machine': '✨',
-        'led_video_small': '📱',
-        'led_video_medium': '🖥️',
-        'led_video_large': '🎬',
-        'indoor_led_screen': '📟',
-        'outdoor_led_screen': '🏟️',
-        'led_tv_stand': '🖥️',
-        
+
         // Furniture
         'f_chairs': '🪑',
         'f_cocktail': '🍸',
