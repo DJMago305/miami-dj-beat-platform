@@ -1,12 +1,2 @@
 *.mp4 filter=lfs diff=lfs merge=lfs -text
 *.zip filter=lfs diff=lfs merge=lfs -text
-
-# EXCEPCION puntual (2026-09-08): estos 3 videos se comitean como blob
-# normal de Git, NO via LFS -- ver .gitignore para el porque (heroes
-# bloqueados en produccion, sin acceso de escritura a Supabase Storage).
-# Sin esto, quedarian como punteros LFS de ~130 bytes en vez del video
-# real al desplegar en Vercel. Revertir junto con la excepcion de
-# .gitignore el dia que se suban a Storage de verdad.
-web/assets/club-dj/videos/club-halloween-hero.mp4 filter= diff= merge= -text
-web/assets/mc-dj/videos/mc-host-hero.mp4 filter= diff= merge= -text
-web/assets/festival-dj/videos/festival-stage-hero.mp4 filter= diff= merge= -text
