@@ -33,7 +33,7 @@
         const recurringSet = new Set();
         recurring.forEach(function (r) {
             let n;
-            if (typeof r === 'string') n = mapR[r.toLowerCase()] ?? Number(r);
+            if (typeof r === 'string') n = mdjNvl(mapR[r.toLowerCase()], Number(r));
             else n = Number(r);
             if (Number.isInteger(n) && n >= 0 && n <= 6) recurringSet.add(n);
         });
@@ -771,7 +771,7 @@ async function initAgendaEngine() {
                     recurring.forEach(function (r) {
                         let n;
                         if (typeof r === 'string') {
-                            n = mapR[r.toLowerCase()] ?? Number(r);
+                            n = mdjNvl(mapR[r.toLowerCase()], Number(r));
                         } else {
                             n = Number(r);
                         }

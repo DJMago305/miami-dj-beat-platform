@@ -327,8 +327,8 @@ function renderWeatherWidget(data, eventOrDate) {
 
     const temp = Math.round((data.main && data.main.temp) || 78);
     const dailyRange = getDailyMinMaxFromForecast(data);
-    const tempMax = Math.round(dailyRange.max ?? (data.main && data.main.temp_max) ?? (temp + 5));
-    const tempMin = Math.round(dailyRange.min ?? (data.main && data.main.temp_min) ?? (temp - 5));
+    const tempMax = Math.round(mdjNvl(dailyRange.max, mdjNvl((data.main && data.main.temp_max), (temp + 5))));
+    const tempMin = Math.round(mdjNvl(dailyRange.min, mdjNvl((data.main && data.main.temp_min), (temp - 5))));
     const conditionMain = (data.weather && data.weather[0] && data.weather[0].main) || "Clear";
 
     const iconImg = document.getElementById('weather-icon-img');
