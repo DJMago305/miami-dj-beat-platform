@@ -7060,18 +7060,23 @@ body.mdj-artist-academy .dj-owner-tabs .container::-webkit-scrollbar-thumb {
   pointer-events: none;
 }
 
+/* FIX-HERO-VIDEO-OVERFLOW-01 (2026-09-09): la tecnica anterior (width/height:auto +
+   min-width/min-height:100% + centrado via flex o transform) depende de que el
+   video se desborde de su caja y el padre lo recorte con overflow:hidden -- en
+   Mac vieja real se vio el video desbordado tapando las tarjetas de abajo en vez
+   de quedar recortado. Reemplazado por el patron estandar object-fit:cover con
+   la caja fija al 100% del contenedor -- el recorte lo hace el propio elemento,
+   no un truco de layout. Mismo compatible con Safari 13 (object-fit soportado
+   desde Safari 10). */
 .mdj-hero-media-layer .hl-hero-video,
 .mdj-hero-media-layer .live-hero-video {
-  position: relative !important;
-  z-index: 0;
-  flex: 0 0 auto;
-  width: auto !important;
-  height: auto !important;
-  min-width: 100%;
-  min-height: 100%;
-  max-width: none;
-  object-fit: cover;
-  object-position: center center;
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  object-fit: cover !important;
+  object-position: center center !important;
 }
 
 /* Roster / DJ / Staff (Música en vivo, Captura, Staff): crop centrado full-bleed — mismo ADN */
@@ -7080,14 +7085,9 @@ body.mdj-artist-academy .dj-owner-tabs .container::-webkit-scrollbar-thumb {
 #staff-modal .mdj-hero-media-layer .live-hero-video,
 #payasos-modal .mdj-hero-media-layer .live-hero-video {
   position: absolute !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
-  flex: none !important;
-  min-width: 100% !important;
-  min-height: 100% !important;
-  width: auto !important;
-  height: auto !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
   max-width: none !important;
   object-fit: cover !important;
   object-position: center center !important;
