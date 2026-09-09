@@ -236,6 +236,35 @@ window.resolveMdAssetPublicUrl = function (path) {
     return String(base).replace(/\/?$/, "/") + segments.join("/") + query;
 };
 
+/**
+ * FIX-VIDEO-PRELOAD-RACE-01 (2026-09-09): resuelve <source data-src="./assets/...">
+ * a la URL real de Supabase recien en DOMContentLoaded, cuando MDB_ASSETS_URL ya
+ * esta listo. Antes, estas etiquetas tenian la ruta relativa directo en `src` --
+ * el parser/preloader del navegador la descarga de inmediato con
+ * preload="metadata"/"auto" (esto es comportamiento normal de HTML5 video, no un
+ * bug de Safari), muchisimo antes de que cualquier JS corra, cayendo siempre en
+ * el propio dominio (miamidjbeat.com/assets/... = 404) en vez del bucket. En Mac
+ * vieja, la rafaga de peticiones fallidas + el fondo 4K con blur parece
+ * contribuir al crash real de pestaña reportado ("This webpage was reloaded
+ * because a problem occurred"). `data-src` no dispara fetch del navegador --
+ * solo un atributo real `src` lo hace.
+ */
+function mdjResolveDeferredVideoSources() {
+    try {
+        document.querySelectorAll("source[data-src]").forEach(function (source) {
+            var resolved = window.resolveMdAssetPublicUrl(source.getAttribute("data-src"));
+            source.setAttribute("src", resolved);
+            var videoEl = source.closest("video");
+            if (videoEl) videoEl.load();
+        });
+    } catch (eDeferredSrc) { void eDeferredSrc; }
+}
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", mdjResolveDeferredVideoSources);
+} else {
+    mdjResolveDeferredVideoSources();
+}
+
 /** @deprecated Usar resolveMdAssetPublicUrl; se mantiene por compatibilidad con rentals.js y el resto del sitio. */
 window.resolveMdAssetVideoUrl = window.resolveMdAssetPublicUrl;
 
