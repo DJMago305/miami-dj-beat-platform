@@ -3,6 +3,30 @@
 // Un solo origen de proyecto → Storage y Edge Functions se derivan de MDB_SUPABASE_URL.
 
 /**
+ * FIX-REVEALTEXT-BLUR-02 (2026-09-09): marca `mdj-legacy-gpu` en <html> para
+ * navegadores viejos (misma sonda de sintaxis moderna que ya usa el sitio,
+ * ej. documents/event-blueprint-editor.html) -- reusada aqui como proxy de
+ * "GPU/motor limitado", no de sintaxis en si. Contraparte de
+ * FIX-REVEALTEXT-BLUR-01 (2026-09-08, quito el blur ANIMADO del titulo de
+ * index.html): las tarjetas "Consultar Disponibilidad" de rentals.html/
+ * services.html (`.glass-card`) tienen `backdrop-filter: blur(20px)`
+ * PERMANENTE mientras se animan con opacity/transform (`revealText`) al
+ * cargar -- misma combinacion de riesgo (confirmada real en iMac 2011,
+ * Radeon HD 6970M) que deja el elemento atascado en opacity:0 (invisible)
+ * en vez de completar la animacion, de forma intermitente entre recargas.
+ * Ver `.mdj-legacy-gpu .glass-card` en styles.css.
+ */
+(function mdjLegacyGpuDetect() {
+    try {
+        var modernSyntaxOk = true;
+        try { new Function('return (null)?.x ?? 1;'); } catch (eDetect) { modernSyntaxOk = false; }
+        if (!modernSyntaxOk && document.documentElement) {
+            document.documentElement.classList.add('mdj-legacy-gpu');
+        }
+    } catch (eOuter) { void eOuter; }
+})();
+
+/**
  * FIX-AUTH-LEGACY: polyfill de crypto.randomUUID() para Safari/WebKit < 15.4.
  * GoTrueClient (auth interno de supabase-js) lo usa al generar el estado del
  * flujo PKCE — sin él, createClient()/signIn* lanzan TypeError y el usuario
@@ -243,19 +267,55 @@ window.resolveMdAssetPublicUrl = function (path) {
  * el parser/preloader del navegador la descarga de inmediato con
  * preload="metadata"/"auto" (esto es comportamiento normal de HTML5 video, no un
  * bug de Safari), muchisimo antes de que cualquier JS corra, cayendo siempre en
- * el propio dominio (miamidjbeat.com/assets/... = 404) en vez del bucket. En Mac
- * vieja, la rafaga de peticiones fallidas + el fondo 4K con blur parece
- * contribuir al crash real de pestaña reportado ("This webpage was reloaded
- * because a problem occurred"). `data-src` no dispara fetch del navegador --
- * solo un atributo real `src` lo hace.
+ * el propio dominio (miamidjbeat.com/assets/... = 404) en vez del bucket. `data-src`
+ * no dispara fetch del navegador -- solo un atributo real `src` lo hace.
+ *
+ * FIX-VIDEO-EAGER-LOAD-CRASH-01 (2026-09-09): la primera version de este fix
+ * resolvia y cargaba TODOS los data-src de golpe en DOMContentLoaded -- eso
+ * arreglo la URL, pero en rentals.html/services.html hay ~10 <video> compartiendo
+ * la pagina (varios modales ocultos + el catalogo dinamico). Antes, con la URL
+ * mala, cada uno fallaba al instante (404) sin gastar memoria real. Ahora que la
+ * URL es correcta, todos intentaban descargar y decodificar en paralelo apenas
+ * cargaba la pagina -- confirmado real en Mac vieja: "A problem repeatedly
+ * occurred" (crash reincidente, peor que el crash unico original). Se cambia a
+ * IntersectionObserver: cada <video> solo se resuelve/carga cuando su elemento
+ * realmente entra en el viewport -- que para uno dentro de un modal con
+ * `display:none` no pasa hasta que ese modal se abre de verdad. El hero visible
+ * de una landing (club-dj.html, etc.) intersecta de inmediato, mismo
+ * comportamiento que antes.
  */
 function mdjResolveDeferredVideoSources() {
     try {
-        document.querySelectorAll("source[data-src]").forEach(function (source) {
+        var sources = document.querySelectorAll("source[data-src]");
+        if (!sources.length) return;
+
+        var resolveOne = function (source) {
+            if (source.dataset.mdjSrcResolved === "1") return;
+            source.dataset.mdjSrcResolved = "1";
             var resolved = window.resolveMdAssetPublicUrl(source.getAttribute("data-src"));
             source.setAttribute("src", resolved);
             var videoEl = source.closest("video");
             if (videoEl) videoEl.load();
+        };
+
+        if (typeof IntersectionObserver !== "function") {
+            /* Sin soporte: mejor cargar todo que dejar el hero visible sin video. */
+            sources.forEach(resolveOne);
+            return;
+        }
+
+        var io = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (!entry.isIntersecting) return;
+                var target = entry.target;
+                io.unobserve(target);
+                var source = target.tagName === "SOURCE" ? target : target.querySelector("source[data-src]");
+                if (source) resolveOne(source);
+            });
+        }, { rootMargin: "250px" });
+
+        sources.forEach(function (source) {
+            io.observe(source.closest("video") || source);
         });
     } catch (eDeferredSrc) { void eDeferredSrc; }
 }
