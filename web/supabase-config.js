@@ -3,6 +3,30 @@
 // Un solo origen de proyecto → Storage y Edge Functions se derivan de MDB_SUPABASE_URL.
 
 /**
+ * FIX-REVEALTEXT-BLUR-02 (2026-09-09): marca `mdj-legacy-gpu` en <html> para
+ * navegadores viejos (misma sonda de sintaxis moderna que ya usa el sitio,
+ * ej. documents/event-blueprint-editor.html) -- reusada aqui como proxy de
+ * "GPU/motor limitado", no de sintaxis en si. Contraparte de
+ * FIX-REVEALTEXT-BLUR-01 (2026-09-08, quito el blur ANIMADO del titulo de
+ * index.html): las tarjetas "Consultar Disponibilidad" de rentals.html/
+ * services.html (`.glass-card`) tienen `backdrop-filter: blur(20px)`
+ * PERMANENTE mientras se animan con opacity/transform (`revealText`) al
+ * cargar -- misma combinacion de riesgo (confirmada real en iMac 2011,
+ * Radeon HD 6970M) que deja el elemento atascado en opacity:0 (invisible)
+ * en vez de completar la animacion, de forma intermitente entre recargas.
+ * Ver `.mdj-legacy-gpu .glass-card` en styles.css.
+ */
+(function mdjLegacyGpuDetect() {
+    try {
+        var modernSyntaxOk = true;
+        try { new Function('return (null)?.x ?? 1;'); } catch (eDetect) { modernSyntaxOk = false; }
+        if (!modernSyntaxOk && document.documentElement) {
+            document.documentElement.classList.add('mdj-legacy-gpu');
+        }
+    } catch (eOuter) { void eOuter; }
+})();
+
+/**
  * FIX-AUTH-LEGACY: polyfill de crypto.randomUUID() para Safari/WebKit < 15.4.
  * GoTrueClient (auth interno de supabase-js) lo usa al generar el estado del
  * flujo PKCE — sin él, createClient()/signIn* lanzan TypeError y el usuario
@@ -234,6 +258,163 @@ window.resolveMdAssetPublicUrl = function (path) {
         }
     });
     return String(base).replace(/\/?$/, "/") + segments.join("/") + query;
+};
+
+/**
+ * FIX-VIDEO-PRELOAD-RACE-01 (2026-09-09): resuelve <source data-src="./assets/...">
+ * a la URL real de Supabase recien en DOMContentLoaded, cuando MDB_ASSETS_URL ya
+ * esta listo. Antes, estas etiquetas tenian la ruta relativa directo en `src` --
+ * el parser/preloader del navegador la descarga de inmediato con
+ * preload="metadata"/"auto" (esto es comportamiento normal de HTML5 video, no un
+ * bug de Safari), muchisimo antes de que cualquier JS corra, cayendo siempre en
+ * el propio dominio (miamidjbeat.com/assets/... = 404) en vez del bucket. `data-src`
+ * no dispara fetch del navegador -- solo un atributo real `src` lo hace.
+ *
+ * FIX-VIDEO-EAGER-LOAD-CRASH-01 (2026-09-09): la primera version de este fix
+ * resolvia y cargaba TODOS los data-src de golpe en DOMContentLoaded -- eso
+ * arreglo la URL, pero en rentals.html/services.html hay ~10 <video> compartiendo
+ * la pagina (varios modales ocultos + el catalogo dinamico). Antes, con la URL
+ * mala, cada uno fallaba al instante (404) sin gastar memoria real. Ahora que la
+ * URL es correcta, todos intentaban descargar y decodificar en paralelo apenas
+ * cargaba la pagina -- confirmado real en Mac vieja: "A problem repeatedly
+ * occurred" (crash reincidente, peor que el crash unico original). Se cambia a
+ * IntersectionObserver: cada <video> solo se resuelve/carga cuando su elemento
+ * realmente entra en el viewport -- que para uno dentro de un modal con
+ * `display:none` no pasa hasta que ese modal se abre de verdad. El hero visible
+ * de una landing (club-dj.html, etc.) intersecta de inmediato, mismo
+ * comportamiento que antes.
+ */
+var mdjVideoLazyLoadObserver = null;
+var mdjResolveOneVideoSource = null;
+
+function mdjResolveDeferredVideoSources() {
+    try {
+        var sources = document.querySelectorAll("source[data-src]");
+        if (!sources.length) return;
+
+        mdjResolveOneVideoSource = function (source) {
+            if (source.dataset.mdjSrcResolved === "1") return;
+            source.dataset.mdjSrcResolved = "1";
+            var resolved = window.resolveMdAssetPublicUrl(source.getAttribute("data-src"));
+            source.setAttribute("src", resolved);
+            var videoEl = source.closest("video");
+            if (!videoEl) return;
+            videoEl.load();
+            /* mdjActivateVideo en vez de dejar el autoplay nativo solo: asi este video
+               tambien entra en la exclusion mutua (un solo video reproduciendose a la
+               vez en toda la pestaña), no solo los que llaman .play() explicito desde
+               rentals.js. */
+            if (typeof window.mdjActivateVideo === "function") {
+                window.mdjActivateVideo(videoEl);
+            }
+        };
+
+        if (typeof IntersectionObserver !== "function") {
+            /* Sin soporte: mejor cargar todo que dejar el hero visible sin video. */
+            sources.forEach(mdjResolveOneVideoSource);
+            return;
+        }
+
+        var io = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (!entry.isIntersecting) return;
+                var target = entry.target;
+                io.unobserve(target);
+                var source = target.tagName === "SOURCE" ? target : target.querySelector("source[data-src]");
+                if (source) mdjResolveOneVideoSource(source);
+            });
+        }, { rootMargin: "250px" });
+        mdjVideoLazyLoadObserver = io;
+
+        sources.forEach(function (source) {
+            io.observe(source.closest("video") || source);
+        });
+    } catch (eDeferredSrc) { void eDeferredSrc; }
+}
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", mdjResolveDeferredVideoSources);
+} else {
+    mdjResolveDeferredVideoSources();
+}
+
+/**
+ * TICKET-VIDEO-LIFECYCLE-01 (2026-09-09), a pedido explicito del PO: la web debe
+ * ser ligera en CUALQUIER hardware (no solo Mac vieja) -- un solo video activo a
+ * la vez en toda la pestaña (exclusion mutua real, un solo decoder trabajando),
+ * y al cerrar el modal que lo contiene, el video se pausa, resetea y DESCARGA
+ * (no solo se pausa) para no dejar memoria de decoder ocupada sin necesidad.
+ */
+
+/** Resuelve de inmediato el <source data-src> de `videoEl` si el IntersectionObserver
+ * todavia no le tocaba el turno (ej. se activa por codigo antes de que el navegador
+ * termine de calcular que ya es visible) -- evita la carrera src-no-listo-todavia. */
+window.mdjEnsureVideoResolved = function (videoEl) {
+    if (!videoEl) return false;
+    try {
+        var source = videoEl.querySelector("source[data-src]");
+        if (source && source.dataset.mdjSrcResolved !== "1" && typeof mdjResolveOneVideoSource === "function") {
+            if (mdjVideoLazyLoadObserver) mdjVideoLazyLoadObserver.unobserve(videoEl);
+            mdjResolveOneVideoSource(source);
+            return true; /* recien se resolvio/llamo .load() ahora mismo */
+        }
+    } catch (eEnsure) { void eEnsure; }
+    return false;
+};
+
+/** Reproduce `videoEl` y pausa cualquier otro que estuviera activo. Usar en vez de videoEl.play() directo. */
+window.mdjActivateVideo = function (videoEl) {
+    if (!videoEl) return;
+    window.mdjEnsureVideoResolved(videoEl);
+    try {
+        if (window.mdjActiveVideoEl && window.mdjActiveVideoEl !== videoEl) {
+            window.mdjActiveVideoEl.pause();
+        }
+    } catch (eDeactivate) { void eDeactivate; }
+    window.mdjActiveVideoEl = videoEl;
+    videoEl.play().catch(function () { /* autoplay bloqueado o video sin src todavia: ignorar */ });
+    /* Un .load() (propio o de quien resolvio el data-src momentos antes) puede dejar
+       el elemento en un estado que rechaza el .play() de arriba en silencio -- red de
+       seguridad: reintentar una vez que el navegador confirme datos reales, sin costo
+       si ya estaba reproduciendo (.play() sobre un video en marcha es un no-op). */
+    videoEl.addEventListener("loadeddata", function retryPlay() {
+        if (window.mdjActiveVideoEl === videoEl) {
+            videoEl.play().catch(function () { /* ignorar */ });
+        }
+    }, { once: true });
+};
+
+/** Pausa y resetea `videoEl` sin descargarlo (para cuando otro video toma el foco dentro del mismo modal). */
+window.mdjDeactivateVideo = function (videoEl) {
+    if (!videoEl) return;
+    try {
+        videoEl.pause();
+        videoEl.currentTime = 0;
+    } catch (ePause) { void ePause; }
+    if (window.mdjActiveVideoEl === videoEl) window.mdjActiveVideoEl = null;
+};
+
+/** Descarga por completo `videoEl` (vuelve a data-src, libera el buffer decodificado) -- llamar al cerrar su modal. */
+window.mdjUnloadVideo = function (videoEl) {
+    if (!videoEl) return;
+    window.mdjDeactivateVideo(videoEl);
+    try {
+        var source = videoEl.querySelector("source[data-src]");
+        if (source && source.hasAttribute("src")) {
+            source.removeAttribute("src");
+            delete source.dataset.mdjSrcResolved;
+            videoEl.removeAttribute("src");
+            videoEl.load();
+            if (mdjVideoLazyLoadObserver) mdjVideoLazyLoadObserver.observe(videoEl);
+        }
+    } catch (eUnload) { void eUnload; }
+};
+
+/** Descarga TODOS los <video data-src> dentro de `container` (modal que se acaba de cerrar). */
+window.mdjUnloadVideosIn = function (container) {
+    if (!container || !container.querySelectorAll) return;
+    try {
+        container.querySelectorAll("video").forEach(window.mdjUnloadVideo);
+    } catch (eUnloadAll) { void eUnloadAll; }
 };
 
 /** @deprecated Usar resolveMdAssetPublicUrl; se mantiene por compatibilidad con rentals.js y el resto del sitio. */

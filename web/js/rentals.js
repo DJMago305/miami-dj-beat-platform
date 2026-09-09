@@ -428,7 +428,7 @@ window.renderStaffHero = function (tabKey = "bartender", animate = true) {
         if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
         if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
         if (changed) videoEl.load();
-        videoEl.play().catch(() => {});
+        if (typeof window.mdjActivateVideo === 'function') { window.mdjActivateVideo(videoEl); } else { videoEl.play().catch(() => {}); }
     }
 
     const staffGrid = document.getElementById("staff-roster-grid");
@@ -506,7 +506,7 @@ window.renderPayasosHero = function (tabKey = "gif", animate = true) {
         if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
         if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
         if (changed) videoEl.load();
-        videoEl.play().catch(() => {});
+        if (typeof window.mdjActivateVideo === 'function') { window.mdjActivateVideo(videoEl); } else { videoEl.play().catch(() => {}); }
     }
 
     const payGrid = document.getElementById("payasos-roster-grid");
@@ -599,7 +599,7 @@ window._rosterHeroPreviewOnly = function (key, hoveredCard) {
         if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
         if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
         if (changed) videoEl.load();
-        videoEl.play().catch(() => {});
+        if (typeof window.mdjActivateVideo === 'function') { window.mdjActivateVideo(videoEl); } else { videoEl.play().catch(() => {}); }
     }
 
     const grid = document.getElementById("roster-grid");
@@ -684,7 +684,7 @@ window._djHeroPreviewOnly = function (key, hoveredCard) {
         if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
         if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
         if (changed) videoEl.load();
-        videoEl.play().catch(() => {});
+        if (typeof window.mdjActivateVideo === 'function') { window.mdjActivateVideo(videoEl); } else { videoEl.play().catch(() => {}); }
     }
     const grid = document.getElementById("dj-roster-grid");
     document.querySelectorAll("#dj-roster-grid .hl-type-card").forEach(function (el) {
@@ -734,7 +734,7 @@ window._lightingHeroPreviewOnly = function (key, hoveredCard) {
         if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
         if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
         if (changed) videoEl.load();
-        videoEl.play().catch(() => {});
+        if (typeof window.mdjActivateVideo === 'function') { window.mdjActivateVideo(videoEl); } else { videoEl.play().catch(() => {}); }
     }
     const grid = document.getElementById("lighting-roster-grid");
     document.querySelectorAll("#lighting-roster-grid .hl-type-card").forEach(function (el) {
@@ -778,7 +778,7 @@ window._fxHeroPreviewOnly = function (key, hoveredCard) {
         if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
         if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
         if (changed) videoEl.load();
-        videoEl.play().catch(() => {});
+        if (typeof window.mdjActivateVideo === 'function') { window.mdjActivateVideo(videoEl); } else { videoEl.play().catch(() => {}); }
     }
     const fxGrid = document.getElementById("fx-roster-grid");
     document.querySelectorAll("#fx-roster-grid [data-fx-key]").forEach(function (el) {
@@ -1025,7 +1025,7 @@ window.renderLiveHero = (tabKey = null, animate = true) => {
             if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
         if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
             if (changed) videoEl.load();
-            videoEl.play().catch(() => { });
+            if (typeof window.mdjActivateVideo === 'function') { window.mdjActivateVideo(videoEl); } else { videoEl.play().catch(() => {}); }
         }
 
         if (window.i18n) window.i18n.updateUI();
@@ -1184,7 +1184,7 @@ window.renderDjHero = (tabKey = 'weddings', animate = true) => {
             if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
         if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
             if (changed) videoEl.load();
-            videoEl.play().catch(() => { });
+            if (typeof window.mdjActivateVideo === 'function') { window.mdjActivateVideo(videoEl); } else { videoEl.play().catch(() => {}); }
         }
 
         if (typeof window._bindDjRosterHeroHover === 'function') {
@@ -1409,7 +1409,7 @@ window.renderFxHero = (currentTabKey = 'sparks', animate = true) => {
             if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
         if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
             if (changed) videoEl.load();
-            videoEl.play().catch(() => { });
+            if (typeof window.mdjActivateVideo === 'function') { window.mdjActivateVideo(videoEl); } else { videoEl.play().catch(() => {}); }
         }
 
         if (typeof window._bindFxGridHeroHover === "function") window._bindFxGridHeroHover();
@@ -1516,7 +1516,7 @@ window.renderLightingHero = (currentTabKey = 'movingHeads', animate = true) => {
             if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
         if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
             if (changed) videoEl.load();
-            videoEl.play().catch(() => { });
+            if (typeof window.mdjActivateVideo === 'function') { window.mdjActivateVideo(videoEl); } else { videoEl.play().catch(() => {}); }
         }
 
         if (typeof window._bindLightingGridHeroHover === "function") window._bindLightingGridHeroHover();
@@ -1661,7 +1661,7 @@ window.updateHoraLocaHero = (id) => {
         if (typeof window.mdjHeroVideoPrime === 'function') window.mdjHeroVideoPrime(videoEl);
         if (typeof window.mdjBindHeroVideoErrorFallback === 'function') window.mdjBindHeroVideoErrorFallback(videoEl);
         if (changed) videoEl.load();
-        videoEl.play().catch(() => {});
+        if (typeof window.mdjActivateVideo === 'function') { window.mdjActivateVideo(videoEl); } else { videoEl.play().catch(() => {}); }
     }
 
     if (window.i18n) {
@@ -1904,7 +1904,7 @@ window.renderRentalCatalog = (categoryId) => {
             if (vid.getAttribute('data-category') === categoryId) {
                 vid.classList.add('active-vid');
                 if (typeof window.mdjHeroVideoPrime === 'function') window.mdjHeroVideoPrime(vid);
-                vid.play().catch(() => {});
+                if (typeof window.mdjActivateVideo === 'function') { window.mdjActivateVideo(vid); } else { vid.play().catch(() => {}); }
                 hasActive = true;
             } else {
                 vid.classList.remove('active-vid');
@@ -1915,7 +1915,7 @@ window.renderRentalCatalog = (categoryId) => {
         if (!hasActive && allVideos.length > 0) {
             allVideos[0].classList.add('active-vid');
             if (typeof window.mdjHeroVideoPrime === 'function') window.mdjHeroVideoPrime(allVideos[0]);
-            allVideos[0].play().catch(() => {});
+            if (typeof window.mdjActivateVideo === 'function') { window.mdjActivateVideo(allVideos[0]); } else { allVideos[0].play().catch(() => {}); }
         }
     } else if (videoContainer && skipBgVideo) {
         videoContainer.querySelectorAll('.rental-bg-vid').forEach((vid) => {
@@ -2340,13 +2340,13 @@ window.renderRentalCatalog = (categoryId) => {
             (source.src.includes(encodeURI(cleanItemVid)) || source.src.includes(cleanItemVid));
         if (already) {
             if (typeof window.mdjHeroVideoPrime === 'function') window.mdjHeroVideoPrime(heroVid);
-            heroVid.play().catch(() => {});
+            if (typeof window.mdjActivateVideo === 'function') { window.mdjActivateVideo(heroVid); } else { heroVid.play().catch(() => {}); }
             return;
         }
         source.src = mdjV(itemDef.video);
         if (typeof window.mdjHeroVideoPrime === 'function') window.mdjHeroVideoPrime(heroVid);
         heroVid.load();
-        heroVid.play().catch(() => {});
+        if (typeof window.mdjActivateVideo === 'function') { window.mdjActivateVideo(heroVid); } else { heroVid.play().catch(() => {}); }
     };
 
     const track = document.querySelector('#rental-dynamic-modal .mdj-rental-catalog-carousel');
@@ -2375,7 +2375,7 @@ window.renderRentalCatalog = (categoryId) => {
                     source.src = mdjV(catBgVideo);
                     if (typeof window.mdjHeroVideoPrime === 'function') window.mdjHeroVideoPrime(heroVid);
                     heroVid.load();
-                    heroVid.play().catch(() => {});
+                    if (typeof window.mdjActivateVideo === 'function') { window.mdjActivateVideo(heroVid); } else { heroVid.play().catch(() => {}); }
                 }
             }
         };
@@ -3171,6 +3171,7 @@ window.premiumTransition = (outId, inId, callback) => {
     setTimeout(() => {
         outModal.classList.remove('modal-visible', 'modal-fade-out');
         outModal.classList.add('modal-hidden');
+        if (typeof window.mdjUnloadVideosIn === 'function') window.mdjUnloadVideosIn(outModal);
 
         if (callback) callback();
 
@@ -3211,6 +3212,7 @@ window.closeCheckoutModal = function() {
     const m = document.getElementById('dj-checkout-modal');
     if(m) {
         m.classList.add('modal-hidden');
+        if (typeof window.mdjUnloadVideosIn === 'function') window.mdjUnloadVideosIn(m);
         document.getElementById('checkout-step-1').style.display = 'block';
         document.getElementById('checkout-step-2').style.display = 'none';
         const form = document.getElementById('checkout-discovery-form');
@@ -3721,6 +3723,7 @@ document.addEventListener('click', async (e) => {
                     m.classList.remove('modal-visible', 'modal-fade-out');
                     m.classList.add('modal-hidden');
                     document.body.classList.remove('body-modal-lock');
+                    if (typeof window.mdjUnloadVideosIn === 'function') window.mdjUnloadVideosIn(m);
 
                     const hlIframe = document.getElementById('hl-hero-iframe');
                     if (hlIframe) hlIframe.src = '';
@@ -3820,7 +3823,7 @@ document.addEventListener('click', async (e) => {
                         source.src = mdjV(baseSrc);
                         if (typeof window.mdjHeroVideoPrime === 'function') window.mdjHeroVideoPrime(heroVideo);
                         heroVideo.load();
-                        heroVideo.play().catch(() => {});
+                        if (typeof window.mdjActivateVideo === 'function') { window.mdjActivateVideo(heroVideo); } else { heroVideo.play().catch(() => {}); }
                     }
                 }
             }
@@ -3865,7 +3868,7 @@ document.addEventListener('click', async (e) => {
                     source.src = mdjV(item.video);
                     if (typeof window.mdjHeroVideoPrime === 'function') window.mdjHeroVideoPrime(heroVideo);
                     heroVideo.load();
-                    heroVideo.play().catch(() => {});
+                    if (typeof window.mdjActivateVideo === 'function') { window.mdjActivateVideo(heroVideo); } else { heroVideo.play().catch(() => {}); }
                 }
             }
         }
@@ -4515,7 +4518,7 @@ window.initTalentSelectorShellHover = function () {
             shell.classList.add('talent-shell-hero-preview-on');
             heroEls().forEach((n) => n.classList.remove('active'));
             if (el) el.classList.add('active');
-            foc.play().catch(() => {});
+            if (typeof window.mdjActivateVideo === 'function') { window.mdjActivateVideo(foc); } else { foc.play().catch(() => {}); }
             return;
         }
         foc.dataset.mdjPreviewUrl = rurl;
@@ -4527,7 +4530,7 @@ window.initTalentSelectorShellHover = function () {
         heroEls().forEach((n) => n.classList.remove('active'));
         if (el) el.classList.add('active');
         foc.load();
-        foc.play().catch(() => {});
+        if (typeof window.mdjActivateVideo === 'function') { window.mdjActivateVideo(foc); } else { foc.play().catch(() => {}); }
     };
 
     const clearFocus = () => {
