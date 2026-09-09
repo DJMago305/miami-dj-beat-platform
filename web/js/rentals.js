@@ -56,6 +56,14 @@ window.mdjHeroVideoPrime = function (el) {
     } catch (e) { /* ignore */ }
 };
 
+/** Si el asset del hero video falla (faltante/400/404), oculta el <video> en vez de dejar un recuadro roto. Idempotente. */
+window.mdjBindHeroVideoErrorFallback = function (el) {
+    if (!el || el.dataset.mdjErrorFallbackBound === "1") return;
+    el.dataset.mdjErrorFallbackBound = "1";
+    el.addEventListener("error", function () { el.style.display = "none"; });
+    el.addEventListener("loadeddata", function () { el.style.display = ""; });
+};
+
 window.djTabs = {
     weddings: {
         id: "dj_weddings",
@@ -272,7 +280,7 @@ window.visualTabs = {
         descKey: "data_vis_magic_mirror_desc",
         priceLabelKey: "vis_magic_mirror_price",
         ctaKey: "btn_add_to_pack",
-        video: "./assets/capture-visuals/Espejo_M\u00e1gico.mp4",
+        video: "./assets/capture-visuals/espejo-magico.mp4",
         fallbackName: "Magic Mirror",
         fallbackSubtitle: "Select the coverage talent you wish to add.",
         fallbackDesc: "Interactive full-length mirror photo experience for your guests.",
@@ -418,6 +426,7 @@ window.renderStaffHero = function (tabKey = "bartender", animate = true) {
         const changed = videoEl.getAttribute("src") !== rv;
         if (changed) videoEl.src = rv;
         if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
+        if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
         if (changed) videoEl.load();
         videoEl.play().catch(() => {});
     }
@@ -495,6 +504,7 @@ window.renderPayasosHero = function (tabKey = "gif", animate = true) {
         const changed = videoEl.getAttribute("src") !== rv;
         if (changed) videoEl.src = rv;
         if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
+        if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
         if (changed) videoEl.load();
         videoEl.play().catch(() => {});
     }
@@ -587,6 +597,7 @@ window._rosterHeroPreviewOnly = function (key, hoveredCard) {
         const changed = videoEl.getAttribute("src") !== rv;
         if (changed) videoEl.src = rv;
         if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
+        if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
         if (changed) videoEl.load();
         videoEl.play().catch(() => {});
     }
@@ -671,6 +682,7 @@ window._djHeroPreviewOnly = function (key, hoveredCard) {
             videoEl.innerHTML = `<source src="${String(rv).replace(/"/g, "&quot;")}" type="video/mp4">`;
         }
         if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
+        if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
         if (changed) videoEl.load();
         videoEl.play().catch(() => {});
     }
@@ -720,6 +732,7 @@ window._lightingHeroPreviewOnly = function (key, hoveredCard) {
         const changed = videoEl.getAttribute("src") !== rv;
         if (changed) videoEl.src = rv;
         if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
+        if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
         if (changed) videoEl.load();
         videoEl.play().catch(() => {});
     }
@@ -763,6 +776,7 @@ window._fxHeroPreviewOnly = function (key, hoveredCard) {
         const changed = videoEl.getAttribute("src") !== rv;
         if (changed) videoEl.src = rv;
         if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
+        if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
         if (changed) videoEl.load();
         videoEl.play().catch(() => {});
     }
@@ -1009,6 +1023,7 @@ window.renderLiveHero = (tabKey = null, animate = true) => {
             const changed = videoEl.getAttribute("src") !== rv;
             if (changed) videoEl.src = rv;
             if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
+        if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
             if (changed) videoEl.load();
             videoEl.play().catch(() => { });
         }
@@ -1167,6 +1182,7 @@ window.renderDjHero = (tabKey = 'weddings', animate = true) => {
                 videoEl.innerHTML = `<source src="${String(rv).replace(/"/g, "&quot;")}" type="video/mp4">`;
             }
             if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
+        if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
             if (changed) videoEl.load();
             videoEl.play().catch(() => { });
         }
@@ -1391,6 +1407,7 @@ window.renderFxHero = (currentTabKey = 'sparks', animate = true) => {
             const changed = videoEl.getAttribute("src") !== rv;
             if (changed) videoEl.src = rv;
             if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
+        if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
             if (changed) videoEl.load();
             videoEl.play().catch(() => { });
         }
@@ -1497,6 +1514,7 @@ window.renderLightingHero = (currentTabKey = 'movingHeads', animate = true) => {
             const changed = videoEl.getAttribute("src") !== rv;
             if (changed) videoEl.src = rv;
             if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
+        if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
             if (changed) videoEl.load();
             videoEl.play().catch(() => { });
         }
@@ -1641,6 +1659,7 @@ window.updateHoraLocaHero = (id) => {
         const changed = videoEl.getAttribute('src') !== rv;
         if (changed) videoEl.src = rv;
         if (typeof window.mdjHeroVideoPrime === 'function') window.mdjHeroVideoPrime(videoEl);
+        if (typeof window.mdjBindHeroVideoErrorFallback === 'function') window.mdjBindHeroVideoErrorFallback(videoEl);
         if (changed) videoEl.load();
         videoEl.play().catch(() => {});
     }
@@ -1890,6 +1909,12 @@ window.renderRentalCatalog = (categoryId) => {
     }
     const skipBgVideo = rentalModal && rentalModal.getAttribute('data-mdj-catalog-no-bg') === '1' && !showRentalHeroVideo;
     const videoContainer = document.getElementById('rental-multi-video-container');
+    if (videoContainer && typeof window.mdjBindHeroVideoErrorFallback === 'function') {
+        /* Cablear el fallback en TODAS, sin importar la rama (categorias como "lighting" nunca
+           llegan a .play() aqui, pero <source preload="none"> igual puede quedar pidiendose
+           en Safari viejo -- ver TICKET FIX-RENTALS-VIDEOS-01, 2026-09-09). */
+        videoContainer.querySelectorAll('.rental-bg-vid').forEach(window.mdjBindHeroVideoErrorFallback);
+    }
     if (videoContainer && !skipBgVideo) {
         const allVideos = videoContainer.querySelectorAll('.rental-bg-vid');
         let hasActive = false;
