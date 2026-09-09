@@ -284,23 +284,34 @@ window.resolveMdAssetPublicUrl = function (path) {
  * de una landing (club-dj.html, etc.) intersecta de inmediato, mismo
  * comportamiento que antes.
  */
+var mdjVideoLazyLoadObserver = null;
+var mdjResolveOneVideoSource = null;
+
 function mdjResolveDeferredVideoSources() {
     try {
         var sources = document.querySelectorAll("source[data-src]");
         if (!sources.length) return;
 
-        var resolveOne = function (source) {
+        mdjResolveOneVideoSource = function (source) {
             if (source.dataset.mdjSrcResolved === "1") return;
             source.dataset.mdjSrcResolved = "1";
             var resolved = window.resolveMdAssetPublicUrl(source.getAttribute("data-src"));
             source.setAttribute("src", resolved);
             var videoEl = source.closest("video");
-            if (videoEl) videoEl.load();
+            if (!videoEl) return;
+            videoEl.load();
+            /* mdjActivateVideo en vez de dejar el autoplay nativo solo: asi este video
+               tambien entra en la exclusion mutua (un solo video reproduciendose a la
+               vez en toda la pestaña), no solo los que llaman .play() explicito desde
+               rentals.js. */
+            if (typeof window.mdjActivateVideo === "function") {
+                window.mdjActivateVideo(videoEl);
+            }
         };
 
         if (typeof IntersectionObserver !== "function") {
             /* Sin soporte: mejor cargar todo que dejar el hero visible sin video. */
-            sources.forEach(resolveOne);
+            sources.forEach(mdjResolveOneVideoSource);
             return;
         }
 
@@ -310,9 +321,10 @@ function mdjResolveDeferredVideoSources() {
                 var target = entry.target;
                 io.unobserve(target);
                 var source = target.tagName === "SOURCE" ? target : target.querySelector("source[data-src]");
-                if (source) resolveOne(source);
+                if (source) mdjResolveOneVideoSource(source);
             });
         }, { rootMargin: "250px" });
+        mdjVideoLazyLoadObserver = io;
 
         sources.forEach(function (source) {
             io.observe(source.closest("video") || source);
@@ -324,6 +336,86 @@ if (document.readyState === "loading") {
 } else {
     mdjResolveDeferredVideoSources();
 }
+
+/**
+ * TICKET-VIDEO-LIFECYCLE-01 (2026-09-09), a pedido explicito del PO: la web debe
+ * ser ligera en CUALQUIER hardware (no solo Mac vieja) -- un solo video activo a
+ * la vez en toda la pestaña (exclusion mutua real, un solo decoder trabajando),
+ * y al cerrar el modal que lo contiene, el video se pausa, resetea y DESCARGA
+ * (no solo se pausa) para no dejar memoria de decoder ocupada sin necesidad.
+ */
+
+/** Resuelve de inmediato el <source data-src> de `videoEl` si el IntersectionObserver
+ * todavia no le tocaba el turno (ej. se activa por codigo antes de que el navegador
+ * termine de calcular que ya es visible) -- evita la carrera src-no-listo-todavia. */
+window.mdjEnsureVideoResolved = function (videoEl) {
+    if (!videoEl) return false;
+    try {
+        var source = videoEl.querySelector("source[data-src]");
+        if (source && source.dataset.mdjSrcResolved !== "1" && typeof mdjResolveOneVideoSource === "function") {
+            if (mdjVideoLazyLoadObserver) mdjVideoLazyLoadObserver.unobserve(videoEl);
+            mdjResolveOneVideoSource(source);
+            return true; /* recien se resolvio/llamo .load() ahora mismo */
+        }
+    } catch (eEnsure) { void eEnsure; }
+    return false;
+};
+
+/** Reproduce `videoEl` y pausa cualquier otro que estuviera activo. Usar en vez de videoEl.play() directo. */
+window.mdjActivateVideo = function (videoEl) {
+    if (!videoEl) return;
+    window.mdjEnsureVideoResolved(videoEl);
+    try {
+        if (window.mdjActiveVideoEl && window.mdjActiveVideoEl !== videoEl) {
+            window.mdjActiveVideoEl.pause();
+        }
+    } catch (eDeactivate) { void eDeactivate; }
+    window.mdjActiveVideoEl = videoEl;
+    videoEl.play().catch(function () { /* autoplay bloqueado o video sin src todavia: ignorar */ });
+    /* Un .load() (propio o de quien resolvio el data-src momentos antes) puede dejar
+       el elemento en un estado que rechaza el .play() de arriba en silencio -- red de
+       seguridad: reintentar una vez que el navegador confirme datos reales, sin costo
+       si ya estaba reproduciendo (.play() sobre un video en marcha es un no-op). */
+    videoEl.addEventListener("loadeddata", function retryPlay() {
+        if (window.mdjActiveVideoEl === videoEl) {
+            videoEl.play().catch(function () { /* ignorar */ });
+        }
+    }, { once: true });
+};
+
+/** Pausa y resetea `videoEl` sin descargarlo (para cuando otro video toma el foco dentro del mismo modal). */
+window.mdjDeactivateVideo = function (videoEl) {
+    if (!videoEl) return;
+    try {
+        videoEl.pause();
+        videoEl.currentTime = 0;
+    } catch (ePause) { void ePause; }
+    if (window.mdjActiveVideoEl === videoEl) window.mdjActiveVideoEl = null;
+};
+
+/** Descarga por completo `videoEl` (vuelve a data-src, libera el buffer decodificado) -- llamar al cerrar su modal. */
+window.mdjUnloadVideo = function (videoEl) {
+    if (!videoEl) return;
+    window.mdjDeactivateVideo(videoEl);
+    try {
+        var source = videoEl.querySelector("source[data-src]");
+        if (source && source.hasAttribute("src")) {
+            source.removeAttribute("src");
+            delete source.dataset.mdjSrcResolved;
+            videoEl.removeAttribute("src");
+            videoEl.load();
+            if (mdjVideoLazyLoadObserver) mdjVideoLazyLoadObserver.observe(videoEl);
+        }
+    } catch (eUnload) { void eUnload; }
+};
+
+/** Descarga TODOS los <video data-src> dentro de `container` (modal que se acaba de cerrar). */
+window.mdjUnloadVideosIn = function (container) {
+    if (!container || !container.querySelectorAll) return;
+    try {
+        container.querySelectorAll("video").forEach(window.mdjUnloadVideo);
+    } catch (eUnloadAll) { void eUnloadAll; }
+};
 
 /** @deprecated Usar resolveMdAssetPublicUrl; se mantiene por compatibilidad con rentals.js y el resto del sitio. */
 window.resolveMdAssetVideoUrl = window.resolveMdAssetPublicUrl;
