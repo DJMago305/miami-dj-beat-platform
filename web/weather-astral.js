@@ -37,8 +37,10 @@ document.addEventListener('DOMContentLoaded', () => {
             hour12: false
         }).formatToParts(date);
 
-        const hour = Number(parts.find(p => p.type === 'hour')?.value || 0);
-        const minute = Number(parts.find(p => p.type === 'minute')?.value || 0);
+        const hourPart = parts.find(p => p.type === 'hour');
+        const minutePart = parts.find(p => p.type === 'minute');
+        const hour = Number((hourPart && hourPart.value) || 0);
+        const minute = Number((minutePart && minutePart.value) || 0);
 
         return hour + minute / 60;
     }
@@ -241,7 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 moonEl.style.opacity = '0';
             }
             moonEl.style.transition = 'left 20s linear, top 20s linear, transform 20s linear, opacity .8s ease';
-            const currentTemp = weatherData?.main?.temp || null;
+            const currentTemp = (weatherData && weatherData.main && weatherData.main.temp) || null;
             applyMoonPhase(astralDate, currentTemp); // Llama al motor unificado de fases y temperatura
             moonEl.style.filter = LOW_END_DEVICE
                 ? `drop-shadow(0 0 8px rgba(255,255,255,0.5))`

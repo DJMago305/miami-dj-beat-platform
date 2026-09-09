@@ -6,7 +6,7 @@
 
 (async function RoleGuard() {
     // ── Config ─────────────────────────────────────────────────
-    let PAGE_ROLE = document.currentScript?.dataset?.role || 'any';
+    let PAGE_ROLE = (document.currentScript && document.currentScript.dataset && document.currentScript.dataset.role) || 'any';
     if (PAGE_ROLE === 'dj' || PAGE_ROLE === 'talent') PAGE_ROLE = 'artist'; // Homologar proteccion
 
     const LOGIN_URL = './login.html';
@@ -25,7 +25,7 @@
     // ── Wait for Supabase ───────────────────────────────────────
     let db = null;
     for (let i = 0; i < 15; i++) {
-        db = window.getSupabaseClient?.();
+        db = (window.getSupabaseClient && window.getSupabaseClient());
         if (db) break;
         await new Promise(r => setTimeout(r, 200));
     }
@@ -35,7 +35,7 @@
     let session = null;
     for (let i = 0; i < 5; i++) {
         const { data } = await db.auth.getSession();
-        if (data?.session) {
+        if (data && data.session) {
             session = data.session;
             break;
         }
@@ -83,8 +83,8 @@
     if (typeof window.mdjResolveEffectiveUserRole === 'function') {
         rawRole = window.mdjResolveEffectiveUserRole(session.user);
     } else {
-        const ut = String(session.user?.user_metadata?.user_type || '').toLowerCase();
-        const appR = String(session.user?.app_metadata?.role || '').toLowerCase();
+        const ut = String((session.user && session.user.user_metadata && session.user.user_metadata.user_type) || '').toLowerCase();
+        const appR = String((session.user && session.user.app_metadata && session.user.app_metadata.role) || '').toLowerCase();
         if (ut === 'talent' || ut === 'dj' || ut === 'artist') {
             rawRole = ut === 'artist' ? 'artist' : 'talent';
         } else {

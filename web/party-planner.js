@@ -452,8 +452,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         progressFill.style.width = `${((currentStep + 1) / steps.length) * 100}%`;
 
-        const finalRef = referralCode || clientProfile?.source_ref;
-        const isLoyaltyClient = (clientProfile?.total_events_booked || 0) > 0;
+        const finalRef = referralCode || (clientProfile && clientProfile.source_ref);
+        const isLoyaltyClient = ((clientProfile && clientProfile.total_events_booked) || 0) > 0;
 
         const referralBanner = (currentStep === 0 && (finalRef || preSelectedDJ || isLoyaltyClient)) ? `
             <div class="recommendation-box" style="border: 1px solid var(--gold); margin-bottom: 25px; background: rgba(183, 148, 62, 0.05); padding: 20px; border-radius: 15px;">

@@ -223,7 +223,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             } else {
                 // Error
-                const msg = dbError?.message || 'Error al enviar. Intenta de nuevo.';
+                const msg = (dbError && dbError.message) || 'Error al enviar. Intenta de nuevo.';
                 if (status) {
                     status.textContent = msg;
                     status.style.color = '#ff6b6b';
@@ -245,10 +245,10 @@ document.addEventListener('DOMContentLoaded', function () {
         regForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const formData = new FormData(regForm);
-            const email = formData.get('email')?.trim();
+            const email = formData.get('email') && formData.get('email').trim();
             const password = formData.get('password');
             const confirmPassword = formData.get('password_confirm');
-            const fullName = formData.get('full_name')?.trim();
+            const fullName = formData.get('full_name') && formData.get('full_name').trim();
 
             if (regBtn) {
                 regBtn.disabled = true;
@@ -351,12 +351,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 talentStatus.textContent = `✅ ${data.dj_name} trabaja con nosotros.`;
                 talentStatus.style.color = 'var(--admin-accent)';
 
-                const d = document.querySelector('[name="event_day"]')?.value;
-                const m = document.querySelector('[name="event_month"]')?.value;
-                const y = document.querySelector('[name="event_year"]')?.value;
+                const dEl = document.querySelector('[name="event_day"]');
+                const d = dEl && dEl.value;
+                const mEl = document.querySelector('[name="event_month"]');
+                const m = mEl && mEl.value;
+                const yEl = document.querySelector('[name="event_year"]');
+                const y = yEl && yEl.value;
                 const eventDate = (d && m && y) ? `${y}-${m}-${d}` : null;
 
-                if (eventDate && data.availability?.includes(eventDate)) {
+                if (eventDate && data.availability && data.availability.includes(eventDate)) {
                     talentStatus.textContent = `⚠️ ${data.dj_name} está OCUPADO para esa fecha.`;
                     talentStatus.style.color = '#ff6b6b';
                 }
@@ -366,7 +369,8 @@ document.addEventListener('DOMContentLoaded', function () {
         // Use change listeners on all date parts
         const dateParts = ['event_day', 'event_month', 'event_year'];
         dateParts.forEach(name => {
-            document.querySelector(`[name="${name}"]`)?.addEventListener('change', () => {
+            const dateEl = document.querySelector(`[name="${name}"]`);
+            if (dateEl) dateEl.addEventListener('change', () => {
                 talentInput.dispatchEvent(new Event('input'));
             });
         });
@@ -399,11 +403,15 @@ function debounce(func, wait) {
 
 // Global: Check Talent Availability (footer section)
 async function checkTalentAvailability() {
-    const name = document.getElementById('check-talent-name')?.value.trim();
+    const nameEl = document.getElementById('check-talent-name');
+    const name = nameEl && nameEl.value.trim();
     const result = document.getElementById('availability-result');
-    const m = document.getElementById('avail-month')?.value;
-    const d = document.getElementById('avail-day')?.value;
-    const y = document.getElementById('avail-year')?.value;
+    const mEl2 = document.getElementById('avail-month');
+    const m = mEl2 && mEl2.value;
+    const dEl2 = document.getElementById('avail-day');
+    const d = dEl2 && dEl2.value;
+    const yEl2 = document.getElementById('avail-year');
+    const y = yEl2 && yEl2.value;
 
     if (!name) return alert('Ingresa el nombre del DJ/Artista.');
 

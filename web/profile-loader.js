@@ -304,16 +304,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // 1. Mapear Eventos de Fecha Específica
             const specificEvents = Object.entries(schedule).map(([date, data]) => ({
-                title: data.events?.[0]?.venue || 'Evento Confirmado',
+                title: (data.events && data.events[0] && data.events[0].venue) || 'Evento Confirmado',
                 start: date,
                 extendedProps: {
-                    eventId: data.events?.[0]?.id || date,
-                    venue: data.events?.[0]?.venue,
-                    city: data.events?.[0]?.city || 'Miami, FL',
-                    status: data.events?.[0]?.status
+                    eventId: (data.events && data.events[0] && data.events[0].id) || date,
+                    venue: (data.events && data.events[0] && data.events[0].venue),
+                    city: (data.events && data.events[0] && data.events[0].city) || 'Miami, FL',
+                    status: (data.events && data.events[0] && data.events[0].status)
                 },
-                backgroundColor: data.events?.[0]?.status === 'CANCELLED' ? window.CALENDAR_THEMES.locked.color : window.CALENDAR_THEMES.gig.color,
-                borderColor: data.events?.[0]?.status === 'CANCELLED' ? window.CALENDAR_THEMES.locked.color : window.CALENDAR_THEMES.gig.color
+                backgroundColor: (data.events && data.events[0] && data.events[0].status) === 'CANCELLED' ? window.CALENDAR_THEMES.locked.color : window.CALENDAR_THEMES.gig.color,
+                borderColor: (data.events && data.events[0] && data.events[0].status) === 'CANCELLED' ? window.CALENDAR_THEMES.locked.color : window.CALENDAR_THEMES.gig.color
             }));
 
             // 2. Mapear Residencias Recurrentes (Días de la semana)
@@ -542,7 +542,7 @@ window.initEventWeatherCalendar = async function (assignedEvents = []) {
                 window.setupEventNotesRealtime(session.user.id);
             }
 
-            if (profile?.availability && Array.isArray(profile.availability)) {
+            if ((profile && profile.availability) && Array.isArray(profile.availability)) {
                 availabilityEvents = profile.availability.map(date => ({
                     title: 'Residencia/Bloqueado',
                     start: date,
@@ -550,7 +550,7 @@ window.initEventWeatherCalendar = async function (assignedEvents = []) {
                     extendedProps: { type: DAY_STATE.RESIDENT }
                 }));
             }
-            if (profile?.availability_schedule) {
+            if (profile && profile.availability_schedule) {
                 schedule = profile.availability_schedule.schedule || {};
                 recurringDays = profile.availability_schedule.recurring_days || [];
                 vacationStart = profile.availability_schedule.vacation_start || '';
@@ -699,7 +699,7 @@ window.initEventWeatherCalendar = async function (assignedEvents = []) {
         eventContent: function (arg) {
             let dot = document.createElement('div');
             dot.className = 'apple-status-dot';
-            const type = arg.event.extendedProps?.type;
+            const type = (arg.event.extendedProps && arg.event.extendedProps.type);
 
             if (type === DAY_STATE.EVENT) {
                 dot.style.backgroundColor = window.CALENDAR_THEMES.gig.color; dot.style.color = window.CALENDAR_THEMES.gig.color;
@@ -939,7 +939,7 @@ window.showDashEventDetails = function (dateStr, isRecurring, dayData, dayNum) {
 
     dataDiv.innerHTML = html;
     card.style.borderColor = themeColor;
-    card.style.background = isRecurring ? `${window.CALENDAR_THEMES.resident.color}0D` : (dayData?.events?.length > 0 ? `${window.CALENDAR_THEMES.gig.color}0D` : '#111114');
+    card.style.background = isRecurring ? `${window.CALENDAR_THEMES.resident.color}0D` : ((dayData && dayData.events && dayData.events.length > 0) ? `${window.CALENDAR_THEMES.gig.color}0D` : '#111114');
 };
 
 window.getWeatherSVG = function (condition, size = 24) {

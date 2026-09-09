@@ -935,27 +935,27 @@ async function processKPIs(ledger, leads, startDate, prevStartDate, commRate, pr
             if (tx.status === 'available') stats.curr.available += amount;
             if (tx.type === 'payout' || tx.status === 'paid') stats.curr.paidOut += amount;
 
-            if (tx.metadata?.source === 'tip') {
-                if (tx.metadata?.soundfortips === true) {
+            if ((tx.metadata && tx.metadata.source) === 'tip') {
+                if ((tx.metadata && tx.metadata.soundfortips) === true) {
                     const rate = tx.metadata.commission_rate != null ? Number(tx.metadata.commission_rate) : 10;
                     stats.curr.tips += amount * (100 - rate) / 100;
                 } else {
                     stats.curr.tips += amount;
                 }
             }
-            if (tx.metadata?.source === 'commission') stats.curr.commissions += amount;
+            if ((tx.metadata && tx.metadata.source) === 'commission') stats.curr.commissions += amount;
         } else if (isPrevious(tx.created_at)) {
             if (tx.type === 'income') stats.prev.gross += amount;
             if (tx.type === 'payout' || tx.status === 'paid') stats.prev.paidOut += amount;
-            if (tx.metadata?.source === 'tip') {
-                if (tx.metadata?.soundfortips === true) {
+            if ((tx.metadata && tx.metadata.source) === 'tip') {
+                if ((tx.metadata && tx.metadata.soundfortips) === true) {
                     const rateP = tx.metadata.commission_rate != null ? Number(tx.metadata.commission_rate) : 10;
                     stats.prev.tips += amount * (100 - rateP) / 100;
                 } else {
                     stats.prev.tips += amount;
                 }
             }
-            if (tx.metadata?.source === 'commission') stats.prev.commissions += amount;
+            if ((tx.metadata && tx.metadata.source) === 'commission') stats.prev.commissions += amount;
         }
     });
 
@@ -1064,7 +1064,8 @@ async function processKPIs(ledger, leads, startDate, prevStartDate, commRate, pr
 
 function renderTimelineChart(ledger, leads, range, startDate, residencyMetrics) {
     if (typeof Chart === 'undefined') return;
-    const ctx = document.getElementById('chart-timeline')?.getContext('2d');
+    const chartTimelineEl = document.getElementById('chart-timeline');
+    const ctx = chartTimelineEl && chartTimelineEl.getContext('2d');
     if (!ctx) return;
 
     const rm = residencyMetrics || computeResidencyMetrics(null);
@@ -1212,7 +1213,8 @@ function renderTimelineChart(ledger, leads, range, startDate, residencyMetrics) 
 
 function renderActivityChart(leads, range, startDate, residencyMetrics) {
     if (typeof Chart === 'undefined') return;
-    const ctx = document.getElementById('chart-activity')?.getContext('2d');
+    const chartActivityEl = document.getElementById('chart-activity');
+    const ctx = chartActivityEl && chartActivityEl.getContext('2d');
     if (!ctx) return;
 
     const rm = residencyMetrics || computeResidencyMetrics(null);
@@ -1267,7 +1269,8 @@ function renderActivityChart(leads, range, startDate, residencyMetrics) {
 
 function renderDistributionChart(ledger, leads, range, startDate, residencyMetrics) {
     if (typeof Chart === 'undefined') return;
-    const ctx = document.getElementById('chart-distribution')?.getContext('2d');
+    const chartDistributionEl = document.getElementById('chart-distribution');
+    const ctx = chartDistributionEl && chartDistributionEl.getContext('2d');
     if (!ctx) return;
 
     const rm = residencyMetrics || computeResidencyMetrics(null);
@@ -1444,7 +1447,7 @@ function renderLedgerTable(ledger) {
             net = -gross;
         } else {
             gross = (tx.amount_cents / 100);
-            commRate = tx.metadata?.commission_rate || 10;
+            commRate = (tx.metadata && tx.metadata.commission_rate) || 10;
             comm = (gross * commRate / 100);
             net = gross - comm;
         }
@@ -1468,7 +1471,7 @@ function renderLedgerTable(ledger) {
             <tr${rowStyle}>
                 <td style="font-weight:700; color:#fff;">${dateCell}</td>
                 <td>
-                    <div style="font-weight:700;">${tx.metadata?.event_name || tx.event_id || 'Servicio'}</div>
+                    <div style="font-weight:700;">${(tx.metadata && tx.metadata.event_name) || tx.event_id || 'Servicio'}</div>
                     <div style="font-size:10px; opacity:0.4;">${subLine}</div>
                 </td>
                 <td style="font-weight:700;">$${gross.toFixed(2)}</td>
