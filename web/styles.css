@@ -7579,21 +7579,30 @@ body.page-home #home-hero .hero-grid {
 
 /* --- CORRECCIÓN FINAL: MARGEN EXTERNO FORZADO --- */
 /* ARREGLO MAESTRO: ESPACIO Y POSICIÓN */
-#roster-grid, #horaloca-grid, #mc-roster-scroll, #payasos-roster-grid, #dj-roster-grid, 
-#lighting-roster-grid, #staff-roster-grid, #fx-roster-grid, 
+#roster-grid, #horaloca-grid, #mc-roster-scroll, #payasos-roster-grid, #dj-roster-grid,
+#lighting-roster-grid, #staff-roster-grid, #fx-roster-grid,
 .mdj-rental-catalog-carousel, .talent-selector-carousel {
     display: flex !important;
     flex-wrap: nowrap !important;
     overflow-x: auto !important;
-    
+
     /* 1. EL ESPACIO: 28px de aire a los lados */
-    padding-left: 28px !important; 
+    padding-left: 28px !important;
     padding-right: 28px !important;
-    
+
     /* 2. Centrado vertical de tarjetas dentro del carrusel */
     align-items: center !important;
-    
-    gap: 20px !important;
+}
+
+/* FIX-FLEX-GAP-SAFARI13-01 (2026-09-09): `gap` en flexbox no lo soporto Safari
+   hasta la version 14.1 -- confirmado real en Mac vieja, tarjetas "sin aire"
+   (pegadas) en Entretenimiento y Talento + DJ/Actuacion, mismo patron ya
+   anotado el 2026-09-08 para header-unified.css. Se reemplaza gap:20px por
+   margin-right en cada tarjeta hija -- margin funciona en cualquier motor. */
+#roster-grid > *, #horaloca-grid > *, #mc-roster-scroll > *, #payasos-roster-grid > *,
+#dj-roster-grid > *, #lighting-roster-grid > *, #staff-roster-grid > *, #fx-roster-grid > *,
+.mdj-rental-catalog-carousel > *, .talent-selector-carousel > * {
+    margin-right: 20px !important;
 }
 
 /* Ocultar scrollbar SOLO en los carruseles de Rentals (sin afectar el resto del sitio) */
