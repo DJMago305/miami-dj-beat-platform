@@ -226,16 +226,6 @@ window.resolveMdAssetPublicUrl = function (path) {
        se re-subieron al bucket de Storage -- <img> normal (no <picture>) confirmado roto
        en TODO navegador, no solo Safari 13 (naturalWidth:0 incluso en Chrome). */
     if (/^corporate\/fotos\//i.test(rel)) return path;
-    /* FIX-NEW-HERO-VIDEOS-STORAGE-01 (2026-09-08): club-dj/mc-dj/festival-dj
-       necesitaban su video de hero en produccion de inmediato y nadie con
-       acceso de escritura a Storage los habia subido todavia -- se comitean
-       estos 3 directo a Git/Vercel (excepcion puntual en .gitignore) en vez
-       de esperar la subida manual. Sin esta exclusion, el <source> se
-       reescribiria a una URL de Storage que no existe (404) y el <video>
-       nunca cargaria pese a que el archivo real ya esta desplegado.
-       Revertir esta linea junto con la excepcion de .gitignore el dia que
-       estos 3 archivos se suban de verdad a Storage. */
-    if (/^club-dj\/videos\//i.test(rel) || /^mc-dj\/videos\//i.test(rel) || /^festival-dj\/videos\//i.test(rel)) return path;
     var segments = m[1].split("/").map(function (seg) {
         try {
             return encodeURIComponent(decodeURIComponent(seg));

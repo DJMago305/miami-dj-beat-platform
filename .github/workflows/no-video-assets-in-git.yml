@@ -19,18 +19,10 @@ jobs:
       - name: Fail if video extensions are tracked in web/assets
         run: |
           set -e
-          # EXCEPCION puntual (2026-09-08/09), aprobada por el PO: 3 heroes
-          # bloqueados en produccion por falta de subida manual a Supabase Storage
-          # se comitean directo a Git/Vercel. Ver .gitignore y .gitattributes para
-          # el resto de la excepcion documentada. Revertir esta lista blanca junto
-          # con esos archivos el dia que se suban a Storage de verdad.
-          allowlist="web/assets/club-dj/videos/club-halloween-hero.mp4
-          web/assets/mc-dj/videos/mc-host-hero.mp4
-          web/assets/festival-dj/videos/festival-stage-hero.mp4"
-          bad=$(git ls-files web/assets 2>/dev/null | grep -E '\.(mp4|mov|webm|m4v|mkv|MP4|MOV|WEBM)$' | grep -vFxf <(echo "$allowlist") || true)
+          bad=$(git ls-files web/assets 2>/dev/null | grep -E '\.(mp4|mov|webm|m4v|mkv|MP4|MOV|WEBM)$' || true)
           if [ -n "$bad" ]; then
             echo "::error::Tracked video files under web/assets — remove from Git and host on Supabase Storage."
             echo "$bad"
             exit 1
           fi
-          echo "OK: no tracked video files under web/assets (fuera de la excepcion documentada arriba)."
+          echo "OK: no tracked video files under web/assets."
