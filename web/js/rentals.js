@@ -735,6 +735,7 @@ window._lightingHeroPreviewOnly = function (key, hoveredCard) {
     if (videoEl && activeVideo) {
         const rv = activeResolved;
         const changed = videoEl.getAttribute("src") !== rv;
+        videoEl.poster = mdjV(item.poster || "./assets/Special_Effects/Iluminacion.jpg");
         if (changed) { videoEl.pause(); videoEl.src = rv; }
         if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
         if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
@@ -779,6 +780,7 @@ window._fxHeroPreviewOnly = function (key, hoveredCard) {
         const v = item.video;
         const rv = mdjV(v);
         const changed = videoEl.getAttribute("src") !== rv;
+        if (item.poster) videoEl.poster = mdjV(item.poster);
         if (changed) { videoEl.pause(); videoEl.src = rv; }
         if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
         if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
@@ -1255,6 +1257,7 @@ window.fxItems = {
         nameKey: "data_fx_sparks_name",
         ctaKey: "btn_add_to_pack",
         video: "./assets/Special_Effects/SPARKULAR.mp4",
+        poster: "./assets/Special_Effects/SPARKULAR.jpg",
         fallbackName: "Pirotecnia Fría (Cold Sparks)",
         fallbackDesc: "Safe, spectacular indoor/outdoor cold spark fountains for grand entrances and first dances.",
         price: 300,
@@ -1265,6 +1268,7 @@ window.fxItems = {
         nameKey: "data_fx_fog_name",
         ctaKey: "btn_add_to_pack",
         video: "./assets/Special_Effects/Dancin_Cloud.mp4",
+        poster: "./assets/Special_Effects/Dancin_Cloud.jpg",
         fallbackName: "Humo Bajo (Dancing on Clouds)",
         fallbackDesc: "A magical, cinematic low-lying fog effect perfect for the first dance.",
         price: 300,
@@ -1275,6 +1279,7 @@ window.fxItems = {
         nameKey: "data_fx_co2_name",
         ctaKey: "btn_add_to_pack",
         video: "./assets/Special_Effects/CO2.mp4",
+        poster: "./assets/Special_Effects/CO2.jpg",
         fallbackName: "CO2 Jets & Cannons",
         fallbackDesc: "High-energy blasts of cryogenic fog designed to cool the dance floor during Peak Hour.",
         price: 400,
@@ -1285,6 +1290,7 @@ window.fxItems = {
         nameKey: "data_fx_bubble_name",
         ctaKey: "btn_add_to_pack",
         video: "./assets/Special_Effects/Bubble_Haze.mp4",
+        poster: "./assets/Special_Effects/Bubble_Haze.jpg",
         fallbackName: "Máquina de Burbujas & Haze",
         fallbackDesc: "A magical, shimmering atmospheric effect cascading thousands of bubbles across the room.",
         price: 150,
@@ -1295,6 +1301,7 @@ window.fxItems = {
         nameKey: "data_fx_snow_name",
         ctaKey: "btn_add_to_pack",
         video: "./assets/Special_Effects/SNOW_MACHINE.mp4",
+        poster: "./assets/Special_Effects/SNOW_MACHINE.jpg",
         fallbackName: "Efecto Nieve Artificial",
         fallbackDesc: "Transform the atmosphere completely and create a stunning winter wonderland indoors or outdoors.",
         price: 250,
@@ -1305,6 +1312,7 @@ window.fxItems = {
         nameKey: "data_fx_smoke_name",
         ctaKey: "btn_add_to_pack",
         video: "./assets/Special_Effects/Smoke_Machine.mp4",
+        poster: "./assets/Special_Effects/Smoke_Machine.jpg",
         fallbackName: "Máquina de Humo (Geyser/Haze)",
         fallbackDesc: "High-output atmospheric smoke perfect for amplifying lighting effects and lasers on the dance floor.",
         price: 150,
@@ -1315,6 +1323,7 @@ window.fxItems = {
         nameKey: "data_fx_confetti_name",
         ctaKey: "btn_add_to_pack",
         video: "./assets/Special_Effects/Stadium_Confetti_Blowers.mp4",
+        poster: "./assets/Special_Effects/Stadium_Confetti_Blowers.jpg",
         fallbackName: "Cañones de Confeti (Stadium Blowers)",
         fallbackDesc: "A massive, stadium-style confetti blast designed for the ultimate climax of your event or Hora Loca.",
         price: 450,
@@ -1325,6 +1334,7 @@ window.fxItems = {
         nameKey: "data_fx_dancefloor_name",
         ctaKey: "btn_add_to_pack",
         video: "./assets/Special_Effects/Led_Dance_Floor.mp4",
+        poster: "./assets/Special_Effects/Led_Dance_Floor.jpg",
         fallbackName: "Pista de Baile LED (Infinity Floor)",
         fallbackDesc: "A stunning interactive 3D LED dance floor that transforms your entire venue into a luxury nightclub.",
         price: null,
@@ -1336,6 +1346,7 @@ window.fxItems = {
         nameKey: "data_light_moving_name",
         ctaKey: "btn_add_to_pack",
         video: "./assets/Special_Effects/Moving_Head_Lights.mp4",
+        poster: "./assets/Special_Effects/Moving_Head_Lights.jpg",
         fallbackName: "Party & Club Lighting",
         fallbackDesc: "Intelligent moving heads and laser arrays to transform any venue into a high-energy nightlife experience.",
         price: 350,
@@ -1346,6 +1357,7 @@ window.fxItems = {
         nameKey: "data_light_led_name",
         ctaKey: "btn_add_to_pack",
         video: "./assets/Special_Effects/pantalla_LED.mp4",
+        poster: "./assets/Special_Effects/pantalla_LED.jpg",
         fallbackName: "Pantallas LED Gigantes",
         fallbackDesc: "State-of-the-art modular LED walls for dynamic visuals, monogram displays, and DJ booth facades.",
         price: null,
@@ -1357,6 +1369,7 @@ window.fxItems = {
         nameKey: "data_light_up_name",
         ctaKey: "btn_add_to_pack",
         video: "./assets/Special_Effects/Iluminacion.mp4",
+        poster: "./assets/Special_Effects/Iluminacion.jpg",
         fallbackName: "Uplighting Arquitectónico",
         fallbackDesc: "Elegant, wireless perimeter lighting designed to bathe your walls in the precise color palette of your event.",
         price: 350,
@@ -1435,7 +1448,9 @@ window.renderFxHero = (currentTabKey = 'sparks', animate = true) => {
             const v = activeVideo;
             const rv = mdjV(v);
             const changed = videoEl.getAttribute("src") !== rv;
-            if (changed) videoEl.src = rv;
+            const activePoster = dataset[currentTabKey] && dataset[currentTabKey].poster;
+            if (activePoster) videoEl.poster = mdjV(activePoster);
+            if (changed) { videoEl.pause(); videoEl.src = rv; }
             if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
         if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
             if (changed) videoEl.load();
@@ -1467,6 +1482,7 @@ window.lightingItems = {
         nameKey: "data_light_moving_name",
         ctaKey: "btn_add_to_pack",
         video: "./assets/Special_Effects/Moving_Head_Lights.mp4",
+        poster: "./assets/Special_Effects/Moving_Head_Lights.jpg",
         fallbackName: "Party & Club Lighting",
         fallbackDesc: "Intelligent moving heads and laser arrays to transform any venue into a high-energy nightlife experience.",
         price: 350,
@@ -1477,6 +1493,7 @@ window.lightingItems = {
         nameKey: "data_light_led_name",
         ctaKey: "btn_add_to_pack",
         video: "./assets/Special_Effects/pantalla_LED.mp4",
+        poster: "./assets/Special_Effects/pantalla_LED.jpg",
         fallbackName: "Pantallas LED Gigantes",
         fallbackDesc: "State-of-the-art modular LED walls for dynamic visuals, monogram displays, and DJ booth facades.",
         price: null,
@@ -1488,6 +1505,7 @@ window.lightingItems = {
         nameKey: "data_light_up_name",
         ctaKey: "btn_add_to_pack",
         video: null,
+        poster: "./assets/Special_Effects/Iluminacion.jpg",
         fallbackName: "Uplighting Arquitectónico",
         fallbackDesc: "Elegant, wireless perimeter lighting designed to bathe your walls in the precise color palette of your event.",
         price: 350,
@@ -1507,6 +1525,7 @@ window.renderLightingHero = (currentTabKey = 'movingHeads', animate = true) => {
         }
 
         let activeVideo = dataset[currentTabKey] && dataset[currentTabKey].video ? dataset[currentTabKey].video : "./assets/Special_Effects/Iluminacion.mp4";
+        let activePoster = dataset[currentTabKey] && dataset[currentTabKey].poster ? dataset[currentTabKey].poster : "./assets/Special_Effects/Iluminacion.jpg";
 
         if (gridEl && dataset) {
             gridEl.innerHTML = Object.entries(dataset).map(([key, item]) => {
@@ -1542,7 +1561,8 @@ window.renderLightingHero = (currentTabKey = 'movingHeads', animate = true) => {
             const v = activeVideo;
             const rv = mdjV(v);
             const changed = videoEl.getAttribute("src") !== rv;
-            if (changed) videoEl.src = rv;
+            videoEl.poster = mdjV(activePoster);
+            if (changed) { videoEl.pause(); videoEl.src = rv; }
             if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
         if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
             if (changed) videoEl.load();
