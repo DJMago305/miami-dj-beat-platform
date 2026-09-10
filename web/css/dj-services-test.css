@@ -31,6 +31,61 @@ a {
   padding: 0 24px;
 }
 
+/* ---------- BARRA DE MENU (replica estatica, ver comentario en el HTML) ---------- */
+.dst-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(10,10,12,0.92);
+  border-bottom: 1px solid rgba(197,160,89,0.25);
+}
+
+.dst-topbar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 12px;
+  padding-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.dst-topbar-brand {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  margin-right: 20px;
+  margin-bottom: 6px;
+}
+.dst-topbar-logo {
+  height: 34px;
+  width: auto;
+  display: block;
+  margin-right: 10px;
+}
+.dst-topbar-wordmark {
+  height: 16px;
+  width: auto;
+  display: block;
+}
+
+.dst-topbar-nav {
+  display: flex;
+  flex-wrap: wrap;
+}
+.dst-topbar-nav a {
+  margin-right: 22px;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-decoration: none;
+  color: rgba(245,242,236,0.82);
+}
+.dst-topbar-nav a:hover {
+  color: var(--gold);
+}
+
 /* ---------- HERO ---------- */
 .dst-hero {
   position: relative;

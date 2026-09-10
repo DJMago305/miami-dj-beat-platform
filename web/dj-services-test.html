@@ -43,6 +43,28 @@
 </head>
 <body>
 
+<!-- Replica ligera y estatica de la barra de menu del sitio -- mismo logo,
+     mismos textos reales de nav (Inicio/Servicios/Eventos/Shop/Trabajos/
+     Contacto, los 6 que ve cualquier visitante sin sesion). A proposito NO es
+     el header real (mdjb-shared-header.js + auth + nav dinamico) -- eso
+     rompería el aislamiento pedido para este piloto; es solo la apariencia. -->
+<header class="dst-topbar">
+  <div class="dst-container dst-topbar-inner">
+    <a href="./index.html" class="dst-topbar-brand">
+      <img src="https://www.miamidjbeat.com/assets/branding/logo-transparent.png" alt="Miami DJ Beat" class="dst-topbar-logo">
+      <img src="https://www.miamidjbeat.com/assets/branding/logo-transparent-letras.png" alt="Miami DJ Beat" class="dst-topbar-wordmark">
+    </a>
+    <nav class="dst-topbar-nav" aria-label="Main">
+      <a href="./index.html">Home</a>
+      <a href="./rentals.html">Services</a>
+      <a href="./events.html">Events</a>
+      <a href="./shop.html">Shop</a>
+      <a href="./jobs.html">Jobs</a>
+      <a href="./contact.html">Contact</a>
+    </nav>
+  </div>
+</header>
+
 <main>
 
   <!-- ===== HERO UNIFICADO: foto de fondo + tarjetas de paquete flotando encima ===== -->
