@@ -249,9 +249,25 @@
         });
     }
 
+    /** Reposiciona `el.scrollLeft` (saltos de carrusel infinito: clones, centrado inicial)
+     * sin disparar el trinquete -- un salto programatico no es un scroll real del usuario.
+     * El listener de 'scroll' ya respeta data-mdjTickMute; esto solo lo activa alrededor
+     * del salto y lo libera en el siguiente frame para no silenciar scrolls reales despues. */
+    function mdjSetScrollLeftSilent(el, value) {
+        if (!el) return;
+        el.dataset.mdjTickMute = '1';
+        el.scrollLeft = value;
+        requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+                delete el.dataset.mdjTickMute;
+            });
+        });
+    }
+
     window.mdjUiTickPlay = mdjUiTickPlay;
     window.mdjUiTickBindScroll = mdjUiTickBindScroll;
     window.mdjUiTickAutoInit = mdjUiTickAutoInit;
+    window.mdjSetScrollLeftSilent = mdjSetScrollLeftSilent;
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', mdjUiTickAutoInit);

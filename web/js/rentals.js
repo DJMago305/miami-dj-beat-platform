@@ -1075,7 +1075,7 @@ window.renderLiveHero = (tabKey = null, animate = true) => {
                         <div class="hero-card-price hl-card-price" style="font-family: Inter, sans-serif; color: var(--gold); font-size: 18px; font-weight: 700; margin-top: auto; margin-bottom: 10px;">
                             $${item.price}.00
                         </div>
-                        <button class="${btnClass}" data-action="hl-activate-direct" data-id="${item.id}" style="width: 100%; border: 1px solid var(--gold); background: ${isSelected ? 'rgba(197,160,89,0.2)' : 'transparent'}; color: var(--gold); padding: 8px 0; border-radius: 50px; font-size: 10px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                        <button class="${btnClass}" data-action="hl-activate-direct" data-id="${item.id}" style="width: 100%; border: 1px solid var(--gold); background: ${isSelected ? 'rgba(197,160,89,0.2)' : 'transparent'}; color: var(--gold); padding: 8px 0; border-radius: 50px; font-size: 10px; font-weight: 600; cursor: pointer; transition: background-color 0.3s ease, border-color 0.3s ease; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 6px;">
                             <span class="hl-btn-icon">${icon}</span>
                             <span class="hl-btn-text" data-i18n="${isSelected ? 'btn_remove_extra' : item.ctaKey}">${t(isSelected ? 'btn_remove_extra' : item.ctaKey, isSelected ? 'Remove' : item.fallbackCta || 'Activar')}</span>
                         </button>
@@ -1449,7 +1449,7 @@ window.renderFxHero = (currentTabKey = 'sparks', animate = true) => {
                             <div class="hero-card-price hl-card-price" style="font-family: Inter, sans-serif; color: var(--gold); font-size: 18px; font-weight: 700; margin-top: auto; margin-bottom: 10px;">
                                 ${item.priceString ? item.priceString : (item.price ? '$' + item.price + '.00' : 'Cotizar')}
                             </div>
-                            <button class="${btnClass}" data-action="hl-activate-direct" data-id="${item.id}" style="width: 100%; border: 1px solid var(--gold); background: ${btnBg}; color: var(--gold); padding: 8px 0; border-radius: 50px; font-size: 10px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                            <button class="${btnClass}" data-action="hl-activate-direct" data-id="${item.id}" style="width: 100%; border: 1px solid var(--gold); background: ${btnBg}; color: var(--gold); padding: 8px 0; border-radius: 50px; font-size: 10px; font-weight: 600; cursor: pointer; transition: background-color 0.3s ease, border-color 0.3s ease; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 6px;">
                                 ${iconHtml}
                                 <span class="hl-btn-text">${btnLabel}</span>
                             </button>
@@ -1586,7 +1586,7 @@ window.renderLightingHero = (currentTabKey = 'movingHeads', animate = true) => {
                         <div class="hero-card-price hl-card-price" style="font-family: Inter, sans-serif; color: var(--gold); font-size: 18px; font-weight: 700; margin-top: auto; margin-bottom: 10px;">
                             ${item.priceString ? item.priceString : (item.price ? '$' + item.price + '.00' : 'Cotizar')}
                         </div>
-                        <button class="${btnClass}" data-action="hl-activate-direct" data-id="${item.id}" style="width: 100%; border: 1px solid var(--gold); background: ${isSelected ? 'rgba(197,160,89,0.2)' : 'transparent'}; color: var(--gold); padding: 8px 0; border-radius: 50px; font-size: 10px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                        <button class="${btnClass}" data-action="hl-activate-direct" data-id="${item.id}" style="width: 100%; border: 1px solid var(--gold); background: ${isSelected ? 'rgba(197,160,89,0.2)' : 'transparent'}; color: var(--gold); padding: 8px 0; border-radius: 50px; font-size: 10px; font-weight: 600; cursor: pointer; transition: background-color 0.3s ease, border-color 0.3s ease; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 6px;">
                             ${icon ? `<span class="hl-btn-icon">${icon}</span>` : ''}
                             <span class="hl-btn-text">${btnText}</span>
                         </button>
@@ -2095,7 +2095,7 @@ window.renderRentalCatalog = (categoryId) => {
                 padding: 10px 22px;
                 border-radius: 999px;
                 cursor: pointer;
-                transition: all 0.3s ease;
+                transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
                 font-family: -apple-system, sans-serif;
                 font-weight: 600;
                 font-size: 15px;
@@ -2160,7 +2160,7 @@ window.renderRentalCatalog = (categoryId) => {
                 flex-direction: column;
                 gap: 10px;
 
-                transition: all 0.25s ease;
+                transition: opacity 0.25s ease, box-shadow 0.25s ease;
             }
 
             /* TOP */
@@ -2200,7 +2200,7 @@ window.renderRentalCatalog = (categoryId) => {
                 color: #d4af37;
                 font-size: 24px;
                 cursor: pointer;
-                transition: all 0.2s ease;
+                transition: color 0.2s ease;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -2231,7 +2231,7 @@ window.renderRentalCatalog = (categoryId) => {
                 font-weight: 600;
                 cursor: pointer;
 
-                transition: all 0.2s ease;
+                transition: opacity 0.2s ease, box-shadow 0.2s ease;
             }
 
             .cta-remove {
@@ -2416,7 +2416,7 @@ window.renderRentalCatalog = (categoryId) => {
 
                     <div class="overlay-bottom">
                         <div class="title" style="display:none;">${item.name}</div>
-                        <button class="${btnClass}" data-action="r-add-cart" data-id="${item.id}" data-price="${item.price}" data-name="${item.name}" data-category="${item.category || ''}" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--gold); background: transparent; color: var(--gold); font-family: -apple-system, sans-serif; font-weight: 600; cursor: pointer; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; transition: all 0.3s ease; margin-bottom: 2px;">${btnText}</button>
+                        <button class="${btnClass}" data-action="r-add-cart" data-id="${item.id}" data-price="${item.price}" data-name="${item.name}" data-category="${item.category || ''}" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--gold); background: transparent; color: var(--gold); font-family: -apple-system, sans-serif; font-weight: 600; cursor: pointer; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; transition: background-color 0.3s ease, opacity 0.3s ease; margin-bottom: 2px;">${btnText}</button>
                     </div>
                 </div>
             </div>
@@ -2563,13 +2563,13 @@ window.mdjTeardownRentalCatalogCarousel = function () {
 window.mdjRentalCatalogInfiniteApply = function () {
     const track = document.querySelector('#rental-dynamic-modal .mdj-rental-catalog-carousel');
     if (!track || track.dataset.mdjInfiniteCarousel !== '1') {
-        if (track) track.scrollLeft = 0;
+        if (track) if (window.mdjSetScrollLeftSilent) { window.mdjSetScrollLeftSilent(track, 0); } else { track.scrollLeft = 0; }
         return;
     }
     const originals = Array.from(track.querySelectorAll(':scope > .product-card:not(.mdj-rental-carousel-clone)'));
     const n = originals.length;
     if (n < 2) {
-        track.scrollLeft = 0;
+        if (window.mdjSetScrollLeftSilent) { window.mdjSetScrollLeftSilent(track, 0); } else { track.scrollLeft = 0; }
         return;
     }
     const firstO = originals[0];
@@ -2581,7 +2581,7 @@ window.mdjRentalCatalogInfiniteApply = function () {
     }
     if (!sw || sw < 10) return;
     track._mdjInfiniteSetWidth = sw;
-    track.scrollLeft = sw;
+    if (window.mdjSetScrollLeftSilent) { window.mdjSetScrollLeftSilent(track, sw); } else { track.scrollLeft = sw; }
 };
 
 window.initRentalCatalogInfiniteCarousel = function () {
@@ -2718,14 +2718,14 @@ window.mdjRentalsTeardownHorizontalInfiniteStrip = function (track, cloneClass, 
 
 window.mdjRentalsApplyHorizontalInfiniteStrip = function (track, cloneClass) {
     if (!track || track.dataset.mdjInfiniteCarousel !== '1') {
-        if (track) track.scrollLeft = 0;
+        if (track) if (window.mdjSetScrollLeftSilent) { window.mdjSetScrollLeftSilent(track, 0); } else { track.scrollLeft = 0; }
         return;
     }
     const sel = ':scope > .talent-cat-card:not(.' + cloneClass + ')';
     const originals = Array.from(track.querySelectorAll(sel));
     const n = originals.length;
     if (n < 2) {
-        track.scrollLeft = 0;
+        if (window.mdjSetScrollLeftSilent) { window.mdjSetScrollLeftSilent(track, 0); } else { track.scrollLeft = 0; }
         return;
     }
     const firstO = originals[0];
@@ -2737,7 +2737,7 @@ window.mdjRentalsApplyHorizontalInfiniteStrip = function (track, cloneClass) {
     }
     if (!sw || sw < 10) return;
     track._mdjInfiniteSetWidth = sw;
-    track.scrollLeft = sw;
+    if (window.mdjSetScrollLeftSilent) { window.mdjSetScrollLeftSilent(track, sw); } else { track.scrollLeft = sw; }
 };
 
 window.mdjRentalsInitHorizontalInfiniteStrip = function (track, cloneClass, infiniteClass) {
@@ -2908,13 +2908,13 @@ window.mdjTeardownLightingCarousel = function () {
 window.mdjLightingInfiniteApply = function () {
     const track = document.querySelector('#lighting-modal #lighting-roster-grid');
     if (!track || track.dataset.mdjInfiniteCarousel !== '1') {
-        if (track) track.scrollLeft = 0;
+        if (track) if (window.mdjSetScrollLeftSilent) { window.mdjSetScrollLeftSilent(track, 0); } else { track.scrollLeft = 0; }
         return;
     }
     const originals = Array.from(track.querySelectorAll(':scope > .talent-cat-card:not(.mdj-lighting-carousel-clone)'));
     const n = originals.length;
     if (n < 2) {
-        track.scrollLeft = 0;
+        if (window.mdjSetScrollLeftSilent) { window.mdjSetScrollLeftSilent(track, 0); } else { track.scrollLeft = 0; }
         return;
     }
     const firstO = originals[0];
@@ -2926,7 +2926,7 @@ window.mdjLightingInfiniteApply = function () {
     }
     if (!sw || sw < 10) return;
     track._mdjInfiniteSetWidth = sw;
-    track.scrollLeft = sw;
+    if (window.mdjSetScrollLeftSilent) { window.mdjSetScrollLeftSilent(track, sw); } else { track.scrollLeft = sw; }
 };
 
 window.initLightingInfiniteCarousel = function () {
@@ -3056,13 +3056,13 @@ window.mdjTeardownFxCarousel = function () {
 window.mdjFxInfiniteApply = function () {
     const track = document.querySelector('#fx-modal #fx-roster-grid');
     if (!track || track.dataset.mdjInfiniteCarousel !== '1') {
-        if (track) track.scrollLeft = 0;
+        if (track) if (window.mdjSetScrollLeftSilent) { window.mdjSetScrollLeftSilent(track, 0); } else { track.scrollLeft = 0; }
         return;
     }
     const originals = Array.from(track.querySelectorAll(':scope > .talent-cat-card:not(.mdj-fx-carousel-clone)'));
     const n = originals.length;
     if (n < 2) {
-        track.scrollLeft = 0;
+        if (window.mdjSetScrollLeftSilent) { window.mdjSetScrollLeftSilent(track, 0); } else { track.scrollLeft = 0; }
         return;
     }
     const firstO = originals[0];
@@ -3074,7 +3074,7 @@ window.mdjFxInfiniteApply = function () {
     }
     if (!sw || sw < 10) return;
     track._mdjInfiniteSetWidth = sw;
-    track.scrollLeft = sw;
+    if (window.mdjSetScrollLeftSilent) { window.mdjSetScrollLeftSilent(track, sw); } else { track.scrollLeft = sw; }
 };
 
 window.initFxInfiniteCarousel = function () {
@@ -4393,7 +4393,7 @@ window.mdjRebuildTalentSelectorInfiniteCarousel = function () {
 window.mdjTalentSelectorInfiniteApply = function () {
     var track = document.querySelector('#talent-selector-modal .talent-selector-carousel');
     if (!track || track.dataset.mdjSimpleLoop !== '1') {
-        if (track) track.scrollLeft = 0;
+        if (track) if (window.mdjSetScrollLeftSilent) { window.mdjSetScrollLeftSilent(track, 0); } else { track.scrollLeft = 0; }
         return;
     }
     var sw = track.scrollWidth;
@@ -4403,7 +4403,7 @@ window.mdjTalentSelectorInfiniteApply = function () {
         var firstCard = track.querySelector('.talent-cat-card:not(.mdj-talent-loop-clone)');
         var slot = firstCard ? (firstCard.offsetWidth + 20) : 270;
         var raw = Math.round(sw / 4);
-        track.scrollLeft = Math.round(raw / slot) * slot;
+        if (window.mdjSetScrollLeftSilent) { window.mdjSetScrollLeftSilent(track, Math.round(raw / slot) * slot); } else { track.scrollLeft = Math.round(raw / slot) * slot; }
     }
 };
 
@@ -4503,13 +4503,13 @@ window.initTalentSelectorInfiniteCarousel = function () {
         var th = 18;
         if (sl >= max - th) {
             jumping = true;
-            track.scrollLeft = sl - half;
+            if (window.mdjSetScrollLeftSilent) { window.mdjSetScrollLeftSilent(track, sl - half); } else { track.scrollLeft = sl - half; }
             requestAnimationFrame(function () {
                 jumping = false;
             });
         } else if (sl <= th) {
             jumping = true;
-            track.scrollLeft = sl + half;
+            if (window.mdjSetScrollLeftSilent) { window.mdjSetScrollLeftSilent(track, sl + half); } else { track.scrollLeft = sl + half; }
             requestAnimationFrame(function () {
                 jumping = false;
             });
@@ -4570,7 +4570,7 @@ window.mdjResetTalentSelectorCarousel = function () {
                 window.mdjTalentSelectorInfiniteApplyRetry(0);
             }
         } else {
-            track.scrollLeft = 0;
+            if (window.mdjSetScrollLeftSilent) { window.mdjSetScrollLeftSilent(track, 0); } else { track.scrollLeft = 0; }
         }
     };
     requestAnimationFrame(function () {
