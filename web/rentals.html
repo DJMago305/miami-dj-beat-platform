@@ -770,7 +770,7 @@ Riesgo: romper carga del catálogo.
             padding-top: 20px !important;
             cursor: pointer;
             /* Contenedores: panel sólido; no “vidrio” que muestre el hero fijo detrás */
-            background: rgba(10, 12, 22, 0.94) !important;
+            background: rgba(197, 160, 89, 0.18) !important;
             backdrop-filter: none !important;
             -webkit-backdrop-filter: none !important;
             border: 1px solid rgba(212, 175, 55, 0.42) !important;
@@ -1054,10 +1054,13 @@ Riesgo: romper carga del catálogo.
 </header>
 
     <!-- ══ CINEMATIC BACKGROUND (fijo; las tarjetas de servicios no disparan vídeo hero) ══ -->
-    <div id="rentals-hero-kb-bg" class="hero-kb-bg"
-        style="position: fixed; inset: 0; z-index: 1; pointer-events: none; background-image: url('./assets/home_hero_4k_wide.webp'); background-size: cover; background-position: center; opacity: 0.3; filter: blur(5px); transition: opacity 0.35s ease;"></div>
+    <video id="rentals-hero-kb-bg" class="hero-kb-bg" autoplay muted loop playsinline webkit-playsinline
+        poster="./assets/home_hero_4k_wide.webp"
+        style="position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 1; pointer-events: none; width: 100%; height: 100%; object-fit: cover; opacity: 0.3; filter: blur(5px); transition: opacity 0.35s ease;">
+        <source src="https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/assets/eventos-venues-patrocinadores/Venues%20Home/events-hero-optimized.mp4" type="video/mp4">
+    </video>
     <div class="hero-video-overlay"
-        style="position: fixed; inset: 0; z-index: 3; pointer-events: none; background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.8) 100%);"></div>
+        style="position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 3; pointer-events: none; background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.8) 100%);"></div>
 
     <main class="container" style="padding: 100px 18px; position: relative; z-index: 10;">
         <div style="text-align: center; margin-bottom: 80px;">
