@@ -1015,6 +1015,16 @@ Riesgo: romper carga del catálogo.
             position: relative !important;
         }
 
+        /* Staff y Payasos (únicas 2 de las 12 con .mdj-magic-hover-card) no
+           mostraban el rectángulo: styles.css le fuerza "contain:content" a esa
+           clase (estabilizador de temblor para OTROS grids), y contain:paint
+           recorta cualquier cosa que se salga de la caja -- exactamente lo que
+           hace mi ::before con margin negativo. Se neutraliza solo aquí dentro
+           del hub, sin tocar la regla global (sigue sirviendo donde se necesita). */
+        #talent-selector-modal.modal-visible .talent-hub-vertical-list > .talent-cat-card.mdj-magic-hover-card {
+            contain: none !important;
+        }
+
         #talent-selector-modal.modal-visible .talent-hub-vertical-list > .talent-cat-card.hero-glass-card::before {
             content: "" !important;
             grid-column: 1 / 3 !important;
