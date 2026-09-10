@@ -78,6 +78,7 @@ window.djTabs = {
         priceLabelKey: "dj_weddings_price",
         ctaKey: "btn_add_to_pack",
         video: "./assets/DJ_Performance/weddings_quinces.mp4",
+        poster: "./assets/DJ_Performance/weddings_quinces.jpg",
         fallbackName: "Weddings & Corporate",
         fallbackSubtitle: "Select Your DJ Experience",
         fallbackDesc: "Premium DJ experience for high-end events",
@@ -92,6 +93,7 @@ window.djTabs = {
         priceLabelKey: "dj_private_price",
         ctaKey: "btn_add_to_pack",
         video: "./assets/DJ_Performance/private_parties.mp4",
+        poster: "./assets/DJ_Performance/private_parties.jpg",
         fallbackName: "Private Parties",
         fallbackSubtitle: "Select Your DJ Experience",
         fallbackDesc: "Exclusive curation for VIP gatherings, house parties, and intimate yacht experiences. (Base: 4 Hours | Extra: $100/hr)",
@@ -106,6 +108,7 @@ window.djTabs = {
         priceLabelKey: "dj_clubs_price",
         ctaKey: "btn_add_to_pack",
         video: "./assets/DJ_Performance/clubs_nightlife.mp4",
+        poster: "./assets/DJ_Performance/clubs_nightlife.jpg",
         fallbackName: "Clubs & Nightlife",
         fallbackSubtitle: "Select Your DJ Experience",
         fallbackDesc: "High-energy open format, electronic, and global rhythms crafted for an explosive dancefloor. (Base: 4 Hours | Extra: $100/hr)",
@@ -120,6 +123,7 @@ window.djTabs = {
         priceLabelKey: "dj_family_price",
         ctaKey: "btn_add_to_pack",
         video: "./assets/DJ_Performance/kids_family.mp4",
+        poster: "./assets/DJ_Performance/kids_family.jpg",
         fallbackName: "Family Events",
         fallbackSubtitle: "Select Your DJ Experience",
         fallbackDesc: "Fun, engaging, and clean entertainment guaranteed to keep every generation dancing. (Base: 4 Hours | Extra: $100/hr)",
@@ -134,6 +138,7 @@ window.djTabs = {
         priceLabelKey: "dj_holiday_price",
         ctaKey: "btn_add_to_pack",
         video: "./assets/DJ_Performance/Halloween.mp4",
+        poster: "./assets/DJ_Performance/Halloween.jpg",
         fallbackName: "Seasonal Parties",
         fallbackSubtitle: "Select Your DJ Experience",
         fallbackDesc: "Halloween, St. Patrick's Day, 4th of July. Custom pricing by setup ($600 – $1,500).",
@@ -148,6 +153,7 @@ window.djTabs = {
         priceLabelKey: "dj_holiday_price",
         ctaKey: "btn_add_to_pack",
         video: "./assets/DJ_Performance/holiday_special_events.mp4",
+        poster: "./assets/DJ_Performance/holiday_special_events.jpg",
         fallbackName: "Holiday & Special Events",
         fallbackSubtitle: "Select Your DJ Experience",
         fallbackDesc: "Curated soundtracks engineered to elevate corporate galas and seasonal festive gatherings. (Base: 5 Hours | Extra: $100/hr)",
@@ -165,6 +171,7 @@ window.activeLiveTab = "sax"; window.liveMusicTabs = {
         priceLabelKey: "live_sax_price",
         ctaKey: "btn_add_to_pack",
         video: "https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/assets/live-music/live-sax.mp4",
+        poster: "https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/assets/live-music/live-sax.jpg",
         fallbackName: "Live Saxophone",
         fallbackSubtitle: "Select the live music talent you wish to add to your package.",
         fallbackDesc: "A sophisticated live sax performance designed for premium cocktail hours, dinners, and elevated nightlife experiences.",
@@ -179,6 +186,7 @@ window.activeLiveTab = "sax"; window.liveMusicTabs = {
         priceLabelKey: "live_percussion_price",
         ctaKey: "btn_add_to_pack",
         video: "https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/assets/live-music/live-percussion.mp4",
+        poster: "https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/assets/live-music/live-percussion.jpg",
         fallbackName: "Live Percussion",
         fallbackSubtitle: "Select the live music talent you wish to add to your package.",
         fallbackDesc: "High-energy percussion designed to ignite the dance floor and elevate the rhythm of your event.",
@@ -193,6 +201,7 @@ window.activeLiveTab = "sax"; window.liveMusicTabs = {
         priceLabelKey: "live_singer_price",
         ctaKey: "btn_add_to_pack",
         video: "https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/assets/live-music/live-singer.mp4",
+        poster: "https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/assets/live-music/live-singer.jpg",
         fallbackName: "Live Singer",
         fallbackSubtitle: "Select the live music talent you wish to add to your package.",
         fallbackDesc: "A premium vocalist for elegant ceremonies, curated moments, and unforgettable live show experiences.",
@@ -207,6 +216,7 @@ window.activeLiveTab = "sax"; window.liveMusicTabs = {
         priceLabelKey: "live_band_price",
         ctaKey: "btn_add_to_pack",
         video: "https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/assets/live-music/Live_Bandas_&_Orquestas%20.mp4",
+        poster: "https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/assets/live-music/Live_Bandas_&_Orquestas%20.jpg",
         fallbackName: "Bandas & Orquestas",
         fallbackSubtitle: "Select the live music talent you wish to add to your package.",
         fallbackDesc: "Ensambles de gran formato, desde jazz hasta orquestas latinas para eventos de lujo.",
@@ -226,6 +236,7 @@ window.visualTabs = {
         priceLabelKey: "vis_photo_price",
         ctaKey: "btn_add_to_pack",
         video: "./assets/capture-visuals/photo.mp4",
+        poster: "./assets/capture-visuals/photo.jpg",
         fallbackName: "Photography",
         fallbackSubtitle: "Select the coverage talent you wish to add.",
         fallbackDesc: "Premium photography coverage capturing the ultimate moments of your event.",
@@ -241,6 +252,7 @@ window.visualTabs = {
         priceLabelKey: "vis_video_price",
         ctaKey: "btn_add_to_pack",
         video: "./assets/capture-visuals/video.mp4",
+        poster: "./assets/capture-visuals/video.jpg",
         fallbackName: "Videography",
         fallbackSubtitle: "Select the coverage talent you wish to add.",
         fallbackDesc: "Cinematic 4K videography to document the life of the party.",
@@ -256,6 +268,7 @@ window.visualTabs = {
         priceLabelKey: "vis_drone_price",
         ctaKey: "btn_add_to_pack",
         video: "./assets/capture-visuals/drone.mp4",
+        poster: "./assets/capture-visuals/drone.jpg",
         fallbackName: "Drone Operator",
         fallbackSubtitle: "Select the coverage talent you wish to add.",
         fallbackDesc: "Stunning aerial views and dynamic 4K shots sweeping over your venue.",
@@ -271,6 +284,7 @@ window.visualTabs = {
         priceLabelKey: "vis_booth360_price",
         ctaKey: "btn_add_to_pack",
         video: "./assets/capture-visuals/Photo_Video_Booth_360.mp4",
+        poster: "./assets/capture-visuals/Photo_Video_Booth_360.jpg",
         fallbackName: "Photo Booth 360",
         fallbackSubtitle: "Select the coverage talent you wish to add.",
         fallbackDesc: "Experiencia inmersiva de video en 360 grados.",
@@ -286,6 +300,7 @@ window.visualTabs = {
         priceLabelKey: "vis_magic_mirror_price",
         ctaKey: "btn_add_to_pack",
         video: "./assets/capture-visuals/Espejo_Magico.mp4",
+        poster: "./assets/capture-visuals/Espejo_Magico.jpg",
         fallbackName: "Magic Mirror",
         fallbackSubtitle: "Select the coverage talent you wish to add.",
         fallbackDesc: "Interactive full-length mirror photo experience for your guests.",
@@ -346,7 +361,8 @@ window.payasosRoles = {
         fallbackName: "GIF / energy",
         descKey: "payasos_gif_desc",
         fallbackDesc: "High-energy clips and comedic timing for kids and families.",
-        video: "./assets/mdj-payasos/pallasos-gif.mp4"
+        video: "./assets/mdj-payasos/pallasos-gif.mp4",
+        poster: "./assets/mdj-payasos/pallasos-gif.jpg"
     },
     show: {
         id: "payaso_show",
@@ -354,7 +370,8 @@ window.payasosRoles = {
         fallbackName: "Clown show",
         descKey: "payasos_show_desc",
         fallbackDesc: "Full stage show with classic clown performance and audience interaction.",
-        video: "./assets/mdj-payasos/show-de-pallasos.mp4"
+        video: "./assets/mdj-payasos/show-de-pallasos.mp4",
+        poster: "./assets/mdj-payasos/show-de-pallasos.jpg"
     },
     circo: {
         id: "payaso_circo",
@@ -362,7 +379,8 @@ window.payasosRoles = {
         fallbackName: "Circus",
         descKey: "payasos_circo_desc",
         fallbackDesc: "Circus-style acts, gags, and variety entertainment.",
-        video: "./assets/mdj-payasos/circo.mp4"
+        video: "./assets/mdj-payasos/circo.mp4",
+        poster: "./assets/mdj-payasos/circo.jpg"
     },
     santa: {
         id: "payaso_santa",
@@ -370,7 +388,8 @@ window.payasosRoles = {
         fallbackName: "Santa & seasonal",
         descKey: "payasos_santa_desc",
         fallbackDesc: "Holiday appearances and themed seasonal entertainment.",
-        video: "./assets/mdj-payasos/Santaclous_Para_christmas.mp4"
+        video: "./assets/mdj-payasos/Santaclous_Para_christmas.mp4",
+        poster: "./assets/mdj-payasos/Santaclous_Para_christmas.jpg"
     }
 };
 
@@ -382,7 +401,8 @@ window.staffRoles = {
         fallbackName: "Bartender",
         descKey: "staff_bartender_desc",
         fallbackDesc: "Bar service and premium cocktail experience.",
-        video: "./assets/mdj-staff-videos/Bartender.mp4"
+        video: "./assets/mdj-staff-videos/Bartender.mp4",
+        poster: "./assets/mdj-staff-videos/Bartender.jpg"
     },
     meseros: {
         id: "staff_meseros",
@@ -390,7 +410,8 @@ window.staffRoles = {
         fallbackName: "Meseros",
         descKey: "staff_meseros_desc",
         fallbackDesc: "Professional table service for your guests.",
-        video: "./assets/mdj-staff-videos/Meseros.mp4"
+        video: "./assets/mdj-staff-videos/Meseros.mp4",
+        poster: "./assets/mdj-staff-videos/Meseros.jpg"
     },
     chef: {
         id: "staff_chef",
@@ -398,7 +419,8 @@ window.staffRoles = {
         fallbackName: "Chef",
         descKey: "staff_chef_desc",
         fallbackDesc: "Live kitchen and catering presentation.",
-        video: "./assets/mdj-staff-videos/Cheff.mp4"
+        video: "./assets/mdj-staff-videos/Cheff.mp4",
+        poster: "./assets/mdj-staff-videos/Cheff.jpg"
     }
 };
 
@@ -429,7 +451,8 @@ window.renderStaffHero = function (tabKey = "bartender", animate = true) {
         const v = item.video;
         const rv = mdjV(v);
         const changed = videoEl.getAttribute("src") !== rv;
-        if (changed) videoEl.src = rv;
+        if (item.poster) videoEl.poster = mdjV(item.poster);
+        if (changed) { videoEl.pause(); videoEl.src = rv; }
         if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
         if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
         if (changed) videoEl.load();
@@ -507,7 +530,8 @@ window.renderPayasosHero = function (tabKey = "gif", animate = true) {
         const v = item.video;
         const rv = mdjV(v);
         const changed = videoEl.getAttribute("src") !== rv;
-        if (changed) videoEl.src = rv;
+        if (item.poster) videoEl.poster = mdjV(item.poster);
+        if (changed) { videoEl.pause(); videoEl.src = rv; }
         if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
         if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
         if (changed) videoEl.load();
@@ -600,7 +624,8 @@ window._rosterHeroPreviewOnly = function (key, hoveredCard) {
         const v = item.video;
         const rv = mdjV(v);
         const changed = videoEl.getAttribute("src") !== rv;
-        if (changed) videoEl.src = rv;
+        if (item.poster) videoEl.poster = mdjV(item.poster);
+        if (changed) { videoEl.pause(); videoEl.src = rv; }
         if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
         if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
         if (changed) videoEl.load();
@@ -681,7 +706,9 @@ window._djHeroPreviewOnly = function (key, hoveredCard) {
         const v = item.video;
         const rv = mdjV(v);
         const changed = videoEl.getAttribute("src") !== rv;
+        if (item.poster) videoEl.poster = mdjV(item.poster);
         if (changed) {
+            videoEl.pause();
             videoEl.setAttribute("src", rv);
             videoEl.src = rv;
             videoEl.innerHTML = `<source src="${String(rv).replace(/"/g, "&quot;")}" type="video/mp4">`;
@@ -894,6 +921,10 @@ window.initMcModalMagicHover = function () {
         "mc-card-host": "./assets/mc-club-host/mc-club-host.mp4",
         "mc-card-maestro": "./assets/mc-club-host/MC.mp4"
     };
+    const POSTER_BY_CARD = {
+        "mc-card-host": "./assets/mc-club-host/mc-club-host.jpg",
+        "mc-card-maestro": "./assets/mc-club-host/MC.jpg"
+    };
 
     const clearActiveCards = function () {
         rowWrap.querySelectorAll(".talent-cat-card").forEach(function (c) {
@@ -909,6 +940,8 @@ window.initMcModalMagicHover = function () {
         if (!v) return;
         const rv = typeof mdjV === "function" ? mdjV(v) : v;
         const changed = videoEl.getAttribute("src") !== rv;
+        const p = POSTER_BY_CARD[cardId];
+        if (p) videoEl.poster = mdjV(p);
         if (changed) { videoEl.pause(); videoEl.src = rv; }
         if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
         if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
@@ -950,7 +983,7 @@ window.initMcModalMagicHover = function () {
 
 window.renderLiveHero = (tabKey = null, animate = true) => {
     let dataset;
-    let titleKey, titleFallback, eyebrowKey, eyebrowFallback, subtitleKey, subtitleFallback, activeVideo;
+    let titleKey, titleFallback, eyebrowKey, eyebrowFallback, subtitleKey, subtitleFallback, activeVideo, activePoster;
     let currentTabKey = tabKey;
 
     if (window.activeCategory === 'live') {
@@ -965,6 +998,7 @@ window.renderLiveHero = (tabKey = null, animate = true) => {
         subtitleKey = activeItem.descKey;
         subtitleFallback = activeItem.fallbackDesc;
         activeVideo = activeItem.video;
+        activePoster = activeItem.poster;
     } else if (window.activeCategory === 'visuals') {
         dataset = window.visualTabs;
         if (!currentTabKey) currentTabKey = 'photo';
@@ -977,6 +1011,7 @@ window.renderLiveHero = (tabKey = null, animate = true) => {
         subtitleKey = activeItem.descKey;
         subtitleFallback = activeItem.fallbackDesc;
         activeVideo = activeItem.video;
+        activePoster = activeItem.poster;
     } else {
         return;
     }
@@ -1053,7 +1088,8 @@ window.renderLiveHero = (tabKey = null, animate = true) => {
             const v = activeVideo;
             const rv = mdjV(v);
             const changed = videoEl.getAttribute("src") !== rv;
-            if (changed) videoEl.src = rv;
+            if (activePoster) videoEl.poster = mdjV(activePoster);
+            if (changed) { videoEl.pause(); videoEl.src = rv; }
             if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
         if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
             if (changed) videoEl.load();
@@ -1208,7 +1244,9 @@ window.renderDjHero = (tabKey = 'weddings', animate = true) => {
             const v = activeItem.video;
             const rv = mdjV(v);
             const changed = videoEl.getAttribute("src") !== rv;
+            if (activeItem.poster) videoEl.poster = mdjV(activeItem.poster);
             if (changed) {
+                videoEl.pause();
                 videoEl.setAttribute("src", rv);
                 videoEl.src = rv;
                 videoEl.innerHTML = `<source src="${String(rv).replace(/"/g, "&quot;")}" type="video/mp4">`;
@@ -1739,7 +1777,8 @@ window.updateHoraLocaHero = (id) => {
         const v = pack.video;
         const rv = mdjV(v);
         const changed = videoEl.getAttribute('src') !== rv;
-        if (changed) videoEl.src = rv;
+        if (pack.image) videoEl.poster = mdjV(pack.image);
+        if (changed) { videoEl.pause(); videoEl.src = rv; }
         if (typeof window.mdjHeroVideoPrime === 'function') window.mdjHeroVideoPrime(videoEl);
         if (typeof window.mdjBindHeroVideoErrorFallback === 'function') window.mdjBindHeroVideoErrorFallback(videoEl);
         if (changed) videoEl.load();

@@ -20,7 +20,7 @@ window.MDJ_RENTALS_DATA = {
       "price": 650,
       "desc": "Show interactivo Miami-style (2 Personas: 1 Robot LED de última generación + 1 Asistente/Técnico CO2). Full energía para el clímax.",
       "video": "./assets/hora-loca/hora-loca-robot.mp4",
-      "image": "",
+      "image": "./assets/hora-loca/hora-loca-robot.jpg",
       "active": true,
       "order": 1,
       "extras": [
@@ -36,7 +36,7 @@ window.MDJ_RENTALS_DATA = {
       "price": 850,
       "desc": "Energía de carnaval VIP (4 Personas: 3 Bailarinas de Samba profesionales + 1 Baterista/Percusionista de Batucada en vivo).",
       "video": "./assets/hora-loca/hora-loca-brasil.mp4?v=20260414-under90mb",
-      "image": "",
+      "image": "./assets/hora-loca/hora-loca-brasil.jpg",
       "active": true,
       "order": 2,
       "extras": [
@@ -51,7 +51,7 @@ window.MDJ_RENTALS_DATA = {
       "price": 800,
       "desc": "Auténtico sabor tropical (4 Personas: 2 Bailarinas tradicionales + 2 Congueros/Músicos en vivo).",
       "video": "./assets/hora-loca/hora-loca-cubana.mp4",
-      "image": "",
+      "image": "./assets/hora-loca/hora-loca-cubana.jpg",
       "active": true,
       "order": 3,
       "extras": [
@@ -66,7 +66,7 @@ window.MDJ_RENTALS_DATA = {
       "price": 550,
       "desc": "Show temático a la carta (2 Personas: 2 Personajes/Zanqueros premium disfrazados estilo La Máscara, Celia Cruz, etc).",
       "video": "./assets/hora-loca/hora-loca-character.mp4",
-      "image": "",
+      "image": "./assets/hora-loca/hora-loca-character.jpg",
       "active": true,
       "order": 4,
       "extras": [
@@ -81,7 +81,7 @@ window.MDJ_RENTALS_DATA = {
       "price": 750,
       "desc": "Fantasía pura para bodas de lujo (3 Personas: 2 Hadas con alas LED + 1 Zanquero místico de fantasía).",
       "video": "./assets/hora-loca/hora-loca-hadas.mp4",
-      "image": "",
+      "image": "./assets/hora-loca/hora-loca-hadas.jpg",
       "active": true,
       "order": 5,
       "extras": [
