@@ -390,6 +390,13 @@ window.mdjActivateVideo = function (videoEl) {
         }
     } catch (eDeactivate) { void eDeactivate; }
     window.mdjActiveVideoEl = videoEl;
+    /* WebKit viejo (Safari 13): al cambiar el src de un <video> que ya esta en pantalla
+       (sin recargar el modal), a veces sigue "reproduciendo" (paused:false, readyState:4)
+       pero la superficie compuesta por GPU queda pintada con el ultimo frame del video
+       ANTERIOR -- se ve como una foto fija aunque el decoder este al dia. Forzar un
+       reflow sincrono (leer offsetHeight) inmediatamente antes de play() obliga a Safari
+       a recalcular layout/paint en vez de reusar la capa compuesta vieja. */
+    void videoEl.offsetHeight;
     videoEl.play().catch(function () { /* autoplay bloqueado o video sin src todavia: ignorar */ });
     /* Un .load() (propio o de quien resolvio el data-src momentos antes) puede dejar
        el elemento en un estado que rechaza el .play() de arriba en silencio -- red de
@@ -397,6 +404,7 @@ window.mdjActivateVideo = function (videoEl) {
        si ya estaba reproduciendo (.play() sobre un video en marcha es un no-op). */
     videoEl.addEventListener("loadeddata", function retryPlay() {
         if (window.mdjActiveVideoEl === videoEl) {
+            void videoEl.offsetHeight;
             videoEl.play().catch(function () { /* ignorar */ });
         }
     }, { once: true });

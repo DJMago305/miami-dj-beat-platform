@@ -4183,6 +4183,12 @@ a.residency-card--map:focus-visible {
   z-index: 1;
   opacity: 0.65;
   pointer-events: none;
+  /* WebKit viejo: fuerza una capa de composicion GPU propia para el <video>, para que
+     un cambio de src en caliente (sin recargar el modal) no deje pintado el ultimo
+     frame del video anterior como si fuera una foto fija. */
+  will-change: transform;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 
 .hero-shell-overlay {
@@ -4432,6 +4438,9 @@ a.residency-card--map:focus-visible {
   height: 100%;
   object-fit: cover;
   z-index: 1;
+  will-change: transform;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 
 .hl-hero-overlay {
@@ -4797,6 +4806,9 @@ a.residency-card--map:focus-visible {
   object-position: center;
   z-index: 1;
   transition: opacity 0.5s ease;
+  will-change: transform;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 
 /* Multi-Video Engine Classes para DJ / Performance */
