@@ -730,7 +730,7 @@ window._lightingHeroPreviewOnly = function (key, hoveredCard) {
     if (videoEl && activeVideo) {
         const rv = activeResolved;
         const changed = videoEl.getAttribute("src") !== rv;
-        if (changed) videoEl.src = rv;
+        if (changed) { videoEl.pause(); videoEl.src = rv; }
         if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
         if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
         if (changed) videoEl.load();
@@ -774,7 +774,7 @@ window._fxHeroPreviewOnly = function (key, hoveredCard) {
         const v = item.video;
         const rv = mdjV(v);
         const changed = videoEl.getAttribute("src") !== rv;
-        if (changed) videoEl.src = rv;
+        if (changed) { videoEl.pause(); videoEl.src = rv; }
         if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
         if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
         if (changed) videoEl.load();
@@ -819,7 +819,7 @@ window._bindLightingGridHeroHover = function () {
             window.activeLightingTabLocked = key;
             if (window._lightingHeroPreviewOnly) window._lightingHeroPreviewOnly(key, card);
             shell.classList.add("mdj-lighting-hero-preview-on");
-        }, 100);
+        }, 120);
     });
 
     gridEl.addEventListener("pointerout", function (e) {
@@ -854,7 +854,7 @@ window._bindFxGridHeroHover = function () {
             window.activeFxTabLocked = key;
             if (window._fxHeroPreviewOnly) window._fxHeroPreviewOnly(key, card);
             shell.classList.add("mdj-fx-hero-preview-on");
-        }, 100);
+        }, 120);
     });
 
     gridEl.addEventListener("pointerout", function (e) {

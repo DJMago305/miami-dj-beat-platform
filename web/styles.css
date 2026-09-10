@@ -7196,6 +7196,10 @@ body.mdj-artist-academy .dj-owner-tabs .container::-webkit-scrollbar-thumb {
   overflow: hidden;
   z-index: 0;
   background: #000;
+  pointer-events: none;
+  contain: layout paint;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 
 .mdj-hero-media-layer--shell .hero-shell-video {
@@ -7776,7 +7780,9 @@ body.page-home #home-hero .hero-grid {
 
 #rental-dynamic-modal .mdj-rental-catalog-carousel .product-card {
     margin-left: 0 !important;
-    margin-right: 0 !important;
+    /* margin-right lo da la regla compartida ARREGLO MAESTRO (20px, linea ~7678) --
+       no lo zeroees aqui: eso fue lo que dejo las tarjetas de Mobiliario pegadas
+       sin aire, unica pestaña sin el mismo espaciado que el resto. */
 }
 
 /* CAJA 4: EVENT STAFF (#staff-roster-grid) */
