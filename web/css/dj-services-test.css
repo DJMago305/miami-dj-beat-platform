@@ -1,0 +1,336 @@
+/* dj-services-test.css — piloto aislado, sin dependencias de rentals.html/styles.css
+   Compatibilidad: 0 uso de aspect-ratio nativo, 0 uso de gap en flex (solo margin). */
+
+:root {
+  --gold: #c5a059;
+  --gold-bright: #d4af37;
+  --ink: #0a0a0c;
+  --ink-soft: #121216;
+  --white: #f5f2ec;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--ink);
+  color: var(--white);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
+}
+
+a {
+  color: inherit;
+}
+
+.dst-container {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ---------- HERO ---------- */
+.dst-hero {
+  position: relative;
+  min-height: 640px;
+  padding: 140px 0 80px 0;
+  background-color: #000;
+  background-image: linear-gradient(180deg, rgba(5,5,7,0.55) 0%, rgba(5,5,7,0.85) 70%, rgba(5,5,7,1) 100%),
+    url('https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/assets/DJ_Performance/clubs_nightlife.jpg');
+  background-size: cover;
+  background-position: center;
+}
+
+.dst-eyebrow {
+  color: var(--gold);
+  font-size: 12px;
+  letter-spacing: 4px;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin: 0 0 18px 0;
+}
+
+.dst-h1 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(36px, 6vw, 64px);
+  line-height: 1.15;
+  margin: 0 0 18px 0;
+  max-width: 780px;
+}
+
+.dst-hero-sub {
+  font-size: clamp(15px, 1.6vw, 19px);
+  color: rgba(245,242,236,0.85);
+  max-width: 620px;
+  margin: 0 0 34px 0;
+}
+
+.dst-cta-row {
+  display: flex;
+  flex-wrap: wrap;
+}
+.dst-cta-row > * {
+  margin-right: 16px;
+  margin-bottom: 16px;
+}
+
+.dst-btn {
+  display: inline-block;
+  padding: 14px 30px;
+  border-radius: 50px;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-decoration: none;
+  cursor: pointer;
+  border: 1px solid var(--gold);
+}
+
+.dst-btn-primary {
+  background: var(--gold);
+  color: #14140f;
+}
+
+.dst-btn-ghost {
+  background: transparent;
+  color: var(--white);
+}
+
+/* ---------- SECTION HEADER ---------- */
+.dst-section {
+  padding: 70px 0;
+}
+.dst-section-alt {
+  background: var(--ink-soft);
+}
+
+.dst-h2 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(28px, 4vw, 42px);
+  margin: 0 0 10px 0;
+  text-align: center;
+}
+
+.dst-section-desc {
+  text-align: center;
+  color: rgba(245,242,236,0.7);
+  max-width: 620px;
+  margin: 0 auto 46px auto;
+  font-size: 15px;
+}
+
+/* ---------- PACKAGES (estatico, siempre legible, sin hover) ---------- */
+.dst-packages {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.dst-packages > * {
+  margin: 10px;
+}
+
+.dst-pkg-card {
+  width: 300px;
+  background: linear-gradient(180deg, #16161b 0%, #0d0d10 100%);
+  border: 1px solid rgba(197,160,89,0.35);
+  border-radius: 14px;
+  padding: 26px 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.dst-pkg-name {
+  font-family: 'Playfair Display', Georgia, serif;
+  color: var(--gold);
+  font-size: 20px;
+  margin: 0 0 8px 0;
+}
+
+.dst-pkg-desc {
+  font-size: 13.5px;
+  color: rgba(245,242,236,0.75);
+  margin: 0 0 20px 0;
+  flex-grow: 1;
+}
+
+.dst-pkg-price {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--white);
+  margin: 0 0 18px 0;
+}
+.dst-pkg-price span {
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(245,242,236,0.55);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+/* ---------- DEMOS: click-to-play estricto ---------- */
+.dst-player-wrap {
+  max-width: 860px;
+  margin: 0 auto 40px auto;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(197,160,89,0.4);
+  background: #000;
+  display: none;
+}
+.dst-player-wrap.is-active {
+  display: block;
+}
+
+/* Proporcion 16:9 sin aspect-ratio nativo: padding-top porcentual clasico */
+.dst-player-frame {
+  position: relative;
+  width: 100%;
+  height: 0;
+  padding-top: 56.25%;
+  background: #000;
+}
+.dst-player-frame video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.dst-player-caption {
+  padding: 14px 18px;
+  font-size: 13px;
+  color: rgba(245,242,236,0.8);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.dst-player-close {
+  background: transparent;
+  border: 1px solid rgba(245,242,236,0.4);
+  color: var(--white);
+  border-radius: 50px;
+  padding: 6px 16px;
+  font-size: 11px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dst-demo-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.dst-demo-grid > * {
+  margin: 10px;
+}
+
+.dst-demo-card {
+  width: 280px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(197,160,89,0.25);
+  background: #0d0d10;
+}
+
+.dst-demo-thumb-frame {
+  position: relative;
+  width: 100%;
+  height: 0;
+  padding-top: 62.5%; /* 280x175 approx, sin aspect-ratio */
+  background: #000;
+}
+.dst-demo-thumb-frame img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.dst-demo-play-btn {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: rgba(0,0,0,0.15);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.dst-demo-play-btn:hover {
+  background: rgba(0,0,0,0.35);
+}
+.dst-demo-play-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(10,10,12,0.72);
+  border: 2px solid var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold);
+  font-size: 20px;
+}
+
+.dst-demo-body {
+  padding: 16px 18px 20px 18px;
+}
+.dst-demo-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 16px;
+  color: var(--white);
+  margin: 0 0 6px 0;
+}
+.dst-demo-text {
+  font-size: 12.5px;
+  color: rgba(245,242,236,0.65);
+  margin: 0 0 14px 0;
+}
+.dst-demo-cta {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--gold);
+  background: transparent;
+  border: 1px solid var(--gold);
+  border-radius: 50px;
+  padding: 8px 18px;
+  cursor: pointer;
+}
+
+/* ---------- FOOTER MINI ---------- */
+.dst-footer {
+  padding: 40px 0;
+  text-align: center;
+  font-size: 12px;
+  color: rgba(245,242,236,0.45);
+}
+
+@media (max-width: 640px) {
+  .dst-hero {
+    min-height: 520px;
+    padding: 110px 0 60px 0;
+  }
+  .dst-pkg-card,
+  .dst-demo-card {
+    width: 100%;
+    max-width: 340px;
+  }
+}
