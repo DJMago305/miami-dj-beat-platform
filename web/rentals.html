@@ -868,23 +868,22 @@ Riesgo: romper carga del catálogo.
             flex-shrink: 0;
         }
 
-        /* ══ Hub de Entretenimiento y Talento: sin cápsula, todo sube y baja libre ══
+        /* ══ Hub de Entretenimiento y Talento: hero fijo, solo el contenido sube ══
            El PO rechazó la lista con scroll acotado ("eso es llevar el problema a otro
-           lugar"). Ahora todo el modal box es el único contenedor de scroll -- el título
-           (mdj-talent-hub-head) también sube y desaparece, igual que en weddings.html.
-           Se sobreescriben aquí, SOLO para #talent-selector-modal (sin tocar el shell
-           compartido con #rental-dynamic-modal), las reglas que antes fijaban el título
-           y encerraban el contenido en una caja de altura fija. Se conserva la clase
+           lugar") Y despues detecto que el video se movia con el scroll -- el error era
+           poner overflow-y:auto en .modal-content, el CONTENEDOR COMUN del video Y del
+           contenido (ambos hermanos ahi dentro). Un position:absolute hereda el scroll
+           de su ancestro con overflow:auto, aunque no se mueva "de verdad" -- por eso el
+           video subia igual que el texto. Fix real: el scroll vive SOLO en
+           .hero-shell-content (hermano del video, no su padre) -- el video/overlay
+           quedan fuera de esa capa y nunca se mueven. Se conserva la clase
            talent-selector-carousel (de ella depende el guard de hover-preview del
            contrato MDJ_RENTALS_TALENT_HUB_CONTRACT) -- solo cambia su comportamiento
            de scroll, no su identidad. */
-        #talent-selector-modal.modal-visible .modal-content.cinematic-hero-shell {
-            overflow-y: auto !important;
-        }
-
         #talent-selector-modal.modal-visible .modal-content.cinematic-hero-shell .hero-shell-content {
-            height: auto !important;
-            min-height: 100% !important;
+            height: 100% !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
             justify-content: flex-start !important;
         }
 
