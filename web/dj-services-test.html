@@ -43,7 +43,12 @@
 <main>
 
   <!-- ===== HERO UNIFICADO: foto de fondo + tarjetas de paquete flotando encima ===== -->
-  <section class="dst-hero">
+  <section class="dst-hero" id="dst-hero">
+    <!-- Video del demo: vive DENTRO del hero, mismo tratamiento que el resto del
+         sitio (sin controles nativos, autoplay/loop/muted) -- reemplaza la foto de
+         fondo en el lugar, nunca se abre como ventana aparte centrada. -->
+    <video id="dst-player-video" class="dst-hero-video" autoplay loop preload="none" playsinline webkit-playsinline muted></video>
+    <button type="button" class="dst-hero-video-close" id="dst-player-close" aria-label="Close video">&times;</button>
     <div class="dst-container dst-hero-inner">
       <p class="dst-eyebrow">Miami DJ Beat Exclusive Talent</p>
       <h1 class="dst-h1">DJ Services in Miami &amp; the Florida Keys</h1>
@@ -209,19 +214,6 @@
   </footer>
 
 </main>
-
-<!-- Reproductor unico como overlay/modal -- oculto hasta el primer clic, nunca desplaza el Hero -->
-<div class="dst-player-overlay" id="dst-player-wrap">
-  <div class="dst-player-modal">
-    <div class="dst-player-frame" id="dst-player-frame">
-      <video id="dst-player-video" controls preload="none" playsinline webkit-playsinline muted></video>
-    </div>
-    <div class="dst-player-caption">
-      <span id="dst-player-caption-text"></span>
-      <button type="button" class="dst-player-close" id="dst-player-close">Close</button>
-    </div>
-  </div>
-</div>
 
 <script src="./js/dj-services-test.js?v=1"></script>
 </body>
