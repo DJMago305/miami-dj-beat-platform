@@ -20,8 +20,13 @@
     try {
         var modernSyntaxOk = true;
         try { new Function('return (null)?.x ?? 1;'); } catch (eDetect) { modernSyntaxOk = false; }
-        if (!modernSyntaxOk && document.documentElement) {
-            document.documentElement.classList.add('mdj-legacy-gpu');
+        if (!modernSyntaxOk) {
+            if (document.documentElement) document.documentElement.classList.add('mdj-legacy-gpu');
+            /* TICKET-SAFARI13-VIDEO-FALLBACK (2026-09-10), a pedido explicito del PO:
+               en WebKit legado, cero video automatico/hover en heroes y tarjetas --
+               solo poster fijo. Ver mdjEnsureVideoResolved/mdjActivateVideo abajo,
+               que consultan esta bandera antes de tocar cualquier <video>. */
+            window.mdjIsLegacySafari = true;
         }
     } catch (eOuter) { void eOuter; }
 })();
@@ -308,6 +313,11 @@ if (document.readyState === "loading") {
 
 function mdjResolveDeferredVideoSources() {
     try {
+        /* TICKET-SAFARI13-VIDEO-FALLBACK: en WebKit legado ningun <source data-src>
+           debe resolverse jamas -- ni siquiera al entrar en viewport -- para
+           garantizar cero decodificacion/memoria de video en segundo plano. El
+           <video> se queda mostrando su poster para siempre en estos navegadores. */
+        if (window.mdjIsLegacySafari) return;
         var sources = document.querySelectorAll("source[data-src]");
         if (!sources.length) return;
 
@@ -369,6 +379,7 @@ if (document.readyState === "loading") {
  * termine de calcular que ya es visible) -- evita la carrera src-no-listo-todavia. */
 window.mdjEnsureVideoResolved = function (videoEl) {
     if (!videoEl) return false;
+    if (window.mdjIsLegacySafari) return false; /* WebKit legado: nunca resolver src, solo poster */
     try {
         var source = videoEl.querySelector("source[data-src]");
         if (source && source.dataset.mdjSrcResolved !== "1" && typeof mdjResolveOneVideoSource === "function") {
@@ -383,6 +394,7 @@ window.mdjEnsureVideoResolved = function (videoEl) {
 /** Reproduce `videoEl` y pausa cualquier otro que estuviera activo. Usar en vez de videoEl.play() directo. */
 window.mdjActivateVideo = function (videoEl) {
     if (!videoEl) return;
+    if (window.mdjIsLegacySafari) return; /* WebKit legado: nunca reproducir, solo poster fijo */
     window.mdjEnsureVideoResolved(videoEl);
     try {
         if (window.mdjActiveVideoEl && window.mdjActiveVideoEl !== videoEl) {
