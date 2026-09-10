@@ -1006,11 +1006,11 @@ Riesgo: romper carga del catálogo.
            salta a la siguiente/anterior cuando cambia cuál está centrada. */
         #talent-selector-modal.modal-visible #mdj-talent-hub-energy-dot {
             position: absolute !important;
-            width: 9px !important;
-            height: 9px !important;
+            width: 5px !important;
+            height: 5px !important;
             border-radius: 50% !important;
             background: #ffe9a8 !important;
-            box-shadow: 0 0 8px 2px rgba(255, 220, 130, 0.9), 0 0 16px 5px rgba(212, 175, 55, 0.6) !important;
+            box-shadow: 0 0 4px 1px rgba(255, 220, 130, 0.85) !important;
             transform: translate(-50%, -50%) !important;
             pointer-events: none !important;
             will-change: left, top !important;
@@ -2110,10 +2110,15 @@ Riesgo: romper carga del catálogo.
                 segmentProgress -= 1;
                 segmentIndex = (segmentIndex + 1) % 4;
             }
+            /* Ease-in-out (smoothstep) en vez de velocidad lineal constante --
+               un barrido a velocidad fija en línea recta se lee como escáner;
+               con aceleración/frenado en cada esquina se lee como una chispa
+               que salta de un punto a otro. */
+            var eased = segmentProgress * segmentProgress * (3 - 2 * segmentProgress);
             var a = corners[segmentIndex];
             var b = corners[(segmentIndex + 1) % 4];
-            var x = a.x + (b.x - a.x) * segmentProgress;
-            var y = a.y + (b.y - a.y) * segmentProgress;
+            var x = a.x + (b.x - a.x) * eased;
+            var y = a.y + (b.y - a.y) * eased;
             dot.style.left = x + 'px';
             dot.style.top = y + 'px';
         }
