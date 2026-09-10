@@ -31,6 +31,17 @@
     } catch (eOuter) { void eOuter; }
 })();
 
+/** Excepcion explicita al bloqueo de video en WebKit legado: un CLIC directo del
+ * usuario en una tarjeta (a diferencia de pasar el mouse o carga automatica) SI
+ * puede cargar/reproducir ese video puntual -- levanta la bandera un instante
+ * mientras corre la funcion de preview ya existente (misma exclusion mutua de
+ * siempre), y la repone despues. Usar en listeners de 'click', nunca de hover. */
+window.mdjRunIgnoringLegacyVideoGuard = function (fn) {
+    var was = window.mdjIsLegacySafari;
+    window.mdjIsLegacySafari = false;
+    try { fn(); } finally { window.mdjIsLegacySafari = was; }
+};
+
 /**
  * FIX-AUTH-LEGACY: polyfill de crypto.randomUUID() para Safari/WebKit < 15.4.
  * GoTrueClient (auth interno de supabase-js) lo usa al generar el estado del

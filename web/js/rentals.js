@@ -501,6 +501,21 @@ window._bindStaffGridHeroHover = function () {
         const restore = window.activeStaffTabLocked || "bartender";
         if (window.renderStaffHero) window.renderStaffHero(restore, false);
     });
+
+    /* WebKit legado: el hover de arriba esta bloqueado. Un CLIC directo si carga/reproduce. */
+    gridEl.addEventListener("click", function (e) {
+        if (!window.mdjIsLegacySafari) return;
+        const card = e.target.closest && e.target.closest(".hl-type-card[data-staff-key]");
+        if (!card || !gridEl.contains(card)) return;
+        const k = card.getAttribute("data-staff-key");
+        if (!k) return;
+        window.mdjRunIgnoringLegacyVideoGuard(function () {
+            lastKey = k;
+            window.activeStaffTabLocked = k;
+            if (window.renderStaffHero) window.renderStaffHero(k, false);
+            shell.classList.add("mdj-staff-hero-preview-on");
+        });
+    });
 };
 
 window.renderPayasosHero = function (tabKey = "gif", animate = true) {
@@ -579,6 +594,21 @@ window._bindPayasosGridHeroHover = function () {
         shell.classList.remove("mdj-payasos-hero-preview-on");
         const restore = window.activePayasosTabLocked || "gif";
         if (window.renderPayasosHero) window.renderPayasosHero(restore, false);
+    });
+
+    /* WebKit legado: el hover de arriba esta bloqueado. Un CLIC directo si carga/reproduce. */
+    gridEl.addEventListener("click", function (e) {
+        if (!window.mdjIsLegacySafari) return;
+        const card = e.target.closest && e.target.closest(".hl-type-card[data-payasos-key]");
+        if (!card || !gridEl.contains(card)) return;
+        const k = card.getAttribute("data-payasos-key");
+        if (!k) return;
+        window.mdjRunIgnoringLegacyVideoGuard(function () {
+            lastKey = k;
+            window.activePayasosTabLocked = k;
+            if (window.renderPayasosHero) window.renderPayasosHero(k, false);
+            shell.classList.add("mdj-payasos-hero-preview-on");
+        });
     });
 };
 
@@ -679,6 +709,22 @@ window._bindRosterGridHeroHover = function () {
                 ? window.activeVisualTabLocked || "photo"
                 : window.activeLiveTabLocked || "sax";
         if (window.renderLiveHero) window.renderLiveHero(restore, false);
+    });
+
+    /* WebKit legado: el hover de arriba esta bloqueado. Un CLIC directo si carga/reproduce. */
+    grid.addEventListener("click", function (e) {
+        if (!window.mdjIsLegacySafari) return;
+        const card = e.target.closest && e.target.closest(".hl-type-card");
+        if (!card || !grid.contains(card)) return;
+        const key = card.getAttribute("data-roster-key");
+        if (!key) return;
+        window.mdjRunIgnoringLegacyVideoGuard(function () {
+            lastHoverKey = key;
+            if (window.activeCategory === "visuals") window.activeVisualTabLocked = key;
+            if (window.activeCategory === "live") window.activeLiveTabLocked = key;
+            if (window._rosterHeroPreviewOnly) window._rosterHeroPreviewOnly(key, card);
+            shell.classList.add("mdj-roster-hero-preview-on");
+        });
     });
 };
 
@@ -865,6 +911,22 @@ window._bindLightingGridHeroHover = function () {
         const restore = window.activeLightingTabLocked || "movingHeads";
         if (window.renderLightingHero) window.renderLightingHero(restore, false);
     });
+
+    /* WebKit legado: el hover de arriba esta bloqueado (ver mdjIsLegacySafari).
+       Un CLIC directo en la tarjeta si carga/reproduce ese video puntual. */
+    gridEl.addEventListener("click", function (e) {
+        if (!window.mdjIsLegacySafari) return;
+        const card = e.target.closest && e.target.closest(".hl-type-card[data-lighting-key]");
+        if (!card || !gridEl.contains(card)) return;
+        const key = card.getAttribute("data-lighting-key");
+        if (!key) return;
+        window.mdjRunIgnoringLegacyVideoGuard(function () {
+            lastKey = key;
+            window.activeLightingTabLocked = key;
+            if (window._lightingHeroPreviewOnly) window._lightingHeroPreviewOnly(key, card);
+            shell.classList.add("mdj-lighting-hero-preview-on");
+        });
+    });
 };
 
 window._bindFxGridHeroHover = function () {
@@ -899,6 +961,21 @@ window._bindFxGridHeroHover = function () {
         shell.classList.remove("mdj-fx-hero-preview-on");
         const restore = window.activeFxTabLocked || "sparks";
         if (window.renderFxHero) window.renderFxHero(restore, false);
+    });
+
+    /* WebKit legado: el hover de arriba esta bloqueado. Un CLIC directo si carga/reproduce. */
+    gridEl.addEventListener("click", function (e) {
+        if (!window.mdjIsLegacySafari) return;
+        const card = e.target.closest && e.target.closest(".talent-cat-card[data-fx-key]");
+        if (!card || !gridEl.contains(card)) return;
+        const key = card.getAttribute("data-fx-key");
+        if (!key) return;
+        window.mdjRunIgnoringLegacyVideoGuard(function () {
+            lastKey = key;
+            window.activeFxTabLocked = key;
+            if (window._fxHeroPreviewOnly) window._fxHeroPreviewOnly(key, card);
+            shell.classList.add("mdj-fx-hero-preview-on");
+        });
     });
 };
 
@@ -980,6 +1057,20 @@ window.initMcModalMagicHover = function () {
         clearTimeout(pendingT);
         lastCardId = null;
         reset();
+    });
+
+    /* WebKit legado: el hover de arriba esta bloqueado dentro de showCard. Un CLIC
+       directo si carga/reproduce -- reusa showCard tal cual, sin duplicar logica. */
+    rowWrap.addEventListener("click", function (e) {
+        if (!window.mdjIsLegacySafari) return;
+        const card = e.target.closest && e.target.closest(".talent-cat-card");
+        if (!card || !rowWrap.contains(card)) return;
+        const cardId = card.id;
+        if (!VIDEO_BY_CARD[cardId]) return;
+        window.mdjRunIgnoringLegacyVideoGuard(function () {
+            lastCardId = cardId;
+            showCard(cardId, card);
+        });
     });
 };
 
@@ -1157,6 +1248,21 @@ window._bindDjRosterHeroHover = function (activeTabKey) {
         shell.classList.remove("mdj-dj-hero-preview-on");
         const restore = window.activeDjTabLocked || activeTabKey || "weddings";
         if (window.renderDjHero) window.renderDjHero(restore, false);
+    });
+
+    /* WebKit legado: el hover de arriba esta bloqueado. Un CLIC directo si carga/reproduce. */
+    gridEl.addEventListener("click", function (e) {
+        if (!window.mdjIsLegacySafari) return;
+        const card = e.target.closest && e.target.closest(".hl-type-card[data-dj-tab-key]");
+        if (!card || !gridEl.contains(card)) return;
+        const key = card.getAttribute("data-dj-tab-key");
+        if (!key) return;
+        window.mdjRunIgnoringLegacyVideoGuard(function () {
+            lastKey = key;
+            window.activeDjTabLocked = key;
+            if (window._djHeroPreviewOnly) window._djHeroPreviewOnly(key, card);
+            shell.classList.add("mdj-dj-hero-preview-on");
+        });
     });
 };
 
@@ -1750,6 +1856,19 @@ window._bindHoraLocaGridHeroHover = function () {
         const rt = e.relatedTarget;
         if (rt && gridEl.contains(rt)) return;
         lastKey = null;
+    });
+
+    /* WebKit legado: el hover de arriba esta bloqueado. Un CLIC directo si carga/reproduce. */
+    gridEl.addEventListener('click', function (e) {
+        if (!window.mdjIsLegacySafari) return;
+        const card = e.target.closest && e.target.closest('.hl-type-card[data-action="select-hl-package"]');
+        if (!card || !gridEl.contains(card)) return;
+        const key = card.getAttribute('data-id');
+        if (!key) return;
+        window.mdjRunIgnoringLegacyVideoGuard(function () {
+            lastKey = key;
+            if (window.updateHoraLocaHero) window.updateHoraLocaHero(key);
+        });
     });
 };
 
@@ -2496,6 +2615,18 @@ window.renderRentalCatalog = (categoryId) => {
             },
             true
         );
+
+        /* WebKit legado: el hover de arriba esta bloqueado dentro de rentalHoverPreview.
+           Un CLIC directo si carga/reproduce -- reusa la misma funcion, sin duplicar logica. */
+        track.addEventListener('click', (e) => {
+            if (!window.mdjIsLegacySafari) return;
+            const card = e.target && e.target.closest && e.target.closest('.product-card');
+            if (!card || !track.contains(card)) return;
+            window.mdjRunIgnoringLegacyVideoGuard(function () {
+                lastRentalCard = card;
+                rentalHoverPreview(card);
+            });
+        });
 
         const revertRentalHero = () => {
             clearTimeout(pendingRentalT);
