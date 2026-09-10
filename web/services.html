@@ -1004,6 +1004,43 @@ Riesgo: romper carga del catálogo.
             transform: none !important;
         }
 
+        /* Rectángulo dorado de solo borde en las 12 filas -- como pseudo-elemento
+           DENTRO del propio mini-grid del ítem (title/desc/cta), no con posición
+           absoluta de tamaño fijo, para que se adapte solo a la altura real de
+           cada título/descripción (algunos envuelven 2-3 líneas, otros 1).
+           grid-column/row abarca ambas columnas y ambas filas del mini-grid;
+           el margin negativo abajo (-24px) sube el borde inferior hasta cruzar
+           por la mitad del botón (altura de botón fija, no depende del texto). */
+        #talent-selector-modal.modal-visible .talent-hub-vertical-list {
+            position: relative !important;
+        }
+
+        #talent-selector-modal.modal-visible .talent-hub-vertical-list > .talent-cat-card.hero-glass-card::before {
+            content: "" !important;
+            grid-column: 1 / 3 !important;
+            grid-row: 1 / 3 !important;
+            align-self: stretch !important;
+            margin: -14px -24px -24px -24px !important;
+            border: 1.5px solid rgba(212, 175, 55, 0.85) !important;
+            border-radius: 22px !important;
+            pointer-events: none !important;
+        }
+
+        /* Punto de energía único (elemento real, no pseudo) -- ver script al final
+           del archivo: recorre el rectángulo de la tarjeta activa según scroll y
+           salta a la siguiente/anterior cuando cambia cuál está centrada. */
+        #talent-selector-modal.modal-visible #mdj-talent-hub-energy-dot {
+            position: absolute !important;
+            width: 9px !important;
+            height: 9px !important;
+            border-radius: 50% !important;
+            background: #ffe9a8 !important;
+            box-shadow: 0 0 8px 2px rgba(255, 220, 130, 0.9), 0 0 16px 5px rgba(212, 175, 55, 0.6) !important;
+            transform: translate(-50%, -50%) !important;
+            pointer-events: none !important;
+            will-change: left, top !important;
+        }
+
         @media (max-width: 640px) {
             #talent-selector-modal.modal-visible .talent-hub-vertical-list > .talent-cat-card.hero-glass-card {
                 grid-template-columns: 1fr !important;
@@ -1051,6 +1088,7 @@ Riesgo: romper carga del catálogo.
             display: inline-block !important;
             margin: 6px 0 0 0 !important;
             padding: 15px 34px !important;
+            background: rgba(212, 175, 55, 0.5) !important;
             border: 2px solid rgba(212, 175, 55, 0.75) !important;
             border-radius: 50px !important;
             text-decoration: none !important;
@@ -1946,6 +1984,101 @@ Riesgo: romper carga del catálogo.
         };
         stripClones();
         new MutationObserver(stripClones).observe(list, { childList: true });
+    })();
+    </script>
+    <script>
+    (function () {
+        /* Punto de energía único: recorre el rectángulo dorado (::before en CSS)
+           de la tarjeta actualmente centrada en el scroll, y salta a la tarjeta
+           vecina cuando el usuario sube/baja lo suficiente para cambiar cuál está
+           centrada. Los offsets de "sangrado" (RECT_BLEED) deben calzar con el
+           margin negativo del ::before en CSS -- si uno cambia, cambiar el otro. */
+        var modal = document.getElementById('talent-selector-modal');
+        var list = document.querySelector('#talent-selector-modal .talent-hub-vertical-list');
+        var scrollHost = document.querySelector('#talent-selector-modal .hero-shell-content');
+        if (!modal || !list || !scrollHost) return;
+
+        var dot = document.createElement('div');
+        dot.id = 'mdj-talent-hub-energy-dot';
+        dot.setAttribute('aria-hidden', 'true');
+        list.appendChild(dot);
+
+        var RECT_BLEED = { top: 14, right: 24, bottom: 24, left: 24 };
+        var SEGMENT_MS = 2200; /* tiempo por lado del rectángulo -- ida completa = 4x esto */
+
+        function cards() {
+            return Array.prototype.slice.call(list.querySelectorAll(':scope > .talent-cat-card'));
+        }
+
+        function cornersFor(card) {
+            var left = card.offsetLeft - RECT_BLEED.left;
+            var top = card.offsetTop - RECT_BLEED.top;
+            var right = card.offsetLeft + card.offsetWidth + RECT_BLEED.right;
+            var bottom = card.offsetTop + card.offsetHeight - RECT_BLEED.bottom;
+            return [
+                { x: left, y: top },
+                { x: right, y: top },
+                { x: right, y: bottom },
+                { x: left, y: bottom }
+            ];
+        }
+
+        var activeIndex = 0;
+        var segmentIndex = 0;
+        var segmentProgress = 0;
+
+        function pickActiveCard(list12) {
+            var hostRect = scrollHost.getBoundingClientRect();
+            var centerY = hostRect.top + hostRect.height / 2;
+            var best = 0, bestDist = Infinity;
+            list12.forEach(function (c, i) {
+                var r = c.getBoundingClientRect();
+                var cy = r.top + r.height / 2;
+                var d = Math.abs(cy - centerY);
+                if (d < bestDist) { bestDist = d; best = i; }
+            });
+            return best;
+        }
+
+        var lastTs = null;
+        function tick(ts) {
+            requestAnimationFrame(tick);
+            if (!modal.classList.contains('modal-visible')) { lastTs = null; return; }
+            var all = cards();
+            if (!all.length) return;
+            if (activeIndex >= all.length) activeIndex = 0;
+            if (lastTs == null) lastTs = ts;
+            var dt = ts - lastTs;
+            lastTs = ts;
+            var corners = cornersFor(all[activeIndex]);
+            segmentProgress += dt / SEGMENT_MS;
+            while (segmentProgress >= 1) {
+                segmentProgress -= 1;
+                segmentIndex = (segmentIndex + 1) % 4;
+            }
+            var a = corners[segmentIndex];
+            var b = corners[(segmentIndex + 1) % 4];
+            var x = a.x + (b.x - a.x) * segmentProgress;
+            var y = a.y + (b.y - a.y) * segmentProgress;
+            dot.style.left = x + 'px';
+            dot.style.top = y + 'px';
+        }
+        requestAnimationFrame(tick);
+
+        var scrollTimer = null;
+        scrollHost.addEventListener('scroll', function () {
+            if (scrollTimer) return;
+            scrollTimer = setTimeout(function () {
+                scrollTimer = null;
+                var all = cards();
+                var next = pickActiveCard(all);
+                if (next !== activeIndex) {
+                    activeIndex = next;
+                    segmentIndex = 0;
+                    segmentProgress = 0;
+                }
+            }, 120);
+        }, { passive: true });
     })();
     </script>
 
