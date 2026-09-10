@@ -867,6 +867,119 @@ Riesgo: romper carga del catálogo.
             cursor: pointer;
             flex-shrink: 0;
         }
+
+        /* ══ Hub de Entretenimiento y Talento: lista vertical con precios (reemplaza el carrusel horizontal) ══
+           El hero (mdj-talent-hero-media) sigue exactamente igual, sin tocar -- solo esta lista
+           gana su propio scroll vertical acotado dentro de .hero-shell-content, que ya no se mueve.
+           Se conserva la clase talent-selector-carousel (de ella depende el guard de hover-preview
+           del contrato MDJ_RENTALS_TALENT_HUB_CONTRACT) y data-mdj-simple-loop="1" en el HTML evita
+           que el carrusel infinito clone estas filas. */
+        #talent-selector-modal.modal-visible .grid5.cinematic-hero-cards.talent-selector-carousel.talent-hub-vertical-list {
+            display: flex !important;
+            flex-direction: column !important;
+            flex-wrap: nowrap !important;
+            align-items: stretch !important;
+            justify-content: flex-start !important;
+            width: 100% !important;
+            max-width: 640px !important;
+            margin: 0 auto !important;
+            gap: 12px !important;
+            padding: 4px clamp(12px, 2.5vw, 24px) 4px !important;
+            max-height: min(46vh, 400px) !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            scroll-snap-type: none !important;
+            touch-action: pan-y !important;
+            border: none !important;
+        }
+
+        #talent-selector-modal.modal-visible .talent-hub-vertical-list::-webkit-scrollbar {
+            display: block !important;
+            width: 6px;
+        }
+
+        #talent-selector-modal.modal-visible .talent-hub-vertical-list::-webkit-scrollbar-thumb {
+            background: rgba(197, 160, 89, 0.45);
+            border-radius: 8px;
+        }
+
+        #talent-selector-modal.modal-visible .talent-hub-vertical-list > .talent-cat-card.hero-glass-card {
+            flex: 0 0 auto !important;
+            flex-shrink: 0 !important;
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: wrap !important;
+            align-items: center !important;
+            align-self: stretch !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: none !important;
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            scroll-snap-align: none !important;
+            justify-content: flex-start !important;
+            padding: 14px 18px !important;
+            gap: 6px 14px !important;
+            box-sizing: border-box !important;
+            background: rgba(197, 160, 89, 0.18) !important;
+            border: 1px solid rgba(197, 160, 89, 0.35) !important;
+            border-radius: 12px !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            box-shadow: none !important;
+            transform: none !important;
+        }
+
+        #talent-selector-modal.modal-visible .talent-hub-vertical-list > .talent-cat-card.hero-glass-card:hover {
+            background: rgba(197, 160, 89, 0.28) !important;
+            border-color: rgba(197, 160, 89, 0.6) !important;
+            transform: none !important;
+        }
+
+        #talent-selector-modal.modal-visible .talent-hub-vertical-list .hero-card-emoji {
+            font-size: 26px !important;
+            margin: 0 !important;
+            flex: 0 0 auto !important;
+        }
+
+        #talent-selector-modal.modal-visible .talent-hub-vertical-list .talent-hub-row-body {
+            flex: 1 1 220px !important;
+            min-width: 0 !important;
+        }
+
+        #talent-selector-modal.modal-visible .talent-hub-vertical-list .hero-card-title {
+            margin: 0 0 4px 0 !important;
+            font-size: clamp(15px, 1.6vw, 18px) !important;
+        }
+
+        #talent-selector-modal.modal-visible .talent-hub-vertical-list .hero-card-text {
+            flex-grow: 0 !important;
+            margin: 0 !important;
+            font-size: 11.5px !important;
+            line-height: 1.4 !important;
+            color: rgba(255, 255, 255, 0.7) !important;
+        }
+
+        #talent-selector-modal.modal-visible .talent-hub-vertical-list .talent-hub-row-price {
+            flex: 0 0 auto !important;
+            text-align: right !important;
+            font-family: system-ui, -apple-system, 'Segoe UI', sans-serif !important;
+            font-weight: 700 !important;
+            font-size: 13px !important;
+            color: #f4ead0 !important;
+            white-space: nowrap !important;
+        }
+
+        #talent-selector-modal.modal-visible .talent-hub-vertical-list .mdj-talent-card-enter {
+            display: block !important;
+            margin: 0 !important;
+            padding: 8px 16px !important;
+            flex: 0 0 auto !important;
+            border: 1px solid rgba(212, 175, 55, 0.55) !important;
+            border-radius: 50px !important;
+            white-space: nowrap !important;
+        }
     </style>
     <style id="rental-dynamic-catalog-panel">
         /* Catálogo por categoría: panel de contenido, sin segundo “hero” de vídeo como la portada EVENTOS */
@@ -1198,22 +1311,22 @@ Riesgo: romper carga del catálogo.
                 style="font-family: 'Playfair Display', serif; color: var(--gold); font-size: 32px; margin-bottom: 32px; text-align: center;">
                 Preguntas Frecuentes — Renta y Producción</h2>
 
-            <details class="rentals-faq-item" style="border: 1px solid rgba(197,160,89,0.25); border-radius: 12px; padding: 18px 22px; margin-bottom: 14px; background: rgba(255,255,255,0.03);">
+            <details class="rentals-faq-item" style="border: 1px solid rgba(197,160,89,0.25); border-radius: 12px; padding: 18px 22px; margin-bottom: 14px; background: rgba(197, 160, 89, 0.18);">
                 <summary style="font-family: 'Playfair Display', serif; font-size: 18px; color: #fff; cursor: pointer;">¿En qué zonas entregan e instalan el equipo?</summary>
                 <p style="color: rgba(255,255,255,0.75); line-height: 1.6; margin-top: 12px;">Entregamos, instalamos y damos soporte técnico en eventos a lo largo de Miami-Dade y Broward County, incluyendo Miami, Fort Lauderdale y el área de South Florida.</p>
             </details>
 
-            <details class="rentals-faq-item" style="border: 1px solid rgba(197,160,89,0.25); border-radius: 12px; padding: 18px 22px; margin-bottom: 14px; background: rgba(255,255,255,0.03);">
+            <details class="rentals-faq-item" style="border: 1px solid rgba(197,160,89,0.25); border-radius: 12px; padding: 18px 22px; margin-bottom: 14px; background: rgba(197, 160, 89, 0.18);">
                 <summary style="font-family: 'Playfair Display', serif; font-size: 18px; color: #fff; cursor: pointer;">¿Con cuánta anticipación debo reservar el equipo o la producción?</summary>
                 <p style="color: rgba(255,255,255,0.75); line-height: 1.6; margin-top: 12px;">Recomendamos reservar con la mayor anticipación posible, especialmente para fines de semana y temporada alta, para confirmar disponibilidad de inventario y coordinar el montaje con tu venue.</p>
             </details>
 
-            <details class="rentals-faq-item" style="border: 1px solid rgba(197,160,89,0.25); border-radius: 12px; padding: 18px 22px; margin-bottom: 14px; background: rgba(255,255,255,0.03);">
+            <details class="rentals-faq-item" style="border: 1px solid rgba(197,160,89,0.25); border-radius: 12px; padding: 18px 22px; margin-bottom: 14px; background: rgba(197, 160, 89, 0.18);">
                 <summary style="font-family: 'Playfair Display', serif; font-size: 18px; color: #fff; cursor: pointer;">¿Ofrecen soporte técnico en sitio durante el evento?</summary>
                 <p style="color: rgba(255,255,255,0.75); line-height: 1.6; margin-top: 12px;">Sí. Las rentas de audio, iluminación y estructuras se coordinan con nuestro equipo técnico, que puede estar presente para el montaje, la operación y el desmontaje del equipo durante tu evento.</p>
             </details>
 
-            <details class="rentals-faq-item" style="border: 1px solid rgba(197,160,89,0.25); border-radius: 12px; padding: 18px 22px; margin-bottom: 14px; background: rgba(255,255,255,0.03);">
+            <details class="rentals-faq-item" style="border: 1px solid rgba(197,160,89,0.25); border-radius: 12px; padding: 18px 22px; margin-bottom: 14px; background: rgba(197, 160, 89, 0.18);">
                 <summary style="font-family: 'Playfair Display', serif; font-size: 18px; color: #fff; cursor: pointer;">¿Puedo obtener una cotización personalizada?</summary>
                 <p style="color: rgba(255,255,255,0.75); line-height: 1.6; margin-top: 12px;">Sí. Cada evento es distinto, así que la cotización depende del equipo, el tamaño del evento y la ubicación — contáctanos al <a href="tel:+13056071780" style="color: var(--gold);">(305) 607-1780</a> o <a href="mailto:miamidjbeat@gmail.com" style="color: var(--gold);">miamidjbeat@gmail.com</a> para tu cotización.</p>
             </details>
@@ -1681,74 +1794,95 @@ Riesgo: romper carga del catálogo.
                     </p>
                 </div>
 
-                <div class="grid5 cinematic-hero-cards talent-selector-carousel" data-mdj-ui-tick-scroll>
+                <div class="grid5 cinematic-hero-cards talent-selector-carousel talent-hub-vertical-list">
                     <!-- DJ / Performance -->
-                    <div class="talent-cat-card hero-glass-card" id="cat-dj" tabindex="0" data-action="open-dj"
+                    <div class="talent-cat-card hero-glass-card talent-hub-row" id="cat-dj" tabindex="0" data-action="open-dj"
                         data-talent-hero-src="./assets/DJ_Performance/weddings_quinces.mp4">
                         <div class="hero-card-emoji" aria-hidden="true">🎧</div>
-                        <h3 class="hero-card-title" data-i18n="dj_cat_title">DJ / Performance</h3>
-                        <p class="hero-card-text" data-i18n="dj_cat_desc">Dentro: catálogo por tipo de fiesta (bodas,
-                            club, familiar, fechas especiales) y extras.</p>
+                        <div class="talent-hub-row-body">
+                            <h3 class="hero-card-title" data-i18n="dj_cat_title">DJ / Performance</h3>
+                            <p class="hero-card-text" data-i18n="dj_cat_desc">Dentro: catálogo por tipo de fiesta (bodas,
+                                club, familiar, fechas especiales) y extras.</p>
+                        </div>
+                        <div class="talent-hub-row-price">Desde $350</div>
                         <span class="mdj-talent-card-enter" data-i18n="talent_card_enter">ENTRAR</span>
                     </div>
 
                     <!-- Hora Loca -->
-                    <div class="talent-cat-card hero-glass-card" id="cat-hora-loca" tabindex="0" data-action="open-horaloca"
+                    <div class="talent-cat-card hero-glass-card talent-hub-row" id="cat-hora-loca" tabindex="0" data-action="open-horaloca"
                         data-talent-hero-src="./assets/hora-loca/hora-loca-robot.mp4">
                         <div class="hero-card-emoji" aria-hidden="true">🎭</div>
-                        <h3 class="hero-card-title" data-i18n="hl_cat_title_1">Hora Loca Experience</h3>
-                        <p class="hero-card-text" data-i18n="hl_cat_desc_1">Dentro: paquetes Hora Loca, personajes,
-                            robots LED y opciones para sumar.</p>
+                        <div class="talent-hub-row-body">
+                            <h3 class="hero-card-title" data-i18n="hl_cat_title_1">Hora Loca Experience</h3>
+                            <p class="hero-card-text" data-i18n="hl_cat_desc_1">Dentro: paquetes Hora Loca, personajes,
+                                robots LED y opciones para sumar.</p>
+                        </div>
+                        <div class="talent-hub-row-price">Desde $550</div>
                         <span class="mdj-talent-card-enter" data-i18n="talent_card_enter">ENTRAR</span>
                     </div>
 
                     <!-- Músicos -->
-                    <div class="talent-cat-card hero-glass-card" id="cat-musicians" tabindex="0" data-action="open-musicians"
+                    <div class="talent-cat-card hero-glass-card talent-hub-row" id="cat-musicians" tabindex="0" data-action="open-musicians"
                         data-talent-hero-src="./assets/live-music/live-sax.mp4">
                         <div class="hero-card-emoji" aria-hidden="true">🎷</div>
-                        <h3 class="hero-card-title" data-i18n="hl_cat_title_2">Músicos en Vivo</h3>
-                        <p class="hero-card-text" data-i18n="hl_cat_desc_2">Dentro: roster en vivo — saxo, percusión y
-                            voz; elige músico y añade al paquete.</p>
+                        <div class="talent-hub-row-body">
+                            <h3 class="hero-card-title" data-i18n="hl_cat_title_2">Músicos en Vivo</h3>
+                            <p class="hero-card-text" data-i18n="hl_cat_desc_2">Dentro: roster en vivo — saxo, percusión y
+                                voz; elige músico y añade al paquete.</p>
+                        </div>
+                        <div class="talent-hub-row-price">Desde $350</div>
                         <span class="mdj-talent-card-enter" data-i18n="talent_card_enter">ENTRAR</span>
                     </div>
 
                     <!-- Visuales -->
-                    <div class="talent-cat-card hero-glass-card" id="cat-visuals" tabindex="0" data-action="open-visuals"
+                    <div class="talent-cat-card hero-glass-card talent-hub-row" id="cat-visuals" tabindex="0" data-action="open-visuals"
                         data-talent-hero-src="./assets/capture-visuals/photo.mp4">
                         <div class="hero-card-emoji" aria-hidden="true">📸</div>
-                        <h3 class="hero-card-title" data-i18n="hl_cat_title_3">Captura y Visuales</h3>
-                        <p class="hero-card-text" data-i18n="hl_cat_desc_3">Dentro: foto, video, VJ, drone, booth 360 y
-                            espejo mágico en el mismo flujo.</p>
+                        <div class="talent-hub-row-body">
+                            <h3 class="hero-card-title" data-i18n="hl_cat_title_3">Captura y Visuales</h3>
+                            <p class="hero-card-text" data-i18n="hl_cat_desc_3">Dentro: foto, video, VJ, drone, booth 360 y
+                                espejo mágico en el mismo flujo.</p>
+                        </div>
+                        <div class="talent-hub-row-price">Desde $250</div>
                         <span class="mdj-talent-card-enter" data-i18n="talent_card_enter">ENTRAR</span>
                     </div>
 
                     <!-- MC y Presentadores -->
-                    <div class="talent-cat-card hero-glass-card" id="cat-mc" tabindex="0" data-action="open-mc"
+                    <div class="talent-cat-card hero-glass-card talent-hub-row" id="cat-mc" tabindex="0" data-action="open-mc"
                         data-talent-hero-src="./assets/mc-club-host/mc-club-host.mp4">
                         <div class="hero-card-emoji" aria-hidden="true">🎙️</div>
-                        <h3 class="hero-card-title" data-i18n="mc_cat_title">MC y Presentadores</h3>
-                        <p class="hero-card-text" data-i18n="mc_cat_desc">Dentro: dos estilos (maestro de ceremonias /
-                            host club), vídeos y disponibilidad.</p>
+                        <div class="talent-hub-row-body">
+                            <h3 class="hero-card-title" data-i18n="mc_cat_title">MC y Presentadores</h3>
+                            <p class="hero-card-text" data-i18n="mc_cat_desc">Dentro: dos estilos (maestro de ceremonias /
+                                host club), vídeos y disponibilidad.</p>
+                        </div>
+                        <div class="talent-hub-row-price">Desde $350</div>
                         <span class="mdj-talent-card-enter" data-i18n="talent_card_enter">ENTRAR</span>
                     </div>
 
                     <!-- Staff (mismo patrón que Músicos en Vivo: abre modal con hero + tarjetas internas) -->
-                    <div class="talent-cat-card hero-glass-card mdj-magic-hover-card" id="cat-staff" tabindex="0" data-action="open-staff"
+                    <div class="talent-cat-card hero-glass-card mdj-magic-hover-card talent-hub-row" id="cat-staff" tabindex="0" data-action="open-staff"
                         data-talent-hero-src="./assets/mdj-staff-videos/Bartender.mp4">
                         <div class="hero-card-emoji" aria-hidden="true">🪪</div>
-                        <h3 class="hero-card-title" data-i18n="talent_staff_title">Staff</h3>
-                        <p class="hero-card-text" data-i18n="talent_staff_desc">Dentro: elige bartender, meseros o chef
-                            — un vídeo por rol (barra, mesa, cocina).</p>
+                        <div class="talent-hub-row-body">
+                            <h3 class="hero-card-title" data-i18n="talent_staff_title">Staff</h3>
+                            <p class="hero-card-text" data-i18n="talent_staff_desc">Dentro: elige bartender, meseros o chef
+                                — un vídeo por rol (barra, mesa, cocina).</p>
+                        </div>
+                        <div class="talent-hub-row-price" data-i18n="rentals-pa-pack-price">Presupuesto a medida</div>
                         <span class="mdj-talent-card-enter" data-i18n="talent_card_enter">ENTRAR</span>
                     </div>
 
                     <!-- Payasos (mismo patrón que Staff: modal con hero + tarjetas internas) -->
-                    <div class="talent-cat-card hero-glass-card mdj-magic-hover-card" id="cat-payasos" tabindex="0" data-action="open-payasos"
+                    <div class="talent-cat-card hero-glass-card mdj-magic-hover-card talent-hub-row" id="cat-payasos" tabindex="0" data-action="open-payasos"
                         data-talent-hero-src="./assets/mdj-payasos/pallasos-gif.mp4">
                         <div class="hero-card-emoji" aria-hidden="true">🤡</div>
-                        <h3 class="hero-card-title" data-i18n="talent_payasos_title">Payasos</h3>
-                        <p class="hero-card-text" data-i18n="talent_payasos_desc">Dentro: GIF en vivo, show, circo y
-                            Santa — elige tipo de actuación infantil/familiar.</p>
+                        <div class="talent-hub-row-body">
+                            <h3 class="hero-card-title" data-i18n="talent_payasos_title">Payasos</h3>
+                            <p class="hero-card-text" data-i18n="talent_payasos_desc">Dentro: GIF en vivo, show, circo y
+                                Santa — elige tipo de actuación infantil/familiar.</p>
+                        </div>
+                        <div class="talent-hub-row-price" data-i18n="rentals-pa-pack-price">Presupuesto a medida</div>
                         <span class="mdj-talent-card-enter" data-i18n="talent_card_enter">ENTRAR</span>
                     </div>
 
@@ -1756,6 +1890,23 @@ Riesgo: romper carga del catálogo.
             </div>
         </div>
     </div>
+    <script>
+    (function () {
+        /* Lista vertical del hub de talento: nunca debe duplicarse. El carrusel
+           infinito compartido (initTalentSelectorInfiniteCarousel, keyed a esta
+           misma clase .talent-selector-carousel de la que depende el guard de
+           hover-preview del contrato congelado) sigue clonando tarjetas cada vez
+           que el modal abre -- en vez de pelear con sus flags internos, se
+           observa la lista y se retira cualquier clon en cuanto aparece. */
+        var list = document.querySelector('#talent-selector-modal .talent-hub-vertical-list');
+        if (!list) return;
+        var stripClones = function () {
+            list.querySelectorAll('.mdj-talent-loop-clone').forEach(function (n) { n.remove(); });
+        };
+        stripClones();
+        new MutationObserver(stripClones).observe(list, { childList: true });
+    })();
+    </script>
 
     <!-- ── HORA LOCA CUSTOMIZER MODAL (Step 2) ── -->
     <div id="horaloca-modal" class="modal-overlay modal-hidden">
