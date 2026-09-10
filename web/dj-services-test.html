@@ -12,7 +12,10 @@
   try {
     var modernSyntaxOk = true;
     try { new Function('return (null)?.x ?? 1;'); } catch (e) { modernSyntaxOk = false; }
-    if (!modernSyntaxOk) document.documentElement.className += ' dst-legacy';
+    if (!modernSyntaxOk) {
+      document.documentElement.className += ' dst-legacy';
+      window.dstIsLegacySafari = true;
+    }
   } catch (e2) { /* ignore */ }
 })();
 </script>
