@@ -287,6 +287,25 @@ window.resolveMdAssetPublicUrl = function (path) {
 var mdjVideoLazyLoadObserver = null;
 var mdjResolveOneVideoSource = null;
 
+/** Poster de respaldo: se resuelve de inmediato (no es lazy como el video) para que
+ * un <video preload="none"> muestre una foto real desde el primer render, y para
+ * que si el video falla a mitad de sesion, mdjBindHeroVideoErrorFallback tenga un
+ * poster real en vez de dejar la caja en negro. */
+function mdjResolveDeferredVideoPosters() {
+    try {
+        document.querySelectorAll("video[data-poster]").forEach(function (v) {
+            if (v.dataset.mdjPosterResolved === "1") return;
+            v.dataset.mdjPosterResolved = "1";
+            v.poster = window.resolveMdAssetPublicUrl(v.getAttribute("data-poster"));
+        });
+    } catch (ePoster) { void ePoster; }
+}
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", mdjResolveDeferredVideoPosters);
+} else {
+    mdjResolveDeferredVideoPosters();
+}
+
 function mdjResolveDeferredVideoSources() {
     try {
         var sources = document.querySelectorAll("source[data-src]");

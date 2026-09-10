@@ -56,11 +56,16 @@ window.mdjHeroVideoPrime = function (el) {
     } catch (e) { /* ignore */ }
 };
 
-/** Si el asset del hero video falla (faltante/400/404), oculta el <video> en vez de dejar un recuadro roto. Idempotente. */
+/** Si el asset del hero video falla (faltante/400/404): si tiene poster, lo dejamos
+ * visible (el <video> muestra su poster cuando no hay frame decodificado) en vez de
+ * ocultar el elemento entero -- un video roto con foto de respaldo se ve intencional,
+ * un recuadro negro se ve como un sitio caido. Sin poster, se oculta como antes. Idempotente. */
 window.mdjBindHeroVideoErrorFallback = function (el) {
     if (!el || el.dataset.mdjErrorFallbackBound === "1") return;
     el.dataset.mdjErrorFallbackBound = "1";
-    el.addEventListener("error", function () { el.style.display = "none"; });
+    el.addEventListener("error", function () {
+        if (!el.getAttribute("poster")) el.style.display = "none";
+    });
     el.addEventListener("loadeddata", function () { el.style.display = ""; });
 };
 
@@ -2391,6 +2396,8 @@ window.renderRentalCatalog = (categoryId) => {
         if (!heroVid) return;
         const source = heroVid.querySelector('source');
         if (!source) return;
+        const itemPoster = itemDef.img || itemDef.image;
+        if (itemPoster) heroVid.poster = mdjV(itemPoster);
         const cleanItemVid = itemDef.video.split('/').pop().replace(/%20/g, ' ');
         const already =
             source.src &&
