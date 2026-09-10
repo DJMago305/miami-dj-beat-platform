@@ -292,7 +292,7 @@ function mdjResolveDeferredVideoSources() {
         var sources = document.querySelectorAll("source[data-src]");
         if (!sources.length) return;
 
-        mdjResolveOneVideoSource = function (source) {
+        mdjResolveOneVideoSource = function (source, skipActivate) {
             if (source.dataset.mdjSrcResolved === "1") return;
             source.dataset.mdjSrcResolved = "1";
             var resolved = window.resolveMdAssetPublicUrl(source.getAttribute("data-src"));
@@ -303,7 +303,10 @@ function mdjResolveDeferredVideoSources() {
             /* mdjActivateVideo en vez de dejar el autoplay nativo solo: asi este video
                tambien entra en la exclusion mutua (un solo video reproduciendose a la
                vez en toda la pestaña), no solo los que llaman .play() explicito desde
-               rentals.js. */
+               rentals.js. EXCEPCION: grupos de video de fondo simultaneo (ej. crossfade
+               de #mc-modal, data-mdj-multi-bg) se saltan esto a proposito -- pausarian
+               al hermano que ya esta en pantalla y se veria "congelado". */
+            if (skipActivate) return;
             if (typeof window.mdjActivateVideo === "function") {
                 window.mdjActivateVideo(videoEl);
             }
@@ -348,13 +351,14 @@ if (document.readyState === "loading") {
 /** Resuelve de inmediato el <source data-src> de `videoEl` si el IntersectionObserver
  * todavia no le tocaba el turno (ej. se activa por codigo antes de que el navegador
  * termine de calcular que ya es visible) -- evita la carrera src-no-listo-todavia. */
-window.mdjEnsureVideoResolved = function (videoEl) {
+window.mdjEnsureVideoResolved = function (videoEl, opts) {
     if (!videoEl) return false;
     try {
         var source = videoEl.querySelector("source[data-src]");
         if (source && source.dataset.mdjSrcResolved !== "1" && typeof mdjResolveOneVideoSource === "function") {
             if (mdjVideoLazyLoadObserver) mdjVideoLazyLoadObserver.unobserve(videoEl);
-            mdjResolveOneVideoSource(source);
+            var skipActivate = !!(opts && opts.skipActivate) || videoEl.hasAttribute("data-mdj-multi-bg");
+            mdjResolveOneVideoSource(source, skipActivate);
             return true; /* recien se resolvio/llamo .load() ahora mismo */
         }
     } catch (eEnsure) { void eEnsure; }

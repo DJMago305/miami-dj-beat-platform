@@ -804,21 +804,28 @@ window._bindLightingGridHeroHover = function () {
     gridEl._mdjLightingMagicBound = true;
 
     let lastKey = null;
+    let pendingT = null;
 
     gridEl.addEventListener("pointerover", function (e) {
         const card = e.target.closest && e.target.closest(".hl-type-card[data-lighting-key]");
         if (!card || !gridEl.contains(card)) return;
         const key = card.getAttribute("data-lighting-key");
         if (!key || key === lastKey) return;
-        lastKey = key;
-        window.activeLightingTabLocked = key;
-        if (window._lightingHeroPreviewOnly) window._lightingHeroPreviewOnly(key, card);
-        shell.classList.add("mdj-lighting-hero-preview-on");
+        clearTimeout(pendingT);
+        /* Debounce: si el mouse barre varias tarjetas rapido, Safari 13 no debe
+           intentar cargar/reproducir un video por cada una en menos de un segundo. */
+        pendingT = setTimeout(function () {
+            lastKey = key;
+            window.activeLightingTabLocked = key;
+            if (window._lightingHeroPreviewOnly) window._lightingHeroPreviewOnly(key, card);
+            shell.classList.add("mdj-lighting-hero-preview-on");
+        }, 100);
     });
 
     gridEl.addEventListener("pointerout", function (e) {
         const rt = e.relatedTarget;
         if (rt && gridEl.contains(rt)) return;
+        clearTimeout(pendingT);
         lastKey = null;
         shell.classList.remove("mdj-lighting-hero-preview-on");
         const restore = window.activeLightingTabLocked || "movingHeads";
@@ -834,21 +841,26 @@ window._bindFxGridHeroHover = function () {
     gridEl._mdjFxMagicBound = true;
 
     let lastKey = null;
+    let pendingT = null;
 
     gridEl.addEventListener("pointerover", function (e) {
         const card = e.target.closest && e.target.closest(".talent-cat-card[data-fx-key]");
         if (!card || !gridEl.contains(card)) return;
         const key = card.getAttribute("data-fx-key");
         if (!key || key === lastKey) return;
-        lastKey = key;
-        window.activeFxTabLocked = key;
-        if (window._fxHeroPreviewOnly) window._fxHeroPreviewOnly(key, card);
-        shell.classList.add("mdj-fx-hero-preview-on");
+        clearTimeout(pendingT);
+        pendingT = setTimeout(function () {
+            lastKey = key;
+            window.activeFxTabLocked = key;
+            if (window._fxHeroPreviewOnly) window._fxHeroPreviewOnly(key, card);
+            shell.classList.add("mdj-fx-hero-preview-on");
+        }, 100);
     });
 
     gridEl.addEventListener("pointerout", function (e) {
         const rt = e.relatedTarget;
         if (rt && gridEl.contains(rt)) return;
+        clearTimeout(pendingT);
         lastKey = null;
         shell.classList.remove("mdj-fx-hero-preview-on");
         const restore = window.activeFxTabLocked || "sparks";
@@ -3212,6 +3224,12 @@ window.premiumTransition = (outId, inId, callback) => {
             inModal.classList.remove('modal-hidden');
             inModal.classList.add('modal-visible', 'modal-fade-in');
             document.body.classList.add('body-modal-lock');
+
+            if (typeof window.mdjEnsureVideoResolved === 'function') {
+                inModal.querySelectorAll('video').forEach(function (v) {
+                    window.mdjEnsureVideoResolved(v);
+                });
+            }
 
             if (inId && typeof window.mdjRentalsRestripInfiniteAfterModalShow === 'function') {
                 window.mdjRentalsRestripInfiniteAfterModalShow(inId);
