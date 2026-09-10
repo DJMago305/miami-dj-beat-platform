@@ -916,16 +916,18 @@ Riesgo: romper carga del catálogo.
             transform: none !important;
         }
 
+        /* Grilla de 3 columnas (izquierda/centro/derecha) en vez de una sola columna
+           larga -- misma técnica que .grid3 de weddings.html, para que 12 filas no
+           se vean como una pirámide vertical. Colapsa a 1 columna en móvil. */
         #talent-selector-modal.modal-visible .grid5.cinematic-hero-cards.talent-selector-carousel.talent-hub-vertical-list {
-            display: flex !important;
-            flex-direction: column !important;
-            flex-wrap: nowrap !important;
-            align-items: stretch !important;
+            display: grid !important;
+            grid-template-columns: repeat(3, 1fr) !important;
+            align-items: start !important;
             justify-content: flex-start !important;
             width: 100% !important;
-            max-width: 640px !important;
+            max-width: 1040px !important;
             margin: 0 auto !important;
-            gap: 12px !important;
+            gap: 34px 30px !important;
             padding: 4px clamp(12px, 2.5vw, 24px) 24px !important;
             height: auto !important;
             max-height: none !important;
@@ -933,6 +935,18 @@ Riesgo: romper carga del catálogo.
             scroll-snap-type: none !important;
             touch-action: pan-y !important;
             border: none !important;
+        }
+
+        @media (max-width: 900px) {
+            #talent-selector-modal.modal-visible .talent-hub-vertical-list {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
+        }
+
+        @media (max-width: 640px) {
+            #talent-selector-modal.modal-visible .talent-hub-vertical-list {
+                grid-template-columns: 1fr !important;
+            }
         }
 
         /* Texto plano, sin caja/borde/fondo -- el PO fue explícito: nada de tarjeta
@@ -954,7 +968,7 @@ Riesgo: romper carga del catálogo.
             max-height: none !important;
             scroll-snap-align: none !important;
             padding: 0 !important;
-            margin: 0 0 30px 0 !important;
+            margin: 0 !important;
             box-sizing: border-box !important;
             background: none !important;
             border: none !important;
@@ -982,14 +996,19 @@ Riesgo: romper carga del catálogo.
         }
 
         #talent-selector-modal.modal-visible .talent-hub-vertical-list .hero-card-title {
-            margin: 0 0 6px 0 !important;
+            margin: 0 0 8px 0 !important;
             font-size: clamp(17px, 1.9vw, 21px) !important;
             font-weight: 700 !important;
         }
 
-        /* Solo título + botón -- sin descripción, per instrucción directa del PO. */
+        /* Descripción de vuelta, visible -- el PO pidió más presentación/publicidad,
+           no solo "entra aquí". */
         #talent-selector-modal.modal-visible .talent-hub-vertical-list .hero-card-text {
-            display: none !important;
+            display: block !important;
+            margin: 0 0 14px 0 !important;
+            font-size: 13px !important;
+            line-height: 1.55 !important;
+            color: rgba(255, 255, 255, 0.72) !important;
         }
 
         #talent-selector-modal.modal-visible .talent-hub-vertical-list .mdj-talent-card-enter {
