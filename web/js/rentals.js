@@ -868,19 +868,25 @@ window._bindFxGridHeroHover = function () {
     });
 };
 
-/** MC & Presentadores: mismo ADN que Captura y Visuales (pointerenter → vídeo en hero; salida de la fila → estado base). */
+/** MC & Presentadores: un solo <video> con swap de src en hover (mismo patron que
+ * Iluminacion/FX) -- antes eran dos <video> simultaneos con crossfade por opacidad,
+ * lo que dejaba dos decoders corriendo a la vez en Safari 13. */
 window.initMcModalMagicHover = function () {
     const shell = document.querySelector("#mc-modal .modal-content.cinematic-hero-shell");
-    const vHost = document.getElementById("mc-video-host");
-    const vMaestro = document.getElementById("mc-video-maestro");
+    const videoEl = document.getElementById("mc-hero-video");
     const cardMaestro = document.getElementById("mc-card-maestro");
     const cardHost = document.getElementById("mc-card-host");
-    if (!shell || !vHost || !vMaestro || !cardMaestro || !cardHost) return;
+    if (!shell || !videoEl || !cardMaestro || !cardHost) return;
     if (shell._mdjMcMagicBound) return;
     shell._mdjMcMagicBound = true;
 
     const rowWrap = cardMaestro.parentElement;
     if (!rowWrap || rowWrap !== cardHost.parentElement) return;
+
+    const VIDEO_BY_CARD = {
+        "mc-card-host": "./assets/mc-club-host/mc-club-host.mp4",
+        "mc-card-maestro": "./assets/mc-club-host/MC.mp4"
+    };
 
     const clearActiveCards = function () {
         rowWrap.querySelectorAll(".talent-cat-card").forEach(function (c) {
@@ -888,25 +894,26 @@ window.initMcModalMagicHover = function () {
         });
     };
 
-    const showMaestro = function (hoveredCard) {
-        vMaestro.style.opacity = "1";
-        vHost.style.opacity = "0";
+    let lastCardId = null;
+    let pendingT = null;
+
+    const showCard = function (cardId, hoveredCard) {
+        const v = VIDEO_BY_CARD[cardId];
+        if (!v) return;
+        const rv = typeof mdjV === "function" ? mdjV(v) : v;
+        const changed = videoEl.getAttribute("src") !== rv;
+        if (changed) { videoEl.pause(); videoEl.src = rv; }
+        if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
+        if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
+        if (changed) videoEl.load();
+        if (typeof window.mdjActivateVideo === "function") { window.mdjActivateVideo(videoEl); } else { videoEl.play().catch(() => {}); }
         shell.classList.add("mdj-mc-hero-preview-on");
         clearActiveCards();
-        (hoveredCard || cardMaestro).classList.add("active");
-    };
-    const showHost = function (hoveredCard) {
-        vHost.style.opacity = "1";
-        vMaestro.style.opacity = "0";
-        shell.classList.add("mdj-mc-hero-preview-on");
-        clearActiveCards();
-        (hoveredCard || cardHost).classList.add("active");
+        (hoveredCard || document.getElementById(cardId)).classList.add("active");
     };
     const reset = function () {
         shell.classList.remove("mdj-mc-hero-preview-on");
         clearActiveCards();
-        vHost.style.opacity = "1";
-        vMaestro.style.opacity = "0";
     };
 
     rowWrap.addEventListener(
@@ -915,8 +922,12 @@ window.initMcModalMagicHover = function () {
             const card = e.target.closest && e.target.closest(".talent-cat-card");
             if (!card || !rowWrap.contains(card)) return;
             const cardId = card.id;
-            if (cardId === "mc-card-maestro") showMaestro(card);
-            else if (cardId === "mc-card-host") showHost(card);
+            if (!VIDEO_BY_CARD[cardId] || cardId === lastCardId) return;
+            clearTimeout(pendingT);
+            pendingT = setTimeout(function () {
+                lastCardId = cardId;
+                showCard(cardId, card);
+            }, 120);
         },
         true
     );
@@ -924,6 +935,8 @@ window.initMcModalMagicHover = function () {
     rowWrap.addEventListener("pointerleave", function (e) {
         const rt = e.relatedTarget;
         if (rt && rowWrap.contains(rt)) return;
+        clearTimeout(pendingT);
+        lastCardId = null;
         reset();
     });
 };

@@ -1590,14 +1590,13 @@ Riesgo: romper carga del catálogo.
                 </div>
             </div>
 
-            <!-- Dual Video Background for Seamless Transitions -->
-            <video class="hero-shell-video" id="mc-video-host" data-mdj-multi-bg="1" autoplay muted loop playsinline preload="none"
-                style="transition: opacity 0.6s ease; opacity: 1;">
+            <!-- Un solo video, swap de src en hover (mismo patron que lighting-hero-video/fx-hero-video)
+                 -- antes eran dos <video> simultaneos con crossfade por opacidad, lo que dejaba DOS
+                 decoders corriendo a la vez en Safari 13 (sensacion de "Mac cansada"). Un solo
+                 elemento = un solo decoder, exclusion mutua sitewide intacta sin excepciones. -->
+            <video class="hero-shell-video" id="mc-hero-video" autoplay muted loop playsinline preload="none"
+                style="opacity: 0.9; filter: brightness(0.9); pointer-events: none;">
                 <source data-src="./assets/mc-club-host/mc-club-host.mp4" type="video/mp4">
-            </video>
-            <video class="hero-shell-video" id="mc-video-maestro" data-mdj-multi-bg="1" autoplay muted loop playsinline preload="none"
-                style="transition: opacity 0.6s ease; opacity: 0;">
-                <source data-src="./assets/mc-club-host/MC.mp4" type="video/mp4">
             </video>
 
             <div class="hero-shell-overlay"></div>
