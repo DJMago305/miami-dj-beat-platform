@@ -1998,10 +1998,18 @@ Riesgo: romper carga del catálogo.
         var scrollHost = document.querySelector('#talent-selector-modal .hero-shell-content');
         if (!modal || !list || !scrollHost) return;
 
+        /* El punto NO vive dentro de .talent-hub-vertical-list -- ese contenedor
+           es un CSS grid, y una regla vieja del carrusel horizontal
+           (".talent-selector-carousel > *") le fuerza min-height/max-height:318px
+           a TODOS sus hijos directos (selector universal). Eso convertía el punto
+           de 5x5px en una barra de 5x318px (confirmado con getBoundingClientRect).
+           Se cuelga de .hero-shell-content (flex, no grid, sin esa regla) en su
+           lugar, y se suma el offset de la lista dentro de ese contenedor al
+           calcular las esquinas de cada tarjeta. */
         var dot = document.createElement('div');
         dot.id = 'mdj-talent-hub-energy-dot';
         dot.setAttribute('aria-hidden', 'true');
-        list.appendChild(dot);
+        scrollHost.appendChild(dot);
 
         var RECT_BLEED = { top: 14, right: 24, bottom: 24, left: 24 };
         var SEGMENT_MS = 2200; /* tiempo por lado del rectángulo -- ida completa = 4x esto */
@@ -2011,10 +2019,12 @@ Riesgo: romper carga del catálogo.
         }
 
         function cornersFor(card) {
-            var left = card.offsetLeft - RECT_BLEED.left;
-            var top = card.offsetTop - RECT_BLEED.top;
-            var right = card.offsetLeft + card.offsetWidth + RECT_BLEED.right;
-            var bottom = card.offsetTop + card.offsetHeight - RECT_BLEED.bottom;
+            var baseLeft = list.offsetLeft + card.offsetLeft;
+            var baseTop = list.offsetTop + card.offsetTop;
+            var left = baseLeft - RECT_BLEED.left;
+            var top = baseTop - RECT_BLEED.top;
+            var right = baseLeft + card.offsetWidth + RECT_BLEED.right;
+            var bottom = baseTop + card.offsetHeight - RECT_BLEED.bottom;
             return [
                 { x: left, y: top },
                 { x: right, y: top },
