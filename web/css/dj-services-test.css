@@ -86,10 +86,33 @@ a {
   color: var(--gold);
 }
 
-/* ---------- HERO ---------- */
-.dst-hero {
+/* Todo lo que va DESPUES del hero fijo (el espaciador reserva su altura) --
+   fondo solido propio para que, al subir con el scroll, tape el video del
+   hero en vez de dejarlo transparentar detras. */
+main {
   position: relative;
-  min-height: 100vh;
+  z-index: 1;
+  background: var(--ink);
+}
+
+.dst-hero-spacer {
+  height: 100vh;
+}
+
+/* ---------- HERO ---------- */
+/* Fijo en el viewport: el video/foto de fondo NUNCA se mueve con el scroll --
+   el resto de la pagina (seccion de demos + footer) sube por encima y lo va
+   cubriendo, como una cortina. Si las 6 tarjetas de paquete no caben en una
+   pantalla, el propio hero scrollea internamente (overflow-y), el fondo
+   sigue fijo. */
+.dst-hero {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow-y: auto;
+  z-index: 0;
   padding: 130px 0 70px 0;
   background-color: #000;
   background-image: linear-gradient(180deg, rgba(5,5,7,0.5) 0%, rgba(5,5,7,0.72) 55%, rgba(5,5,7,0.94) 100%),
@@ -218,6 +241,9 @@ a {
 /* ---------- SECTION HEADER ---------- */
 .dst-section {
   padding: 70px 0;
+  position: relative;
+  z-index: 2;
+  background: var(--ink);
 }
 .dst-section-alt {
   background: var(--ink-soft);
@@ -417,6 +443,9 @@ html.dst-legacy .dst-glass {
 
 /* ---------- FOOTER MINI ---------- */
 .dst-footer {
+  position: relative;
+  z-index: 2;
+  background: var(--ink);
   padding: 40px 0;
   text-align: center;
   font-size: 12px;
