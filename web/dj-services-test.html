@@ -3,6 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+/* Deteccion de WebKit legado, autocontenida (esta pagina no carga
+   supabase-config.js) -- misma sonda ?./?? ya probada en rentals.html.
+   Fuerza el fallback solido de .dst-glass incluso si @supports reporta
+   soporte parcial de backdrop-filter. */
+(function () {
+  try {
+    var modernSyntaxOk = true;
+    try { new Function('return (null)?.x ?? 1;'); } catch (e) { modernSyntaxOk = false; }
+    if (!modernSyntaxOk) document.documentElement.className += ' dst-legacy';
+  } catch (e2) { /* ignore */ }
+})();
+</script>
 <title>DJ Services in Miami | Miami DJ Beat Live Entertainment</title>
 <meta name="description" content="Professional DJ services in Miami and the Florida Keys for weddings, quinceaneras, private parties, corporate events and clubs. Watch real event demos and check package pricing.">
 <link rel="canonical" href="https://www.miamidjbeat.com/dj-services-test.html">
@@ -29,9 +42,9 @@
 
 <main>
 
-  <!-- ===== HERO ===== -->
+  <!-- ===== HERO UNIFICADO: foto de fondo + tarjetas de paquete flotando encima ===== -->
   <section class="dst-hero">
-    <div class="dst-container">
+    <div class="dst-container dst-hero-inner">
       <p class="dst-eyebrow">Miami DJ Beat Exclusive Talent</p>
       <h1 class="dst-h1">DJ Services in Miami &amp; the Florida Keys</h1>
       <p class="dst-hero-sub">
@@ -42,73 +55,62 @@
         <a class="dst-btn dst-btn-primary" href="./contact.html">Check Availability</a>
         <a class="dst-btn dst-btn-ghost" href="#dst-demos">Watch Live Demos</a>
       </div>
-    </div>
-  </section>
 
-  <!-- ===== PACKAGES (estatico, siempre visible) ===== -->
-  <section class="dst-section">
-    <div class="dst-container">
-      <h2 class="dst-h2">DJ Packages</h2>
-      <p class="dst-section-desc">Base pricing shown up front &mdash; final quote depends on hours, location and add-ons.</p>
+      <h2 class="dst-h2 dst-h2-onhero">DJ Packages</h2>
 
       <div class="dst-packages">
 
-        <article class="dst-pkg-card">
+        <article class="dst-pkg-card dst-glass">
           <h3 class="dst-pkg-name">Weddings &amp; Corporate</h3>
           <p class="dst-pkg-desc">Premium DJ experience for high-end events.</p>
           <p class="dst-pkg-price"><span>Starting at</span>$1,500.00</p>
+          <button type="button" class="dst-btn dst-btn-primary dst-pkg-book">Book Package</button>
         </article>
 
-        <article class="dst-pkg-card">
+        <article class="dst-pkg-card dst-glass">
           <h3 class="dst-pkg-name">Private Parties</h3>
           <p class="dst-pkg-desc">Exclusive curation for VIP gatherings, house parties, and intimate yacht experiences. Base 4 hours, extra hours $100/hr.</p>
           <p class="dst-pkg-price"><span>Starting at</span>$500.00</p>
+          <button type="button" class="dst-btn dst-btn-primary dst-pkg-book">Book Package</button>
         </article>
 
-        <article class="dst-pkg-card">
+        <article class="dst-pkg-card dst-glass">
           <h3 class="dst-pkg-name">Clubs &amp; Nightlife</h3>
           <p class="dst-pkg-desc">High-energy open format, electronic, and global rhythms crafted for an explosive dancefloor. Base 4 hours, extra hours $100/hr.</p>
           <p class="dst-pkg-price"><span>Starting at</span>$500.00</p>
+          <button type="button" class="dst-btn dst-btn-primary dst-pkg-book">Book Package</button>
         </article>
 
-        <article class="dst-pkg-card">
+        <article class="dst-pkg-card dst-glass">
           <h3 class="dst-pkg-name">Family Events</h3>
           <p class="dst-pkg-desc">Fun, engaging, and clean entertainment guaranteed to keep every generation dancing. Base 4 hours, extra hours $100/hr.</p>
           <p class="dst-pkg-price"><span>Starting at</span>$350.00</p>
+          <button type="button" class="dst-btn dst-btn-primary dst-pkg-book">Book Package</button>
         </article>
 
-        <article class="dst-pkg-card">
+        <article class="dst-pkg-card dst-glass">
           <h3 class="dst-pkg-name">Seasonal Parties</h3>
           <p class="dst-pkg-desc">Halloween, St. Patrick's Day, 4th of July. Custom pricing by setup.</p>
           <p class="dst-pkg-price"><span>Range</span>$600 &ndash; $1,500</p>
+          <button type="button" class="dst-btn dst-btn-primary dst-pkg-book">Book Package</button>
         </article>
 
-        <article class="dst-pkg-card">
+        <article class="dst-pkg-card dst-glass">
           <h3 class="dst-pkg-name">Holiday &amp; Special Events</h3>
           <p class="dst-pkg-desc">Curated soundtracks engineered to elevate corporate galas and seasonal festive gatherings. Base 5 hours, extra hours $100/hr.</p>
           <p class="dst-pkg-price"><span>Starting at</span>$1,500.00</p>
+          <button type="button" class="dst-btn dst-btn-primary dst-pkg-book">Book Package</button>
         </article>
 
       </div>
     </div>
   </section>
 
-  <!-- ===== DEMOS: click-to-play estricto ===== -->
+  <!-- ===== DEMOS: solo miniaturas estaticas; el reproductor abre en modal, sin desplazar el Hero ===== -->
   <section class="dst-section dst-section-alt" id="dst-demos">
     <div class="dst-container">
       <h2 class="dst-h2">Past Events &amp; Live Demos</h2>
-      <p class="dst-section-desc">Static photos only &mdash; click any demo to load and play that single video. Nothing plays automatically.</p>
-
-      <!-- Reproductor unico, oculto hasta el primer clic -->
-      <div class="dst-player-wrap" id="dst-player-wrap">
-        <div class="dst-player-frame" id="dst-player-frame">
-          <video id="dst-player-video" controls preload="none" playsinline webkit-playsinline muted></video>
-        </div>
-        <div class="dst-player-caption">
-          <span id="dst-player-caption-text"></span>
-          <button type="button" class="dst-player-close" id="dst-player-close">Close</button>
-        </div>
-      </div>
+      <p class="dst-section-desc">Static photos only &mdash; click any demo to open the player in a compact overlay. Nothing plays automatically.</p>
 
       <div class="dst-demo-grid">
 
@@ -207,6 +209,19 @@
   </footer>
 
 </main>
+
+<!-- Reproductor unico como overlay/modal -- oculto hasta el primer clic, nunca desplaza el Hero -->
+<div class="dst-player-overlay" id="dst-player-wrap">
+  <div class="dst-player-modal">
+    <div class="dst-player-frame" id="dst-player-frame">
+      <video id="dst-player-video" controls preload="none" playsinline webkit-playsinline muted></video>
+    </div>
+    <div class="dst-player-caption">
+      <span id="dst-player-caption-text"></span>
+      <button type="button" class="dst-player-close" id="dst-player-close">Close</button>
+    </div>
+  </div>
+</div>
 
 <script src="./js/dj-services-test.js?v=1"></script>
 </body>

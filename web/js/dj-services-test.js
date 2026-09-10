@@ -35,7 +35,7 @@
             video.load();
             playerWrap.classList.add('is-active');
             if (caption) caption.textContent = title || '';
-            playerWrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            /* Overlay fijo: no desplaza ni hace scroll a ninguna parte de la pagina. */
             video.play().catch(function () {
                 /* autoplay bloqueado tras un clic real es raro, pero no rompe nada si pasa */
             });
@@ -58,11 +58,37 @@
                 stopAndHide();
             });
         }
+
+        /* Clic en el fondo oscuro (fuera del modal) tambien cierra. */
+        playerWrap.addEventListener('click', function (e) {
+            if (e.target === playerWrap) stopAndHide();
+        });
+    }
+
+    function bindBookButtons() {
+        var buttons = document.querySelectorAll('.dst-pkg-book');
+        for (var i = 0; i < buttons.length; i++) {
+            (function (btn) {
+                btn.addEventListener('click', function () {
+                    var card = btn.closest ? btn.closest('.dst-pkg-card') : null;
+                    var nameEl = card ? card.querySelector('.dst-pkg-name') : null;
+                    var name = nameEl ? nameEl.textContent : '';
+                    var url = './contact.html';
+                    if (name) url += '?subject=' + encodeURIComponent('DJ Package: ' + name);
+                    window.location.href = url;
+                });
+            })(buttons[i]);
+        }
+    }
+
+    function init() {
+        bindDemoPlayers();
+        bindBookButtons();
     }
 
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', bindDemoPlayers);
+        document.addEventListener('DOMContentLoaded', init);
     } else {
-        bindDemoPlayers();
+        init();
     }
 })();

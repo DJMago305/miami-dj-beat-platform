@@ -34,13 +34,24 @@ a {
 /* ---------- HERO ---------- */
 .dst-hero {
   position: relative;
-  min-height: 640px;
-  padding: 140px 0 80px 0;
+  min-height: 100vh;
+  padding: 130px 0 70px 0;
   background-color: #000;
-  background-image: linear-gradient(180deg, rgba(5,5,7,0.55) 0%, rgba(5,5,7,0.85) 70%, rgba(5,5,7,1) 100%),
+  background-image: linear-gradient(180deg, rgba(5,5,7,0.5) 0%, rgba(5,5,7,0.72) 55%, rgba(5,5,7,0.94) 100%),
     url('https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/assets/DJ_Performance/clubs_nightlife.jpg');
   background-size: cover;
   background-position: center;
+  display: flex;
+  align-items: flex-end;
+}
+
+.dst-hero-inner {
+  width: 100%;
+}
+
+.dst-h2-onhero {
+  text-align: left;
+  margin-top: 46px;
 }
 
 .dst-eyebrow {
@@ -134,12 +145,46 @@ a {
 
 .dst-pkg-card {
   width: 300px;
-  background: linear-gradient(180deg, #16161b 0%, #0d0d10 100%);
-  border: 1px solid rgba(197,160,89,0.35);
   border-radius: 14px;
   padding: 26px 24px;
   display: flex;
   flex-direction: column;
+}
+
+/* Tarjeta de vidrio flotante sobre la foto del Hero. Fallback SOLIDO primero
+   (fondo casi opaco) -- esto es lo que ve Safari 13, que no soporta
+   backdrop-filter. Navegadores modernos lo sobreescriben con blur real.
+   Sin animacion de entrada en estas tarjetas a proposito: backdrop-filter +
+   una animacion opacity/transform es la combinacion que deja elementos
+   atascados invisibles en GPU vieja (ver FIX-REVEALTEXT-BLUR-01/02 en
+   rentals.html) -- aqui ni se intenta, las tarjetas son visibles desde el
+   primer render. */
+.dst-glass {
+  background: rgba(18, 18, 24, 0.86);
+  border: 1px solid rgba(255, 215, 0, 0.25);
+}
+
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .dst-glass {
+    background: rgba(18, 18, 24, 0.72);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+}
+
+/* Deteccion de WebKit legado (misma sonda ?./?? ya probada en rentals.html)
+   fuerza el fallback solido aunque el navegador reporte soporte parcial de
+   @supports -- doble seguro. */
+html.dst-legacy .dst-glass {
+  background: rgba(18, 18, 24, 0.9) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+.dst-pkg-book {
+  margin-top: 4px;
+  width: 100%;
+  text-align: center;
 }
 
 .dst-pkg-name {
@@ -172,18 +217,31 @@ a {
   margin-bottom: 4px;
 }
 
-/* ---------- DEMOS: click-to-play estricto ---------- */
-.dst-player-wrap {
+/* ---------- DEMOS: click-to-play estricto, reproductor en overlay/modal ---------- */
+.dst-player-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: rgba(4,4,6,0.92);
+  z-index: 500;
+  padding: 24px;
+  align-items: center;
+  justify-content: center;
+}
+.dst-player-overlay.is-active {
+  display: flex;
+}
+
+.dst-player-modal {
+  width: 100%;
   max-width: 860px;
-  margin: 0 auto 40px auto;
   border-radius: 14px;
   overflow: hidden;
   border: 1px solid rgba(197,160,89,0.4);
   background: #000;
-  display: none;
-}
-.dst-player-wrap.is-active {
-  display: block;
 }
 
 /* Proporcion 16:9 sin aspect-ratio nativo: padding-top porcentual clasico */
