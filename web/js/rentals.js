@@ -447,7 +447,7 @@ window.renderStaffHero = function (tabKey = "bartender", animate = true) {
         subtitleEl.textContent = t(item.descKey, item.fallbackDesc);
     }
 
-    if (videoEl && item.video) {
+    if (videoEl && item.video && !window.mdjIsLegacySafari) {
         const v = item.video;
         const rv = mdjV(v);
         const changed = videoEl.getAttribute("src") !== rv;
@@ -526,7 +526,7 @@ window.renderPayasosHero = function (tabKey = "gif", animate = true) {
         subtitleEl.textContent = t(item.descKey, item.fallbackDesc);
     }
 
-    if (videoEl && item.video) {
+    if (videoEl && item.video && !window.mdjIsLegacySafari) {
         const v = item.video;
         const rv = mdjV(v);
         const changed = videoEl.getAttribute("src") !== rv;
@@ -620,7 +620,7 @@ window._rosterHeroPreviewOnly = function (key, hoveredCard) {
         subtitleEl.textContent = t(item.descKey, item.fallbackDesc);
     }
 
-    if (videoEl && item.video) {
+    if (videoEl && item.video && !window.mdjIsLegacySafari) {
         const v = item.video;
         const rv = mdjV(v);
         const changed = videoEl.getAttribute("src") !== rv;
@@ -702,7 +702,7 @@ window._djHeroPreviewOnly = function (key, hoveredCard) {
         subtitleEl.setAttribute("data-i18n", item.subtitleKey);
         subtitleEl.textContent = t(item.subtitleKey, item.fallbackSubtitle);
     }
-    if (videoEl && item.video) {
+    if (videoEl && item.video && !window.mdjIsLegacySafari) {
         const v = item.video;
         const rv = mdjV(v);
         const changed = videoEl.getAttribute("src") !== rv;
@@ -759,7 +759,7 @@ window._lightingHeroPreviewOnly = function (key, hoveredCard) {
             subtitleEl.textContent = item.fallbackDesc || "";
         }
     }
-    if (videoEl && activeVideo) {
+    if (videoEl && activeVideo && !window.mdjIsLegacySafari) {
         const rv = activeResolved;
         const changed = videoEl.getAttribute("src") !== rv;
         videoEl.poster = mdjV(item.poster || "./assets/Special_Effects/Iluminacion.jpg");
@@ -803,7 +803,7 @@ window._fxHeroPreviewOnly = function (key, hoveredCard) {
     if (subtitleEl) {
         subtitleEl.textContent = item.fallbackDesc || "";
     }
-    if (videoEl && item.video) {
+    if (videoEl && item.video && !window.mdjIsLegacySafari) {
         const v = item.video;
         const rv = mdjV(v);
         const changed = videoEl.getAttribute("src") !== rv;
@@ -938,15 +938,17 @@ window.initMcModalMagicHover = function () {
     const showCard = function (cardId, hoveredCard) {
         const v = VIDEO_BY_CARD[cardId];
         if (!v) return;
-        const rv = typeof mdjV === "function" ? mdjV(v) : v;
-        const changed = videoEl.getAttribute("src") !== rv;
         const p = POSTER_BY_CARD[cardId];
         if (p) videoEl.poster = mdjV(p);
-        if (changed) { videoEl.pause(); videoEl.src = rv; }
-        if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
-        if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
-        if (changed) videoEl.load();
-        if (typeof window.mdjActivateVideo === "function") { window.mdjActivateVideo(videoEl); } else { videoEl.play().catch(() => {}); }
+        if (!window.mdjIsLegacySafari) {
+            const rv = typeof mdjV === "function" ? mdjV(v) : v;
+            const changed = videoEl.getAttribute("src") !== rv;
+            if (changed) { videoEl.pause(); videoEl.src = rv; }
+            if (typeof window.mdjHeroVideoPrime === "function") window.mdjHeroVideoPrime(videoEl);
+            if (typeof window.mdjBindHeroVideoErrorFallback === "function") window.mdjBindHeroVideoErrorFallback(videoEl);
+            if (changed) videoEl.load();
+            if (typeof window.mdjActivateVideo === "function") { window.mdjActivateVideo(videoEl); } else { videoEl.play().catch(() => {}); }
+        }
         shell.classList.add("mdj-mc-hero-preview-on");
         clearActiveCards();
         (hoveredCard || document.getElementById(cardId)).classList.add("active");
@@ -1084,7 +1086,7 @@ window.renderLiveHero = (tabKey = null, animate = true) => {
             }).join('');
         }
 
-        if (videoEl && activeVideo) {
+        if (videoEl && activeVideo && !window.mdjIsLegacySafari) {
             const v = activeVideo;
             const rv = mdjV(v);
             const changed = videoEl.getAttribute("src") !== rv;
@@ -1240,7 +1242,7 @@ window.renderDjHero = (tabKey = 'weddings', animate = true) => {
             }).join('');
         }
 
-        if (videoEl && activeItem.video) {
+        if (videoEl && activeItem.video && !window.mdjIsLegacySafari) {
             const v = activeItem.video;
             const rv = mdjV(v);
             const changed = videoEl.getAttribute("src") !== rv;
@@ -1482,7 +1484,7 @@ window.renderFxHero = (currentTabKey = 'sparks', animate = true) => {
             }
         }
 
-        if (videoEl && activeVideo) {
+        if (videoEl && activeVideo && !window.mdjIsLegacySafari) {
             const v = activeVideo;
             const rv = mdjV(v);
             const changed = videoEl.getAttribute("src") !== rv;
@@ -1595,7 +1597,7 @@ window.renderLightingHero = (currentTabKey = 'movingHeads', animate = true) => {
             }).join('');
         }
 
-        if (videoEl && activeVideo) {
+        if (videoEl && activeVideo && !window.mdjIsLegacySafari) {
             const v = activeVideo;
             const rv = mdjV(v);
             const changed = videoEl.getAttribute("src") !== rv;
@@ -1773,7 +1775,7 @@ window.updateHoraLocaHero = (id) => {
     }
 
     const videoEl = document.getElementById('hl-hero-video');
-    if (videoEl && pack.video) {
+    if (videoEl && pack.video && !window.mdjIsLegacySafari) {
         const v = pack.video;
         const rv = mdjV(v);
         const changed = videoEl.getAttribute('src') !== rv;
@@ -2457,6 +2459,7 @@ window.renderRentalCatalog = (categoryId) => {
         if (!source) return;
         const itemPoster = itemDef.img || itemDef.image;
         if (itemPoster) heroVid.poster = mdjV(itemPoster);
+        if (window.mdjIsLegacySafari) return;
         const cleanItemVid = itemDef.video.split('/').pop().replace(/%20/g, ' ');
         const already =
             source.src &&
