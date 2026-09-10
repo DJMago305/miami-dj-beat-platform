@@ -936,14 +936,17 @@ Riesgo: romper carga del catálogo.
             border: none !important;
         }
 
-        #talent-selector-modal.modal-visible .talent-hub-vertical-list > .talent-cat-card.hero-glass-card {
+        /* Texto plano, sin caja/borde/fondo -- el PO fue explícito: nada de tarjeta
+           apilada, solo título + botón sueltos sobre el video.
+           Selectores con "a." explícito: las filas con link real (<a>) heredaban
+           border/width:250px/height:318px del carrusel horizontal viejo (selector
+           con etiqueta "a" = misma o mayor especificidad que uno solo de clases). */
+        #talent-selector-modal.modal-visible .talent-hub-vertical-list > .talent-cat-card.hero-glass-card,
+        #talent-selector-modal.modal-visible .talent-hub-vertical-list > a.talent-cat-card.hero-glass-card,
+        #talent-selector-modal.modal-visible .talent-hub-vertical-list > a.hero-glass-card {
             flex: 0 0 auto !important;
             flex-shrink: 0 !important;
-            display: flex !important;
-            flex-direction: row !important;
-            flex-wrap: wrap !important;
-            align-items: center !important;
-            align-self: stretch !important;
+            display: block !important;
             width: 100% !important;
             min-width: 0 !important;
             max-width: none !important;
@@ -951,13 +954,12 @@ Riesgo: romper carga del catálogo.
             min-height: 0 !important;
             max-height: none !important;
             scroll-snap-align: none !important;
-            justify-content: flex-start !important;
-            padding: 14px 18px !important;
-            gap: 6px 14px !important;
+            padding: 0 !important;
+            margin: 0 0 30px 0 !important;
             box-sizing: border-box !important;
-            background: rgba(197, 160, 89, 0.18) !important;
-            border: 1px solid rgba(197, 160, 89, 0.35) !important;
-            border-radius: 12px !important;
+            background: none !important;
+            border: none !important;
+            border-radius: 0 !important;
             backdrop-filter: none !important;
             -webkit-backdrop-filter: none !important;
             box-shadow: none !important;
@@ -967,43 +969,40 @@ Riesgo: romper carga del catálogo.
         }
 
         #talent-selector-modal.modal-visible .talent-hub-vertical-list > .talent-cat-card.hero-glass-card:hover {
-            background: rgba(197, 160, 89, 0.28) !important;
-            border-color: rgba(197, 160, 89, 0.6) !important;
+            background: none !important;
+            border-color: transparent !important;
             transform: none !important;
         }
 
         #talent-selector-modal.modal-visible .talent-hub-vertical-list .hero-card-emoji {
-            font-size: 26px !important;
-            margin: 0 !important;
-            flex: 0 0 auto !important;
+            display: none !important;
         }
 
         #talent-selector-modal.modal-visible .talent-hub-vertical-list .talent-hub-row-body {
-            flex: 1 1 220px !important;
-            min-width: 0 !important;
+            display: block !important;
         }
 
         #talent-selector-modal.modal-visible .talent-hub-vertical-list .hero-card-title {
-            margin: 0 0 4px 0 !important;
-            font-size: clamp(15px, 1.6vw, 18px) !important;
+            margin: 0 0 6px 0 !important;
+            font-size: clamp(17px, 1.9vw, 21px) !important;
+            font-weight: 700 !important;
         }
 
+        /* Solo título + botón -- sin descripción, per instrucción directa del PO. */
         #talent-selector-modal.modal-visible .talent-hub-vertical-list .hero-card-text {
-            flex-grow: 0 !important;
-            margin: 0 !important;
-            font-size: 11.5px !important;
-            line-height: 1.4 !important;
-            color: rgba(255, 255, 255, 0.7) !important;
+            display: none !important;
         }
 
         #talent-selector-modal.modal-visible .talent-hub-vertical-list .mdj-talent-card-enter {
-            display: block !important;
+            display: inline-block !important;
             margin: 0 !important;
-            padding: 8px 16px !important;
-            flex: 0 0 auto !important;
-            border: 1px solid rgba(212, 175, 55, 0.55) !important;
+            padding: 9px 22px !important;
+            border: 1px solid rgba(212, 175, 55, 0.6) !important;
             border-radius: 50px !important;
-            white-space: nowrap !important;
+            text-decoration: none !important;
+            font-size: 11px !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.05em !important;
         }
     </style>
     <style id="rental-dynamic-catalog-panel">
