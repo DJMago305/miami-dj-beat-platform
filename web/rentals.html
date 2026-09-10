@@ -891,9 +891,10 @@ Riesgo: romper carga del catálogo.
             transform: none !important;
         }
 
-        /* Grilla de 3 columnas (izquierda/centro/derecha) en vez de una sola columna
-           larga -- misma técnica que .grid3 de weddings.html, para que 12 filas no
-           se vean como una pirámide vertical. Colapsa a 1 columna en móvil. */
+        /* Grilla de 3 columnas con patrón zig-zag: cada entrada ocupa 2 de las 3
+           columnas (título grande en una, descripción+botón en la vecina), dejando
+           la tercera vacía -- alterna de lado en cada entrada (impar: col 1-2,
+           par: col 2-3) para que no se vea amontonado ni como pirámide. */
         #talent-selector-modal.modal-visible .grid5.cinematic-hero-cards.talent-selector-carousel.talent-hub-vertical-list {
             display: grid !important;
             grid-template-columns: repeat(3, 1fr) !important;
@@ -902,7 +903,7 @@ Riesgo: romper carga del catálogo.
             width: 100% !important;
             max-width: 1040px !important;
             margin: 0 auto !important;
-            gap: 34px 30px !important;
+            gap: 46px 30px !important;
             padding: 4px clamp(12px, 2.5vw, 24px) 24px !important;
             height: auto !important;
             max-height: none !important;
@@ -912,9 +913,21 @@ Riesgo: romper carga del catálogo.
             border: none !important;
         }
 
+        #talent-selector-modal.modal-visible .talent-hub-vertical-list > .talent-cat-card.hero-glass-card:nth-child(odd) {
+            grid-column: 1 / span 2 !important;
+        }
+
+        #talent-selector-modal.modal-visible .talent-hub-vertical-list > .talent-cat-card.hero-glass-card:nth-child(even) {
+            grid-column: 2 / span 2 !important;
+        }
+
         @media (max-width: 900px) {
             #talent-selector-modal.modal-visible .talent-hub-vertical-list {
                 grid-template-columns: repeat(2, 1fr) !important;
+            }
+            #talent-selector-modal.modal-visible .talent-hub-vertical-list > .talent-cat-card.hero-glass-card:nth-child(odd),
+            #talent-selector-modal.modal-visible .talent-hub-vertical-list > .talent-cat-card.hero-glass-card:nth-child(even) {
+                grid-column: 1 / span 2 !important;
             }
         }
 
@@ -932,9 +945,12 @@ Riesgo: romper carga del catálogo.
         #talent-selector-modal.modal-visible .talent-hub-vertical-list > .talent-cat-card.hero-glass-card,
         #talent-selector-modal.modal-visible .talent-hub-vertical-list > a.talent-cat-card.hero-glass-card,
         #talent-selector-modal.modal-visible .talent-hub-vertical-list > a.hero-glass-card {
-            flex: 0 0 auto !important;
             flex-shrink: 0 !important;
-            display: block !important;
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            grid-template-areas: "title desc" "title cta" !important;
+            column-gap: 26px !important;
+            row-gap: 10px !important;
             width: 100% !important;
             min-width: 0 !important;
             max-width: none !important;
@@ -962,31 +978,47 @@ Riesgo: romper carga del catálogo.
             transform: none !important;
         }
 
+        @media (max-width: 640px) {
+            #talent-selector-modal.modal-visible .talent-hub-vertical-list > .talent-cat-card.hero-glass-card {
+                grid-template-columns: 1fr !important;
+                grid-template-areas: "title" "desc" "cta" !important;
+            }
+        }
+
         #talent-selector-modal.modal-visible .talent-hub-vertical-list .hero-card-emoji {
             display: none !important;
         }
 
+        /* Se "desenvuelve" el wrapper para que h3+p sean hijos directos de la
+           grilla (grid-area title/desc), sin tocar el HTML. */
         #talent-selector-modal.modal-visible .talent-hub-vertical-list .talent-hub-row-body {
-            display: block !important;
+            display: contents !important;
         }
 
         #talent-selector-modal.modal-visible .talent-hub-vertical-list .hero-card-title {
-            margin: 0 0 8px 0 !important;
-            font-size: clamp(17px, 1.9vw, 21px) !important;
+            grid-area: title !important;
+            align-self: start !important;
+            margin: 0 !important;
+            font-size: clamp(24px, 2.7vw, 32px) !important;
+            line-height: 1.15 !important;
             font-weight: 700 !important;
         }
 
         /* Descripción de vuelta, visible -- el PO pidió más presentación/publicidad,
            no solo "entra aquí". */
         #talent-selector-modal.modal-visible .talent-hub-vertical-list .hero-card-text {
+            grid-area: desc !important;
             display: block !important;
-            margin: 0 0 14px 0 !important;
+            margin: 0 !important;
             font-size: 13px !important;
             line-height: 1.55 !important;
             color: rgba(255, 255, 255, 0.72) !important;
         }
 
         #talent-selector-modal.modal-visible .talent-hub-vertical-list .mdj-talent-card-enter {
+            grid-area: cta !important;
+            justify-self: start !important;
+            align-self: start !important;
             display: inline-block !important;
             margin: 0 !important;
             padding: 9px 22px !important;
