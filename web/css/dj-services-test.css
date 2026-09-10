@@ -120,14 +120,19 @@ main {
   background-size: cover;
   background-position: center;
   display: flex;
-  align-items: flex-end;
   overflow-x: hidden;
 }
 
+/* margin-top:auto (no align-items:flex-end en el padre) a proposito: con
+   align-items/justify-content:flex-end, el contenido que desborda un
+   contenedor con overflow-y:auto queda con scrollTop clavado en 0 y la
+   parte de arriba (eyebrow/H1) inalcanzable -- bug conocido de flexbox.
+   El margen automatico sí participa del calculo real de scroll. */
 .dst-hero-inner {
   width: 100%;
   position: relative;
   z-index: 2;
+  margin-top: auto;
 }
 
 /* Video del demo: capa dentro del MISMO hero, oculta hasta el clic. Al activarse
