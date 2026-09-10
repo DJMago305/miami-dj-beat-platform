@@ -53,9 +53,11 @@ a {
 }
 
 /* Video del demo: capa dentro del MISMO hero, oculta hasta el clic. Al activarse
-   cubre foto de fondo + tarjetas (z-index por encima de .dst-hero-inner) --
-   nunca se abre como ventana aparte. Sin controles nativos, mismo tratamiento
-   que el resto de los hero-video del sitio (autoplay/loop/muted, object-fit:cover). */
+   REEMPLAZA la foto de fondo (z-index 1, igual que la foto) -- las tarjetas de
+   paquete (.dst-hero-inner, z-index 2) se quedan SIEMPRE flotando encima, sea
+   foto o video lo que se ve detras. Nunca se abre como ventana aparte. Sin
+   controles nativos, mismo tratamiento que el resto de los hero-video del
+   sitio (autoplay/loop/muted, object-fit:cover). */
 .dst-hero-video {
   position: absolute;
   top: 0;
@@ -72,7 +74,6 @@ a {
 }
 .dst-hero-video.is-active {
   opacity: 1;
-  z-index: 5;
   pointer-events: auto;
 }
 
