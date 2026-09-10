@@ -893,12 +893,30 @@ Riesgo: romper carga del catálogo.
             flex-shrink: 0;
         }
 
-        /* ══ Hub de Entretenimiento y Talento: lista vertical con precios (reemplaza el carrusel horizontal) ══
-           El hero (mdj-talent-hero-media) sigue exactamente igual, sin tocar -- solo esta lista
-           gana su propio scroll vertical acotado dentro de .hero-shell-content, que ya no se mueve.
-           Se conserva la clase talent-selector-carousel (de ella depende el guard de hover-preview
-           del contrato MDJ_RENTALS_TALENT_HUB_CONTRACT) y el script de abajo retira cualquier clon
-           que el carrusel infinito compartido intente insertar. */
+        /* ══ Hub de Entretenimiento y Talento: sin cápsula, todo sube y baja libre ══
+           El PO rechazó la lista con scroll acotado ("eso es llevar el problema a otro
+           lugar"). Ahora todo el modal box es el único contenedor de scroll -- el título
+           (mdj-talent-hub-head) también sube y desaparece, igual que en weddings.html.
+           Se sobreescriben aquí, SOLO para #talent-selector-modal (sin tocar el shell
+           compartido con #rental-dynamic-modal), las reglas que antes fijaban el título
+           y encerraban el contenido en una caja de altura fija. Se conserva la clase
+           talent-selector-carousel (de ella depende el guard de hover-preview del
+           contrato MDJ_RENTALS_TALENT_HUB_CONTRACT) -- solo cambia su comportamiento
+           de scroll, no su identidad. */
+        #talent-selector-modal.modal-visible .modal-content.cinematic-hero-shell {
+            overflow-y: auto !important;
+        }
+
+        #talent-selector-modal.modal-visible .modal-content.cinematic-hero-shell .hero-shell-content {
+            height: auto !important;
+            min-height: 100% !important;
+            justify-content: flex-start !important;
+        }
+
+        #talent-selector-modal.modal-visible .mdj-talent-hub-head {
+            transform: none !important;
+        }
+
         #talent-selector-modal.modal-visible .grid5.cinematic-hero-cards.talent-selector-carousel.talent-hub-vertical-list {
             display: flex !important;
             flex-direction: column !important;
@@ -909,23 +927,13 @@ Riesgo: romper carga del catálogo.
             max-width: 640px !important;
             margin: 0 auto !important;
             gap: 12px !important;
-            padding: 4px clamp(12px, 2.5vw, 24px) 4px !important;
-            max-height: min(46vh, 400px) !important;
-            overflow-y: auto !important;
-            overflow-x: hidden !important;
+            padding: 4px clamp(12px, 2.5vw, 24px) 24px !important;
+            height: auto !important;
+            max-height: none !important;
+            overflow: visible !important;
             scroll-snap-type: none !important;
             touch-action: pan-y !important;
             border: none !important;
-        }
-
-        #talent-selector-modal.modal-visible .talent-hub-vertical-list::-webkit-scrollbar {
-            display: block !important;
-            width: 6px;
-        }
-
-        #talent-selector-modal.modal-visible .talent-hub-vertical-list::-webkit-scrollbar-thumb {
-            background: rgba(197, 160, 89, 0.45);
-            border-radius: 8px;
         }
 
         #talent-selector-modal.modal-visible .talent-hub-vertical-list > .talent-cat-card.hero-glass-card {
@@ -954,6 +962,8 @@ Riesgo: romper carga del catálogo.
             -webkit-backdrop-filter: none !important;
             box-shadow: none !important;
             transform: none !important;
+            text-decoration: none !important;
+            color: inherit !important;
         }
 
         #talent-selector-modal.modal-visible .talent-hub-vertical-list > .talent-cat-card.hero-glass-card:hover {
@@ -984,16 +994,6 @@ Riesgo: romper carga del catálogo.
             font-size: 11.5px !important;
             line-height: 1.4 !important;
             color: rgba(255, 255, 255, 0.7) !important;
-        }
-
-        #talent-selector-modal.modal-visible .talent-hub-vertical-list .talent-hub-row-price {
-            flex: 0 0 auto !important;
-            text-align: right !important;
-            font-family: system-ui, -apple-system, 'Segoe UI', sans-serif !important;
-            font-weight: 700 !important;
-            font-size: 13px !important;
-            color: #f4ead0 !important;
-            white-space: nowrap !important;
         }
 
         #talent-selector-modal.modal-visible .talent-hub-vertical-list .mdj-talent-card-enter {
@@ -1747,33 +1747,81 @@ Riesgo: romper carga del catálogo.
                 </div>
 
                 <div class="grid5 cinematic-hero-cards talent-selector-carousel talent-hub-vertical-list">
-                    <!-- DJ / Performance -->
-                    <div class="talent-cat-card hero-glass-card talent-hub-row" id="cat-dj" tabindex="0" data-action="open-dj"
-                        data-talent-hero-src="./assets/DJ_Performance/weddings_quinces.mp4">
-                        <div class="hero-card-emoji" aria-hidden="true">🎧</div>
+                    <!-- DJ → Bodas: página propia real -->
+                    <a class="talent-cat-card hero-glass-card talent-hub-row" href="./weddings.html">
+                        <div class="hero-card-emoji" aria-hidden="true">💍</div>
                         <div class="talent-hub-row-body">
-                            <h3 class="hero-card-title" data-i18n="dj_cat_title">DJ / Performance</h3>
-                            <p class="hero-card-text" data-i18n="dj_cat_desc">Dentro: catálogo por tipo de fiesta (bodas,
-                                club, familiar, fechas especiales) y extras.</p>
+                            <h3 class="hero-card-title" data-i18n="dj_weddings_cat_title">DJ para Bodas</h3>
+                            <p class="hero-card-text" data-i18n="dj_weddings_cat_desc">Experiencia de DJ premium para bodas y eventos de alto nivel.</p>
                         </div>
-                        <div class="talent-hub-row-price">Desde $350</div>
-                        <span class="mdj-talent-card-enter" data-i18n="talent_card_enter">ENTRAR</span>
+                        <span class="mdj-talent-card-enter" data-i18n="talent_card_enter_link">Ver página completa →</span>
+                    </a>
+
+                    <!-- DJ → Clubs/Nightlife: página propia real -->
+                    <a class="talent-cat-card hero-glass-card talent-hub-row" href="./club-dj.html">
+                        <div class="hero-card-emoji" aria-hidden="true">🪩</div>
+                        <div class="talent-hub-row-body">
+                            <h3 class="hero-card-title" data-i18n="dj_clubs_cat_title">DJ para Clubs y Vida Nocturna</h3>
+                            <p class="hero-card-text" data-i18n="dj_clubs_cat_desc">Formato abierto de alta energía, electrónica y ritmos globales para una pista de baile explosiva.</p>
+                        </div>
+                        <span class="mdj-talent-card-enter" data-i18n="talent_card_enter_link">Ver página completa →</span>
+                    </a>
+
+                    <!-- DJ → Holiday: página propia real -->
+                    <a class="talent-cat-card hero-glass-card talent-hub-row" href="./corporate.html">
+                        <div class="hero-card-emoji" aria-hidden="true">🎉</div>
+                        <div class="talent-hub-row-body">
+                            <h3 class="hero-card-title" data-i18n="dj_holiday_cat_title">DJ para Holiday y Eventos Especiales</h3>
+                            <p class="hero-card-text" data-i18n="dj_holiday_cat_desc">Bandas sonoras curadas para elevar galas corporativas y celebraciones festivas de temporada.</p>
+                        </div>
+                        <span class="mdj-talent-card-enter" data-i18n="talent_card_enter_link">Ver página completa →</span>
+                    </a>
+
+                    <!-- DJ → Fiestas Privadas: interina, sin página propia todavía -->
+                    <div class="talent-cat-card hero-glass-card talent-hub-row" id="cat-dj-private" tabindex="0" data-action="open-dj"
+                        data-talent-hero-src="./assets/DJ_Performance/private_parties.mp4">
+                        <div class="hero-card-emoji" aria-hidden="true">🥂</div>
+                        <div class="talent-hub-row-body">
+                            <h3 class="hero-card-title" data-i18n="dj_private_cat_title">DJ para Fiestas Privadas</h3>
+                            <p class="hero-card-text" data-i18n="dj_private_cat_desc">Curaduría exclusiva para reuniones VIP, fiestas en casa y experiencias íntimas en yate.</p>
+                        </div>
+                        <span class="mdj-talent-card-enter" data-i18n="talent_card_enter_interim">Ver opciones</span>
                     </div>
 
-                    <!-- Hora Loca -->
-                    <div class="talent-cat-card hero-glass-card talent-hub-row" id="cat-hora-loca" tabindex="0" data-action="open-horaloca"
-                        data-talent-hero-src="./assets/hora-loca/hora-loca-robot.mp4">
+                    <!-- DJ → Eventos Familiares: interina, sin página propia todavía -->
+                    <div class="talent-cat-card hero-glass-card talent-hub-row" id="cat-dj-family" tabindex="0" data-action="open-dj"
+                        data-talent-hero-src="./assets/DJ_Performance/kids_family.mp4">
+                        <div class="hero-card-emoji" aria-hidden="true">👨‍👩‍👧‍👦</div>
+                        <div class="talent-hub-row-body">
+                            <h3 class="hero-card-title" data-i18n="dj_family_cat_title">DJ para Eventos Familiares</h3>
+                            <p class="hero-card-text" data-i18n="dj_family_cat_desc">Entretenimiento familiar, divertido y para todas las edades, garantizado para hacer bailar a cada generación.</p>
+                        </div>
+                        <span class="mdj-talent-card-enter" data-i18n="talent_card_enter_interim">Ver opciones</span>
+                    </div>
+
+                    <!-- DJ → Fiestas de Temporada/Halloween: interina, sin página propia todavía -->
+                    <div class="talent-cat-card hero-glass-card talent-hub-row" id="cat-dj-seasonal" tabindex="0" data-action="open-dj"
+                        data-talent-hero-src="./assets/DJ_Performance/Halloween.mp4">
+                        <div class="hero-card-emoji" aria-hidden="true">🎃</div>
+                        <div class="talent-hub-row-body">
+                            <h3 class="hero-card-title" data-i18n="dj_seasonal_cat_title">DJ para Fiestas de Temporada</h3>
+                            <p class="hero-card-text" data-i18n="dj_seasonal_cat_desc">Halloween, St. Patrick's Day, 4 de julio. Presupuesto personalizado según montaje.</p>
+                        </div>
+                        <span class="mdj-talent-card-enter" data-i18n="talent_card_enter_interim">Ver opciones</span>
+                    </div>
+
+                    <!-- Hora Loca: página propia real -->
+                    <a class="talent-cat-card hero-glass-card talent-hub-row" href="./hora-loca.html">
                         <div class="hero-card-emoji" aria-hidden="true">🎭</div>
                         <div class="talent-hub-row-body">
                             <h3 class="hero-card-title" data-i18n="hl_cat_title_1">Hora Loca Experience</h3>
                             <p class="hero-card-text" data-i18n="hl_cat_desc_1">Dentro: paquetes Hora Loca, personajes,
                                 robots LED y opciones para sumar.</p>
                         </div>
-                        <div class="talent-hub-row-price">Desde $550</div>
-                        <span class="mdj-talent-card-enter" data-i18n="talent_card_enter">ENTRAR</span>
-                    </div>
+                        <span class="mdj-talent-card-enter" data-i18n="talent_card_enter_link">Ver página completa →</span>
+                    </a>
 
-                    <!-- Músicos -->
+                    <!-- Músicos: interina, sin página propia todavía -->
                     <div class="talent-cat-card hero-glass-card talent-hub-row" id="cat-musicians" tabindex="0" data-action="open-musicians"
                         data-talent-hero-src="./assets/live-music/live-sax.mp4">
                         <div class="hero-card-emoji" aria-hidden="true">🎷</div>
@@ -1782,11 +1830,10 @@ Riesgo: romper carga del catálogo.
                             <p class="hero-card-text" data-i18n="hl_cat_desc_2">Dentro: roster en vivo — saxo, percusión y
                                 voz; elige músico y añade al paquete.</p>
                         </div>
-                        <div class="talent-hub-row-price">Desde $350</div>
-                        <span class="mdj-talent-card-enter" data-i18n="talent_card_enter">ENTRAR</span>
+                        <span class="mdj-talent-card-enter" data-i18n="talent_card_enter_interim">Ver opciones</span>
                     </div>
 
-                    <!-- Visuales -->
+                    <!-- Visuales: interina, sin página propia todavía -->
                     <div class="talent-cat-card hero-glass-card talent-hub-row" id="cat-visuals" tabindex="0" data-action="open-visuals"
                         data-talent-hero-src="./assets/capture-visuals/photo.mp4">
                         <div class="hero-card-emoji" aria-hidden="true">📸</div>
@@ -1795,24 +1842,21 @@ Riesgo: romper carga del catálogo.
                             <p class="hero-card-text" data-i18n="hl_cat_desc_3">Dentro: foto, video, VJ, drone, booth 360 y
                                 espejo mágico en el mismo flujo.</p>
                         </div>
-                        <div class="talent-hub-row-price">Desde $250</div>
-                        <span class="mdj-talent-card-enter" data-i18n="talent_card_enter">ENTRAR</span>
+                        <span class="mdj-talent-card-enter" data-i18n="talent_card_enter_interim">Ver opciones</span>
                     </div>
 
-                    <!-- MC y Presentadores -->
-                    <div class="talent-cat-card hero-glass-card talent-hub-row" id="cat-mc" tabindex="0" data-action="open-mc"
-                        data-talent-hero-src="./assets/mc-club-host/mc-club-host.mp4">
+                    <!-- MC y Presentadores: página propia real -->
+                    <a class="talent-cat-card hero-glass-card talent-hub-row" href="./mc-dj.html">
                         <div class="hero-card-emoji" aria-hidden="true">🎙️</div>
                         <div class="talent-hub-row-body">
                             <h3 class="hero-card-title" data-i18n="mc_cat_title">MC y Presentadores</h3>
                             <p class="hero-card-text" data-i18n="mc_cat_desc">Dentro: dos estilos (maestro de ceremonias /
                                 host club), vídeos y disponibilidad.</p>
                         </div>
-                        <div class="talent-hub-row-price">Desde $350</div>
-                        <span class="mdj-talent-card-enter" data-i18n="talent_card_enter">ENTRAR</span>
-                    </div>
+                        <span class="mdj-talent-card-enter" data-i18n="talent_card_enter_link">Ver página completa →</span>
+                    </a>
 
-                    <!-- Staff (mismo patrón que Músicos en Vivo: abre modal con hero + tarjetas internas) -->
+                    <!-- Staff: interina, sin página propia todavía -->
                     <div class="talent-cat-card hero-glass-card mdj-magic-hover-card talent-hub-row" id="cat-staff" tabindex="0" data-action="open-staff"
                         data-talent-hero-src="./assets/mdj-staff-videos/Bartender.mp4">
                         <div class="hero-card-emoji" aria-hidden="true">🪪</div>
@@ -1821,11 +1865,10 @@ Riesgo: romper carga del catálogo.
                             <p class="hero-card-text" data-i18n="talent_staff_desc">Dentro: elige bartender, meseros o chef
                                 — un vídeo por rol (barra, mesa, cocina).</p>
                         </div>
-                        <div class="talent-hub-row-price" data-i18n="rentals-pa-pack-price">Presupuesto a medida</div>
-                        <span class="mdj-talent-card-enter" data-i18n="talent_card_enter">ENTRAR</span>
+                        <span class="mdj-talent-card-enter" data-i18n="talent_card_enter_interim">Ver opciones</span>
                     </div>
 
-                    <!-- Payasos (mismo patrón que Staff: modal con hero + tarjetas internas) -->
+                    <!-- Payasos: interina, sin página propia todavía -->
                     <div class="talent-cat-card hero-glass-card mdj-magic-hover-card talent-hub-row" id="cat-payasos" tabindex="0" data-action="open-payasos"
                         data-talent-hero-src="./assets/mdj-payasos/pallasos-gif.mp4">
                         <div class="hero-card-emoji" aria-hidden="true">🤡</div>
@@ -1834,8 +1877,7 @@ Riesgo: romper carga del catálogo.
                             <p class="hero-card-text" data-i18n="talent_payasos_desc">Dentro: GIF en vivo, show, circo y
                                 Santa — elige tipo de actuación infantil/familiar.</p>
                         </div>
-                        <div class="talent-hub-row-price" data-i18n="rentals-pa-pack-price">Presupuesto a medida</div>
-                        <span class="mdj-talent-card-enter" data-i18n="talent_card_enter">ENTRAR</span>
+                        <span class="mdj-talent-card-enter" data-i18n="talent_card_enter_interim">Ver opciones</span>
                     </div>
 
                 </div>
