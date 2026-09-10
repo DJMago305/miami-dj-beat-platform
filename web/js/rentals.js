@@ -2475,20 +2475,27 @@ window.renderRentalCatalog = (categoryId) => {
     const track = document.querySelector('#rental-dynamic-modal .mdj-rental-catalog-carousel');
     if (track) {
         let lastRentalCard = null;
-        /* Delegación: incluye clones del carrusel infinito y puntero fino (iMac / Safari). */
+        let pendingRentalT = null;
+        /* Delegación: incluye clones del carrusel infinito y puntero fino (iMac / Safari).
+           Debounce 120ms: si el mouse barre varias tarjetas rapido, Safari 13 no debe
+           intentar cargar/reproducir un video por cada una (mismo fix que Iluminacion/FX). */
         track.addEventListener(
             'pointerover',
             (e) => {
                 const card = e.target && e.target.closest && e.target.closest('.product-card');
                 if (!card || !track.contains(card)) return;
                 if (lastRentalCard === card) return;
-                lastRentalCard = card;
-                rentalHoverPreview(card);
+                clearTimeout(pendingRentalT);
+                pendingRentalT = setTimeout(() => {
+                    lastRentalCard = card;
+                    rentalHoverPreview(card);
+                }, 120);
             },
             true
         );
 
         const revertRentalHero = () => {
+            clearTimeout(pendingRentalT);
             lastRentalCard = null;
             const heroVid = document.querySelector('#rental-multi-video-container .active-vid');
             if (heroVid && catBgVideo) {
