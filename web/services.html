@@ -699,6 +699,12 @@ Riesgo: romper carga del catálogo.
             box-shadow: none !important;
         }
 
+        /* Tarjeta completa clicable (no solo el botón) -- misma UX que el hub de talento. */
+        #rentals-services-grid>a.tile.glass-card {
+            text-decoration: none;
+            color: inherit;
+        }
+
         /* Hover ADN: escala desde la base (crece hacia arriba; la línea inferior no se mueve) */
         #talent-selector-modal.modal-visible .talent-selector-carousel>.hero-glass-card,
         #talent-selector-modal.modal-visible .talent-selector-carousel>a.hero-glass-card {
@@ -782,20 +788,30 @@ Riesgo: romper carga del catálogo.
             transform: none !important;
         }
 
-        /* Grilla de 3 columnas con patrón zig-zag: cada entrada ocupa 2 de las 3
-           columnas (título grande en una, descripción+botón en la vecina), dejando
-           la tercera vacía -- alterna de lado en cada entrada (impar: col 1-2,
-           par: col 2-3) para que no se vea amontonado ni como pirámide. */
+        /* PO 2026-09-11: la grilla de 3 columnas en zig-zag dejaba SIEMPRE un
+           tercio vacío al lado de cada tarjeta ("sobra mucho espacio a las
+           tarjetas por los lados") -- porque el transform:scale() del efecto
+           de foco (ver script al final del archivo) cambia el tamaño VISUAL
+           de la tarjeta pero no el ancho real de su columna de grid, así que
+           ese hueco quedaba fijo sin importar qué tan chica se pusiera la
+           tarjeta. Columna única centrada: sin hueco lateral asimétrico, y la
+           tarjeta activa ahora sí se ve más grande que sus vecinas porque
+           todas comparten el mismo ancho de referencia. */
         #talent-selector-modal.modal-visible .grid5.cinematic-hero-cards.talent-selector-carousel.talent-hub-vertical-list {
-            display: grid !important;
-            grid-template-columns: repeat(3, 1fr) !important;
-            align-items: start !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: stretch !important;
             justify-content: flex-start !important;
             width: 100% !important;
-            max-width: none !important;
-            margin: 0 !important;
-            gap: 100px clamp(30px, 4vw, 60px) !important;
-            padding: 4px clamp(24px, 5vw, 72px) 24px !important;
+            max-width: clamp(680px, 46vw, 880px) !important;
+            margin: 0 auto !important;
+            /* PO 2026-09-11 (segunda vuelta): "no hay respiración" -- la tarjeta
+               activa crece con transform (no mueve el layout), así que se comía
+               visualmente el gap de sus vecinas. Subido de 44px a 96px para que
+               quede aire real incluso cuando la tarjeta central está en su tamaño
+               más grande. */
+            gap: 96px !important;
+            padding: 4px clamp(16px, 4vw, 32px) 40px !important;
             height: auto !important;
             max-height: none !important;
             overflow: visible !important;
@@ -804,27 +820,14 @@ Riesgo: romper carga del catálogo.
             border: none !important;
         }
 
-        #talent-selector-modal.modal-visible .talent-hub-vertical-list > .talent-cat-card.hero-glass-card:nth-child(odd) {
-            grid-column: 1 / span 2 !important;
-        }
-
+        #talent-selector-modal.modal-visible .talent-hub-vertical-list > .talent-cat-card.hero-glass-card:nth-child(odd),
         #talent-selector-modal.modal-visible .talent-hub-vertical-list > .talent-cat-card.hero-glass-card:nth-child(even) {
-            grid-column: 2 / span 2 !important;
-        }
-
-        @media (max-width: 900px) {
-            #talent-selector-modal.modal-visible .talent-hub-vertical-list {
-                grid-template-columns: repeat(2, 1fr) !important;
-            }
-            #talent-selector-modal.modal-visible .talent-hub-vertical-list > .talent-cat-card.hero-glass-card:nth-child(odd),
-            #talent-selector-modal.modal-visible .talent-hub-vertical-list > .talent-cat-card.hero-glass-card:nth-child(even) {
-                grid-column: 1 / span 2 !important;
-            }
+            width: 100% !important;
         }
 
         @media (max-width: 640px) {
             #talent-selector-modal.modal-visible .talent-hub-vertical-list {
-                grid-template-columns: 1fr !important;
+                max-width: 480px !important;
             }
         }
 
@@ -892,8 +895,9 @@ Riesgo: romper carga del catálogo.
 
         /* Intensidad de color e "bleed" del recuadro -- historial: color subió
            0.42→0.82 el 2026-09-10, bajó a 0.62/0.12 el 2026-09-11 ("más
-           glamour"), y ese mismo día subió un poco más a 0.72/0.16 -- el PO
-           además pidió reducir el margen negativo (bleed) para que el
+           glamour"), ese mismo día subió un poco más a 0.72/0.16, y el
+           2026-09-11 volvió a 0.82/0.2 ("necesitan un poquito mas de color").
+           El PO además pidió reducir el margen negativo (bleed) para que el
            recuadro sea más compacto/pequeño, de -14/-24px a -7/-12px. Color
            por categoría en --hub-accent (inline por tarjeta). */
         #talent-selector-modal.modal-visible .talent-hub-vertical-list > .talent-cat-card.hero-glass-card::before {
@@ -902,8 +906,8 @@ Riesgo: romper carga del catálogo.
             grid-row: 1 / 3 !important;
             align-self: stretch !important;
             margin: -7px -12px -12px -12px !important;
-            border: 2px solid rgba(var(--hub-accent, 212, 175, 55), 0.72) !important;
-            background: rgba(var(--hub-accent, 212, 175, 55), 0.16) !important;
+            border: 2px solid rgba(var(--hub-accent, 212, 175, 55), 0.82) !important;
+            background: rgba(var(--hub-accent, 212, 175, 55), 0.2) !important;
             border-radius: 22px !important;
             pointer-events: none !important;
         }
@@ -966,7 +970,13 @@ Riesgo: romper carga del catálogo.
             grid-area: title !important;
             align-self: start !important;
             margin: 0 !important;
-            font-size: clamp(20px, 2.2vw, 28px) !important;
+            /* PO 2026-09-11: título le quitaba protagonismo al hero de fondo -- reducido
+               de clamp(20px,2.2vw,28px), luego a clamp(15,1.6vw,21), y en una
+               tercera vuelta el mismo día ("siguen viéndose grande") a este
+               tamaño más chico. Fallback fijo antes: Safari <13.1 no soporta
+               clamp(). */
+            font-size: 13px !important;
+            font-size: clamp(12px, 0.85vw, 15px) !important;
             text-transform: uppercase !important;
             letter-spacing: 0.02em !important;
             line-height: 1.15 !important;
@@ -1210,7 +1220,7 @@ Riesgo: romper carga del catálogo.
                     Disponibilidad</a>
             </div>
 
-            <div class="tile glass-card" style="opacity: 0; animation: revealText 0.8s 0.7s ease-out forwards;">
+            <a href="./pro-audio-dj.html" class="tile glass-card" style="opacity: 0; animation: revealText 0.8s 0.7s ease-out forwards;">
                 <h3 data-i18n="rentals-pa-pack-title"
                     style="font-family: 'Playfair Display', serif; font-size: 24px; margin-bottom: 8px;">
                     Audio y Sonido Profesional</h3>
@@ -1219,12 +1229,12 @@ Riesgo: romper carga del catálogo.
                 <div class="value"
                     style="color: rgba(212, 175, 55, 0.7); font-size: 15px; font-weight: 600; margin-top: 12px; margin-bottom: 20px;"
                     data-i18n="rentals-pa-pack-price">Presupuesto a medida</div>
-                <a href="#" class="btn primary full" data-action="open-rental-category" data-category="audio"
+                <span class="btn primary full"
                     style="border-radius: 50px;" data-i18n="rentals-check-availability">Consultar
-                    Disponibilidad</a>
-            </div>
+                    Disponibilidad</span>
+            </a>
 
-            <div class="tile glass-card" style="opacity: 0; animation: revealText 0.8s 0.8s ease-out forwards;">
+            <a href="./lighting-dj.html" class="tile glass-card" style="opacity: 0; animation: revealText 0.8s 0.8s ease-out forwards;">
                 <h3 data-i18n="rentals-lighting-title"
                     style="font-family: 'Playfair Display', serif; font-size: 24px; margin-bottom: 8px;">
                     Iluminación y Pantallas LED</h3>
@@ -1233,12 +1243,12 @@ Riesgo: romper carga del catálogo.
                 <div class="value"
                     style="color: rgba(212, 175, 55, 0.7); font-size: 15px; font-weight: 600; margin-top: 12px; margin-bottom: 20px;"
                     data-i18n="rentals-pa-pack-price">Presupuesto a medida</div>
-                <a href="#" class="btn primary full" data-action="open-lighting-modal" style="border-radius: 50px;"
+                <span class="btn primary full" style="border-radius: 50px;"
                     data-i18n="rentals-check-availability">Consultar
-                    Disponibilidad</a>
-            </div>
+                    Disponibilidad</span>
+            </a>
 
-            <div class="tile glass-card" style="opacity: 0; animation: revealText 0.8s 0.9s ease-out forwards;">
+            <a href="./furniture-dj.html" class="tile glass-card" style="opacity: 0; animation: revealText 0.8s 0.9s ease-out forwards;">
                 <h3 data-i18n="rentals-decor-title"
                     style="font-family: 'Playfair Display', serif; font-size: 24px; margin-bottom: 8px;">
                     Mobiliario y Decoración</h3>
@@ -1247,12 +1257,12 @@ Riesgo: romper carga del catálogo.
                 <div class="value"
                     style="color: rgba(212, 175, 55, 0.7); font-size: 15px; font-weight: 600; margin-top: 12px; margin-bottom: 20px;"
                     data-i18n="rentals-pa-pack-price">Presupuesto a medida</div>
-                <a href="#" class="btn primary full" data-action="open-rental-category" data-category="furniture"
+                <span class="btn primary full"
                     style="border-radius: 50px;" data-i18n="rentals-check-availability">Consultar
-                    Disponibilidad</a>
-            </div>
+                    Disponibilidad</span>
+            </a>
 
-            <div class="tile glass-card" style="opacity: 0; animation: revealText 0.8s 1.0s ease-out forwards;">
+            <a href="./special-effects-dj.html" class="tile glass-card" style="opacity: 0; animation: revealText 0.8s 1.0s ease-out forwards;">
                 <h3 data-i18n="rentals-fx-title"
                     style="font-family: 'Playfair Display', serif; font-size: 24px; margin-bottom: 8px;">
                     Efectos Especiales</h3>
@@ -1261,13 +1271,13 @@ Riesgo: romper carga del catálogo.
                 <div class="value"
                     style="color: rgba(212, 175, 55, 0.7); font-size: 15px; font-weight: 600; margin-top: 12px; margin-bottom: 20px;"
                     data-i18n="rentals-pa-pack-price">Presupuesto a medida</div>
-                <a href="#" class="btn primary full" data-action="open-fx-modal" style="border-radius: 50px;"
+                <span class="btn primary full" style="border-radius: 50px;"
                     data-i18n="rentals-check-availability">Consultar
-                    Disponibilidad</a>
-            </div>
+                    Disponibilidad</span>
+            </a>
 
             <!-- TENTS CARD INJECTION (Phase 5) -->
-            <div class="tile glass-card" style="opacity: 0; animation: revealText 0.8s 1.1s ease-out forwards;">
+            <a href="./tents-dj.html" class="tile glass-card" style="opacity: 0; animation: revealText 0.8s 1.1s ease-out forwards;">
                 <h3 data-i18n="rentals-tents-title"
                     style="font-family: 'Playfair Display', serif; font-size: 24px; margin-bottom: 8px;">
                     Carpas y Estructuras</h3>
@@ -1276,13 +1286,13 @@ Riesgo: romper carga del catálogo.
                 <div class="value"
                     style="color: rgba(212, 175, 55, 0.7); font-size: 15px; font-weight: 600; margin-top: 12px; margin-bottom: 20px;"
                     data-i18n="rentals-pa-pack-price">Presupuesto a medida</div>
-                <a href="#" class="btn primary full" data-action="open-rental-category" data-category="tents"
+                <span class="btn primary full"
                     style="border-radius: 50px;" data-i18n="rentals-check-availability">Consultar
-                    Disponibilidad</a>
-            </div>
+                    Disponibilidad</span>
+            </a>
 
             <!-- STAGES CARD INJECTION (Operación Quirúrgica) -->
-            <div class="tile glass-card" style="opacity: 0; animation: revealText 0.8s 1.2s ease-out forwards;">
+            <a href="./stages-dj.html" class="tile glass-card" style="opacity: 0; animation: revealText 0.8s 1.2s ease-out forwards;">
                 <h3 data-i18n="rentals-stages-main-title"
                     style="font-family: 'Playfair Display', serif; font-size: 24px; margin-bottom: 8px;">
                     Stage & Event Structures</h3>
@@ -1291,13 +1301,13 @@ Riesgo: romper carga del catálogo.
                 <div class="value"
                     style="color: rgba(212, 175, 55, 0.7); font-size: 15px; font-weight: 600; margin-top: 12px; margin-bottom: 20px;"
                     data-i18n="rentals-stages-price">Presupuesto a medida</div>
-                <a href="#" class="btn primary full" data-action="open-rental-category" data-category="stages"
+                <span class="btn primary full"
                     style="border-radius: 50px;" data-i18n="rentals-check-availability">Consultar
-                    Disponibilidad</a>
-            </div>
+                    Disponibilidad</span>
+            </a>
 
             <!-- Castillos Inflables — clon de tarjeta Stage (mismo markup); hero catálogo inflatables + carpeta ref -->
-            <div class="tile glass-card" style="opacity: 0; animation: revealText 0.8s 1.25s ease-out forwards;">
+            <a href="./inflatables-dj.html" class="tile glass-card" style="opacity: 0; animation: revealText 0.8s 1.25s ease-out forwards;">
                 <h3 data-i18n="rentals-inflatables-title"
                     style="font-family: 'Playfair Display', serif; font-size: 24px; margin-bottom: 8px;">
                     Castillos Inflables</h3>
@@ -1306,10 +1316,10 @@ Riesgo: romper carga del catálogo.
                 <div class="value"
                     style="color: rgba(212, 175, 55, 0.7); font-size: 15px; font-weight: 600; margin-top: 12px; margin-bottom: 20px;"
                     data-i18n="rentals-pa-pack-price">Presupuesto a medida</div>
-                <a href="#" class="btn primary full" data-action="open-rental-category" data-category="inflatables"
+                <span class="btn primary full"
                     style="border-radius: 50px;" data-i18n="rentals-check-availability">Consultar
-                    Disponibilidad</a>
-            </div>
+                    Disponibilidad</span>
+            </a>
         </div>
 
     </main>
@@ -1807,11 +1817,22 @@ Riesgo: romper carga del catálogo.
         var scrollHost = document.querySelector('#talent-selector-modal .hero-shell-content');
         if (!modal || !list || !scrollHost) return;
 
-        var MAX_SCALE = 1.05;
-        var MIN_SCALE = 0.94;
-        var MAX_Z = 50;      /* px que "sale" hacia el usuario la tarjeta centrada */
-        var MAX_TILT = 8;    /* grados de inclinación tipo cover-flow para las que no están centradas */
-        var MAX_FADE = 0.32; /* velo de degradado máximo en las tarjetas lejanas (no opacidad plana) */
+        /* PO 2026-09-11: la diferencia entre la tarjeta activa y sus vecinas era
+           casi imperceptible (1.05 vs 0.94, 11% de rango) -- pidió explícitamente
+           que "la del medio resalte más en grande, las demás se mantengan más
+           pequeñas". Rango ampliado a ~38% (1.16 vs 0.84) para que el efecto se
+           note de un vistazo, no solo en un zoom pixel a pixel. */
+        /* PO 2026-09-11 (segunda vuelta): al subir MAX_SCALE/MAX_Z la tarjeta activa
+           empezó a "comerse" el gap de la lista con su propio crecimiento visual
+           (transform no mueve layout, solo pinta más grande encima del espacio
+           vecino) -- se veía sin aire entre tarjetas. Se bajó un poco MAX_Z/TILT
+           (menos "salto" hacia el usuario) y se compensó subiendo el gap real del
+           contenedor en vez de seguir subiendo el scale. */
+        var MAX_SCALE = 1.14;
+        var MIN_SCALE = 0.85;
+        var MAX_Z = 36;      /* px que "sale" hacia el usuario la tarjeta centrada */
+        var MAX_TILT = 6;    /* grados de inclinación tipo cover-flow para las que no están centradas */
+        var MAX_FADE = 0.42; /* velo de degradado máximo en las tarjetas lejanas (no opacidad plana) */
         var FALLOFF_PX = 420; /* distancia al centro a partir de la cual ya no cambia más */
 
         function cards() {

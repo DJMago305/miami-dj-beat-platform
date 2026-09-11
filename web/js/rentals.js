@@ -763,7 +763,14 @@ window.rentalCatalogs = {
             { id: "f_led", name: "LED Furniture", price: 75, image: "./assets/furniture-decor/led-furniture.jpg", video: "./assets/furniture-decor/led-furniture.mp4", category: "furniture", unit: "/u" },
             { id: "f_linens", name: "Premium Linens", price: 12, image: "./assets/furniture-decor/linens.jpg", video: "./assets/furniture-decor/linens.mp4", category: "furniture", unit: "/u" },
             { id: "f_tables", name: "Banquet Tables", price: 15, image: "./assets/furniture-decor/tables.jpg", video: "./assets/furniture-decor/tables.mp4", category: "furniture", unit: "/u" },
-            { id: "f_backdrop", name: "Scenic Backdrops", price: 300, image: "./assets/furniture-decor/backdrops.jpg", video: "./assets/furniture-decor/backdrops.mp4", category: "furniture", unit: "/u" }
+            { id: "f_backdrop", name: "Scenic Backdrops", price: 300, image: "./assets/furniture-decor/backdrops.jpg", video: "./assets/furniture-decor/backdrops.mp4", category: "furniture", unit: "/u" },
+            { id: "d_babyshower", name: "Luxury Baby Shower", price: 1450, category: "furniture", unit: "/pkg" },
+            { id: "d_genderreveal", name: "Gender Reveal Deluxe", price: 1550, category: "furniture", unit: "/pkg" },
+            { id: "d_kidsparty", name: "Kids Themed Mega-Party", price: 1750, category: "furniture", unit: "/pkg" },
+            { id: "d_quince", name: "Royal Quince / Sweet 16", price: 2450, category: "furniture", unit: "/pkg" },
+            { id: "d_wedding", name: "Wedding Glam & Sweetheart", price: 3250, category: "furniture", unit: "/pkg" },
+            { id: "d_halloween", name: "Haunted VIP Halloween", price: 2250, category: "furniture", unit: "/pkg" },
+            { id: "d_nye", name: "NYE & Corporate Gala", price: 2850, category: "furniture", unit: "/pkg" }
         ]
     },
     tents: {
@@ -779,9 +786,11 @@ window.rentalCatalogs = {
         title: "Kids & Inflatables",
         subtitle: "Fun structures and attractions for kids events and parties.",
         items: [
-            { id: "castle_lite", name: "Lite Castle", price: 150, img: "./assets/inflatables/lite-castle.jpg", video: "./assets/inflatables/lite-castle.mp4" },
-            { id: "castle_basic", name: "Basic Castle", price: 200, img: "./assets/inflatables/basic-castle.jpg", video: "./assets/inflatables/basic-castle.mp4" },
-            { id: "castle_big", name: "Big Castle", price: 350, img: "./assets/inflatables/big-castle.jpg", video: "./assets/inflatables/big-castle.mp4" }
+            { id: "castle_lite", name: "Lite Castle", price: 250, img: "./assets/inflatables/lite-castle.jpg", video: "./assets/inflatables/lite-castle.mp4" },
+            { id: "castle_basic", name: "Basic Castle", price: 375, img: "./assets/inflatables/basic-castle.jpg", video: "./assets/inflatables/basic-castle.mp4" },
+            { id: "castle_big", name: "Big Castle", price: 525, img: "./assets/inflatables/big-castle.jpg", video: "./assets/inflatables/big-castle.mp4" },
+            { id: "castle_combo", name: "Combo Castle & Slide", price: 500 },
+            { id: "castle_waterslide", name: "Water Slide Combo", price: 700 }
         ]
     },
     stages: {
@@ -1134,6 +1143,15 @@ window.renderRentalCatalog = (categoryId) => {
         'f_linens': '🧵',
         'f_tables': '🪚',
         'f_backdrop': '🖼️',
+
+        // Decor packages
+        'd_babyshower': '🍼',
+        'd_genderreveal': '🎀',
+        'd_kidsparty': '🎈',
+        'd_quince': '👑',
+        'd_wedding': '💍',
+        'd_halloween': '🎃',
+        'd_nye': '🥂',
         
         // Tents & AC
         'tent_clear': '🎪',
@@ -1144,6 +1162,8 @@ window.renderRentalCatalog = (categoryId) => {
         'castle_lite': '🏰',
         'castle_basic': '🎠',
         'castle_big': '🎡',
+        'castle_combo': '🛝',
+        'castle_waterslide': '💦',
         
         // Stages
         'stage_small': '🧱',
@@ -1202,8 +1222,26 @@ window.renderRentalCatalog = (categoryId) => {
              customDescription = 'Consola de mezcla analógica/digital para conectar múltiples fuentes de audio. Ecualización y efectos integrados.';
         } else if (item.category === 'lighting') {
              customDescription = 'Iluminación y sistemas visuales profesionales para elevar la experiencia visual de su evento, con control DMX y configuración personalizada.';
+        } else if (item.id === 'd_babyshower') {
+             customDescription = 'Set de 3 paneles Chiara, guirnalda orgánica de globos (15 ft), letrero LED "Oh Baby", silla Peacock/Wicker y 3 pedestales de pastel.';
+        } else if (item.id === 'd_genderreveal') {
+             customDescription = 'Fondo doble (azul/rosa), arco orgánico masivo, letrero neón "Boy or Girl", caja de revelación sorpresa y pedestales cilíndricos.';
+        } else if (item.id === 'd_kidsparty') {
+             customDescription = 'Pared temática 3D personalizada, arco de globos triple con accesorios, figuras corpóreas a escala real del personaje y mesa de dulces temática.';
+        } else if (item.id === 'd_quince') {
+             customDescription = 'Muro de brillo (Shimmer Wall 8x8 ft), números gigantes iluminados (Marquee Letters), arco orgánico VIP con toques florales y alfombra blanca.';
+        } else if (item.id === 'd_wedding') {
+             customDescription = 'Backdrop floral completo para mesa de novios, arco ceremonial con flores naturales/pampas grass, candelabros LED perimetrales y letrero neón personalizado.';
+        } else if (item.id === 'd_halloween') {
+             customDescription = 'Arco temático de calabazas y telarañas hiperrealistas, ataúd/tumbas escénicas, iluminación ultravioleta integrada y máquina de humo bajo.';
+        } else if (item.id === 'd_nye') {
+             customDescription = 'Shimmer wall negro y oro, letras Marquee gigantes, cascada de globos cromados, alfombra roja y postes dorados con cordón de terciopelo.';
         } else if (item.category === 'furniture') {
              customDescription = 'Mobiliario premium y elementos de decoración seleccionados para aportar elegancia, confort y estilo a cualquier espacio de celebración.';
+        } else if (item.id === 'castle_combo') {
+             customDescription = 'Castillo combo de mayor tamaño con tobogán integrado y área de brincos — la actualización más popular para fiestas infantiles más grandes.';
+        } else if (item.id === 'castle_waterslide') {
+             customDescription = 'Combo de tobogán inflable con agua, ideal para los días calurosos de Miami — la opción más completa para diversión sin límites.';
         } else if (item.id && item.id.startsWith('tent')) {
              customDescription = 'Estructuras de carpa de alta resistencia y diseño elegante, ideales para proteger a sus invitados de las inclemencias del tiempo.';
         } else if (item.id && item.id.startsWith('castle')) {
@@ -2691,7 +2729,7 @@ document.addEventListener('click', async (e) => {
     // DYNAMIC RENTAL ENGINE LOGIC (Phase 6)
     if (e.target.closest('[data-action="open-rental-category"]')) {
         e.preventDefault();
-        const btn = e.target.closest('a') || e.target.closest('div');
+        const btn = e.target.closest('[data-action="open-rental-category"]');
         const catId = btn.getAttribute('data-category');
         if (!catId) return;
 
@@ -3769,7 +3807,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             'tents':       { catalog: 'tents' },
             'inflatables': { catalog: 'inflatables' },
             'stages':      { catalog: 'stages' },
-            'lighting-gear': { catalog: 'lighting' }
+            'lighting-gear': { id: 'lighting-modal', render: function () { if (typeof window.renderLightingHero === 'function') window.renderLightingHero('movingHeads', false); } }
         };
         var entry = OPEN_MAP[openTarget];
         if (!entry) return;
