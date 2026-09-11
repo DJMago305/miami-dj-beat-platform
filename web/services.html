@@ -804,13 +804,15 @@ Riesgo: romper carga del catálogo.
             justify-content: flex-start !important;
             width: 100% !important;
             max-width: clamp(680px, 46vw, 880px) !important;
-            margin: 0 auto !important;
-            /* PO 2026-09-11 (segunda vuelta): "no hay respiración" -- la tarjeta
-               activa crece con transform (no mueve el layout), así que se comía
-               visualmente el gap de sus vecinas. Subido de 44px a 96px para que
-               quede aire real incluso cuando la tarjeta central está en su tamaño
-               más grande. */
-            gap: 96px !important;
+            /* PO 2026-09-11 (auditoría iMac vieja): "amontonadas, no tienen
+               espacio de respiración" -- gap en flex necesita Safari 14.1+ (el
+               mismo bug ya visto en el resto del sitio esta sesión), así que en
+               Safari viejo el 96px de gap simplemente no existía. Se reemplaza
+               por margen real en cada tarjeta (ver regla de .talent-cat-card
+               más abajo) -- funciona en cualquier navegador. El margen negativo
+               vertical aquí cancela el margen que la primera/última tarjeta
+               agregan de más en los bordes del contenedor. */
+            margin: -48px auto !important;
             padding: 4px clamp(16px, 4vw, 32px) 40px !important;
             height: auto !important;
             max-height: none !important;
@@ -842,7 +844,11 @@ Riesgo: romper carga del catálogo.
             flex-shrink: 0 !important;
             display: grid !important;
             grid-template-columns: 1fr 1fr !important;
-            grid-template-areas: "title desc" "title cta" !important;
+            /* PO 2026-09-11 (pendiente de aprobación): botón debajo del título
+               (columna izquierda) en vez de debajo de la descripción -- la
+               descripción ahora ocupa toda la columna derecha para "dar una
+               mejor explicación de qué se trata". */
+            grid-template-areas: "title desc" "cta desc" !important;
             column-gap: 26px !important;
             row-gap: 10px !important;
             width: 100% !important;
@@ -870,6 +876,16 @@ Riesgo: romper carga del catálogo.
             background: none !important;
             border-color: transparent !important;
             transform: none !important;
+        }
+
+        /* Fallback cross-browser del espacio entre filas (ver comentario en el
+           contenedor arriba): margen real en cada tarjeta en vez de gap en flex.
+           48px arriba y abajo de cada una = 96px visual entre dos consecutivas
+           (los márgenes de flex items no colapsan, a diferencia de bloque). */
+        #talent-selector-modal.modal-visible .talent-hub-vertical-list > .talent-cat-card.hero-glass-card,
+        #talent-selector-modal.modal-visible .talent-hub-vertical-list > a.talent-cat-card.hero-glass-card,
+        #talent-selector-modal.modal-visible .talent-hub-vertical-list > a.hero-glass-card {
+            margin: 48px 0 !important;
         }
 
         /* Rectángulo dorado de solo borde en las 12 filas -- como pseudo-elemento
@@ -970,13 +986,15 @@ Riesgo: romper carga del catálogo.
             grid-area: title !important;
             align-self: start !important;
             margin: 0 !important;
-            /* PO 2026-09-11: título le quitaba protagonismo al hero de fondo -- reducido
-               de clamp(20px,2.2vw,28px), luego a clamp(15,1.6vw,21), y en una
-               tercera vuelta el mismo día ("siguen viéndose grande") a este
-               tamaño más chico. Fallback fijo antes: Safari <13.1 no soporta
-               clamp(). */
-            font-size: 13px !important;
-            font-size: clamp(12px, 0.85vw, 15px) !important;
+            /* PO 2026-09-11 (cuarta vuelta -- NO APROBADO, pendiente de revisión
+               visual): las tres reducciones anteriores llegaron a clamp(12,.85vw,15),
+               MÁS CHICO que la descripción de al lado (16px fijo) -- el título
+               terminó leyéndose como texto de cuerpo, no como título ("parece
+               contenido, no título"). Regla a partir de ahora: el título SIEMPRE
+               debe verse más grande que .hero-card-text (16px), nunca al revés.
+               Fallback fijo antes: Safari <13.1 no soporta clamp(). */
+            font-size: 20px !important;
+            font-size: clamp(19px, 1.3vw, 23px) !important;
             text-transform: uppercase !important;
             letter-spacing: 0.02em !important;
             line-height: 1.15 !important;
@@ -997,16 +1015,21 @@ Riesgo: romper carga del catálogo.
         /* Botón con más volumen -- más grande, más grueso, letras más grandes. */
         #talent-selector-modal.modal-visible .talent-hub-vertical-list .mdj-talent-card-enter {
             grid-area: cta !important;
-            justify-self: start !important;
+            /* PO 2026-09-11 (APROBADO): centrado al título (columna izquierda),
+               no a lo ancho de toda la tarjeta -- con un pequeño empujón extra
+               hacia la derecha. */
+            justify-self: center !important;
+            position: relative !important;
+            left: 10px !important;
             align-self: start !important;
             display: inline-block !important;
-            margin: 6px 0 0 0 !important;
-            padding: 15px 34px !important;
+            margin: 10px 0 0 0 !important;
+            padding: 11px 26px !important;
             background: rgba(212, 175, 55, 0.5) !important;
             border: 2px solid rgba(212, 175, 55, 0.75) !important;
             border-radius: 50px !important;
             text-decoration: none !important;
-            font-size: 14px !important;
+            font-size: 12px !important;
             font-weight: 800 !important;
             letter-spacing: 0.06em !important;
         }
@@ -1839,56 +1862,70 @@ Riesgo: romper carga del catálogo.
             return Array.prototype.slice.call(list.querySelectorAll(':scope > .talent-cat-card'));
         }
 
-        /* Vídeo "serie" por categoría: cada fila trae su propio vídeo real en
-           data-talent-hero-src (mismo dato que ya usaba el preview por hover,
-           hoy congelado -- ver MDJ_RENTALS_TALENT_HUB_CONTRACT). Esto es un
-           disparador nuevo (scroll, no hover) sobre los mismos dos <video>
-           ambient/focus y las mismas clases de crossfade ya existentes; no
-           reactiva el hover congelado ni toca esa función. */
+        /* PO 2026-09-11 (auditoría iMac vieja): el disparador por SCROLL (aunque
+           tenía un debounce de 450ms) seguía siendo "se cambia de video al subir
+           las tarjetas" -- exactamente lo que el PO pidió evitar desde el inicio:
+           "que se disparen los videos como en una serie, uno por cada entrada...
+           no que se disparen con scroll". En hardware viejo, cada cambio de src
+           a mitad de un scroll largo sigue encadenando cargas y sobrecarga el
+           decodificador. Se reemplaza por el mismo patrón "serie" ya usado en
+           las 7 páginas SEO nuevas (pro-audio-dj.html, etc.): una lista fija de
+           videos que avanza SOLA con el evento `ended` de cada clip -- un video
+           a la vez, de principio a fin, sin depender de dónde esté el scroll. */
         var heroAmbient = document.getElementById('talent-shell-ambient');
         var heroFocus = document.getElementById('talent-shell-focus');
-        var lastHeroUrl = null;
-
-        /* Seguridad en Mac/iMac viejas de estudio: NO cargar un vídeo por cada
-           tarjeta que cruza el centro mientras se scrollea rápido -- eso es
-           exactamente el patrón que ya dio problemas antes (muchas cargas de
-           vídeo en cadena saturan el decodificador en hardware viejo). El
-           "disparador" real es por TURNO DE ENTRADA: se arma un temporizador
-           en cada tick de scroll y solo se ejecuta si el scroll se queda
-           quieto ese tiempo -- un scroll rápido de punta a punta reprograma
-           el mismo timer una y otra vez sin cargar nada hasta que el usuario
-           se detiene en una tarjeta. */
-        var HERO_SETTLE_MS = 450;
-        var pendingHeroTimer = null;
-        var pendingHeroUrl = null;
+        var heroChainStarted = false;
 
         function resolveVideoUrl(u) {
             return typeof window.resolveMdAssetVideoUrl === 'function' ? window.resolveMdAssetVideoUrl(u) : u;
         }
 
-        function queueCategoryVideo(url) {
-            if (!url || url === pendingHeroUrl) return;
-            pendingHeroUrl = url;
-            if (pendingHeroTimer) clearTimeout(pendingHeroTimer);
-            pendingHeroTimer = setTimeout(function () {
-                pendingHeroTimer = null;
-                showCategoryVideo(url);
-            }, HERO_SETTLE_MS);
-        }
+        function startHeroChain() {
+            if (heroChainStarted || !heroAmbient || !heroFocus) return;
+            var playlist = cards()
+                .map(function (c) { return c.getAttribute('data-talent-hero-src'); })
+                .filter(Boolean);
+            if (!playlist.length) return;
+            heroChainStarted = true;
+            var idx = 0;
 
-        function showCategoryVideo(url) {
-            if (!heroAmbient || !heroFocus || !url) return;
-            var rurl = resolveVideoUrl(url);
-            if (rurl === lastHeroUrl) return;
-            lastHeroUrl = rurl;
-            if (typeof window.mdjBindHeroVideoErrorFallback === 'function') window.mdjBindHeroVideoErrorFallback(heroFocus);
-            heroFocus.muted = true;
-            heroFocus.src = rurl;
-            if (typeof window.mdjHeroVideoPrime === 'function') window.mdjHeroVideoPrime(heroFocus);
-            heroFocus.classList.add('is-visible');
-            heroAmbient.classList.add('talent-shell-ambient-dim');
-            heroFocus.load();
-            if (typeof window.mdjActivateVideo === 'function') { window.mdjActivateVideo(heroFocus); } else { heroFocus.play().catch(function () {}); }
+            function playAt(i) {
+                var rurl = resolveVideoUrl(playlist[i]);
+                if (typeof window.mdjBindHeroVideoErrorFallback === 'function') window.mdjBindHeroVideoErrorFallback(heroFocus);
+                /* OJO: NO usar window.mdjHeroVideoPrime aquí -- fuerza loop=true
+                   incondicionalmente (correcto para un hero ambiental único,
+                   pero rompe la cadena: si vuelve a poner loop, 'ended' nunca
+                   dispara y el video queda pegado en el primero para siempre).
+                   Se replican a mano solo las propiedades seguras que sí
+                   necesitamos (mute/playsinline), sin loop. */
+                heroFocus.muted = true;
+                heroFocus.defaultMuted = true;
+                heroFocus.playsInline = true;
+                heroFocus.setAttribute('playsinline', '');
+                heroFocus.setAttribute('muted', '');
+                heroFocus.removeAttribute('loop');
+                heroFocus.src = rurl;
+                heroFocus.classList.add('is-visible');
+                heroAmbient.classList.add('talent-shell-ambient-dim');
+                if (typeof window.mdjEnsureVideoResolved === 'function') window.mdjEnsureVideoResolved(heroFocus);
+                heroFocus.load();
+                if (typeof window.mdjActivateVideo === 'function') { window.mdjActivateVideo(heroFocus); } else { heroFocus.play().catch(function () {}); }
+            }
+
+            heroFocus.removeAttribute('loop');
+            heroFocus.addEventListener('ended', function () {
+                idx = (idx + 1) % playlist.length;
+                playAt(idx);
+            });
+            /* Mismo guard que ya usa el patrón "serie" en las 7 páginas SEO
+               (pro-audio-dj.html, etc.): si algo externo pausa el video (un
+               reflow del modal, la pestaña perdiendo foco un instante), sin
+               esto se queda congelado en un frame para siempre -- "video
+               trabado" que reportó el PO viendo el hub en su pantalla real. */
+            heroFocus.addEventListener('pause', function () {
+                if (!document.hidden) heroFocus.play().catch(function () {});
+            });
+            playAt(idx);
         }
 
         function applyFocusZoom() {
@@ -1899,8 +1936,6 @@ Riesgo: romper carga del catálogo.
                hace que "gane" una tarjeta distinta cada vez, aunque el scroll no
                se mueva. offsetTop es puro layout: inmune a transform. */
             var centerY = scrollHost.scrollTop + scrollHost.clientHeight / 2;
-            var activeCard = null;
-            var bestDist = Infinity;
             cards().forEach(function (card) {
                 var cardCenterY = list.offsetTop + card.offsetTop + card.offsetHeight / 2;
                 var signedDist = cardCenterY - centerY;
@@ -1919,14 +1954,7 @@ Riesgo: romper carga del catálogo.
                     'important'
                 );
                 card.style.setProperty('--mdj-hub-fade', fade.toFixed(2));
-
-                var absRealDist = Math.abs(signedDist);
-                if (absRealDist < bestDist) { bestDist = absRealDist; activeCard = card; }
             });
-            if (activeCard) {
-                var heroSrc = activeCard.getAttribute('data-talent-hero-src');
-                if (heroSrc) queueCategoryVideo(heroSrc);
-            }
         }
 
         var raf = null;
@@ -1939,10 +1967,16 @@ Riesgo: romper carga del catálogo.
             });
         }
 
+        function onModalVisibilityChange() {
+            if (!modal.classList.contains('modal-visible')) return;
+            startHeroChain();
+            scheduleUpdate();
+        }
+
         scrollHost.addEventListener('scroll', scheduleUpdate, { passive: true });
         window.addEventListener('resize', scheduleUpdate, { passive: true });
-        new MutationObserver(scheduleUpdate).observe(modal, { attributes: true, attributeFilter: ['class'] });
-        scheduleUpdate();
+        new MutationObserver(onModalVisibilityChange).observe(modal, { attributes: true, attributeFilter: ['class'] });
+        onModalVisibilityChange();
     })();
     </script>
 
