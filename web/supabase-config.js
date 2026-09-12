@@ -147,26 +147,6 @@ window.mdjSupabaseAnonInvokeHeaders = function () {
    in mdjBuildPublicFanProfileUrl / buildMiamiPublicQrUrl — do not edit that file. */
 window.MDB_QR_PROFILE_PATH = "/profile.html";
 
-window.mdjFanPublicProfileUrl = function (djUserId, opts) {
-    try {
-        if (!djUserId) return "";
-        var o = opts || {};
-        var path = (typeof window.MDB_QR_PROFILE_PATH === "string" && window.MDB_QR_PROFILE_PATH.trim())
-            ? window.MDB_QR_PROFILE_PATH.trim()
-            : "/profile.html";
-        if (path.charAt(0) === "/") path = path.slice(1);
-        var u = new URL(path, window.location.href);
-        var id = String(djUserId);
-        u.searchParams.set("id", id);
-        u.searchParams.set("ref", id);
-        if (o.sftOpen) u.searchParams.set("sft_open", "1");
-        if (o.sftDebug) u.searchParams.set("sft_debug", "1");
-        return u.href;
-    } catch (_) {
-        return "";
-    }
-};
-
 /** Instalador MDJPRO macOS (Storage público `installers/`). */
 window.MDB_INSTALLER_MAC_PKG_URL =
     window.mdbSupabaseOrigin() + "/storage/v1/object/public/installers/MDJPRO_Installer.pkg";
@@ -419,9 +399,6 @@ window.mdjUnloadVideosIn = function (container) {
 
 /** @deprecated Usar resolveMdAssetPublicUrl; se mantiene por compatibilidad con rentals.js y el resto del sitio. */
 window.resolveMdAssetVideoUrl = window.resolveMdAssetPublicUrl;
-
-/** Misma regla que los vídeos: rutas `./assets/...` → URL pública del bucket `assets`. */
-window.resolveMdAssetImageUrl = window.resolveMdAssetPublicUrl;
 
 (function mdjBootstrapRemoteAssets() {
     function run() {
