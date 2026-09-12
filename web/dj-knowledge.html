@@ -25,6 +25,20 @@
     })();
     </script>
     <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
+    <script>
+      /* Hard Gate Ligero — Academia Gateway. Contenido reservado a miembros
+         inscritos; sin sesion, redirige a la puerta de entrada centralizada. */
+      (async function () {
+        try {
+          var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+          if (!sb) return;
+          var res = await sb.auth.getSession();
+          if (!res || !res.data || !res.data.session) {
+            window.location.href = 'academia.html?redirect=' + encodeURIComponent(window.location.pathname);
+          }
+        } catch (e) { /* fallo de red: no bloquear la pagina */ }
+      })();
+    </script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>MDJPRO — Conocimiento DJ: Historia y Cultura</title>

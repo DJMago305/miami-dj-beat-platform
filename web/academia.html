@@ -417,13 +417,226 @@
         </section>
     </main>
 
-    <nav class="academia-float-tabs" aria-label="Academia sections">
+    <!-- ══════════════════════════════════════════════════════
+         ACADEMIA GATEWAY — puerta de entrada única del ecosistema
+         estudiantil. Sin sesión: presentación + login/signup.
+         Con sesión: hub de acceso a módulos/biblioteca/evaluación.
+    ══════════════════════════════════════════════════════ -->
+    <section id="academia-auth-gate" class="section" style="display:none; max-width:460px; margin:0 auto 60px;">
+        <div
+            style="background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.07);border-radius:28px;padding:44px 40px;backdrop-filter:blur(20px);">
+
+            <div style="text-align:center;margin-bottom:22px;">
+                <div style="font-size:32px;margin-bottom:10px;">🎧</div>
+                <h2 style="margin:0 0 10px;font-size:20px;letter-spacing:1px;" data-i18n="academia-gate-title">ACCESO
+                    AL ECOSISTEMA ESTUDIANTIL</h2>
+                <p style="margin:0 0 16px;color:var(--muted);font-size:13px;line-height:1.5;"
+                    data-i18n="course-access-restricted">El acceso completo al programa y a las evaluaciones está
+                    disponible únicamente para miembros inscritos en el programa oficial.</p>
+                <ul
+                    style="text-align:left;margin:0;padding:0 0 0 18px;color:rgba(255,255,255,0.85);font-size:13px;line-height:1.8;">
+                    <li data-i18n="academia-gate-benefit-1">Los 12 módulos completos del programa</li>
+                    <li data-i18n="academia-gate-benefit-2">Biblioteca de cultura y técnica de cabina</li>
+                    <li data-i18n="academia-gate-benefit-3">Evaluación práctica y certificación oficial</li>
+                </ul>
+            </div>
+
+            <!-- Tab toggle -->
+            <div
+                style="display:flex;gap:0;margin-bottom:28px;border:1px solid rgba(255,255,255,0.1);border-radius:12px;overflow:hidden;">
+                <button id="academia-gate-tab-signup" onclick="academiaSwitchGateTab('signup')"
+                    data-i18n="gate-tab-signup"
+                    style="flex:1;padding:12px;background:var(--gold);color:#000;font-weight:900;font-size:13px;letter-spacing:1px;border:none;cursor:pointer;transition:all 0.2s;">
+                    ✨ CREAR CUENTA
+                </button>
+                <button id="academia-gate-tab-login" onclick="academiaSwitchGateTab('login')"
+                    data-i18n="gate-tab-login"
+                    style="flex:1;padding:12px;background:transparent;color:var(--muted);font-weight:800;font-size:13px;letter-spacing:1px;border:none;cursor:pointer;transition:all 0.2s;">
+                    🔑 YA TENGO CUENTA
+                </button>
+            </div>
+
+            <!-- CREAR CUENTA form -->
+            <form id="academia-gate-signup-form" class="form" autocomplete="on" onsubmit="academiaGateSignup(event)">
+                <label><span data-i18n="gate-name-label">NOMBRE ARTÍSTICO</span>
+                    <input type="text" id="academia-gate-name" required placeholder="DJ Futuro" autocomplete="name">
+                </label>
+                <label><span>EMAIL <span style="color:#ff5555;">*</span></span>
+                    <input type="email" id="academia-gate-signup-email" required placeholder="tu@email.com"
+                        autocomplete="email">
+                </label>
+                <label><span data-i18n="gate-pass-label">CONTRASEÑA <span style="color:#ff5555;">*</span></span>
+                    <input type="password" id="academia-gate-signup-pass" required
+                        placeholder="Mínimo 6 caracteres" minlength="6" autocomplete="new-password">
+                </label>
+                <p id="academia-gate-signup-error" style="color:#ff5555;font-size:12px;margin:0;display:none;"></p>
+                <button type="submit" class="btn primary full" id="academia-gate-signup-btn"
+                    style="margin-top:8px;letter-spacing:1px;" data-i18n="gate-btn-signup">
+                    🚀 CREAR MI CUENTA
+                </button>
+            </form>
+
+            <!-- LOGIN form -->
+            <form id="academia-gate-login-form" class="form" autocomplete="on" style="display:none;"
+                onsubmit="academiaGateLogin(event)">
+                <label><span>EMAIL</span>
+                    <input type="email" id="academia-gate-login-email" required placeholder="tu@email.com"
+                        autocomplete="email">
+                </label>
+                <label><span data-i18n="gate-pass-label">CONTRASEÑA</span>
+                    <input type="password" id="academia-gate-login-pass" required placeholder="••••••••"
+                        autocomplete="current-password">
+                </label>
+                <p id="academia-gate-login-error" style="color:#ff5555;font-size:12px;margin:0;display:none;"></p>
+                <button type="submit" class="btn primary full" id="academia-gate-login-btn"
+                    style="margin-top:8px;letter-spacing:1px;" data-i18n="gate-btn-login">
+                    🔑 INICIAR SESIÓN
+                </button>
+            </form>
+        </div>
+    </section>
+
+    <nav class="academia-float-tabs" id="academia-hub" aria-label="Academia sections" style="display:none;">
         <a href="./courses.html" class="academia-float-tab" data-i18n="nav-academy-courses">Courses &amp;
             Certification</a>
         <a href="./dj-knowledge.html" class="academia-float-tab" data-i18n="nav-academy-library">DJ Culture &amp;
             Library</a>
         <a href="./metodo-cabina.html" class="academia-float-tab" data-i18n="nav-academy-cabina">Booth Method</a>
     </nav>
+
+    <script>
+        (function () {
+            function switchTab(tab) {
+                var signupForm = document.getElementById('academia-gate-signup-form');
+                var loginForm = document.getElementById('academia-gate-login-form');
+                var tabSignup = document.getElementById('academia-gate-tab-signup');
+                var tabLogin = document.getElementById('academia-gate-tab-login');
+                if (tab === 'signup') {
+                    signupForm.style.display = 'block'; loginForm.style.display = 'none';
+                    tabSignup.style.background = 'var(--gold)'; tabSignup.style.color = '#000';
+                    tabLogin.style.background = 'transparent'; tabLogin.style.color = 'var(--muted)';
+                } else {
+                    loginForm.style.display = 'block'; signupForm.style.display = 'none';
+                    tabLogin.style.background = 'var(--gold)'; tabLogin.style.color = '#000';
+                    tabSignup.style.background = 'transparent'; tabSignup.style.color = 'var(--muted)';
+                }
+            }
+            window.academiaSwitchGateTab = switchTab;
+
+            function showGate() {
+                var gate = document.getElementById('academia-auth-gate');
+                var hub = document.getElementById('academia-hub');
+                if (gate) gate.style.display = 'block';
+                if (hub) hub.style.display = 'none';
+            }
+
+            function showHub() {
+                var gate = document.getElementById('academia-auth-gate');
+                var hub = document.getElementById('academia-hub');
+                if (gate) gate.style.display = 'none';
+                if (hub) hub.style.display = '';
+            }
+            window.academiaShowHub = showHub;
+
+            function supa() {
+                return typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+            }
+
+            async function initAcademiaGate() {
+                var sb = supa();
+                if (!sb) { showGate(); return; }
+                try {
+                    var res = await sb.auth.getSession();
+                    if (res && res.data && res.data.session) showHub();
+                    else showGate();
+                } catch (e) { showGate(); }
+            }
+
+            window.academiaGateSignup = async function (e) {
+                e.preventDefault();
+                var sb = supa();
+                if (!sb) return;
+                var btn = document.getElementById('academia-gate-signup-btn');
+                var err = document.getElementById('academia-gate-signup-error');
+                var name = document.getElementById('academia-gate-name').value.trim();
+                var email = document.getElementById('academia-gate-signup-email').value.trim();
+                var pass = document.getElementById('academia-gate-signup-pass').value;
+
+                btn.disabled = true;
+                err.style.display = 'none';
+
+                var signUpRes = await sb.auth.signUp({
+                    email: email,
+                    password: pass,
+                    options: { data: { full_name: name, artistic_name: name, user_type: 'talent', plan: 'LITE', username: email.split('@')[0] } }
+                });
+
+                if (signUpRes.error) {
+                    err.textContent = signUpRes.error.message;
+                    err.style.display = 'block';
+                    btn.disabled = false;
+                    return;
+                }
+
+                var session = signUpRes.data && signUpRes.data.session;
+                if (!session) {
+                    var signInRes = await sb.auth.signInWithPassword({ email: email, password: pass });
+                    if (!signInRes.error && signInRes.data) session = signInRes.data.session;
+                }
+
+                if (!session) {
+                    err.textContent = 'Si tu correo requiere confirmación, ábrelo y vuelve; o inicia sesión abajo con la misma contraseña.';
+                    err.style.display = 'block';
+                    btn.disabled = false;
+                    return;
+                }
+
+                var user = session.user;
+                try {
+                    var existing = await sb.from('dj_profiles').select('user_id').eq('user_id', user.id).maybeSingle();
+                    if (!existing.data) {
+                        var memberId = 'DJ-' + user.id.substring(0, 6).toUpperCase();
+                        await sb.from('dj_profiles').insert([{
+                            user_id: user.id, email: email, dj_name: name, stage_name: name, full_name: name,
+                            plan: 'LITE', status: 'ACTIVE', member_id: memberId,
+                            referral_code: 'REF' + memberId.replace('DJ-', '').substring(0, 5),
+                            photo_status: 'pending', rating: 1.0, review_count: 0
+                        }]);
+                    }
+                } catch (insErr) { /* la cuenta ya quedo creada; el perfil se puede completar despues */ }
+
+                showHub();
+            };
+
+            window.academiaGateLogin = async function (e) {
+                e.preventDefault();
+                var sb = supa();
+                if (!sb) return;
+                var btn = document.getElementById('academia-gate-login-btn');
+                var err = document.getElementById('academia-gate-login-error');
+                var email = document.getElementById('academia-gate-login-email').value.trim();
+                var pass = document.getElementById('academia-gate-login-pass').value;
+
+                btn.disabled = true;
+                err.style.display = 'none';
+
+                var res = await sb.auth.signInWithPassword({ email: email, password: pass });
+                if (res.error) {
+                    err.textContent = res.error.message;
+                    err.style.display = 'block';
+                    btn.disabled = false;
+                    return;
+                }
+                showHub();
+            };
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initAcademiaGate);
+            } else {
+                initAcademiaGate();
+            }
+        })();
+    </script>
 
     <script src="./js/academy-media-loader.js?v=20260612-acad-storage"></script>
     <script src="./translations.js?v=20260906-cabina-method"></script>

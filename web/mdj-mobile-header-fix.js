@@ -107,11 +107,31 @@
       }
 
       mountOrRemoveFabs();
-      // Reintento: "visitante persistente" y el parpadeo .mdj-estacion-previa
-      // resuelven el estado real del header DESPUÉS de este DOMContentLoaded
-      // inicial — sin este reintento, una página que empieza oculta y luego
-      // se revela se quedaría con el failsafe montado de más (o al revés).
-      setTimeout(mountOrRemoveFabs, 400);
+      // FIX-DUP-HAMBURGER-BOOT-MASK (hallazgo del PO en vivo, sesión real):
+      // el "boot mask" de auth (mdjApplyAuthBootMask, mdjb-shared-header.js)
+      // resuelve de forma asincrónica (getSession + autodetect de nav), y
+      // puede tardar bajo latencia real de red. Temporizadores ciegos
+      // (setTimeout a intervalos fijos) no son deterministas: si el mask
+      // sigue activo justo en el instante de cada chequeo, este script monta
+      // su FAB de respaldo y no hay garantía de que un reintento posterior
+      // vuelva a revisar a tiempo — dos hamburguesas reales simultáneas.
+      //
+      // Reemplazado por un MutationObserver: reacciona al cambio real de
+      // clases/atributos del header (ej. cuando mdj-nav-booting/
+      // mdj-auth-resolving se quitan, o cuando mdj-riel-toggle cambia de
+      // display) en vez de adivinar cuánto tarda. Se desconecta solo a los
+      // 6000ms como límite defensivo, para no dejar un observer corriendo
+      // indefinidamente en cada página.
+      var mdjMobileFixObserver = new MutationObserver(function () {
+        mountOrRemoveFabs();
+      });
+      mdjMobileFixObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style'],
+        subtree: true,
+        childList: true
+      });
+      setTimeout(function () { mdjMobileFixObserver.disconnect(); }, 6000);
     } catch (e) { /* si algo falla, el header original sigue como estaba */ }
   }
 
