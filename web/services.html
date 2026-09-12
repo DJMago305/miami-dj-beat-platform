@@ -204,7 +204,15 @@ Riesgo: romper carga del catálogo.
             box-sizing: border-box !important;
             padding: max(76px, calc(env(safe-area-inset-top) + 54px)) clamp(12px, 2.5vw, 28px) clamp(36px, 8vh, 88px) !important;
             margin: 0 auto 0 !important;
-            gap: clamp(16px, 2.8vh, 32px) !important;
+        }
+
+        /* AUDITORÍA FORENSE 2026-09-11: gap en flex-column (Safari <14.1) dejaba
+           el encabezado pegado directo al primer elemento (lista de tarjetas o
+           carrusel) sin aire -- margen real en el hijo, funciona en cualquier
+           navegador, sin importar cuántos hijos tenga cada modal. */
+        #talent-selector-modal.modal-visible .hero-shell-content > *:not(:last-child),
+        #rental-dynamic-modal.modal-visible .hero-shell-content > *:not(:last-child) {
+            margin-bottom: clamp(16px, 2.8vh, 32px) !important;
         }
 
         #talent-selector-modal.modal-visible .hero-shell-content > div:first-of-type {
@@ -235,7 +243,6 @@ Riesgo: romper carga del catálogo.
             width: 100% !important;
             max-width: 100% !important;
             margin: 0 auto !important;
-            gap: clamp(14px, 2vw, 22px) !important;
             padding: 14px clamp(18px, 3.5vw, 40px) 14px clamp(18px, 3.5vw, 40px) !important;
             padding-inline-end: clamp(44px, 9vw, 112px) !important;
             overflow-x: scroll !important;
@@ -247,6 +254,14 @@ Riesgo: romper carga del catálogo.
             grid-template-columns: unset !important;
             box-sizing: border-box !important;
             touch-action: pan-x;
+        }
+
+        /* AUDITORÍA FORENSE 2026-09-11: gap en flex (Safari <14.1). Esta regla
+           quedó huérfana/inerte -- la sustituye .talent-hub-vertical-list (más
+           específica) en el hub real de hoy -- pero se corrige igual para no
+           dejar el mismo bug listo para reaparecer si algo pierde esa clase. */
+        #talent-selector-modal.modal-visible .grid5.cinematic-hero-cards.talent-selector-carousel > * {
+            margin-right: clamp(14px, 2vw, 22px) !important;
         }
 
         #talent-selector-modal.modal-visible .talent-selector-carousel > .hero-glass-card,
@@ -352,7 +367,15 @@ Riesgo: romper carga del catálogo.
             position: static !important;
             flex-direction: row !important;
             align-items: center !important;
-            gap: 12px !important;
+        }
+
+        /* AUDITORÍA FORENSE 2026-09-11: gap en flex (aquí y en el style="" inline
+           de cada .modal-nav-left) no funciona en Safari <14.1 -- los botones
+           Back/Home quedaban pegados. Margen real en vez de gap, aplica a
+           cualquier .modal-nav-left del sitio (Regresar + Home siempre son
+           2 hijos). */
+        .modal-header-nav .modal-nav-left > *:not(:last-child) {
+            margin-right: 12px !important;
         }
 
         #talent-selector-modal.modal-visible .modal-header-nav .modal-close-btn {
@@ -545,7 +568,6 @@ Riesgo: romper carga del catálogo.
             flex-wrap: nowrap !important;
             align-items: center !important;
             justify-content: flex-start !important;
-            gap: clamp(14px, 2vw, 22px) !important;
             padding: 14px clamp(18px, 3.5vw, 40px) 24px !important;
             padding-inline-end: clamp(44px, 9vw, 112px) !important;
             overflow-x: auto !important;
@@ -556,6 +578,14 @@ Riesgo: romper carga del catálogo.
             scroll-padding-inline-end: clamp(44px, 9vw, 112px);
             box-sizing: border-box !important;
             touch-action: pan-x;
+        }
+
+        /* AUDITORÍA FORENSE 2026-09-11: gap en flex (Safari <14.1) -- margen real
+           en cada tarjeta hija en vez de gap, mismo patrón ya usado en
+           #roster-grid/#fx-roster-grid (styles.css). Margen sobrante tras la
+           última tarjeta es inofensivo (carrusel con scroll horizontal). */
+        #lighting-modal.modal-visible #lighting-roster-grid.mdj-lighting-carousel > * {
+            margin-right: clamp(14px, 2vw, 22px) !important;
         }
 
         #lighting-modal.modal-visible #lighting-roster-grid.mdj-lighting-carousel.mdj-lighting-carousel-infinite {
@@ -591,7 +621,6 @@ Riesgo: romper carga del catálogo.
             width: 100% !important;
             max-width: 100% !important;
             margin: 0 auto !important;
-            gap: clamp(14px, 2vw, 22px) !important;
             padding: 14px clamp(18px, 3.5vw, 40px) 24px !important;
             padding-inline-end: clamp(44px, 9vw, 112px) !important;
             overflow-x: auto !important;
@@ -602,6 +631,12 @@ Riesgo: romper carga del catálogo.
             scroll-padding-inline-end: clamp(44px, 9vw, 112px);
             box-sizing: border-box !important;
             touch-action: pan-x;
+        }
+
+        /* AUDITORÍA FORENSE 2026-09-11: gap en flex (Safari <14.1) -- margen real
+           en cada tarjeta hija en vez de gap. */
+        #fx-modal.modal-visible #fx-roster-grid.mdj-fx-catalog-carousel > * {
+            margin-right: clamp(14px, 2vw, 22px) !important;
         }
 
         #fx-modal.modal-visible #fx-roster-grid.mdj-fx-catalog-carousel.mdj-fx-carousel-infinite {
@@ -1083,7 +1118,6 @@ Riesgo: romper carga del catálogo.
             width: 100% !important;
             max-width: 100% !important;
             margin: 0 auto !important;
-            gap: clamp(14px, 2vw, 22px) !important;
             padding: 14px clamp(18px, 3.5vw, 40px) 24px !important;
             padding-inline-end: clamp(44px, 9vw, 112px) !important;
             overflow-x: auto !important;
@@ -1094,6 +1128,12 @@ Riesgo: romper carga del catálogo.
             scroll-padding-inline-end: clamp(44px, 9vw, 112px);
             box-sizing: border-box !important;
             touch-action: pan-x;
+        }
+
+        /* AUDITORÍA FORENSE 2026-09-11: gap en flex (Safari <14.1) -- margen real
+           en cada tarjeta hija en vez de gap. */
+        #rental-dynamic-modal.modal-visible .mdj-rental-catalog-carousel > * {
+            margin-right: clamp(14px, 2vw, 22px) !important;
         }
 
         #rental-dynamic-modal.modal-visible .mdj-rental-catalog-carousel.mdj-rental-carousel-infinite {
@@ -1226,7 +1266,7 @@ Riesgo: romper carga del catálogo.
                 Exclusive Event Solutions & Gear</p>
         </div>
 
-        <div id="rentals-services-grid" class="grid3" style="gap: 30px;">
+        <div id="rentals-services-grid" class="grid3">
 
             <!-- Entretenimiento y Talento — entrada principal al hub de talento (modal) -->
             <div class="tile glass-card" id="talent-tile"
@@ -1650,7 +1690,7 @@ Riesgo: romper carga del catálogo.
         <div class="modal-content cinematic-hero-shell">
 
             <div class="modal-header-nav">
-                <div class="modal-nav-left" style="display: flex; align-items: center; gap: 10px;">
+                <div class="modal-nav-left" style="display: flex; align-items: center;">
                     <button type="button" class="modal-nav-btn cinematic-glass-btn mdj-modal-regresar" data-action="back-from-talent-selector"
                         data-i18n="btn-regresar">Regresar</button>
                     <button class="modal-nav-btn cinematic-glass-btn" data-action="go-home"
@@ -1986,7 +2026,7 @@ Riesgo: romper carga del catálogo.
         <div class="modal-content cinematic-hero-shell">
 
             <div class="modal-header-nav">
-                <div class="modal-nav-left" style="display: flex; align-items: center; gap: 10px;">
+                <div class="modal-nav-left" style="display: flex; align-items: center;">
                     <button type="button" class="modal-nav-btn cinematic-glass-btn mdj-modal-regresar" data-action="back-to-selector-fx"
                         data-i18n="btn-regresar">Regresar</button>
                     <button class="modal-nav-btn cinematic-glass-btn" data-action="go-home"
@@ -2039,7 +2079,7 @@ Riesgo: romper carga del catálogo.
         <div class="modal-content cinematic-hero-shell">
 
             <div class="modal-header-nav">
-                <div class="modal-nav-left" style="display: flex; align-items: center; gap: 10px;">
+                <div class="modal-nav-left" style="display: flex; align-items: center;">
                     <button type="button" class="modal-nav-btn cinematic-glass-btn mdj-modal-regresar" data-action="back-to-selector-lighting"
                         data-i18n="btn-regresar">Regresar</button>
                     <button class="modal-nav-btn cinematic-glass-btn" data-action="go-home"
@@ -2158,9 +2198,9 @@ Riesgo: romper carga del catálogo.
                     <div class="form-group" style="grid-column: span 2; margin-top: 15px;">
                         <button type="button" onclick="checkoutNextStep()" class="cinematic-play-btn"
                             style="width: 100%; border-radius: 8px; box-shadow: 0 0 20px rgba(255, 62, 236, 0.4);">
-                            <span style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                            <span style="display: flex; align-items: center; justify-content: center;">
                                 Generate Invoice Preview <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2">
+                                    stroke="currentColor" stroke-width="2" style="margin-left: 10px;">
                                     <path d="M5 12h14M12 5l7 7-7 7" />
                                 </svg>
                             </span>
@@ -2295,14 +2335,14 @@ Riesgo: romper carga del catálogo.
                 </div> <!-- END A4 PRINTABLE ZONE -->
 
 
-                <div style="display: flex; gap: 15px;">
+                <div style="display: flex;">
                     <button type="button" onclick="checkoutPrevStep()" class="cinematic-glass-btn"
-                        style="flex: 1; padding: 15px; border-radius: 8px;">Edit Details</button>
+                        style="flex: 1; padding: 15px; border-radius: 8px; margin-right: 15px;">Edit Details</button>
                     <button id="chk-reserve-btn" type="button" onclick="checkoutSubmit()" class="cinematic-play-btn"
                         style="flex: 2; border-radius: 8px; box-shadow: 0 0 20px rgba(255, 62, 236, 0.4);">
-                        <span style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        <span style="display: flex; align-items: center; justify-content: center;">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
+                                stroke-width="2" style="margin-right: 10px;">
                                 <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
                             </svg>
                             Reserve Your Date
@@ -2349,7 +2389,7 @@ Riesgo: romper carga del catálogo.
                 style="background: transparent; border: none; padding-top: 0; width: 100%; position: relative; z-index: 10;">
                 <div class="rentals-header-inner"
                     style="max-width: 1200px; margin: 0 auto 2vh auto; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between;">
-                    <div class="modal-nav-left" style="display: flex; align-items: center; gap: 10px;">
+                    <div class="modal-nav-left" style="display: flex; align-items: center;">
                         <button type="button" class="modal-nav-btn cinematic-glass-btn mdj-modal-regresar" data-action="back-from-rental-dynamic"
                             data-i18n="btn-regresar">Regresar</button>
                         <button class="modal-nav-btn cinematic-glass-btn" data-action="go-home"

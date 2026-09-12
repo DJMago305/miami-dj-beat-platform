@@ -157,6 +157,28 @@
       white-space: nowrap;
     }
 
+    /* Precio clickeable = agregar al carrito (un paquete, sin cantidad).
+       Borde+fondo para que se note que es un botón, no solo texto. */
+    .stagedj-pkg-price.stagedj-add-to-cart {
+      cursor: pointer;
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid rgba(212, 175, 55, 0.5);
+      background: rgba(212, 175, 55, 0.08);
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+
+    .stagedj-pkg-price.stagedj-add-to-cart:hover {
+      background: rgba(212, 175, 55, 0.22);
+      border-color: var(--gold);
+    }
+
+    .stagedj-pkg-price.stagedj-add-to-cart.stagedj-added-flash {
+      background: rgba(90, 200, 120, 0.25);
+      border-color: rgba(90, 200, 120, 0.8);
+      color: #eafff0;
+    }
+
     .stagedj-package-item p {
       color: rgba(255, 255, 255, 0.75);
       line-height: 1.65;
@@ -345,7 +367,7 @@
       <details>
         <summary>
           <span class="stagedj-pkg-name" data-i18n="stagedj-pkg-small-name">Small DJ Stage</span>
-          <span class="stagedj-pkg-price" data-i18n="stagedj-pkg-small-price">$300</span>
+          <span class="stagedj-pkg-price stagedj-add-to-cart" data-sku="stage_small" data-price="300" data-i18n="stagedj-pkg-small-price">$300</span>
         </summary>
         <p data-i18n="stagedj-pkg-small-desc">Compact stage platform sized for DJ booths and intimate live setups.</p>
       </details>
@@ -355,7 +377,7 @@
       <details>
         <summary>
           <span class="stagedj-pkg-name" data-i18n="stagedj-pkg-medium-name">Medium Event Stage</span>
-          <span class="stagedj-pkg-price" data-i18n="stagedj-pkg-medium-price">$600</span>
+          <span class="stagedj-pkg-price stagedj-add-to-cart" data-sku="stage_medium" data-price="600" data-i18n="stagedj-pkg-medium-price">$600</span>
         </summary>
         <p data-i18n="stagedj-pkg-medium-desc">Mid-size stage platform built for bands, presentations, and medium-format events.</p>
       </details>
@@ -365,7 +387,7 @@
       <details>
         <summary>
           <span class="stagedj-pkg-name" data-i18n="stagedj-pkg-large-name">Large Concert Stage</span>
-          <span class="stagedj-pkg-price" data-i18n="stagedj-pkg-large-price">$1,200</span>
+          <span class="stagedj-pkg-price stagedj-add-to-cart" data-sku="stage_large" data-price="1200" data-i18n="stagedj-pkg-large-price">$1,200</span>
         </summary>
         <p data-i18n="stagedj-pkg-large-desc">Large-format stage platform built for full concert productions and major live shows.</p>
       </details>
@@ -375,7 +397,7 @@
       <details>
         <summary>
           <span class="stagedj-pkg-name" data-i18n="stagedj-pkg-goalpost-name">Goal Post Truss System</span>
-          <span class="stagedj-pkg-price" data-i18n="stagedj-pkg-goalpost-price">$350</span>
+          <span class="stagedj-pkg-price stagedj-add-to-cart" data-sku="truss_arch" data-price="350" data-i18n="stagedj-pkg-goalpost-price">$350</span>
         </summary>
         <p data-i18n="stagedj-pkg-goalpost-desc">Simple goal-post-style truss arch for lighting fixtures and banner mounting.</p>
       </details>
@@ -385,7 +407,7 @@
       <details>
         <summary>
           <span class="stagedj-pkg-name" data-i18n="stagedj-pkg-boxtruss-name">Full Box Truss Structure</span>
-          <span class="stagedj-pkg-price" data-i18n="stagedj-pkg-boxtruss-price">$1,800</span>
+          <span class="stagedj-pkg-price stagedj-add-to-cart" data-sku="truss_box_full" data-price="1800" data-i18n="stagedj-pkg-boxtruss-price">$1,800</span>
         </summary>
         <p data-i18n="stagedj-pkg-boxtruss-desc">Complete box-truss structure for large-scale lighting, speaker, and video rigging.</p>
       </details>
@@ -395,14 +417,14 @@
       <details>
         <summary>
           <span class="stagedj-pkg-name" data-i18n="stagedj-pkg-ultra-name">Ultra Truss System</span>
-          <span class="stagedj-pkg-price" data-i18n="stagedj-pkg-ultra-price">$3,500</span>
+          <span class="stagedj-pkg-price stagedj-add-to-cart" data-sku="truss_ultra" data-price="3500" data-i18n="stagedj-pkg-ultra-price">$3,500</span>
         </summary>
         <p data-i18n="stagedj-pkg-ultra-desc">The top-tier truss system for the most demanding large-format productions.</p>
       </details>
     </div>
 
     <div class="stagedj-cta-wrap">
-      <a href="./rentals.html?open=stages" class="btn primary" data-i18n="stagedj-cta-configure">Configure Your Stage &amp; Add to Cart →</a>
+      <a href="./rentals.html?checkout=fromcart" class="btn primary" data-i18n="stagedj-cta-configure">Go to Cart &amp; Reserve →</a>
       <a href="tel:+13056071780" class="btn outline" data-i18n="stagedj-cta-call">Call (305) 607-1780</a>
       <a href="mailto:miamidjbeat@gmail.com" class="btn outline" data-i18n="stagedj-cta-email">Email for a Quote</a>
     </div>
@@ -418,7 +440,7 @@
 
       <details class="stagedj-faq-item">
         <summary data-i18n="stagedj-faq-q2">What is a truss system used for?</summary>
-        <p data-i18n="stagedj-faq-a2">Truss systems provide the rigging structure for lighting, speakers, and video screens — from a simple Goal Post Truss arch to a Full Box Truss Structure or the top-tier Ultra Truss System for the most demanding productions. <a href="./rentals.html?open=stages">Configure your stage</a> · <a href="tel:+13056071780">(305) 607-1780</a></p>
+        <p data-i18n="stagedj-faq-a2">Truss systems provide the rigging structure for lighting, speakers, and video screens — from a simple Goal Post Truss arch to a Full Box Truss Structure or the top-tier Ultra Truss System for the most demanding productions. <a href="./rentals.html?checkout=fromcart">Configure your stage</a> · <a href="tel:+13056071780">(305) 607-1780</a></p>
       </details>
     </section>
   </main>
@@ -507,6 +529,87 @@
         } else {
             kick();
         }
+    })();
+    </script>
+    <script>
+    (function () {
+        /* PO 2026-09-11 (APROBADO, mismo patron que pro-audio-dj.html): un
+           clic en el precio agrega ese paquete al carrito real, sin modal ni
+           stepper -- esta categoria se renta por paquete, no por cantidad
+           (Mobiliario y Decoracion es la unica excepcion, tiene su propia
+           calculadora). Escribe directo al localStorage que ya lee/escribe
+           todo el sistema (mismo formato que arma mdj-event-builder-adapter.js)
+           para no cargar el motor completo de ~150KB en esta pagina liviana. */
+        var DRAFT_KEY = 'mdj:event-builder:draft:v1:anon';
+
+        function uid() {
+            return (window.crypto && window.crypto.randomUUID)
+                ? window.crypto.randomUUID()
+                : 'line_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9);
+        }
+
+        function readDraft() {
+            try {
+                var raw = localStorage.getItem(DRAFT_KEY);
+                if (raw) {
+                    var parsed = JSON.parse(raw);
+                    if (parsed && Array.isArray(parsed.lines)) return parsed;
+                }
+            } catch (e) { /* noop */ }
+            return { schema_version: 1, draft_id: uid(), lines: [], assigned_lead_id: null };
+        }
+
+        function writeDraft(draft) {
+            draft.updated_at = new Date().toISOString();
+            try { localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); } catch (e) { /* noop */ }
+        }
+
+        function addPackageToCart(el) {
+            var sku = el.getAttribute('data-sku');
+            var price = parseFloat(el.getAttribute('data-price'));
+            if (!sku || isNaN(price)) return;
+            var nameEl = el.parentElement ? el.parentElement.querySelector('.stagedj-pkg-name') : null;
+            var name = nameEl ? nameEl.textContent.trim() : sku;
+
+            var draft = readDraft();
+            var existing = draft.lines.filter(function (l) { return l.catalog_sku === sku; })[0];
+            if (existing) {
+                existing.quantity += 1;
+                existing.line_total_usd = Math.round(existing.unit_price_usd * existing.quantity * 100) / 100;
+            } else {
+                draft.lines.push({
+                    line_id: uid(),
+                    catalog_sku: sku,
+                    category_key: 'stages',
+                    category_label: 'Stage & Event Structures',
+                    slot: 'gear_stages',
+                    name: name,
+                    image_url: null,
+                    unit_price_usd: price,
+                    quantity: 1,
+                    line_total_usd: price,
+                    replaceable: false,
+                    line_status: 'cotizado'
+                });
+            }
+            writeDraft(draft);
+
+            var original = el.textContent;
+            el.classList.add('stagedj-added-flash');
+            el.textContent = '\u2713 ' + (window.t ? window.t('stagedj-added-flash', 'Agregado') : 'Agregado');
+            setTimeout(function () {
+                el.textContent = original;
+                el.classList.remove('stagedj-added-flash');
+            }, 1400);
+        }
+
+        document.addEventListener('click', function (e) {
+            var el = e.target.closest ? e.target.closest('.stagedj-add-to-cart') : null;
+            if (!el) return;
+            e.preventDefault();
+            e.stopPropagation();
+            addPackageToCart(el);
+        });
     })();
     </script>
   <script src="./translations.js?v=20260903-perfil-label"></script>

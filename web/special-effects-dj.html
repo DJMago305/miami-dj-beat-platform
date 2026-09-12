@@ -162,6 +162,28 @@
       white-space: nowrap;
     }
 
+    /* Precio clickeable = agregar al carrito (un paquete, sin cantidad).
+       Borde+fondo para que se note que es un botón, no solo texto. */
+    .fxdj-pkg-price.fxdj-add-to-cart {
+      cursor: pointer;
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid rgba(212, 175, 55, 0.5);
+      background: rgba(212, 175, 55, 0.08);
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+
+    .fxdj-pkg-price.fxdj-add-to-cart:hover {
+      background: rgba(212, 175, 55, 0.22);
+      border-color: var(--gold);
+    }
+
+    .fxdj-pkg-price.fxdj-add-to-cart.fxdj-added-flash {
+      background: rgba(90, 200, 120, 0.25);
+      border-color: rgba(90, 200, 120, 0.8);
+      color: #eafff0;
+    }
+
     .fxdj-package-item p {
       color: rgba(255, 255, 255, 0.75);
       line-height: 1.65;
@@ -350,7 +372,7 @@
       <details>
         <summary>
           <span class="fxdj-pkg-name" data-i18n="fxdj-pkg-sparks-name">Cold Spark Fountains</span>
-          <span class="fxdj-pkg-price" data-i18n="fxdj-pkg-sparks-price">$300</span>
+          <span class="fxdj-pkg-price fxdj-add-to-cart" data-sku="fx_sparks" data-price="300" data-i18n="fxdj-pkg-sparks-price">$300</span>
         </summary>
         <p data-i18n="fxdj-pkg-sparks-desc">Safe, spectacular indoor/outdoor cold spark fountains for grand entrances and first dances.</p>
       </details>
@@ -360,7 +382,7 @@
       <details>
         <summary>
           <span class="fxdj-pkg-name" data-i18n="fxdj-pkg-fog-name">Dancing on Clouds (Low Fog)</span>
-          <span class="fxdj-pkg-price" data-i18n="fxdj-pkg-fog-price">$300</span>
+          <span class="fxdj-pkg-price fxdj-add-to-cart" data-sku="fx_fog" data-price="300" data-i18n="fxdj-pkg-fog-price">$300</span>
         </summary>
         <p data-i18n="fxdj-pkg-fog-desc">A magical, cinematic low-lying fog effect perfect for the first dance.</p>
       </details>
@@ -370,7 +392,7 @@
       <details>
         <summary>
           <span class="fxdj-pkg-name" data-i18n="fxdj-pkg-co2-name">CO2 Jets &amp; Cannons</span>
-          <span class="fxdj-pkg-price" data-i18n="fxdj-pkg-co2-price">$400</span>
+          <span class="fxdj-pkg-price fxdj-add-to-cart" data-sku="fx_co2" data-price="400" data-i18n="fxdj-pkg-co2-price">$400</span>
         </summary>
         <p data-i18n="fxdj-pkg-co2-desc">High-energy blasts of cryogenic fog designed to cool the dance floor during peak hour.</p>
       </details>
@@ -380,7 +402,7 @@
       <details>
         <summary>
           <span class="fxdj-pkg-name" data-i18n="fxdj-pkg-bubble-name">Bubble Machine &amp; Haze</span>
-          <span class="fxdj-pkg-price" data-i18n="fxdj-pkg-bubble-price">$150</span>
+          <span class="fxdj-pkg-price fxdj-add-to-cart" data-sku="fx_bubble" data-price="150" data-i18n="fxdj-pkg-bubble-price">$150</span>
         </summary>
         <p data-i18n="fxdj-pkg-bubble-desc">A magical, shimmering atmospheric effect cascading thousands of bubbles across the room.</p>
       </details>
@@ -390,7 +412,7 @@
       <details>
         <summary>
           <span class="fxdj-pkg-name" data-i18n="fxdj-pkg-snow-name">Artificial Snow Effect</span>
-          <span class="fxdj-pkg-price" data-i18n="fxdj-pkg-snow-price">$250</span>
+          <span class="fxdj-pkg-price fxdj-add-to-cart" data-sku="fx_snow" data-price="250" data-i18n="fxdj-pkg-snow-price">$250</span>
         </summary>
         <p data-i18n="fxdj-pkg-snow-desc">Transform the atmosphere completely and create a stunning winter wonderland indoors or outdoors.</p>
       </details>
@@ -400,7 +422,7 @@
       <details>
         <summary>
           <span class="fxdj-pkg-name" data-i18n="fxdj-pkg-smoke-name">Smoke Machine (Geyser/Haze)</span>
-          <span class="fxdj-pkg-price" data-i18n="fxdj-pkg-smoke-price">$150</span>
+          <span class="fxdj-pkg-price fxdj-add-to-cart" data-sku="fx_smoke" data-price="150" data-i18n="fxdj-pkg-smoke-price">$150</span>
         </summary>
         <p data-i18n="fxdj-pkg-smoke-desc">High-output atmospheric smoke perfect for amplifying lighting effects and lasers on the dance floor.</p>
       </details>
@@ -410,7 +432,7 @@
       <details>
         <summary>
           <span class="fxdj-pkg-name" data-i18n="fxdj-pkg-confetti-name">Stadium Confetti Blowers</span>
-          <span class="fxdj-pkg-price" data-i18n="fxdj-pkg-confetti-price">$450</span>
+          <span class="fxdj-pkg-price fxdj-add-to-cart" data-sku="fx_confetti" data-price="450" data-i18n="fxdj-pkg-confetti-price">$450</span>
         </summary>
         <p data-i18n="fxdj-pkg-confetti-desc">A massive, stadium-style confetti blast designed for the ultimate climax of your event or Hora Loca.</p>
       </details>
@@ -427,7 +449,7 @@
     </div>
 
     <div class="fxdj-cta-wrap">
-      <a href="./rentals.html?open=fx" class="btn primary" data-i18n="fxdj-cta-configure">Configure Your Effects &amp; Add to Pack →</a>
+      <a href="./rentals.html?checkout=fromcart" class="btn primary" data-i18n="fxdj-cta-configure">Go to Cart &amp; Reserve →</a>
       <a href="tel:+13056071780" class="btn outline" data-i18n="fxdj-cta-call">Call (305) 607-1780</a>
       <a href="mailto:miamidjbeat@gmail.com" class="btn outline" data-i18n="fxdj-cta-email">Email for a Quote</a>
     </div>
@@ -448,7 +470,7 @@
 
       <details class="fxdj-faq-item">
         <summary data-i18n="fxdj-faq-q3">How big is the LED dance floor?</summary>
-        <p data-i18n="fxdj-faq-a3">The LED Infinity Floor is quoted according to your venue's exact measurements, transforming any space into a luxury nightclub-style dance floor. <a href="./rentals.html?open=fx">Configure your effects</a> · <a href="tel:+13056071780">(305) 607-1780</a></p>
+        <p data-i18n="fxdj-faq-a3">The LED Infinity Floor is quoted according to your venue's exact measurements, transforming any space into a luxury nightclub-style dance floor. <a href="./rentals.html?checkout=fromcart">Configure your effects</a> · <a href="tel:+13056071780">(305) 607-1780</a></p>
       </details>
     </section>
   </main>
@@ -537,6 +559,87 @@
         } else {
             kick();
         }
+    })();
+    </script>
+    <script>
+    (function () {
+        /* PO 2026-09-11 (APROBADO, mismo patron que pro-audio-dj.html): un
+           clic en el precio agrega ese paquete al carrito real, sin modal ni
+           stepper -- esta categoria se renta por paquete, no por cantidad
+           (Mobiliario y Decoracion es la unica excepcion, tiene su propia
+           calculadora). Escribe directo al localStorage que ya lee/escribe
+           todo el sistema (mismo formato que arma mdj-event-builder-adapter.js)
+           para no cargar el motor completo de ~150KB en esta pagina liviana. */
+        var DRAFT_KEY = 'mdj:event-builder:draft:v1:anon';
+
+        function uid() {
+            return (window.crypto && window.crypto.randomUUID)
+                ? window.crypto.randomUUID()
+                : 'line_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9);
+        }
+
+        function readDraft() {
+            try {
+                var raw = localStorage.getItem(DRAFT_KEY);
+                if (raw) {
+                    var parsed = JSON.parse(raw);
+                    if (parsed && Array.isArray(parsed.lines)) return parsed;
+                }
+            } catch (e) { /* noop */ }
+            return { schema_version: 1, draft_id: uid(), lines: [], assigned_lead_id: null };
+        }
+
+        function writeDraft(draft) {
+            draft.updated_at = new Date().toISOString();
+            try { localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); } catch (e) { /* noop */ }
+        }
+
+        function addPackageToCart(el) {
+            var sku = el.getAttribute('data-sku');
+            var price = parseFloat(el.getAttribute('data-price'));
+            if (!sku || isNaN(price)) return;
+            var nameEl = el.parentElement ? el.parentElement.querySelector('.fxdj-pkg-name') : null;
+            var name = nameEl ? nameEl.textContent.trim() : sku;
+
+            var draft = readDraft();
+            var existing = draft.lines.filter(function (l) { return l.catalog_sku === sku; })[0];
+            if (existing) {
+                existing.quantity += 1;
+                existing.line_total_usd = Math.round(existing.unit_price_usd * existing.quantity * 100) / 100;
+            } else {
+                draft.lines.push({
+                    line_id: uid(),
+                    catalog_sku: sku,
+                    category_key: 'fx',
+                    category_label: 'Special Effects',
+                    slot: 'gear_fx',
+                    name: name,
+                    image_url: null,
+                    unit_price_usd: price,
+                    quantity: 1,
+                    line_total_usd: price,
+                    replaceable: false,
+                    line_status: 'cotizado'
+                });
+            }
+            writeDraft(draft);
+
+            var original = el.textContent;
+            el.classList.add('fxdj-added-flash');
+            el.textContent = '\u2713 ' + (window.t ? window.t('fxdj-added-flash', 'Agregado') : 'Agregado');
+            setTimeout(function () {
+                el.textContent = original;
+                el.classList.remove('fxdj-added-flash');
+            }, 1400);
+        }
+
+        document.addEventListener('click', function (e) {
+            var el = e.target.closest ? e.target.closest('.fxdj-add-to-cart') : null;
+            if (!el) return;
+            e.preventDefault();
+            e.stopPropagation();
+            addPackageToCart(el);
+        });
     })();
     </script>
   <script src="./translations.js?v=20260903-perfil-label"></script>

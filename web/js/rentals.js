@@ -1192,9 +1192,9 @@ window.renderRentalCatalog = (categoryId) => {
         }
 
         const qtyHtml = isTalent ? '' : `
-                            <div class="qty" style="display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(212,175,37,0.3);">
-                                <button class="qty-btn-action" data-action="r-qty-down" data-id="${item.id}" style="background: none; border: none; color: var(--gold); font-size: 16px; cursor: pointer; padding: 0 4px;">−</button>
-                                <span id="qty-val-${item.id}" class="qty-val-display" style="color: white; font-family: Inter, sans-serif; font-size: 12px; min-width: 14px; text-align: center;">${qty}</span>
+                            <div class="qty" style="display: flex; align-items: center; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(212,175,37,0.3);">
+                                <button class="qty-btn-action" data-action="r-qty-down" data-id="${item.id}" style="background: none; border: none; color: var(--gold); font-size: 16px; cursor: pointer; padding: 0 4px; margin-right: 8px;">−</button>
+                                <span id="qty-val-${item.id}" class="qty-val-display" style="color: white; font-family: Inter, sans-serif; font-size: 12px; min-width: 14px; text-align: center; margin-right: 8px;">${qty}</span>
                                 <button class="qty-btn-action" data-action="r-qty-up" data-id="${item.id}" style="background: none; border: none; color: var(--gold); font-size: 16px; cursor: pointer; padding: 0 4px;">+</button>
                             </div>
         `;
@@ -1274,8 +1274,8 @@ window.renderRentalCatalog = (categoryId) => {
                     ${mediaHtml}
                 </div>
                 
-                <div class="product-overlay" style="position: relative; margin-top: auto; padding: 0; display: flex; flex-direction: column; gap: 10px; width: 100%; box-sizing: border-box; background: transparent; border: none; margin-bottom: 12px;">
-                    <div class="overlay-top" ${isTalent ? 'style="justify-content: center;"' : ''} style="margin-bottom: 0;">
+                <div class="product-overlay" style="position: relative; margin-top: auto; padding: 0; display: flex; flex-direction: column; width: 100%; box-sizing: border-box; background: transparent; border: none; margin-bottom: 12px;">
+                    <div class="overlay-top" ${isTalent ? 'style="justify-content: center;"' : ''} style="margin-bottom: 10px;">
                         <div class="price-wrap">
                             <span class="price" style="font-family: Inter, sans-serif; font-size: 16px; font-weight: 700; color: #d4af37;">$${item.price}</span>
                             <span class="unit" style="font-size: 12px; opacity: 0.7; color: #fff; margin-left: 2px; display: none;">${item.unit || '/u'}</span>
