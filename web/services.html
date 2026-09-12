@@ -204,7 +204,15 @@ Riesgo: romper carga del catálogo.
             box-sizing: border-box !important;
             padding: max(76px, calc(env(safe-area-inset-top) + 54px)) clamp(12px, 2.5vw, 28px) clamp(36px, 8vh, 88px) !important;
             margin: 0 auto 0 !important;
-            gap: clamp(16px, 2.8vh, 32px) !important;
+        }
+
+        /* AUDITORÍA FORENSE 2026-09-11: gap en flex-column (Safari <14.1) dejaba
+           el encabezado pegado directo al primer elemento (lista de tarjetas o
+           carrusel) sin aire -- margen real en el hijo, funciona en cualquier
+           navegador, sin importar cuántos hijos tenga cada modal. */
+        #talent-selector-modal.modal-visible .hero-shell-content > *:not(:last-child),
+        #rental-dynamic-modal.modal-visible .hero-shell-content > *:not(:last-child) {
+            margin-bottom: clamp(16px, 2.8vh, 32px) !important;
         }
 
         #talent-selector-modal.modal-visible .hero-shell-content > div:first-of-type {
@@ -235,7 +243,6 @@ Riesgo: romper carga del catálogo.
             width: 100% !important;
             max-width: 100% !important;
             margin: 0 auto !important;
-            gap: clamp(14px, 2vw, 22px) !important;
             padding: 14px clamp(18px, 3.5vw, 40px) 14px clamp(18px, 3.5vw, 40px) !important;
             padding-inline-end: clamp(44px, 9vw, 112px) !important;
             overflow-x: scroll !important;
@@ -247,6 +254,14 @@ Riesgo: romper carga del catálogo.
             grid-template-columns: unset !important;
             box-sizing: border-box !important;
             touch-action: pan-x;
+        }
+
+        /* AUDITORÍA FORENSE 2026-09-11: gap en flex (Safari <14.1). Esta regla
+           quedó huérfana/inerte -- la sustituye .talent-hub-vertical-list (más
+           específica) en el hub real de hoy -- pero se corrige igual para no
+           dejar el mismo bug listo para reaparecer si algo pierde esa clase. */
+        #talent-selector-modal.modal-visible .grid5.cinematic-hero-cards.talent-selector-carousel > * {
+            margin-right: clamp(14px, 2vw, 22px) !important;
         }
 
         #talent-selector-modal.modal-visible .talent-selector-carousel > .hero-glass-card,
@@ -352,7 +367,15 @@ Riesgo: romper carga del catálogo.
             position: static !important;
             flex-direction: row !important;
             align-items: center !important;
-            gap: 12px !important;
+        }
+
+        /* AUDITORÍA FORENSE 2026-09-11: gap en flex (aquí y en el style="" inline
+           de cada .modal-nav-left) no funciona en Safari <14.1 -- los botones
+           Back/Home quedaban pegados. Margen real en vez de gap, aplica a
+           cualquier .modal-nav-left del sitio (Regresar + Home siempre son
+           2 hijos). */
+        .modal-header-nav .modal-nav-left > *:not(:last-child) {
+            margin-right: 12px !important;
         }
 
         #talent-selector-modal.modal-visible .modal-header-nav .modal-close-btn {
@@ -545,7 +568,6 @@ Riesgo: romper carga del catálogo.
             flex-wrap: nowrap !important;
             align-items: center !important;
             justify-content: flex-start !important;
-            gap: clamp(14px, 2vw, 22px) !important;
             padding: 14px clamp(18px, 3.5vw, 40px) 24px !important;
             padding-inline-end: clamp(44px, 9vw, 112px) !important;
             overflow-x: auto !important;
@@ -556,6 +578,14 @@ Riesgo: romper carga del catálogo.
             scroll-padding-inline-end: clamp(44px, 9vw, 112px);
             box-sizing: border-box !important;
             touch-action: pan-x;
+        }
+
+        /* AUDITORÍA FORENSE 2026-09-11: gap en flex (Safari <14.1) -- margen real
+           en cada tarjeta hija en vez de gap, mismo patrón ya usado en
+           #roster-grid/#fx-roster-grid (styles.css). Margen sobrante tras la
+           última tarjeta es inofensivo (carrusel con scroll horizontal). */
+        #lighting-modal.modal-visible #lighting-roster-grid.mdj-lighting-carousel > * {
+            margin-right: clamp(14px, 2vw, 22px) !important;
         }
 
         #lighting-modal.modal-visible #lighting-roster-grid.mdj-lighting-carousel.mdj-lighting-carousel-infinite {
@@ -591,7 +621,6 @@ Riesgo: romper carga del catálogo.
             width: 100% !important;
             max-width: 100% !important;
             margin: 0 auto !important;
-            gap: clamp(14px, 2vw, 22px) !important;
             padding: 14px clamp(18px, 3.5vw, 40px) 24px !important;
             padding-inline-end: clamp(44px, 9vw, 112px) !important;
             overflow-x: auto !important;
@@ -602,6 +631,12 @@ Riesgo: romper carga del catálogo.
             scroll-padding-inline-end: clamp(44px, 9vw, 112px);
             box-sizing: border-box !important;
             touch-action: pan-x;
+        }
+
+        /* AUDITORÍA FORENSE 2026-09-11: gap en flex (Safari <14.1) -- margen real
+           en cada tarjeta hija en vez de gap. */
+        #fx-modal.modal-visible #fx-roster-grid.mdj-fx-catalog-carousel > * {
+            margin-right: clamp(14px, 2vw, 22px) !important;
         }
 
         #fx-modal.modal-visible #fx-roster-grid.mdj-fx-catalog-carousel.mdj-fx-carousel-infinite {
@@ -804,13 +839,15 @@ Riesgo: romper carga del catálogo.
             justify-content: flex-start !important;
             width: 100% !important;
             max-width: clamp(680px, 46vw, 880px) !important;
-            margin: 0 auto !important;
-            /* PO 2026-09-11 (segunda vuelta): "no hay respiración" -- la tarjeta
-               activa crece con transform (no mueve el layout), así que se comía
-               visualmente el gap de sus vecinas. Subido de 44px a 96px para que
-               quede aire real incluso cuando la tarjeta central está en su tamaño
-               más grande. */
-            gap: 96px !important;
+            /* PO 2026-09-11 (auditoría iMac vieja): "amontonadas, no tienen
+               espacio de respiración" -- gap en flex necesita Safari 14.1+ (el
+               mismo bug ya visto en el resto del sitio esta sesión), así que en
+               Safari viejo el 96px de gap simplemente no existía. Se reemplaza
+               por margen real en cada tarjeta (ver regla de .talent-cat-card
+               más abajo) -- funciona en cualquier navegador. El margen negativo
+               vertical aquí cancela el margen que la primera/última tarjeta
+               agregan de más en los bordes del contenedor. */
+            margin: -48px auto !important;
             padding: 4px clamp(16px, 4vw, 32px) 40px !important;
             height: auto !important;
             max-height: none !important;
@@ -842,7 +879,11 @@ Riesgo: romper carga del catálogo.
             flex-shrink: 0 !important;
             display: grid !important;
             grid-template-columns: 1fr 1fr !important;
-            grid-template-areas: "title desc" "title cta" !important;
+            /* PO 2026-09-11 (pendiente de aprobación): botón debajo del título
+               (columna izquierda) en vez de debajo de la descripción -- la
+               descripción ahora ocupa toda la columna derecha para "dar una
+               mejor explicación de qué se trata". */
+            grid-template-areas: "title desc" "cta desc" !important;
             column-gap: 26px !important;
             row-gap: 10px !important;
             width: 100% !important;
@@ -870,6 +911,16 @@ Riesgo: romper carga del catálogo.
             background: none !important;
             border-color: transparent !important;
             transform: none !important;
+        }
+
+        /* Fallback cross-browser del espacio entre filas (ver comentario en el
+           contenedor arriba): margen real en cada tarjeta en vez de gap en flex.
+           48px arriba y abajo de cada una = 96px visual entre dos consecutivas
+           (los márgenes de flex items no colapsan, a diferencia de bloque). */
+        #talent-selector-modal.modal-visible .talent-hub-vertical-list > .talent-cat-card.hero-glass-card,
+        #talent-selector-modal.modal-visible .talent-hub-vertical-list > a.talent-cat-card.hero-glass-card,
+        #talent-selector-modal.modal-visible .talent-hub-vertical-list > a.hero-glass-card {
+            margin: 48px 0 !important;
         }
 
         /* Rectángulo dorado de solo borde en las 12 filas -- como pseudo-elemento
@@ -970,13 +1021,15 @@ Riesgo: romper carga del catálogo.
             grid-area: title !important;
             align-self: start !important;
             margin: 0 !important;
-            /* PO 2026-09-11: título le quitaba protagonismo al hero de fondo -- reducido
-               de clamp(20px,2.2vw,28px), luego a clamp(15,1.6vw,21), y en una
-               tercera vuelta el mismo día ("siguen viéndose grande") a este
-               tamaño más chico. Fallback fijo antes: Safari <13.1 no soporta
-               clamp(). */
-            font-size: 13px !important;
-            font-size: clamp(12px, 0.85vw, 15px) !important;
+            /* PO 2026-09-11 (cuarta vuelta -- NO APROBADO, pendiente de revisión
+               visual): las tres reducciones anteriores llegaron a clamp(12,.85vw,15),
+               MÁS CHICO que la descripción de al lado (16px fijo) -- el título
+               terminó leyéndose como texto de cuerpo, no como título ("parece
+               contenido, no título"). Regla a partir de ahora: el título SIEMPRE
+               debe verse más grande que .hero-card-text (16px), nunca al revés.
+               Fallback fijo antes: Safari <13.1 no soporta clamp(). */
+            font-size: 20px !important;
+            font-size: clamp(19px, 1.3vw, 23px) !important;
             text-transform: uppercase !important;
             letter-spacing: 0.02em !important;
             line-height: 1.15 !important;
@@ -997,16 +1050,21 @@ Riesgo: romper carga del catálogo.
         /* Botón con más volumen -- más grande, más grueso, letras más grandes. */
         #talent-selector-modal.modal-visible .talent-hub-vertical-list .mdj-talent-card-enter {
             grid-area: cta !important;
-            justify-self: start !important;
+            /* PO 2026-09-11 (APROBADO): centrado al título (columna izquierda),
+               no a lo ancho de toda la tarjeta -- con un pequeño empujón extra
+               hacia la derecha. */
+            justify-self: center !important;
+            position: relative !important;
+            left: 10px !important;
             align-self: start !important;
             display: inline-block !important;
-            margin: 6px 0 0 0 !important;
-            padding: 15px 34px !important;
+            margin: 10px 0 0 0 !important;
+            padding: 11px 26px !important;
             background: rgba(212, 175, 55, 0.5) !important;
             border: 2px solid rgba(212, 175, 55, 0.75) !important;
             border-radius: 50px !important;
             text-decoration: none !important;
-            font-size: 14px !important;
+            font-size: 12px !important;
             font-weight: 800 !important;
             letter-spacing: 0.06em !important;
         }
@@ -1060,7 +1118,6 @@ Riesgo: romper carga del catálogo.
             width: 100% !important;
             max-width: 100% !important;
             margin: 0 auto !important;
-            gap: clamp(14px, 2vw, 22px) !important;
             padding: 14px clamp(18px, 3.5vw, 40px) 24px !important;
             padding-inline-end: clamp(44px, 9vw, 112px) !important;
             overflow-x: auto !important;
@@ -1071,6 +1128,12 @@ Riesgo: romper carga del catálogo.
             scroll-padding-inline-end: clamp(44px, 9vw, 112px);
             box-sizing: border-box !important;
             touch-action: pan-x;
+        }
+
+        /* AUDITORÍA FORENSE 2026-09-11: gap en flex (Safari <14.1) -- margen real
+           en cada tarjeta hija en vez de gap. */
+        #rental-dynamic-modal.modal-visible .mdj-rental-catalog-carousel > * {
+            margin-right: clamp(14px, 2vw, 22px) !important;
         }
 
         #rental-dynamic-modal.modal-visible .mdj-rental-catalog-carousel.mdj-rental-carousel-infinite {
@@ -1203,7 +1266,7 @@ Riesgo: romper carga del catálogo.
                 Exclusive Event Solutions & Gear</p>
         </div>
 
-        <div id="rentals-services-grid" class="grid3" style="gap: 30px;">
+        <div id="rentals-services-grid" class="grid3">
 
             <!-- Entretenimiento y Talento — entrada principal al hub de talento (modal) -->
             <div class="tile glass-card" id="talent-tile"
@@ -1627,7 +1690,7 @@ Riesgo: romper carga del catálogo.
         <div class="modal-content cinematic-hero-shell">
 
             <div class="modal-header-nav">
-                <div class="modal-nav-left" style="display: flex; align-items: center; gap: 10px;">
+                <div class="modal-nav-left" style="display: flex; align-items: center;">
                     <button type="button" class="modal-nav-btn cinematic-glass-btn mdj-modal-regresar" data-action="back-from-talent-selector"
                         data-i18n="btn-regresar">Regresar</button>
                     <button class="modal-nav-btn cinematic-glass-btn" data-action="go-home"
@@ -1839,56 +1902,70 @@ Riesgo: romper carga del catálogo.
             return Array.prototype.slice.call(list.querySelectorAll(':scope > .talent-cat-card'));
         }
 
-        /* Vídeo "serie" por categoría: cada fila trae su propio vídeo real en
-           data-talent-hero-src (mismo dato que ya usaba el preview por hover,
-           hoy congelado -- ver MDJ_RENTALS_TALENT_HUB_CONTRACT). Esto es un
-           disparador nuevo (scroll, no hover) sobre los mismos dos <video>
-           ambient/focus y las mismas clases de crossfade ya existentes; no
-           reactiva el hover congelado ni toca esa función. */
+        /* PO 2026-09-11 (auditoría iMac vieja): el disparador por SCROLL (aunque
+           tenía un debounce de 450ms) seguía siendo "se cambia de video al subir
+           las tarjetas" -- exactamente lo que el PO pidió evitar desde el inicio:
+           "que se disparen los videos como en una serie, uno por cada entrada...
+           no que se disparen con scroll". En hardware viejo, cada cambio de src
+           a mitad de un scroll largo sigue encadenando cargas y sobrecarga el
+           decodificador. Se reemplaza por el mismo patrón "serie" ya usado en
+           las 7 páginas SEO nuevas (pro-audio-dj.html, etc.): una lista fija de
+           videos que avanza SOLA con el evento `ended` de cada clip -- un video
+           a la vez, de principio a fin, sin depender de dónde esté el scroll. */
         var heroAmbient = document.getElementById('talent-shell-ambient');
         var heroFocus = document.getElementById('talent-shell-focus');
-        var lastHeroUrl = null;
-
-        /* Seguridad en Mac/iMac viejas de estudio: NO cargar un vídeo por cada
-           tarjeta que cruza el centro mientras se scrollea rápido -- eso es
-           exactamente el patrón que ya dio problemas antes (muchas cargas de
-           vídeo en cadena saturan el decodificador en hardware viejo). El
-           "disparador" real es por TURNO DE ENTRADA: se arma un temporizador
-           en cada tick de scroll y solo se ejecuta si el scroll se queda
-           quieto ese tiempo -- un scroll rápido de punta a punta reprograma
-           el mismo timer una y otra vez sin cargar nada hasta que el usuario
-           se detiene en una tarjeta. */
-        var HERO_SETTLE_MS = 450;
-        var pendingHeroTimer = null;
-        var pendingHeroUrl = null;
+        var heroChainStarted = false;
 
         function resolveVideoUrl(u) {
             return typeof window.resolveMdAssetVideoUrl === 'function' ? window.resolveMdAssetVideoUrl(u) : u;
         }
 
-        function queueCategoryVideo(url) {
-            if (!url || url === pendingHeroUrl) return;
-            pendingHeroUrl = url;
-            if (pendingHeroTimer) clearTimeout(pendingHeroTimer);
-            pendingHeroTimer = setTimeout(function () {
-                pendingHeroTimer = null;
-                showCategoryVideo(url);
-            }, HERO_SETTLE_MS);
-        }
+        function startHeroChain() {
+            if (heroChainStarted || !heroAmbient || !heroFocus) return;
+            var playlist = cards()
+                .map(function (c) { return c.getAttribute('data-talent-hero-src'); })
+                .filter(Boolean);
+            if (!playlist.length) return;
+            heroChainStarted = true;
+            var idx = 0;
 
-        function showCategoryVideo(url) {
-            if (!heroAmbient || !heroFocus || !url) return;
-            var rurl = resolveVideoUrl(url);
-            if (rurl === lastHeroUrl) return;
-            lastHeroUrl = rurl;
-            if (typeof window.mdjBindHeroVideoErrorFallback === 'function') window.mdjBindHeroVideoErrorFallback(heroFocus);
-            heroFocus.muted = true;
-            heroFocus.src = rurl;
-            if (typeof window.mdjHeroVideoPrime === 'function') window.mdjHeroVideoPrime(heroFocus);
-            heroFocus.classList.add('is-visible');
-            heroAmbient.classList.add('talent-shell-ambient-dim');
-            heroFocus.load();
-            if (typeof window.mdjActivateVideo === 'function') { window.mdjActivateVideo(heroFocus); } else { heroFocus.play().catch(function () {}); }
+            function playAt(i) {
+                var rurl = resolveVideoUrl(playlist[i]);
+                if (typeof window.mdjBindHeroVideoErrorFallback === 'function') window.mdjBindHeroVideoErrorFallback(heroFocus);
+                /* OJO: NO usar window.mdjHeroVideoPrime aquí -- fuerza loop=true
+                   incondicionalmente (correcto para un hero ambiental único,
+                   pero rompe la cadena: si vuelve a poner loop, 'ended' nunca
+                   dispara y el video queda pegado en el primero para siempre).
+                   Se replican a mano solo las propiedades seguras que sí
+                   necesitamos (mute/playsinline), sin loop. */
+                heroFocus.muted = true;
+                heroFocus.defaultMuted = true;
+                heroFocus.playsInline = true;
+                heroFocus.setAttribute('playsinline', '');
+                heroFocus.setAttribute('muted', '');
+                heroFocus.removeAttribute('loop');
+                heroFocus.src = rurl;
+                heroFocus.classList.add('is-visible');
+                heroAmbient.classList.add('talent-shell-ambient-dim');
+                if (typeof window.mdjEnsureVideoResolved === 'function') window.mdjEnsureVideoResolved(heroFocus);
+                heroFocus.load();
+                if (typeof window.mdjActivateVideo === 'function') { window.mdjActivateVideo(heroFocus); } else { heroFocus.play().catch(function () {}); }
+            }
+
+            heroFocus.removeAttribute('loop');
+            heroFocus.addEventListener('ended', function () {
+                idx = (idx + 1) % playlist.length;
+                playAt(idx);
+            });
+            /* Mismo guard que ya usa el patrón "serie" en las 7 páginas SEO
+               (pro-audio-dj.html, etc.): si algo externo pausa el video (un
+               reflow del modal, la pestaña perdiendo foco un instante), sin
+               esto se queda congelado en un frame para siempre -- "video
+               trabado" que reportó el PO viendo el hub en su pantalla real. */
+            heroFocus.addEventListener('pause', function () {
+                if (!document.hidden) heroFocus.play().catch(function () {});
+            });
+            playAt(idx);
         }
 
         function applyFocusZoom() {
@@ -1899,8 +1976,6 @@ Riesgo: romper carga del catálogo.
                hace que "gane" una tarjeta distinta cada vez, aunque el scroll no
                se mueva. offsetTop es puro layout: inmune a transform. */
             var centerY = scrollHost.scrollTop + scrollHost.clientHeight / 2;
-            var activeCard = null;
-            var bestDist = Infinity;
             cards().forEach(function (card) {
                 var cardCenterY = list.offsetTop + card.offsetTop + card.offsetHeight / 2;
                 var signedDist = cardCenterY - centerY;
@@ -1919,14 +1994,7 @@ Riesgo: romper carga del catálogo.
                     'important'
                 );
                 card.style.setProperty('--mdj-hub-fade', fade.toFixed(2));
-
-                var absRealDist = Math.abs(signedDist);
-                if (absRealDist < bestDist) { bestDist = absRealDist; activeCard = card; }
             });
-            if (activeCard) {
-                var heroSrc = activeCard.getAttribute('data-talent-hero-src');
-                if (heroSrc) queueCategoryVideo(heroSrc);
-            }
         }
 
         var raf = null;
@@ -1939,10 +2007,16 @@ Riesgo: romper carga del catálogo.
             });
         }
 
+        function onModalVisibilityChange() {
+            if (!modal.classList.contains('modal-visible')) return;
+            startHeroChain();
+            scheduleUpdate();
+        }
+
         scrollHost.addEventListener('scroll', scheduleUpdate, { passive: true });
         window.addEventListener('resize', scheduleUpdate, { passive: true });
-        new MutationObserver(scheduleUpdate).observe(modal, { attributes: true, attributeFilter: ['class'] });
-        scheduleUpdate();
+        new MutationObserver(onModalVisibilityChange).observe(modal, { attributes: true, attributeFilter: ['class'] });
+        onModalVisibilityChange();
     })();
     </script>
 
@@ -1952,7 +2026,7 @@ Riesgo: romper carga del catálogo.
         <div class="modal-content cinematic-hero-shell">
 
             <div class="modal-header-nav">
-                <div class="modal-nav-left" style="display: flex; align-items: center; gap: 10px;">
+                <div class="modal-nav-left" style="display: flex; align-items: center;">
                     <button type="button" class="modal-nav-btn cinematic-glass-btn mdj-modal-regresar" data-action="back-to-selector-fx"
                         data-i18n="btn-regresar">Regresar</button>
                     <button class="modal-nav-btn cinematic-glass-btn" data-action="go-home"
@@ -2005,7 +2079,7 @@ Riesgo: romper carga del catálogo.
         <div class="modal-content cinematic-hero-shell">
 
             <div class="modal-header-nav">
-                <div class="modal-nav-left" style="display: flex; align-items: center; gap: 10px;">
+                <div class="modal-nav-left" style="display: flex; align-items: center;">
                     <button type="button" class="modal-nav-btn cinematic-glass-btn mdj-modal-regresar" data-action="back-to-selector-lighting"
                         data-i18n="btn-regresar">Regresar</button>
                     <button class="modal-nav-btn cinematic-glass-btn" data-action="go-home"
@@ -2124,9 +2198,9 @@ Riesgo: romper carga del catálogo.
                     <div class="form-group" style="grid-column: span 2; margin-top: 15px;">
                         <button type="button" onclick="checkoutNextStep()" class="cinematic-play-btn"
                             style="width: 100%; border-radius: 8px; box-shadow: 0 0 20px rgba(255, 62, 236, 0.4);">
-                            <span style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                            <span style="display: flex; align-items: center; justify-content: center;">
                                 Generate Invoice Preview <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2">
+                                    stroke="currentColor" stroke-width="2" style="margin-left: 10px;">
                                     <path d="M5 12h14M12 5l7 7-7 7" />
                                 </svg>
                             </span>
@@ -2261,14 +2335,14 @@ Riesgo: romper carga del catálogo.
                 </div> <!-- END A4 PRINTABLE ZONE -->
 
 
-                <div style="display: flex; gap: 15px;">
+                <div style="display: flex;">
                     <button type="button" onclick="checkoutPrevStep()" class="cinematic-glass-btn"
-                        style="flex: 1; padding: 15px; border-radius: 8px;">Edit Details</button>
+                        style="flex: 1; padding: 15px; border-radius: 8px; margin-right: 15px;">Edit Details</button>
                     <button id="chk-reserve-btn" type="button" onclick="checkoutSubmit()" class="cinematic-play-btn"
                         style="flex: 2; border-radius: 8px; box-shadow: 0 0 20px rgba(255, 62, 236, 0.4);">
-                        <span style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        <span style="display: flex; align-items: center; justify-content: center;">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
+                                stroke-width="2" style="margin-right: 10px;">
                                 <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
                             </svg>
                             Reserve Your Date
@@ -2315,7 +2389,7 @@ Riesgo: romper carga del catálogo.
                 style="background: transparent; border: none; padding-top: 0; width: 100%; position: relative; z-index: 10;">
                 <div class="rentals-header-inner"
                     style="max-width: 1200px; margin: 0 auto 2vh auto; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between;">
-                    <div class="modal-nav-left" style="display: flex; align-items: center; gap: 10px;">
+                    <div class="modal-nav-left" style="display: flex; align-items: center;">
                         <button type="button" class="modal-nav-btn cinematic-glass-btn mdj-modal-regresar" data-action="back-from-rental-dynamic"
                             data-i18n="btn-regresar">Regresar</button>
                         <button class="modal-nav-btn cinematic-glass-btn" data-action="go-home"

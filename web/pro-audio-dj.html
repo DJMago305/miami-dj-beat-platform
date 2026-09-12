@@ -162,6 +162,28 @@
       white-space: nowrap;
     }
 
+    /* Precio clickeable = agregar al carrito (un paquete, sin cantidad).
+       Borde+fondo para que se note que es un botón, no solo texto. */
+    .paudio-pkg-price.paudio-add-to-cart {
+      cursor: pointer;
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid rgba(212, 175, 55, 0.5);
+      background: rgba(212, 175, 55, 0.08);
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+
+    .paudio-pkg-price.paudio-add-to-cart:hover {
+      background: rgba(212, 175, 55, 0.22);
+      border-color: var(--gold);
+    }
+
+    .paudio-pkg-price.paudio-add-to-cart.paudio-added-flash {
+      background: rgba(90, 200, 120, 0.25);
+      border-color: rgba(90, 200, 120, 0.8);
+      color: #eafff0;
+    }
+
     .paudio-package-item p {
       color: rgba(255, 255, 255, 0.75);
       line-height: 1.65;
@@ -350,7 +372,7 @@
       <details>
         <summary>
           <span class="paudio-pkg-name" data-i18n="paudio-pkg-small-name">Small PA System</span>
-          <span class="paudio-pkg-price" data-i18n="paudio-pkg-small-price">$150</span>
+          <span class="paudio-pkg-price paudio-add-to-cart" data-sku="pa_small" data-price="150" data-i18n="paudio-pkg-small-price">$150</span>
         </summary>
         <p data-i18n="paudio-pkg-small-desc">Compact sound system ideal for indoor spaces and audiences up to 50 people. Includes powered speakers and tripods.</p>
       </details>
@@ -360,7 +382,7 @@
       <details>
         <summary>
           <span class="paudio-pkg-name" data-i18n="paudio-pkg-medium-name">Medium PA System</span>
-          <span class="paudio-pkg-price" data-i18n="paudio-pkg-medium-price">$350</span>
+          <span class="paudio-pkg-price paudio-add-to-cart" data-sku="pa_medium" data-price="350" data-i18n="paudio-pkg-medium-price">$350</span>
         </summary>
         <p data-i18n="paudio-pkg-medium-desc">Versatile setup for medium-sized events. Powerful subwoofers and crystal-clear highs for up to 150 guests.</p>
       </details>
@@ -370,7 +392,7 @@
       <details>
         <summary>
           <span class="paudio-pkg-name" data-i18n="paudio-pkg-large-name">Large Event Sound System</span>
-          <span class="paudio-pkg-price" data-i18n="paudio-pkg-large-price">$750</span>
+          <span class="paudio-pkg-price paudio-add-to-cart" data-sku="pa_large" data-price="750" data-i18n="paudio-pkg-large-price">$750</span>
         </summary>
         <p data-i18n="paudio-pkg-large-desc">High-performance line array for concerts or large-format weddings. Flawless acoustic coverage.</p>
       </details>
@@ -380,7 +402,7 @@
       <details>
         <summary>
           <span class="paudio-pkg-name" data-i18n="paudio-pkg-mic-name">Wireless Microphone</span>
-          <span class="paudio-pkg-price" data-i18n="paudio-pkg-mic-price">$65</span>
+          <span class="paudio-pkg-price paudio-add-to-cart" data-sku="wireless_mic" data-price="65" data-i18n="paudio-pkg-mic-price">$65</span>
         </summary>
         <p data-i18n="paudio-pkg-mic-desc">Professional-grade UHF microphones (Shure/Sennheiser). Extended interference-free range for speeches and singers.</p>
       </details>
@@ -390,7 +412,7 @@
       <details>
         <summary>
           <span class="paudio-pkg-name" data-i18n="paudio-pkg-monitor-name">DJ Monitor Speaker</span>
-          <span class="paudio-pkg-price" data-i18n="paudio-pkg-monitor-price">$95</span>
+          <span class="paudio-pkg-price paudio-add-to-cart" data-sku="dj_monitor" data-price="95" data-i18n="paudio-pkg-monitor-price">$95</span>
         </summary>
         <p data-i18n="paudio-pkg-monitor-desc">Dedicated DJ booth monitors. Flat response and adequate sound pressure for precise mixing.</p>
       </details>
@@ -400,14 +422,14 @@
       <details>
         <summary>
           <span class="paudio-pkg-name" data-i18n="paudio-pkg-mixer-name">Audio Mixer</span>
-          <span class="paudio-pkg-price" data-i18n="paudio-pkg-mixer-price">$120</span>
+          <span class="paudio-pkg-price paudio-add-to-cart" data-sku="audio_mixer" data-price="120" data-i18n="paudio-pkg-mixer-price">$120</span>
         </summary>
         <p data-i18n="paudio-pkg-mixer-desc">Analog/digital mixing console to connect multiple audio sources. Built-in EQ and effects.</p>
       </details>
     </div>
 
     <div class="paudio-cta-wrap">
-      <a href="./rentals.html?open=audio" class="btn primary" data-i18n="paudio-cta-configure">Configure Your Equipment &amp; Add to Cart →</a>
+      <a href="./rentals.html?checkout=fromcart" class="btn primary" data-i18n="paudio-cta-configure">Go to Cart &amp; Reserve →</a>
       <a href="tel:+13056071780" class="btn outline" data-i18n="paudio-cta-call">Call (305) 607-1780</a>
       <a href="mailto:miamidjbeat@gmail.com" class="btn outline" data-i18n="paudio-cta-email">Email for a Quote</a>
     </div>
@@ -428,7 +450,7 @@
 
       <details class="paudio-faq-item">
         <summary data-i18n="paudio-faq-q3">Can I rent an audio mixer separately from a PA system?</summary>
-        <p data-i18n="paudio-faq-a3">Yes — the mixing console can be rented on its own or combined with any PA package. <a href="./rentals.html?open=audio">Configure your equipment</a> · <a href="tel:+13056071780">(305) 607-1780</a></p>
+        <p data-i18n="paudio-faq-a3">Yes — the mixing console can be rented on its own or combined with any PA package. <a href="./rentals.html?checkout=fromcart">Configure your equipment</a> · <a href="tel:+13056071780">(305) 607-1780</a></p>
       </details>
     </section>
   </main>
@@ -517,6 +539,97 @@
         } else {
             kick();
         }
+    })();
+    </script>
+    <script>
+    (function () {
+        /* PO 2026-09-11 (APROBADO): "cuando cliquea el precio se agrega al
+           carrito, ese es el procedimiento" -- un paquete es Pequeño/Mediano/
+           Grande, no una cantidad que se ajusta, así que un clic en el precio
+           = un paquete agregado, sin modal ni stepper.
+
+           OJO -- auditoría 2026-09-11: esta página (como todas las páginas
+           SEO nuevas) carga mdj-cart-pill.js a propósito EN VEZ DEL motor
+           completo MDJEventBuilder (~150KB) -- ver comentario en la cabecera
+           de ese archivo: "Creates a minimal #mdj-event-builder-root stub so
+           mdjb-shared-header.js skips loading the full event-builder scripts
+           on this page". Es decir: MDJEventBuilder NUNCA existe aquí por
+           diseño, no es un bug. Para agregar un item sin cargar el motor
+           completo, se escribe directo al mismo localStorage que YA lee/
+           escribe todo el sistema (mdj:event-builder:draft:v1:<uid>) con el
+           mismo formato exacto que arma mdj-event-builder-adapter.js -- así
+           el pill del header lo cuenta al instante, y si luego se abre el
+           carrito completo en rentals.html, el item ya está ahí. */
+        var DRAFT_KEY = 'mdj:event-builder:draft:v1:anon';
+
+        function uid() {
+            return (window.crypto && window.crypto.randomUUID)
+                ? window.crypto.randomUUID()
+                : 'line_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9);
+        }
+
+        function readDraft() {
+            try {
+                var raw = localStorage.getItem(DRAFT_KEY);
+                if (raw) {
+                    var parsed = JSON.parse(raw);
+                    if (parsed && Array.isArray(parsed.lines)) return parsed;
+                }
+            } catch (e) { /* noop */ }
+            return { schema_version: 1, draft_id: uid(), lines: [], assigned_lead_id: null };
+        }
+
+        function writeDraft(draft) {
+            draft.updated_at = new Date().toISOString();
+            try { localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); } catch (e) { /* noop */ }
+        }
+
+        function addPackageToCart(el) {
+            var sku = el.getAttribute('data-sku');
+            var price = parseFloat(el.getAttribute('data-price'));
+            if (!sku || isNaN(price)) return;
+            var nameEl = el.parentElement ? el.parentElement.querySelector('.paudio-pkg-name') : null;
+            var name = nameEl ? nameEl.textContent.trim() : sku;
+
+            var draft = readDraft();
+            var existing = draft.lines.filter(function (l) { return l.catalog_sku === sku; })[0];
+            if (existing) {
+                existing.quantity += 1;
+                existing.line_total_usd = Math.round(existing.unit_price_usd * existing.quantity * 100) / 100;
+            } else {
+                draft.lines.push({
+                    line_id: uid(),
+                    catalog_sku: sku,
+                    category_key: 'audio',
+                    category_label: 'Audio y Sonido Profesional',
+                    slot: 'gear_audio',
+                    name: name,
+                    image_url: null,
+                    unit_price_usd: price,
+                    quantity: 1,
+                    line_total_usd: price,
+                    replaceable: false,
+                    line_status: 'cotizado'
+                });
+            }
+            writeDraft(draft);
+
+            var original = el.textContent;
+            el.classList.add('paudio-added-flash');
+            el.textContent = '✓ ' + (window.t ? window.t('paudio-added-flash', 'Agregado') : 'Agregado');
+            setTimeout(function () {
+                el.textContent = original;
+                el.classList.remove('paudio-added-flash');
+            }, 1400);
+        }
+
+        document.addEventListener('click', function (e) {
+            var el = e.target.closest ? e.target.closest('.paudio-add-to-cart') : null;
+            if (!el) return;
+            e.preventDefault();
+            e.stopPropagation();
+            addPackageToCart(el);
+        });
     })();
     </script>
   <script src="./translations.js?v=20260903-perfil-label"></script>

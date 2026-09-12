@@ -66,8 +66,12 @@
                 if (!raw) { continue; }
                 var draft = JSON.parse(raw);
                 var lines = Array.isArray(draft && draft.lines) ? draft.lines : [];
+                /* AUDITORÍA 2026-09-11: leía l.qty, pero el esquema real que
+                   escribe el adapter (y todo el resto del sistema) usa
+                   l.quantity -- el badge nunca contaba nada real, siempre
+                   caía a 0/oculto sin importar lo que hubiera en el carrito. */
                 var qty = lines.reduce(function (sum, l) {
-                    var n = parseInt(l.qty, 10);
+                    var n = parseInt(l.quantity, 10);
                     return sum + (n > 0 ? n : 0);
                 }, 0);
                 if (qty > bestCount) { bestCount = qty; }

@@ -78,49 +78,49 @@
       specialty: 'audio sonido',
       findLabel: 'Ver talento de audio disponible',
       rentLabel: 'Audio y Sonido Profesional — Rentar',
-      rentHref:  './rentals.html?open=audio'
+      rentHref:  './pro-audio-dj.html'
     },
     {
       re: /^(iluminaci[a-z]*|lighting[a-z]*|lights?|laser[a-z]*|uplighting[a-z]*|pantalla[a-z]*|screen[a-z]*|led(\s*screen[a-z]*|\s*wall[a-z]*|\s*panel[a-z]*)?)$/i,
       specialty: 'iluminacion',
       findLabel: 'Ver talento con iluminación',
       rentLabel: 'Iluminación y Pantallas LED — Rentar',
-      rentHref:  './rentals.html?open=lighting-gear'
+      rentHref:  './lighting-dj.html'
     },
     {
       re: /^(fx[a-z]*|effect[a-z]*|efecto[a-z]*|confetti[a-z]*|confeti[a-z]*|cold\s*spark[a-z]*|chispa[a-z]*|spark[a-z]*|smoke[a-z]*|niebla[a-z]*|fog[a-z]*|snow[a-z]*|nieve[a-z]*|bubble[a-z]*|burbuja[a-z]*|dancefloor[a-z]*|pista(\s*led[a-z]*)?)$/i,
       specialty: 'fx efectos',
       findLabel: 'Ver artistas con efectos visuales',
       rentLabel: 'Efectos Visuales FX — Rentar',
-      rentHref:  './rentals.html?open=fx'
+      rentHref:  './special-effects-dj.html'
     },
     {
       re: /^(furniture[a-z]*|decor[a-z]*|mueble[a-z]*|chair[a-z]*|silla[a-z]*|table[a-z]*|mesa[a-z]*|decoraci[a-z]*|floral[a-z]*|linen[a-z]*|mantel[a-z]*|lounge[a-z]*|backdrop[a-z]*)$/i,
       specialty: 'decoracion',
       findLabel: 'Ver artistas de decoración',
       rentLabel: 'Furniture & Decor — Rentar',
-      rentHref:  './rentals.html?open=furniture'
+      rentHref:  './furniture-dj.html'
     },
     {
       re: /^(tent[a-z]*|canopy[a-z]*|carpa[a-z]*|toldo[a-z]*|air\s*conditioning[a-z]*|aire(\s*acondicionado[a-z]*)?|ac\b)$/i,
       specialty: 'carpa',
       findLabel: 'Ver opciones de carpas / estructuras',
       rentLabel: 'Carpas & Estructuras — Rentar',
-      rentHref:  './rentals.html?open=tents'
+      rentHref:  './tents-dj.html'
     },
     {
       re: /^(inflatable[a-z]*|bounce[a-z]*|inflable[a-z]*|castillo[a-z]*|castle[a-z]*|kids?|children[a-z]*|ni[ñn]o[a-z]*|brinca[a-z]*)$/i,
       specialty: 'inflable kids',
       findLabel: 'Ver entretenimiento para niños',
       rentLabel: 'Kids & Inflatables — Rentar',
-      rentHref:  './rentals.html?open=inflatables'
+      rentHref:  './inflatables-dj.html'
     },
     {
       re: /^(stage[a-z]*|escenario[a-z]*|tarima[a-z]*|truss[a-z]*|structure[a-z]*|estructura[a-z]*|concert[a-z]*|concierto[a-z]*|staging[a-z]*)$/i,
       specialty: 'escenario',
       findLabel: 'Ver artistas de escenario',
       rentLabel: 'Escenario & Estructuras — Rentar',
-      rentHref:  './rentals.html?open=stages'
+      rentHref:  './stages-dj.html'
     }
   ];
 

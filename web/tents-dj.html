@@ -157,6 +157,28 @@
       white-space: nowrap;
     }
 
+    /* Precio clickeable = agregar al carrito (un paquete, sin cantidad).
+       Borde+fondo para que se note que es un botón, no solo texto. */
+    .tents-pkg-price.tents-add-to-cart {
+      cursor: pointer;
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid rgba(212, 175, 55, 0.5);
+      background: rgba(212, 175, 55, 0.08);
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+
+    .tents-pkg-price.tents-add-to-cart:hover {
+      background: rgba(212, 175, 55, 0.22);
+      border-color: var(--gold);
+    }
+
+    .tents-pkg-price.tents-add-to-cart.tents-added-flash {
+      background: rgba(90, 200, 120, 0.25);
+      border-color: rgba(90, 200, 120, 0.8);
+      color: #eafff0;
+    }
+
     .tents-package-item p {
       color: rgba(255, 255, 255, 0.75);
       line-height: 1.65;
@@ -345,7 +367,7 @@
       <details>
         <summary>
           <span class="tents-pkg-name" data-i18n="tents-pkg-clear-name">Premium Clear Tent</span>
-          <span class="tents-pkg-price" data-i18n="tents-pkg-clear-price">$800</span>
+          <span class="tents-pkg-price tents-add-to-cart" data-sku="tent_clear" data-price="800" data-i18n="tents-pkg-clear-price">$800</span>
         </summary>
         <p data-i18n="tents-pkg-clear-desc">Transparent-wall tent structure that keeps your event covered while preserving an open-air view — ideal for weddings and upscale outdoor celebrations.</p>
       </details>
@@ -355,7 +377,7 @@
       <details>
         <summary>
           <span class="tents-pkg-name" data-i18n="tents-pkg-white-name">Classic White Tent</span>
-          <span class="tents-pkg-price" data-i18n="tents-pkg-white-price">$600</span>
+          <span class="tents-pkg-price tents-add-to-cart" data-sku="tent_white" data-price="600" data-i18n="tents-pkg-white-price">$600</span>
         </summary>
         <p data-i18n="tents-pkg-white-desc">Traditional frame tent in classic white — a versatile all-weather structure for backyard parties, corporate events, and celebrations of any size.</p>
       </details>
@@ -365,14 +387,14 @@
       <details>
         <summary>
           <span class="tents-pkg-name" data-i18n="tents-pkg-ac-name">Portable A/C Unit</span>
-          <span class="tents-pkg-price" data-i18n="tents-pkg-ac-price">$250</span>
+          <span class="tents-pkg-price tents-add-to-cart" data-sku="ac_unit" data-price="250" data-i18n="tents-pkg-ac-price">$250</span>
         </summary>
         <p data-i18n="tents-pkg-ac-desc">Portable air conditioning unit to keep any tent or outdoor structure comfortably cool during Miami's heat.</p>
       </details>
     </div>
 
     <div class="tents-cta-wrap">
-      <a href="./rentals.html?open=tents" class="btn primary" data-i18n="tents-cta-configure">Configure Your Tent &amp; Add to Cart →</a>
+      <a href="./rentals.html?checkout=fromcart" class="btn primary" data-i18n="tents-cta-configure">Go to Cart &amp; Reserve →</a>
       <a href="tel:+13056071780" class="btn outline" data-i18n="tents-cta-call">Call (305) 607-1780</a>
       <a href="mailto:miamidjbeat@gmail.com" class="btn outline" data-i18n="tents-cta-email">Email for a Quote</a>
     </div>
@@ -388,7 +410,7 @@
 
       <details class="tents-faq-item">
         <summary data-i18n="tents-faq-q2">Can I add air conditioning to my tent?</summary>
-        <p data-i18n="tents-faq-a2">Yes — a portable A/C unit can be added to any tent package to keep guests comfortably cool during Miami's heat. <a href="./rentals.html?open=tents">Configure your tent</a> · <a href="tel:+13056071780">(305) 607-1780</a></p>
+        <p data-i18n="tents-faq-a2">Yes — a portable A/C unit can be added to any tent package to keep guests comfortably cool during Miami's heat. <a href="./rentals.html?checkout=fromcart">Configure your tent</a> · <a href="tel:+13056071780">(305) 607-1780</a></p>
       </details>
     </section>
   </main>
@@ -477,6 +499,87 @@
         } else {
             kick();
         }
+    })();
+    </script>
+    <script>
+    (function () {
+        /* PO 2026-09-11 (APROBADO, mismo patron que pro-audio-dj.html): un
+           clic en el precio agrega ese paquete al carrito real, sin modal ni
+           stepper -- esta categoria se renta por paquete, no por cantidad
+           (Mobiliario y Decoracion es la unica excepcion, tiene su propia
+           calculadora). Escribe directo al localStorage que ya lee/escribe
+           todo el sistema (mismo formato que arma mdj-event-builder-adapter.js)
+           para no cargar el motor completo de ~150KB en esta pagina liviana. */
+        var DRAFT_KEY = 'mdj:event-builder:draft:v1:anon';
+
+        function uid() {
+            return (window.crypto && window.crypto.randomUUID)
+                ? window.crypto.randomUUID()
+                : 'line_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9);
+        }
+
+        function readDraft() {
+            try {
+                var raw = localStorage.getItem(DRAFT_KEY);
+                if (raw) {
+                    var parsed = JSON.parse(raw);
+                    if (parsed && Array.isArray(parsed.lines)) return parsed;
+                }
+            } catch (e) { /* noop */ }
+            return { schema_version: 1, draft_id: uid(), lines: [], assigned_lead_id: null };
+        }
+
+        function writeDraft(draft) {
+            draft.updated_at = new Date().toISOString();
+            try { localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); } catch (e) { /* noop */ }
+        }
+
+        function addPackageToCart(el) {
+            var sku = el.getAttribute('data-sku');
+            var price = parseFloat(el.getAttribute('data-price'));
+            if (!sku || isNaN(price)) return;
+            var nameEl = el.parentElement ? el.parentElement.querySelector('.tents-pkg-name') : null;
+            var name = nameEl ? nameEl.textContent.trim() : sku;
+
+            var draft = readDraft();
+            var existing = draft.lines.filter(function (l) { return l.catalog_sku === sku; })[0];
+            if (existing) {
+                existing.quantity += 1;
+                existing.line_total_usd = Math.round(existing.unit_price_usd * existing.quantity * 100) / 100;
+            } else {
+                draft.lines.push({
+                    line_id: uid(),
+                    catalog_sku: sku,
+                    category_key: 'tents',
+                    category_label: 'Tent & Event Structures',
+                    slot: 'gear_tents',
+                    name: name,
+                    image_url: null,
+                    unit_price_usd: price,
+                    quantity: 1,
+                    line_total_usd: price,
+                    replaceable: false,
+                    line_status: 'cotizado'
+                });
+            }
+            writeDraft(draft);
+
+            var original = el.textContent;
+            el.classList.add('tents-added-flash');
+            el.textContent = '\u2713 ' + (window.t ? window.t('tents-added-flash', 'Agregado') : 'Agregado');
+            setTimeout(function () {
+                el.textContent = original;
+                el.classList.remove('tents-added-flash');
+            }, 1400);
+        }
+
+        document.addEventListener('click', function (e) {
+            var el = e.target.closest ? e.target.closest('.tents-add-to-cart') : null;
+            if (!el) return;
+            e.preventDefault();
+            e.stopPropagation();
+            addPackageToCart(el);
+        });
     })();
     </script>
   <script src="./translations.js?v=20260903-perfil-label"></script>

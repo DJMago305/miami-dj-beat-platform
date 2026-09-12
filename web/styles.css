@@ -7766,13 +7766,21 @@ body.page-home #home-hero .hero-grid {
 }
 
 /* Aislando el diseño cinemático a la sección Services, tal como ordenó el usuario */
+/* AUDITORÍA FORENSE 2026-09-11: el fix anterior de "iMac 8px -> 24px" subió el
+   VALOR de gap pero dejó la propiedad `gap` en flexbox intacta -- Safari no
+   soporta gap en flex hasta 14.1, así que en Safari viejo esto seguía
+   valiendo 0 y las tarjetas seguían "unidas" (el mismo bug reportado, nunca
+   verificado en Safari real -- ver feedback_chromium_tool_cannot_verify_safari13).
+   Reemplazado por margen real: funciona igual en cualquier motor. */
 #rentals-services-grid > .tile.glass-card,
 #rentals-services-grid > .equipment-card,
 #equipment-grid > .tile.glass-card,
 #equipment-grid > .equipment-card {
-  /* COMPACTACIÓN: Eliminar márgenes laterales excesivos */
+  /* COMPACTACIÓN: sin margen a la izquierda (primera columna pegada al
+     borde, como antes); 24px a la derecha y abajo hacen de gap real. */
   margin-left: 0 !important;
-  margin-right: 0 !important;
+  margin-right: 24px !important;
+  margin-bottom: 24px !important;
   /* MASA: flex-basis mayor para verse más robustas (aprox 4 por fila) */
   flex: 0 0 calc(25% - 12px) !important;
   /* Garantizar anchos para dar presencia física */
@@ -7787,8 +7795,10 @@ body.page-home #home-hero .hero-grid {
   justify-content: flex-start !important;
   display: flex !important;
   flex-wrap: wrap !important;
-  /* PO 2026-09-11 (iMac): 8px dejaba las tarjetas "unidas", pidió aire visible entre ellas */
-  gap: 24px !important;
+  /* Neutraliza el gap:14px heredado de .grid3 -- el espacio real ahora es
+     100% margen (ver regla de arriba), gap:0 es inofensivo en cualquier
+     navegador tenga o no soporte de gap en flex. */
+  gap: 0 !important;
 }
 
 /* Opcional: Aseguramos que la base del modal de DJ tampoco lo encajone */

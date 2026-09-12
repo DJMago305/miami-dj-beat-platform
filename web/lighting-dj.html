@@ -162,6 +162,28 @@
       white-space: nowrap;
     }
 
+    /* Precio clickeable = agregar al carrito (un paquete, sin cantidad).
+       Borde+fondo para que se note que es un botón, no solo texto. */
+    .lighting-pkg-price.lighting-add-to-cart {
+      cursor: pointer;
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid rgba(212, 175, 55, 0.5);
+      background: rgba(212, 175, 55, 0.08);
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+
+    .lighting-pkg-price.lighting-add-to-cart:hover {
+      background: rgba(212, 175, 55, 0.22);
+      border-color: var(--gold);
+    }
+
+    .lighting-pkg-price.lighting-add-to-cart.lighting-added-flash {
+      background: rgba(90, 200, 120, 0.25);
+      border-color: rgba(90, 200, 120, 0.8);
+      color: #eafff0;
+    }
+
     .lighting-package-item p {
       color: rgba(255, 255, 255, 0.75);
       line-height: 1.65;
@@ -350,7 +372,7 @@
       <details>
         <summary>
           <span class="lighting-pkg-name" data-i18n="lighting-pkg-moving-name">Party &amp; Club Lighting</span>
-          <span class="lighting-pkg-price" data-i18n="lighting-pkg-moving-price">$350</span>
+          <span class="lighting-pkg-price lighting-add-to-cart" data-sku="light_moving_heads" data-price="350" data-i18n="lighting-pkg-moving-price">$350</span>
         </summary>
         <p data-i18n="lighting-pkg-moving-desc">Intelligent moving heads and laser arrays to transform any venue into a high-energy nightlife experience.</p>
       </details>
@@ -370,14 +392,14 @@
       <details>
         <summary>
           <span class="lighting-pkg-name" data-i18n="lighting-pkg-up-name">Architectural Uplighting</span>
-          <span class="lighting-pkg-price" data-i18n="lighting-pkg-up-price">$350</span>
+          <span class="lighting-pkg-price lighting-add-to-cart" data-sku="light_uplighting" data-price="350" data-i18n="lighting-pkg-up-price">$350</span>
         </summary>
         <p data-i18n="lighting-pkg-up-desc">Elegant, wireless perimeter lighting designed to bathe your walls in the precise color palette of your event.</p>
       </details>
     </div>
 
     <div class="lighting-cta-wrap">
-      <a href="./rentals.html?open=lighting-gear" class="btn primary" data-i18n="lighting-cta-configure">Configure Your Lighting &amp; Add to Pack →</a>
+      <a href="./rentals.html?checkout=fromcart" class="btn primary" data-i18n="lighting-cta-configure">Go to Cart &amp; Reserve →</a>
       <a href="tel:+13056071780" class="btn outline" data-i18n="lighting-cta-call">Call (305) 607-1780</a>
       <a href="mailto:miamidjbeat@gmail.com" class="btn outline" data-i18n="lighting-cta-email">Email for a Quote</a>
     </div>
@@ -398,7 +420,7 @@
 
       <details class="lighting-faq-item">
         <summary data-i18n="lighting-faq-q3">What is architectural uplighting?</summary>
-        <p data-i18n="lighting-faq-a3">Elegant, wireless perimeter lighting designed to bathe your venue's walls in the precise color palette of your event. <a href="./rentals.html?open=lighting-gear">Configure your lighting</a> · <a href="tel:+13056071780">(305) 607-1780</a></p>
+        <p data-i18n="lighting-faq-a3">Elegant, wireless perimeter lighting designed to bathe your venue's walls in the precise color palette of your event. <a href="./rentals.html?checkout=fromcart">Configure your lighting</a> · <a href="tel:+13056071780">(305) 607-1780</a></p>
       </details>
     </section>
   </main>
@@ -487,6 +509,87 @@
         } else {
             kick();
         }
+    })();
+    </script>
+    <script>
+    (function () {
+        /* PO 2026-09-11 (APROBADO, mismo patron que pro-audio-dj.html): un
+           clic en el precio agrega ese paquete al carrito real, sin modal ni
+           stepper -- esta categoria se renta por paquete, no por cantidad
+           (Mobiliario y Decoracion es la unica excepcion, tiene su propia
+           calculadora). Escribe directo al localStorage que ya lee/escribe
+           todo el sistema (mismo formato que arma mdj-event-builder-adapter.js)
+           para no cargar el motor completo de ~150KB en esta pagina liviana. */
+        var DRAFT_KEY = 'mdj:event-builder:draft:v1:anon';
+
+        function uid() {
+            return (window.crypto && window.crypto.randomUUID)
+                ? window.crypto.randomUUID()
+                : 'line_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9);
+        }
+
+        function readDraft() {
+            try {
+                var raw = localStorage.getItem(DRAFT_KEY);
+                if (raw) {
+                    var parsed = JSON.parse(raw);
+                    if (parsed && Array.isArray(parsed.lines)) return parsed;
+                }
+            } catch (e) { /* noop */ }
+            return { schema_version: 1, draft_id: uid(), lines: [], assigned_lead_id: null };
+        }
+
+        function writeDraft(draft) {
+            draft.updated_at = new Date().toISOString();
+            try { localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); } catch (e) { /* noop */ }
+        }
+
+        function addPackageToCart(el) {
+            var sku = el.getAttribute('data-sku');
+            var price = parseFloat(el.getAttribute('data-price'));
+            if (!sku || isNaN(price)) return;
+            var nameEl = el.parentElement ? el.parentElement.querySelector('.lighting-pkg-name') : null;
+            var name = nameEl ? nameEl.textContent.trim() : sku;
+
+            var draft = readDraft();
+            var existing = draft.lines.filter(function (l) { return l.catalog_sku === sku; })[0];
+            if (existing) {
+                existing.quantity += 1;
+                existing.line_total_usd = Math.round(existing.unit_price_usd * existing.quantity * 100) / 100;
+            } else {
+                draft.lines.push({
+                    line_id: uid(),
+                    catalog_sku: sku,
+                    category_key: 'lighting',
+                    category_label: 'Iluminación & LED',
+                    slot: 'gear_lighting',
+                    name: name,
+                    image_url: null,
+                    unit_price_usd: price,
+                    quantity: 1,
+                    line_total_usd: price,
+                    replaceable: false,
+                    line_status: 'cotizado'
+                });
+            }
+            writeDraft(draft);
+
+            var original = el.textContent;
+            el.classList.add('lighting-added-flash');
+            el.textContent = '\u2713 ' + (window.t ? window.t('lighting-added-flash', 'Agregado') : 'Agregado');
+            setTimeout(function () {
+                el.textContent = original;
+                el.classList.remove('lighting-added-flash');
+            }, 1400);
+        }
+
+        document.addEventListener('click', function (e) {
+            var el = e.target.closest ? e.target.closest('.lighting-add-to-cart') : null;
+            if (!el) return;
+            e.preventDefault();
+            e.stopPropagation();
+            addPackageToCart(el);
+        });
     })();
     </script>
   <script src="./translations.js?v=20260903-perfil-label"></script>

@@ -105,8 +105,9 @@
     }
 
     /* Cada producto: nombre+precio/u a la izquierda, stepper +/- y subtotal a la
-       derecha -- el mismo patrón de cantidad que ya existe en el carrito real
-       (rentals.html?open=furniture), reconstruido aquí como calculadora en vivo. */
+       derecha. La cantidad elegida aquí se agrega directo al carrito real al
+       hacer clic en "Add Your Selection to the Cart" -- ver script al final
+       del archivo (addSelectionToCart). */
     .furndj-item {
       display: grid;
       grid-template-columns: 1fr auto;
@@ -258,6 +259,16 @@
 
     .furndj-cta-wrap > * {
       margin: 6px;
+    }
+
+    /* El CTA principal pasó de <a> a <button> (ya no navega directo, primero
+       agrega la selección real al carrito) -- restaura lo que .btn no cubre
+       por venir de un <a> originalmente. */
+    #furndj-add-to-cart-btn {
+      cursor: pointer;
+      font-family: inherit;
+      font-size: inherit;
+      text-decoration: none;
     }
 
     body.page-furniture-dj .footer {
@@ -640,7 +651,7 @@
       <p class="furndj-note" data-i18n="furndj-calc-note">This is a live estimate. Final availability and delivery fees are confirmed when you add your selection to the real cart or speak with our team.</p>
 
       <div class="furndj-cta-wrap">
-        <a href="./rentals.html?open=furniture" class="btn primary" data-i18n="furndj-cta-configure">Add Your Selection to the Cart →</a>
+        <button type="button" id="furndj-add-to-cart-btn" class="btn primary" data-i18n="furndj-cta-configure">Add Your Selection to the Cart →</button>
         <a href="tel:+13056071780" class="btn outline" data-i18n="furndj-cta-call">Call (305) 607-1780</a>
         <a href="mailto:miamidjbeat@gmail.com" class="btn outline" data-i18n="furndj-cta-email">Email for a Quote</a>
       </div>
@@ -740,8 +751,12 @@
     </script>
     <script>
     /* Calculadora en vivo: cantidad por producto x precio/u = subtotal, más el
-       total general -- solo estimado local (no toca window.selectedPackage real,
-       eso pasa al hacer clic en "Add Your Selection to the Cart" -> ?open=furniture). */
+       total general. PO 2026-09-11 (APROBADO): "se agregan 4 sillas, se hace
+       la suma automáticamente y al comprar se agrega al carrito el total de
+       las 4 sillas" -- el botón ya no manda al modal viejo (?open=furniture);
+       toma cada fila con cantidad > 0 y la agrega al mismo carrito compartido
+       (localStorage) que usan las otras 5 páginas, con la CANTIDAD real (no
+       siempre 1 como en esas), y sigue al mismo checkout real. */
     (function () {
         function fmt(n) { return '$' + n.toLocaleString('en-US'); }
 
@@ -768,6 +783,71 @@
             if (bar) bar.hidden = !anyQty;
         }
 
+        var DRAFT_KEY = 'mdj:event-builder:draft:v1:anon';
+
+        function uid() {
+            return (window.crypto && window.crypto.randomUUID)
+                ? window.crypto.randomUUID()
+                : 'line_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9);
+        }
+
+        function readDraft() {
+            try {
+                var raw = localStorage.getItem(DRAFT_KEY);
+                if (raw) {
+                    var parsed = JSON.parse(raw);
+                    if (parsed && Array.isArray(parsed.lines)) return parsed;
+                }
+            } catch (e) { /* noop */ }
+            return { schema_version: 1, draft_id: uid(), lines: [], assigned_lead_id: null };
+        }
+
+        function writeDraft(draft) {
+            draft.updated_at = new Date().toISOString();
+            try { localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); } catch (e) { /* noop */ }
+        }
+
+        function addSelectionToCart() {
+            var rows = document.querySelectorAll('.furndj-item');
+            var draft = readDraft();
+            var addedAny = false;
+            rows.forEach(function (row) {
+                var qty = parseInt(row.querySelector('.furndj-qty-val').textContent, 10) || 0;
+                if (qty <= 0) return;
+                addedAny = true;
+                var sku = row.getAttribute('data-furn-id');
+                var price = parseFloat(row.getAttribute('data-furn-price')) || 0;
+                var name = row.querySelector('.furndj-item-name').textContent.trim();
+                var existing = draft.lines.filter(function (l) { return l.catalog_sku === sku; })[0];
+                if (existing) {
+                    existing.quantity = qty;
+                    existing.unit_price_usd = price;
+                    existing.line_total_usd = Math.round(price * qty * 100) / 100;
+                } else {
+                    draft.lines.push({
+                        line_id: uid(),
+                        catalog_sku: sku,
+                        category_key: 'furniture',
+                        category_label: 'Furniture & Decor',
+                        slot: 'gear_furniture',
+                        name: name,
+                        image_url: null,
+                        unit_price_usd: price,
+                        quantity: qty,
+                        line_total_usd: Math.round(price * qty * 100) / 100,
+                        replaceable: false,
+                        line_status: 'cotizado'
+                    });
+                }
+            });
+            if (!addedAny) {
+                window.alert(window.t ? window.t('msg_empty_cart', 'Please select at least one item.') : 'Please select at least one item.');
+                return;
+            }
+            writeDraft(draft);
+            window.location.href = './rentals.html?checkout=fromcart';
+        }
+
         function init() {
             document.querySelectorAll('.furndj-item').forEach(function (row) {
                 row.addEventListener('click', function (e) {
@@ -785,6 +865,8 @@
                 });
             });
             recalcTotal();
+            var cartBtn = document.getElementById('furndj-add-to-cart-btn');
+            if (cartBtn) cartBtn.addEventListener('click', addSelectionToCart);
         }
 
         if (document.readyState === 'loading') {
