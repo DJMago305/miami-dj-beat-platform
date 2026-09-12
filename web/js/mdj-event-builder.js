@@ -1543,9 +1543,16 @@
                 notesCell = '<a class="mdj-eb-crm-notes-link" href="' + escapeHtml(linkHref) + '" target="_blank" rel="noopener" title="' + linkTitle + '"' + linkOpacity + '>' + icon + '</a>';
             }
 
-            var replaceBtn = line.replaceable
-                ? '<button type="button" class="mdj-eb-line__replace mdj-eb-crm-act-btn" data-line-id="' + escapeHtml(line.line_id) + '" data-slot="' + escapeHtml(line.slot) + '" title="Reemplazar">↺</button>'
-                : '';
+            /* AUDITORÍA FORENSE 2026-09-12: el botón "Reemplazar" (↺) se apaga a
+               propósito -- su handler (ver abajo) no dejaba elegir un paquete
+               real: para DJ/Hora Loca sustituía la línea del cliente por un
+               preset de PRUEBA fijo ("Private Parties $500" / "Premium Hora
+               Loca Pack $1200") sin preguntar nada, y para cualquier otro slot
+               solo mostraba un mensaje de consola de desarrollador. Un cliente
+               real podía perder su selección real sin darse cuenta. Se
+               reactiva el día que exista un selector real de "cambiar de
+               paquete" (reutilizando replaceLineInSlot, que sigue intacta). */
+            var replaceBtn = '';
             var removeBtn =
                 '<button type="button" class="mdj-eb-line__remove mdj-eb-crm-act-btn mdj-eb-crm-act-btn--rm" data-line-id="' + escapeHtml(line.line_id) + '" title="Quitar">✕</button>';
 
@@ -1977,16 +1984,12 @@
                     removeLine(removeBtn.getAttribute('data-line-id'));
                     return;
                 }
+                /* El botón .mdj-eb-line__replace ya no se renderiza (ver render
+                   de la fila más arriba) -- este bloque se deja vacío a
+                   propósito, listo para un selector real de "cambiar de
+                   paquete" el día que se construya. */
                 var replaceBtn = e.target.closest('.mdj-eb-line__replace');
                 if (replaceBtn) {
-                    var slot = replaceBtn.getAttribute('data-slot');
-                    if (slot === 'dj_primary') {
-                        replaceLineInSlot(slot, global.MDJEventBuilderAdapter.buildTestLine('dj', { preset: 'private' }));
-                    } else if (slot === 'horaloca_pack') {
-                        replaceLineInSlot(slot, global.MDJEventBuilderAdapter.buildTestLine('horaloca'));
-                    } else {
-                        showToast('Replace preview: add another test item for this slot via console.');
-                    }
                     return;
                 }
                 // Talent row click → toggle mini picker
