@@ -165,7 +165,8 @@
         /* Hero bajo header + barra artística (sin solapar la franja negra) */
         .academia-hero {
             position: relative;
-            min-height: calc(100dvh - var(--header-height, 85px) - 96px);
+            min-height: calc(100vh - var(--header-height, 84px));
+            min-height: calc(100dvh - var(--header-height, 84px));
             margin-top: 0;
             padding-top: clamp(28px, 5vh, 56px);
             padding-bottom: 120px;
@@ -185,6 +186,9 @@
             z-index: 0;
         }
 
+        /* Degradado hasta negro sólido: la transición hacia el Teaser/Gate no
+           corta la imagen en seco, se funde con el fondo #050403 del resto
+           de la página. */
         .academia-hero::after {
             content: "";
             position: absolute;
@@ -193,7 +197,8 @@
             background: linear-gradient(180deg,
                     rgba(5, 4, 3, 0.35) 0%,
                     rgba(5, 4, 3, 0.55) 45%,
-                    rgba(5, 4, 3, 0.88) 100%);
+                    rgba(5, 4, 3, 0.92) 85%,
+                    #050403 100%);
         }
 
         .academia-hero-inner {
@@ -450,7 +455,7 @@
          mismos que el schema Course de courses.html). Contenido de
          presentación, sin desbloquear nada del programa interno.
     ══════════════════════════════════════════════════════ -->
-    <section class="section" style="max-width: 720px; margin: 0 auto 48px; padding: 140px 22px 0;">
+    <section id="academia-teaser" class="section" style="display:none; max-width: 720px; margin: 0 auto 48px; padding: 140px 22px 0;">
         <h2 style="font-family:'Syne',system-ui,sans-serif; text-align:center; font-size:clamp(22px,3.5vw,32px); color:#f7f5f0; margin-bottom:10px;"
             data-i18n="academia-teaser-title">El temario completo, en 12 módulos</h2>
         <p style="text-align:center; color:rgba(255,255,255,0.7); font-size:14px; max-width:56ch; margin:0 auto 28px;"
@@ -581,15 +586,23 @@
             function showGate() {
                 var gate = document.getElementById('academia-auth-gate');
                 var hub = document.getElementById('academia-hub');
+                var teaser = document.getElementById('academia-teaser');
                 if (gate) gate.style.display = 'block';
                 if (hub) hub.style.display = 'none';
+                if (teaser) teaser.style.display = 'block';
             }
 
             function showHub() {
                 var gate = document.getElementById('academia-auth-gate');
                 var hub = document.getElementById('academia-hub');
+                var teaser = document.getElementById('academia-teaser');
                 if (gate) gate.style.display = 'none';
                 if (hub) hub.style.display = '';
+                /* Un estudiante con sesión activa no necesita el teaser de
+                   suscripción -- ya está adentro. Sin esto, el teaser (que no
+                   depende de sesión) seguía ocupando espacio y colisionaba
+                   con .academia-float-tabs (los 3 pills del hub, position:fixed). */
+                if (teaser) teaser.style.display = 'none';
             }
             window.academiaShowHub = showHub;
 
