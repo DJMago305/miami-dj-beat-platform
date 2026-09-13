@@ -103,8 +103,13 @@
 
         .knowledge-hero {
             position: relative;
-            min-height: 450px;
+            /* EXCEPCION AUTORIZADA (owner, hero fullscreen): min-height fijo de
+               450px dejaba el hero como una tira angosta. Alto completo del
+               viewport, igual patron ya aplicado en academia.html/courses.html. */
+            min-height: calc(100vh - var(--header-height, 84px));
+            min-height: calc(100dvh - var(--header-height, 84px));
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             padding: 120px 0 100px;
@@ -139,7 +144,14 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.4) 100%);
+            /* Funde a negro solido al pie (mismo tono que el fondo de la
+               pagina) en vez de cortar la imagen en seco contra la seccion
+               siguiente. */
+            background: linear-gradient(to bottom,
+                    rgba(0, 0, 0, 0.1) 0%,
+                    rgba(0, 0, 0, 0.45) 55%,
+                    rgba(5, 4, 3, 0.92) 85%,
+                    #050403 100%);
             z-index: 1;
         }
 
@@ -177,6 +189,12 @@
 
         .editorial-img {
             width: 100%;
+            /* Acotada para que la imagen ilustre la historia sin dominarla --
+               el propósito de esta biblioteca es el texto/la doctrina, la
+               imagen es apoyo visual, no el protagonista. */
+            max-height: 460px;
+            object-fit: cover;
+            object-position: center;
             border-radius: 16px;
             margin: 40px 0;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
@@ -196,116 +214,68 @@
 
         /* 🆕 Knowledge Layout Styles */
         .knowledge-container {
-            max-width: 1280px;
-            margin: -60px auto 100px;
-            padding: 0 40px;
-            display: flex;
-            gap: 60px;
+            /* REDISEÑO (owner, biblioteca full-width): sidebar fija eliminada,
+               contenedor abierto al ancho real de pantalla. Margen superior
+               (antes -60px, pegaba "El Legado" contra el final del hero;
+               luego 90px) ajustado a 56px -- el espacio limpio de respiro
+               entre el hero y la seccion editorial que pidio el owner. */
+            max-width: 1560px;
+            width: 94%;
+            margin: 56px auto 100px;
+            padding: 0;
             position: relative;
             z-index: 10;
         }
 
-        .knowledge-sidebar {
-            width: 280px;
-            flex-shrink: 0;
-            position: sticky;
-            top: 140px;
-            margin-top: 60px;
-            height: fit-content;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 24px;
-            padding: 32px 24px;
-            backdrop-filter: blur(10px);
-        }
-
-        .knowledge-sidebar h4 {
-            font-size: 11px;
-            font-weight: 800;
-            letter-spacing: 2px;
-            color: var(--gold);
-            text-transform: uppercase;
-            margin-bottom: 24px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid rgba(197, 160, 89, 0.2);
-        }
-
-        .knowledge-nav {
+        .category-pills {
             display: flex;
-            flex-direction: column;
+            flex-wrap: wrap;
+            justify-content: center;
             gap: 12px;
+            margin: 0 0 48px;
         }
 
-        .knowledge-nav-item {
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 14px;
-            text-decoration: none;
-            padding: 10px 16px;
-            border-radius: 12px;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 12px;
+        .category-pill {
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            color: rgba(255, 255, 255, 0.75);
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(197, 160, 89, 0.25);
+            border-radius: 999px;
+            padding: 10px 22px;
+            cursor: pointer;
+            transition: all 0.25s ease;
         }
 
-        .knowledge-nav-item:hover {
-            background: rgba(255, 255, 255, 0.05);
+        .category-pill:hover {
+            border-color: rgba(197, 160, 89, 0.6);
             color: #fff;
-            transform: translateX(5px);
         }
 
-        .knowledge-nav-item.active {
-            background: rgba(197, 160, 89, 0.1);
-            color: var(--gold);
-            border-left: 3px solid var(--gold);
-            padding-left: 13px; /* 16px - 3px border to maintain alignment */
-            font-weight: 600;
-        }
-
-        .knowledge-nav-item.upcoming {
-            opacity: 0.4;
-            pointer-events: none;
-            font-style: italic;
-        }
-
-        .knowledge-nav-item span {
-            font-size: 18px;
+        .category-pill.active {
+            background: var(--gold);
+            border-color: var(--gold);
+            color: #0a0a0a;
         }
 
         .knowledge-main {
-            flex-grow: 1;
-            max-width: 860px;
+            max-width: 100%;
         }
 
-        /* 🆕 Futuristic Horizontal Library Styles */
+        /* Estantería editorial — grid responsivo, reemplaza el scroll horizontal */
         .knowledge-scroll-container {
             position: relative;
             width: 100%;
-            margin-top: 60px;
-            padding: 20px 0 40px;
-            display: flex;
+            margin-top: 40px;
+            padding: 0 0 40px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
             gap: 24px;
-            overflow-x: auto;
-            scroll-snap-type: x mandatory;
-            scrollbar-width: none;
-            /* Firefox */
-            -ms-overflow-style: none;
-            /* IE/Edge */
-            cursor: grab;
-            padding-left: 2px;
-            /* For hover glow clipping */
-        }
-
-        .knowledge-scroll-container::-webkit-scrollbar {
-            display: none;
-            /* Chrome/Safari */
         }
 
         .knowledge-card {
-            flex: 0 0 320px;
             height: 480px;
-            /* More vertical aspect ratio */
-            scroll-snap-align: start;
             position: relative;
             border-radius: 12px;
             overflow: hidden;
@@ -318,6 +288,10 @@
             justify-content: flex-end;
             padding: 32px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .knowledge-card.is-filtered-out {
+            display: none;
         }
 
         .knowledge-card:hover {
@@ -425,38 +399,26 @@
             transform: scaleX(1);
         }
 
-        /* Ambient Glow for the container */
-        .library-vault-glow {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-220%, -50%);
-            width: 800px;
-            height: 400px;
-            background: radial-gradient(circle, rgba(197, 160, 89, 0.03) 0%, transparent 70%);
-            pointer-events: none;
-            z-index: -1;
+        @media (max-width: 768px) {
+            .knowledge-scroll-container {
+                grid-template-columns: 1fr;
+            }
+
+            .knowledge-card {
+                height: 420px;
+            }
         }
 
-        @media (max-width: 768px) {
-            .knowledge-card {
-                flex: 0 0 280px;
-                height: 420px;
+        @media (min-width: 769px) and (max-width: 1200px) {
+            .knowledge-scroll-container {
+                grid-template-columns: repeat(2, 1fr);
             }
         }
 
         @media (max-width: 1024px) {
             .knowledge-container {
-                flex-direction: column;
-                margin-top: 40px;
-                padding: 0 20px;
-                gap: 40px;
-            }
-
-            .knowledge-sidebar {
-                width: 100%;
-                position: relative;
-                top: 0;
+                margin-top: 48px;
+                width: 92%;
             }
         }
     </style>
@@ -596,100 +558,74 @@
     <!-- MAIN CONTENT -->
     <div class="knowledge-container">
 
-        <!-- SIDEBAR -->
-        <aside class="knowledge-sidebar">
-            <h4 data-i18n="knowledge-sidebar-title">Biblioteca DJ</h4>
-            <nav class="knowledge-nav">
-                <a href="#manifesto" class="knowledge-nav-item">
-                    Manifesto
-                </a>
-                <a href="#selecta" class="knowledge-nav-item">
-                    El Selecta
-                </a>
-                <a href="#bronx-birth" class="knowledge-nav-item">
-                    Bronx 1973
-                </a>
-                <a href="#reading-floor" class="knowledge-nav-item">
-                    Psicología: Leer la pista
-                </a>
-                <a href="#dj-vs-entertainer" class="knowledge-nav-item">
-                    DJ vs Entertainer
-                </a>
-            </nav>
-        </aside>
-
         <!-- CONTENT AREA -->
         <main class="knowledge-main">
 
-            <!-- INTRO SECTION (Moved here to restore grid layout) -->
-            <div style="max-width: 860px; text-align: left; margin-bottom: 60px;">
+            <!-- INTRO SECTION -->
+            <div style="max-width: 860px; text-align: center; margin: 0 auto 48px;">
                 <h2 style="font-family: 'Playfair Display', serif; font-size: 32px; margin-bottom: 20px;"
                     data-i18n="knowledge-intro-title">El Legado detrás de las perillas</h2>
-                <p style="color: rgba(255,255,255,0.7); line-height: 1.8; font-size: 17px;" data-i18n="knowledge-intro-p">
+                <p style="color: rgba(255,255,255,0.7); line-height: 1.8; font-size: 17px; max-width: 780px; margin: 0 auto;" data-i18n="knowledge-intro-p">
                     Ser un DJ no es solo dominar una técnica; es ser guardián de una herencia cultural que comenzó en las calles
                     de Kingston y el Bronx. Aquí exploramos las raíces que dieron forma al mundo que hoy controlas.
                 </p>
+            </div>
 
-                <!-- 🆕 Futuristic Horizontal Vault Browser -->
-                <div style="position: relative; margin-left: -20px; width: calc(100% + 40px);">
-                    <div class="library-vault-glow"></div>
-                    <div class="knowledge-scroll-container" style="margin-top: 40px;">
-                        <a href="#selecta" class="knowledge-card">
-                            <img src="./assets/knowledge/jamaica-sound.png" data-academy-media="vault_cards.selecta" class="knowledge-card-bg" alt="Selecta">
-                            <div class="knowledge-card-overlay"></div>
-                            <div class="knowledge-card-content">
-                                <span class="category-tag" data-i18n="knowledge-category-history">Historia</span>
-                                <h3 data-i18n="course-art-title">El Selecta</h3>
-                                <p data-i18n="course-art-sub">Jamaica y el origen del Sound System.</p>
-                                <div class="card-footer" data-i18n="knowledge-card-read">Leer artículo ➜</div>
-                            </div>
-                        </a>
-                        <a href="#bronx-birth" class="knowledge-card">
-                            <img src="./assets/knowledge/bronx-birth.png" data-academy-media="vault_cards.bronx_birth" class="knowledge-card-bg" alt="Bronx">
-                            <div class="knowledge-card-overlay"></div>
-                            <div class="knowledge-card-content">
-                                <span class="category-tag" data-i18n="knowledge-category-culture">Cultura</span>
-                                <h3 data-i18n="art-bronx-title">Nacimiento del Hip-Hop</h3>
-                                <p data-i18n="art-bronx-sub">El impacto de Kool Herc en NY.</p>
-                                <div class="card-footer" data-i18n="knowledge-card-read">Leer artículo ➜</div>
-                            </div>
-                        </a>
-                        <a href="#reading-floor" class="knowledge-card">
-                            <img src="./assets/knowledge/reading-floor.png" data-academy-media="vault_cards.reading_floor" class="knowledge-card-bg" alt="Read Floor">
-                            <div class="knowledge-card-overlay"></div>
-                            <div class="knowledge-card-content">
-                                <span class="category-tag" data-i18n="knowledge-category-technique">Técnica</span>
-                                <h3 data-i18n="art-reading-title">Leer la Pista</h3>
-                                <p data-i18n="art-reading-sub">Psicología y conexión con el público.</p>
-                                <div class="card-footer" data-i18n="knowledge-card-read">Leer artículo ➜</div>
-                            </div>
-                        </a>
-                        <a href="#dj-vs-entertainer" class="knowledge-card">
-                            <img src="./assets/knowledge/dj-entertainer.png" data-academy-media="vault_cards.dj_vs_entertainer" class="knowledge-card-bg" alt="DJ vs Entertainer">
-                            <div class="knowledge-card-overlay"></div>
-                            <div class="knowledge-card-content">
-                                <span class="category-tag" data-i18n="knowledge-category-technique">Técnica</span>
-                                <h3 data-i18n="art-entertainer-title">DJ vs Entertainer</h3>
-                                <p data-i18n="art-entertainer-sub">Definiendo tu identidad en cabina.</p>
-                                <div class="card-footer" data-i18n="knowledge-card-read">Leer artículo ➜</div>
-                            </div>
-                        </a>
-                        <!-- Dummy cards to encourage scrolling feel -->
-                        <div class="knowledge-card" style="opacity: 0.2; pointer-events: none; border-style: dashed;">
-                            <div class="knowledge-card-content">
-                                <span class="category-tag">ARCHIVE</span>
-                                <h3 style="color: rgba(255,255,255,0.3);">Next Chapter</h3>
-                            </div>
-                        </div>
+            <!-- Filtro de categorías reales (Historia / Cultura / Técnica) -->
+            <div class="category-pills" id="knowledge-category-pills">
+                <button type="button" class="category-pill active" data-filter="all" data-i18n="knowledge-pill-all">Todos</button>
+                <button type="button" class="category-pill" data-filter="historia" data-i18n="knowledge-category-history">Historia</button>
+                <button type="button" class="category-pill" data-filter="cultura" data-i18n="knowledge-category-culture">Cultura</button>
+                <button type="button" class="category-pill" data-filter="tecnica" data-i18n="knowledge-category-technique">Técnica</button>
+            </div>
+
+            <!-- Estanteria editorial -->
+            <div class="knowledge-scroll-container" id="knowledge-grid">
+                <a href="#selecta" class="knowledge-card" data-category="historia">
+                    <img src="./assets/knowledge/jamaica-sound.png" data-academy-media="vault_cards.selecta" class="knowledge-card-bg" alt="Selecta">
+                    <div class="knowledge-card-overlay"></div>
+                    <div class="knowledge-card-content">
+                        <span class="category-tag" data-i18n="knowledge-category-history">Historia</span>
+                        <h3 data-i18n="course-art-title">El Selecta</h3>
+                        <p data-i18n="course-art-sub">Jamaica y el origen del Sound System.</p>
+                        <div class="card-footer" data-i18n="knowledge-card-read">Leer Historia ➜</div>
                     </div>
-
-                    <!-- Visual Scroll Hint -->
-                    <div style="display: flex; align-items: center; gap: 12px; margin-top: -10px; opacity: 0.5; padding-left: 20px;">
-                        <div style="height: 1px; flex: 1; background: linear-gradient(to right, var(--gold), transparent);">
-                        </div>
-                        <div
-                            style="font-size: 10px; font-weight: 800; letter-spacing: 2px; color: var(--gold); text-transform: uppercase;">
-                            Scroll Horizontal</div>
+                </a>
+                <a href="#bronx-birth" class="knowledge-card" data-category="cultura">
+                    <img src="./assets/knowledge/bronx-birth.png" data-academy-media="vault_cards.bronx_birth" class="knowledge-card-bg" alt="Bronx">
+                    <div class="knowledge-card-overlay"></div>
+                    <div class="knowledge-card-content">
+                        <span class="category-tag" data-i18n="knowledge-category-culture">Cultura</span>
+                        <h3 data-i18n="art-bronx-title">Nacimiento del Hip-Hop</h3>
+                        <p data-i18n="art-bronx-sub">El impacto de Kool Herc en NY.</p>
+                        <div class="card-footer" data-i18n="knowledge-card-read">Leer Historia ➜</div>
+                    </div>
+                </a>
+                <a href="#reading-floor" class="knowledge-card" data-category="tecnica">
+                    <img src="./assets/knowledge/reading-floor.png" data-academy-media="vault_cards.reading_floor" class="knowledge-card-bg" alt="Read Floor">
+                    <div class="knowledge-card-overlay"></div>
+                    <div class="knowledge-card-content">
+                        <span class="category-tag" data-i18n="knowledge-category-technique">Técnica</span>
+                        <h3 data-i18n="art-reading-title">Leer la Pista</h3>
+                        <p data-i18n="art-reading-sub">Psicología y conexión con el público.</p>
+                        <div class="card-footer" data-i18n="knowledge-card-read">Leer Historia ➜</div>
+                    </div>
+                </a>
+                <a href="#dj-vs-entertainer" class="knowledge-card" data-category="tecnica">
+                    <img src="./assets/knowledge/dj-entertainer.png" data-academy-media="vault_cards.dj_vs_entertainer" class="knowledge-card-bg" alt="DJ vs Entertainer">
+                    <div class="knowledge-card-overlay"></div>
+                    <div class="knowledge-card-content">
+                        <span class="category-tag" data-i18n="knowledge-category-technique">Técnica</span>
+                        <h3 data-i18n="art-entertainer-title">DJ vs Entertainer</h3>
+                        <p data-i18n="art-entertainer-sub">Definiendo tu identidad en cabina.</p>
+                        <div class="card-footer" data-i18n="knowledge-card-read">Leer Historia ➜</div>
+                    </div>
+                </a>
+                <!-- Placeholder de proximo capitulo, sin categoria -->
+                <div class="knowledge-card" data-category="proximamente" style="opacity: 0.2; pointer-events: none; border-style: dashed;">
+                    <div class="knowledge-card-content">
+                        <span class="category-tag">ARCHIVE</span>
+                        <h3 style="color: rgba(255,255,255,0.3);">Next Chapter</h3>
                     </div>
                 </div>
             </div>
@@ -1043,50 +979,22 @@
     <script src="./js/academy-media-loader.js?v=20260612-acad-storage"></script>
     <script src="./articles-loader.js"></script>
     <script>
-        // Scroll Spy Logic for Knowledge Sidebar
+        // Filtro de categorias de la biblioteca (Todos / Historia / Cultura / Tecnica)
         document.addEventListener('DOMContentLoaded', () => {
-            const sections = document.querySelectorAll('.knowledge-main > section[id], .knowledge-main > article[id]');
-            const navItems = document.querySelectorAll('.knowledge-nav-item');
+            const pills = document.querySelectorAll('#knowledge-category-pills .category-pill');
+            const cards = document.querySelectorAll('#knowledge-grid .knowledge-card[data-category]');
 
-            const observerOptions = {
-                root: null,
-                rootMargin: '-20% 0px -60% 0px', // Trigger when section is in the middle of viewport
-                threshold: 0
-            };
-
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        // Remove active class from all
-                        navItems.forEach(item => item.classList.remove('active'));
-                        
-                        // Add active class to corresponding nav item
-                        const activeId = entry.target.getAttribute('id');
-                        const activeNavItem = document.querySelector(`.knowledge-nav-item[href="#${activeId}"]`);
-                        
-                        if (activeNavItem) {
-                            activeNavItem.classList.add('active');
-                        }
-                    }
+            pills.forEach(pill => {
+                pill.addEventListener('click', () => {
+                    pills.forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    const filter = pill.getAttribute('data-filter');
+                    cards.forEach(card => {
+                        const match = filter === 'all' || card.getAttribute('data-category') === filter;
+                        card.classList.toggle('is-filtered-out', !match);
+                    });
                 });
-            }, observerOptions);
-
-            sections.forEach(section => {
-                observer.observe(section);
             });
-            
-            // Set initial active state based on URL hash if present
-            if (window.location.hash) {
-                const targetNavItem = document.querySelector(`.knowledge-nav-item[href="${window.location.hash}"]`);
-                if(targetNavItem) {
-                    navItems.forEach(item => item.classList.remove('active'));
-                    targetNavItem.classList.add('active');
-                }
-            } else {
-                 // Default to manifesto
-                 const firstNavItem = document.querySelector('.knowledge-nav-item[href="#manifesto"]');
-                 if(firstNavItem) firstNavItem.classList.add('active');
-            }
         });
     </script>
 

@@ -102,11 +102,21 @@
             margin-left: calc(-50vw + 50%);
             margin-top: calc(-1 * var(--header-height, 110px));
             padding-top: calc(var(--header-height, 110px) + 60px);
-            padding-bottom: 80px;
+            padding-bottom: 48px;
             text-align: center;
             overflow: hidden;
             box-sizing: border-box;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            /* EXCEPCION AUTORIZADA (owner, cubrir la tarjeta Booth Method dentro
+               del pliegue del hero): alto minimo de viewport completo, contenido
+               centrado en columna para que titulo+stats+tarjeta respiren parejo
+               sin importar cuanto texto agregue cada idioma. */
+            min-height: calc(100vh - var(--header-height, 84px));
+            min-height: calc(100dvh - var(--header-height, 84px));
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
 
         .courses-hero h1 {
@@ -721,13 +731,13 @@
                         <div class="stat-label" data-i18n="course-stat-access">Acceso de por vida</div>
                     </div>
                 </div>
-            </div>
-        </section>
 
-        <section class="section" style="padding-top:40px;padding-bottom:0;">
-            <div class="container">
-                <div style="max-width:900px;margin:0 auto;display:flex;align-items:center;gap:20px;flex-wrap:wrap;justify-content:space-between;background:rgba(197,160,89,0.05);border:1px solid rgba(197,160,89,0.22);border-radius:18px;padding:22px 28px;">
-                    <div style="flex:1;min-width:240px;">
+                <!-- EXCEPCION AUTORIZADA (owner): tarjeta Booth Method reubicada
+                     dentro del hero, debajo de las stats, para que quede cubierta
+                     por el mismo fondo de tornamesas en el primer pliegue.
+                     Contenido/texto/href sin alterar -- solo se movio de lugar. -->
+                <div style="max-width:900px;width:100%;margin:32px auto 0;display:flex;align-items:center;gap:20px;flex-wrap:wrap;justify-content:space-between;background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.28);border-radius:18px;padding:22px 28px;backdrop-filter:blur(6px);">
+                    <div style="flex:1;min-width:240px;text-align:left;">
                         <div style="color:var(--gold);font-weight:800;font-size:15px;margin-bottom:6px;" data-i18n="cabina-courses-banner-title">📖 Lectura Obligatoria: El Método de Cabina</div>
                         <p style="color:var(--muted);font-size:13.5px;line-height:1.6;margin:0;" data-i18n="cabina-courses-banner-body">Antes de presentar tu evaluación práctica, domina la doctrina completa — Ley Cero, 18 reglas operativas y los 12 módulos de entrenamiento del DJ profesional.</p>
                     </div>
