@@ -3827,15 +3827,24 @@
             const passed = wrong <= MAX_WRONG;
 
             try {
-                const { data: { session } } = await supabase.auth.getSession();
+                // FIX-EXAM-SESSION-INIT (2026-09-13): mismo cliente real que initExam() --
+                // `supabase` a secas es el namespace crudo del CDN, nunca el cliente
+                // configurado. Ver comentario completo en initExam() mas arriba.
+                const sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+                if (!sb || !sb.auth || typeof sb.auth.getSession !== 'function') return;
+
+                const { data: { session } } = await sb.auth.getSession();
                 if (session) {
                     const retryAfter = passed ? null :
                         new Date(Date.now() + COOLDOWN_DAYS * 24 * 60 * 60 * 1000).toISOString();
 
-                    await supabase.from('dj_profiles').update({
+                    // FIX-RATING-ROLLUP-GUARD (2026-09-13): dj_profiles.rating es el
+                    // promedio agregado de reseñas verificadas de clientes (rollup de
+                    // dj_public_reviews) -- este quiz NO debe escribirlo, o lo corrompe
+                    // con un numero derivado del score del examen.
+                    await sb.from('dj_profiles').update({
                         certification_score: score,
                         certification_date: new Date().toISOString(),
-                        rating: passed ? Math.min(5, parseFloat((score / 20).toFixed(1))) : undefined,
                         exam_retry_after: retryAfter
                     }).eq('user_id', session.user.id);
 
