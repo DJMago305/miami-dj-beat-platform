@@ -132,6 +132,24 @@
         childList: true
       });
       setTimeout(function () { mdjMobileFixObserver.disconnect(); }, 6000);
+
+      // FIX-DUP-HAMBURGER-BACKGROUND-TAB (2026-09-13, hallazgo del PO en vivo):
+      // el disconnect de arriba es un reloj de pared -- si la pestaña se
+      // minimiza o pasa a segundo plano justo en esa ventana, el navegador
+      // frena los timers (y la resolucion real de sesion/auth, que suele
+      // tardar mas bajo esa misma condicion) y el observer puede desconectarse
+      // ANTES de que el header real llegue a ser alcanzable. El FAB de
+      // respaldo, montado mientras tanto, se queda huerfano encima del
+      // riel-toggle real una vez la pestaña vuelve a primer plano -- dos
+      // hamburguesas reales simultaneas, ninguna "mal hecha".
+      //
+      // Sin timers nuevos: un solo listener de `visibilitychange`, permanente
+      // (no depende del observer ni de sus 6000ms), que re-evalua en el
+      // instante exacto en que el usuario vuelve a mirar la pestaña --
+      // gratis, guiado por evento real, no por reloj.
+      document.addEventListener('visibilitychange', function () {
+        if (!document.hidden) mountOrRemoveFabs();
+      });
     } catch (e) { /* si algo falla, el header original sigue como estaba */ }
   }
 
