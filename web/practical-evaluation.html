@@ -5,6 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Miami DJ Beat — Practical Evaluation</title>
+    <!-- Herramienta interna de puntuación del instructor (no contenido público de SEO).
+         noindex evita que Google la muestre en resultados; NO es control de acceso —
+         la URL sigue siendo accesible directo sin login. Ver nota en memoria del
+         proyecto sobre auditar si necesita autenticación/rol Staff/Instructor. -->
+    <meta name="robots" content="noindex, follow" />
   <!-- Tipografia institucional del menu (Inter 800). Sin esta hoja la barra cae en la
        sustituta del sistema y el texto sale ~2% mas estrecho, desplazando el eje X. -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=optional" rel="stylesheet" />
@@ -416,6 +421,20 @@
     })();
     </script>
     <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
+    <script>
+      /* Hard Gate Ligero — Academia Gateway. Contenido reservado a miembros
+         inscritos; sin sesion, redirige a la puerta de entrada centralizada. */
+      (async function () {
+        try {
+          var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+          if (!sb) return;
+          var res = await sb.auth.getSession();
+          if (!res || !res.data || !res.data.session) {
+            window.location.href = 'academia.html?redirect=' + encodeURIComponent(window.location.pathname);
+          }
+        } catch (e) { /* fallo de red: no bloquear la pagina */ }
+      })();
+    </script>
     <script src="./translations.js?v=20260903-perfil-label"></script>
     <script src="./i18n.js?v=20260411-14"></script>
     <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>

@@ -25,10 +25,62 @@
     })();
     </script>
     <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
+    <script>
+      /* Hard Gate Ligero — Academia Gateway. Contenido reservado a miembros
+         inscritos; sin sesion, redirige a la puerta de entrada centralizada. */
+      (async function () {
+        try {
+          var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+          if (!sb) return;
+          var res = await sb.auth.getSession();
+          if (!res || !res.data || !res.data.session) {
+            window.location.href = 'academia.html?redirect=' + encodeURIComponent(window.location.pathname);
+          }
+        } catch (e) { /* fallo de red: no bloquear la pagina */ }
+      })();
+    </script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>MDJPRO — Conocimiento DJ: Historia y Cultura</title>
     <link rel="canonical" href="https://www.miamidjbeat.com/dj-knowledge.html" />
+    <meta name="description"
+        content="Biblioteca de cultura DJ de Miami DJ Beat Academy: historia del Sound System jamaiquino, nacimiento del Hip-Hop en el Bronx, cómo leer la pista y la identidad del DJ profesional." />
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      "@id": "https://www.miamidjbeat.com/dj-knowledge.html#collection",
+      "name": "DJ Knowledge Library",
+      "description": "Biblioteca de cultura DJ de Miami DJ Beat Academy: historia, cultura y fundamentos del oficio del DJ.",
+      "url": "https://www.miamidjbeat.com/dj-knowledge.html",
+      "publisher": {
+        "@type": "EducationalOrganization",
+        "name": "Miami DJ Beat Academy",
+        "url": "https://www.miamidjbeat.com/academia.html",
+        "parentOrganization": {
+          "@type": "LocalBusiness",
+          "name": "Miami DJ Beat LLC",
+          "url": "https://www.miamidjbeat.com/",
+          "telephone": "+1-305-607-1780",
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Miami",
+            "addressRegion": "FL",
+            "addressCountry": "US"
+          }
+        }
+      },
+      "hasPart": [
+        {
+          "@type": "Article",
+          "headline": "El Selecta",
+          "description": "Jamaica y el origen del Sound System.",
+          "url": "https://www.miamidjbeat.com/dj-knowledge.html#selecta",
+          "genre": "Historia"
+        }
+      ]
+    }
+    </script>
     <!-- GEO/SEO Fase 6 -- medicion: GA4 activo desde 2026-08-29 (ID real). -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-7XRWGTCQ5L"></script>
     <script>
@@ -51,8 +103,13 @@
 
         .knowledge-hero {
             position: relative;
-            min-height: 450px;
+            /* EXCEPCION AUTORIZADA (owner, hero fullscreen): min-height fijo de
+               450px dejaba el hero como una tira angosta. Alto completo del
+               viewport, igual patron ya aplicado en academia.html/courses.html. */
+            min-height: calc(100vh - var(--header-height, 84px));
+            min-height: calc(100dvh - var(--header-height, 84px));
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             padding: 120px 0 100px;
@@ -87,7 +144,14 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.4) 100%);
+            /* Funde a negro solido al pie (mismo tono que el fondo de la
+               pagina) en vez de cortar la imagen en seco contra la seccion
+               siguiente. */
+            background: linear-gradient(to bottom,
+                    rgba(0, 0, 0, 0.1) 0%,
+                    rgba(0, 0, 0, 0.45) 55%,
+                    rgba(5, 4, 3, 0.92) 85%,
+                    #050403 100%);
             z-index: 1;
         }
 
@@ -125,6 +189,12 @@
 
         .editorial-img {
             width: 100%;
+            /* Acotada para que la imagen ilustre la historia sin dominarla --
+               el propósito de esta biblioteca es el texto/la doctrina, la
+               imagen es apoyo visual, no el protagonista. */
+            max-height: 460px;
+            object-fit: cover;
+            object-position: center;
             border-radius: 16px;
             margin: 40px 0;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
@@ -144,116 +214,68 @@
 
         /* 🆕 Knowledge Layout Styles */
         .knowledge-container {
-            max-width: 1280px;
-            margin: -60px auto 100px;
-            padding: 0 40px;
-            display: flex;
-            gap: 60px;
+            /* REDISEÑO (owner, biblioteca full-width): sidebar fija eliminada,
+               contenedor abierto al ancho real de pantalla. Margen superior
+               (antes -60px, pegaba "El Legado" contra el final del hero;
+               luego 90px) ajustado a 56px -- el espacio limpio de respiro
+               entre el hero y la seccion editorial que pidio el owner. */
+            max-width: 1560px;
+            width: 94%;
+            margin: 56px auto 100px;
+            padding: 0;
             position: relative;
             z-index: 10;
         }
 
-        .knowledge-sidebar {
-            width: 280px;
-            flex-shrink: 0;
-            position: sticky;
-            top: 140px;
-            margin-top: 60px;
-            height: fit-content;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 24px;
-            padding: 32px 24px;
-            backdrop-filter: blur(10px);
-        }
-
-        .knowledge-sidebar h4 {
-            font-size: 11px;
-            font-weight: 800;
-            letter-spacing: 2px;
-            color: var(--gold);
-            text-transform: uppercase;
-            margin-bottom: 24px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid rgba(197, 160, 89, 0.2);
-        }
-
-        .knowledge-nav {
+        .category-pills {
             display: flex;
-            flex-direction: column;
+            flex-wrap: wrap;
+            justify-content: center;
             gap: 12px;
+            margin: 0 0 48px;
         }
 
-        .knowledge-nav-item {
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 14px;
-            text-decoration: none;
-            padding: 10px 16px;
-            border-radius: 12px;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 12px;
+        .category-pill {
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            color: rgba(255, 255, 255, 0.75);
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(197, 160, 89, 0.25);
+            border-radius: 999px;
+            padding: 10px 22px;
+            cursor: pointer;
+            transition: all 0.25s ease;
         }
 
-        .knowledge-nav-item:hover {
-            background: rgba(255, 255, 255, 0.05);
+        .category-pill:hover {
+            border-color: rgba(197, 160, 89, 0.6);
             color: #fff;
-            transform: translateX(5px);
         }
 
-        .knowledge-nav-item.active {
-            background: rgba(197, 160, 89, 0.1);
-            color: var(--gold);
-            border-left: 3px solid var(--gold);
-            padding-left: 13px; /* 16px - 3px border to maintain alignment */
-            font-weight: 600;
-        }
-
-        .knowledge-nav-item.upcoming {
-            opacity: 0.4;
-            pointer-events: none;
-            font-style: italic;
-        }
-
-        .knowledge-nav-item span {
-            font-size: 18px;
+        .category-pill.active {
+            background: var(--gold);
+            border-color: var(--gold);
+            color: #0a0a0a;
         }
 
         .knowledge-main {
-            flex-grow: 1;
-            max-width: 860px;
+            max-width: 100%;
         }
 
-        /* 🆕 Futuristic Horizontal Library Styles */
+        /* Estantería editorial — grid responsivo, reemplaza el scroll horizontal */
         .knowledge-scroll-container {
             position: relative;
             width: 100%;
-            margin-top: 60px;
-            padding: 20px 0 40px;
-            display: flex;
+            margin-top: 40px;
+            padding: 0 0 40px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
             gap: 24px;
-            overflow-x: auto;
-            scroll-snap-type: x mandatory;
-            scrollbar-width: none;
-            /* Firefox */
-            -ms-overflow-style: none;
-            /* IE/Edge */
-            cursor: grab;
-            padding-left: 2px;
-            /* For hover glow clipping */
-        }
-
-        .knowledge-scroll-container::-webkit-scrollbar {
-            display: none;
-            /* Chrome/Safari */
         }
 
         .knowledge-card {
-            flex: 0 0 320px;
             height: 480px;
-            /* More vertical aspect ratio */
-            scroll-snap-align: start;
             position: relative;
             border-radius: 12px;
             overflow: hidden;
@@ -266,6 +288,10 @@
             justify-content: flex-end;
             padding: 32px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .knowledge-card.is-filtered-out {
+            display: none;
         }
 
         .knowledge-card:hover {
@@ -373,38 +399,249 @@
             transform: scaleX(1);
         }
 
-        /* Ambient Glow for the container */
-        .library-vault-glow {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-220%, -50%);
-            width: 800px;
-            height: 400px;
-            background: radial-gradient(circle, rgba(197, 160, 89, 0.03) 0%, transparent 70%);
-            pointer-events: none;
-            z-index: -1;
+        @media (max-width: 768px) {
+            .knowledge-scroll-container {
+                grid-template-columns: 1fr;
+            }
+
+            .knowledge-card {
+                height: 420px;
+            }
         }
 
-        @media (max-width: 768px) {
-            .knowledge-card {
-                flex: 0 0 280px;
-                height: 420px;
+        @media (min-width: 769px) and (max-width: 1200px) {
+            .knowledge-scroll-container {
+                grid-template-columns: repeat(2, 1fr);
             }
         }
 
         @media (max-width: 1024px) {
             .knowledge-container {
-                flex-direction: column;
-                margin-top: 40px;
-                padding: 0 20px;
-                gap: 40px;
+                margin-top: 48px;
+                width: 92%;
+            }
+        }
+
+        /* ═══ LECTOR EDITORIAL INMERSIVO + REPRODUCTOR DE VOZ NATIVO ═══ */
+        .reader-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 100000;
+            background: #070605;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .reader-modal.reader-modal--open {
+            display: flex;
+        }
+
+        .reader-progress-track {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.06);
+            z-index: 2;
+        }
+
+        .reader-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--gold);
+        }
+
+        .reader-close-btn {
+            position: fixed;
+            top: 18px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid rgba(197, 160, 89, 0.3);
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            font-size: 18px;
+            line-height: 1;
+            cursor: pointer;
+            z-index: 3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .reader-close-btn:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+
+        .reader-modal-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 80px 24px 120px;
+        }
+
+        .reader-modal-inner {
+            max-width: 740px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .reader-voice-bar {
+            position: sticky;
+            top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            background: rgba(7, 6, 5, 0.92);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(197, 160, 89, 0.18);
+            border-radius: 16px;
+            padding: 12px 16px;
+            margin-bottom: 40px;
+            z-index: 1;
+        }
+
+        .reader-voice-btn {
+            width: 38px;
+            height: 38px;
+            flex-shrink: 0;
+            border-radius: 50%;
+            border: 1px solid rgba(197, 160, 89, 0.3);
+            background: rgba(197, 160, 89, 0.08);
+            color: var(--gold);
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .reader-voice-btn:hover {
+            background: var(--gold);
+            color: #0a0a0a;
+        }
+
+        .reader-speed-group {
+            display: flex;
+            gap: 6px;
+            margin-left: auto;
+        }
+
+        .reader-speed-btn {
+            font-size: 12px;
+            font-weight: 700;
+            padding: 7px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(197, 160, 89, 0.25);
+            background: transparent;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+        }
+
+        .reader-speed-btn.active {
+            background: var(--gold);
+            border-color: var(--gold);
+            color: #0a0a0a;
+        }
+
+        .reader-article-body {
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        .reader-article-body--gated {
+            -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 100%);
+            mask-image: linear-gradient(to bottom, #000 55%, transparent 100%);
+            max-height: 620px;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .reader-gate {
+            margin-top: -80px;
+            position: relative;
+            z-index: 1;
+            background: linear-gradient(180deg, transparent 0%, #070605 45%);
+            padding: 100px 20px 0;
+            text-align: center;
+        }
+
+        .reader-gate-card {
+            background: rgba(197, 160, 89, 0.06);
+            border: 1px solid rgba(197, 160, 89, 0.3);
+            border-radius: 20px;
+            padding: 32px 28px;
+            max-width: 520px;
+            margin: 0 auto;
+        }
+
+        .reader-gate-card p {
+            color: #fff;
+            font-size: 16px;
+            line-height: 1.6;
+            margin: 0 0 20px;
+        }
+
+        .reader-gate-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .reader-gate-btn {
+            display: inline-block;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 800;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .reader-gate-btn-primary {
+            background: var(--gold);
+            color: #0a0c10;
+        }
+
+        .reader-gate-btn-secondary {
+            background: transparent;
+            border: 1px solid rgba(197, 160, 89, 0.4);
+            color: var(--gold);
+        }
+
+        @media (max-width: 480px) {
+            .reader-modal-scroll {
+                padding: 70px 14px 100px;
             }
 
-            .knowledge-sidebar {
+            .reader-voice-bar {
+                padding: 10px 12px;
+                gap: 8px;
+            }
+
+            .reader-speed-group {
+                margin-left: 0;
                 width: 100%;
-                position: relative;
-                top: 0;
+                justify-content: flex-start;
+                margin-top: 6px;
+            }
+
+            .reader-gate {
+                padding: 70px 14px 0;
+            }
+
+            .reader-gate-card {
+                padding: 22px 18px;
+            }
+
+            .reader-gate-btn {
+                padding: 11px 18px;
+                font-size: 12.5px;
             }
         }
     </style>
@@ -544,100 +781,74 @@
     <!-- MAIN CONTENT -->
     <div class="knowledge-container">
 
-        <!-- SIDEBAR -->
-        <aside class="knowledge-sidebar">
-            <h4 data-i18n="knowledge-sidebar-title">Biblioteca DJ</h4>
-            <nav class="knowledge-nav">
-                <a href="#manifesto" class="knowledge-nav-item">
-                    Manifesto
-                </a>
-                <a href="#selecta" class="knowledge-nav-item">
-                    El Selecta
-                </a>
-                <a href="#bronx-birth" class="knowledge-nav-item">
-                    Bronx 1973
-                </a>
-                <a href="#reading-floor" class="knowledge-nav-item">
-                    Psicología: Leer la pista
-                </a>
-                <a href="#dj-vs-entertainer" class="knowledge-nav-item">
-                    DJ vs Entertainer
-                </a>
-            </nav>
-        </aside>
-
         <!-- CONTENT AREA -->
         <main class="knowledge-main">
 
-            <!-- INTRO SECTION (Moved here to restore grid layout) -->
-            <div style="max-width: 860px; text-align: left; margin-bottom: 60px;">
+            <!-- INTRO SECTION -->
+            <div style="max-width: 860px; text-align: center; margin: 0 auto 48px;">
                 <h2 style="font-family: 'Playfair Display', serif; font-size: 32px; margin-bottom: 20px;"
                     data-i18n="knowledge-intro-title">El Legado detrás de las perillas</h2>
-                <p style="color: rgba(255,255,255,0.7); line-height: 1.8; font-size: 17px;" data-i18n="knowledge-intro-p">
+                <p style="color: rgba(255,255,255,0.7); line-height: 1.8; font-size: 17px; max-width: 780px; margin: 0 auto;" data-i18n="knowledge-intro-p">
                     Ser un DJ no es solo dominar una técnica; es ser guardián de una herencia cultural que comenzó en las calles
                     de Kingston y el Bronx. Aquí exploramos las raíces que dieron forma al mundo que hoy controlas.
                 </p>
+            </div>
 
-                <!-- 🆕 Futuristic Horizontal Vault Browser -->
-                <div style="position: relative; margin-left: -20px; width: calc(100% + 40px);">
-                    <div class="library-vault-glow"></div>
-                    <div class="knowledge-scroll-container" style="margin-top: 40px;">
-                        <a href="#selecta" class="knowledge-card">
-                            <img src="./assets/knowledge/jamaica-sound.png" data-academy-media="vault_cards.selecta" class="knowledge-card-bg" alt="Selecta">
-                            <div class="knowledge-card-overlay"></div>
-                            <div class="knowledge-card-content">
-                                <span class="category-tag" data-i18n="knowledge-category-history">Historia</span>
-                                <h3 data-i18n="course-art-title">El Selecta</h3>
-                                <p data-i18n="course-art-sub">Jamaica y el origen del Sound System.</p>
-                                <div class="card-footer" data-i18n="knowledge-card-read">Leer artículo ➜</div>
-                            </div>
-                        </a>
-                        <a href="#bronx-birth" class="knowledge-card">
-                            <img src="./assets/knowledge/bronx-birth.png" data-academy-media="vault_cards.bronx_birth" class="knowledge-card-bg" alt="Bronx">
-                            <div class="knowledge-card-overlay"></div>
-                            <div class="knowledge-card-content">
-                                <span class="category-tag" data-i18n="knowledge-category-culture">Cultura</span>
-                                <h3 data-i18n="art-bronx-title">Nacimiento del Hip-Hop</h3>
-                                <p data-i18n="art-bronx-sub">El impacto de Kool Herc en NY.</p>
-                                <div class="card-footer" data-i18n="knowledge-card-read">Leer artículo ➜</div>
-                            </div>
-                        </a>
-                        <a href="#reading-floor" class="knowledge-card">
-                            <img src="./assets/knowledge/reading-floor.png" data-academy-media="vault_cards.reading_floor" class="knowledge-card-bg" alt="Read Floor">
-                            <div class="knowledge-card-overlay"></div>
-                            <div class="knowledge-card-content">
-                                <span class="category-tag" data-i18n="knowledge-category-technique">Técnica</span>
-                                <h3 data-i18n="art-reading-title">Leer la Pista</h3>
-                                <p data-i18n="art-reading-sub">Psicología y conexión con el público.</p>
-                                <div class="card-footer" data-i18n="knowledge-card-read">Leer artículo ➜</div>
-                            </div>
-                        </a>
-                        <a href="#dj-vs-entertainer" class="knowledge-card">
-                            <img src="./assets/knowledge/dj-entertainer.png" data-academy-media="vault_cards.dj_vs_entertainer" class="knowledge-card-bg" alt="DJ vs Entertainer">
-                            <div class="knowledge-card-overlay"></div>
-                            <div class="knowledge-card-content">
-                                <span class="category-tag" data-i18n="knowledge-category-technique">Técnica</span>
-                                <h3 data-i18n="art-entertainer-title">DJ vs Entertainer</h3>
-                                <p data-i18n="art-entertainer-sub">Definiendo tu identidad en cabina.</p>
-                                <div class="card-footer" data-i18n="knowledge-card-read">Leer artículo ➜</div>
-                            </div>
-                        </a>
-                        <!-- Dummy cards to encourage scrolling feel -->
-                        <div class="knowledge-card" style="opacity: 0.2; pointer-events: none; border-style: dashed;">
-                            <div class="knowledge-card-content">
-                                <span class="category-tag">ARCHIVE</span>
-                                <h3 style="color: rgba(255,255,255,0.3);">Next Chapter</h3>
-                            </div>
-                        </div>
+            <!-- Filtro de categorías reales (Historia / Cultura / Técnica) -->
+            <div class="category-pills" id="knowledge-category-pills">
+                <button type="button" class="category-pill active" data-filter="all" data-i18n="knowledge-pill-all">Todos</button>
+                <button type="button" class="category-pill" data-filter="historia" data-i18n="knowledge-category-history">Historia</button>
+                <button type="button" class="category-pill" data-filter="cultura" data-i18n="knowledge-category-culture">Cultura</button>
+                <button type="button" class="category-pill" data-filter="tecnica" data-i18n="knowledge-category-technique">Técnica</button>
+            </div>
+
+            <!-- Estanteria editorial -->
+            <div class="knowledge-scroll-container" id="knowledge-grid">
+                <a href="#selecta" class="knowledge-card" data-category="historia">
+                    <img src="./assets/knowledge/jamaica-sound.png" data-academy-media="vault_cards.selecta" class="knowledge-card-bg" alt="Selecta">
+                    <div class="knowledge-card-overlay"></div>
+                    <div class="knowledge-card-content">
+                        <span class="category-tag" data-i18n="knowledge-category-history">Historia</span>
+                        <h3 data-i18n="course-art-title">El Selecta</h3>
+                        <p data-i18n="course-art-sub">Jamaica y el origen del Sound System.</p>
+                        <div class="card-footer" data-i18n="knowledge-card-read">Leer Historia ➜</div>
                     </div>
-
-                    <!-- Visual Scroll Hint -->
-                    <div style="display: flex; align-items: center; gap: 12px; margin-top: -10px; opacity: 0.5; padding-left: 20px;">
-                        <div style="height: 1px; flex: 1; background: linear-gradient(to right, var(--gold), transparent);">
-                        </div>
-                        <div
-                            style="font-size: 10px; font-weight: 800; letter-spacing: 2px; color: var(--gold); text-transform: uppercase;">
-                            Scroll Horizontal</div>
+                </a>
+                <a href="#bronx-birth" class="knowledge-card" data-category="cultura">
+                    <img src="./assets/knowledge/bronx-birth.png" data-academy-media="vault_cards.bronx_birth" class="knowledge-card-bg" alt="Bronx">
+                    <div class="knowledge-card-overlay"></div>
+                    <div class="knowledge-card-content">
+                        <span class="category-tag" data-i18n="knowledge-category-culture">Cultura</span>
+                        <h3 data-i18n="art-bronx-title">Nacimiento del Hip-Hop</h3>
+                        <p data-i18n="art-bronx-sub">El impacto de Kool Herc en NY.</p>
+                        <div class="card-footer" data-i18n="knowledge-card-read">Leer Historia ➜</div>
+                    </div>
+                </a>
+                <a href="#reading-floor" class="knowledge-card" data-category="tecnica">
+                    <img src="./assets/knowledge/reading-floor.png" data-academy-media="vault_cards.reading_floor" class="knowledge-card-bg" alt="Read Floor">
+                    <div class="knowledge-card-overlay"></div>
+                    <div class="knowledge-card-content">
+                        <span class="category-tag" data-i18n="knowledge-category-technique">Técnica</span>
+                        <h3 data-i18n="art-reading-title">Leer la Pista</h3>
+                        <p data-i18n="art-reading-sub">Psicología y conexión con el público.</p>
+                        <div class="card-footer" data-i18n="knowledge-card-read">Leer Historia ➜</div>
+                    </div>
+                </a>
+                <a href="#dj-vs-entertainer" class="knowledge-card" data-category="tecnica">
+                    <img src="./assets/knowledge/dj-entertainer.png" data-academy-media="vault_cards.dj_vs_entertainer" class="knowledge-card-bg" alt="DJ vs Entertainer">
+                    <div class="knowledge-card-overlay"></div>
+                    <div class="knowledge-card-content">
+                        <span class="category-tag" data-i18n="knowledge-category-technique">Técnica</span>
+                        <h3 data-i18n="art-entertainer-title">DJ vs Entertainer</h3>
+                        <p data-i18n="art-entertainer-sub">Definiendo tu identidad en cabina.</p>
+                        <div class="card-footer" data-i18n="knowledge-card-read">Leer Historia ➜</div>
+                    </div>
+                </a>
+                <!-- Placeholder de proximo capitulo, sin categoria -->
+                <div class="knowledge-card" data-category="proximamente" style="opacity: 0.2; pointer-events: none; border-style: dashed;">
+                    <div class="knowledge-card-content">
+                        <span class="category-tag">ARCHIVE</span>
+                        <h3 style="color: rgba(255,255,255,0.3);">Next Chapter</h3>
                     </div>
                 </div>
             </div>
@@ -991,50 +1202,224 @@
     <script src="./js/academy-media-loader.js?v=20260612-acad-storage"></script>
     <script src="./articles-loader.js"></script>
     <script>
-        // Scroll Spy Logic for Knowledge Sidebar
+        // Filtro de categorias de la biblioteca (Todos / Historia / Cultura / Tecnica)
         document.addEventListener('DOMContentLoaded', () => {
-            const sections = document.querySelectorAll('.knowledge-main > section[id], .knowledge-main > article[id]');
-            const navItems = document.querySelectorAll('.knowledge-nav-item');
+            const pills = document.querySelectorAll('#knowledge-category-pills .category-pill');
+            const cards = document.querySelectorAll('#knowledge-grid .knowledge-card[data-category]');
 
-            const observerOptions = {
-                root: null,
-                rootMargin: '-20% 0px -60% 0px', // Trigger when section is in the middle of viewport
-                threshold: 0
-            };
-
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        // Remove active class from all
-                        navItems.forEach(item => item.classList.remove('active'));
-                        
-                        // Add active class to corresponding nav item
-                        const activeId = entry.target.getAttribute('id');
-                        const activeNavItem = document.querySelector(`.knowledge-nav-item[href="#${activeId}"]`);
-                        
-                        if (activeNavItem) {
-                            activeNavItem.classList.add('active');
-                        }
-                    }
+            pills.forEach(pill => {
+                pill.addEventListener('click', () => {
+                    pills.forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    const filter = pill.getAttribute('data-filter');
+                    cards.forEach(card => {
+                        const match = filter === 'all' || card.getAttribute('data-category') === filter;
+                        card.classList.toggle('is-filtered-out', !match);
+                    });
                 });
-            }, observerOptions);
-
-            sections.forEach(section => {
-                observer.observe(section);
             });
-            
-            // Set initial active state based on URL hash if present
-            if (window.location.hash) {
-                const targetNavItem = document.querySelector(`.knowledge-nav-item[href="${window.location.hash}"]`);
-                if(targetNavItem) {
-                    navItems.forEach(item => item.classList.remove('active'));
-                    targetNavItem.classList.add('active');
-                }
-            } else {
-                 // Default to manifesto
-                 const firstNavItem = document.querySelector('.knowledge-nav-item[href="#manifesto"]');
-                 if(firstNavItem) firstNavItem.classList.add('active');
+        });
+    </script>
+
+    <!-- ═══ LECTOR EDITORIAL INMERSIVO (4 artículos reales) ═══ -->
+    <div id="reader-modal" class="reader-modal" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Lector de artículo">
+        <div class="reader-progress-track">
+            <div class="reader-progress-fill" id="reader-progress-fill"></div>
+        </div>
+        <button type="button" id="reader-close-btn" class="reader-close-btn" aria-label="Cerrar lector">✕</button>
+        <div class="reader-modal-scroll" id="reader-modal-scroll">
+            <div class="reader-modal-inner">
+                <div class="reader-voice-bar" id="reader-voice-bar">
+                    <button type="button" id="reader-play-btn" class="reader-voice-btn" aria-label="Reproducir">▶</button>
+                    <button type="button" id="reader-pause-btn" class="reader-voice-btn" aria-label="Pausar" hidden>⏸</button>
+                    <button type="button" id="reader-stop-btn" class="reader-voice-btn" aria-label="Detener">⏹</button>
+                    <div class="reader-speed-group">
+                        <button type="button" class="reader-speed-btn active" data-speed="1">1x</button>
+                        <button type="button" class="reader-speed-btn" data-speed="1.25">1.25x</button>
+                    </div>
+                </div>
+                <div id="reader-article-body" class="reader-article-body"></div>
+                <div id="reader-gate" class="reader-gate" hidden>
+                    <div class="reader-gate-card">
+                        <p data-i18n="reader-gate-msg">Continúa leyendo y escuchando este volumen con tu membresía de estudiante.</p>
+                        <div class="reader-gate-actions">
+                            <a href="./academia.html" class="reader-gate-btn reader-gate-btn-primary" data-i18n="reader-gate-login">Iniciar sesión</a>
+                            <a href="./academia.html" class="reader-gate-btn reader-gate-btn-secondary" data-i18n="reader-gate-subscribe">Suscribirme</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Lector editorial inmersivo + reproductor de voz nativo (Web Speech API)
+        document.addEventListener('DOMContentLoaded', () => {
+            const modal = document.getElementById('reader-modal');
+            if (!modal) return;
+
+            const scrollEl = document.getElementById('reader-modal-scroll');
+            const bodyEl = document.getElementById('reader-article-body');
+            const gateEl = document.getElementById('reader-gate');
+            const voiceBarEl = document.getElementById('reader-voice-bar');
+            const progressFill = document.getElementById('reader-progress-fill');
+            const closeBtn = document.getElementById('reader-close-btn');
+            const playBtn = document.getElementById('reader-play-btn');
+            const pauseBtn = document.getElementById('reader-pause-btn');
+            const stopBtn = document.getElementById('reader-stop-btn');
+            const speedBtns = document.querySelectorAll('.reader-speed-btn');
+
+            let currentRate = 1;
+            let voicesCache = [];
+
+            function isAuthed() {
+                return !!window.__mdjNavOwnUserId;
             }
+
+            function refreshVoices() {
+                try { voicesCache = window.speechSynthesis.getVoices() || []; } catch (e) { voicesCache = []; }
+            }
+            if ('speechSynthesis' in window) {
+                refreshVoices();
+                window.speechSynthesis.onvoiceschanged = refreshVoices;
+            }
+
+            // Voz mas organica disponible: prioriza nombres "Natural/Google/Siri/Premium/Online"
+            // dentro del idioma activo. Sin selector visible -- si ninguna coincide, se deja sin
+            // "voice" explicito y el motor usa su default para ese idioma (orden del ticket).
+            function pickNaturalVoice(langPrefix) {
+                const candidates = voicesCache.filter(v => v.lang && v.lang.toLowerCase().indexOf(langPrefix) === 0);
+                const priority = ['natural', 'google', 'siri', 'premium', 'online'];
+                for (const word of priority) {
+                    const match = candidates.find(v => v.name.toLowerCase().indexOf(word) !== -1);
+                    if (match) return match;
+                }
+                return null;
+            }
+
+            function speechLangPrefix() {
+                return (document.documentElement.lang === 'es') ? 'es' : 'en';
+            }
+
+            function updatePlayPauseUI(playing) {
+                playBtn.hidden = playing;
+                pauseBtn.hidden = !playing;
+            }
+
+            function stopSpeech() {
+                try { window.speechSynthesis.cancel(); } catch (e) { /* noop */ }
+                updatePlayPauseUI(false);
+            }
+
+            function speakFromStart() {
+                if (!('speechSynthesis' in window) || !bodyEl) return;
+                stopSpeech();
+                const text = bodyEl.innerText.trim();
+                if (!text) return;
+                refreshVoices();
+                const langPrefix = speechLangPrefix();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = langPrefix === 'es' ? 'es-ES' : 'en-US';
+                utterance.rate = currentRate;
+                const naturalVoice = pickNaturalVoice(langPrefix);
+                if (naturalVoice) utterance.voice = naturalVoice;
+                utterance.onend = () => updatePlayPauseUI(false);
+                utterance.onerror = () => updatePlayPauseUI(false);
+                window.speechSynthesis.speak(utterance);
+                updatePlayPauseUI(true);
+            }
+
+            function togglePlayPause() {
+                if (!('speechSynthesis' in window)) return;
+                if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
+                    window.speechSynthesis.pause();
+                    updatePlayPauseUI(false);
+                    return;
+                }
+                if (window.speechSynthesis.paused) {
+                    window.speechSynthesis.resume();
+                    updatePlayPauseUI(true);
+                    return;
+                }
+                speakFromStart();
+            }
+
+            function updateProgress() {
+                if (!scrollEl || !progressFill) return;
+                const max = scrollEl.scrollHeight - scrollEl.clientHeight;
+                progressFill.style.width = (max > 0 ? (scrollEl.scrollTop / max) * 100 : 0) + '%';
+            }
+
+            // Corta el DOM clonado justo despues del 2do <p> real, sin importar el anidado --
+            // Range.deleteContents() rompe/ajusta ancestros solo, deja el arbol valido.
+            function truncateAfterSecondParagraph() {
+                const paragraphs = bodyEl.querySelectorAll('p');
+                if (paragraphs.length <= 2) return false;
+                const range = document.createRange();
+                range.setStartAfter(paragraphs[1]);
+                range.setEndAfter(bodyEl.lastChild);
+                range.deleteContents();
+                return true;
+            }
+
+            function openReader(articleId) {
+                const source = document.getElementById(articleId);
+                if (!source) return;
+
+                stopSpeech();
+                bodyEl.innerHTML = source.innerHTML;
+                bodyEl.classList.remove('reader-article-body--gated');
+                gateEl.hidden = true;
+                voiceBarEl.hidden = false;
+                speedBtns.forEach(b => b.classList.toggle('active', b.getAttribute('data-speed') === '1'));
+                currentRate = 1;
+
+                if (!isAuthed()) {
+                    truncateAfterSecondParagraph();
+                    bodyEl.classList.add('reader-article-body--gated');
+                    gateEl.hidden = false;
+                    voiceBarEl.hidden = true; // "audio completo" tambien queda tras la puerta
+                }
+
+                modal.classList.add('reader-modal--open');
+                modal.setAttribute('aria-hidden', 'false');
+                document.body.style.overflow = 'hidden';
+                scrollEl.scrollTop = 0;
+                updateProgress();
+            }
+
+            function closeReader() {
+                stopSpeech();
+                modal.classList.remove('reader-modal--open');
+                modal.setAttribute('aria-hidden', 'true');
+                document.body.style.overflow = '';
+            }
+
+            document.querySelectorAll('a.knowledge-card[href^="#"]').forEach(card => {
+                const targetId = card.getAttribute('href').slice(1);
+                if (!document.getElementById(targetId)) return; // sin articulo real, deja el href intacto
+                card.addEventListener('click', (ev) => {
+                    ev.preventDefault();
+                    openReader(targetId);
+                });
+            });
+
+            closeBtn.addEventListener('click', closeReader);
+            scrollEl.addEventListener('scroll', updateProgress);
+            document.addEventListener('keydown', (ev) => {
+                if (ev.key === 'Escape' && modal.classList.contains('reader-modal--open')) closeReader();
+            });
+
+            playBtn.addEventListener('click', togglePlayPause);
+            pauseBtn.addEventListener('click', togglePlayPause);
+            stopBtn.addEventListener('click', stopSpeech);
+            speedBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    speedBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentRate = parseFloat(btn.getAttribute('data-speed')) || 1;
+                    if (window.speechSynthesis.speaking) speakFromStart();
+                });
+            });
         });
     </script>
 

@@ -38,6 +38,27 @@
   --mdj-header-search-slot-w: clamp(140px, 12vw, 220px);
 }
 
+/* FIX-HEADER-MOBILE-R2-OVERLAP: el :root de arriba fija --mdj-header-unified-r2
+   en 72px sin media query propio. #mainHeader usa height/min-height/max-height
+   = r1+r2 con !important (más abajo en este archivo) en TODOS los anchos, así
+   que en móvil el header fijo medía 156px (84+72) mientras body.padding-top
+   (calc con --header-nav-band, que sí baja a 0 en móvil vía styles.css) medía
+   solo 84px — 72px de header tapando el contenido de debajo. Medido en vivo:
+   el título de directorio.html quedaba cortado por el borde del header a
+   390px. Misma condición que ya usa styles.css para --header-nav-band:0px,
+   repetida aquí porque este archivo carga después y su :root sin media query
+   gana por orden de cascada. */
+@media (max-width: 600px) and (pointer: coarse) {
+  :root {
+    --mdj-header-unified-r2: 0px;
+  }
+}
+@media (orientation: landscape) and (max-height: 480px) and (pointer: coarse) {
+  :root {
+    --mdj-header-unified-r2: 0px;
+  }
+}
+
 /*
  * Monetización — cabecera unificada: PRO / GRATIS / badge DJPRO **no** en fila 1 en ninguna ruta (#mainNav / “pestañas”).
  * Drawer móvil (`#header-subscribe-free-mobile`, etc.) sin cambios. `!important` gana a `inline-flex` del JS.
