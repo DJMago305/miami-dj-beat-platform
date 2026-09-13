@@ -3723,10 +3723,25 @@
         async function initExam() {
             const gateEl = document.getElementById('exam-gate');
             try {
-                const { data: { session } } = await supabase.auth.getSession();
+                // FIX-EXAM-SESSION-INIT (2026-09-13): `supabase` a secas es el namespace
+                // crudo del bundle CDN (solo trae .createClient) -- nunca el cliente
+                // configurado, que vive en window.getSupabaseClient() (ver
+                // supabase-config.js, mismo patron ya usado mas abajo en este archivo,
+                // lineas ~3998/4089). Llamar .auth.getSession() sobre el namespace crudo
+                // lanzaba "Cannot read properties of undefined (reading 'getSession')"
+                // en TODA carga, con o sin sesion. Si el cliente aun no esta listo
+                // (CDN lento resolviendo), getSupabaseClient() devuelve null sin lanzar
+                // -- se trata igual que "sin sesion": el examen degrada al gate.
+                const sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+                if (!sb || !sb.auth || typeof sb.auth.getSession !== 'function') {
+                    if (gateEl) gateEl.style.display = 'block';
+                    return;
+                }
+
+                const { data: { session } } = await sb.auth.getSession();
                 if (!session) { if (gateEl) gateEl.style.display = 'block'; return; }
 
-                const { data: profile } = await supabase
+                const { data: profile } = await sb
                     .from('dj_profiles')
                     .select('plan, status, exam_retry_after')
                     .eq('user_id', session.user.id)
