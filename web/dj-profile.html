@@ -6286,22 +6286,20 @@
             const db = window.getSupabaseClient();
             if (!db) return;
 
-            // FIX-CERTIFICATES-SCHEMA-SYNC (2026-09-13): certificates no tiene
-            // columna user_id (ver supabase/setup.sql) -- nunca hubo FK real
-            // hacia el DJ. Se resuelve el email registrado de ESTE dj_profiles
-            // (el DJ que se esta evaluando, no necesariamente quien mira la
-            // pantalla -- un instructor evalua perfiles ajenos) y se busca el
-            // certificado por ese email. Fragil a proposito: si el alumno
-            // escribio un email distinto al de su cuenta al presentar el
-            // examen (certification.html), o si ese campo quedo vacio, esto no
-            // encuentra el certificado. Arreglo real pendiente: migracion que
-            // agregue certificates.user_id como FK verdadera.
+            // certificates.user_id es FK real (migracion 20260913080000). Fallback a
+            // email solo para certificados historicos emitidos antes de esa columna
+            // (backfill por email ya corrido, pero puede quedar alguno sin vincular
+            // si el alumno escribio un email distinto al de su cuenta).
             let cert = null;
-            const { data: djProfileForCert } = await db.from('dj_profiles').select('email').eq('user_id', userId).single();
-            const djEmailForCert = djProfileForCert && djProfileForCert.email;
-            if (djEmailForCert) {
-                const { data } = await db.from('certificates').select('id, graduated, cert_id, dj_name').eq('email', djEmailForCert).single();
-                cert = data;
+            const { data: byUserId } = await db.from('certificates').select('id, graduated, cert_id, dj_name').eq('user_id', userId).single();
+            cert = byUserId;
+            if (!cert) {
+                const { data: djProfileForCert } = await db.from('dj_profiles').select('email').eq('user_id', userId).single();
+                const djEmailForCert = djProfileForCert && djProfileForCert.email;
+                if (djEmailForCert) {
+                    const { data } = await db.from('certificates').select('id, graduated, cert_id, dj_name').eq('email', djEmailForCert).single();
+                    cert = data;
+                }
             }
 
             if (cert) {
@@ -6386,25 +6384,32 @@
 
             // 2. Update Certificate if PASS
             if (result === 'PASS') {
-                // FIX-CERTIFICATES-SCHEMA-SYNC (2026-09-13): certificates no tiene
-                // user_id/status/practical_date/security_hash (ver supabase/setup.sql)
-                // -- este UPDATE fallaba con PGRST204 en TODA graduacion oficial real.
-                // Se vincula por email del dj_profiles evaluado, mismo criterio que
-                // checkAssessmentStatus() arriba -- misma fragilidad documentada ahi.
-                const { data: djProfileForCert } = await db.from('dj_profiles').select('email').eq('user_id', targetDJ).single();
-                const djEmailForCert = djProfileForCert && djProfileForCert.email;
+                // certificates.user_id es FK real (migracion 20260913080000). Se
+                // intenta por ahi primero; el fallback por email solo cubre
+                // certificados historicos que quedaron sin vincular.
+                const { data: updatedByUserId, error: certErrorByUserId } = await db.from('certificates')
+                    .update({ graduated: true, practical_score: avg })
+                    .eq('user_id', targetDJ)
+                    .select('id');
 
-                if (!djEmailForCert) {
-                    alert('No se encontró un email en el perfil de este DJ -- no se pudo vincular el certificado. La graduación NO se registró en certificates.');
-                } else {
-                    const { error: certError } = await db.from('certificates')
-                        .update({
-                            graduated: true,
-                            practical_score: avg
-                        })
-                        .eq('email', djEmailForCert);
+                if (certErrorByUserId) {
+                    alert('Error actualizando certificado: ' + certErrorByUserId.message);
+                } else if (!updatedByUserId || updatedByUserId.length === 0) {
+                    const { data: djProfileForCert } = await db.from('dj_profiles').select('email').eq('user_id', targetDJ).single();
+                    const djEmailForCert = djProfileForCert && djProfileForCert.email;
 
-                    if (certError) alert('Error actualizando certificado: ' + certError.message);
+                    if (!djEmailForCert) {
+                        alert('No se encontró un email en el perfil de este DJ -- no se pudo vincular el certificado. La graduación NO se registró en certificates.');
+                    } else {
+                        const { error: certError } = await db.from('certificates')
+                            .update({
+                                graduated: true,
+                                practical_score: avg
+                            })
+                            .eq('email', djEmailForCert);
+
+                        if (certError) alert('Error actualizando certificado: ' + certError.message);
+                    }
                 }
 
                 // 3. Update Profile Status

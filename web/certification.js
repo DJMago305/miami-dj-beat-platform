@@ -300,11 +300,20 @@
         // TODA sumision real del examen oficial.
         let registry = "—";
         try {
+            // FIX-CERTIFICATES-USER-ID (2026-09-13): certificates.user_id ya existe
+            // (migracion 20260913080000) -- se envia cuando hay sesion real, para
+            // que el vinculo con dj-profile.html sea una FK de verdad y no dependa
+            // de que el email escrito aqui coincida con el de la cuenta.
+            const sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+            const { data: { session } } = sb && sb.auth ? await sb.auth.getSession() : { data: { session: null } };
+            const userId = (session && session.user && session.user.id) || null;
+
             const { error: insErr } = await supabaseClient
                 .from('certificates')
                 .insert([{
                     cert_id: certId,
                     dj_name: name,
+                    user_id: userId,
                     email: $('djEmail').value.trim() || null,
                     theory_score: totalEarned,
                     theory_pct: pct,
