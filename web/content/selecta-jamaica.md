@@ -1,6 +1,6 @@
 # El Selecta: Cuando Jamaica Inventó el DJ
 
-![Sound System Jamaica](../assets/knowledge/jamaica-sound.png)
+![Sound System Jamaica](/assets/knowledge/jamaica-sound.png)
 
 **Introducción**
 Mucho antes de que los DJs llenaran estadios y cobraran cifras astronómicas, la figura del selector de discos nació en las polvorientas calles de Kingston, Jamaica, a finales de los años 50.

@@ -1,6 +1,6 @@
 # Bronx 1973: El Nacimiento del Hip Hop y el DJ Moderno
 
-![Nacimiento del Hip Hop](../assets/knowledge/bronx-birth.png)
+![Nacimiento del Hip Hop](/assets/knowledge/bronx-birth.png)
 
 **Introducción**
 El 11 de agosto de 1973, en la sala de recreo de un edificio de apartamentos en el 1520 de Sedgwick Avenue en el Bronx, Nueva York, un joven inmigrante jamaicano cambió la historia de la música contemporánea para siempre.

@@ -54,9 +54,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 3. Fetch and inject function
     async function loadArticleContent(sectionId, filename) {
+        // FIX-KNOWLEDGE-I18N-OVERRIDE (2026-09-13): estos .md son solo-español.
+        // Sobreescribir el cuerpo del articulo en modo EN pisaba la traduccion
+        // real que i18n.js ya habia puesto un instante antes en los mismos
+        // data-i18n (art-bronx-p1/p2, etc. -- ver translations.js). En EN, mejor
+        // no tocar nada y dejar esa traduccion visible; en ES sigue igual.
+        // window.i18n (no window.currentLang, que no existe) lo expone i18n.js.
+        if (window.i18n && window.i18n.currentLang === 'en') return;
+
         const sectionEl = document.getElementById(sectionId);
         if (!sectionEl) return;
-        
+
         // Find the content container within the section (the one with the background)
         // If it doesn't exist (like in the manifesto), we'll inject into the section itself or a specific wrapper
         let contentContainer = sectionEl.querySelector('.content-wrapper');
