@@ -1,6 +1,14 @@
 // Creates a Stripe Checkout Session for the DJ Professional Course (one-time).
 // Env: STRIPE_SECRET_KEY, optional COURSE_PRICE_CENTS (default 19700), SITE_URL (fallback redirects)
+//
+// FIX-COURSE-CHECKOUT-AUTH (2026-09-13): antes este endpoint aceptaba
+// checkouts anónimos -- Stripe cobraba, pero client_reference_id/metadata.user_id
+// nunca llegaban a existir, así que el webhook (ver stripe-webhook) no tenía
+// forma de vincular el pago a una cuenta real. Ahora exige el JWT de la sesión
+// (mismo patrón que create-checkout/index.ts: service role + auth.getUser(jwt)),
+// e inyecta client_reference_id + metadata.user_id en la sesión de Stripe.
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const PROD_ORIGINS = ["https://miamidjbeat.com", "https://www.miamidjbeat.com"];
 
@@ -61,11 +69,33 @@ serve(async (req) => {
         });
     }
 
+    // ── JWT validation: mismo patron que create-checkout/index.ts ──────────
+    const authHeader = req.headers.get("Authorization") ?? "";
+    const jwt = authHeader.replace("Bearer ", "").trim();
+    if (!jwt) {
+        return new Response(JSON.stringify({ ok: false, error: "No authorization token" }), {
+            status: 401,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+    }
+
+    const adminAuth = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+    const { data: { user }, error: authError } = await adminAuth.auth.getUser(jwt);
+    if (authError || !user) {
+        return new Response(JSON.stringify({ ok: false, error: "Unauthorized" }), {
+            status: 401,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+    }
+
     const clientIp =
         req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
         req.headers.get("cf-connecting-ip") ||
         "unknown";
-    if (!checkRateLimit(`course_checkout:${clientIp}`)) {
+    if (!checkRateLimit(`course_checkout:${user.id}:${clientIp}`)) {
         return new Response(
             JSON.stringify({ ok: false, error: "Too many requests. Try again in a minute." }),
             { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json", "Retry-After": "60" } },
@@ -113,6 +143,7 @@ serve(async (req) => {
     const checkoutParams: Record<string, string> = {
         mode: "payment",
         billing_address_collection: "auto",
+        client_reference_id: user.id,
         "line_items[0][price_data][currency]": "usd",
         "line_items[0][price_data][unit_amount]": String(COURSE_PRICE_CENTS),
         "line_items[0][price_data][product_data][name]": "MDJPRO — Curso DJ Profesional (acceso de por vida)",
@@ -121,7 +152,12 @@ serve(async (req) => {
         success_url: withSessionIdTemplate(successUrl),
         cancel_url: cancelUrl,
         "metadata[product]": "miami_dj_course",
+        "metadata[user_id]": user.id,
+        "metadata[platform]": "miami_dj_beat",
     };
+    // Prellena el email en el formulario de Stripe -- solo si la cuenta tiene uno
+    // real; Stripe rechaza customer_email vacío/mal formado en vez de ignorarlo.
+    if (user.email) checkoutParams["customer_email"] = user.email;
 
     const checkoutRes = await fetch("https://api.stripe.com/v1/checkout/sessions", {
         method: "POST",

@@ -1,6 +1,6 @@
 # DJ vs Entertainer: Identidad Profesional
 
-![DJ vs Entertainer](../assets/knowledge/dj-entertainer.png)
+![DJ vs Entertainer](/assets/knowledge/dj-entertainer.png)
 
 **Introducción**
 En la industria actual existe una gran confusión entre ser un DJ (Disc Jockey) purista musical y ser un Entertainer (Animador). Entender la diferencia y decidir dónde te posicionas en este espectro define tu carrera musical.

@@ -1,6 +1,6 @@
 # Manifesto de la Academia DJ
 
-![Hero Base](../assets/knowledge/hero-bg.png)
+![Hero Base](/assets/knowledge/hero-bg.png)
 
 **Introducción**
 Nuestra misión es formar verdaderos profesionales del arte del DJ. Ser DJ no es solo dominar una técnica. Es entender la cultura que dio origen a este movimiento, respetar sus raíces y llevar esa energía al público con responsabilidad.

@@ -512,21 +512,34 @@ serve(async (req) => {
                 }
 
                 // ── Branch: DJ Professional Course (one-time, Stripe Checkout) ──
+                // FIX-COURSE-CHECKOUT-AUTH (2026-09-13): antes solo dejaba un recibo
+                // (customer_email suelto, sin FK) -- create-course-checkout ahora exige
+                // sesion real y manda client_reference_id + metadata.user_id, asi que
+                // aqui se resuelve y se guarda de verdad. `upsert` sobre
+                // stripe_session_id (columna UNIQUE desde la migracion original) hace
+                // esto idempotente si Stripe reenvia el mismo evento -- no crea una
+                // segunda fila ni duplica el otorgamiento de acceso.
                 if (session.metadata?.product === "miami_dj_course") {
                     const email =
                         (session.customer_details?.email as string | undefined) ||
                         (session.customer_email as string | undefined) ||
                         "unknown";
-                    const { error: cpErr } = await supabase.from("course_purchases").insert({
+                    const courseUserId = userId || (session.client_reference_id as string | null) || null;
+                    if (!courseUserId) {
+                        console.error(`[Webhook] course_purchases: sesion ${session.id} sin user_id/client_reference_id -- checkout anonimo o evento previo a FIX-COURSE-CHECKOUT-AUTH. Se guarda igual (solo email) para no perder el pago, pero no otorga acceso automatico.`);
+                    }
+                    const { error: cpErr } = await supabase.from("course_purchases").upsert({
                         stripe_session_id: session.id,
                         stripe_payment_intent: (session.payment_intent as string) ?? null,
+                        user_id: courseUserId,
                         customer_email: email,
                         amount_cents: session.amount_total ?? 0,
                         currency: session.currency ?? "usd",
                         product: "dj_professional_course",
-                    });
+                        status: "completed",
+                    }, { onConflict: "stripe_session_id" });
                     if (cpErr) console.error("[Webhook] course_purchases:", cpErr.message);
-                    else console.log(`✅ Course purchase: ${session.id} | ${email} | $${((session.amount_total ?? 0) / 100).toFixed(2)}`);
+                    else console.log(`✅ Course purchase: ${session.id} | user_id=${courseUserId ?? "NONE"} | ${email} | $${((session.amount_total ?? 0) / 100).toFixed(2)}`);
                     break;
                 }
 

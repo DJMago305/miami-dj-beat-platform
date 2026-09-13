@@ -128,6 +128,28 @@ a {
     display: none !important;
 }
 
+/* FIX-CERTIFICATION-HERO-COLLISION (2026-09-13): `.hero` en styles.css es el
+   hero de pantalla completa de index.html (display:flex fila unica,
+   min-height:100vh, margin-top negativo bajo el header, overflow:hidden) --
+   esta pagina reusa el mismo nombre de clase para una tarjeta de 7 bloques
+   que deben apilarse verticalmente (badge, h1, subtitulo, niveles, divisor,
+   campos, aviso). Sin este override, esos 7 bloques se aplastaban en una
+   sola fila horizontal y el overflow:hidden cortaba lo que no cabia.
+   certification.css carga despues de styles.css, asi que este bloque gana
+   por orden de cascada a igual especificidad (una sola clase cada uno). */
+.hero {
+    display: block;
+    flex-direction: unset;
+    align-items: unset;
+    justify-content: unset;
+    position: static;
+    min-height: 0;
+    margin-top: 0;
+    padding: 0;
+    overflow: visible;
+    background: transparent;
+}
+
 /* ── HERO ─────────────────────────── */
 .certBadge {
     display: inline-flex;

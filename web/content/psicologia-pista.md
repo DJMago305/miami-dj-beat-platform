@@ -1,6 +1,6 @@
 # Psicología: El Arte de Leer la Pista
 
-![Reading the Floor](../assets/knowledge/reading-floor.png)
+![Reading the Floor](/assets/knowledge/reading-floor.png)
 
 **Introducción**
 La habilidad técnica te permite mezclar dos canciones sin que el ritmo se desajuste. Pero la habilidad psicológica es lo que te permite controlar la energía de mil personas a la vez. Leer la pista es el arte supremo del DJ.
