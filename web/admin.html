@@ -37,6 +37,17 @@
         .btn.amber:hover {
             background: rgba(245, 158, 11, 0.1);
         }
+
+        /* FIX-ADMIN-HEADER-LOGO-SIZE (2026-09-13): esta página no carga
+           styles.css (solo certification.css + mdj-assistant.css), así que
+           .logo-img-eagle/.brand-letters-img no tenían ninguna restricción de
+           tamaño y el logo se renderizaba a su resolución nativa (varios miles
+           de px), tapando toda la pantalla. Acota solo dentro de este header. */
+        header.header img {
+            max-height: 48px;
+            width: auto;
+            object-fit: contain;
+        }
     </style>
 </head>
 
@@ -59,10 +70,7 @@
             <h1>Admin — Practical Update</h1>
             <p class="muted">Server-side PATCH via Edge Function. No DB keys in browser.</p>
 
-            <label class="field">
-                <span>ADMIN_PASS</span>
-                <input id="pass" type="password" placeholder="Admin password" />
-            </label>
+            <p class="muted" id="ownerSessionStatus" style="margin-bottom:8px;">Checking Owner session…</p>
 
             <label class="field" style="margin-top:10px;">
                 <span>Certification ID</span>
@@ -107,16 +115,28 @@
         <section class="card">
             <div class="sectionHeader">
                 <h2>Governance Controls</h2>
-                <p class="muted">Revocation, suspension, and renewal. Uses the same cert_id + pass above.</p>
+                <p class="muted">Revocation, suspension, and renewal. Uses the cert_id above. Owner-only — authorized
+                    by your session, not a shared password.</p>
+            </div>
+
+            <!-- Board case + reason: required for revoke/suspend/reinstate, logged immutably -->
+            <div class="kpi">
+                <strong>📋 The Board — Expediente Formal</strong>
+                <p class="muted" style="font-size:12px; margin:4px 0 8px;">Obligatorio para revocar, suspender o
+                    reinstalar. Queda escrito de forma permanente en certificate_revocation_log.</p>
+                <label class="field">
+                    <span>Board Case Number (required)</span>
+                    <input id="boardCaseNumber" type="text" placeholder="e.g. BOARD-2026-014" />
+                </label>
+                <label class="field" style="margin-top:8px;">
+                    <span>Reason (required)</span>
+                    <input id="govReason" type="text" placeholder="e.g. Fraudulent use of seal at venue X" />
+                </label>
             </div>
 
             <!-- Revoke -->
-            <div class="kpi">
+            <div class="kpi" style="margin-top:12px;">
                 <strong>🔴 Revoke Certificate</strong>
-                <label class="field" style="margin-top:8px;">
-                    <span>Reason (required)</span>
-                    <input id="revokeReason" type="text" placeholder="e.g. Fraudulent use of seal at venue X" />
-                </label>
                 <div class="actionRow">
                     <button id="btnRevoke" class="btn danger">Revoke</button>
                     <button id="btnUnrevoke" class="btn">Clear Revocation</button>
@@ -151,6 +171,7 @@
     <script>
         const OUT = document.getElementById("out");
         const GOV = document.getElementById("govOut");
+        const SESSION_STATUS = document.getElementById("ownerSessionStatus");
         const FN_URL =
             typeof window.mdbSupabaseFunctionUrl === "function" ? window.mdbSupabaseFunctionUrl("admin-update") : "";
 
@@ -162,20 +183,48 @@
             el.innerHTML = `<strong>Response</strong><pre style="white-space:pre-wrap;color:#9ca3af;margin:8px 0 0;">${escapeHtml(JSON.stringify(obj, null, 2))}</pre>`;
         }
         function creds() {
+            return { cert_id: document.getElementById("cert_id").value.trim() };
+        }
+        function governanceFields() {
             return {
-                pass: document.getElementById("pass").value.trim(),
-                cert_id: document.getElementById("cert_id").value.trim(),
+                board_case_number: document.getElementById("boardCaseNumber").value.trim(),
+                reason: document.getElementById("govReason").value.trim(),
             };
         }
+
+        // FIX-ADMIN-UPDATE-OWNER-AUTH (2026-09-13): admin-update ya no acepta un
+        // ADMIN_PASS compartido -- exige el JWT de tu sesión real y valida en el
+        // servidor que sea la cuenta Owner (OWNER_USER_ID). Debes haber iniciado
+        // sesión en este mismo navegador vía login.html primero.
+        async function getAuthHeader() {
+            const sb = typeof window.getSupabaseClient === "function" ? window.getSupabaseClient() : null;
+            if (!sb) return null;
+            const { data: { session } } = await sb.auth.getSession();
+            return session ? `Bearer ${session.access_token}` : null;
+        }
+
+        async function refreshSessionStatus() {
+            const authHeader = await getAuthHeader();
+            SESSION_STATUS.textContent = authHeader
+                ? "✅ Signed in — requests will be sent as your session. Server verifies you are the Owner."
+                : "⚠️ Not signed in. Log in as the Owner at ./login.html in this browser first.";
+        }
+        refreshSessionStatus();
+
         async function callFn(payload, outEl) {
             try {
                 if (!FN_URL) {
                     showOut(outEl, { ok: false, error: "Supabase admin-update URL missing (load supabase-config.js)." });
                     return;
                 }
+                const authHeader = await getAuthHeader();
+                if (!authHeader) {
+                    showOut(outEl, { ok: false, error: "Not signed in. Log in as the Owner at ./login.html first." });
+                    return;
+                }
                 const r = await fetch(FN_URL, {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                    headers: { "Content-Type": "application/json", "Authorization": authHeader },
                     body: JSON.stringify(payload),
                 });
                 const data = await r.json().catch(() => ({ ok: false, error: "Bad JSON" }));
@@ -199,20 +248,26 @@
 
         // ── REVOKE ─────────────────────────────────────────────
         document.getElementById("btnRevoke").addEventListener("click", () => {
-            const reason = document.getElementById("revokeReason").value.trim();
-            if (!reason) { alert("Please enter a revoke reason."); return; }
-            callFn({ ...creds(), revoked: true, revoked_reason: reason }, GOV);
+            const { board_case_number, reason } = governanceFields();
+            if (!board_case_number || !reason) { alert("Board Case Number and Reason are required."); return; }
+            callFn({ ...creds(), revoked: true, board_case_number, reason }, GOV);
         });
         document.getElementById("btnUnrevoke").addEventListener("click", () => {
-            callFn({ ...creds(), revoked: false }, GOV);
+            const { board_case_number, reason } = governanceFields();
+            if (!board_case_number || !reason) { alert("Board Case Number and Reason are required."); return; }
+            callFn({ ...creds(), revoked: false, board_case_number, reason }, GOV);
         });
 
         // ── SUSPEND ────────────────────────────────────────────
         document.getElementById("btnSuspend").addEventListener("click", () => {
-            callFn({ ...creds(), suspended: true }, GOV);
+            const { board_case_number, reason } = governanceFields();
+            if (!board_case_number || !reason) { alert("Board Case Number and Reason are required."); return; }
+            callFn({ ...creds(), suspended: true, board_case_number, reason }, GOV);
         });
         document.getElementById("btnUnsuspend").addEventListener("click", () => {
-            callFn({ ...creds(), suspended: false }, GOV);
+            const { board_case_number, reason } = governanceFields();
+            if (!board_case_number || !reason) { alert("Board Case Number and Reason are required."); return; }
+            callFn({ ...creds(), suspended: false, board_case_number, reason }, GOV);
         });
 
         // ── RENEW ──────────────────────────────────────────────
