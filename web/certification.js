@@ -32,10 +32,10 @@
 
     /* ── RANDOMIZATION ENGINE ────────────────────────────── */
     function buildExam() {
-        const s1_all = MASTER_BANK.filter(q => q.section === 'S1: Cultura, Mentalidad y Ética');
-        const s2_all = MASTER_BANK.filter(q => q.section === 'S2: Serato DJ Pro');
-        const s3_all = MASTER_BANK.filter(q => q.section === 'S3: Conocimiento Musical');
-        const s4_all = MASTER_BANK.filter(q => q.section === 'S4: Operación y Seguridad');
+        const s1_all = MASTER_BANK.filter(q => q.section === 'S1: Cultura, Mentalidad y Ética' && q.type === 'mc');
+        const s2_all = MASTER_BANK.filter(q => q.section === 'S2: Serato DJ Pro' && q.type === 'mc');
+        const s3_all = MASTER_BANK.filter(q => q.section === 'S3: Conocimiento Musical' && q.type === 'mc');
+        const s4_all = MASTER_BANK.filter(q => q.section === 'S4: Operación y Seguridad' && q.type === 'mc');
 
         const mc = [
             ...shuffle([...s1_all]).slice(0, 6),
