@@ -6260,16 +6260,6 @@
             }
         }
 
-        // ── Security & Cryptography (Paso 2) ──────────────────
-        async function generateSecurityHash(certNumber, userId, instructorId) {
-            const secretSalt = "MDB_INTERNAL_SALT_2026_STRICT";
-            const dataStr = `${certNumber}|${userId}|${instructorId}|${secretSalt}`;
-            const msgBuffer = new TextEncoder().encode(dataStr);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 32).toUpperCase();
-        }
-
         // ── Practical Assessment Logic ──────────────────
         window.updateAverage = () => {
             const tech = parseFloat(document.getElementById('score-tech').value);
@@ -6296,12 +6286,27 @@
             const db = window.getSupabaseClient();
             if (!db) return;
 
-            // 1. Check if graduated
-            const { data: cert } = await db.from('certificates').select('id, graduated, cert_number, student_name').eq('user_id', userId).single();
+            // FIX-CERTIFICATES-SCHEMA-SYNC (2026-09-13): certificates no tiene
+            // columna user_id (ver supabase/setup.sql) -- nunca hubo FK real
+            // hacia el DJ. Se resuelve el email registrado de ESTE dj_profiles
+            // (el DJ que se esta evaluando, no necesariamente quien mira la
+            // pantalla -- un instructor evalua perfiles ajenos) y se busca el
+            // certificado por ese email. Fragil a proposito: si el alumno
+            // escribio un email distinto al de su cuenta al presentar el
+            // examen (certification.html), o si ese campo quedo vacio, esto no
+            // encuentra el certificado. Arreglo real pendiente: migracion que
+            // agregue certificates.user_id como FK verdadera.
+            let cert = null;
+            const { data: djProfileForCert } = await db.from('dj_profiles').select('email').eq('user_id', userId).single();
+            const djEmailForCert = djProfileForCert && djProfileForCert.email;
+            if (djEmailForCert) {
+                const { data } = await db.from('certificates').select('id, graduated, cert_id, dj_name').eq('email', djEmailForCert).single();
+                cert = data;
+            }
 
             if (cert) {
-                document.getElementById('eval-dj-name').textContent = cert.student_name;
-                document.getElementById('eval-cert-id').textContent = cert.cert_number;
+                document.getElementById('eval-dj-name').textContent = cert.dj_name;
+                document.getElementById('eval-cert-id').textContent = cert.cert_id;
 
                 if (cert.graduated) {
                     document.getElementById('assessment-form').style.display = 'none';
@@ -6381,21 +6386,26 @@
 
             // 2. Update Certificate if PASS
             if (result === 'PASS') {
-                // Generate Security Hash (Paso 2)
-                const { data: certData } = await db.from('certificates').select('cert_number').eq('user_id', targetDJ).single();
-                const secHash = await generateSecurityHash((certData && certData.cert_number) || 'UNKNOWN', targetDJ, instructorId);
+                // FIX-CERTIFICATES-SCHEMA-SYNC (2026-09-13): certificates no tiene
+                // user_id/status/practical_date/security_hash (ver supabase/setup.sql)
+                // -- este UPDATE fallaba con PGRST204 en TODA graduacion oficial real.
+                // Se vincula por email del dj_profiles evaluado, mismo criterio que
+                // checkAssessmentStatus() arriba -- misma fragilidad documentada ahi.
+                const { data: djProfileForCert } = await db.from('dj_profiles').select('email').eq('user_id', targetDJ).single();
+                const djEmailForCert = djProfileForCert && djProfileForCert.email;
 
-                const { error: certError } = await db.from('certificates')
-                    .update({
-                        graduated: true,
-                        status: 'PRO_VERIFIED',
-                        practical_score: avg,
-                        practical_date: new Date().toISOString(),
-                        security_hash: secHash
-                    })
-                    .eq('user_id', targetDJ);
+                if (!djEmailForCert) {
+                    alert('No se encontró un email en el perfil de este DJ -- no se pudo vincular el certificado. La graduación NO se registró en certificates.');
+                } else {
+                    const { error: certError } = await db.from('certificates')
+                        .update({
+                            graduated: true,
+                            practical_score: avg
+                        })
+                        .eq('email', djEmailForCert);
 
-                if (certError) alert('Error actualizando certificado: ' + certError.message);
+                    if (certError) alert('Error actualizando certificado: ' + certError.message);
+                }
 
                 // 3. Update Profile Status
                 await db.from('dj_profiles').update({ verified: true }).eq('user_id', targetDJ);

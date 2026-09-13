@@ -320,7 +320,10 @@
     </script>
     <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
     <script>
-        const supabaseClient = supabase.createClient(window.MDB_SUPABASE_URL, window.MDB_SUPABASE_ANON_KEY);
+        // FIX-CERTIFICATES-SCHEMA-SYNC (2026-09-13): reusa el singleton del sitio
+        // (supabase-config.js) en vez de instanciar un cliente propio -- mismo
+        // patron que el resto de la plataforma (getSupabaseClient()).
+        const supabaseClient = window.getSupabaseClient();
     </script>
     <script src="./cert-bank-stub.js"></script>
     <script src="./certification.js"></script>

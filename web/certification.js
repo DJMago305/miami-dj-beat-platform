@@ -292,18 +292,23 @@
         }
 
         /* ── Supabase INSERT ────────────────────────────────── */
+        // FIX-CERTIFICATES-SCHEMA-SYNC (2026-09-13): cert_number/student_name/
+        // verification_url no existen en public.certificates (ver
+        // supabase/setup.sql) -- las columnas reales son cert_id/dj_name, y no
+        // hay columna para la URL de verificacion (se construye en runtime con
+        // cert_id, nunca se persiste). Este INSERT fallaba con PGRST204 en
+        // TODA sumision real del examen oficial.
         let registry = "—";
         try {
             const { error: insErr } = await supabaseClient
                 .from('certificates')
                 .insert([{
-                    cert_number: certId,
-                    student_name: name,
+                    cert_id: certId,
+                    dj_name: name,
                     email: $('djEmail').value.trim() || null,
                     theory_score: totalEarned,
                     theory_pct: pct,
-                    pre_graduated: preGrad,
-                    verification_url: `${window.location.origin}/verify.html?id=${certId}`
+                    pre_graduated: preGrad
                 }]);
             if (insErr) {
                 console.error('Supabase insert error:', insErr);
@@ -311,7 +316,7 @@
                 const { data: regData } = await supabaseClient
                     .from('certificates')
                     .select('public_year, public_seq')
-                    .eq('cert_number', certId)
+                    .eq('cert_id', certId)
                     .single();
                 if (regData && regData.public_year && regData.public_seq) {
                     registry = `${regData.public_year}-${String(regData.public_seq).padStart(6, '0')}`;
