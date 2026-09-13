@@ -508,6 +508,15 @@
         #qr-export-area.pub-qr-paper {
             padding: 10px 12px 12px !important;
             overflow: hidden;
+            /* FIX-PROFILE-QR-EXPORT-OVERFLOW (2026-09-13): heredaba width:100%
+               de .pub-qr-share-block sin ningún max-width, así que en viewports
+               angostos (donde .dj-side-col ya no tiene el ancho fijo de
+               sidebar de escritorio) la tarjeta cuadrada del QR se estiraba al
+               ancho completo del dispositivo. Es un widget visible ("SCAN FOR
+               PUSH!" + downloadMyQR() al tocar), no un área de captura oculta
+               -- se acota como tarjeta, no se esconde. */
+            max-width: 340px;
+            margin: 0 auto;
         }
 
         #qr-export-area .mdj-qr-wrap {
