@@ -4,8 +4,10 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Miami DJ Beat — Standards & Code of Conduct</title>
+    <title>Estándares y Código de Conducta DJ Miami | Miami DJ Beat</title>
     <link rel="canonical" href="https://www.miamidjbeat.com/standards.html" />
+    <meta name="description"
+        content="Código de conducta y estándares profesionales para DJs certificados MDB en Miami: preparación técnica, ética en cabina, revocación y renovación anual." />
     <!-- GEO/SEO Fase 6 -- medicion: GA4 activo desde 2026-08-29 (ID real). -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-7XRWGTCQ5L"></script>
     <script>
@@ -15,6 +17,55 @@
       gtag('config', 'G-7XRWGTCQ5L');
     </script>
     <meta name="google-site-verification" content="BMMzSc4HzEcFPH2SaRYWVi1ORPiIOF2ghKycMgeojn8" />
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "@id": "https://www.miamidjbeat.com/standards.html#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "¿Qué son los Estándares MDB para DJs certificados?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Son el código de conducta que todo DJ con sello MDB acepta al presentar el examen: preparación técnica (biblioteca organizada, backup independiente), control de energía y estructura del set, operación Open Format con criterio, conducta profesional en cabina, responsabilidad con el venue, y competencia cultural para transitar entre géneros como reggaetón, salsa, bachata, merengue, crossover, hip hop y house sin faltar el respeto a la identidad del venue."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Qué NO hace un DJ certificado MDB?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No sabotea la energía de otro DJ subiendo el BPM deliberadamente, no manipula la cabina o el sistema de un colega sin autorización, no opera en clipping o niveles inseguros, no se presenta a un set profesional sin backups, no tiene conducta irrespetuosa hacia staff o colegas, y no reclama certificación activa si está suspendida o revocada."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Qué puede causar la suspensión o revocación de una certificación MDB?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Evidencia razonable, documentada y verificable de una violación seria del Código de Conducta, basada en reportes de venues, promoters, instructores, colegas y/o evidencia audiovisual. La suspensión es un estado temporal (ID marcado como suspended en Verify) mientras se investiga; la revocación es la pérdida definitiva del estatus MDB (ID marcado como revoked, visible a venues y bookers)."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Cada cuánto se renueva la certificación MDB?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Cada 12 meses desde la fecha de emisión original. El proceso de renovación puede incluir un mini-examen de actualización de estándares, revisión de conducta y/o una evaluación práctica abreviada ante instructor. Si no se renueva, el ID queda marcado como expired en Verify y el DJ debe reiniciar el proceso completo."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿La certificación MDB es una licencia legal para trabajar como DJ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. La certificación MDB es una credencial privada emitida por Miami DJ Beat LLC. No constituye licencia gubernamental, habilitación laboral legal ni membresía sindical — su valor es reputacional y operacional dentro de la comunidad DJ de Miami y mercados asociados."
+          }
+        }
+      ]
+    }
+    </script>
   <!-- Tipografia institucional del menu (Inter 800). Sin esta hoja la barra cae en la
        sustituta del sistema y el texto sale ~2% mas estrecho, desplazando el eje X. -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=optional" rel="stylesheet" />
@@ -583,6 +634,20 @@
     })();
     </script>
     <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
+    <script>
+      /* Hard Gate Ligero — Academia Gateway. Contenido reservado a miembros
+         inscritos; sin sesion, redirige a la puerta de entrada centralizada. */
+      (async function () {
+        try {
+          var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+          if (!sb) return;
+          var res = await sb.auth.getSession();
+          if (!res || !res.data || !res.data.session) {
+            window.location.href = 'academia.html?redirect=' + encodeURIComponent(window.location.pathname);
+          }
+        } catch (e) { /* fallo de red: no bloquear la pagina */ }
+      })();
+    </script>
     <script src="./translations.js?v=20260903-perfil-label"></script>
     <script src="./i18n.js?v=20260411-14"></script>
     <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
