@@ -46,7 +46,24 @@
             var key = el.getAttribute('data-academy-media');
             var src = resolveEntry(catalog, key);
             if (!src) return;
-            el.src = withVersion(src, version);
+            src = withVersion(src, version);
+
+            /* FIX-CABLE-IMG-ABORT (2026-09-13): sobreescribir `src` en caliente
+               aborta (net::ERR_ABORTED) la descarga local que el navegador ya
+               inicio al parsear el <img> -- confirmado en las 6 imagenes de
+               cable_connectors.* en courses.html. TODOS los <img data-academy-media>
+               del sitio ya traen un src local real en el HTML (verificado); el
+               catalogo solo debe actuar como respaldo si ese archivo local
+               realmente falla, nunca como reemplazo preventivo de algo que el
+               navegador ya esta cargando. */
+            if (el.getAttribute('src')) {
+                el.addEventListener('error', function onLocalMediaError() {
+                    el.removeEventListener('error', onLocalMediaError);
+                    el.src = src;
+                }, { once: true });
+                return;
+            }
+            el.src = src;
         });
 
         document.querySelectorAll('[data-academy-hero-video]').forEach(function (el) {

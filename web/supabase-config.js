@@ -433,7 +433,21 @@ window.resolveMdAssetVideoUrl = window.resolveMdAssetPublicUrl;
             if (el.closest("picture")) return;
             var is = el.getAttribute("src");
             if (is && /weather\//i.test(is)) return;
-            if (is && is.indexOf("./assets/") === 0) el.src = fn(is);
+            /* FIX-CABLE-IMG-ABORT (2026-09-13): sobreescribir `src` en caliente
+               aborta (net::ERR_ABORTED) la descarga local que el navegador ya
+               inicio al parsear el <img> -- confirmado en courses.html
+               (assets/course/cable_*.png). Cuando el archivo local SI existe
+               (deploy con el binario incluido, o entorno local), esta funcion
+               no debe competir con esa descarga ya en curso. El bucket de
+               Storage sigue siendo el respaldo real para cuando el binario NO
+               esta en el deploy (motivo original de esta funcion) -- solo que
+               ahora se activa via `error`, nunca de forma preventiva. */
+            if (is && is.indexOf("./assets/") === 0) {
+                el.addEventListener("error", function onLocalAssetMissing() {
+                    el.removeEventListener("error", onLocalAssetMissing);
+                    el.src = fn(is);
+                }, { once: true });
+            }
         });
         var hero = document.getElementById("home-hero-video");
         if (hero) {
