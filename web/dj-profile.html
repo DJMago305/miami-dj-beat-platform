@@ -1396,13 +1396,27 @@
                 height: 320px;
             }
 
+            /* TICKET · hero cargado en móvil. El PO pidió explícitamente encoger un
+               poco la foto para dar aire al resto ("incluso la propia foto del
+               hero, un poco"). scale() la reduce sin recortarla distinto —
+               mismo encuadre, mismo object-position, solo más pequeña dentro de
+               la misma caja — y de paso atenúa (sin ocultar ni borrar, regla 2
+               de gobernanza) el monograma dorado que trae la propia foto de
+               portada del artista en el lado derecho. */
             body.dj-profile-sft-client-view .dj-hero-bg-photo {
                 object-position: center 22%;
+                transform: scale(0.94);
             }
 
+            /* Franja extra de oscurecido a la derecha: el monograma dorado
+               "DM / DJMAGO305" que trae la foto de portada del artista competía
+               con el bloque de nombre/estrellas por atención en ~375-390px. No
+               se toca el archivo de la foto (es contenido del propio artista) —
+               solo se atenúa con el mismo velo translúcido que ya oscurece la
+               izquierda, ahora también en el tercio derecho. */
             body.dj-profile-sft-client-view .dj-hero-overlay {
                 background:
-                    linear-gradient(to right, rgba(0, 0, 0, 0.3) 0%, transparent 42%, transparent 100%),
+                    linear-gradient(to right, rgba(0, 0, 0, 0.3) 0%, transparent 42%, transparent 68%, rgba(0, 0, 0, 0.4) 100%),
                     linear-gradient(to top, rgba(0, 0, 0, 0.94) 0%, rgba(0, 0, 0, 0.68) 36%, transparent 66%);
             }
 
@@ -1422,25 +1436,45 @@
                 padding: 5px 11px;
             }
 
-            body.dj-profile-show-owner-tabs .dj-hero-top-stack,
-            html.dj-profile-qr-view .dj-hero-top-stack {
+            body.dj-profile-show-owner-tabs .dj-hero-top-stack {
                 top: 16px;
                 left: 20px;
             }
 
+            /* BUG REAL (mismo hallazgo que MDJ_FIT_PUBLIC_HERO_MOBILE, arriba):
+               en modo dueño/estación, .dj-hero recibe padding-top propio (ver
+               header-unified.css, franja bajo barra) que ya empuja esta pastilla
+               por debajo del logo fijo móvil (.mdj-mobile-brand-fab, LOCKED,
+               top:14px/alto 44px). La vista pública (QR) no tiene esa franja, así
+               que copiar el mismo top:16px la dejaba justo debajo del logo —
+               medido en vivo, "PLAN PRO" se leía encima de "Miami DJ Beat LLC".
+               No se toca el logo (regla 2 de gobernanza); se baja SOLO esta
+               pastilla, SOLO en la vista pública, lo justo para despejarlo. */
+            html.dj-profile-qr-view .dj-hero-top-stack {
+                top: 70px;
+                left: 20px;
+            }
+
+            /* TICKET · bloque nombre/rating/redes iba pegado al hombro izquierdo
+               de la foto, amontonado. justify-content:center centra la columna
+               completa dentro del hero (la foto inset ya está display:none en
+               esta vista, así que no hay nada a la derecha con qué repartir el
+               espacio). */
             body.dj-profile-sft-client-view .dj-hero-content {
                 padding: 0 22px 14px;
                 align-items: flex-end;
+                justify-content: center;
             }
 
             body.dj-profile-sft-client-view .dj-hero-left {
                 max-width: min(100%, 24ch);
                 padding-top: 18px;
+                text-align: center;
             }
 
             body.dj-profile-sft-client-view .dj-hero-role {
                 max-width: 20ch;
-                margin-bottom: 7px;
+                margin: 0 auto 7px;
                 font-size: 10px;
                 line-height: 1.28;
                 letter-spacing: 0.16em;
@@ -1449,35 +1483,53 @@
 
             body.dj-profile-sft-client-view .dj-hero-name {
                 margin-bottom: 10px;
-                font-size: clamp(22px, 6.5vw, 30px);
+                /* TICKET · el PO pidió reducir también el nombre del escenario un
+                   poco a este ancho — mismo clamp, techo bajado de 30px a 26px. */
+                font-size: clamp(20px, 5.8vw, 26px);
                 line-height: 1.03;
             }
 
             body.dj-profile-sft-client-view .dj-rating {
                 gap: 3px;
                 margin-bottom: 12px;
-                font-size: 12px;
+                /* TICKET · estrellas un poco más pequeñas, PO lo pidió explícito. */
+                font-size: 11px;
                 opacity: 1;
+                justify-content: center;
                 filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.38));
             }
 
+            /* TICKET · la fila se recortaba por el borde izquierdo de la pantalla:
+               7 íconos a 34px + botón compartir no cabían en los ~213px de esta
+               columna con flex-wrap:nowrap, así que el conjunto (centrado sobre
+               un ancho que no le alcanzaba) se salía por ambos lados y el propio
+               .dj-hero (overflow:hidden) recortaba el primero. Envolver en dos
+               líneas cuando hace falta + íconos algo más chicos (pedido del PO)
+               resuelve el recorte sin tocar el marcado. */
             body.dj-profile-sft-client-view .dj-social-row {
                 gap: 6px;
                 margin-top: 0;
                 justify-content: center;
-                flex-wrap: nowrap;
+                flex-wrap: wrap;
+                width: 100%;
+            }
+
+            body.dj-profile-sft-client-view #pub-social-icons {
+                flex-wrap: wrap;
+                justify-content: center;
+                width: 100%;
             }
 
             body.dj-profile-sft-client-view .dj-social-icon {
-                width: 34px;
-                height: 34px;
-                border-radius: 9px;
+                width: 28px;
+                height: 28px;
+                border-radius: 8px;
                 background: rgba(255, 255, 255, 0.08);
             }
 
             body.dj-profile-sft-client-view .dj-social-icon svg {
-                width: 16px;
-                height: 16px;
+                width: 14px;
+                height: 14px;
             }
 
             body.dj-profile-sft-client-view #tab-public > .dj-body {
@@ -2914,6 +2966,20 @@
 
             body.dj-profile.mdj-sft-float-pad #tab-public {
                 padding-bottom: calc(78px + env(safe-area-inset-bottom, 0));
+            }
+
+            /* TICKET · el botón flotante del asistente (#mdj-assistant-booth,
+               definido en mdj-assistant.css, cargado en decenas de páginas —
+               NO se toca ese archivo compartido) vive en bottom:18px/right:16px
+               fijo. Con la barra CTA de SOUNDFORTIPS ocupando toda la franja
+               inferior en móvil (bar ≈ 10px + 52px botón + 12px + safe-area),
+               el robot quedaba encima, tapando el texto/tap-target de la barra.
+               Se sube SOLO en dj-profile.html (override local, no en el CSS
+               compartido) y SOLO cuando esa barra está realmente activa
+               (mdj-sft-float-pad) — en cualquier otra página el botón se queda
+               donde siempre. */
+            body.mdj-sft-float-pad #mdj-assistant-booth {
+                bottom: calc(96px + env(safe-area-inset-bottom, 0px));
             }
         }
 
@@ -5369,6 +5435,63 @@
 
             if (p.founding_member) document.getElementById('pub-founder-badge').style.display = 'block';
 
+            /* ══ HERO MOVIL · SE MIDE, NO SE ADIVINA ═══════════════════════════
+               BUG REAL encontrado en vivo (perfil público, ≤560px, DJMago305):
+               el hero público mide 260px fijos (ver @media max-width:560px más
+               arriba) — altura pensada para el caso sin foto de fondo, según su
+               propio comentario. Con foto + certificación + redes, el bloque de
+               nombre (.dj-hero-left, anclado abajo con align-items:flex-end)
+               mide más que el espacio disponible y se desborda HACIA ARRIBA,
+               fuera del propio .dj-hero (que lo recorta con overflow:hidden) —
+               metido justo en la zona donde vive el logo fijo de marca en móvil
+               (.mdj-mobile-brand-fab, position:fixed, top:14px/left:14px/alto
+               44px, siempre visible, LOCKED). Medido en vivo: el nombre
+               "DJMago305" terminaba debajo del logotipo "Miami DJ Beat LLC".
+               No es un problema de ESE logo (no se toca, ver regla 2 de
+               gobernanza) ni de la altura fija en si (perfiles sin certificación
+               —DJSolitario, DJYuyo— caben de sobra en 260px y no deben crecer,
+               o vuelve el "degradado vacío" que un ticket anterior ya corrigió
+               a proposito para ese caso). El contenido REAL es lo que varía
+               (insignia de certificación, socio fundador…), así que se mide el
+               contenido real en vez de adivinar un numero fijo nuevo: si
+               .dj-hero-left empieza por encima del propio .dj-hero, el hero
+               crece exactamente lo que hace falta para bajar el bloque por
+               debajo del logo fijo — ni un pixel más, y solo cuando hace falta. */
+            function mdjFitPublicHeroMobile() {
+                try {
+                    if (document.body.classList.contains('mdj-perfil-estacion')) return; // esa vista ya usa 352px, sin este problema
+                    var hero = document.querySelector('.dj-hero');
+                    var left = document.querySelector('.dj-hero-left');
+                    if (!hero || !left) return;
+                    hero.style.removeProperty('height'); // vuelve a la base de la hoja antes de medir de nuevo
+                    if (!window.matchMedia('(max-width: 560px)').matches) return; // solo aplica en el mismo corte que reduce a 260px
+                    /* Un documento oculto (pestaña en segundo plano, precarga) no tiene layout
+                       real — getBoundingClientRect() da todo en cero ahi. Medir en ese momento
+                       aplicaria una altura basada en un cero falso; se sale sin tocar nada y
+                       el listener de visibilitychange, mas abajo, vuelve a medir cuando el
+                       documento sea visible de verdad. */
+                    if (document.hidden) return;
+                    var heroTop = hero.getBoundingClientRect().top;
+                    var leftTop = left.getBoundingClientRect().top;
+                    var overflowPx = heroTop - leftTop; // >0 si el bloque de nombre empieza antes que el propio hero
+                    if (overflowPx <= 0) return; // cabe de sobra — no tocar (DJSolitario, DJYuyo, etc.)
+                    var FAB_RESERVADO = 66; // 14px (top del logo fijo) + 44px (su alto) + 8px de aire
+                    var base = hero.getBoundingClientRect().height;
+                    hero.style.setProperty('height', Math.ceil(base + overflowPx + FAB_RESERVADO) + 'px');
+                } catch (eFit) { /* noop */ }
+            }
+            mdjFitPublicHeroMobile();
+            (function () {
+                var t = null;
+                function reScheduleFit() {
+                    clearTimeout(t);
+                    t = setTimeout(mdjFitPublicHeroMobile, 120);
+                }
+                window.addEventListener('resize', reScheduleFit, { passive: true });
+                window.addEventListener('orientationchange', reScheduleFit, { passive: true });
+                document.addEventListener('visibilitychange', reScheduleFit, { passive: true });
+            })();
+
             // ── Status sidebar (owner/admin) ──
             if (isOwner || isAdmin) {
                 const sc = document.getElementById('status-sidebar-card');
@@ -5940,6 +6063,12 @@
             // Store blocked dates
             window._djBlockedDates = p.blocked_dates || {};
             window._djNameForAvail = djName;
+            // Corrección quirúrgica (2026-09-13): dj_profiles.blocked_dates no
+            // existe como columna real (confirmado vía information_schema) —
+            // _djBlockedDates de arriba siempre fue {}. checkDJAvailability()
+            // ahora llama al RPC real check_dj_availability(p_dj_slug, ...),
+            // que necesita el slug público, no el user_id.
+            window._djSlugForAvail = p.dj_slug || '';
 
             (function stripFlowTabFromUrlIfUnauthorized() {
                 const rp = new URLSearchParams(window.location.search);
@@ -6214,7 +6343,18 @@
             setTimeout(() => t.classList.remove('show'), 3000);
         }
         // ── CHECK button handler ──
-        function checkDJAvailability() {
+        // Corrección quirúrgica (2026-09-13): dj_profiles.blocked_dates nunca
+        // existió como columna real — window._djBlockedDates siempre fue {},
+        // así que esta función SIEMPRE mostraba "✅ Disponible" para
+        // cualquier fecha/DJ (falso positivo en producción). Ahora llama al
+        // RPC real check_dj_availability() (tri-state, SECURITY DEFINER,
+        // supabase/migrations/20260913120000_check_dj_availability_rpc.sql —
+        // NO aplicado aún en ningún entorno). Se pasa p_start_time/p_end_time
+        // = null a propósito: el PO prohibió agregar un selector de hora a
+        // esta UI, y el propio diseño del RPC falla seguro a
+        // REQUIRES_CONFIRMATION (nunca AVAILABLE) cuando falta la hora — ver
+        // comentario §5-6 de la migración.
+        async function checkDJAvailability() {
             const monthEl = document.getElementById('dj-avail-month');
             const m = monthEl && monthEl.value;
             const dayEl = document.getElementById('dj-avail-day');
@@ -6229,35 +6369,79 @@
                 if (result) { result.style.color = 'rgba(255,200,100,0.9)'; result.textContent = '⚠️ Selecciona mes, día y año.'; }
                 return;
             }
-            const dateStr = y + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0');
-            const state = (window._djBlockedDates || {})[dateStr];
             if (!result) return;
+            const dateStr = y + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0');
 
-            if (state === 'blocked') {
+            result.style.color = 'rgba(255,255,255,0.55)';
+            result.textContent = 'Consultando…';
+
+            // Fail-safe default: cualquier error (RPC aún no aplicado en
+            // ningún entorno, red caída, slug ausente, etc.) cae aquí — NUNCA
+            // se muestra "Disponible" por un error o dato faltante.
+            let status = 'REQUIRES_CONFIRMATION';
+            try {
+                const slug = window._djSlugForAvail || '';
+                if (!slug) throw new Error('missing-dj-slug');
+                // Mismo patrón que el resto de la página (ver p.ej. línea
+                // ~4048/~14888): cliente local por función vía
+                // window.getSupabaseClient(), nunca una instancia nueva.
+                const sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+                if (!sb || typeof sb.rpc !== 'function') {
+                    throw new Error('missing-supabase-client');
+                }
+                const { data, error } = await sb.rpc('check_dj_availability', {
+                    p_dj_slug: slug,
+                    p_event_date: dateStr,
+                    p_start_time: null,
+                    p_end_time: null
+                });
+                if (error) throw error;
+                if (data === 'AVAILABLE' || data === 'NOT_AVAILABLE' || data === 'REQUIRES_CONFIRMATION') {
+                    status = data;
+                }
+            } catch (e) {
+                try { console.warn('[dj-profile] check_dj_availability fail-safe →', e); } catch (e2) { void e2; }
+                status = 'REQUIRES_CONFIRMATION';
+            }
+
+            try { sessionStorage.setItem('mdj_avail_result', status); } catch (eS) { void eS; }
+
+            if (status === 'NOT_AVAILABLE') {
                 result.style.color = '#ff6b6b';
                 result.textContent = 'No disponible para esa fecha. Prueba otra fecha o contacta a Miami DJ Beat.';
-            } else if (state === 'busy') {
-                result.style.color = '#ff6b6b';
-                result.textContent = 'No disponible para esa fecha. Prueba otra fecha o contacta a Miami DJ Beat.';
-            } else {
+                return;
+            }
+
+            // AVAILABLE o REQUIRES_CONFIRMATION: nunca se deja al visitante
+            // sin salida — ambos casos muestran el enlace de reserva/consulta,
+            // pero solo AVAILABLE usa el copy verde "Disponible".
+            if (status === 'AVAILABLE') {
                 result.style.color = '#22c55e';
                 result.textContent = '✅ Disponible para ese día.';
-
-                // Build booking URL with DJ ref + name + date pre-filled (funnel MDJB)
-                const djN = encodeURIComponent(window._djNameForAvail || '');
-                const refId = window.currentProfileDJId ? String(window.currentProfileDJId) : '';
-                const refQ = refId ? ('ref=' + encodeURIComponent(refId) + '&') : '';
-                const bookingUrl = './index.html?' + refQ + 'dj=' + djN + '&date=' + dateStr + '#contact';
-
-                const reserveBtn = document.createElement('a');
-                reserveBtn.id = 'dj-avail-reserve-btn';
-                reserveBtn.href = bookingUrl;
-                reserveBtn.textContent = '📋 RESERVAR ESTE DJ';
-                reserveBtn.style.cssText = 'display:block;width:100%;margin-top:10px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;text-decoration:none;padding:11px;border-radius:9px;font-size:13px;font-weight:900;text-align:center;transition:transform 0.15s,box-shadow 0.15s;box-sizing:border-box;';
-                reserveBtn.onmouseover = () => { reserveBtn.style.transform = 'translateY(-1px)'; reserveBtn.style.boxShadow = '0 6px 18px rgba(34,197,94,0.4)'; };
-                reserveBtn.onmouseout = () => { reserveBtn.style.transform = ''; reserveBtn.style.boxShadow = ''; };
-                result.after(reserveBtn);
+            } else {
+                result.style.color = '#e8c987';
+                result.textContent = 'Por confirmar — contáctanos y lo verificamos contigo.';
             }
+
+            // Build booking URL with DJ ref + name + date pre-filled (funnel MDJB)
+            // — mismo patrón ya vivo (index.html lee ref/dj/date, precarga
+            // #contact, form-handler.js envía a leads).
+            const djN = encodeURIComponent(window._djNameForAvail || '');
+            const refId = window.currentProfileDJId ? String(window.currentProfileDJId) : '';
+            const refQ = refId ? ('ref=' + encodeURIComponent(refId) + '&') : '';
+            const bookingUrl = './index.html?' + refQ + 'dj=' + djN + '&date=' + dateStr + '#contact';
+
+            const reserveBtn = document.createElement('a');
+            reserveBtn.id = 'dj-avail-reserve-btn';
+            reserveBtn.href = bookingUrl;
+            reserveBtn.textContent = status === 'AVAILABLE' ? '📋 RESERVAR ESTE DJ' : '📋 CONSULTAR ESTA FECHA';
+            const activeGradient = status === 'AVAILABLE' ? 'linear-gradient(135deg,#22c55e,#16a34a)' : 'linear-gradient(135deg,#c5a059,#e8b96a)';
+            const activeColor = status === 'AVAILABLE' ? '#fff' : '#000';
+            const activeShadow = status === 'AVAILABLE' ? '0 6px 18px rgba(34,197,94,0.4)' : '0 6px 18px rgba(197,160,89,0.45)';
+            reserveBtn.style.cssText = 'display:block;width:100%;margin-top:10px;background:' + activeGradient + ';color:' + activeColor + ';text-decoration:none;padding:11px;border-radius:9px;font-size:13px;font-weight:900;text-align:center;transition:transform 0.15s,box-shadow 0.15s;box-sizing:border-box;';
+            reserveBtn.onmouseover = () => { reserveBtn.style.transform = 'translateY(-1px)'; reserveBtn.style.boxShadow = activeShadow; };
+            reserveBtn.onmouseout = () => { reserveBtn.style.transform = ''; reserveBtn.style.boxShadow = ''; };
+            result.after(reserveBtn);
         }
 
         // ── Practical Assessment Logic ──────────────────
@@ -7444,6 +7628,7 @@
         // Global constants for DJ availability
         window._djBlockedDates = {};
         window._djNameForAvail = '';
+        window._djSlugForAvail = '';
         window.currentProfileDJId = null;
         window._flowTabAllowed = false;
 
@@ -14815,7 +15000,7 @@
     <script defer src="./monetization.js?v=20260422-sft-math"></script>
 
     <script defer src="./header-smart-search.js?v=20260415-CORE-CONNECTIONS"></script>
-    <script defer src="./mdjb-shared-header.js?v=20260903-revert-nav-agenda"></script>
+    <script defer src="./mdjb-shared-header.js?v=20260913-qr-view-no-franja"></script>
   <script defer src="./mdj-owner-tabs-marquee.js?v=20260818-nav-canonico"></script>
   <script defer src="./mdj-social-bar.js?v=20260819-social-contact-only"></script>
   <!-- Cart pill: badge + redirect to rentals (no heavy scripts needed here) -->
