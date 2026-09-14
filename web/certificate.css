@@ -183,7 +183,7 @@ body {
     width: 210mm;
     height: 297mm;
     background-color: #fff;
-    background-image: url('./assets/Certificate Transparent.png');
+    background-image: url('./assets/certificates/Certificate Transparent.png');
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
@@ -209,7 +209,7 @@ body {
     font-size: 54pt !important;
     letter-spacing: 0.5px !important;
     font-style: italic;
-    color: #000;
+    color: var(--gold);
     margin: 0 auto 2mm auto !important;
     border-bottom: 2px solid var(--gold);
     white-space: nowrap;
@@ -307,6 +307,44 @@ body {
 .signature-line {
     border-top: 1.2px solid #000;
     width: 100%;
+}
+
+.official-seal-wrap {
+    position: absolute;
+    bottom: 50mm;
+    right: 35mm;
+    width: 38mm;
+    height: 38mm;
+    z-index: 20;
+    pointer-events: none;
+}
+
+.official-seal {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+    opacity: 0.95;
+}
+
+.qr-code-wrap {
+    position: absolute;
+    bottom: 50mm;
+    left: 35mm;
+    width: 25mm;
+    height: 25mm;
+    z-index: 20;
+    background: #fff;
+    padding: 2mm;
+    border: 1px solid rgba(0,0,0,0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.qr-code-wrap canvas, .qr-code-wrap img {
+    width: 100% !important;
+    height: 100% !important;
 }
 
 .cert-meta-container {
@@ -421,7 +459,7 @@ body {
         border: none !important;
         width: 210mm !important;
         height: 297mm !important;
-        background-image: url('./assets/Certificate Transparent.png') !important;
+        background-image: url('./assets/certificates/Certificate Transparent.png') !important;
         background-size: cover !important;
         -webkit-print-color-adjust: exact !important;
         color-adjust: exact !important;

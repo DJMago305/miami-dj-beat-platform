@@ -508,6 +508,15 @@
         #qr-export-area.pub-qr-paper {
             padding: 10px 12px 12px !important;
             overflow: hidden;
+            /* FIX-PROFILE-QR-EXPORT-OVERFLOW (2026-09-13): heredaba width:100%
+               de .pub-qr-share-block sin ningún max-width, así que en viewports
+               angostos (donde .dj-side-col ya no tiene el ancho fijo de
+               sidebar de escritorio) la tarjeta cuadrada del QR se estiraba al
+               ancho completo del dispositivo. Es un widget visible ("SCAN FOR
+               PUSH!" + downloadMyQR() al tocar), no un área de captura oculta
+               -- se acota como tarjeta, no se esconde. */
+            max-width: 340px;
+            margin: 0 auto;
         }
 
         #qr-export-area .mdj-qr-wrap {
@@ -1009,62 +1018,6 @@
         }
 
         /* Dashboard/Flow styles from original dashboard */
-        /* ── Certification Badge ── */
-        .cert-badge-block {
-            display: inline-flex;
-            align-items: center;
-            gap: 12px;
-            background: linear-gradient(135deg, rgba(197, 160, 89, 0.1), rgba(197, 160, 89, 0.03));
-            border: 1px solid rgba(197, 160, 89, 0.35);
-            border-radius: 16px;
-            padding: 12px 18px;
-            margin-top: 15px;
-            margin-right: 15px;
-            transition: all 0.3s ease;
-        }
-
-        .cert-badge-block:hover {
-            border-color: var(--gold);
-            background: rgba(197, 160, 89, 0.15);
-            transform: translateY(-2px);
-        }
-
-        .cert-badge-icon {
-            font-size: 24px;
-        }
-
-        .cert-badge-info {
-            text-align: left;
-        }
-
-        .cert-badge-title {
-            font-size: 11px;
-            font-weight: 800;
-            color: var(--gold);
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            margin-bottom: 2px;
-        }
-
-        .cert-badge-id {
-            font-size: 13px;
-            font-weight: 700;
-            color: #fff;
-            margin-bottom: 2px;
-            font-family: 'Inter', sans-serif;
-        }
-
-        .cert-badge-status {
-            font-size: 10px;
-            color: #00ff88;
-            font-weight: 800;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            text-decoration: underline;
-            text-underline-offset: 3px;
-        }
-
         .admin-card {
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.08);
@@ -3540,6 +3493,12 @@
                          visto nunca. Va FUERA del <h1> a proposito: dentro, la linea que
                          reescribe el nombre con textContent lo borraria en cada pintada. -->
                     <span id="pub-name-badge" class="dj-hero-name-badge" title=""></span>
+                    <!-- FIX-PROFILE-HERO-CERT-CLEANUP (2026-09-13): reemplaza la tarjeta
+                         gigante de certificación (ver #pub-cert-badge, removido) por un ID
+                         sutil bajo el nombre. Va FUERA del <h1> por el mismo motivo que
+                         #pub-name-badge arriba. -->
+                    <span id="pub-cert-id-inline" class="muted"
+                        style="display:none; font-size:0.75rem; letter-spacing:1px;"></span>
 
                     <!-- Fila social icons -->
                     <div class="dj-social-row">
@@ -3558,28 +3517,6 @@
                          cambia. Orden final: Nombre - Rating - Redes - Especialidades - Badges. -->
                     <div class="dj-hero-role" id="pub-role-label">DJ · PRODUCER</div>
 
-                    <!-- Verified Certification Badge -->
-                    <div id="pub-cert-badge" style="display:none; margin-top: 15px;">
-                        <a id="cert-verify-link" href="#" style="text-decoration:none; display:inline-block;">
-                            <div class="cert-badge-block">
-                                <span class="cert-badge-icon">🏆</span>
-                                <div class="cert-badge-info">
-                                    <div class="cert-badge-title" id="display-cert-title" data-i18n="profile-cert-badge-title">Miami DJ Beat Certified DJ
-                                    </div>
-                                    <div class="cert-badge-id" id="display-cert-id">Credential ID: MDB-2025-001</div>
-                                    <div class="cert-badge-status">
-                                        <span id="display-cert-status-label" data-i18n="profile-cert-badge-status">Verified Credential</span>
-                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
-                                            stroke="currentColor" stroke-width="3" stroke-linecap="round"
-                                            stroke-linejoin="round">
-                                            <polyline points="20 6 9 17 4 12"></polyline>
-                                        </svg>
-                                    </div>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-
                     <!-- Founder badge -->
                     <div id="pub-founder-badge" style="display:none; margin-top: 15px;">
                         <div class="founder-badge">
@@ -3588,7 +3525,7 @@
                                 <div class="f-title" data-i18n="profile-founder-title">FOUNDING MEMBER</div>
                                 <div class="f-sub" id="pub-member-number"
                                     style="display:flex; align-items:center; gap:8px;">
-                                    <img loading="lazy" src="./assets/certified-badge.png"
+                                    <img loading="lazy" src="./assets/certificates/certified-badge.png"
                                         style="width:24px; height:24px; object-fit:contain;" alt="Certified Badge">
                                     <span data-i18n="profile-founder-rank">Miami DJ Beat Certified · #1 of 10</span>
                                 </div>
@@ -4351,6 +4288,11 @@
                certificacion, solo por ser owner. La verificacion la anuncia
                #pub-name-badge, junto al nombre, leyendo p.verified. */
             var _label = (_role === 'owner') ? '✦ OWNER' : (isPro ? '⭐ PLAN PRO' : 'PLAN BÁSICO');
+            /* FIX-PROFILE-HERO-CERT-CLEANUP (2026-09-13): la copa 🏆 junto al
+               plan reemplaza la tarjeta grande de certificación -- misma
+               condición que antes mostraba esa tarjeta (certification_score
+               >= 70), ver el bloque que rellena #pub-cert-id-inline más abajo. */
+            if (profile.certification_score && profile.certification_score >= 70) _label += ' 🏆';
             planPillEl.textContent = _label;
             planPillEl.classList.toggle('dj-hero-plan-pill--pro', isPro);
             planPillEl.classList.toggle('dj-hero-plan-pill--lite', !isPro);
@@ -5409,27 +5351,18 @@
             } catch (e) { console.error('Reserve contact links:', e); }
 
 
-            // ── Certification badge ──
+            // ── Certification badge (minimalista: copa 🏆 en la pastilla de plan,
+            //    ver mdjPaintHeroPlanPill, + ID sutil bajo el nombre aquí) ──
             if (p.certification_score && p.certification_score >= 70) {
-                const certBadge = document.getElementById('pub-cert-badge');
-                if (certBadge) {
-                    certBadge.style.display = 'block';
+                // Generate ID like MDB-2025-XXXX
+                const year = p.certification_date ? new Date(p.certification_date).getFullYear() : 2026;
+                const suffix = (p.id || '').split('-')[0].toUpperCase() || 'PRO';
+                const certID = `MDB-${year}-${suffix}`;
 
-                    // Generate ID like MDB-2025-XXXX
-                    const year = p.certification_date ? new Date(p.certification_date).getFullYear() : 2026;
-                    const suffix = (p.id || '').split('-')[0].toUpperCase() || 'PRO';
-                    const certID = `MDB-${year}-${suffix}`;
-
-                    document.getElementById('display-cert-id').textContent = `Credential ID: ${certID}`;
-
-                    if (p.graduated) {
-                        const badgTitle = document.querySelector('.cert-badge-title');
-                        if (badgTitle) badgTitle.textContent = "Fully Certified DJ";
-                        const badgStatus = document.querySelector('.cert-badge-status span');
-                        if (badgStatus) badgStatus.textContent = "Verified (PRO)";
-                    }
-
-                    document.getElementById('cert-verify-link').href = `./verify.html?id=${certID}`;
+                const certIdEl = document.getElementById('pub-cert-id-inline');
+                if (certIdEl) {
+                    certIdEl.textContent = `ID: ${certID}`;
+                    certIdEl.style.display = 'inline';
                 }
             }
 
