@@ -5546,6 +5546,43 @@ body[data-mdj-estacion] #mainHeader.header.mdj-header-unified {
     max-width: none !important;
   }
 
+  /* FIX-NAV-TABLET-AIRE-REAL (2026-09-15, tarde -- orden del PO, "demasiado
+     espacio entre pestañas vs el tamaño de las letras"): medido en vivo a
+     1024px, el gap elástico del riel (clamp 4-10px, resultaba 6.14px) MÁS
+     el margen del separador "/" (0.7rem = 11.2px por lado, puesto "por
+     cálculo, no medido en pantalla" según su propio comentario en la regla
+     original, más abajo en este archivo) sumaban ~42px de aire entre dos
+     palabras de 12px -- se confirma en vivo la desproporción que reportó
+     el PO. Mismo selector de doble-#id que la regla original para igualar
+     especificidad y ganar por orden (este bloque va después en el
+     archivo), acotado a este tramo de tablet -- no se toca el valor base
+     para desktop/portátil. */
+  html body #mainHeader#mainHeader.header.mdj-header-unified
+    #mainNav#mainNav.mdj-mainnav-flex.nav.top-nav {
+    gap: 2px !important;
+  }
+  html body #mainHeader#mainHeader.header.mdj-header-unified
+    #mainNav#mainNav > a[data-mdj-slot]:not([data-mdj-slot="1"])::before,
+  html body #mainHeader#mainHeader.header.mdj-header-unified
+    #mainNav#mainNav > a#mainNav-guest-mi-perfil-link::before {
+    margin: 0 0.2rem !important;
+  }
+
+  /* FIX-NAV-TABLET-SCROLL-HINT (2026-09-15, tarde -- hallazgo en vivo): en
+     el extremo angosto de este tramo (ej. 768px con 9 puestos y
+     "SoundForTips™"), ningún tamaño de fuente evita el desborde real -- el
+     scroll de arriba sigue funcionando pero, sin scrollbar visible, no hay
+     ningún indicio de que hay más contenido. mdjTabletHeaderScale()
+     (mdj-mobile-header-fix.js / inline en dj-profile.html) agrega esta
+     clase SOLO cuando de verdad sigue desbordando al tamaño mínimo -- en
+     el caso normal (ej. 1024px, donde todo cabe) la barra queda exactamente
+     igual que antes, sin degradado. Mismo patrón de máscara ya usado en
+     .dj-hero-role (el cintillo de especialidades). */
+  #mainHeader.header.mdj-header-unified #mainNav.mdj-nav-scrollable {
+    -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 28px), transparent 100%);
+    mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 28px), transparent 100%);
+  }
+
   /* FIX-TABLET-HEADER-SCALE-DOWN (2026-09-15, orden del PO): el scroll de
      arriba resuelve que la barra NUNCA tape el logo, pero el PO pidió algo
      más -- que quepa SIN deslizar, achicando el contenido, no escondiéndolo

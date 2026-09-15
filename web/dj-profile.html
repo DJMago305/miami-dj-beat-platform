@@ -162,7 +162,7 @@
         })();
     </script>
     <link rel="stylesheet" href="./styles.css?v=20260909-revealtext-blur-fix" />
-    <link rel="stylesheet" href="./header-unified.css?v=20260915-postmerge" />
+    <link rel="stylesheet" href="./header-unified.css?v=20260915-nav-aire-real" />
     <link rel="stylesheet" href="./profile.css?v=20260825-share-btn-gold" />
     <style id="mdj-qr-view-header-shield">
         /* Blindaje definitivo: especificidad mayor que #mainHeader.header.mdj-header-unified { display:flex !important } en header-unified.css */
@@ -1311,7 +1311,77 @@
             }
         }
 
+        /* TICKET 2026-09-15 (tarde) -- ORDEN DEL PO: bajar 8-10px el bloque de
+           identidad (nombre/ID/redes) en tablet/desktop -- el nombre queda
+           pegado a la altura de la oreja/audifono del rostro.
+           Pedido literal: margin-top:10px en el h1 (.dj-hero-name) y
+           margin-bottom:6px en el ID (#pub-cert-id-inline). MEDIDO EN VIVO
+           a 1024px ANTES de aplicar nada: .dj-hero-left está anclado ABAJO
+           (align-items:flex-end en .dj-hero-content, altura automática, sin
+           override en este rango de ancho). En ese esquema un margin-top en
+           el PRIMER hijo no mueve nada -- la caja crece hacia arriba para
+           absorber el margen y el nombre queda en el mismo pixel exacto
+           (confirmado con getBoundingClientRect antes/después: 274.95px en
+           ambos casos). El ID además es un <span> inline -- los márgenes
+           verticales en elementos inline no tienen efecto (spec CSS), así
+           que el margin-bottom ahí tampoco haría nada (idem, mismo pixel
+           antes/después).
+           El parámetro que SÍ mueve el bloque completo hacia abajo, sin
+           tocar ningún margen interno (el espacio entre redes y cintillo
+           queda exactamente igual que antes, cero riesgo nuevo de choque):
+           el padding-bottom del contenedor ancla (.dj-hero-content). De
+           40px a 30px desplaza nombre + ID + redes + cintillo 10px hacia
+           abajo en bloque, confirmado en vivo (shiftDown:10, gap cintillo→
+           borde inferior del hero: 40px, sin overflow).
+           Las estrellas y el badge PLAN PRO NO viven aquí -- ver
+           #pub-hero-top-stack (FIX-PROFILE-HERO-RATING-UNDER-PLAN,
+           2026-09-15 más arriba en esta sesión): es un bloque independiente
+           anclado ARRIBA a propósito, ajeno a este contenedor, por eso no
+           se incluye en este ajuste.
+           Acotado a min-width:901px para no tocar el rango <=900px, ya
+           afinado por otro ticket de esta misma sesión.
+           SEGUNDA PARTE del mismo ticket: "mantener 10px mínimos entre
+           redes y cintillo" -- medido en vivo, ese gap es 0px hoy (el
+           cintillo empieza justo donde terminan los íconos; se ve separado
+           solo por el line-height propio del texto, no por un margen
+           real). Bajar SOLO el padding-bottom no lo cambia (desplaza todo
+           el bloque por igual, sin tocar los huecos internos). Para dar un
+           margen real de 10px ahí sin perder el descenso de 10px del
+           nombre, se compensa: padding-bottom baja 20px (no 10) y se le
+           suma un margin-top:10px real a .dj-hero-role -- el h1 sigue
+           bajando exactamente 10px (274.95px -> 284.95px, verificado en
+           vivo), y el cintillo gana su hueco real de 10px sin chocar con
+           el borde inferior del hero (queda a 30px de él, antes eran 40). */
+        @media (min-width: 901px) {
+            #tab-public .dj-hero .dj-hero-content {
+                padding-bottom: 20px;
+            }
+
+            .dj-hero-role {
+                margin-top: 10px;
+            }
+        }
+
         @media(max-width: 560px) {
+            /* FIX-MOBILE-HEADER-DEAD-AIR (2026-09-15, orden del PO): "franja
+               de aire muerto entre la barra del logo y la imagen del Hero".
+               Medido en vivo: viene de `body { padding-top: calc(var(
+               --header-height) + var(--header-nav-band)) }` (styles.css,
+               regla GLOBAL de todo el sitio) -- en modo estación/dueño esas
+               variables resuelven a 80px aquí, pero .header-top mide 0 (está
+               colapsado en este modo) y lo único real ahí es el logo+
+               hamburguesa flotantes (.mdj-mobile-brand-fab, position:fixed,
+               top:14px + 44px de alto = termina en 58px). No se toca la
+               regla global (afectaría TODAS las páginas del sitio) -- se
+               acota SOLO aquí, SOLO en modo estación (.header-top realmente
+               colapsado; en modo visitante esa barra SÍ tiene contenido real
+               y bajar el padding la taparía). 66px deja un respiro de 8px
+               bajo el logo flotante, en vez de los 22px sobrantes de antes. */
+            html.mdj-estacion-previa body.dj-profile,
+            body.dj-profile[data-mdj-estacion] {
+                padding-top: 66px !important;
+            }
+
             /* Un poco más de altura: el bloque inferior baja en pantalla y deja más “cara” libre arriba. */
             .dj-hero {
                 height: 352px;
@@ -3196,18 +3266,24 @@
             /* FIX-PROFILE-HERO-REBUILD (2026-09-14): el asistente (#mdj-assistant-booth,
                mdj-assistant.css) es fixed bottom-right con z-index 10100 -- más alto que
                esta franja (9500) -- y se montaba sobre la esquina de la tarjeta dorada
-               de SOUNDFORTIPS. Por pedido explícito del PO pasa a un valor fijo,
-               siempre activo en este ancho (antes era condicional a que la franja
-               estuviera realmente en pantalla -- más preciso, pero el PO pidió
-               garantía incondicional en su lugar).
-               MERGE 2026-09-15 (origin/main traía la misma idea, versión
-               condicional a .mdj-sft-float-pad con env(safe-area-inset-bottom)
-               para notch/home-indicator): se conserva el selector INCONDICIONAL
-               que pidió el PO -- pero se suma el safe-area-inset de main, que
-               es una mejora real y no contradice "incondicional". */
+               de SOUNDFORTIPS.
+               TICKET 2026-09-15 (tarde): bajado a bottom:20px porque, con el hueco de
+               95px reservado incondicionalmente, el bot quedaba flotando lejos del
+               borde y chocando con "INTERACTUAR" -- medido en vivo: la franja SFT
+               tenía la clase "--on" pero display:none real (rect 0,0,0,0), es decir
+               el hueco de 95px estaba reservado para una franja que no se pintaba.
+               BLINDAJE CONDICIONAL 2026-09-15 (aprobado por el PO): 20px es la base
+               (franja SFT inactiva); el selector de abajo SOLO sube a 95px cuando
+               body.mdj-sft-float-pad está presente (franja realmente activa) --
+               resuelve el riesgo detectado sin reintroducir el hueco fantasma. */
             #mdj-assistant-booth {
-                bottom: calc(95px + env(safe-area-inset-bottom, 0px)) !important;
+                bottom: 20px !important;
                 right: 16px !important;
+                z-index: 999;
+            }
+
+            body.mdj-sft-float-pad #mdj-assistant-booth {
+                bottom: calc(95px + env(safe-area-inset-bottom, 0px)) !important;
             }
         }
 
@@ -3685,25 +3761,58 @@
         function mdjTabletHeaderScale() {
           try {
             var inRange = window.innerWidth >= 601 && window.innerWidth <= 1220;
+            // FIX-NAV-TABLET-LEGIBLE (2026-09-15, orden del PO): 8px dejaba
+            // el menú "enano" -- sube a 14px + padding real por link, mismo
+            // criterio que mdj-mobile-header-fix.js. Medido en vivo: a
+            // 14px+8px/14px los 9 puestos de esta página (incluye
+            // "SoundForTips™", el más largo) no caben en los 972px
+            // disponibles a 1024px -- 12px+5px/5px fue el tamaño más grande
+            // que cupo ENTERO en ESA medición puntual.
+            // FIX-NAV-TABLET-ADAPTATIVO (2026-09-15, tarde -- reporte del
+            // PO): un 12px fijo, calculado a partir de UNA sola medición en
+            // un solo motor de renderizado, se rompe en cuanto la fuente
+            // real (peso/kerning) mide distinto en otro navegador -- por
+            // eso el PO vio "MI PERFIL"/"AGENTE.IA" cortados en su Chrome
+            // real aunque aquí medía exacto. Se reemplaza el valor fijo por
+            // un ajuste que SE MIDE a sí mismo: prueba 13px, 12px, 11px,
+            // 10px en orden y usa el primero que quepa entero
+            // (scrollWidth<=clientWidth) en el ancho real de ESE navegador
+            // -- ya no depende de que el kerning coincida con esta sesión
+            // de prueba. Con 10px como piso, si aun así no cupiera, la red
+            // de scroll horizontal de header-unified.css (601-1220px) sigue
+            // ahí como último recurso.
             var links = document.querySelectorAll('#mainHeader.mdj-header-unified #mainNav > a');
-            for (var i = 0; i < links.length; i++) {
-              if (inRange) {
-                links[i].style.setProperty('font-size', '8px', 'important');
-                links[i].style.setProperty('letter-spacing', '0.01em', 'important');
-              } else {
-                links[i].style.removeProperty('font-size');
-                links[i].style.removeProperty('letter-spacing');
-              }
-            }
-            // FIX-NAV-AIRE-LATERAL (2026-09-15): mismo hallazgo que
-            // mdj-mobile-header-fix.js -- max-width/justify-content por CSS
-            // normal en header-unified.css no se pintaba pese a confirmarlo
-            // en vivo como la única regla que hacía match; va por JS.
+            var navEl = document.getElementById('mainNav');
+
+            // FIX-NAV-AIRE-LATERAL, vuelta 2 (2026-09-15, orden del PO):
+            // ancho máximo de la barra = ancho real medido de .dj-hero (no
+            // un número fijo adivinado) -- mismo criterio que
+            // mdj-mobile-header-fix.js.
+            // ORDEN CRÍTICO (2026-09-15, tarde -- BUG real encontrado en
+            // vivo): este bloque debe correr ANTES del loop de ajuste de
+            // fuente de abajo, no después. Cuando corría después, el loop
+            // medía navEl.clientWidth contra el ancho SIN restringir
+            // (contenedor todavía a su max-width por defecto, más ancho que
+            // el Hero) en la primera pasada -- a 13px eso "cabía" ahí y el
+            // loop paraba, pero al aplicarse DESPUÉS el max-width real
+            // (angostando el contenedor), 13px ya no cabía y quedaba
+            // atascado sin recalcular. Medido en vivo: con el orden viejo,
+            // sampleFontSize quedaba en 13px con overflow real (scrollWidth
+            // 1010 vs clientWidth 972) pese al loop "funcionar" en pruebas
+            // manuales aisladas.
             var navContainer = document.querySelector('#mainHeader.mdj-header-unified .header-nav .container');
-            var mainNavEl = document.querySelector('#mainHeader.mdj-header-unified #mainNav');
+            var heroEl = document.querySelector('.dj-hero');
             if (navContainer) {
-              if (inRange) {
-                navContainer.style.setProperty('max-width', '1040px', 'important');
+              // GUARDA (2026-09-15, tarde -- BUG real encontrado en vivo con
+              // el gancho de document.fonts.ready): si .dj-hero todavía no
+              // tiene ancho real (0px -- datos del perfil aún cargando en
+              // ese instante), heroW salía 0 y max-width:0px COLAPSABA
+              // #mainNav entero (medido: clientWidth caía a ~8px). Sin un
+              // ancho de Hero sano, no se toca el max-width -- mejor dejarlo
+              // sin restringir un instante que colapsar la barra entera.
+              var heroW = heroEl ? Math.round(heroEl.getBoundingClientRect().width) : 0;
+              if (inRange && heroEl && heroW > 0) {
+                navContainer.style.setProperty('max-width', heroW + 'px', 'important');
                 navContainer.style.setProperty('margin-left', 'auto', 'important');
                 navContainer.style.setProperty('margin-right', 'auto', 'important');
               } else {
@@ -3712,17 +3821,55 @@
                 navContainer.style.removeProperty('margin-right');
               }
             }
-            if (mainNavEl) {
-              if (inRange) {
-                mainNavEl.style.setProperty('justify-content', 'space-evenly', 'important');
-              } else {
-                mainNavEl.style.removeProperty('justify-content');
+
+            if (inRange && navEl && links.length) {
+              // Forzar reflow tras fijar el max-width de arriba, antes de
+              // medir para el ajuste de fuente -- sin esto, clientWidth
+              // puede seguir reportando el ancho previo a la restricción.
+              void navEl.offsetWidth;
+              var fitSizes = [13, 12, 11, 10];
+              for (var s = 0; s < fitSizes.length; s++) {
+                for (var i = 0; i < links.length; i++) {
+                  links[i].style.setProperty('font-size', fitSizes[s] + 'px', 'important');
+                  links[i].style.setProperty('padding', '5px 5px', 'important');
+                  links[i].style.removeProperty('letter-spacing');
+                }
+                void navEl.offsetWidth;
+                if (navEl.scrollWidth <= navEl.clientWidth || s === fitSizes.length - 1) break;
+              }
+              // FIX-NAV-TABLET-SCROLL-HINT (2026-09-15, tarde -- hallazgo en
+              // vivo): a 768px, con 9 puestos, NINGÚN tamaño (probado hasta
+              // 6px con 0 padding) evita el desborde -- el scroll horizontal
+              // de header-unified.css SÍ funciona (confirmado moviendo
+              // scrollLeft a mano) pero no tiene scrollbar visible, así que
+              // se ve "roto" sin serlo. No se vuelve a hamburguesa (orden
+              // expresa del PO: tablet nunca hamburguesa) -- se marca la
+              // barra como escrollable SOLO cuando de verdad lo sigue
+              // estando ni al tamaño mínimo, para que el CSS le agregue un
+              // degradado en el borde (mismo patrón que el cintillo de
+              // especialidades, .dj-hero-role) y no en los casos donde todo
+              // cabe normal (1024px, por ejemplo).
+              navEl.classList.toggle('mdj-nav-scrollable', navEl.scrollWidth > navEl.clientWidth);
+            } else {
+              navEl && navEl.classList.remove('mdj-nav-scrollable');
+              for (var k = 0; k < links.length; k++) {
+                links[k].style.removeProperty('font-size');
+                links[k].style.removeProperty('padding');
+                links[k].style.removeProperty('letter-spacing');
               }
             }
 
+            // FIX-NAV-TABLET-COMPACTO (2026-09-15, tarde -- orden del PO):
+            // "espacio muerto vertical" en la franja de navegación. 52px
+            // para texto de 10-13px + 5px de padding vertical (rango
+            // 20-23px de contenido) dejaba aire de sobra. Baja a 34px --
+            // .header-top NO se toca (vale 62px para el logo/marca en modo
+            // visitante, compartido por decenas de páginas vía
+            // mdj-mobile-header-fix.js; en modo estación aquí mide 0 de
+            // todas formas, así que no es la causa del aire reportado).
             var rows = [
               [document.querySelector('#mainHeader.mdj-header-unified .header-top'), '62px'],
-              [document.querySelector('#mainHeader.mdj-header-unified .header-nav'), '52px']
+              [document.querySelector('#mainHeader.mdj-header-unified .header-nav'), '34px']
             ];
             for (var j = 0; j < rows.length; j++) {
               var el = rows[j][0], px = rows[j][1];
@@ -3739,8 +3886,70 @@
             }
           } catch (eScale) { /* si algo falla, el header original sigue como estaba */ }
         }
+        // FIX-NAV-TABLET-PHASE2-HOOK (2026-09-15, tarde -- BUG real
+        // encontrado en vivo con trazas de consola): ni el gancho de
+        // fuentes ni el ResizeObserver sobre .dj-hero alcanzaban -- log en
+        // mano mostró que la llamada inicial corre con heroW=0 ("NO_HERO"/
+        // "0" en las trazas), decide que el tamaño más grande "cabe" contra
+        // un ancho todavía sin sentido, y NINGÚN gancho posterior volvía a
+        // llamar a la función después de que "[dj-profile] phase2
+        // background complete" puebla el Hero con datos reales -- el nodo
+        // de .dj-hero se reconstruye en esa fase, así que un
+        // ResizeObserver atado al nodo viejo se queda observando un
+        // elemento ya desconectado. Se expone en window para poder
+        // llamarla explícitamente justo después de esa fase (ver el otro
+        // extremo de este fix, cerca de "phase2 background complete").
+        window.mdjTabletHeaderScale = mdjTabletHeaderScale;
         window.addEventListener('resize', mdjTabletHeaderScale);
         mdjTabletHeaderScale();
+        // FIX-NAV-TABLET-FONT-RACE (2026-09-15, tarde -- BUG real encontrado
+        // en vivo): la llamada inmediata de arriba corre ANTES de que Inter
+        // (la fuente real de #mainNav > a, peso 700) termine de cargar --
+        // document.fonts confirmaba "Inter 700 unloaded" en ese instante.
+        // El loop mide contra el ancho de la fuente de RESPALDO (más
+        // angosta), decide que 13px "cabe", y nada vuelve a medir cuando
+        // Inter real entra y el texto se ensancha -- el cambio de fuente no
+        // dispara 'resize'. Confirmado en vivo: sin este gancho, sampleFont
+        // quedaba en 13px con overflow real (scrollWidth 1010 vs
+        // clientWidth 972); con este gancho, decae a 12px exacto en cuanto
+        // la fuente real está lista.
+        if (document.fonts && document.fonts.ready && typeof document.fonts.ready.then === 'function') {
+          document.fonts.ready.then(mdjTabletHeaderScale).catch(function () {});
+        }
+        // FIX-NAV-TABLET-HERO-RESIZE (2026-09-15, tarde -- BUG real
+        // encontrado en vivo): ni el gancho de fuentes de arriba alcanza --
+        // si document.fonts.ready resuelve ANTES de que el perfil (datos
+        // async) termine de cargar y .dj-hero tome su ancho real, la guarda
+        // de arriba deja el contenedor SIN restringir en ese momento, y el
+        // loop de ajuste de fuente mide contra ese ancho de sobra, "cabe" a
+        // 13px, y nada vuelve a medir cuando el Hero después sí toma su
+        // ancho real y lo angosta. En vez de adivinar en qué punto exacto
+        // del código termina de cargar el perfil, se observa el propio
+        // .dj-hero: cualquier cambio real de su tamaño vuelve a llamar a
+        // mdjTabletHeaderScale(). Cubre esto y cualquier otra causa futura
+        // de que el Hero cambie de ancho después de la carga inicial.
+        (function () {
+          if (typeof ResizeObserver !== 'function') return;
+          var heroForObserve = document.querySelector('.dj-hero');
+          if (!heroForObserve) return;
+          var ro = new ResizeObserver(function () { mdjTabletHeaderScale(); });
+          ro.observe(heroForObserve);
+        })();
+        // FIX-NAV-TABLET-RETRY-NET (2026-09-15, tarde -- BUG real encontrado
+        // en vivo): con trazas de consola, el gancho de "phase2 background
+        // complete" de arriba a veces SÍ corrige a tiempo y a veces no --
+        // dj-profile.html tiene varias ramas async (perfil, clima,
+        // geolocalización) con tiempos medidos entre ~400ms y >20s según la
+        // sesión, y no todas pasan por el mismo punto de "phase2". Llamar
+        // window.mdjTabletHeaderScale() a mano en cualquier momento SIEMPRE
+        // corrige de inmediato (confirmado en vivo) -- la función es
+        // barata e idempotente, así que en vez de perseguir el evento
+        // exacto correcto para cada rama, se reintenta unas pocas veces a
+        // intervalos crecientes. Red de seguridad, no sustituye los ganchos
+        // de arriba (que siguen corrigiendo antes, cuando sí alcanzan).
+        [300, 800, 1500, 3000, 6000].forEach(function (ms) {
+          setTimeout(mdjTabletHeaderScale, ms);
+        });
       })();
     </script>
 
@@ -4209,17 +4418,10 @@
                     </div>
                 </div>
 
-                <!-- Economía (solo dueño): saldo acreditado + acumulado de sesión (cabina) -->
-                <div class="dj-card" id="owner-wallet-card" style="display:none;">
-                    <div class="dj-card-label" data-i18n="profile-wallet-title">ECONOMÍA · SOUNDFORTIPS</div>
-                    <p class="owner-wallet-sub" style="margin:0 0 6px;font-size:11px;" data-i18n="profile-wallet-balance-hint">Saldo acreditado (tips ya abonados tras cerrar cabina)</p>
-                    <div id="owner-wallet-balance" class="owner-wallet-luxury">$0.00</div>
-                    <div id="owner-wallet-session-wrap" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.1);">
-                        <div style="font-size:10px;font-weight:800;letter-spacing:0.08em;color:rgba(197,160,89,0.95);" data-i18n="profile-wallet-tonight-label">ENTRANDO ESTA NOCHE (sesión cabina)</div>
-                        <div id="owner-wallet-session-pending" style="font-size:20px;font-weight:900;color:#86efac;margin-top:6px;">+$0.00</div>
-                        <p class="owner-wallet-sub" style="margin-top:8px;" data-i18n="profile-wallet-tonight-hint">Suma de la noche: se abona a tu saldo de golpe al <strong>cerrar la pestaña</strong> SoundForTips (fin de sesión).</p>
-                    </div>
-                </div>
+                <!-- FIX-WALLET-CARD-REMOVED (2026-09-15, orden del PO): la tarjeta
+                     ECONOMÍA · SOUNDFORTIPS se eliminó de MI PERFIL a propósito --
+                     duplicaba Cash Flow (dj-dashboard.html?tab=flow), que ya es el
+                     único lugar real para ver el saldo del DJ. -->
 
                 <!-- Documentación Legal & W-9 (solo dueño): lee obtener_mis_contratos() —
                      misma RPC de solo lectura ya usada en account-settings.html, sin
@@ -4229,7 +4431,7 @@
                     <div id="legal-compliance-rows" style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
                         <div style="font-size:11px;color:rgba(255,255,255,0.35);" data-i18n="profile-legal-loading">Cargando…</div>
                     </div>
-                    <a href="./account-settings.html#legal" style="display:inline-block;margin-top:12px;font-size:12px;font-weight:800;color:var(--gold);text-decoration:underline;" data-i18n="profile-legal-view-all">Ver todos mis documentos →</a>
+                    <a href="./account-settings.html#legal" style="display:inline-block;margin-top:12px;font-size:10px;font-weight:800;letter-spacing:.03em;padding:3px 9px;border-radius:999px;background:rgba(197,160,89,0.14);color:var(--gold);border:1px solid rgba(197,160,89,0.35);text-decoration:none;" data-i18n="profile-legal-view-all">Documentos</a>
                 </div>
 
                 <!-- Staff/manager: criterios de venta (teléfono/directo) — no incluye Cash Flow del artista. -->
@@ -4367,7 +4569,7 @@
     </footer>
 
     <!-- Translations & Base Logic -->
-    <script defer src="./translations.js?v=20260913-web-title-btn-keys"></script>
+    <script defer src="./translations.js?v=20260915-docs-pill-label"></script>
     <script defer src="./i18n.js?v=20260427-lang-default"></script>
     <script>
         // 🔧 Motor Principal de Logout (A prueba de fallos)
@@ -4800,17 +5002,10 @@
                     sftRefreshLaunchBadge();
                     sftCabQueueSyncIfBoothOpen();
                 }
-                if (ev.key && String(ev.key).indexOf('mdj_sft_booth_pending_') === 0) {
-                    if (typeof window.sftRefreshOwnerWalletEconomy === 'function') window.sftRefreshOwnerWalletEconomy();
-                }
-                if (ev.key === 'mdj_sft_tips') {
-                    if (typeof window.sftRefreshOwnerWalletEconomy === 'function') window.sftRefreshOwnerWalletEconomy();
-                }
             });
             window.addEventListener('mdj-sft-queue', function () {
                 sftRefreshLaunchBadge();
                 sftCabQueueSyncIfBoothOpen();
-                if (typeof window.sftRefreshOwnerWalletEconomy === 'function') window.sftRefreshOwnerWalletEconomy();
             });
         }
 
@@ -5814,25 +6009,6 @@
                 /* Perfil público: ocultar bloque OWNER MODE para evitar duplicidad/ruido en esta vista. */
                 if (oc) oc.style.display = 'none';
 
-                const owc = document.getElementById('owner-wallet-card');
-                const owb = document.getElementById('owner-wallet-balance');
-                if (owc && owb) {
-                    if (isOwner && window._mdjSftProAllowed && !isPublicQrView) {
-                        owc.style.display = 'block';
-                        var baseW = Number(p.wallet_balance != null ? p.wallet_balance : (p.rewards_balance != null ? p.rewards_balance : 0)) || 0;
-                        window._mdjOwnerWalletBaseUsd = baseW;
-                        if (typeof window.sftRefreshOwnerWalletEconomy === 'function') {
-                            window.sftRefreshOwnerWalletEconomy();
-                        } else {
-                            owb.textContent = (window.MDB_MONETIZATION && typeof window.MDB_MONETIZATION.formatDjWalletUsd === 'function')
-                                ? window.MDB_MONETIZATION.formatDjWalletUsd(p)
-                                : ('$' + baseW.toFixed(2));
-                        }
-                    } else {
-                        owc.style.display = 'none';
-                    }
-                }
-
                 // ── Documentación Legal & W-9 (solo dueño, nunca en vista pública/QR) ──
                 const legalCard = document.getElementById('legal-compliance-card');
                 if (legalCard && isOwner && !isPublicQrView) {
@@ -6578,7 +6754,6 @@
                         } else {
                             bb.style.display = 'block';
                             if (typeof window.sftUpdateBoothBannerPending === 'function') window.sftUpdateBoothBannerPending();
-                            if (typeof window.sftRefreshOwnerWalletEconomy === 'function') window.sftRefreshOwnerWalletEconomy();
                         }
                         try {
                             document.body.classList.add('dj-profile-sft-booth-banner-visible');
@@ -6602,6 +6777,13 @@
                     console.info('[dj-profile] phase2 background complete ~' + Math.round(mdjT2 - mdjProfT0) + 'ms');
                 }
             } catch (eT2) { void eT2; }
+            // FIX-NAV-TABLET-PHASE2-HOOK (2026-09-15, tarde): el Hero recién
+            // toma su ancho/contenido real en este punto -- re-evaluar el
+            // ajuste de tablet aquí (ver la exposición en window junto a la
+            // definición de mdjTabletHeaderScale, más arriba en el archivo).
+            try {
+                if (typeof window.mdjTabletHeaderScale === 'function') window.mdjTabletHeaderScale();
+            } catch (eScaleP2) { void eScaleP2; }
             }); /* mdjProfilePhase2 */
         }
 
@@ -13420,7 +13602,6 @@
                 sftMaybeNotifyClientSms('accept', row);
                 if (typeof sftQueueRemoveById === 'function') sftQueueRemoveById(djId, requestId);
                 if (typeof sftRefreshLaunchBadge === 'function') sftRefreshLaunchBadge();
-                if (typeof window.sftRefreshOwnerWalletEconomy === 'function') window.sftRefreshOwnerWalletEconomy();
                 window.sftRenderDjLibraryList();
                 if (typeof window.refreshSftNightLogList === 'function') window.refreshSftNightLogList();
             } finally {
@@ -13477,9 +13658,6 @@
             window.__mdjSftFlushDone = false;
             if (typeof window.sftFlushBoothPendingToWallets === 'function') {
                 window.sftFlushBoothPendingToWallets();
-            }
-            if (typeof window.sftRefreshOwnerWalletEconomy === 'function') {
-                window.sftRefreshOwnerWalletEconomy();
             }
             try {
                 var djId = window.currentProfileDJId;
@@ -14972,7 +15150,8 @@
         /**
          * Al aceptar: reparto 10% casa / 90% DJ (soundfortipSplit).
          * — Pestaña cabina (sft_booth=1): encola; al cerrar la pestaña → sftFlushBoothPendingToWallets().
-         * — Resto: deposita ya en mdj_sft_tips + mdj_sft_platform_pool_usd (demo localStorage).
+         * — Resto: acumula solo el pool de casa (mdj_sft_platform_pool_usd) en localStorage.
+         *   El saldo real del DJ vive en Cash Flow (dj-dashboard.html?tab=flow), no aquí.
          */
         function sftBoothPendingKey(djId) {
             return 'mdj_sft_booth_pending_' + (djId || '');
@@ -14999,44 +15178,6 @@
             el.textContent = 'Pendiente de depósito al cerrar esta pestaña · DJ $' + td.toFixed(2) + ' · Casa $' + tp.toFixed(2);
         };
 
-        /** Saldo acreditado = base Supabase + tips ya volcados (local). “Esta noche” = parte DJ pendiente de abono hasta cerrar cabina. */
-        window.sftRefreshOwnerWalletEconomy = function sftRefreshOwnerWalletEconomy() {
-            var base = typeof window._mdjOwnerWalletBaseUsd === 'number' ? window._mdjOwnerWalletBaseUsd : 0;
-            var tipsCredited = parseFloat(localStorage.getItem('mdj_sft_tips') || '0');
-            var acreditado = base + tipsCredited;
-
-            var owb = document.getElementById('owner-wallet-balance');
-            if (owb) {
-                owb.textContent = '$' + acreditado.toFixed(2);
-                owb.style.animation = 'none'; void owb.offsetWidth;
-                owb.style.animation = 'pulse 1s';
-            }
-
-            /* kpi-tips lo rellena solo loadFlowData (Supabase + SoundForTips aceptadas); no pisar con localStorage demo. */
-
-            var djId = window.currentProfileDJId;
-            var pendDj = 0;
-            if (djId) {
-                try {
-                    var arr = JSON.parse(localStorage.getItem(sftBoothPendingKey(djId)) || '[]');
-                    if (Array.isArray(arr)) {
-                        arr.forEach(function (r) { pendDj += Number(r.a) || 0; });
-                    }
-                } catch (e) { void e; }
-            }
-            var wrap = document.getElementById('owner-wallet-session-wrap');
-            var pendEl = document.getElementById('owner-wallet-session-pending');
-            if (wrap && pendEl) {
-                if (pendDj > 0) {
-                    wrap.style.display = 'block';
-                    pendEl.textContent = '+$' + pendDj.toFixed(2);
-                } else {
-                    wrap.style.display = 'none';
-                    pendEl.textContent = '+$0.00';
-                }
-            }
-        };
-
         window.sftFlushBoothPendingToWallets = function sftFlushBoothPendingToWallets() {
             if (window.__mdjSftFlushDone) return;
             try {
@@ -15050,21 +15191,20 @@
 
                 window.__mdjSftFlushDone = true;
 
-                var sftSum = parseFloat(localStorage.getItem('mdj_sft_tips') || '0');
+                /* La parte DJ ya no se acumula en localStorage -- el saldo real del
+                   DJ vive únicamente en Cash Flow (dj-dashboard.html?tab=flow),
+                   que lo recalcula desde Supabase. El pool de casa
+                   ('mdj_sft_platform_pool_usd') es contabilidad de plataforma,
+                   fuera de alcance de este ticket, y se mantiene igual. */
                 var platSum = parseFloat(localStorage.getItem('mdj_sft_platform_pool_usd') || '0');
                 arr.forEach(function (row) {
-                    sftSum += Number(row.a) || 0;
                     platSum += Number(row.p) || 0;
                 });
-                localStorage.setItem('mdj_sft_tips', String(sftSum));
                 localStorage.setItem('mdj_sft_platform_pool_usd', platSum.toFixed(4));
                 localStorage.removeItem(key);
 
                 var pend = document.getElementById('mdjSftBoothPendingLine');
                 if (pend) pend.textContent = '';
-                if (typeof window.sftRefreshOwnerWalletEconomy === 'function') {
-                    window.sftRefreshOwnerWalletEconomy();
-                }
             } catch (e) { void e; }
         };
 
@@ -15123,9 +15263,6 @@
                 if (typeof window.sftUpdateBoothBannerPending === 'function') {
                     window.sftUpdateBoothBannerPending();
                 }
-                if (typeof window.sftRefreshOwnerWalletEconomy === 'function') {
-                    window.sftRefreshOwnerWalletEconomy();
-                }
                 return {
                     grossUsd: (Number(grossTipUsd) || 0),
                     platformUsd: platformUsd,
@@ -15134,15 +15271,11 @@
                 };
             }
 
-            var sftSum = parseFloat(localStorage.getItem('mdj_sft_tips') || '0') + artistUsd;
-            localStorage.setItem('mdj_sft_tips', String(sftSum));
-
+            /* Parte DJ ya no se acumula en localStorage -- el saldo real del DJ
+               vive únicamente en Cash Flow (dj-dashboard.html?tab=flow), que lo
+               recalcula desde Supabase. */
             var platSum = parseFloat(localStorage.getItem('mdj_sft_platform_pool_usd') || '0') + platformUsd;
             localStorage.setItem('mdj_sft_platform_pool_usd', platSum.toFixed(4));
-
-            if (typeof window.sftRefreshOwnerWalletEconomy === 'function') {
-                window.sftRefreshOwnerWalletEconomy();
-            }
 
             return {
                 grossUsd: (Number(grossTipUsd) || 0),
