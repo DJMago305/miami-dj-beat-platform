@@ -305,28 +305,32 @@
         }
       }
 
+      // FIX-NAV-TABLET-FILA-UNICA (2026-09-15, madrugada -- ORDEN
+      // PRIORITARIA del PO, revierte FIX-NAV-TABLET-REACOMODO): wrap a 2
+      // líneas se veía bien en la medición inicial, pero los propios
+      // timers de reintento (300/800/1500/3000/6000ms, más abajo) volvían
+      // a correr después y en alguna vuelta dejaban la barra partida en
+      // "pirámide" -- confirmado en vivo por el PO esperando la ráfaga
+      // completa. QUEDA PROHIBIDO EL WRAP. Se vuelve al sistema anterior,
+      // ya estable: loop de tamaños decrecientes (13→12→11→10px, el
+      // primero que quepa entero) + scroll horizontal táctil con
+      // degradado como red de seguridad para el caso extremo (768px
+      // vertical, que no cabe ni a 6px de fuente) -- nunca una segunda
+      // fila, nunca hamburguesa. mdjb-shared-header.js fija
+      // flex-wrap:nowrap inline e incondicional (su fuente de verdad) --
+      // header-unified.css ya no intenta ponerle wrap.
       if (inRange && navEl && links.length) {
-        // Forzar reflow tras fijar el max-width de arriba, antes de medir.
         void navEl.offsetWidth;
         var fitSizes = [13, 12, 11, 10];
         for (var s = 0; s < fitSizes.length; s++) {
           for (var i = 0; i < links.length; i++) {
             links[i].style.setProperty('font-size', fitSizes[s] + 'px', 'important');
-            links[i].style.setProperty('padding', '5px 5px', 'important');
+            links[i].style.setProperty('padding', '4px 3px', 'important');
             links[i].style.removeProperty('letter-spacing');
           }
           void navEl.offsetWidth;
           if (navEl.scrollWidth <= navEl.clientWidth || s === fitSizes.length - 1) break;
         }
-        // FIX-NAV-TABLET-SCROLL-HINT (2026-09-15, tarde -- hallazgo en vivo
-        // en dj-profile.html a 768px): con suficientes puestos, ningún
-        // tamaño evita el desborde -- el scroll horizontal ya existente
-        // sigue funcionando pero no tiene scrollbar visible, así que se ve
-        // "roto" sin serlo. No se vuelve a hamburguesa (tablet nunca
-        // hamburguesa) -- se marca la barra como escrollable SOLO cuando de
-        // verdad lo sigue estando ni al tamaño mínimo, para que el CSS le
-        // agregue un degradado en el borde; no afecta a páginas donde todo
-        // cabe normal.
         navEl.classList.toggle('mdj-nav-scrollable', navEl.scrollWidth > navEl.clientWidth);
       } else {
         if (navEl) navEl.classList.remove('mdj-nav-scrollable');
@@ -338,13 +342,15 @@
       }
 
       // FIX-NAV-TABLET-COMPACTO (2026-09-15, tarde -- orden del PO):
-      // "espacio muerto vertical" en la franja de navegación. 52px para
-      // texto de 10-13px + 5px de padding vertical dejaba aire de sobra --
-      // baja a 34px. .header-top NO se toca (62px es para el logo/marca en
-      // modo visitante, ya escalado aparte más abajo en scaleTargets).
+      // "espacio muerto vertical" en la franja de navegación. .header-top
+      // baja a 62px -- vale para el logo/marca en modo visitante, ya
+      // escalado aparte más abajo en scaleTargets. .header-nav baja a
+      // 38px (dentro del rango 34-38px pedido) -- fija SIEMPRE una sola
+      // línea, así que un alto fijo es seguro (no hay caso de 2 líneas
+      // que recortar).
       var rows = [
         [document.querySelector('#mainHeader.mdj-header-unified .header-top'), '62px'],
-        [document.querySelector('#mainHeader.mdj-header-unified .header-nav'), '34px']
+        [document.querySelector('#mainHeader.mdj-header-unified .header-nav'), '38px']
       ];
       for (var j = 0; j < rows.length; j++) {
         var el = rows[j][0], px = rows[j][1];
