@@ -68,10 +68,20 @@
      riel-toggle -- dos hamburguesas dibujadas una sobre otra, ambas reales,
      ninguna "mal hecha". El riel-toggle existe siempre en el DOM pero mide
      0x0 (display:none) fuera de esa condición, así que este chequeo no
-     cambia nada en las páginas donde nunca aparece. */
+     cambia nada en las páginas donde nunca aparece.
+
+     TRIPLE CANDADO (2026-09-15, orden del PO): tablet ya no oculta la barra
+     real (`.header-nav`/`#mainNav`, ver header-unified.css -- el umbral
+     nav↔hamburguesa volvió a ser solo-teléfono). Sin este chequeo, esta
+     función seguía viendo "ningún botón de hamburguesa alcanzable" en
+     tablet (ninguno de los dos existe ahí a propósito, ya no hace falta) y
+     montaba su FAB de todos modos -- encima de la barra real, ya visible.
+     `#mainNav` es el contenido real de `.header-nav`; si tiene tamaño, la
+     barra ya es alcanzable y este failsafe no debe hacer nada. */
   function isMenuReachable() {
     return elUsable(document.getElementById('mobileMenuBtn')) ||
-      elUsable(document.getElementById('mdj-riel-toggle'));
+      elUsable(document.getElementById('mdj-riel-toggle')) ||
+      elUsable(document.getElementById('mainNav'));
   }
 
   function isBrandReachable() {
@@ -155,6 +165,12 @@
 
   function mountOrRemoveFabs() {
     try {
+      // Reevalúa también el achicado de tablet en cada disparo de esta
+      // función (observer de clases/atributos, visibilitychange) -- cubre
+      // páginas donde el modo del header (estación/visitante) resuelve de
+      // forma asíncrona después de la carga inicial.
+      mdjTabletHeaderScale();
+
       // 3) Botón de menú independiente -- solo si NINGÚN mecanismo real
       //    (hamburguesa vieja o riel-toggle de estación) es alcanzable.
       if (isMenuReachable()) {
@@ -197,9 +213,98 @@
     } catch (e) { /* si algo falla, el header original sigue como estaba */ }
   }
 
+  /* FIX-TABLET-HEADER-SCALE-DOWN (2026-09-15, orden del PO): tablets deben
+     ver la barra real (ya lo hacen, ver header-unified.css -- el corte
+     nav↔hamburguesa volvió a ser solo-teléfono) pero ACHICADA para que 9-10
+     puestos quepan sin deslizar, no a tamaño de escritorio con scroll.
+
+     Por qué esto es JS y no CSS: se intentó primero como reglas normales en
+     header-unified.css (tokens --mdj-nav-font-size/--mdj-header-unified-r1
+     y r2, y selectores directos con !important sobre #mainNav > a /
+     .header-top / .header-nav). Verificado exhaustivamente por consola que
+     esas reglas eran las ÚNICAS activas que hacían match (sin otra regla de
+     mayor especificidad ni media query compitiendo en ese rango) -- y aun
+     así no se pintaban. Un estilo puesto por JS directo sobre cada elemento
+     SÍ se pinta (confirmado en vivo), así que el achicado real vive aquí.
+
+     window.innerWidth, no matchMedia: se reevalúa a mano en cada resize,
+     así que un booleano simple alcanza. 601-1220px es el mismo rango que
+     header-unified.css usa para el scroll de seguridad de la barra (ver
+     "INTERCAMBIO NAV↔HAMBURGUESA" en ese archivo) -- mismo tramo, no un
+     número nuevo. Los tres targets son #mainNav > a (tipografía), y
+     .header-top / .header-nav (alto de ambas filas) -- 62/52px conservan
+     la misma proporción que 84/72px de escritorio, solo más compactos. */
+  function mdjTabletHeaderScale() {
+    try {
+      var inRange = window.innerWidth >= 601 && window.innerWidth <= 1220;
+      var links = document.querySelectorAll('#mainHeader.mdj-header-unified #mainNav > a');
+      for (var i = 0; i < links.length; i++) {
+        if (inRange) {
+          links[i].style.setProperty('font-size', '11px', 'important');
+          // 0.14em de letter-spacing (tamaño de escritorio) en 8-9 puestos
+          // suma varias decenas de px por sí solo -- se acorta junto con
+          // la tipografía para que quepan sin deslizar.
+          links[i].style.setProperty('letter-spacing', '0.02em', 'important');
+        } else {
+          links[i].style.removeProperty('font-size');
+          links[i].style.removeProperty('letter-spacing');
+        }
+      }
+      var rows = [
+        [document.querySelector('#mainHeader.mdj-header-unified .header-top'), '62px'],
+        [document.querySelector('#mainHeader.mdj-header-unified .header-nav'), '52px']
+      ];
+      for (var j = 0; j < rows.length; j++) {
+        var el = rows[j][0], px = rows[j][1];
+        if (!el) continue;
+        if (inRange) {
+          el.style.setProperty('min-height', px, 'important');
+          el.style.setProperty('max-height', px, 'important');
+          el.style.setProperty('height', px, 'important');
+        } else {
+          el.style.removeProperty('min-height');
+          el.style.removeProperty('max-height');
+          el.style.removeProperty('height');
+        }
+      }
+
+      // FIX-TABLET-HEADER-SCALE-DOWN, parte 2 (2026-09-15, hallazgo del PO
+      // en vivo): bajar el ALTO de .header-top a 62px no encogía el
+      // CONTENIDO de adentro (logo 72px, wordmark 104px, botón SALIR,
+      // avatar+nombre, carrito, buscador -- todos a medida de escritorio),
+      // así que quedaba viéndose igual de grande dentro de una caja más
+      // baja. Mismo criterio que arriba: tamaño real puesto por JS sobre
+      // cada pieza, no la caja que las contiene.
+      var scaleTargets = [
+        ['.logo-img-eagle', {height: '38px', width: '38px'}],
+        ['.brand-letters-img', {height: '58px', width: '58px'}],
+        ['.brand-letters-wrapper', {height: '38px'}],
+        ['#header-login-btn', {fontSize: '10px', padding: '5px 10px'}],
+        ['.lang-switcher', {fontSize: '10px', height: '22px'}],
+        ['.mdj-avatar-slot', {height: '30px', width: '30px'}],
+        ['.mdj-account-display-name', {fontSize: '10px'}],
+        ['.header-cart-btn', {height: '30px', width: '30px'}],
+        ['.header-smart-search', {height: '26px', fontSize: '11px', width: '90px'}]
+      ];
+      for (var k = 0; k < scaleTargets.length; k++) {
+        var sel = scaleTargets[k][0], props = scaleTargets[k][1];
+        var els = document.querySelectorAll(sel);
+        for (var m = 0; m < els.length; m++) {
+          for (var prop in props) {
+            if (inRange) els[m].style.setProperty(prop.replace(/[A-Z]/g, function (c) { return '-' + c.toLowerCase(); }), props[prop], 'important');
+            else els[m].style.removeProperty(prop.replace(/[A-Z]/g, function (c) { return '-' + c.toLowerCase(); }));
+          }
+        }
+      }
+    } catch (e) { /* si algo falla, el header original sigue como estaba */ }
+  }
+  window.addEventListener('resize', mdjTabletHeaderScale);
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', mdjTabletHeaderScale);
   } else {
     init();
+    mdjTabletHeaderScale();
   }
 })();

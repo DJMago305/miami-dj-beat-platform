@@ -5457,37 +5457,36 @@ body[data-mdj-estacion] #mainHeader.header.mdj-header-unified {
 
 /* ══════════════════════════════════════════════════════════════════════════
    INTERCAMBIO NAV↔HAMBURGUESA · UMBRAL REAL DE 10 PUESTOS · 2026-08-30
+   REVERTIDO A HAMBURGUESA-SOLO-TELÉFONO · 2026-09-15
    ──────────────────────────────────────────────────────────────────────────
-   Orden del PO tras el incidente de MI PERFIL/STAFF: con 10 puestos, el ancho
-   minimo para renderizar la barra completa sin tocar el logo es ~1150px. Por
-   debajo, la barra de escritorio se oculta y SOLO la hamburguesa queda
-   visible. Prohibido mostrar las dos a la vez.
+   Historial: el 2026-08-30 esta regla subió el corte nav↔hamburguesa a
+   1150px sitio-completo porque, con 10 puestos, la barra no cabía sin tapar
+   el logo entre 601-1149px sin contención de overflow.
 
-   POR QUÉ HACIA FALTA UNA REGLA NUEVA
-   Ya existian dos umbrales, y NO coincidian entre si:
-     - header-unified.css ocultaba `.header-nav` solo con
-       `(max-width:600px) and (pointer:coarse)` — decision PO 2026-08-20,
-       "la hamburguesa es EXCLUSIVA DE TELEFONO".
-     - styles.css mostraba `.mobile-menu-btn` con `display:flex` en DOS
-       sitios (líneas ~2938 y ~5817) bajo `(max-width:1000px)`, SIN condicion
-       de puntero.
-   Entre 601px y 1000px (y en cualquier entorno donde el puntero no se
-   reporte como "coarse" incluso por debajo de eso — asi se reprodujo aqui
-   mismo, en el navegador de verificacion) la hamburguesa ya se mostraba pero
-   la barra de escritorio TODAVIA NO se ocultaba: las dos convivian, y con 10
-   puestos en vez de 9 el logo quedaba debajo. Ese es el defecto reportado.
+   Orden explícita del PO (2026-09-15): las tablets deben ver la barra real,
+   igual que en portátil/escritorio -- la hamburguesa vuelve a ser EXCLUSIVA
+   DE TELÉFONO (la decisión original del PO, 2026-08-20). El motivo de 08-30
+   para no hacerlo así (los 10 puestos no caben) se resuelve aquí de otra
+   forma: en vez de esconder la barra, se le da la MISMA red de seguridad de
+   scroll horizontal contenido que .header-top ya usa en el tramo portátil
+   1001-1221px (ver arriba en este archivo) y que el propio #mainNav ya usa
+   en teléfono -- la barra real, deslizable si hace falta, nunca tapa el
+   logo porque el overflow queda contenido dentro de su propia caja.
 
    QUÉ HACE ESTA REGLA
-   Un tercer umbral, unico y sin condicion de puntero, en 1150px — el numero
-   que pidio el PO. Con `!important` y la MISMA especificidad que ya usaba el
-   corte de telefono (mismo selector para `.header-nav`), gana en todo el
-   rango donde se solapa con los otros dos sin necesidad de tocarlos: el
-   corte de telefono (600px+tactil) sigue intacto para sus propios ajustes de
-   espacio (logo, wordmark) que esta regla NO toca. Solo se unifica el
-   intercambio nav/hamburguesa, que es lo que pedia el ticket — no se amplia
-   el alcance a nada mas.
+   1) Corte nav↔hamburguesa vuelve a ser SOLO teléfono real:
+      (max-width:600px) and (pointer:coarse) -- igual que la decisión
+      original 2026-08-20. Portátil con ventana angosta no debe recibirla
+      (pointer fino), tablet tampoco (ya no, por orden del PO).
+   2) Tablet + portátil angosto (601-1220px) recibe la barra REAL, con
+      scroll horizontal contenido (mismo patrón que el teléfono y que el
+      tramo portátil de abajo) en vez de esconderse.
+   3) styles.css sigue mostrando `.mobile-menu-btn` sin condición de puntero
+      por debajo de 1000px (dos sitios legados, ~2938/~5817) -- se anula
+      explícitamente en el tramo 601-1220px para que la barra real y la
+      hamburguesa nunca convivan (la regla del PO de 08-30 sigue en pie).
    ══════════════════════════════════════════════════════════════════════════ */
-@media (max-width: 1150px) {
+@media (max-width: 600px) and (pointer: coarse) {
   #mainHeader.header.mdj-header-unified .header-nav,
   html body #mainHeader.header.mdj-header-unified > .header-nav {
     display: none !important;
@@ -5495,6 +5494,85 @@ body[data-mdj-estacion] #mainHeader.header.mdj-header-unified {
   #mainHeader.header.mdj-header-unified .mobile-menu-btn {
     display: flex !important;
   }
+}
+
+@media (min-width: 601px) and (max-width: 1220px) {
+  /* Barra real visible -- anula el display:none que esta misma hoja le
+     ponía antes en este tramo. Sin valor propio de `display` fuera de este
+     bloque: al no forzar nada aquí, vuelve al que ya trae de fábrica
+     (styles.css/base de esta hoja, flex). */
+  #mainHeader.header.mdj-header-unified .mobile-menu-btn {
+    display: none !important;
+  }
+
+  /* Red de seguridad de overflow -- mismo patrón que el tramo portátil
+     1001-1221px (ver bloque de arriba) y que #mainNav en teléfono: scroll
+     horizontal SIN scrollbar visible, contenido dentro de .header-nav, para
+     que 10 puestos nunca empujen ni tapen el logo de la fila 1. */
+  #mainHeader.header.mdj-header-unified .header-nav {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+  #mainHeader.header.mdj-header-unified .header-nav::-webkit-scrollbar {
+    display: none !important;
+    height: 0 !important;
+  }
+  #mainHeader.header.mdj-header-unified .header-nav .container {
+    overflow-x: visible !important;
+    overflow-y: hidden !important;
+  }
+  #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav.mdj-mainnav-flex.nav.top-nav {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scrollbar-width: none !important;
+  }
+  #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a {
+    width: auto !important;
+    max-width: none !important;
+  }
+
+  /* FIX-TABLET-HEADER-SCALE-DOWN (2026-09-15, orden del PO): el scroll de
+     arriba resuelve que la barra NUNCA tape el logo, pero el PO pidió algo
+     más -- que quepa SIN deslizar, achicando el contenido, no escondiéndolo
+     ni dejándolo deslizable a tamaño de escritorio.
+
+     HISTORIAL 1: el primer intento fue tokens (--mdj-nav-font-size, etc) y
+     selectores directos con !important en esta hoja -- confirmados
+     exhaustivamente por CSSOM como la única regla activa que hacía match,
+     sin otra regla de mayor especificidad ni media compitiendo, y aun así
+     no se pintaban (causa nunca explicada). El achicado real terminó
+     viviendo por JS (mdj-mobile-header-fix.js, mdjTabletHeaderScale).
+
+     HISTORIAL 2 (2026-09-15, segunda vuelta): se intentó reemplazar ese JS
+     por Container Queries (container-type:inline-size + clamp() con cqw en
+     #mainNav / .header-top .container) -- la idea que trajo el PO. Probado
+     en vivo: CSS.supports confirma que el navegador SÍ soporta la
+     característica, y un contenedor de prueba aislado (un <div> nuevo,
+     sin ninguna otra regla de esta página) resuelve cqw correctamente
+     (50cqw de un contenedor de 400px = 200px, como debe ser). Pero dentro
+     de #mainNav específicamente, cualquier valor en cqw (probado 10cqw y
+     100cqw, con y sin esperar un frame) da SIEMPRE el mismo resultado fijo
+     (~15.73px) sin importar el número -- containerType se reporta
+     correctamente como "inline-size" vía getComputedStyle, pero `contain`
+     se queda en "none". No se encontró ninguna regla en este archivo ni en
+     styles.css que ponga contain:none explícitamente, así que la causa
+     real quedó sin explicar pese a la revisión.
+
+     Dado que el achicado por JS (mdjTabletHeaderScale, en
+     mdj-mobile-header-fix.js y también inline en dj-profile.html) SÍ está
+     verificado funcionando en vivo en ambas páginas y en varios anchos, se
+     mantiene esa solución -- no se reemplaza algo que funciona por una
+     técnica que, en ESTA página concreta, no resuelve correctamente pese a
+     que el navegador la soporta en general. Si en el futuro alguien quiere
+     retomar Container Queries aquí, el punto de partida es precisamente
+     ese `contain:none` inexplicado. */
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -5538,8 +5616,18 @@ body[data-mdj-estacion] #mainHeader.header.mdj-header-unified {
    coexistian a la vez, exactamente lo que el punto 5 prohibe. El riel solo
    existe para tapar el hueco que .mdj-estacion-previa abre al ocultar
    .header-top (ver bloque de arriba, linea ~4956) -- fuera de esa condicion
-   el hamburguesa vieja ya cumple su funcion sola. */
-@media (max-width: 1150px) {
+   el hamburguesa vieja ya cumple su funcion sola.
+   CORRECCION 2026-09-15 (orden del PO, tablets ven la barra real): el corte
+   de 1150px aquí venía de la MISMA decisión de 08-30 que el bloque
+   "INTERCAMBIO NAV↔HAMBURGUESA" más arriba en este archivo -- esa decisión
+   se revirtió (tablet ya no oculta `.header-nav`, ver ese bloque). Con
+   `.header-nav` visible+deslizable de 601 a 1220px en TODAS las páginas,
+   incluidas las de estación, este riel ya no hace falta ahí: mostrarlo
+   sería el mismo defecto de "las dos a la vez" que el punto 5 prohíbe, esta
+   vez riel+barra en vez de riel+hamburguesa vieja. Baja al mismo corte
+   solo-teléfono que ya usa el hamburguesa normal. `.header-top` (logo/fila 1)
+   sigue oculto siempre en estación -- eso NO es parte de este ticket. */
+@media (max-width: 600px) and (pointer: coarse) {
   html.mdj-estacion-previa #mainHeader.header.mdj-header-unified > .mdj-riel-toggle,
   /* CORTINA REAL 2026-09-02: mismo hueco de 1.6s -- este botón solo debía
      aparecer cuando .header-top ya está oculto (ver data-mdj-estacion arriba,

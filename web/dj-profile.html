@@ -97,6 +97,34 @@
         html[data-mdj-boot-tab="sft"] body.dj-profile > footer.footer {
             display: none !important;
         }
+        /* FIX-PROFILE-HERO-RIEL-TOGGLE-AIR (2026-09-15): pedido explícito del
+           PO -- el botón hamburguesa de estación (#mdj-riel-toggle, vive en
+           mdjb-shared-header.js/header-unified.css, compartido por ~9
+           páginas) quedaba pegado al borde superior del header: ese archivo
+           lo deja con position:static dentro de un header display:flex con
+           align-items:normal (=stretch por defecto, pero el botón tiene alto
+           fijo de 40px así que no se estira -- solo arranca en top:0 del
+           header de 84px, sin centrar). Este override vive SOLO en el
+           <style> de dj-profile.html -- no toca header-unified.css, así que
+           no afecta a las otras 8 páginas de estación. Con !important
+           porque este bloque <style> se imprime ANTES del <link
+           href="./header-unified.css">, más abajo en el archivo -- incluso
+           con selector idéntico, sin !important perdería por orden de
+           aparición, no por especificidad.
+           NOTA: #mainHeader es flex-direction:column (no row) -- el eje
+           principal es VERTICAL, así que align-self (eje cruzado = horizontal
+           aquí) no mueve nada en Y, confirmado en vivo. .header-top y
+           .header-nav (los otros dos hijos, antes que el botón en el DOM)
+           miden 0 de alto en modo estación, así que el botón queda pegado
+           arriba del todo dentro de una caja de 84px. margin-top+bottom:auto
+           en un flex column SÍ reparte el espacio sobrante del eje principal
+           en partes iguales arriba/abajo -- centra de verdad sin tocar
+           justify-content del header (que sí afectaría a header-top/nav en
+           los otros modos de esta misma página). */
+        #mainHeader.header.mdj-header-unified > .mdj-riel-toggle {
+            margin-top: auto !important;
+            margin-bottom: auto !important;
+        }
         html[data-mdj-boot-tab="sft"] #tab-sft .sft-tab-legacy-shell {
             display: none !important;
         }
@@ -134,7 +162,7 @@
         })();
     </script>
     <link rel="stylesheet" href="./styles.css?v=20260909-revealtext-blur-fix" />
-    <link rel="stylesheet" href="./header-unified.css?v=20260902-cortinas" />
+    <link rel="stylesheet" href="./header-unified.css?v=20260915-cq-reverted" />
     <link rel="stylesheet" href="./profile.css?v=20260825-share-btn-gold" />
     <style id="mdj-qr-view-header-shield">
         /* Blindaje definitivo: especificidad mayor que #mainHeader.header.mdj-header-unified { display:flex !important } en header-unified.css */
@@ -584,6 +612,22 @@
             /* Maximum clarity, no artificial darkening */
             transition: opacity 0.5s ease, filter 0.4s ease;
             opacity: 0;
+            /* FIX-PROFILE-HERO-PHOTO-SHIFT (2026-09-15): empuje vertical extra,
+               PURAMENTE de presentación -- no toca photo_focal_x/y ni
+               hero_bg_zoom (datos reales del DJ en Supabase). El JS que pinta
+               la foto (más abajo, donde arma bgPhoto.style.transform) lee
+               esta variable y la escribe como "translateY(valor) scale(s)"
+               -- translateY ANTES de scale() en el string, no después.
+               Un transform en CSS aplica de derecha a izquierda sobre el
+               punto (scale() actúa primero, translateY() sobre el resultado
+               ya escalado), así que ese translateY mueve el encuadre ya
+               resuelto por foco/zoom una cantidad fija de píxeles, igual
+               para cualquier DJ sin importar su zoom guardado -- verificado
+               con álgebra: scale(s) alrededor de un origen o da s·p + o·(1-s);
+               agregar translateY(t) delante suma "+t" aparte, sin mezclarse
+               con "s" ni "o". Por eso puede vivir en CSS (responsive, por
+               breakpoint) en vez de tener que calcularse por DJ. */
+            --dj-hero-photo-shift-y: 0px;
         }
 
         .dj-hero-bg-photo.loaded {
@@ -839,6 +883,24 @@
             justify-content: center;
         }
 
+        /* FIX-PROFILE-HERO-SHARE-BTN-SIZE (2026-09-15): pedido explícito del PO
+           en modo tarjeta/escritorio -- misma medida (40x40) que los otros
+           .dj-social-icon en el DOM, pero el fondo SÓLIDO en dorado (los demás
+           usan negro translúcido, ver profile.css ":not(.share-btn)") lo hace
+           leer visualmente mucho más grande sobre la foto oscura del hero, no
+           el icono de adentro (ese ya estaba bien). Se achica el CUADRO, no el
+           svg. Escopado a min-width:561px porque ≤560px ya tiene su propio
+           tamaño responsive (clamp en .dj-social-icon, ver ese breakpoint) --
+           una regla aquí sin acotar pesaría más por especificidad
+           (.dj-social-icon.share-btn > .dj-social-icon) y rompería ese ajuste
+           móvil ya aprobado. */
+        @media (min-width: 561px) {
+            .dj-social-icon.share-btn {
+                width: 34px;
+                height: 34px;
+            }
+        }
+
         .dj-social-icon.share-btn:hover {
             transform: scale(1.05);
             box-shadow: 0 4px 15px rgba(197, 160, 89, 0.4);
@@ -916,6 +978,10 @@
             display: flex;
             flex-direction: column;
             align-items: flex-start;
+            /* FIX-PROFILE-HERO-RATING-UNDER-PLAN (2026-09-15): aire entre el
+               pill de plan y las estrellas (ahora segundo hijo de este mismo
+               flex column, ver HTML más abajo). */
+            gap: 8px;
         }
 
         /* TICKET C · legibilidad. Estaba a 9px sobre un fondo al 58% de opacidad,
@@ -1250,30 +1316,136 @@
             .dj-hero {
                 height: 352px;
             }
-            /* Reducido a 260px SOLO en vista pública: sin foto de fondo propia (caso
-               real reportado por el PO — Sundowner/DJMago305), esos 352px eran solo
-               degradado vacío antes del bloque de nombre/redes. En modo artista
-               (body.mdj-perfil-estacion) el hero se queda en 352px — ese modo ya
-               reserva 88px+30px de espacio para la franja flotante que se cuelga
-               debajo de la cabecera (ver header-unified.css); acortarlo ahí también
-               dejaba menos aire real del que ese offset fijo necesita. */
+            /* NOTA (2026-09-14): la condición body:not(.mdj-perfil-estacion) ya no
+               distingue nada en esta página -- .mdj-perfil-estacion la ponía la
+               franja flotante, que ya no se monta nunca aquí (ver
+               FIX-PROFILE-HERO-NO-DUPLICATE-BRANDING). Esta regla aplica siempre
+               ahora, así que su altura es la real para todo el mundo.
+               FIX-PROFILE-HERO-FACE-VISIBLE (2026-09-14): subido de 258 a 500px --
+               error crítico reportado por el PO: al centrar .dj-hero-left el
+               bloque de texto (anclado abajo, align-items:flex-end en
+               .dj-hero-content) quedó tan alto respecto al hero que tapaba ojos y
+               nariz. Con más alto en la caja, el mismo anclaje-abajo dejó libre la
+               parte de arriba para la cara -- no se tocó el object-position/zoom
+               de la foto, solo el tamaño del lienzo. */
             body:not(.mdj-perfil-estacion) .dj-hero {
-                height: 260px;
+                height: 580px;
+            }
+
+            /* FIX-PROFILE-HERO-PHOTO-SHIFT (2026-09-15): pedido explícito del
+               PO -- con el hero ya alto (580px) y el bloque de texto centrado,
+               seguía leyéndose apretado contra la barbilla. La foto ya
+               muestra el alto COMPLETO de la imagen fuente (1920x775, mucho
+               más ancha que alta: a este ancho de caja el recorte de
+               object-fit:cover es horizontal, no vertical -- no hay margen
+               vertical que "revelar" subiendo o bajando el foco). Lo que sí
+               se puede mover es el ENCUADRE ya resuelto, un empuje fijo hacia
+               arriba, dejando más aire real entre la barbilla y las
+               estrellas/nombre. Ver .dj-hero-bg-photo (arriba en el archivo)
+               para el porqué este valor no interfiere con photo_focal_y ni
+               hero_bg_zoom de cada DJ. */
+            .dj-hero-bg-photo {
+                --dj-hero-photo-shift-y: -34px;
+            }
+
+            /* FIX-PROFILE-HERO-FACE-VISIBLE (2026-09-14): con el hero más alto,
+               el degradado general (.dj-hero-overlay, arriba en el archivo) ya
+               no oscurece lo suficiente la mitad inferior -- el texto queda
+               sobre pecho/cuello, que es más claro que el degradado pensado
+               para 380px. Overlay adicional exclusivo de este breakpoint,
+               pedido explícito del PO: negro casi sólido abajo, transparente
+               arriba, para no tapar la cara.
+               FIX-PROFILE-HERO-OVERLAY-SOFTEN (2026-09-15): pedido explícito
+               del PO -- "se ve muy oscuro el hero" en teléfono. Con las
+               estrellas ya fuera de este bloque (ver FIX-PROFILE-HERO-RATING-
+               UNDER-PLAN, viven en #pub-hero-top-stack ahora), el texto que
+               queda abajo (nombre/id/redes/cintillo) es bastante más bajo que
+               antes -- ya no hace falta oscurecer los 70% inferiores del
+               hero, solo la franja donde realmente hay texto. Máximo baja de
+               0.95 a 0.8, y el corte a transparente sube de 70% a 55% (más
+               foto real -- pecho/audífonos -- visible sin negro encima). */
+            .dj-hero-overlay {
+                background:
+                    linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.35) 55%, transparent 85%);
+            }
+
+            /* FIX-PROFILE-HERO-REBUILD (2026-09-14): bloque de artista centrado
+               por pedido explícito del PO. .dj-hero-left es el contenedor real
+               (no existen .dj-hero-info/.pub-dj-info que pedía el ticket). */
+            .dj-hero-left {
+                margin: 0 auto;
+                text-align: center;
+                width: 100%;
+                padding: 0 16px;
             }
 
             .dj-hero-name {
-                font-size: clamp(1.4rem, 5vw, 2.2rem);
-                letter-spacing: -1px;
+                font-size: 1.8rem;
+                line-height: 1.2;
+                text-align: center;
+                letter-spacing: -0.5px;
+                margin: 0 0 6px;
             }
 
             .dj-hero-plan-pill {
-                font-size: clamp(0.65rem, 2vw, 0.8rem);
-                padding: 2px 8px;
+                font-size: 0.75rem;
+                padding: 3px 8px;
+                margin-bottom: 4px;
+                gap: 4px;
             }
 
+
+            /* FIX-PROFILE-HERO-REBUILD (2026-09-14): el tamaño real de las
+               estrellas lo define el <svg width="20" height="20"> inline en el
+               HTML (ver JS que las genera) -- font-size en .dj-rating nunca
+               las tocó, por eso seguían viéndose grandes pese al ajuste
+               anterior. El fix real va sobre el propio svg.
+               FIX-PROFILE-HERO-RATING-UNDER-PLAN (2026-09-15): #pub-hero-rating
+               ya no vive en .dj-hero-left -- se movió dentro de
+               #pub-hero-top-stack en el HTML (mismo flex column que PLAN PRO),
+               así que hereda top/left del stack en cualquier ancho sin
+               necesidad de position:absolute ni coordenadas a mano aquí.
+               Solo queda ajustar tamaño/gap para que quepa cómodo en móvil. */
+            #tab-public .dj-hero .dj-rating {
+                margin: 0;
+                gap: 2px;
+            }
+
+            #tab-public .dj-hero .dj-rating svg {
+                width: 16px;
+                height: 16px;
+            }
+
+            #pub-cert-id-inline {
+                display: block;
+                text-align: center;
+                font-size: 0.7rem !important;
+                opacity: 0.8;
+                letter-spacing: 0.5px !important;
+            }
+
+            /* Cintillo: se para la animación de marquee infinito y se trunca
+               con elipsis en una sola línea centrada -- ver .dj-hero-role-track
+               (envuelve el texto duplicado para el loop del marquee; con
+               overflow:hidden el duplicado nunca llega a verse). */
             .dj-hero-role {
-                font-size: clamp(0.7rem, 2vw, 0.75rem);
+                font-size: 0.65rem;
                 letter-spacing: 2px;
+                width: 100%;
+                text-align: center;
+                overflow: hidden;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+            }
+
+            .dj-hero-role-track {
+                animation: none;
+                display: inline-block;
+                max-width: 100%;
+                overflow: hidden;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+                vertical-align: bottom;
             }
 
             /* Encima del corte: menos padding inferior que antes = overlay más abajo; sigue habiendo aire bajo la fila social. */
@@ -1281,24 +1453,43 @@
                 padding-bottom: 38px;
             }
 
-            /* Menos hueco entre estrellas y fila de redes: aprovecha el espacio vertical hacia abajo. */
-            #tab-public .dj-hero .dj-rating {
-                margin-bottom: 9px;
+            .dj-social-row {
+                display: flex !important;
+                justify-content: center !important;
+                flex-wrap: wrap !important;
+                width: 100% !important;
+                margin: 8px auto !important;
+                padding: 0 !important;
+                gap: clamp(4px, 1.5vw, 8px);
             }
 
-            .dj-social-row {
-                margin-top: 6px;
-                flex-wrap: nowrap;
-                justify-content: center;
-                gap: clamp(4px, 1.5vw, 8px);
+            /* FIX-PROFILE-HERO-STARS-VS-PLANPILL (2026-09-14): más aire entre
+               redes sociales y el cintillo de categorías -- pedido explícito
+               de bajarlo, no solo que ya no choque con nada. */
+            .dj-hero-role {
+                margin-top: 10px;
             }
 
             /* .share-btn hereda esto (misma clase base .dj-social-icon en el
                HTML) — mismo tamaño y alineación que las redes reales, nunca
-               se cae a una segunda línea ni queda sobredimensionado. */
+               se cae a una segunda línea ni queda sobredimensionado.
+               FIX-PROFILE-HERO-SHARE-WRAP (2026-09-15): con 8 redes + compartir
+               (9 círculos) el tamaño anterior (min 26px) sumaba más que el
+               ancho disponible por ~1px -- suficiente para que flex-wrap
+               empujara "compartir" a una segunda línea, tapando más cara de
+               la que debería. Bajado a 22-30px: 9 círculos entran de sobra
+               incluso en el móvil más angosto soportado (320px). */
             .dj-social-icon {
-                width: clamp(26px, 6.5vw, 34px);
-                height: clamp(26px, 6.5vw, 34px);
+                width: clamp(22px, 6vw, 30px);
+                height: clamp(22px, 6vw, 30px);
+            }
+
+            /* #pub-social-icons trae gap:8px FIJO en línea (HTML, ver JS que
+               lo pinta) -- eso, sumado al ancho de arriba, era la otra mitad
+               de la causa del salto de línea. Un !important en el breakpoint
+               es lo único que gana contra un estilo puesto inline. */
+            #pub-social-icons {
+                gap: 4px !important;
             }
 
             #tab-public > .dj-body {
@@ -1340,6 +1531,91 @@
                «pagina siguiente» y no como continuacion pegada. */
             #tab-public > .dj-body {
                 padding-top: 28px;
+            }
+        }
+
+        /* ══ FIX-HERO-LANDSCAPE-CORTO · "EFECTO PHABLET" ══════════════════════
+           Aporte del PO (2026-09-15): el bloque de arriba (max-width:950 +
+           landscape) ya resuelve el ALTO de la caja con svh -- un iPhone Pro
+           Max acostado (932×430 en CSS) no se queda más alto que la pantalla
+           física ni empuja la barra del navegador. Lo que ese bloque NO
+           tocaba es que el CONTENIDO adentro (nombre, cintillo, redes) sigue
+           con el tamaño pensado para un hero vertical de 580px de alto --
+           en una caja de ~400px de alto real, ese mismo contenido queda
+           apretado contra el borde inferior.
+           max-height (no max-width) es la señal correcta aquí: un Pro Max
+           acostado es ANCHO (932px, entra en la regla de más arriba por
+           max-width:950) pero CORTO de alto -- max-height:500px aísla
+           exactamente ese caso corto sin afectar tablets en landscape
+           genuino (más altas, más aire real). */
+        @media (max-height: 500px) and (orientation: landscape) {
+            /* FIX-HERO-LANDSCAPE-CORTO, refuerzo (2026-09-15): medido en vivo
+               a 932×430 (Pro Max acostado) -- el primer intento (solo bajar
+               fuente del nombre) no alcanzó porque a este ANCHO (932px) no
+               entra ningún breakpoint de ancho móvil (560/640/768px): los
+               íconos sociales, el id y el cintillo seguían al tamaño base de
+               escritorio dentro de una caja de 430px de alto real. La fila
+               social sola medía 40px y arrancaba a solo 5px del borde
+               inferior del hero -- se salía 35px por debajo del viewport.
+               Esta versión fuerza el tamaño compacto de MÓVIL (no solo el
+               nombre) sin depender del ancho, ya que aquí el limitante es la
+               ALTURA, no el ancho. */
+            .dj-hero-name {
+                font-size: 1.1rem !important;
+                line-height: 1.1 !important;
+                margin: 0 0 2px !important;
+            }
+
+            #pub-cert-id-inline {
+                font-size: 0.55rem !important;
+                letter-spacing: 0.3px !important;
+            }
+
+            .dj-rating {
+                margin: 0 !important;
+                gap: 1px !important;
+            }
+            .dj-rating svg {
+                width: 12px !important;
+                height: 12px !important;
+            }
+
+            .dj-social-row {
+                margin: 2px auto !important;
+                gap: 2px !important;
+                /* min-height:40px (anti-CLS, ver más abajo en este archivo)
+                   mantenía la fila a 40px de alto aunque los íconos ya
+                   midieran 18px -- confirmado en vivo (getBoundingClientRect
+                   seguía en 40 con los íconos ya achicados). El salto de
+                   layout que ese min-height evita no aplica aquí: en este
+                   breakpoint el contenido siempre está presente de entrada. */
+                min-height: 0 !important;
+            }
+            .dj-social-icon {
+                width: 18px !important;
+                height: 18px !important;
+            }
+            .dj-social-icon svg {
+                width: 10px !important;
+                height: 10px !important;
+            }
+
+            .dj-hero-role {
+                margin-top: 2px !important;
+                font-size: 0.55rem !important;
+                letter-spacing: 1px !important;
+            }
+
+            #tab-public .dj-hero .dj-hero-content {
+                padding-bottom: 6px !important;
+            }
+
+            .dj-hero-top-stack {
+                top: 8px !important;
+            }
+            .dj-hero-plan-pill {
+                font-size: 9px !important;
+                padding: 3px 8px !important;
             }
         }
 
@@ -2617,10 +2893,6 @@
             }
         }
 
-        #soundfortips-launch-btn .sft-launch-brand-col .sft-launch-status-pill {
-            margin-top: 0;
-        }
-
         /* SOUNDFORTIPS: badge + brillo cuando hay peticiones pendientes (solo DJ / cabina) */
         .sft-launch-btn {
             position: relative;
@@ -2867,6 +3139,18 @@
 
             body.dj-profile.mdj-sft-float-pad #tab-public {
                 padding-bottom: calc(78px + env(safe-area-inset-bottom, 0));
+            }
+
+            /* FIX-PROFILE-HERO-REBUILD (2026-09-14): el asistente (#mdj-assistant-booth,
+               mdj-assistant.css) es fixed bottom-right con z-index 10100 -- más alto que
+               esta franja (9500) -- y se montaba sobre la esquina de la tarjeta dorada
+               de SOUNDFORTIPS. Por pedido explícito del PO pasa a un valor fijo,
+               siempre activo en este ancho (antes era condicional a que la franja
+               estuviera realmente en pantalla -- más preciso, pero el PO pidió
+               garantía incondicional en su lugar). */
+            #mdj-assistant-booth {
+                bottom: 95px !important;
+                right: 16px !important;
             }
         }
 
@@ -3289,21 +3573,38 @@
         var realMenu = document.getElementById('mobileMenu');
         if (realMenu) document.body.appendChild(realMenu);
 
-        var fab = document.createElement('button');
-        fab.type = 'button';
-        fab.id = 'mdjMobileMenuFab';
-        fab.className = 'mdj-mobile-menu-fab';
-        fab.setAttribute('aria-label', 'Menú');
-        fab.setAttribute('aria-controls', 'mobileMenu');
-        fab.setAttribute('aria-expanded', 'false');
-        fab.innerHTML = '<span></span><span></span><span></span>';
-        fab.addEventListener('click', function () {
-          var real = document.getElementById('mobileMenuBtn');
-          if (real) { real.click(); return; }
-          var menu = document.getElementById('mobileMenu');
-          if (menu) menu.classList.toggle('active');
-        });
-        document.body.appendChild(fab);
+        /* FIX-PROFILE-HERO-DOUBLE-HAMBURGER (2026-09-15): reportado en vivo por
+           el PO -- este FAB y #mdj-riel-toggle (mdjb-shared-header.js, botón
+           persistente de riel del 2026-08-30) se pintaban los dos a la vez en
+           modo dueño/estación, superpuestos arriba a la derecha. El riel ya
+           resuelve exactamente el mismo hueco (misma condición: modo estación
+           + ancho de móvil/tablet) de forma más completa -- reutiliza #mainNav
+           real en vez de un panel aparte. Se detecta esa misma condición aquí
+           (mismo par de selectores que arma el riel en header-unified.css:
+           html.mdj-estacion-previa o body[data-mdj-estacion]) para NO crear
+           este FAB cuando el riel ya lo va a cubrir. En modo visitante
+           anónimo ninguna de las dos marcas está presente -- ahí este FAB
+           sigue siendo el único botón de menú funcional y se crea igual. */
+        var yaTieneRielDeEstacion = document.documentElement.classList.contains('mdj-estacion-previa') ||
+          document.body.hasAttribute('data-mdj-estacion');
+
+        if (!yaTieneRielDeEstacion) {
+          var fab = document.createElement('button');
+          fab.type = 'button';
+          fab.id = 'mdjMobileMenuFab';
+          fab.className = 'mdj-mobile-menu-fab';
+          fab.setAttribute('aria-label', 'Menú');
+          fab.setAttribute('aria-controls', 'mobileMenu');
+          fab.setAttribute('aria-expanded', 'false');
+          fab.innerHTML = '<span></span><span></span><span></span>';
+          fab.addEventListener('click', function () {
+            var real = document.getElementById('mobileMenuBtn');
+            if (real) { real.click(); return; }
+            var menu = document.getElementById('mobileMenu');
+            if (menu) menu.classList.toggle('active');
+          });
+          document.body.appendChild(fab);
+        }
 
         var brand = document.createElement('a');
         brand.id = 'mdjMobileBrandFab';
@@ -3314,6 +3615,50 @@
           '<img src="./assets/branding/logo-transparent.png" alt="Miami DJ Beat Logo">' +
           '<img src="./assets/branding/logo-transparent Letras.png" alt="Miami DJ Beat" class="mdj-mobile-brand-fab-letras">';
         document.body.appendChild(brand);
+
+        /* FIX-TABLET-HEADER-SCALE-DOWN (2026-09-15, orden del PO): misma
+           función que mdj-mobile-header-fix.js (que esta página NO carga --
+           tiene su propia lógica de FAB, arriba en este mismo script) para
+           que tablet vea la barra real de #mainNav pero achicada, no a
+           tamaño de escritorio con scroll. dj-profile.html tiene MÁS
+           puestos que las páginas públicas (Inicio/Academia/Agenda/CONFIG/
+           DJ Tools/Cash Flow/SoundForTips/MI PERFIL/AGENTE.IA -- 9, con
+           "SoundForTips™" el más largo) así que necesita ir más chico que
+           los 11px que alcanzaron en index.html -- medido en vivo aquí. */
+        function mdjTabletHeaderScale() {
+          try {
+            var inRange = window.innerWidth >= 601 && window.innerWidth <= 1220;
+            var links = document.querySelectorAll('#mainHeader.mdj-header-unified #mainNav > a');
+            for (var i = 0; i < links.length; i++) {
+              if (inRange) {
+                links[i].style.setProperty('font-size', '8px', 'important');
+                links[i].style.setProperty('letter-spacing', '0.01em', 'important');
+              } else {
+                links[i].style.removeProperty('font-size');
+                links[i].style.removeProperty('letter-spacing');
+              }
+            }
+            var rows = [
+              [document.querySelector('#mainHeader.mdj-header-unified .header-top'), '62px'],
+              [document.querySelector('#mainHeader.mdj-header-unified .header-nav'), '52px']
+            ];
+            for (var j = 0; j < rows.length; j++) {
+              var el = rows[j][0], px = rows[j][1];
+              if (!el) continue;
+              if (inRange) {
+                el.style.setProperty('min-height', px, 'important');
+                el.style.setProperty('max-height', px, 'important');
+                el.style.setProperty('height', px, 'important');
+              } else {
+                el.style.removeProperty('min-height');
+                el.style.removeProperty('max-height');
+                el.style.removeProperty('height');
+              }
+            }
+          } catch (eScale) { /* si algo falla, el header original sigue como estaba */ }
+        }
+        window.addEventListener('resize', mdjTabletHeaderScale);
+        mdjTabletHeaderScale();
       })();
     </script>
 
@@ -3403,21 +3748,35 @@
 
             <div class="dj-hero-overlay"></div>
 
-            <!-- Plan del artista (hero top-left) -->
+            <!-- Plan del artista (hero top-left)
+                 FIX-PROFILE-HERO-RATING-UNDER-PLAN (2026-09-15): pedido explícito
+                 del PO -- las estrellas van SIEMPRE debajo de PLAN PRO, "ese es
+                 el verdadero lugar para todos los modelos" (todos los anchos de
+                 pantalla, no solo móvil). En vez de repetir top/left a mano por
+                 cada breakpoint (frágil: pill cambia de left en más de un
+                 media query ya existente), #pub-hero-rating se muda a vivir
+                 DENTRO de #pub-hero-top-stack, como segundo hijo del mismo
+                 flex column -- hereda automáticamente la posición del stack
+                 completo en cualquier ancho, presente o futuro, sin duplicar
+                 coordenadas. mdjPaintHeroPlanPill() ya hace
+                 stackEl.style.display='flex' para TODO perfil (PRO/básico/
+                 owner), así que el stack nunca se queda oculto con las
+                 estrellas atrapadas dentro. -->
             <div id="pub-hero-top-stack" class="dj-hero-top-stack" style="display:none;">
                 <div id="pub-hero-plan-pill" class="dj-hero-plan-pill" hidden></div>
+                <!-- Artist Rating (vacío hasta renderDynamicReviewsAndKPI) -->
+                <div class="dj-rating" id="pub-hero-rating"></div>
             </div>
 
-            <!-- Foto inset top-right -->
-            <div class="dj-hero-inset">
-                <img id="pub-photo-inset" src="./assets/dj-avatar-placeholder.png" alt="DJ">
-            </div>
+            <!-- FIX-PROFILE-HERO-NO-AVATAR (2026-09-13): avatar circular top-right
+                 eliminado por pedido del PO -- la foto central ya identifica al
+                 artista, el círculo sobraba. #pub-photo-inset queda sin
+                 contenedor en el DOM; insetPhoto en el JS de más abajo ya
+                 comprueba `if (avatarUrl && insetPhoto)` antes de usarlo, así
+                 que no rompe nada al ser null. -->
 
             <div class="dj-hero-content">
                 <div class="dj-hero-left">
-
-                    <!-- Artist Rating (vacío hasta renderDynamicReviewsAndKPI) -->
-                    <div class="dj-rating" id="pub-hero-rating"></div>
 
                     <!-- Nombre + punto dorado -->
                     <h1 id="pub-name" class="dj-hero-name">Cargando…</h1>
@@ -3691,24 +4050,24 @@
                         <span id="soundfortips-launch-badge" class="sft-pending-badge" style="display:none;"
                             aria-hidden="true"></span>
                         <span class="sft-launch-icon-wrap" aria-hidden="true">🎵</span>
+                        <!-- FIX-PROFILE-HERO-LAYOUT (2026-09-13): pill de estado ON/OFF ("EN VIVO")
+                             eliminada por completo -- el widget se queda solo con ícono + wordmark. -->
                         <span class="sft-launch-brand-col">
                             <span class="sft-launch-wordmark">
                                 <span class="sft-launch-wordmark-sound" data-i18n="sft-launch-word-sound">SOUND</span><span class="sft-launch-wordmark-fortips" data-i18n="sft-launch-word-fortips">FORTIPS™</span>
                             </span>
-                            <span id="soundfortips-launch-status-pill" class="sft-launch-status-pill" style="display:none;"
-                                data-i18n="sft-public-pill-off" aria-hidden="true">OFF</span>
                         </span>
                     </button>
 
                     <div class="pub-web-title" style="text-align:center; margin-top:2px; margin-bottom:6px;">
-                        <div style="font-size:11px; letter-spacing:0.26em; text-transform:uppercase; font-weight:900; color:var(--gold); text-shadow:0 0 14px rgba(197,160,89,0.42), 0 0 2px rgba(255,255,255,0.22);">WEB MIAMI DJ BEAT</div>
+                        <div data-i18n="profile-web-title" style="font-size:11px; letter-spacing:0.26em; text-transform:uppercase; font-weight:900; color:var(--gold); text-shadow:0 0 14px rgba(197,160,89,0.42), 0 0 2px rgba(255,255,255,0.22);">WEB MIAMI DJ BEAT</div>
                     </div>
                     <!-- Web Button (Full Width Stacked) -->
                     <button onclick="gotoAffiliateWeb()"
                         style="width:100%; display:flex; align-items:center; justify-content:center; gap:8px; background:rgba(197,160,89,0.05); color:#fff; border:1px solid rgba(197,160,89,0.4); padding:14px; border-radius:10px; font-size:13px; font-weight:800; letter-spacing:1px; cursor:pointer; text-transform:uppercase; transition:all 0.3s ease; opacity:0.85;"
                         onmouseover="this.style.opacity='1'; this.style.background='rgba(197,160,89,0.5)'; this.style.borderColor='#c5a059'; this.style.boxShadow='0 5px 20px rgba(197,160,89,0.3)';"
                         onmouseout="this.style.opacity='0.85'; this.style.background='rgba(197,160,89,0.05)'; this.style.borderColor='rgba(197,160,89,0.4)'; this.style.boxShadow='none';">
-                        <span style="font-size:16px;">🌐</span> WEB
+                        <span style="font-size:16px;">🌐</span> <span data-i18n="profile-web-btn">WEB</span>
                     </button>
 
                 </div>
@@ -3926,7 +4285,7 @@
     </footer>
 
     <!-- Translations & Base Logic -->
-    <script defer src="./translations.js?v=20260903-perfil-label"></script>
+    <script defer src="./translations.js?v=20260913-web-title-btn-keys"></script>
     <script defer src="./i18n.js?v=20260427-lang-default"></script>
     <script>
         // 🔧 Motor Principal de Logout (A prueba de fallos)
@@ -4996,7 +5355,12 @@
 
             if (coverUrl && bgPhoto) {
                 bgPhoto.style.objectPosition = fxp + '% ' + fyp + '%';
-                bgPhoto.style.transform = 'scale(' + (zm / 100) + ')';
+                // FIX-PROFILE-HERO-PHOTO-SHIFT (2026-09-15): --dj-hero-photo-shift-y
+                // (0px salvo en el breakpoint móvil, ver CSS) va ANTES de scale()
+                // en la cadena -- así queda como un corrimiento fijo en píxeles
+                // del encuadre ya resuelto por foco/zoom, igual para cualquier DJ.
+                var heroShiftY = getComputedStyle(bgPhoto).getPropertyValue('--dj-hero-photo-shift-y').trim() || '0px';
+                bgPhoto.style.transform = 'translateY(' + heroShiftY + ') scale(' + (zm / 100) + ')';
                 bgPhoto.style.transformOrigin = fxp + '% ' + fyp + '%';
                 bgPhoto.alt = 'Cover — ' + djName;
                 mdjRevealProfileHeroImg(bgPhoto);
@@ -14748,7 +15112,7 @@
     <script defer src="./monetization.js?v=20260422-sft-math"></script>
 
     <script defer src="./header-smart-search.js?v=20260415-CORE-CONNECTIONS"></script>
-    <script defer src="./mdjb-shared-header.js?v=20260903-revert-nav-agenda"></script>
+    <script defer src="./mdjb-shared-header.js?v=20260913-no-floating-strip-profile"></script>
   <script defer src="./mdj-owner-tabs-marquee.js?v=20260818-nav-canonico"></script>
   <script defer src="./mdj-social-bar.js?v=20260819-social-contact-only"></script>
   <!-- Cart pill: badge + redirect to rentals (no heavy scripts needed here) -->
