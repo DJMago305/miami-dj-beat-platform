@@ -1155,6 +1155,29 @@
     } catch (eSacar) { /* noop */ }
   }
 
+  /* BLINDAJE QR (?view=public), UNA SOLA VEZ, REUTILIZABLE.
+     El comentario de arriba ("VISITANTE EN UN PERFIL AJENO") ya deja escrito
+     que ?view=public "tiene su propio blindaje, mas antiguo, y no se toca" --
+     pero ese blindaje solo estaba implementado DENTRO de
+     mdjEsVisitanteDePerfil() (rama 'visitante'). La rama 'artista' (mas
+     abajo, donde el propio dueño mira su perfil) no lo heredaba: un dueño con
+     sesion activa que abre su propio enlace ?view=public (para ver que ve un
+     fan) seguia disparando mdjEnEstacionDeTrabajo()===true y montaba la
+     franja flotante (logo + buscador) ENCIMA del hero publico -- que ya
+     oculta #mainHeader por su cuenta (ver "mdj-qr-view-header-shield" en
+     dj-profile.html) pero no esperaba compañía ahi. Root cause real,
+     confirmado en vivo: no es un ajuste de CSS, es esta rama sin el mismo
+     guardia que su vecina. */
+  function mdjEsVistaQrPublicaDePerfil() {
+    try {
+      var pagina = String(window.location.pathname || '').split('/').pop().toLowerCase();
+      if (pagina !== 'dj-profile.html') return false;
+      var q = new URLSearchParams(window.location.search || '');
+      return q.get('view') === 'public';
+    } catch (eQr) { return false; }
+  }
+  window.mdjEsVistaQrPublicaDePerfil = mdjEsVistaQrPublicaDePerfil;
+
   function mdjEsVisitanteDePerfil() {
     try {
       var pagina = String(window.location.pathname || '').split('/').pop().toLowerCase();
@@ -1658,8 +1681,8 @@
        los otros puntos de esta misma función (ver el "sitio 6" documentado
        abajo) -- se usa también aquí, en el único punto que faltaba. */
     if (mdjEsVisitanteDePerfil()) mdjMontarFlotanteVisitante();
-    else if (mdjArtistaEnSuPerfil() ||
-             (document.body && document.body.getAttribute('data-mdj-estacion'))) {
+    else if (!mdjEsVistaQrPublicaDePerfil() && (mdjArtistaEnSuPerfil() ||
+             (document.body && document.body.getAttribute('data-mdj-estacion')))) {
       mdjMontarFranjaFlotante('artista');
     }
     else {

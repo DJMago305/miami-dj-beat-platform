@@ -17,47 +17,235 @@
 // cada grupo, alfabético.
 //
 //   node tools/dj-profiles/build.mjs          → genera web/dj/*.html + actualiza sitemap.xml
-//   node tools/dj-profiles/build.mjs --dry-run → solo imprime quién calificaría, no escribe nada
+//   node tools/dj-profiles/build.mjs --dry-run → solo imprime el PLAN, no escribe nada
+//   node tools/dj-profiles/build.mjs --dry-run --reconcile → además muestra qué borraría
+//   MDJB_FIXTURE=<ruta.json> node ... --dry-run → corre contra un fixture local, sin red
+//   MDJB_OUTPUT_DIR=<ruta> node ...            → redirige TODA escritura (perfiles,
+//     directorio.html, equipo.html, sitemap.xml, slug-manifest) a esa carpeta en vez
+//     de web/ — para validar una corrida REAL sin tocar jamás el sitio publicado.
 //
 // Sin dependencias externas — usa fetch nativo (Node 18+). No modifica
 // profile.html, directory.html, find-dj.html ni ninguna tabla de Supabase.
+//
+// ── Contrato de seguridad (Master Correction Order) ────────────────────────
+// 1. La SALIDA APROBADA es la especificación. Los 3 perfiles en vivo
+//    (djmago305 / djsolitario / djyuyo) + directorio.html + equipo.html son
+//    trabajo cerrado: este generador CONVERGE hacia ellos, nunca al revés.
+// 2. PLAN → VALIDATE → WRITE: nada toca el disco hasta que todas las
+//    validaciones pasen (colisión de slug, roster vacío, ownership, ancla de
+//    identidad). Los borrados ocurren al final y solo con --reconcile.
+// 3. --dry-run ⇒ CERO escrituras en disco. El script nunca escribe en la base
+//    de datos (solo SELECT vía PostgREST).
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, unlinkSync } from "node:fs";
+import { join, dirname, basename, isAbsolute } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "..", "..");
 const WEB = join(ROOT, "web");
-const OUT_DIR = join(WEB, "dj");
-const SITEMAP = join(WEB, "sitemap.xml");
 
-const SUPABASE_URL = "https://hkuvuqupbxwkiykxvqdr.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_IMhi16lHj2dAk51AdUOK8w_U7s89-Ff";
+// MDJB_OUTPUT_DIR — override de validación local, mismo patrón que MDJB_FIXTURE
+// (Corrección de la orden "FINAL LOCAL VALIDATION"): redirige TODA escritura
+// (perfiles, directorio, equipo.html, sitemap.xml, slug-manifest) a un
+// directorio scratch aislado, para poder correr una generación REAL sin tocar
+// jamás web/. Sin esta variable el comportamiento es idéntico al de siempre.
+const OUTPUT_DIR_OVERRIDE = process.env.MDJB_OUTPUT_DIR || null;
+const OUTPUT_BASE = OUTPUT_DIR_OVERRIDE
+  ? (isAbsolute(OUTPUT_DIR_OVERRIDE) ? OUTPUT_DIR_OVERRIDE : join(ROOT, OUTPUT_DIR_OVERRIDE))
+  : WEB;
+const OUT_DIR = join(OUTPUT_BASE, "dj");
+const SITEMAP = join(OUTPUT_BASE, "sitemap.xml");
+const EQUIPO_PATH = join(OUTPUT_BASE, "equipo.html");
+const SLUG_MANIFEST = OUTPUT_DIR_OVERRIDE
+  ? join(OUTPUT_BASE, ".slug-manifest.json")
+  : join(HERE, ".slug-manifest.json");
 
-const DRY_RUN = process.argv.includes("--dry-run");
+/* ═══ 0) origen canónico — fuente única de verdad ═══════════════════════════
+   Corrección 2: TODA URL absoluta que emite este generador (canonical, Person
+   url, @id, JSON-LD, <loc> del sitemap, og:url) sale de aquí. El sitio vive en
+   www.miamidjbeat.com; emitir el host pelado partía la señal de canonical en
+   dos hosts distintos. No se toca ningún otro archivo del repo: esto solo
+   gobierna lo que ESTE generador escribe. */
+export const SITE_ORIGIN = "https://www.miamidjbeat.com";
+export const ORG_ID = `${SITE_ORIGIN}/#organization`;
+export const ORG_NODE = Object.freeze({
+  "@type": "EntertainmentBusiness",
+  "@id": ORG_ID,
+  name: "Miami DJ Beat LLC",
+  url: `${SITE_ORIGIN}/`,
+});
+
+/* ═══ 0b) identidad de persona — resultado cerrado, horneado en el código ═══
+   Person Identity Normalization (trabajo aprobado y ya en producción): el
+   humano detrás de djmago305 y de la fila `owner` es UNA sola entidad, con un
+   @id compartido. Es un mapa EXPLÍCITO por slug a propósito, no una regla
+   derivada de `full_name`: derivarlo de full_name le daría @id/alternateName
+   también a djsolitario y djyuyo, que en la salida aprobada NO lo llevan —
+   eso sería una regresión contra la especificación. */
+export const PERSON_IDENTITY = Object.freeze({
+  djmago305: {
+    personId: `${SITE_ORIGIN}/dj/djmago305.html#gerardo-a-valle`,
+    name: "Gerardo A Valle",
+    alternateName: "DJMago305",
+    jobTitle: ["Fundador & Propietario", "DJ"],
+    identityLine: "Gerardo A Valle, conocido profesionalmente como DJMago305.",
+  },
+  owner: {
+    personId: `${SITE_ORIGIN}/dj/djmago305.html#gerardo-a-valle`,
+    name: "Gerardo A Valle",
+    alternateName: "DJMago305",
+  },
+});
+
+/* ═══ 0c) ancla de identidad ════════════════════════════════════════════════
+   Corrección 11: djmago305.html es la página de identidad del fundador. Si la
+   reconciliación llegara a calcularla como candidata a borrado por CUALQUIER
+   motivo, se aborta la corrida entera. Nunca se borra automáticamente. */
+export const IDENTITY_ANCHOR_SLUG = "djmago305";
+
+/* ═══ 0d) aggregateRating en JSON-LD ════════════════════════════════════════
+   Corrección 1 y corrección 17 se cruzan aquí, y la corrección 1 (converger a
+   la salida aprobada) manda:
+     · La salida aprobada NO lleva aggregateRating en NINGUNO de los 3 — se
+       quitó en un commit previo, a propósito.
+     · djmago305 sí tiene review_count=2, así que la regla "review_count > 0"
+       de la corrección 17, sola, lo volvería a emitir → regresión.
+   Resolución: la insignia ★ visible se rige por review_count > 0 (corrección
+   17, que elimina el ★ 1 (0) fabricado de djsolitario/djyuyo), y el
+   aggregateRating de JSON-LD queda apagado por este interruptor. Un solo
+   cambio de línea lo reactiva si el PO lo decide; hasta entonces la salida
+   aprobada es la ley. */
+export const EMIT_AGGREGATE_RATING_JSONLD = false;
+
+/* ═══ 0e) flags e entorno ══════════════════════════════════════════════════ */
+
+const ARGV = process.argv.slice(2);
+export const DRY_RUN = ARGV.includes("--dry-run");
+export const RECONCILE = ARGV.includes("--reconcile");
+// Corrección 14: no se habilita hoy. Existe solo como punto de entrada
+// documentado para un futuro caso legítimo de roster vacío.
+export const ALLOW_EMPTY_ROSTER = ARGV.includes("--allow-empty-roster");
+
+// Valores de PRODUCCIÓN. Siguen aquí SOLO como conveniencia de --dry-run
+// (lectura pura, sin efectos). Corrección 3: una corrida REAL que no declare
+// entorno aborta antes de cualquier fetch — nunca cae en silencio a PROD.
+const PROD_SUPABASE_URL = "https://hkuvuqupbxwkiykxvqdr.supabase.co";
+const PROD_SUPABASE_ANON_KEY = "sb_publishable_IMhi16lHj2dAk51AdUOK8w_U7s89-Ff";
+
+export function maskKey(key) {
+  if (!key) return "(ausente)";
+  const m = String(key).match(/^(sb_[a-z]+_|eyJ)/);
+  return m ? `${m[1]}… (presente, ${String(key).length} chars)` : `(presente, ${String(key).length} chars)`;
+}
+
+export function projectRefFromUrl(url) {
+  const m = String(url || "").match(/^https:\/\/([a-z0-9]+)\.supabase\.co/);
+  return m ? m[1] : "(desconocido)";
+}
+
+/**
+ * Corrección 3 — resuelve el entorno de forma EXPLÍCITA.
+ * Devuelve { env, url, key, source, fixture } o { abort: "<motivo>" }.
+ * En modo REAL (sin --dry-run) exige MDJB_ENV o SUPABASE_URL+SUPABASE_ANON_KEY.
+ */
+export function resolveEnvironment(env = process.env, { dryRun = DRY_RUN } = {}) {
+  const fixture = env.MDJB_FIXTURE || null;
+  if (fixture) {
+    return { env: "FIXTURE", url: null, key: null, source: "MDJB_FIXTURE", fixture };
+  }
+  const declared = (env.MDJB_ENV || "").trim().toUpperCase();
+  const url = env.SUPABASE_URL || null;
+  const key = env.SUPABASE_ANON_KEY || null;
+
+  if (url && key) {
+    return { env: declared || (url === PROD_SUPABASE_URL ? "PROD" : "TEST"), url, key, source: "SUPABASE_URL/SUPABASE_ANON_KEY", fixture: null };
+  }
+  if (declared === "PROD") {
+    return { env: "PROD", url: PROD_SUPABASE_URL, key: PROD_SUPABASE_ANON_KEY, source: "MDJB_ENV=PROD", fixture: null };
+  }
+  if (declared === "TEST") {
+    return { abort: "MDJB_ENV=TEST exige SUPABASE_URL y SUPABASE_ANON_KEY explícitos (no hay valores TEST horneados: dj_profiles en TEST es otra tabla, ver corrección 4)." };
+  }
+  if (!dryRun) {
+    return { abort: "modo REAL sin entorno declarado. Exporta MDJB_ENV=PROD (o SUPABASE_URL + SUPABASE_ANON_KEY) antes de correr sin --dry-run." };
+  }
+  // --dry-run sin declarar nada: lectura pura, se permite, pero se anuncia.
+  return { env: "PROD", url: PROD_SUPABASE_URL, key: PROD_SUPABASE_ANON_KEY, source: "default de --dry-run (solo lectura)", fixture: null };
+}
+
+export function printEnvironmentBanner(resolved, { dryRun = DRY_RUN, outDir = OUT_DIR, log = console.log } = {}) {
+  log(`ENVIRONMENT: ${resolved.env}`);
+  log(`SUPABASE PROJECT REF: ${resolved.fixture ? "(ninguno — fixture local)" : projectRefFromUrl(resolved.url)}`);
+  log(`SUPABASE KEY: ${resolved.fixture ? "(ninguna — fixture local)" : maskKey(resolved.key)}`);
+  log(`ENV SOURCE: ${resolved.source}`);
+  log(`MODE: ${dryRun ? "DRY-RUN" : "REAL"}`);
+  log(`OUTPUT TARGET: ${outDir}`);
+}
 
 const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-const escJs = (s) => String(s ?? "").replace(/</g, "\\u003C");
+
+/* titleCaseCity — dj_profiles.city llega tal cual lo escribió el DJ ("homestead",
+   "MIAMI", "miami beach"): confirmado contra un caso real (DJSolitario). Antes
+   pasaba inadvertido porque el <title> ignoraba `city` y siempre decía "Miami";
+   ahora que el título usa la ciudad real (decisión SEO: cada perfil compite por
+   su propia ciudad en vez de canibalizar "Miami" entre sí), el formato sí es
+   visible en <title>/og:title, no solo en el texto de la página. Normaliza a
+   Title Case; no traduce ni corrige el nombre, solo la capitalización. */
+const titleCaseCity = (s) =>
+  String(s ?? "").trim().replace(/\w\S*/g, (w) => w[0].toUpperCase() + w.slice(1).toLowerCase());
+
+/* Corrección 16 — escJy estaba definido pero NUNCA se invocaba en el camino de
+   serialización de JSON-LD: un valor con `</script>` dentro (bio, nombre, URL
+   social) cerraba el bloque y podía inyectar HTML ejecutable. Se escapa TODO
+   `<` del JSON serializado: en JSON.stringify los únicos `<` posibles viven
+   dentro de strings, y `<` es un escape JSON válido, así que el objeto
+   que parsea el rastreador es idéntico — solo deja de existir la secuencia de
+   cierre. Verificado: ninguno de los 3 archivos aprobados contiene `<` en su
+   JSON-LD, así que esto es byte-idéntico contra la salida aprobada. */
+export const escJs = (s) => String(s ?? "").replace(/</g, "\\u003C");
+export const jsonLd = (obj) => escJs(JSON.stringify(obj));
 
 /* ═══ 1) traer datos reales, solo lectura ═══════════════════════════════ */
 
-async function fetchDJs() {
-  const cols = [
-    "user_id", "dj_slug", "stage_name", "full_name", "photo_url", "background_url",
-    "bio", "bio_short", "bio_en", "city", "roles", "artist_specialty", "plan", "plan_type",
-    "plan_status", "is_premium", "available", "rating", "review_count", "is_resident",
-    "instagram_url", "facebook_url", "tiktok_url", "youtube_url", "soundcloud_url",
-    "apple_music_url", "spotify_url", "website_url",
-  ].join(",");
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/public_dj_profiles?select=${cols}`, {
-    headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
+export const FETCH_COLUMNS = [
+  "user_id", "dj_slug", "stage_name", "full_name", "photo_url", "background_url",
+  "bio", "bio_short", "bio_en", "city", "roles", "artist_specialty", "plan", "plan_type",
+  "plan_status", "is_premium", "available", "rating", "review_count", "is_resident",
+  // Corrección 5 — compuerta editorial. La columna todavía NO existe en la
+  // base: la migración que la crea está preparada en supabase/migrations/ y
+  // NO se ha aplicado. Hasta que se aplique y se rellenen las 3 filas buenas,
+  // esta condición sola dejaría a TODO el mundo inelegible — por eso la
+  // migración + backfill debe aterrizar ANTES de apuntar esto a PROD real.
+  "seo_publish_status",
+  "instagram_url", "facebook_url", "tiktok_url", "youtube_url", "soundcloud_url",
+  "apple_music_url", "spotify_url", "beatport_url", "website_url",
+];
+
+/* Corrección 4 — adaptador de fixture local.
+   `dj_profiles` en el proyecto de PRUEBA es OTRA tabla (stub de identidad V2,
+   5 columnas, sin relación con perfiles de DJ): leerla como si fuera data de
+   perfiles sería falso, y escribirla está prohibido. Por eso la estrategia de
+   pruebas es un fixture JSON local — cero red, cero base de datos, cero
+   cambios de esquema. Es lo que usa build.test.mjs. */
+export function loadFixture(path) {
+  const raw = JSON.parse(readFileSync(path, "utf8"));
+  const rows = Array.isArray(raw) ? raw : raw.rows;
+  if (!Array.isArray(rows)) throw new Error(`Fixture inválido (se esperaba un array o {rows:[...]}): ${path}`);
+  return rows;
+}
+
+export async function fetchDJs(resolved) {
+  if (resolved.fixture) return loadFixture(resolved.fixture);
+  const cols = FETCH_COLUMNS.join(",");
+  const res = await fetch(`${resolved.url}/rest/v1/public_dj_profiles?select=${cols}`, {
+    headers: { apikey: resolved.key, Authorization: `Bearer ${resolved.key}` },
   });
   if (!res.ok) throw new Error(`Supabase fetch failed: ${res.status} ${await res.text()}`);
   return res.json();
 }
 
-function isPaid(dj) {
+export function isPaid(dj) {
   const t = `${dj.plan || ""} ${dj.plan_type || ""}`.toLowerCase();
   return /pro|founder|premium/.test(t) || dj.is_premium === true;
 }
@@ -68,17 +256,26 @@ function isPaid(dj) {
 // DJs"), así que solo entra quien tenga un rol de DJ real. El resto de
 // categorías (Hora Loca, MC, Payasos, Músicos...) ya tiene su propia puerta
 // pública en services.html → "Entretenimiento y Talento" y no se toca aquí.
-function isActuallyDJ(dj) {
+export function isActuallyDJ(dj) {
   const hay = `${dj.artist_specialty || ""} ${dj.roles || ""}`.toLowerCase();
   return /\bdj\b/.test(hay);
 }
 
-function qualifies(dj) {
+/* Corrección 5 — compuerta editorial `seo_publish_status`.
+   FALLA CERRADA: solo el literal 'approved' publica. Ausente, null, 'pending'
+   o cualquier otro valor ⇒ NO elegible. Es deliberado: una columna que aún no
+   existe deja a todos fuera antes que publicar a alguien sin aprobación. */
+export function isSeoApproved(dj) {
+  return dj.seo_publish_status === "approved";
+}
+
+export function qualifies(dj) {
   // Owner es una cuenta separada de DJ (regla del proyecto: Owner nunca es
   // "artista") — excluida aunque tenga foto/bio, junto con cualquier fila
   // marcada Staff en vez de un rol de talento real.
   if (dj.dj_slug === "owner" || /\bstaff\b/i.test(dj.artist_specialty || "")) return false;
   if (!isActuallyDJ(dj)) return false;
+  if (!isSeoApproved(dj)) return false;
   return Boolean((dj.bio || dj.bio_short) && dj.photo_url && dj.stage_name && dj.dj_slug);
 }
 
@@ -114,6 +311,11 @@ const SOCIAL_SVG = {
   youtube_url: { label: "YouTube", svg: '<svg viewBox="0 0 24 24"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.6 5.8a3 3 0 0 0 2.1 2.1C4.5 20.5 12 20.5 12 20.5s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8zM9.5 15.5v-7l6.5 3.5-6.5 3.5z"/></svg>' },
   soundcloud_url: { label: "SoundCloud", svg: '<svg viewBox="0 0 24 24"><path d="M12 7c-2.8 0-5.1 2.3-5.1 5.1 0 .2 0 .5.1.7-1.1.2-2 .8-2.6 1.7-.5 0-1 .2-1.4.5-.5.4-.9 1-.9 1.7 0 1.2 1 2.3 2.3 2.3h12.3C18.2 19 20 17.2 20 15c0-1.8-1.2-3.3-2.8-3.8-.2-2.3-2.1-4.2-4.4-4.2-.3 0-.5 0-.8.1zM10.8 19h-1.2v-7.6h1.2V19zm2.4 0h-1.2v-9.6h1.2V19zm2.4 0h-1.2v-7.6h1.2V19z" fill="currentColor"/></svg>' },
   apple_music_url: { label: "Apple Music", svg: '<svg viewBox="0 0 361 361"><path d="M254.5,55c-0.87,0.08-8.6,1.45-9.53,1.64l-107,21.59l-0.04,0.01c-2.79,0.59-4.98,1.58-6.67,3 c-2.04,1.71-3.17,4.13-3.6,6.95c-0.09,0.6-0.24,1.82-0.24,3.62c0,0,0,109.32,0,133.92c0,3.13-0.25,6.17-2.37,8.76 c-2.12,2.59-4.74,3.37-7.81,3.99c-2.33,0.47-4.66,0.94-6.99,1.41c-8.84,1.78-14.59,2.99-19.8,5.01 c-4.98,1.93-8.71,4.39-11.68,7.51c-5.89,6.17-8.28,14.54-7.46,22.38c0.7,6.69,3.71,13.09,8.88,17.82 c3.49,3.2,7.85,5.63,12.99,6.66c5.33,1.07,11.01,0.7,19.31-0.98c4.42-0.89,8.56-2.28,12.5-4.61c3.9-2.3,7.24-5.37,9.85-9.11 c2.62-3.75,4.31-7.92,5.24-12.35c0.96-4.57,1.19-8.7,1.19-13.26l0-116.15c0-6.22,1.76-7.86,6.78-9.08c0,0,88.94-17.94,93.09-18.75 c5.79-1.11,8.52,0.54,8.52,6.61l0,79.29c0,3.14-0.03,6.32-2.17,8.92c-2.12,2.59-4.74,3.37-7.81,3.99 c-2.33,0.47-4.66,0.94-6.99,1.41c-8.84,1.78-14.59,2.99-19.8,5.01c-4.98,1.93-8.71,4.39-11.68,7.51 c-5.89,6.17-8.49,14.54-7.67,22.38c0.7,6.69,3.92,13.09,9.09,17.82c3.49,3.2,7.85,5.56,12.99,6.6c5.33,1.07,11.01,0.69,19.31-0.98 c4.42-0.89,8.56-2.22,12.5-4.55c3.9-2.3,7.24-5.37,9.85-9.11c2.62-3.75,4.31-7.92,5.24-12.35c0.96-4.57,1-8.7,1-13.26V64.46 C263.54,58.3,260.29,54.5,254.5,55z" fill="currentColor" transform="scale(1.1) translate(-20, -20)"/></svg>' },
+  // Spotify/Beatport — glyph oficial tomado de simple-icons (cdn.jsdelivr.net/npm/simple-icons),
+  // no reconstruido de memoria: la columna spotify_url ya existía en FETCH_COLUMNS pero
+  // nunca tuvo ícono; beatport_url es campo nuevo (ver migración 20260913130000).
+  spotify_url: { label: "Spotify", svg: '<svg viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z" fill="currentColor"/></svg>' },
+  beatport_url: { label: "Beatport", svg: '<svg viewBox="0 0 24 24"><path d="M21.429 17.055a7.114 7.114 0 0 1-.794 3.246 6.917 6.917 0 0 1-2.181 2.492 6.698 6.698 0 0 1-3.063 1.163 6.653 6.653 0 0 1-3.239-.434 6.796 6.796 0 0 1-2.668-1.932 7.03 7.03 0 0 1-1.481-2.983 7.124 7.124 0 0 1 .049-3.345 7.015 7.015 0 0 1 1.566-2.937l-4.626 4.73-2.421-2.479 5.201-5.265a3.791 3.791 0 0 0 1.066-2.675V0h3.41v6.613a7.172 7.172 0 0 1-.519 2.794 7.02 7.02 0 0 1-1.559 2.353l-.153.156a6.768 6.768 0 0 1 3.49-1.725 6.687 6.687 0 0 1 3.845.5 6.873 6.873 0 0 1 2.959 2.564 7.118 7.118 0 0 1 1.118 3.8Zm-3.089 0a3.89 3.89 0 0 0-.611-2.133 3.752 3.752 0 0 0-1.666-1.424 3.65 3.65 0 0 0-2.158-.233 3.704 3.704 0 0 0-1.92 1.037 3.852 3.852 0 0 0-1.031 1.955 3.908 3.908 0 0 0 .205 2.213c.282.7.76 1.299 1.374 1.721a3.672 3.672 0 0 0 2.076.647 3.637 3.637 0 0 0 2.635-1.096c.347-.351.622-.77.81-1.231.188-.461.285-.956.286-1.456Z" fill="currentColor"/></svg>' },
 };
 
 /* ═══ 3) plantilla ═══════════════════════════════════════════════════════ */
@@ -126,9 +328,15 @@ const HEADER_HTML = `  <header class="header mdj-header-unified" id="mainHeader"
     <div class="header-top">
       <div class="container">
         <div class="brand">
-          <img src="./assets/branding/logo-transparent.webp" alt="Miami DJ Beat Logo" class="logo-img-eagle" width="256" height="256">
+          <picture>
+            <source srcset="./assets/branding/logo-transparent.webp" type="image/webp">
+            <img src="./assets/branding/logo-transparent-fallback.png" alt="Miami DJ Beat Logo" class="logo-img-eagle" width="256" height="256">
+          </picture>
           <div class="brand-letters-wrapper">
-            <img src="./assets/branding/logo-transparent-letras.webp" alt="Miami DJ Beat Letters" class="brand-letters-img" width="384" height="384">
+            <picture>
+              <source srcset="./assets/branding/logo-transparent-letras.webp" type="image/webp">
+              <img src="./assets/branding/logo-transparent-letras.png" alt="Miami DJ Beat Letters" class="brand-letters-img" width="384" height="384">
+            </picture>
           </div>
         </div>
 
@@ -245,7 +453,34 @@ const FOOTER_AND_SCRIPTS_HTML = `  <footer class="footer">
   <script src="./mdj-mobile-header-fix.js?v=20260904-dj-profiles"></script>
 `;
 
-function renderPage(dj) {
+/* Corrección 18 — OG/Twitter. Todos los valores salen de data que el
+   generador YA tiene (metaDesc, canonical, photo_url/background_url). No se
+   inventa ni se pide nada nuevo. */
+export function socialMetaTags({ title, description, image, url, type }) {
+  return [
+    `  <meta property="og:type" content="${esc(type)}" />`,
+    `  <meta property="og:title" content="${esc(title)}" />`,
+    `  <meta property="og:description" content="${description}" />`,
+    `  <meta property="og:url" content="${esc(url)}" />`,
+    `  <meta property="og:image" content="${esc(image)}" />`,
+    `  <meta name="twitter:card" content="summary_large_image" />`,
+    `  <meta name="twitter:title" content="${esc(title)}" />`,
+    `  <meta name="twitter:description" content="${description}" />`,
+    `  <meta name="twitter:image" content="${esc(image)}" />`,
+  ].join("\n");
+}
+
+export const SITE_OG_IMAGE = `${SITE_ORIGIN}/assets/branding/logo-transparent-fallback.png`;
+
+/* La salida aprobada normaliza la localidad en el dato estructurado
+   ("homestead" en pantalla → "Homestead" en addressLocality) y la deja cruda
+   en el texto visible. Se reproduce exactamente eso: sin efecto sobre "Miami"
+   ni "Hialeah", que ya vienen capitalizados. */
+export function titleCaseLocality(city) {
+  return String(city || "").replace(/\S+/g, (w) => w.charAt(0).toUpperCase() + w.slice(1));
+}
+
+export function renderPage(dj) {
   const name = dj.stage_name;
   const bio = stripPhoneNumbers(dj.bio || dj.bio_short || "");
   const bioParas = bio.split(/\n{2,}/).filter(Boolean);
@@ -256,46 +491,69 @@ function renderPage(dj) {
   // disponible sin importar el idioma activo — no se inventa traducción.
   const bioEn = stripPhoneNumbers(dj.bio_en || "");
   const bioEnParas = bioEn ? bioEn.split(/\n{2,}/).filter(Boolean) : null;
-  const city = dj.city || "Miami";
+  const city = titleCaseCity(dj.city) || "Miami";
   const specialtyTags = (dj.artist_specialty || dj.roles || "")
     .split(/[·,]/).map((s) => s.trim()).filter(Boolean).slice(0, 8);
   const services = relatedServices(dj);
-  const title = `${esc(name)} — DJ en Miami | Miami DJ Beat`;
+  const title = `${esc(name)} — DJ en ${esc(city)} | Miami DJ Beat`;
   // Colapsar saltos de línea del bio ANTES de cortar a 155 caracteres — un
   // \n crudo dentro de content="..." rompía la etiqueta en un caso real
   // (DJSolitario, bio con salto de línea propio).
   const bioFlat = bio.replace(/\s+/g, " ").trim();
   const metaDesc = esc(bioFlat.slice(0, 155).trim() + (bioFlat.length > 155 ? "…" : ""));
-  const canonical = `https://miamidjbeat.com/dj/${dj.dj_slug}.html`;
+  const canonical = `${SITE_ORIGIN}/dj/${dj.dj_slug}.html`;
 
-  const sameAs = [dj.instagram_url, dj.facebook_url, dj.tiktok_url, dj.youtube_url, dj.soundcloud_url, dj.apple_music_url, dj.spotify_url]
+  const sameAs = [dj.instagram_url, dj.facebook_url, dj.tiktok_url, dj.youtube_url, dj.soundcloud_url, dj.apple_music_url, dj.spotify_url, dj.beatport_url]
     .filter(Boolean);
 
   const socialLinks = Object.keys(SOCIAL_SVG)
     .filter((field) => dj[field])
     .map((field) => ({ href: dj[field], ...SOCIAL_SVG[field] }));
 
+  // Corrección 17 — se elimina la fabricación Math.max(1, review_count || 1),
+  // que convertía "0 reseñas" en "1 reseña". La compuerta ahora es estricta:
+  // sin reseñas reales no hay estrella visible ni dato estructurado. El
+  // default de la base (rating 1.0 / review_count 0) por sí solo ya no
+  // produce ninguna calificación. No se toca el default de la base.
+  const reviewCount = Number(dj.review_count) || 0;
+  const hasRealRating = reviewCount > 0 && Number(dj.rating) > 0;
+
+  const identity = PERSON_IDENTITY[dj.dj_slug] || null;
+
   const personLd = {
     "@context": "https://schema.org",
     "@type": "Person",
-    name,
-    jobTitle: "DJ",
+    ...(identity?.personId ? { "@id": identity.personId } : {}),
+    name: identity?.name || name,
+    ...(identity?.alternateName ? { alternateName: identity.alternateName } : {}),
+    jobTitle: identity?.jobTitle || "DJ",
     image: dj.photo_url,
-    description: bio.slice(0, 500),
-    address: { "@type": "PostalAddress", addressLocality: city, addressRegion: "FL", addressCountry: "US" },
-    worksFor: { "@type": "EntertainmentBusiness", name: "Miami DJ Beat LLC", url: "https://miamidjbeat.com/" },
+    description: bio,
+    address: { "@type": "PostalAddress", addressLocality: titleCaseLocality(city), addressRegion: "FL", addressCountry: "US" },
+    worksFor: ORG_NODE,
     url: canonical,
     ...(sameAs.length ? { sameAs } : {}),
-    ...(dj.rating ? {
+    ...(EMIT_AGGREGATE_RATING_JSONLD && hasRealRating ? {
       aggregateRating: {
         "@type": "AggregateRating",
         ratingValue: dj.rating,
-        reviewCount: Math.max(1, dj.review_count || 1),
+        reviewCount,
       },
     } : {}),
   };
 
-  const bookingHref = `./client-portal.html?dj_name=${encodeURIComponent(name)}&ref=${encodeURIComponent(dj.dj_slug)}`;
+  // og:image — se prefiere el banner apaisado cuando existe (mejor tarjeta de
+  // compartir); photo_url es el respaldo garantizado, porque tener foto es
+  // requisito de elegibilidad.
+  const ogImage = dj.background_url || dj.photo_url;
+
+  // Corrección quirúrgica (2026-09-13): se descartó la página nueva
+  // dj-availability.html — el PO identificó que el componente de
+  // disponibilidad ya existe, aprobado y en vivo, dentro de dj-profile.html
+  // (acordeón AVAILABILITY, ?view=public). En vez de duplicar UI, este botón
+  // reutiliza el mismo destino que "Perfil Artístico" (liveProfileHref) —
+  // check_dj_availability() ahora vive conectado ahí mismo.
+  const bookingHref = `./dj-profile.html?id=${encodeURIComponent(dj.user_id)}&view=public`;
   // Enlaza directo a la vista pública real (dj-profile.html?view=public) en
   // vez de pasar por profile.html — esa página ahora es solo un redirect de
   // compatibilidad para links/QR viejos, no la fuente de verdad.
@@ -311,7 +569,8 @@ function renderPage(dj) {
   <title>${title}</title>
   <link rel="canonical" href="${canonical}" />
   <meta name="description" content="${metaDesc}" />
-  <script type="application/ld+json">${JSON.stringify(personLd)}</script>
+${socialMetaTags({ title, description: metaDesc, image: ogImage, url: canonical, type: "profile" })}
+  <script type="application/ld+json">${jsonLd(personLd)}</script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Outfit:wght@300;400;500;600;700&display=optional" rel="stylesheet" />
@@ -356,8 +615,8 @@ ${HEADER_HTML}
       <img class="djp-photo" src="${esc(dj.photo_url)}" alt="${esc(name)} — DJ en ${esc(city)}, Miami DJ Beat" loading="eager" fetchpriority="high" />
       <div>
         <h1 class="djp-name">${esc(name)}</h1>
-        <div class="djp-meta">📍 ${esc(city)}${dj.is_resident ? " · DJ Residente" : ""}${dj.rating ? ` · ★ ${esc(dj.rating)} (${esc(dj.review_count || 0)})` : ""}</div>
-        ${specialtyTags.length ? `<div class="djp-tags">${specialtyTags.map((t) => `<span class="djp-tag">${esc(t)}</span>`).join("")}</div>` : ""}
+        <div class="djp-meta">📍 ${esc(city)}${dj.is_resident ? " · DJ Residente" : ""}${hasRealRating ? ` · ★ ${esc(dj.rating)} (${esc(reviewCount)})` : ""}</div>
+        ${identity?.identityLine ? `<p class="djp-identity" style="color:rgba(255,255,255,0.55);font-size:14px;margin:0 0 10px;">${esc(identity.identityLine)}</p>\n        ` : ""}${specialtyTags.length ? `<div class="djp-tags">${specialtyTags.map((t) => `<span class="djp-tag">${esc(t)}</span>`).join("")}</div>` : ""}
         <div class="djp-bio djp-bio-es">${bioParas.map((p) => `<p>${esc(p)}</p>`).join("")}</div>
         ${bioEnParas ? `<div class="djp-bio djp-bio-en">${bioEnParas.map((p) => `<p>${esc(p)}</p>`).join("")}</div>` : ""}
         <div class="djp-cta">
@@ -393,9 +652,13 @@ ${FOOTER_AND_SCRIPTS_HTML}
    reales horneados, para que Google/Siri/ChatGPT puedan descubrir cada
    perfil por enlace interno y no solo por el sitemap. */
 
-function renderIndexPage(djs) {
+const INDEX_TITLE = "Directorio de DJs en Miami | Miami DJ Beat";
+const INDEX_CANONICAL = `${SITE_ORIGIN}/dj/directorio.html`;
+const INDEX_DESC = "DJs profesionales de Miami DJ Beat — bodas, quinceañeras, eventos corporativos y Latin/Open Format. Perfiles reales, disponibilidad y contacto directo.";
+
+export function renderIndexPage(djs) {
   const cards = djs.map((dj) => {
-    const city = dj.city || "Miami";
+    const city = titleCaseCity(dj.city) || "Miami";
     const bio = stripPhoneNumbers(dj.bio || dj.bio_short || "").slice(0, 140);
     return `
       <a class="djidx-card" href="./dj/${dj.dj_slug}.html">
@@ -415,16 +678,17 @@ function renderIndexPage(djs) {
   <meta charset="utf-8" />
   <base href="/" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Directorio de DJs en Miami | Miami DJ Beat</title>
-  <link rel="canonical" href="https://miamidjbeat.com/dj/directorio.html" />
-  <meta name="description" content="DJs profesionales de Miami DJ Beat — bodas, quinceañeras, eventos corporativos y Latin/Open Format. Perfiles reales, disponibilidad y contacto directo." />
-  <script type="application/ld+json">${JSON.stringify({
+  <title>${INDEX_TITLE}</title>
+  <link rel="canonical" href="${INDEX_CANONICAL}" />
+  <meta name="description" content="${INDEX_DESC}" />
+${socialMetaTags({ title: INDEX_TITLE, description: INDEX_DESC, image: SITE_OG_IMAGE, url: INDEX_CANONICAL, type: "website" })}
+  <script type="application/ld+json">${jsonLd({
     "@context": "https://schema.org",
     "@type": "ItemList",
     itemListElement: djs.map((dj, i) => ({
       "@type": "ListItem",
       position: i + 1,
-      url: `https://miamidjbeat.com/dj/${dj.dj_slug}.html`,
+      url: `${SITE_ORIGIN}/dj/${dj.dj_slug}.html`,
       name: dj.stage_name,
     })),
   })}</script>
@@ -454,6 +718,7 @@ ${HEADER_HTML}
     <div class="djidx-wrap">
       <h1>Directorio de DJs</h1>
       <p>DJs profesionales de Miami DJ Beat, con disponibilidad real y reserva directa.</p>
+      <p style="font-size:14px;color:rgba(255,255,255,0.6);">¿Buscas por disponibilidad, ciudad o especialidad? <a href="../find-dj.html" style="color:var(--gold);">Explora todos los DJs de la plataforma</a> · ¿Quieres verificar una credencial? <a href="../directory.html" style="color:var(--gold);">Directorio de certificación</a></p>
       <div class="djidx-grid">${cards}</div>
     </div>
   </main>
@@ -476,11 +741,20 @@ const STAFF_TITLE_BY_SLUG = {
   owner: "Fundador &amp; Propietario",
 };
 
-function qualifiesStaff(dj) {
+/* Corrección 19 — AISLAMIENTO DELIBERADO.
+   `seo_publish_status` es una compuerta del camino de DJs y NO se añade aquí.
+   equipo.html es una página corporativa de autoridad (E-E-A-T), no un perfil
+   reservable: su inclusión no depende de ninguna aprobación editorial de DJ.
+   Ningún valor de dj.seo_publish_status puede alterar esta función. */
+export function qualifiesStaff(dj) {
   return Boolean(/\bstaff\b/i.test(dj.artist_specialty || "") && (dj.bio || dj.bio_short) && dj.photo_url && dj.stage_name && dj.dj_slug);
 }
 
-function renderTeamPage(staff) {
+const TEAM_TITLE = "Equipo — Miami DJ Beat LLC";
+const TEAM_CANONICAL = `${SITE_ORIGIN}/equipo.html`;
+const TEAM_DESC = "Conoce al equipo detrás de Miami DJ Beat LLC — fundador, dirección y el equipo que impulsa la plataforma de DJs y producción de eventos en Miami.";
+
+export function renderTeamPage(staff) {
   const cards = staff.map((s) => {
     const bio = stripPhoneNumbers(s.bio || s.bio_short || "");
     const bioParas = bio.split(/\n{2,}/).filter(Boolean);
@@ -504,13 +778,21 @@ function renderTeamPage(staff) {
       </article>`;
   }).join("");
 
-  const personLd = staff.map((s) => ({
-    "@type": "Person",
-    name: s.stage_name,
-    jobTitle: (STAFF_TITLE_BY_SLUG[s.dj_slug] || "Equipo Miami DJ Beat").replace(/&amp;/g, "&"),
-    image: s.photo_url,
-    worksFor: { "@type": "EntertainmentBusiness", name: "Miami DJ Beat LLC", url: "https://miamidjbeat.com/" },
-  }));
+  // Person Identity Normalization: la fila `owner` y la fila `djmago305` son
+  // la MISMA persona, así que comparten @id. Sin eso, el grafo declaraba dos
+  // entidades distintas para un solo humano.
+  const personLd = staff.map((s) => {
+    const identity = PERSON_IDENTITY[s.dj_slug] || null;
+    return {
+      "@type": "Person",
+      ...(identity?.personId ? { "@id": identity.personId } : {}),
+      name: identity?.name || s.stage_name,
+      ...(identity?.alternateName ? { alternateName: identity.alternateName } : {}),
+      jobTitle: (STAFF_TITLE_BY_SLUG[s.dj_slug] || "Equipo Miami DJ Beat").replace(/&amp;/g, "&"),
+      image: s.photo_url,
+      worksFor: ORG_NODE,
+    };
+  });
 
   return `<!doctype html>
 <html lang="es">
@@ -519,10 +801,11 @@ function renderTeamPage(staff) {
   <meta charset="utf-8" />
   <base href="/" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Equipo — Miami DJ Beat LLC</title>
-  <link rel="canonical" href="https://miamidjbeat.com/equipo.html" />
-  <meta name="description" content="Conoce al equipo detrás de Miami DJ Beat LLC — fundador, dirección y el equipo que impulsa la plataforma de DJs y producción de eventos en Miami." />
-  <script type="application/ld+json">${JSON.stringify({ "@context": "https://schema.org", "@graph": personLd })}</script>
+  <title>${TEAM_TITLE}</title>
+  <link rel="canonical" href="${TEAM_CANONICAL}" />
+  <meta name="description" content="${TEAM_DESC}" />
+${socialMetaTags({ title: TEAM_TITLE, description: TEAM_DESC, image: staff[0]?.photo_url || SITE_OG_IMAGE, url: TEAM_CANONICAL, type: "website" })}
+  <script type="application/ld+json">${jsonLd({ "@context": "https://schema.org", "@graph": personLd })}</script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Outfit:wght@300;400;500;600;700&display=optional" rel="stylesheet" />
@@ -562,78 +845,382 @@ ${FOOTER_AND_SCRIPTS_HTML}
 `;
 }
 
-/* ═══ 4) sitemap ═════════════════════════════════════════════════════════ */
 
-function upsertSitemap(paths) {
-  let xml = readFileSync(SITEMAP, "utf8");
-  let added = 0;
-  for (const { path, priority } of paths) {
-    const loc = `https://miamidjbeat.com/${path}`;
-    if (xml.includes(`<loc>${loc}</loc>`)) continue;
-    const entry = `  <url>\n    <loc>${loc}</loc>\n    <changefreq>weekly</changefreq>\n    <priority>${priority}</priority>\n  </url>\n`;
-    xml = xml.replace("</urlset>", `${entry}</urlset>`);
-    added++;
-  }
-  if (added && !DRY_RUN) writeFileSync(SITEMAP, xml, "utf8");
-  return added;
+/* ═══ 4) sitemap — namespace acotado ════════════════════════════════════════
+   Corrección 13. El host pasa a www (corrección 2) y se añade capacidad de
+   REMOCIÓN, pero estrictamente acotada a páginas individuales de DJ:
+       ^https://www\.miamidjbeat\.com/dj/[a-z0-9-]+\.html$
+   con /dj/directorio.html excluido a mano (encaja en el patrón pero NO es un
+   perfil), y sin tocar jamás /equipo.html ni nada fuera de /dj/. */
+
+const ORIGIN_RE_SRC = SITE_ORIGIN.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+export const DJ_PAGE_LOC_RE = new RegExp(`^${ORIGIN_RE_SRC}/dj/[a-z0-9-]+\\.html$`);
+export const SITEMAP_PROTECTED_LOCS = Object.freeze([
+  `${SITE_ORIGIN}/dj/directorio.html`,
+  `${SITE_ORIGIN}/equipo.html`,
+]);
+
+/** Solo una página individual de DJ puede salir del sitemap por esta vía. */
+export function isRemovableSitemapLoc(loc) {
+  if (SITEMAP_PROTECTED_LOCS.includes(loc)) return false;
+  return DJ_PAGE_LOC_RE.test(loc);
 }
 
-/* ═══ main ═══════════════════════════════════════════════════════════════ */
+export function readSitemapLocs(xml) {
+  return [...String(xml).matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
+}
 
-async function main() {
-  const all = await fetchDJs();
-  const qualified = all.filter(qualifies);
-  const skipped = all.filter((d) => !qualifies(d));
+/** Pase de diagnóstico: detecta (NO corrige en silencio) duplicados y www/no-www. */
+export function diagnoseSitemap(xml) {
+  const locs = readSitemapLocs(xml);
+  const seen = new Set();
+  const duplicates = [];
+  const hostMismatch = [];
+  for (const loc of locs) {
+    if (seen.has(loc)) duplicates.push(loc); else seen.add(loc);
+    if (/^https?:\/\/miamidjbeat\.com\//.test(loc)) hostMismatch.push(loc);
+  }
+  // Mismo path servido bajo www y sin www = señal de canonical partida.
+  const byPath = new Map();
+  for (const loc of locs) {
+    const m = loc.match(/^https?:\/\/(?:www\.)?miamidjbeat\.com(\/.*)$/);
+    if (!m) continue;
+    byPath.set(m[1], (byPath.get(m[1]) || 0) + 1);
+  }
+  const duplicatePaths = [...byPath.entries()].filter(([, n]) => n > 1).map(([p]) => p);
+  return { duplicates, hostMismatch, duplicatePaths };
+}
 
-  qualified.sort((a, b) => {
+/**
+ * Calcula el sitemap nuevo EN MEMORIA. No escribe nada — quien escribe es
+ * main(), y solo después de que todas las validaciones pasaron.
+ */
+export function planSitemap(xml, { addPaths = [], removeLocs = [] } = {}) {
+  let out = String(xml);
+  const present = new Set(readSitemapLocs(out));
+  const added = [];
+  const removed = [];
+  const refused = [];
+
+  for (const loc of removeLocs) {
+    if (!isRemovableSitemapLoc(loc)) { refused.push(loc); continue; }
+    if (!present.has(loc)) continue;
+    const locRe = loc.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const re = new RegExp(`\\n?[ \\t]*<url>(?:(?!<\\/url>)[\\s\\S])*?<loc>${locRe}<\\/loc>[\\s\\S]*?<\\/url>`, "g");
+    const next = out.replace(re, "");
+    if (next !== out) { out = next; removed.push(loc); present.delete(loc); }
+  }
+
+  for (const { path, priority } of addPaths) {
+    const loc = `${SITE_ORIGIN}/${path}`;
+    if (present.has(loc)) continue;
+    const entry = `  <url>\n    <loc>${loc}</loc>\n    <changefreq>weekly</changefreq>\n    <priority>${priority}</priority>\n  </url>\n`;
+    out = out.replace("</urlset>", `${entry}</urlset>`);
+    present.add(loc);
+    added.push(loc);
+  }
+
+  return { xml: out, added, removed, refused, diagnostics: diagnoseSitemap(xml) };
+}
+
+/* ═══ 5) propiedad de archivos generados — falla cerrada ════════════════════
+   Corrección 10. Marcador de propiedad = lo que YA existe y es exclusivo de
+   renderPage(): body class="notranslate page-dj-profile" + un <link rel=
+   canonical> cuyo slug coincide con el nombre del archivo. No se inventa
+   maquinaria nueva de marcado. Cualquier archivo que no pase AMBAS pruebas es
+   ajeno: se registra [SKIP-UNOWNED] y NUNCA se toca.
+   directorio.html queda excluido por nombre, siempre y en todo caso. */
+
+export const MANAGED_BODY_MARKER = '<body class="notranslate page-dj-profile">';
+
+export function isManagedProfileFile(filename, html) {
+  if (filename === "directorio.html") return false;
+  if (!filename.endsWith(".html")) return false;
+  if (!String(html).includes(MANAGED_BODY_MARKER)) return false;
+  const slug = basename(filename, ".html");
+  const m = String(html).match(/<link rel="canonical" href="([^"]+)"\s*\/?>/);
+  if (!m) return false;
+  // Se acepta también el host pelado como seguridad de transición: los
+  // archivos legados escritos antes de la corrección 2 siguen siendo NUESTROS
+  // y no deben aparecer como ajenos en la primera regeneración controlada.
+  return m[1] === `${SITE_ORIGIN}/dj/${slug}.html` || m[1] === `https://miamidjbeat.com/dj/${slug}.html`;
+}
+
+/* ═══ 6) manifiesto de slugs — rename vs. baja real ═════════════════════════
+   Corrección 9. Sin identidad persistida, un DJ que cambia de slug es
+   indistinguible de un DJ dado de baja, y el reconciliador borraría la página
+   vieja en silencio. El manifiesto guarda { user_id: slug } de cada corrida.
+   Falta de manifiesto (primera corrida) = sin historia, todo es nuevo. */
+
+export function readSlugManifest(path = SLUG_MANIFEST) {
+  if (!existsSync(path)) return { slugs: {}, ok: true, existed: false };
+  try {
+    const j = JSON.parse(readFileSync(path, "utf8"));
+    const slugs = (j && typeof j === "object" && j.slugs && typeof j.slugs === "object") ? j.slugs : {};
+    return { slugs, ok: true, existed: true };
+  } catch {
+    // Manifiesto ilegible: se sigue adelante, pero ok:false BLOQUEA cualquier
+    // borrado — sin historia confiable no se borra nada.
+    return { slugs: {}, ok: false, existed: true };
+  }
+}
+
+export function buildSlugManifest(desired) {
+  const slugs = {};
+  for (const dj of desired) slugs[dj.user_id] = dj.dj_slug;
+  return { generated_at: new Date().toISOString(), slugs };
+}
+
+/* ═══ 7) PLAN — todo se calcula y valida en memoria, antes de tocar disco ═══
+   Corrección 15. Función pura: recibe filas + archivos ya leídos, devuelve el
+   plan completo. Si ok === false, main() no escribe absolutamente nada. */
+
+export function planGeneration({
+  rows,
+  existingFiles = [],
+  manifest = { slugs: {}, ok: true, existed: false },
+  reconcile = false,
+  allowEmptyRoster = false,
+} = {}) {
+  const errors = [];
+  const notes = [];
+
+  const desired = rows.filter(qualifies);
+  const skipped = rows.filter((d) => !qualifies(d));
+  const staff = rows.filter(qualifiesStaff);
+
+  desired.sort((a, b) => {
     const pa = isPaid(a) ? 0 : 1;
     const pb = isPaid(b) ? 0 : 1;
     if (pa !== pb) return pa - pb;
     return (a.stage_name || "").localeCompare(b.stage_name || "");
   });
 
-  console.log(`Total DJs en public_dj_profiles: ${all.length}`);
-  console.log(`Elegibles (bio + foto reales): ${qualified.length}`);
-  qualified.forEach((d, i) => console.log(`  ${i + 1}. ${d.dj_slug}  (${isPaid(d) ? "PAGO" : "gratis"})  — ${d.stage_name}`));
-  if (skipped.length) {
-    console.log(`Pendientes de completar perfil (sin página todavía): ${skipped.length}`);
-    skipped.forEach((d) => console.log(`  - ${d.dj_slug || d.user_id}: falta ${!d.bio_short && !d.bio ? "bio" : ""}${!d.photo_url ? " foto" : ""}`));
+  /* — corrección 8: colisión de slug ⇒ ABORTO TOTAL, no se escribe nada.
+       No se auto-resuelve con un sufijo numérico ni se deja que el orden
+       decida un ganador en silencio: dos DJs reclamando la misma URL es un
+       conflicto humano, no algo que un script deba zanjar. */
+  const bySlug = new Map();
+  for (const dj of desired) {
+    if (!bySlug.has(dj.dj_slug)) bySlug.set(dj.dj_slug, []);
+    bySlug.get(dj.dj_slug).push(dj);
+  }
+  const collisions = [...bySlug.entries()]
+    .filter(([, list]) => list.length > 1)
+    .map(([slug, list]) => ({ slug, count: list.length, names: list.map((d) => d.stage_name || d.user_id) }));
+  for (const c of collisions) {
+    errors.push(`[COLLISION] ${c.slug} appears ${c.count} times (dj_names: ${c.names.join(", ")})`);
   }
 
-  if (DRY_RUN) {
-    console.log("\n--dry-run: no se escribió ningún archivo.");
+  /* — corrección 14: roster vacío ⇒ ABORTO antes de sobrescribir directorio/
+       equipo/sitemap con un roster en blanco. Hoy no existe ningún escenario
+       legítimo de cero DJs. Si algún día lo hubiera, la puerta de entrada es
+       --allow-empty-roster (definido pero NO habilitado en este ticket). */
+  const rosterSafetyAbort = desired.length === 0 && !allowEmptyRoster;
+  if (rosterSafetyAbort) {
+    errors.push(`[ROSTER-SAFETY-ABORT] fetched ${rows.length} rows, ${desired.length} elegibles — refusing to overwrite existing directory/team pages with an empty roster`);
+  }
+
+  /* — corrección 10/12: clasificación de archivos en disco. */
+  const managed = [];
+  const unowned = [];
+  for (const f of existingFiles) {
+    if (f.filename === "directorio.html") continue; // nunca candidato, jamás
+    if (isManagedProfileFile(f.filename, f.html)) managed.push(basename(f.filename, ".html"));
+    else unowned.push(f.filename);
+  }
+
+  const desiredSlugs = new Set(desired.map((d) => d.dj_slug));
+  const managedSet = new Set(managed);
+  const create = desired.filter((d) => !managedSet.has(d.dj_slug)).map((d) => d.dj_slug);
+  const keep = desired.filter((d) => managedSet.has(d.dj_slug)).map((d) => d.dj_slug);
+  const stale = managed.filter((s) => !desiredSlugs.has(s));
+
+  /* — corrección 9/12: se parte `stale` por CAUSA, cruzándolo con el
+       manifiesto. Mismo user_id con slug distinto = RENAME (no se borra, se
+       marca para revisión humana; nada de redirects especulativos).
+       user_id que ya no está en el set deseado = baja real. */
+  const slugToUser = new Map();
+  for (const [userId, slug] of Object.entries(manifest.slugs || {})) slugToUser.set(slug, userId);
+  const desiredByUser = new Map(desired.map((d) => [d.user_id, d.dj_slug]));
+
+  const renameCandidates = [];
+  const staleRemovable = [];
+  for (const oldSlug of stale) {
+    const userId = slugToUser.get(oldSlug);
+    const newSlug = userId ? desiredByUser.get(userId) : undefined;
+    if (userId && newSlug && newSlug !== oldSlug) {
+      renameCandidates.push({ user_id: userId, old: oldSlug, new: newSlug });
+      notes.push(`[RENAME-CANDIDATE] user_id=${userId} old=${oldSlug} new=${newSlug}`);
+    } else {
+      staleRemovable.push(oldSlug);
+    }
+  }
+
+  /* — corrección 11: ancla de identidad. Si djmago305 aparece como borrable
+       por el motivo que sea, se aborta la corrida entera. */
+  if (staleRemovable.includes(IDENTITY_ANCHOR_SLUG)) {
+    errors.push(`[IDENTITY-ANCHOR-ABORT] ${IDENTITY_ANCHOR_SLUG}.html is protected and cannot be automatically removed — manual review required`);
+  }
+
+  if (reconcile && !manifest.ok) {
+    errors.push("[MANIFEST-UNREADABLE] .slug-manifest.json no se pudo leer — se rechaza --reconcile: sin historia confiable no se borra nada.");
+  }
+
+  const sitemapAdd = [
+    { path: "dj/directorio.html", priority: "0.8" },
+    { path: "equipo.html", priority: "0.6" },
+    ...desired.map((d) => ({ path: `dj/${d.dj_slug}.html`, priority: "0.7" })),
+  ];
+  // Solo se propone quitar del sitemap lo que de verdad se va a borrar.
+  const sitemapRemove = (reconcile ? staleRemovable : []).map((s) => `${SITE_ORIGIN}/dj/${s}.html`);
+
+  return {
+    ok: errors.length === 0,
+    errors, notes,
+    rows, desired, skipped, staff,
+    managed, unowned, create, keep, stale, staleRemovable, renameCandidates, collisions,
+    rosterSafetyAbort, sitemapAdd, sitemapRemove,
+  };
+}
+
+/** Lee web/dj/*.html del disco en la forma que planGeneration() espera. */
+export function readExistingProfileFiles(dir = OUT_DIR) {
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir)
+    .filter((f) => f.endsWith(".html"))
+    .map((f) => ({ filename: f, html: readFileSync(join(dir, f), "utf8") }));
+}
+
+/* ═══ 8) reporte — corrección 20 ════════════════════════════════════════════ */
+
+export function printPlan(plan, { reconcile = false, log = console.log } = {}) {
+  log(`\nTotal filas en public_dj_profiles: ${plan.rows.length}`);
+  log(`Elegibles (bio + foto + seo_publish_status='approved'): ${plan.desired.length}`);
+  plan.desired.forEach((d, i) => log(`  ${i + 1}. ${d.dj_slug}  (${isPaid(d) ? "PAGO" : "gratis"})  — ${d.stage_name}`));
+
+  if (plan.skipped.length) {
+    log(`\nNo elegibles (sin página): ${plan.skipped.length}`);
+    plan.skipped.forEach((d) => {
+      const falta = [];
+      if (!d.bio && !d.bio_short) falta.push("bio");
+      if (!d.photo_url) falta.push("foto");
+      if (!isSeoApproved(d)) falta.push(`seo_publish_status=${d.seo_publish_status ?? "null"}`);
+      if (!isActuallyDJ(d)) falta.push("rol DJ");
+      log(`  - ${d.dj_slug || d.user_id}: falta ${falta.join(", ") || "(otro requisito)"}`);
+    });
+  }
+
+  log(`\nCREATE (${plan.create.length}): ${plan.create.join(", ") || "—"}`);
+  log(`KEEP (${plan.keep.length}): ${plan.keep.join(", ") || "—"}`);
+  if (reconcile) {
+    log(`REMOVE (${plan.staleRemovable.length}): ${plan.staleRemovable.join(", ") || "—"}`);
+  } else {
+    log(`REMOVE (0 — sin --reconcile): se BORRARÍA ${plan.staleRemovable.length}: ${plan.staleRemovable.join(", ") || "—"}`);
+  }
+  plan.unowned.forEach((f) => log(`[SKIP-UNOWNED] ${f}`));
+  plan.collisions.forEach((c) => log(`[COLLISION] ${c.slug} appears ${c.count} times (dj_names: ${c.names.join(", ")})`));
+  plan.renameCandidates.forEach((r) => log(`[RENAME-CANDIDATE] user_id=${r.user_id} old=${r.old} new=${r.new}`));
+  if (plan.rosterSafetyAbort) log(`[ROSTER-SAFETY-ABORT] fetched 0 elegibles — no se sobrescribe directorio/equipo/sitemap`);
+  plan.errors.forEach((e) => log(`[ERROR] ${e}`));
+
+  log(`\nStaff elegible (equipo.html): ${plan.staff.length}`);
+  plan.staff.forEach((s) => log(`  - ${s.dj_slug} — ${s.stage_name}`));
+}
+
+/* ═══ main — PLAN → VALIDATE → WRITE ═══════════════════════════════════════ */
+
+export async function main() {
+  const resolved = resolveEnvironment(process.env, { dryRun: DRY_RUN });
+  if (resolved.abort) {
+    console.error("ENVIRONMENT: (no declarado)");
+    console.error(`MODE: ${DRY_RUN ? "DRY-RUN" : "REAL"}`);
+    console.error(`[ERROR] ABORT — ${resolved.abort}`);
+    process.exitCode = 2;
+    return;
+  }
+  printEnvironmentBanner(resolved, { dryRun: DRY_RUN, outDir: OUT_DIR });
+
+  const rows = await fetchDJs(resolved);
+
+  const plan = planGeneration({
+    rows,
+    existingFiles: readExistingProfileFiles(OUT_DIR),
+    manifest: readSlugManifest(),
+    reconcile: RECONCILE,
+    allowEmptyRoster: ALLOW_EMPTY_ROSTER,
+  });
+
+  const sitemapXmlBefore = existsSync(SITEMAP) ? readFileSync(SITEMAP, "utf8") : "";
+  const sitemapPlan = sitemapXmlBefore
+    ? planSitemap(sitemapXmlBefore, { addPaths: plan.sitemapAdd, removeLocs: plan.sitemapRemove })
+    : { xml: "", added: [], removed: [], refused: [], diagnostics: { duplicates: [], hostMismatch: [], duplicatePaths: [] } };
+
+  printPlan(plan, { reconcile: RECONCILE });
+  sitemapPlan.added.forEach((l) => console.log(`[SITEMAP ADD] ${l}`));
+  sitemapPlan.removed.forEach((l) => console.log(`[SITEMAP REMOVE] ${l}`));
+  sitemapPlan.refused.forEach((l) => console.log(`[SITEMAP SKIP-PROTECTED] ${l}`));
+  const diag = sitemapPlan.diagnostics;
+  diag.hostMismatch.forEach((l) => console.log(`[SITEMAP DIAG] host sin www (no se corrige solo): ${l}`));
+  diag.duplicates.forEach((l) => console.log(`[SITEMAP DIAG] <loc> duplicado: ${l}`));
+  diag.duplicatePaths.forEach((p) => console.log(`[SITEMAP DIAG] mismo path bajo www y sin www: ${p}`));
+
+  // ── VALIDATE ──────────────────────────────────────────────────────────────
+  if (!plan.ok) {
+    console.error(`\nRESUMEN: ABORTADO — ${plan.errors.length} error(es) de validación. CERO archivos escritos.`);
+    process.exitCode = 1;
     return;
   }
 
-  if (!existsSync(OUT_DIR)) mkdirSync(OUT_DIR, { recursive: true });
-
-  for (const dj of qualified) {
-    const html = renderPage(dj);
-    writeFileSync(join(OUT_DIR, `${dj.dj_slug}.html`), html, "utf8");
-    console.log(`✓ web/dj/${dj.dj_slug}.html`);
+  if (DRY_RUN) {
+    console.log(`\nRESUMEN: --dry-run — ${plan.create.length} a crear, ${plan.keep.length} a actualizar, ${plan.staleRemovable.length} borrable(s)${RECONCILE ? "" : " (sin --reconcile)"}, ${sitemapPlan.added.length} alta(s) de sitemap, ${sitemapPlan.removed.length} baja(s) de sitemap. CERO archivos escritos.`);
+    return;
   }
 
-  const indexHtml = renderIndexPage(qualified);
-  writeFileSync(join(OUT_DIR, "directorio.html"), indexHtml, "utf8");
-  console.log(`✓ web/dj/directorio.html (${qualified.length} perfiles listados)`);
+  // ── WRITE ─────────────────────────────────────────────────────────────────
+  if (!existsSync(OUT_DIR)) mkdirSync(OUT_DIR, { recursive: true });
 
-  const staff = all.filter(qualifiesStaff);
-  console.log(`Staff elegible (Sobre Nosotros): ${staff.length}`);
-  staff.forEach((s) => console.log(`  - ${s.dj_slug} — ${s.stage_name}`));
-  const teamHtml = renderTeamPage(staff);
-  writeFileSync(join(WEB, "equipo.html"), teamHtml, "utf8");
-  console.log(`✓ web/equipo.html (${staff.length} miembros listados)`);
+  for (const dj of plan.desired) {
+    const profilePath = join(OUT_DIR, `${dj.dj_slug}.html`);
+    writeFileSync(profilePath, renderPage(dj), "utf8");
+    console.log(`✓ ${OUTPUT_DIR_OVERRIDE ? profilePath : `web/dj/${dj.dj_slug}.html`}`);
+  }
 
-  const sitemapPaths = [
-    { path: "dj/directorio.html", priority: "0.8" },
-    { path: "equipo.html", priority: "0.6" },
-    ...qualified.map((d) => ({ path: `dj/${d.dj_slug}.html`, priority: "0.7" })),
-  ];
-  const added = upsertSitemap(sitemapPaths);
-  console.log(`sitemap.xml: ${added} URL(s) nueva(s) agregada(s).`);
+  const directorioPath = join(OUT_DIR, "directorio.html");
+  writeFileSync(directorioPath, renderIndexPage(plan.desired), "utf8");
+  console.log(`✓ ${OUTPUT_DIR_OVERRIDE ? directorioPath : "web/dj/directorio.html"} (${plan.desired.length} perfiles listados)`);
+
+  writeFileSync(EQUIPO_PATH, renderTeamPage(plan.staff), "utf8");
+  console.log(`✓ ${OUTPUT_DIR_OVERRIDE ? EQUIPO_PATH : "web/equipo.html"} (${plan.staff.length} miembros listados)`);
+
+  if (sitemapXmlBefore && (sitemapPlan.added.length || sitemapPlan.removed.length)) {
+    writeFileSync(SITEMAP, sitemapPlan.xml, "utf8");
+    console.log(`✓ ${OUTPUT_DIR_OVERRIDE ? SITEMAP : "web/sitemap.xml"} (+${sitemapPlan.added.length} / -${sitemapPlan.removed.length})`);
+  }
+
+  writeFileSync(SLUG_MANIFEST, `${JSON.stringify(buildSlugManifest(plan.desired), null, 2)}\n`, "utf8");
+  console.log(`✓ ${OUTPUT_DIR_OVERRIDE ? SLUG_MANIFEST : "tools/dj-profiles/.slug-manifest.json"} (${plan.desired.length} entradas)`);
+
+  // Los borrados van AL FINAL, después de que todas las altas/actualizaciones
+  // salieron bien, y solo sobre stale-removable (nunca rename-candidate, nunca
+  // unowned, nunca directorio.html, nunca el ancla de identidad).
+  if (RECONCILE) {
+    for (const slug of plan.staleRemovable) {
+      const removePath = join(OUT_DIR, `${slug}.html`);
+      unlinkSync(removePath);
+      console.log(`✗ REMOVE ${OUTPUT_DIR_OVERRIDE ? removePath : `web/dj/${slug}.html`}`);
+    }
+  }
+
+  console.log(`\nRESUMEN: ${plan.create.length} creada(s), ${plan.keep.length} actualizada(s), ${RECONCILE ? plan.staleRemovable.length : 0} borrada(s), sitemap +${sitemapPlan.added.length}/-${sitemapPlan.removed.length}.`);
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+// Solo se ejecuta si se invoca como script; importarlo desde las pruebas no
+// dispara ninguna corrida.
+const INVOKED_DIRECTLY = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
+if (INVOKED_DIRECTLY) {
+  main().catch((e) => {
+    console.error(`[ERROR] ${e && e.message ? e.message : e}`);
+    process.exit(1);
+  });
+}
