@@ -5593,6 +5593,25 @@ body[data-mdj-estacion] #mainHeader.header.mdj-header-unified {
     margin: 0 2px !important;
   }
 
+  /* FIX-NAV-TABLET-CENTRADO-VERTICAL (2026-09-16, orden del PO): #mainHeader
+     mide 84px fijos en modo estación (regla calibrada más abajo en este
+     archivo, con muchas otras piezas de la estación ancladas a ese número --
+     NO se toca). .header-top vale 0 aquí (display:none) y .header-nav mide
+     38px -- con justify-content:normal (el valor de fábrica en un flex
+     column), ese único hijo visible queda pegado arriba, dejando 46px de
+     pared negra sólida debajo antes de la foto. Centrar el eje Y del propio
+     #mainHeader dentro de ESTE rango de ancho (601-1220px) reparte esos
+     46px en 23px arriba / 23px abajo, sin cambiar el alto total de 84px --
+     cero impacto en las otras piezas de estación ancladas a ese número
+     (siguen viendo los mismos 84px de siempre). Mismo selector exacto que
+     la regla de 84px, para acotar la especificidad igual y no interferir
+     con desktop/hamburguesa real fuera de este medio. */
+  html.mdj-estacion-previa #mainHeader.header.mdj-header-unified,
+  body.mdj-perfil-estacion #mainHeader.header.mdj-header-unified,
+  body[data-mdj-estacion] #mainHeader.header.mdj-header-unified {
+    justify-content: center !important;
+  }
+
   /* FIX-TABLET-HEADER-SCALE-DOWN (2026-09-15, orden del PO): el scroll de
      arriba resuelve que la barra NUNCA tape el logo, pero el PO pidió algo
      más -- que quepa SIN deslizar, achicando el contenido, no escondiéndolo
