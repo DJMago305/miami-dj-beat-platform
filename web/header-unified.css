@@ -5505,10 +5505,26 @@ body[data-mdj-estacion] #mainHeader.header.mdj-header-unified {
     display: none !important;
   }
 
-  /* Red de seguridad de overflow -- mismo patrón que el tramo portátil
-     1001-1221px (ver bloque de arriba) y que #mainNav en teléfono: scroll
-     horizontal SIN scrollbar visible, contenido dentro de .header-nav, para
-     que 10 puestos nunca empujen ni tapen el logo de la fila 1. */
+  /* FIX-NAV-TABLET-FILA-UNICA (2026-09-15, madrugada -- ORDEN PRIORITARIA
+     del PO, revierte FIX-NAV-TABLET-REACOMODO de esta misma noche): el
+     wrap a 2 líneas se veía bien en la medición inicial, pero los propios
+     timers de reintento de mdjTabletHeaderScale (300/800/1500/3000/6000ms
+     -- necesarios para ganarle a la carrera de fuentes/datos async) volvían
+     a correr después y, en alguna vuelta, dejaban la barra en 2 líneas
+     ("pirámide", 6 arriba + 3 abajo) sin que hiciera falta -- confirmado
+     por el PO en vivo esperando la ráfaga completa. Un sistema con estado
+     que puede cambiar solo en cualquiera de 5 reintentos futuros es
+     frágil por diseño, aunque cada reintento individual mida bien.
+     QUEDA PROHIBIDO EL WRAP. Se vuelve al sistema anterior, ya probado
+     estable: SIEMPRE una sola línea (nowrap), con scroll horizontal táctil
+     + degradado de borde como red de seguridad para el caso extremo
+     (768px vertical, 9 puestos que no caben ni a 6px de fuente) -- nunca
+     una segunda fila, nunca hamburguesa. */
+  html body #mainHeader.header.mdj-header-unified > .header-nav,
+  html body #mainHeader#mainHeader.header.mdj-header-unified
+    .header-nav .container > #mainNav#mainNav.mdj-mainnav-flex.nav.top-nav {
+    flex-wrap: nowrap !important;
+  }
   #mainHeader.header.mdj-header-unified .header-nav {
     overflow-x: auto !important;
     overflow-y: hidden !important;
@@ -5532,7 +5548,8 @@ body[data-mdj-estacion] #mainHeader.header.mdj-header-unified {
        que el resto de este bloque. Implementado por JS en su lugar (ver
        mdjTabletHeaderScale, mdj-mobile-header-fix.js). */
   }
-  #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav.mdj-mainnav-flex.nav.top-nav {
+  html body #mainHeader#mainHeader.header.mdj-header-unified
+    .header-nav .container > #mainNav#mainNav.mdj-mainnav-flex.nav.top-nav {
     width: 100% !important;
     max-width: 100% !important;
     margin-left: 0 !important;
@@ -5544,6 +5561,14 @@ body[data-mdj-estacion] #mainHeader.header.mdj-header-unified {
   #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a {
     width: auto !important;
     max-width: none !important;
+  }
+  /* Degradado de borde: SOLO cuando de verdad sigue desbordando al tamaño
+     mínimo de fuente (clase agregada por mdjTabletHeaderScale) -- en el
+     caso normal (1024px, todo cabe) la barra no lo lleva. Mismo patrón de
+     máscara que .dj-hero-role (el cintillo de especialidades). */
+  #mainHeader.header.mdj-header-unified #mainNav.mdj-nav-scrollable {
+    -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 28px), transparent 100%);
+    mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 28px), transparent 100%);
   }
 
   /* FIX-NAV-TABLET-AIRE-REAL (2026-09-15, tarde -- orden del PO, "demasiado
@@ -5565,22 +5590,26 @@ body[data-mdj-estacion] #mainHeader.header.mdj-header-unified {
     #mainNav#mainNav > a[data-mdj-slot]:not([data-mdj-slot="1"])::before,
   html body #mainHeader#mainHeader.header.mdj-header-unified
     #mainNav#mainNav > a#mainNav-guest-mi-perfil-link::before {
-    margin: 0 0.2rem !important;
+    margin: 0 2px !important;
   }
 
-  /* FIX-NAV-TABLET-SCROLL-HINT (2026-09-15, tarde -- hallazgo en vivo): en
-     el extremo angosto de este tramo (ej. 768px con 9 puestos y
-     "SoundForTips™"), ningún tamaño de fuente evita el desborde real -- el
-     scroll de arriba sigue funcionando pero, sin scrollbar visible, no hay
-     ningún indicio de que hay más contenido. mdjTabletHeaderScale()
-     (mdj-mobile-header-fix.js / inline en dj-profile.html) agrega esta
-     clase SOLO cuando de verdad sigue desbordando al tamaño mínimo -- en
-     el caso normal (ej. 1024px, donde todo cabe) la barra queda exactamente
-     igual que antes, sin degradado. Mismo patrón de máscara ya usado en
-     .dj-hero-role (el cintillo de especialidades). */
-  #mainHeader.header.mdj-header-unified #mainNav.mdj-nav-scrollable {
-    -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 28px), transparent 100%);
-    mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 28px), transparent 100%);
+  /* FIX-NAV-TABLET-CENTRADO-VERTICAL (2026-09-16, orden del PO): #mainHeader
+     mide 84px fijos en modo estación (regla calibrada más abajo en este
+     archivo, con muchas otras piezas de la estación ancladas a ese número --
+     NO se toca). .header-top vale 0 aquí (display:none) y .header-nav mide
+     38px -- con justify-content:normal (el valor de fábrica en un flex
+     column), ese único hijo visible queda pegado arriba, dejando 46px de
+     pared negra sólida debajo antes de la foto. Centrar el eje Y del propio
+     #mainHeader dentro de ESTE rango de ancho (601-1220px) reparte esos
+     46px en 23px arriba / 23px abajo, sin cambiar el alto total de 84px --
+     cero impacto en las otras piezas de estación ancladas a ese número
+     (siguen viendo los mismos 84px de siempre). Mismo selector exacto que
+     la regla de 84px, para acotar la especificidad igual y no interferir
+     con desktop/hamburguesa real fuera de este medio. */
+  html.mdj-estacion-previa #mainHeader.header.mdj-header-unified,
+  body.mdj-perfil-estacion #mainHeader.header.mdj-header-unified,
+  body[data-mdj-estacion] #mainHeader.header.mdj-header-unified {
+    justify-content: center !important;
   }
 
   /* FIX-TABLET-HEADER-SCALE-DOWN (2026-09-15, orden del PO): el scroll de

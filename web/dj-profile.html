@@ -162,7 +162,7 @@
         })();
     </script>
     <link rel="stylesheet" href="./styles.css?v=20260909-revealtext-blur-fix" />
-    <link rel="stylesheet" href="./header-unified.css?v=20260915-nav-aire-real" />
+    <link rel="stylesheet" href="./header-unified.css?v=20260916-nav-centrado-v" />
     <link rel="stylesheet" href="./profile.css?v=20260825-share-btn-gold" />
     <style id="mdj-qr-view-header-shield">
         /* Blindaje definitivo: especificidad mayor que #mainHeader.header.mdj-header-unified { display:flex !important } en header-unified.css */
@@ -3822,33 +3822,36 @@
               }
             }
 
+            // FIX-NAV-TABLET-FILA-UNICA (2026-09-15, madrugada -- ORDEN
+            // PRIORITARIA del PO, revierte FIX-NAV-TABLET-REACOMODO):
+            // wrap a 2 líneas se veía bien en la medición inicial, pero los
+            // propios timers de reintento (300/800/1500/3000/6000ms, más
+            // abajo) volvían a correr después y en alguna vuelta dejaban la
+            // barra partida en "pirámide" -- un sistema con estado que
+            // puede cambiar solo en cualquiera de 5 reintentos futuros es
+            // frágil, confirmado en vivo por el PO esperando la ráfaga
+            // completa. QUEDA PROHIBIDO EL WRAP. Se vuelve al sistema
+            // anterior, ya estable: loop de tamaños decrecientes
+            // (13→12→11→10px, el primero que quepa entero) + scroll
+            // horizontal táctil con degradado como red de seguridad para
+            // el caso extremo (768px vertical, que no cabe ni a 6px de
+            // fuente) -- nunca una segunda fila, nunca hamburguesa.
+            // mdjb-shared-header.js fija flex-wrap:nowrap inline e
+            // incondicional (su fuente de verdad) -- header-unified.css ya
+            // no intenta ponerle wrap, así que no hace falta pelear contra
+            // ese archivo aquí.
             if (inRange && navEl && links.length) {
-              // Forzar reflow tras fijar el max-width de arriba, antes de
-              // medir para el ajuste de fuente -- sin esto, clientWidth
-              // puede seguir reportando el ancho previo a la restricción.
               void navEl.offsetWidth;
               var fitSizes = [13, 12, 11, 10];
               for (var s = 0; s < fitSizes.length; s++) {
                 for (var i = 0; i < links.length; i++) {
                   links[i].style.setProperty('font-size', fitSizes[s] + 'px', 'important');
-                  links[i].style.setProperty('padding', '5px 5px', 'important');
+                  links[i].style.setProperty('padding', '4px 3px', 'important');
                   links[i].style.removeProperty('letter-spacing');
                 }
                 void navEl.offsetWidth;
                 if (navEl.scrollWidth <= navEl.clientWidth || s === fitSizes.length - 1) break;
               }
-              // FIX-NAV-TABLET-SCROLL-HINT (2026-09-15, tarde -- hallazgo en
-              // vivo): a 768px, con 9 puestos, NINGÚN tamaño (probado hasta
-              // 6px con 0 padding) evita el desborde -- el scroll horizontal
-              // de header-unified.css SÍ funciona (confirmado moviendo
-              // scrollLeft a mano) pero no tiene scrollbar visible, así que
-              // se ve "roto" sin serlo. No se vuelve a hamburguesa (orden
-              // expresa del PO: tablet nunca hamburguesa) -- se marca la
-              // barra como escrollable SOLO cuando de verdad lo sigue
-              // estando ni al tamaño mínimo, para que el CSS le agregue un
-              // degradado en el borde (mismo patrón que el cintillo de
-              // especialidades, .dj-hero-role) y no en los casos donde todo
-              // cabe normal (1024px, por ejemplo).
               navEl.classList.toggle('mdj-nav-scrollable', navEl.scrollWidth > navEl.clientWidth);
             } else {
               navEl && navEl.classList.remove('mdj-nav-scrollable');
@@ -3861,15 +3864,16 @@
 
             // FIX-NAV-TABLET-COMPACTO (2026-09-15, tarde -- orden del PO):
             // "espacio muerto vertical" en la franja de navegación. 52px
-            // para texto de 10-13px + 5px de padding vertical (rango
-            // 20-23px de contenido) dejaba aire de sobra. Baja a 34px --
-            // .header-top NO se toca (vale 62px para el logo/marca en modo
-            // visitante, compartido por decenas de páginas vía
-            // mdj-mobile-header-fix.js; en modo estación aquí mide 0 de
-            // todas formas, así que no es la causa del aire reportado).
+            // para texto de 10-13px + 5px de padding vertical dejaba aire
+            // de sobra. Baja a 38px (dentro del rango 34-38px pedido) --
+            // fija SIEMPRE una sola línea, así que un alto fijo es seguro
+            // (no hay caso de 2 líneas que recortar). .header-top NO se
+            // toca (vale 62px para el logo/marca en modo visitante,
+            // compartido por decenas de páginas; en modo estación aquí
+            // mide 0 de todas formas).
             var rows = [
               [document.querySelector('#mainHeader.mdj-header-unified .header-top'), '62px'],
-              [document.querySelector('#mainHeader.mdj-header-unified .header-nav'), '34px']
+              [document.querySelector('#mainHeader.mdj-header-unified .header-nav'), '38px']
             ];
             for (var j = 0; j < rows.length; j++) {
               var el = rows[j][0], px = rows[j][1];
