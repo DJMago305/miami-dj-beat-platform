@@ -250,6 +250,36 @@
           links[i].style.removeProperty('letter-spacing');
         }
       }
+      // FIX-NAV-AIRE-LATERAL (2026-09-15): con la tipografía de arriba ya
+      // compacta, los 8-9 puestos ocupan mucho menos que el ancho real de
+      // la barra en tablet/escritorio medio -- quedaba un margen negro
+      // grande y parejo a cada lado en vez de aprovechado. Mismo intento
+      // que con el achicado: primero como CSS normal en header-unified.css
+      // (max-width + justify-content:space-evenly, mismo selector que ya
+      // funciona para otras reglas de ese archivo) -- confirmado en vivo
+      // que NO se pintaba, mismo patrón que el resto de esta función. Va
+      // por JS directo, igual que todo lo demás aquí.
+      var navContainer = document.querySelector('#mainHeader.mdj-header-unified .header-nav .container');
+      var mainNavEl = document.querySelector('#mainHeader.mdj-header-unified #mainNav');
+      if (navContainer) {
+        if (inRange) {
+          navContainer.style.setProperty('max-width', '1040px', 'important');
+          navContainer.style.setProperty('margin-left', 'auto', 'important');
+          navContainer.style.setProperty('margin-right', 'auto', 'important');
+        } else {
+          navContainer.style.removeProperty('max-width');
+          navContainer.style.removeProperty('margin-left');
+          navContainer.style.removeProperty('margin-right');
+        }
+      }
+      if (mainNavEl) {
+        if (inRange) {
+          mainNavEl.style.setProperty('justify-content', 'space-evenly', 'important');
+        } else {
+          mainNavEl.style.removeProperty('justify-content');
+        }
+      }
+
       var rows = [
         [document.querySelector('#mainHeader.mdj-header-unified .header-top'), '62px'],
         [document.querySelector('#mainHeader.mdj-header-unified .header-nav'), '52px']

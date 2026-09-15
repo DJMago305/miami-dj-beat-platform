@@ -5523,6 +5523,14 @@ body[data-mdj-estacion] #mainHeader.header.mdj-header-unified {
   #mainHeader.header.mdj-header-unified .header-nav .container {
     overflow-x: visible !important;
     overflow-y: hidden !important;
+    /* FIX-NAV-AIRE-LATERAL (2026-09-15): en tablet/escritorio medio, la
+       tipografía compacta de FIX-TABLET-HEADER-SCALE-DOWN deja los 8-9
+       puestos ocupando mucho menos que el ancho real de la barra -- margen
+       negro grande y parejo a los lados en vez de aprovechado. Se probó
+       max-width:1040px + margin:auto AQUÍ MISMO -- confirmado en vivo
+       (getComputedStyle) que no se pintaba, mismo patrón sin explicación
+       que el resto de este bloque. Implementado por JS en su lugar (ver
+       mdjTabletHeaderScale, mdj-mobile-header-fix.js). */
   }
   #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav.mdj-mainnav-flex.nav.top-nav {
     width: 100% !important;
