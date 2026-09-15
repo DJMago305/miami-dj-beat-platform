@@ -68,10 +68,20 @@
      riel-toggle -- dos hamburguesas dibujadas una sobre otra, ambas reales,
      ninguna "mal hecha". El riel-toggle existe siempre en el DOM pero mide
      0x0 (display:none) fuera de esa condición, así que este chequeo no
-     cambia nada en las páginas donde nunca aparece. */
+     cambia nada en las páginas donde nunca aparece.
+
+     TRIPLE CANDADO (2026-09-15, orden del PO): tablet ya no oculta la barra
+     real (`.header-nav`/`#mainNav`, ver header-unified.css -- el umbral
+     nav↔hamburguesa volvió a ser solo-teléfono). Sin este chequeo, esta
+     función seguía viendo "ningún botón de hamburguesa alcanzable" en
+     tablet (ninguno de los dos existe ahí a propósito, ya no hace falta) y
+     montaba su FAB de todos modos -- encima de la barra real, ya visible.
+     `#mainNav` es el contenido real de `.header-nav`; si tiene tamaño, la
+     barra ya es alcanzable y este failsafe no debe hacer nada. */
   function isMenuReachable() {
     return elUsable(document.getElementById('mobileMenuBtn')) ||
-      elUsable(document.getElementById('mdj-riel-toggle'));
+      elUsable(document.getElementById('mdj-riel-toggle')) ||
+      elUsable(document.getElementById('mainNav'));
   }
 
   function isBrandReachable() {
@@ -155,6 +165,12 @@
 
   function mountOrRemoveFabs() {
     try {
+      // Reevalúa también el achicado de tablet en cada disparo de esta
+      // función (observer de clases/atributos, visibilitychange) -- cubre
+      // páginas donde el modo del header (estación/visitante) resuelve de
+      // forma asíncrona después de la carga inicial.
+      mdjTabletHeaderScale();
+
       // 3) Botón de menú independiente -- solo si NINGÚN mecanismo real
       //    (hamburguesa vieja o riel-toggle de estación) es alcanzable.
       if (isMenuReachable()) {
@@ -197,9 +213,238 @@
     } catch (e) { /* si algo falla, el header original sigue como estaba */ }
   }
 
+  /* FIX-TABLET-HEADER-SCALE-DOWN (2026-09-15, orden del PO): tablets deben
+     ver la barra real (ya lo hacen, ver header-unified.css -- el corte
+     nav↔hamburguesa volvió a ser solo-teléfono) pero ACHICADA para que 9-10
+     puestos quepan sin deslizar, no a tamaño de escritorio con scroll.
+
+     Por qué esto es JS y no CSS: se intentó primero como reglas normales en
+     header-unified.css (tokens --mdj-nav-font-size/--mdj-header-unified-r1
+     y r2, y selectores directos con !important sobre #mainNav > a /
+     .header-top / .header-nav). Verificado exhaustivamente por consola que
+     esas reglas eran las ÚNICAS activas que hacían match (sin otra regla de
+     mayor especificidad ni media query compitiendo en ese rango) -- y aun
+     así no se pintaban. Un estilo puesto por JS directo sobre cada elemento
+     SÍ se pinta (confirmado en vivo), así que el achicado real vive aquí.
+
+     window.innerWidth, no matchMedia: se reevalúa a mano en cada resize,
+     así que un booleano simple alcanza. 601-1220px es el mismo rango que
+     header-unified.css usa para el scroll de seguridad de la barra (ver
+     "INTERCAMBIO NAV↔HAMBURGUESA" en ese archivo) -- mismo tramo, no un
+     número nuevo. Los tres targets son #mainNav > a (tipografía), y
+     .header-top / .header-nav (alto de ambas filas) -- 62/52px conservan
+     la misma proporción que 84/72px de escritorio, solo más compactos. */
+  function mdjTabletHeaderScale() {
+    try {
+      var inRange = window.innerWidth >= 601 && window.innerWidth <= 1220;
+      // FIX-NAV-TABLET-LEGIBLE (2026-09-15, orden del PO): la vuelta anterior
+      // (11px sin padding) dejaba los puestos "enanos" en el centro de una
+      // barra grande -- el problema no era el ANCHO de la barra, era que el
+      // CONTENIDO se achicó demasiado. Se pidió 13-14px + padding real --
+      // medido en vivo, 14px+8px/14px SÍ se ve legible pero ya no cabe sin
+      // scroll en la página de 9 puestos (dj-profile.html, con
+      // "SoundForTips™") ni siquiera en la de 8 (index.html): se salían de
+      // los 972px disponibles a 1024px de ventana, cortando "MI PERFIL"/
+      // "AGENTE.IA" sin ningún indicio visual de que hay más al deslizar.
+      // 12px + 5px/5px fue el tamaño MÁS GRANDE que cabía entero en la
+      // medición puntual de ese momento (972px de contenido en 972px
+      // disponibles, dj-profile.html a 1024px).
+      // FIX-NAV-TABLET-ADAPTATIVO (2026-09-15, tarde -- reporte del PO): un
+      // valor fijo calculado en UN solo motor de renderizado se rompe en
+      // cuanto la fuente real mide distinto en otro navegador -- el PO vio
+      // ítems cortados en su Chrome real pese a la medición exacta aquí.
+      // Se reemplaza por un ajuste que SE MIDE a sí mismo: prueba 13, 12,
+      // 11 y 10px en orden y usa el primero que quepa entero
+      // (scrollWidth<=clientWidth) en el ancho real de ESE navegador --
+      // deja de depender de que el kerning coincida con esta sesión de
+      // prueba. Con 10px como piso, si aun así no cupiera, la red de
+      // scroll horizontal de header-unified.css (601-1220px) sigue como
+      // último recurso.
+      var links = document.querySelectorAll('#mainHeader.mdj-header-unified #mainNav > a');
+      var navEl = document.getElementById('mainNav');
+
+      // FIX-NAV-AIRE-LATERAL, vuelta 2 (2026-09-15, orden del PO): "alinear
+      // el ancho máximo de la barra exactamente con el ancho del Hero" -- en
+      // vez de adivinar un número fijo (1040px, que no correspondía a nada
+      // real de la página), se MIDE el ancho real de .dj-hero en cada
+      // reevaluación y se usa ESE valor. Como .dj-hero es full-bleed en la
+      // mayoría de anchos (mismo ancho que el viewport), esto normalmente
+      // no recorta nada -- que es correcto: el defecto real no era que la
+      // barra fuera "demasiado ancha", era la tipografía enana de arriba.
+      // Se mantiene la lógica por si en algún contexto (owner-tabs, sft-
+      // client-view, etc.) el hero SÍ tuviera un ancho distinto al del
+      // viewport -- ahí la barra lo seguiría en vez de quedar descuadrada.
+      // ORDEN CRÍTICO (2026-09-15, tarde -- BUG real encontrado en vivo):
+      // este bloque debe correr ANTES del loop de ajuste de fuente de
+      // abajo, no después. Con el orden viejo, el loop medía clientWidth
+      // contra el ancho SIN restringir (contenedor a su max-width por
+      // defecto, más ancho que el Hero) en la primera pasada -- a 13px eso
+      // "cabía" ahí y el loop paraba ahí mismo; al aplicarse DESPUÉS el
+      // max-width real (angostando el contenedor), 13px ya no cabía y
+      // quedaba atascado sin volver a recalcular. Medido en vivo: con el
+      // orden viejo, sampleFontSize quedaba en 13px con overflow real
+      // (scrollWidth 1010 vs clientWidth 972).
+      var navContainer = document.querySelector('#mainHeader.mdj-header-unified .header-nav .container');
+      var heroEl = document.querySelector('.dj-hero');
+      if (navContainer) {
+        // GUARDA (2026-09-15, tarde -- BUG real encontrado en vivo con el
+        // gancho de document.fonts.ready): si .dj-hero todavía no tiene
+        // ancho real (0px -- datos del perfil aún cargando en ese
+        // instante), heroW salía 0 y max-width:0px COLAPSABA #mainNav
+        // entero (medido: clientWidth caía a ~8px). Sin un ancho de Hero
+        // sano, no se toca el max-width.
+        var heroW = heroEl ? Math.round(heroEl.getBoundingClientRect().width) : 0;
+        if (inRange && heroEl && heroW > 0) {
+          navContainer.style.setProperty('max-width', heroW + 'px', 'important');
+          navContainer.style.setProperty('margin-left', 'auto', 'important');
+          navContainer.style.setProperty('margin-right', 'auto', 'important');
+        } else {
+          navContainer.style.removeProperty('max-width');
+          navContainer.style.removeProperty('margin-left');
+          navContainer.style.removeProperty('margin-right');
+        }
+      }
+
+      if (inRange && navEl && links.length) {
+        // Forzar reflow tras fijar el max-width de arriba, antes de medir.
+        void navEl.offsetWidth;
+        var fitSizes = [13, 12, 11, 10];
+        for (var s = 0; s < fitSizes.length; s++) {
+          for (var i = 0; i < links.length; i++) {
+            links[i].style.setProperty('font-size', fitSizes[s] + 'px', 'important');
+            links[i].style.setProperty('padding', '5px 5px', 'important');
+            links[i].style.removeProperty('letter-spacing');
+          }
+          void navEl.offsetWidth;
+          if (navEl.scrollWidth <= navEl.clientWidth || s === fitSizes.length - 1) break;
+        }
+        // FIX-NAV-TABLET-SCROLL-HINT (2026-09-15, tarde -- hallazgo en vivo
+        // en dj-profile.html a 768px): con suficientes puestos, ningún
+        // tamaño evita el desborde -- el scroll horizontal ya existente
+        // sigue funcionando pero no tiene scrollbar visible, así que se ve
+        // "roto" sin serlo. No se vuelve a hamburguesa (tablet nunca
+        // hamburguesa) -- se marca la barra como escrollable SOLO cuando de
+        // verdad lo sigue estando ni al tamaño mínimo, para que el CSS le
+        // agregue un degradado en el borde; no afecta a páginas donde todo
+        // cabe normal.
+        navEl.classList.toggle('mdj-nav-scrollable', navEl.scrollWidth > navEl.clientWidth);
+      } else {
+        if (navEl) navEl.classList.remove('mdj-nav-scrollable');
+        for (var i2 = 0; i2 < links.length; i2++) {
+          links[i2].style.removeProperty('font-size');
+          links[i2].style.removeProperty('padding');
+          links[i2].style.removeProperty('letter-spacing');
+        }
+      }
+
+      // FIX-NAV-TABLET-COMPACTO (2026-09-15, tarde -- orden del PO):
+      // "espacio muerto vertical" en la franja de navegación. 52px para
+      // texto de 10-13px + 5px de padding vertical dejaba aire de sobra --
+      // baja a 34px. .header-top NO se toca (62px es para el logo/marca en
+      // modo visitante, ya escalado aparte más abajo en scaleTargets).
+      var rows = [
+        [document.querySelector('#mainHeader.mdj-header-unified .header-top'), '62px'],
+        [document.querySelector('#mainHeader.mdj-header-unified .header-nav'), '34px']
+      ];
+      for (var j = 0; j < rows.length; j++) {
+        var el = rows[j][0], px = rows[j][1];
+        if (!el) continue;
+        if (inRange) {
+          el.style.setProperty('min-height', px, 'important');
+          el.style.setProperty('max-height', px, 'important');
+          el.style.setProperty('height', px, 'important');
+        } else {
+          el.style.removeProperty('min-height');
+          el.style.removeProperty('max-height');
+          el.style.removeProperty('height');
+        }
+      }
+
+      // FIX-TABLET-HEADER-SCALE-DOWN, parte 2 (2026-09-15, hallazgo del PO
+      // en vivo): bajar el ALTO de .header-top a 62px no encogía el
+      // CONTENIDO de adentro (logo 72px, wordmark 104px, botón SALIR,
+      // avatar+nombre, carrito, buscador -- todos a medida de escritorio),
+      // así que quedaba viéndose igual de grande dentro de una caja más
+      // baja. Mismo criterio que arriba: tamaño real puesto por JS sobre
+      // cada pieza, no la caja que las contiene.
+      var scaleTargets = [
+        ['.logo-img-eagle', {height: '38px', width: '38px'}],
+        ['.brand-letters-img', {height: '58px', width: '58px'}],
+        ['.brand-letters-wrapper', {height: '38px'}],
+        ['#header-login-btn', {fontSize: '10px', padding: '5px 10px'}],
+        ['.lang-switcher', {fontSize: '10px', height: '22px'}],
+        ['.mdj-avatar-slot', {height: '30px', width: '30px'}],
+        ['.mdj-account-display-name', {fontSize: '10px'}],
+        ['.header-cart-btn', {height: '30px', width: '30px'}],
+        ['.header-smart-search', {height: '26px', fontSize: '11px', width: '90px'}]
+      ];
+      for (var k = 0; k < scaleTargets.length; k++) {
+        var sel = scaleTargets[k][0], props = scaleTargets[k][1];
+        var els = document.querySelectorAll(sel);
+        for (var m = 0; m < els.length; m++) {
+          for (var prop in props) {
+            if (inRange) els[m].style.setProperty(prop.replace(/[A-Z]/g, function (c) { return '-' + c.toLowerCase(); }), props[prop], 'important');
+            else els[m].style.removeProperty(prop.replace(/[A-Z]/g, function (c) { return '-' + c.toLowerCase(); }));
+          }
+        }
+      }
+    } catch (e) { /* si algo falla, el header original sigue como estaba */ }
+  }
+  window.addEventListener('resize', mdjTabletHeaderScale);
+
+  // FIX-NAV-TABLET-FONT-RACE (2026-09-15, tarde -- BUG real encontrado en
+  // vivo): la llamada de mdjTabletHeaderScale en DOMContentLoaded/init
+  // puede correr ANTES de que Inter (la fuente real de #mainNav > a, peso
+  // 700) termine de cargar -- document.fonts confirmaba "Inter 700
+  // unloaded" en ese instante. El loop de ajuste de fuente mide contra el
+  // ancho de la fuente de RESPALDO (más angosta), decide que un tamaño más
+  // grande "cabe", y nada vuelve a medir cuando Inter real entra y el
+  // texto se ensancha -- el cambio de fuente no dispara 'resize'.
+  // Confirmado en vivo en dj-profile.html: sin este gancho, el tamaño
+  // quedaba atascado con overflow real (scrollWidth > clientWidth); con
+  // este gancho, decae al tamaño correcto en cuanto la fuente real está
+  // lista.
+  if (document.fonts && document.fonts.ready && typeof document.fonts.ready.then === 'function') {
+    document.fonts.ready.then(mdjTabletHeaderScale).catch(function () {});
+  }
+
+  // FIX-NAV-TABLET-HERO-RESIZE (2026-09-15, tarde -- BUG real encontrado en
+  // vivo, dj-profile.html): ni el gancho de fuentes de arriba alcanza -- si
+  // document.fonts.ready resuelve ANTES de que datos async (perfil) den a
+  // .dj-hero su ancho real, la guarda de heroW deja el contenedor SIN
+  // restringir en ese momento, el loop de ajuste de fuente mide contra ese
+  // ancho de sobra y "cabe" a un tamaño mayor, y nada vuelve a medir cuando
+  // el Hero después sí toma su ancho real y lo angosta. En vez de adivinar
+  // el punto exacto donde termina de cargar cada página, se observa
+  // .dj-hero directamente (cuando existe -- no todas las páginas que usan
+  // este script lo tienen, de ahí el chequeo): cualquier cambio real de su
+  // tamaño vuelve a llamar a mdjTabletHeaderScale().
+  if (typeof ResizeObserver === 'function') {
+    var heroForObserve = document.querySelector('.dj-hero');
+    if (heroForObserve) {
+      new ResizeObserver(function () { mdjTabletHeaderScale(); }).observe(heroForObserve);
+    }
+  }
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', mdjTabletHeaderScale);
   } else {
     init();
+    mdjTabletHeaderScale();
   }
+
+  // FIX-NAV-TABLET-RETRY-NET (2026-09-15, tarde -- BUG real encontrado en
+  // vivo en dj-profile.html): con trazas de consola, ni fonts.ready ni el
+  // ResizeObserver disparan siempre a tiempo -- páginas con varias ramas
+  // async (perfil, clima, geolocalización, etc.) no garantizan pasar por
+  // un único punto donde el Hero ya tenga su ancho final. Llamar a
+  // mdjTabletHeaderScale() a mano en cualquier momento SIEMPRE corrige de
+  // inmediato (confirmado en vivo) -- es barata e idempotente, así que en
+  // vez de perseguir el evento exacto correcto en cada página que use este
+  // script, se reintenta unas pocas veces a intervalos crecientes. Red de
+  // seguridad, no sustituye los ganchos de arriba.
+  [300, 800, 1500, 3000, 6000].forEach(function (ms) {
+    setTimeout(mdjTabletHeaderScale, ms);
+  });
 })();

@@ -1205,6 +1205,20 @@
        PO esa fila se va, y la salida queda en la pestaña Inicio del riel. */
   function mdjMontarFranjaFlotante(modo) {
     try {
+      /* FIX-PROFILE-HERO-NO-DUPLICATE-BRANDING (2026-09-13): dj-profile.html ya
+         no quiere el logo/buscador flotante en ningún caso -- ni superpuesto al
+         hero (ya resuelto antes empujando el hero hacia abajo) ni apilado
+         encima de él tampoco: el PO pidió el Hero completamente despejado. La
+         barra de tabs (.header-nav) ya cubre la navegación; .header-top (con
+         el buscador real) sigue oculto igual que siempre vía la regla CSS
+         independiente body[data-mdj-estacion] #mainHeader .header-top
+         {display:none!important} (header-unified.css) -- esta guarda no la
+         toca. Guarda EXCLUSIVA de esta página: las otras ~9 vistas de
+         estación (academia.html, etc.) montan la franja exactamente igual
+         que antes. */
+      var _paginaFranja = String(window.location.pathname || '').split('/').pop().toLowerCase();
+      if (_paginaFranja === 'dj-profile.html') return;
+
       if (document.getElementById('mdj-flotante-visitante')) return;   // ya montada
 
       var caja = document.createElement('div');
