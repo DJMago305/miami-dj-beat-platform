@@ -1858,8 +1858,16 @@
 
 
         @media (max-width: 640px) {
+            /* FIX-SFT-CLIENT-HERO-FACE-OVERLAP (2026-09-16, orden del PO): 320px no
+               dejaba aire para el bloque nombre/ID/redes (≈221px, anclado abajo vía
+               align-items:flex-end en .dj-hero-content) -- el nombre y los íconos
+               quedaban montados sobre la cara. Mismo diagnóstico que
+               FIX-PROFILE-HERO-FACE-VISIBLE (más arriba en este archivo, 2026-09-14):
+               subir el alto de la caja, sin tocar object-position/zoom de la foto,
+               deja la mitad superior libre para la cara. 480px es suficiente para
+               este bloque más compacto (fotos ya achicadas con scale(0.94) abajo). */
             body.dj-profile-sft-client-view .dj-hero {
-                height: 320px;
+                height: 480px;
             }
 
             /* TICKET · hero cargado en móvil. El PO pidió explícitamente encoger un
@@ -3445,8 +3453,15 @@
                 inset 0 1px 0 rgba(255, 255, 255, 0.06);
         }
 
-        /* Móvil: un solo CTA — flotante inferior; ocultar el del sidebar para no duplicar. */
-        @media (max-width: 640px) {
+        /* Móvil/tablet: un solo CTA — flotante inferior; ocultar el del sidebar para no
+           duplicar. FIX-SFT-TABLET-GAP (2026-09-16, orden del PO): subido de 640px a
+           900px -- ese es el mismo punto de corte que ya usa el JS para decidir
+           "vista cliente móvil de SFT" (ver isSftClientMobileProfile / clase
+           body.dj-profile-sft-client-view). Con 640px aquí y 900px allá, entre 641px
+           y 900px (tablet, o ventana angosta en computadora) NINGÚN botón de
+           SoundForTips se mostraba -- ni el flotante (necesitaba ≤640) ni el de la
+           tarjeta (se escondía desde 900). Alinear el número cierra el hueco. */
+        @media (max-width: 900px) {
             #tab-public .dj-side-col #soundfortips-launch-btn {
                 display: none !important;
             }
@@ -12094,6 +12109,7 @@
                     <div class="sft-group">
                         <label data-i18n="sft-fan-contact-label">Email o teléfono <span style="opacity:0.5;font-weight:600">(recomendado)</span></label>
                         <input type="text" class="sft-input" id="sftFanContact" data-i18n-hold="sft-fan-contact-placeholder" placeholder="Email o teléfono (opcional)" autocomplete="on" inputmode="text" aria-required="false">
+                        <p class="sft-fan-contact-sms-consent" style="font-size:11px;color:rgba(255,255,255,0.55);margin:8px 0 0 0;line-height:1.45;" data-i18n="sft-fan-contact-sms-consent">Si dejas tu teléfono, <strong>Miami DJ Beat</strong> te enviará un SMS avisándote si el DJ aceptó o no tu canción — un solo mensaje por petición, no publicidad. Pueden aplicar tarifas de mensajes y datos. Responde STOP para no recibir más.</p>
                     </div>
                 </div>
 
