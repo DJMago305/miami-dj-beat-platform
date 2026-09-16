@@ -3001,6 +3001,89 @@ a.residency-card--map:focus-visible {
   }
 }
 
+/* FIX-HEADER-MOBILE-BRAND-FAB-OVERLAP (2026-09-16, orden del PO -- "EN se monta
+   sobre el logo"): el diagnóstico original apuntaba a .brand vs .header-actions,
+   pero medido en vivo a 390px el .brand REAL ya está bien posicionado (x=12-96,
+   sin invadir nada). Lo que realmente se pinta encima de "EN" es
+   #mdjMobileBrandFab -- un respaldo de marca `position:fixed` (mdj-mobile-
+   header-fix.js) que se monta cuando isBrandReachable() decide que el logo
+   real no es alcanzable. Esa función se equivoca en este contexto (visitante
+   normal, header real visible) y monta el FAB de todos modos -- 190px de
+   ancho, invade el carril de idioma/login. Arreglo aquí en CSS, sin tocar el
+   JS (fuera del alcance de este ticket): se oculta el FAB por declaración
+   siempre que el header real esté presente y NO estemos en modo estación
+   (único caso legítimo donde el FAB hace falta, porque ahí sí puede faltar
+   el logo real). */
+@media (max-width: 600px) {
+  html:not(.mdj-estacion-previa)
+    body:not(.mdj-perfil-estacion):not([data-mdj-estacion])
+    #mdjMobileBrandFab {
+    display: none !important;
+  }
+}
+
+/* FIX-DJ-PROFILE-NO-CART (2026-09-16, orden del PO): el carrito de compra no
+   pertenece al perfil público de un DJ -- se quita para liberar espacio en
+   el carril de acciones y evitar que colisione con avatar/idioma/login en
+   anchos angostos. Acotado a body.dj-profile (esta plantilla), en todo
+   ancho -- no es un problema exclusivo de mobile, el carrito no tiene
+   función aquí en ningún tamaño. #header-auth-zone (avatar/cuenta) no se
+   toca, solo los botones de carrito dentro de .header-avatar-cart-row. */
+body.dj-profile .header-avatar-cart-row .header-cart-btn {
+  display: none !important;
+}
+
+/* FIX-VENUES-CARD-CTA-ONLY (2026-09-16, orden del PO): #venues-card pasa de
+   tabla de turnos a tarjeta compacta con un solo CTA al calendario real de
+   eventos (./events.html). Padding acotado y altura máxima en móvil para
+   que se sienta como un botón, no como una tarjeta de datos. */
+#venues-card {
+  padding: 16px !important;
+}
+
+.btn-venues-cta {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+  background: #d4af37;
+  color: #0a0a0a;
+  font-weight: 800;
+  padding: 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  letter-spacing: 0.04em;
+}
+
+.btn-venues-cta:hover,
+.btn-venues-cta:focus-visible {
+  background: #e8c458;
+  color: #0a0a0a;
+}
+
+@media (max-width: 600px) {
+  #venues-card {
+    max-height: 100px;
+    overflow: hidden;
+  }
+}
+
+/* FIX-MOBILE-MENU-FAB-AVATAR-OVERLAP (2026-09-16, orden del PO): a diferencia
+   de #mdjMobileBrandFab, este respaldo SÍ hace falta -- medido en vivo, el
+   .mobile-menu-btn real queda fuera del viewport a 390px incluso después de
+   quitar el carrito (right ~431px en una pantalla de 390px). El FAB
+   (position:fixed; top:14px; right:14px, definido inline en dj-profile.html)
+   cae justo en la misma esquina que #header-auth-zone (avatar/cuenta),
+   29px de solape medidos en vivo -- no hay espacio horizontal libre en esa
+   franja para separarlos sin encimar algo. Se baja el FAB debajo de la
+   cabecera (84px de alto) en vez de encimarlo con el avatar. */
+@media (max-width: 600px) {
+  #mdjMobileMenuFab {
+    top: 96px !important;
+    right: 12px !important;
+  }
+}
+
 /* Telefono en APAISADO. Girado, un telefono mide 844-932px de ancho y se
    escaparia del corte de 600px, quedandose con la barra. Pero sigue siendo un
    telefono. Lo que no cambia al girar es que la pantalla es CORTA: 390-430px de
@@ -3032,6 +3115,26 @@ a.residency-card--map:focus-visible {
 
   .logo-img {
     height: 70px;
+  }
+}
+
+/* FIX-HEADER-MOBILE-FABS-LANDSCAPE (2026-09-16, orden del PO -- "aplícalo
+   para todos los casos de vista de celular"): mismos dos ajustes que el
+   bloque ≤600px de arriba (FAB de marca oculto cuando el header real ya
+   está visible; FAB de menú bajado debajo de la cabecera para no encimar
+   el avatar), repetidos aquí para el teléfono en apaisado -- selectores por
+   id, no dependen del ancho, así que es seguro aplicarlos también en este
+   rango aunque hoy no se haya medido el mismo solape exacto. */
+@media (orientation: landscape) and (max-height: 480px) and (pointer: coarse) {
+  html:not(.mdj-estacion-previa)
+    body:not(.mdj-perfil-estacion):not([data-mdj-estacion])
+    #mdjMobileBrandFab {
+    display: none !important;
+  }
+
+  #mdjMobileMenuFab {
+    top: 96px !important;
+    right: 12px !important;
   }
 }
 
