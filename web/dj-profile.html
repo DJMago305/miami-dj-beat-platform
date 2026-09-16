@@ -161,7 +161,7 @@
             }, 2800);
         })();
     </script>
-    <link rel="stylesheet" href="./styles.css?v=20260916-tablet-1024e" />
+    <link rel="stylesheet" href="./styles.css?v=20260916-venues-cta" />
     <link rel="stylesheet" href="./header-unified.css?v=20260916-nav-static-fit2" />
     <link rel="stylesheet" href="./profile.css?v=20260825-share-btn-gold" />
     <style id="mdj-qr-view-header-shield">
@@ -440,6 +440,40 @@
             font-size: 11px;
             font-weight: 600;
             color: rgba(255, 255, 255, 0.42);
+        }
+
+        /* FIX-RESIDENCY-TABLE-MOBILE (2026-09-16, orden del PO): "Sundowners Key
+           Largo" partido letra por letra ("Sundo/wners/Key/Largo") -- las 80px/100px
+           fijas de DAY/SHIFT (pensadas para escritorio) no dejaban casi nada para
+           VENUE en 390px reales (~130px de sobra, insuficiente para cualquier
+           nombre real). DAY/SHIFT bajan a lo que su propio contenido necesita
+           (SUN/THU/FRI/SAT y DAY/NIGHT, ambos cortos); todo el resto queda para
+           VENUE, y font-size baja un poco para que quepan más caracteres por
+           línea antes de partir palabra. */
+        @media (max-width: 600px) {
+            .res-table {
+                font-size: 12px;
+            }
+            .res-table .res-row {
+                grid-template-columns: 44px 58px 1fr;
+            }
+            .res-table .res-row > div {
+                padding: 8px 8px;
+            }
+            /* FIX-RESIDENCY-DAY-NOWRAP (2026-09-16, orden del PO): "nunca me gustó"
+               ver DAY partido en 2 líneas (SU arriba, N abajo). En vez de perseguir
+               un ancho de columna que siempre alcance, se prohíbe el salto de línea
+               en DAY/SHIFT (primeras 2 columnas) -- si de verdad no cupiera algún
+               día se recorta en seco (sin puntos suspensivos), nunca baja a una
+               segunda línea. VENUE (3ª columna) sigue partiendo palabra normal si
+               hace falta -- eso sí es aceptable para nombres largos de verdad. */
+            .res-table .res-row > div:nth-child(1),
+            .res-table .res-row > div:nth-child(2) {
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: clip;
+                word-break: normal;
+            }
         }
 
         /* ── QR referral card (owner only) ── */
@@ -1510,11 +1544,17 @@
                 letter-spacing: 0.5px !important;
             }
 
-            /* Cintillo: se para la animación de marquee infinito y se trunca
-               con elipsis en una sola línea centrada -- ver .dj-hero-role-track
-               (envuelve el texto duplicado para el loop del marquee; con
-               overflow:hidden el duplicado nunca llega a verse). */
-            .dj-hero-role {
+            /* FIX-HERO-TAGS-MARQUEE-MOBILE (2026-09-16, orden del PO, reemplaza el
+               "para la animación" de más abajo): con 1-2 tags (sin .is-ticker) se
+               mantiene exactamente el comportamiento de antes -- estático,
+               centrado, truncado con elipsis. Con 3+ tags (.is-ticker, ver JS en
+               mdjPaintHeroPlanPill... la función que llena #pub-role-label más
+               abajo en este archivo) el carrusel de .dj-hero-role-track (16s
+               desktop) sigue el mismo sistema ya construido -- solo se afina la
+               velocidad a 22s en este ancho, más cómodo de leer en pantalla
+               chica. El mask-image de bordes ya vive en la regla base de
+               .dj-hero-role (no se toca aquí). */
+            .dj-hero-role:not(.is-ticker) {
                 font-size: 0.65rem;
                 letter-spacing: 2px;
                 width: 100%;
@@ -1524,7 +1564,7 @@
                 text-overflow: ellipsis;
             }
 
-            .dj-hero-role-track {
+            .dj-hero-role:not(.is-ticker) .dj-hero-role-track {
                 animation: none;
                 display: inline-block;
                 max-width: 100%;
@@ -1532,6 +1572,20 @@
                 white-space: nowrap;
                 text-overflow: ellipsis;
                 vertical-align: bottom;
+            }
+
+            .dj-hero-role.is-ticker {
+                font-size: 0.65rem;
+                letter-spacing: 2px;
+            }
+
+            .dj-hero-role.is-ticker .dj-hero-role-track {
+                animation-duration: 22s;
+            }
+
+            .dj-hero-role.is-ticker:hover .dj-hero-role-track,
+            .dj-hero-role.is-ticker:active .dj-hero-role-track {
+                animation-play-state: paused;
             }
 
             /* Encima del corte: menos padding inferior que antes = overlay más abajo; sigue habiendo aire bajo la fila social. */
@@ -2131,12 +2185,10 @@
                 padding: 18px 16px !important;
             }
 
-            body.dj-profile-sft-client-view #pub-venues-details > summary,
             body.dj-profile-sft-client-view #pub-reviews-details > summary {
                 display: flex;
             }
 
-            body.dj-profile-sft-client-view #pub-venues-details:not([open]) .pub-mobile-section-body,
             body.dj-profile-sft-client-view #pub-reviews-details:not([open]) .pub-mobile-section-body {
                 display: none !important;
             }
@@ -4019,7 +4071,14 @@
                                     <span id="pub-reviews-title"></span>
                                     <span id="pub-reviews-avg" style="color:var(--gold); font-size:11px; font-weight:900;"></span>
                                 </div>
-                                <div id="pub-reviews-carousel" class="reviews-carousel"></div>
+                                <!-- FIX-REVIEWS-CARD-CENTERING (2026-09-16, orden del PO): #reviews-card
+                                     tiene padding-right:0 (arriba, por una razón que no tocamos) --
+                                     #pub-reviews-header ya lo compensaba con su propio padding-right:20px
+                                     inline, pero el carrusel de abajo se quedó sin ese mismo respiro,
+                                     dejando la tarjeta de testimonio pegada al borde derecho (29px de
+                                     aire a la izquierda vs 1px a la derecha, medido en vivo a 390px).
+                                     Mismo valor que el header, mismo patrón. -->
+                                <div id="pub-reviews-carousel" class="reviews-carousel" style="padding-right:20px;"></div>
                             </div>
                         </details>
                     </div>
@@ -4067,22 +4126,38 @@
                 </div>
 
                 <!-- Lugar de trabajo actual -->
+                <!-- FIX-VENUES-SIEMPRE-VISIBLE (2026-09-16, orden del PO): esta tarjeta
+                     SIEMPRE tiene algo real que mostrar (residencia real o el fallback
+                     "disponible para contrataciones" en mdjPaintVenuesOrAvailability más
+                     abajo) -- antes su título vivía oculto para todo visitante normal
+                     (solo se veía en modo owner-tabs/QR) y el <details> arrancaba
+                     cerrado, dejando SIEMPRE una caja de 70px vacía sin forma de
+                     abrirla. Mismo patrón ya usado en AVAILABILITY: contenedor fijo,
+                     sin acordeón, sin chevron -- el valor real lo sigue llenando JS
+                     según el DJ que se esté visitando (multi-tenant, nada hardcodeado). -->
+                <!-- FIX-VENUES-CARD-CTA-ONLY (2026-09-16, orden del PO): reemplaza la
+                     tabla de turnos por una tarjeta compacta con solo un CTA al
+                     calendario real de eventos. La tabla/JS de residencias sigue
+                     poblando #pub-venues-body por si se retoma más adelante -- solo
+                     queda oculta (display:none), no se tocó su lógica. -->
                 <div class="dj-card" id="venues-card">
-                    <details class="pub-mobile-section-details" id="pub-venues-details">
-                        <summary class="pub-mobile-section-summary">
+                    <div class="pub-mobile-section-details" id="pub-venues-details">
+                        <div class="pub-mobile-section-summary pub-mobile-section-summary--fixed">
                             <span class="pub-mobile-section-summary-head">
-                                <span class="pub-mobile-section-title" data-i18n="profile-currently-at-title">ACTUALMENTE TRABAJA EN</span>
+                                <span class="pub-mobile-section-title" data-i18n="profile-venues-badge">RESIDENCIES &amp; VENUES</span>
                             </span>
                             <span class="pub-mobile-section-rule" aria-hidden="true"></span>
-                            <span class="pub-mobile-section-chevron" aria-hidden="true">▼</span>
-                        </summary>
-                        <div class="pub-mobile-section-body">
-                            <div class="dj-card-label" data-i18n="profile-currently-at-label">ACTUALMENTE TRABAJANDO EN</div>
-                            <div id="pub-venues-body">
-                                <!-- populated by JS -->
-                            </div>
                         </div>
-                    </details>
+                        <div class="pub-mobile-section-body">
+                            <div class="dj-card-label" data-i18n="profile-currently-at-label" style="display:none;">ACTUALMENTE TRABAJANDO EN</div>
+                            <div id="pub-venues-body" style="display:none;">
+                                <!-- populated by JS, oculto por orden del PO (2026-09-16) -->
+                            </div>
+                            <a href="./events.html" class="btn-venues-cta" data-i18n="profile-see-week-events">SEE THIS WEEK'S EVENTS ★</a>
+                        </div>
+                    </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Consulta disponibilidad (flujo público de contratación) -->
@@ -4146,15 +4221,19 @@
 
             <div class="dj-side-col">
             <!-- Public Action Buttons (SOUNDFORTIPS & Re-Routing) -->
-            <div class="dj-card" id="public-action-buttons" style="margin-top:20px;">
+            <div class="dj-card" id="public-action-buttons" style="margin-top:20px; padding:16px;">
+                <!-- FIX-WEB-CARD-COMPACT (2026-09-16, orden del PO): etiqueta "INTERACT/
+                     INTERACTUAR" quitada por ser redundante -- el botón WEB ya se explica
+                     solo. data-i18n se mantiene en el elemento (oculto, no borrado) por si
+                     algún día vuelve a hacer falta el rótulo. -->
                 <div class="dj-card-label" data-i18n="profile-interactuar-title"
-                    style="text-align:center; justify-content:center; letter-spacing:4px; margin-bottom: 8px;">
+                    style="display:none; text-align:center; justify-content:center; letter-spacing:4px; margin-bottom: 8px;">
                     INTERACTUAR</div>
                 <p id="sft-public-interact-hint" class="sft-public-interact-hint" data-i18n="sft-public-interact-hint" aria-hidden="true"
                     style="display:none;">Fans: el botón dorado grande es para pedir canción y propina (no hace falta ir a las pestañas del DJ).</p>
                 <!-- Beneficio primera compra / comisión DJ — visible al escanear QR (view=public) -->
                 <div class="pub-first-purchase-promo-wrap" data-i18n="profile-first-purchase-promo"></div>
-                <div style="display:flex; flex-direction:column; gap:16px;">
+                <div style="display:flex; flex-direction:column; gap:10px;">
 
                     <!-- QR Element Full Width (De Primero); oculto en ?view=public vía profile.css -->
                     <div class="pub-qr-share-block" style="width:100%; margin-bottom:10px;">
@@ -4412,7 +4491,7 @@
     </footer>
 
     <!-- Translations & Base Logic -->
-    <script defer src="./translations.js?v=20260915-docs-pill-label"></script>
+    <script defer src="./translations.js?v=20260916-venues-cta"></script>
     <script defer src="./i18n.js?v=20260427-lang-default"></script>
     <script>
         // 🔧 Motor Principal de Logout (A prueba de fallos)
@@ -5420,9 +5499,10 @@
                 });
             }
             if (isSftClientMobileProfile) {
-                // FIX-AVAILABILITY-SIEMPRE-VISIBLE (2026-09-16): pub-avail-details ya
-                // no es un <details> -- no tiene .open que cerrar, queda fuera de esta lista.
-                ['pub-venues-details', 'pub-reviews-details'].forEach(function (id) {
+                // FIX-AVAILABILITY-SIEMPRE-VISIBLE / FIX-VENUES-SIEMPRE-VISIBLE
+                // (2026-09-16): ni pub-avail-details ni pub-venues-details son ya
+                // <details> -- no tienen .open que cerrar, quedan fuera de esta lista.
+                ['pub-reviews-details'].forEach(function (id) {
                     var el = document.getElementById(id);
                     if (el) el.open = false;
                 });
@@ -5430,9 +5510,6 @@
                 if (bioDetails && !isAdmin) bioDetails.open = false;
                 var availBtn = document.getElementById('dj-avail-check-btn');
                 if (availBtn) availBtn.textContent = 'CHECK AVAILABILITY';
-            } else if (isPublicQrView && !isOwner) {
-                var venuesDetails = document.getElementById('pub-venues-details');
-                if (venuesDetails) venuesDetails.open = false;
             }
 
             const djName = p.stage_name || p.dj_name || p.full_name || 'DJ';
@@ -5588,6 +5665,16 @@
                    perfil (editables por su dueño) — nunca van por textContent aquí
                    porque ahora se arma HTML, así que pasan por escape manual. */
                 const escRole = String(cleanRoleLine).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+                /* FIX-HERO-TAGS-MARQUEE-MOBILE (2026-09-16, orden del PO -- "EN MÓVIL"):
+                   la duplicación de contenido NO cambia (sigue siempre igual, tal como ya
+                   funcionaba en escritorio -- tocarla ahí no era parte de este ticket).
+                   Lo único nuevo es .is-ticker, que solo importa dentro del @media(max-width:
+                   560px) de arriba: con 3+ tags (separados por " · ") deja correr el
+                   carrusel; con 1-2, ese mismo media query lo vuelve a apagar y trunca con
+                   elipsis -- exactamente el comportamiento previo a este ticket para esos
+                   casos, sin regresión en escritorio. */
+                const tagCount = cleanRoleLine ? cleanRoleLine.split(' · ').filter(Boolean).length : 0;
+                roleEl.classList.toggle('is-ticker', tagCount > 2);
                 roleEl.innerHTML = escRole
                     ? '<span class="dj-hero-role-track"><span>' + escRole + '</span><span aria-hidden="true">' + escRole + '</span></span>'
                     : '';
