@@ -161,7 +161,7 @@
             }, 2800);
         })();
     </script>
-    <link rel="stylesheet" href="./styles.css?v=20260909-revealtext-blur-fix" />
+    <link rel="stylesheet" href="./styles.css?v=20260916-tablet-1024e" />
     <link rel="stylesheet" href="./header-unified.css?v=20260916-nav-static-fit2" />
     <link rel="stylesheet" href="./profile.css?v=20260825-share-btn-gold" />
     <style id="mdj-qr-view-header-shield">
@@ -5507,17 +5507,27 @@
             // Owner: dj-owner-tabs complementa el header; no ocultar #mainNav (slots Agenda/CONFIG/Flujo vía header-unified + mdjb-shared-header.js).
             document.getElementById('pub-name').textContent = djName;
 
-            /* FIX-HERO-ARTIST-ID (2026-09-16, orden del PO): mdjb_account_public_id
-               no es una columna de dj_profiles -- el ID público real vive en la
-               tabla aparte public.mdjb_account_ids (stem MDJB-XXXX-XXXX + letra
-               de rol), que esta consulta de perfil no trae hoy. Se usa el
-               fallback que el propio PO autorizó ('ID: ' + id) con el uuid ya
-               disponible en p.id. Si más adelante se quiere el stem real, hace
-               falta traer esa tabla en loadProfile() -- ticket aparte. */
+            /* FIX-HERO-ARTIST-ID-CARNET-OFICIAL (2026-09-16, orden del PO): PROHIBIDO
+               mostrar el UUID interno de Postgres. Se consume `public_account_id`
+               directamente de la fila ya cargada (`p`) -- columna nueva de la
+               vista public_dj_profiles (migración
+               20260916220000_public_dj_profiles_add_account_id.sql, pendiente
+               de correr en Supabase), formato real "MDJB-XXXX-XXXX-<letra>" vía
+               LEFT JOIN a mdjb_account_ids con security_invoker=false (evita la
+               RLS de la tabla base, que bloquea a `anon` por diseño -- verificado
+               en vivo antes de este cambio). Sin llamada aparte a
+               mdjb_account_ids: ya rebotaba en `anon` y no hacía falta un
+               segundo viaje de red.
+               LÍMITE CONOCIDO: las ramas de esta función que leen directo de
+               `dj_profiles` (dueño viendo su propio perfil, rescates internos)
+               NO pasan por la vista -- esa tabla base no tiene esta columna, así
+               que en esas ramas el contenedor queda vacío hasta que la migración
+               se aplique Y esas ramas también lean de la vista (fuera de este
+               ticket). Nunca cae al UUID en ningún caso: si no hay valor, el
+               :empty{display:none} del CSS lo oculta. */
             const artistIdEl = document.getElementById('pub-hero-artist-id');
             if (artistIdEl) {
-                var _artistIdVal = p.mdjb_account_public_id || p.user_id || targetId;
-                artistIdEl.textContent = _artistIdVal ? ('ID: ' + _artistIdVal) : '';
+                artistIdEl.textContent = p.public_account_id ? p.public_account_id : '';
             }
 
             // ── Badge after name: diamond=verified, star=PRO-unverified, dot=lite ──

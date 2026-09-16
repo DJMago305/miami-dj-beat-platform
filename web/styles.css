@@ -6496,18 +6496,94 @@ body.mdj-artist-academy #mainHeader.header {
 }
 
 /* Viewport estrecho: una sola fila de 140px (sin wrap de la píldora) */
-@media (max-width: 820px) {
+@media (max-width: 1024px) {
+  /* FIX-HEADER-ACTIONS-TABLET-FIT (2026-09-16, orden del PO, autorización
+     acotada a este archivo): ES/EN + LOGIN + avatar + carrito + buscador
+     conviviendo en 768-1024px reales -- gap/márgenes internos comprimidos a
+     4px para que nada quede oculto ni dependa de scroll horizontal fantasma.
+     EXTENDIDO a 1024px (2026-09-16, orden del PO): a 1024px el buscador
+     quedaba en x=1029-1169, fuera del viewport -- el bloque
+     @media(min-width:1001px) de header-unified.css (--mdj-header-brand-slot
+     en 660px + margin-right:clamp(250-390px) en .header-actions) seguía
+     activo ahí, mismo problema que a 768px por la misma causa. Se sube el
+     techo de este bloque de 820 a 1024px para que gane también en ese tramo.
+     Medido en vivo a 768px: con --mdj-header-brand-slot en su valor de
+     escritorio (660px), .brand ocupaba 574px de los 768px del viewport --
+     dejaba solo 138px para TODO el bloque de acciones (necesita ~420px), sin
+     margen de maniobra posible ahí. Confirmado con el PO: se reduce la
+     variable aquí (header-unified.css es quien la consume vía max-width, sin
+     tocarla) para
+     dejarle sitio real al bloque de acciones.
+     SEGUNDO HALLAZGO (medido en vivo): la única regla que CONSUME esta
+     variable vía max-width (#mainHeader.mdj-header-unified .brand) vive
+     dentro de @media(min-width:1001px) -- inactiva aquí. Cambiar solo el
+     valor de la variable no hacía nada en este rango porque nadie la leía.
+     Se agrega el consumidor real, acotado a este mismo rango. */
+  :root {
+    --mdj-header-brand-slot: 255px;
+  }
+
+  /* TERCER HALLAZGO (medido en vivo a 1024px): max-width no alcanzaba porque
+     #mainHeader.header.mdj-header-unified .header-top .container > .brand
+     (header-unified.css:287-311, @media min-width:1001px) fija
+     min-width:clamp(300px,34vw,560px) !important -- 348px a 1024px, MAYOR
+     que mi max-width de 255px. Por spec CSS, min-width > max-width hace que
+     min-width gane siempre, sin importar cuál regla tenga más especificidad.
+     Se iguala el selector exacto (mismo peso: 1 id + 5 clases) para poder
+     sobreescribir min-width además de max-width; se recorta también el
+     padding-right/margin-right de esa misma regla, que sumaban ~123px más
+     de aire alrededor del wordmark. */
+  /* CUARTO HALLAZGO (medido en vivo): header-unified.css define la MISMA
+     regla con idéntico selector (1 id + 5 clases) -- en empate de
+     especificidad gana el archivo que carga después (header-unified.css
+     va después de styles.css en el <head>), sin importar el orden dentro
+     de este mismo archivo. Se refuerza con html+body y #mainHeader
+     duplicado (mismo patrón ya usado en header-unified.css para casos
+     idénticos) para ganar por especificidad real, no por orden. */
+  /* SEXTO HALLAZGO (medido en vivo): overflow:hidden recortaba el águila --
+     tiene transform:translateX(-188px) !important (header-unified.css:469,
+     "sangrado" intencional fuera de su caja lógica, calibrado para el
+     brand-slot ancho de escritorio). Sin overflow:hidden, el águila sigue
+     sangrando visible como siempre; max-width/min-width igual restringe el
+     espacio que .brand RESERVA en el flex (lo único que le hacía falta al
+     bloque de acciones). */
+  html body #mainHeader#mainHeader.header.mdj-header-unified
+    .header-top .container > .brand {
+    max-width: min(var(--mdj-header-brand-slot), 100%) !important;
+    min-width: 0 !important;
+    padding-right: 12px !important;
+    margin-right: 12px !important;
+  }
+
+  /* QUINTO HALLAZGO (medido en vivo): con la marca ya compacta, seguían
+     158px de overflow real en .header-top -- venían del margin-right que
+     header-unified.css:376-379 reserva en .header-actions
+     (calc(18vw+30px), ~214px a 1024px) para dejarle sitio a un layout de
+     marca más ancho que ya no aplica aquí. Mismo refuerzo de especificidad
+     que arriba para poder pisarlo. */
+  html body #mainHeader#mainHeader.header.mdj-header-unified
+    .header-top .container > .header-actions {
+    margin-right: 12px !important;
+  }
+
   #mainHeader .header-actions {
     flex-wrap: nowrap !important;
+    gap: 4px !important;
   }
 
   #mainHeader .header-search-wrap {
     order: 0;
-    flex: 1 1 100px;
+    flex: 0 0 auto;
     min-width: 0;
     max-width: none;
     flex-basis: auto;
     margin-top: 0;
+    margin-left: 4px !important;
+  }
+
+  #mainHeader .header-smart-search {
+    width: clamp(90px, 12vw, 115px) !important;
+    min-width: 0 !important;
   }
 }
 
