@@ -571,9 +571,14 @@ function renderUI(s){
   }
 }
 function refreshState(){
-  // LIVE con dato real: conservar el estado del hub — NO pisarlo con el mock del providerFn
-  // (el bucle/intervalo llaman refreshState para retintar; en vivo el clima manda el hub).
-  if(liveMode && liveStatus==='live'){ const hs=MDJ_WeatherHub.getState(); if(hs){ state=hs; renderUI(state); return; } }
+  // LIVE (o el hub ya trae un dato real aunque liveStatus todavía no diga 'live',
+  // p.ej. justo tras 'connecting'): conservar el estado del hub — NO pisarlo con
+  // el mock del providerFn (el bucle/intervalo llaman refreshState para retintar;
+  // en vivo el clima manda el hub, nunca el mock).
+  if(liveMode || MDJ_WeatherHub.getState()){
+    const hs=MDJ_WeatherHub.getState();
+    if(hs){ state=hs; renderUI(state); return; }
+  }
   state=providerFn(currentInput()); renderUI(state);   // preview/mock (async-ready)
 }
 refreshState();
@@ -664,7 +669,9 @@ function frame(now){
   const isDayNow = sunElev>0.15;
   if(isDayNow!==_clockIsDay){ _clockIsDay=isDayNow; const _ck=document.querySelector('.clock'); if(_ck) _ck.classList.toggle('is-day', isDayNow); }
   const az=0.45+0.48*dayT;          // keep sun/moon in the right negative space
-  const hb=Math.floor(dayT*24); if(hb!==lastHourBucket){ lastHourBucket=hb; refreshState(); }  // temp/forecast track the moving clock, from the provider
+  // En vivo, el dato ya llega por el timer/suscripción del Hub (setLive/subscribeHub) —
+  // llamar aquí de más solo arriesgaba pisar un dato real con el mock del reloj simulado.
+  const hb=Math.floor(dayT*24); if(hb!==lastHourBucket){ lastHourBucket=hb; if(!liveMode) refreshState(); }
   const tgt=state.drivers;          // ease current -> the contract's drivers (~1.5s)
   const k=reduce?1.0:0.03;
   cur.cloud+=(tgt.cloud-cur.cloud)*k; cur.storm+=(tgt.storm-cur.storm)*k;
@@ -806,12 +813,16 @@ document.getElementById('livebtn').addEventListener('click',function(){ setLive(
   const sl=document.getElementById('dslider'), lb=document.getElementById('dlbl');
   const MON=['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
   const todayDOY=simDayOfYear; sl.value=simDayOfYear;
-  function upd(){ dropLive(); simDayOfYear=+sl.value;
+  // dropLive() SOLO cuando el usuario mueve el slider a mano ('input'), nunca en
+  // el montaje inicial: la llamada de arranque (upd() sin interacción, más abajo)
+  // apagaba el modo en vivo apenas terminaba de conectar — el mismo slider que
+  // solo pinta "HOY" por defecto bastaba para tumbar el satélite en cada carga.
+  function upd(fromUser){ if(fromUser) dropLive(); simDayOfYear=+sl.value;
     const d=new Date(new Date().getFullYear(),0,1); d.setDate(simDayOfYear);
     lb.textContent = (simDayOfYear===todayDOY) ? 'HOY' : (d.getDate()+' '+MON[d.getMonth()]);
     refreshState(); tick();
   }
-  sl.addEventListener('input',upd); upd();
+  sl.addEventListener('input',function(){ upd(true); }); upd(false);
 })();
 // production: hide the dev/preview controls (users must not fake weather/time/location)
 if(!PREVIEW){ ['datectl','timeofday','weather','scenes'].forEach(function(id){ const e=document.getElementById(id); if(e) e.style.display='none'; }); }
@@ -838,3 +849,9 @@ window.addEventListener('message', function(e){
 });
 // tell the host we're ready so it can (re)send even if it loaded first
 try { if (window.parent && window.parent !== window) window.parent.postMessage({ type:'mdjb:hero-ready' }, '*'); } catch(_e){}
+
+// El clima real conecta solo al cargar — el botón queda para desconectar, no
+// para activar. Va AL FINAL a propósito: si algo del resto de la
+// inicialización todavía llamara a dropLive() por error, esta línea corre
+// después de todo lo demás y gana.
+setLive(true);
