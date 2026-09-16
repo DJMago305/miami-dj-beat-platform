@@ -265,7 +265,10 @@ serve(async (req) => {
   const newStatus = kind === "accept" ? "accepted" : "denied";
 
   const SITE_URL = (Deno.env.get("SITE_URL") || "https://miamidjbeat.com").replace(/\/$/, "");
-  const profileLink = `${SITE_URL}/dj-profile.html?id=${encodeURIComponent(user.id)}&view=public`;
+  // FIX-SFT-LIVE-SESSION-GATING (2026-09-16, orden del PO): este link invita al
+  // fan a pedir OTRA canción en vivo -- debe entrar al modo kiosco (mode=live),
+  // no al perfil de booking (view=public), que ya no muestra SoundForTips.
+  const profileLink = `${SITE_URL}/dj-profile.html?id=${encodeURIComponent(user.id)}&mode=live`;
 
   let msgBody = "";
   if (kind === "accept") {

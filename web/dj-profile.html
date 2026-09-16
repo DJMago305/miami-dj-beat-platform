@@ -29,16 +29,24 @@
                     document.documentElement.setAttribute('data-mdj-no-ambient', '1');
                     window.MDJ_SKIP_AMBIENT_MUSIC = true;
                 } catch (eNoAmb) { void eNoAmb; }
-                if (p.get('view') === 'public') {
+                /* FIX-SFT-LIVE-SESSION-GATING (2026-09-16, orden del PO): ?mode=live es
+                   el candado de URL del "modo kiosco" (QR de cabina/booth) -- comparte el
+                   mismo blindaje de cabecera/chrome que ?view=public (dj-profile-qr-view)
+                   pero se marca aparte (dj-profile-live-kiosk) para enfocar la interfaz en
+                   SoundForTips. Nunca se combinan: view=public sigue siendo booking puro. */
+                var isPublicQrBoot = p.get('view') === 'public';
+                var isLiveKioskBoot = p.get('mode') === 'live';
+                if (isPublicQrBoot || isLiveKioskBoot) {
                     document.documentElement.classList.add('dj-profile-qr-view');
-                    if (key) {
-                        try {
-                            localStorage.setItem(key, '1');
-                        } catch (e2) {
-                            void e2;
-                        }
+                    if (isLiveKioskBoot) document.documentElement.classList.add('dj-profile-live-kiosk');
+                }
+                if (isPublicQrBoot && key) {
+                    try {
+                        localStorage.setItem(key, '1');
+                    } catch (e2) {
+                        void e2;
                     }
-                } else if (key) {
+                } else if (!isPublicQrBoot && !isLiveKioskBoot && key) {
                     try {
                         if (localStorage.getItem(key) === '1') {
                             document.documentElement.classList.add('dj-profile-hide-pub-qr');
@@ -172,6 +180,19 @@
         }
         /* Oculta el botón flotante inferior de SFT en vista DJ (redundante con el menú superior) */
         html:not(.dj-profile-qr-view) #mdj-sft-mobile-float-cta {
+            display: none !important;
+        }
+    </style>
+    <style id="mdj-sft-live-kiosk-style">
+        /* FIX-SFT-LIVE-SESSION-GATING (2026-09-16, orden del PO): modo kiosco
+           (?mode=live, QR de cabina) -- oculta el perfil comercial (reseñas, bio,
+           venues, disponibilidad) y enfoca la pantalla en SoundForTips. El QR de
+           compartir perfil (booking) tampoco tiene sentido aquí -- ya se llegó
+           por un QR distinto -- se oculta igual que en dj-profile-qr-view. */
+        html.dj-profile-live-kiosk .dj-main-col {
+            display: none !important;
+        }
+        html.dj-profile-live-kiosk #public-action-buttons .pub-qr-share-block {
             display: none !important;
         }
     </style>
@@ -4156,8 +4177,6 @@
                             <a href="./events.html" class="btn-venues-cta" data-i18n="profile-see-week-events">SEE THIS WEEK'S EVENTS ★</a>
                         </div>
                     </div>
-                        </div>
-                    </div>
                 </div>
 
                 <!-- Consulta disponibilidad (flujo público de contratación) -->
@@ -4271,6 +4290,11 @@
                             </span>
                         </span>
                     </button>
+                    <!-- FIX-SFT-LIVE-SESSION-GATING (2026-09-16, orden del PO): Candado B --
+                         visible solo en modo kiosco (?mode=live) cuando la sesión en vivo
+                         nunca inició o ya expiró (4h desde soundfortips_live_started_at).
+                         Ver applySoundForTipsPublicVisibility(). -->
+                    <p id="sft-kiosk-ended-msg" style="display:none;text-align:center;font-size:11px;font-weight:800;letter-spacing:.04em;color:#fb923c;margin:8px 0 0;line-height:1.4;" data-i18n="sft-kiosk-soon-msg">PRÓXIMAMENTE EN VIVO</p>
 
                     <div class="pub-web-title" style="text-align:center; margin-top:2px; margin-bottom:6px;">
                         <div data-i18n="profile-web-title" style="font-size:11px; letter-spacing:0.26em; text-transform:uppercase; font-weight:900; color:var(--gold); text-shadow:0 0 14px rgba(197,160,89,0.42), 0 0 2px rgba(255,255,255,0.22);">WEB MIAMI DJ BEAT</div>
@@ -4491,7 +4515,7 @@
     </footer>
 
     <!-- Translations & Base Logic -->
-    <script defer src="./translations.js?v=20260916-venues-cta"></script>
+    <script defer src="./translations.js?v=20260916-sft-live-kiosk"></script>
     <script defer src="./i18n.js?v=20260427-lang-default"></script>
     <script>
         // 🔧 Motor Principal de Logout (A prueba de fallos)
@@ -4609,6 +4633,24 @@
             var qs = '?view=public&id=' + id + '&ref=' + id;
             if (rc) qs += '&rcode=' + encodeURIComponent(rc);
             return base + path + qs;
+        };
+
+        /**
+         * FIX-SFT-LIVE-SESSION-GATING (2026-09-16, orden del PO): URL del "QR de
+         * Cabina / Booth Live" -- Candado A. A propósito distinta de
+         * buildMiamiPublicQrUrl (booking): sin ref/rcode (no es un link de
+         * referido, es un cartel físico de mesa) y con mode=live en vez de
+         * view=public, para que el fan que lo escanea entre directo al modo
+         * kiosco de SoundForTips en vez del perfil comercial.
+         * @param {string} userId - user_id del DJ
+         */
+        window.mdjBuildLiveKioskUrl = function (userId) {
+            if (!userId) return '';
+            var base = mdbPublicProfileQrBase();
+            var path = window.MDB_QR_PROFILE_PATH || '/dj-profile.html';
+            if (path.charAt(0) !== '/') path = '/' + path;
+            var id = encodeURIComponent(userId);
+            return base + path + '?id=' + id + '&mode=live';
         };
 
         /** Miami DJ Beat marca en QR (13% del lado; alinear con .mdj-qr-brand) + corrección H si existe */
@@ -4928,13 +4970,32 @@
             });
         }
 
+        /* FIX-SFT-LIVE-SESSION-GATING (2026-09-16, orden del PO): Candado B --
+           una sesión en vivo es válida solo dentro de las 4h desde que el DJ
+           encendió el switch (soundfortips_live_started_at). Sin cron: se
+           calcula en el cliente cada vez que se pinta el estado. */
+        function mdjSftIsLiveNow(active, startedAtIso) {
+            if (active !== true || !startedAtIso) return false;
+            var startedMs = new Date(startedAtIso).getTime();
+            if (!isFinite(startedMs)) return false;
+            var FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
+            return (Date.now() - startedMs) < FOUR_HOURS_MS;
+        }
+
         function applySoundForTipsPublicVisibility(active) {
             var btn = document.getElementById('soundfortips-launch-btn');
             var floatWrap = document.getElementById('mdj-sft-mobile-float-cta');
             var floatBtn = document.getElementById('soundfortips-launch-btn-float');
             var smartHead = document.getElementById('soundfortips-smart-heading');
+            var kioskMsg = document.getElementById('sft-kiosk-ended-msg');
             if (!btn) return;
-            var pro = window._mdjSftProAllowed === true;
+            /* FIX-SFT-LIVE-SESSION-GATING (2026-09-16, orden del PO): Candado A --
+               un visitante que no es el dueño solo ve el widget si entró por el
+               modo kiosco (?mode=live). El link de booking (?view=public / base)
+               nunca lo muestra, sin importar el estado en BD. El dueño sigue
+               viendo su propio estado siempre (vista de panel, no de fan). */
+            var pro = window._mdjSftProAllowed === true
+                && (window._mdjSftViewerIsOwner === true || window._mdjSftFanPublicEligible === true);
             var pill = document.getElementById('soundfortips-launch-status-pill');
             btn.classList.remove('sft-launch-btn--online', 'sft-launch-btn--offline');
             if (!pro) {
@@ -4946,6 +5007,7 @@
                     smartHead.setAttribute('aria-hidden', 'true');
                 }
                 if (pill) pill.style.display = 'none';
+                if (kioskMsg) kioskMsg.style.display = 'none';
                 if (floatWrap) {
                     floatWrap.classList.remove('mdj-sft-mobile-float-cta--on');
                     floatWrap.setAttribute('aria-hidden', 'true');
@@ -4972,7 +5034,21 @@
                 smartHead.setAttribute('aria-hidden', 'true');
             }
             if (pill) pill.style.display = 'inline-flex';
-            if (active) {
+            /* FIX-SFT-LIVE-SESSION-GATING (2026-09-16, orden del PO): Candado B --
+               solo aplica el bloqueo de "sesión expirada / próximamente" a un fan
+               real en modo kiosco. El dueño viendo su propio panel sigue viendo
+               ON/OFF tal cual, sin este tercer estado. */
+            var kioskFanCtx = window._mdjSftLiveKioskView === true && window._mdjSftViewerIsOwner !== true;
+            var liveNow = window._mdjSftIsLiveNow === true;
+            var hasStartedTs = !!window._mdjSftLiveStartedAt;
+            /* hasStartedTs=false cubre tanto "nunca lo encendió" como DJs que ya
+               tenían soundfortips_active=true ANTES de esta migración (columna
+               nueva, sin valor histórico) -- se tratan como "aún no inició",
+               no como "terminó", hasta que vuelvan a tocar el switch una vez. */
+            var kioskExpired = kioskFanCtx && hasStartedTs && !liveNow;
+            var kioskNeverStarted = kioskFanCtx && !hasStartedTs;
+            var kioskBlocked = kioskExpired || kioskNeverStarted;
+            if (active && !kioskBlocked) {
                 btn.classList.add('sft-launch-btn--online');
                 btn.disabled = false;
                 btn.setAttribute('aria-label', 'SoundForTips — live');
@@ -4982,6 +5058,7 @@
                     pill.setAttribute('data-i18n', 'sft-public-pill-on');
                 }
                 if (floatBtn) floatBtn.classList.remove('sft-float--offline');
+                if (kioskMsg) kioskMsg.style.display = 'none';
             } else {
                 btn.classList.add('sft-launch-btn--offline');
                 btn.disabled = false;
@@ -4992,6 +5069,15 @@
                     pill.setAttribute('data-i18n', 'sft-public-pill-off');
                 }
                 if (floatBtn) floatBtn.classList.add('sft-float--offline');
+                if (kioskExpired || kioskNeverStarted) {
+                    btn.disabled = true;
+                    if (kioskMsg) {
+                        kioskMsg.style.display = 'block';
+                        kioskMsg.setAttribute('data-i18n', kioskExpired ? 'sft-kiosk-ended-msg' : 'sft-kiosk-soon-msg');
+                    }
+                } else if (kioskMsg) {
+                    kioskMsg.style.display = 'none';
+                }
             }
             if (floatWrap) {
                 floatWrap.classList.add('mdj-sft-mobile-float-cta--on');
@@ -5074,14 +5160,26 @@
             toggle.addEventListener('change', async function () {
                 var v = toggle.checked;
                 var rollback = !v;
-                var res = await db.from('dj_profiles').update({ soundfortips_active: v }).eq('user_id', session.user.id);
+                /* FIX-SFT-LIVE-SESSION-GATING (2026-09-16, orden del PO): Candado B --
+                   encender el switch marca el inicio de una nueva sesión en vivo
+                   (soundfortips_live_started_at = now()); apagarlo la limpia. Una
+                   sesión encendida hace más de 4h se trata como expirada aunque el
+                   switch siga en ON -- ver mdjSftIsLiveNow(). */
+                var nowIso = v ? new Date().toISOString() : null;
+                var res = await db.from('dj_profiles').update({ soundfortips_active: v, soundfortips_live_started_at: nowIso }).eq('user_id', session.user.id);
                 if (res.error) {
                     alert('No se pudo guardar. Ejecuta en Supabase la migración soundfortips_active (columna en dj_profiles).\n' + (res.error.message || ''));
                     toggle.checked = rollback;
                     syncSftTabOnlineButton();
                     return;
                 }
-                if (window.currentDJData) window.currentDJData.soundfortips_active = v;
+                if (window.currentDJData) {
+                    window.currentDJData.soundfortips_active = v;
+                    window.currentDJData.soundfortips_live_started_at = nowIso;
+                    window.currentDJData.soundfortips_live_now = mdjSftIsLiveNow(v, nowIso);
+                }
+                window._mdjSftIsLiveNow = mdjSftIsLiveNow(v, nowIso);
+                window._mdjSftLiveStartedAt = nowIso;
                 applySoundForTipsPublicVisibility(v);
                 syncSftTabOnlineButton();
                 try {
@@ -5311,7 +5409,14 @@
 
             const params = new URLSearchParams(window.location.search);
             const isPublicQrView = params.get('view') === 'public';
-            const allowPublicProfileBrowse = isPublicQrView || !!params.get('id');
+            /* FIX-SFT-LIVE-SESSION-GATING (2026-09-16, orden del PO): Candado A --
+               ?mode=live es el ÚNICO modo que puede habilitar SoundForTips para un
+               visitante no-dueño (ver _mdjSftFanPublicEligible más abajo). El
+               booking (?view=public / base) nunca lo activa, sin importar el
+               estado en BD. */
+            const isLiveKioskView = params.get('mode') === 'live';
+            window._mdjSftLiveKioskView = isLiveKioskView;
+            const allowPublicProfileBrowse = isPublicQrView || isLiveKioskView || !!params.get('id');
 
             if (mdjSftStripeReturn) {
                 setTimeout(function () {
@@ -5392,7 +5497,7 @@
             }
 
             const isOwner = session && session.user.id === targetId;
-            window._mdjSftViewerIsOwner = !!(isOwner && !isPublicQrView);
+            window._mdjSftViewerIsOwner = !!(isOwner && !isPublicQrView && !isLiveKioskView);
             try {
                 var __sftBooth = new URLSearchParams(window.location.search).get('sft_booth') === '1';
                 window._mdjSftShowPendingBadge = (!!isOwner && !isPublicQrView) || __sftBooth;
@@ -5485,7 +5590,7 @@
 
             // Cabina / cola / wallet SFT: solo PRO de pago (ver mdbProfileSoundForTipsEligible).
             window._mdjSftProAllowed = mdbProfileSoundForTipsEligible(p, session && session.user);
-            window._mdjSftFanPublicEligible = !!(isPublicQrView && !isOwner && window._mdjSftProAllowed);
+            window._mdjSftFanPublicEligible = !!(isLiveKioskView && !isOwner && window._mdjSftProAllowed);
             const isSftClientMobileProfile = !!(window._mdjSftFanPublicEligible
                 && window.matchMedia
                 && window.matchMedia('(max-width: 900px)').matches);
@@ -5757,7 +5862,7 @@
             }
 
             if (!isOwner && targetId) {
-                var visitSrc = isPublicQrView ? 'sft_qr' : 'profile';
+                var visitSrc = (isPublicQrView || isLiveKioskView) ? 'sft_qr' : 'profile';
                 if (typeof window.mdjRecordProfileVisibilityVisit === 'function') {
                     window.mdjRecordProfileVisibilityVisit(targetId, visitSrc);
                 }
@@ -6353,8 +6458,12 @@
                 photo: p.photo_url || '',
                 url: fanShareUrl,
                 soundfortips_active: p.soundfortips_active === true,
-                soundfortips_eligible: window._mdjSftProAllowed === true
+                soundfortips_eligible: window._mdjSftProAllowed === true,
+                soundfortips_live_started_at: p.soundfortips_live_started_at || null,
+                soundfortips_live_now: mdjSftIsLiveNow(p.soundfortips_active, p.soundfortips_live_started_at)
             };
+            window._mdjSftIsLiveNow = window.currentDJData.soundfortips_live_now;
+            window._mdjSftLiveStartedAt = window.currentDJData.soundfortips_live_started_at;
             // Update Meta tags for social previews
             const metaTitle = document.getElementById('meta-og-title');
             const metaDesc = document.getElementById('meta-og-desc');
@@ -6369,9 +6478,13 @@
                 ? window.buildMiamiPublicQrUrl(targetId, p.referral_code || null)
                 : (`${mdbPublicProfileQrBase()}/dj-profile.html?id=${encodeURIComponent(targetId)}&view=public&ref=${encodeURIComponent(targetId)}`);
             window._mdjPublicProfileQrUrl = profileUrl;
-            // SFT cabin QR: land on the public profile hero so the fan sees the DJ
-            // and the SoundForTips "Pedir Canción" button — not the internal cabin panel.
-            window._mdjSftCabQrUrl = profileUrl || '';
+            // SFT cabin QR: FIX-SFT-LIVE-SESSION-GATING (2026-09-16, orden del PO) --
+            // ya NO usa el link de booking (profileUrl/view=public). Usa el modo
+            // kiosco (mode=live) para que el fan que escanea en la mesa/cabina entre
+            // directo a SoundForTips, no al perfil comercial.
+            window._mdjSftCabQrUrl = (typeof window.mdjBuildLiveKioskUrl === 'function'
+                ? window.mdjBuildLiveKioskUrl(targetId)
+                : profileUrl) || '';
             try {
                 var cabQrReset = document.getElementById('sft-cab-qr-mount');
                 if (cabQrReset) {
@@ -12559,7 +12672,13 @@
         }
 
         function soundForTipsAcceptingRequests() {
-            return window.currentDJData && window.currentDJData.soundfortips_active === true && window.currentDJData.soundfortips_eligible === true;
+            /* FIX-SFT-LIVE-SESSION-GATING (2026-09-16, orden del PO): Candado B --
+               ya no basta con el switch encendido; la sesión en vivo debe seguir
+               dentro de las 4h de soundfortips_live_started_at. El backend
+               (create-sft-tip-checkout / register-sft-fan-request) aplica el mismo
+               candado -- este check del cliente es solo para no mostrar el flujo
+               como disponible cuando ya no lo es. */
+            return window.currentDJData && window.currentDJData.soundfortips_active === true && window.currentDJData.soundfortips_eligible === true && window.currentDJData.soundfortips_live_now === true;
         }
 
         function soundForTipsFanMayOpenModal() {

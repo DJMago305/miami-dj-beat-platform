@@ -105,7 +105,7 @@ serve(async (req) => {
 
   const { data: dj, error: djErr } = await supabaseAdmin
     .from("dj_profiles")
-    .select("user_id, soundfortips_active, soundfortips_platform_fee_blocked")
+    .select("user_id, soundfortips_active, soundfortips_live_started_at, soundfortips_platform_fee_blocked")
     .eq("user_id", djId)
     .maybeSingle();
 
@@ -126,6 +126,20 @@ serve(async (req) => {
 
   if (dj.soundfortips_active !== true) {
     return new Response(JSON.stringify({ error: "DJ is offline — not accepting requests" }), {
+      status: 403,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  // FIX-SFT-LIVE-SESSION-GATING (2026-09-16, orden del PO): Candado B, aplicado
+  // en servidor (el candado del cliente en dj-profile.html se puede saltar
+  // llamando esta función directo). Una sesión en vivo vale solo 4h desde
+  // soundfortips_live_started_at -- pasado ese tiempo, aunque el switch siga en
+  // ON, se trata como si el DJ no estuviera aceptando pedidos.
+  const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
+  const startedAtMs = dj.soundfortips_live_started_at ? new Date(dj.soundfortips_live_started_at).getTime() : NaN;
+  if (!Number.isFinite(startedAtMs) || Date.now() - startedAtMs >= FOUR_HOURS_MS) {
+    return new Response(JSON.stringify({ error: "Live session ended — DJ is not currently accepting requests" }), {
       status: 403,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
