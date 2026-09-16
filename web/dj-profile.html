@@ -1978,23 +1978,34 @@
 
             /* TICKET · la fila se recortaba por el borde izquierdo de la pantalla:
                7 íconos a 34px + botón compartir no cabían en los ~213px de esta
-               columna con flex-wrap:nowrap, así que el conjunto (centrado sobre
-               un ancho que no le alcanzaba) se salía por ambos lados y el propio
-               .dj-hero (overflow:hidden) recortaba el primero. Envolver en dos
-               líneas cuando hace falta + íconos algo más chicos (pedido del PO)
-               resuelve el recorte sin tocar el marcado. */
+               columna. FIX-SFT-SOCIAL-PYRAMID (2026-09-16, orden del PO): el
+               arreglo anterior envolvía #pub-social-icons (los íconos sociales)
+               por su cuenta y dejaba el botón de compartir COMO HERMANO aparte
+               en .dj-social-row -- dos flex-wrap independientes. Resultado: los
+               sociales se partían en 2 líneas centradas cada una por separado
+               (forma de pirámide, 5+3), y compartir se caía solo a una tercera
+               línea, lejos del grupo. Se unifica en una sola grilla: #pub-social-
+               icons pasa a display:contents (deja de ser su propio contenedor,
+               sus <a> se vuelven hijos directos de .dj-social-row) para que
+               TODOS los íconos, compartir incluido, fluyan en una sola matriz de
+               4 columnas -- filas parejas, compartir siempre al final de la
+               secuencia, nunca aislado. */
+            /* !important: una regla vieja y sin acotar en @media(max-width:560px),
+               más abajo en este archivo, fija display:flex!important en
+               .dj-social-row -- sin este !important aquí, esa gana por ser
+               igual de "important" y no ceder ante mayor especificidad ni
+               orden de aparición. */
             body.dj-profile-sft-client-view .dj-social-row {
+                display: grid !important;
+                grid-template-columns: repeat(4, auto);
                 gap: 6px;
                 margin-top: 0;
                 justify-content: center;
-                flex-wrap: wrap;
                 width: 100%;
             }
 
             body.dj-profile-sft-client-view #pub-social-icons {
-                flex-wrap: wrap;
-                justify-content: center;
-                width: 100%;
+                display: contents;
             }
 
             body.dj-profile-sft-client-view .dj-social-icon {
