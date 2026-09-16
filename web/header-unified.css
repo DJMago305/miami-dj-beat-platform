@@ -76,6 +76,19 @@
   body.dj-profile {
     --header-nav-band: var(--mdj-header-unified-r2);
   }
+
+  /* FIX-HERO-CLEARANCE-ESTACION-GAP (2026-09-16, orden del PO): en modo
+     Estación (data-mdj-estacion, el propio artista logueado en su perfil)
+     #mainHeader .header-top queda display:none (regla ya existente más abajo
+     en este archivo) -- el header real es de UNA fila (.header-nav, 84px
+     medidos incl. padding), no dos. La regla de arriba seguía sumando los
+     72px de --header-nav-band encima, dejando un hueco muerto entre el menú
+     y el hero (visible en tablet) y empujando el contenido del hero hacia
+     abajo (visible en escritorio como "la imagen queda muy abajo"). Mayor
+     especificidad por el atributo -- gana sin importar el orden. */
+  body.dj-profile[data-mdj-estacion] {
+    --header-nav-band: 0px;
+  }
 }
 
 /*

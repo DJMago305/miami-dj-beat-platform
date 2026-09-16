@@ -170,7 +170,7 @@
         })();
     </script>
     <link rel="stylesheet" href="./styles.css?v=20260916-venues-cta" />
-    <link rel="stylesheet" href="./header-unified.css?v=20260916-nav-static-fit2" />
+    <link rel="stylesheet" href="./header-unified.css?v=20260916-estacion-gap-fix" />
     <link rel="stylesheet" href="./profile.css?v=20260825-share-btn-gold" />
     <style id="mdj-qr-view-header-shield">
         /* Blindaje definitivo: especificidad mayor que #mainHeader.header.mdj-header-unified { display:flex !important } en header-unified.css */
@@ -1827,7 +1827,10 @@
             }
 
             body.dj-profile-show-owner-tabs .dj-hero-top-stack {
-                top: 16px;
+                /* FIX-HERO-TOP-STACK-CLEARANCE (2026-09-16, orden del PO): 16px
+                   dejaba el pill PLAN PRO y las estrellas pegados contra el
+                   borde inferior del menú en móvil -- un poco más de aire. */
+                top: 24px;
                 left: 20px;
             }
 
