@@ -192,7 +192,7 @@
         html.dj-profile-live-kiosk .dj-main-col {
             display: none !important;
         }
-        html.dj-profile-live-kiosk #public-action-buttons .pub-qr-share-block {
+        html.dj-profile-live-kiosk #public-qr-card {
             display: none !important;
         }
     </style>
@@ -1369,7 +1369,15 @@
                 gap: 24px;
             }
 
-            #tab-public #public-action-buttons {
+            /* #public-qr-card (2026-09-17): antes vivía junto con WEB dentro de
+               #public-action-buttons -- al separarse en tarjetas propias, se
+               agrupa aquí con el mismo order:1 para que tableta (601-900px)
+               siga viendo exactamente lo mismo que antes de la separación. El
+               reordenamiento real (Hero→WEB→Bio→Reviews→QR→Residencias→
+               Disponibilidad→Legal) vive solo en el bloque de teléfono más
+               abajo -- NO se toca tableta/escritorio. */
+            #tab-public #public-action-buttons,
+            #tab-public #public-qr-card {
                 order: 1;
             }
 
@@ -1379,6 +1387,69 @@
 
             #tab-public .dj-main-col {
                 order: 3;
+            }
+        }
+
+        /* FIX-MOBILE-CARD-REORDER (2026-09-17, orden del PO -- SOLO teléfono
+           ≤600px; tableta y escritorio no se tocan): Hero → WEB → Bio →
+           Reviews → QR → Residencias & Venues → Disponibilidad → Legal
+           (dueño). .dj-main-col/.dj-side-col se "desenvuelven"
+           (display:contents) para que cada tarjeta sea su propio ítem flex,
+           ordenable individualmente -- mismo patrón que ya usaba solo
+           dj-profile-sft-client-view más abajo en este archivo.
+           A PROPÓSITO sin "and (pointer:coarse)" (a diferencia del botón
+           hamburguesa/riel, que sí lo exige): el PO verifica achicando la
+           ventana de un navegador de escritorio real, que nunca reporta
+           puntero táctil -- con esa condición el arreglo nunca se veía en su
+           propia forma de probar. Solo el ancho decide aquí. */
+        @media (max-width: 600px) {
+            /* FIX-DEAD-SPACE-HERO-GAP (2026-09-17, orden del PO): 28px de
+               margin-bottom del hero + 28px de padding-top de .dj-body sumaban
+               56px de negro plano antes de la primera tarjeta -- se ve como
+               espacio muerto real en pantallas de teléfono (confirmado con
+               captura). Se acorta solo el padding superior del contenedor
+               para teléfono; tableta/escritorio conservan sus 28px. */
+            #tab-public .dj-body {
+                padding-top: 8px;
+            }
+
+            #tab-public .dj-main-col,
+            #tab-public .dj-side-col {
+                display: contents;
+            }
+
+            #tab-public #public-action-buttons,
+            #tab-public #public-qr-card {
+                margin-top: 0;
+            }
+
+            #tab-public #public-action-buttons {
+                order: 1;
+            }
+
+            #tab-public .pub-bio-card {
+                order: 2;
+            }
+
+            #tab-public #pub-reviews-wrap,
+            #tab-public #pub-rate-card {
+                order: 3;
+            }
+
+            #tab-public #public-qr-card {
+                order: 4;
+            }
+
+            #tab-public #venues-card {
+                order: 5;
+            }
+
+            #tab-public #avail-check-card {
+                order: 6;
+            }
+
+            #tab-public .sidebar-stack {
+                order: 7;
             }
         }
 
@@ -1653,8 +1724,13 @@
                 gap: 4px !important;
             }
 
+            /* FIX-DEAD-SPACE-HERO-GAP (2026-09-17, orden del PO): 36px aquí +
+               el propio padding de la primera tarjeta se leía como un bloque
+               negro vacío entre el hero y la tarjeta WEB en teléfono real
+               (confirmado con captura). Bajado a 8px -- el aire que queda lo
+               da la tarjeta misma, no este padding extra. */
             #tab-public > .dj-body {
-                padding-top: 36px;
+                padding-top: 8px;
             }
         }
 
@@ -2278,7 +2354,7 @@
                 text-shadow: 0 0 12px rgba(197, 160, 89, 0.35);
             }
 
-            body.dj-profile-sft-client-view #public-action-buttons .pub-first-purchase-promo-wrap {
+            body.dj-profile-sft-client-view #public-qr-card {
                 display: none !important;
             }
 
@@ -2292,7 +2368,6 @@
 
             body.dj-profile-sft-client-view #public-action-buttons .dj-card-label,
             body.dj-profile-sft-client-view #public-action-buttons #sft-public-interact-hint,
-            body.dj-profile-sft-client-view #public-action-buttons .pub-qr-share-block,
             body.dj-profile-sft-client-view #public-action-buttons #soundfortips-smart-heading,
             body.dj-profile-sft-client-view #public-action-buttons #soundfortips-launch-btn {
                 display: none !important;
@@ -2503,6 +2578,25 @@
             border: 1px solid rgba(197, 160, 89, 0.22);
             background: rgba(0, 0, 0, 0.28);
             text-align: center;
+        }
+
+        /* FIX-DEAD-SPACE-EMPTY-PROMO (2026-09-17, orden del PO -- SOLO
+           teléfono, tableta/escritorio no se tocan): sin traducción cargada
+           (data-i18n="profile-first-purchase-promo" no existe en
+           translations.js -- nunca se llenó), este contenedor quedaba como
+           una caja vacía con borde/relleno propio, leyéndose como espacio
+           muerto arriba del QR en móvil. Colapsa a cero cuando está vacío;
+           si algún día se agrega el texto real, vuelve a mostrarse solo
+           porque deja de estar :empty. Sin "and (pointer:coarse)" a
+           propósito -- ver la misma nota en FIX-MOBILE-CARD-REORDER más
+           arriba: el PO prueba achicando una ventana de escritorio real. */
+        @media (max-width: 600px) {
+            .pub-first-purchase-promo-wrap:empty {
+                display: none;
+                margin: 0;
+                padding: 0;
+                border: none;
+            }
         }
 
         .pub-first-purchase-promo-wrap strong {
@@ -3205,10 +3299,13 @@
 
         /* ── Móvil: SoundForTips CTA visible sin scroll largo + barra flotante ── */
         @media (max-width: 900px) {
-            #tab-public .dj-main-col {
-                display: flex;
-                flex-direction: column;
-            }
+            /* FIX-MOBILE-CARD-REORDER (2026-09-17): display:flex aquí competía
+               con .dj-main-col{display:contents} (ver bloque más arriba en
+               este archivo) por la misma propiedad al mismo ancho -- ganaba
+               este por ir después en la hoja, y todo el orden intercalado se
+               rompía. El apilado vertical simple que este flex daba ya lo
+               resuelve `contents` al desenvolver main-col dentro del flex de
+               .dj-body. */
 
             #tab-public #public-action-buttons {
                 margin-top: 0;
@@ -4139,7 +4236,7 @@
 
                 <!-- Opiniones de clientes (primero visible tras hero) -->
                 <div id="pub-reviews-wrap" class="pub-reviews-wrap pub-reviews-section">
-                    <div class="dj-card" id="reviews-card" style="overflow: hidden; padding-right:0;">
+                    <div class="dj-card" id="reviews-card" style="overflow: hidden;">
                         <details class="pub-mobile-section-details" id="pub-reviews-details" open>
                             <summary class="pub-mobile-section-summary">
                                 <span class="pub-mobile-section-summary-head">
@@ -4161,7 +4258,7 @@
                                      dejando la tarjeta de testimonio pegada al borde derecho (29px de
                                      aire a la izquierda vs 1px a la derecha, medido en vivo a 390px).
                                      Mismo valor que el header, mismo patrón. -->
-                                <div id="pub-reviews-carousel" class="reviews-carousel" style="padding-right:20px;"></div>
+                                <div id="pub-reviews-carousel" class="reviews-carousel"></div>
                             </div>
                         </details>
                     </div>
@@ -4301,7 +4398,39 @@
             </div>
 
             <div class="dj-side-col">
-            <!-- Public Action Buttons (SOUNDFORTIPS & Re-Routing) -->
+            <!-- FIX-MOBILE-CARD-REORDER (2026-09-17, orden del PO): QR y WEB
+                 vivían en una sola tarjeta (#public-action-buttons), lo que
+                 impedía intercalarlas por separado. Se separan en dos
+                 tarjetas propias. El orden intercalado real (Hero → WEB →
+                 Bio → Reviews → QR → Residencias → Disponibilidad → Legal)
+                 SOLO aplica en teléfono, @media(max-width:600px) -- ver
+                 bloque FIX-MOBILE-CARD-REORDER más arriba en este archivo.
+                 En tableta/escritorio (@media max-width:900px, sin tocar)
+                 estas dos tarjetas se quedan agrupadas con order:1, tal como
+                 estaban antes de separarlas -- cero cambio visual ahí. -->
+            <!-- QR (De Primero); oculto en ?view=public vía profile.css y en modo kiosco -->
+            <div class="dj-card" id="public-qr-card" style="margin-top:20px; padding:16px;">
+                <!-- Beneficio primera compra / comisión DJ — visible al escanear QR (view=public) -->
+                <div class="pub-first-purchase-promo-wrap" data-i18n="profile-first-purchase-promo"></div>
+                <div class="pub-qr-share-block" style="width:100%;">
+                    <div id="qr-export-area" class="pub-qr-paper"
+                        style="background:#fff; padding:8px 10px 10px; border-radius:12px; display:flex; flex-direction:column; align-items:center; justify-content:center; box-sizing:border-box; width:100%;">
+                        <div class="mdj-qr-wrap" onclick="downloadMyQR()"
+                            title="Touch to Download in Profile View" style="cursor:pointer;">
+                            <div id="profile-qrcode" class="mdj-qr-host" style="width:200px; height:200px;"></div>
+                            <div class="mdj-qr-brand" aria-hidden="true">
+                                <img src="./assets/branding/logo-transparent.png" alt="" width="64" height="64"
+                                    decoding="async" />
+                            </div>
+                        </div>
+                        <div
+                            style="text-align:center; margin-top:12px; font-size:12px; color:#000; font-weight:900; letter-spacing:1px;">
+                            SCAN FOR PUSH!</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- WEB / SoundForTips (Re-Routing) -->
             <div class="dj-card" id="public-action-buttons" style="margin-top:20px; padding:16px;">
                 <!-- FIX-WEB-CARD-COMPACT (2026-09-16, orden del PO): etiqueta "INTERACT/
                      INTERACTUAR" quitada por ser redundante -- el botón WEB ya se explica
@@ -4312,27 +4441,7 @@
                     INTERACTUAR</div>
                 <p id="sft-public-interact-hint" class="sft-public-interact-hint" data-i18n="sft-public-interact-hint" aria-hidden="true"
                     style="display:none;">Fans: el botón dorado grande es para pedir canción y propina (no hace falta ir a las pestañas del DJ).</p>
-                <!-- Beneficio primera compra / comisión DJ — visible al escanear QR (view=public) -->
-                <div class="pub-first-purchase-promo-wrap" data-i18n="profile-first-purchase-promo"></div>
                 <div style="display:flex; flex-direction:column; gap:10px;">
-
-                    <!-- QR Element Full Width (De Primero); oculto en ?view=public vía profile.css -->
-                    <div class="pub-qr-share-block" style="width:100%; margin-bottom:10px;">
-                        <div id="qr-export-area" class="pub-qr-paper"
-                            style="background:#fff; padding:8px 10px 10px; border-radius:12px; display:flex; flex-direction:column; align-items:center; justify-content:center; box-sizing:border-box; width:100%;">
-                            <div class="mdj-qr-wrap" onclick="downloadMyQR()"
-                                title="Touch to Download in Profile View" style="cursor:pointer;">
-                                <div id="profile-qrcode" class="mdj-qr-host" style="width:200px; height:200px;"></div>
-                                <div class="mdj-qr-brand" aria-hidden="true">
-                                    <img src="./assets/branding/logo-transparent.png" alt="" width="64" height="64"
-                                        decoding="async" />
-                                </div>
-                            </div>
-                            <div
-                                style="text-align:center; margin-top:12px; font-size:12px; color:#000; font-weight:900; letter-spacing:1px;">
-                                SCAN FOR PUSH!</div>
-                        </div>
-                    </div>
 
                     <p id="soundfortips-smart-heading" class="soundfortips-smart-heading" style="display:none;"
                         data-i18n="sft-public-smart-search-heading" aria-hidden="true">BUSCADOR DE CANCIONES</p>
@@ -5141,11 +5250,26 @@
                     kioskMsg.style.display = 'none';
                 }
             }
-            if (floatWrap) {
+            /* FIX-BOOTH-PHANTOM-FLOAT-PAD (2026-09-17, orden del PO): la franja
+               flotante de SFT solo puede pintarse cuando html.dj-profile-qr-view
+               está presente (ver regla en <head>: html:not(.dj-profile-qr-view)
+               #mdj-sft-mobile-float-cta{display:none!important}). Fuera de ese
+               contexto (ej. el dueño viendo su propio perfil normal) esta
+               función igual agregaba mdj-sft-float-pad al body sin condición,
+               reservando 95px para el asistente (#mdj-assistant-booth) por una
+               franja que CSS nunca deja pintar -- el "booth" quedaba
+               innecesariamente alto en móvil. Mismo bug de fondo que ya se
+               documentó el 2026-09-15 para otro caso, recurriendo aquí. */
+            var floatBarCanRender = document.documentElement.classList.contains('dj-profile-qr-view');
+            if (floatWrap && floatBarCanRender) {
                 floatWrap.classList.add('mdj-sft-mobile-float-cta--on');
                 floatWrap.removeAttribute('aria-hidden');
             }
-            document.body.classList.add('mdj-sft-float-pad');
+            if (floatBarCanRender) {
+                document.body.classList.add('mdj-sft-float-pad');
+            } else {
+                document.body.classList.remove('mdj-sft-float-pad');
+            }
             sftRefreshLaunchBadge();
             try {
                 if (window.i18n && typeof window.i18n.updateUI === 'function') window.i18n.updateUI();
