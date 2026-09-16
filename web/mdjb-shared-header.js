@@ -1729,22 +1729,12 @@
     }
     mdjMarcarPuestoActivo();
 
-    /* REFACTOR 2026-08-30 (orden PO, "cero parches temporales"): este mismo
-       bloque forzaba `display:grid` inline con !important -- un estilo
-       inline con !important gana a CUALQUIER regla de hoja de estilos sin
-       importar su especificidad, así que por más que header-unified.css se
-       reescribiera a flexbox, esto lo seguía pisando en silencio. Es
-       exactamente la razón por la que el cambio a flex en la hoja no se veía
-       reflejado en vivo -- verificado con getComputedStyle().display
-       devolviendo "grid" pese al nuevo CSS.
-       Ahora se fuerza `flex` en su lugar, por el mismo motivo original (hay
-       reglas viejas de otra era que podían reafirmar un valor distinto) pero
-       con el valor que de verdad gobierna el riel hoy. grid-auto-rows ya no
-       aplica -- es una propiedad exclusiva de grid, inerte en un contenedor
-       flex -- así que se retira en vez de dejarla como ruido. */
-    nav.style.setProperty('display', 'flex', 'important');
-    nav.style.setProperty('flex-wrap', 'nowrap', 'important');
-    nav.style.setProperty('align-items', 'center', 'important');
+    /* PURGA-CATEGORIA-A (2026-09-16, orden del PO): el forzado de
+       display/flex-wrap/align-items por JS (histórico del 2026-08-30, ver
+       git log) queda eliminado -- header-unified.css:4311-4313 ya tiene una
+       regla estática incondicional, con especificidad de doble-#id, que fija
+       exactamente los mismos tres valores sobre #mainNav. Confirmado
+       redundante antes de borrar. */
 
     /* ── NORMALIZACIÓN CANÓNICA DE LOS 8 PUESTOS ─────────────────────────
        Estándar inmutable (PO 2026-08-18, actualizado 2026-09-02 al retirar
@@ -7289,3 +7279,10 @@
   checkVersion();
   setInterval(checkVersion, CHECK_INTERVAL_MS);
 })();
+
+/* PURGA-CATEGORIA-A (2026-09-16, orden del PO): mdjSyncDjProfileHeroClearance
+   (sincronizaba el padding-top del body por JS midiendo #mainHeader) queda
+   eliminada. Reemplazo 100% estático en web/header-unified.css:
+   `@media (min-width: 601px) { body.dj-profile { --header-nav-band:
+   var(--mdj-header-unified-r2); } }` -- ata la variable que faltaba
+   directamente a su fuente de verdad, sin JS ni número mágico. */

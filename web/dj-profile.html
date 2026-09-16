@@ -162,7 +162,7 @@
         })();
     </script>
     <link rel="stylesheet" href="./styles.css?v=20260909-revealtext-blur-fix" />
-    <link rel="stylesheet" href="./header-unified.css?v=20260916-nav-centrado-v" />
+    <link rel="stylesheet" href="./header-unified.css?v=20260916-nav-static-fit2" />
     <link rel="stylesheet" href="./profile.css?v=20260825-share-btn-gold" />
     <style id="mdj-qr-view-header-shield">
         /* Blindaje definitivo: especificidad mayor que #mainHeader.header.mdj-header-unified { display:flex !important } en header-unified.css */
@@ -829,6 +829,22 @@
 
         .dj-hero-name .dot {
             color: var(--gold);
+        }
+
+        /* FIX-HERO-ARTIST-ID (2026-09-16, orden del PO): mismo lenguaje visual
+           que #pub-cert-id-inline (el otro "ID sutil bajo el nombre") -- texto
+           chico, discreto, sin competir con el h1. Vacío (sin contenido) no
+           ocupa línea real gracias al :empty de abajo, así que no dejar hueco
+           mientras el perfil todavía carga. */
+        .dj-artist-id {
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            color: rgba(255, 255, 255, 0.55);
+            margin: -6px 0 10px;
+        }
+
+        .dj-artist-id:empty {
+            display: none;
         }
 
         /* El indicador es HERMANO del nombre, no hijo: dentro del <h1> lo borraba
@@ -2034,6 +2050,15 @@
             transform: rotate(-180deg);
         }
 
+        /* FIX-AVAILABILITY-SIEMPRE-VISIBLE (2026-09-16, orden del PO): título fijo de
+           AVAILABILITY, visible en toda vista (no depende de owner-tabs/qr-view/
+           sft-client-view como el resto de .pub-mobile-section-summary) -- sin
+           cursor de acordeón, ya no hay nada que expandir/colapsar. */
+        .pub-mobile-section-summary--fixed {
+            display: flex;
+            cursor: default;
+        }
+
         @media (max-width: 900px) {
             .pub-bio-card.bio-collapsed {
                 padding-top: 14px !important;
@@ -2107,14 +2132,12 @@
             }
 
             body.dj-profile-sft-client-view #pub-venues-details > summary,
-            body.dj-profile-sft-client-view #pub-reviews-details > summary,
-            body.dj-profile-sft-client-view #pub-avail-details > summary {
+            body.dj-profile-sft-client-view #pub-reviews-details > summary {
                 display: flex;
             }
 
             body.dj-profile-sft-client-view #pub-venues-details:not([open]) .pub-mobile-section-body,
-            body.dj-profile-sft-client-view #pub-reviews-details:not([open]) .pub-mobile-section-body,
-            body.dj-profile-sft-client-view #pub-avail-details:not([open]) .pub-mobile-section-body {
+            body.dj-profile-sft-client-view #pub-reviews-details:not([open]) .pub-mobile-section-body {
                 display: none !important;
             }
 
@@ -3749,211 +3772,12 @@
           '<img src="./assets/branding/logo-transparent Letras.png" alt="Miami DJ Beat" class="mdj-mobile-brand-fab-letras">';
         document.body.appendChild(brand);
 
-        /* FIX-TABLET-HEADER-SCALE-DOWN (2026-09-15, orden del PO): misma
-           función que mdj-mobile-header-fix.js (que esta página NO carga --
-           tiene su propia lógica de FAB, arriba en este mismo script) para
-           que tablet vea la barra real de #mainNav pero achicada, no a
-           tamaño de escritorio con scroll. dj-profile.html tiene MÁS
-           puestos que las páginas públicas (Inicio/Academia/Agenda/CONFIG/
-           DJ Tools/Cash Flow/SoundForTips/MI PERFIL/AGENTE.IA -- 9, con
-           "SoundForTips™" el más largo) así que necesita ir más chico que
-           los 11px que alcanzaron en index.html -- medido en vivo aquí. */
-        function mdjTabletHeaderScale() {
-          try {
-            var inRange = window.innerWidth >= 601 && window.innerWidth <= 1220;
-            // FIX-NAV-TABLET-LEGIBLE (2026-09-15, orden del PO): 8px dejaba
-            // el menú "enano" -- sube a 14px + padding real por link, mismo
-            // criterio que mdj-mobile-header-fix.js. Medido en vivo: a
-            // 14px+8px/14px los 9 puestos de esta página (incluye
-            // "SoundForTips™", el más largo) no caben en los 972px
-            // disponibles a 1024px -- 12px+5px/5px fue el tamaño más grande
-            // que cupo ENTERO en ESA medición puntual.
-            // FIX-NAV-TABLET-ADAPTATIVO (2026-09-15, tarde -- reporte del
-            // PO): un 12px fijo, calculado a partir de UNA sola medición en
-            // un solo motor de renderizado, se rompe en cuanto la fuente
-            // real (peso/kerning) mide distinto en otro navegador -- por
-            // eso el PO vio "MI PERFIL"/"AGENTE.IA" cortados en su Chrome
-            // real aunque aquí medía exacto. Se reemplaza el valor fijo por
-            // un ajuste que SE MIDE a sí mismo: prueba 13px, 12px, 11px,
-            // 10px en orden y usa el primero que quepa entero
-            // (scrollWidth<=clientWidth) en el ancho real de ESE navegador
-            // -- ya no depende de que el kerning coincida con esta sesión
-            // de prueba. Con 10px como piso, si aun así no cupiera, la red
-            // de scroll horizontal de header-unified.css (601-1220px) sigue
-            // ahí como último recurso.
-            var links = document.querySelectorAll('#mainHeader.mdj-header-unified #mainNav > a');
-            var navEl = document.getElementById('mainNav');
-
-            // FIX-NAV-AIRE-LATERAL, vuelta 2 (2026-09-15, orden del PO):
-            // ancho máximo de la barra = ancho real medido de .dj-hero (no
-            // un número fijo adivinado) -- mismo criterio que
-            // mdj-mobile-header-fix.js.
-            // ORDEN CRÍTICO (2026-09-15, tarde -- BUG real encontrado en
-            // vivo): este bloque debe correr ANTES del loop de ajuste de
-            // fuente de abajo, no después. Cuando corría después, el loop
-            // medía navEl.clientWidth contra el ancho SIN restringir
-            // (contenedor todavía a su max-width por defecto, más ancho que
-            // el Hero) en la primera pasada -- a 13px eso "cabía" ahí y el
-            // loop paraba, pero al aplicarse DESPUÉS el max-width real
-            // (angostando el contenedor), 13px ya no cabía y quedaba
-            // atascado sin recalcular. Medido en vivo: con el orden viejo,
-            // sampleFontSize quedaba en 13px con overflow real (scrollWidth
-            // 1010 vs clientWidth 972) pese al loop "funcionar" en pruebas
-            // manuales aisladas.
-            var navContainer = document.querySelector('#mainHeader.mdj-header-unified .header-nav .container');
-            var heroEl = document.querySelector('.dj-hero');
-            if (navContainer) {
-              // GUARDA (2026-09-15, tarde -- BUG real encontrado en vivo con
-              // el gancho de document.fonts.ready): si .dj-hero todavía no
-              // tiene ancho real (0px -- datos del perfil aún cargando en
-              // ese instante), heroW salía 0 y max-width:0px COLAPSABA
-              // #mainNav entero (medido: clientWidth caía a ~8px). Sin un
-              // ancho de Hero sano, no se toca el max-width -- mejor dejarlo
-              // sin restringir un instante que colapsar la barra entera.
-              var heroW = heroEl ? Math.round(heroEl.getBoundingClientRect().width) : 0;
-              if (inRange && heroEl && heroW > 0) {
-                navContainer.style.setProperty('max-width', heroW + 'px', 'important');
-                navContainer.style.setProperty('margin-left', 'auto', 'important');
-                navContainer.style.setProperty('margin-right', 'auto', 'important');
-              } else {
-                navContainer.style.removeProperty('max-width');
-                navContainer.style.removeProperty('margin-left');
-                navContainer.style.removeProperty('margin-right');
-              }
-            }
-
-            // FIX-NAV-TABLET-FILA-UNICA (2026-09-15, madrugada -- ORDEN
-            // PRIORITARIA del PO, revierte FIX-NAV-TABLET-REACOMODO):
-            // wrap a 2 líneas se veía bien en la medición inicial, pero los
-            // propios timers de reintento (300/800/1500/3000/6000ms, más
-            // abajo) volvían a correr después y en alguna vuelta dejaban la
-            // barra partida en "pirámide" -- un sistema con estado que
-            // puede cambiar solo en cualquiera de 5 reintentos futuros es
-            // frágil, confirmado en vivo por el PO esperando la ráfaga
-            // completa. QUEDA PROHIBIDO EL WRAP. Se vuelve al sistema
-            // anterior, ya estable: loop de tamaños decrecientes
-            // (13→12→11→10px, el primero que quepa entero) + scroll
-            // horizontal táctil con degradado como red de seguridad para
-            // el caso extremo (768px vertical, que no cabe ni a 6px de
-            // fuente) -- nunca una segunda fila, nunca hamburguesa.
-            // mdjb-shared-header.js fija flex-wrap:nowrap inline e
-            // incondicional (su fuente de verdad) -- header-unified.css ya
-            // no intenta ponerle wrap, así que no hace falta pelear contra
-            // ese archivo aquí.
-            if (inRange && navEl && links.length) {
-              void navEl.offsetWidth;
-              var fitSizes = [13, 12, 11, 10];
-              for (var s = 0; s < fitSizes.length; s++) {
-                for (var i = 0; i < links.length; i++) {
-                  links[i].style.setProperty('font-size', fitSizes[s] + 'px', 'important');
-                  links[i].style.setProperty('padding', '4px 3px', 'important');
-                  links[i].style.removeProperty('letter-spacing');
-                }
-                void navEl.offsetWidth;
-                if (navEl.scrollWidth <= navEl.clientWidth || s === fitSizes.length - 1) break;
-              }
-              navEl.classList.toggle('mdj-nav-scrollable', navEl.scrollWidth > navEl.clientWidth);
-            } else {
-              navEl && navEl.classList.remove('mdj-nav-scrollable');
-              for (var k = 0; k < links.length; k++) {
-                links[k].style.removeProperty('font-size');
-                links[k].style.removeProperty('padding');
-                links[k].style.removeProperty('letter-spacing');
-              }
-            }
-
-            // FIX-NAV-TABLET-COMPACTO (2026-09-15, tarde -- orden del PO):
-            // "espacio muerto vertical" en la franja de navegación. 52px
-            // para texto de 10-13px + 5px de padding vertical dejaba aire
-            // de sobra. Baja a 38px (dentro del rango 34-38px pedido) --
-            // fija SIEMPRE una sola línea, así que un alto fijo es seguro
-            // (no hay caso de 2 líneas que recortar). .header-top NO se
-            // toca (vale 62px para el logo/marca en modo visitante,
-            // compartido por decenas de páginas; en modo estación aquí
-            // mide 0 de todas formas).
-            var rows = [
-              [document.querySelector('#mainHeader.mdj-header-unified .header-top'), '62px'],
-              [document.querySelector('#mainHeader.mdj-header-unified .header-nav'), '38px']
-            ];
-            for (var j = 0; j < rows.length; j++) {
-              var el = rows[j][0], px = rows[j][1];
-              if (!el) continue;
-              if (inRange) {
-                el.style.setProperty('min-height', px, 'important');
-                el.style.setProperty('max-height', px, 'important');
-                el.style.setProperty('height', px, 'important');
-              } else {
-                el.style.removeProperty('min-height');
-                el.style.removeProperty('max-height');
-                el.style.removeProperty('height');
-              }
-            }
-          } catch (eScale) { /* si algo falla, el header original sigue como estaba */ }
-        }
-        // FIX-NAV-TABLET-PHASE2-HOOK (2026-09-15, tarde -- BUG real
-        // encontrado en vivo con trazas de consola): ni el gancho de
-        // fuentes ni el ResizeObserver sobre .dj-hero alcanzaban -- log en
-        // mano mostró que la llamada inicial corre con heroW=0 ("NO_HERO"/
-        // "0" en las trazas), decide que el tamaño más grande "cabe" contra
-        // un ancho todavía sin sentido, y NINGÚN gancho posterior volvía a
-        // llamar a la función después de que "[dj-profile] phase2
-        // background complete" puebla el Hero con datos reales -- el nodo
-        // de .dj-hero se reconstruye en esa fase, así que un
-        // ResizeObserver atado al nodo viejo se queda observando un
-        // elemento ya desconectado. Se expone en window para poder
-        // llamarla explícitamente justo después de esa fase (ver el otro
-        // extremo de este fix, cerca de "phase2 background complete").
-        window.mdjTabletHeaderScale = mdjTabletHeaderScale;
-        window.addEventListener('resize', mdjTabletHeaderScale);
-        mdjTabletHeaderScale();
-        // FIX-NAV-TABLET-FONT-RACE (2026-09-15, tarde -- BUG real encontrado
-        // en vivo): la llamada inmediata de arriba corre ANTES de que Inter
-        // (la fuente real de #mainNav > a, peso 700) termine de cargar --
-        // document.fonts confirmaba "Inter 700 unloaded" en ese instante.
-        // El loop mide contra el ancho de la fuente de RESPALDO (más
-        // angosta), decide que 13px "cabe", y nada vuelve a medir cuando
-        // Inter real entra y el texto se ensancha -- el cambio de fuente no
-        // dispara 'resize'. Confirmado en vivo: sin este gancho, sampleFont
-        // quedaba en 13px con overflow real (scrollWidth 1010 vs
-        // clientWidth 972); con este gancho, decae a 12px exacto en cuanto
-        // la fuente real está lista.
-        if (document.fonts && document.fonts.ready && typeof document.fonts.ready.then === 'function') {
-          document.fonts.ready.then(mdjTabletHeaderScale).catch(function () {});
-        }
-        // FIX-NAV-TABLET-HERO-RESIZE (2026-09-15, tarde -- BUG real
-        // encontrado en vivo): ni el gancho de fuentes de arriba alcanza --
-        // si document.fonts.ready resuelve ANTES de que el perfil (datos
-        // async) termine de cargar y .dj-hero tome su ancho real, la guarda
-        // de arriba deja el contenedor SIN restringir en ese momento, y el
-        // loop de ajuste de fuente mide contra ese ancho de sobra, "cabe" a
-        // 13px, y nada vuelve a medir cuando el Hero después sí toma su
-        // ancho real y lo angosta. En vez de adivinar en qué punto exacto
-        // del código termina de cargar el perfil, se observa el propio
-        // .dj-hero: cualquier cambio real de su tamaño vuelve a llamar a
-        // mdjTabletHeaderScale(). Cubre esto y cualquier otra causa futura
-        // de que el Hero cambie de ancho después de la carga inicial.
-        (function () {
-          if (typeof ResizeObserver !== 'function') return;
-          var heroForObserve = document.querySelector('.dj-hero');
-          if (!heroForObserve) return;
-          var ro = new ResizeObserver(function () { mdjTabletHeaderScale(); });
-          ro.observe(heroForObserve);
-        })();
-        // FIX-NAV-TABLET-RETRY-NET (2026-09-15, tarde -- BUG real encontrado
-        // en vivo): con trazas de consola, el gancho de "phase2 background
-        // complete" de arriba a veces SÍ corrige a tiempo y a veces no --
-        // dj-profile.html tiene varias ramas async (perfil, clima,
-        // geolocalización) con tiempos medidos entre ~400ms y >20s según la
-        // sesión, y no todas pasan por el mismo punto de "phase2". Llamar
-        // window.mdjTabletHeaderScale() a mano en cualquier momento SIEMPRE
-        // corrige de inmediato (confirmado en vivo) -- la función es
-        // barata e idempotente, así que en vez de perseguir el evento
-        // exacto correcto para cada rama, se reintenta unas pocas veces a
-        // intervalos crecientes. Red de seguridad, no sustituye los ganchos
-        // de arriba (que siguen corrigiendo antes, cuando sí alcanzan).
-        [300, 800, 1500, 3000, 6000].forEach(function (ms) {
-          setTimeout(mdjTabletHeaderScale, ms);
-        });
+        /* PURGA-CATEGORIA-A (2026-09-16, orden del PO -- "alto a parches
+           temporales"): mdjTabletHeaderScale (achicado de fuente/alto por JS
+           en tablet) queda eliminada por completo, aquí y en
+           mdj-mobile-header-fix.js. Sin reemplazo JS: el alto y la
+           tipografía del header en todo ancho ≥601px corren 100% por CSS
+           estático (header-unified.css, --mdj-header-unified-r1/r2). */
       })();
     </script>
 
@@ -4053,12 +3877,17 @@
                  DENTRO de #pub-hero-top-stack, como segundo hijo del mismo
                  flex column -- hereda automáticamente la posición del stack
                  completo en cualquier ancho, presente o futuro, sin duplicar
-                 coordenadas. mdjPaintHeroPlanPill() ya hace
-                 stackEl.style.display='flex' para TODO perfil (PRO/básico/
-                 owner), así que el stack nunca se queda oculto con las
-                 estrellas atrapadas dentro. -->
-            <div id="pub-hero-top-stack" class="dj-hero-top-stack" style="display:none;">
-                <div id="pub-hero-plan-pill" class="dj-hero-plan-pill" hidden></div>
+                 coordenadas.
+                 FIX-HERO-STATIC-STRUCTURE (2026-09-16, orden del PO -- "cero
+                 vaciados por JavaScript"): el stack y el pill ya no arrancan
+                 ocultos (antes: style="display:none" + atributo hidden). Sus
+                 clases propias (.dj-hero-top-stack, .dj-hero-plan-pill) ya
+                 declaran display:flex/inline-flex en CSS -- mdjPaintHeroPlanPill()
+                 sigue siendo quien llena el TEXTO real de cada DJ (plan,
+                 owner, 🏆 si certification_score>=70), pero la estructura
+                 misma es fija para cualquier perfil que cargue este archivo. -->
+            <div id="pub-hero-top-stack" class="dj-hero-top-stack">
+                <div id="pub-hero-plan-pill" class="dj-hero-plan-pill"></div>
                 <!-- Artist Rating (vacío hasta renderDynamicReviewsAndKPI) -->
                 <div class="dj-rating" id="pub-hero-rating"></div>
             </div>
@@ -4075,6 +3904,10 @@
 
                     <!-- Nombre + punto dorado -->
                     <h1 id="pub-name" class="dj-hero-name">Cargando…</h1>
+                    <!-- FIX-HERO-ARTIST-ID (2026-09-16, orden del PO): contenedor fijo,
+                         nunca oculto -- el valor real de CADA DJ lo llena mdjPaintHeroArtistId()
+                         al cargar el perfil (ver más abajo en este archivo). -->
+                    <div id="pub-hero-artist-id" class="dj-artist-id"></div>
                     <!-- TICKET C · indicador de verificacion. Existia el CSS (.dj-hero-name
                          #pub-name-badge) y el JS que lo buscaba, pero el ELEMENTO no estaba
                          en el marcado: getElementById devolvia null y el indicador no se ha
@@ -4253,15 +4086,21 @@
                 </div>
 
                 <!-- Consulta disponibilidad (flujo público de contratación) -->
+                <!-- FIX-AVAILABILITY-SIEMPRE-VISIBLE (2026-09-16, orden del PO): esta
+                     tarjeta ya NO es un <details> colapsable -- el PO reportó que en
+                     vista SFT-cliente-móvil se veía como acordeón vacío (JS la cerraba
+                     por defecto, ver dj-profile-sft-client-view más abajo). El título
+                     queda fijo, sin flecha, y el contenido siempre visible en las tres
+                     vistas que antes controlaban su apertura (owner-tabs, qr-view,
+                     sft-client-view). -->
                 <div class="dj-card" id="avail-check-card">
-                    <details class="pub-mobile-section-details" id="pub-avail-details" open>
-                        <summary class="pub-mobile-section-summary">
+                    <div class="pub-mobile-section-details" id="pub-avail-details">
+                        <div class="pub-mobile-section-summary pub-mobile-section-summary--fixed">
                             <span class="pub-mobile-section-summary-head">
                                 <span class="pub-mobile-section-title" data-i18n="profile-disponibilidad-title">DISPONIBILIDAD</span>
                             </span>
                             <span class="pub-mobile-section-rule" aria-hidden="true"></span>
-                            <span class="pub-mobile-section-chevron" aria-hidden="true">▼</span>
-                        </summary>
+                        </div>
                         <div class="pub-mobile-section-body">
                             <div class="dj-card-label" data-i18n="profile-avail-title">CONSULTA DISPONIBILIDAD · VISÍTANOS</div>
                             <p class="pub-avail-visit-hint" data-i18n="profile-avail-visit-hint"
@@ -4300,7 +4139,7 @@
                             <div id="dj-avail-result"
                                 style="margin-top:10px;font-size:12px;font-weight:700;text-align:center;min-height:18px;"></div>
                         </div>
-                    </details>
+                    </div>
                 </div>
 
             </div>
@@ -4858,7 +4697,6 @@
         /** Pastilla de plan en hero (PRO / básico). Sin badge Disponible/Ocupado. */
         function mdjPaintHeroPlanPill(profile) {
             const planPillEl = document.getElementById('pub-hero-plan-pill');
-            const stackEl = document.getElementById('pub-hero-top-stack');
             if (!planPillEl || !profile) return;
             const isPro = mdbProfileIsVipPro(profile);
             /* Texto diferenciado: solo owner recibe badge de plataforma exclusivo */
@@ -4877,8 +4715,6 @@
             planPillEl.textContent = _label;
             planPillEl.classList.toggle('dj-hero-plan-pill--pro', isPro);
             planPillEl.classList.toggle('dj-hero-plan-pill--lite', !isPro);
-            planPillEl.hidden = false;
-            if (stackEl) stackEl.style.display = 'flex';
         }
 
         /** SoundForTips™: MDJPRO de pago — alineado con DB `dj_soundfortips_plan_ok`.
@@ -5584,7 +5420,9 @@
                 });
             }
             if (isSftClientMobileProfile) {
-                ['pub-venues-details', 'pub-reviews-details', 'pub-avail-details'].forEach(function (id) {
+                // FIX-AVAILABILITY-SIEMPRE-VISIBLE (2026-09-16): pub-avail-details ya
+                // no es un <details> -- no tiene .open que cerrar, queda fuera de esta lista.
+                ['pub-venues-details', 'pub-reviews-details'].forEach(function (id) {
                     var el = document.getElementById(id);
                     if (el) el.open = false;
                 });
@@ -5668,6 +5506,19 @@
 
             // Owner: dj-owner-tabs complementa el header; no ocultar #mainNav (slots Agenda/CONFIG/Flujo vía header-unified + mdjb-shared-header.js).
             document.getElementById('pub-name').textContent = djName;
+
+            /* FIX-HERO-ARTIST-ID (2026-09-16, orden del PO): mdjb_account_public_id
+               no es una columna de dj_profiles -- el ID público real vive en la
+               tabla aparte public.mdjb_account_ids (stem MDJB-XXXX-XXXX + letra
+               de rol), que esta consulta de perfil no trae hoy. Se usa el
+               fallback que el propio PO autorizó ('ID: ' + id) con el uuid ya
+               disponible en p.id. Si más adelante se quiere el stem real, hace
+               falta traer esa tabla en loadProfile() -- ticket aparte. */
+            const artistIdEl = document.getElementById('pub-hero-artist-id');
+            if (artistIdEl) {
+                var _artistIdVal = p.mdjb_account_public_id || p.user_id || targetId;
+                artistIdEl.textContent = _artistIdVal ? ('ID: ' + _artistIdVal) : '';
+            }
 
             // ── Badge after name: diamond=verified, star=PRO-unverified, dot=lite ──
             const badge = document.getElementById('pub-name-badge');
@@ -6781,13 +6632,6 @@
                     console.info('[dj-profile] phase2 background complete ~' + Math.round(mdjT2 - mdjProfT0) + 'ms');
                 }
             } catch (eT2) { void eT2; }
-            // FIX-NAV-TABLET-PHASE2-HOOK (2026-09-15, tarde): el Hero recién
-            // toma su ancho/contenido real en este punto -- re-evaluar el
-            // ajuste de tablet aquí (ver la exposición en window junto a la
-            // definición de mdjTabletHeaderScale, más arriba en el archivo).
-            try {
-                if (typeof window.mdjTabletHeaderScale === 'function') window.mdjTabletHeaderScale();
-            } catch (eScaleP2) { void eScaleP2; }
             }); /* mdjProfilePhase2 */
         }
 
@@ -15450,7 +15294,7 @@
     <script defer src="./monetization.js?v=20260422-sft-math"></script>
 
     <script defer src="./header-smart-search.js?v=20260415-CORE-CONNECTIONS"></script>
-    <script defer src="./mdjb-shared-header.js?v=20260915-merge-floating-strip-fixes"></script>
+    <script defer src="./mdjb-shared-header.js?v=20260916-purga-a"></script>
   <script defer src="./mdj-owner-tabs-marquee.js?v=20260818-nav-canonico"></script>
   <script defer src="./mdj-social-bar.js?v=20260819-social-contact-only"></script>
   <!-- Cart pill: badge + redirect to rentals (no heavy scripts needed here) -->
