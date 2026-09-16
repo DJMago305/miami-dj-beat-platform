@@ -5750,12 +5750,34 @@ body.mdj-riel-abierto #mainHeader.header.mdj-header-unified .header-nav {
   z-index: 900 !important;
   background: #0b0b0d !important;
   border-top: 1px solid rgba(197, 160, 89, .25) !important;
+  /* FIX-RIEL-MOBILE-MENU-CLIPPED (2026-09-17, orden del PO -- MI PERFIL debe
+     desplegar las 9 pestañas completas en el menú de teléfono): esta regla ya
+     daba max-height de sobra, pero una regla sin @media más arriba en este
+     mismo archivo (html body #mainHeader...> .header-nav { height:72px
+     !important }) sigue ganando por especificidad -- height definido gana
+     sobre max-height más grande, así que la caja nunca crecía y el panel
+     abierto quedaba encerrado en 72px con solo 1-2 ítems visibles aunque el
+     contenido real (9 pestañas) fuera mucho más alto. El botón que agrega
+     .mdj-riel-abierto solo existe en el corte de teléfono (ver
+     .mdj-riel-toggle más abajo), así que esto no toca tableta/escritorio. */
+  height: auto !important;
+  min-height: 0 !important;
   max-height: calc(100vh - 100%) !important;
   overflow-y: auto !important;
 }
 body.mdj-riel-abierto #mainHeader.header.mdj-header-unified .header-nav .container {
   width: 100% !important;
   max-width: none !important;
+  /* FIX-RIEL-MOBILE-MENU-CLIPPED (2026-09-17, orden del PO): un nivel más
+     abajo que .header-nav vive .container, con su propio
+     max-height:var(--mdj-header-unified-r2) (72px) !important -- aunque
+     .header-nav ya crece, .container seguía topado a 72px y recortaba las 9
+     pestañas de #mainNav (que sí mide 302px de alto real, confirmado en
+     vivo) por dentro. */
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: visible !important;
 }
 body.mdj-riel-abierto #mainHeader#mainHeader.header.mdj-header-unified
   #mainNav#mainNav.mdj-mainnav-flex.nav.top-nav {
@@ -5770,6 +5792,18 @@ body.mdj-riel-abierto #mainHeader.header.mdj-header-unified #mainNav > [data-mdj
   border-bottom: 1px solid rgba(255, 255, 255, .06) !important;
 }
 body.mdj-riel-abierto #mainHeader.header.mdj-header-unified #mainNav > [data-mdj-slot]::before {
+  display: none !important;
+}
+/* FIX-RIEL-MENU-SLASH (2026-09-17, orden del PO -- SOLO el menú de
+   hamburguesa/vertical; el riel horizontal de tableta/escritorio conserva
+   sus "/" tal cual): el separador real venía de una regla "doble ID"
+   deliberadamente indestructible (html body #mainHeader#mainHeader...
+   #mainNav#mainNav > a[data-mdj-slot]:not([data-mdj-slot="1"])::before,
+   más arriba en este archivo). Se copia ese mismo selector y se le suma
+   .mdj-riel-abierto para superarlo en especificidad SOLO cuando el menú
+   vertical de teléfono está abierto. */
+html body.mdj-riel-abierto #mainHeader#mainHeader.header.mdj-header-unified #mainNav#mainNav > a[data-mdj-slot]::before {
+  content: none !important;
   display: none !important;
 }
 body.mdj-riel-abierto #mainHeader.header.mdj-header-unified #mainNav > .mdj-daynight {
