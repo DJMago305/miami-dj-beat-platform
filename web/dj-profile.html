@@ -3445,8 +3445,15 @@
                 inset 0 1px 0 rgba(255, 255, 255, 0.06);
         }
 
-        /* Móvil: un solo CTA — flotante inferior; ocultar el del sidebar para no duplicar. */
-        @media (max-width: 640px) {
+        /* Móvil/tablet: un solo CTA — flotante inferior; ocultar el del sidebar para no
+           duplicar. FIX-SFT-TABLET-GAP (2026-09-16, orden del PO): subido de 640px a
+           900px -- ese es el mismo punto de corte que ya usa el JS para decidir
+           "vista cliente móvil de SFT" (ver isSftClientMobileProfile / clase
+           body.dj-profile-sft-client-view). Con 640px aquí y 900px allá, entre 641px
+           y 900px (tablet, o ventana angosta en computadora) NINGÚN botón de
+           SoundForTips se mostraba -- ni el flotante (necesitaba ≤640) ni el de la
+           tarjeta (se escondía desde 900). Alinear el número cierra el hueco. */
+        @media (max-width: 900px) {
             #tab-public .dj-side-col #soundfortips-launch-btn {
                 display: none !important;
             }
