@@ -2268,10 +2268,19 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                             <p class="fineprint">Registro institucional de graduados MDJPRO</p>
                         </div>
                         <div style="display:flex; gap:10px;">
-                            <input type="text" id="registry-search" placeholder="Buscar por ID o Nombre..." 
+                            <input type="text" id="registry-search" placeholder="Buscar por ID o Nombre..."
                                 style="padding:8px 15px; border-radius:50px; border:1px solid var(--line); background:rgba(255,255,255,0.05); color:#fff; font-size:12px;"
                                 oninput="filterRegistry()">
                             <button class="btn secondary small" onclick="loadCertificationRegistry()">↺ Actualizar</button>
+                            <!-- Candado real: oculto por defecto, solo applyStaffDashboardRole() lo revela
+                                 si dj_profiles.role === 'owner' (mismo patrón que sidebar-create-profiles /
+                                 sidebar-promociones / sidebar-mdjpro-downloads en este mismo archivo). La
+                                 acción en sí ya está protegida server-side en admin.html (verifica OWNER_USER_ID
+                                 contra el JWT); esto evita que un staff que no es Owner vea siquiera el botón. -->
+                            <a href="./admin.html" target="_blank" rel="noopener" id="registry-admin-certs-link"
+                                class="btn secondary small"
+                                style="text-decoration:none; display:none; align-items:center; gap:5px; border-color:rgba(245,158,11,0.5); color:#f59e0b;">
+                                🔒 Administrar Certificados (Owner)</a>
                         </div>
                     </div>
                     <div id="registry-container">
@@ -4774,11 +4783,13 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     const promLink = document.getElementById('sidebar-promociones');
                     const mdjDlLink = document.getElementById('sidebar-mdjpro-downloads');
                     const mdjDlPanel = document.getElementById('mdjpro-downloads-panel');
+                    const adminCertsLink = document.getElementById('registry-admin-certs-link');
                     window._mdjAdminRole = rn;
                     if (cpLink)   cpLink.style.display   = (rn === 'owner') ? 'flex' : 'none';
                     if (promLink) promLink.style.display  = (rn === 'owner') ? 'flex' : 'none';
                     if (mdjDlLink) mdjDlLink.style.display = (rn === 'owner') ? 'flex' : 'none';
                     if (mdjDlPanel) mdjDlPanel.style.display = (rn === 'owner') ? 'block' : 'none';
+                    if (adminCertsLink) adminCertsLink.style.display = (rn === 'owner') ? 'inline-flex' : 'none';
                     applyRoleRestrictions();
                 }
 

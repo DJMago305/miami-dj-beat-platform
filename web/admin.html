@@ -38,22 +38,94 @@
             background: rgba(245, 158, 11, 0.1);
         }
 
-        /* FIX-ADMIN-HEADER-LOGO-SIZE (2026-09-13): esta página no carga
-           styles.css (solo certification.css + mdj-assistant.css), así que
-           .logo-img-eagle/.brand-letters-img no tenían ninguna restricción de
-           tamaño y el logo se renderizaba a su resolución nativa (varios miles
-           de px), tapando toda la pantalla. Acota solo dentro de este header. */
-        header.header img {
-            max-height: 48px;
+        /* FIX-ADMIN-BRANDING-REAL-PATRON (2026-09-16): esta página no carga
+           styles.css (solo certification.css + mdj-assistant.css). El parche
+           anterior forzaba .logo-img-eagle y .brand-letters-img al mismo
+           max-height:48px, aplastando las proporciones reales del águila y
+           del wordmark (se veían chicos/pobres). Se reemplaza por las mismas
+           cuatro reglas de marca que usa el resto del sitio (styles.css:907-942,
+           variante genérica sin #mainHeader) — mismo patrón, no un tamaño
+           inventado para esta página sola. */
+        /* pointer-events:none: el wordmark se dibuja más alto que su caja
+           (overflow:visible, igual que en styles.css) y por eso se monta
+           visualmente sobre la barra Volver/Cerrar de abajo. Es puro
+           decorado, no un link, así que no debe robarle el clic a nada. */
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            height: 100%;
+            position: relative;
+            flex-shrink: 0;
+            overflow: visible;
+            pointer-events: none;
+        }
+
+        .logo-img-eagle {
+            height: 56px;
+            width: auto;
+            flex-shrink: 0;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+        }
+
+        .brand-letters-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 64px;
+            width: 280px;
+            overflow: visible;
+            margin-left: -20px;
+            flex-shrink: 0;
+        }
+
+        .brand-letters-img {
+            height: 204px;
             width: auto;
             object-fit: contain;
+            image-rendering: -webkit-optimize-contrast;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+        }
+
+        /* Puerta de entrada/salida: volver al panel de Staff o cerrar esta
+           pestaña de herramienta. admin.html no tiene menú compartido (es
+           una herramienta aislada del Owner), así que necesita su propio
+           camino de regreso explícito. */
+        .admin-exit-bar {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .admin-exit-bar a,
+        .admin-exit-bar button {
+            font-family: inherit;
+            font-size: 12.5px;
+            font-weight: 600;
+            padding: 7px 16px;
+            border-radius: 50px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.04);
+            color: rgba(255, 255, 255, 0.78);
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .admin-exit-bar a:hover,
+        .admin-exit-bar button:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
         }
     </style>
 </head>
 
 <body>
     <header class="header" style="padding: 20px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
-        <div class="container" style="display: flex; justify-content: center;">
+        <div class="container" style="display: flex; flex-direction: column; align-items: center;">
             <div class="brand">
                 <img src="./assets/branding/logo-transparent.png" alt="Miami DJ Beat Logo" class="logo-img-eagle">
                 <div class="brand-letters-wrapper">
@@ -61,6 +133,10 @@
                         class="brand-letters-img">
                 </div>
             </div>
+            <nav class="admin-exit-bar">
+                <a href="./staff.html">Volver</a>
+                <button type="button" onclick="(function(){ window.close(); setTimeout(function(){ window.location.href='./staff.html'; }, 150); })()">✕ Cerrar</button>
+            </nav>
         </div>
     </header>
     <main class="container">
