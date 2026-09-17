@@ -14,6 +14,7 @@
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { BIRTHDAYS_CALENDAR_ID, crearCanalWatch, listarEventosGoogle, procesarEventosGoogle } from "../_shared/google-calendar-sync.ts";
 
 const SUPABASE_URL_FALLBACK = "https://hkuvuqupbxwkiykxvqdr.supabase.co";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -142,71 +143,94 @@ serve(async (req: Request) => {
             console.error("[calendar-oauth-callback] Google no devolvio access_token");
             return redirectAPerfil("error", "no_access_token");
         }
-        // refresh_token solo llega la PRIMERA vez que el usuario autoriza (o
-        // con prompt=consent forzado, como ya se manda en calendar-oauth-init)
-        // -- si por algun motivo no llega, se preserva el que ya hubiera en
-        // la fila anterior en vez de pisarlo con NULL.
-        const { data: filaExistente } = await ADMIN
-            .from("user_calendar_integrations")
-            .select("refresh_token")
-            .eq("user_id", userId)
-            .eq("provider", "google")
-            .maybeSingle();
+        // Se conectan DOS calendarios de Google por usuario: "primary" (sus
+        // eventos normales) y el calendario especial de cumpleaños/
+        // aniversarios de sus contactos (orden explicita del PO, 2026-09-17 --
+        // antes solo se leia primary). Una fila por calendario en
+        // user_calendar_integrations (calendar_id, migracion
+        // 20260917140000_calendar_integrations_multi_calendar.sql).
+        const CALENDARIOS: { id: string; tipo: "cumpleanos" | "nota" }[] = [
+            { id: "primary", tipo: "nota" },
+            { id: BIRTHDAYS_CALENDAR_ID, tipo: "cumpleanos" },
+        ];
 
-        const { error: upsertErr } = await ADMIN
-            .from("user_calendar_integrations")
-            .upsert({
-                user_id: userId,
-                provider: "google",
-                access_token: accessToken,
-                refresh_token: refreshToken || filaExistente?.refresh_token || null,
-                status: "active",
-                last_synced_at: null,
-                updated_at: new Date().toISOString(),
-            }, { onConflict: "user_id,provider" });
+        for (const cal of CALENDARIOS) {
+            // refresh_token solo llega la PRIMERA vez que el usuario autoriza
+            // (o con prompt=consent forzado) -- si por algun motivo no llega,
+            // se preserva el que ya hubiera en la fila anterior en vez de
+            // pisarlo con NULL.
+            const { data: filaExistente } = await ADMIN
+                .from("user_calendar_integrations")
+                .select("refresh_token")
+                .eq("user_id", userId)
+                .eq("provider", "google")
+                .eq("calendar_id", cal.id)
+                .maybeSingle();
 
-        if (upsertErr) {
-            console.error("[calendar-oauth-callback] upsert error:", upsertErr.message);
-            return redirectAPerfil("error", "save_failed");
-        }
+            const { error: upsertErr } = await ADMIN
+                .from("user_calendar_integrations")
+                .upsert({
+                    user_id: userId,
+                    provider: "google",
+                    calendar_id: cal.id,
+                    access_token: accessToken,
+                    refresh_token: refreshToken || filaExistente?.refresh_token || null,
+                    status: "active",
+                    last_synced_at: null,
+                    updated_at: new Date().toISOString(),
+                }, { onConflict: "user_id,provider,calendar_id" });
 
-        // Crea el canal de escucha (events.watch) para que Google empiece a
-        // avisar a calendar-sync-webhook. Sin esto la conexion queda "activa"
-        // en la tabla pero Google nunca manda nada -- verificado contra la
-        // doc oficial vigente (developers.google.com/calendar/api/guides/push):
-        // POST calendars/{id}/events/watch con {id, type:'web_hook', address}.
-        // Un fallo aca NO revierte la conexion ya guardada -- el DJ igual
-        // queda conectado, solo sin sincronizacion automatica hasta que se
-        // reintente (fuera de alcance de este archivo: no hay reintento
-        // automatico todavia).
-        try {
+            if (upsertErr) {
+                console.error(`[calendar-oauth-callback] upsert error (${cal.id}):`, upsertErr.message);
+                // El calendario "primary" es el que importa para no romper el
+                // flujo existente; si falla el de cumpleaños se sigue igual.
+                if (cal.id === "primary") return redirectAPerfil("error", "save_failed");
+                continue;
+            }
+
+            // Crea el canal de escucha (events.watch) para que Google empiece
+            // a avisar a calendar-sync-webhook. Un fallo aca NO revierte la
+            // conexion ya guardada -- el DJ igual queda conectado, solo sin
+            // sincronizacion automatica de ESE calendario hasta que
+            // calendar-channel-renew lo reintente.
             const webhookUrl = `${SUPABASE_URL}/functions/v1/calendar-sync-webhook`;
-            const channelId = crypto.randomUUID();
-            const watchRes = await fetch(
-                "https://www.googleapis.com/calendar/v3/calendars/primary/events/watch",
-                {
-                    method: "POST",
-                    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-                    body: JSON.stringify({ id: channelId, type: "web_hook", address: webhookUrl }),
-                },
-            );
-            const watchBody = await watchRes.json().catch(() => ({}));
-            if (watchRes.ok && watchBody.resourceId) {
+            const canal = await crearCanalWatch(accessToken, cal.id, webhookUrl);
+            if (canal) {
                 await ADMIN
                     .from("user_calendar_integrations")
                     .update({
-                        channel_id: channelId,
-                        channel_resource_id: String(watchBody.resourceId),
-                        channel_expires_at: watchBody.expiration ? new Date(Number(watchBody.expiration)).toISOString() : null,
+                        channel_id: canal.channelId,
+                        channel_resource_id: canal.resourceId,
+                        channel_expires_at: canal.expiresAt,
                     })
                     .eq("user_id", userId)
-                    .eq("provider", "google");
-                console.log(`[calendar-oauth-callback] canal creado · user=${userId} · channel=${channelId}`);
-            } else {
-                console.error("[calendar-oauth-callback] events.watch fallo (conexion igual quedo activa):", watchRes.status, JSON.stringify(watchBody).slice(0, 300));
+                    .eq("provider", "google")
+                    .eq("calendar_id", cal.id);
+                console.log(`[calendar-oauth-callback] canal creado · user=${userId} · calendar=${cal.id} · channel=${canal.channelId}`);
             }
-        } catch (watchErr) {
-            console.error("[calendar-oauth-callback] events.watch red (conexion igual quedo activa):", watchErr);
+
+            // Carga inicial: sin esto, solo se verian cambios FUTUROS a partir
+            // de ahora -- lo que el DJ ya tenia en su calendario (cumpleaños
+            // ya cargados, eventos ya puestos) nunca aparecia. Se trae todo lo
+            // que Google devuelva (futuro, por timeMin) y se guarda el
+            // syncToken para que el proximo aviso push solo traiga lo nuevo.
+            try {
+                const inicial = await listarEventosGoogle(accessToken, cal.id);
+                if (inicial.ok) {
+                    await procesarEventosGoogle(ADMIN, userId, inicial.eventos, cal.tipo);
+                    await ADMIN
+                        .from("user_calendar_integrations")
+                        .update({ sync_token: inicial.nextSyncToken, last_synced_at: new Date().toISOString() })
+                        .eq("user_id", userId)
+                        .eq("provider", "google")
+                        .eq("calendar_id", cal.id);
+                    console.log(`[calendar-oauth-callback] carga inicial · user=${userId} · calendar=${cal.id} · eventos=${inicial.eventos.length}`);
+                } else {
+                    console.error(`[calendar-oauth-callback] carga inicial fallo (${cal.id}):`, inicial.status);
+                }
+            } catch (backfillErr) {
+                console.error(`[calendar-oauth-callback] carga inicial red (${cal.id}):`, backfillErr);
+            }
         }
 
         console.log(`[calendar-oauth-callback] conectado · user=${userId} · provider=google`);

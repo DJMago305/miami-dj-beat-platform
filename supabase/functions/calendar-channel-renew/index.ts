@@ -9,50 +9,25 @@
 // y notify-dj-sms (Authorization: Bearer $CRON_EDGE_AUTH_SECRET) -- no se
 // inventa un secreto nuevo para lo mismo.
 //
-// Reusa el mismo contrato de events.watch ya verificado en
-// calendar-oauth-callback (POST calendars/primary/events/watch, misma forma
-// de leer resourceId/expiration de la respuesta).
+// 2026-09-17: hay hasta 2 filas por usuario (calendar_id "primary" y el de
+// cumpleaños) -- se renueva cada fila por separado, cada una con su propio
+// channel_id/channel_expires_at. Lógica de events.watch/channels.stop movida
+// a _shared/google-calendar-sync.ts, reusada también por calendar-oauth-
+// callback y calendar-sync-webhook.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { cerrarCanalWatch, crearCanalWatch, refrescarAccessToken } from "../_shared/google-calendar-sync.ts";
 
 const SUPABASE_URL_FALLBACK = "https://hkuvuqupbxwkiykxvqdr.supabase.co";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const SUPABASE_URL = (Deno.env.get("SUPABASE_URL") || SUPABASE_URL_FALLBACK).replace(/\/$/, "");
 const ADMIN = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
 
-const GOOGLE_TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
 // Los canales de Calendar duran ~7 dias; se renuevan con margen para no
 // depender de que el cron corra justo a tiempo el ultimo dia.
 const RENEW_WINDOW_HOURS = 24;
-
-async function refrescarAccessToken(refreshToken: string): Promise<string | null> {
-    const CLIENT_ID = Deno.env.get("GOOGLE_CALENDAR_CLIENT_ID") ?? "";
-    const CLIENT_SECRET = Deno.env.get("GOOGLE_CALENDAR_CLIENT_SECRET") ?? "";
-    if (!CLIENT_ID || !CLIENT_SECRET || !refreshToken) return null;
-    try {
-        const r = await fetch(GOOGLE_TOKEN_ENDPOINT, {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: new URLSearchParams({
-                client_id: CLIENT_ID,
-                client_secret: CLIENT_SECRET,
-                refresh_token: refreshToken,
-                grant_type: "refresh_token",
-            }).toString(),
-        });
-        const d = await r.json().catch(() => ({}));
-        if (!r.ok || !d.access_token) {
-            console.error("[calendar-channel-renew] refresh_token fallo:", r.status, JSON.stringify(d).slice(0, 300));
-            return null;
-        }
-        return String(d.access_token);
-    } catch (e) {
-        console.error("[calendar-channel-renew] refresh_token red:", e);
-        return null;
-    }
-}
 
 serve(async (req: Request) => {
     const auth = req.headers.get("Authorization") ?? "";
@@ -68,7 +43,7 @@ serve(async (req: Request) => {
     const limite = new Date(Date.now() + RENEW_WINDOW_HOURS * 60 * 60 * 1000).toISOString();
     const { data: porVencer, error } = await ADMIN
         .from("user_calendar_integrations")
-        .select("user_id, access_token, refresh_token, channel_id, channel_resource_id")
+        .select("user_id, calendar_id, access_token, refresh_token, channel_id, channel_resource_id")
         .eq("provider", "google")
         .eq("status", "active")
         .lte("channel_expires_at", limite);
@@ -84,6 +59,8 @@ serve(async (req: Request) => {
     const resultados: Record<string, string> = {};
     for (const fila of porVencer ?? []) {
         const uid = String(fila.user_id);
+        const calendarId = String(fila.calendar_id || "primary");
+        const clave = `${uid}:${calendarId}`;
         try {
             // El access_token guardado dura ~1h; si el canal vive dias, ya
             // esta vencido -- se refresca siempre aqui en vez de intentar
@@ -92,61 +69,41 @@ serve(async (req: Request) => {
             if (!accessToken) {
                 await ADMIN.from("user_calendar_integrations")
                     .update({ status: "expired" })
-                    .eq("user_id", uid).eq("provider", "google");
-                resultados[uid] = "refresh_token_invalido";
+                    .eq("user_id", uid).eq("provider", "google").eq("calendar_id", calendarId);
+                resultados[clave] = "refresh_token_invalido";
                 continue;
             }
             await ADMIN.from("user_calendar_integrations")
                 .update({ access_token: accessToken })
-                .eq("user_id", uid).eq("provider", "google");
+                .eq("user_id", uid).eq("provider", "google").eq("calendar_id", calendarId);
 
             const webhookUrl = `${SUPABASE_URL}/functions/v1/calendar-sync-webhook`;
-            const channelIdNuevo = crypto.randomUUID();
-            const watchRes = await fetch(
-                "https://www.googleapis.com/calendar/v3/calendars/primary/events/watch",
-                {
-                    method: "POST",
-                    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-                    body: JSON.stringify({ id: channelIdNuevo, type: "web_hook", address: webhookUrl }),
-                },
-            );
-            const watchBody = await watchRes.json().catch(() => ({}));
-            if (!watchRes.ok || !watchBody.resourceId) {
-                console.error(`[calendar-channel-renew] events.watch fallo user=${uid}:`, watchRes.status, JSON.stringify(watchBody).slice(0, 300));
-                resultados[uid] = "watch_failed";
+            const canal = await crearCanalWatch(accessToken, calendarId, webhookUrl);
+            if (!canal) {
+                resultados[clave] = "watch_failed";
                 continue;
             }
 
             await ADMIN
                 .from("user_calendar_integrations")
                 .update({
-                    channel_id: channelIdNuevo,
-                    channel_resource_id: String(watchBody.resourceId),
-                    channel_expires_at: watchBody.expiration ? new Date(Number(watchBody.expiration)).toISOString() : null,
+                    channel_id: canal.channelId,
+                    channel_resource_id: canal.resourceId,
+                    channel_expires_at: canal.expiresAt,
                 })
                 .eq("user_id", uid)
-                .eq("provider", "google");
+                .eq("provider", "google")
+                .eq("calendar_id", calendarId);
 
-            // Cierra el canal viejo -- limpieza de buena fe. Si Google ya lo
-            // vencio o el stop falla, no bloquea nada: el canal nuevo ya
-            // quedo guardado y activo, channels.stop solo evita basura del
-            // lado de Google.
+            // Cierra el canal viejo -- limpieza de buena fe, no bloqueante.
             if (fila.channel_id && fila.channel_resource_id) {
-                try {
-                    await fetch("https://www.googleapis.com/calendar/v3/channels/stop", {
-                        method: "POST",
-                        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-                        body: JSON.stringify({ id: fila.channel_id, resourceId: fila.channel_resource_id }),
-                    });
-                } catch (eStop) {
-                    console.warn(`[calendar-channel-renew] channels.stop fallo (no bloqueante) user=${uid}:`, eStop);
-                }
+                await cerrarCanalWatch(accessToken, String(fila.channel_id), String(fila.channel_resource_id));
             }
 
-            resultados[uid] = "renovado";
+            resultados[clave] = "renovado";
         } catch (e) {
-            console.error(`[calendar-channel-renew] error user=${uid}:`, e);
-            resultados[uid] = "error";
+            console.error(`[calendar-channel-renew] error ${clave}:`, e);
+            resultados[clave] = "error";
         }
     }
 
