@@ -501,6 +501,8 @@
         }
 
         .status-badge {
+            display: inline-block;
+            white-space: nowrap;
             padding: 4px 12px;
             border-radius: 20px;
             font-size: 12px;
@@ -7443,6 +7445,21 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     return;
                 }
 
+                /* certificates.user_id no tiene FK a dj_profiles (aún pendiente) -- sin
+                   embedding de PostgREST posible. Se cruza a mano por user_id para traer
+                   el nombre real del estudiante (dj_profiles.dj_name); certificates.dj_name
+                   guarda el nombre artístico, no el real. */
+                const registryUserIds = [...new Set((certs || []).map(c => c.user_id).filter(Boolean))];
+                let realNameByUserId = {};
+                if (registryUserIds.length) {
+                    const { data: regProfiles } = await db
+                        .from('dj_profiles')
+                        .select('user_id, dj_name')
+                        .in('user_id', registryUserIds);
+                    (regProfiles || []).forEach(p => { realNameByUserId[p.user_id] = p.dj_name; });
+                }
+                (certs || []).forEach(c => { c.student_real_name = realNameByUserId[c.user_id] || null; });
+
                 window._fullRegistryData = certs || [];
                 renderRegistryTable(window._fullRegistryData);
             };
@@ -7482,9 +7499,9 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                                 
                                 return `
                                     <tr>
-                                        <td><strong>${c.student_name}</strong></td>
+                                        <td><strong>${c.student_real_name || '—'}</strong></td>
                                         <td><span style="color:var(--gold); font-weight:700;">${c.dj_name || '—'}</span></td>
-                                        <td style="font-family:monospace; font-size:11px;">${c.cert_number}</td>
+                                        <td style="font-family:monospace; font-size:11px;">${c.cert_id || '—'}</td>
                                         <td>${new Date(c.created_at).toLocaleDateString()}</td>
                                         <td><span class="status-badge" style="border:1px solid ${statusColor}; color:${statusColor}; background:rgba(0,0,0,0.2);">${statusLabel}</span></td>
                                         <td><strong>${c.theory_pct}%</strong></td>
@@ -7492,7 +7509,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                                         <td>
                                             <div style="display:flex; gap:6px; flex-wrap:wrap;">
                                                 <a href="./dj-profile.html?id=${c.user_id || ''}" class="btn-pill" style="text-decoration:none;">${translations[certLang]['nav-profile'] || 'Profile'}</a>
-                                                <a href="./verify.html?id=${c.cert_number}" class="btn-pill" style="text-decoration:none; border-color:rgba(255,255,255,0.2);" target="_blank">${translations[certLang]['cert-btn-verify'] || 'Verify'}</a>
+                                                <a href="./verify.html?id=${c.cert_id || ''}" class="btn-pill" style="text-decoration:none; border-color:rgba(255,255,255,0.2);" target="_blank">${translations[certLang]['cert-btn-verify'] || 'Verify'}</a>
                                                 ${!c.graduated ? `<a href="./dj-profile.html?id=${c.user_id || ''}&evaluate=true" class="btn-pill gold" style="text-decoration:none;">${translations[certLang]['cert-eval-btn-evaluate'] || 'Evaluate Practical'}</a>` : ''}
                                             </div>
                                         </td>
@@ -7508,9 +7525,9 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 const elRegistrySearch = document.getElementById('registry-search');
                 const q = (elRegistrySearch && elRegistrySearch.value.toLowerCase()) || '';
                 const filtered = (window._fullRegistryData || []).filter(c => {
-                    const sName = (c.student_name || '').toLowerCase();
+                    const sName = (c.student_real_name || '').toLowerCase();
                     const aName = (c.dj_name || '').toLowerCase();
-                    const cNum = (c.cert_number || '').toLowerCase();
+                    const cNum = (c.cert_id || '').toLowerCase();
                     return sName.includes(q) || aName.includes(q) || cNum.includes(q);
                 });
                 renderRegistryTable(filtered);
