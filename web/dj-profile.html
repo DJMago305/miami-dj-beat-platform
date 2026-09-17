@@ -980,7 +980,13 @@
         /* Toast Notification */
         #share-toast {
             position: fixed;
-            bottom: 30px;
+            /* FIX-TOAST-SAFARI-TOOLBAR (2026-09-16, orden del PO): bottom:30px fijo
+               podía quedar tapado por la barra propia de Safari en iPhone --
+               mismo colchón de seguridad que ya se usa en otras partes de esta
+               página (env(safe-area-inset-bottom)). En navegadores sin esa
+               franja (desktop, Android, iPhones viejos) el valor es 0 y no
+               cambia nada. */
+            bottom: calc(30px + env(safe-area-inset-bottom, 0px));
             left: 50%;
             transform: translateX(-50%) translateY(100px);
             background: #c5a059;
@@ -1866,8 +1872,13 @@
                subir el alto de la caja, sin tocar object-position/zoom de la foto,
                deja la mitad superior libre para la cara. 480px es suficiente para
                este bloque más compacto (fotos ya achicadas con scale(0.94) abajo). */
+            /* FIX-SFT-HERO-HEIGHT-CORRECTO (2026-09-16, orden del PO): 428px volvió
+               a tapar la cara -- se había bajado persiguiendo "una sola pantalla",
+               pero ese ahorro no debe salir de la foto. Vuelve a un alto seguro
+               (probado sin solape); el ahorro para que quepa en una pantalla sale
+               del botón y los márgenes de la tarjeta (ver más abajo), no de aquí. */
             body.dj-profile-sft-client-view .dj-hero {
-                height: 428px;
+                height: 460px;
             }
 
             /* TICKET · hero cargado en móvil. El PO pidió explícitamente encoger un
@@ -1943,8 +1954,15 @@
                 justify-content: center;
             }
 
+            /* FIX-SFT-ROLE-NO-FADE-2 (2026-09-16, orden del PO): el ancho real
+               que importaba era este -- .dj-hero-role-track (92vw, fix anterior)
+               vivía DENTRO de .dj-hero-left, que seguía acotado a 24ch (~181px).
+               El hijo nunca tuvo más ancho real que el padre, así que el
+               "degradado" percibido en realidad era la ventana angosta del
+               padre cortando el carrusel a la mitad de una palabra. Se ensancha
+               el padre a todo el ancho disponible. */
             body.dj-profile-sft-client-view .dj-hero-left {
-                max-width: min(100%, 24ch);
+                max-width: 100%;
                 padding-top: 30px;
                 text-align: center;
             }
@@ -2036,6 +2054,15 @@
                 height: 28px;
                 border-radius: 8px;
                 background: rgba(255, 255, 255, 0.08);
+            }
+
+            /* FIX-SFT-SHARE-BTN-TRANSPARENT (2026-09-16, orden del PO): la regla
+               de arriba (.dj-social-icon) también pisaba el fondo dorado sólido
+               propio de .share-btn (misma clase base) -- quedaba casi
+               transparente sobre la foto oscura, invisible. Se restaura el
+               dorado, solo el tamaño se queda achicado como el resto. */
+            body.dj-profile-sft-client-view .dj-social-icon.share-btn {
+                background: var(--gold);
             }
 
             body.dj-profile-sft-client-view .dj-social-icon svg {
@@ -2467,7 +2494,11 @@
                JS aunque la franja no se pinte). Sin franja, no hace falta el
                hueco. */
             body.dj-profile.mdj-sft-float-pad.dj-profile-sft-client-view #tab-public {
-                padding-bottom: 24px !important;
+                padding-bottom: 0 !important;
+            }
+
+            body.dj-profile-sft-client-view #public-action-buttons {
+                margin-bottom: 0 !important;
             }
 
             /* "BUSCADOR DE CANCIONES" -- pedido del PO: quitarlo, el botón ya se
@@ -2476,10 +2507,12 @@
                 display: none !important;
             }
 
+            /* Tamaño/márgenes recortados un poco (pedido del PO: el ahorro para
+               caber en una pantalla sale de aquí, no de la altura del hero). */
             body.dj-profile-sft-client-view #soundfortips-launch-btn {
-                width: 190px !important;
-                height: 190px !important;
-                margin: 24px auto 56px !important;
+                width: 168px !important;
+                height: 168px !important;
+                margin: 16px auto 48px !important;
                 border-radius: 50% !important;
                 flex-direction: column !important;
                 justify-content: center !important;
@@ -2518,9 +2551,9 @@
             }
 
             body.dj-profile-sft-client-view #soundfortips-launch-btn .sft-launch-icon-wrap {
-                width: 84px !important;
-                height: 84px !important;
-                font-size: 42px !important;
+                width: 74px !important;
+                height: 74px !important;
+                font-size: 36px !important;
             }
 
             /* Pedido del PO: "SOUNDFORTIPS" sale del círculo, se lee debajo del
