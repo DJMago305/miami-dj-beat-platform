@@ -1145,14 +1145,14 @@
     {
       "id": "V11",
       "title": "Un .container global en hoja de pagina empuja el menu dentro del branding",
-      "detail": "certification.css:112 declara .container { max-width:880px; margin:0 auto; padding:20px 16px 60px } sin acotar a su contenido. El max-width no llega a hacer dano porque header-unified.css lo bloquea con !important, pero el padding-top pasa sin oposicion y sube el menu 20px: la fila queda en top 84 y el menu en top 64, solapando la banda del branding. Lo cargan SIETE paginas —certification, certification-about, directory, verify, practical-evaluation, standards y admin—, no seis. Se arregla acotando el selector a :where(main, section, footer), el patron que ya existe y funciona en jobs.html; una linea, un solo archivo.",
+      "detail": "certification.css:112 declara .container { max-width:880px; margin:0 auto; padding:20px 16px 60px } sin acotar a su contenido. El max-width no llega a hacer dano porque header-unified.css lo bloquea con !important, pero el padding-top pasa sin oposicion y sube el menu 20px: la fila queda en top 84 y el menu en top 64, solapando la banda del branding. Lo cargan SIETE paginas —certification, certification-about, directory, verify, practical-evaluation, standards y admin—, no seis. Se arregla acotando el selector a :where(main, section, footer), el patron que ya existe y funciona en jobs.html; una linea, un solo archivo. RESUELTO 2026-09-16: acotado a :where(main, section, footer) .container en certification.css (PR #396).",
       "probe": {
         "kind": "grep",
-        "pattern": "padding: 20px 16px 60px",
+        "pattern": ":where\\(main, section, footer\\) \\.container",
         "paths": [
           "web/certification.css"
         ],
-        "expect": "absent"
+        "expect": "present"
       },
       "severity": "media"
     },

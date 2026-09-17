@@ -509,6 +509,36 @@
             font-weight: 700;
         }
 
+        /* Barra de búsqueda del Libro de Certificados: mismo componente real
+           (.header-search-wrap / .header-smart-search, styles.css), tamaño BASE
+           (44px) -- NO el compacto de 32px que usa #mainHeader, pensado solo para
+           caber apretado en la barra superior angosta. El tema oscuro sí se
+           replica porque esta caja no vive dentro de #mainHeader. */
+        #registry-search-wrap .header-smart-search {
+            background: rgba(8, 7, 6, 0.55);
+            color: #f0f0f0;
+            border: 1px solid rgba(197, 160, 89, 0.28);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 2px 12px rgba(0, 0, 0, 0.25);
+            min-height: 44px;
+            padding: 10px 18px 10px 52px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        #registry-search-wrap .header-smart-search::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        #registry-search-wrap .header-smart-search:focus {
+            outline: none;
+            border-color: rgba(197, 160, 89, 0.55);
+            box-shadow: 0 0 0 1px rgba(197, 160, 89, 0.25), 0 4px 20px rgba(0, 0, 0, 0.35);
+        }
+        #registry-search-wrap.header-search-wrap::before {
+            left: 16px;
+            width: 18px;
+            height: 18px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23e8dcc8' fill-opacity='0.88' d='M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/%3E%3C/svg%3E");
+        }
+
         .status-pending {
             background: rgba(255, 165, 0, 0.1);
             color: orange;
@@ -2264,25 +2294,41 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
 
                 <!-- Certification Registry Section -->
                 <div class="admin-card" id="registry-section" style="display:none;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                        <div>
-                            <h3 style="margin:0;">📜 Libro Oficial de Certificados</h3>
-                            <p class="fineprint">Registro institucional de graduados MDJPRO</p>
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; margin-bottom:20px;">
+                        <div style="display:flex; align-items:flex-start; gap:12px;">
+                            <svg width="22" height="22" fill="none" stroke="#c5a059" stroke-width="1.8" viewBox="0 0 24 24" style="flex:none; margin-top:2px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                            <div>
+                                <div style="font-size:11px; font-weight:800; color:#c5a059; letter-spacing:2px; text-transform:uppercase; margin-bottom:4px;">Certificación Miami DJ Beat</div>
+                                <h3 style="margin:0;">Libro Oficial de Certificados</h3>
+                                <p class="fineprint" style="margin-top:4px;">Registro institucional de graduados de la Academia</p>
+                            </div>
                         </div>
-                        <div style="display:flex; gap:10px;">
-                            <input type="text" id="registry-search" placeholder="Buscar por ID o Nombre..."
-                                style="padding:8px 15px; border-radius:50px; border:1px solid var(--line); background:rgba(255,255,255,0.05); color:#fff; font-size:12px;"
-                                oninput="filterRegistry()">
-                            <button class="btn secondary small" onclick="loadCertificationRegistry()">↺ Actualizar</button>
+                        <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+                            <!-- Misma barra de búsqueda del header público (.header-search-wrap /
+                                 .header-smart-search, styles.css) -- no se inventa una nueva. Se usa el
+                                 tamaño BASE (no el compacto de #mainHeader, pensado para caber apretado en
+                                 la barra superior) y se replica el tema oscuro bajo #registry-section,
+                                 porque esta caja no vive dentro del header. -->
+                            <div class="header-search-wrap" id="registry-search-wrap" style="flex:none; width:280px;">
+                                <input type="search" id="registry-search" class="header-smart-search" placeholder="Buscar…" autocomplete="off" enterkeyhint="search"
+                                    oninput="filterRegistry()">
+                            </div>
                             <!-- Candado real: oculto por defecto, solo applyStaffDashboardRole() lo revela
                                  si dj_profiles.role === 'owner' (mismo patrón que sidebar-create-profiles /
                                  sidebar-promociones / sidebar-mdjpro-downloads en este mismo archivo). La
                                  acción en sí ya está protegida server-side en admin.html (verifica OWNER_USER_ID
-                                 contra el JWT); esto evita que un staff que no es Owner vea siquiera el botón. -->
-                            <a href="./admin.html" target="_blank" rel="noopener" id="registry-admin-certs-link"
-                                class="btn secondary small"
-                                style="text-decoration:none; display:none; align-items:center; gap:5px; border-color:rgba(245,158,11,0.5); color:#f59e0b;">
-                                🔒 Administrar Certificados (Owner)</a>
+                                 contra el JWT); esto evita que un staff que no es Owner vea siquiera el botón.
+                                 Va en su propio grupo sin wrap con el botón de refrescar para que SIEMPRE
+                                 queden pegados uno al otro, sin que el buscador los separe de línea. -->
+                            <div style="display:flex; gap:8px; align-items:center; flex-wrap:nowrap; flex:none;">
+                                <a href="./admin.html" target="_blank" rel="noopener" id="registry-admin-certs-link"
+                                    style="text-decoration:none; display:none; align-items:center; gap:7px; white-space:nowrap; padding:8px 16px; border-radius:999px; background:rgba(245,158,11,0.14); border:1px solid rgba(245,158,11,0.55); color:#f59e0b; font-size:12px; font-weight:800; letter-spacing:0.03em; text-transform:uppercase;">
+                                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                    Gestionar Certificado</a>
+                                <button class="btn secondary small" onclick="loadCertificationRegistry()" title="Actualizar" aria-label="Actualizar" style="display:inline-flex; align-items:center; justify-content:center; padding:8px; flex:none;">
+                                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                                </button>
+                            </div>
                         </div>
                     </div>
                     <div id="registry-container">
@@ -4784,13 +4830,15 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     const cpLink  = document.getElementById('sidebar-create-profiles');
                     const promLink = document.getElementById('sidebar-promociones');
                     const mdjDlLink = document.getElementById('sidebar-mdjpro-downloads');
-                    const mdjDlPanel = document.getElementById('mdjpro-downloads-panel');
                     const adminCertsLink = document.getElementById('registry-admin-certs-link');
                     window._mdjAdminRole = rn;
                     if (cpLink)   cpLink.style.display   = (rn === 'owner') ? 'flex' : 'none';
                     if (promLink) promLink.style.display  = (rn === 'owner') ? 'flex' : 'none';
                     if (mdjDlLink) mdjDlLink.style.display = (rn === 'owner') ? 'flex' : 'none';
-                    if (mdjDlPanel) mdjDlPanel.style.display = (rn === 'owner') ? 'block' : 'none';
+                    /* mdjpro-downloads-panel NO se toca aquí: su visibilidad ya la maneja
+                       el router de pestañas (handleHashNavigation) cuando se hace click en
+                       el link de arriba -- forzar 'block' aquí lo dejaba pegado debajo de
+                       CUALQUIER pestaña que el Owner abriera (ej. Certificados). */
                     if (adminCertsLink) adminCertsLink.style.display = (rn === 'owner') ? 'inline-flex' : 'none';
                     applyRoleRestrictions();
                 }
@@ -7507,10 +7555,19 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                                         <td><strong>${c.theory_pct}%</strong></td>
                                         <td>${practicalLabel}</td>
                                         <td>
-                                            <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                                                <a href="./dj-profile.html?id=${c.user_id || ''}" class="btn-pill" style="text-decoration:none;">${translations[certLang]['nav-profile'] || 'Profile'}</a>
-                                                <a href="./verify.html?id=${c.cert_id || ''}" class="btn-pill" style="text-decoration:none; border-color:rgba(255,255,255,0.2);" target="_blank">${translations[certLang]['cert-btn-verify'] || 'Verify'}</a>
-                                                ${!c.graduated ? `<a href="./dj-profile.html?id=${c.user_id || ''}&evaluate=true" class="btn-pill gold" style="text-decoration:none;">${translations[certLang]['cert-eval-btn-evaluate'] || 'Evaluate Practical'}</a>` : ''}
+                                            <div style="display:flex; flex-direction:column; gap:6px; align-items:flex-start;">
+                                                <a href="./dj-profile.html?id=${c.user_id || ''}" class="btn-pill" style="text-decoration:none; gap:6px;">
+                                                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                                    ${translations[certLang]['nav-profile'] || 'Profile'}
+                                                </a>
+                                                <a href="./verify.html?id=${c.cert_id || ''}" class="btn-pill" style="text-decoration:none; gap:6px; border-color:rgba(255,255,255,0.2);" target="_blank">
+                                                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                                                    ${translations[certLang]['cert-btn-verify'] || 'Verify'}
+                                                </a>
+                                                ${!c.graduated ? `<a href="./dj-profile.html?id=${c.user_id || ''}&evaluate=true" class="btn-pill gold" style="text-decoration:none; gap:6px;">
+                                                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><circle cx="12" cy="8" r="6"/><path d="M15.5 13.5L17 22l-5-3-5 3 1.5-8.5"/></svg>
+                                                    ${translations[certLang]['cert-eval-btn-evaluate'] || 'Evaluate Practical'}
+                                                </a>` : ''}
                                             </div>
                                         </td>
                                     </tr>
