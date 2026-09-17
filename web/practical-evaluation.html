@@ -6,10 +6,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Miami DJ Beat — Practical Evaluation</title>
     <!-- Herramienta interna de puntuación del instructor (no contenido público de SEO).
-         noindex evita que Google la muestre en resultados; NO es control de acceso —
-         la URL sigue siendo accesible directo sin login. Ver nota en memoria del
-         proyecto sobre auditar si necesita autenticación/rol Staff/Instructor. -->
+         noindex evita que Google la muestre en resultados; el control de acceso real
+         (sesión + rol staff) vive en el script de abajo, mismo patrón que staff-admin.html. -->
     <meta name="robots" content="noindex, follow" />
+    <!-- Auth gate: oculta la rúbrica hasta terminar la verificación de rol staff (anti-flash). -->
+    <style id="mdj-pe-auth-gate-css">
+        html.mdj-pe-gate-pending #mainHeader,
+        html.mdj-pe-gate-pending main.container {
+            visibility: hidden !important;
+        }
+        html.mdj-pe-gate-pending body {
+            background: #050810;
+        }
+    </style>
+    <script>
+        document.documentElement.classList.add('mdj-pe-gate-pending');
+    </script>
   <!-- Tipografia institucional del menu (Inter 800). Sin esta hoja la barra cae en la
        sustituta del sistema y el texto sale ~2% mas estrecho, desplazando el eje X. -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=optional" rel="stylesheet" />
@@ -422,17 +434,48 @@
     </script>
     <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
     <script>
-      /* Hard Gate Ligero — Academia Gateway. Contenido reservado a miembros
-         inscritos; sin sesion, redirige a la puerta de entrada centralizada. */
+      /* Hard Gate real — reservado a rol staff (mismo STAFF_DJ_ROLES y patrón de
+         bloqueo de body que staff-admin.html). Una sesión de estudiante/DJ inscrito
+         ya NO es suficiente para ver la rúbrica del instructor. */
       (async function () {
+        var STAFF_DJ_ROLES = ['admin', 'owner', 'manager', 'seller'];
+        var loginRedirect = './login.html?next=./practical-evaluation.html&mdj_staff_entry=1';
+        function denyAccess() {
+          document.documentElement.classList.remove('mdj-pe-gate-pending');
+          document.body.innerHTML = `
+            <div style="height:100vh;display:flex;align-items:center;justify-content:center;background:#050810;color:#ff3333;text-align:center;font-family:sans-serif;padding:24px;">
+              <div>
+                <h1>⛔ ACCESO DENEGADO</h1>
+                <p>Esta herramienta es solo para staff (instructor/admin).</p>
+                <p style="margin-top:18px;"><a href="${loginRedirect}" style="color:var(--gold,#c5a059);font-weight:800;">Entrar con cuenta staff →</a></p>
+                <p style="margin-top:10px;"><a href="./index.html" style="color:#fff;">Volver al Inicio</a></p>
+              </div>
+            </div>`;
+        }
         try {
           var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
-          if (!sb) return;
+          if (!sb) { document.documentElement.classList.remove('mdj-pe-gate-pending'); return; }
           var res = await sb.auth.getSession();
-          if (!res || !res.data || !res.data.session) {
-            window.location.href = 'academia.html?redirect=' + encodeURIComponent(window.location.pathname);
+          var session = res && res.data && res.data.session;
+          if (!session) {
+            window.location.replace(loginRedirect);
+            return;
           }
-        } catch (e) { /* fallo de red: no bloquear la pagina */ }
+          var { data: profile } = await sb
+            .from('dj_profiles')
+            .select('role')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
+          var roleNorm = String(profile && profile.role ? profile.role : '').toLowerCase().trim();
+          if (!STAFF_DJ_ROLES.includes(roleNorm)) {
+            denyAccess();
+            return;
+          }
+          document.documentElement.classList.remove('mdj-pe-gate-pending');
+        } catch (e) {
+          /* fallo de red: no dejar la rúbrica abierta a ciegas. */
+          denyAccess();
+        }
       })();
     </script>
     <script src="./translations.js?v=20260916-sft-live-kiosk"></script>
