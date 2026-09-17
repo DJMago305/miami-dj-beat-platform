@@ -12326,7 +12326,10 @@
                     <div class="sft-group">
                         <label data-i18n="sft-fan-contact-label">Email o teléfono <span style="opacity:0.5;font-weight:600">(recomendado)</span></label>
                         <input type="text" class="sft-input" id="sftFanContact" data-i18n-hold="sft-fan-contact-placeholder" placeholder="Email o teléfono (opcional)" autocomplete="on" inputmode="text" aria-required="false">
-                        <p class="sft-fan-contact-sms-consent" style="font-size:11px;color:rgba(255,255,255,0.55);margin:8px 0 0 0;line-height:1.45;" data-i18n="sft-fan-contact-sms-consent">Si dejas tu teléfono, <strong>Miami DJ Beat</strong> te enviará un SMS avisándote si el DJ aceptó o no tu canción — un solo mensaje por petición, no publicidad. Pueden aplicar tarifas de mensajes y datos. Responde STOP para no recibir más.</p>
+                        <label class="sft-fan-contact-sms-consent-label" for="sftFanContactSmsConsentCheck" style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:rgba(255,255,255,0.55);margin:8px 0 0 0;line-height:1.45;cursor:pointer;text-transform:none;letter-spacing:normal;">
+                            <input type="checkbox" id="sftFanContactSmsConsentCheck" style="margin-top:2px;width:16px;height:16px;flex:none;accent-color:#c5a059;">
+                            <span data-i18n="sft-fan-contact-sms-consent">Sí, quiero que <strong>Miami DJ Beat</strong> me avise por SMS si el DJ aceptó o no mi canción — un solo mensaje por petición, no publicidad. Pueden aplicar tarifas de mensajes y datos. Responde STOP para no recibir más.</span>
+                        </label>
                     </div>
                 </div>
 
@@ -15229,6 +15232,12 @@
             var phoneDigits = phone.replace(/\D/g, '');
             if (phone && phoneDigits.length > 0 && phoneDigits.length < 7) {
                 return alert("Si completas el teléfono, usa al menos 7 dígitos (o déjalo vacío).");
+            }
+            if (phoneDigits.length >= 7) {
+                var smsConsentBox = document.getElementById('sftFanContactSmsConsentCheck');
+                if (smsConsentBox && !smsConsentBox.checked) {
+                    return alert(sftT('sft-alert-sms-consent-required', 'Marca la casilla para recibir el SMS de aviso, o deja el teléfono en blanco.'));
+                }
             }
             if (tipVal <= 0) return alert("Elige un monto" + (sftSelectedPayment !== 'Tarjeta' ? " que planeas enviar por " + sftSelectedPayment : " de propina") + " (rápido o personalizado).");
 
