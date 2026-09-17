@@ -2275,8 +2275,10 @@
                 display: flex;
                 flex-direction: column;
                 gap: 12px;
-                /* Pedido del PO: la tarjeta del botón, pegada al hero. */
-                padding: 4px 16px 88px;
+                /* Pedido del PO: la tarjeta del botón, pegada al hero; sin franja
+                   flotante ni pie de página en este modo, no hace falta aire
+                   extra abajo tampoco. */
+                padding: 4px 16px 16px;
             }
 
             body.dj-profile-sft-client-view #public-action-buttons {
@@ -2450,6 +2452,22 @@
                al proceso (se monta encima del anillo del botón). */
             body.dj-profile-sft-client-view #mdj-assistant-booth {
                 display: none !important;
+            }
+
+            /* Pedido del PO: pantalla única, sin nada que scrollear después de la
+               tarjeta -- el pie de página (copyright, links del sitio) no aporta
+               nada en este modo y dejaba un bloque negro grande antes de sí mismo. */
+            body.dj-profile-sft-client-view footer.footer {
+                display: none !important;
+            }
+
+            /* Ese espacio negro grande, en realidad: #tab-public reservaba
+               78px + safe-area de padding-bottom para la franja flotante que ya
+               quitamos en este modo (body.mdj-sft-float-pad sigue puesto por el
+               JS aunque la franja no se pinte). Sin franja, no hace falta el
+               hueco. */
+            body.dj-profile.mdj-sft-float-pad.dj-profile-sft-client-view #tab-public {
+                padding-bottom: 24px !important;
             }
 
             /* "BUSCADOR DE CANCIONES" -- pedido del PO: quitarlo, el botón ya se
