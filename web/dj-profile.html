@@ -980,7 +980,13 @@
         /* Toast Notification */
         #share-toast {
             position: fixed;
-            bottom: 30px;
+            /* FIX-TOAST-SAFARI-TOOLBAR (2026-09-16, orden del PO): bottom:30px fijo
+               podía quedar tapado por la barra propia de Safari en iPhone --
+               mismo colchón de seguridad que ya se usa en otras partes de esta
+               página (env(safe-area-inset-bottom)). En navegadores sin esa
+               franja (desktop, Android, iPhones viejos) el valor es 0 y no
+               cambia nada. */
+            bottom: calc(30px + env(safe-area-inset-bottom, 0px));
             left: 50%;
             transform: translateX(-50%) translateY(100px);
             background: #c5a059;
@@ -1866,8 +1872,13 @@
                subir el alto de la caja, sin tocar object-position/zoom de la foto,
                deja la mitad superior libre para la cara. 480px es suficiente para
                este bloque más compacto (fotos ya achicadas con scale(0.94) abajo). */
+            /* FIX-SFT-HERO-HEIGHT-CORRECTO (2026-09-16, orden del PO): 428px volvió
+               a tapar la cara -- se había bajado persiguiendo "una sola pantalla",
+               pero ese ahorro no debe salir de la foto. Vuelve a un alto seguro
+               (probado sin solape); el ahorro para que quepa en una pantalla sale
+               del botón y los márgenes de la tarjeta (ver más abajo), no de aquí. */
             body.dj-profile-sft-client-view .dj-hero {
-                height: 480px;
+                height: 460px;
             }
 
             /* TICKET · hero cargado en móvil. El PO pidió explícitamente encoger un
@@ -1943,14 +1954,29 @@
                 justify-content: center;
             }
 
+            /* FIX-SFT-ROLE-NO-FADE-2 (2026-09-16, orden del PO): el ancho real
+               que importaba era este -- .dj-hero-role-track (92vw, fix anterior)
+               vivía DENTRO de .dj-hero-left, que seguía acotado a 24ch (~181px).
+               El hijo nunca tuvo más ancho real que el padre, así que el
+               "degradado" percibido en realidad era la ventana angosta del
+               padre cortando el carrusel a la mitad de una palabra. Se ensancha
+               el padre a todo el ancho disponible. */
             body.dj-profile-sft-client-view .dj-hero-left {
-                max-width: min(100%, 24ch);
-                padding-top: 18px;
+                max-width: 100%;
+                padding-top: 30px;
                 text-align: center;
             }
 
+            /* FIX-SFT-ROLE-NO-FADE (2026-09-16, orden del PO): el PO no quiere el
+               degradado de los bordes (mask-image, definido en la regla base
+               .dj-hero-role) -- le ha dado problemas antes. Se quita solo aquí
+               (móvil/kiosco); en tablet/escritorio la regla base sigue intacta.
+               Se ensancha a casi todo el ancho de la pantalla para que el texto
+               corra de un lado al otro, no en una columna angosta. */
             body.dj-profile-sft-client-view .dj-hero-role {
-                max-width: 20ch;
+                max-width: 92vw;
+                mask-image: none;
+                -webkit-mask-image: none;
                 margin: 0 auto 7px;
                 font-size: 10px;
                 line-height: 1.28;
@@ -1978,23 +2004,49 @@
 
             /* TICKET · la fila se recortaba por el borde izquierdo de la pantalla:
                7 íconos a 34px + botón compartir no cabían en los ~213px de esta
-               columna con flex-wrap:nowrap, así que el conjunto (centrado sobre
-               un ancho que no le alcanzaba) se salía por ambos lados y el propio
-               .dj-hero (overflow:hidden) recortaba el primero. Envolver en dos
-               líneas cuando hace falta + íconos algo más chicos (pedido del PO)
-               resuelve el recorte sin tocar el marcado. */
+               columna. FIX-SFT-SOCIAL-PYRAMID (2026-09-16, orden del PO): el
+               arreglo anterior envolvía #pub-social-icons (los íconos sociales)
+               por su cuenta y dejaba el botón de compartir COMO HERMANO aparte
+               en .dj-social-row -- dos flex-wrap independientes. Resultado: los
+               sociales se partían en 2 líneas centradas cada una por separado
+               (forma de pirámide, 5+3), y compartir se caía solo a una tercera
+               línea, lejos del grupo. Se unifica en una sola grilla: #pub-social-
+               icons pasa a display:contents (deja de ser su propio contenedor,
+               sus <a> se vuelven hijos directos de .dj-social-row) para que
+               TODOS los íconos, compartir incluido, fluyan en una sola matriz de
+               4 columnas -- filas parejas, compartir siempre al final de la
+               secuencia, nunca aislado. */
+            /* !important: una regla vieja y sin acotar en @media(max-width:560px),
+               más abajo en este archivo, fija display:flex!important en
+               .dj-social-row -- sin este !important aquí, esa gana por ser
+               igual de "important" y no ceder ante mayor especificidad ni
+               orden de aparición. */
             body.dj-profile-sft-client-view .dj-social-row {
+                display: grid !important;
+                grid-template-columns: repeat(4, auto);
                 gap: 6px;
-                margin-top: 0;
+                /* !important: la regla de @media(max-width:560px) más abajo fija
+                   margin:8px auto!important (shorthand, pisa margin-top también) --
+                   el PO pidió más aire real entre los íconos y el cuello de la
+                   foto, 8px no alcanzaba. */
+                margin-top: 18px !important;
                 justify-content: center;
-                flex-wrap: wrap;
                 width: 100%;
             }
 
             body.dj-profile-sft-client-view #pub-social-icons {
-                flex-wrap: wrap;
-                justify-content: center;
-                width: 100%;
+                display: contents;
+            }
+
+            /* FIX-SFT-ROLE-LEGIBILITY (2026-09-16, orden del PO): .dj-hero-role
+               (la barra "DJ · Open Format · ...") es texto blanco al 50% de
+               opacidad sin sombra -- legible sobre un fondo oscuro parejo, pero
+               se pierde contra zonas más claras de la propia foto de portada
+               del artista (cada DJ trae una foto distinta, no controlamos su
+               contenido). Mismo tratamiento que .dj-hero-name (text-shadow),
+               solo en este breakpoint compacto. */
+            body.dj-profile-sft-client-view .dj-hero-role {
+                text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85);
             }
 
             body.dj-profile-sft-client-view .dj-social-icon {
@@ -2002,6 +2054,15 @@
                 height: 28px;
                 border-radius: 8px;
                 background: rgba(255, 255, 255, 0.08);
+            }
+
+            /* FIX-SFT-SHARE-BTN-TRANSPARENT (2026-09-16, orden del PO): la regla
+               de arriba (.dj-social-icon) también pisaba el fondo dorado sólido
+               propio de .share-btn (misma clase base) -- quedaba casi
+               transparente sobre la foto oscura, invisible. Se restaura el
+               dorado, solo el tamaño se queda achicado como el resto. */
+            body.dj-profile-sft-client-view .dj-social-icon.share-btn {
+                background: var(--gold);
             }
 
             body.dj-profile-sft-client-view .dj-social-icon svg {
@@ -2241,7 +2302,14 @@
                 display: flex;
                 flex-direction: column;
                 gap: 12px;
-                padding: 18px 16px 88px;
+                /* Pedido del PO: la tarjeta del botón, pegada al hero; sin franja
+                   flotante ni pie de página en este modo, no hace falta aire
+                   extra abajo tampoco. */
+                padding: 4px 16px 16px;
+            }
+
+            body.dj-profile-sft-client-view #public-action-buttons {
+                margin-top: 0 !important;
             }
 
             body.dj-profile-sft-client-view #tab-public .dj-main-col,
@@ -2374,10 +2442,13 @@
                 min-width: 0 !important;
             }
 
+            /* FIX-SFT-KIOSK-ROUND-CTA (2026-09-16, orden del PO): el buscador y el
+               botón de lanzar SFT dejaron de estar en esta lista de "esconder" --
+               ahora SÍ deben mostrarse aquí (el botón redondo centrado, ver más
+               abajo en este mismo archivo). La etiqueta y el hint siguen ocultos,
+               sin cambios. */
             body.dj-profile-sft-client-view #public-action-buttons .dj-card-label,
-            body.dj-profile-sft-client-view #public-action-buttons #sft-public-interact-hint,
-            body.dj-profile-sft-client-view #public-action-buttons #soundfortips-smart-heading,
-            body.dj-profile-sft-client-view #public-action-buttons #soundfortips-launch-btn {
+            body.dj-profile-sft-client-view #public-action-buttons #sft-public-interact-hint {
                 display: none !important;
             }
 
@@ -2386,33 +2457,136 @@
                 padding-bottom: 12px !important;
             }
 
-            body.dj-profile-sft-client-view #public-action-buttons .pub-web-title {
-                display: block !important;
-                margin: 0 !important;
+            /* FIX-SFT-KIOSK-FOCUS (2026-09-16, orden del PO): en modo kiosco (fan
+               pidiendo canción) el botón de WEB no aporta nada -- el fan ya está
+               en el evento, no está decidiendo si contratarte. Se quita entero
+               (antes solo se restilaba) para dejar toda la pantalla al botón de
+               pedir canción, ahora redondo y centrado en el espacio libre. */
+            body.dj-profile-sft-client-view #public-action-buttons .pub-web-title,
+            body.dj-profile-sft-client-view #public-action-buttons button[onclick*="gotoAffiliateWeb"] {
+                display: none !important;
+            }
+
+            /* Un solo llamado a la acción en este modo: se quita la franja
+               flotante inferior (redundante con el botón redondo de abajo) para
+               no competir por atención con dos CTAs a la vez. */
+            body.dj-profile-sft-client-view #mdj-sft-mobile-float-cta {
+                display: none !important;
+            }
+
+            /* Pedido del PO: este modo es solo para pedir canción, no para vender
+               un evento -- el asistente IA (booth) no aporta aquí y solo estorba
+               al proceso (se monta encima del anillo del botón). */
+            body.dj-profile-sft-client-view #mdj-assistant-booth {
+                display: none !important;
+            }
+
+            /* Pedido del PO: pantalla única, sin nada que scrollear después de la
+               tarjeta -- el pie de página (copyright, links del sitio) no aporta
+               nada en este modo y dejaba un bloque negro grande antes de sí mismo. */
+            body.dj-profile-sft-client-view footer.footer {
+                display: none !important;
+            }
+
+            /* Ese espacio negro grande, en realidad: #tab-public reservaba
+               78px + safe-area de padding-bottom para la franja flotante que ya
+               quitamos en este modo (body.mdj-sft-float-pad sigue puesto por el
+               JS aunque la franja no se pinte). Sin franja, no hace falta el
+               hueco. */
+            body.dj-profile.mdj-sft-float-pad.dj-profile-sft-client-view #tab-public {
+                padding-bottom: 0 !important;
+            }
+
+            body.dj-profile-sft-client-view #public-action-buttons {
+                margin-bottom: 0 !important;
+            }
+
+            /* "BUSCADOR DE CANCIONES" -- pedido del PO: quitarlo, el botón ya se
+               explica solo con el texto de abajo (#sft-kiosk-explainer). */
+            body.dj-profile-sft-client-view #soundfortips-smart-heading {
+                display: none !important;
+            }
+
+            /* Tamaño/márgenes recortados un poco (pedido del PO: el ahorro para
+               caber en una pantalla sale de aquí, no de la altura del hero). */
+            body.dj-profile-sft-client-view #soundfortips-launch-btn {
+                width: 168px !important;
+                height: 168px !important;
+                margin: 16px auto 48px !important;
+                border-radius: 50% !important;
+                flex-direction: column !important;
+                justify-content: center !important;
+                gap: 0 !important;
+                padding: 0 !important;
+                position: relative !important;
+                overflow: visible !important;
+            }
+
+            /* Anillo pulsante (pedido del PO): un aro que crece y se desvanece en
+               bucle para llamar la atención sobre el botón. Respeta
+               prefers-reduced-motion -- se queda quieto para quien lo pidió. */
+            body.dj-profile-sft-client-view #soundfortips-launch-btn.sft-launch-btn--online::before,
+            body.dj-profile-sft-client-view #soundfortips-launch-btn.sft-launch-btn--online::after {
+                content: '';
+                position: absolute;
+                inset: 0;
+                border-radius: 50%;
+                border: 2px solid rgba(250, 204, 21, 0.75);
+                animation: mdjSftRingPulse 2.4s ease-out infinite;
+                pointer-events: none;
+            }
+            body.dj-profile-sft-client-view #soundfortips-launch-btn.sft-launch-btn--online::after {
+                animation-delay: 1.2s;
+            }
+            @keyframes mdjSftRingPulse {
+                0% { transform: scale(1); opacity: 0.75; }
+                100% { transform: scale(1.35); opacity: 0; }
+            }
+            @media (prefers-reduced-motion: reduce) {
+                body.dj-profile-sft-client-view #soundfortips-launch-btn.sft-launch-btn--online::before,
+                body.dj-profile-sft-client-view #soundfortips-launch-btn.sft-launch-btn--online::after {
+                    animation: none;
+                    display: none;
+                }
+            }
+
+            body.dj-profile-sft-client-view #soundfortips-launch-btn .sft-launch-icon-wrap {
+                width: 74px !important;
+                height: 74px !important;
+                font-size: 36px !important;
+            }
+
+            /* Pedido del PO: "SOUNDFORTIPS" sale del círculo, se lee debajo del
+               botón como una etiqueta -- el círculo se queda solo con el ícono. */
+            body.dj-profile-sft-client-view #soundfortips-launch-btn .sft-launch-brand-col {
+                position: absolute;
+                top: 100%;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 220px;
+                margin-top: 28px;
+                align-items: center;
                 text-align: center;
             }
 
-            body.dj-profile-sft-client-view #public-action-buttons .pub-web-title > div {
-                font-size: 0 !important;
-                letter-spacing: 0 !important;
-                line-height: 1 !important;
+            body.dj-profile-sft-client-view #soundfortips-launch-btn .sft-launch-wordmark {
+                display: flex;
+                flex-direction: row;
+                gap: 4px;
+                line-height: 1.15;
+                font-size: 15px;
+                letter-spacing: 0.06em;
             }
 
-            body.dj-profile-sft-client-view #public-action-buttons .pub-web-title > div::after {
-                content: 'MIAMI DJ BEAT';
-                display: inline-block;
-                font-size: 10px;
-                letter-spacing: 0.22em;
-                text-transform: uppercase;
-                font-weight: 900;
-                color: var(--gold);
-                text-shadow: 0 0 14px rgba(197, 160, 89, 0.42), 0 0 2px rgba(255, 255, 255, 0.22);
-            }
-
-            body.dj-profile-sft-client-view #public-action-buttons button[onclick*="gotoAffiliateWeb"] {
-                margin-top: 0 !important;
-                padding-top: 12px !important;
-                padding-bottom: 12px !important;
+            body.dj-profile-sft-client-view #sft-kiosk-explainer {
+                display: block !important;
+                text-align: center;
+                font-size: 13px;
+                font-weight: 500;
+                line-height: 1.5;
+                color: rgba(255, 255, 255, 0.72);
+                max-width: 280px;
+                margin: 0 auto 4px;
             }
         }
 
@@ -3466,6 +3640,17 @@
                 display: none !important;
             }
 
+            /* FIX-SFT-KIOSK-ROUND-CTA (2026-09-16, orden del PO): la regla de
+               arriba escondía el botón de tarjeta para no duplicar con la
+               franja flotante -- ya no aplica al fan de kiosco, porque ahí la
+               franja flotante se quitó a propósito (un solo CTA, el redondo).
+               Selector con una clase más (mayor especificidad) para ganarle a
+               la regla de arriba sin usar :not() complejo (compatibilidad
+               Safari 13). */
+            body.dj-profile-sft-client-view #tab-public .dj-side-col #soundfortips-launch-btn {
+                display: flex !important;
+            }
+
             .mdj-sft-mobile-float-cta.mdj-sft-mobile-float-cta--on {
                 display: block;
             }
@@ -4482,6 +4667,12 @@
                          Ver applySoundForTipsPublicVisibility(). -->
                     <p id="sft-kiosk-ended-msg" style="display:none;text-align:center;font-size:11px;font-weight:800;letter-spacing:.04em;color:#fb923c;margin:8px 0 0;line-height:1.4;" data-i18n="sft-kiosk-soon-msg">PRÓXIMAMENTE EN VIVO</p>
 
+                    <!-- FIX-SFT-KIOSK-ROUND-CTA (2026-09-16, orden del PO): explicación
+                         corta de qué hace el botón -- solo visible en modo kiosco
+                         (ver CSS, display:none por defecto). Tamaño normal, no letras
+                         grandes; cambia de idioma solo (mismo motor data-i18n del sitio). -->
+                    <p id="sft-kiosk-explainer" class="sft-kiosk-explainer" style="display:none;" data-i18n="sft-kiosk-explainer">Este botón te conecta en vivo con la cabina del DJ: pide tu canción y deja una propina mientras el DJ está tocando y aceptando peticiones.</p>
+
                     <div class="pub-web-title" style="text-align:center; margin-top:2px; margin-bottom:6px;">
                         <div data-i18n="profile-web-title" style="font-size:11px; letter-spacing:0.26em; text-transform:uppercase; font-weight:900; color:var(--gold); text-shadow:0 0 14px rgba(197,160,89,0.42), 0 0 2px rgba(255,255,255,0.22);">WEB MIAMI DJ BEAT</div>
                     </div>
@@ -5203,21 +5394,33 @@
                 sftRefreshLaunchBadge();
                 return;
             }
-            /* Móvil ≤640px: el CTA fijo vive en #soundfortips-launch-btn-float; no forzar display:inline
-               (si no, pisa el display:none !important y quedan dos SOUNDFORTIPS en pantalla). */
+            /* Móvil ≤640px: antes el CTA fijo vivía en #soundfortips-launch-btn-float
+               y este botón se dejaba en display:none!important para no duplicar
+               (dos SOUNDFORTIPS en pantalla). FIX-SFT-KIOSK-ROUND-CTA (2026-09-16,
+               orden del PO): en el fan de kiosco la franja flotante ya no existe
+               (un solo CTA, el redondo centrado) -- para ESE caso puntual sí hay
+               que forzar el display, igual que en escritorio. Fuera del kiosco
+               (si algún día vuelve a haber franja flotante en otro contexto) se
+               mantiene el comportamiento viejo. */
             var isMobileCta = false;
             try {
                 isMobileCta = !!(window.matchMedia && window.matchMedia('(max-width: 640px)').matches);
             } catch (eMq) { void eMq; }
-            if (isMobileCta) {
+            var isKioskFanNow = window._mdjSftLiveKioskView === true && window._mdjSftViewerIsOwner !== true;
+            if (isMobileCta && !isKioskFanNow) {
                 try { btn.style.removeProperty('display'); } catch (eRm) { void eRm; }
             } else {
                 btn.style.display = 'flex';
             }
             btn.removeAttribute('aria-hidden');
             if (smartHead) {
-                smartHead.style.display = 'none';
-                smartHead.setAttribute('aria-hidden', 'true');
+                if (isKioskFanNow) {
+                    smartHead.style.display = '';
+                    smartHead.removeAttribute('aria-hidden');
+                } else {
+                    smartHead.style.display = 'none';
+                    smartHead.setAttribute('aria-hidden', 'true');
+                }
             }
             if (pill) pill.style.display = 'inline-flex';
             /* FIX-SFT-LIVE-SESSION-GATING (2026-09-16, orden del PO): Candado B --
@@ -7072,24 +7275,38 @@
             const data = window.currentDJData;
             if (!data) return;
 
-            const contactInfo = `📞 Para contrataciones contacta a Miami DJ Beat:\nWhatsApp: +1 (305) 607-1780\nEmail: miamidjbeat@gmail.com`;
-            const shareText = `🎵 ¡Conoce a ${data.name} en Miami DJ Beat!\n\n📍 ${data.currentWork}\n\n📝 Bio: ${data.bio.substring(0, 120)}...\n\n📅 Estado: ${data.availability}\n\n${contactInfo}\n\n🔗 Mira su perfil completo aquí:`;
+            /* FIX-SFT-KIOSK-SHARE (2026-09-16, orden del PO): un fan en modo
+               kiosco quiere invitar a alguien a pedir una canción -- no tiene
+               nada que ver con "contrata a este DJ". Comparte el link correcto
+               (mode=live, el mismo que arma el QR de cabina) con texto propio,
+               sin tocar el share normal del perfil de reserva. */
+            const isKiosk = window._mdjSftLiveKioskView === true;
+            const shareUrl = isKiosk && window._mdjSftCabQrUrl ? window._mdjSftCabQrUrl : data.url;
+            const shareTitle = isKiosk ? `SoundForTips — ${data.name}` : `${data.name} — Perfil DJ`;
+
+            let shareText;
+            if (isKiosk) {
+                shareText = `🎵 ¡Pide una canción en vivo con ${data.name}! Toca este link, elige tu canción y deja una propina — el DJ la pone al momento:`;
+            } else {
+                const contactInfo = `📞 Para contrataciones contacta a Miami DJ Beat:\nWhatsApp: +1 (305) 607-1780\nEmail: miamidjbeat@gmail.com`;
+                shareText = `🎵 ¡Conoce a ${data.name} en Miami DJ Beat!\n\n📍 ${data.currentWork}\n\n📝 Bio: ${data.bio.substring(0, 120)}...\n\n📅 Estado: ${data.availability}\n\n${contactInfo}\n\n🔗 Mira su perfil completo aquí:`;
+            }
 
             if (navigator.share) {
                 try {
                     await navigator.share({
-                        title: `${data.name} — Perfil DJ`,
+                        title: shareTitle,
                         text: shareText,
-                        url: data.url
+                        url: shareUrl
                     });
                 } catch {
                     /* cancelado o fallido */
                 }
             } else {
                 // Fallback to copy to clipboard
-                const fullMessage = `${shareText}\n${data.url}`;
+                const fullMessage = `${shareText}\n${shareUrl}`;
                 navigator.clipboard.writeText(fullMessage).then(() => {
-                    showToast('¡Link de perfil y datos de contacto copiados!');
+                    showToast(isKiosk ? '¡Link para pedir canción copiado!' : '¡Link de perfil y datos de contacto copiados!');
                 });
             }
         }
