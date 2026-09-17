@@ -1945,7 +1945,7 @@
 
             body.dj-profile-sft-client-view .dj-hero-left {
                 max-width: min(100%, 24ch);
-                padding-top: 18px;
+                padding-top: 30px;
                 text-align: center;
             }
 
@@ -7224,24 +7224,38 @@
             const data = window.currentDJData;
             if (!data) return;
 
-            const contactInfo = `📞 Para contrataciones contacta a Miami DJ Beat:\nWhatsApp: +1 (305) 607-1780\nEmail: miamidjbeat@gmail.com`;
-            const shareText = `🎵 ¡Conoce a ${data.name} en Miami DJ Beat!\n\n📍 ${data.currentWork}\n\n📝 Bio: ${data.bio.substring(0, 120)}...\n\n📅 Estado: ${data.availability}\n\n${contactInfo}\n\n🔗 Mira su perfil completo aquí:`;
+            /* FIX-SFT-KIOSK-SHARE (2026-09-16, orden del PO): un fan en modo
+               kiosco quiere invitar a alguien a pedir una canción -- no tiene
+               nada que ver con "contrata a este DJ". Comparte el link correcto
+               (mode=live, el mismo que arma el QR de cabina) con texto propio,
+               sin tocar el share normal del perfil de reserva. */
+            const isKiosk = window._mdjSftLiveKioskView === true;
+            const shareUrl = isKiosk && window._mdjSftCabQrUrl ? window._mdjSftCabQrUrl : data.url;
+            const shareTitle = isKiosk ? `SoundForTips — ${data.name}` : `${data.name} — Perfil DJ`;
+
+            let shareText;
+            if (isKiosk) {
+                shareText = `🎵 ¡Pide una canción en vivo con ${data.name}! Toca este link, elige tu canción y deja una propina — el DJ la pone al momento:`;
+            } else {
+                const contactInfo = `📞 Para contrataciones contacta a Miami DJ Beat:\nWhatsApp: +1 (305) 607-1780\nEmail: miamidjbeat@gmail.com`;
+                shareText = `🎵 ¡Conoce a ${data.name} en Miami DJ Beat!\n\n📍 ${data.currentWork}\n\n📝 Bio: ${data.bio.substring(0, 120)}...\n\n📅 Estado: ${data.availability}\n\n${contactInfo}\n\n🔗 Mira su perfil completo aquí:`;
+            }
 
             if (navigator.share) {
                 try {
                     await navigator.share({
-                        title: `${data.name} — Perfil DJ`,
+                        title: shareTitle,
                         text: shareText,
-                        url: data.url
+                        url: shareUrl
                     });
                 } catch {
                     /* cancelado o fallido */
                 }
             } else {
                 // Fallback to copy to clipboard
-                const fullMessage = `${shareText}\n${data.url}`;
+                const fullMessage = `${shareText}\n${shareUrl}`;
                 navigator.clipboard.writeText(fullMessage).then(() => {
-                    showToast('¡Link de perfil y datos de contacto copiados!');
+                    showToast(isKiosk ? '¡Link para pedir canción copiado!' : '¡Link de perfil y datos de contacto copiados!');
                 });
             }
         }
