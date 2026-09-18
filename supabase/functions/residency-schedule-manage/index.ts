@@ -123,9 +123,11 @@ Deno.serve(async (req: Request) => {
     const body = await req.json().catch(() => ({}));
     const action = String(body.action || "").trim();
 
-    // ── crear: nueva regla de residencia ──
+    // ── crear: nueva regla de residencia (permanente, o serie acotada si
+    // trae fecha_inicio/fecha_fin -- ver 20260918150000_residency_schedule_
+    // series_acotada.sql) ──
     if (action === "crear") {
-        const { dia_semana, turno, venue, dj_nombre, hora_inicio, hora_fin, venue_pay_usd, dj_pay_usd, notas } = body;
+        const { dia_semana, turno, venue, dj_nombre, hora_inicio, hora_fin, venue_pay_usd, dj_pay_usd, notas, fecha_inicio, fecha_fin, nombre_serie } = body;
         const { data, error } = await ADMIN.rpc("residency_schedule_modificar", {
             p_accion: "crear",
             p_dia_semana: dia_semana,
@@ -138,9 +140,13 @@ Deno.serve(async (req: Request) => {
             p_dj_pay_usd: dj_pay_usd ?? null,
             p_notas: notas ?? null,
             p_staff_user_id: gate.userId,
+            p_fecha_inicio: fecha_inicio ?? null,
+            p_fecha_fin: fecha_fin ?? null,
+            p_nombre_serie: nombre_serie ?? null,
         });
         if (error) return json(req, { ok: false, error: "crear_failed", detail: error.message }, 400);
-        await auditar(gate.jwt, "residencia.creada", data as string, `${gate.name || gate.userId} creó residencia ${venue} (${turno}, día ${dia_semana})`, null, body);
+        const etiqueta = nombre_serie ? `serie "${nombre_serie}" (${fecha_inicio}→${fecha_fin})` : "residencia permanente";
+        await auditar(gate.jwt, "residencia.creada", data as string, `${gate.name || gate.userId} creó ${etiqueta}: ${venue} (${turno}, día ${dia_semana})`, null, body);
         return json(req, { ok: true, id: data });
     }
 
