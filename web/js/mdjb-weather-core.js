@@ -155,6 +155,50 @@ function normalize(raw) {
   return raw;
 }
 
+// ── One Call API 3.0 (2026-09-18, pedido explícito del PO: "el clima llega
+// atrasado, no adelantado") ──────────────────────────────────────────────────
+// /data/2.5/weather (arriba) es una FOTO del momento -- por diseño siempre
+// reporta DESPUÉS de que algo ya está pasando. One Call 3.0 trae "minutely"
+// (próxima hora, minuto a minuto) y "alerts" (avisos oficiales de clima
+// severo, los mismos que emite el servicio meteorológico real) -- la única
+// forma real de adelantarse. Requiere que la cuenta de OpenWeatherMap tenga
+// esa suscripción activada (gratis hasta 1000 consultas/día, aparte del plan
+// base) -- mientras no esté activada, el edge function reenvía el 401 real
+// de OWM y este fetch falla LIMPIO, sin romper el clima base de arriba.
+async function fetchAlertaAdelantada(coords, ctrl) {
+  const ep = ENDPOINT();
+  if (!ep) return null;
+  try {
+    const url = ep + '?lat=' + coords.lat.toFixed(4) + '&lon=' + coords.lon.toFixed(4) + '&recurso=onecall';
+    const r = await fetch(url, { cache: 'no-store', signal: ctrl.signal });
+    if (!r.ok) return null;                      // 401/403/502: sin suscripción todavía, no es error fatal
+    const d = await r.json();
+    const alerts = Array.isArray(d.alerts) ? d.alerts : [];
+    // "lluvia pronto": primer minuto con precipitación real en la próxima hora.
+    const minutely = Array.isArray(d.minutely) ? d.minutely : [];
+    const idxLluvia = minutely.findIndex((m) => (m.precipitation || 0) > 0);
+    return {
+      alerts: alerts.map((a) => ({ evento: a.event || 'Aviso', desc: (a.description || '').slice(0, 400), fin: a.end || null })),
+      lluviaEnMin: idxLluvia === -1 ? null : idxLluvia,
+    };
+  } catch (_e) { return null; }                   // red/timeout: silencioso, no rompe el clima base
+}
+
+// Un aviso oficial de tormenta/severo debe GANARLE a la clasificación básica
+// de /weather -- si OWM ya emitió la alerta, no hace falta esperar a que el
+// código "actual" (500/501/etc.) se ponga al día.
+const _RE_TORMENTA = /tormenta|thunderstorm|severe|tornado|hurrican|tropical/i;
+function aplicarAlerta(state, adelanto) {
+  if (!adelanto) return state;
+  state.lookAhead = adelanto;
+  const activa = (adelanto.alerts || []).find((a) => _RE_TORMENTA.test(a.evento));
+  if (activa && state.drivers.storm < 0.9) {
+    state.drivers = { ...state.drivers, storm: 0.9, rain: Math.max(state.drivers.rain, 0.8) };
+    state.condition = { ...state.condition, key: 'storm', label: activa.evento };
+  }
+  return state;
+}
+
 // ── Fetch al Edge Function (mismo endpoint que el motor; 8s cap, nunca cuelga) ──
 async function doFetch(coords) {
   const ep = ENDPOINT();
@@ -167,7 +211,8 @@ async function doFetch(coords) {
     if (!r.ok) throw new Error('http ' + r.status);
     const s = normalize(await r.json());               // OWM crudo → AtmosphericState (Opción B)
     if (!isValidState(s)) throw new Error('malformed AtmosphericState');
-    return s;
+    const adelanto = await fetchAlertaAdelantada(coords, ctrl);   // best-effort, nunca bloquea ni rompe lo de arriba
+    return aplicarAlerta(s, adelanto);
   } finally { clearTimeout(to); }
 }
 
