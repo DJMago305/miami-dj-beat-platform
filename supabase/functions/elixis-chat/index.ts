@@ -2760,9 +2760,16 @@ serve(async (req: Request) => {
     // repite en CADA ronda del bucle: la API de Claude exige el mismo bloque
     // "thinking" en todas las llamadas de un mismo intercambio de herramientas,
     // no solo en la primera.
+    // BUG REAL 2026-09-18 (probado en vivo, error real de la API): Sonnet 5
+    // rechaza el formato viejo de thinking con 400 -- "thinking.type.enabled"
+    // is not supported for this model. Use "thinking.type.adaptive" and
+    // "output_config.effort"". El formato "enabled"+budget_tokens es de la
+    // familia 4.x; Sonnet 5 exige "adaptive" + output_config.effort. Esto
+    // tumbaba con 502 CUALQUIER turno donde el router decidiera pensar mas
+    // -- confirmado probando el caso real del Haunting House.
     const pensarMas = govMode === "FULL" && await necesitaPensarMas(userMessage, history, apiKey);
     const thinkingParam = pensarMas
-        ? { thinking: { type: "enabled", budget_tokens: THINKING_BUDGET_TOKENS } }
+        ? { thinking: { type: "adaptive" }, output_config: { effort: "high" } }
         : {};
     // 6->25 rondas SOLO en FULL (2026-09-18, mismo caso real: confirmado en
     // agent_action_log que las primeras 3 acciones SÍ se ejecutaron, pero el
