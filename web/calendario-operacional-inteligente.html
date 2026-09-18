@@ -236,10 +236,11 @@
   .pill.auto svg{width:11px;height:11px;}
   .rem-empty{color:var(--ink-mute);font-size:12.5px;padding:8px 4px;}
 
-  .search-panel{position:absolute;top:54px;right:16px;width:360px;max-width:calc(100% - 32px);background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);z-index:50;padding:12px;display:none;}
-  .search-panel.open{display:block;}
-  .search-panel input{width:100%;padding:9px 12px;border-radius:9px;border:1px solid var(--line);background:var(--panel-2);color:var(--ink);font-size:13.5px;font-family:var(--sans);}
-  .search-results{max-height:360px;overflow-y:auto;margin-top:8px;display:flex;flex-direction:column;gap:2px;}
+  .search-wrap{position:relative;display:flex;align-items:center;}
+  .search-wrap input{width:0;min-width:0;padding:0;margin:0;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--ink);font-size:13.5px;font-family:var(--sans);opacity:0;pointer-events:none;transition:width .22s ease,opacity .16s ease,padding .22s ease,margin .22s ease,background .16s ease,border-color .16s ease;}
+  .search-wrap.open input{width:220px;opacity:1;padding:7px 12px;margin-right:6px;border-color:var(--line);background:var(--panel-2);pointer-events:auto;}
+  .search-results{position:absolute;top:calc(100% + 6px);right:0;width:320px;max-width:calc(100vw - 32px);max-height:360px;overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);z-index:50;padding:8px;display:none;flex-direction:column;gap:2px;}
+  .search-wrap.open .search-results{display:flex;}
   .search-group-label{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-mute);padding:8px 6px 2px;}
   .search-item{padding:8px 10px;border-radius:9px;cursor:pointer;font-size:13px;display:flex;flex-direction:column;gap:2px;}
   .search-item:hover{background:var(--panel-2);}
@@ -273,6 +274,13 @@
   /* CONTINUIDAD / ENGAGEMENT */
   .eng-stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
   .eng-note{font-size:12.5px;color:var(--ink-soft);background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:14px;}
+  /* "?" de ayuda para notas explicativas/informativas -- mismo patrón ya
+     usado en contracts-engine.html (.info-dot/.info-popover): un ícono
+     chico en vez de un párrafo fijo siempre visible. */
+  .info-wrap{position:relative;display:inline-block;vertical-align:middle;}
+  .info-dot{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:999px;border:1px solid var(--line);background:var(--panel-2);color:var(--ink-mute);font-size:10.5px;font-weight:800;font-family:var(--sans);cursor:pointer;line-height:1;padding:0;margin-left:6px;}
+  .info-dot:hover{color:var(--set);border-color:var(--set);}
+  .info-popover{position:absolute;left:0;top:calc(100% + 8px);z-index:40;width:280px;max-width:70vw;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:11px 13px;font-size:12px;font-weight:400;line-height:1.55;color:var(--ink-soft);text-transform:none;letter-spacing:normal;box-shadow:var(--shadow);}
   .gov{font-size:12px;color:var(--ink-soft);background:color-mix(in srgb,var(--prod) 10%,transparent);border:1px solid color-mix(in srgb,var(--prod) 42%,transparent);border-radius:10px;padding:10px 12px;margin-bottom:14px;display:flex;gap:9px;align-items:flex-start;}
   .gov b{color:var(--ink);}
   .occ{border:1px solid var(--line);border-radius:13px;background:var(--panel);padding:14px 16px;margin-bottom:12px;}
@@ -366,13 +374,12 @@
       <div class="tb-right">
         <button class="iconbtn" id="fsToggle" title="Pantalla completa" data-i18n-title="coi-tt-pantalla-completa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V5a1 1 0 0 1 1-1h4M20 9V5a1 1 0 0 0-1-1h-4M4 15v4a1 1 0 0 0 1 1h4M20 15v4a1 1 0 0 1-1 1h-4"/></svg></button>
         <button class="iconbtn" id="themeToggle" title="Día / Noche" data-i18n-title="coi-tt-dia-noche"></button>
-        <button class="iconbtn" id="btnSearch" title="Buscar" data-i18n-title="coi-tt-buscar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg></button>
+        <span class="search-wrap" id="searchWrap">
+          <input type="text" id="searchInput" placeholder="Buscar por nombre, evento, fecha, artista…" autocomplete="off">
+          <button class="iconbtn" id="btnSearch" title="Buscar" data-i18n-title="coi-tt-buscar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg></button>
+          <div class="search-results" id="searchResults"></div>
+        </span>
       </div>
-    </div>
-
-    <div class="search-panel" id="searchPanel">
-      <input type="text" id="searchInput" placeholder="Buscar por nombre, evento, fecha, artista…" autocomplete="off">
-      <div class="search-results" id="searchResults"></div>
     </div>
 
     <div class="ctx" id="ctx"></div>
@@ -565,16 +572,16 @@
   // (EV/CLIENTS/ARTISTS), sin pedir nada nuevo a Supabase. Click en un
   // resultado reusa el mismo patrón de salto que ya usan Recordatorios y el
   // calendario normal (eid()/state.sel/state.date/state.view="dia").
-  var btnSearch=document.getElementById("btnSearch"),searchPanel=document.getElementById("searchPanel"),searchInput=document.getElementById("searchInput"),searchResults=document.getElementById("searchResults");
+  var btnSearch=document.getElementById("btnSearch"),searchWrap=document.getElementById("searchWrap"),searchInput=document.getElementById("searchInput"),searchResults=document.getElementById("searchResults");
   function fmtFecha(dt){return DOWF[dt.getDay()]+" "+dt.getDate()+" "+MONTHS[dt.getMonth()];}
-  function closeSearch(){searchPanel.classList.remove("open");}
-  function openSearch(){searchPanel.classList.add("open");searchInput.value="";renderSearchResults("");searchInput.focus();}
+  function closeSearch(){searchWrap.classList.remove("open");}
+  function openSearch(){searchWrap.classList.add("open");searchInput.value="";renderSearchResults("");searchInput.focus();}
   btnSearch.addEventListener("click",function(e){
     e.stopPropagation();
-    if(searchPanel.classList.contains("open"))closeSearch();else openSearch();
+    if(searchWrap.classList.contains("open"))closeSearch();else openSearch();
   });
   document.addEventListener("click",function(e){
-    if(searchPanel.classList.contains("open")&&!searchPanel.contains(e.target)&&e.target!==btnSearch)closeSearch();
+    if(searchWrap.classList.contains("open")&&!searchWrap.contains(e.target))closeSearch();
   });
   document.addEventListener("click",function(e){
     var changed=false;
@@ -588,16 +595,32 @@
     }
     if(changed)render();
   });
+  // "?" de ayuda: un solo manejador para cualquier .info-dot del archivo,
+  // mismo patrón ya usado en contracts-engine.html -- una nota nueva solo
+  // necesita el botón data-info-target="<id>" + un .info-popover con ese id.
+  document.addEventListener("click",function(e){
+    var dot=e.target.closest(".info-dot");
+    if(dot){
+      e.stopPropagation();
+      var target=document.getElementById(dot.dataset.infoTarget);
+      var wasHidden=target?target.hidden:true;
+      document.querySelectorAll(".info-popover").forEach(function(p){p.hidden=true;});
+      if(target)target.hidden=!wasHidden;
+      return;
+    }
+    if(!e.target.closest(".info-popover"))document.querySelectorAll(".info-popover").forEach(function(p){p.hidden=true;});
+  });
   searchInput.addEventListener("click",function(e){e.stopPropagation();});
   searchInput.addEventListener("keydown",function(e){if(e.key==="Escape")closeSearch();});
   searchInput.addEventListener("input",function(){renderSearchResults(searchInput.value.trim().toLowerCase());});
 
   function renderSearchResults(q){
-    if(!q){searchResults.innerHTML='<div class="search-empty">Escribe un nombre, evento, fecha o artista…</div>';return;}
-    var evMatches=[],clMatches=[],artMatches=[];
+    if(!q){searchResults.innerHTML="";return;}
+    var evMatches=[],clMatches=[],artMatches=[],cliAccMatches=[];
     EV.filter(inScope).forEach(function(e){
       var dt=parse(e.d);
-      var hay=((e.t||"")+" "+(e.venue||"")+" "+artName(e.artist)+" "+fmtFecha(dt)+" "+e.d).toLowerCase();
+      var cliNombre=e.clientId?clientAccName(e.clientId):"";
+      var hay=((e.t||"")+" "+(e.venue||"")+" "+artName(e.artist)+" "+cliNombre+" "+fmtFecha(dt)+" "+e.d).toLowerCase();
       if(hay.indexOf(q)!==-1)evMatches.push({e:e,dt:dt});
     });
     scopedClients().forEach(function(c){
@@ -606,6 +629,9 @@
     });
     ARTISTS.forEach(function(a){
       if((a.n||"").toLowerCase().indexOf(q)!==-1)artMatches.push(a);
+    });
+    CLIENT_ACCOUNTS.forEach(function(c){
+      if((c.n||"").toLowerCase().indexOf(q)!==-1)cliAccMatches.push(c);
     });
     evMatches.sort(function(a,b){return a.dt-b.dt;});
     var h="";
@@ -617,8 +643,11 @@
     section("Eventos",evMatches,function(m){
       return '<div class="search-item" data-kind="ev" data-eid="'+encodeURIComponent(eid(m.e))+'"><b>'+(m.e.t||"Evento")+'</b><span class="si-sub">'+fmtFecha(m.dt)+(m.e.venue?" · "+m.e.venue:"")+'</span></div>';
     });
-    section("Clientes",clMatches,function(c){
+    section("Clientes (cumple/aniv.)",clMatches,function(c){
       return '<div class="search-item" data-kind="cl" data-cn="'+encodeURIComponent(c.n)+'"><b>'+c.n+'</b><span class="si-sub">'+(c.estado||"")+(c.note?" · "+c.note:"")+'</span></div>';
+    });
+    section("Cuentas de cliente",cliAccMatches,function(c){
+      return '<div class="search-item" data-kind="cliacc" data-cli="'+encodeURIComponent(c.id)+'"><b>'+c.n+'</b><span class="si-sub">Filtrar su calendario</span></div>';
     });
     section("Artistas",artMatches,function(a){
       return '<div class="search-item" data-kind="art" data-aid="'+encodeURIComponent(a.id)+'"><b>'+a.n+'</b><span class="si-sub">Ver su calendario</span></div>';
@@ -636,6 +665,9 @@
           var name=decodeURIComponent(el.dataset.cn),match=null;
           EV.forEach(function(ev){if(!match&&ev.cal==="cliente"&&ev.client&&ev.client.n===name)match=ev;});
           if(match){state.sel=match;state.date=parse(match.d);state.view="dia";}
+          closeSearch();render();
+        }else if(kind==="cliacc"){
+          state.clientFilter=decodeURIComponent(el.dataset.cli);
           closeSearch();render();
         }else if(kind==="art"){
           closeSearch();
@@ -738,7 +770,9 @@
       h+='<span class="consent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>T&C aceptados</span>';
       h+='<span class="iso"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Solo ves tu información</span>';
     } else {
-      h+='<div class="who"><span style="color:var(--cliente);font-weight:700">Calendario Master</span><span style="color:var(--ink-mute);font-size:12px">consolida a todos los artistas</span></div>';
+      h+='<div class="who"><span style="color:var(--cliente);font-weight:700">Calendario Master</span>'
+        +'<span class="info-wrap"><button type="button" class="info-dot" data-info-target="masterInfoPop" aria-label="Ayuda">?</button>'
+        +'<div class="info-popover" id="masterInfoPop" hidden>Consolida a todos los artistas en un solo lugar.</div></span></div>';
     }
     ctx.innerHTML=h;
     ctx.querySelectorAll(".roleswitch button").forEach(function(b){b.onclick=function(){
@@ -1185,11 +1219,13 @@
 
   // ---------- NOTARIZACIÓN · pestaña independiente (solo manager / orden del owner) ----------
   function renderNotz(){
-    titleEl.innerHTML='Notarización <span class="sub">manager · orden del owner</span>';
+    titleEl.innerHTML='Notarización <span class="sub">manager · orden del owner</span>'
+      +'<span class="info-wrap"><button type="button" class="info-dot" data-info-target="notzInfoPop" aria-label="Ayuda">?</button>'
+      +'<div class="info-popover" id="notzInfoPop" hidden>Espacio exclusivo del manager: aquí se crean las notas de continuidad, no desde el calendario. El Manager IA solo puede notarizar cuando recibe una orden explícita del owner, y esa orden queda registrada en la nota. Protege la popularidad del DJ o alimenta el entrenamiento del sistema; nunca penaliza.</div></span>';
     if(state.role!=="owner"){view.innerHTML='<div class="locked">🔒 Espacio exclusivo del <b>manager / owner</b>. Cambia a <b>Owner · Matrix</b> para notarizar.</div>';return;}
     var gaps=[];
     OCCASIONS.forEach(function(o){o.hist.forEach(function(h){if(h.dj===null&&!h.note)gaps.push({o:o,h:h});});});
-    var html='<div class="eng-note">Espacio exclusivo del <b>manager</b>: aquí se crean las notas de continuidad — <b>no</b> desde el calendario. El <b>Manager IA</b> solo puede notarizar cuando recibe una <b>orden explícita del owner</b> (queda registrada en la nota). Protege la popularidad del DJ y/o alimenta el entrenamiento del sistema; nunca penaliza.</div>';
+    var html="";
     html+='<div class="gov">⚖ <span><b>Uso restringido:</b> estas notas son solo para uso y desarrollo interno de la empresa. No son de uso personal, no se usan para bullying, ni para tomar medidas contra ningún artista.</span></div>';
     if(!gaps.length)html+='<div class="pnote ign">No hay vacíos abiertos para notarizar.</div>';
     gaps.forEach(function(g){
