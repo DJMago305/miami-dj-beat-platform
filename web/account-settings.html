@@ -1585,6 +1585,19 @@
           </div>
         </div>
 
+        <!-- BIRTHDAY (2026-09-18, reporte real del PO: no había dónde guardar
+             su propia fecha de nacimiento -- dj_profiles.birth_date ya existía
+             en la base de datos, pero ningún formulario la exponía nunca. -->
+        <div class="form-group" style="margin-top:16px;">
+          <div class="mdj-field-outlined">
+            <input type="date" id="input-birthday" autocomplete="bday" placeholder=" " />
+            <label for="input-birthday" class="mdj-field-outlined__label">Birthday / Cumpleaños</label>
+          </div>
+          <p class="fineprint" style="margin-top:6px;font-size:11px;opacity:0.55;line-height:1.4;">
+            Miami DJ Beat te lo recuerda cada año. / Miami DJ Beat will remember it every year.
+          </p>
+        </div>
+
         <!-- ADDRESS BLOCK -->
         <h3 style="font-size: 11px; color: rgba(255, 255, 255, 0.4); text-transform: uppercase; letter-spacing: 2px; margin: 32px 0 16px 0;">Billing & Event Address</h3>
         
@@ -3402,7 +3415,8 @@
                 stage_name: newStageName,
                 username: un,
                 phone: data.phone,
-                city: data.address_city
+                city: data.address_city,
+                birth_date: data.birth_date || null
               }).eq('user_id', uid);
             if (artistErr) {
               console.error('[MDJ-SYSTEM] dj_profiles update FAILED', artistErr);
@@ -3488,6 +3502,17 @@
                 } else if (meta.username) {
                   uEl.value = String(meta.username).trim().replace(/^@+/, '');
                 }
+              }
+            }
+          } catch (uErr) { /* non-fatal */ }
+          try {
+            // birth_date SIEMPRE vive en dj_profiles (no en client_profiles) --
+            // se pide aparte sin importar si hay fila cp o no.
+            var bdEl = document.getElementById('input-birthday');
+            if (bdEl) {
+              var djBd = await db.from('dj_profiles').select('birth_date').eq('user_id', session.user.id).maybeSingle();
+              if (djBd && djBd.data && djBd.data.birth_date) {
+                bdEl.value = String(djBd.data.birth_date).slice(0, 10);
               }
             }
           } catch (uHydrate) { /* non-fatal */ }
@@ -3939,6 +3964,8 @@
                 const newCountry = typeof window.mdjGetAddressCountryForSave === 'function'
                   ? window.mdjGetAddressCountryForSave()
                   : '';
+                var elBirthday = document.getElementById('input-birthday');
+                const newBirthday = elBirthday ? elBirthday.value.trim() : '';
 
                 var elPrefEmail = document.getElementById('pref-notify-email');
                 var elPrefMkt = document.getElementById('pref-notify-marketing');
@@ -3956,6 +3983,7 @@
                   stage_name: newDisplayName || null,
                   username: uVal.value != null ? uVal.value : '',
                   phone: newPhone,
+                  birth_date: newBirthday || null,
                   address_street: newStreet,
                   address_apt: newApt,
                   address_city: newCity,

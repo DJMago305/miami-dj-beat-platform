@@ -249,6 +249,12 @@
        difuminados al scrollear, sin sangrar por encima (misma formula que el
        header del perfil de artista). No global: las otras vistas no se tocan. */
     body[data-vista="agenda"] .staff-topnav{background:rgba(7,6,5,.96) !important;}
+    /* Modo día (2026-09-17, reporte PO): la regla de arriba forzaba fondo oscuro
+       incluso en tema día, y el texto de las pestañas ya se oscurece con
+       :root[data-theme="day"] .staff-topnav button (linea ~1100) -- texto
+       oscuro sobre fondo casi negro las volvia ilegibles/invisibles. Mismo
+       "esmerilado" pero con la paleta clara del portal. */
+    :root[data-theme="day"] body[data-vista="agenda"] .staff-topnav{background:rgba(238,241,245,.96) !important;}
     /* Oculto a la vista pero VIVO en el DOM y para lectores de pantalla. */
     .solo-lectores{position:absolute;width:1px;height:1px;padding:0;margin:-1px;
       overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;}
@@ -1603,7 +1609,7 @@
       <!-- ═══ Vista AGENDA — muestra staff-agenda.html DENTRO del portal (debajo del menú, como FINANCIERO). Archivo del tronco nuevo, independiente del viejo. ═══ -->
       <section id="view-agenda" class="staff-view">
         <div id="agenda-loading" class="agenda-loading">Cargando agenda…</div>
-        <iframe id="agenda-frame" data-src="./staff-agenda.html" title="Agenda" referrerpolicy="same-origin"></iframe>
+        <iframe id="agenda-frame" data-src="./staff-agenda.html" title="Agenda" referrerpolicy="same-origin" allow="fullscreen" allowfullscreen></iframe>
       </section>
 
       <!-- ═══ Vista CASH FLOW — misma copia del tronco nuevo abriendo el tab flow (?tab=flow). 1:1, sin modificar. ═══ -->
