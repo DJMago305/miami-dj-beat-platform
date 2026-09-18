@@ -49,7 +49,7 @@
     --ink:#16182a;--ink-soft:#474d6b;--ink-mute:#9096b0;
     --line:rgba(30,40,90,0.10);--line-soft:rgba(30,40,90,0.055);
     --today:#ff2d55;--today-ink:#fff;
-    --set:#ff2e86;--staff:#ff7a4d;--prod:#8b6cff;--pago:#10b3a3;--clima:#f5a623;--cliente:#3d8bff;--owner:#8a91b4;
+    --set:#ff2e86;--staff:#ff7a4d;--prod:#8b6cff;--pago:#10b3a3;--clima:#f5a623;--cliente:#3d8bff;--personal:#54d29a;--owner:#8a91b4;
     --pot:#f5a623;--act:#10b3a3;--vip:#ff2e86;
     --shadow:0 18px 44px -26px rgba(24,30,70,0.40);
     --sunset:linear-gradient(115deg,#ff2e86,#ff7a4d 55%,#ffbe3d);
@@ -215,7 +215,10 @@
   .rem-col>h4{margin:0 0 2px;font-size:13px;display:flex;align-items:center;gap:8px;color:var(--ink);}
   .rem-col>h4 .cnt{font-family:var(--mono);font-size:11px;color:var(--ink-mute);margin-left:auto;}
   .rem-col.today>h4 b{color:var(--today);} .rem-col.future>h4 b{color:var(--pago);} .rem-col.past>h4 b{color:var(--ink-mute);}
-  .rcard{border:1px solid var(--line);border-radius:11px;background:var(--panel);padding:11px 12px;display:flex;gap:10px;align-items:flex-start;}
+  .rcard{border:1px solid var(--line);border-radius:11px;background:var(--panel);padding:11px 12px;display:flex;gap:10px;align-items:flex-start;cursor:pointer;position:relative;transition:border-color .15s,background .15s;}
+  .rcard:hover{border-color:color-mix(in srgb,var(--set) 40%,var(--line));}
+  .rcard.unread{border-color:color-mix(in srgb,var(--set) 45%,var(--line));background:color-mix(in srgb,var(--set) 5%,var(--panel));}
+  .rcard .rdot{position:absolute;top:9px;right:9px;width:8px;height:8px;border-radius:50%;background:var(--today);box-shadow:0 0 0 2px var(--panel);}
   .rcard .ricon{width:34px;height:34px;border-radius:10px;flex:none;display:grid;place-items:center;font-size:16px;background:color-mix(in srgb,var(--c) 16%,transparent);}
   .rcard .rb{flex:1;min-width:0;}
   .rcard .rt{font-size:13.5px;font-weight:650;line-height:1.25;}
@@ -397,7 +400,7 @@
   var MONTHS=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
   var MON_L=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
   var DOW1=["D","L","M","M","J","V","S"],DOWL=["dom","lun","mar","mié","jue","vie","sáb"],DOWF=["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
-  var CALN={set:"Sets / Reservas",staff:"Staff / Cobertura",prod:"Producción",pago:"Pagos / Cobros",clima:"Clima",cliente:"Cliente"};
+  var CALN={set:"Sets / Reservas",staff:"Staff / Cobertura",prod:"Producción",pago:"Pagos / Cobros",clima:"Clima",cliente:"Cliente",personal:"Calendario personal (Google)"};
   var START=8,END=27,H=52,NOW=_n0.getHours()+_n0.getMinutes()/60;  // línea "ahora" = hora REAL
 
   var ARTISTS=[{id:"mago",n:"DJ Mago",c:"#ff2e86"},{id:"luna",n:"DJ Luna",c:"#3d8bff"},{id:"tropi",n:"DJ Tropikal",c:"#10b3a3"}];
@@ -539,7 +542,21 @@
     else state.date=addDays(d,dir);
     render();
   }
-  function updateBadge(){var c=0;EV.forEach(function(e){if(e.cal!=="cliente"||!inScope(e))return;var n=daysBetween(TODAY,parse(e.d));if(n>=0&&n<=7)c++;});document.getElementById("remBadge").textContent=c;}
+  // Leído/no-leído de recordatorios: por dispositivo (localStorage), no por
+  // cuenta -- igual de alcance que coi_theme más abajo. La clave reusa eid(e)
+  // (mismo id ya usado para seleccionar/resaltar un evento en la vista Día),
+  // así que abrir el evento desde Recordatorios y desde el calendario normal
+  // marca lo mismo como leído.
+  var REM_READ_KEY="coi_rem_read_v1";
+  function loadReadSet(){ try{ return JSON.parse(localStorage.getItem(REM_READ_KEY)||"[]"); }catch(e){ return []; } }
+  function isRead(id){ return loadReadSet().indexOf(id)!==-1; }
+  function markRead(id){
+    try{
+      var s=loadReadSet();
+      if(s.indexOf(id)===-1){ s.push(id); if(s.length>800) s=s.slice(-800); localStorage.setItem(REM_READ_KEY, JSON.stringify(s)); }
+    }catch(e){}
+  }
+  function updateBadge(){var c=0;buildReminders().forEach(function(x){var n=daysBetween(TODAY,x.dt);if(n>=0&&n<=7&&!isRead(eid(x.ev)))c++;});document.getElementById("remBadge").textContent=c;}
 
   var BELL='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>';
 
@@ -578,7 +595,7 @@
   }
 
   function renderLegend(){
-    var items=[["set","Sets / Reservas"],["staff","Staff / Cobertura"],["prod","Producción"],["pago","Pagos / Cobros"],["clima","Clima"],["cliente","Clientes (cumple/aniv.)"]];
+    var items=[["set","Sets / Reservas"],["staff","Staff / Cobertura"],["prod","Producción"],["pago","Pagos / Cobros"],["clima","Clima"],["cliente","Clientes (cumple/aniv.)"],["personal","Calendario personal (Google)"]];
     var h="";items.forEach(function(it){h+='<span class="li" style="--c:var(--'+it[0]+')"><span class="sq"></span>'+it[1]+'</span>';});
     h+='<span class="note">'+(state.role==="owner"?"vista master · datos de todos los artistas":"herramienta del artista · datos aislados")+'</span>';
     legend.innerHTML=h;
@@ -595,8 +612,10 @@
     btnNotz.setAttribute("aria-selected",v==="notarizacion");
     btnNotz.style.display=(state.role==="owner")?"":"none";  // solo manager/owner
     btnCon.style.display=(state.role==="owner")?"":"none";   // Continuidad: solo staff (gestión de DJs)
-    btnRem.style.display="none";   // Recordatorios: FUERA del calendario (va a módulo de comunicación dedicado o a una tarea de ELIXIS AI) — decisión del owner
-    if(state.view==="recordatorios") state.view="mes";   // nadie lo usa aquí (ningún perfil)
+    // Recordatorios: reactivado 2026-09-17 a pedido del PO ("no veo las alertas
+    // activadas") — antes vivía oculto en espera de un módulo dedicado que
+    // nunca se construyó. Visible para ambos roles: cada uno ve sus propios
+    // recordatorios (inScope ya filtra), el owner ve el consolidado.
     if(state.role!=="owner" && state.view==="continuidad") state.view="mes";
     nav.className="nav"+((v==="recordatorios"||v==="clientes"||v==="continuidad"||v==="notarizacion")?" hidden":"");
     updateBadge();renderCtx();renderLegend();
@@ -861,10 +880,11 @@
   function buildReminders(){
     var r=[];
     EV.filter(inScope).forEach(function(e){
-      if(e.cal==="cliente")r.push({dt:parse(e.d),icon:e.kind==="aniv"?"🎉":"🎂",title:e.t.replace(/^🎂 |^🎉 /,""),sub:(e.client?e.client.estado+" · "+e.client.note:""),chan:e.client?e.client.chan:"WhatsApp",cal:"cliente",art:e.artist,auto:true});
-      else if(e.cal==="pago")r.push({dt:parse(e.d),icon:"💵",title:e.t,sub:"Cobro / conciliación",chan:"Interno",cal:"pago",art:e.artist});
-      else if(e.cal==="clima")r.push({dt:parse(e.d),icon:"🌧",title:e.t,sub:"Riesgo operativo",chan:"Push",cal:"clima",art:e.artist});
-      else if(e.cal==="set")r.push({dt:parse(e.d),icon:"🎧",title:e.t,sub:e.venue||"Evento confirmado",chan:"Push",cal:"set",art:e.artist});
+      if(e.cal==="cliente")r.push({dt:parse(e.d),icon:e.kind==="aniv"?"🎉":"🎂",title:e.t.replace(/^🎂 |^🎉 /,""),sub:(e.client?e.client.estado+" · "+e.client.note:""),chan:e.client?e.client.chan:"WhatsApp",cal:"cliente",art:e.artist,auto:true,ev:e});
+      else if(e.cal==="pago")r.push({dt:parse(e.d),icon:"💵",title:e.t,sub:"Cobro / conciliación",chan:"Interno",cal:"pago",art:e.artist,ev:e});
+      else if(e.cal==="clima")r.push({dt:parse(e.d),icon:"🌧",title:e.t,sub:"Riesgo operativo",chan:"Push",cal:"clima",art:e.artist,ev:e});
+      else if(e.cal==="set")r.push({dt:parse(e.d),icon:"🎧",title:e.t,sub:e.venue||"Evento confirmado",chan:"Push",cal:"set",art:e.artist,ev:e});
+      else if(e.cal==="personal")r.push({dt:parse(e.d),icon:e.kind==="cumple"?"🎂":"📅",title:e.t,sub:"Sincronizado de "+artName(e.artist),chan:"Push",cal:"personal",art:e.artist,auto:true,ev:e});
     });
     r.sort(function(a,b){return a.dt-b.dt;});return r;
   }
@@ -874,13 +894,31 @@
     all.forEach(function(x){var n=daysBetween(TODAY,x.dt);if(n<0)past.push(x);else if(n===0)today.push(x);else fut.push(x);});
     past=past.slice(Math.max(0,past.length-6));fut=fut.slice(0,8);
     view.innerHTML='<div class="rem-grid">'+col("past","Pasados","seguimiento",past)+col("today","Hoy","10 ago",today)+col("future","Próximos","7 días",fut)+'</div>';
+    // Click en una tarjeta = "leída" (el numero de la campana ya no la cuenta,
+    // pedido explicito del PO: "hasta que no se lean no se borra el numero")
+    // + salto directo al evento en la vista Día (mismo eid()/state.sel que ya
+    // usa el calendario normal para resaltar un evento -- un patrón por función).
+    view.querySelectorAll(".rcard[data-remid]").forEach(function(el){
+      el.addEventListener("click", function(){
+        var rid=decodeURIComponent(el.dataset.remid);
+        markRead(rid);
+        el.classList.remove("unread");
+        var dot=el.querySelector(".rdot"); if(dot) dot.remove();
+        updateBadge();
+        var e=findEv(rid);
+        if(e){ state.sel=e; state.date=parse(e.d); state.view="dia"; render(); }
+      });
+    });
   }
   function col(cls,label,meta,items){
     var owner=(state.role==="owner");
     var h='<div class="rem-col '+cls+'"><h4><b>'+label+'</b><span class="cnt">'+meta+' · '+items.length+'</span></h4>';
     if(!items.length)h+='<div class="rem-empty">Sin recordatorios.</div>';
     items.forEach(function(x){
-      h+='<div class="rcard"><div class="ricon" style="--c:var(--'+x.cal+')">'+x.icon+'</div><div class="rb"><div class="rt">'+x.title+'</div>'+(x.sub?'<div class="rs">'+x.sub+'</div>':'')
+      var rid=eid(x.ev), unread=!isRead(rid);
+      h+='<div class="rcard'+(unread?' unread':'')+'" data-remid="'+encodeURIComponent(rid)+'" title="Ver el evento y marcarlo como leído">'
+        +(unread?'<span class="rdot" aria-hidden="true"></span>':'')
+        +'<div class="ricon" style="--c:var(--'+x.cal+')">'+x.icon+'</div><div class="rb"><div class="rt">'+x.title+'</div>'+(x.sub?'<div class="rs">'+x.sub+'</div>':'')
         +'<div class="rmeta"><span class="pill when">'+relLabel(x.dt)+'</span><span class="pill chan">'+x.chan+'</span>'
         +(x.auto?'<span class="pill auto">'+BELL+'auto</span>':'')
         +(owner?'<span class="pill art" style="--a:'+artColor(x.art)+'">'+artName(x.art)+'</span>':'')
@@ -1052,7 +1090,7 @@
       var r=await sb.from("leads").select("event_date,event_start_time,event_end_time,event_type,name,venue,location,event_location,city,status,payment_status,total_amount,budget,assigned_dj_id,assigned_dj_name,assigned_staff_name");
       if(r.error) throw r.error;
       var m=mapLeads((r.data||[]).filter(function(x){ return x.event_date; }));
-      _leadsEv=m.evs; ARTISTS=m.artists.concat(_resEv.some(function(e){return e.artist==="_res";})?[_resArtist]:[]); BASE_EV=_leadsEv.concat(_resEv);
+      _leadsEv=m.evs; ARTISTS=m.artists.concat(_resEv.some(function(e){return e.artist==="_res";})?[_resArtist]:[]); BASE_EV=_leadsEv.concat(_resEv).concat(_syncEv);
       rebuild(); render();
     }catch(err){ console.warn("[Matrix] carga de leads falló:", err); }
   }
@@ -1091,7 +1129,7 @@
     }catch(err){ console.warn("[Matrix] calendario maestro (¿RPC get_master_calendar_events creada?):", err.message||err); }
   }
   // ═══ Residencias recurrentes reales (tabla residency_schedule) ═══
-  var _leadsEv=[], _resEv=[];
+  var _leadsEv=[], _resEv=[], _syncEv=[];
   var _resArtist={id:"_res",n:"DJMago305 · Residencias",c:"#c5a059"};
   async function loadResidencies(){
     try{
@@ -1136,9 +1174,79 @@
       _resEv=evs;
       var _hasResChip=evs.some(function(e){return e.artist==="_res";});
       if(_hasResChip && !ARTISTS.some(function(a){return a.id==="_res";})) ARTISTS=ARTISTS.concat([_resArtist]);
-      BASE_EV=_leadsEv.concat(_resEv); rebuild(); render();
+      BASE_EV=_leadsEv.concat(_resEv).concat(_syncEv); rebuild(); render();
     }catch(err){ console.warn("[Matrix] residencias:", err.message||err); }
   }
+
+  // ═══ Sincronización de calendario personal (Google, PR #403) ═══
+  // Lee elixis_agenda_eventos filas tipo "cumpleanos"/"nota" que llegan del
+  // conector de Google Calendar de cada artista (calendar-oauth-callback +
+  // calendar-sync-webhook). RLS ya filtra solo: el owner ve todas las filas
+  // activas, un artista solo las suyas propias no-confidenciales. El SSOT es
+  // esta tabla -- si aún no hay filas (conector recién activado, sin correr
+  // el backfill), simplemente no aparece nada, sin inventar datos de ejemplo.
+  async function loadPersonalCalendarSync(){
+    try{
+      var sb=(window.getSupabaseClient? window.getSupabaseClient() : window.supabase);
+      if(!sb || !sb.from || !sb.auth){ return setTimeout(loadPersonalCalendarSync, 300); }
+      if(!(await sb.auth.getSession()).data.session){ return setTimeout(loadPersonalCalendarSync, 300); }
+      var r=await sb.from("elixis_agenda_eventos")
+        .select("user_id,dj_nombre,venue_nombre,fecha_inicio,tipo,notas")
+        .eq("estado","activo")
+        .in("tipo",["cumpleanos","nota"]);
+      if(r.error) throw r.error;
+      var rows=r.data||[];
+      if(!rows.length){ _syncEv=[]; BASE_EV=_leadsEv.concat(_resEv).concat(_syncEv); rebuild(); render(); return; }
+
+      // dj_nombre ya viene guardado en cada fila (lo resolvió el sync al escribir),
+      // pero el "artist id" que usa esta pantalla para color/pip es dj_profiles.id
+      // (no el user_id de auth) -- hay que resolverlo para que la atribución calce
+      // con el resto del sistema (leads.assigned_dj_id, residency_schedule.dj_id).
+      var uids=[]; rows.forEach(function(x){ if(uids.indexOf(x.user_id)===-1) uids.push(x.user_id); });
+      var profByUser={};
+      try{
+        var pr=await sb.from("dj_profiles").select("id,user_id,stage_name,dj_name,full_name").in("user_id", uids);
+        (pr.data||[]).forEach(function(p){ profByUser[p.user_id]=p; });
+      }catch(e2){ console.warn("[Matrix] dj_profiles lookup para sync personal falló:", e2.message||e2); }
+
+      var pal=0, out=[];
+      rows.forEach(function(row){
+        var prof=profByUser[row.user_id];
+        var artId=prof?prof.id:row.user_id;   // sin perfil resuelto, cae al auth id (mejor eso que perder el evento)
+        var nm=(prof&&(prof.stage_name||prof.dj_name||prof.full_name))||row.dj_nombre||"DJ";
+        if(!ARTISTS.some(function(a){return a.id===artId;})) ARTISTS.push({id:artId, n:nm, c:DJ_PALETTE[pal++ % DJ_PALETTE.length]});
+        var d0=new Date(row.fecha_inicio), iso=d0.getFullYear()+"-"+pad(d0.getMonth()+1)+"-"+pad(d0.getDate());
+        out.push({ d:iso, cal:"personal", ad:true, kind:(row.tipo==="cumpleanos"?"cumple":"nota"),
+          t:row.notas||row.venue_nombre||(row.tipo==="cumpleanos"?"Cumpleaños":"Evento personal"),
+          artist:artId });
+      });
+      _syncEv=out;
+      BASE_EV=_leadsEv.concat(_resEv).concat(_syncEv);
+      rebuild(); render();
+    }catch(err){ console.warn("[Matrix] sincronización de calendario personal:", err.message||err); }
+  }
+
+  // ═══ Campana en tiempo real ═══
+  // Se suscribe a elixis_agenda_eventos (altas/bajas del sync de Google
+  // Calendar y de ELIXIS) y recarga sola en cuanto algo cambia -- mismo
+  // patrón .channel()/.on('postgres_changes') ya usado en client-portal.js
+  // para el chat del portal, no se inventa uno nuevo. Requiere la tabla
+  // dentro de supabase_realtime (migración
+  // 20260917160000_elixis_agenda_eventos_realtime.sql); si esa migración
+  // aún no corrió, subscribe() simplemente no recibe nada -- no rompe la
+  // carga inicial (que sigue siendo la consulta normal de arriba).
+  var _remRealtimeChannel=null;
+  function subscribeRemindersRealtime(){
+    var sb=(window.getSupabaseClient? window.getSupabaseClient() : window.supabase);
+    if(!sb || !sb.channel){ return setTimeout(subscribeRemindersRealtime, 300); }
+    if(_remRealtimeChannel){ try{ sb.removeChannel(_remRealtimeChannel); }catch(e){} }
+    _remRealtimeChannel = sb.channel("coi-agenda-eventos")
+      .on("postgres_changes", { event: "*", schema: "public", table: "elixis_agenda_eventos" }, function(){
+        loadPersonalCalendarSync();
+      })
+      .subscribe();
+  }
+
   BASE_EV=[]; CLIENTS=[]; ARTISTS=[];   // arrancamos vacío: los datos reales llegan de Supabase (nada de mock)
   rebuild();render();
   // ═══ Rol real: staff → Owner·Matrix; artista → su modo personal aislado ═══
@@ -1166,6 +1274,8 @@
   loadRealLeads();
   loadClientDates();
   loadResidencies();
+  loadPersonalCalendarSync();
+  subscribeRemindersRealtime();
 })();
 </script>
 <script>

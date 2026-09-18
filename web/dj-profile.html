@@ -8573,11 +8573,14 @@
             </div>
         </section>
 
-        <!-- Integraciones de calendario (2026-09-01 infra + 2026-09-17 activacion real de Google):
-             Apple sigue disabled -- usa CalDAV, no OAuth2, no hay flujo construido (calendar-oauth-init
-             declina provider=apple con 501). Google SI tiene las 3 credenciales ya cargadas en Supabase
-             (GOOGLE_CALENDAR_CLIENT_ID/_SECRET, CALENDAR_OAUTH_STATE_SECRET, confirmado en vivo con
-             calendar-oauth-init devolviendo 200 + URL real) -- solo faltaba activar este boton. -->
+        <!-- Integraciones de calendario. UNICO control real = el switch "Sync Google
+             Calendar" de account-settings.html (Cuenta > Preferences) -- 2026-09-17,
+             a pedido del PO, tras detectar que aqui habia un SEGUNDO boton duplicado
+             que disparaba el mismo calendar-oauth-init por su cuenta (confusion real:
+             el PO ya usaba el switch de Account Settings, ni sabia que este boton
+             existia). Se retira la logica duplicada; esto es solo un link al mismo
+             lugar de siempre, para "un patron por funcion" en vez de dos casi-iguales
+             que pueden desincronizarse. Apple sigue disabled -- usa CalDAV, no OAuth2. -->
         <section style="padding:40px 0;background:#000;min-height:40vh;">
             <div class="container" style="padding:0 56px;">
                 <div style="margin-bottom:24px;">
@@ -8591,51 +8594,16 @@
                         <span style="flex:1;">Conectar Apple Calendar</span>
                         <span style="font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:rgba(197,160,89,0.7);border:1px solid rgba(197,160,89,0.3);border-radius:999px;padding:3px 10px;">Próximamente</span>
                     </button>
-                    <button type="button" id="btn-connect-google-calendar" onclick="mdjConnectGoogleCalendar()"
-                        style="display:flex;align-items:center;gap:14px;padding:16px 20px;border-radius:12px;border:1px solid rgba(197,160,89,0.35);background:rgba(197,160,89,0.06);color:#fff;font-size:15px;font-weight:700;cursor:pointer;text-align:left;">
+                    <a href="./account-settings.html?mdj_nav=profile" id="btn-connect-google-calendar"
+                        style="display:flex;align-items:center;gap:14px;padding:16px 20px;border-radius:12px;border:1px solid rgba(197,160,89,0.35);background:rgba(197,160,89,0.06);color:#fff;font-size:15px;font-weight:700;cursor:pointer;text-align:left;text-decoration:none;">
                         <span style="font-size:22px;line-height:1;">🗓️</span>
                         <span style="flex:1;">Conectar Google Calendar</span>
-                        <span id="btn-connect-google-calendar-badge" style="font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#c5a059;border:1px solid rgba(197,160,89,0.4);border-radius:999px;padding:3px 10px;">Conectar</span>
-                    </button>
+                        <span style="font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#c5a059;border:1px solid rgba(197,160,89,0.4);border-radius:999px;padding:3px 10px;">Ir a Ajustes →</span>
+                    </a>
                 </div>
             </div>
         </section>
     </div>
-
-    <script>
-        async function mdjConnectGoogleCalendar() {
-            var btn = document.getElementById('btn-connect-google-calendar');
-            var badge = document.getElementById('btn-connect-google-calendar-badge');
-            var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
-            if (!sb) { alert('No se pudo conectar. Recarga la página e inténtalo de nuevo.'); return; }
-            var sess = await sb.auth.getSession();
-            var session = sess && sess.data && sess.data.session;
-            if (!session) {
-                window.location.href = './login.html?next=' + encodeURIComponent(window.location.pathname + window.location.search);
-                return;
-            }
-            if (btn) btn.disabled = true;
-            if (badge) badge.textContent = 'Conectando…';
-            try {
-                var fnUrl = typeof window.mdbSupabaseFunctionUrl === 'function' ? window.mdbSupabaseFunctionUrl('calendar-oauth-init') : '';
-                if (!fnUrl) throw new Error('calendar-oauth-init no disponible');
-                var res = await fetch(fnUrl + '?provider=google', {
-                    headers: { Authorization: 'Bearer ' + session.access_token }
-                });
-                var body = null;
-                try { body = await res.json(); } catch (eJson) { void eJson; }
-                if (res.ok && body && body.ok && body.url) {
-                    window.location.href = body.url;
-                    return;
-                }
-                throw new Error((body && (body.error || body.detalle)) || ('HTTP ' + res.status));
-            } catch (e) {
-                if (btn) btn.disabled = false;
-                if (badge) badge.textContent = 'Conectar';
-                alert('No se pudo iniciar la conexión con Google Calendar: ' + (e && e.message ? e.message : 'error desconocido'));
-            }
-        }
-    </script>
 
     <script>
         // Global constants for DJ availability
