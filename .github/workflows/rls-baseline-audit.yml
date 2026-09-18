@@ -36,9 +36,7 @@ jobs:
           fi
           LINE=$(psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -A -F'|' -t -f supabase/scripts/audit_security_baseline_fast_probe.sql)
           echo "probe_row=$LINE"
-          IFS='|' read -r a b c d total <<EOF
-$LINE
-EOF
+          IFS='|' read -r a b c d total <<< "$LINE"
           if [ -z "$total" ]; then
             echo "No se pudo leer n_fast_total" >&2
             exit 1
