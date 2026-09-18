@@ -134,7 +134,20 @@
   .chip .tm{color:var(--ink-mute);font-variant-numeric:tabular-nums;}
   .more{font-size:11px;color:var(--ink-mute);padding:2px 5px;font-weight:600;}
 
-  .tl{display:grid;grid-template-columns:56px 1fr;border:1px solid var(--line);border-radius:14px;overflow:hidden;}
+  /* BUG REAL ENCONTRADO 2026-09-18 (reporte del PO con captura real -- las
+     residencias nunca se vieron en la columna de horas, ni antes de hoy):
+     .tl definía 2 columnas (56px + 1fr) pero sus 3 hijos directos (.allday
+     header, .allday de eventos "todo el día", .grid-scroll) NO declaran a
+     qué columna van -- el auto-placement de CSS Grid los reparte 2 por fila,
+     así que .grid-scroll (la cuadrícula de horas completa) caía en la
+     PRIMERA columna de una fila nueva: 56px de ancho real, no el 100% que
+     necesitaba. De ahí bajaba a 0px en .grid-body/.cols/.col, y cualquier
+     evento quedaba comprimido a una rayita de ~17px, invisible en la
+     práctica -- sin importar cuántos títulos hubiera. .allday y .grid-body ya
+     resuelven su PROPIO reparto 56px/contenido por dentro (ver sus reglas
+     abajo); .tl solo necesita UNA columna para que cada hijo ocupe una fila
+     completa, tal como ya se veía visualmente en el header de "todo el día". */
+  .tl{display:grid;grid-template-columns:1fr;border:1px solid var(--line);border-radius:14px;overflow:hidden;}
   .allday{display:grid;grid-template-columns:56px 1fr;border-bottom:1px solid var(--line);background:var(--panel-2);}
   .allday .lbl{font-size:10.5px;color:var(--ink-mute);padding:6px;text-align:right;font-weight:600;}
   .ad-cols{display:grid;} .ad-col{padding:4px 5px;border-left:1px solid var(--line-soft);min-width:0;} .ad-col:first-child{border-left:none;}
@@ -164,15 +177,13 @@
   .day-split:hover::before,.day-split.drag::before{background:var(--set);width:3px;}
   .day-split:hover::after,.day-split.drag::after{background:var(--set);opacity:1;}
   .detail{border:1px solid var(--line);border-radius:14px;padding:18px;background:var(--panel-2);align-self:stretch;min-width:0;display:flex;flex-direction:column;}
-  /* El panel llena el alto (igual que el timeline). Se ven ~2 tarjetas completas; si hay
-     más eventos, la tarjeta COMPLETA se desliza hacia arriba y el resto va apareciendo —
-     NUNCA hay scroll dentro de una misma tarjeta. Las tarjetas no cambian de tamaño. */
-  .ev-cards{flex:1 1 auto;min-height:0;overflow:hidden;position:relative;}
-  .ev-track{display:flex;flex-direction:column;gap:14px;min-height:100%;transition:transform .55s cubic-bezier(.4,0,.2,1);will-change:transform;}
-  .ev-track .ev-card{flex:none;margin-bottom:0;}
-  .ev-dots{display:flex;justify-content:center;gap:6px;padding-top:14px;flex:none;}
-  .ev-dot{width:6px;height:6px;border-radius:50%;background:var(--line);cursor:pointer;transition:background .3s,width .3s;}
-  .ev-dot.on{background:var(--set);width:18px;}
+  /* El panel llena el alto (igual que el timeline) y muestra SOLO el evento
+     seleccionado en la línea de tiempo de la izquierda -- ya no un carrusel
+     automático (retirado 2026-09-18, pedido explícito del PO). Si el
+     contenido de esa única tarjeta es más alto que el panel (formularios
+     abiertos, etc.), se scrollea -- nunca se recorta. */
+  .ev-cards{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;position:relative;}
+  .detail-hint{flex:none;font-size:12px;color:var(--ink-mute);margin-bottom:10px;}
   .detail .empty{color:var(--ink-mute);font-size:14px;text-align:center;padding:30px 10px;}
   .detail .dcal{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:650;color:var(--c);}
   .detail .dcal .sq{width:10px;height:10px;border-radius:3px;background:var(--c);}
@@ -180,7 +191,10 @@
   .detail .when{color:var(--ink-mute);font-size:13px;font-variant-numeric:tabular-nums;margin-bottom:14px;}
   .detail .venue{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink-soft);padding:10px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:12px;}
   .detail .venue svg{width:16px;height:16px;color:var(--ink-mute);flex:none;}
-  .detail .artline{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-mute);margin-bottom:10px;}
+  /* Contraste subido 2026-09-18 (mismo reporte del PO: "Artista: DJMago305 muy
+     claro") -- --ink-mute quedaba demasiado tenue para un dato que sí importa
+     leer de un vistazo (quién toca), no es una etiqueta decorativa. */
+  .detail .artline{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-soft);margin-bottom:10px;}
   .detail .artline .pip{width:9px;height:9px;border-radius:50%;background:var(--a);}
   .detail-hd{display:flex;flex:none;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--line);}
   .detail-hd h3{font-size:15px;font-weight:700;letter-spacing:-0.01em;text-transform:capitalize;color:var(--ink);}
@@ -208,6 +222,31 @@
   .rec-item .pip{width:8px;height:8px;border-radius:50%;flex:none;}
   .rec-item .rn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .rec-item .rtag{font-size:10.5px;padding:2px 7px;border-radius:99px;font-weight:700;white-space:nowrap;}
+  .res-dj-form{margin-top:10px;padding:11px;border-radius:10px;background:var(--panel-2);border:1px solid var(--line);display:flex;flex-direction:column;gap:9px;}
+  /* Contraste subido 2026-09-18 (reporte del PO: "los campos del DJ casi no se
+     ven, están muy claritos") -- la etiqueta ya usaba --ink-mute (deliberadamente
+     tenue en el resto de la app) y el placeholder del input caía al gris por
+     defecto del navegador, ninguno pensado para leerse fácil dentro de esta
+     tarjeta oscura. Subidos a --ink-soft, y el placeholder fijado explícito
+     (antes no existía ninguna regla ::placeholder en todo el archivo). */
+  .res-dj-form label{font-size:10.5px;color:var(--ink-soft);font-weight:700;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em;}
+  .res-dj-input{width:100%;padding:8px 9px;border-radius:9px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:13px;font-family:var(--sans);box-sizing:border-box;}
+  .res-dj-input::placeholder{color:var(--ink-soft);opacity:0.85;}
+  .res-dj-scope{display:flex;flex-direction:column;gap:6px;}
+  .res-dj-scope label{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-soft);text-transform:none;font-weight:500;letter-spacing:0;}
+  .res-dj-msg{font-size:12px;color:var(--ink-mute);}
+  .res-dj-msg.ok{color:var(--act);}
+  .res-dj-msg.err{color:var(--sunset);}
+  .res-dj-save{border:none;cursor:pointer;background:var(--pago);color:#04211d;font-weight:700;padding:8px 14px;border-radius:9px;font-size:13px;font-family:var(--sans);}
+  .res-dj-cancel,.res-del-cancel{border:1px solid var(--line);background:transparent;color:var(--ink-soft);cursor:pointer;padding:8px 14px;border-radius:9px;font-size:13px;font-family:var(--sans);}
+  .res-actions{display:flex;gap:8px;margin-top:12px;}
+  .res-actions .act{margin-top:0;flex:1;}
+  .act-danger{background:#e5484d !important;color:#fff !important;}
+  .res-del-save{border:none;cursor:pointer;font-weight:700;padding:8px 14px;border-radius:9px;font-size:13px;font-family:var(--sans);}
+  .lead-del-btn{margin-top:12px;}
+  .lead-del-warn{font-size:12.5px;color:var(--ink-soft);margin:0 0 4px;}
+  .lead-del-save{border:none;cursor:pointer;font-weight:700;padding:8px 14px;border-radius:9px;font-size:13px;font-family:var(--sans);}
+  .lead-del-cancel{border:1px solid var(--line);background:transparent;color:var(--ink-soft);cursor:pointer;padding:8px 14px;border-radius:9px;font-size:13px;font-family:var(--sans);}
   .rec-item .rtag.aff{background:color-mix(in srgb,var(--pago) 20%,transparent);color:var(--pago);}
   .rec-item .rtag.pro{background:color-mix(in srgb,var(--sunset) 22%,transparent);color:var(--sunset);}
   .rec-item .rsend{border:none;border-radius:8px;padding:6px 10px;background:var(--cliente);color:#04211d;font-weight:700;font-size:11.5px;cursor:pointer;white-space:nowrap;}
@@ -266,6 +305,8 @@
   .estado.VIP{background:color-mix(in srgb,var(--vip) 16%,transparent);color:var(--vip);}
   .cdate{font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:12px;color:var(--ink-soft);}
   .pencil{border:1px solid var(--line);background:var(--panel);border-radius:8px;width:28px;height:26px;cursor:pointer;color:var(--ink-mute);display:grid;place-items:center;} .pencil svg{width:14px;height:14px;}
+  .crm-del-btn{color:#e5484d;border-color:color-mix(in srgb,#e5484d 45%,var(--line));}
+  .crm-del-btn:hover{background:color-mix(in srgb,#e5484d 12%,var(--panel));}
   .newform{display:grid;grid-template-columns:1.4fr .9fr .9fr .9fr auto;gap:8px;padding:12px;border:1px dashed var(--line);border-radius:12px;background:var(--panel-2);margin-bottom:12px;align-items:end;}
   .newform label{font-size:10.5px;color:var(--ink-mute);font-weight:600;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em;}
   .newform input,.newform select{width:100%;padding:8px 9px;border-radius:9px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:13px;font-family:var(--sans);}
@@ -510,6 +551,19 @@
 
   var EV=[];
   function rebuild(){
+    // Vincula cumpleaños sincronizados de Google (cal:"personal", sin ficha
+    // propia) con la ficha CRM que el mismo artista o cliente ya configuró en
+    // "Base de clientes" para ese contacto (PO 2026-09-18: "si es un
+    // cumpleaños de su agenda, verá el dato del cliente que él configuró").
+    // Google solo entrega el nombre del contacto (nunca un ID) -- el nombre
+    // normalizado + el mismo dueño (artist/clientId) es la única señal real
+    // para enlazarlo. Sin match, el evento se queda igual que hoy (sin e.client).
+    _syncEv.forEach(function(e){
+      if(e.kind!=="cumple" || e.client) return;
+      var ownerKey=e.artist||e.clientId, nameNorm=String(e.t||"").trim().toLowerCase();
+      var m=CLIENTS.filter(function(c){ return c.owner===ownerKey && String(c.n||"").trim().toLowerCase()===nameNorm; });
+      if(m.length) e.client=m[0];
+    });
     // Capa dinámica "Aniversarios VIP": desde CLIENTS reales (client_profiles) genera cumpleaños/aniversarios
     // como eventos recurrentes en años cercanos (para navegar). El SSOT es la fecha; el evento se genera.
     var gen=[], nowY=(new Date()).getFullYear(), years=[nowY-1, nowY, nowY+1];
@@ -875,6 +929,38 @@
     renderDayDetail(d);wireTimed();wireDaySplit();
   }
 
+  // Arreglo rápido intermedio (PO 2026-09-18): dos eventos reales que se
+  // cruzan en horario (ej. dos residencias, mismo viernes noche, distinto
+  // venue) se dibujaban encimados en la misma columna -- el segundo tapaba
+  // por completo al primero. Esto NO es el diseño final de "carriles" que
+  // describió el PO (eso queda para otro ticket); solo evita que un evento
+  // real desaparezca detrás de otro: si se cruzan, se ponen lado a lado.
+  // Algoritmo clásico de layout de calendario: agrupa por clusters de
+  // solapamiento (barrido por hora de inicio) y dentro de cada cluster asigna
+  // la primera columna libre a cada evento.
+  function layoutOverlaps(evs){
+    var sorted=evs.slice().sort(function(a,b){ return (a.s-b.s)||(a.e-b.e); });
+    var layout=new Map(), cluster=[], clusterEnd=-Infinity;
+    function flush(){
+      if(!cluster.length) return;
+      var cols=[]; // cols[i] = fin del último evento puesto en esa columna
+      cluster.forEach(function(e){
+        var placed=false;
+        for(var i=0;i<cols.length;i++){ if(cols[i]<=e.s){ cols[i]=e.e; layout.set(e,{col:i}); placed=true; break; } }
+        if(!placed){ cols.push(e.e); layout.set(e,{col:cols.length-1}); }
+      });
+      cluster.forEach(function(e){ layout.get(e).cols=cols.length; });
+      cluster=[]; clusterEnd=-Infinity;
+    }
+    sorted.forEach(function(e){
+      if(cluster.length && e.s>=clusterEnd) flush();
+      cluster.push(e);
+      if(e.e>clusterEnd) clusterEnd=e.e;
+    });
+    flush();
+    return layout;
+  }
+
   function buildTimeline(days){
     var owner=(state.role==="owner");
     var html='<div class="tl"><div class="allday"><div class="lbl">todo el día</div><div class="ad-cols colhead" style="grid-template-columns:repeat('+days.length+',1fr)">';
@@ -888,17 +974,50 @@
     html+='</div><div class="cols" style="grid-template-columns:repeat('+days.length+',1fr)">';
     days.forEach(function(dt){html+='<div class="col"><div class="hlines">';for(var h=START;h<END;h++)html+='<i></i>';html+='</div>';
       if(same(dt,TODAY))html+='<div class="nowline" style="top:'+((NOW-START)*H)+'px"></div>';
-      evOn(key(dt)).filter(function(e){return !e.ad;}).forEach(function(e){var top=(e.s-START)*H,hgt=Math.max((e.e-e.s)*H-3,26);var selCls=(state.sel&&eid(state.sel)===eid(e))?' sel':'';
-        html+='<div class="tev'+selCls+'" style="--c:var(--'+e.cal+');top:'+top+'px;height:'+hgt+'px" data-id="'+eid(e)+'"><b>'+e.t+'</b><span>'+fmtT(e.s)+' – '+fmtT(e.e)+'</span></div>';});
+      var _dayTimed=evOn(key(dt)).filter(function(e){return !e.ad;});
+      var _overlapLay=layoutOverlaps(_dayTimed);
+      _dayTimed.forEach(function(e){var top=(e.s-START)*H,hgt=Math.max((e.e-e.s)*H-3,26);var selCls=(state.sel&&eid(state.sel)===eid(e))?' sel':'';
+        var lay=_overlapLay.get(e)||{col:0,cols:1};
+        var laneCss=lay.cols>1?(';left:calc('+(lay.col*100/lay.cols)+'% + 3px);right:auto;width:calc('+(100/lay.cols)+'% - 6px)'):'';
+        html+='<div class="tev'+selCls+'" style="--c:var(--'+e.cal+');top:'+top+'px;height:'+hgt+'px'+laneCss+'" data-id="'+eid(e)+'"><b>'+e.t+'</b><span>'+fmtT(e.s)+' – '+fmtT(e.e)+'</span></div>';});
       html+='</div>';});
     html+='</div></div></div></div>';return html;
   }
 
   function eid(e){return e.d+"|"+e.t;}
   function findEv(id){for(var i=0;i<EV.length;i++)if(eid(EV[i])===id)return EV[i];return null;}
+
+  // ═══ Residencias: reasignar DJ directo desde el calendario (PO 2026-09-17) ═══
+  // Llama la Edge Function residency-schedule-manage (el RPC de escritura es
+  // service_role-only, el navegador no puede llamarlo directo). Requiere
+  // sesión real de staff -- la Edge Function la vuelve a verificar server-side,
+  // esto solo evita el intento inútil si por lo que sea __COI_STAFF quedó mal.
+  async function callResidencyManage(action, payload){
+    var sb=(window.getSupabaseClient? window.getSupabaseClient() : window.supabase);
+    var sess=(await sb.auth.getSession()).data.session;
+    if(!sess) throw new Error("Sesión expirada. Recarga la página.");
+    var base=(window.MDB_SUPABASE_URL||"").replace(/\/$/,"");
+    if(!base) throw new Error("Configuración de Supabase no encontrada.");
+    var body=Object.assign({action:action}, payload);
+    var resp=await fetch(base+"/functions/v1/residency-schedule-manage",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+sess.access_token},
+      body:JSON.stringify(body)
+    });
+    var out=await resp.json().catch(function(){return {};});
+    if(!resp.ok || !out.ok) throw new Error(out.error||("http_"+resp.status));
+    return out;
+  }
+  var _resDjSeq=0;
   function wireTimed(){
     view.querySelectorAll("[data-id]").forEach(function(el){el.onclick=function(){var e=findEv(el.dataset.id);if(!e)return;state.sel=e;if(state.view!=="dia"){state.date=parse(e.d);state.view="dia";render();}else render();};});
-    var gs=document.getElementById("gscroll");if(gs)gs.scrollTop=(17-START)*H;
+    var gs=document.getElementById("gscroll");if(!gs)return;
+    // Autoscroll al primer evento del día en vez de una hora fija (PO
+    // 2026-09-18: una Residencia de 12pm-5pm quedaba arriba del scroll inicial
+    // en 5pm/17h -- parecía que la columna izquierda no dibujaba el evento).
+    var todays=evOn(key(state.date)).filter(function(e){return !e.ad && e.s!=null;});
+    var firstH=todays.length?Math.min.apply(null,todays.map(function(e){return e.s;})):17;
+    gs.scrollTop=(Math.max(START,firstH-1)-START)*H;
   }
 
   // Divisor vertical arrastrable de la vista Día: el usuario decide cuánto espacio
@@ -940,6 +1059,47 @@
     h+='<div class="when"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>'+when+'</div>';
     if(state.role==="owner")h+='<div class="artline"><span class="pip" style="--a:'+artColor(e.artist)+'"></span>Artista: '+artName(e.artist)+'</div>';
     if(e.venue)h+='<div class="venue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg>'+e.venue+'</div>';
+    // Reasignar DJ de una Residencia -- solo staff/owner (PO 2026-09-17: "el
+    // proceso debe ser desde el mismo día... reemplaza el DJ con una opción
+    // una vez o para siempre"). e.residencyId lo agrega loadResidencies().
+    if(e.residencyId && window.__COI_STAFF===true){
+      var _rdj="resdj"+(_resDjSeq++), _rdel="resdel"+(_resDjSeq++);
+      h+='<div class="layers-lbl">Residencia</div>';
+      h+='<div class="artline">DJ actual: <b>'+(e.djName||"—")+'</b></div>';
+      h+='<div class="res-actions">'
+        +'<button class="act res-dj-btn" data-resid="'+e.residencyId+'" data-occdate="'+e.occurrenceDate+'" data-dow="'+e.dayOfWeek+'" data-shift="'+(e.shift||"")+'" data-venue="'+(e.venue||"")+'">Reemplazar DJ</button>'
+        +'<button class="act act-danger res-del-btn" data-resid="'+e.residencyId+'" data-occdate="'+e.occurrenceDate+'" data-dow="'+e.dayOfWeek+'" data-shift="'+(e.shift||"")+'" data-venue="'+(e.venue||"")+'">Eliminar</button>'
+        +'</div>';
+      h+='<div class="res-dj-form" hidden>'
+        +'<div><label>Nuevo DJ</label><input type="text" class="res-dj-input" placeholder="Nombre del DJ"></div>'
+        +'<div class="res-dj-scope">'
+        +'<label><input type="radio" name="'+_rdj+'" value="una_vez" checked> Solo esta fecha ('+e.occurrenceDate+')</label>'
+        +'<label><input type="radio" name="'+_rdj+'" value="siempre"> Esta y todas las futuras</label>'
+        +'</div>'
+        +'<div class="res-dj-msg" hidden></div>'
+        +'<button class="res-dj-save">Guardar</button> <button class="res-dj-cancel">Cancelar</button>'
+        +'</div>';
+      h+='<div class="res-del-form" hidden>'
+        +'<div class="res-dj-scope">'
+        +'<label><input type="radio" name="'+_rdel+'" value="una_vez" checked> Solo esta fecha ('+e.occurrenceDate+') — la residencia sigue las demás semanas</label>'
+        +'<label><input type="radio" name="'+_rdel+'" value="siempre"> Desactivar la residencia completa (podrás reactivarla cuando quieras)</label>'
+        +'</div>'
+        +'<div class="res-dj-msg" hidden></div>'
+        +'<button class="res-del-save act-danger">Eliminar</button> <button class="res-del-cancel">Cancelar</button>'
+        +'</div>';
+    }
+    // Eliminar un evento suelto (lead: boda, privado, corporativo...) -- solo
+    // staff/owner, solo si no está ya cancelado. e.leadId lo agrega mapLeads().
+    // Cancela con el MISMO patrón ya usado en staff-order.html
+    // (leads.status='CANCELLED', nunca DELETE real) y deja huella en audit_log.
+    if(e.leadId && !e.residencyId && window.__COI_STAFF===true && String(e.leadStatus).toUpperCase()!=="CANCELLED"){
+      h+='<button class="act act-danger lead-del-btn" data-leadid="'+e.leadId+'">Eliminar evento</button>';
+      h+='<div class="res-del-form lead-del-form" hidden>'
+        +'<p class="lead-del-warn">¿Eliminar este evento? Se marcará como cancelado y quedará registrado quién lo hizo.</p>'
+        +'<div class="res-dj-msg" hidden></div>'
+        +'<button class="lead-del-save act-danger">Sí, eliminar</button> <button class="lead-del-cancel">Cancelar</button>'
+        +'</div>';
+    }
     if(e.meta){h+='<div class="layers-lbl">Capas de inteligencia</div>';
       LAYERS.forEach(function(L){var m=e.meta[L.k];if(!m)return;h+='<div class="layer '+L.cls+'"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+L.ic+'</svg></div><div class="lt">'+L.name+'<small>'+m.s+'</small></div><div class="val">'+m.v+'</div></div>';});
     }
@@ -1013,66 +1173,160 @@
     window.open("https://wa.me/"+digits+"?text="+encodeURIComponent(msg), "_blank", "noopener");
   }
 
-  // Panel lateral del día: lista TODOS los eventos de ese día (con su hora y detalle). Si hay 2, aparecen los 2.
+  // Botón "Reemplazar DJ" de una ocurrencia de Residencia: abre/cierra el formulario inline.
+  function toggleResDjForm(btn){
+    var card=btn.closest(".ev-card");
+    var form=card&&card.querySelector(".res-dj-form");
+    if(!form) return;
+    var other=card.querySelector(".res-del-form");if(other)other.hidden=true;
+    form.hidden=!form.hidden;
+    if(!form.hidden){ var inp=form.querySelector(".res-dj-input"); if(inp) inp.focus(); }
+  }
+  // Guarda el reemplazo -- "una_vez" crea una excepción puntual (la regla no se
+  // toca), "siempre" cambia la regla completa de ahora en adelante. Ambas
+  // pasan por la Edge Function (RPC de escritura real es service_role-only).
+  async function saveResDj(btn){
+    var form=btn.closest(".res-dj-form");
+    var card=btn.closest(".ev-card");
+    var input=form.querySelector(".res-dj-input");
+    var msg=form.querySelector(".res-dj-msg");
+    var scope=form.querySelector('input[type="radio"]:checked');
+    var djNombre=(input?input.value:"").trim();
+    var actBtn=card.querySelector(".res-dj-btn");
+    if(!djNombre){ input.focus(); return; }
+    msg.hidden=false; msg.textContent="Guardando…"; msg.className="res-dj-msg";
+    btn.disabled=true;
+    try{
+      if(scope && scope.value==="siempre"){
+        await callResidencyManage("reasignar_dj_siempre",{
+          dia_semana:Number(actBtn.dataset.dow), turno:actBtn.dataset.shift,
+          venue:actBtn.dataset.venue, dj_nombre:djNombre
+        });
+      }else{
+        await callResidencyManage("reasignar_dj_una_vez",{
+          residency_id:actBtn.dataset.resid, exception_date:actBtn.dataset.occdate, dj_nombre:djNombre
+        });
+      }
+      msg.textContent="Listo — actualizando calendario…"; msg.className="res-dj-msg ok";
+      await loadResidencies();
+      var d2=(state.sel?parse(state.sel.d):state.date); renderDayDetail(d2);
+    }catch(err){
+      msg.textContent="No se pudo guardar: "+(err.message||err); msg.className="res-dj-msg err";
+      btn.disabled=false;
+    }
+  }
+
+  // Botón "Eliminar" de una ocurrencia de Residencia: abre/cierra el formulario inline.
+  function toggleResDelForm(btn){
+    var card=btn.closest(".ev-card");
+    var form=card&&card.querySelector(".res-del-form");
+    if(!form) return;
+    var other=card.querySelector(".res-dj-form");if(other)other.hidden=true;
+    form.hidden=!form.hidden;
+  }
+  // "una_vez" elimina SOLO esa fecha (excepción skip=true, la regla sigue
+  // viva); "siempre" desactiva la residencia completa -- reactivable cuando
+  // quieran (residency_schedule_modificar ya tiene accion:'reactivar').
+  async function saveResDelete(btn){
+    var form=btn.closest(".res-del-form");
+    var card=btn.closest(".ev-card");
+    var msg=form.querySelector(".res-dj-msg");
+    var scope=form.querySelector('input[type="radio"]:checked');
+    var actBtn=card.querySelector(".res-del-btn");
+    msg.hidden=false; msg.textContent="Eliminando…"; msg.className="res-dj-msg";
+    btn.disabled=true;
+    try{
+      if(scope && scope.value==="siempre"){
+        await callResidencyManage("desactivar",{
+          dia_semana:Number(actBtn.dataset.dow), turno:actBtn.dataset.shift, venue:actBtn.dataset.venue
+        });
+      }else{
+        await callResidencyManage("eliminar_una_vez",{
+          residency_id:actBtn.dataset.resid, exception_date:actBtn.dataset.occdate
+        });
+      }
+      msg.textContent="Listo — actualizando calendario…"; msg.className="res-dj-msg ok";
+      await loadResidencies();
+      var d2=(state.sel?parse(state.sel.d):state.date); renderDayDetail(d2);
+    }catch(err){
+      msg.textContent="No se pudo eliminar: "+(err.message||err); msg.className="res-dj-msg err";
+      btn.disabled=false;
+    }
+  }
+
+  // Botón "Eliminar evento" de un lead suelto (boda/privado/corporativo...).
+  function toggleLeadDelForm(btn){
+    var card=btn.closest(".ev-card");
+    var form=card&&card.querySelector(".lead-del-form");
+    if(!form) return;
+    form.hidden=!form.hidden;
+  }
+  // Cancela el lead (mismo patrón que staff-order.html: status='CANCELLED',
+  // nunca DELETE real) y deja huella en audit_log -- pedido explícito del PO
+  // para poder investigar quién eliminó qué.
+  async function saveLeadDelete(btn){
+    var form=btn.closest(".lead-del-form");
+    var card=btn.closest(".ev-card");
+    var msg=form.querySelector(".res-dj-msg");
+    var actBtn=card.querySelector(".lead-del-btn");
+    var leadId=actBtn.dataset.leadid;
+    msg.hidden=false; msg.textContent="Eliminando…"; msg.className="res-dj-msg";
+    btn.disabled=true;
+    try{
+      var sb=(window.getSupabaseClient? window.getSupabaseClient() : window.supabase);
+      var upd=await sb.from("leads").update({status:"CANCELLED"}).eq("id", leadId);
+      if(upd.error) throw upd.error;
+      try{
+        await sb.rpc("mdj_auditar", {
+          p_accion:"evento.eliminado", p_recurso_tabla:"leads", p_recurso_id:leadId,
+          p_origen:"web", p_resultado:"ok", p_detalle:"Eliminado (cancelado) directo desde el Calendario Operacional."
+        });
+      }catch(auditErr){ console.warn("[Matrix] audit_log:", auditErr.message||auditErr); }
+      msg.textContent="Listo — actualizando calendario…"; msg.className="res-dj-msg ok";
+      await loadRealLeads();
+      var d2=(state.sel?parse(state.sel.d):state.date); renderDayDetail(d2);
+    }catch(err){
+      msg.textContent="No se pudo eliminar: "+(err.message||err); msg.className="res-dj-msg err";
+      btn.disabled=false;
+    }
+  }
+
+  // Panel lateral del día: muestra SOLO el evento SELECCIONADO en la línea de
+  // tiempo de la izquierda -- ya no un carrusel automático que rotaba entre
+  // todos (PO 2026-09-18: "la tarjeta que sube y baja no va a hacer eso más,
+  // solo se va a mostrar el contenido que está seleccionado a la izquierda").
+  // Sin selección todavía (o de otro día), se muestra el primer evento por
+  // defecto -- nunca un panel vacío habiendo eventos ese día.
   function renderDayDetail(d){
     var el=document.getElementById("detail");if(!el)return;
-    if(_dayCarousel){clearInterval(_dayCarousel);_dayCarousel=null;}   // corta el carrusel previo antes de re-render
     var list=evOn(key(d)).slice().sort(function(a,b){var sa=a.ad?-1:(a.s==null?0:a.s),sb=b.ad?-1:(b.s==null?0:b.s);return sa-sb;});
     var hd='<div class="detail-hd"><h3>'+DOWF[d.getDay()]+' '+d.getDate()+' '+MON_L[d.getMonth()]+'</h3><span class="cnt">'+list.length+(list.length===1?' evento':' eventos')+'</span></div>';
     if(!list.length){el.innerHTML=hd+'<div class="empty">Día sin eventos en la agenda.</div>';return;}
-    var h='';
-    list.forEach(function(e){h+='<div class="ev-card'+((state.sel&&eid(state.sel)===eid(e))?' sel':'')+'" data-detid="'+eid(e)+'">'+eventCardHTML(e)+'</div>';});
-    var _dots='';for(var _i=0;_i<list.length;_i++)_dots+='<span class="ev-dot" data-i="'+_i+'"></span>';
-    el.innerHTML=hd+'<div class="ev-cards" id="evCards"><div class="ev-track">'+h+'</div></div>'+(list.length>1?'<div class="ev-dots" id="evDots">'+_dots+'</div>':'');
+    var sel=(state.sel && list.some(function(e){return eid(e)===eid(state.sel);})) ? state.sel : list[0];
+    state.sel=sel;
+    var hint=(list.length>1)?'<div class="detail-hint">Elige otro evento en la línea de tiempo de la izquierda para verlo aquí.</div>':'';
+    el.innerHTML=hd+hint+'<div class="ev-cards" id="evCards"><div class="ev-card sel" data-detid="'+eid(sel)+'">'+eventCardHTML(sel)+'</div></div>';
     el.querySelectorAll(".ev-card").forEach(function(card){
-      var act=card.querySelector(".act");if(act)act.onclick=function(ev){ev.stopPropagation();offerEvent(act);};
-      card.onclick=function(ev){if(ev.target.closest(".act"))return;var e=findEv(card.dataset.detid);if(e){state.sel=e;render();}};
+      // .act[data-mcid] = "Ofrecer evento" (cliente). El botón de Residencia
+      // también usa .act por el estilo, pero no lleva data-mcid -- selectores
+      // separados para no cruzarlos.
+      var act=card.querySelector(".act[data-mcid]");if(act)act.onclick=function(ev){ev.stopPropagation();offerEvent(act);};
+      var resDjBtn=card.querySelector(".res-dj-btn");if(resDjBtn)resDjBtn.onclick=function(ev){ev.stopPropagation();toggleResDjForm(resDjBtn);};
+      var resDjSave=card.querySelector(".res-dj-save");if(resDjSave)resDjSave.onclick=function(ev){ev.stopPropagation();saveResDj(resDjSave);};
+      var resDjCancel=card.querySelector(".res-dj-cancel");if(resDjCancel)resDjCancel.onclick=function(ev){ev.stopPropagation();resDjCancel.closest(".res-dj-form").hidden=true;};
+      var resDelBtn=card.querySelector(".res-del-btn");if(resDelBtn)resDelBtn.onclick=function(ev){ev.stopPropagation();toggleResDelForm(resDelBtn);};
+      var resDelSave=card.querySelector(".res-del-save");if(resDelSave)resDelSave.onclick=function(ev){ev.stopPropagation();saveResDelete(resDelSave);};
+      var resDelCancel=card.querySelector(".res-del-cancel");if(resDelCancel)resDelCancel.onclick=function(ev){ev.stopPropagation();resDelCancel.closest(".res-del-form").hidden=true;};
+      var leadDelBtn=card.querySelector(".lead-del-btn");if(leadDelBtn)leadDelBtn.onclick=function(ev){ev.stopPropagation();toggleLeadDelForm(leadDelBtn);};
+      var leadDelSave=card.querySelector(".lead-del-save");if(leadDelSave)leadDelSave.onclick=function(ev){ev.stopPropagation();saveLeadDelete(leadDelSave);};
+      var leadDelCancel=card.querySelector(".lead-del-cancel");if(leadDelCancel)leadDelCancel.onclick=function(ev){ev.stopPropagation();leadDelCancel.closest(".lead-del-form").hidden=true;};
+      card.onclick=function(ev){if(ev.target.closest(".act")||ev.target.closest(".res-dj-form")||ev.target.closest(".res-del-form")||ev.target.closest(".lead-del-form"))return;var e=findEv(card.dataset.detid);if(e){state.sel=e;render();}};
     });
-    startDayCarousel();
-  }
-
-  // Carrusel del panel del día: UNA tarjeta por evento, se muestra una a la vez y la tarjeta
-  // COMPLETA se desliza hacia arriba para mostrar la siguiente (nunca scroll dentro de una
-  // tarjeta). Auto cada 3s cuando coinciden 2+ eventos; pausa al pasar el mouse; puntos abajo
-  // (clic para saltar). Ejemplo: 2 residencias + un cumpleaños → se van rotando de a una.
-  var _dayCarousel=null;
-  function startDayCarousel(){
-    if(_dayCarousel){clearInterval(_dayCarousel);_dayCarousel=null;}
-    var box=document.getElementById("evCards"); if(!box) return;
-    var track=box.querySelector(".ev-track"); if(!track) return;
-    var cards=track.children, n=cards.length; if(!n) return;
-    var dotsWrap=document.getElementById("evDots"), dots=dotsWrap?dotsWrap.children:null;
-    var detail=document.getElementById("detail");
+    // El panel toma el MISMO alto que el timeline de al lado, igual que antes
+    // (sin esto se ve descuadrado frente a la columna de la izquierda).
     requestAnimationFrame(function(){
-      // El panel toma el MISMO alto que el timeline de al lado (llena el espacio, sin zona muerta).
       var tl=document.querySelector(".day-layout .day-tl");
-      var capH=tl?Math.round(tl.getBoundingClientRect().height):560;
-      if(detail) detail.style.height=capH+"px";
-      if(dotsWrap) dotsWrap.style.display="none";           // ocultos para medir
-      track.style.justifyContent="flex-start";
-      track.style.transform="translateY(0px)";
-      requestAnimationFrame(function(){                     // medir tras aplicar el alto
-        var boxH=box.clientHeight;
-        var last=cards[n-1], contentH=last.offsetTop+last.offsetHeight;   // relativo a #evCards
-        if(contentH<=boxH+6){
-          // Caben TODAS (ej. 2 residencias): tarjetas JUNTAS arriba (sin separarlas), así se ve
-          // COMPLETO lo que se monetiza en cada venue (el 2do no queda cortado). Espacio libre abajo.
-          track.style.justifyContent="flex-start";
-          return;                                           // dots ocultos, sin rotación
-        }
-        // Hay MÁS de las que caben: se ven ~2 y el resto va apareciendo (desliza card-by-card).
-        if(dotsWrap) dotsWrap.style.display="";
-        boxH=box.clientHeight;
-        var maxShift=Math.max(0, contentH-boxH), offs=[];
-        for(var i=0;i<n;i++) offs[i]=cards[i].offsetTop;
-        var idx=0, paused=false;
-        function show(i){ idx=i; track.style.transform="translateY(-"+Math.min(offs[i],maxShift)+"px)"; if(dots) for(var k=0;k<dots.length;k++) dots[k].classList.toggle("on",k===i); }
-        show(0);
-        box.addEventListener("pointerenter", function(){ paused=true; });
-        box.addEventListener("pointerleave", function(){ paused=false; });
-        if(dots) for(var k=0;k<dots.length;k++){ (function(kk){ dots[kk].addEventListener("click", function(){ show(kk); paused=true; clearTimeout(box.__rp); box.__rp=setTimeout(function(){paused=false;},6000); }); })(k); }
-        _dayCarousel=setInterval(function(){ if(!box.isConnected){ clearInterval(_dayCarousel); _dayCarousel=null; return; } if(paused) return; show((idx+1)%n); }, 3000);
-      });
+      if(tl) el.style.height=Math.round(tl.getBoundingClientRect().height)+"px";
     });
   }
 
@@ -1145,28 +1399,77 @@
         +'<div><label>'+(owner?'Artista':'Canal')+'</label>';
       if(owner){html+='<select id="f-a">';ARTISTS.forEach(function(a){html+='<option value="'+a.id+'">'+a.n+'</option>';});html+='</select>';}
       else{html+='<select id="f-c"><option>WhatsApp</option><option>Instagram</option><option>Email</option><option>SMS</option></select>';}
-      html+='</div><button class="save" id="f-save">Guardar</button></div>';
+      html+='</div>';
+      // Teléfono/email SOLO en la vista Owner -- es el único guardado real
+      // (find_or_create_master_client lo exige). "Mis clientes" (artista)
+      // sigue siendo local/de mentira por ahora -- ver nota en f-save.
+      if(owner) html+='<div><label>Teléfono o email</label><input id="f-contact" placeholder="+1 305... o correo@ejemplo.com"></div>';
+      html+='<button class="save" id="f-save">Guardar</button></div>';
     }
     html+='<div class="crm-table"><div class="crm-scroll"><table class="crm"><thead><tr><th>Cliente</th>'+(owner?'<th>Artista</th>':'')+'<th>Estado</th><th>Cumpleaños</th><th>Aniversario</th><th>Canal</th><th>Notif.</th><th></th></tr></thead><tbody>';
     list.forEach(function(c){
       var bday=c.bday?c.bday.split("-")[1]+" ago":"—";
       var aniv=c.since?(function(){var p=c.since.split("-");return p[2]+" "+MON_L[+p[1]-1].slice(0,3)+" · "+(2026-(+p[0]))+"a";})():"—";
+      // Eliminar (soft, dj_client_affiliation_modificar) SOLO owner/staff Y
+      // SOLO filas reales (con masterClientId) -- las de mentira (renderCrm
+      // local, "Mis clientes") no tienen nada real que desactivar.
+      var delBtn=(owner && c.masterClientId)
+        ? '<button class="pencil crm-del-btn" title="Eliminar" data-mcid="'+c.masterClientId+'" data-djid="'+(c.owner||'')+'" data-name="'+c.n+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></button>'
+        : '';
       html+='<tr><td><div class="cname">'+c.n+'</div><div class="cnote">'+c.note+'</div></td>'
         +(owner?'<td><span class="cart" style="--a:'+artColor(c.owner)+'"><span class="pip"></span>'+artName(c.owner)+'</span></td>':'')
         +'<td><span class="estado '+c.estado+'">'+c.estado+'</span></td><td class="cdate">'+bday+'</td><td class="cdate">'+aniv+'</td><td class="cdate">'+c.chan+'</td>'
         +'<td><span class="pill auto">'+BELL+'auto</span></td>'
-        +'<td><button class="pencil" title="Editar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20h4L18 10l-4-4L4 16v4Z"/><path d="M13 5l4 4"/></svg></button></td></tr>';
+        +'<td>'+delBtn+'</td></tr>';
     });
     html+='</tbody></table></div></div>';view.innerHTML=html;
     document.getElementById("btnNew").onclick=function(){state.crmForm=!state.crmForm;render();};
+    view.querySelectorAll(".crm-del-btn").forEach(function(btn){
+      btn.onclick=function(){
+        if(!confirm('¿Eliminar a "'+btn.dataset.name+'" de tu base de clientes? Podrás volver a agregarlo cuando quieras.')) return;
+        btn.disabled=true;
+        var sb=(window.getSupabaseClient? window.getSupabaseClient() : window.supabase);
+        sb.rpc('dj_client_affiliation_modificar',{ p_master_client_id:btn.dataset.mcid, p_dj_id:btn.dataset.djid, p_accion:'desactivar' })
+          .then(function(r){ if(r.error) throw r.error; return loadClientDates(); })
+          .catch(function(err){ alert('No se pudo eliminar: '+(err.message||err)); btn.disabled=false; });
+      };
+    });
     var save=document.getElementById("f-save");
     if(save)save.onclick=function(){
       var n=document.getElementById("f-n").value.trim();if(!n){document.getElementById("f-n").focus();return;}
       var bd=document.getElementById("f-b").value,mmdd=bd?bd.slice(5):"08-15";
+      var estado=document.getElementById("f-e").value;
       var own=owner?document.getElementById("f-a").value:state.artist;
       var chan=owner?"WhatsApp":document.getElementById("f-c").value;
-      CLIENTS.push({n:n,estado:document.getElementById("f-e").value,bday:mmdd,since:"",chan:chan,note:"Nuevo lead · agregado hoy",owner:own});
-      state.crmForm=false;rebuild();render();
+      if(!owner){
+        // "Mis clientes" (artista): sigue local/de mentira -- el candado real
+        // de get_master_calendar_events() hoy es "solo staff", así que un
+        // artista normal no podría ni leer de vuelta lo que guardara aquí.
+        // Ticket aparte si se quiere hacer real para artistas.
+        CLIENTS.push({n:n,estado:estado,bday:mmdd,since:"",chan:chan,note:"Nuevo lead · agregado hoy",owner:own});
+        state.crmForm=false;rebuild();render();
+        return;
+      }
+      var contact=document.getElementById("f-contact").value.trim();
+      if(!contact){ alert("Falta el teléfono o email del cliente -- find_or_create_master_client lo exige para no duplicar contactos."); return; }
+      var isEmail=contact.indexOf("@")!==-1;
+      var sb=(window.getSupabaseClient? window.getSupabaseClient() : window.supabase);
+      save.disabled=true; save.textContent="Guardando…";
+      sb.rpc('find_or_create_master_client',{
+        p_dj_id:own, p_phone:(isEmail?null:contact), p_email:(isEmail?contact:null),
+        p_name:n, p_birthday:(bd||null), p_wedding_anniversary:null
+      }).then(function(r){
+        if(r.error) throw r.error;
+        var mcId=r.data;
+        return sb.rpc('dj_client_affiliation_modificar',{ p_master_client_id:mcId, p_dj_id:own, p_accion:'actualizar_estado', p_estado:estado });
+      }).then(function(r2){
+        if(r2 && r2.error) throw r2.error;
+        state.crmForm=false;
+        return loadClientDates();
+      }).catch(function(err){
+        alert("No se pudo guardar: "+(err.message||err));
+        save.disabled=false; save.textContent="Guardar";
+      });
     };
   }
 
@@ -1290,7 +1593,8 @@
       evs.push({ d:L.event_date, cal:"set", artist:did, clientId:ck, ad:(s===null),
                  s:(s===null?0:s), e:(e!==null?e:(s!==null?s+2:0)),
                  t:(L.event_type||L.name||"Evento")+(L.status? " · "+L.status : ""),
-                 venue:venue, meta:(Object.keys(meta).length? meta : null) });
+                 venue:venue, meta:(Object.keys(meta).length? meta : null),
+                 leadId:L.id, leadStatus:(L.status||"") });
     });
     return { evs:evs, artists:Object.keys(amap).map(function(k){return amap[k];}), clients:Object.keys(cmap).map(function(k){return cmap[k];}) };
   }
@@ -1300,10 +1604,12 @@
       if(!sb || !sb.from || !sb.auth){ return setTimeout(loadRealLeads, 300); }   // cliente aún no listo → reintenta
       var sess=(await sb.auth.getSession()).data.session;                          // ASEGURA la sesión restaurada antes de consultar
       if(!sess){ return setTimeout(loadRealLeads, 300); }                          // sin sesión aún → reintenta (si no, RLS = anon = 0 filas)
-      var r=await sb.from("leads").select("event_date,event_start_time,event_end_time,event_type,name,venue,location,event_location,city,status,payment_status,total_amount,budget,assigned_dj_id,assigned_dj_name,assigned_staff_name,client_user_id,contact_person,email");
+      var r=await sb.from("leads").select("id,event_date,event_start_time,event_end_time,event_type,name,venue,location,event_location,city,status,payment_status,total_amount,budget,assigned_dj_id,assigned_dj_name,assigned_staff_name,client_user_id,contact_person,email");
       if(r.error) throw r.error;
       var m=mapLeads((r.data||[]).filter(function(x){ return x.event_date; }));
-      _leadsEv=m.evs; ARTISTS=m.artists.concat(_resEv.some(function(e){return e.artist==="_res";})?[_resArtist]:[]); CLIENT_ACCOUNTS=m.clients; BASE_EV=_leadsEv.concat(_resEv).concat(_syncEv);
+      _leadsEv=m.evs; ARTISTS=m.artists; CLIENT_ACCOUNTS=m.clients;
+      addResidencyArtists(); // re-agrega los DJ de residencias reales (ver loadResidencies) -- ARTISTS se acaba de reconstruir desde cero arriba
+      BASE_EV=_leadsEv.concat(_resEv).concat(_syncEv);
       rebuild(); render();
     }catch(err){ console.warn("[Matrix] carga de leads falló:", err); }
   }
@@ -1326,7 +1632,10 @@
         var djIds=row.dj_ids||[], djNames=row.dj_names||[];
         return {
           n: row.client_name || "Cliente",
-          estado: "",
+          // Real desde hoy (2026-09-18) -- antes get_master_calendar_events()
+          // no devolvía esta columna y quedaba vacía siempre, aunque el
+          // formulario de "Nuevo cliente" la pidiera (nunca se guardaba).
+          estado: row.estado || "Potencial",
           bday: row.event_type==="birthday" ? md(row.event_date) : null,
           anniv: row.event_type==="wedding_anniversary" ? md(row.event_date) : null,
           chan: "WhatsApp",
@@ -1343,7 +1652,18 @@
   }
   // ═══ Residencias recurrentes reales (tabla residency_schedule) ═══
   var _leadsEv=[], _resEv=[], _syncEv=[];
-  var _resArtist={id:"_res",n:"DJMago305 · Residencias",c:"#c5a059"};
+  // Un chip de ARTISTS por cada DJ real de residencia sin dj_id (ver nota en
+  // loadResidencies) -- se llama tanto ahí como en loadRealLeads(), porque
+  // esa función RECONSTRUYE ARTISTS desde cero y borraría estos chips si no
+  // se reponen después, sin importar el orden en que corran las dos cargas.
+  function addResidencyArtists(){
+    var pal0=ARTISTS.length;
+    _resEv.forEach(function(e){
+      if(String(e.artist).indexOf("name:")===0 && !ARTISTS.some(function(a){return a.id===e.artist;})){
+        ARTISTS=ARTISTS.concat([{ id:e.artist, n:e.djName||"Sin asignar", c:DJ_PALETTE[pal0++ % DJ_PALETTE.length] }]);
+      }
+    });
+  }
   async function loadResidencies(){
     try{
       var sb=(window.getSupabaseClient? window.getSupabaseClient() : window.supabase);
@@ -1354,7 +1674,10 @@
       // El ARTISTA NUNCA pide venue_pay_usd (total que paga el venue = dato de la empresa, revela el margen).
       // Solo su propio dj_pay_usd. El staff/owner sí ve el desglose completo.
       var _pay=_staff?"venue_pay_usd,dj_pay_usd":"dj_pay_usd";
-      var _base="day_of_week,shift,venue,dj_name,start_time,end_time";
+      // "id" agregado (2026-09-17, ticket eliminar/reasignar residencias): sin
+      // esto ninguna ocurrencia generada abajo podía trazarse de vuelta a su
+      // regla -- imposible reasignar DJ "solo esta fecha" ni "para siempre".
+      var _base="id,day_of_week,shift,venue,dj_name,start_time,end_time";
       // Puerta SEGURA primero (la vista aplica el candado de venue_pay a nivel DB); si aún no existe, cae a la base.
       async function _resq(sel){
         var rr=await sb.from("residency_schedule_secure").select(sel+",dj_id").eq("active",true);
@@ -1367,6 +1690,19 @@
       if(r.error){ r=await _resq(_base+(_staff?",venue_pay_usd":"")); }   // dj_pay_usd aún no existe en la tabla → degradar sin romper
       if(r.error) throw r.error;
       var rules=r.data||[], evs=[];
+      // Excepciones puntuales ("solo esta fecha, DJ distinto" -- tabla nueva
+      // residency_schedule_exceptions, 2026-09-17). Un mapa id+fecha → excepción
+      // para aplicarlas al vuelo mientras se expande cada regla abajo.
+      var _excByKey={};
+      try{
+        var ruleIds=rules.map(function(rl){return rl.id;}).filter(Boolean);
+        if(ruleIds.length){
+          var exq=await sb.from("residency_schedule_exceptions")
+            .select("residency_id,exception_date,dj_name,dj_id,skip")
+            .in("residency_id", ruleIds);
+          (exq.data||[]).forEach(function(ex){ _excByKey[ex.residency_id+"|"+ex.exception_date]=ex; });
+        }
+      }catch(exErr){ console.warn("[Matrix] excepciones de residencia:", exErr.message||exErr); }
       var y=(state.date&&state.date.getFullYear)?state.date.getFullYear():2026;
       function pad(n){return (n<10?"0":"")+n;}
       for(var d=new Date(y,0,1), end=new Date(y,11,31); d<=end; d.setDate(d.getDate()+1)){
@@ -1376,17 +1712,31 @@
           var s=_t2h(rule.start_time), e=_t2h(rule.end_time);
           if(s!==null && e!==null && e<s) e=e+24;   // cruza medianoche
           var iso=d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
-          evs.push({ d:iso, cal:"set", artist:(rule.dj_id||"_res"), ad:false,
+          var _exc=_excByKey[rule.id+"|"+iso];
+          if(_exc && _exc.skip) return;   // eliminado SOLO esta fecha -- la regla sigue viva las demás semanas
+          var _djName=(_exc?_exc.dj_name:rule.dj_name)||"";
+          // dj_id real casi siempre huérfano/null en las filas reales (ver
+          // 20260901130000_residency_schedule_modificar.sql) -- ANTES esto caía
+          // a un solo bucket generico "_res" ("DJMago305 · Residencias") sin
+          // importar quien fuera el DJ real. Reporte del PO 2026-09-18: somos
+          // una empresa con VARIOS DJs (ej. DJYuyo), ese fallback mentia sobre
+          // quien toca. Ahora, sin dj_id, se usa el NOMBRE real como llave --
+          // cada DJ distinto obtiene su propio identificador, nunca la marca
+          // generica de un solo artista.
+          var _djKey=(_exc?_exc.dj_id:rule.dj_id)||("name:"+(_djName||"Sin asignar"));
+          evs.push({ d:iso, cal:"set", artist:_djKey, ad:false,
             s:(s===null?0:s), e:(e!==null?e:(s!==null?s+2:0)),
-            t:"Residencia · "+(rule.venue||""), venue:(rule.venue||""),
+            t:"Residencia · "+(rule.venue||"")+(_exc?" (DJ de reemplazo)":""), venue:(rule.venue||""),
+            // Trazabilidad para reasignar/eliminar esta ocurrencia puntual:
+            residencyId:rule.id, occurrenceDate:iso, dayOfWeek:rule.day_of_week,
+            shift:rule.shift, djName:_djName, isException:!!_exc,
             meta:{ pago: _staff
               ? { v:"$"+Number(rule.venue_pay_usd||0), s:"venue paga · DJ recibe $"+Number(rule.dj_pay_usd||0) }
               : { v:(rule.dj_pay_usd!=null?"$"+Number(rule.dj_pay_usd):"por definir"), s:"tu pago" } } });
         });
       }
       _resEv=evs;
-      var _hasResChip=evs.some(function(e){return e.artist==="_res";});
-      if(_hasResChip && !ARTISTS.some(function(a){return a.id==="_res";})) ARTISTS=ARTISTS.concat([_resArtist]);
+      addResidencyArtists();
       BASE_EV=_leadsEv.concat(_resEv).concat(_syncEv); rebuild(); render();
     }catch(err){ console.warn("[Matrix] residencias:", err.message||err); }
   }

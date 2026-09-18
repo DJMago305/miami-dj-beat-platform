@@ -761,6 +761,12 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
             }
 
             /* Módulo clima: sin zoom CSS (escala natural; ajustes finos con padding/tamaño si hace falta). */
+            /* DECISIÓN PO 2026-09-17: el clima se queda SOLO en modo oscuro a propósito
+               -- probamos modo día aquí y "luce horrible" (confirmado por el PO). No
+               construir estilos [data-theme="day"] para esta tarjeta ni para
+               weather-experience/. El calendario de abajo (#staff-matrix-frame →
+               calendario-operacional-inteligente.html) es aparte: ese SÍ tiene su
+               propio día/noche (sol/luna) ya diseñado para el toggle -- ese no se toca. */
             #tab-dashboard #booth-hero-container {
                 overflow: hidden !important;
                 isolation: isolate;
@@ -1157,6 +1163,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                     <!-- ── Agenda operacional (Matrix) — SOLO staff/owner/manager/seller. Se decide por rol (dj_profiles.role): el artista mantiene su calendario personal de abajo. ── -->
                     <div id="staff-matrix-embed" style="display:none; width:100%; margin-top:8px;">
                       <iframe id="staff-matrix-frame" title="Agenda operacional — Miami DJ Beat" loading="lazy"
+                        allow="fullscreen" allowfullscreen
                         style="width:100%; height:calc(100vh - 120px); min-height:700px; border:0; border-radius:0; display:block;"></iframe>
                     </div>
                     <script>
