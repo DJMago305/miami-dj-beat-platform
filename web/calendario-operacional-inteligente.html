@@ -426,6 +426,15 @@
   function artName(id){for(var i=0;i<ARTISTS.length;i++)if(ARTISTS[i].id===id)return ARTISTS[i].n;return"Matrix";}
   function artColor(id){for(var i=0;i<ARTISTS.length;i++)if(ARTISTS[i].id===id)return ARTISTS[i].c;return"var(--owner)";}
 
+  // Cuentas Cliente: pestaña separada del roster de Artista (2026-09-18, a
+  // pedido explicito del PO -- "para no mezclar"). Mismo patron id/n/c que
+  // ARTISTS, arranca vacio, se llena con datos reales (leads propios +
+  // calendario personal de Google si lo conectan) en loadRealLeads()/
+  // loadPersonalCalendarSync().
+  var CLIENT_ACCOUNTS=[];
+  function clientAccName(id){for(var i=0;i<CLIENT_ACCOUNTS.length;i++)if(CLIENT_ACCOUNTS[i].id===id)return CLIENT_ACCOUNTS[i].n;return"Cliente";}
+  function clientAccColor(id){for(var i=0;i<CLIENT_ACCOUNTS.length;i++)if(CLIENT_ACCOUNTS[i].id===id)return CLIENT_ACCOUNTS[i].c;return"var(--owner)";}
+
   var BASE_EV=[
     {d:"2026-08-09",cal:"prod",ad:true,t:"Curaduría de playlist — set del sábado",artist:"mago"},
     {d:"2026-08-10",cal:"set",s:23,e:25,t:"Set — Club E11EVEN",venue:"E11EVEN · Downtown Miami",artist:"mago",
@@ -506,7 +515,7 @@
     EV=BASE_EV.concat(gen);updateBadge();
   }
 
-  var state={view:"mes",date:new Date(TODAY),sel:null,crmForm:false,role:"owner",artist:"mago",consent:{},pendingRole:null,notz:null,artistaMenuOpen:false};
+  var state={view:"mes",date:new Date(TODAY),sel:null,crmForm:false,role:"owner",artist:"mago",consent:{},pendingRole:null,notz:null,artistaMenuOpen:false,clienteMenuOpen:false,clientFilter:null};
 
   function pad(n){return(n<10?"0":"")+n;}
   function key(dt){return dt.getFullYear()+"-"+pad(dt.getMonth()+1)+"-"+pad(dt.getDate());}
@@ -515,7 +524,13 @@
   function addDays(dt,n){var x=new Date(dt);x.setDate(x.getDate()+n);return x;}
   function startOfWeek(dt){return addDays(dt,-dt.getDay());}
   function inScope(e){
-    if(state.role==="owner") return true;
+    if(state.role==="owner"){
+      // Filtro "Cliente" (pestaña separada del roster de Artista): al hacer
+      // click en un cliente, el Master se acota a sus eventos -- se libera
+      // igual que se libera desde la pestaña misma (click de nuevo).
+      if(state.clientFilter && e.clientId!==state.clientFilter) return false;
+      return true;
+    }
     if(e.artist===state.artist) return true;
     // Un cliente maestro puede estar afiliado a varios DJs a la vez
     // (master_clients/dj_client_affiliations) — e.artist solo carga UNO
@@ -562,10 +577,16 @@
     if(searchPanel.classList.contains("open")&&!searchPanel.contains(e.target)&&e.target!==btnSearch)closeSearch();
   });
   document.addEventListener("click",function(e){
+    var changed=false;
     if(state.artistaMenuOpen){
-      var wrap=document.querySelector(".art-tab-wrap");
-      if(wrap&&!wrap.contains(e.target)){state.artistaMenuOpen=false;render();}
+      var w1=document.getElementById("artTabWrap");
+      if(w1&&!w1.contains(e.target)){state.artistaMenuOpen=false;changed=true;}
     }
+    if(state.clienteMenuOpen){
+      var w2=document.getElementById("cliTabWrap");
+      if(w2&&!w2.contains(e.target)){state.clienteMenuOpen=false;changed=true;}
+    }
+    if(changed)render();
   });
   searchInput.addEventListener("click",function(e){e.stopPropagation();});
   searchInput.addEventListener("keydown",function(e){if(e.key==="Escape")closeSearch();});
@@ -672,12 +693,30 @@
     var showArtTab=(state.role==="owner");
     var h='<div class="roleswitch">';
     if(showArtTab){
-      h+='<span class="art-tab-wrap"><button class="r-art art-tab" id="artTabBtn" aria-selected="false" aria-expanded="'+(state.artistaMenuOpen?"true":"false")+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.4"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>Artista<small class="tab-count">'+EV.length+'</small></button>';
+      h+='<span class="art-tab-wrap" id="artTabWrap"><button class="r-art art-tab" id="artTabBtn" aria-selected="false" aria-expanded="'+(state.artistaMenuOpen?"true":"false")+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.4"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>Artista<small class="tab-count">'+EV.length+'</small></button>';
       if(state.artistaMenuOpen){
         h+='<div class="art-tab-menu" id="artTabMenu">';
         ARTISTS.forEach(function(a){var cnt=EV.filter(function(e){return e.artist===a.id;}).length;
           h+='<button class="art-tab-item" data-art="'+a.id+'"><span class="pip" style="--c:'+a.c+'"></span>'+a.n+'<small>'+cnt+'</small></button>';});
         if(!ARTISTS.length)h+='<div class="rem-empty">Sin artistas todavía.</div>';
+        h+='</div>';
+      }
+      h+='</span>';
+      // "Cliente": pestaña gemela, cuentas de portal de cliente -- NUNCA
+      // mezcladas con el roster de Artista (2026-09-18, aclaracion explicita
+      // del PO: son plantillas de cuenta independientes). Mismo total general
+      // de eventos, desglosado por cliente en vez de por artista. Con filtro
+      // activo, el boton muestra el nombre del cliente + una "✕" para
+      // quitarlo (el resto del boton sigue abriendo el menu para cambiar).
+      h+='<span class="art-tab-wrap" id="cliTabWrap"><button class="r-art art-tab" id="cliTabBtn" aria-selected="false" aria-expanded="'+(state.clienteMenuOpen?"true":"false")+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.4"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>'
+        +(state.clientFilter?clientAccName(state.clientFilter):"Cliente")
+        +(state.clientFilter?'<small class="tab-count" id="cliClear" title="Quitar filtro">✕</small>':'<small class="tab-count">'+EV.length+'</small>')
+        +'</button>';
+      if(state.clienteMenuOpen){
+        h+='<div class="art-tab-menu" id="cliTabMenu">';
+        CLIENT_ACCOUNTS.forEach(function(c){var cnt=EV.filter(function(e){return e.clientId===c.id;}).length;
+          h+='<button class="art-tab-item" data-cli="'+c.id+'"><span class="pip" style="--c:'+c.c+'"></span>'+c.n+'<small>'+cnt+'</small></button>';});
+        if(!CLIENT_ACCOUNTS.length)h+='<div class="rem-empty">Sin clientes todavía.</div>';
         h+='</div>';
       }
       h+='</span>';
@@ -712,6 +751,12 @@
     var artTabMenu=document.getElementById("artTabMenu");
     if(artTabMenu)artTabMenu.querySelectorAll(".art-tab-item").forEach(function(b){b.onclick=function(e){e.stopPropagation();state.consent[b.dataset.art]=true;state.artistaMenuOpen=false;requestArtist(b.dataset.art);};});
     var sel=document.getElementById("artSel");if(sel)sel.onchange=function(){requestArtist(sel.value);};
+    var cliTabBtn=document.getElementById("cliTabBtn");
+    if(cliTabBtn)cliTabBtn.onclick=function(e){e.stopPropagation();state.clienteMenuOpen=!state.clienteMenuOpen;render();};
+    var cliTabMenu=document.getElementById("cliTabMenu");
+    if(cliTabMenu)cliTabMenu.querySelectorAll(".art-tab-item").forEach(function(b){b.onclick=function(e){e.stopPropagation();state.clientFilter=b.dataset.cli;state.clienteMenuOpen=false;render();};});
+    var cliClear=document.getElementById("cliClear");
+    if(cliClear)cliClear.onclick=function(e){e.stopPropagation();state.clientFilter=null;render();};
   }
 
   function renderLegend(){
@@ -1004,7 +1049,7 @@
       else if(e.cal==="pago")r.push({dt:parse(e.d),icon:"💵",title:e.t,sub:"Cobro / conciliación",chan:"Interno",cal:"pago",art:e.artist,ev:e});
       else if(e.cal==="clima")r.push({dt:parse(e.d),icon:"🌧",title:e.t,sub:"Riesgo operativo",chan:"Push",cal:"clima",art:e.artist,ev:e});
       else if(e.cal==="set")r.push({dt:parse(e.d),icon:"🎧",title:e.t,sub:e.venue||"Evento confirmado",chan:"Push",cal:"set",art:e.artist,ev:e});
-      else if(e.cal==="personal")r.push({dt:parse(e.d),icon:e.kind==="cumple"?"🎂":"📅",title:e.t,sub:"Sincronizado de "+artName(e.artist),chan:"Push",cal:"personal",art:e.artist,auto:true,ev:e});
+      else if(e.cal==="personal")r.push({dt:parse(e.d),icon:e.kind==="cumple"?"🎂":"📅",title:e.t,sub:"Sincronizado de "+(e.clientId?clientAccName(e.clientId):artName(e.artist)),chan:"Push",cal:"personal",art:e.artist,auto:true,ev:e});
     });
     r.sort(function(a,b){return a.dt-b.dt;});return r;
   }
@@ -1184,22 +1229,34 @@
   // (y de todos modos no llega aquí por el guard de la página). Solo LECTURA.
   var DJ_PALETTE = ["#ff2e86","#3d8bff","#10b3a3","#8b6cff","#f5a623","#ff7a4d","#54d29a","#c5a059"];
   function _t2h(t){ if(!t) return null; var p=String(t).split(":"); var h=(+p[0])+((+p[1]||0)/60); return isNaN(h)?null:h; }
+  // Clave estable de cliente por lead: prioriza la cuenta real
+  // (client_user_id) sobre email/nombre -- mismo dato que ya usa la RLS de
+  // leads para aislar a un cliente a lo suyo. Sin cuenta vinculada (lead
+  // viejo, o cliente que reservó sin loguearse) cae a email y luego a nombre,
+  // para no perder el agrupamiento por completo.
+  function clientKeyFor(L){
+    if(L.client_user_id) return "u:"+L.client_user_id;
+    if(L.email) return "e:"+String(L.email).toLowerCase().trim();
+    return "n:"+(L.contact_person||L.name||"Cliente sin nombre");
+  }
   function mapLeads(rows){
-    var amap={}, pal=0, evs=[];
+    var amap={}, cmap={}, pal=0, cpal=0, evs=[];
     rows.forEach(function(L){
       var did=L.assigned_dj_id||"_none", dn=L.assigned_dj_name||"Sin asignar";
       if(!amap[did]) amap[did]={ id:did, n:dn, c:(did==="_none"?"var(--owner)":DJ_PALETTE[pal++ % DJ_PALETTE.length]) };
+      var ck=clientKeyFor(L), cn=L.contact_person||L.name||"Cliente sin nombre";
+      if(!cmap[ck]) cmap[ck]={ id:ck, n:cn, c:DJ_PALETTE[cpal++ % DJ_PALETTE.length] };
       var s=_t2h(L.event_start_time), e=_t2h(L.event_end_time);
       var venue=L.venue||L.event_location||L.location||L.city||"";
       var meta={};
       if(L.total_amount||L.budget) meta.pago={ v:(L.total_amount? "$"+L.total_amount : String(L.budget)), s:(L.payment_status||L.status||"") };
       if(L.assigned_staff_name) meta.staff={ v:L.assigned_staff_name, s:"staff asignado" };
-      evs.push({ d:L.event_date, cal:"set", artist:did, ad:(s===null),
+      evs.push({ d:L.event_date, cal:"set", artist:did, clientId:ck, ad:(s===null),
                  s:(s===null?0:s), e:(e!==null?e:(s!==null?s+2:0)),
                  t:(L.event_type||L.name||"Evento")+(L.status? " · "+L.status : ""),
                  venue:venue, meta:(Object.keys(meta).length? meta : null) });
     });
-    return { evs:evs, artists:Object.keys(amap).map(function(k){return amap[k];}) };
+    return { evs:evs, artists:Object.keys(amap).map(function(k){return amap[k];}), clients:Object.keys(cmap).map(function(k){return cmap[k];}) };
   }
   async function loadRealLeads(){
     try{
@@ -1207,10 +1264,10 @@
       if(!sb || !sb.from || !sb.auth){ return setTimeout(loadRealLeads, 300); }   // cliente aún no listo → reintenta
       var sess=(await sb.auth.getSession()).data.session;                          // ASEGURA la sesión restaurada antes de consultar
       if(!sess){ return setTimeout(loadRealLeads, 300); }                          // sin sesión aún → reintenta (si no, RLS = anon = 0 filas)
-      var r=await sb.from("leads").select("event_date,event_start_time,event_end_time,event_type,name,venue,location,event_location,city,status,payment_status,total_amount,budget,assigned_dj_id,assigned_dj_name,assigned_staff_name");
+      var r=await sb.from("leads").select("event_date,event_start_time,event_end_time,event_type,name,venue,location,event_location,city,status,payment_status,total_amount,budget,assigned_dj_id,assigned_dj_name,assigned_staff_name,client_user_id,contact_person,email");
       if(r.error) throw r.error;
       var m=mapLeads((r.data||[]).filter(function(x){ return x.event_date; }));
-      _leadsEv=m.evs; ARTISTS=m.artists.concat(_resEv.some(function(e){return e.artist==="_res";})?[_resArtist]:[]); BASE_EV=_leadsEv.concat(_resEv).concat(_syncEv);
+      _leadsEv=m.evs; ARTISTS=m.artists.concat(_resEv.some(function(e){return e.artist==="_res";})?[_resArtist]:[]); CLIENT_ACCOUNTS=m.clients; BASE_EV=_leadsEv.concat(_resEv).concat(_syncEv);
       rebuild(); render();
     }catch(err){ console.warn("[Matrix] carga de leads falló:", err); }
   }
@@ -1329,16 +1386,36 @@
         (pr.data||[]).forEach(function(p){ profByUser[p.user_id]=p; });
       }catch(e2){ console.warn("[Matrix] dj_profiles lookup para sync personal falló:", e2.message||e2); }
 
-      var pal=0, out=[];
+      // 2026-09-18, a pedido del PO: una cuenta Cliente puede conectar Google
+      // Calendar con el MISMO flujo que un artista (calendar-oauth-init no
+      // distingue tipo de cuenta) -- si un user_id no resolvió como DJ, se
+      // busca en client_profiles antes de descartarlo. Nunca se mezcla con
+      // ARTISTS: va a su propio roster (CLIENT_ACCOUNTS), pestaña separada.
+      var faltantes=uids.filter(function(u){ return !profByUser[u]; });
+      var clientByUser={};
+      if(faltantes.length){
+        try{
+          var cr=await sb.from("client_profiles").select("user_id,full_name").in("user_id", faltantes);
+          (cr.data||[]).forEach(function(c){ clientByUser[c.user_id]=c; });
+        }catch(e3){ console.warn("[Matrix] client_profiles lookup para sync personal falló:", e3.message||e3); }
+      }
+
+      var pal=0, cpal=0, out=[];
       rows.forEach(function(row){
         var prof=profByUser[row.user_id];
-        var artId=prof?prof.id:row.user_id;   // sin perfil resuelto, cae al auth id (mejor eso que perder el evento)
-        var nm=(prof&&(prof.stage_name||prof.dj_name||prof.full_name))||row.dj_nombre||"DJ";
-        if(!ARTISTS.some(function(a){return a.id===artId;})) ARTISTS.push({id:artId, n:nm, c:DJ_PALETTE[pal++ % DJ_PALETTE.length]});
         var d0=new Date(row.fecha_inicio), iso=d0.getFullYear()+"-"+pad(d0.getMonth()+1)+"-"+pad(d0.getDate());
-        out.push({ d:iso, cal:"personal", ad:true, kind:(row.tipo==="cumpleanos"?"cumple":"nota"),
-          t:row.notas||row.venue_nombre||(row.tipo==="cumpleanos"?"Cumpleaños":"Evento personal"),
-          artist:artId });
+        var titulo=row.notas||row.venue_nombre||(row.tipo==="cumpleanos"?"Cumpleaños":"Evento personal");
+        if(prof){
+          var artId=prof.id;
+          var nm=prof.stage_name||prof.dj_name||prof.full_name||row.dj_nombre||"DJ";
+          if(!ARTISTS.some(function(a){return a.id===artId;})) ARTISTS.push({id:artId, n:nm, c:DJ_PALETTE[pal++ % DJ_PALETTE.length]});
+          out.push({ d:iso, cal:"personal", ad:true, kind:(row.tipo==="cumpleanos"?"cumple":"nota"), t:titulo, artist:artId });
+        } else {
+          var cliente=clientByUser[row.user_id], ckey="u:"+row.user_id;
+          var cnm=(cliente&&cliente.full_name)||row.dj_nombre||"Cliente";
+          if(!CLIENT_ACCOUNTS.some(function(c){return c.id===ckey;})) CLIENT_ACCOUNTS.push({id:ckey, n:cnm, c:DJ_PALETTE[cpal++ % DJ_PALETTE.length]});
+          out.push({ d:iso, cal:"personal", ad:true, kind:(row.tipo==="cumpleanos"?"cumple":"nota"), t:titulo, clientId:ckey });
+        }
       });
       _syncEv=out;
       BASE_EV=_leadsEv.concat(_resEv).concat(_syncEv);
