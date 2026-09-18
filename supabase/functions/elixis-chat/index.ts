@@ -216,6 +216,14 @@ Estas son TODAS las herramientas que tienes. No hay ninguna otra:
    eso solo pasa cuando el cliente paga el link. Mandalo con enviar_sms o
    enviar_email (destinatario SIEMPRE de buscar_cliente); nunca digas que la
    reserva ya esta confirmada.
+22. consultar_cumpleanos_contactos_personales — cumpleanos REALES de los
+   contactos personales que un DJ o un Cliente sincronizo desde su propio
+   Google Calendar (calendario de cumpleanos de Google, no client_profiles).
+   Util para detectar oportunidades de clientes potenciales -- el amigo o
+   familiar de un artista con cumpleanos cerca puede ser un lead. Google NO
+   entrega telefono ni email en estos eventos, solo el nombre -- si el
+   usuario pide ese dato, dile que no esta disponible por esta via, no lo
+   inventes. Si la lista vuelve vacia, dilo asi.
 
 ### DE MUSICA SI SABES, Y MUCHO
 Eres productor y DJ, no un administrativo. Sabes leer una pista y decir que
@@ -1052,6 +1060,27 @@ serve(async (req: Request) => {
         },
     };
 
+    const CUMPLEANOS_CONTACTOS_TOOL = {
+        name: "consultar_cumpleanos_contactos_personales",
+        description:
+            "Consulta elixis_agenda_eventos (tipo='cumpleanos') -- los cumpleanos reales de los contactos " +
+            "personales que un DJ o un Cliente sincronizo desde SU PROPIO Google Calendar (calendario especial " +
+            "de cumpleanos de Google, distinto de client_profiles.birth_date). Cada resultado dice de que " +
+            "artista o cliente es el contacto, para poder dirigir seguimiento comercial 'de parte de' esa " +
+            "persona. Google NO entrega telefono ni email por esta via, solo el nombre -- nunca inventes un " +
+            "dato de contacto que no venga en la respuesta. Si no hay nadie en la ventana pedida, dilo asi.",
+        input_schema: {
+            type: "object",
+            properties: {
+                dias: {
+                    type: "number",
+                    description: "Ventana de dias hacia adelante desde hoy. Default 30, maximo 90.",
+                },
+            },
+            required: [],
+        },
+    };
+
     const LIBRO_EVENTO_TOOL = {
         name: "consultar_libro_evento",
         description:
@@ -1529,6 +1558,7 @@ serve(async (req: Request) => {
             || toolName === "consultar_efemerides"
             || toolName === "consultar_historial_bitacora"
             || toolName === "consultar_seguimiento_anual"
+            || toolName === "consultar_cumpleanos_contactos_personales"
             || toolName === "consultar_libro_evento"
             || toolName === "consultar_eventos_venue"
         ) {
@@ -1890,6 +1920,20 @@ serve(async (req: Request) => {
                 .select("user_id, full_name")
                 .in("user_id", clientIds);
             for (const p of perfiles ?? []) nombresPorId[String(p.user_id)] = String(p.full_name ?? "(sin nombre)");
+
+            // 2026-09-18: mdj-yearly-recall ahora guarda master_clients.id en
+            // client_user_id para birthday/anniversary (no un client_profiles.
+            // user_id real -- ese solo aplica a event_anniversary, que sigue
+            // viniendo de leads.client_user_id). Lo que no resolvio arriba se
+            // intenta aca antes de caer a "(sin nombre)".
+            const faltantes = clientIds.filter((id) => !nombresPorId[String(id)]);
+            if (faltantes.length > 0) {
+                const { data: masterClients } = await ADMIN
+                    .from("master_clients")
+                    .select("id, name")
+                    .in("id", faltantes);
+                for (const mc of masterClients ?? []) nombresPorId[String(mc.id)] = String(mc.name ?? "(sin nombre)");
+            }
         }
 
         // dedup_key tiene forma "<tipo>:<id>:<anio>" (birthday/anniversary/event_anniversary).
@@ -1921,6 +1965,70 @@ serve(async (req: Request) => {
         });
 
         return JSON.stringify({ ok: true, count: recordatorios.length, recordatorios });
+    }
+
+    async function runCumpleanosContactosTool(input: Record<string, unknown>): Promise<string> {
+        const diasRaw = Number(input?.dias);
+        const dias = Number.isFinite(diasRaw) && diasRaw > 0 ? Math.min(90, diasRaw) : 30;
+        const ahora = new Date();
+        const limite = new Date(ahora.getTime() + dias * 24 * 60 * 60 * 1000);
+
+        const { data, error } = await ADMIN
+            .from("elixis_agenda_eventos")
+            .select("user_id, notas, fecha_inicio")
+            .eq("tipo", "cumpleanos")
+            .eq("estado", "activo")
+            .gte("fecha_inicio", ahora.toISOString())
+            .lte("fecha_inicio", limite.toISOString())
+            .order("fecha_inicio", { ascending: true })
+            .limit(50);
+        if (error) return JSON.stringify({ error: `elixis_agenda_eventos: ${error.message}` });
+
+        const rows = data ?? [];
+        if (rows.length === 0) return JSON.stringify({ ok: true, count: 0, ventana_dias: dias, cumpleanos: [] });
+
+        // Mismo dual-lookup que ya usa loadPersonalCalendarSync() del lado del
+        // calendario y procesarEventosGoogle() al sincronizar -- calendar-
+        // oauth-init no distingue tipo de cuenta, asi que el user_id puede ser
+        // un DJ o un Cliente. Nunca se mezclan: cada fila dice explicitamente
+        // de cual de los dos es el contacto.
+        const userIds = Array.from(new Set(rows.map((r) => r.user_id).filter(Boolean)));
+        const djPorUser: Record<string, string> = {};
+        const clientePorUser: Record<string, string> = {};
+        if (userIds.length > 0) {
+            const { data: djs } = await ADMIN
+                .from("dj_profiles")
+                .select("user_id, stage_name, dj_name, full_name")
+                .in("user_id", userIds);
+            for (const d of djs ?? []) {
+                const nombre = String(d.stage_name || d.dj_name || d.full_name || "").trim();
+                if (nombre) djPorUser[String(d.user_id)] = nombre;
+            }
+            const faltantes = userIds.filter((id) => !djPorUser[String(id)]);
+            if (faltantes.length > 0) {
+                const { data: clientes } = await ADMIN
+                    .from("client_profiles")
+                    .select("user_id, full_name")
+                    .in("user_id", faltantes);
+                for (const c of clientes ?? []) {
+                    const nombre = String(c.full_name || "").trim();
+                    if (nombre) clientePorUser[String(c.user_id)] = nombre;
+                }
+            }
+        }
+
+        const cumpleanos = rows.map((r) => {
+            const uid = String(r.user_id ?? "");
+            const esDj = Boolean(djPorUser[uid]);
+            return {
+                contacto: String(r.notas ?? "(sin nombre)"),
+                fecha: r.fecha_inicio,
+                sincronizado_de_tipo: esDj ? "artista" : (clientePorUser[uid] ? "cliente" : "desconocido"),
+                sincronizado_de_nombre: esDj ? djPorUser[uid] : (clientePorUser[uid] ?? "(sin nombre)"),
+            };
+        });
+
+        return JSON.stringify({ ok: true, count: cumpleanos.length, ventana_dias: dias, cumpleanos });
     }
 
     async function runLibroEventoTool(input: Record<string, unknown>): Promise<string> {
@@ -2563,7 +2671,7 @@ serve(async (req: Request) => {
                     // hasta este cambio de modelo. Sin este parametro, el muestreo queda en
                     // el default del modelo -- no hace falta reemplazarlo por nada.
                     system: systemContent,
-                    tools: [FINANCIAL_TOOL, LEAD_NOTE_TOOL, AGENDA_READ_TOOL, AGENDA_WRITE_TOOL, AGENDA_EVENTOS_TOOL, RESIDENCY_TOOL, EFEMERIDES_TOOL, INCIDENT_WRITE_TOOL, INCIDENT_READ_TOOL, CATALOG_READ_TOOL, CATALOG_PRICE_TOOL, QUOTE_WRITE_TOOL, CLIENT_SEARCH_TOOL, SMS_QUEUE_TOOL, EMAIL_QUEUE_TOOL, CONFIRM_SEND_TOOL, MUSIC_TOOL, MEMORY_TOOL, SEGUIMIENTO_ANUAL_TOOL, LIBRO_EVENTO_TOOL, VENUE_EVENTS_TOOL, VENUE_RESERVATION_TOOL],
+                    tools: [FINANCIAL_TOOL, LEAD_NOTE_TOOL, AGENDA_READ_TOOL, AGENDA_WRITE_TOOL, AGENDA_EVENTOS_TOOL, RESIDENCY_TOOL, EFEMERIDES_TOOL, INCIDENT_WRITE_TOOL, INCIDENT_READ_TOOL, CATALOG_READ_TOOL, CATALOG_PRICE_TOOL, QUOTE_WRITE_TOOL, CLIENT_SEARCH_TOOL, SMS_QUEUE_TOOL, EMAIL_QUEUE_TOOL, CONFIRM_SEND_TOOL, MUSIC_TOOL, MEMORY_TOOL, SEGUIMIENTO_ANUAL_TOOL, CUMPLEANOS_CONTACTOS_TOOL, LIBRO_EVENTO_TOOL, VENUE_EVENTS_TOOL, VENUE_RESERVATION_TOOL],
                     messages: convo,
                 }),
             });
@@ -2686,6 +2794,11 @@ serve(async (req: Request) => {
                     await recordAiKpi(failed ? "tool_error" : "tool_ok");
                 } else if (toolName === "consultar_seguimiento_anual") {
                     out = await runSeguimientoAnualTool((b.input as Record<string, unknown>) ?? {});
+                    let failed = true;
+                    try { failed = (JSON.parse(out) as { ok?: unknown })?.ok !== true; } catch { failed = true; }
+                    await recordAiKpi(failed ? "tool_error" : "tool_ok");
+                } else if (toolName === "consultar_cumpleanos_contactos_personales") {
+                    out = await runCumpleanosContactosTool((b.input as Record<string, unknown>) ?? {});
                     let failed = true;
                     try { failed = (JSON.parse(out) as { ok?: unknown })?.ok !== true; } catch { failed = true; }
                     await recordAiKpi(failed ? "tool_error" : "tool_ok");
