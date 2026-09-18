@@ -121,14 +121,26 @@ serve(async (req: Request) => {
     const lang = /^[a-z]{2}$/.test(u.searchParams.get("lang") ?? "") ? u.searchParams.get("lang")! : "es";
     // Lista blanca de recursos. No se acepta una ruta arbitraria: sin esto,
     // el puente reenvia lo que le manden y se convierte en un proxy abierto.
-    const recurso = u.searchParams.get("recurso") === "forecast" ? "forecast" : "weather";
+    // "onecall" (2026-09-18, diagnostico pedido por el PO): /data/2.5/weather
+    // es una foto del momento -- por diseño, siempre reporta DESPUES de que
+    // algo ya esta pasando, nunca antes. One Call API 3.0 trae "minutely"
+    // (proxima hora minuto a minuto) y "alerts" (avisos oficiales de clima
+    // severo) -- la unica forma real de que el clima "llegue adelantado" en
+    // vez de atrasado. Requiere que la CLAVE tenga esa suscripcion activada
+    // en el dashboard de OpenWeatherMap (separada del plan base) -- por eso
+    // esto es solo el puente, no una promesa de que ya funciona.
+    const recursoParam = u.searchParams.get("recurso");
+    const recurso = recursoParam === "forecast" ? "forecast" : recursoParam === "onecall" ? "onecall" : "weather";
 
-    const destino = new URL(`https://api.openweathermap.org/data/2.5/${recurso}`);
+    const destino = recurso === "onecall"
+        ? new URL("https://api.openweathermap.org/data/3.0/onecall")
+        : new URL(`https://api.openweathermap.org/data/2.5/${recurso}`);
     destino.searchParams.set("lat", String(lat));
     destino.searchParams.set("lon", String(lon));
     destino.searchParams.set("units", units);
     destino.searchParams.set("lang", lang);
     destino.searchParams.set("appid", clave);
+    if (recurso === "onecall") destino.searchParams.set("exclude", "hourly,daily");
 
     try {
         const res = await fetch(destino.toString());
