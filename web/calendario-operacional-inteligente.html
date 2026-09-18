@@ -1395,25 +1395,32 @@
       html+='<div class="newform">'
         +'<div><label>Nombre</label><input id="f-n" placeholder="Nombre y apellido"></div>'
         +'<div><label>Estado</label><select id="f-e"><option>Potencial</option><option>Activo</option><option>VIP</option></select></div>'
-        +'<div><label>Cumpleaños</label><input id="f-b" type="date" value="2026-08-15"></div>'
-        +'<div><label>'+(owner?'Artista':'Canal')+'</label>';
-      if(owner){html+='<select id="f-a">';ARTISTS.forEach(function(a){html+='<option value="'+a.id+'">'+a.n+'</option>';});html+='</select>';}
-      else{html+='<select id="f-c"><option>WhatsApp</option><option>Instagram</option><option>Email</option><option>SMS</option></select>';}
-      html+='</div>';
-      // Teléfono/email SOLO en la vista Owner -- es el único guardado real
-      // (find_or_create_master_client lo exige). "Mis clientes" (artista)
-      // sigue siendo local/de mentira por ahora -- ver nota en f-save.
-      if(owner) html+='<div><label>Teléfono o email</label><input id="f-contact" placeholder="+1 305... o correo@ejemplo.com"></div>';
+        +'<div><label>Cumpleaños</label><input id="f-b" type="date" value="2026-08-15"></div>';
+      // Selector de artista SOLO owner -- un artista guarda siempre bajo su
+      // propio perfil (state.artist), no hay nada que elegir. "Canal" (2026-
+      // 09-18) se quitó del formulario de artista: no existe columna real
+      // para eso en dj_client_affiliations/master_clients, era un campo de
+      // mentira que no se guardaba en ningún lado.
+      if(owner){
+        html+='<div><label>Artista</label><select id="f-a">';
+        ARTISTS.forEach(function(a){html+='<option value="'+a.id+'">'+a.n+'</option>';});
+        html+='</select></div>';
+      }
+      // Teléfono/email para ambas vistas (2026-09-18): find_or_create_master_client
+      // lo exige siempre -- antes solo la vista Owner lo pedía porque "Mis
+      // clientes" (artista) todavía no tenía guardado real.
+      html+='<div><label>Teléfono o email</label><input id="f-contact" placeholder="+1 305... o correo@ejemplo.com"></div>';
       html+='<button class="save" id="f-save">Guardar</button></div>';
     }
     html+='<div class="crm-table"><div class="crm-scroll"><table class="crm"><thead><tr><th>Cliente</th>'+(owner?'<th>Artista</th>':'')+'<th>Estado</th><th>Cumpleaños</th><th>Aniversario</th><th>Canal</th><th>Notif.</th><th></th></tr></thead><tbody>';
     list.forEach(function(c){
       var bday=c.bday?c.bday.split("-")[1]+" ago":"—";
       var aniv=c.since?(function(){var p=c.since.split("-");return p[2]+" "+MON_L[+p[1]-1].slice(0,3)+" · "+(2026-(+p[0]))+"a";})():"—";
-      // Eliminar (soft, dj_client_affiliation_modificar) SOLO owner/staff Y
-      // SOLO filas reales (con masterClientId) -- las de mentira (renderCrm
-      // local, "Mis clientes") no tienen nada real que desactivar.
-      var delBtn=(owner && c.masterClientId)
+      // Eliminar (soft, dj_client_affiliation_modificar) SOLO filas reales
+      // (con masterClientId) -- ambas vistas ya son reales desde 2026-09-18,
+      // dj_client_affiliation_modificar valida que el artista solo toque lo
+      // suyo (ver script mis_clientes_artista_real.sql).
+      var delBtn=(c.masterClientId)
         ? '<button class="pencil crm-del-btn" title="Eliminar" data-mcid="'+c.masterClientId+'" data-djid="'+(c.owner||'')+'" data-name="'+c.n+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></button>'
         : '';
       html+='<tr><td><div class="cname">'+c.n+'</div><div class="cnote">'+c.note+'</div></td>'
@@ -1440,16 +1447,6 @@
       var bd=document.getElementById("f-b").value,mmdd=bd?bd.slice(5):"08-15";
       var estado=document.getElementById("f-e").value;
       var own=owner?document.getElementById("f-a").value:state.artist;
-      var chan=owner?"WhatsApp":document.getElementById("f-c").value;
-      if(!owner){
-        // "Mis clientes" (artista): sigue local/de mentira -- el candado real
-        // de get_master_calendar_events() hoy es "solo staff", así que un
-        // artista normal no podría ni leer de vuelta lo que guardara aquí.
-        // Ticket aparte si se quiere hacer real para artistas.
-        CLIENTS.push({n:n,estado:estado,bday:mmdd,since:"",chan:chan,note:"Nuevo lead · agregado hoy",owner:own});
-        state.crmForm=false;rebuild();render();
-        return;
-      }
       var contact=document.getElementById("f-contact").value.trim();
       if(!contact){ alert("Falta el teléfono o email del cliente -- find_or_create_master_client lo exige para no duplicar contactos."); return; }
       var isEmail=contact.indexOf("@")!==-1;
@@ -1625,7 +1622,13 @@
       var sb=(window.getSupabaseClient? window.getSupabaseClient() : window.supabase);
       if(!sb || !sb.rpc || !sb.auth){ return setTimeout(loadClientDates, 300); }
       if(!(await sb.auth.getSession()).data.session){ return setTimeout(loadClientDates, 300); }
-      var r=await sb.rpc("get_master_calendar_events");
+      if(window.__COI_STAFF===undefined){ return setTimeout(loadClientDates, 300); }   // esperar a saber el rol antes de elegir el RPC
+      // Owner/staff: vista consolidada de todos los artistas (get_master_calendar_events,
+      // guardia de "solo staff" adentro). Artista: SOLO su propia base
+      // (get_my_calendar_events, 2026-09-18 -- antes "Mis clientes" era
+      // local/de mentira porque este RPC no existía y el otro rechazaba a
+      // cualquiera que no fuera staff).
+      var r=await sb.rpc(window.__COI_STAFF===true ? "get_master_calendar_events" : "get_my_calendar_events");
       if(r.error) throw r.error;
       var md=function(d){ return d ? String(d).slice(5,10) : null; };   // "YYYY-MM-DD" → "MM-DD"
       CLIENTS=(r.data||[]).map(function(row){
@@ -1648,7 +1651,7 @@
         };
       }).filter(function(c){ return c.bday || c.anniv; });
       rebuild(); render();
-    }catch(err){ console.warn("[Matrix] calendario maestro (¿RPC get_master_calendar_events creada?):", err.message||err); }
+    }catch(err){ console.warn("[Matrix] fechas de clientes:", err.message||err); }
   }
   // ═══ Residencias recurrentes reales (tabla residency_schedule) ═══
   var _leadsEv=[], _resEv=[], _syncEv=[], _bookEv=[];
