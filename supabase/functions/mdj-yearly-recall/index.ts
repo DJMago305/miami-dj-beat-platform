@@ -3,10 +3,19 @@
 // Pieza 3 (docs/diseno-calendario-cliente-fase2.md): "memoria anual". Corre
 // una vez al día vía pg_cron y busca, entre los eventos YA REALIZADOS
 // (leads.event_completed_at no nulo) y las fechas propias del cliente
-// (client_profiles.birth_date / wedding_anniversary), cualquier mes/día que
+// (master_clients.birthday / wedding_anniversary), cualquier mes/día que
 // coincida con HOY + WINDOW_DAYS -- si hay coincidencia, encola un aviso en
 // event_reminders_queue (reminder_type='yearly_recall') para que STAFF de
 // seguimiento con tiempo de sobra, no el mismo día.
+//
+// 2026-09-18: corregido para leer master_clients (Fase 2, deduplicado por
+// master_client -- el mismo que ya usa get_master_calendar_events() para el
+// calendario) en vez de client_profiles (Fase 1). client_profiles tiene 0
+// filas con birth_date/wedding_anniversary cargados -- la cola nunca se
+// llenó por leer de la tabla equivocada, no por un bug de lógica. event_id
+// sigue siendo real (leads.id) solo para la pieza 2 (aniversario de evento);
+// para cumpleaños/aniversario de cliente, client_user_id ahora guarda
+// master_clients.id (no tiene FK que lo impida -- columna libre).
 //
 // Mismo patrón de disparo que send-reminder-sms: pg_cron llama con
 // Authorization: Bearer $CRON_EDGE_AUTH_SECRET (secreto estático de sistema,
@@ -82,18 +91,20 @@ serve(async (req: Request) => {
   let queued = 0;
 
   // ── 1. Cumpleaños / aniversario de boda propios del cliente ──
-  const { data: profiles, error: profErr } = await ADMIN
-    .from("client_profiles")
-    .select("user_id, full_name, birth_date, wedding_anniversary")
-    .not("user_id", "is", null);
+  // master_clients, no client_profiles: es la fuente deduplicada real que ya
+  // usa get_master_calendar_events() para el calendario -- un mismo cliente
+  // atendido por varios DJs vive UNA sola vez aquí.
+  const { data: clients, error: clientsErr } = await ADMIN
+    .from("master_clients")
+    .select("id, name, birthday, wedding_anniversary");
 
-  if (profErr) {
-    console.error("[mdj-yearly-recall] client_profiles read failed:", profErr);
+  if (clientsErr) {
+    console.error("[mdj-yearly-recall] master_clients read failed:", clientsErr);
   } else {
-    for (const p of profiles ?? []) {
+    for (const c of clients ?? []) {
       const checks: Array<[string, string | null]> = [
-        ["birthday", p.birth_date],
-        ["anniversary", p.wedding_anniversary],
+        ["birthday", c.birthday],
+        ["anniversary", c.wedding_anniversary],
       ];
       for (const [kind, dateStr] of checks) {
         if (!dateStr) continue;
@@ -101,12 +112,12 @@ serve(async (req: Request) => {
         if (!wanted.has(monthDay(d))) continue;
 
         const yearTag = String(thisYear);
-        const dedupKey = `${kind}:${p.user_id}:${yearTag}`;
+        const dedupKey = `${kind}:${c.id}:${yearTag}`;
         if (await alreadyQueued(dedupKey)) continue;
 
         const label = kind === "birthday" ? "cumpleaños" : "aniversario de boda";
         const { error: insErr } = await ADMIN.from("event_reminders_queue").insert({
-          client_user_id: p.user_id,
+          client_user_id: c.id,
           dedup_key: dedupKey,
           reminder_type: "yearly_recall",
           status: "pending",
@@ -116,7 +127,7 @@ serve(async (req: Request) => {
           console.error(`[mdj-yearly-recall] insert failed (${dedupKey}):`, insErr);
           continue;
         }
-        console.log(`[mdj-yearly-recall] ${label} próximo: ${p.full_name ?? p.user_id}`);
+        console.log(`[mdj-yearly-recall] ${label} próximo: ${c.name ?? c.id}`);
         queued++;
       }
     }
