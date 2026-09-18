@@ -162,9 +162,22 @@ export async function procesarEventosGoogle(
         .select("stage_name, dj_name, full_name")
         .eq("user_id", userId)
         .maybeSingle();
-    const djNombre = String(djProf?.stage_name || djProf?.dj_name || djProf?.full_name || "").trim();
+    let djNombre = String(djProf?.stage_name || djProf?.dj_name || djProf?.full_name || "").trim();
     if (!djNombre) {
-        console.error(`[google-calendar-sync] sin dj_profiles.stage_name/dj_name/full_name para user_id=${userId}, se omiten inserciones nuevas`);
+        // calendar-oauth-init no distingue tipo de cuenta -- una cuenta
+        // Cliente puede conectar Google Calendar con el mismo flujo que un
+        // artista (2026-09-18, a pedido explícito del PO: "la lógica es la
+        // misma"). Si no resolvió como DJ, se intenta como Cliente antes de
+        // descartar el evento.
+        const { data: clientProf } = await ADMIN
+            .from("client_profiles")
+            .select("full_name")
+            .eq("user_id", userId)
+            .maybeSingle();
+        djNombre = String(clientProf?.full_name || "").trim();
+    }
+    if (!djNombre) {
+        console.error(`[google-calendar-sync] sin dj_profiles/client_profiles.full_name para user_id=${userId}, se omiten inserciones nuevas`);
     }
 
     for (const ev of eventos) {
