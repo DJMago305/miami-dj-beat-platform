@@ -1519,12 +1519,18 @@
   var MOON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
   function isDark(){ var t=root.getAttribute("data-theme"); if(t) return t==="dark"; return !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches); }
   function paint(){ btn.innerHTML = isDark() ? SUN : MOON; }   // muestra a dónde vas: sol=ir a día, luna=ir a noche
-  try{ var s=localStorage.getItem("coi_theme"); if(s) root.setAttribute("data-theme", s); }catch(e){}
+  // mdjStaffTheme: MISMA llave que usa el sol/luna del riel principal
+  // (web/mdjb-shared-header.js) en el resto de la plataforma -- 2026-09-18,
+  // a pedido del PO: un solo estado de tema en toda la app, no uno aislado
+  // por página. Los valores ya coinciden ("light"/"dark"); solo cambia cómo
+  // se aplica al DOM (esta página usa data-theme explícito en ambos casos,
+  // el sitio general solo marca "day" y deja el atributo ausente en dark).
+  try{ var s=localStorage.getItem("mdjStaffTheme"); if(s==="light"||s==="dark") root.setAttribute("data-theme", s); }catch(e){}
   paint();
   btn.addEventListener("click", function(){
     var goDark = !isDark();
     root.setAttribute("data-theme", goDark ? "dark" : "light");
-    try{ localStorage.setItem("coi_theme", goDark ? "dark" : "light"); }catch(e){}
+    try{ localStorage.setItem("mdjStaffTheme", goDark ? "dark" : "light"); }catch(e){}
     paint();
   });
 })();
