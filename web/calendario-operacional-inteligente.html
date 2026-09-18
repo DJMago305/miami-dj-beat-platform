@@ -1609,7 +1609,7 @@
       var m=mapLeads((r.data||[]).filter(function(x){ return x.event_date; }));
       _leadsEv=m.evs; ARTISTS=m.artists; CLIENT_ACCOUNTS=m.clients;
       addResidencyArtists(); // re-agrega los DJ de residencias reales (ver loadResidencies) -- ARTISTS se acaba de reconstruir desde cero arriba
-      BASE_EV=_leadsEv.concat(_resEv).concat(_syncEv);
+      BASE_EV=_leadsEv.concat(_resEv).concat(_syncEv).concat(_bookEv);
       rebuild(); render();
     }catch(err){ console.warn("[Matrix] carga de leads falló:", err); }
   }
@@ -1651,7 +1651,7 @@
     }catch(err){ console.warn("[Matrix] calendario maestro (¿RPC get_master_calendar_events creada?):", err.message||err); }
   }
   // ═══ Residencias recurrentes reales (tabla residency_schedule) ═══
-  var _leadsEv=[], _resEv=[], _syncEv=[];
+  var _leadsEv=[], _resEv=[], _syncEv=[], _bookEv=[];
   // Un chip de ARTISTS por cada DJ real de residencia sin dj_id (ver nota en
   // loadResidencies) -- se llama tanto ahí como en loadRealLeads(), porque
   // esa función RECONSTRUYE ARTISTS desde cero y borraría estos chips si no
@@ -1737,7 +1737,7 @@
       }
       _resEv=evs;
       addResidencyArtists();
-      BASE_EV=_leadsEv.concat(_resEv).concat(_syncEv); rebuild(); render();
+      BASE_EV=_leadsEv.concat(_resEv).concat(_syncEv).concat(_bookEv); rebuild(); render();
     }catch(err){ console.warn("[Matrix] residencias:", err.message||err); }
   }
 
@@ -1759,7 +1759,7 @@
         .in("tipo",["cumpleanos","nota"]);
       if(r.error) throw r.error;
       var rows=r.data||[];
-      if(!rows.length){ _syncEv=[]; BASE_EV=_leadsEv.concat(_resEv).concat(_syncEv); rebuild(); render(); return; }
+      if(!rows.length){ _syncEv=[]; BASE_EV=_leadsEv.concat(_resEv).concat(_syncEv).concat(_bookEv); rebuild(); render(); return; }
 
       // dj_nombre ya viene guardado en cada fila (lo resolvió el sync al escribir),
       // pero el "artist id" que usa esta pantalla para color/pip es dj_profiles.id
@@ -1804,9 +1804,78 @@
         }
       });
       _syncEv=out;
-      BASE_EV=_leadsEv.concat(_resEv).concat(_syncEv);
+      BASE_EV=_leadsEv.concat(_resEv).concat(_syncEv).concat(_bookEv);
       rebuild(); render();
     }catch(err){ console.warn("[Matrix] sincronización de calendario personal:", err.message||err); }
+  }
+
+  // ═══ Eventos reales creados por ELIXIS (modificar_agenda_evento) ═══
+  // BUG REAL 2026-09-18 (reporte del PO con un evento real, "Haunting House:
+  // Halloween"): ELIXIS lo creó de verdad en elixis_agenda_eventos (tipo
+  // "privado", 5 fechas) pero NUNCA aparecía en este calendario. Causa: la
+  // única consulta que leía esta tabla (loadPersonalCalendarSync, arriba)
+  // filtraba tipo IN ('cumpleanos','nota') a propósito -- esa función se
+  // escribió solo para el sync de cumpleaños de Google (PR #403) y nunca se
+  // extendió cuando ELIXIS empezó a poder crear eventos reales de tipo
+  // "privado"/"boda" con esta misma tabla. No es un fallo de guardado: el
+  // dato siempre estuvo bien, la pantalla simplemente no estaba programada
+  // para pintarlo.
+  //
+  // "residencia" queda fuera a propósito: esa recurrencia semanal ya vive en
+  // residency_schedule (gestionar_residency_schedule/loadResidencies arriba)
+  // -- mostrarla también desde aquí duplicaría la misma noche dos veces.
+  async function loadElixisBookings(){
+    try{
+      var sb=(window.getSupabaseClient? window.getSupabaseClient() : window.supabase);
+      if(!sb || !sb.from || !sb.auth){ return setTimeout(loadElixisBookings, 300); }
+      if(!(await sb.auth.getSession()).data.session){ return setTimeout(loadElixisBookings, 300); }
+      var r=await sb.from("elixis_agenda_eventos")
+        .select("id,user_id,dj_nombre,venue_nombre,fecha_inicio,fecha_fin,tipo,notas,tarifa_venue_cents,pago_dj_cents,estado")
+        .eq("estado","activo")
+        .in("tipo",["privado","boda"]);
+      if(r.error) throw r.error;
+      var rows=r.data||[];
+      if(!rows.length){ _bookEv=[]; BASE_EV=_leadsEv.concat(_resEv).concat(_syncEv).concat(_bookEv); rebuild(); render(); return; }
+
+      // Mismo lookup user_id → dj_profiles.id que loadPersonalCalendarSync():
+      // esta pantalla siempre agrupa/colorea por dj_profiles.id, nunca por el
+      // user_id de auth.
+      var uids=[]; rows.forEach(function(x){ if(uids.indexOf(x.user_id)===-1) uids.push(x.user_id); });
+      var profByUser={};
+      if(uids.length){
+        try{
+          var pr=await sb.from("dj_profiles").select("id,user_id,stage_name,dj_name,full_name").in("user_id", uids);
+          (pr.data||[]).forEach(function(p){ profByUser[p.user_id]=p; });
+        }catch(e2){ console.warn("[Matrix] dj_profiles lookup para bookings de ELIXIS falló:", e2.message||e2); }
+      }
+
+      function dt2h(dt){ return dt.getHours()+dt.getMinutes()/60; }
+      var pal=0, out=[];
+      rows.forEach(function(row){
+        var d0=new Date(row.fecha_inicio), d1=row.fecha_fin?new Date(row.fecha_fin):null;
+        var iso=d0.getFullYear()+"-"+pad(d0.getMonth()+1)+"-"+pad(d0.getDate());
+        var s=dt2h(d0), e=d1?dt2h(d1):s+2;
+        if(d1 && d1.getFullYear()===d0.getFullYear() && d1.getMonth()===d0.getMonth() && d1.getDate()===d0.getDate() && e<s) e+=24;   // cruza medianoche, mismo día calendario
+        var prof=profByUser[row.user_id];
+        var artId=prof?prof.id:("name:"+(row.dj_nombre||"Sin asignar"));
+        var artNm=(prof&&(prof.stage_name||prof.dj_name||prof.full_name))||row.dj_nombre||"Sin asignar";
+        if(!ARTISTS.some(function(a){return a.id===artId;})) ARTISTS.push({id:artId, n:artNm, c:DJ_PALETTE[pal++ % DJ_PALETTE.length]});
+        var meta=null;
+        if(row.tarifa_venue_cents!=null || row.pago_dj_cents!=null){
+          meta={ pago:{
+            v:(row.pago_dj_cents!=null?"$"+(row.pago_dj_cents/100):"por definir"),
+            s:(row.tarifa_venue_cents!=null?"venue paga $"+(row.tarifa_venue_cents/100):"tu pago")
+          } };
+        }
+        out.push({ d:iso, cal:"set", artist:artId, ad:false, s:s, e:e,
+          t:(row.notas||row.venue_nombre||(row.tipo==="boda"?"Boda":"Evento privado")),
+          venue:(row.venue_nombre||""), meta:meta,
+          bookingId:row.id, bookingTipo:row.tipo });
+      });
+      _bookEv=out;
+      BASE_EV=_leadsEv.concat(_resEv).concat(_syncEv).concat(_bookEv);
+      rebuild(); render();
+    }catch(err){ console.warn("[Matrix] bookings reales de ELIXIS:", err.message||err); }
   }
 
   // ═══ Campana en tiempo real ═══
@@ -1826,6 +1895,7 @@
     _remRealtimeChannel = sb.channel("coi-agenda-eventos")
       .on("postgres_changes", { event: "*", schema: "public", table: "elixis_agenda_eventos" }, function(){
         loadPersonalCalendarSync();
+        loadElixisBookings();
       })
       .subscribe();
   }
@@ -1858,6 +1928,7 @@
   loadClientDates();
   loadResidencies();
   loadPersonalCalendarSync();
+  loadElixisBookings();
   subscribeRemindersRealtime();
 })();
 </script>
