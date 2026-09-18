@@ -2356,6 +2356,8 @@
           '🔔<span id="mdj-notif-bell-badge" class="mdj-notif-bell-badge" hidden>0</span>' +
         '</button>' +
         '<div id="mdj-notif-bell-dropdown" class="mdj-notif-bell-dropdown" hidden>' +
+          '<div class="mdj-notif-bell-title">Leads nuevos</div>' +
+          '<div id="mdj-notif-bell-list-leads" class="mdj-notif-bell-list"></div>' +
           '<div class="mdj-notif-bell-title">Contratos pendientes de firma</div>' +
           '<div id="mdj-notif-bell-list" class="mdj-notif-bell-list"></div>' +
           '<div class="mdj-notif-bell-title">Pedidos sin leer</div>' +
@@ -2382,16 +2384,49 @@
 
       refreshNotifBell(sb);
     }
-    var _notifContractCount = 0, _notifMerchCount = 0;
+    var _notifContractCount = 0, _notifMerchCount = 0, _notifLeadsCount = 0;
     function _paintNotifBadge(){
       var badge = el('mdj-notif-bell-badge');
-      var total = _notifContractCount + _notifMerchCount;
+      var total = _notifContractCount + _notifMerchCount + _notifLeadsCount;
       if(total > 0){ badge.hidden = false; badge.textContent = String(total); }
       else badge.hidden = true;
     }
     async function refreshNotifBell(sb){
+      await loadNewLeads(sb);
       await loadPendingContracts(sb);
       await loadUnreadMerchOrders(sb);
+    }
+    // Leads nuevos (2026-09-18, a pedido del PO: la campana solo miraba
+    // contratos/pedidos -- un lead nuevo esperando respuesta no encendía nada
+    // aquí aunque sí sea "tarea por hacer"). status='NEW' es el default real
+    // de la tabla leads (ver leads.status DEFAULT 'NEW') -- en cuanto alguien
+    // lo mueve a CONTACTED/MATCHED/etc. deja de contar, sin tocar nada aquí.
+    async function loadNewLeads(sb){
+      var list = el('mdj-notif-bell-list-leads');
+      try{
+        var res = await sb.from('leads')
+          .select('id, name, contact_person, event_type, created_at')
+          .eq('status', 'NEW')
+          .order('created_at', { ascending: false });
+        var rows = (res && res.data) || [];
+        _notifLeadsCount = rows.length;
+        if(rows.length){
+          list.innerHTML = rows.map(function(r){
+            var who = (r.contact_person || r.name || 'Lead sin nombre').replace(/</g, '&lt;');
+            var tipo = (r.event_type || '').replace(/</g, '&lt;');
+            var when = r.created_at ? new Date(r.created_at).toLocaleDateString('es-US') : '—';
+            return '<a class="mdj-notif-bell-item" href="./admin-dashboard.html">' +
+              '<span class="mdj-notif-bell-item-who">' + who + (tipo ? ' · ' + tipo : '') + '</span>' +
+              '<span class="mdj-notif-bell-item-meta">' + when + '</span></a>';
+          }).join('');
+        } else {
+          list.innerHTML = '<div class="mdj-notif-bell-empty">Sin leads nuevos</div>';
+        }
+      }catch(e){
+        _notifLeadsCount = 0;
+        list.innerHTML = '<div class="mdj-notif-bell-empty">Sin leads nuevos</div>';
+      }
+      _paintNotifBadge();
     }
     async function loadPendingContracts(sb){
       var list = el('mdj-notif-bell-list');
