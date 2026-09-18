@@ -31,15 +31,36 @@ import {
 // tambien disponible si esto se repite con Sonnet.
 const MODEL = "claude-sonnet-5";
 const ANTHROPIC_VERSION = "2023-06-01";
-// SUBIDO 512->900 (2026-08-31, mismo cambio de modelo): de paso corrige un
-// orden real invertido en el governor de mas abajo -- FULL (el nivel normal,
-// bajo 80% de cuota) daba MENOS tokens (512) que SAVER (640, el nivel de
-// ahorro, 80-100% de cuota), justo al reves de lo que el propio comentario
-// del governor dice que deberia pasar ("FULL=MAX_TOKENS · SAVER=640 ·
-// ESSENTIAL=384"). Con 900, FULL > SAVER > ESSENTIAL, como el comentario ya
-// decia. Tambien le da a Sonnet 5 mas margen real para respuestas con tablas
-// (ej. la agenda semanal completa) sin cortarse a la mitad.
-const MAX_TOKENS = 900;
+// Extended thinking (2026-09-18, pedido explícito del PO: "necesito que
+// razone más" tras ver a ELIXIS estancarse en un pedido largo). Solo en modo
+// FULL (founder/owner) -- es mas lento y consume mas tokens, y el problema
+// que lo motivo es especificamente el uso del owner; SAVER/ESSENTIAL se
+// quedan rapidos y baratos como estaban disenados. budget_tokens cuenta dentro
+// de max_tokens (no aparte), por eso FULL subio de 4096 a 8192 -- sin ese
+// margen, el presupuesto de pensamiento se comeria el espacio real de
+// respuesta/herramientas que se acaba de agrandar para el mismo caso.
+const THINKING_BUDGET_TOKENS = 3000;
+// Router de complejidad (2026-09-18, pedido explícito del PO: que ELIXIS
+// mismo decida cuándo hace falta pensar más, en vez de encender el
+// pensamiento extendido siempre -- "para trabajos locales normales de la
+// plataforma no necesita activarse". Se usa Haiku 4.5 (rápido y barato) SOLO
+// para clasificar el mensaje en una palabra, nunca para responderle a
+// Gerardo -- ese costo es minúsculo comparado con el presupuesto de
+// pensamiento (3000 tokens) que ahorra en cada mensaje simple.
+const ROUTER_MODEL = "claude-haiku-4-5-20251001";
+// SUBIDO 900->4096 (2026-09-18, reporte real del PO con capturas): pidió
+// crear ~10 fechas puntuales alternando 2 DJs, dijo "aprobado" DOS veces, y
+// ELIXIS nunca ejecutó ni una sola llamada -- solo repetía el mismo resumen
+// del plan cada turno. Causa raíz real: cada fecha necesita 2 tool_use
+// (agenda personal del DJ + agenda maestra del staff), ~10 fechas = ~20
+// llamadas -- imposible que quepan en 900 tokens de salida junto con el
+// texto. El modelo no trunca a medias: cuando ve que no le alcanza el
+// presupuesto para completar el lote, prefiere no ejecutar NADA y devolver
+// solo un resumen de texto que sí quepa -- de ahí el loop de "resumen final"
+// sin avance real. 900 ya se había subido una vez (512->900) por el mismo
+// síntoma con tablas; el techo seguía siendo insuficiente para lotes de
+// herramientas. Mismo criterio de orden que antes: FULL > SAVER > ESSENTIAL.
+const MAX_TOKENS = 8192;
 
 // Public REST key for roster reads: env only (anon or publishable). No hardcoded literals.
 function envPublicRestKey(): string {
@@ -129,17 +150,54 @@ const SYSTEM_PROMPT = `Eres ELIXIS, el Agente Ejecutivo de Inteligencia del ecos
 - Ayudar a GESTIONAR, DECIDIR y EJECUTAR las operaciones de Miami DJ Beat LLC: bookings, artistas, cursos, equipo, finanzas y estrategia.
 - Priorizas la acción concreta y la claridad. Cuando algo requiera una decisión de Gerardo, se la presentas clara (opciones + tu recomendación).
 
+### PEDIDOS COMPUESTOS (varias cosas en un solo mensaje) -- 2026-09-18, caso
+### real: Gerardo pidió 3 cambios de agenda en un mismo mensaje (crear un
+### evento especial, congelar una residencia, alternar DJ de otra) y no
+### ejecutaste NADA -- ni la parte que sí tenías herramienta para hacer.
+- Cuando un mensaje trae VARIAS peticiones, no es todo-o-nada. Identifica cada
+  una por separado: la que sí tiene una herramienta real, EJECÚTALA de una vez
+  -- no esperes a resolver las demás primero.
+- Si una parte del pedido no tiene herramienta o falta un dato para completarla,
+  dilo con nombre y explica exactamente qué falta o por qué no se puede hoy --
+  nunca la ignores en silencio ni la mezcles con las partes que sí hiciste.
+- En tu respuesta, sé explícito: qué ejecutaste (con el resultado real de la
+  herramienta), y qué no pudiste hacer y por qué. Gerardo debe poder confirmar
+  cada cosa sin tener que preguntar "¿y qué pasó con...?".
+
+### CUANDO GERARDO YA APROBÓ -- EJECUTA, NO VUELVAS A RESUMIR (2026-09-18,
+### caso real: pidió crear ~10 fechas alternando DJ, dijo "aprobado, manda las
+### órdenes" y en dos turnos seguidos SOLO recibió de vuelta el mismo resumen
+### del plan, sin una sola herramienta ejecutada. Eso es una falla grave.)
+- "Aprobado"/"dale"/"sí"/"procede"/"hazlo" sobre algo que ya propusiste
+  significa: LLAMA las herramientas necesarias EN ESTA MISMA RESPUESTA, ya --
+  no vuelvas a describir el plan, no pidas luz verde otra vez, no repitas lo
+  que "falta por ejecutar" como si fuera nuevo.
+- Si el lote es largo (varias fechas, varios registros), no te detengas por
+  parecer mucho -- encadena tantas llamadas de herramienta como el turno
+  permita. Si de verdad no terminas todo el lote en una respuesta, ejecuta
+  TODO lo que puedas ahora y dí exactamente cuánto quedó y qué falta -- nunca
+  entregues un turno entero sin ejecutar nada cuando ya tenías luz verde.
+- No repitas el resumen completo de "Hecho / Falta" en cada mensaje de la
+  conversación -- eso ya quedó dicho una vez. En los turnos siguientes, habla
+  solo de lo que CAMBIÓ desde el último mensaje (qué se ejecutó, qué sigue).
+
 ### HONESTIDAD (regla absoluta)
 - Nunca inventes datos, cifras ni nombres. Si no tienes un dato, dilo y explica cómo conseguirlo.
 - Si una acción tiene riesgo o es irreversible, adviértelo ANTES y pide confirmación.
+- Si Gerardo pregunta por algo que ÉL te pidió antes en esta misma conversación
+  (el historial lo trae), nunca respondas que "no hay nada pendiente" o "todo
+  en orden" sin repasar ese historial primero -- decir eso cuando su propio
+  mensaje sigue ahí es peor que admitir que no lo resolviste.
 
 ### ESTILO DE RESPUESTA
 - Conciso: 2 a 5 oraciones por respuesta salvo que Gerardo pida detalle.
 - Humano y cálido, no un manual técnico. Directo al grano.
 - Si el mensaje es un saludo simple o no pide nada concreto ("hola", "buenos
   días", "¿qué tal?", "todo bien por aquí"), responde SOLO con el saludo y
-  una pregunta abierta corta -- ej. "¡Buenos días, Gerardo! ¿Qué tenemos en
-  mente hoy?". NUNCA sueltes ahí un listado de todo lo que sabes hacer
+  una pregunta abierta corta -- VARÍA la frase cada vez (nunca la misma
+  fórmula fija tipo "¿Qué tenemos en mente hoy?" repetida en cada saludo --
+  Gerardo lo reportó como aburrido y repetitivo, 2026-09-18). NUNCA sueltes
+  ahí un listado de todo lo que sabes hacer
   (agenda, cotizaciones, música, etc.) -- eso es una venta de menú, no una
   conversación real, y quema la sensación de estar hablando con alguien.
   Menciona una capacidad concreta solo cuando de verdad resuelve lo que se
@@ -675,6 +733,45 @@ interface RequestBody {
     message?: string;
     history?: ChatMessage[];
     context?: string;
+}
+
+// ─── ROUTER DE COMPLEJIDAD ──────────────────────────────────────────────────
+// Clasifica el mensaje con Haiku 4.5 (rápido/barato) en una sola palabra --
+// nunca escribe la respuesta real, solo decide si el turno necesita pensamiento
+// extendido. Fail-safe hacia "sí piensa": si el clasificador falla o tarda,
+// mejor gastar el presupuesto de pensamiento de más que repetir el bug real
+// que motivó todo esto (ELIXIS estancado sin ejecutar nada en un caso complejo).
+async function necesitaPensarMas(userMessage: string, history: ChatMessage[], apiKey: string): Promise<boolean> {
+    if (!userMessage) return false;
+    const ultimoTurno = history.slice(-2).map((m) => `${m.role}: ${m.content}`).join("\n");
+    try {
+        const ctrl = new AbortController();
+        const to = setTimeout(() => ctrl.abort(), 4000); // clasificador lento no debe frenar el turno real
+        const r = await fetch("https://api.anthropic.com/v1/messages", {
+            method: "POST",
+            headers: { "x-api-key": apiKey, "anthropic-version": ANTHROPIC_VERSION, "Content-Type": "application/json" },
+            signal: ctrl.signal,
+            body: JSON.stringify({
+                model: ROUTER_MODEL,
+                max_tokens: 5,
+                system: "Clasificas UN mensaje para un agente de IA de un negocio de DJs en Miami. " +
+                    "Responde EXACTAMENTE una palabra: COMPLEJO o SIMPLE. " +
+                    "COMPLEJO = pide varias acciones encadenadas, un lote de varias fechas/eventos, " +
+                    "alternar/rotar entre opciones, calcular dinero con varias variables, o decidir entre " +
+                    "opciones ambiguas. SIMPLE = consulta puntual, saludo, una sola acción clara, tarea " +
+                    "rutinaria de la plataforma. Ante la duda, responde SIMPLE.",
+                messages: [{ role: "user", content: (ultimoTurno ? ultimoTurno + "\n" : "") + `user: ${userMessage}` }],
+            }),
+        });
+        clearTimeout(to);
+        if (!r.ok) return true; // clasificador falló -> mejor pensar de más que repetir el bug real
+        const d = await r.json();
+        const texto = Array.isArray(d.content) ? d.content.map((b: Record<string, unknown>) => String(b.text ?? "")).join("") : "";
+        return /COMPLEJO/i.test(texto);
+    } catch (e) {
+        console.error("[elixis-chat] router de complejidad falló (se activa pensamiento extendido por seguridad):", e);
+        return true;
+    }
 }
 
 // ─── HANDLER ─────────────────────────────────────────────────────────────────
@@ -2648,12 +2745,33 @@ serve(async (req: Request) => {
     }
     const govPct = govUnlimited ? 0 : (govCap > 0 ? Math.min(100, Math.round((govUsedUnits / govCap) * 100)) : 100);
     const govMode = govUnlimited ? "FULL" : (govPct >= 100 ? "ESSENTIAL" : (govPct >= 80 ? "SAVER" : "FULL"));
-    // Router: haiku ya es el modelo económico; el gobernador ajusta el techo de tokens según el modo.
-    const govMaxTokens = govMode === "ESSENTIAL" ? 384 : (govMode === "SAVER" ? 640 : MAX_TOKENS);
+    // Gobernador de cuota: ajusta el techo de tokens según el modo (FULL/SAVER/ESSENTIAL).
+    const govMaxTokens = govMode === "ESSENTIAL" ? 1024 : (govMode === "SAVER" ? 2048 : MAX_TOKENS);
     let usInput = 0, usOutput = 0, usToolCalls = 0; // acumuladores para el ledger de consumo (ai_usage_events)
 
     let reply = "";
-    for (let round = 0; round < 3; round++) {
+    // Extended thinking SOLO en modo FULL, y SOLO si el router de complejidad
+    // (arriba, Haiku 4.5) de verdad lo pide (2026-09-18, pedido explícito del
+    // PO: "para trabajos locales normales de la plataforma no necesita
+    // activarse" -- un "elimina este venue" es una sola acción clara, no
+    // amerita gastar el presupuesto de pensamiento). Incompatible con
+    // temperature/top_p/top_k, que este archivo ya no manda (ver nota de
+    // abajo), y requiere no forzar tool_choice, que tampoco se manda aqui. Se
+    // repite en CADA ronda del bucle: la API de Claude exige el mismo bloque
+    // "thinking" en todas las llamadas de un mismo intercambio de herramientas,
+    // no solo en la primera.
+    const pensarMas = govMode === "FULL" && await necesitaPensarMas(userMessage, history, apiKey);
+    const thinkingParam = pensarMas
+        ? { thinking: { type: "enabled", budget_tokens: THINKING_BUDGET_TOKENS } }
+        : {};
+    // 6->25 rondas SOLO en FULL (2026-09-18, mismo caso real: confirmado en
+    // agent_action_log que las primeras 3 acciones SÍ se ejecutaron, pero el
+    // lote de ~10 fechas x 2 herramientas cada una -- ~20 llamadas -- seguía
+    // sin caber ni en 6 rondas con pensamiento extendido compitiendo por el
+    // mismo presupuesto de tokens por ronda. SAVER/ESSENTIAL se quedan en 6:
+    // no es su caso de uso y cada ronda de mas es otra llamada a Anthropic.
+    const maxRounds = govMode === "FULL" ? 25 : 6;
+    for (let round = 0; round < maxRounds; round++) {
         let cRes: Response;
         try {
             cRes = await fetch("https://api.anthropic.com/v1/messages", {
@@ -2661,7 +2779,7 @@ serve(async (req: Request) => {
                 headers: { "x-api-key": apiKey, "anthropic-version": ANTHROPIC_VERSION, "Content-Type": "application/json" },
                 body: JSON.stringify({
                     model: MODEL,
-                    max_tokens: govMaxTokens, // Governor: FULL=MAX_TOKENS · SAVER=640 · ESSENTIAL=384 (founder siempre FULL)
+                    max_tokens: govMaxTokens, // Governor: FULL=MAX_TOKENS(8192, incl. thinking) · SAVER=2048 · ESSENTIAL=1024 (founder siempre FULL)
                     // SIN temperature (2026-08-31, bug real encontrado en vivo -- primera
                     // llamada real con Sonnet 5 devolvia 502 "AI provider error" incluso
                     // para un mensaje trivial sin herramientas). Confirmado contra la
@@ -2669,7 +2787,9 @@ serve(async (req: Request) => {
                     // Fable 5 el muestreo (temperature/top_p/top_k) esta REMOVIDO -- la API
                     // lo rechaza con 400. Haiku 4.5 si lo aceptaba, por eso nunca fallo
                     // hasta este cambio de modelo. Sin este parametro, el muestreo queda en
-                    // el default del modelo -- no hace falta reemplazarlo por nada.
+                    // el default del modelo -- no hace falta reemplazarlo por nada. Ademas,
+                    // extended thinking (abajo) tampoco lo acepta junto.
+                    ...thinkingParam,
                     system: systemContent,
                     tools: [FINANCIAL_TOOL, LEAD_NOTE_TOOL, AGENDA_READ_TOOL, AGENDA_WRITE_TOOL, AGENDA_EVENTOS_TOOL, RESIDENCY_TOOL, EFEMERIDES_TOOL, INCIDENT_WRITE_TOOL, INCIDENT_READ_TOOL, CATALOG_READ_TOOL, CATALOG_PRICE_TOOL, QUOTE_WRITE_TOOL, CLIENT_SEARCH_TOOL, SMS_QUEUE_TOOL, EMAIL_QUEUE_TOOL, CONFIRM_SEND_TOOL, MUSIC_TOOL, MEMORY_TOOL, SEGUIMIENTO_ANUAL_TOOL, CUMPLEANOS_CONTACTOS_TOOL, LIBRO_EVENTO_TOOL, VENUE_EVENTS_TOOL, VENUE_RESERVATION_TOOL],
                     messages: convo,
@@ -2938,17 +3058,19 @@ serve(async (req: Request) => {
     }
 
     /* ═══ CIERRE FORZADO ═══════════════════════════════════════════════════
-       El bucle de arriba da TRES vueltas. Si en la tercera ELIXIS sigue
-       pidiendo herramientas, se sale sin haber escrito ni una palabra y `reply`
-       queda vacio: de ahi salia el «(502) Empty response from AI» que el PO
-       fotografio. No era un fallo del proveedor ni una respuesta vacia — era
-       quedarse sin turnos en mitad de una tarea larga. Le paso justo pidiendo
-       registrar CUATRO eventos de golpe, que son varias llamadas encadenadas.
+       El bucle de arriba da hasta 25 vueltas en modo FULL (6 en SAVER/
+       ESSENTIAL). Si ELIXIS sigue pidiendo herramientas hasta la última, se
+       sale sin haber escrito ni una palabra y `reply` queda vacio.
 
-       Las herramientas YA se ejecutaron; lo unico que faltaba era contarlo. Asi
-       que se pide una vuelta mas SIN herramientas: al no tener con que llamar,
-       el modelo no puede hacer otra cosa que responder en texto y resumir lo
-       hecho. Una sola llamada, corta y acotada.
+       Las herramientas YA ejecutadas se quedan ejecutadas; lo unico que falta
+       es contarlo. Se pide una vuelta mas SIN herramientas para que cierre en
+       texto. 2026-09-18 (reporte real del PO, lote de ~10 fechas x 2
+       herramientas cada una): la instruccion de cierre ANTES decia
+       "sin usar herramientas", y el modelo lo repetia como "no tengo
+       herramientas disponibles" -- sonaba a que ELIXIS habia perdido acceso a
+       TODO, no a que se le acabaron las rondas de ESTE turno especifico.
+       Ahora se le pide nombrar la causa real y decirle a Gerardo que solo
+       tiene que pedir que continue -- no inventarle una excusa tecnica.
 
        Si ni asi contesta, entonces si es un fallo de verdad, y se dice con esas
        palabras en vez de culpar a una «respuesta vacia». */
@@ -2966,7 +3088,7 @@ serve(async (req: Request) => {
                     /* sin `tools` a proposito: obliga a cerrar en texto */
                     messages: [
                         ...convo,
-                        { role: "user", content: "Resume en texto, sin usar herramientas, que quedo hecho y que falta. Se breve y concreto." },
+                        { role: "user", content: "Se acabaron las rondas de herramientas de este turno (no perdiste acceso a ellas, solo se agotó el cupo de este mensaje). Resume en texto, sin usar herramientas: qué ejecutaste realmente en este turno y qué falta. Termina diciendo que basta con que Gerardo escriba \"continúa\" para seguir con el resto en el próximo mensaje. Sé breve y concreto." },
                     ],
                 }),
             });
