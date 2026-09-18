@@ -1677,7 +1677,11 @@
       // "id" agregado (2026-09-17, ticket eliminar/reasignar residencias): sin
       // esto ninguna ocurrencia generada abajo podía trazarse de vuelta a su
       // regla -- imposible reasignar DJ "solo esta fecha" ni "para siempre".
-      var _base="id,day_of_week,shift,venue,dj_name,start_time,end_time";
+      // start_date/end_date/series_name (2026-09-18, "serie acotada" -- ver
+      // 20260918150000_residency_schedule_series_acotada.sql): NULL en las
+      // residencias permanentes de siempre, con valor en una serie con fin
+      // real (ej. "Haunting House: Halloween", 5 jueves).
+      var _base="id,day_of_week,shift,venue,dj_name,start_time,end_time,start_date,end_date,series_name";
       // Puerta SEGURA primero (la vista aplica el candado de venue_pay a nivel DB); si aún no existe, cae a la base.
       async function _resq(sel){
         var rr=await sb.from("residency_schedule_secure").select(sel+",dj_id").eq("active",true);
@@ -1703,18 +1707,35 @@
           (exq.data||[]).forEach(function(ex){ _excByKey[ex.residency_id+"|"+ex.exception_date]=ex; });
         }
       }catch(exErr){ console.warn("[Matrix] excepciones de residencia:", exErr.message||exErr); }
+      // Serie acotada: cuenta "semana N de M" -- mismo lenguaje que ya usa
+      // ELIXIS al crear eventos sueltos ("Haunting House ... semana 1 de 5"),
+      // para que las dos vías de creación se vean consistentes en pantalla.
+      function _seriesInfo(rule, isoDate){
+        if(!rule.start_date || !rule.end_date) return null;
+        var sd=new Date(rule.start_date+"T00:00:00"), ed=new Date(rule.end_date+"T00:00:00"), cur=new Date(isoDate+"T00:00:00");
+        var deltaToFirst=((Number(rule.day_of_week)-sd.getDay())+7)%7;
+        var first=new Date(sd.getTime()); first.setDate(first.getDate()+deltaToFirst);
+        if(cur<first||cur>ed) return null;
+        return { idx: Math.round((cur-first)/(7*86400000))+1, total: Math.floor((ed-first)/(7*86400000))+1 };
+      }
       var y=(state.date&&state.date.getFullYear)?state.date.getFullYear():2026;
       function pad(n){return (n<10?"0":"")+n;}
       for(var d=new Date(y,0,1), end=new Date(y,11,31); d<=end; d.setDate(d.getDate()+1)){
         var dow=d.getDay();
         rules.forEach(function(rule){
           if(Number(rule.day_of_week)!==dow) return;
+          var iso=d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+          if(rule.start_date && iso<rule.start_date) return;   // serie acotada: todavía no empieza
+          if(rule.end_date && iso>rule.end_date) return;       // serie acotada: ya terminó
           var s=_t2h(rule.start_time), e=_t2h(rule.end_time);
           if(s!==null && e!==null && e<s) e=e+24;   // cruza medianoche
-          var iso=d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
           var _exc=_excByKey[rule.id+"|"+iso];
           if(_exc && _exc.skip) return;   // eliminado SOLO esta fecha -- la regla sigue viva las demás semanas
           var _djName=(_exc?_exc.dj_name:rule.dj_name)||"";
+          var _serie=_seriesInfo(rule, iso);
+          var _titulo=rule.series_name
+            ? rule.series_name+(_serie?" — semana "+_serie.idx+" de "+_serie.total:"")
+            : "Residencia · "+(rule.venue||"");
           // dj_id real casi siempre huérfano/null en las filas reales (ver
           // 20260901130000_residency_schedule_modificar.sql) -- ANTES esto caía
           // a un solo bucket generico "_res" ("DJMago305 · Residencias") sin
@@ -1726,7 +1747,7 @@
           var _djKey=(_exc?_exc.dj_id:rule.dj_id)||("name:"+(_djName||"Sin asignar"));
           evs.push({ d:iso, cal:"set", artist:_djKey, ad:false,
             s:(s===null?0:s), e:(e!==null?e:(s!==null?s+2:0)),
-            t:"Residencia · "+(rule.venue||"")+(_exc?" (DJ de reemplazo)":""), venue:(rule.venue||""),
+            t:_titulo+(_exc?" (DJ de reemplazo)":""), venue:(rule.venue||""),
             // Trazabilidad para reasignar/eliminar esta ocurrencia puntual:
             residencyId:rule.id, occurrenceDate:iso, dayOfWeek:rule.day_of_week,
             shift:rule.shift, djName:_djName, isException:!!_exc,

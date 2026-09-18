@@ -1062,7 +1062,15 @@ serve(async (req: Request) => {
             "residencias activa en tu contexto (mas arriba); usa esta herramienta solo cuando pidan CAMBIAR " +
             "algo de esa plantilla, no para consultarla. Para actualizar/desactivar/reactivar, identifica la " +
             "fila por dia+turno+venue exactos -- si no calzan con una fila real, la herramienta la rechaza, " +
-            "no inventes una.",
+            "no inventes una. " +
+            "SERIE ACOTADA (2026-09-18): si el pedido tiene un numero fijo de semanas o una fecha de cierre " +
+            "-- '5 jueves seguidos', 'todos los viernes de octubre', 'hasta el 31 de diciembre' -- usa " +
+            "accion='crear' con fecha_inicio/fecha_fin/nombre_serie en vez de crear eventos sueltos con " +
+            "modificar_agenda_evento uno por uno. Sin fecha_fin, la fila queda como residencia PERMANENTE " +
+            "(el comportamiento normal). La rotacion de DJ entre fechas de la serie es MANUAL: crea la serie " +
+            "con el DJ base, y si piden un DJ distinto para una fecha puntual dentro del rango, usa " +
+            "accion='actualizar' recien despues de que exista, o dile al staff que lo reasigne desde el " +
+            "calendario (\"Reemplazar DJ -> solo esta fecha\") -- no hay automatismo de turnos.",
         input_schema: {
             type: "object",
             properties: {
@@ -1107,6 +1115,18 @@ serve(async (req: Request) => {
                 notas: {
                     type: "string",
                     description: "Nota opcional.",
+                },
+                fecha_inicio: {
+                    type: "string",
+                    description: "Solo para serie acotada, formato YYYY-MM-DD: primera fecha real de la serie. Sin esto, la regla se trata como permanente (sin limite hacia atras).",
+                },
+                fecha_fin: {
+                    type: "string",
+                    description: "Solo para serie acotada, formato YYYY-MM-DD: ultima fecha real de la serie (ej. el 5to jueves). Sin esto, la residencia es PERMANENTE -- no pongas una fecha de fin a una residencia que no la tiene de verdad.",
+                },
+                nombre_serie: {
+                    type: "string",
+                    description: "Solo para serie acotada: nombre a mostrar en el calendario (ej. 'Haunting House: Halloween'). Sin esto, se muestra como 'Residencia · {venue}'.",
                 },
             },
             required: ["accion", "dia_semana", "turno", "venue"],
@@ -1888,6 +1908,12 @@ serve(async (req: Request) => {
         return `${raw}:00`;
     }
 
+    function parseFechaSimple(value: unknown): string | null {
+        const raw = String(value ?? "").trim();
+        if (!raw || !/^\d{4}-\d{2}-\d{2}$/.test(raw)) return null;
+        return Number.isFinite(Date.parse(`${raw}T00:00:00Z`)) ? raw : null;
+    }
+
     async function runResidencyTool(input: Record<string, unknown>): Promise<string> {
         const accion = String(input?.accion ?? "").trim().toLowerCase();
         const diaSemana = Number(input?.dia_semana);
@@ -1924,6 +1950,16 @@ serve(async (req: Request) => {
         const venuePayUsd = typeof input?.venue_pay_usd === "number" ? input.venue_pay_usd : null;
         const djPayUsd = typeof input?.dj_pay_usd === "number" ? input.dj_pay_usd : null;
 
+        const fechaInicio = input?.fecha_inicio != null ? parseFechaSimple(input.fecha_inicio) : null;
+        const fechaFin = input?.fecha_fin != null ? parseFechaSimple(input.fecha_fin) : null;
+        if ((input?.fecha_inicio != null && !fechaInicio) || (input?.fecha_fin != null && !fechaFin)) {
+            return JSON.stringify({ error: "fecha_invalida", detalle: "Formato esperado YYYY-MM-DD." });
+        }
+        if (fechaInicio && fechaFin && fechaFin < fechaInicio) {
+            return JSON.stringify({ error: "rango_fechas_invalido" });
+        }
+        const nombreSerie = String(input?.nombre_serie ?? "").trim();
+
         const { data: rowId, error } = await ADMIN.rpc("residency_schedule_modificar", {
             p_accion: accion,
             p_dia_semana: diaSemana,
@@ -1936,6 +1972,9 @@ serve(async (req: Request) => {
             p_dj_pay_usd: djPayUsd,
             p_notas: notas || null,
             p_staff_user_id: gate.userId,
+            p_fecha_inicio: fechaInicio,
+            p_fecha_fin: fechaFin,
+            p_nombre_serie: nombreSerie || null,
         });
         if (error || !rowId) {
             const detail = error?.message ?? "rpc";
@@ -1943,10 +1982,11 @@ serve(async (req: Request) => {
             let code = "residencia_no_procesada";
             if (detail.includes("residencia_no_encontrada")) code = "residencia_no_encontrada";
             else if (detail.includes("residency_schedule_shift_check")) code = "turno_invalido:solo_dia_o_noche";
+            else if (detail.includes("rango_fechas_invalido")) code = "rango_fechas_invalido";
             return JSON.stringify({ error: code });
         }
         await recordActionLog("gestionar_residency_schedule", target, `ok:${accion}:${rowId}`);
-        return JSON.stringify({ ok: true, id: rowId, accion, venue, turno, dia_semana: diaSemana });
+        return JSON.stringify({ ok: true, id: rowId, accion, venue, turno, dia_semana: diaSemana, fecha_inicio: fechaInicio, fecha_fin: fechaFin, nombre_serie: nombreSerie || null });
     }
 
     const MESES_ES = ["", "enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
