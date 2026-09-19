@@ -7135,7 +7135,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
             // pequeña, al lado, fuera de la casilla del número.
             const _networkPhoneExtraRowHtml = (entry, idx) => `
                 <div class="net-phone-extra-row" data-idx="${idx}" style="display:flex; gap:6px; align-items:center; margin-top:6px;">
-                    <select style="flex:none; width:34px; height:34px; text-align:center; background:rgba(0,0,0,0.22); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.3); border-radius:50%; color:var(--net-text); font-size:15px; padding:0; cursor:pointer;">
+                    <select style="flex:none; width:26px; height:26px; text-align:center; background:transparent; border:none; color:var(--net-text); font-size:16px; padding:0; cursor:pointer;">
                         ${Object.keys(NETWORK_PHONE_TYPE_EMOJI).map(key => `<option value="${key}" ${entry.tipo === key ? 'selected' : ''}>${NETWORK_PHONE_TYPE_EMOJI[key]}</option>`).join('')}
                     </select>
                     <input type="text" class="net-phone-extra-input" value="${_networkAttrEsc(entry.numero || '')}" placeholder="Número"
