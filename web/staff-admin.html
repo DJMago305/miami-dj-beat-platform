@@ -7262,7 +7262,14 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         // crear una categoría nueva") -- libres, creadas por el staff, con su
                         // menú de "..." para renombrar/eliminar (Todos/Artistas/las ancladas
                         // no lo traen porque no se pueden borrar).
-                        (window._networkCustomLists || []).filter(l => !NETWORK_PINNED_CUSTOM_NAMES.includes(String(l.name || '').trim().toLowerCase())).map(list => {
+                        (window._networkCustomLists || [])
+                            .filter(l => !NETWORK_PINNED_CUSTOM_NAMES.includes(String(l.name || '').trim().toLowerCase()))
+                            // 2026-09-19, pedido del PO: "menos las tres primeras [Todos/
+                            // Artistas/Staff, fijas arriba], las demás que se autoorganicen
+                            // por orden alfabético" -- antes quedaban en el orden en que se
+                            // crearon, cada vez más difícil de ubicar a mano según crecen.
+                            .sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'es', { sensitivity: 'base' }))
+                            .map(list => {
                             const tabId = 'custom:' + list.id;
                             const active = tabId === window._networkActiveTab;
                             const activeBg = 'var(--net-tab-active-bg)';
