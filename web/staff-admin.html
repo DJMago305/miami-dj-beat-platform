@@ -6861,15 +6861,23 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                             return;
                         }
 
+                        // Equipo real de Miami DJ Beat (mismos roles que is_staff() en la
+                        // base) -- NO es un nivel de pago como LITE/PRO, es el dueño/
+                        // manager/vendedor de la plataforma. Mostrarlo como "LITE" (2026-
+                        // 09-19, reporte del PO: "tienes mi perfil A Gerardo A Valle como
+                        // LITE y soy el dueño, eso es una categoría especial staff") era
+                        // engañoso -- confundía payment tier con rol real.
+                        const isRealStaffRole = roleStr === 'admin' || roleStr === 'owner' || roleStr === 'manager' || roleStr === 'seller';
                         let proStatus = 'LITE';
                         if (d.is_premium || (d.plan && d.plan.toLowerCase() === 'pro')) {
                             proStatus = 'PRO';
                         }
+                        if (isRealStaffRole) proStatus = 'STAFF';
 
                         const baseContact = {
                             ...d,
                             _source: 'artist',
-                            _fuente: roleStr === 'admin' || roleStr === 'owner' || roleStr === 'manager' || roleStr === 'seller' ? 'Equipo interno (asignado por Owner)' : 'Registro de artista (auto-servicio)',
+                            _fuente: isRealStaffRole ? 'Equipo interno (asignado por Owner)' : 'Registro de artista (auto-servicio)',
                             _displayName: d.stage_name || d.dj_name || d.full_name || 'Sin Nombre',
                             _displayEmail: d.email || '—',
                             _displayPhone: d.phone || '—',
@@ -7286,7 +7294,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                                 const color = _networkTierColor(p._proStatus);
                                 proHtml = `<span style="background:var(--net-surface-2); padding:4px 8px; border-radius:4px; font-size:11px; font-weight:800; color:${color}; border:1px solid ${color};">${p._proStatus}</span>`;
                             } else {
-                                const pColor = p._proStatus === 'PRO' ? '#e8b96a' : '#a1a1aa';
+                                const pColor = p._proStatus === 'STAFF' ? 'var(--gold)' : (p._proStatus === 'PRO' ? '#e8b96a' : '#a1a1aa');
                                 proHtml = `<span style="color:${pColor}; font-size:11px; font-weight:800;">${p._proStatus}</span>`;
                             }
 
@@ -7797,7 +7805,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         const color = _networkTierColor(p._proStatus);
                         proHtml = `<span style="background:var(--net-surface-2); padding:4px 8px; border-radius:4px; font-size:11px; font-weight:800; color:${color}; border:1px solid ${color};">${p._proStatus}</span>`;
                     } else {
-                        const pColor = p._proStatus === 'PRO' ? '#e8b96a' : '#a1a1aa';
+                        const pColor = p._proStatus === 'STAFF' ? 'var(--gold)' : (p._proStatus === 'PRO' ? '#e8b96a' : '#a1a1aa');
                         proHtml = `<span style="color:${pColor}; font-size:11px; font-weight:800;">${p._proStatus}</span>`;
                     }
                 }
