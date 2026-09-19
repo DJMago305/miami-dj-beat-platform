@@ -277,6 +277,10 @@
             margin: 0 auto;
         }
 
+        /* Carrete de fecha de nacimiento (2026-09-19) -- oculta la barra de scroll
+           nativa en Chrome/Safari; scrollbar-width:none (Firefox) ya va inline. */
+        .net-wheel-col::-webkit-scrollbar { display: none; }
+
         /* 2026-09-18, pedido del PO: con el panel de edición abierto, esas columnas
            (email/teléfono/PRO/fecha/compliance/fuente) ya no hacen falta en la
            tabla -- ese mismo dato, MÁS detallado y editable, vive ahora en el
@@ -6963,6 +6967,15 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
             // "familia" (👪), que confundiría con la categoría real "Familia
             // (Equipo Interno)".
             const NETWORK_ALL_ICON = '👥👤';
+
+            // Carrete de fecha de nacimiento estilo Apple (2026-09-19, pedido
+            // explícito del PO: "los carretes que usa Apple para la fecha de
+            // nacimiento, 3 carretes inteligentes con carrusel"). "Inteligentes"
+            // -- el carrete de Día recalcula cuántos días tiene el mes/año
+            // elegidos (28/29/30/31), igual que el picker nativo de iOS/macOS.
+            const NETWORK_WHEEL_ITEM_H = 32;
+            const NETWORK_WHEEL_MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            const _networkDaysInMonth = (month, year) => new Date(year, month, 0).getDate();
             // "Familia (Equipo Interno)", "Venues y Proveedores" y "Clientes y
             // Contratistas" se quitaron de las fijas (2026-09-19, pedido explícito
             // del PO, una por una): mezclaban conceptos reales distintos (equipo
@@ -7713,10 +7726,20 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 const fuente = (p._category === 'Personal' || p._category === 'Comercial') ? 'client' : 'dj';
                 const phone = (document.getElementById('network-field-phone') || {}).value || null;
                 const email = (document.getElementById('network-field-email') || {}).value || null;
+                // Fecha de nacimiento -- viene del carrete de 3 columnas (Mes/Día/Año,
+                // 2026-09-19, pedido del PO: "los carretes que usa Apple"). Solo se
+                // manda si el staff realmente movió el carrete (window._networkBirthWheelTouched);
+                // si nunca lo tocó, se manda null y el RPC deja birth_date como está
+                // (mismo criterio COALESCE que ya usan phone/email).
+                let birthDate = null;
+                if (window._networkBirthWheelTouched && window._networkBirthWheel) {
+                    const bw = window._networkBirthWheel;
+                    birthDate = bw.year + '-' + String(bw.month).padStart(2, '0') + '-' + String(bw.day).padStart(2, '0');
+                }
 
                 if (msg) msg.textContent = 'Guardando…';
                 const { data, error } = await sb.rpc('network_contacto_actualizar', {
-                    p_fuente: fuente, p_id: p.id, p_phone: phone, p_email: email
+                    p_fuente: fuente, p_id: p.id, p_phone: phone, p_email: email, p_birth_date: birthDate
                 });
                 if (error) { if (msg) msg.textContent = 'Error: ' + error.message; return; }
                 if (data && data.ok === false) { if (msg) msg.textContent = 'Error: ' + data.error; return; }
@@ -7725,6 +7748,11 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 // sin tener que recargar todo el Network desde la base.
                 p._displayPhone = phone || '—';
                 p._displayEmail = email || '—';
+                if (birthDate) {
+                    p.birth_date = birthDate;
+                    p._displayBirthDate = new Date(birthDate + 'T00:00:00').toLocaleDateString();
+                    window._networkBirthWheelTouched = false;
+                }
                 if (msg) msg.textContent = '✅ Guardado';
                 const rowEl = document.querySelector(`#crm-container .net-data-row[data-idx="${idx}"]`);
                 if (rowEl) {
@@ -7842,8 +7870,46 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     ${actionBtn(rawPhone ? `tel:${rawPhone}` : '', '📞', 'Llamar')}
                     ${actionBtn(rawPhone ? `facetime:${rawPhone}` : '', '📹', 'FaceTime')}
                     ${actionBtn(rawEmail ? `mailto:${rawEmail}` : '', '✉️', 'Email')}
-                    ${actionBtn(rawPhone ? `https://wa.me/${rawPhone.replace(/^\+/, '')}` : '', '💚', 'WhatsApp')}
+                    ${actionBtn(rawPhone ? `https://wa.me/${rawPhone.replace(/^\+/, '')}` : '', '📱', 'WhatsApp')}
                 </div>`;
+
+                // Carrete de fecha de nacimiento -- 3 columnas con scroll-snap (Mes/
+                // Día/Año), sin librería externa. window._networkBirthWheel guarda la
+                // selección actual; se inicializa con la fecha real si existe, o el
+                // 1-Ene de hace 30 años si no hay ninguna todavía.
+                const _bwToday = new Date();
+                let bwYear = _bwToday.getFullYear() - 30, bwMonth = 1, bwDay = 1;
+                if (p.birth_date) {
+                    const _bwParts = String(p.birth_date).split('-').map(n => parseInt(n, 10));
+                    if (_bwParts.length === 3 && !_bwParts.some(isNaN)) { bwYear = _bwParts[0]; bwMonth = _bwParts[1]; bwDay = _bwParts[2]; }
+                }
+                window._networkBirthWheel = { year: bwYear, month: bwMonth, day: bwDay };
+                window._networkBirthWheelTouched = false;
+
+                const _bwYearsList = [];
+                for (let y = _bwToday.getFullYear() - 90; y <= _bwToday.getFullYear(); y++) _bwYearsList.push(y);
+                const _bwDaysCount = _networkDaysInMonth(bwMonth, bwYear);
+                const _bwDaysList = Array.from({ length: _bwDaysCount }, (_, i) => i + 1);
+
+                const wheelCol = (id, kind, values, labels, selectedIdx) => `
+                    <div id="${id}" class="net-wheel-col" data-kind="${kind}" onscroll="window._networkWheelScroll(this)" style="flex:1; height:${NETWORK_WHEEL_ITEM_H * 3}px; overflow-y:scroll; scroll-snap-type:y mandatory; scrollbar-width:none;">
+                        <div style="height:${NETWORK_WHEEL_ITEM_H}px;"></div>
+                        ${values.map((v, i) => `<div class="net-wheel-item" data-val="${v}" style="height:${NETWORK_WHEEL_ITEM_H}px; display:flex; align-items:center; justify-content:center; scroll-snap-align:center; font-size:14px; font-weight:${i === selectedIdx ? '800' : '500'}; color:${i === selectedIdx ? 'var(--gold)' : 'var(--net-text-dim)'};">${labels ? labels[i] : v}</div>`).join('')}
+                        <div style="height:${NETWORK_WHEEL_ITEM_H}px;"></div>
+                    </div>`;
+
+                const birthWheelHtml = `
+                    <div style="margin-bottom:14px;">
+                        <label style="display:block; font-size:10px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:6px;">Fecha de nacimiento</label>
+                        <div style="position:relative; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); border-radius:10px; padding:0 8px;">
+                            <div style="position:absolute; top:${NETWORK_WHEEL_ITEM_H}px; left:8px; right:8px; height:${NETWORK_WHEEL_ITEM_H}px; border-top:1px solid rgba(197,160,89,0.4); border-bottom:1px solid rgba(197,160,89,0.4); pointer-events:none;"></div>
+                            <div style="display:flex;">
+                                ${wheelCol('network-wheel-month', 'month', NETWORK_WHEEL_MONTHS.map((_, i) => i + 1), NETWORK_WHEEL_MONTHS, bwMonth - 1)}
+                                ${wheelCol('network-wheel-day', 'day', _bwDaysList, null, bwDay - 1)}
+                                ${wheelCol('network-wheel-year', 'year', _bwYearsList, null, _bwYearsList.indexOf(bwYear))}
+                            </div>
+                        </div>
+                    </div>`;
 
                 panel.innerHTML = `
                     <div style="max-width:460px; margin:0 auto; text-align:center; position:relative;">
@@ -7864,10 +7930,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                                 </div>
                                 <div id="network-save-msg" style="font-size:12px; color:var(--muted); text-align:right; margin-top:4px; min-height:14px;"></div>
                             </div>
-                            <div style="margin-bottom:14px;">
-                                <label style="display:block; font-size:10px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:4px;">Fecha de nacimiento</label>
-                                <div style="background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); color:${p._displayBirthDate !== '—' ? 'var(--net-text)' : 'var(--muted)'}; padding:8px 10px; border-radius:10px; font-size:13px;">${p._displayBirthDate === '—' ? 'Sin fecha registrada' : p._displayBirthDate}</div>
-                            </div>
+                            ${birthWheelHtml}
                             <div style="margin-bottom:14px;">
                                 <label style="display:block; font-size:10px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:6px;">Categorías</label>
                                 <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); border-radius:10px; padding:7px 8px;">
@@ -7905,6 +7968,58 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         </div>
                     </div>
                 `;
+
+                // El scroll-snap arranca en 0 -- hay que posicionar cada carrete en su
+                // valor real DESPUÉS de insertar el HTML (no se puede hacer antes, el
+                // elemento todavía no tiene layout).
+                setTimeout(() => {
+                    const monthCol = document.getElementById('network-wheel-month');
+                    const dayCol = document.getElementById('network-wheel-day');
+                    const yearCol = document.getElementById('network-wheel-year');
+                    if (monthCol) monthCol.scrollTop = (bwMonth - 1) * NETWORK_WHEEL_ITEM_H;
+                    if (dayCol) dayCol.scrollTop = (bwDay - 1) * NETWORK_WHEEL_ITEM_H;
+                    if (yearCol) yearCol.scrollTop = _bwYearsList.indexOf(bwYear) * NETWORK_WHEEL_ITEM_H;
+                }, 0);
+            };
+
+            // Carrete de fecha de nacimiento -- lee qué ítem quedó centrado tras el
+            // scroll-snap, resalta ese ítem, y si cambió Mes o Año, reconstruye el
+            // carrete de Día con la cantidad real de días de ese mes/año ("carretes
+            // inteligentes", pedido explícito del PO).
+            window._networkWheelScroll = function(el) {
+                clearTimeout(el._networkWheelTimer);
+                el._networkWheelTimer = setTimeout(() => window._networkWheelSettle(el), 80);
+            };
+
+            window._networkWheelSettle = function(el) {
+                const items = Array.from(el.querySelectorAll('.net-wheel-item'));
+                if (!items.length) return;
+                const idx = Math.max(0, Math.min(items.length - 1, Math.round(el.scrollTop / NETWORK_WHEEL_ITEM_H)));
+                el.scrollTop = idx * NETWORK_WHEEL_ITEM_H;
+                items.forEach((it, i) => {
+                    it.style.fontWeight = i === idx ? '800' : '500';
+                    it.style.color = i === idx ? 'var(--gold)' : 'var(--net-text-dim)';
+                });
+                const kind = el.dataset.kind;
+                const val = parseInt(items[idx].dataset.val, 10);
+                if (!window._networkBirthWheel) return;
+                window._networkBirthWheelTouched = true;
+                window._networkBirthWheel[kind] = val;
+                if (kind === 'month' || kind === 'year') window._networkRebuildDayWheel();
+            };
+
+            window._networkRebuildDayWheel = function() {
+                const bw = window._networkBirthWheel;
+                const dayCol = document.getElementById('network-wheel-day');
+                if (!dayCol || !bw) return;
+                const maxDays = _networkDaysInMonth(bw.month, bw.year);
+                if (dayCol.querySelectorAll('.net-wheel-item').length === maxDays) return;
+                if (bw.day > maxDays) bw.day = maxDays;
+                const itemsHtml = Array.from({ length: maxDays }, (_, i) => i + 1)
+                    .map(v => `<div class="net-wheel-item" data-val="${v}" style="height:${NETWORK_WHEEL_ITEM_H}px; display:flex; align-items:center; justify-content:center; scroll-snap-align:center; font-size:14px; font-weight:${v === bw.day ? '800' : '500'}; color:${v === bw.day ? 'var(--gold)' : 'var(--net-text-dim)'};">${v}</div>`)
+                    .join('');
+                dayCol.innerHTML = `<div style="height:${NETWORK_WHEEL_ITEM_H}px;"></div>${itemsHtml}<div style="height:${NETWORK_WHEEL_ITEM_H}px;"></div>`;
+                dayCol.scrollTop = (bw.day - 1) * NETWORK_WHEEL_ITEM_H;
             };
 
             // ══ VENUES / SALAS / TAQUILLA — CRUD anidado de 4 niveles ══════════════
