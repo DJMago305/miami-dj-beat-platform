@@ -6799,7 +6799,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     document.getElementById('crm-container').innerHTML = '<div class="loading-spinner">Generando auditoría global de contactos...</div>';
                     
                     // Fetch both profiles concurrently to speed up loading.
-                    const [clientsRes, djsRes, leadsRes, listsRes, listMembersRes, referenciaRes] = await Promise.all([
+                    const [clientsRes, djsRes, leadsRes, listsRes, listMembersRes, referenciaRes, fotosFallbackRes] = await Promise.all([
                         db.from('client_profiles').select('id, full_name, email, phone, phones_extra, emails_extra, birth_date, aniversario, redes_sociales, address_street, address_apt, city, address_state, address_zip, address_country, is_commercial, company_name, tier_level, total_spent, total_events, created_at, photo_url').order('total_spent', { ascending: false }),
                         db.from('dj_profiles').select('id, full_name, stage_name, dj_name, email, phone, phones_extra, emails_extra, birth_date, aniversario, address, address_apt, city, region, address_zip, address_country, website_url, youtube_url, spotify_url, soundcloud_url, instagram_url, tiktok_url, facebook_url, beatport_url, apple_music_url, twitter_url, role, artist_specialty, bio, status, plan, is_premium, created_at, photo_url').order('created_at', { ascending: false }),
                         // Fuente del dato (2026-09-18, pedido del PO): no hay una columna real de
@@ -6818,6 +6818,12 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         // datos para publicidad"). Tabla aparte de client_profiles/dj_profiles
                         // porque no representan cuentas reales.
                         db.from('network_referencia_contactos').select('id, nombre, telefono, email, empresa, notas, origen_csv, origen_persona_nombre, photo_url, birth_date, birth_date_year_conocido, created_at, phones_extra, emails_extra, aniversario, redes_sociales, direccion, fusionado_fuente, fusionado_id, fusionado_en'),
+                        // Respaldo de foto real (2026-09-19, "cablear el avatar que ya
+                        // existe"): cuando photo_url está vacío pero la persona sí tiene
+                        // una foto real guardada en su login de Google (auth.users), este
+                        // RPC la expone -- de solo lectura, nunca escribe nada. Mismo
+                        // criterio que ya usa dj-dashboard.html para sí mismo.
+                        db.rpc('network_fotos_oauth_fallback'),
                     ]);
 
                     if(clientsRes.error) throw clientsRes.error;
@@ -6828,6 +6834,12 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
 
                     const clients = clientsRes.data;
                     const djs = djsRes.data;
+
+                    // Mapa de respaldo de foto real (solo lectura, ver comentario arriba).
+                    const _fotosFallback = {};
+                    (fotosFallbackRes && fotosFallbackRes.data || []).forEach(r => {
+                        _fotosFallback[r.fuente + ':' + r.id] = r.foto;
+                    });
 
                     // Contactos de referencia ya fusionados con una cuenta real
                     // (2026-09-19) -- se guardan aparte para inyectar su notas/origen
@@ -6883,6 +6895,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                             _proStatus: c.tier_level || 'NEW',
                             _createdAt: c.created_at ? new Date(c.created_at).toLocaleDateString() : '—',
                             _fusionReferencia: _fusionesPorCuentaReal['client:' + c.id] || null,
+                            photo_url: c.photo_url || _fotosFallback['client:' + c.id] || null,
                         });
                     });
                     
@@ -6928,6 +6941,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                             _proStatus: proStatus,
                             _createdAt: d.created_at ? new Date(d.created_at).toLocaleDateString() : '—',
                             _fusionReferencia: _fusionesPorCuentaReal['dj:' + d.id] || null,
+                            photo_url: d.photo_url || _fotosFallback['dj:' + d.id] || null,
                         };
 
                         let assignedCategories = [];
