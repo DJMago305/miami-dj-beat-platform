@@ -6794,8 +6794,8 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     // dj_profiles/client_profiles así, es una superficie solo-staff) para
                     // cruzar compliance legal (Contrato / W-9) sin tocar el esquema.
                     const [clientsRes, djsRes, contractsRes, leadsRes, listsRes, listMembersRes, referenciaRes] = await Promise.all([
-                        db.from('client_profiles').select('id, full_name, email, phone, birth_date, is_commercial, company_name, tier_level, total_spent, total_events, created_at, photo_url').order('total_spent', { ascending: false }),
-                        db.from('dj_profiles').select('id, full_name, stage_name, dj_name, email, phone, birth_date, role, artist_specialty, bio, status, plan, is_premium, created_at, photo_url').order('created_at', { ascending: false }),
+                        db.from('client_profiles').select('id, full_name, email, phone, phones_extra, birth_date, is_commercial, company_name, tier_level, total_spent, total_events, created_at, photo_url').order('total_spent', { ascending: false }),
+                        db.from('dj_profiles').select('id, full_name, stage_name, dj_name, email, phone, phones_extra, birth_date, role, artist_specialty, bio, status, plan, is_premium, created_at, photo_url').order('created_at', { ascending: false }),
                         db.from('signed_contracts').select('id, artist_profile_id, contract_type, signer_email, status'),
                         // Fuente del dato (2026-09-18, pedido del PO): no hay una columna real de
                         // "origen" en client_profiles -- se deriva por email compartido con leads
@@ -6812,7 +6812,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         // -- "no tienen cuenta con nosotros, solo son parte de nuestra base de
                         // datos para publicidad"). Tabla aparte de client_profiles/dj_profiles
                         // porque no representan cuentas reales.
-                        db.from('network_referencia_contactos').select('id, nombre, telefono, email, empresa, notas, origen_csv, origen_persona_nombre, photo_url, birth_date, birth_date_year_conocido, created_at'),
+                        db.from('network_referencia_contactos').select('id, nombre, telefono, email, empresa, notas, origen_csv, origen_persona_nombre, photo_url, birth_date, birth_date_year_conocido, created_at, phones_extra'),
                     ]);
 
                     if(clientsRes.error) throw clientsRes.error;
@@ -7122,6 +7122,22 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
             // fotos" -- photo_url YA existe en dj_profiles/client_profiles, solo
             // faltaba usarla; antes el avatar siempre mostraba iniciales aunque
             // hubiera una foto real subida). Cae a iniciales si no hay foto.
+            // Teléfonos adicionales (2026-09-19, pedido del PO: "+" azul junto a
+            // TELÉFONO para agregar más números, cada uno con un tipo -- resuelto con
+            // emoji en vez de palabras largas: 📱 iPhone/Celular, 💼 Trabajo,
+            // 🏠 Personal, 🏢 Oficina). Se guardan en phones_extra (jsonb), aparte del
+            // teléfono principal que ya existía.
+            const NETWORK_PHONE_TYPE_EMOJI = { iphone: '📱', trabajo: '💼', personal: '🏠', oficina: '🏢' };
+            const _networkPhoneExtraRowHtml = (entry, idx) => `
+                <div class="net-phone-extra-row" data-idx="${idx}" style="display:flex; gap:6px; align-items:center; margin-top:6px;">
+                    <select style="background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); border-radius:8px; color:var(--net-text); padding:6px 4px; font-size:14px;">
+                        ${Object.keys(NETWORK_PHONE_TYPE_EMOJI).map(key => `<option value="${key}" ${entry.tipo === key ? 'selected' : ''}>${NETWORK_PHONE_TYPE_EMOJI[key]}</option>`).join('')}
+                    </select>
+                    <input type="text" class="net-phone-extra-input" value="${_networkAttrEsc(entry.numero || '')}" placeholder="Número"
+                        style="flex:1; min-width:0; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); color:var(--net-text); padding:8px 10px; border-radius:10px; font:inherit; font-size:13px;">
+                    <button type="button" onclick="this.closest('.net-phone-extra-row').remove()" title="Quitar" style="flex:none; width:22px; height:22px; padding:0; color:#ef4444; background:transparent; border:none; font-size:20px; font-weight:800; line-height:1; cursor:pointer;">−</button>
+                </div>`;
+
             const _networkAvatarHtml = (p, size) => p.photo_url
                 ? `<img src="${p.photo_url}" alt="" style="width:${size}px; height:${size}px; border-radius:50%; object-fit:cover; flex:none;" onerror="this.replaceWith(Object.assign(document.createElement('span'), {textContent:'${_networkInitials(p._displayName)}', style:'flex:none; width:${size}px; height:${size}px; border-radius:50%; background:var(--net-avatar-bg); border:1px solid var(--net-avatar-border); color:var(--gold); font-size:${Math.round(size*0.38)}px; font-weight:800; display:flex; align-items:center; justify-content:center;'}))">`
                 : `<span style="flex:none; width:${size}px; height:${size}px; border-radius:50%; background:var(--net-avatar-bg); border:1px solid var(--net-avatar-border); color:var(--gold); font-size:${Math.round(size*0.38)}px; font-weight:800; display:flex; align-items:center; justify-content:center;">${_networkInitials(p._displayName)}</span>`;
@@ -7957,14 +7973,23 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     birthDate = bw.year + '-' + String(bw.month).padStart(2, '0') + '-' + String(bw.day).padStart(2, '0');
                 }
 
+                // Teléfonos adicionales (2026-09-19) -- se recolectan siempre (nunca
+                // null) para que borrar una fila y guardar sí la borre de verdad; un
+                // array vacío es un valor real, distinto de "no tocar" (por eso el RPC
+                // usa COALESCE(p_phones_extra, phones_extra) con NULL, nunca con '[]').
+                const phonesExtra = [...document.querySelectorAll('#network-phones-extra .net-phone-extra-row')].map(row => ({
+                    tipo: row.querySelector('select').value,
+                    numero: row.querySelector('.net-phone-extra-input').value.trim(),
+                })).filter(e => e.numero);
+
                 if (msg) msg.textContent = 'Guardando…';
                 // Contactos de referencia (sin cuenta real) viven en su propia tabla,
                 // con su propio RPC más simple -- desde 2026-09-19 sí acepta birth_date
                 // (antes se perdía en silencio: el carrete se movía pero nunca se
                 // mandaba en este branch).
                 const { data, error } = fuente === 'referencia'
-                    ? await sb.rpc('network_referencia_actualizar', { p_id: p.id, p_phone: phone, p_email: email, p_birth_date: birthDate })
-                    : await sb.rpc('network_contacto_actualizar', { p_fuente: fuente, p_id: p.id, p_phone: phone, p_email: email, p_birth_date: birthDate });
+                    ? await sb.rpc('network_referencia_actualizar', { p_id: p.id, p_phone: phone, p_email: email, p_birth_date: birthDate, p_phones_extra: phonesExtra })
+                    : await sb.rpc('network_contacto_actualizar', { p_fuente: fuente, p_id: p.id, p_phone: phone, p_email: email, p_birth_date: birthDate, p_phones_extra: phonesExtra });
                 if (error) { if (msg) msg.textContent = 'Error: ' + error.message; return; }
                 if (data && data.ok === false) { if (msg) msg.textContent = 'Error: ' + data.error; return; }
 
@@ -7972,6 +7997,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 // sin tener que recargar todo el Network desde la base.
                 p._displayPhone = phone || '—';
                 p._displayEmail = email || '—';
+                p.phones_extra = phonesExtra;
                 if (birthDate) {
                     p.birth_date = birthDate;
                     p._displayBirthDate = new Date(birthDate + 'T00:00:00').toLocaleDateString();
@@ -7984,6 +8010,15 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     if (emailCell) emailCell.textContent = p._displayEmail;
                     if (phoneCell) phoneCell.textContent = p._displayPhone;
                 }
+            };
+
+            // "+" junto a TELÉFONO (2026-09-19) -- agrega una fila vacía en blanco;
+            // se guarda de verdad recién al apretar "Guardar" (ver saveNetworkContact).
+            window._networkAddPhoneExtra = function() {
+                const container = document.getElementById('network-phones-extra');
+                if (!container) return;
+                const idx = container.children.length;
+                container.insertAdjacentHTML('beforeend', _networkPhoneExtraRowHtml({ tipo: 'iphone', numero: '' }, idx));
             };
 
             // 2026-09-19, pedido del PO: "en la sección de donde va la foto también
@@ -8206,7 +8241,17 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         ${quickActionsHtml}
 
                         <div style="text-align:left;">
-                            ${field('Teléfono', p._displayPhone, 'Sin teléfono registrado', 'network-field-phone')}
+                            <div style="margin-bottom:14px;">
+                                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+                                    <label style="font-size:10px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase;">Teléfono</label>
+                                    <button type="button" onclick="window._networkAddPhoneExtra()" title="Agregar otro teléfono" aria-label="Agregar otro teléfono" style="flex:none; width:20px; height:20px; padding:0; color:#3b82f6; border:1px solid var(--net-glass-border); background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; cursor:pointer;">+</button>
+                                </div>
+                                <input type="text" id="network-field-phone" value="${(p._displayPhone && p._displayPhone !== '—' ? p._displayPhone : '').toString().replace(/"/g, '&quot;')}" placeholder="Sin teléfono registrado"
+                                    style="width:100%; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); color:var(--net-text); padding:8px 10px; border-radius:10px; font:inherit; font-size:13px;">
+                                <div id="network-phones-extra">
+                                    ${(Array.isArray(p.phones_extra) ? p.phones_extra : []).map((entry, idx) => _networkPhoneExtraRowHtml(entry, idx)).join('')}
+                                </div>
+                            </div>
                             <div style="margin-bottom:4px;">
                                 <label style="display:block; font-size:10px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:4px;">Email</label>
                                 <div style="display:flex; gap:8px; align-items:stretch;">
