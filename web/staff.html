@@ -4162,7 +4162,25 @@
          Network (u otra herramienta fullpage) está abierta; el resto de vistas
          de Staff no se toca. */
       function enterFullPage(){ side.classList.add('fullpage-active'); if(shell) shell.classList.add('fullpage-tight'); }
-      function exitFullPage(){ side.classList.remove('fullpage-active'); if(shell) shell.classList.remove('fullpage-tight'); }
+      /* 2026-09-18, bug real encontrado por el PO: la ✕ solo volvía a mostrar el
+         menú, pero dejaba el panel de Network detrás mostrándose igual -- el
+         menú y Network quedaban los dos visibles a la vez, superpuestos. La ✕
+         debe REGRESAR a Staff de verdad: vuelve al panel de Gobernanza/Permisos
+         (la vista con la que arranca Staff) y marca ese link como activo. */
+      function exitFullPage(){
+        side.classList.remove('fullpage-active');
+        if(shell) shell.classList.remove('fullpage-tight');
+        showPanel('gob');
+        side.querySelectorAll('.side3-link').forEach(function(x){ x.classList.remove('active'); });
+        var gobLink = side.querySelector('.side3-link[data-sec="gob"]');
+        if(gobLink) gobLink.classList.add('active');
+        side.querySelectorAll('.side3-group').forEach(function(x){ x.classList.remove('open'); });
+        side.querySelectorAll('.side3-items').forEach(function(x){ x.classList.remove('open'); });
+        var gobGroup = side.querySelector('.side3-group[data-group="gobernanza"]');
+        var gobItems = side.querySelector('.side3-items[data-items="gobernanza"]');
+        if(gobGroup) gobGroup.classList.add('open');
+        if(gobItems) gobItems.classList.add('open');
+      }
       window.exitNetworkFullPage = exitFullPage;
       /* grupos = acordeón (uno abierto a la vez, "abanico") */
       side.querySelectorAll('.side3-group').forEach(function(g){ g.addEventListener('click', function(){

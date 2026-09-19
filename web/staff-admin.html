@@ -7297,6 +7297,43 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 window._networkEditPanelOpen = false;
             };
 
+            // Guardado real de Teléfono/Email (2026-09-18) -- llama al RPC staff-only
+            // network_contacto_actualizar (RLS + is_staff + auditoría vía mdj_auditar,
+            // ver supabase/scripts/20260918180000_network_contacto_actualizar.sql).
+            // Solo pide el RPC si el script ya se aplicó a producción -- si no existe
+            // todavía, PostgREST devuelve un error claro y se lo mostramos tal cual.
+            window.saveNetworkContact = async function() {
+                const idx = window._networkSelectedIdx;
+                const p = idx != null ? (window._networkRowData || [])[idx] : null;
+                const msg = document.getElementById('network-save-msg');
+                if (!p) { if (msg) msg.textContent = 'No hay contacto seleccionado.'; return; }
+                const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+                if (!sb || !sb.rpc) { if (msg) msg.textContent = 'Sin conexión a la base.'; return; }
+
+                const fuente = (p._category === 'Personal' || p._category === 'Comercial') ? 'client' : 'dj';
+                const phone = (document.getElementById('network-field-phone') || {}).value || null;
+                const email = (document.getElementById('network-field-email') || {}).value || null;
+
+                if (msg) msg.textContent = 'Guardando…';
+                const { data, error } = await sb.rpc('network_contacto_actualizar', {
+                    p_fuente: fuente, p_id: p.id, p_phone: phone, p_email: email
+                });
+                if (error) { if (msg) msg.textContent = 'Error: ' + error.message; return; }
+                if (data && data.ok === false) { if (msg) msg.textContent = 'Error: ' + data.error; return; }
+
+                // Refleja el guardado en memoria (fila de la tabla + objeto seleccionado)
+                // sin tener que recargar todo el Network desde la base.
+                p._displayPhone = phone || '—';
+                p._displayEmail = email || '—';
+                if (msg) msg.textContent = '✅ Guardado';
+                const rowEl = document.querySelector(`#crm-container .net-data-row[data-idx="${idx}"]`);
+                if (rowEl) {
+                    const emailCell = rowEl.children[1], phoneCell = rowEl.children[2];
+                    if (emailCell) emailCell.textContent = p._displayEmail;
+                    if (phoneCell) phoneCell.textContent = p._displayPhone;
+                }
+            };
+
             // Barra vertical ajustable (2026-09-18, pedido explícito del PO): arrastra
             // para correr el panel de edición a gusto de quien esté editando. Mientras
             // más a la izquierda el mouse, más ANCHO el panel (está pegado a la derecha).
@@ -7353,10 +7390,14 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     return;
                 }
 
-                const field = (label, value, placeholder) => `
+                // 2026-09-18: Teléfono/Email ya guardan de verdad (network_contacto_actualizar,
+                // RPC staff-only, auditado vía mdj_auditar) -- dejaron de ser de solo lectura.
+                // Notas se queda readonly a propósito: no existe columna real para eso todavía
+                // en client_profiles/dj_profiles, y no se inventa una sin pedirla primero.
+                const field = (label, value, placeholder, inputId) => `
                     <div style="margin-bottom:14px;">
                         <label style="display:block; font-size:10px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:4px;">${label}</label>
-                        <input type="text" value="${(value || '').toString().replace(/"/g, '&quot;')}" placeholder="${placeholder || '—'}" readonly
+                        <input type="text" id="${inputId}" value="${(value && value !== '—' ? value : '').toString().replace(/"/g, '&quot;')}" placeholder="${placeholder || '—'}"
                             style="width:100%; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); color:var(--net-text); padding:8px 10px; border-radius:10px; font:inherit; font-size:13px;">
                     </div>`;
 
@@ -7381,8 +7422,12 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         <div style="font-size:11px; color:rgba(20,15,8,0.5); font-weight:600; margin-bottom:22px;">${p._fuente || '—'}</div>
 
                         <div style="text-align:left;">
-                            ${field('Teléfono', p._displayPhone, 'Sin teléfono registrado')}
-                            ${field('Email', p._displayEmail, 'Sin email registrado')}
+                            ${field('Teléfono', p._displayPhone, 'Sin teléfono registrado', 'network-field-phone')}
+                            ${field('Email', p._displayEmail, 'Sin email registrado', 'network-field-email')}
+                            <div style="display:flex; align-items:center; gap:10px; margin:-4px 0 14px;">
+                                <button onclick="window.saveNetworkContact()" style="background:var(--gold); color:#1a1206; font-weight:800; border:0; padding:8px 16px; border-radius:8px; cursor:pointer; font:inherit; font-size:13px;">Guardar</button>
+                                <span id="network-save-msg" style="font-size:12px; color:var(--muted);"></span>
+                            </div>
                             <div style="display:flex; gap:16px; margin-bottom:14px; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); border-radius:10px; padding:10px 14px;">
                                 <div style="flex:1;">
                                     <label style="display:block; font-size:10px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:4px;">Contrato</label>
@@ -7408,7 +7453,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                                 <label style="display:block; font-size:10px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:4px;">Notas</label>
                                 <textarea readonly placeholder="Sin notas todavía" rows="2" style="width:100%; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); color:var(--net-text); padding:8px 10px; border-radius:10px; font:inherit; font-size:13px; resize:none;"></textarea>
                             </div>
-                            <p class="fineprint" style="margin-top:12px;">Vista de solo lectura por ahora -- editar y guardar campos aquí es un paso aparte, pendiente de que se pida explícitamente.</p>
+                            <p class="fineprint" style="margin-top:12px;">Teléfono y email ya guardan de verdad. Notas se queda de solo lectura -- no existe todavía una columna real para eso en la base.</p>
                         </div>
                     </div>
                 `;
