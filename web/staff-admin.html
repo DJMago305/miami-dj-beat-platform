@@ -6918,30 +6918,43 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         if (roleStr === 'admin' || roleStr === 'owner' || roleStr === 'manager' || roleStr === 'seller') {
                             assignedCategories.push('MDJBStaff');
                         }
-                        if (/\b(bartender|mesero|chef|staff)\b/.test(spec)) {
-                            assignedCategories.push('Staff');
-                        }
-                        if (/\b(hora loca|robot|personaje|zanquero)\b/.test(spec)) {
-                            assignedCategories.push('HoraLoca');
-                        }
-                        if (/\b(band|banda|bandas|orquesta|orquestas|músicos|musicos)\b/.test(spec)) {
-                            assignedCategories.push('Band');
-                        }
-                        if (/\b(cantante|solista|vocalista|saxo|percusión|percusion)\b/.test(spec)) {
-                            assignedCategories.push('Solista');
-                        }
-                        if (/\b(foto|video|vj|drone|booth|espejo|visuales)\b/.test(spec)) {
-                            assignedCategories.push('Visuales');
-                        }
-                        if (/\b(mc|host|presentador|maestro de ceremonia)\b/.test(spec)) {
-                            assignedCategories.push('MC');
-                        }
-                        if (/\b(payaso|payasos|circo|santa|infantil)\b/.test(spec)) {
-                            assignedCategories.push('Payaso');
-                        }
-                        if (/\b(dj)\b/.test(spec) || assignedCategories.length === 0) {
-                            // Default to DJ if they explicitly say DJ, or if we couldn't match any other category
-                            assignedCategories.push('DJ');
+                        // 2026-09-19, corrección del PO: Gerardo A Valle (role='owner',
+                        // artist_specialty='Staff') caía igual en "DJ"/Artistas porque su
+                        // bio dice "Miami DJ Beat LLC" -- el regex de abajo matcheaba la
+                        // palabra "DJ" del NOMBRE DE LA EMPRESA, no de una especialidad
+                        // real. "me tienes en esta categoría cuando soy miembro del staff...
+                        // no debería entrar en la categoría de artista con este correo".
+                        // El equipo real (admin/owner/manager/seller) ya tiene su categoría
+                        // correcta (MDJBStaff) por rol -- no se le evalúa texto de bio/
+                        // especialidad para ver si "parece" un tipo de artista, evita que
+                        // cualquier mención casual de "DJ"/"banda"/etc. en su biografía lo
+                        // cuele en Artistas.
+                        if (!isRealStaffRole) {
+                            if (/\b(bartender|mesero|chef|staff)\b/.test(spec)) {
+                                assignedCategories.push('Staff');
+                            }
+                            if (/\b(hora loca|robot|personaje|zanquero)\b/.test(spec)) {
+                                assignedCategories.push('HoraLoca');
+                            }
+                            if (/\b(band|banda|bandas|orquesta|orquestas|músicos|musicos)\b/.test(spec)) {
+                                assignedCategories.push('Band');
+                            }
+                            if (/\b(cantante|solista|vocalista|saxo|percusión|percusion)\b/.test(spec)) {
+                                assignedCategories.push('Solista');
+                            }
+                            if (/\b(foto|video|vj|drone|booth|espejo|visuales)\b/.test(spec)) {
+                                assignedCategories.push('Visuales');
+                            }
+                            if (/\b(mc|host|presentador|maestro de ceremonia)\b/.test(spec)) {
+                                assignedCategories.push('MC');
+                            }
+                            if (/\b(payaso|payasos|circo|santa|infantil)\b/.test(spec)) {
+                                assignedCategories.push('Payaso');
+                            }
+                            if (/\b(dj)\b/.test(spec) || assignedCategories.length === 0) {
+                                // Default to DJ if they explicitly say DJ, or if we couldn't match any other category
+                                assignedCategories.push('DJ');
+                            }
                         }
 
                         // Remove duplicates just in case
