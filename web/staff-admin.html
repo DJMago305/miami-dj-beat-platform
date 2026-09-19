@@ -2348,15 +2348,21 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                 </div>
 
                 <!-- CRM / VIP Section -->
-                <div class="admin-card" id="crm" style="display:none; padding:0; overflow:hidden;">
-                  <!-- 2026-09-19, corrección del PO: con listas largas (ej. 55 DJs tras
-                       importar los contactos de referencia), min-height dejaba crecer todo
-                       el bloque sin límite -- la página entera scrolleaba en vez de la
-                       tabla, y la barra de categorías (más corta) quedaba "vacía" al fondo
-                       porque align-items:stretch la estiraba hasta el alto total sin tener
-                       contenido propio para llenarlo. height fija + overflow:hidden fuerza
-                       a que sea #crm-container (la tabla) el que scrollee internamente. -->
-                  <div style="display:flex; align-items:stretch; height:72vh; overflow:hidden;">
+                <div class="admin-card" id="crm" style="display:none; padding:0; overflow:hidden; height:100vh;">
+                  <!-- 2026-09-19, corrección del PO (dos vueltas): con listas largas (ej.
+                       55 DJs tras importar los contactos de referencia), min-height dejaba
+                       crecer todo el bloque sin límite -- la página entera scrolleaba en
+                       vez de la tabla, y la barra de categorías (más corta) quedaba
+                       "vacía" al fondo porque align-items:stretch la estiraba hasta el
+                       alto total sin tener contenido propio para llenarlo. Un height fijo
+                       en vh arbitrario (72vh) tapó eso pero dejó una franja negra sin usar
+                       en pantallas donde el iframe mide más que eso -- "tenemos un sistema
+                       de autoajuste de pantalla... no recojas la pantalla". 100vh (el
+                       iframe de Network no tiene nada arriba, #crm empieza en y:0 -- medido
+                       en vivo) llena el alto real disponible sin importar el tamaño de
+                       pantalla, y overflow:hidden + los overflow-y:auto internos siguen
+                       evitando que la sección crezca más allá de eso con listas largas. -->
+                  <div style="display:flex; align-items:stretch; height:100%; overflow:hidden;">
                     <!-- Sidebar de Network (2026-09-18, retoque pedido por el PO con
                          referencia directa a macOS Contactos: la columna de categorías
                          llega hasta arriba, a todo lo alto -- NO empieza debajo del
