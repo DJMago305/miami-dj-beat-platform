@@ -2385,7 +2385,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                     <div style="flex:1; min-width:0; display:flex; flex-direction:column;">
                     <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 24px 12px 28px; border-bottom:1px solid var(--net-line);">
                         <div>
-                            <h3 style="margin:0; color:var(--gold);">🌐 Network<span class="mdj-help" tabindex="0"><span class="mdj-help-icon">?</span><span class="mdj-help-tip">Directorio global del negocio — antes "Directorio Global (CRM)". Prototipo 2026-09-18: pestañas + fuente del dato. Pendiente para después: detección de duplicados y fotos automáticas.</span></span></h3>
+                            <h3 style="margin:0; color:var(--gold);">🌐 Network<span class="mdj-help" tabindex="0"><span class="mdj-help-icon">?</span><span class="mdj-help-tip">Directorio global del negocio — antes "Directorio Global (CRM)". Prototipo 2026-09-18: pestañas + fuente del dato. Detecta contactos de referencia que ya tienen cuenta real y permite fusionarlos (2026-09-19). Pendiente para después: fotos automáticas.</span></span></h3>
                         </div>
                         <div style="display:flex; gap:10px; align-items:center;">
                             <!-- Orden / Más opciones (2026-09-19, pedido del PO: "te faltan dos
@@ -6780,6 +6780,15 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 }
             };
 
+            // Detección de duplicados referencia↔cuenta real (2026-09-19, pedido
+            // del PO tras encontrar sus propias 2 fichas de referencia
+            // "MIAMI DJ BEAT LLC"/"MIAMIDJBEATLLC Valle" ya coincidiendo con sus
+            // cuentas reales). Un mismo teléfono en `telefono` puede venir con
+            // varios números separados por "; " -- se extraen todos los bloques
+            // de 7+ dígitos y se comparan por los últimos 10 (ignora +1/formato).
+            const _networkNormPhones = (raw) => (String(raw || '').match(/\d{7,}/g) || []).map(d => d.slice(-10)).filter(Boolean);
+            const _networkNormEmail = (raw) => String(raw || '').trim().toLowerCase();
+
             // ── Certification Registry ────────────────────────
             window.allCRMProfiles = [];
             window.loadCRM = async function() {
@@ -6789,14 +6798,10 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     
                     document.getElementById('crm-container').innerHTML = '<div class="loading-spinner">Generando auditoría global de contactos...</div>';
                     
-                    // Fetch both profiles concurrently to speed up loading. signed_contracts
-                    // se trae aparte (misma consulta directa, sin RPC — esta página ya lee
-                    // dj_profiles/client_profiles así, es una superficie solo-staff) para
-                    // cruzar compliance legal (Contrato / W-9) sin tocar el esquema.
-                    const [clientsRes, djsRes, contractsRes, leadsRes, listsRes, listMembersRes, referenciaRes] = await Promise.all([
-                        db.from('client_profiles').select('id, full_name, email, phone, phones_extra, emails_extra, birth_date, aniversario, is_commercial, company_name, tier_level, total_spent, total_events, created_at, photo_url').order('total_spent', { ascending: false }),
-                        db.from('dj_profiles').select('id, full_name, stage_name, dj_name, email, phone, phones_extra, emails_extra, birth_date, aniversario, role, artist_specialty, bio, status, plan, is_premium, created_at, photo_url').order('created_at', { ascending: false }),
-                        db.from('signed_contracts').select('id, artist_profile_id, contract_type, signer_email, status'),
+                    // Fetch both profiles concurrently to speed up loading.
+                    const [clientsRes, djsRes, leadsRes, listsRes, listMembersRes, referenciaRes] = await Promise.all([
+                        db.from('client_profiles').select('id, full_name, email, phone, phones_extra, emails_extra, birth_date, aniversario, redes_sociales, address_street, address_apt, city, address_state, address_zip, address_country, is_commercial, company_name, tier_level, total_spent, total_events, created_at, photo_url').order('total_spent', { ascending: false }),
+                        db.from('dj_profiles').select('id, full_name, stage_name, dj_name, email, phone, phones_extra, emails_extra, birth_date, aniversario, address, address_apt, city, region, address_zip, address_country, website_url, youtube_url, spotify_url, soundcloud_url, instagram_url, tiktok_url, facebook_url, beatport_url, apple_music_url, twitter_url, role, artist_specialty, bio, status, plan, is_premium, created_at, photo_url').order('created_at', { ascending: false }),
                         // Fuente del dato (2026-09-18, pedido del PO): no hay una columna real de
                         // "origen" en client_profiles -- se deriva por email compartido con leads
                         // (si coincide, vino de un formulario/reserva real; si no, es una cuenta
@@ -6812,7 +6817,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         // -- "no tienen cuenta con nosotros, solo son parte de nuestra base de
                         // datos para publicidad"). Tabla aparte de client_profiles/dj_profiles
                         // porque no representan cuentas reales.
-                        db.from('network_referencia_contactos').select('id, nombre, telefono, email, empresa, notas, origen_csv, origen_persona_nombre, photo_url, birth_date, birth_date_year_conocido, created_at, phones_extra, emails_extra, aniversario'),
+                        db.from('network_referencia_contactos').select('id, nombre, telefono, email, empresa, notas, origen_csv, origen_persona_nombre, photo_url, birth_date, birth_date_year_conocido, created_at, phones_extra, emails_extra, aniversario, redes_sociales, direccion, fusionado_fuente, fusionado_id, fusionado_en'),
                     ]);
 
                     if(clientsRes.error) throw clientsRes.error;
@@ -6821,40 +6826,20 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     window._networkCustomMembers = listMembersRes.data || [];
                     const leadEmails = new Set((leadsRes.data || []).map(l => (l.email || '').toLowerCase().trim()).filter(Boolean));
 
-                    // Mapas de compliance: por artist_profile_id (artistas reales) y por
-                    // email en minúsculas (todos — clientes/venues/staff no tienen fila en
-                    // dj_profiles). "status" real en la DB es siempre SIGNED cuando existe
-                    // la fila (guardar_contrato_firmado lo fija así) — su sola presencia ya
-                    // significa "certificado".
-                    const complianceByProfileId = {};
-                    const complianceByEmail = {};
-                    const SERVICE_CONTRACT_TYPES = new Set(['DJ_AGREEMENT', 'VENUE_AGREEMENT', 'CORPORATE_AGREEMENT', 'STAFF_AGREEMENT', 'LIVE_BAND_AGREEMENT', 'SOLO_ARTIST_AGREEMENT', 'SUBCONTRACTOR_SHOW_AGREEMENT', 'PRIVATE_EVENT_AGREEMENT']);
-                    (contractsRes.data || []).forEach(c => {
-                        const isW9 = c.contract_type === 'W9';
-                        const bucket = { contractId: null, w9Id: null };
-                        if (isW9) bucket.w9Id = c.id; else if (SERVICE_CONTRACT_TYPES.has(c.contract_type)) bucket.contractId = c.id;
-                        const mergeInto = (map, key) => {
-                            if (!key) return;
-                            const cur = map[key] || { contractId: null, w9Id: null };
-                            if (bucket.contractId) cur.contractId = bucket.contractId;
-                            if (bucket.w9Id) cur.w9Id = bucket.w9Id;
-                            map[key] = cur;
-                        };
-                        mergeInto(complianceByProfileId, c.artist_profile_id);
-                        mergeInto(complianceByEmail, (c.signer_email || '').toLowerCase().trim());
-                    });
-                    const getCompliance = (profileId, email) => {
-                        const byId = profileId ? complianceByProfileId[profileId] : null;
-                        const byEmail = email ? complianceByEmail[(email || '').toLowerCase().trim()] : null;
-                        return {
-                            contractId: (byId && byId.contractId) || (byEmail && byEmail.contractId) || null,
-                            w9Id: (byId && byId.w9Id) || (byEmail && byEmail.w9Id) || null,
-                        };
-                    };
-
                     const clients = clientsRes.data;
                     const djs = djsRes.data;
-                    
+
+                    // Contactos de referencia ya fusionados con una cuenta real
+                    // (2026-09-19) -- se guardan aparte para inyectar su notas/origen
+                    // dentro de "Info interna" de la cuenta real correspondiente, así
+                    // ese dato no se pierde al fusionar (nunca se borra la fila vieja).
+                    const _fusionesPorCuentaReal = {};
+                    (referenciaRes.data || []).forEach(r => {
+                        if (r.fusionado_fuente && r.fusionado_id) {
+                            _fusionesPorCuentaReal[r.fusionado_fuente + ':' + r.fusionado_id] = r;
+                        }
+                    });
+
                     let allContacts = [];
                     
                     // Create a Set of emails that exist in the DJ/Talent/Staff database
@@ -6897,11 +6882,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                             _displayBirthDate: c.birth_date ? new Date(c.birth_date + 'T00:00:00').toLocaleDateString() : '—',
                             _proStatus: c.tier_level || 'NEW',
                             _createdAt: c.created_at ? new Date(c.created_at).toLocaleDateString() : '—',
-                            _compliance: getCompliance(null, c.email),
-                            // Comercial -> venue (salón/locación); Personal -> private_event
-                            // (bodas/15s, con depósitos/horas extra/cláusula climática) —
-                            // reemplaza el mapeo genérico anterior a "corporate".
-                            _contractTemplate: isCommercial ? 'venue' : 'private_event',
+                            _fusionReferencia: _fusionesPorCuentaReal['client:' + c.id] || null,
                         });
                     });
                     
@@ -6946,7 +6927,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                             _displayBirthDate: d.birth_date ? new Date(d.birth_date + 'T00:00:00').toLocaleDateString() : '—',
                             _proStatus: proStatus,
                             _createdAt: d.created_at ? new Date(d.created_at).toLocaleDateString() : '—',
-                            _compliance: getCompliance(d.id, d.email),
+                            _fusionReferencia: _fusionesPorCuentaReal['dj:' + d.id] || null,
                         };
 
                         let assignedCategories = [];
@@ -6998,30 +6979,43 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         // Remove duplicates just in case
                         assignedCategories = [...new Set(assignedCategories)];
 
-                        // Cada categoría real de talento usa su propia plantilla especializada
-                        // (rider/COI/exclusividad varían según el tipo de figura) — ya no se
-                        // agrupan en el template genérico "staff". Personal técnico interno
-                        // (Staff/MDJBStaff) sigue usando "staff", que es lo que realmente es.
-                        const TEMPLATE_BY_CATEGORY = {
-                            DJ: 'dj', Band: 'live_band', Solista: 'solo_artist',
-                            HoraLoca: 'subcontractor_show', Visuales: 'subcontractor_show', MC: 'subcontractor_show',
-                            Payaso: 'subcontractor_show', Staff: 'staff', MDJBStaff: 'staff',
-                        };
                         // Push a copy of the contact for EACH category they belong to
                         assignedCategories.forEach(cat => {
                             allContacts.push({
                                 ...baseContact,
                                 _category: cat,
-                                _contractTemplate: TEMPLATE_BY_CATEGORY[cat] || 'staff',
                             });
                         });
                     });
                     
+                    // Mapas teléfono/email -> cuenta real, para detectar cuando un
+                    // contacto de referencia YA se suscribió (2026-09-19). Solo
+                    // client_profiles/dj_profiles cuentan como "cuenta real".
+                    const _realByPhone = {};
+                    const _realByEmail = {};
+                    const _indexReal = (fuente, id, nombre, phone, email) => {
+                        _networkNormPhones(phone).forEach(p => { if (!_realByPhone[p]) _realByPhone[p] = { fuente, id, nombre }; });
+                        const e = _networkNormEmail(email);
+                        if (e && !_realByEmail[e]) _realByEmail[e] = { fuente, id, nombre };
+                    };
+                    (clients || []).forEach(c => _indexReal('client', c.id, c.full_name, c.phone, c.email));
+                    (djs || []).forEach(d => _indexReal('dj', d.id, d.full_name || d.stage_name || d.dj_name, d.phone, d.email));
+                    const _findRealMatch = (phone, email) => {
+                        for (const p of _networkNormPhones(phone)) { if (_realByPhone[p]) return _realByPhone[p]; }
+                        const e = _networkNormEmail(email);
+                        return (e && _realByEmail[e]) || null;
+                    };
+
                     // Contactos de referencia -- sin cuenta real, por eso no tienen
                     // _category (no encajan en ningún ALL_TABLES/NETWORK_TABS derivado
                     // de datos reales de cuenta). Solo aparecen en "Todos" y en las
                     // categorías personalizadas a las que se les asignó explícitamente.
+                    // Los que ya se fusionaron con una cuenta real (fusionado_id) ya no
+                    // se muestran como ficha aparte -- su dato vivo está en la cuenta
+                    // real, esta fila queda solo como historial en la base.
                     (referenciaRes.data || []).forEach(r => {
+                        if (r.fusionado_id) return;
+                        const matchReal = _findRealMatch(r.telefono, r.email);
                         allContacts.push({
                             ...r,
                             _source: 'referencia',
@@ -7035,7 +7029,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                                 : '—',
                             _proStatus: null,
                             _createdAt: '—',
-                            _compliance: { contractId: null, w9Id: null },
+                            _matchReal: matchReal,
                         });
                     });
 
@@ -7164,6 +7158,35 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     <button type="button" onclick="this.closest('.net-email-extra-row').remove()" title="Quitar" style="flex:none; width:22px; height:22px; padding:0; color:#ef4444; background:transparent; border:none; font-size:20px; font-weight:800; line-height:1; cursor:pointer;">−</button>
                 </div>`;
 
+            // Redes sociales (2026-09-19, pedido del PO: última pieza de la tarjeta de
+            // contacto -- "se selecciona el nombre de la red social, se pega el link,
+            // mismo sistema de burbuja + azul"). Nombres de red = texto plano en un
+            // <select> (igual que el propio ejemplo del PO, YouTube al agregar redes) --
+            // no hace falta ícono ahí, son nombres propios, no categorías genéricas.
+            const NETWORK_SOCIAL_OPTIONS = ['Instagram', 'Facebook', 'TikTok', 'YouTube', 'Twitter/X', 'LinkedIn', 'WhatsApp', 'Otro'];
+            // Fuente "dj" (2026-09-19, "falta cableado"): dj_profiles YA tiene 9
+            // columnas reales para esto -- las mismas que edita el propio DJ en
+            // dj-dashboard.html/account-settings.html (youtube_url, spotify_url,
+            // etc). Antes esta sección escribía a `dj_profiles.redes_sociales`
+            // (jsonb nuevo, desconectado) -- ahora lee/escribe las columnas reales,
+            // así que editar desde aquí o desde el dashboard del DJ es la MISMA
+            // fuente de dato, nunca dos copias que se desincronizan.
+            const NETWORK_DJ_SOCIAL_COLUMNS = {
+                'YouTube': 'youtube_url', 'Spotify': 'spotify_url', 'SoundCloud': 'soundcloud_url',
+                'Instagram': 'instagram_url', 'TikTok': 'tiktok_url', 'Facebook': 'facebook_url',
+                'Beatport': 'beatport_url', 'Apple Music': 'apple_music_url', 'Twitter/X': 'twitter_url',
+            };
+            const _networkSocialRowHtml = (entry, idx, options) => `
+                <div class="net-social-row" data-idx="${idx}" style="display:flex; gap:6px; align-items:center; margin-top:6px;">
+                    <select class="net-social-select" style="flex:none; width:96px; background:rgba(0,0,0,0.22); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.3); color:var(--net-text); padding:8px 4px; border-radius:10px; font:inherit; font-size:12px; cursor:pointer;">
+                        ${(options || NETWORK_SOCIAL_OPTIONS).map(name => `<option value="${name}" ${entry.red === name ? 'selected' : ''}>${name}</option>`).join('')}
+                    </select>
+                    <input type="text" class="net-social-input" value="${_networkAttrEsc(entry.url || '')}" placeholder="Pega el link y Enter"
+                        onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}"
+                        style="flex:1; min-width:0; background:rgba(0,0,0,0.22); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.3); color:var(--net-text); padding:8px 10px; border-radius:10px; font:inherit; font-size:13px;">
+                    <button type="button" onclick="this.closest('.net-social-row').remove()" title="Quitar" style="flex:none; width:22px; height:22px; padding:0; color:#ef4444; background:transparent; border:none; font-size:20px; font-weight:800; line-height:1; cursor:pointer;">−</button>
+                </div>`;
+
             const _networkAvatarHtml = (p, size) => p.photo_url
                 ? `<img src="${p.photo_url}" alt="" style="width:${size}px; height:${size}px; border-radius:50%; object-fit:cover; flex:none;" onerror="this.replaceWith(Object.assign(document.createElement('span'), {textContent:'${_networkInitials(p._displayName)}', style:'flex:none; width:${size}px; height:${size}px; border-radius:50%; background:var(--net-avatar-bg); border:1px solid var(--net-avatar-border); color:var(--gold); font-size:${Math.round(size*0.38)}px; font-weight:800; display:flex; align-items:center; justify-content:center;'}))">`
                 : `<span style="flex:none; width:${size}px; height:${size}px; border-radius:50%; background:var(--net-avatar-bg); border:1px solid var(--net-avatar-border); color:var(--gold); font-size:${Math.round(size*0.38)}px; font-weight:800; display:flex; align-items:center; justify-content:center;">${_networkInitials(p._displayName)}</span>`;
@@ -7207,35 +7230,6 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 if(t==='GOLD') return '#e8b96a';
                 if(t==='SILVER') return '#c0c0c0';
                 return '#a1a1aa'; // NEW
-            };
-
-            // Badges de compliance legal (Contrato + W-9) — verde con link real si
-            // ya existe el registro (abre/descarga vía ?view_record=<id>, mismo
-            // patrón que account-settings.html); gris/naranja y clicable si falta
-            // (abre el generador de envíos en la plantilla correcta vía
-            // ?open_send=<template>, prefiliando nombre/contacto — ver
-            // tryOpenSendFromQuery() en contracts-engine.html).
-            const _networkBadgeStyle = (bg, border, color) =>
-                `display:inline-flex;align-items:center;gap:4px;background:${bg};border:1px solid ${border};color:${color};padding:3px 8px;border-radius:999px;font-size:10px;font-weight:800;text-decoration:none;white-space:nowrap;backdrop-filter:blur(6px);`;
-            const _networkComplianceCell = (p) => {
-                const email = (p._displayEmail && p._displayEmail !== '—') ? p._displayEmail : '';
-                const name = encodeURIComponent(p._displayName || '');
-                const contact = encodeURIComponent(email);
-                const comp = p._compliance || {};
-
-                const contractBadge = comp.contractId
-                    ? `<a href="./contracts-engine.html?view_record=${encodeURIComponent(comp.contractId)}" target="_blank" rel="noopener" style="${_networkBadgeStyle('rgba(34,197,94,0.12)', 'rgba(34,197,94,0.35)', '#4ade80')}">📄 Contrato</a>`
-                    : (email
-                        ? `<a href="./contracts-engine.html?open_send=${encodeURIComponent(p._contractTemplate || 'private_event')}&name=${name}&contact=${contact}" target="_blank" rel="noopener" style="${_networkBadgeStyle('var(--net-badge-neutral-bg)', 'var(--net-badge-neutral-border)', 'var(--net-badge-neutral-text)')}">Sin Contrato</a>`
-                        : `<span style="${_networkBadgeStyle('var(--net-badge-neutral-bg)', 'var(--net-badge-neutral-border)', 'var(--net-badge-neutral-text)')}">Sin Contrato</span>`);
-
-                const w9Badge = comp.w9Id
-                    ? `<a href="./contracts-engine.html?view_record=${encodeURIComponent(comp.w9Id)}" target="_blank" rel="noopener" style="${_networkBadgeStyle('rgba(34,197,94,0.12)', 'rgba(34,197,94,0.35)', '#4ade80')}">🧾 W-9</a>`
-                    : (email
-                        ? `<a href="./contracts-engine.html?open_send=w9&name=${name}&contact=${contact}" target="_blank" rel="noopener" style="${_networkBadgeStyle('rgba(251,146,60,0.12)', 'rgba(251,146,60,0.35)', '#fb923c')}">Pendiente W-9</a>`
-                        : `<span style="${_networkBadgeStyle('rgba(251,146,60,0.08)', 'rgba(251,146,60,0.2)', 'rgba(251,146,60,0.45)')}">Pendiente W-9</span>`);
-
-                return `<div style="display:flex; gap:6px; flex-wrap:wrap;">${contractBadge}${w9Badge}</div>`;
             };
 
             window.renderCRM = function(profiles) {
@@ -7474,7 +7468,6 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                                             <th style="text-align:left; padding:10px; border: 1px solid var(--net-line);">Teléfono</th>
                                             <th style="text-align:center; padding:10px; border: 1px solid var(--net-line);">PRO / Nivel</th>
                                             <th style="text-align:center; padding:10px; border: 1px solid var(--net-line);">Fecha Suscripción</th>
-                                            <th style="text-align:center; padding:10px; border: 1px solid var(--net-line);">Compliance Legal</th>
                                             ${isClient ? '<th style="text-align:center; padding:10px; border: 1px solid var(--net-line);">Eventos</th><th style="text-align:right; padding:10px; border: 1px solid var(--net-line);">Gasto</th>' : ''}
                                             <th style="text-align:left; padding:10px; border: 1px solid var(--net-line);">Fuente</th>
                                         </tr>
@@ -7485,7 +7478,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     if (groupData.length === 0) {
                         tableHtml += `
                             <tr>
-                                <td colspan="${isClient ? 9 : 7}" style="padding:15px; text-align:center; font-size:12px; color:var(--muted); border: 1px solid var(--net-line);">
+                                <td colspan="${isClient ? 8 : 6}" style="padding:15px; text-align:center; font-size:12px; color:var(--muted); border: 1px solid var(--net-line);">
                                     No hay registros en esta categoría aún.
                                 </td>
                             </tr>
@@ -7519,13 +7512,13 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                                             ${_networkAvatarHtml(p, 26)}
                                             <span>${nameParts.primary}${nameParts.secondary ? ` <span style="font-weight:600; color:var(--muted); font-size:11px;">(${nameParts.secondary})</span>` : ''}</span>
                                             ${uncategorizedDot}
+                                            ${(p._source === 'referencia' && p._matchReal) ? `<button onclick="event.stopPropagation(); window._networkJumpToRealAccount('${p._matchReal.fuente}', '${p._matchReal.id}')" style="background:none; border:none; padding:0; margin:0; color:#3b82f6; font-size:11px; font-weight:600; cursor:pointer; text-decoration:underline; font:inherit; white-space:nowrap;">ya es cuenta real →</button>` : ''}
                                         </span>
                                     </td>
                                     <td style="padding:10px; font-size:12px; border: 1px solid var(--net-line);">${p._displayEmail}</td>
                                     <td style="padding:10px; font-size:12px; color:var(--muted); border: 1px solid var(--net-line);">${p._displayPhone}</td>
                                     <td style="padding:10px; text-align:center; border: 1px solid var(--net-line);">${proHtml}</td>
                                     <td style="padding:10px; text-align:center; font-size:12px; color:var(--muted); border: 1px solid var(--net-line);">${p._createdAt}</td>
-                                    <td style="padding:10px; text-align:center; border: 1px solid var(--net-line);">${_networkComplianceCell(p)}</td>
                                     ${isClient ? `
                                         <td style="padding:10px; text-align:center; border: 1px solid var(--net-line);">${p.total_events || 0}</td>
                                         <td style="padding:10px; text-align:right; color:var(--gold); border: 1px solid var(--net-line);">$${Number(p.total_spent || 0).toFixed(2)}</td>
@@ -7988,6 +7981,21 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 const fuente = _networkFuenteDe(p);
                 const phone = (document.getElementById('network-field-phone') || {}).value || null;
                 const email = (document.getElementById('network-field-email') || {}).value || null;
+                // Dirección (2026-09-19) -- mismo criterio que phone/email: siempre se
+                // manda el valor actual de los inputs (ya vienen prellenados con el
+                // dato real), nunca hace falta un flag de "tocado". client_profiles y
+                // dj_profiles ya comparten las mismas 6 columnas (apt/zip/país se
+                // agregaron a dj_profiles el mismo día para que la ficha de un DJ no
+                // se viera incompleta frente a la de un cliente).
+                const _addrVal = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+                const direccion = {
+                    street: _addrVal('network-field-address-street'),
+                    apt: _addrVal('network-field-address-apt'),
+                    city: _addrVal('network-field-address-city'),
+                    state: _addrVal('network-field-address-state'),
+                    zip: _addrVal('network-field-address-zip'),
+                    country: _addrVal('network-field-address-country'),
+                };
                 // Fecha de nacimiento -- viene de los 3 <select> (Día/Mes/Año, 2026-09-19,
                 // reemplazó al carrete). Solo se manda si el staff realmente tocó algún
                 // select (window._networkBirthWheelTouched); si no, se manda null y el
@@ -7995,7 +8003,10 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 let birthDate = null;
                 if (window._networkBirthWheelTouched) {
                     const bd = document.getElementById('network-birth-day'), bm = document.getElementById('network-birth-month'), by = document.getElementById('network-birth-year');
-                    if (bd && bm && by) birthDate = by.value + '-' + bm.value.padStart(2, '0') + '-' + bd.value.padStart(2, '0');
+                    // Solo arma la fecha si los 3 selects tienen un valor real -- si la
+                    // persona solo tocó uno y dejó los otros en el placeholder ("Día"/
+                    // "Mes"/"Año"), no se manda una fecha incompleta/inventada.
+                    if (bd && bm && by && bd.value && bm.value && by.value) birthDate = by.value + '-' + bm.value.padStart(2, '0') + '-' + bd.value.padStart(2, '0');
                 }
 
                 // Aniversario -- dos nombres + fecha, mismo criterio de "touched" que
@@ -8008,7 +8019,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     aniversario = {
                         nombre1: n1.trim(),
                         nombre2: n2.trim(),
-                        fecha: (ad && am && ay) ? (ay.value + '-' + am.value.padStart(2, '0') + '-' + ad.value.padStart(2, '0')) : null,
+                        fecha: (ad && am && ay && ad.value && am.value && ay.value) ? (ay.value + '-' + am.value.padStart(2, '0') + '-' + ad.value.padStart(2, '0')) : null,
                     };
                 }
 
@@ -8025,6 +8036,19 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 // fila y guardar sí la borre.
                 const emailsExtra = [...document.querySelectorAll('#network-emails-extra .net-email-extra-row .net-email-extra-input')]
                     .map(input => input.value.trim()).filter(Boolean);
+                // Redes sociales (2026-09-19) -- mismo criterio: array completo siempre.
+                const redesSociales = [...document.querySelectorAll('#network-socials-extra .net-social-row')].map(row => ({
+                    red: row.querySelector('.net-social-select').value,
+                    url: row.querySelector('.net-social-input').value.trim(),
+                })).filter(e => e.url);
+                // Notas (2026-09-19) -- solo aplica a contactos de referencia (única
+                // fuente con columna real); en cuentas reales el campo es readonly.
+                const notasEl = document.getElementById('network-field-notas');
+                const notas = (fuente === 'referencia' && notasEl && !notasEl.readOnly) ? notasEl.value : null;
+                // Página web (2026-09-19, "falta cableado") -- solo existe el input
+                // para fuente "dj" (columna real website_url); null para el resto.
+                const websiteEl = document.getElementById('network-field-website');
+                const websiteUrl = websiteEl ? websiteEl.value.trim() : null;
 
                 if (msg) msg.textContent = 'Guardando…';
                 // Contactos de referencia (sin cuenta real) viven en su propia tabla,
@@ -8032,8 +8056,8 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 // (antes se perdía en silencio: el carrete se movía pero nunca se
                 // mandaba en este branch).
                 const { data, error } = fuente === 'referencia'
-                    ? await sb.rpc('network_referencia_actualizar', { p_id: p.id, p_phone: phone, p_email: email, p_birth_date: birthDate, p_phones_extra: phonesExtra, p_emails_extra: emailsExtra, p_aniversario: aniversario })
-                    : await sb.rpc('network_contacto_actualizar', { p_fuente: fuente, p_id: p.id, p_phone: phone, p_email: email, p_birth_date: birthDate, p_phones_extra: phonesExtra, p_emails_extra: emailsExtra, p_aniversario: aniversario });
+                    ? await sb.rpc('network_referencia_actualizar', { p_id: p.id, p_phone: phone, p_email: email, p_birth_date: birthDate, p_phones_extra: phonesExtra, p_emails_extra: emailsExtra, p_aniversario: aniversario, p_redes_sociales: redesSociales, p_notas: notas, p_direccion: direccion })
+                    : await sb.rpc('network_contacto_actualizar', { p_fuente: fuente, p_id: p.id, p_phone: phone, p_email: email, p_birth_date: birthDate, p_phones_extra: phonesExtra, p_emails_extra: emailsExtra, p_aniversario: aniversario, p_redes_sociales: redesSociales, p_direccion: direccion, p_website_url: websiteUrl });
                 if (error) { if (msg) msg.textContent = 'Error: ' + error.message; return; }
                 if (data && data.ok === false) { if (msg) msg.textContent = 'Error: ' + data.error; return; }
 
@@ -8052,6 +8076,36 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     p.aniversario = aniversario;
                     window._networkAnniversaryTouched = false;
                 }
+                if (fuente === 'dj') {
+                    // Redes sociales de dj viven en columnas reales, no en el jsonb
+                    // genérico -- se refleja cada una por separado (full replace,
+                    // igual que el RPC: ausente en el array = se limpia esa red).
+                    Object.entries(NETWORK_DJ_SOCIAL_COLUMNS).forEach(([red, col]) => {
+                        const entry = redesSociales.find(e => e.red === red);
+                        p[col] = entry ? entry.url : null;
+                    });
+                    p.website_url = websiteUrl;
+                } else {
+                    p.redes_sociales = redesSociales;
+                }
+                if (fuente === 'referencia') {
+                    p.direccion = direccion;
+                } else if (fuente === 'dj') {
+                    p.address = direccion.street;
+                    p.address_apt = direccion.apt;
+                    p.city = direccion.city;
+                    p.region = direccion.state;
+                    p.address_zip = direccion.zip;
+                    p.address_country = direccion.country;
+                } else {
+                    p.address_street = direccion.street;
+                    p.address_apt = direccion.apt;
+                    p.city = direccion.city;
+                    p.address_state = direccion.state;
+                    p.address_zip = direccion.zip;
+                    p.address_country = direccion.country;
+                }
+                if (notas !== null) p.notas = notas;
                 if (msg) msg.textContent = '✅ Guardado';
                 const rowEl = document.querySelector(`#crm-container .net-data-row[data-idx="${idx}"]`);
                 if (rowEl) {
@@ -8077,6 +8131,51 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 if (!container) return;
                 const idx = container.children.length;
                 container.insertAdjacentHTML('beforeend', _networkEmailExtraRowHtml('', idx));
+            };
+
+            // "+" junto a REDES SOCIALES (2026-09-19) -- mismo sistema. Para fuente
+            // "dj" solo ofrece las 9 redes con columna real (ver
+            // NETWORK_DJ_SOCIAL_COLUMNS); para client/referencia, la lista genérica.
+            window._networkAddSocialExtra = function() {
+                const container = document.getElementById('network-socials-extra');
+                if (!container) return;
+                const p = (window._networkRowData || [])[window._networkSelectedIdx];
+                const isDj = p && _networkFuenteDe(p) === 'dj';
+                const options = isDj ? Object.keys(NETWORK_DJ_SOCIAL_COLUMNS) : NETWORK_SOCIAL_OPTIONS;
+                const idx = container.children.length;
+                container.insertAdjacentHTML('beforeend', _networkSocialRowHtml({ red: options[0], url: '' }, idx, options));
+            };
+
+            // Salta a la ficha de la cuenta real correspondiente (2026-09-19,
+            // detección de duplicados referencia↔cuenta real). Si la cuenta real no
+            // está en la tabla actualmente filtrada, cambia a "Todos" primero.
+            window._networkJumpToRealAccount = function(fuenteReal, idReal) {
+                let idx = (window._networkRowData || []).findIndex(p => _networkFuenteDe(p) === fuenteReal && p.id === idReal);
+                if (idx < 0) {
+                    window.switchNetworkTab('todos');
+                    idx = (window._networkRowData || []).findIndex(p => _networkFuenteDe(p) === fuenteReal && p.id === idReal);
+                }
+                if (idx >= 0) {
+                    window.selectNetworkContact(idx);
+                    window.openNetworkEditPanel(window._networkRowData[idx]);
+                }
+            };
+
+            // Fusiona un contacto de referencia con la cuenta real que ya coincide
+            // por teléfono/email (2026-09-19, pedido del PO tras encontrar sus
+            // propias 2 fichas duplicadas). El RPC solo rellena huecos reales,
+            // nunca sobreescribe, y marca la fila de referencia como fusionada en
+            // vez de borrarla (para no perder notas/origen_csv).
+            window.mergeNetworkReferenciaConCuentaReal = async function(referenciaId, fuenteReal, idReal, nombreReal) {
+                const ok = confirm(`¿Fusionar este contacto de referencia con la cuenta real de "${nombreReal}"?\n\nSolo se rellenan los datos que la cuenta real no tenga todavía -- nada real se sobreescribe. El contacto de referencia no se borra, queda archivado como historial.`);
+                if (!ok) return;
+                const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+                if (!sb || !sb.rpc) { alert('Sin conexión a la base.'); return; }
+                const { data, error } = await sb.rpc('network_referencia_fusionar', { p_referencia_id: referenciaId, p_fuente_real: fuenteReal, p_id_real: idReal });
+                if (error) { alert('Error al fusionar: ' + error.message); return; }
+                if (data && data.ok === false) { alert('Error al fusionar: ' + data.error); return; }
+                await window.loadCRM();
+                window._networkJumpToRealAccount(fuenteReal, idReal);
             };
 
             // 2026-09-19, pedido del PO: "en la sección de donde va la foto también
@@ -8193,6 +8292,30 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 }
                 const isClient = p._category === 'Personal' || p._category === 'Comercial';
 
+                // Dirección física (2026-09-19, pedido del PO -- referencia directa a
+                // su propia tarjeta de Contactos de macOS/iCloud, sección "Casa").
+                // client_profiles y dj_profiles ya tienen las mismas 6 columnas
+                // (address_apt/address_zip/address_country se agregaron a dj_profiles
+                // 2026-09-19 para que la ficha de un DJ no se vea incompleta frente a
+                // la de un cliente); dj usa `address` en vez de `address_street` y
+                // `region` en vez de `address_state` (nombres que ya traía la tabla).
+                // network_referencia_contactos guarda un solo objeto jsonb `direccion`.
+                const _fuenteDirRaw = _networkFuenteDe(p);
+                const isDjSource = _fuenteDirRaw === 'dj';
+                const direccion = _fuenteDirRaw === 'referencia'
+                    ? ((p.direccion && typeof p.direccion === 'object') ? p.direccion : {})
+                    : (isDjSource
+                        ? { street: p.address || '', apt: p.address_apt || '', city: p.city || '', state: p.region || '', zip: p.address_zip || '', country: p.address_country || '' }
+                        : { street: p.address_street || '', apt: p.address_apt || '', city: p.city || '', state: p.address_state || '', zip: p.address_zip || '', country: p.address_country || '' });
+
+                // Redes sociales -- para "dj" se arman desde las 9 columnas reales
+                // (ver NETWORK_DJ_SOCIAL_COLUMNS); para client/referencia, del jsonb
+                // genérico `redes_sociales` (esas fuentes no tienen columnas propias
+                // por red social).
+                const _networkSocialRowsIniciales = isDjSource
+                    ? Object.entries(NETWORK_DJ_SOCIAL_COLUMNS).filter(([, col]) => p[col]).map(([red, col]) => ({ red, url: p[col] }))
+                    : (Array.isArray(p.redes_sociales) ? p.redes_sociales : []);
+
                 // Categorías personalizadas asignadas a este contacto (2026-09-19,
                 // pedido del PO: "por lógica en la tarjeta grande tiene que existir el
                 // campo Categorías"). Cruza network_list_members (ya cargado por
@@ -8252,27 +8375,33 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 // carrete de scroll-snap por 3 <select> normales. Mismo helper sirve
                 // para Aniversario (pedido en el mismo mensaje: "mismo sistema que el
                 // de cumpleaños para seleccionar las fechas").
+                // 2026-09-19, pedido del PO: revisar cómo Google/Facebook/Instagram
+                // muestran la casilla de cumpleaños cuando NO se ha editado -- ninguno
+                // pone una fecha inventada ya seleccionada: dejan cada select en un
+                // placeholder ("Month"/"Day"/"Year" en Google Account, "Mes"/"Día"/"Año"
+                // en Facebook) hasta que la persona elige de verdad. Antes este código
+                // rellenaba con "1 de enero de hace 30 años" como si fuera un dato real
+                // -- el mismo problema de fondo que el bug del año falso de Outlook, solo
+                // que aplicado a TODO contacto sin cumpleaños. Ahora day/month/year quedan
+                // en `null` cuando no hay dato real, y el select lo muestra en blanco.
                 const _bwToday = new Date();
-                let bwYear = _bwToday.getFullYear() - 30, bwMonth = 1, bwDay = 1;
+                let bwYear = null, bwMonth = null, bwDay = null;
                 if (p.birth_date) {
                     const _bwParts = String(p.birth_date).split('-').map(n => parseInt(n, 10));
                     if (_bwParts.length === 3 && !_bwParts.some(isNaN)) {
                         bwMonth = _bwParts[1]; bwDay = _bwParts[2];
                         // Año placeholder de Outlook (1604/1904, "birth_date_year_conocido"
-                        // = false) -- ese año es falso y NO cabe en la lista de 90 años del
-                        // select (por eso antes se veía "2026": al no encontrar el año real
-                        // en las opciones, el navegador caía en la primera). Se muestra un
-                        // año real cualquiera (actual - 30) en su lugar, dejando el mes/día
-                        // real intactos -- el aviso de abajo ya explica que hay que fijar un
-                        // año real y guardar.
-                        bwYear = (p.birth_date_year_conocido === false) ? (_bwToday.getFullYear() - 30) : _bwParts[0];
+                        // = false): ese año es falso, así que se deja el select de Año en
+                        // blanco (mismo criterio de arriba) en vez de inventar uno --
+                        // mes/día sí son reales y se muestran tal cual.
+                        bwYear = (p.birth_date_year_conocido === false) ? null : _bwParts[0];
                     }
                 }
                 window._networkBirthWheel = { year: bwYear, month: bwMonth, day: bwDay };
                 window._networkBirthWheelTouched = false;
 
                 const anniv = (p.aniversario && typeof p.aniversario === 'object') ? p.aniversario : {};
-                let anYear = _bwToday.getFullYear() - 5, anMonth = 1, anDay = 1;
+                let anYear = null, anMonth = null, anDay = null;
                 if (anniv.fecha) {
                     const _anParts = String(anniv.fecha).split('-').map(n => parseInt(n, 10));
                     if (_anParts.length === 3 && !_anParts.some(isNaN)) { anYear = _anParts[0]; anMonth = _anParts[1]; anDay = _anParts[2]; }
@@ -8287,16 +8416,22 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 };
                 const _selectStyle = 'background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); color:var(--net-text); padding:8px 6px; border-radius:10px; font:inherit; font-size:13px; flex:1; min-width:0;';
                 const _networkDateSelectGroup = (prefix, day, month, year, touchedFlagName) => {
-                    const daysList = Array.from({ length: _networkDaysInMonth(month, year) }, (_, i) => i + 1);
+                    // Días del mes: si el mes/año todavía no se conoce, se calcula sobre
+                    // un año bisiesto (2024) para no esconder el día 29 de febrero antes
+                    // de tiempo.
+                    const daysList = Array.from({ length: _networkDaysInMonth(month || 2, year || 2024) }, (_, i) => i + 1);
                     const yearsList = _networkYearsList(90);
                     return `<div style="display:flex; gap:6px;">
                         <select id="${prefix}-day" onchange="window._networkDateSelectChanged('${prefix}', '${touchedFlagName}')" style="${_selectStyle}">
+                            <option value="" ${day ? '' : 'selected'} disabled>Día</option>
                             ${daysList.map(d => `<option value="${d}" ${d === day ? 'selected' : ''}>${d}</option>`).join('')}
                         </select>
                         <select id="${prefix}-month" onchange="window._networkDateSelectChanged('${prefix}', '${touchedFlagName}')" style="${_selectStyle} flex:1.4;">
+                            <option value="" ${month ? '' : 'selected'} disabled>Mes</option>
                             ${NETWORK_WHEEL_MONTHS.map((m, i) => `<option value="${i + 1}" ${i + 1 === month ? 'selected' : ''}>${m}</option>`).join('')}
                         </select>
                         <select id="${prefix}-year" onchange="window._networkDateSelectChanged('${prefix}', '${touchedFlagName}')" style="${_selectStyle}">
+                            <option value="" ${year ? '' : 'selected'} disabled>Año</option>
                             ${yearsList.map(y => `<option value="${y}" ${y === year ? 'selected' : ''}>${y}</option>`).join('')}
                         </select>
                     </div>`;
@@ -8306,7 +8441,6 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     <div style="margin-bottom:14px;">
                         <label style="display:block; font-size:10px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:6px;">Fecha de nacimiento</label>
                         ${_networkDateSelectGroup('network-birth', bwDay, bwMonth, bwYear, '_networkBirthWheelTouched')}
-                        ${p.birth_date_year_conocido === false ? `<div style="font-size:11px; color:var(--muted); margin-top:6px;">⚠️ Año no confirmado en el dato original (mes/día real) -- elige un año real y guarda para fijarlo.</div>` : ''}
                     </div>
                     <div style="margin-bottom:14px;">
                         <label style="display:block; font-size:10px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:6px;">Aniversario</label>
@@ -8340,9 +8474,19 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         </div>
                         <div id="network-photo-msg" style="font-size:11px; color:var(--muted); margin-bottom:6px;"></div>
                         <h2 style="margin:0 0 2px; color:var(--net-text); font-size:20px; text-shadow:0 1px 4px rgba(0,0,0,0.35);">${p._displayName || 'Sin Nombre'}</h2>
-                        ${p._displayStageName ? `<div style="font-size:12px; color:var(--gold); font-weight:700; margin-bottom:2px;">Nombre artístico: ${p._displayStageName}</div>` : ''}
-                        <div style="font-size:12px; color:rgba(20,15,8,0.62); font-weight:600; margin-bottom:4px;">${NETWORK_CATEGORY_LABEL[p._category] || p._category || 'Contacto de referencia'}${proHtml ? ' · ' : ''}${proHtml}</div>
-                        ${p.origen_persona_nombre ? `<div style="font-size:11px; color:rgba(20,15,8,0.5); font-weight:600; margin-bottom:16px;">Ingresado a mano por ${p.origen_persona_nombre}${p.origen_csv ? ` · importado de ${p.origen_csv}` : ''}</div>` : '<div style="margin-bottom:16px;"></div>'}
+                        ${p._displayStageName ? `<div style="font-size:12px; color:var(--gold); font-weight:700; margin-bottom:2px;">${p._displayStageName}</div>` : ''}
+                        <!-- 2026-09-19, pedido del PO: "donde dice 'Contacto de
+                             referencia' ahí solo va el tipo de contacto (ej. Amigo)...
+                             si no está editado, déjalo en blanco, no pongas nada" --
+                             ya no hay texto genérico de relleno; muestra la(s)
+                             categoría(s) personalizada(s) real(es) asignadas, o nada. -->
+                        ${(() => {
+                            const _catLabel = NETWORK_CATEGORY_LABEL[p._category] || (fuente !== 'referencia' ? p._category : null);
+                            const _customNames = myLists.map(l => l.name);
+                            const _subtitle = _catLabel || (_customNames.length ? _customNames.join(', ') : '');
+                            return (_subtitle || proHtml) ? `<div style="font-size:12px; color:rgba(20,15,8,0.62); font-weight:600; margin-bottom:4px;">${_subtitle}${_subtitle && proHtml ? ' · ' : ''}${proHtml}</div>` : '';
+                        })()}
+                        <div style="margin-bottom:16px;"></div>
                         ${quickActionsHtml}
 
                         <div style="text-align:left;">
@@ -8368,6 +8512,34 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                                     ${(Array.isArray(p.emails_extra) ? p.emails_extra : []).map((value, idx) => _networkEmailExtraRowHtml(value, idx)).join('')}
                                 </div>
                             </div>
+                            <div style="margin-bottom:14px;">
+                                <label style="display:block; font-size:10px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:6px;">Dirección</label>
+                                <div style="display:flex; gap:8px; margin-bottom:6px;">
+                                    <input type="text" id="network-field-address-street" value="${_networkAttrEsc(direccion.street || '')}" placeholder="Calle" style="flex:2; min-width:0; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); color:var(--net-text); padding:8px 10px; border-radius:10px; font:inherit; font-size:13px;">
+                                    <input type="text" id="network-field-address-apt" value="${_networkAttrEsc(direccion.apt || '')}" placeholder="Apt / Suite" style="flex:1; min-width:0; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); color:var(--net-text); padding:8px 10px; border-radius:10px; font:inherit; font-size:13px;">
+                                </div>
+                                <div style="display:flex; gap:8px; margin-bottom:6px;">
+                                    <input type="text" id="network-field-address-city" value="${_networkAttrEsc(direccion.city || '')}" placeholder="Ciudad" style="flex:1.4; min-width:0; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); color:var(--net-text); padding:8px 10px; border-radius:10px; font:inherit; font-size:13px;">
+                                    <input type="text" id="network-field-address-state" value="${_networkAttrEsc(direccion.state || '')}" placeholder="Estado" style="flex:1; min-width:0; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); color:var(--net-text); padding:8px 10px; border-radius:10px; font:inherit; font-size:13px;">
+                                    <input type="text" id="network-field-address-zip" value="${_networkAttrEsc(direccion.zip || '')}" placeholder="Código postal" style="flex:1; min-width:0; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); color:var(--net-text); padding:8px 10px; border-radius:10px; font:inherit; font-size:13px;">
+                                </div>
+                                <input type="text" id="network-field-address-country" value="${_networkAttrEsc(direccion.country || '')}" placeholder="País" style="width:100%; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); color:var(--net-text); padding:8px 10px; border-radius:10px; font:inherit; font-size:13px;">
+                            </div>
+                            ${isDjSource ? `
+                            <div style="margin-bottom:14px;">
+                                <label style="display:block; font-size:10px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:4px;">Página web</label>
+                                <input type="text" id="network-field-website" value="${_networkAttrEsc(p.website_url || '')}" placeholder="Sin página web registrada"
+                                    style="width:100%; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); color:var(--net-text); padding:8px 10px; border-radius:10px; font:inherit; font-size:13px;">
+                            </div>` : ''}
+                            <div style="margin-bottom:14px;">
+                                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+                                    <label style="font-size:10px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase;">Redes sociales</label>
+                                    <button type="button" onclick="window._networkAddSocialExtra()" title="Agregar red social" aria-label="Agregar red social" style="flex:none; width:28px; height:28px; padding:0; color:#3b82f6; border:1px solid rgba(255,255,255,0.3); background:rgba(0,0,0,0.22); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:800; cursor:pointer;">+</button>
+                                </div>
+                                <div id="network-socials-extra">
+                                    ${_networkSocialRowsIniciales.map((entry, idx) => _networkSocialRowHtml(entry, idx, isDjSource ? Object.keys(NETWORK_DJ_SOCIAL_COLUMNS) : NETWORK_SOCIAL_OPTIONS)).join('')}
+                                </div>
+                            </div>
                             ${birthWheelHtml}
                             <div style="margin-bottom:14px;">
                                 <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
@@ -8386,16 +8558,6 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                                     </div>
                                 </div>
                             </div>
-                            <div style="display:flex; gap:16px; margin-bottom:14px; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); border-radius:10px; padding:10px 14px;">
-                                <div style="flex:1;">
-                                    <label style="display:block; font-size:10px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:4px;">Contrato</label>
-                                    <div>${p._compliance && p._compliance.contractId ? '<span style="color:#4ade80; font-weight:700; font-size:12px;">✅ Firmado</span>' : '<span style="color:#fb923c; font-weight:700; font-size:12px;">Pendiente</span>'}</div>
-                                </div>
-                                <div style="flex:1;">
-                                    <label style="display:block; font-size:10px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:4px;">W-9</label>
-                                    <div>${p._compliance && p._compliance.w9Id ? '<span style="color:#4ade80; font-weight:700; font-size:12px;">✅ Firmado</span>' : '<span style="color:#fb923c; font-weight:700; font-size:12px;">Pendiente</span>'}</div>
-                                </div>
-                            </div>
                             ${isClient ? `
                             <div style="display:flex; gap:16px; margin-bottom:14px; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); border-radius:10px; padding:10px 14px;">
                                 <div style="flex:1;">
@@ -8407,11 +8569,29 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                                     <div style="color:var(--gold); font-weight:700;">$${Number(p.total_spent || 0).toFixed(2)}</div>
                                 </div>
                             </div>` : ''}
+                            ${(fuente === 'referencia' && p._matchReal) ? `
+                            <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); border-radius:10px; padding:10px 14px;">
+                                <div style="font-size:12px; color:var(--net-text);">Esta persona ya tiene cuenta real: <strong>${_networkAttrEsc(p._matchReal.nombre || '')}</strong> (${p._matchReal.fuente === 'dj' ? 'DJ/Artista' : 'Cliente'}).</div>
+                                <button onclick="window.mergeNetworkReferenciaConCuentaReal('${p.id}', '${p._matchReal.fuente}', '${p._matchReal.id}', '${_networkAttrEsc(p._matchReal.nombre || '')}')" style="flex:none; background:transparent; color:#3b82f6; font-weight:700; border:1px solid #3b82f6; padding:7px 14px; border-radius:8px; cursor:pointer; font:inherit; font-size:12px; white-space:nowrap;">Fusionar con cuenta real</button>
+                            </div>` : ''}
                             <div style="margin-bottom:4px;">
                                 <label style="display:block; font-size:10px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:4px;">Notas</label>
-                                <textarea readonly placeholder="Sin notas todavía" rows="2" style="width:100%; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); color:var(--net-text); padding:8px 10px; border-radius:10px; font:inherit; font-size:13px; resize:none;"></textarea>
+                                <textarea id="network-field-notas" ${fuente === 'referencia' ? '' : 'readonly'} placeholder="Sin notas todavía" rows="2" style="width:100%; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); color:var(--net-text); padding:8px 10px; border-radius:10px; font:inherit; font-size:13px; resize:none;">${_networkAttrEsc(p.notas || '')}</textarea>
                             </div>
-                            <p class="fineprint" style="margin-top:12px;">Teléfono y email ya guardan de verdad. Notas se queda de solo lectura -- no existe todavía una columna real para eso en la base.</p>
+                            ${fuente !== 'referencia' ? `<p class="fineprint" style="margin-top:12px;">Notas se queda de solo lectura para cuentas reales -- no existe todavía una columna real para eso en client_profiles/dj_profiles.</p>` : ''}
+                            ${(p.origen_persona_nombre || p._fusionReferencia) ? `
+                            <!-- 2026-09-19, pedido del PO: el "ingresado a mano por..." ya
+                                 no va visible abajo de la foto (ensuciaba la tarjeta) -- se
+                                 mueve aquí, en una sección plegable al final, para uso
+                                 INTERNO solamente (si algún día se comparte esta ficha con
+                                 el usuario real, este dato no se comparte). También guarda
+                                 aquí el historial de fusión con un contacto de referencia
+                                 (notas/origen que no tienen columna real donde vivir). -->
+                            <details style="margin-top:10px;">
+                                <summary style="cursor:pointer; font-size:11px; color:var(--muted); letter-spacing:.04em;">Info interna (no se comparte)</summary>
+                                ${p.origen_persona_nombre ? `<div style="font-size:11px; color:var(--muted); margin-top:6px;">Ingresado a mano por ${p.origen_persona_nombre}${p.origen_csv ? ` · importado de ${p.origen_csv}` : ''}</div>` : ''}
+                                ${p._fusionReferencia ? `<div style="font-size:11px; color:var(--muted); margin-top:6px; padding-top:6px; border-top:1px solid var(--net-line-soft);">Fusionado con el contacto de referencia "${_networkAttrEsc(p._fusionReferencia.nombre || '')}" el ${p._fusionReferencia.fusionado_en ? new Date(p._fusionReferencia.fusionado_en).toLocaleDateString() : ''}.${p._fusionReferencia.origen_csv ? ` Importado originalmente de ${p._fusionReferencia.origen_csv}.` : ''}${p._fusionReferencia.notas ? `<br>Notas originales: ${_networkAttrEsc(p._fusionReferencia.notas)}` : ''}</div>` : ''}
+                            </details>` : ''}
                             <div style="display:flex; justify-content:flex-end; align-items:center; gap:10px; margin-top:6px;">
                                 <span id="network-save-msg" style="font-size:12px; color:var(--muted); min-height:14px;"></span>
                                 <button onclick="window.saveNetworkContact()" style="flex:none; background:var(--gold); color:#1a1206; font-weight:800; border:0; padding:9px 20px; border-radius:8px; cursor:pointer; font:inherit; font-size:13px;">Guardar</button>
@@ -8433,11 +8613,15 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 const monthSel = document.getElementById(prefix + '-month');
                 const yearSel = document.getElementById(prefix + '-year');
                 if (!daySel || !monthSel || !yearSel) return;
+                // Mes/Año pueden seguir en placeholder (valor "") si la persona todavía
+                // no los tocó -- sin ambos no se puede recalcular el día 29/30/31 real,
+                // así que se deja el select de Día como está hasta que se sepan los dos.
+                if (!monthSel.value || !yearSel.value) return;
                 const month = parseInt(monthSel.value, 10);
                 const year = parseInt(yearSel.value, 10);
-                const curDay = parseInt(daySel.value, 10);
+                const curDay = parseInt(daySel.value, 10) || 1;
                 const maxDays = _networkDaysInMonth(month, year);
-                if (daySel.options.length === maxDays) return;
+                if (daySel.options.length - 1 === maxDays && daySel.value) return;
                 const newDay = Math.min(curDay, maxDays);
                 daySel.innerHTML = Array.from({ length: maxDays }, (_, i) => i + 1)
                     .map(d => `<option value="${d}" ${d === newDay ? 'selected' : ''}>${d}</option>`).join('');
