@@ -6953,16 +6953,18 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
             // "familia" (👪), que confundiría con la categoría real "Familia
             // (Equipo Interno)".
             const NETWORK_ALL_ICON = '👥👤';
-            // "Familia (Equipo Interno)" se quitó de las fijas (2026-09-19, pedido
-            // explícito del PO: "familia no va fijo... esa debe ser editable y
-            // eliminable también... Familia es para las fechas de las familias, los
-            // cumpleaños, aniversarios" -- concepto distinto a "equipo interno". Si
-            // el PO quiere una categoría "Familia", la crea él mismo con el "+" como
-            // categoría personalizada (editable/eliminable, como Staff/DJ/Bartender).
+            // "Familia (Equipo Interno)", "Venues y Proveedores" y "Clientes y
+            // Contratistas" se quitaron de las fijas (2026-09-19, pedido explícito
+            // del PO, una por una): mezclaban conceptos reales distintos (equipo
+            // interno vs. fechas familiares; venues vs. proveedores subcontratados;
+            // clientes vs. contratistas) sin que la base de datos tuviera una
+            // columna real que los distinguiera. El PO prefiere crear él mismo la
+            // categoría personalizada exacta que necesita y clasificar a mano, en
+            // vez de una fija mal planteada que junta dos cosas. "Artistas" se
+            // queda porque SÍ es una clasificación real de una sola cosa (el tipo
+            // de artista ya viene de dj_profiles, no mezcla dos conceptos).
             const NETWORK_TABS = [
-                { id: 'artistas', label: NETWORK_GROUP_ICON + ' Artistas', cats: ['DJ', 'HoraLoca', 'Band', 'Solista', 'Visuales', 'MC', 'Payaso'] },
-                { id: 'venues', label: NETWORK_GROUP_ICON + ' Venues y Proveedores', cats: ['Comercial'] },
-                { id: 'clientes', label: NETWORK_GROUP_ICON + ' Clientes y Contratistas', cats: ['Personal', 'Staff'] }
+                { id: 'artistas', label: NETWORK_GROUP_ICON + ' Artistas', cats: ['DJ', 'HoraLoca', 'Band', 'Solista', 'Visuales', 'MC', 'Payaso'] }
             ];
 
             // Iniciales para el círculo-avatar (estilo Contactos) cuando no hay foto real.
