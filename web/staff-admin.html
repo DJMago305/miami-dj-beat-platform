@@ -277,6 +277,10 @@
             margin: 0 auto;
         }
 
+        /* Carrete de fecha de nacimiento (2026-09-19) -- oculta la barra de scroll
+           nativa en Chrome/Safari; scrollbar-width:none (Firefox) ya va inline. */
+        .net-wheel-col::-webkit-scrollbar { display: none; }
+
         /* 2026-09-18, pedido del PO: con el panel de edición abierto, esas columnas
            (email/teléfono/PRO/fecha/compliance/fuente) ya no hacen falta en la
            tabla -- ese mismo dato, MÁS detallado y editable, vive ahora en el
@@ -2240,7 +2244,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                         <h3 style="color:var(--gold);">Actividad operativa</h3>
                         <div class="owner-ops-feed-toolbar-actions">
                             <span id="owner-ops-feed-meta" class="owner-ops-feed-meta"></span>
-                            <button type="button" class="btn secondary small" onclick="loadOwnerOpsFeed()">↺ Actualizar</button>
+                            <button type="button" class="btn secondary small" onclick="loadOwnerOpsFeed()"><svg width="13" height="13" fill="none" stroke="#3b82f6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="vertical-align:-2px; margin-right:4px;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Actualizar</button>
                         </div>
                     </div>
                     <div class="owner-ops-controls">
@@ -2300,7 +2304,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                                 <option value="confirmed">Confirmado</option>
                                 <option value="cancelled">Cancelado</option>
                             </select>
-                            <button class="btn secondary small" onclick="loadEbOrders()">↺ Actualizar</button>
+                            <button class="btn secondary small" onclick="loadEbOrders()"><svg width="13" height="13" fill="none" stroke="#3b82f6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="vertical-align:-2px; margin-right:4px;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Actualizar</button>
                         </div>
                     </div>
                     <div id="eb-orders-container">
@@ -2335,7 +2339,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                                 <h4 style="margin:0; color: var(--gold);">📡 Actividad Reciente de la Plataforma</h4>
                                 <p class="fineprint">Nuevos usuarios, suscripciones y eventos del sistema</p>
                             </div>
-                            <button class="btn secondary small" onclick="loadStaffActivity()">↺ Actualizar</button>
+                            <button class="btn secondary small" onclick="loadStaffActivity()"><svg width="13" height="13" fill="none" stroke="#3b82f6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="vertical-align:-2px; margin-right:4px;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Actualizar</button>
                         </div>
                         <div id="staff-activity-feed">
                             <div class="loading-spinner">Esperando datos de actividad...</div>
@@ -2344,8 +2348,21 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                 </div>
 
                 <!-- CRM / VIP Section -->
-                <div class="admin-card" id="crm" style="display:none; padding:0; overflow:hidden;">
-                  <div style="display:flex; align-items:stretch; min-height:72vh;">
+                <div class="admin-card" id="crm" style="display:none; padding:0; overflow:hidden; height:100vh;">
+                  <!-- 2026-09-19, corrección del PO (dos vueltas): con listas largas (ej.
+                       55 DJs tras importar los contactos de referencia), min-height dejaba
+                       crecer todo el bloque sin límite -- la página entera scrolleaba en
+                       vez de la tabla, y la barra de categorías (más corta) quedaba
+                       "vacía" al fondo porque align-items:stretch la estiraba hasta el
+                       alto total sin tener contenido propio para llenarlo. Un height fijo
+                       en vh arbitrario (72vh) tapó eso pero dejó una franja negra sin usar
+                       en pantallas donde el iframe mide más que eso -- "tenemos un sistema
+                       de autoajuste de pantalla... no recojas la pantalla". 100vh (el
+                       iframe de Network no tiene nada arriba, #crm empieza en y:0 -- medido
+                       en vivo) llena el alto real disponible sin importar el tamaño de
+                       pantalla, y overflow:hidden + los overflow-y:auto internos siguen
+                       evitando que la sección crezca más allá de eso con listas largas. -->
+                  <div style="display:flex; align-items:stretch; height:100%; overflow:hidden;">
                     <!-- Sidebar de Network (2026-09-18, retoque pedido por el PO con
                          referencia directa a macOS Contactos: la columna de categorías
                          llega hasta arriba, a todo lo alto -- NO empieza debajo del
@@ -2355,31 +2372,61 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                          cero: de aquí salen todos los demás retoques visuales.
                          Botón de contraer/expandir: mismo ícono y patrón que ya usa
                          #side3-collapse en staff.html (rectángulo con línea vertical). -->
-                    <div id="network-sidebar-wrap" style="flex:0 0 220px; display:flex; flex-direction:column; border-right:1px solid var(--net-line); background:var(--net-surface); transition:flex-basis .15s ease;">
-                        <div style="padding:10px 8px 2px; display:flex; justify-content:flex-end;">
-                            <button type="button" id="network-sidebar-toggle" onclick="window.toggleNetworkSidebar()" title="Contraer / expandir categorías" aria-label="Contraer o expandir categorías" style="background:transparent; border:none; color:var(--muted); cursor:pointer; padding:6px; border-radius:6px; display:flex; align-items:center; justify-content:center;">
+                    <div id="network-sidebar-wrap" style="flex:0 0 220px; display:flex; flex-direction:column; min-height:0; border-right:1px solid var(--net-line); background:var(--net-surface); transition:flex-basis .15s ease;">
+                        <div style="flex:none; padding:10px 8px 2px; display:flex; justify-content:flex-end;">
+                            <button type="button" id="network-sidebar-toggle" onclick="window.toggleNetworkSidebar()" title="Contraer / expandir categorías" aria-label="Contraer o expandir categorías" style="background:transparent; border:none; color:#3b82f6; cursor:pointer; padding:6px; border-radius:6px; display:flex; align-items:center; justify-content:center;">
                                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
                             </button>
                         </div>
-                        <div id="network-tabs" style="flex:1; display:flex; flex-direction:column; gap:2px; padding:0 12px 18px;">
+                        <div id="network-tabs" style="flex:1; min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:2px; padding:0 12px 18px;">
                         </div>
                     </div>
 
                     <div style="flex:1; min-width:0; display:flex; flex-direction:column;">
                     <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 24px 12px 28px; border-bottom:1px solid var(--net-line);">
                         <div>
-                            <h3 style="margin:0; color:var(--gold);">🌐 Network<span class="mdj-help" tabindex="0"><span class="mdj-help-icon">?</span><span class="mdj-help-tip">Directorio global del negocio — antes "Directorio Global (CRM)". Prototipo 2026-09-18: pestañas + fuente del dato. Pendiente para después: detección de duplicados y fotos automáticas.</span></span></h3>
+                            <h3 style="margin:0; color:var(--gold);">🌐 Network<span class="mdj-help" tabindex="0"><span class="mdj-help-icon">?</span><span class="mdj-help-tip">Directorio global del negocio — antes "Directorio Global (CRM)". Prototipo 2026-09-18: pestañas + fuente del dato. Detecta contactos de referencia que ya tienen cuenta real y permite fusionarlos (2026-09-19). Pendiente para después: fotos automáticas.</span></span></h3>
                         </div>
                         <div style="display:flex; gap:10px; align-items:center;">
+                            <!-- Orden / Más opciones (2026-09-19, pedido del PO: "te faltan dos
+                                 herramientas en la barra al lado de editar" -- mismo círculo azul
+                                 que el botón de actualizar). Orden es real (ver renderTable);
+                                 "Más opciones" por ahora solo trae exportar CSV, lo único que hay
+                                 backend real para hacer aquí. -->
+                            <div style="position:relative;">
+                                <button id="network-sort-btn" class="btn secondary small" onclick="window.toggleNetworkSortMenu(event)" title="Ordenar" aria-label="Ordenar" style="width:36px; height:36px; padding:0; color:#3b82f6; border:1px solid var(--net-glass-border); background:var(--net-glass-bg); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border-radius:50%; display:flex; align-items:center; justify-content:center;">
+                                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M8 9l4-4 4 4"/><path d="M16 15l-4 4-4-4"/></svg>
+                                </button>
+                                <div id="network-sort-menu" style="display:none; position:absolute; top:calc(100% + 6px); left:0; z-index:200; min-width:240px; background:var(--net-card-bg); border:1px solid var(--net-line); border-radius:10px; box-shadow:0 12px 32px rgba(0,0,0,0.4); padding:6px; font-size:13px;">
+                                    <button onclick="window.networkSetSort('alpha')" style="display:block; width:100%; text-align:left; background:transparent; border:none; color:var(--net-text); padding:8px 10px; border-radius:6px; cursor:pointer; font:inherit;">Alfabético (A-Z)</button>
+                                    <button onclick="window.networkSetSort('antiguos')" style="display:block; width:100%; text-align:left; background:transparent; border:none; color:var(--net-text); padding:8px 10px; border-radius:6px; cursor:pointer; font:inherit;">Fecha de agregado (más antiguos primero)</button>
+                                    <button onclick="window.networkSetSort('recientes')" style="display:block; width:100%; text-align:left; background:transparent; border:none; color:var(--net-text); padding:8px 10px; border-radius:6px; cursor:pointer; font:inherit;">Últimos agregados primero</button>
+                                </div>
+                            </div>
+                            <div style="position:relative;">
+                                <button id="network-more-btn" class="btn secondary small" onclick="window.toggleNetworkMoreMenu(event)" title="Más opciones" aria-label="Más opciones" style="width:36px; height:36px; padding:0; color:#3b82f6; border:1px solid var(--net-glass-border); background:var(--net-glass-bg); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border-radius:50%; display:flex; align-items:center; justify-content:center;">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+                                </button>
+                                <div id="network-more-menu" style="display:none; position:absolute; top:calc(100% + 6px); left:0; z-index:200; min-width:260px; background:var(--net-card-bg); border:1px solid var(--net-line); border-radius:10px; box-shadow:0 12px 32px rgba(0,0,0,0.4); padding:6px; font-size:13px;">
+                                    <div style="padding:6px 10px; font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--net-text-dim);">Nombre a mostrar</div>
+                                    <button onclick="window.networkSetNameMode('primary', 'real')" style="display:block; width:100%; text-align:left; background:transparent; border:none; color:var(--net-text); padding:8px 10px; border-radius:6px; cursor:pointer; font:inherit;">Nombre real primero</button>
+                                    <button onclick="window.networkSetNameMode('primary', 'artistico')" style="display:block; width:100%; text-align:left; background:transparent; border:none; color:var(--net-text); padding:8px 10px; border-radius:6px; cursor:pointer; font:inherit;">Nombre artístico primero (si tiene)</button>
+                                    <div style="height:1px; background:var(--net-line); margin:6px 4px;"></div>
+                                    <button onclick="window.networkSetNameMode('order', 'normal')" style="display:block; width:100%; text-align:left; background:transparent; border:none; color:var(--net-text); padding:8px 10px; border-radius:6px; cursor:pointer; font:inherit;">Nombre y apellido</button>
+                                    <button onclick="window.networkSetNameMode('order', 'apellido')" style="display:block; width:100%; text-align:left; background:transparent; border:none; color:var(--net-text); padding:8px 10px; border-radius:6px; cursor:pointer; font:inherit;">Apellido y nombre</button>
+                                    <div style="height:1px; background:var(--net-line); margin:6px 4px;"></div>
+                                    <button onclick="window.networkExportCSV()" style="display:block; width:100%; text-align:left; background:transparent; border:none; color:var(--net-text); padding:8px 10px; border-radius:6px; cursor:pointer; font:inherit;">Exportar CSV de esta vista</button>
+                                </div>
+                            </div>
                             <!-- Editar / + (2026-09-18) -- mismos dos botones que trae la barra
                                  de macOS Contactos junto al buscador. Todavía no hay backend de
                                  escritura real para el Network (eso es la tarjeta de contacto
                                  editable, pendiente aparte) -- por ahora "Editar" y las opciones
                                  del "+" avisan honestamente que están pendientes de construir, en
                                  vez de simular un guardado que no existe. -->
-                            <button class="btn secondary small" onclick="window.networkEditStub && window.networkEditStub()" style="border-radius:999px; padding:7px 16px; font-size:13px; font-weight:700; color:var(--net-text); border:1px solid var(--net-line); background:var(--net-hover);">Editar</button>
+                            <button class="btn secondary small" onclick="window.networkEditStub && window.networkEditStub()" style="border-radius:999px; padding:7px 16px; font-size:13px; font-weight:700; color:#3b82f6; border:1px solid var(--net-line); background:var(--net-hover);">Editar</button>
                             <div style="position:relative;">
-                                <button id="network-add-btn" class="btn secondary small" onclick="window.toggleNetworkAddMenu(event)" title="Agregar" aria-label="Agregar" style="width:36px; height:36px; padding:0; line-height:1; font-size:20px; font-weight:800; color:var(--net-text); border:1px solid var(--net-line); background:var(--net-hover); border-radius:50%; display:flex; align-items:center; justify-content:center;">+</button>
+                                <button id="network-add-btn" class="btn secondary small" onclick="window.toggleNetworkAddMenu(event)" title="Agregar" aria-label="Agregar" style="width:36px; height:36px; padding:0; line-height:1; font-size:20px; font-weight:800; color:#3b82f6; border:1px solid var(--net-glass-border); background:var(--net-glass-bg); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border-radius:50%; display:flex; align-items:center; justify-content:center;">+</button>
                                 <div id="network-add-menu" style="display:none; position:absolute; top:calc(100% + 6px); left:0; z-index:200; min-width:220px; background:var(--net-card-bg); border:1px solid var(--net-line); border-radius:10px; box-shadow:0 12px 32px rgba(0,0,0,0.4); padding:6px; font-size:13px;">
                                     <button onclick="window.networkAddStub('Nuevo contacto')" style="display:block; width:100%; text-align:left; background:transparent; border:none; color:var(--net-text); padding:8px 10px; border-radius:6px; cursor:pointer; font:inherit;">Nuevo contacto</button>
                                     <button onclick="window.networkAddStub('Nueva lista')" style="display:block; width:100%; text-align:left; background:transparent; border:none; color:var(--net-text); padding:8px 10px; border-radius:6px; cursor:pointer; font:inherit;">Nueva lista</button>
@@ -2397,7 +2444,9 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--net-text-dim)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute; left:12px; pointer-events:none;"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                                 <input type="text" id="network-search" oninput="window.searchNetwork(this.value)" placeholder="Buscar" style="background:var(--net-hover); border:1px solid var(--net-line); border-radius:999px; color:var(--net-text); padding:7px 14px 7px 32px !important; font:inherit; font-size:13px !important; width:180px; box-sizing:border-box; transition:width .15s ease;" onfocus="this.style.width='240px'" onblur="if(!this.value)this.style.width='180px'">
                             </div>
-                            <button class="btn secondary small" onclick="window.loadCRM && window.loadCRM()" title="Actualizar" aria-label="Actualizar" style="width:36px; height:36px; padding:0; line-height:1; font-size:18px; color:rgba(197,160,89,.98); border:1px solid rgba(197,160,89,.55); background:rgba(197,160,89,.12); border-radius:8px; display:flex; align-items:center; justify-content:center;">↺</button>
+                            <button class="btn secondary small" onclick="window.loadCRM && window.loadCRM()" title="Actualizar" aria-label="Actualizar" style="width:36px; height:36px; padding:0; color:#3b82f6; border:none; background:transparent; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+                                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                            </button>
                             <!-- Cerrar el modo página completa (2026-09-18, pedido del PO: un
                                  solo grupo de botones, no dos flotando por separado). Llama a la
                                  función expuesta por el padre (staff.html) ya que #staff-side3
@@ -2478,7 +2527,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                 <div class="admin-card" id="analytics" style="display:none;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
                         <h3>📊 Analytics del Negocio</h3>
-                        <button class="btn secondary small" onclick="loadAnalytics()">↺ Actualizar</button>
+                        <button class="btn secondary small" onclick="loadAnalytics()"><svg width="13" height="13" fill="none" stroke="#3b82f6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="vertical-align:-2px; margin-right:4px;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Actualizar</button>
                     </div>
 
                     <!-- KPI Cards -->
@@ -2515,7 +2564,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                     <div class="tile" id="mdj-reviews-moderation-tile" style="display:none; margin-top:20px; border:1px solid var(--line);">
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:10px;">
                             <h4 style="margin:0;color:var(--gold);">⭐ Moderación de opiniones (gestión)</h4>
-                            <button type="button" class="btn secondary small" onclick="loadMdReviewsModeration()">↺ Actualizar</button>
+                            <button type="button" class="btn secondary small" onclick="loadMdReviewsModeration()"><svg width="13" height="13" fill="none" stroke="#3b82f6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="vertical-align:-2px; margin-right:4px;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Actualizar</button>
                         </div>
                         <p class="fineprint" style="margin:0 0 14px;line-height:1.5;opacity:0.88;">
                             Una opinión por cuenta de cliente. Solo gestión puede ocultar reseñas fraudulentas (contacta al autor primero). No se borran; quedan ocultas.
@@ -3175,7 +3224,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
                       <button onclick="loadFashionShowPanel()" id="fs-btn-load"
                         style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.6);border-radius:7px;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:.05em;">
-                        ↺ Recargar
+                        <svg width="13" height="13" fill="none" stroke="#3b82f6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="vertical-align:-2px; margin-right:4px;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Recargar
                       </button>
                       <button onclick="fsOpenAssignModal()" id="fs-btn-assign"
                         style="background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.35);color:#a5b4fc;border-radius:7px;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:.05em;display:flex;align-items:center;gap:6px;">
@@ -6731,6 +6780,15 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 }
             };
 
+            // Detección de duplicados referencia↔cuenta real (2026-09-19, pedido
+            // del PO tras encontrar sus propias 2 fichas de referencia
+            // "MIAMI DJ BEAT LLC"/"MIAMIDJBEATLLC Valle" ya coincidiendo con sus
+            // cuentas reales). Un mismo teléfono en `telefono` puede venir con
+            // varios números separados por "; " -- se extraen todos los bloques
+            // de 7+ dígitos y se comparan por los últimos 10 (ignora +1/formato).
+            const _networkNormPhones = (raw) => (String(raw || '').match(/\d{7,}/g) || []).map(d => d.slice(-10)).filter(Boolean);
+            const _networkNormEmail = (raw) => String(raw || '').trim().toLowerCase();
+
             // ── Certification Registry ────────────────────────
             window.allCRMProfiles = [];
             window.loadCRM = async function() {
@@ -6740,59 +6798,60 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     
                     document.getElementById('crm-container').innerHTML = '<div class="loading-spinner">Generando auditoría global de contactos...</div>';
                     
-                    // Fetch both profiles concurrently to speed up loading. signed_contracts
-                    // se trae aparte (misma consulta directa, sin RPC — esta página ya lee
-                    // dj_profiles/client_profiles así, es una superficie solo-staff) para
-                    // cruzar compliance legal (Contrato / W-9) sin tocar el esquema.
-                    const [clientsRes, djsRes, contractsRes, leadsRes] = await Promise.all([
-                        db.from('client_profiles').select('id, full_name, email, phone, is_commercial, company_name, tier_level, total_spent, total_events, created_at').order('total_spent', { ascending: false }),
-                        db.from('dj_profiles').select('id, full_name, stage_name, dj_name, email, phone, role, artist_specialty, bio, status, plan, is_premium, created_at').order('created_at', { ascending: false }),
-                        db.from('signed_contracts').select('id, artist_profile_id, contract_type, signer_email, status'),
+                    // Fetch both profiles concurrently to speed up loading.
+                    const [clientsRes, djsRes, leadsRes, listsRes, listMembersRes, referenciaRes, fotosFallbackRes] = await Promise.all([
+                        db.from('client_profiles').select('id, full_name, email, phone, phones_extra, emails_extra, birth_date, aniversario, redes_sociales, address_street, address_apt, city, address_state, address_zip, address_country, is_commercial, company_name, tier_level, total_spent, total_events, created_at, photo_url').order('total_spent', { ascending: false }),
+                        db.from('dj_profiles').select('id, full_name, stage_name, dj_name, email, phone, phones_extra, emails_extra, birth_date, aniversario, address, address_apt, city, region, address_zip, address_country, website_url, youtube_url, spotify_url, soundcloud_url, instagram_url, tiktok_url, facebook_url, beatport_url, apple_music_url, twitter_url, role, artist_specialty, bio, status, plan, is_premium, created_at, photo_url').order('created_at', { ascending: false }),
                         // Fuente del dato (2026-09-18, pedido del PO): no hay una columna real de
                         // "origen" en client_profiles -- se deriva por email compartido con leads
                         // (si coincide, vino de un formulario/reserva real; si no, es una cuenta
                         // creada directo). Honesto, no inventa un dato que no existe.
                         db.from('leads').select('email').not('email', 'is', null),
+                        // Categorías personalizadas (2026-09-19, pedido del PO): libres, creadas
+                        // por el staff -- NO derivadas de datos, a diferencia de Artistas/Venues/
+                        // Clientes/Familia. Viven en network_lists/network_list_members.
+                        db.from('network_lists').select('id, name').order('created_at', { ascending: true }),
+                        db.from('network_list_members').select('list_id, fuente, contacto_id'),
+                        // Contactos de referencia (2026-09-19, pedido del PO: importar su base
+                        // de datos externa de proveedores/artistas/prospectos SIN cuenta real
+                        // -- "no tienen cuenta con nosotros, solo son parte de nuestra base de
+                        // datos para publicidad"). Tabla aparte de client_profiles/dj_profiles
+                        // porque no representan cuentas reales.
+                        db.from('network_referencia_contactos').select('id, nombre, telefono, email, empresa, notas, origen_csv, origen_persona_nombre, photo_url, birth_date, birth_date_year_conocido, created_at, phones_extra, emails_extra, aniversario, redes_sociales, direccion, fusionado_fuente, fusionado_id, fusionado_en'),
+                        // Respaldo de foto real (2026-09-19, "cablear el avatar que ya
+                        // existe"): cuando photo_url está vacío pero la persona sí tiene
+                        // una foto real guardada en su login de Google (auth.users), este
+                        // RPC la expone -- de solo lectura, nunca escribe nada. Mismo
+                        // criterio que ya usa dj-dashboard.html para sí mismo.
+                        db.rpc('network_fotos_oauth_fallback'),
                     ]);
 
                     if(clientsRes.error) throw clientsRes.error;
                     if(djsRes.error) throw djsRes.error;
+                    window._networkCustomLists = listsRes.data || [];
+                    window._networkCustomMembers = listMembersRes.data || [];
                     const leadEmails = new Set((leadsRes.data || []).map(l => (l.email || '').toLowerCase().trim()).filter(Boolean));
-
-                    // Mapas de compliance: por artist_profile_id (artistas reales) y por
-                    // email en minúsculas (todos — clientes/venues/staff no tienen fila en
-                    // dj_profiles). "status" real en la DB es siempre SIGNED cuando existe
-                    // la fila (guardar_contrato_firmado lo fija así) — su sola presencia ya
-                    // significa "certificado".
-                    const complianceByProfileId = {};
-                    const complianceByEmail = {};
-                    const SERVICE_CONTRACT_TYPES = new Set(['DJ_AGREEMENT', 'VENUE_AGREEMENT', 'CORPORATE_AGREEMENT', 'STAFF_AGREEMENT', 'LIVE_BAND_AGREEMENT', 'SOLO_ARTIST_AGREEMENT', 'SUBCONTRACTOR_SHOW_AGREEMENT', 'PRIVATE_EVENT_AGREEMENT']);
-                    (contractsRes.data || []).forEach(c => {
-                        const isW9 = c.contract_type === 'W9';
-                        const bucket = { contractId: null, w9Id: null };
-                        if (isW9) bucket.w9Id = c.id; else if (SERVICE_CONTRACT_TYPES.has(c.contract_type)) bucket.contractId = c.id;
-                        const mergeInto = (map, key) => {
-                            if (!key) return;
-                            const cur = map[key] || { contractId: null, w9Id: null };
-                            if (bucket.contractId) cur.contractId = bucket.contractId;
-                            if (bucket.w9Id) cur.w9Id = bucket.w9Id;
-                            map[key] = cur;
-                        };
-                        mergeInto(complianceByProfileId, c.artist_profile_id);
-                        mergeInto(complianceByEmail, (c.signer_email || '').toLowerCase().trim());
-                    });
-                    const getCompliance = (profileId, email) => {
-                        const byId = profileId ? complianceByProfileId[profileId] : null;
-                        const byEmail = email ? complianceByEmail[(email || '').toLowerCase().trim()] : null;
-                        return {
-                            contractId: (byId && byId.contractId) || (byEmail && byEmail.contractId) || null,
-                            w9Id: (byId && byId.w9Id) || (byEmail && byEmail.w9Id) || null,
-                        };
-                    };
 
                     const clients = clientsRes.data;
                     const djs = djsRes.data;
-                    
+
+                    // Mapa de respaldo de foto real (solo lectura, ver comentario arriba).
+                    const _fotosFallback = {};
+                    (fotosFallbackRes && fotosFallbackRes.data || []).forEach(r => {
+                        _fotosFallback[r.fuente + ':' + r.id] = r.foto;
+                    });
+
+                    // Contactos de referencia ya fusionados con una cuenta real
+                    // (2026-09-19) -- se guardan aparte para inyectar su notas/origen
+                    // dentro de "Info interna" de la cuenta real correspondiente, así
+                    // ese dato no se pierde al fusionar (nunca se borra la fila vieja).
+                    const _fusionesPorCuentaReal = {};
+                    (referenciaRes.data || []).forEach(r => {
+                        if (r.fusionado_fuente && r.fusionado_id) {
+                            _fusionesPorCuentaReal[r.fusionado_fuente + ':' + r.fusionado_id] = r;
+                        }
+                    });
+
                     let allContacts = [];
                     
                     // Create a Set of emails that exist in the DJ/Talent/Staff database
@@ -6832,13 +6891,11 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                             _displayName: c.company_name ? `${c.company_name} (${c.full_name || 'Sin Nombre'})` : (c.full_name || 'Sin Nombre'),
                             _displayEmail: c.email || '—',
                             _displayPhone: c.phone || '—',
+                            _displayBirthDate: c.birth_date ? new Date(c.birth_date + 'T00:00:00').toLocaleDateString() : '—',
                             _proStatus: c.tier_level || 'NEW',
                             _createdAt: c.created_at ? new Date(c.created_at).toLocaleDateString() : '—',
-                            _compliance: getCompliance(null, c.email),
-                            // Comercial -> venue (salón/locación); Personal -> private_event
-                            // (bodas/15s, con depósitos/horas extra/cláusula climática) —
-                            // reemplaza el mapeo genérico anterior a "corporate".
-                            _contractTemplate: isCommercial ? 'venue' : 'private_event',
+                            _fusionReferencia: _fusionesPorCuentaReal['client:' + c.id] || null,
+                            photo_url: c.photo_url || _fotosFallback['client:' + c.id] || null,
                         });
                     });
                     
@@ -6854,21 +6911,37 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                             return;
                         }
 
+                        // Equipo real de Miami DJ Beat (mismos roles que is_staff() en la
+                        // base) -- NO es un nivel de pago como LITE/PRO, es el dueño/
+                        // manager/vendedor de la plataforma. Mostrarlo como "LITE" (2026-
+                        // 09-19, reporte del PO: "tienes mi perfil A Gerardo A Valle como
+                        // LITE y soy el dueño, eso es una categoría especial staff") era
+                        // engañoso -- confundía payment tier con rol real.
+                        const isRealStaffRole = roleStr === 'admin' || roleStr === 'owner' || roleStr === 'manager' || roleStr === 'seller';
                         let proStatus = 'LITE';
                         if (d.is_premium || (d.plan && d.plan.toLowerCase() === 'pro')) {
                             proStatus = 'PRO';
                         }
+                        if (isRealStaffRole) proStatus = 'STAFF';
 
                         const baseContact = {
                             ...d,
                             _source: 'artist',
-                            _fuente: roleStr === 'admin' || roleStr === 'owner' || roleStr === 'manager' || roleStr === 'seller' ? 'Equipo interno (asignado por Owner)' : 'Registro de artista (auto-servicio)',
-                            _displayName: d.stage_name || d.dj_name || d.full_name || 'Sin Nombre',
+                            _fuente: isRealStaffRole ? 'Equipo interno (asignado por Owner)' : 'Registro de artista (auto-servicio)',
+                            // 2026-09-19, corrección del PO: "el nombre artístico está
+                            // reemplazando al nombre real, esto debería estar separado".
+                            // El nombre REAL (full_name) manda como identidad principal;
+                            // el nombre artístico se guarda aparte (_displayStageName) y se
+                            // muestra como dato secundario, nunca sustituyendo al real.
+                            _displayName: d.full_name || d.stage_name || d.dj_name || 'Sin Nombre',
+                            _displayStageName: (d.stage_name && d.stage_name !== d.full_name) ? d.stage_name : ((d.dj_name && d.dj_name !== d.full_name) ? d.dj_name : null),
                             _displayEmail: d.email || '—',
                             _displayPhone: d.phone || '—',
+                            _displayBirthDate: d.birth_date ? new Date(d.birth_date + 'T00:00:00').toLocaleDateString() : '—',
                             _proStatus: proStatus,
                             _createdAt: d.created_at ? new Date(d.created_at).toLocaleDateString() : '—',
-                            _compliance: getCompliance(d.id, d.email),
+                            _fusionReferencia: _fusionesPorCuentaReal['dj:' + d.id] || null,
+                            photo_url: d.photo_url || _fotosFallback['dj:' + d.id] || null,
                         };
 
                         let assignedCategories = [];
@@ -6878,54 +6951,102 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         if (roleStr === 'admin' || roleStr === 'owner' || roleStr === 'manager' || roleStr === 'seller') {
                             assignedCategories.push('MDJBStaff');
                         }
-                        if (/\b(bartender|mesero|chef|staff)\b/.test(spec)) {
-                            assignedCategories.push('Staff');
-                        }
-                        if (/\b(hora loca|robot|personaje|zanquero)\b/.test(spec)) {
-                            assignedCategories.push('HoraLoca');
-                        }
-                        if (/\b(band|banda|bandas|orquesta|orquestas|músicos|musicos)\b/.test(spec)) {
-                            assignedCategories.push('Band');
-                        }
-                        if (/\b(cantante|solista|vocalista|saxo|percusión|percusion)\b/.test(spec)) {
-                            assignedCategories.push('Solista');
-                        }
-                        if (/\b(foto|video|vj|drone|booth|espejo|visuales)\b/.test(spec)) {
-                            assignedCategories.push('Visuales');
-                        }
-                        if (/\b(mc|host|presentador|maestro de ceremonia)\b/.test(spec)) {
-                            assignedCategories.push('MC');
-                        }
-                        if (/\b(payaso|payasos|circo|santa|infantil)\b/.test(spec)) {
-                            assignedCategories.push('Payaso');
-                        }
-                        if (/\b(dj)\b/.test(spec) || assignedCategories.length === 0) {
-                            // Default to DJ if they explicitly say DJ, or if we couldn't match any other category
-                            assignedCategories.push('DJ');
+                        // 2026-09-19, corrección del PO: Gerardo A Valle (role='owner',
+                        // artist_specialty='Staff') caía igual en "DJ"/Artistas porque su
+                        // bio dice "Miami DJ Beat LLC" -- el regex de abajo matcheaba la
+                        // palabra "DJ" del NOMBRE DE LA EMPRESA, no de una especialidad
+                        // real. "me tienes en esta categoría cuando soy miembro del staff...
+                        // no debería entrar en la categoría de artista con este correo".
+                        // El equipo real (admin/owner/manager/seller) ya tiene su categoría
+                        // correcta (MDJBStaff) por rol -- no se le evalúa texto de bio/
+                        // especialidad para ver si "parece" un tipo de artista, evita que
+                        // cualquier mención casual de "DJ"/"banda"/etc. en su biografía lo
+                        // cuele en Artistas.
+                        if (!isRealStaffRole) {
+                            if (/\b(bartender|mesero|chef|staff)\b/.test(spec)) {
+                                assignedCategories.push('Staff');
+                            }
+                            if (/\b(hora loca|robot|personaje|zanquero)\b/.test(spec)) {
+                                assignedCategories.push('HoraLoca');
+                            }
+                            if (/\b(band|banda|bandas|orquesta|orquestas|músicos|musicos)\b/.test(spec)) {
+                                assignedCategories.push('Band');
+                            }
+                            if (/\b(cantante|solista|vocalista|saxo|percusión|percusion)\b/.test(spec)) {
+                                assignedCategories.push('Solista');
+                            }
+                            if (/\b(foto|video|vj|drone|booth|espejo|visuales)\b/.test(spec)) {
+                                assignedCategories.push('Visuales');
+                            }
+                            if (/\b(mc|host|presentador|maestro de ceremonia)\b/.test(spec)) {
+                                assignedCategories.push('MC');
+                            }
+                            if (/\b(payaso|payasos|circo|santa|infantil)\b/.test(spec)) {
+                                assignedCategories.push('Payaso');
+                            }
+                            if (/\b(dj)\b/.test(spec) || assignedCategories.length === 0) {
+                                // Default to DJ if they explicitly say DJ, or if we couldn't match any other category
+                                assignedCategories.push('DJ');
+                            }
                         }
 
                         // Remove duplicates just in case
                         assignedCategories = [...new Set(assignedCategories)];
 
-                        // Cada categoría real de talento usa su propia plantilla especializada
-                        // (rider/COI/exclusividad varían según el tipo de figura) — ya no se
-                        // agrupan en el template genérico "staff". Personal técnico interno
-                        // (Staff/MDJBStaff) sigue usando "staff", que es lo que realmente es.
-                        const TEMPLATE_BY_CATEGORY = {
-                            DJ: 'dj', Band: 'live_band', Solista: 'solo_artist',
-                            HoraLoca: 'subcontractor_show', Visuales: 'subcontractor_show', MC: 'subcontractor_show',
-                            Payaso: 'subcontractor_show', Staff: 'staff', MDJBStaff: 'staff',
-                        };
                         // Push a copy of the contact for EACH category they belong to
                         assignedCategories.forEach(cat => {
                             allContacts.push({
                                 ...baseContact,
                                 _category: cat,
-                                _contractTemplate: TEMPLATE_BY_CATEGORY[cat] || 'staff',
                             });
                         });
                     });
                     
+                    // Mapas teléfono/email -> cuenta real, para detectar cuando un
+                    // contacto de referencia YA se suscribió (2026-09-19). Solo
+                    // client_profiles/dj_profiles cuentan como "cuenta real".
+                    const _realByPhone = {};
+                    const _realByEmail = {};
+                    const _indexReal = (fuente, id, nombre, phone, email) => {
+                        _networkNormPhones(phone).forEach(p => { if (!_realByPhone[p]) _realByPhone[p] = { fuente, id, nombre }; });
+                        const e = _networkNormEmail(email);
+                        if (e && !_realByEmail[e]) _realByEmail[e] = { fuente, id, nombre };
+                    };
+                    (clients || []).forEach(c => _indexReal('client', c.id, c.full_name, c.phone, c.email));
+                    (djs || []).forEach(d => _indexReal('dj', d.id, d.full_name || d.stage_name || d.dj_name, d.phone, d.email));
+                    const _findRealMatch = (phone, email) => {
+                        for (const p of _networkNormPhones(phone)) { if (_realByPhone[p]) return _realByPhone[p]; }
+                        const e = _networkNormEmail(email);
+                        return (e && _realByEmail[e]) || null;
+                    };
+
+                    // Contactos de referencia -- sin cuenta real, por eso no tienen
+                    // _category (no encajan en ningún ALL_TABLES/NETWORK_TABS derivado
+                    // de datos reales de cuenta). Solo aparecen en "Todos" y en las
+                    // categorías personalizadas a las que se les asignó explícitamente.
+                    // Los que ya se fusionaron con una cuenta real (fusionado_id) ya no
+                    // se muestran como ficha aparte -- su dato vivo está en la cuenta
+                    // real, esta fila queda solo como historial en la base.
+                    (referenciaRes.data || []).forEach(r => {
+                        if (r.fusionado_id) return;
+                        const matchReal = _findRealMatch(r.telefono, r.email);
+                        allContacts.push({
+                            ...r,
+                            _source: 'referencia',
+                            _category: null,
+                            _fuente: 'Contacto de referencia (sin cuenta)',
+                            _displayName: r.nombre || 'Sin Nombre',
+                            _displayEmail: r.email || '—',
+                            _displayPhone: r.telefono || '—',
+                            _displayBirthDate: r.birth_date
+                                ? (new Date(r.birth_date + 'T00:00:00').toLocaleDateString() + (r.birth_date_year_conocido === false ? ' (año no confirmado)' : ''))
+                                : '—',
+                            _proStatus: null,
+                            _createdAt: '—',
+                            _matchReal: matchReal,
+                        });
+                    });
+
                     window.allCRMProfiles = allContacts;
                     renderCRM(window.allCRMProfiles);
                 } catch(e) {
@@ -6935,15 +7056,158 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
             
             // Pestañas del Network — agrupan las 11 categorías reales en 4 vistas,
             // mismo criterio de agrupación que el PO usa en macOS Contacts.
+            // Ícono único para TODAS las categorías del sidebar (2026-09-19, pedido
+            // del PO tras comparar con la app nativa de Contactos: "todos salen
+            // iguales con los muñequitos porque son grupos, no es necesario crear
+            // diferente emojis") -- antes cada categoría traía su propio emoji.
+            const NETWORK_GROUP_ICON = '👥';
+            // "Todos" usa un ícono de 3 siluetas (no 2, pedido explícito del PO dos
+            // veces: "ponle 3 muñequitos no 2") -- se arma con el mismo glifo de
+            // "persona" que ya usan las categorías (👥/👤) en vez del emoji de
+            // "familia" (👪), que confundiría con la categoría real "Familia
+            // (Equipo Interno)".
+            const NETWORK_ALL_ICON = '👥👤';
+
+            // Carrete de fecha de nacimiento estilo Apple (2026-09-19, pedido
+            // explícito del PO: "los carretes que usa Apple para la fecha de
+            // nacimiento, 3 carretes inteligentes con carrusel"). "Inteligentes"
+            // -- el carrete de Día recalcula cuántos días tiene el mes/año
+            // elegidos (28/29/30/31), igual que el picker nativo de iOS/macOS.
+            const NETWORK_WHEEL_ITEM_H = 32;
+            const NETWORK_WHEEL_MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            const _networkDaysInMonth = (month, year) => new Date(year, month, 0).getDate();
+            // "Familia (Equipo Interno)", "Venues y Proveedores" y "Clientes y
+            // Contratistas" se quitaron de las fijas (2026-09-19, pedido explícito
+            // del PO, una por una): mezclaban conceptos reales distintos (equipo
+            // interno vs. fechas familiares; venues vs. proveedores subcontratados;
+            // clientes vs. contratistas) sin que la base de datos tuviera una
+            // columna real que los distinguiera. El PO prefiere crear él mismo la
+            // categoría personalizada exacta que necesita y clasificar a mano, en
+            // vez de una fija mal planteada que junta dos cosas. "Artistas" se
+            // queda porque SÍ es una clasificación real de una sola cosa (el tipo
+            // de artista ya viene de dj_profiles, no mezcla dos conceptos).
             const NETWORK_TABS = [
-                { id: 'artistas', label: '🎤 Artistas', cats: ['DJ', 'HoraLoca', 'Band', 'Solista', 'Visuales', 'MC', 'Payaso'] },
-                { id: 'venues', label: '🏢 Venues y Proveedores', cats: ['Comercial'] },
-                { id: 'clientes', label: '👥 Clientes y Contratistas', cats: ['Personal', 'Staff'] },
-                { id: 'familia', label: '🏠 Familia (Equipo Interno)', cats: ['MDJBStaff'] }
+                { id: 'artistas', label: NETWORK_GROUP_ICON + ' Artistas', cats: ['DJ', 'HoraLoca', 'Band', 'Solista', 'Visuales', 'MC', 'Payaso'] }
             ];
+            // Categorías personalizadas que el PO ancló como fijas -- "estas 3 fijas
+            // [Todos, Artistas, Staff] así está bien, las demás las creo yo"
+            // (2026-09-19). Se identifican por nombre (no por id) porque viven en
+            // network_lists como cualquier categoría personalizada -- solo cambia
+            // dónde se pintan (arriba, junto a Todos/Artistas) y que no se pueden
+            // eliminar (si acaso, renombrar).
+            const NETWORK_PINNED_CUSTOM_NAMES = ['staff'];
 
             // Iniciales para el círculo-avatar (estilo Contactos) cuando no hay foto real.
             const _networkInitials = (name) => (String(name || '').trim().split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || '?');
+
+            // Modo de nombre en la primera casilla (2026-09-19, pedido del PO: "es
+            // para editar el modo en que ves la primera casilla... si es artista el
+            // nombre de artista primero... si quieres ver nombre y apellido o
+            // apellido y nombre") -- dos ejes independientes, elegidos desde el menú
+            // "..." (ver toggleNetworkMoreMenu): cuál nombre va en negrita (real vs
+            // artístico, solo aplica si el DJ tiene nombre artístico) y en qué orden
+            // se leen las palabras (normal vs "Apellido, Nombre" -- sin campos
+            // separados de nombre/apellido en la base, se aproxima moviendo la
+            // última palabra al frente).
+            const _networkOrderName = (name) => {
+                const parts = String(name || '').trim().split(/\s+/);
+                if (parts.length < 2) return name;
+                return parts[parts.length - 1] + ', ' + parts.slice(0, -1).join(' ');
+            };
+            const _networkNameCellParts = (p) => {
+                const mode = window._networkNameDisplayMode || { primary: 'real', order: 'normal' };
+                let primary = p._displayName;
+                let secondary = p._displayStageName || null;
+                if (mode.primary === 'artistico' && p._displayStageName) {
+                    primary = p._displayStageName;
+                    secondary = p._displayName;
+                }
+                if (mode.order === 'apellido') primary = _networkOrderName(primary);
+                return { primary, secondary };
+            };
+
+            // Foto real del contacto (2026-09-19, pedido del PO: "también tenemos las
+            // fotos" -- photo_url YA existe en dj_profiles/client_profiles, solo
+            // faltaba usarla; antes el avatar siempre mostraba iniciales aunque
+            // hubiera una foto real subida). Cae a iniciales si no hay foto.
+            // Teléfonos adicionales (2026-09-19, pedido del PO: "+" azul junto a
+            // TELÉFONO para agregar más números, cada uno con un tipo). Corrección:
+            // "estos 📱💼🏠🏢 no son emoji simples" -- un <select> nativo no puede
+            // mostrar SVG (solo texto), así que el tipo pasa a ser un botón que cicla
+            // entre 4 íconos de línea (mismo lenguaje feather-style del resto de la
+            // barra) en vez de emoji a color. Se guardan en phones_extra (jsonb).
+            const NETWORK_PHONE_TYPE_ORDER = ['iphone', 'trabajo', 'personal', 'oficina'];
+            const NETWORK_PHONE_TYPE_ICON = {
+                iphone: '<rect x="7" y="2" width="10" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>',
+                trabajo: '<rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>',
+                personal: '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+                oficina: '<rect x="4" y="2" width="16" height="20" rx="1"/><line x1="8" y1="7" x2="8" y2="7"/><line x1="16" y1="7" x2="16" y2="7"/><line x1="8" y1="12" x2="8" y2="12"/><line x1="16" y1="12" x2="16" y2="12"/><line x1="8" y1="17" x2="8" y2="17"/><line x1="16" y1="17" x2="16" y2="17"/>',
+            };
+            const _networkPhoneTypeIconSvg = (tipo) => `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${NETWORK_PHONE_TYPE_ICON[tipo] || NETWORK_PHONE_TYPE_ICON.iphone}</svg>`;
+            window._networkCyclePhoneType = function(btn) {
+                const cur = btn.getAttribute('data-tipo') || 'iphone';
+                const next = NETWORK_PHONE_TYPE_ORDER[(NETWORK_PHONE_TYPE_ORDER.indexOf(cur) + 1) % NETWORK_PHONE_TYPE_ORDER.length];
+                btn.setAttribute('data-tipo', next);
+                btn.innerHTML = _networkPhoneTypeIconSvg(next);
+            };
+            // 2026-09-19, corrección del PO viendo su propia captura (2 rondas): el
+            // ícono de tipo va AFUERA de la barra del número, a la izquierda, suelto,
+            // sin burbuja -- no pegado por dentro ni en una fila separada de abajo.
+            const _networkPhoneExtraRowHtml = (entry, idx) => `
+                <div class="net-phone-extra-row" data-idx="${idx}" style="display:flex; gap:6px; align-items:center; margin-top:6px;">
+                    <button type="button" class="net-phone-type-btn" data-tipo="${entry.tipo || 'iphone'}" onclick="window._networkCyclePhoneType(this)" title="Cambiar tipo" style="flex:none; width:30px; height:30px; padding:0; background:transparent; border:none; color:var(--net-text); display:flex; align-items:center; justify-content:center; cursor:pointer;">${_networkPhoneTypeIconSvg(entry.tipo || 'iphone')}</button>
+                    <input type="text" class="net-phone-extra-input" value="${_networkAttrEsc(entry.numero || '')}" placeholder="Número"
+                        style="flex:1; min-width:0; background:rgba(0,0,0,0.22); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.3); color:var(--net-text); padding:8px 10px; border-radius:10px; font:inherit; font-size:13px;">
+                    <button type="button" onclick="this.closest('.net-phone-extra-row').remove()" title="Quitar" style="flex:none; width:22px; height:22px; padding:0; color:#ef4444; background:transparent; border:none; font-size:20px; font-weight:800; line-height:1; cursor:pointer;">−</button>
+                </div>`;
+
+            // Correos adicionales (2026-09-19, pedido del PO: "mismo sistema de
+            // arriba pero para crear más correos" -- sin selector de tipo, el email
+            // no tiene el mismo concepto de iPhone/Trabajo/Personal/Oficina que el
+            // teléfono).
+            const _networkEmailExtraRowHtml = (value, idx) => `
+                <div class="net-email-extra-row" data-idx="${idx}" style="display:flex; gap:6px; align-items:center; margin-top:6px;">
+                    <input type="text" class="net-email-extra-input" value="${_networkAttrEsc(value || '')}" placeholder="Correo"
+                        style="flex:1; min-width:0; background:rgba(0,0,0,0.22); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.3); color:var(--net-text); padding:8px 10px; border-radius:10px; font:inherit; font-size:13px;">
+                    <button type="button" onclick="this.closest('.net-email-extra-row').remove()" title="Quitar" style="flex:none; width:22px; height:22px; padding:0; color:#ef4444; background:transparent; border:none; font-size:20px; font-weight:800; line-height:1; cursor:pointer;">−</button>
+                </div>`;
+
+            // Redes sociales (2026-09-19, pedido del PO: última pieza de la tarjeta de
+            // contacto -- "se selecciona el nombre de la red social, se pega el link,
+            // mismo sistema de burbuja + azul"). Nombres de red = texto plano en un
+            // <select> (igual que el propio ejemplo del PO, YouTube al agregar redes) --
+            // no hace falta ícono ahí, son nombres propios, no categorías genéricas.
+            const NETWORK_SOCIAL_OPTIONS = ['Instagram', 'Facebook', 'TikTok', 'YouTube', 'Twitter/X', 'LinkedIn', 'WhatsApp', 'Otro'];
+            // Fuente "dj" (2026-09-19, "falta cableado"): dj_profiles YA tiene 9
+            // columnas reales para esto -- las mismas que edita el propio DJ en
+            // dj-dashboard.html/account-settings.html (youtube_url, spotify_url,
+            // etc). Antes esta sección escribía a `dj_profiles.redes_sociales`
+            // (jsonb nuevo, desconectado) -- ahora lee/escribe las columnas reales,
+            // así que editar desde aquí o desde el dashboard del DJ es la MISMA
+            // fuente de dato, nunca dos copias que se desincronizan.
+            const NETWORK_DJ_SOCIAL_COLUMNS = {
+                'YouTube': 'youtube_url', 'Spotify': 'spotify_url', 'SoundCloud': 'soundcloud_url',
+                'Instagram': 'instagram_url', 'TikTok': 'tiktok_url', 'Facebook': 'facebook_url',
+                'Beatport': 'beatport_url', 'Apple Music': 'apple_music_url', 'Twitter/X': 'twitter_url',
+            };
+            const _networkSocialRowHtml = (entry, idx, options) => `
+                <div class="net-social-row" data-idx="${idx}" style="display:flex; gap:6px; align-items:center; margin-top:6px;">
+                    <select class="net-social-select" style="flex:none; width:96px; background:rgba(0,0,0,0.22); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.3); color:var(--net-text); padding:8px 4px; border-radius:10px; font:inherit; font-size:12px; cursor:pointer;">
+                        ${(options || NETWORK_SOCIAL_OPTIONS).map(name => `<option value="${name}" ${entry.red === name ? 'selected' : ''}>${name}</option>`).join('')}
+                    </select>
+                    <input type="text" class="net-social-input" value="${_networkAttrEsc(entry.url || '')}" placeholder="Pega el link y Enter"
+                        onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}"
+                        style="flex:1; min-width:0; background:rgba(0,0,0,0.22); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.3); color:var(--net-text); padding:8px 10px; border-radius:10px; font:inherit; font-size:13px;">
+                    <button type="button" onclick="this.closest('.net-social-row').remove()" title="Quitar" style="flex:none; width:22px; height:22px; padding:0; color:#ef4444; background:transparent; border:none; font-size:20px; font-weight:800; line-height:1; cursor:pointer;">−</button>
+                </div>`;
+
+            const _networkAvatarHtml = (p, size) => p.photo_url
+                ? `<img src="${p.photo_url}" alt="" style="width:${size}px; height:${size}px; border-radius:50%; object-fit:cover; flex:none;" onerror="this.replaceWith(Object.assign(document.createElement('span'), {textContent:'${_networkInitials(p._displayName)}', style:'flex:none; width:${size}px; height:${size}px; border-radius:50%; background:var(--net-avatar-bg); border:1px solid var(--net-avatar-border); color:var(--gold); font-size:${Math.round(size*0.38)}px; font-weight:800; display:flex; align-items:center; justify-content:center;'}))">`
+                : `<span style="flex:none; width:${size}px; height:${size}px; border-radius:50%; background:var(--net-avatar-bg); border:1px solid var(--net-avatar-border); color:var(--gold); font-size:${Math.round(size*0.38)}px; font-weight:800; display:flex; align-items:center; justify-content:center;">${_networkInitials(p._displayName)}</span>`;
+
+            // Escape para meter texto libre (nombre de categoría) dentro de un
+            // atributo HTML value="..." sin romper el markup.
+            const _networkAttrEsc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 
             // Etiqueta corta de categoría para la línea secundaria de cada fila de la
             // lista (reemplaza los encabezados de tabla de antes -- ver abajo).
@@ -6954,40 +7218,32 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 Personal: 'Cliente Personal', Comercial: 'Cliente Comercial / Venue'
             };
 
+            // 'client' (client_profiles) | 'dj' (dj_profiles) -- misma regla que ya
+            // usaba window.saveNetworkContact, ahora compartida con las categorías
+            // personalizadas (network_list_members guarda "fuente" para saber en
+            // cuál de las dos tablas está cada contacto).
+            const _networkFuenteDe = (p) => p._source === 'referencia' ? 'referencia' : ((p._category === 'Personal' || p._category === 'Comercial') ? 'client' : 'dj');
+
+            // Una misma persona real puede tener varias categorías automáticas a la
+            // vez (ej. Owner que es DJ + Staff (Eventos) + Equipo Interno), así que
+            // aparece más de una vez en el arreglo plano de perfiles. Las vistas que
+            // mezclan categorías ("Todos", categorías personalizadas) deben mostrarla
+            // una sola vez -- este helper centraliza ese dedupe por fuente+id.
+            const _networkDedupeByContact = (profiles) => {
+                const seen = new Set();
+                return profiles.filter(p => {
+                    const key = _networkFuenteDe(p) + ':' + p.id;
+                    if (seen.has(key)) return false;
+                    seen.add(key);
+                    return true;
+                });
+            };
+
             const _networkTierColor = (t) => {
                 if(t==='DIAMOND') return '#b9f2ff';
                 if(t==='GOLD') return '#e8b96a';
                 if(t==='SILVER') return '#c0c0c0';
                 return '#a1a1aa'; // NEW
-            };
-
-            // Badges de compliance legal (Contrato + W-9) — verde con link real si
-            // ya existe el registro (abre/descarga vía ?view_record=<id>, mismo
-            // patrón que account-settings.html); gris/naranja y clicable si falta
-            // (abre el generador de envíos en la plantilla correcta vía
-            // ?open_send=<template>, prefiliando nombre/contacto — ver
-            // tryOpenSendFromQuery() en contracts-engine.html).
-            const _networkBadgeStyle = (bg, border, color) =>
-                `display:inline-flex;align-items:center;gap:4px;background:${bg};border:1px solid ${border};color:${color};padding:3px 8px;border-radius:999px;font-size:10px;font-weight:800;text-decoration:none;white-space:nowrap;backdrop-filter:blur(6px);`;
-            const _networkComplianceCell = (p) => {
-                const email = (p._displayEmail && p._displayEmail !== '—') ? p._displayEmail : '';
-                const name = encodeURIComponent(p._displayName || '');
-                const contact = encodeURIComponent(email);
-                const comp = p._compliance || {};
-
-                const contractBadge = comp.contractId
-                    ? `<a href="./contracts-engine.html?view_record=${encodeURIComponent(comp.contractId)}" target="_blank" rel="noopener" style="${_networkBadgeStyle('rgba(34,197,94,0.12)', 'rgba(34,197,94,0.35)', '#4ade80')}">📄 Contrato</a>`
-                    : (email
-                        ? `<a href="./contracts-engine.html?open_send=${encodeURIComponent(p._contractTemplate || 'private_event')}&name=${name}&contact=${contact}" target="_blank" rel="noopener" style="${_networkBadgeStyle('var(--net-badge-neutral-bg)', 'var(--net-badge-neutral-border)', 'var(--net-badge-neutral-text)')}">Sin Contrato</a>`
-                        : `<span style="${_networkBadgeStyle('var(--net-badge-neutral-bg)', 'var(--net-badge-neutral-border)', 'var(--net-badge-neutral-text)')}">Sin Contrato</span>`);
-
-                const w9Badge = comp.w9Id
-                    ? `<a href="./contracts-engine.html?view_record=${encodeURIComponent(comp.w9Id)}" target="_blank" rel="noopener" style="${_networkBadgeStyle('rgba(34,197,94,0.12)', 'rgba(34,197,94,0.35)', '#4ade80')}">🧾 W-9</a>`
-                    : (email
-                        ? `<a href="./contracts-engine.html?open_send=w9&name=${name}&contact=${contact}" target="_blank" rel="noopener" style="${_networkBadgeStyle('rgba(251,146,60,0.12)', 'rgba(251,146,60,0.35)', '#fb923c')}">Pendiente W-9</a>`
-                        : `<span style="${_networkBadgeStyle('rgba(251,146,60,0.08)', 'rgba(251,146,60,0.2)', 'rgba(251,146,60,0.45)')}">Pendiente W-9</span>`);
-
-                return `<div style="display:flex; gap:6px; flex-wrap:wrap;">${contractBadge}${w9Badge}</div>`;
             };
 
             window.renderCRM = function(profiles) {
@@ -7038,8 +7294,32 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 // pedido explícito del PO. Cada grupo es una CATEGORÍA real, no una
                 // cuenta externa (aquí no hay "iCloud" -- todo vive en Supabase).
                 if (tabsContainer) {
+                    // "Todos" -- categoría por defecto, fija, no se puede renombrar ni
+                    // borrar (2026-09-19, pedido del PO comparando con "Todos los
+                    // contactos" de la app nativa: agrupa TODO, incluso lo que no tiene
+                    // categoría personalizada asignada -- por eso recorre ALL_TABLES
+                    // completo más abajo, no depende de network_list_members).
+                    const todosActive = (window._networkActiveTab || 'artistas') === 'todos';
+                    const todosCount = _networkDedupeByContact(visibleProfiles).length;
                     tabsContainer.innerHTML =
-                        `<div class="net-tab-label" style="font-size:10px; font-weight:800; letter-spacing:.08em; color:var(--muted); text-transform:uppercase; padding:6px 2px 8px;">Categorías</div>` +
+                        `<div class="net-tab-label" style="display:flex; align-items:center; justify-content:space-between; font-size:10px; font-weight:800; letter-spacing:.08em; color:var(--muted); text-transform:uppercase; padding:6px 2px 8px;">
+                            <span>Categorías</span>
+                            <button type="button" onclick="window.networkStartCreateCategory()" title="Crear categoría" aria-label="Crear categoría" style="background:transparent; border:none; color:#3b82f6; cursor:pointer; font-size:22px; font-weight:800; line-height:1; padding:0 2px;">+</button>
+                        </div>` +
+                        `<button type="button" class="net-tab-btn" onclick="window.switchNetworkTab('todos')" title="Todos" style="
+                            display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%;
+                            padding:8px 10px; border:none; border-radius:6px; text-align:left;
+                            background:${todosActive ? 'var(--net-tab-active-bg)' : 'transparent'};
+                            color:${todosActive ? 'var(--gold)' : 'var(--net-text-dim)'};
+                            font-weight:${todosActive ? '800' : '600'}; font-size:13px; cursor:pointer; white-space:nowrap;
+                            transition:background 0.15s, color 0.15s;
+                        " onmouseover="if(this.style.background==='transparent')this.style.background='var(--net-hover)'" onmouseout="this.style.background='${todosActive ? 'var(--net-tab-active-bg)' : 'transparent'}'">
+                            <span style="flex:none; font-size:12px; letter-spacing:-3px; color:var(--gold);">${NETWORK_ALL_ICON}</span>
+                            <span class="net-tab-label" style="flex:1; display:flex; align-items:center; justify-content:space-between; gap:8px; overflow:hidden;">
+                                <span style="overflow:hidden; text-overflow:ellipsis;">Todos</span>
+                                <span style="font-size:11px; color:var(--muted); flex:none;">${todosCount}</span>
+                            </span>
+                        </button>` +
                         NETWORK_TABS.map(t => {
                             const active = t.id === window._networkActiveTab;
                             const count = t.cats.reduce((sum, cat) => sum + (groups[cat] ? groups[cat].length : 0), 0);
@@ -7055,16 +7335,102 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                                 font-weight:${active ? '800' : '600'}; font-size:13px; cursor:pointer; white-space:nowrap;
                                 transition:background 0.15s, color 0.15s;
                             " onmouseover="if(this.style.background==='transparent')this.style.background='var(--net-hover)'" onmouseout="this.style.background='${active ? activeBg : 'transparent'}'">
-                                <span style="flex:none;">${icon}</span>
+                                <span style="flex:none; color:var(--gold);">${icon}</span>
                                 <span class="net-tab-label" style="flex:1; display:flex; align-items:center; justify-content:space-between; gap:8px; overflow:hidden;">
                                     <span style="overflow:hidden; text-overflow:ellipsis;">${text}</span>
-                                    <span style="display:flex; align-items:center; gap:6px; flex:none;">
-                                        <span style="font-size:11px; color:var(--muted);">${count}</span>
-                                        <span style="font-size:10px; color:var(--muted);">${active ? '▾' : '▸'}</span>
-                                    </span>
+                                    <span style="font-size:11px; color:var(--muted); flex:none;">${count}</span>
                                 </span>
                             </button>`;
-                        }).join('');
+                        }).join('') +
+                        // Categorías personalizadas ancladas (ver NETWORK_PINNED_CUSTOM_NAMES)
+                        // -- mismo estilo fijo que Todos/Artistas, sin menú "⋯" (no se
+                        // eliminan). Siguen siendo network_lists reales por debajo.
+                        (window._networkCustomLists || []).filter(l => NETWORK_PINNED_CUSTOM_NAMES.includes(String(l.name || '').trim().toLowerCase())).map(list => {
+                            const tabId = 'custom:' + list.id;
+                            const active = tabId === window._networkActiveTab;
+                            const activeBg = 'var(--net-tab-active-bg)';
+                            const count = (window._networkCustomMembers || []).filter(m => m.list_id === list.id).length;
+                            return `<button type="button" class="net-tab-btn" onclick="window.switchNetworkTab('${tabId}')" title="${list.name}" style="
+                                display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%;
+                                padding:8px 10px; border:none; border-radius:6px; text-align:left;
+                                background:${active ? activeBg : 'transparent'};
+                                color:${active ? 'var(--gold)' : 'var(--net-text-dim)'};
+                                font-weight:${active ? '800' : '600'}; font-size:13px; cursor:pointer; white-space:nowrap;
+                                transition:background 0.15s, color 0.15s;
+                            " onmouseover="if(this.style.background==='transparent')this.style.background='var(--net-hover)'" onmouseout="this.style.background='${active ? activeBg : 'transparent'}'">
+                                <span style="flex:none; color:var(--gold);">${NETWORK_GROUP_ICON}</span>
+                                <span class="net-tab-label" style="flex:1; display:flex; align-items:center; justify-content:space-between; gap:8px; overflow:hidden;">
+                                    <span style="overflow:hidden; text-overflow:ellipsis;">${list.name}</span>
+                                    <span style="font-size:11px; color:var(--muted); flex:none;">${count}</span>
+                                </span>
+                            </button>`;
+                        }).join('') +
+                        // Categorías personalizadas (2026-09-19, pedido del PO: "no cambies la
+                        // palabra Categorías por lista, déjalo así, solo el signo de + para
+                        // crear una categoría nueva") -- libres, creadas por el staff, con su
+                        // menú de "..." para renombrar/eliminar (Todos/Artistas/las ancladas
+                        // no lo traen porque no se pueden borrar).
+                        (window._networkCustomLists || [])
+                            .filter(l => !NETWORK_PINNED_CUSTOM_NAMES.includes(String(l.name || '').trim().toLowerCase()))
+                            // 2026-09-19, pedido del PO: "menos las tres primeras [Todos/
+                            // Artistas/Staff, fijas arriba], las demás que se autoorganicen
+                            // por orden alfabético" -- antes quedaban en el orden en que se
+                            // crearon, cada vez más difícil de ubicar a mano según crecen.
+                            .sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'es', { sensitivity: 'base' }))
+                            .map(list => {
+                            const tabId = 'custom:' + list.id;
+                            const active = tabId === window._networkActiveTab;
+                            const activeBg = 'var(--net-tab-active-bg)';
+                            const count = (window._networkCustomMembers || []).filter(m => m.list_id === list.id).length;
+                            const nameEsc = String(list.name || '').replace(/'/g, "\\'");
+
+                            // Edición en línea (2026-09-19, pedido del PO comparando con la
+                            // app nativa de Contactos: "ahí sale marcado en azul para
+                            // editarlo yo mismo") -- reemplaza el prompt() de antes por un
+                            // input directo en la propia fila, igual que "Lista sin título 1".
+                            if (list.id === window._networkRenamingId) {
+                                return `<div class="net-custom-row" style="display:flex; align-items:center; gap:8px; padding:8px 10px;">
+                                    <span style="flex:none;">${NETWORK_GROUP_ICON}</span>
+                                    <input type="text" id="network-rename-input-${list.id}" value="${_networkAttrEsc(list.name)}"
+                                        onkeydown="window._networkRenameKeydown(event, '${list.id}')"
+                                        onblur="window._networkCommitRenameCategory('${list.id}', this.value)"
+                                        onclick="event.stopPropagation()"
+                                        style="flex:1; min-width:0; background:var(--net-surface-2); border:1px solid var(--gold); border-radius:6px; color:var(--net-text); font:inherit; font-weight:700; font-size:13px; padding:4px 8px;">
+                                </div>`;
+                            }
+
+                            return `<div class="net-custom-row" style="position:relative; display:flex; align-items:center;">
+                                <button type="button" class="net-tab-btn" onclick="window.switchNetworkTab('${tabId}')" title="${nameEsc}" style="
+                                    flex:1; min-width:0; display:flex; align-items:center; justify-content:space-between; gap:8px;
+                                    padding:8px 10px; border:none; border-radius:6px; text-align:left;
+                                    background:${active ? activeBg : 'transparent'};
+                                    color:${active ? 'var(--gold)' : 'var(--net-text-dim)'};
+                                    font-weight:${active ? '800' : '600'}; font-size:13px; cursor:pointer; white-space:nowrap;
+                                    transition:background 0.15s, color 0.15s;
+                                " onmouseover="if(this.style.background==='transparent')this.style.background='var(--net-hover)'" onmouseout="this.style.background='${active ? activeBg : 'transparent'}'">
+                                    <span style="flex:none;">${NETWORK_GROUP_ICON}</span>
+                                    <span class="net-tab-label" style="flex:1; display:flex; align-items:center; justify-content:space-between; gap:8px; overflow:hidden;">
+                                        <span style="overflow:hidden; text-overflow:ellipsis;">${list.name}</span>
+                                        <span style="font-size:11px; color:var(--muted); flex:none;">${count}</span>
+                                    </span>
+                                </button>
+                                <button type="button" class="net-tab-label" onclick="window.toggleNetworkCategoryMenu(event, '${list.id}')" title="Más opciones" aria-label="Más opciones" style="flex:none; background:transparent; border:none; color:var(--net-text-dim); cursor:pointer; font-size:14px; padding:4px 6px;">⋯</button>
+                                <div id="network-category-menu-${list.id}" style="display:none; position:absolute; top:100%; right:0; z-index:210; min-width:170px; background:var(--net-card-bg); border:1px solid var(--net-line); border-radius:10px; box-shadow:0 12px 32px rgba(0,0,0,0.4); padding:6px; font-size:13px;">
+                                    <button onclick="window.networkStartRenameCategory('${list.id}')" style="display:block; width:100%; text-align:left; background:transparent; border:none; color:var(--net-text); padding:8px 10px; border-radius:6px; cursor:pointer; font:inherit;">✏️ Renombrar categoría</button>
+                                    <button onclick="window.networkDeleteCategory('${list.id}', '${nameEsc}')" style="display:block; width:100%; text-align:left; background:transparent; border:none; color:#f87171; padding:8px 10px; border-radius:6px; cursor:pointer; font:inherit;">🗑️ Eliminar categoría</button>
+                                </div>
+                            </div>`;
+                        }).join('') +
+                        // Fila fantasma de creación -- mismo patrón "Lista sin título 1"
+                        // de la referencia: aparece ya editable, sin ventana emergente.
+                        (window._networkCreatingCategory ? `<div class="net-custom-row" style="display:flex; align-items:center; gap:8px; padding:8px 10px;">
+                            <span style="flex:none;">${NETWORK_GROUP_ICON}</span>
+                            <input type="text" id="network-new-category-input" value=""
+                                onkeydown="window._networkNewCategoryKeydown(event)"
+                                onblur="window._networkCommitCreateCategory(this.value)"
+                                onclick="event.stopPropagation()"
+                                style="flex:1; min-width:0; background:var(--net-surface-2); border:1px solid var(--gold); border-radius:6px; color:var(--net-text); font:inherit; font-weight:700; font-size:13px; padding:4px 8px;">
+                        </div>` : '');
                 }
 
                 // 2026-09-18, corrección del PO sobre el intento anterior: las tablas
@@ -7075,19 +7441,39 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 // fila ya seleccionada -- ver window.networkEditStub().
                 window._networkRowData = [];
 
-                const renderTable = (title, icon, groupData, isClient, index) => {
+                const renderTable = (title, icon, groupData, isClient, index, flagUncategorized) => {
                     const tableId = `crm-table-${index}`;
                     const iconId = `crm-icon-${index}`;
+                    // Orden de la tabla (2026-09-19, pedido del PO: "las flechas que
+                    // representan el orden de los contactos, los ordena por fecha de
+                    // agregado, letras del abecedario, o últimos agregados") -- se
+                    // aplica siempre aquí, en el único punto donde pasan las 3 ramas
+                    // (Todos / categoría fija / categoría personalizada).
+                    const sortMode = window._networkSortMode || 'alpha';
+                    groupData = groupData.slice().sort((a, b) => {
+                        if (sortMode === 'alpha') {
+                            return String(a._displayName || '').localeCompare(String(b._displayName || ''), 'es', { sensitivity: 'base' });
+                        }
+                        const ta = a.created_at ? new Date(a.created_at).getTime() : 0;
+                        const tb = b.created_at ? new Date(b.created_at).getTime() : 0;
+                        return sortMode === 'recientes' ? (tb - ta) : (ta - tb);
+                    });
+                    // Solo para "Todos" (2026-09-19, pedido del PO): marca con un punto
+                    // de color a quien no tiene NINGUNA categoría personalizada -- NO
+                    // rojo, porque rojo aquí se leería como error; verde/amarillo es
+                    // solo informativo ("todavía sin clasificar").
+                    const categorizedKeys = flagUncategorized
+                        ? new Set((window._networkCustomMembers || []).map(m => m.fuente + ':' + m.contacto_id))
+                        : null;
 
                     let tableHtml = `
                         <div style="margin-bottom: 20px; background: var(--net-surface); border-radius: 8px; border: 1px solid var(--net-line-soft);">
-                            <div onclick="toggleCRMTable('${tableId}', '${iconId}')" style="cursor: pointer; padding: 15px; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; border-radius: 8px;" onmouseover="this.style.background='var(--net-hover)'" onmouseout="this.style.background='transparent'">
+                            <div style="padding: 15px; display: flex; justify-content: space-between; align-items: center; border-radius: 8px;">
                                 <h4 style="color: var(--gold); margin: 0; font-size: 16px;">
                                     ${icon} ${title} (${groupData.length})
                                 </h4>
-                                <span id="${iconId}" style="color: var(--gold); font-size: 12px; transition: transform 0.3s;">▼</span>
                             </div>
-                            <div id="${tableId}" style="display: none; padding: 0 15px 15px 15px; overflow-x: auto;">
+                            <div id="${tableId}" style="padding: 0 15px 15px 15px; overflow-x: auto;">
                                 <table style="width: 100%; min-width: 600px; border-collapse: collapse; border: 1px solid var(--net-line);">
                                     <thead>
                                         <tr style="background: var(--net-surface);">
@@ -7096,7 +7482,6 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                                             <th style="text-align:left; padding:10px; border: 1px solid var(--net-line);">Teléfono</th>
                                             <th style="text-align:center; padding:10px; border: 1px solid var(--net-line);">PRO / Nivel</th>
                                             <th style="text-align:center; padding:10px; border: 1px solid var(--net-line);">Fecha Suscripción</th>
-                                            <th style="text-align:center; padding:10px; border: 1px solid var(--net-line);">Compliance Legal</th>
                                             ${isClient ? '<th style="text-align:center; padding:10px; border: 1px solid var(--net-line);">Eventos</th><th style="text-align:right; padding:10px; border: 1px solid var(--net-line);">Gasto</th>' : ''}
                                             <th style="text-align:left; padding:10px; border: 1px solid var(--net-line);">Fuente</th>
                                         </tr>
@@ -7107,7 +7492,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     if (groupData.length === 0) {
                         tableHtml += `
                             <tr>
-                                <td colspan="${isClient ? 9 : 7}" style="padding:15px; text-align:center; font-size:12px; color:var(--muted); border: 1px solid var(--net-line);">
+                                <td colspan="${isClient ? 8 : 6}" style="padding:15px; text-align:center; font-size:12px; color:var(--muted); border: 1px solid var(--net-line);">
                                     No hay registros en esta categoría aún.
                                 </td>
                             </tr>
@@ -7115,31 +7500,39 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     } else {
                         groupData.forEach(p => {
                             let proHtml = '';
-                            if (isClient) {
+                            if (!p._proStatus) {
+                                proHtml = '<span style="color:var(--muted); font-size:11px;">—</span>';
+                            } else if (isClient) {
                                 const color = _networkTierColor(p._proStatus);
                                 proHtml = `<span style="background:var(--net-surface-2); padding:4px 8px; border-radius:4px; font-size:11px; font-weight:800; color:${color}; border:1px solid ${color};">${p._proStatus}</span>`;
                             } else {
-                                const pColor = p._proStatus === 'PRO' ? '#e8b96a' : '#a1a1aa';
+                                const pColor = p._proStatus === 'STAFF' ? 'var(--gold)' : (p._proStatus === 'PRO' ? '#e8b96a' : '#a1a1aa');
                                 proHtml = `<span style="color:${pColor}; font-size:11px; font-weight:800;">${p._proStatus}</span>`;
                             }
 
                             window._networkRowData.push(p);
                             const rowIdx = window._networkRowData.length - 1;
                             const selected = rowIdx === window._networkSelectedIdx;
+                            const isUncategorized = categorizedKeys && !categorizedKeys.has(_networkFuenteDe(p) + ':' + p.id);
+                            const uncategorizedDot = isUncategorized
+                                ? `<span title="Sin categoría personalizada asignada" style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#eab308; flex:none;"></span>`
+                                : '';
+                            const nameParts = _networkNameCellParts(p);
 
                             tableHtml += `
                                 <tr class="net-data-row" data-idx="${rowIdx}" onclick="window.selectNetworkContact(${rowIdx})" style="cursor:pointer; border-bottom: 1px solid var(--net-line-soft); transition: background 0.2s; background:${selected ? 'var(--net-tab-active-bg)' : 'transparent'}; box-shadow:${selected ? 'inset 3px 0 0 var(--gold)' : 'none'};" onmouseover="if(this.getAttribute('data-idx')!='${window._networkSelectedIdx}')this.style.background='var(--net-hover)'" onmouseout="this.style.background='${selected ? 'var(--net-tab-active-bg)' : 'transparent'}'">
                                     <td style="padding:10px; font-weight:700; border: 1px solid var(--net-line);">
                                         <span style="display:inline-flex; align-items:center; gap:8px;">
-                                            <span style="flex:none; width:26px; height:26px; border-radius:50%; background:var(--net-avatar-bg); border:1px solid var(--net-avatar-border); color:var(--gold); font-size:10px; font-weight:800; display:flex; align-items:center; justify-content:center;">${_networkInitials(p._displayName)}</span>
-                                            <span>${p._displayName}</span>
+                                            ${_networkAvatarHtml(p, 26)}
+                                            <span>${nameParts.primary}${nameParts.secondary ? ` <span style="font-weight:600; color:var(--muted); font-size:11px;">(${nameParts.secondary})</span>` : ''}</span>
+                                            ${uncategorizedDot}
+                                            ${(p._source === 'referencia' && p._matchReal) ? `<button onclick="event.stopPropagation(); window._networkJumpToRealAccount('${p._matchReal.fuente}', '${p._matchReal.id}')" style="background:none; border:none; padding:0; margin:0; color:#3b82f6; font-size:11px; font-weight:600; cursor:pointer; text-decoration:underline; font:inherit; white-space:nowrap;">ya es cuenta real →</button>` : ''}
                                         </span>
                                     </td>
                                     <td style="padding:10px; font-size:12px; border: 1px solid var(--net-line);">${p._displayEmail}</td>
                                     <td style="padding:10px; font-size:12px; color:var(--muted); border: 1px solid var(--net-line);">${p._displayPhone}</td>
                                     <td style="padding:10px; text-align:center; border: 1px solid var(--net-line);">${proHtml}</td>
                                     <td style="padding:10px; text-align:center; font-size:12px; color:var(--muted); border: 1px solid var(--net-line);">${p._createdAt}</td>
-                                    <td style="padding:10px; text-align:center; border: 1px solid var(--net-line);">${_networkComplianceCell(p)}</td>
                                     ${isClient ? `
                                         <td style="padding:10px; text-align:center; border: 1px solid var(--net-line);">${p.total_events || 0}</td>
                                         <td style="padding:10px; text-align:right; color:var(--gold); border: 1px solid var(--net-line);">$${Number(p.total_spent || 0).toFixed(2)}</td>
@@ -7173,18 +7566,44 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     { cat: 'MDJBStaff', title: 'MDJB Staff (Equipo Interno)', icon: '🏢', isClient: false }
                 ];
 
-                const activeTabDef = NETWORK_TABS.find(t => t.id === window._networkActiveTab) || NETWORK_TABS[0];
                 let html = '';
-                let idx = 0;
-                ALL_TABLES.filter(t => activeTabDef.cats.includes(t.cat)).forEach(t => {
-                    idx++;
-                    html += renderTable(t.title, t.icon, groups[t.cat], t.isClient, idx);
-                });
-                container.innerHTML = html;
+                const activeTab = window._networkActiveTab || 'artistas';
 
-                setTimeout(() => {
-                    if (window.toggleCRMTable) window.toggleCRMTable('crm-table-1', 'crm-icon-1');
-                }, 100);
+                if (activeTab === 'todos') {
+                    // "Todos" -- pedido del PO (2026-09-19): NO desglosar en las 11
+                    // sub-tablas de ALL_TABLES: una sola tabla plana con cada contacto
+                    // real, tenga o no una categoría personalizada. Los que no tienen
+                    // ninguna se marcan con un punto amarillo (flagUncategorized=true),
+                    // nunca rojo (rojo = error, no ausencia de categoría).
+                    html = renderTable('Todos', NETWORK_ALL_ICON, _networkDedupeByContact(visibleProfiles), false, 1, true);
+                } else if (activeTab.indexOf('custom:') === 0) {
+                    // Categoría personalizada -- una sola tabla mezclando client_profiles
+                    // y dj_profiles (por eso no puede reusar ALL_TABLES/groups, que
+                    // separan por categoría derivada). isClient=false: se muestra la
+                    // ficha simple; el detalle completo sigue disponible en el panel.
+                    const listId = activeTab.slice('custom:'.length);
+                    const list = (window._networkCustomLists || []).find(l => String(l.id) === listId);
+                    const memberKeys = new Set((window._networkCustomMembers || [])
+                        .filter(m => String(m.list_id) === listId)
+                        .map(m => m.fuente + ':' + m.contacto_id));
+                    const members = _networkDedupeByContact(visibleProfiles.filter(p => memberKeys.has(_networkFuenteDe(p) + ':' + p.id)));
+                    html = renderTable(list ? list.name : 'Categoría', NETWORK_GROUP_ICON, members, false, 1);
+                } else {
+                    // Una sola tabla plana por categoría (2026-09-19, pedido explícito
+                    // del PO: "quita todo eso... esto tiene otro rumbo más profesional"
+                    // -- el desglose en acordeones por sub-categoría, uno por uno, se
+                    // quita por completo. Mismo patrón ya usado en "Todos" y en las
+                    // categorías personalizadas: una tabla, todo el detalle real sigue
+                    // disponible en el panel al hacer clic en "Editar".
+                    const activeTabDef = NETWORK_TABS.find(t => t.id === activeTab) || NETWORK_TABS[0];
+                    const members = _networkDedupeByContact(
+                        visibleProfiles.filter(p => activeTabDef.cats.includes(p._category))
+                    );
+                    const spaceIdx = activeTabDef.label.indexOf(' ');
+                    const title = spaceIdx > -1 ? activeTabDef.label.slice(spaceIdx + 1) : activeTabDef.label;
+                    html = renderTable(title, NETWORK_GROUP_ICON, members, false, 1);
+                }
+                container.innerHTML = html;
             };
 
             window.switchNetworkTab = function(tabId) {
@@ -7207,6 +7626,209 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
             window.toggleNetworkSidebar = function() {
                 const wrap = document.getElementById('network-sidebar-wrap');
                 if (wrap) wrap.classList.toggle('net-collapsed');
+            };
+
+            // Categorías personalizadas (2026-09-19) -- crear/renombrar/eliminar,
+            // llaman a los RPC de supabase/scripts/20260919010000_network_listas_personalizadas.sql.
+            // Recargan window.loadCRM() al terminar para traer la lista de nuevo con
+            // conteos reales -- estas categorías son pocas, no vale la pena mantener
+            // un caché local aparte que se pueda desincronizar.
+            // Crear categoría -- edición en línea (2026-09-19, corrección del PO:
+            // "ahí sale marcado en azul para editarlo yo mismo", sin ventana
+            // prompt()). El "+" solo abre la fila fantasma editable; el guardado
+            // real ocurre en _networkCommitCreateCategory (Enter o blur).
+            window.networkStartCreateCategory = function() {
+                window._networkCreatingCategory = true;
+                if (window._networkLastProfiles) window.renderCRM(window._networkLastProfiles);
+                const input = document.getElementById('network-new-category-input');
+                if (input) { input.focus(); input.select(); }
+            };
+
+            window._networkNewCategoryKeydown = function(ev) {
+                if (ev.key === 'Enter') { ev.preventDefault(); window._networkCommitCreateCategory(ev.target.value); }
+                else if (ev.key === 'Escape') { ev.preventDefault(); window._networkCancelCreateCategory(); }
+            };
+
+            window._networkCancelCreateCategory = function() {
+                if (!window._networkCreatingCategory) return;
+                window._networkCreatingCategory = false;
+                if (window._networkLastProfiles) window.renderCRM(window._networkLastProfiles);
+            };
+
+            // Auto-vínculo por nombre (2026-09-19, pedido explícito del PO: "ya sabes
+            // las categorías de los que tenemos ahí, por qué no los has puesto" --
+            // ejemplo real: creó una categoría "DJ" esperando que los 10 contactos
+            // que YA son categoría real 'DJ' entraran solos, sin agregarlos uno por
+            // uno). Si el nombre escrito coincide (sin mayúsculas/acentos de más)
+            // con una categoría automática real -- la clave interna ('DJ', 'Staff')
+            // o su etiqueta visible ('Staff (Eventos)') -- se asignan de una vez
+            // todos los contactos que ya tienen esa categoría real.
+            window._networkAutoLinkCategory = async function(listName) {
+                const norm = (s) => String(s || '').trim().toLowerCase();
+                const target = norm(listName);
+                const matchedCatKey = Object.keys(NETWORK_CATEGORY_LABEL).find(key =>
+                    norm(key) === target || norm(NETWORK_CATEGORY_LABEL[key]) === target);
+                if (!matchedCatKey) return 0;
+                const matches = (window._networkLastProfiles || []).filter(p => p._category === matchedCatKey);
+                if (!matches.length) return 0;
+                const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+                if (!sb || !sb.rpc) return 0;
+                for (const p of matches) {
+                    await sb.rpc('network_list_asignar_por_nombre', {
+                        p_list_name: listName, p_fuente: _networkFuenteDe(p), p_contacto_id: p.id
+                    });
+                }
+                return matches.length;
+            };
+
+            window._networkCommitCreateCategory = async function(rawName) {
+                if (!window._networkCreatingCategory) return; // ya se procesó (Enter + blur)
+                window._networkCreatingCategory = false;
+                const name = (rawName || '').trim();
+                if (!name) { if (window._networkLastProfiles) window.renderCRM(window._networkLastProfiles); return; }
+                const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+                if (!sb || !sb.rpc) return;
+                const { data, error } = await sb.rpc('network_list_crear', { p_name: name });
+                if (error || (data && data.ok === false)) {
+                    alert('Error creando la categoría: ' + (error ? error.message : data.error));
+                    if (window._networkLastProfiles) window.renderCRM(window._networkLastProfiles);
+                    return;
+                }
+                await window._networkAutoLinkCategory(name);
+                if (window.loadCRM) await window.loadCRM();
+                window.switchNetworkTab('custom:' + data.id);
+            };
+
+            window.toggleNetworkCategoryMenu = function(ev, listId) {
+                if (ev) ev.stopPropagation();
+                document.querySelectorAll('[id^="network-category-menu-"]').forEach(m => {
+                    if (m.id !== 'network-category-menu-' + listId) m.style.display = 'none';
+                });
+                const menu = document.getElementById('network-category-menu-' + listId);
+                if (!menu) return;
+                const willOpen = menu.style.display === 'none';
+                menu.style.display = willOpen ? 'block' : 'none';
+                if (willOpen) {
+                    const closeOnOutside = (e) => {
+                        if (!menu.contains(e.target)) {
+                            menu.style.display = 'none';
+                            document.removeEventListener('click', closeOnOutside);
+                        }
+                    };
+                    setTimeout(() => document.addEventListener('click', closeOnOutside), 0);
+                }
+            };
+
+            // Renombrar categoría -- misma edición en línea que crear (ver arriba).
+            window.networkStartRenameCategory = function(listId) {
+                const menu = document.getElementById('network-category-menu-' + listId);
+                if (menu) menu.style.display = 'none';
+                window._networkRenamingId = listId;
+                if (window._networkLastProfiles) window.renderCRM(window._networkLastProfiles);
+                const input = document.getElementById('network-rename-input-' + listId);
+                if (input) { input.focus(); input.select(); }
+            };
+
+            window._networkRenameKeydown = function(ev, listId) {
+                if (ev.key === 'Enter') { ev.preventDefault(); window._networkCommitRenameCategory(listId, ev.target.value); }
+                else if (ev.key === 'Escape') { ev.preventDefault(); window._networkCancelRenameCategory(); }
+            };
+
+            window._networkCancelRenameCategory = function() {
+                if (window._networkRenamingId == null) return;
+                window._networkRenamingId = null;
+                if (window._networkLastProfiles) window.renderCRM(window._networkLastProfiles);
+            };
+
+            window._networkCommitRenameCategory = async function(listId, rawName) {
+                if (window._networkRenamingId !== listId) return; // ya se procesó (Enter + blur)
+                window._networkRenamingId = null;
+                const current = (window._networkCustomLists || []).find(l => l.id === listId);
+                const name = (rawName || '').trim();
+                if (!name || (current && name === current.name)) { if (window._networkLastProfiles) window.renderCRM(window._networkLastProfiles); return; }
+                const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+                if (!sb || !sb.rpc) return;
+                const { data, error } = await sb.rpc('network_list_renombrar', { p_id: listId, p_name: name });
+                if (error || (data && data.ok === false)) {
+                    alert('Error renombrando: ' + (error ? error.message : data.error));
+                    if (window._networkLastProfiles) window.renderCRM(window._networkLastProfiles);
+                    return;
+                }
+                await window._networkAutoLinkCategory(name);
+                if (window.loadCRM) await window.loadCRM();
+            };
+
+            window.networkDeleteCategory = async function(listId, name) {
+                const menu = document.getElementById('network-category-menu-' + listId);
+                if (menu) menu.style.display = 'none';
+                if (!confirm('¿Eliminar la categoría "' + name + '"? Los contactos no se borran, solo dejan de estar agrupados aquí.')) return;
+                const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+                if (!sb || !sb.rpc) return;
+                const { data, error } = await sb.rpc('network_list_eliminar', { p_id: listId });
+                if (error || (data && data.ok === false)) {
+                    alert('Error eliminando: ' + (error ? error.message : data.error));
+                    return;
+                }
+                if (window._networkActiveTab === 'custom:' + listId) window._networkActiveTab = 'artistas';
+                if (window.loadCRM) await window.loadCRM();
+            };
+
+            // Revela/oculta la fila de "agregar categoría" en la ficha (2026-09-19,
+            // pedido del PO: "el botón con el signo de + para crear otra categoría",
+            // igual que el "+" azul de la app nativa de Contactos que abre el campo
+            // para rellenar en vez de mostrar siempre una burbuja/chip).
+            window._networkToggleAddCategoryRow = function() {
+                const row = document.getElementById('network-cat-add-row');
+                if (!row) return;
+                const willShow = row.style.display === 'none';
+                row.style.display = willShow ? 'flex' : 'none';
+                if (willShow) {
+                    const input = document.getElementById('network-cat-input');
+                    if (input) input.focus();
+                }
+            };
+
+            // Asignar/quitar el contacto ABIERTO en el panel de una categoría, por
+            // nombre -- crea la categoría si no existe (network_list_asignar_por_nombre),
+            // "se le pone el nombre del grupo y automáticamente aparece ahí dentro".
+            window.addNetworkCategoryToContact = async function() {
+                const input = document.getElementById('network-cat-input');
+                const name = (input ? input.value : '').trim();
+                if (!name) return;
+                const idx = window._networkSelectedIdx;
+                const p = idx != null ? (window._networkRowData || [])[idx] : null;
+                if (!p) return;
+                const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+                if (!sb || !sb.rpc) return;
+                const { data, error } = await sb.rpc('network_list_asignar_por_nombre', {
+                    p_list_name: name, p_fuente: _networkFuenteDe(p), p_contacto_id: p.id
+                });
+                if (error || (data && data.ok === false)) {
+                    alert('Error asignando categoría: ' + (error ? error.message : data.error));
+                    return;
+                }
+                if (input) input.value = '';
+                if (window.loadCRM) await window.loadCRM();
+                window.selectNetworkContact(idx);
+                if (window._networkEditPanelOpen) window.renderNetworkDetail((window._networkRowData || [])[idx]);
+            };
+
+            window.removeNetworkCategoryFromContact = async function(listId) {
+                const idx = window._networkSelectedIdx;
+                const p = idx != null ? (window._networkRowData || [])[idx] : null;
+                if (!p) return;
+                const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+                if (!sb || !sb.rpc) return;
+                const { data, error } = await sb.rpc('network_list_quitar', {
+                    p_list_id: listId, p_fuente: _networkFuenteDe(p), p_contacto_id: p.id
+                });
+                if (error || (data && data.ok === false)) {
+                    alert('Error quitando categoría: ' + (error ? error.message : data.error));
+                    return;
+                }
+                if (window.loadCRM) await window.loadCRM();
+                window.selectNetworkContact(idx);
+                if (window._networkEditPanelOpen) window.renderNetworkDetail((window._networkRowData || [])[idx]);
             };
 
             // "Editar" (2026-09-18, corrección del PO): las tablas completas se ven
@@ -7247,6 +7869,66 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
             window.networkAddStub = function(label) {
                 document.getElementById('network-add-menu').style.display = 'none';
                 alert('"' + label + '" todavía no está construido -- pendiente de definir a qué tabla real se guarda.');
+            };
+
+            // Orden / Más opciones (2026-09-19) -- mismo patrón toggle-menu-con-clic-
+            // afuera que ya usa toggleNetworkAddMenu.
+            const _networkToggleMenu = (menuId, btnId) => (ev) => {
+                if (ev) ev.stopPropagation();
+                const menu = document.getElementById(menuId);
+                if (!menu) return;
+                const willOpen = menu.style.display === 'none';
+                menu.style.display = willOpen ? 'block' : 'none';
+                if (willOpen) {
+                    const closeOnOutside = (e) => {
+                        if (!menu.contains(e.target) && e.target.id !== btnId) {
+                            menu.style.display = 'none';
+                            document.removeEventListener('click', closeOnOutside);
+                        }
+                    };
+                    setTimeout(() => document.addEventListener('click', closeOnOutside), 0);
+                }
+            };
+            window.toggleNetworkSortMenu = _networkToggleMenu('network-sort-menu', 'network-sort-btn');
+            window.toggleNetworkMoreMenu = _networkToggleMenu('network-more-menu', 'network-more-btn');
+
+            window.networkSetSort = function(mode) {
+                window._networkSortMode = mode;
+                document.getElementById('network-sort-menu').style.display = 'none';
+                if (window._networkLastProfiles) window.renderCRM(window._networkLastProfiles);
+            };
+
+            // "Nombre a mostrar" (2026-09-19, pedido del PO) -- ver _networkNameCellParts.
+            // axis='primary': real vs artístico. axis='order': normal vs "Apellido, Nombre".
+            window.networkSetNameMode = function(axis, value) {
+                window._networkNameDisplayMode = Object.assign(
+                    { primary: 'real', order: 'normal' },
+                    window._networkNameDisplayMode,
+                    { [axis]: value }
+                );
+                document.getElementById('network-more-menu').style.display = 'none';
+                if (window._networkLastProfiles) window.renderCRM(window._networkLastProfiles);
+            };
+
+            window.networkExportCSV = function() {
+                document.getElementById('network-more-menu').style.display = 'none';
+                const rows = window._networkRowData || [];
+                if (!rows.length) { alert('No hay contactos en esta vista para exportar.'); return; }
+                const esc = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+                const header = ['Nombre', 'Email', 'Teléfono', 'Fuente'];
+                const lines = [header.map(esc).join(',')];
+                rows.forEach(p => {
+                    lines.push([p._displayName, p._displayEmail, p._displayPhone, p._fuente].map(esc).join(','));
+                });
+                const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'network-' + (window._networkActiveTab || 'export') + '-' + new Date().toISOString().slice(0, 10) + '.csv';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
             };
 
             // Selección de fila (2026-09-18, corrección del PO): SOLO resalta -- ya
@@ -7310,14 +7992,86 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
                 if (!sb || !sb.rpc) { if (msg) msg.textContent = 'Sin conexión a la base.'; return; }
 
-                const fuente = (p._category === 'Personal' || p._category === 'Comercial') ? 'client' : 'dj';
+                const fuente = _networkFuenteDe(p);
                 const phone = (document.getElementById('network-field-phone') || {}).value || null;
                 const email = (document.getElementById('network-field-email') || {}).value || null;
+                // Dirección (2026-09-19) -- mismo criterio que phone/email: siempre se
+                // manda el valor actual de los inputs (ya vienen prellenados con el
+                // dato real), nunca hace falta un flag de "tocado". client_profiles y
+                // dj_profiles ya comparten las mismas 6 columnas (apt/zip/país se
+                // agregaron a dj_profiles el mismo día para que la ficha de un DJ no
+                // se viera incompleta frente a la de un cliente).
+                const _addrVal = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+                const direccion = {
+                    street: _addrVal('network-field-address-street'),
+                    apt: _addrVal('network-field-address-apt'),
+                    city: _addrVal('network-field-address-city'),
+                    state: _addrVal('network-field-address-state'),
+                    zip: _addrVal('network-field-address-zip'),
+                    country: _addrVal('network-field-address-country'),
+                };
+                // Fecha de nacimiento -- viene de los 3 <select> (Día/Mes/Año, 2026-09-19,
+                // reemplazó al carrete). Solo se manda si el staff realmente tocó algún
+                // select (window._networkBirthWheelTouched); si no, se manda null y el
+                // RPC deja birth_date como está (mismo criterio COALESCE que phone/email).
+                let birthDate = null;
+                if (window._networkBirthWheelTouched) {
+                    const bd = document.getElementById('network-birth-day'), bm = document.getElementById('network-birth-month'), by = document.getElementById('network-birth-year');
+                    // Solo arma la fecha si los 3 selects tienen un valor real -- si la
+                    // persona solo tocó uno y dejó los otros en el placeholder ("Día"/
+                    // "Mes"/"Año"), no se manda una fecha incompleta/inventada.
+                    if (bd && bm && by && bd.value && bm.value && by.value) birthDate = by.value + '-' + bm.value.padStart(2, '0') + '-' + bd.value.padStart(2, '0');
+                }
+
+                // Aniversario -- dos nombres + fecha, mismo criterio de "touched" que
+                // cumpleaños (2026-09-19, pedido explícito del PO).
+                let aniversario = null;
+                if (window._networkAnniversaryTouched) {
+                    const n1 = (document.getElementById('network-anniv-nombre1') || {}).value || '';
+                    const n2 = (document.getElementById('network-anniv-nombre2') || {}).value || '';
+                    const ad = document.getElementById('network-anniv-day'), am = document.getElementById('network-anniv-month'), ay = document.getElementById('network-anniv-year');
+                    aniversario = {
+                        nombre1: n1.trim(),
+                        nombre2: n2.trim(),
+                        fecha: (ad && am && ay && ad.value && am.value && ay.value) ? (ay.value + '-' + am.value.padStart(2, '0') + '-' + ad.value.padStart(2, '0')) : null,
+                    };
+                }
+
+                // Teléfonos adicionales (2026-09-19) -- se recolectan siempre (nunca
+                // null) para que borrar una fila y guardar sí la borre de verdad; un
+                // array vacío es un valor real, distinto de "no tocar" (por eso el RPC
+                // usa COALESCE(p_phones_extra, phones_extra) con NULL, nunca con '[]').
+                const phonesExtra = [...document.querySelectorAll('#network-phones-extra .net-phone-extra-row')].map(row => ({
+                    tipo: row.querySelector('.net-phone-type-btn').getAttribute('data-tipo'),
+                    numero: row.querySelector('.net-phone-extra-input').value.trim(),
+                })).filter(e => e.numero);
+                // Correos adicionales (2026-09-19) -- mismo criterio que teléfonos:
+                // siempre se manda el array completo, nunca null, para que borrar una
+                // fila y guardar sí la borre.
+                const emailsExtra = [...document.querySelectorAll('#network-emails-extra .net-email-extra-row .net-email-extra-input')]
+                    .map(input => input.value.trim()).filter(Boolean);
+                // Redes sociales (2026-09-19) -- mismo criterio: array completo siempre.
+                const redesSociales = [...document.querySelectorAll('#network-socials-extra .net-social-row')].map(row => ({
+                    red: row.querySelector('.net-social-select').value,
+                    url: row.querySelector('.net-social-input').value.trim(),
+                })).filter(e => e.url);
+                // Notas (2026-09-19) -- solo aplica a contactos de referencia (única
+                // fuente con columna real); en cuentas reales el campo es readonly.
+                const notasEl = document.getElementById('network-field-notas');
+                const notas = (fuente === 'referencia' && notasEl && !notasEl.readOnly) ? notasEl.value : null;
+                // Página web (2026-09-19, "falta cableado") -- solo existe el input
+                // para fuente "dj" (columna real website_url); null para el resto.
+                const websiteEl = document.getElementById('network-field-website');
+                const websiteUrl = websiteEl ? websiteEl.value.trim() : null;
 
                 if (msg) msg.textContent = 'Guardando…';
-                const { data, error } = await sb.rpc('network_contacto_actualizar', {
-                    p_fuente: fuente, p_id: p.id, p_phone: phone, p_email: email
-                });
+                // Contactos de referencia (sin cuenta real) viven en su propia tabla,
+                // con su propio RPC más simple -- desde 2026-09-19 sí acepta birth_date
+                // (antes se perdía en silencio: el carrete se movía pero nunca se
+                // mandaba en este branch).
+                const { data, error } = fuente === 'referencia'
+                    ? await sb.rpc('network_referencia_actualizar', { p_id: p.id, p_phone: phone, p_email: email, p_birth_date: birthDate, p_phones_extra: phonesExtra, p_emails_extra: emailsExtra, p_aniversario: aniversario, p_redes_sociales: redesSociales, p_notas: notas, p_direccion: direccion })
+                    : await sb.rpc('network_contacto_actualizar', { p_fuente: fuente, p_id: p.id, p_phone: phone, p_email: email, p_birth_date: birthDate, p_phones_extra: phonesExtra, p_emails_extra: emailsExtra, p_aniversario: aniversario, p_redes_sociales: redesSociales, p_direccion: direccion, p_website_url: websiteUrl });
                 if (error) { if (msg) msg.textContent = 'Error: ' + error.message; return; }
                 if (data && data.ok === false) { if (msg) msg.textContent = 'Error: ' + data.error; return; }
 
@@ -7325,12 +8079,164 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 // sin tener que recargar todo el Network desde la base.
                 p._displayPhone = phone || '—';
                 p._displayEmail = email || '—';
+                p.phones_extra = phonesExtra;
+                p.emails_extra = emailsExtra;
+                if (birthDate) {
+                    p.birth_date = birthDate;
+                    p._displayBirthDate = new Date(birthDate + 'T00:00:00').toLocaleDateString();
+                    window._networkBirthWheelTouched = false;
+                }
+                if (aniversario) {
+                    p.aniversario = aniversario;
+                    window._networkAnniversaryTouched = false;
+                }
+                if (fuente === 'dj') {
+                    // Redes sociales de dj viven en columnas reales, no en el jsonb
+                    // genérico -- se refleja cada una por separado (full replace,
+                    // igual que el RPC: ausente en el array = se limpia esa red).
+                    Object.entries(NETWORK_DJ_SOCIAL_COLUMNS).forEach(([red, col]) => {
+                        const entry = redesSociales.find(e => e.red === red);
+                        p[col] = entry ? entry.url : null;
+                    });
+                    p.website_url = websiteUrl;
+                } else {
+                    p.redes_sociales = redesSociales;
+                }
+                if (fuente === 'referencia') {
+                    p.direccion = direccion;
+                } else if (fuente === 'dj') {
+                    p.address = direccion.street;
+                    p.address_apt = direccion.apt;
+                    p.city = direccion.city;
+                    p.region = direccion.state;
+                    p.address_zip = direccion.zip;
+                    p.address_country = direccion.country;
+                } else {
+                    p.address_street = direccion.street;
+                    p.address_apt = direccion.apt;
+                    p.city = direccion.city;
+                    p.address_state = direccion.state;
+                    p.address_zip = direccion.zip;
+                    p.address_country = direccion.country;
+                }
+                if (notas !== null) p.notas = notas;
                 if (msg) msg.textContent = '✅ Guardado';
                 const rowEl = document.querySelector(`#crm-container .net-data-row[data-idx="${idx}"]`);
                 if (rowEl) {
                     const emailCell = rowEl.children[1], phoneCell = rowEl.children[2];
                     if (emailCell) emailCell.textContent = p._displayEmail;
                     if (phoneCell) phoneCell.textContent = p._displayPhone;
+                }
+            };
+
+            // "+" junto a TELÉFONO (2026-09-19) -- agrega una fila vacía en blanco;
+            // se guarda de verdad recién al apretar "Guardar" (ver saveNetworkContact).
+            window._networkAddPhoneExtra = function() {
+                const container = document.getElementById('network-phones-extra');
+                if (!container) return;
+                const idx = container.children.length;
+                container.insertAdjacentHTML('beforeend', _networkPhoneExtraRowHtml({ tipo: 'iphone', numero: '' }, idx));
+            };
+
+            // "+" junto a EMAIL (2026-09-19) -- mismo sistema que teléfono, sin
+            // selector de tipo.
+            window._networkAddEmailExtra = function() {
+                const container = document.getElementById('network-emails-extra');
+                if (!container) return;
+                const idx = container.children.length;
+                container.insertAdjacentHTML('beforeend', _networkEmailExtraRowHtml('', idx));
+            };
+
+            // "+" junto a REDES SOCIALES (2026-09-19) -- mismo sistema. Para fuente
+            // "dj" solo ofrece las 9 redes con columna real (ver
+            // NETWORK_DJ_SOCIAL_COLUMNS); para client/referencia, la lista genérica.
+            window._networkAddSocialExtra = function() {
+                const container = document.getElementById('network-socials-extra');
+                if (!container) return;
+                const p = (window._networkRowData || [])[window._networkSelectedIdx];
+                const isDj = p && _networkFuenteDe(p) === 'dj';
+                const options = isDj ? Object.keys(NETWORK_DJ_SOCIAL_COLUMNS) : NETWORK_SOCIAL_OPTIONS;
+                const idx = container.children.length;
+                container.insertAdjacentHTML('beforeend', _networkSocialRowHtml({ red: options[0], url: '' }, idx, options));
+            };
+
+            // Salta a la ficha de la cuenta real correspondiente (2026-09-19,
+            // detección de duplicados referencia↔cuenta real). Si la cuenta real no
+            // está en la tabla actualmente filtrada, cambia a "Todos" primero.
+            window._networkJumpToRealAccount = function(fuenteReal, idReal) {
+                let idx = (window._networkRowData || []).findIndex(p => _networkFuenteDe(p) === fuenteReal && p.id === idReal);
+                if (idx < 0) {
+                    window.switchNetworkTab('todos');
+                    idx = (window._networkRowData || []).findIndex(p => _networkFuenteDe(p) === fuenteReal && p.id === idReal);
+                }
+                if (idx >= 0) {
+                    window.selectNetworkContact(idx);
+                    window.openNetworkEditPanel(window._networkRowData[idx]);
+                }
+            };
+
+            // Fusiona un contacto de referencia con la cuenta real que ya coincide
+            // por teléfono/email (2026-09-19, pedido del PO tras encontrar sus
+            // propias 2 fichas duplicadas). El RPC solo rellena huecos reales,
+            // nunca sobreescribe, y marca la fila de referencia como fusionada en
+            // vez de borrarla (para no perder notas/origen_csv).
+            window.mergeNetworkReferenciaConCuentaReal = async function(referenciaId, fuenteReal, idReal, nombreReal) {
+                const ok = confirm(`¿Fusionar este contacto de referencia con la cuenta real de "${nombreReal}"?\n\nSolo se rellenan los datos que la cuenta real no tenga todavía -- nada real se sobreescribe. El contacto de referencia no se borra, queda archivado como historial.`);
+                if (!ok) return;
+                const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+                if (!sb || !sb.rpc) { alert('Sin conexión a la base.'); return; }
+                const { data, error } = await sb.rpc('network_referencia_fusionar', { p_referencia_id: referenciaId, p_fuente_real: fuenteReal, p_id_real: idReal });
+                if (error) { alert('Error al fusionar: ' + error.message); return; }
+                if (data && data.ok === false) { alert('Error al fusionar: ' + data.error); return; }
+                await window.loadCRM();
+                window._networkJumpToRealAccount(fuenteReal, idReal);
+            };
+
+            // 2026-09-19, pedido del PO: "en la sección de donde va la foto también
+            // se debería poder editar desde aquí, hasta que el cliente se abra la
+            // cuenta y se autocorrija". Sube a una carpeta APARTE del bucket real
+            // (avatars/staff-uploads/), nunca a la carpeta del dueño de la cuenta --
+            // mismo patrón upload/getPublicUrl que ya usa account-settings.html.
+            window.uploadNetworkPhoto = async function(inputEl) {
+                const idx = window._networkSelectedIdx;
+                const p = idx != null ? (window._networkRowData || [])[idx] : null;
+                const msg = document.getElementById('network-photo-msg');
+                const file = inputEl && inputEl.files && inputEl.files[0];
+                if (!p || !file) return;
+                const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+                if (!sb || !sb.storage) { if (msg) msg.textContent = 'Sin conexión a la base.'; return; }
+
+                if (msg) msg.textContent = 'Subiendo foto…';
+                try {
+                    const fuente = _networkFuenteDe(p);
+                    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+                    const filePath = 'staff-uploads/' + fuente + '-' + p.id + '/avatar.' + ext;
+
+                    const up = await sb.storage.from('avatars').upload(filePath, file, { upsert: true, cacheControl: '3600' });
+                    if (up.error) throw up.error;
+
+                    const pub = sb.storage.from('avatars').getPublicUrl(filePath);
+                    if (!pub || !pub.data) throw new Error('No se pudo obtener la URL pública.');
+                    const photoUrl = pub.data.publicUrl + '?v=' + Date.now();
+
+                    const { data, error } = fuente === 'referencia'
+                        ? await sb.rpc('network_referencia_actualizar', { p_id: p.id, p_photo_url: photoUrl })
+                        : await sb.rpc('network_contacto_actualizar', { p_fuente: fuente, p_id: p.id, p_photo_url: photoUrl });
+                    if (error) throw error;
+                    if (data && data.ok === false) throw new Error(data.error);
+
+                    p.photo_url = photoUrl;
+                    // renderNetworkDetail reemplaza todo el panel (incluido este mismo
+                    // div de mensaje) -- el texto de éxito se pone DESPUÉS de re-render,
+                    // sobre el div nuevo, o el re-render lo borra antes de que se vea.
+                    window.renderNetworkDetail(p);
+                    const newMsg = document.getElementById('network-photo-msg');
+                    if (newMsg) newMsg.textContent = '✅ Foto actualizada';
+                    const rowEl = document.querySelector(`#crm-container .net-data-row[data-idx="${idx}"]`);
+                    const avatarWrap = rowEl && rowEl.querySelector('td span[style*="inline-flex"]');
+                    if (avatarWrap && avatarWrap.firstElementChild) avatarWrap.firstElementChild.outerHTML = _networkAvatarHtml(p, 26);
+                } catch (e) {
+                    if (msg) msg.textContent = 'Error: ' + (e && e.message ? e.message : e);
                 }
             };
 
@@ -7360,19 +8266,6 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 document.body.style.userSelect = 'none';
                 document.addEventListener('mousemove', onMove);
                 document.addEventListener('mouseup', onUp);
-            };
-
-            window.toggleCRMTable = function(tableId, iconId) {
-                const table = document.getElementById(tableId);
-                const icon = document.getElementById(iconId);
-                if (!table || !icon) return;
-                if (table.style.display === 'none') {
-                    table.style.display = 'block';
-                    icon.style.transform = 'rotate(180deg)';
-                } else {
-                    table.style.display = 'none';
-                    icon.style.transform = 'rotate(0deg)';
-                }
             };
 
             // Panel de detalle SÓLIDO (2026-09-18, pedido explícito del PO con
@@ -7407,35 +8300,276 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         const color = _networkTierColor(p._proStatus);
                         proHtml = `<span style="background:var(--net-surface-2); padding:4px 8px; border-radius:4px; font-size:11px; font-weight:800; color:${color}; border:1px solid ${color};">${p._proStatus}</span>`;
                     } else {
-                        const pColor = p._proStatus === 'PRO' ? '#e8b96a' : '#a1a1aa';
+                        const pColor = p._proStatus === 'STAFF' ? 'var(--gold)' : (p._proStatus === 'PRO' ? '#e8b96a' : '#a1a1aa');
                         proHtml = `<span style="color:${pColor}; font-size:11px; font-weight:800;">${p._proStatus}</span>`;
                     }
                 }
                 const isClient = p._category === 'Personal' || p._category === 'Comercial';
 
+                // Dirección física (2026-09-19, pedido del PO -- referencia directa a
+                // su propia tarjeta de Contactos de macOS/iCloud, sección "Casa").
+                // client_profiles y dj_profiles ya tienen las mismas 6 columnas
+                // (address_apt/address_zip/address_country se agregaron a dj_profiles
+                // 2026-09-19 para que la ficha de un DJ no se vea incompleta frente a
+                // la de un cliente); dj usa `address` en vez de `address_street` y
+                // `region` en vez de `address_state` (nombres que ya traía la tabla).
+                // network_referencia_contactos guarda un solo objeto jsonb `direccion`.
+                const _fuenteDirRaw = _networkFuenteDe(p);
+                const isDjSource = _fuenteDirRaw === 'dj';
+                const direccion = _fuenteDirRaw === 'referencia'
+                    ? ((p.direccion && typeof p.direccion === 'object') ? p.direccion : {})
+                    : (isDjSource
+                        ? { street: p.address || '', apt: p.address_apt || '', city: p.city || '', state: p.region || '', zip: p.address_zip || '', country: p.address_country || '' }
+                        : { street: p.address_street || '', apt: p.address_apt || '', city: p.city || '', state: p.address_state || '', zip: p.address_zip || '', country: p.address_country || '' });
+
+                // Redes sociales -- para "dj" se arman desde las 9 columnas reales
+                // (ver NETWORK_DJ_SOCIAL_COLUMNS); para client/referencia, del jsonb
+                // genérico `redes_sociales` (esas fuentes no tienen columnas propias
+                // por red social).
+                const _networkSocialRowsIniciales = isDjSource
+                    ? Object.entries(NETWORK_DJ_SOCIAL_COLUMNS).filter(([, col]) => p[col]).map(([red, col]) => ({ red, url: p[col] }))
+                    : (Array.isArray(p.redes_sociales) ? p.redes_sociales : []);
+
+                // Categorías personalizadas asignadas a este contacto (2026-09-19,
+                // pedido del PO: "por lógica en la tarjeta grande tiene que existir el
+                // campo Categorías"). Cruza network_list_members (ya cargado por
+                // loadCRM) con este contacto por fuente+id -- nunca vuelve a leer la
+                // base solo para pintar los chips.
+                const fuente = _networkFuenteDe(p);
+                const myListIds = (window._networkCustomMembers || [])
+                    .filter(m => m.fuente === fuente && String(m.contacto_id) === String(p.id))
+                    .map(m => m.list_id);
+                const myLists = (window._networkCustomLists || []).filter(l => myListIds.includes(l.id));
+
+                // Botones de acción rápida (2026-09-19, referencia directa del PO: la
+                // app nativa de Contactos, ícono de mensaje/llamar/FaceTime/mail arriba
+                // del nombre). Son enlaces de esquema de URL (tel:/sms:/facetime:/
+                // mailto:/wa.me) -- mismo patrón YA usado en contracts-engine.html y
+                // calendario-operacional-inteligente.html, no una integración nueva.
+                // Un SMS/email "real" desde miamidjbeat@gmail.com es otra cosa (pasa
+                // por la cola de aprobación de ELIXIS, no por un botón directo aquí).
+                const rawPhone = (p._displayPhone && p._displayPhone !== '—') ? p._displayPhone.replace(/[^\d+]/g, '') : '';
+                const rawEmail = (p._displayEmail && p._displayEmail !== '—') ? p._displayEmail : '';
+                // 2026-09-19, corrección del PO: al ponerle color:var(--net-text) al
+                // <a>, Safari/macOS renderiza estos emoji en modo texto monocromo (el
+                // "SF Symbol" plano que se ve en la captura) en vez del emoji real a
+                // color -- el color solo debe afectar texto, nunca un glifo de emoji.
+                // Burbuja fija oscura semitransparente (2026-09-19, pedido del PO: "las
+                // burbujas casi no se ven, están muy transparentes") -- var(--net-glass-bg)
+                // está pensada para el fondo oscuro general de la barra; aquí, encima del
+                // degradado dorado del encabezado de la ficha, casi desaparecía. Con un
+                // negro fijo semitransparente se ve igual de bien en cualquier fondo.
+                // 2026-09-19, corrección del PO: "ese emoji es muy dibujado... no
+                // somos para niños, somos para personas inteligentes... te mostré una
+                // cámara común como las que usan las plataformas serias" -- se
+                // refiere a la tarjeta nativa de macOS que mandó antes (íconos planos,
+                // una sola línea, sin dibujo a color). Se cambian los 5 emoji por el
+                // mismo lenguaje de ícono SVG feather-style que ya usa el resto de la
+                // barra (buscador, actualizar, ordenar). WhatsApp se distingue por
+                // color de fondo (verde), no por dibujo distinto.
+                const actionBtn = (href, svg, title, bg, border, color) => href
+                    ? `<a href="${href}" title="${title}" target="${href.indexOf('http') === 0 ? '_blank' : '_self'}" rel="noopener" style="display:inline-flex; align-items:center; justify-content:center; width:38px; height:38px; border-radius:50%; background:${bg || 'rgba(0,0,0,0.22)'}; backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid ${border || 'rgba(255,255,255,0.3)'}; text-decoration:none; cursor:pointer; color:${color || '#3b82f6'};">${svg}</a>`
+                    : `<span title="Sin dato para ${title.toLowerCase()}" style="display:inline-flex; align-items:center; justify-content:center; width:38px; height:38px; border-radius:50%; background:${bg || 'rgba(0,0,0,0.22)'}; border:1px solid ${border || 'rgba(255,255,255,0.3)'}; opacity:0.4; color:${color || '#3b82f6'};">${svg}</span>`;
+                const _icoSvg = (paths) => `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
+                const ICO_MESSAGE = _icoSvg('<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>');
+                const ICO_PHONE = _icoSvg('<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>');
+                const ICO_VIDEO = _icoSvg('<path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>');
+                const ICO_MAIL = _icoSvg('<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>');
+                const quickActionsHtml = `<div style="display:flex; justify-content:center; gap:10px; margin-bottom:20px;">
+                    ${actionBtn(rawPhone ? `sms:${rawPhone}` : '', ICO_MESSAGE, 'Mensaje')}
+                    ${actionBtn(rawPhone ? `tel:${rawPhone}` : '', ICO_PHONE, 'Llamar')}
+                    ${actionBtn(rawPhone ? `facetime:${rawPhone}` : '', ICO_VIDEO, 'FaceTime')}
+                    ${actionBtn(rawEmail ? `mailto:${rawEmail}` : '', ICO_MAIL, 'Email')}
+                    ${actionBtn(rawPhone ? `https://wa.me/${rawPhone.replace(/^\+/, '')}` : '', ICO_MESSAGE, 'WhatsApp', 'rgba(37,153,64,0.35)', 'rgba(74,222,128,0.5)', '#4ade80')}
+                </div>`;
+
+                // 2026-09-19, corrección del PO: "la sección de carrusel para el
+                // cumpleaños no me gusta, prefiero el de las casillas con listas
+                // desplegables para seleccionar día, mes y año" -- se reemplaza el
+                // carrete de scroll-snap por 3 <select> normales. Mismo helper sirve
+                // para Aniversario (pedido en el mismo mensaje: "mismo sistema que el
+                // de cumpleaños para seleccionar las fechas").
+                // 2026-09-19, pedido del PO: revisar cómo Google/Facebook/Instagram
+                // muestran la casilla de cumpleaños cuando NO se ha editado -- ninguno
+                // pone una fecha inventada ya seleccionada: dejan cada select en un
+                // placeholder ("Month"/"Day"/"Year" en Google Account, "Mes"/"Día"/"Año"
+                // en Facebook) hasta que la persona elige de verdad. Antes este código
+                // rellenaba con "1 de enero de hace 30 años" como si fuera un dato real
+                // -- el mismo problema de fondo que el bug del año falso de Outlook, solo
+                // que aplicado a TODO contacto sin cumpleaños. Ahora day/month/year quedan
+                // en `null` cuando no hay dato real, y el select lo muestra en blanco.
+                const _bwToday = new Date();
+                let bwYear = null, bwMonth = null, bwDay = null;
+                if (p.birth_date) {
+                    const _bwParts = String(p.birth_date).split('-').map(n => parseInt(n, 10));
+                    if (_bwParts.length === 3 && !_bwParts.some(isNaN)) {
+                        bwMonth = _bwParts[1]; bwDay = _bwParts[2];
+                        // Año placeholder de Outlook (1604/1904, "birth_date_year_conocido"
+                        // = false): ese año es falso, así que se deja el select de Año en
+                        // blanco (mismo criterio de arriba) en vez de inventar uno --
+                        // mes/día sí son reales y se muestran tal cual.
+                        bwYear = (p.birth_date_year_conocido === false) ? null : _bwParts[0];
+                    }
+                }
+                window._networkBirthWheel = { year: bwYear, month: bwMonth, day: bwDay };
+                window._networkBirthWheelTouched = false;
+
+                const anniv = (p.aniversario && typeof p.aniversario === 'object') ? p.aniversario : {};
+                let anYear = null, anMonth = null, anDay = null;
+                if (anniv.fecha) {
+                    const _anParts = String(anniv.fecha).split('-').map(n => parseInt(n, 10));
+                    if (_anParts.length === 3 && !_anParts.some(isNaN)) { anYear = _anParts[0]; anMonth = _anParts[1]; anDay = _anParts[2]; }
+                }
+                window._networkAnniversaryWheel = { year: anYear, month: anMonth, day: anDay };
+                window._networkAnniversaryTouched = false;
+
+                const _networkYearsList = (maxYearsBack) => {
+                    const list = [];
+                    for (let y = _bwToday.getFullYear(); y >= _bwToday.getFullYear() - maxYearsBack; y--) list.push(y);
+                    return list;
+                };
+                const _selectStyle = 'background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); color:var(--net-text); padding:8px 6px; border-radius:10px; font:inherit; font-size:13px; flex:1; min-width:0;';
+                const _networkDateSelectGroup = (prefix, day, month, year, touchedFlagName) => {
+                    // Días del mes: si el mes/año todavía no se conoce, se calcula sobre
+                    // un año bisiesto (2024) para no esconder el día 29 de febrero antes
+                    // de tiempo.
+                    const daysList = Array.from({ length: _networkDaysInMonth(month || 2, year || 2024) }, (_, i) => i + 1);
+                    const yearsList = _networkYearsList(90);
+                    return `<div style="display:flex; gap:6px;">
+                        <select id="${prefix}-day" onchange="window._networkDateSelectChanged('${prefix}', '${touchedFlagName}')" style="${_selectStyle}">
+                            <option value="" ${day ? '' : 'selected'} disabled>Día</option>
+                            ${daysList.map(d => `<option value="${d}" ${d === day ? 'selected' : ''}>${d}</option>`).join('')}
+                        </select>
+                        <select id="${prefix}-month" onchange="window._networkDateSelectChanged('${prefix}', '${touchedFlagName}')" style="${_selectStyle} flex:1.4;">
+                            <option value="" ${month ? '' : 'selected'} disabled>Mes</option>
+                            ${NETWORK_WHEEL_MONTHS.map((m, i) => `<option value="${i + 1}" ${i + 1 === month ? 'selected' : ''}>${m}</option>`).join('')}
+                        </select>
+                        <select id="${prefix}-year" onchange="window._networkDateSelectChanged('${prefix}', '${touchedFlagName}')" style="${_selectStyle}">
+                            <option value="" ${year ? '' : 'selected'} disabled>Año</option>
+                            ${yearsList.map(y => `<option value="${y}" ${y === year ? 'selected' : ''}>${y}</option>`).join('')}
+                        </select>
+                    </div>`;
+                };
+
+                const birthWheelHtml = `
+                    <div style="margin-bottom:14px;">
+                        <label style="display:block; font-size:10px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:6px;">Fecha de nacimiento</label>
+                        ${_networkDateSelectGroup('network-birth', bwDay, bwMonth, bwYear, '_networkBirthWheelTouched')}
+                    </div>
+                    <div style="margin-bottom:14px;">
+                        <label style="display:block; font-size:10px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:6px;">Aniversario</label>
+                        <div style="display:flex; gap:6px; margin-bottom:6px;">
+                            <input type="text" id="network-anniv-nombre1" onchange="window._networkAnniversaryTouched = true;" value="${_networkAttrEsc(anniv.nombre1 || '')}" placeholder="Nombre 1"
+                                style="flex:1; min-width:0; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); color:var(--net-text); padding:8px 10px; border-radius:10px; font:inherit; font-size:13px;">
+                            <input type="text" id="network-anniv-nombre2" onchange="window._networkAnniversaryTouched = true;" value="${_networkAttrEsc(anniv.nombre2 || '')}" placeholder="Nombre 2"
+                                style="flex:1; min-width:0; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); color:var(--net-text); padding:8px 10px; border-radius:10px; font:inherit; font-size:13px;">
+                        </div>
+                        ${_networkDateSelectGroup('network-anniv', anDay, anMonth, anYear, '_networkAnniversaryTouched')}
+                    </div>`;
+
                 panel.innerHTML = `
                     <div style="max-width:460px; margin:0 auto; text-align:center; position:relative;">
                         <button onclick="window.closeNetworkEditPanel()" aria-label="Cerrar edición" title="Cerrar" style="position:absolute; top:-8px; right:-8px; background:transparent; border:none; color:var(--muted); font-size:22px; cursor:pointer; line-height:1;">×</button>
-                        <div style="width:104px; height:104px; border-radius:50%; margin:0 auto 14px; background:var(--net-glass-bg); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border:1px solid var(--net-glass-border); box-shadow:0 0 0 1px rgba(197,160,89,0.15), 0 12px 32px rgba(0,0,0,0.25); color:var(--gold); font-size:34px; font-weight:800; display:flex; align-items:center; justify-content:center;">${_networkInitials(p._displayName)}</div>
+                        <div style="position:relative; width:104px; margin:0 auto 14px;">
+                            ${p.photo_url
+                                ? `<img src="${p.photo_url}" alt="" style="width:104px; height:104px; border-radius:50%; object-fit:cover; display:block; border:1px solid var(--net-glass-border); box-shadow:0 0 0 1px rgba(197,160,89,0.15), 0 12px 32px rgba(0,0,0,0.25);" onerror="this.outerHTML='<div style=\\'width:104px;height:104px;border-radius:50%;background:var(--net-glass-bg);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--net-glass-border);box-shadow:0 0 0 1px rgba(197,160,89,0.15),0 12px 32px rgba(0,0,0,0.25);color:var(--gold);font-size:34px;font-weight:800;display:flex;align-items:center;justify-content:center;\\'>${_networkInitials(p._displayName)}</div>'">`
+                                : `<div style="width:104px; height:104px; border-radius:50%; background:var(--net-glass-bg); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border:1px solid var(--net-glass-border); box-shadow:0 0 0 1px rgba(197,160,89,0.15), 0 12px 32px rgba(0,0,0,0.25); color:var(--gold); font-size:34px; font-weight:800; display:flex; align-items:center; justify-content:center;">${_networkInitials(p._displayName)}</div>`}
+                            <!-- 2026-09-19, pedido del PO: "en la sección de donde va la
+                                 foto también se debería poder editar desde aquí, hasta que
+                                 el cliente se abra la cuenta y se autocorrija" -- staff sube
+                                 una foto temporal a avatars/staff-uploads/ (carpeta propia,
+                                 con su propio permiso -- no toca la carpeta real del dueño
+                                 de la cuenta); si la persona real sube la suya después
+                                 desde SU cuenta, esa nueva simplemente reemplaza photo_url
+                                 como siempre, sin conflicto. -->
+                            <label title="Cambiar foto" style="position:absolute; bottom:0; right:0; width:30px; height:30px; border-radius:50%; background:var(--gold); color:#1a1206; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; border:2px solid var(--net-surface); box-shadow:0 2px 8px rgba(0,0,0,0.35);">
+                                ✎<input type="file" accept="image/*" onchange="window.uploadNetworkPhoto(this)" style="display:none;">
+                            </label>
+                        </div>
+                        <div id="network-photo-msg" style="font-size:11px; color:var(--muted); margin-bottom:6px;"></div>
                         <h2 style="margin:0 0 2px; color:var(--net-text); font-size:20px; text-shadow:0 1px 4px rgba(0,0,0,0.35);">${p._displayName || 'Sin Nombre'}</h2>
-                        <div style="font-size:12px; color:rgba(20,15,8,0.62); font-weight:600; margin-bottom:4px;">${NETWORK_CATEGORY_LABEL[p._category] || p._category}${proHtml ? ' · ' : ''}${proHtml}</div>
-                        <div style="font-size:11px; color:rgba(20,15,8,0.5); font-weight:600; margin-bottom:22px;">${p._fuente || '—'}</div>
+                        ${p._displayStageName ? `<div style="font-size:12px; color:var(--gold); font-weight:700; margin-bottom:2px;">${p._displayStageName}</div>` : ''}
+                        <!-- 2026-09-19, pedido del PO: "donde dice 'Contacto de
+                             referencia' ahí solo va el tipo de contacto (ej. Amigo)...
+                             si no está editado, déjalo en blanco, no pongas nada" --
+                             ya no hay texto genérico de relleno; muestra la(s)
+                             categoría(s) personalizada(s) real(es) asignadas, o nada. -->
+                        ${(() => {
+                            const _catLabel = NETWORK_CATEGORY_LABEL[p._category] || (fuente !== 'referencia' ? p._category : null);
+                            const _customNames = myLists.map(l => l.name);
+                            const _subtitle = _catLabel || (_customNames.length ? _customNames.join(', ') : '');
+                            return (_subtitle || proHtml) ? `<div style="font-size:12px; color:rgba(20,15,8,0.62); font-weight:600; margin-bottom:4px;">${_subtitle}${_subtitle && proHtml ? ' · ' : ''}${proHtml}</div>` : '';
+                        })()}
+                        <div style="margin-bottom:16px;"></div>
+                        ${quickActionsHtml}
 
                         <div style="text-align:left;">
-                            ${field('Teléfono', p._displayPhone, 'Sin teléfono registrado', 'network-field-phone')}
-                            ${field('Email', p._displayEmail, 'Sin email registrado', 'network-field-email')}
-                            <div style="display:flex; align-items:center; gap:10px; margin:-4px 0 14px;">
-                                <button onclick="window.saveNetworkContact()" style="background:var(--gold); color:#1a1206; font-weight:800; border:0; padding:8px 16px; border-radius:8px; cursor:pointer; font:inherit; font-size:13px;">Guardar</button>
-                                <span id="network-save-msg" style="font-size:12px; color:var(--muted);"></span>
-                            </div>
-                            <div style="display:flex; gap:16px; margin-bottom:14px; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); border-radius:10px; padding:10px 14px;">
-                                <div style="flex:1;">
-                                    <label style="display:block; font-size:10px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:4px;">Contrato</label>
-                                    <div>${p._compliance && p._compliance.contractId ? '<span style="color:#4ade80; font-weight:700; font-size:12px;">✅ Firmado</span>' : '<span style="color:#fb923c; font-weight:700; font-size:12px;">Pendiente</span>'}</div>
+                            <div style="margin-bottom:14px;">
+                                <label style="display:block; font-size:10px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:4px;">Teléfono</label>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <input type="text" id="network-field-phone" value="${(p._displayPhone && p._displayPhone !== '—' ? p._displayPhone : '').toString().replace(/"/g, '&quot;')}" placeholder="Sin teléfono registrado"
+                                        style="flex:1; min-width:0; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); color:var(--net-text); padding:8px 10px; border-radius:10px; font:inherit; font-size:13px;">
+                                    <button type="button" onclick="window._networkAddPhoneExtra()" title="Agregar otro teléfono" aria-label="Agregar otro teléfono" style="flex:none; width:28px; height:28px; padding:0; color:#3b82f6; border:1px solid rgba(255,255,255,0.3); background:rgba(0,0,0,0.22); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:800; cursor:pointer;">+</button>
                                 </div>
-                                <div style="flex:1;">
-                                    <label style="display:block; font-size:10px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:4px;">W-9</label>
-                                    <div>${p._compliance && p._compliance.w9Id ? '<span style="color:#4ade80; font-weight:700; font-size:12px;">✅ Firmado</span>' : '<span style="color:#fb923c; font-weight:700; font-size:12px;">Pendiente</span>'}</div>
+                                <div id="network-phones-extra">
+                                    ${(Array.isArray(p.phones_extra) ? p.phones_extra : []).map((entry, idx) => _networkPhoneExtraRowHtml(entry, idx)).join('')}
+                                </div>
+                            </div>
+                            <div style="margin-bottom:14px;">
+                                <label style="display:block; font-size:10px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:4px;">Email</label>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <input type="text" id="network-field-email" value="${(p._displayEmail && p._displayEmail !== '—' ? p._displayEmail : '').toString().replace(/"/g, '&quot;')}" placeholder="Sin email registrado"
+                                        style="flex:1; min-width:0; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); color:var(--net-text); padding:8px 10px; border-radius:10px; font:inherit; font-size:13px;">
+                                    <button type="button" onclick="window._networkAddEmailExtra()" title="Agregar otro correo" aria-label="Agregar otro correo" style="flex:none; width:28px; height:28px; padding:0; color:#3b82f6; border:1px solid rgba(255,255,255,0.3); background:rgba(0,0,0,0.22); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:800; cursor:pointer;">+</button>
+                                </div>
+                                <div id="network-emails-extra">
+                                    ${(Array.isArray(p.emails_extra) ? p.emails_extra : []).map((value, idx) => _networkEmailExtraRowHtml(value, idx)).join('')}
+                                </div>
+                            </div>
+                            <div style="margin-bottom:14px;">
+                                <label style="display:block; font-size:10px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:6px;">Dirección</label>
+                                <div style="display:flex; gap:8px; margin-bottom:6px;">
+                                    <input type="text" id="network-field-address-street" value="${_networkAttrEsc(direccion.street || '')}" placeholder="Calle" style="flex:2; min-width:0; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); color:var(--net-text); padding:8px 10px; border-radius:10px; font:inherit; font-size:13px;">
+                                    <input type="text" id="network-field-address-apt" value="${_networkAttrEsc(direccion.apt || '')}" placeholder="Apt / Suite" style="flex:1; min-width:0; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); color:var(--net-text); padding:8px 10px; border-radius:10px; font:inherit; font-size:13px;">
+                                </div>
+                                <div style="display:flex; gap:8px; margin-bottom:6px;">
+                                    <input type="text" id="network-field-address-city" value="${_networkAttrEsc(direccion.city || '')}" placeholder="Ciudad" style="flex:1.4; min-width:0; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); color:var(--net-text); padding:8px 10px; border-radius:10px; font:inherit; font-size:13px;">
+                                    <input type="text" id="network-field-address-state" value="${_networkAttrEsc(direccion.state || '')}" placeholder="Estado" style="flex:1; min-width:0; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); color:var(--net-text); padding:8px 10px; border-radius:10px; font:inherit; font-size:13px;">
+                                    <input type="text" id="network-field-address-zip" value="${_networkAttrEsc(direccion.zip || '')}" placeholder="Código postal" style="flex:1; min-width:0; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); color:var(--net-text); padding:8px 10px; border-radius:10px; font:inherit; font-size:13px;">
+                                </div>
+                                <input type="text" id="network-field-address-country" value="${_networkAttrEsc(direccion.country || '')}" placeholder="País" style="width:100%; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); color:var(--net-text); padding:8px 10px; border-radius:10px; font:inherit; font-size:13px;">
+                            </div>
+                            ${isDjSource ? `
+                            <div style="margin-bottom:14px;">
+                                <label style="display:block; font-size:10px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:4px;">Página web</label>
+                                <input type="text" id="network-field-website" value="${_networkAttrEsc(p.website_url || '')}" placeholder="Sin página web registrada"
+                                    style="width:100%; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); color:var(--net-text); padding:8px 10px; border-radius:10px; font:inherit; font-size:13px;">
+                            </div>` : ''}
+                            <div style="margin-bottom:14px;">
+                                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+                                    <label style="font-size:10px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase;">Redes sociales</label>
+                                    <button type="button" onclick="window._networkAddSocialExtra()" title="Agregar red social" aria-label="Agregar red social" style="flex:none; width:28px; height:28px; padding:0; color:#3b82f6; border:1px solid rgba(255,255,255,0.3); background:rgba(0,0,0,0.22); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:800; cursor:pointer;">+</button>
+                                </div>
+                                <div id="network-socials-extra">
+                                    ${_networkSocialRowsIniciales.map((entry, idx) => _networkSocialRowHtml(entry, idx, isDjSource ? Object.keys(NETWORK_DJ_SOCIAL_COLUMNS) : NETWORK_SOCIAL_OPTIONS)).join('')}
+                                </div>
+                            </div>
+                            ${birthWheelHtml}
+                            <div style="margin-bottom:14px;">
+                                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+                                    <label style="display:block; font-size:10px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase;">Categorías</label>
+                                    <button onclick="window._networkToggleAddCategoryRow()" title="Agregar categoría" aria-label="Agregar categoría" style="flex:none; width:20px; height:20px; border-radius:50%; background:#0a84ff; color:#fff; border:none; font-size:14px; font-weight:800; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0;">+</button>
+                                </div>
+                                <div>
+                                    ${myLists.map(l => `
+                                        <div style="display:flex; align-items:center; gap:10px; padding:7px 0; border-bottom:1px solid var(--net-line-soft);">
+                                            <button onclick="window.removeNetworkCategoryFromContact('${l.id}')" title="Quitar" aria-label="Quitar" style="flex:none; width:20px; height:20px; border-radius:50%; background:#ff3b30; color:#fff; border:none; font-size:16px; font-weight:800; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0 0 2px;">−</button>
+                                            <span style="font-size:13px; color:var(--net-text);">${l.name}</span>
+                                        </div>`).join('')}
+                                    <div id="network-cat-add-row" style="display:none; align-items:center; gap:10px; padding:7px 0;">
+                                        <span style="flex:none; width:20px;"></span>
+                                        <input type="text" id="network-cat-input" placeholder="Nombre de categoría…" style="flex:1; background:transparent; border:none; border-bottom:1px solid var(--net-glass-border); color:var(--net-text); padding:4px 2px; font:inherit; font-size:13px; outline:none;" onkeydown="if(event.key==='Enter'){event.preventDefault(); window.addNetworkCategoryToContact();}">
+                                    </div>
                                 </div>
                             </div>
                             ${isClient ? `
@@ -7449,14 +8583,62 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                                     <div style="color:var(--gold); font-weight:700;">$${Number(p.total_spent || 0).toFixed(2)}</div>
                                 </div>
                             </div>` : ''}
+                            ${(fuente === 'referencia' && p._matchReal) ? `
+                            <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); border-radius:10px; padding:10px 14px;">
+                                <div style="font-size:12px; color:var(--net-text);">Esta persona ya tiene cuenta real: <strong>${_networkAttrEsc(p._matchReal.nombre || '')}</strong> (${p._matchReal.fuente === 'dj' ? 'DJ/Artista' : 'Cliente'}).</div>
+                                <button onclick="window.mergeNetworkReferenciaConCuentaReal('${p.id}', '${p._matchReal.fuente}', '${p._matchReal.id}', '${_networkAttrEsc(p._matchReal.nombre || '')}')" style="flex:none; background:transparent; color:#3b82f6; font-weight:700; border:1px solid #3b82f6; padding:7px 14px; border-radius:8px; cursor:pointer; font:inherit; font-size:12px; white-space:nowrap;">Fusionar con cuenta real</button>
+                            </div>` : ''}
                             <div style="margin-bottom:4px;">
                                 <label style="display:block; font-size:10px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:4px;">Notas</label>
-                                <textarea readonly placeholder="Sin notas todavía" rows="2" style="width:100%; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); color:var(--net-text); padding:8px 10px; border-radius:10px; font:inherit; font-size:13px; resize:none;"></textarea>
+                                <textarea id="network-field-notas" ${fuente === 'referencia' ? '' : 'readonly'} placeholder="Sin notas todavía" rows="2" style="width:100%; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); color:var(--net-text); padding:8px 10px; border-radius:10px; font:inherit; font-size:13px; resize:none;">${_networkAttrEsc(p.notas || '')}</textarea>
                             </div>
-                            <p class="fineprint" style="margin-top:12px;">Teléfono y email ya guardan de verdad. Notas se queda de solo lectura -- no existe todavía una columna real para eso en la base.</p>
+                            ${fuente !== 'referencia' ? `<p class="fineprint" style="margin-top:12px;">Notas se queda de solo lectura para cuentas reales -- no existe todavía una columna real para eso en client_profiles/dj_profiles.</p>` : ''}
+                            ${(p.origen_persona_nombre || p._fusionReferencia) ? `
+                            <!-- 2026-09-19, pedido del PO: el "ingresado a mano por..." ya
+                                 no va visible abajo de la foto (ensuciaba la tarjeta) -- se
+                                 mueve aquí, en una sección plegable al final, para uso
+                                 INTERNO solamente (si algún día se comparte esta ficha con
+                                 el usuario real, este dato no se comparte). También guarda
+                                 aquí el historial de fusión con un contacto de referencia
+                                 (notas/origen que no tienen columna real donde vivir). -->
+                            <details style="margin-top:10px;">
+                                <summary style="cursor:pointer; font-size:11px; color:var(--muted); letter-spacing:.04em;">Info interna (no se comparte)</summary>
+                                ${p.origen_persona_nombre ? `<div style="font-size:11px; color:var(--muted); margin-top:6px;">Ingresado a mano por ${p.origen_persona_nombre}${p.origen_csv ? ` · importado de ${p.origen_csv}` : ''}</div>` : ''}
+                                ${p._fusionReferencia ? `<div style="font-size:11px; color:var(--muted); margin-top:6px; padding-top:6px; border-top:1px solid var(--net-line-soft);">Fusionado con el contacto de referencia "${_networkAttrEsc(p._fusionReferencia.nombre || '')}" el ${p._fusionReferencia.fusionado_en ? new Date(p._fusionReferencia.fusionado_en).toLocaleDateString() : ''}.${p._fusionReferencia.origen_csv ? ` Importado originalmente de ${p._fusionReferencia.origen_csv}.` : ''}${p._fusionReferencia.notas ? `<br>Notas originales: ${_networkAttrEsc(p._fusionReferencia.notas)}` : ''}</div>` : ''}
+                            </details>` : ''}
+                            <div style="display:flex; justify-content:flex-end; align-items:center; gap:10px; margin-top:6px;">
+                                <span id="network-save-msg" style="font-size:12px; color:var(--muted); min-height:14px;"></span>
+                                <button onclick="window.saveNetworkContact()" style="flex:none; background:var(--gold); color:#1a1206; font-weight:800; border:0; padding:9px 20px; border-radius:8px; cursor:pointer; font:inherit; font-size:13px;">Guardar</button>
+                            </div>
                         </div>
                     </div>
                 `;
+
+            };
+
+            // Selects de fecha (2026-09-19, reemplaza el carrete de scroll-snap --
+            // pedido del PO: "prefiero el de las casillas con listas desplegables").
+            // Sirve tanto para Fecha de nacimiento (prefix='network-birth') como para
+            // Aniversario (prefix='network-anniv'); reconstruye el select de Día con
+            // la cantidad real de días de ese mes/año si Mes o Año cambiaron.
+            window._networkDateSelectChanged = function(prefix, touchedFlagName) {
+                window[touchedFlagName] = true;
+                const daySel = document.getElementById(prefix + '-day');
+                const monthSel = document.getElementById(prefix + '-month');
+                const yearSel = document.getElementById(prefix + '-year');
+                if (!daySel || !monthSel || !yearSel) return;
+                // Mes/Año pueden seguir en placeholder (valor "") si la persona todavía
+                // no los tocó -- sin ambos no se puede recalcular el día 29/30/31 real,
+                // así que se deja el select de Día como está hasta que se sepan los dos.
+                if (!monthSel.value || !yearSel.value) return;
+                const month = parseInt(monthSel.value, 10);
+                const year = parseInt(yearSel.value, 10);
+                const curDay = parseInt(daySel.value, 10) || 1;
+                const maxDays = _networkDaysInMonth(month, year);
+                if (daySel.options.length - 1 === maxDays && daySel.value) return;
+                const newDay = Math.min(curDay, maxDays);
+                daySel.innerHTML = Array.from({ length: maxDays }, (_, i) => i + 1)
+                    .map(d => `<option value="${d}" ${d === newDay ? 'selected' : ''}>${d}</option>`).join('');
             };
 
             // ══ VENUES / SALAS / TAQUILLA — CRUD anidado de 4 niveles ══════════════
