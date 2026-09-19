@@ -6947,6 +6947,11 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
             // iguales con los muñequitos porque son grupos, no es necesario crear
             // diferente emojis") -- antes cada categoría traía su propio emoji.
             const NETWORK_GROUP_ICON = '👥';
+            // "Todos" usa un ícono distinto (3 siluetas) al de las categorías (2
+            // siluetas) -- mismo lenguaje visual que "Todos los contactos" en la
+            // app nativa de Contactos, pedido explícito del PO ("ponle 3 muñequitos
+            // no 2").
+            const NETWORK_ALL_ICON = '👪';
             const NETWORK_TABS = [
                 { id: 'artistas', label: NETWORK_GROUP_ICON + ' Artistas', cats: ['DJ', 'HoraLoca', 'Band', 'Solista', 'Visuales', 'MC', 'Payaso'] },
                 { id: 'venues', label: NETWORK_GROUP_ICON + ' Venues y Proveedores', cats: ['Comercial'] },
@@ -6975,6 +6980,21 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
             // personalizadas (network_list_members guarda "fuente" para saber en
             // cuál de las dos tablas está cada contacto).
             const _networkFuenteDe = (p) => (p._category === 'Personal' || p._category === 'Comercial') ? 'client' : 'dj';
+
+            // Una misma persona real puede tener varias categorías automáticas a la
+            // vez (ej. Owner que es DJ + Staff (Eventos) + Equipo Interno), así que
+            // aparece más de una vez en el arreglo plano de perfiles. Las vistas que
+            // mezclan categorías ("Todos", categorías personalizadas) deben mostrarla
+            // una sola vez -- este helper centraliza ese dedupe por fuente+id.
+            const _networkDedupeByContact = (profiles) => {
+                const seen = new Set();
+                return profiles.filter(p => {
+                    const key = _networkFuenteDe(p) + ':' + p.id;
+                    if (seen.has(key)) return false;
+                    seen.add(key);
+                    return true;
+                });
+            };
 
             const _networkTierColor = (t) => {
                 if(t==='DIAMOND') return '#b9f2ff';
@@ -7066,7 +7086,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     // categoría personalizada asignada -- por eso recorre ALL_TABLES
                     // completo más abajo, no depende de network_list_members).
                     const todosActive = (window._networkActiveTab || 'artistas') === 'todos';
-                    const todosCount = visibleProfiles.length;
+                    const todosCount = _networkDedupeByContact(visibleProfiles).length;
                     tabsContainer.innerHTML =
                         `<div class="net-tab-label" style="display:flex; align-items:center; justify-content:space-between; font-size:10px; font-weight:800; letter-spacing:.08em; color:var(--muted); text-transform:uppercase; padding:6px 2px 8px;">
                             <span>Categorías</span>
@@ -7080,7 +7100,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                             font-weight:${todosActive ? '800' : '600'}; font-size:13px; cursor:pointer; white-space:nowrap;
                             transition:background 0.15s, color 0.15s;
                         " onmouseover="if(this.style.background==='transparent')this.style.background='var(--net-hover)'" onmouseout="this.style.background='${todosActive ? 'var(--net-tab-active-bg)' : 'transparent'}'">
-                            <span style="flex:none;">${NETWORK_GROUP_ICON}</span>
+                            <span style="flex:none;">${NETWORK_ALL_ICON}</span>
                             <span class="net-tab-label" style="flex:1; display:flex; align-items:center; justify-content:space-between; gap:8px; overflow:hidden;">
                                 <span style="overflow:hidden; text-overflow:ellipsis;">Todos</span>
                                 <span style="font-size:11px; color:var(--muted); flex:none;">${todosCount}</span>
@@ -7181,9 +7201,16 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 // fila ya seleccionada -- ver window.networkEditStub().
                 window._networkRowData = [];
 
-                const renderTable = (title, icon, groupData, isClient, index) => {
+                const renderTable = (title, icon, groupData, isClient, index, flagUncategorized) => {
                     const tableId = `crm-table-${index}`;
                     const iconId = `crm-icon-${index}`;
+                    // Solo para "Todos" (2026-09-19, pedido del PO): marca con un punto
+                    // de color a quien no tiene NINGUNA categoría personalizada -- NO
+                    // rojo, porque rojo aquí se leería como error; verde/amarillo es
+                    // solo informativo ("todavía sin clasificar").
+                    const categorizedKeys = flagUncategorized
+                        ? new Set((window._networkCustomMembers || []).map(m => m.fuente + ':' + m.contacto_id))
+                        : null;
 
                     let tableHtml = `
                         <div style="margin-bottom: 20px; background: var(--net-surface); border-radius: 8px; border: 1px solid var(--net-line-soft);">
@@ -7232,6 +7259,10 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                             window._networkRowData.push(p);
                             const rowIdx = window._networkRowData.length - 1;
                             const selected = rowIdx === window._networkSelectedIdx;
+                            const isUncategorized = categorizedKeys && !categorizedKeys.has(_networkFuenteDe(p) + ':' + p.id);
+                            const uncategorizedDot = isUncategorized
+                                ? `<span title="Sin categoría personalizada asignada" style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#eab308; flex:none;"></span>`
+                                : '';
 
                             tableHtml += `
                                 <tr class="net-data-row" data-idx="${rowIdx}" onclick="window.selectNetworkContact(${rowIdx})" style="cursor:pointer; border-bottom: 1px solid var(--net-line-soft); transition: background 0.2s; background:${selected ? 'var(--net-tab-active-bg)' : 'transparent'}; box-shadow:${selected ? 'inset 3px 0 0 var(--gold)' : 'none'};" onmouseover="if(this.getAttribute('data-idx')!='${window._networkSelectedIdx}')this.style.background='var(--net-hover)'" onmouseout="this.style.background='${selected ? 'var(--net-tab-active-bg)' : 'transparent'}'">
@@ -7239,6 +7270,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                                         <span style="display:inline-flex; align-items:center; gap:8px;">
                                             <span style="flex:none; width:26px; height:26px; border-radius:50%; background:var(--net-avatar-bg); border:1px solid var(--net-avatar-border); color:var(--gold); font-size:10px; font-weight:800; display:flex; align-items:center; justify-content:center;">${_networkInitials(p._displayName)}</span>
                                             <span>${p._displayName}</span>
+                                            ${uncategorizedDot}
                                         </span>
                                     </td>
                                     <td style="padding:10px; font-size:12px; border: 1px solid var(--net-line);">${p._displayEmail}</td>
@@ -7283,14 +7315,12 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 const activeTab = window._networkActiveTab || 'artistas';
 
                 if (activeTab === 'todos') {
-                    // "Todos" -- une TODAS las sub-tablas de ALL_TABLES sin filtrar por
-                    // categoría, para que aparezca cada contacto real que existe,
-                    // tenga o no una categoría personalizada asignada.
-                    let idx = 0;
-                    ALL_TABLES.forEach(t => {
-                        idx++;
-                        html += renderTable(t.title, t.icon, groups[t.cat], t.isClient, idx);
-                    });
+                    // "Todos" -- pedido del PO (2026-09-19): NO desglosar en las 11
+                    // sub-tablas de ALL_TABLES: una sola tabla plana con cada contacto
+                    // real, tenga o no una categoría personalizada. Los que no tienen
+                    // ninguna se marcan con un punto amarillo (flagUncategorized=true),
+                    // nunca rojo (rojo = error, no ausencia de categoría).
+                    html = renderTable('Todos', NETWORK_ALL_ICON, _networkDedupeByContact(visibleProfiles), false, 1, true);
                 } else if (activeTab.indexOf('custom:') === 0) {
                     // Categoría personalizada -- una sola tabla mezclando client_profiles
                     // y dj_profiles (por eso no puede reusar ALL_TABLES/groups, que
@@ -7301,17 +7331,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     const memberKeys = new Set((window._networkCustomMembers || [])
                         .filter(m => String(m.list_id) === listId)
                         .map(m => m.fuente + ':' + m.contacto_id));
-                    // Un mismo contacto puede aparecer varias veces en visibleProfiles
-                    // (una fila real por cada categoría automática que tenga -- ej. un
-                    // Owner que es DJ + Staff + Equipo Interno a la vez); sin este
-                    // dedupe la categoría personalizada lo mostraría repetido.
-                    const seenMembers = new Set();
-                    const members = visibleProfiles.filter(p => {
-                        const key = _networkFuenteDe(p) + ':' + p.id;
-                        if (!memberKeys.has(key) || seenMembers.has(key)) return false;
-                        seenMembers.add(key);
-                        return true;
-                    });
+                    const members = _networkDedupeByContact(visibleProfiles.filter(p => memberKeys.has(_networkFuenteDe(p) + ':' + p.id)));
                     html = renderTable(list ? list.name : 'Categoría', NETWORK_GROUP_ICON, members, false, 1);
                 } else {
                     const activeTabDef = NETWORK_TABS.find(t => t.id === activeTab) || NETWORK_TABS[0];
@@ -7377,6 +7397,32 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 if (window._networkLastProfiles) window.renderCRM(window._networkLastProfiles);
             };
 
+            // Auto-vínculo por nombre (2026-09-19, pedido explícito del PO: "ya sabes
+            // las categorías de los que tenemos ahí, por qué no los has puesto" --
+            // ejemplo real: creó una categoría "DJ" esperando que los 10 contactos
+            // que YA son categoría real 'DJ' entraran solos, sin agregarlos uno por
+            // uno). Si el nombre escrito coincide (sin mayúsculas/acentos de más)
+            // con una categoría automática real -- la clave interna ('DJ', 'Staff')
+            // o su etiqueta visible ('Staff (Eventos)') -- se asignan de una vez
+            // todos los contactos que ya tienen esa categoría real.
+            window._networkAutoLinkCategory = async function(listName) {
+                const norm = (s) => String(s || '').trim().toLowerCase();
+                const target = norm(listName);
+                const matchedCatKey = Object.keys(NETWORK_CATEGORY_LABEL).find(key =>
+                    norm(key) === target || norm(NETWORK_CATEGORY_LABEL[key]) === target);
+                if (!matchedCatKey) return 0;
+                const matches = (window._networkLastProfiles || []).filter(p => p._category === matchedCatKey);
+                if (!matches.length) return 0;
+                const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+                if (!sb || !sb.rpc) return 0;
+                for (const p of matches) {
+                    await sb.rpc('network_list_asignar_por_nombre', {
+                        p_list_name: listName, p_fuente: _networkFuenteDe(p), p_contacto_id: p.id
+                    });
+                }
+                return matches.length;
+            };
+
             window._networkCommitCreateCategory = async function(rawName) {
                 if (!window._networkCreatingCategory) return; // ya se procesó (Enter + blur)
                 window._networkCreatingCategory = false;
@@ -7390,6 +7436,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     if (window._networkLastProfiles) window.renderCRM(window._networkLastProfiles);
                     return;
                 }
+                await window._networkAutoLinkCategory(name);
                 if (window.loadCRM) await window.loadCRM();
                 window.switchNetworkTab('custom:' + data.id);
             };
@@ -7449,6 +7496,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     if (window._networkLastProfiles) window.renderCRM(window._networkLastProfiles);
                     return;
                 }
+                await window._networkAutoLinkCategory(name);
                 if (window.loadCRM) await window.loadCRM();
             };
 
