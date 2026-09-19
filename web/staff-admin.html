@@ -6902,7 +6902,13 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                             ...d,
                             _source: 'artist',
                             _fuente: isRealStaffRole ? 'Equipo interno (asignado por Owner)' : 'Registro de artista (auto-servicio)',
-                            _displayName: d.stage_name || d.dj_name || d.full_name || 'Sin Nombre',
+                            // 2026-09-19, corrección del PO: "el nombre artístico está
+                            // reemplazando al nombre real, esto debería estar separado".
+                            // El nombre REAL (full_name) manda como identidad principal;
+                            // el nombre artístico se guarda aparte (_displayStageName) y se
+                            // muestra como dato secundario, nunca sustituyendo al real.
+                            _displayName: d.full_name || d.stage_name || d.dj_name || 'Sin Nombre',
+                            _displayStageName: (d.stage_name && d.stage_name !== d.full_name) ? d.stage_name : ((d.dj_name && d.dj_name !== d.full_name) ? d.dj_name : null),
                             _displayEmail: d.email || '—',
                             _displayPhone: d.phone || '—',
                             _displayBirthDate: d.birth_date ? new Date(d.birth_date + 'T00:00:00').toLocaleDateString() : '—',
@@ -7388,7 +7394,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                                     <td style="padding:10px; font-weight:700; border: 1px solid var(--net-line);">
                                         <span style="display:inline-flex; align-items:center; gap:8px;">
                                             ${_networkAvatarHtml(p, 26)}
-                                            <span>${p._displayName}</span>
+                                            <span>${p._displayName}${p._displayStageName ? ` <span style="font-weight:600; color:var(--muted); font-size:11px;">(${p._displayStageName})</span>` : ''}</span>
                                             ${uncategorizedDot}
                                         </span>
                                     </td>
@@ -7997,8 +8003,9 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                             ? `<img src="${p.photo_url}" alt="" style="width:104px; height:104px; border-radius:50%; object-fit:cover; margin:0 auto 14px; display:block; border:1px solid var(--net-glass-border); box-shadow:0 0 0 1px rgba(197,160,89,0.15), 0 12px 32px rgba(0,0,0,0.25);" onerror="this.outerHTML='<div style=\\'width:104px;height:104px;border-radius:50%;margin:0 auto 14px;background:var(--net-glass-bg);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--net-glass-border);box-shadow:0 0 0 1px rgba(197,160,89,0.15),0 12px 32px rgba(0,0,0,0.25);color:var(--gold);font-size:34px;font-weight:800;display:flex;align-items:center;justify-content:center;\\'>${_networkInitials(p._displayName)}</div>'">`
                             : `<div style="width:104px; height:104px; border-radius:50%; margin:0 auto 14px; background:var(--net-glass-bg); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border:1px solid var(--net-glass-border); box-shadow:0 0 0 1px rgba(197,160,89,0.15), 0 12px 32px rgba(0,0,0,0.25); color:var(--gold); font-size:34px; font-weight:800; display:flex; align-items:center; justify-content:center;">${_networkInitials(p._displayName)}</div>`}
                         <h2 style="margin:0 0 2px; color:var(--net-text); font-size:20px; text-shadow:0 1px 4px rgba(0,0,0,0.35);">${p._displayName || 'Sin Nombre'}</h2>
+                        ${p._displayStageName ? `<div style="font-size:12px; color:var(--gold); font-weight:700; margin-bottom:2px;">Nombre artístico: ${p._displayStageName}</div>` : ''}
                         <div style="font-size:12px; color:rgba(20,15,8,0.62); font-weight:600; margin-bottom:4px;">${NETWORK_CATEGORY_LABEL[p._category] || p._category || 'Contacto de referencia'}${proHtml ? ' · ' : ''}${proHtml}</div>
-                        ${p.origen_persona_nombre ? `<div style="font-size:11px; color:rgba(20,15,8,0.5); font-weight:600; margin-bottom:16px;">Vino por: ${p.origen_persona_nombre}</div>` : '<div style="margin-bottom:16px;"></div>'}
+                        ${p.origen_persona_nombre ? `<div style="font-size:11px; color:rgba(20,15,8,0.5); font-weight:600; margin-bottom:16px;">Ingresado a mano por ${p.origen_persona_nombre}${p.origen_csv ? ` · importado de ${p.origen_csv}` : ''}</div>` : '<div style="margin-bottom:16px;"></div>'}
                         ${quickActionsHtml}
 
                         <div style="text-align:left;">
