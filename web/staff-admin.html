@@ -7101,7 +7101,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                             font-weight:${todosActive ? '800' : '600'}; font-size:13px; cursor:pointer; white-space:nowrap;
                             transition:background 0.15s, color 0.15s;
                         " onmouseover="if(this.style.background==='transparent')this.style.background='var(--net-hover)'" onmouseout="this.style.background='${todosActive ? 'var(--net-tab-active-bg)' : 'transparent'}'">
-                            <span style="flex:none;">${NETWORK_ALL_ICON}</span>
+                            <span style="flex:none; font-size:12px; letter-spacing:-3px; color:var(--gold);">${NETWORK_ALL_ICON}</span>
                             <span class="net-tab-label" style="flex:1; display:flex; align-items:center; justify-content:space-between; gap:8px; overflow:hidden;">
                                 <span style="overflow:hidden; text-overflow:ellipsis;">Todos</span>
                                 <span style="font-size:11px; color:var(--muted); flex:none;">${todosCount}</span>
@@ -7122,7 +7122,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                                 font-weight:${active ? '800' : '600'}; font-size:13px; cursor:pointer; white-space:nowrap;
                                 transition:background 0.15s, color 0.15s;
                             " onmouseover="if(this.style.background==='transparent')this.style.background='var(--net-hover)'" onmouseout="this.style.background='${active ? activeBg : 'transparent'}'">
-                                <span style="flex:none;">${icon}</span>
+                                <span style="flex:none; color:var(--gold);">${icon}</span>
                                 <span class="net-tab-label" style="flex:1; display:flex; align-items:center; justify-content:space-between; gap:8px; overflow:hidden;">
                                     <span style="overflow:hidden; text-overflow:ellipsis;">${text}</span>
                                     <span style="display:flex; align-items:center; gap:6px; flex:none;">
