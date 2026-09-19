@@ -7848,6 +7848,54 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 }
             };
 
+            // 2026-09-19, pedido del PO: "en la sección de donde va la foto también
+            // se debería poder editar desde aquí, hasta que el cliente se abra la
+            // cuenta y se autocorrija". Sube a una carpeta APARTE del bucket real
+            // (avatars/staff-uploads/), nunca a la carpeta del dueño de la cuenta --
+            // mismo patrón upload/getPublicUrl que ya usa account-settings.html.
+            window.uploadNetworkPhoto = async function(inputEl) {
+                const idx = window._networkSelectedIdx;
+                const p = idx != null ? (window._networkRowData || [])[idx] : null;
+                const msg = document.getElementById('network-photo-msg');
+                const file = inputEl && inputEl.files && inputEl.files[0];
+                if (!p || !file) return;
+                const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+                if (!sb || !sb.storage) { if (msg) msg.textContent = 'Sin conexión a la base.'; return; }
+
+                if (msg) msg.textContent = 'Subiendo foto…';
+                try {
+                    const fuente = _networkFuenteDe(p);
+                    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+                    const filePath = 'staff-uploads/' + fuente + '-' + p.id + '/avatar.' + ext;
+
+                    const up = await sb.storage.from('avatars').upload(filePath, file, { upsert: true, cacheControl: '3600' });
+                    if (up.error) throw up.error;
+
+                    const pub = sb.storage.from('avatars').getPublicUrl(filePath);
+                    if (!pub || !pub.data) throw new Error('No se pudo obtener la URL pública.');
+                    const photoUrl = pub.data.publicUrl + '?v=' + Date.now();
+
+                    const { data, error } = fuente === 'referencia'
+                        ? await sb.rpc('network_referencia_actualizar', { p_id: p.id, p_photo_url: photoUrl })
+                        : await sb.rpc('network_contacto_actualizar', { p_fuente: fuente, p_id: p.id, p_photo_url: photoUrl });
+                    if (error) throw error;
+                    if (data && data.ok === false) throw new Error(data.error);
+
+                    p.photo_url = photoUrl;
+                    // renderNetworkDetail reemplaza todo el panel (incluido este mismo
+                    // div de mensaje) -- el texto de éxito se pone DESPUÉS de re-render,
+                    // sobre el div nuevo, o el re-render lo borra antes de que se vea.
+                    window.renderNetworkDetail(p);
+                    const newMsg = document.getElementById('network-photo-msg');
+                    if (newMsg) newMsg.textContent = '✅ Foto actualizada';
+                    const rowEl = document.querySelector(`#crm-container .net-data-row[data-idx="${idx}"]`);
+                    const avatarWrap = rowEl && rowEl.querySelector('td span[style*="inline-flex"]');
+                    if (avatarWrap && avatarWrap.firstElementChild) avatarWrap.firstElementChild.outerHTML = _networkAvatarHtml(p, 26);
+                } catch (e) {
+                    if (msg) msg.textContent = 'Error: ' + (e && e.message ? e.message : e);
+                }
+            };
+
             // Barra vertical ajustable (2026-09-18, pedido explícito del PO): arrastra
             // para correr el panel de edición a gusto de quien esté editando. Mientras
             // más a la izquierda el mouse, más ANCHO el panel (está pegado a la derecha).
@@ -7999,9 +8047,23 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 panel.innerHTML = `
                     <div style="max-width:460px; margin:0 auto; text-align:center; position:relative;">
                         <button onclick="window.closeNetworkEditPanel()" aria-label="Cerrar edición" title="Cerrar" style="position:absolute; top:-8px; right:-8px; background:transparent; border:none; color:var(--muted); font-size:22px; cursor:pointer; line-height:1;">×</button>
-                        ${p.photo_url
-                            ? `<img src="${p.photo_url}" alt="" style="width:104px; height:104px; border-radius:50%; object-fit:cover; margin:0 auto 14px; display:block; border:1px solid var(--net-glass-border); box-shadow:0 0 0 1px rgba(197,160,89,0.15), 0 12px 32px rgba(0,0,0,0.25);" onerror="this.outerHTML='<div style=\\'width:104px;height:104px;border-radius:50%;margin:0 auto 14px;background:var(--net-glass-bg);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--net-glass-border);box-shadow:0 0 0 1px rgba(197,160,89,0.15),0 12px 32px rgba(0,0,0,0.25);color:var(--gold);font-size:34px;font-weight:800;display:flex;align-items:center;justify-content:center;\\'>${_networkInitials(p._displayName)}</div>'">`
-                            : `<div style="width:104px; height:104px; border-radius:50%; margin:0 auto 14px; background:var(--net-glass-bg); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border:1px solid var(--net-glass-border); box-shadow:0 0 0 1px rgba(197,160,89,0.15), 0 12px 32px rgba(0,0,0,0.25); color:var(--gold); font-size:34px; font-weight:800; display:flex; align-items:center; justify-content:center;">${_networkInitials(p._displayName)}</div>`}
+                        <div style="position:relative; width:104px; margin:0 auto 14px;">
+                            ${p.photo_url
+                                ? `<img src="${p.photo_url}" alt="" style="width:104px; height:104px; border-radius:50%; object-fit:cover; display:block; border:1px solid var(--net-glass-border); box-shadow:0 0 0 1px rgba(197,160,89,0.15), 0 12px 32px rgba(0,0,0,0.25);" onerror="this.outerHTML='<div style=\\'width:104px;height:104px;border-radius:50%;background:var(--net-glass-bg);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--net-glass-border);box-shadow:0 0 0 1px rgba(197,160,89,0.15),0 12px 32px rgba(0,0,0,0.25);color:var(--gold);font-size:34px;font-weight:800;display:flex;align-items:center;justify-content:center;\\'>${_networkInitials(p._displayName)}</div>'">`
+                                : `<div style="width:104px; height:104px; border-radius:50%; background:var(--net-glass-bg); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border:1px solid var(--net-glass-border); box-shadow:0 0 0 1px rgba(197,160,89,0.15), 0 12px 32px rgba(0,0,0,0.25); color:var(--gold); font-size:34px; font-weight:800; display:flex; align-items:center; justify-content:center;">${_networkInitials(p._displayName)}</div>`}
+                            <!-- 2026-09-19, pedido del PO: "en la sección de donde va la
+                                 foto también se debería poder editar desde aquí, hasta que
+                                 el cliente se abra la cuenta y se autocorrija" -- staff sube
+                                 una foto temporal a avatars/staff-uploads/ (carpeta propia,
+                                 con su propio permiso -- no toca la carpeta real del dueño
+                                 de la cuenta); si la persona real sube la suya después
+                                 desde SU cuenta, esa nueva simplemente reemplaza photo_url
+                                 como siempre, sin conflicto. -->
+                            <label title="Cambiar foto" style="position:absolute; bottom:0; right:0; width:30px; height:30px; border-radius:50%; background:var(--gold); color:#1a1206; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; border:2px solid var(--net-surface); box-shadow:0 2px 8px rgba(0,0,0,0.35);">
+                                ✎<input type="file" accept="image/*" onchange="window.uploadNetworkPhoto(this)" style="display:none;">
+                            </label>
+                        </div>
+                        <div id="network-photo-msg" style="font-size:11px; color:var(--muted); margin-bottom:6px;"></div>
                         <h2 style="margin:0 0 2px; color:var(--net-text); font-size:20px; text-shadow:0 1px 4px rgba(0,0,0,0.35);">${p._displayName || 'Sin Nombre'}</h2>
                         ${p._displayStageName ? `<div style="font-size:12px; color:var(--gold); font-weight:700; margin-bottom:2px;">Nombre artístico: ${p._displayStageName}</div>` : ''}
                         <div style="font-size:12px; color:rgba(20,15,8,0.62); font-weight:600; margin-bottom:4px;">${NETWORK_CATEGORY_LABEL[p._category] || p._category || 'Contacto de referencia'}${proHtml ? ' · ' : ''}${proHtml}</div>
