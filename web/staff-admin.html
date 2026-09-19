@@ -7850,8 +7850,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         <button onclick="window.closeNetworkEditPanel()" aria-label="Cerrar edición" title="Cerrar" style="position:absolute; top:-8px; right:-8px; background:transparent; border:none; color:var(--muted); font-size:22px; cursor:pointer; line-height:1;">×</button>
                         <div style="width:104px; height:104px; border-radius:50%; margin:0 auto 14px; background:var(--net-glass-bg); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border:1px solid var(--net-glass-border); box-shadow:0 0 0 1px rgba(197,160,89,0.15), 0 12px 32px rgba(0,0,0,0.25); color:var(--gold); font-size:34px; font-weight:800; display:flex; align-items:center; justify-content:center;">${_networkInitials(p._displayName)}</div>
                         <h2 style="margin:0 0 2px; color:var(--net-text); font-size:20px; text-shadow:0 1px 4px rgba(0,0,0,0.35);">${p._displayName || 'Sin Nombre'}</h2>
-                        <div style="font-size:12px; color:rgba(20,15,8,0.62); font-weight:600; margin-bottom:4px;">${NETWORK_CATEGORY_LABEL[p._category] || p._category}${proHtml ? ' · ' : ''}${proHtml}</div>
-                        <div style="font-size:11px; color:rgba(20,15,8,0.5); font-weight:600; margin-bottom:16px;">${p._fuente || '—'}</div>
+                        <div style="font-size:12px; color:rgba(20,15,8,0.62); font-weight:600; margin-bottom:16px;">${NETWORK_CATEGORY_LABEL[p._category] || p._category}${proHtml ? ' · ' : ''}${proHtml}</div>
                         ${quickActionsHtml}
 
                         <div style="text-align:left;">
