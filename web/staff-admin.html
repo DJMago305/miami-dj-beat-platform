@@ -6780,7 +6780,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         // -- "no tienen cuenta con nosotros, solo son parte de nuestra base de
                         // datos para publicidad"). Tabla aparte de client_profiles/dj_profiles
                         // porque no representan cuentas reales.
-                        db.from('network_referencia_contactos').select('id, nombre, telefono, email, empresa, notas, origen_csv, origen_persona_nombre'),
+                        db.from('network_referencia_contactos').select('id, nombre, telefono, email, empresa, notas, origen_csv, origen_persona_nombre, photo_url, birth_date, birth_date_year_conocido'),
                     ]);
 
                     if(clientsRes.error) throw clientsRes.error;
@@ -6998,7 +6998,9 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                             _displayName: r.nombre || 'Sin Nombre',
                             _displayEmail: r.email || '—',
                             _displayPhone: r.telefono || '—',
-                            _displayBirthDate: '—',
+                            _displayBirthDate: r.birth_date
+                                ? (new Date(r.birth_date + 'T00:00:00').toLocaleDateString() + (r.birth_date_year_conocido === false ? ' (año no confirmado)' : ''))
+                                : '—',
                             _proStatus: null,
                             _createdAt: '—',
                             _compliance: { contractId: null, w9Id: null },
@@ -7822,10 +7824,11 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
 
                 if (msg) msg.textContent = 'Guardando…';
                 // Contactos de referencia (sin cuenta real) viven en su propia tabla,
-                // con su propio RPC más simple -- no tienen birth_date ni las columnas
-                // de negocio que sí tiene network_contacto_actualizar.
+                // con su propio RPC más simple -- desde 2026-09-19 sí acepta birth_date
+                // (antes se perdía en silencio: el carrete se movía pero nunca se
+                // mandaba en este branch).
                 const { data, error } = fuente === 'referencia'
-                    ? await sb.rpc('network_referencia_actualizar', { p_id: p.id, p_phone: phone, p_email: email })
+                    ? await sb.rpc('network_referencia_actualizar', { p_id: p.id, p_phone: phone, p_email: email, p_birth_date: birthDate })
                     : await sb.rpc('network_contacto_actualizar', { p_fuente: fuente, p_id: p.id, p_phone: phone, p_email: email, p_birth_date: birthDate });
                 if (error) { if (msg) msg.textContent = 'Error: ' + error.message; return; }
                 if (data && data.ok === false) { if (msg) msg.textContent = 'Error: ' + data.error; return; }
@@ -8042,6 +8045,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                                 ${wheelCol('network-wheel-year', 'year', _bwYearsList, null, _bwYearsList.indexOf(bwYear))}
                             </div>
                         </div>
+                        ${p.birth_date_year_conocido === false ? `<div style="font-size:11px; color:var(--muted); margin-top:6px;">⚠️ Año no confirmado en el dato original (mes/día real) -- mueve el carrete y guarda para fijar un año real.</div>` : ''}
                     </div>`;
 
                 panel.innerHTML = `
