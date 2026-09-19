@@ -38,3 +38,16 @@ DELETE FROM public.network_referencia_contactos WHERE id='59e4b8c6-d84a-4aa7-92f
 --   - MIAMI DJ BEAT LLC / MIAMIDJBEATLLC Valle (autoregistros del PO, ya dejados así a propósito)
 
 NOTIFY pgrst, 'reload schema';
+
+-- 2026-09-19 (continuación, confirmado por el PO en el chat): "Liam
+-- Enier" y "Liam Monzon" SÍ son la misma persona (mismo teléfono);
+-- "Enier" es su nombre real. Se fusiona conservando "Liam Enier",
+-- se agrega la empresa "Flujo Tv" de la fila duplicada, y se borra esa
+-- fila duplicada.
+UPDATE public.network_referencia_contactos
+   SET empresa = 'Flujo Tv',
+       notas = 'Nombre real: Enier. "Monzon" y "Liam Monzon" eran variantes del mismo contacto, fusionadas.'
+ WHERE id = 'e562d362-3d30-468f-a094-54791546e044';
+
+DELETE FROM public.network_list_members WHERE fuente='referencia' AND contacto_id='396d7255-2593-4b83-8f88-fe3fdc1936df';
+DELETE FROM public.network_referencia_contactos WHERE id='396d7255-2593-4b83-8f88-fe3fdc1936df';
