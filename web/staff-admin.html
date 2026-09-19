@@ -6942,15 +6942,24 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
             
             // Pestañas del Network — agrupan las 11 categorías reales en 4 vistas,
             // mismo criterio de agrupación que el PO usa en macOS Contacts.
+            // Ícono único para TODAS las categorías del sidebar (2026-09-19, pedido
+            // del PO tras comparar con la app nativa de Contactos: "todos salen
+            // iguales con los muñequitos porque son grupos, no es necesario crear
+            // diferente emojis") -- antes cada categoría traía su propio emoji.
+            const NETWORK_GROUP_ICON = '👥';
             const NETWORK_TABS = [
-                { id: 'artistas', label: '🎤 Artistas', cats: ['DJ', 'HoraLoca', 'Band', 'Solista', 'Visuales', 'MC', 'Payaso'] },
-                { id: 'venues', label: '🏢 Venues y Proveedores', cats: ['Comercial'] },
-                { id: 'clientes', label: '👥 Clientes y Contratistas', cats: ['Personal', 'Staff'] },
-                { id: 'familia', label: '🏠 Familia (Equipo Interno)', cats: ['MDJBStaff'] }
+                { id: 'artistas', label: NETWORK_GROUP_ICON + ' Artistas', cats: ['DJ', 'HoraLoca', 'Band', 'Solista', 'Visuales', 'MC', 'Payaso'] },
+                { id: 'venues', label: NETWORK_GROUP_ICON + ' Venues y Proveedores', cats: ['Comercial'] },
+                { id: 'clientes', label: NETWORK_GROUP_ICON + ' Clientes y Contratistas', cats: ['Personal', 'Staff'] },
+                { id: 'familia', label: NETWORK_GROUP_ICON + ' Familia (Equipo Interno)', cats: ['MDJBStaff'] }
             ];
 
             // Iniciales para el círculo-avatar (estilo Contactos) cuando no hay foto real.
             const _networkInitials = (name) => (String(name || '').trim().split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || '?');
+
+            // Escape para meter texto libre (nombre de categoría) dentro de un
+            // atributo HTML value="..." sin romper el markup.
+            const _networkAttrEsc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 
             // Etiqueta corta de categoría para la línea secundaria de cada fila de la
             // lista (reemplaza los encabezados de tabla de antes -- ver abajo).
@@ -7054,7 +7063,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     tabsContainer.innerHTML =
                         `<div class="net-tab-label" style="display:flex; align-items:center; justify-content:space-between; font-size:10px; font-weight:800; letter-spacing:.08em; color:var(--muted); text-transform:uppercase; padding:6px 2px 8px;">
                             <span>Categorías</span>
-                            <button type="button" onclick="window.networkCreateCategory()" title="Crear categoría" aria-label="Crear categoría" style="background:transparent; border:none; color:var(--net-text-dim); cursor:pointer; font-size:16px; font-weight:800; line-height:1; padding:0 2px;">+</button>
+                            <button type="button" onclick="window.networkStartCreateCategory()" title="Crear categoría" aria-label="Crear categoría" style="background:transparent; border:none; color:var(--net-text-dim); cursor:pointer; font-size:16px; font-weight:800; line-height:1; padding:0 2px;">+</button>
                         </div>` +
                         NETWORK_TABS.map(t => {
                             const active = t.id === window._networkActiveTab;
@@ -7093,6 +7102,22 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                             const activeBg = 'var(--net-tab-active-bg)';
                             const count = (window._networkCustomMembers || []).filter(m => m.list_id === list.id).length;
                             const nameEsc = String(list.name || '').replace(/'/g, "\\'");
+
+                            // Edición en línea (2026-09-19, pedido del PO comparando con la
+                            // app nativa de Contactos: "ahí sale marcado en azul para
+                            // editarlo yo mismo") -- reemplaza el prompt() de antes por un
+                            // input directo en la propia fila, igual que "Lista sin título 1".
+                            if (list.id === window._networkRenamingId) {
+                                return `<div class="net-custom-row" style="display:flex; align-items:center; gap:8px; padding:8px 10px;">
+                                    <span style="flex:none;">${NETWORK_GROUP_ICON}</span>
+                                    <input type="text" id="network-rename-input-${list.id}" value="${_networkAttrEsc(list.name)}"
+                                        onkeydown="window._networkRenameKeydown(event, '${list.id}')"
+                                        onblur="window._networkCommitRenameCategory('${list.id}', this.value)"
+                                        onclick="event.stopPropagation()"
+                                        style="flex:1; min-width:0; background:var(--net-surface-2); border:1px solid var(--gold); border-radius:6px; color:var(--net-text); font:inherit; font-weight:700; font-size:13px; padding:4px 8px;">
+                                </div>`;
+                            }
+
                             return `<div class="net-custom-row" style="position:relative; display:flex; align-items:center;">
                                 <button type="button" class="net-tab-btn" onclick="window.switchNetworkTab('${tabId}')" title="${nameEsc}" style="
                                     flex:1; min-width:0; display:flex; align-items:center; justify-content:space-between; gap:8px;
@@ -7102,7 +7127,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                                     font-weight:${active ? '800' : '600'}; font-size:13px; cursor:pointer; white-space:nowrap;
                                     transition:background 0.15s, color 0.15s;
                                 " onmouseover="if(this.style.background==='transparent')this.style.background='var(--net-hover)'" onmouseout="this.style.background='${active ? activeBg : 'transparent'}'">
-                                    <span style="flex:none;">🏷️</span>
+                                    <span style="flex:none;">${NETWORK_GROUP_ICON}</span>
                                     <span class="net-tab-label" style="flex:1; display:flex; align-items:center; justify-content:space-between; gap:8px; overflow:hidden;">
                                         <span style="overflow:hidden; text-overflow:ellipsis;">${list.name}</span>
                                         <span style="font-size:11px; color:var(--muted); flex:none;">${count}</span>
@@ -7110,11 +7135,21 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                                 </button>
                                 <button type="button" class="net-tab-label" onclick="window.toggleNetworkCategoryMenu(event, '${list.id}')" title="Más opciones" aria-label="Más opciones" style="flex:none; background:transparent; border:none; color:var(--net-text-dim); cursor:pointer; font-size:14px; padding:4px 6px;">⋯</button>
                                 <div id="network-category-menu-${list.id}" style="display:none; position:absolute; top:100%; right:0; z-index:210; min-width:170px; background:var(--net-card-bg); border:1px solid var(--net-line); border-radius:10px; box-shadow:0 12px 32px rgba(0,0,0,0.4); padding:6px; font-size:13px;">
-                                    <button onclick="window.networkRenameCategory('${list.id}', '${nameEsc}')" style="display:block; width:100%; text-align:left; background:transparent; border:none; color:var(--net-text); padding:8px 10px; border-radius:6px; cursor:pointer; font:inherit;">✏️ Renombrar categoría</button>
+                                    <button onclick="window.networkStartRenameCategory('${list.id}')" style="display:block; width:100%; text-align:left; background:transparent; border:none; color:var(--net-text); padding:8px 10px; border-radius:6px; cursor:pointer; font:inherit;">✏️ Renombrar categoría</button>
                                     <button onclick="window.networkDeleteCategory('${list.id}', '${nameEsc}')" style="display:block; width:100%; text-align:left; background:transparent; border:none; color:#f87171; padding:8px 10px; border-radius:6px; cursor:pointer; font:inherit;">🗑️ Eliminar categoría</button>
                                 </div>
                             </div>`;
-                        }).join('');
+                        }).join('') +
+                        // Fila fantasma de creación -- mismo patrón "Lista sin título 1"
+                        // de la referencia: aparece ya editable, sin ventana emergente.
+                        (window._networkCreatingCategory ? `<div class="net-custom-row" style="display:flex; align-items:center; gap:8px; padding:8px 10px;">
+                            <span style="flex:none;">${NETWORK_GROUP_ICON}</span>
+                            <input type="text" id="network-new-category-input" value=""
+                                onkeydown="window._networkNewCategoryKeydown(event)"
+                                onblur="window._networkCommitCreateCategory(this.value)"
+                                onclick="event.stopPropagation()"
+                                style="flex:1; min-width:0; background:var(--net-surface-2); border:1px solid var(--gold); border-radius:6px; color:var(--net-text); font:inherit; font-weight:700; font-size:13px; padding:4px 8px;">
+                        </div>` : '');
                 }
 
                 // 2026-09-18, corrección del PO sobre el intento anterior: las tablas
@@ -7237,7 +7272,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         .filter(m => String(m.list_id) === listId)
                         .map(m => m.fuente + ':' + m.contacto_id));
                     const members = visibleProfiles.filter(p => memberKeys.has(_networkFuenteDe(p) + ':' + p.id));
-                    html = renderTable(list ? list.name : 'Categoría', '🏷️', members, false, 1);
+                    html = renderTable(list ? list.name : 'Categoría', NETWORK_GROUP_ICON, members, false, 1);
                 } else {
                     const activeTabDef = NETWORK_TABS.find(t => t.id === activeTab) || NETWORK_TABS[0];
                     let idx = 0;
@@ -7280,14 +7315,39 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
             // Recargan window.loadCRM() al terminar para traer la lista de nuevo con
             // conteos reales -- estas categorías son pocas, no vale la pena mantener
             // un caché local aparte que se pueda desincronizar.
-            window.networkCreateCategory = async function() {
-                const name = (window.prompt('Nombre de la nueva categoría:') || '').trim();
-                if (!name) return;
+            // Crear categoría -- edición en línea (2026-09-19, corrección del PO:
+            // "ahí sale marcado en azul para editarlo yo mismo", sin ventana
+            // prompt()). El "+" solo abre la fila fantasma editable; el guardado
+            // real ocurre en _networkCommitCreateCategory (Enter o blur).
+            window.networkStartCreateCategory = function() {
+                window._networkCreatingCategory = true;
+                if (window._networkLastProfiles) window.renderCRM(window._networkLastProfiles);
+                const input = document.getElementById('network-new-category-input');
+                if (input) { input.focus(); input.select(); }
+            };
+
+            window._networkNewCategoryKeydown = function(ev) {
+                if (ev.key === 'Enter') { ev.preventDefault(); window._networkCommitCreateCategory(ev.target.value); }
+                else if (ev.key === 'Escape') { ev.preventDefault(); window._networkCancelCreateCategory(); }
+            };
+
+            window._networkCancelCreateCategory = function() {
+                if (!window._networkCreatingCategory) return;
+                window._networkCreatingCategory = false;
+                if (window._networkLastProfiles) window.renderCRM(window._networkLastProfiles);
+            };
+
+            window._networkCommitCreateCategory = async function(rawName) {
+                if (!window._networkCreatingCategory) return; // ya se procesó (Enter + blur)
+                window._networkCreatingCategory = false;
+                const name = (rawName || '').trim();
+                if (!name) { if (window._networkLastProfiles) window.renderCRM(window._networkLastProfiles); return; }
                 const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
                 if (!sb || !sb.rpc) return;
                 const { data, error } = await sb.rpc('network_list_crear', { p_name: name });
                 if (error || (data && data.ok === false)) {
                     alert('Error creando la categoría: ' + (error ? error.message : data.error));
+                    if (window._networkLastProfiles) window.renderCRM(window._networkLastProfiles);
                     return;
                 }
                 if (window.loadCRM) await window.loadCRM();
@@ -7314,16 +7374,39 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 }
             };
 
-            window.networkRenameCategory = async function(listId, currentName) {
+            // Renombrar categoría -- misma edición en línea que crear (ver arriba).
+            window.networkStartRenameCategory = function(listId) {
                 const menu = document.getElementById('network-category-menu-' + listId);
                 if (menu) menu.style.display = 'none';
-                const name = (window.prompt('Nuevo nombre de la categoría:', currentName) || '').trim();
-                if (!name || name === currentName) return;
+                window._networkRenamingId = listId;
+                if (window._networkLastProfiles) window.renderCRM(window._networkLastProfiles);
+                const input = document.getElementById('network-rename-input-' + listId);
+                if (input) { input.focus(); input.select(); }
+            };
+
+            window._networkRenameKeydown = function(ev, listId) {
+                if (ev.key === 'Enter') { ev.preventDefault(); window._networkCommitRenameCategory(listId, ev.target.value); }
+                else if (ev.key === 'Escape') { ev.preventDefault(); window._networkCancelRenameCategory(); }
+            };
+
+            window._networkCancelRenameCategory = function() {
+                if (window._networkRenamingId == null) return;
+                window._networkRenamingId = null;
+                if (window._networkLastProfiles) window.renderCRM(window._networkLastProfiles);
+            };
+
+            window._networkCommitRenameCategory = async function(listId, rawName) {
+                if (window._networkRenamingId !== listId) return; // ya se procesó (Enter + blur)
+                window._networkRenamingId = null;
+                const current = (window._networkCustomLists || []).find(l => l.id === listId);
+                const name = (rawName || '').trim();
+                if (!name || (current && name === current.name)) { if (window._networkLastProfiles) window.renderCRM(window._networkLastProfiles); return; }
                 const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
                 if (!sb || !sb.rpc) return;
                 const { data, error } = await sb.rpc('network_list_renombrar', { p_id: listId, p_name: name });
                 if (error || (data && data.ok === false)) {
                     alert('Error renombrando: ' + (error ? error.message : data.error));
+                    if (window._networkLastProfiles) window.renderCRM(window._networkLastProfiles);
                     return;
                 }
                 if (window.loadCRM) await window.loadCRM();
@@ -7602,7 +7685,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     .map(m => m.list_id);
                 const myLists = (window._networkCustomLists || []).filter(l => myListIds.includes(l.id));
                 const chipsHtml = myLists.length
-                    ? myLists.map(l => `<span style="display:inline-flex; align-items:center; gap:5px; background:var(--net-tab-active-bg); color:var(--gold); border:1px solid rgba(197,160,89,0.4); padding:3px 8px 3px 10px; border-radius:999px; font-size:11px; font-weight:700;">🏷️ ${l.name}<button onclick="window.removeNetworkCategoryFromContact('${l.id}')" aria-label="Quitar" style="background:transparent; border:none; color:inherit; cursor:pointer; font-size:13px; line-height:1; padding:0;">×</button></span>`).join('')
+                    ? myLists.map(l => `<span style="display:inline-flex; align-items:center; gap:5px; background:var(--net-tab-active-bg); color:var(--gold); border:1px solid rgba(197,160,89,0.4); padding:3px 8px 3px 10px; border-radius:999px; font-size:11px; font-weight:700;">${NETWORK_GROUP_ICON} ${l.name}<button onclick="window.removeNetworkCategoryFromContact('${l.id}')" aria-label="Quitar" style="background:transparent; border:none; color:inherit; cursor:pointer; font-size:13px; line-height:1; padding:0;">×</button></span>`).join('')
                     : `<span style="font-size:12px; color:var(--muted);">Sin categorías asignadas</span>`;
 
                 panel.innerHTML = `
