@@ -51,3 +51,15 @@ UPDATE public.network_referencia_contactos
 
 DELETE FROM public.network_list_members WHERE fuente='referencia' AND contacto_id='396d7255-2593-4b83-8f88-fe3fdc1936df';
 DELETE FROM public.network_referencia_contactos WHERE id='396d7255-2593-4b83-8f88-fe3fdc1936df';
+
+-- 2026-09-19 (continuación, confirmado por el PO): "Toreros Brasilian
+-- Restaurant" es el mismo local que "Rio Grande Churrascaria" bajo un
+-- nombre viejo -- ya no se llama Toreros. Se fusiona conservando Rio
+-- Grande (nombre actual, ya documentado) y se amplía su nota con el
+-- historial completo del local.
+UPDATE public.network_referencia_contactos
+   SET notas = 'Venue real — 1255 W 46th St Ste 27, Hialeah FL 33012. Antes fue "La Cueva del Pirata" y también "Toreros Brasilian Restaurant" -- ya no es ninguno de los dos, ahora es Rio Grande Churrascaria (a veces mantienen "La Cueva del Pirata" como noche temática los sábados). Sitio: riograndechurrascaria.com'
+ WHERE id = 'a53ba0ba-74a9-4bcb-aaa8-c1dd4dec8a3d';
+
+DELETE FROM public.network_list_members WHERE fuente='referencia' AND contacto_id='fb92fd2a-ddd3-4f91-8519-2d5a809fa364';
+DELETE FROM public.network_referencia_contactos WHERE id='fb92fd2a-ddd3-4f91-8519-2d5a809fa364';
