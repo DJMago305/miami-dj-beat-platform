@@ -8124,15 +8124,20 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 // <a>, Safari/macOS renderiza estos emoji en modo texto monocromo (el
                 // "SF Symbol" plano que se ve en la captura) en vez del emoji real a
                 // color -- el color solo debe afectar texto, nunca un glifo de emoji.
+                // Burbuja fija oscura semitransparente (2026-09-19, pedido del PO: "las
+                // burbujas casi no se ven, están muy transparentes") -- var(--net-glass-bg)
+                // está pensada para el fondo oscuro general de la barra; aquí, encima del
+                // degradado dorado del encabezado de la ficha, casi desaparecía. Con un
+                // negro fijo semitransparente se ve igual de bien en cualquier fondo.
                 const actionBtn = (href, icon, title) => href
-                    ? `<a href="${href}" title="${title}" target="${href.indexOf('http') === 0 ? '_blank' : '_self'}" rel="noopener" style="display:inline-flex; align-items:center; justify-content:center; width:38px; height:38px; border-radius:50%; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); font-size:17px; text-decoration:none; cursor:pointer;">${icon}</a>`
-                    : `<span title="Sin dato para ${title.toLowerCase()}" style="display:inline-flex; align-items:center; justify-content:center; width:38px; height:38px; border-radius:50%; background:var(--net-glass-bg); border:1px solid var(--net-glass-border); opacity:0.3; font-size:17px;">${icon}</span>`;
+                    ? `<a href="${href}" title="${title}" target="${href.indexOf('http') === 0 ? '_blank' : '_self'}" rel="noopener" style="display:inline-flex; align-items:center; justify-content:center; width:38px; height:38px; border-radius:50%; background:rgba(0,0,0,0.22); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.3); font-size:17px; text-decoration:none; cursor:pointer;">${icon}</a>`
+                    : `<span title="Sin dato para ${title.toLowerCase()}" style="display:inline-flex; align-items:center; justify-content:center; width:38px; height:38px; border-radius:50%; background:rgba(0,0,0,0.22); border:1px solid rgba(255,255,255,0.3); opacity:0.4; font-size:17px;">${icon}</span>`;
                 const quickActionsHtml = `<div style="display:flex; justify-content:center; gap:10px; margin-bottom:20px;">
                     ${actionBtn(rawPhone ? `sms:${rawPhone}` : '', '💬', 'Mensaje')}
                     ${actionBtn(rawPhone ? `tel:${rawPhone}` : '', '📞', 'Llamar')}
-                    ${actionBtn(rawPhone ? `facetime:${rawPhone}` : '', '📹', 'FaceTime')}
+                    ${actionBtn(rawPhone ? `facetime:${rawPhone}` : '', '🎥', 'FaceTime')}
                     ${actionBtn(rawEmail ? `mailto:${rawEmail}` : '', '✉️', 'Email')}
-                    ${actionBtn(rawPhone ? `https://wa.me/${rawPhone.replace(/^\+/, '')}` : '', '📱', 'WhatsApp')}
+                    ${actionBtn(rawPhone ? `https://wa.me/${rawPhone.replace(/^\+/, '')}` : '', '💚', 'WhatsApp')}
                 </div>`;
 
                 // Carrete de fecha de nacimiento -- 3 columnas con scroll-snap (Mes/
