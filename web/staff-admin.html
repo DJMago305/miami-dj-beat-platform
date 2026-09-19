@@ -6953,11 +6953,16 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
             // "familia" (👪), que confundiría con la categoría real "Familia
             // (Equipo Interno)".
             const NETWORK_ALL_ICON = '👥👤';
+            // "Familia (Equipo Interno)" se quitó de las fijas (2026-09-19, pedido
+            // explícito del PO: "familia no va fijo... esa debe ser editable y
+            // eliminable también... Familia es para las fechas de las familias, los
+            // cumpleaños, aniversarios" -- concepto distinto a "equipo interno". Si
+            // el PO quiere una categoría "Familia", la crea él mismo con el "+" como
+            // categoría personalizada (editable/eliminable, como Staff/DJ/Bartender).
             const NETWORK_TABS = [
                 { id: 'artistas', label: NETWORK_GROUP_ICON + ' Artistas', cats: ['DJ', 'HoraLoca', 'Band', 'Solista', 'Visuales', 'MC', 'Payaso'] },
                 { id: 'venues', label: NETWORK_GROUP_ICON + ' Venues y Proveedores', cats: ['Comercial'] },
-                { id: 'clientes', label: NETWORK_GROUP_ICON + ' Clientes y Contratistas', cats: ['Personal', 'Staff'] },
-                { id: 'familia', label: NETWORK_GROUP_ICON + ' Familia (Equipo Interno)', cats: ['MDJBStaff'] }
+                { id: 'clientes', label: NETWORK_GROUP_ICON + ' Clientes y Contratistas', cats: ['Personal', 'Staff'] }
             ];
 
             // Iniciales para el círculo-avatar (estilo Contactos) cuando no hay foto real.
