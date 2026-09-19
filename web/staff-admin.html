@@ -6794,8 +6794,8 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     // dj_profiles/client_profiles así, es una superficie solo-staff) para
                     // cruzar compliance legal (Contrato / W-9) sin tocar el esquema.
                     const [clientsRes, djsRes, contractsRes, leadsRes, listsRes, listMembersRes, referenciaRes] = await Promise.all([
-                        db.from('client_profiles').select('id, full_name, email, phone, phones_extra, birth_date, is_commercial, company_name, tier_level, total_spent, total_events, created_at, photo_url').order('total_spent', { ascending: false }),
-                        db.from('dj_profiles').select('id, full_name, stage_name, dj_name, email, phone, phones_extra, birth_date, role, artist_specialty, bio, status, plan, is_premium, created_at, photo_url').order('created_at', { ascending: false }),
+                        db.from('client_profiles').select('id, full_name, email, phone, phones_extra, emails_extra, birth_date, is_commercial, company_name, tier_level, total_spent, total_events, created_at, photo_url').order('total_spent', { ascending: false }),
+                        db.from('dj_profiles').select('id, full_name, stage_name, dj_name, email, phone, phones_extra, emails_extra, birth_date, role, artist_specialty, bio, status, plan, is_premium, created_at, photo_url').order('created_at', { ascending: false }),
                         db.from('signed_contracts').select('id, artist_profile_id, contract_type, signer_email, status'),
                         // Fuente del dato (2026-09-18, pedido del PO): no hay una columna real de
                         // "origen" en client_profiles -- se deriva por email compartido con leads
@@ -6812,7 +6812,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         // -- "no tienen cuenta con nosotros, solo son parte de nuestra base de
                         // datos para publicidad"). Tabla aparte de client_profiles/dj_profiles
                         // porque no representan cuentas reales.
-                        db.from('network_referencia_contactos').select('id, nombre, telefono, email, empresa, notas, origen_csv, origen_persona_nombre, photo_url, birth_date, birth_date_year_conocido, created_at, phones_extra'),
+                        db.from('network_referencia_contactos').select('id, nombre, telefono, email, empresa, notas, origen_csv, origen_persona_nombre, photo_url, birth_date, birth_date_year_conocido, created_at, phones_extra, emails_extra'),
                     ]);
 
                     if(clientsRes.error) throw clientsRes.error;
@@ -7141,6 +7141,17 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     <input type="text" class="net-phone-extra-input" value="${_networkAttrEsc(entry.numero || '')}" placeholder="Número"
                         style="flex:1; min-width:0; background:rgba(0,0,0,0.22); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.3); color:var(--net-text); padding:8px 10px; border-radius:10px; font:inherit; font-size:13px;">
                     <button type="button" onclick="this.closest('.net-phone-extra-row').remove()" title="Quitar" style="flex:none; width:22px; height:22px; padding:0; color:#ef4444; background:transparent; border:none; font-size:20px; font-weight:800; line-height:1; cursor:pointer;">−</button>
+                </div>`;
+
+            // Correos adicionales (2026-09-19, pedido del PO: "mismo sistema de
+            // arriba pero para crear más correos" -- sin selector de tipo, el email
+            // no tiene el mismo concepto de iPhone/Trabajo/Personal/Oficina que el
+            // teléfono).
+            const _networkEmailExtraRowHtml = (value, idx) => `
+                <div class="net-email-extra-row" data-idx="${idx}" style="display:flex; gap:6px; align-items:center; margin-top:6px;">
+                    <input type="text" class="net-email-extra-input" value="${_networkAttrEsc(value || '')}" placeholder="Correo"
+                        style="flex:1; min-width:0; background:rgba(0,0,0,0.22); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.3); color:var(--net-text); padding:8px 10px; border-radius:10px; font:inherit; font-size:13px;">
+                    <button type="button" onclick="this.closest('.net-email-extra-row').remove()" title="Quitar" style="flex:none; width:22px; height:22px; padding:0; color:#ef4444; background:transparent; border:none; font-size:20px; font-weight:800; line-height:1; cursor:pointer;">−</button>
                 </div>`;
 
             const _networkAvatarHtml = (p, size) => p.photo_url
@@ -7986,6 +7997,11 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     tipo: row.querySelector('select').value,
                     numero: row.querySelector('.net-phone-extra-input').value.trim(),
                 })).filter(e => e.numero);
+                // Correos adicionales (2026-09-19) -- mismo criterio que teléfonos:
+                // siempre se manda el array completo, nunca null, para que borrar una
+                // fila y guardar sí la borre.
+                const emailsExtra = [...document.querySelectorAll('#network-emails-extra .net-email-extra-row .net-email-extra-input')]
+                    .map(input => input.value.trim()).filter(Boolean);
 
                 if (msg) msg.textContent = 'Guardando…';
                 // Contactos de referencia (sin cuenta real) viven en su propia tabla,
@@ -7993,8 +8009,8 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 // (antes se perdía en silencio: el carrete se movía pero nunca se
                 // mandaba en este branch).
                 const { data, error } = fuente === 'referencia'
-                    ? await sb.rpc('network_referencia_actualizar', { p_id: p.id, p_phone: phone, p_email: email, p_birth_date: birthDate, p_phones_extra: phonesExtra })
-                    : await sb.rpc('network_contacto_actualizar', { p_fuente: fuente, p_id: p.id, p_phone: phone, p_email: email, p_birth_date: birthDate, p_phones_extra: phonesExtra });
+                    ? await sb.rpc('network_referencia_actualizar', { p_id: p.id, p_phone: phone, p_email: email, p_birth_date: birthDate, p_phones_extra: phonesExtra, p_emails_extra: emailsExtra })
+                    : await sb.rpc('network_contacto_actualizar', { p_fuente: fuente, p_id: p.id, p_phone: phone, p_email: email, p_birth_date: birthDate, p_phones_extra: phonesExtra, p_emails_extra: emailsExtra });
                 if (error) { if (msg) msg.textContent = 'Error: ' + error.message; return; }
                 if (data && data.ok === false) { if (msg) msg.textContent = 'Error: ' + data.error; return; }
 
@@ -8003,6 +8019,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 p._displayPhone = phone || '—';
                 p._displayEmail = email || '—';
                 p.phones_extra = phonesExtra;
+                p.emails_extra = emailsExtra;
                 if (birthDate) {
                     p.birth_date = birthDate;
                     p._displayBirthDate = new Date(birthDate + 'T00:00:00').toLocaleDateString();
@@ -8024,6 +8041,15 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 if (!container) return;
                 const idx = container.children.length;
                 container.insertAdjacentHTML('beforeend', _networkPhoneExtraRowHtml({ tipo: 'iphone', numero: '' }, idx));
+            };
+
+            // "+" junto a EMAIL (2026-09-19) -- mismo sistema que teléfono, sin
+            // selector de tipo.
+            window._networkAddEmailExtra = function() {
+                const container = document.getElementById('network-emails-extra');
+                if (!container) return;
+                const idx = container.children.length;
+                container.insertAdjacentHTML('beforeend', _networkEmailExtraRowHtml('', idx));
             };
 
             // 2026-09-19, pedido del PO: "en la sección de donde va la foto también
@@ -8270,14 +8296,20 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                                     ${(Array.isArray(p.phones_extra) ? p.phones_extra : []).map((entry, idx) => _networkPhoneExtraRowHtml(entry, idx)).join('')}
                                 </div>
                             </div>
-                            <div style="margin-bottom:4px;">
+                            <div style="margin-bottom:14px;">
                                 <label style="display:block; font-size:10px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:4px;">Email</label>
-                                <div style="display:flex; gap:8px; align-items:stretch;">
+                                <div style="display:flex; align-items:center; gap:8px;">
                                     <input type="text" id="network-field-email" value="${(p._displayEmail && p._displayEmail !== '—' ? p._displayEmail : '').toString().replace(/"/g, '&quot;')}" placeholder="Sin email registrado"
                                         style="flex:1; min-width:0; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); color:var(--net-text); padding:8px 10px; border-radius:10px; font:inherit; font-size:13px;">
-                                    <button onclick="window.saveNetworkContact()" style="flex:none; background:var(--gold); color:#1a1206; font-weight:800; border:0; padding:8px 16px; border-radius:8px; cursor:pointer; font:inherit; font-size:13px;">Guardar</button>
+                                    <button type="button" onclick="window._networkAddEmailExtra()" title="Agregar otro correo" aria-label="Agregar otro correo" style="flex:none; width:28px; height:28px; padding:0; color:#3b82f6; border:1px solid rgba(255,255,255,0.3); background:rgba(0,0,0,0.22); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:800; cursor:pointer;">+</button>
                                 </div>
-                                <div id="network-save-msg" style="font-size:12px; color:var(--muted); text-align:right; margin-top:4px; min-height:14px;"></div>
+                                <div id="network-emails-extra">
+                                    ${(Array.isArray(p.emails_extra) ? p.emails_extra : []).map((value, idx) => _networkEmailExtraRowHtml(value, idx)).join('')}
+                                </div>
+                            </div>
+                            <div style="display:flex; justify-content:flex-end; align-items:center; gap:10px; margin-bottom:14px;">
+                                <span id="network-save-msg" style="font-size:12px; color:var(--muted); min-height:14px;"></span>
+                                <button onclick="window.saveNetworkContact()" style="flex:none; background:var(--gold); color:#1a1206; font-weight:800; border:0; padding:8px 16px; border-radius:8px; cursor:pointer; font:inherit; font-size:13px;">Guardar</button>
                             </div>
                             ${birthWheelHtml}
                             <div style="margin-bottom:14px;">
