@@ -2407,7 +2407,14 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                                 <button id="network-more-btn" class="btn secondary small" onclick="window.toggleNetworkMoreMenu(event)" title="Más opciones" aria-label="Más opciones" style="width:36px; height:36px; padding:0; color:#3b82f6; border:1px solid var(--net-glass-border); background:var(--net-glass-bg); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border-radius:50%; display:flex; align-items:center; justify-content:center;">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
                                 </button>
-                                <div id="network-more-menu" style="display:none; position:absolute; top:calc(100% + 6px); left:0; z-index:200; min-width:220px; background:var(--net-card-bg); border:1px solid var(--net-line); border-radius:10px; box-shadow:0 12px 32px rgba(0,0,0,0.4); padding:6px; font-size:13px;">
+                                <div id="network-more-menu" style="display:none; position:absolute; top:calc(100% + 6px); left:0; z-index:200; min-width:260px; background:var(--net-card-bg); border:1px solid var(--net-line); border-radius:10px; box-shadow:0 12px 32px rgba(0,0,0,0.4); padding:6px; font-size:13px;">
+                                    <div style="padding:6px 10px; font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--net-text-dim);">Nombre a mostrar</div>
+                                    <button onclick="window.networkSetNameMode('primary', 'real')" style="display:block; width:100%; text-align:left; background:transparent; border:none; color:var(--net-text); padding:8px 10px; border-radius:6px; cursor:pointer; font:inherit;">Nombre real primero</button>
+                                    <button onclick="window.networkSetNameMode('primary', 'artistico')" style="display:block; width:100%; text-align:left; background:transparent; border:none; color:var(--net-text); padding:8px 10px; border-radius:6px; cursor:pointer; font:inherit;">Nombre artístico primero (si tiene)</button>
+                                    <div style="height:1px; background:var(--net-line); margin:6px 4px;"></div>
+                                    <button onclick="window.networkSetNameMode('order', 'normal')" style="display:block; width:100%; text-align:left; background:transparent; border:none; color:var(--net-text); padding:8px 10px; border-radius:6px; cursor:pointer; font:inherit;">Nombre y apellido</button>
+                                    <button onclick="window.networkSetNameMode('order', 'apellido')" style="display:block; width:100%; text-align:left; background:transparent; border:none; color:var(--net-text); padding:8px 10px; border-radius:6px; cursor:pointer; font:inherit;">Apellido y nombre</button>
+                                    <div style="height:1px; background:var(--net-line); margin:6px 4px;"></div>
                                     <button onclick="window.networkExportCSV()" style="display:block; width:100%; text-align:left; background:transparent; border:none; color:var(--net-text); padding:8px 10px; border-radius:6px; cursor:pointer; font:inherit;">Exportar CSV de esta vista</button>
                                 </div>
                             </div>
@@ -7085,6 +7092,32 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
             // Iniciales para el círculo-avatar (estilo Contactos) cuando no hay foto real.
             const _networkInitials = (name) => (String(name || '').trim().split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || '?');
 
+            // Modo de nombre en la primera casilla (2026-09-19, pedido del PO: "es
+            // para editar el modo en que ves la primera casilla... si es artista el
+            // nombre de artista primero... si quieres ver nombre y apellido o
+            // apellido y nombre") -- dos ejes independientes, elegidos desde el menú
+            // "..." (ver toggleNetworkMoreMenu): cuál nombre va en negrita (real vs
+            // artístico, solo aplica si el DJ tiene nombre artístico) y en qué orden
+            // se leen las palabras (normal vs "Apellido, Nombre" -- sin campos
+            // separados de nombre/apellido en la base, se aproxima moviendo la
+            // última palabra al frente).
+            const _networkOrderName = (name) => {
+                const parts = String(name || '').trim().split(/\s+/);
+                if (parts.length < 2) return name;
+                return parts[parts.length - 1] + ', ' + parts.slice(0, -1).join(' ');
+            };
+            const _networkNameCellParts = (p) => {
+                const mode = window._networkNameDisplayMode || { primary: 'real', order: 'normal' };
+                let primary = p._displayName;
+                let secondary = p._displayStageName || null;
+                if (mode.primary === 'artistico' && p._displayStageName) {
+                    primary = p._displayStageName;
+                    secondary = p._displayName;
+                }
+                if (mode.order === 'apellido') primary = _networkOrderName(primary);
+                return { primary, secondary };
+            };
+
             // Foto real del contacto (2026-09-19, pedido del PO: "también tenemos las
             // fotos" -- photo_url YA existe en dj_profiles/client_profiles, solo
             // faltaba usarla; antes el avatar siempre mostraba iniciales aunque
@@ -7435,13 +7468,14 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                             const uncategorizedDot = isUncategorized
                                 ? `<span title="Sin categoría personalizada asignada" style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#eab308; flex:none;"></span>`
                                 : '';
+                            const nameParts = _networkNameCellParts(p);
 
                             tableHtml += `
                                 <tr class="net-data-row" data-idx="${rowIdx}" onclick="window.selectNetworkContact(${rowIdx})" style="cursor:pointer; border-bottom: 1px solid var(--net-line-soft); transition: background 0.2s; background:${selected ? 'var(--net-tab-active-bg)' : 'transparent'}; box-shadow:${selected ? 'inset 3px 0 0 var(--gold)' : 'none'};" onmouseover="if(this.getAttribute('data-idx')!='${window._networkSelectedIdx}')this.style.background='var(--net-hover)'" onmouseout="this.style.background='${selected ? 'var(--net-tab-active-bg)' : 'transparent'}'">
                                     <td style="padding:10px; font-weight:700; border: 1px solid var(--net-line);">
                                         <span style="display:inline-flex; align-items:center; gap:8px;">
                                             ${_networkAvatarHtml(p, 26)}
-                                            <span>${p._displayName}${p._displayStageName ? ` <span style="font-weight:600; color:var(--muted); font-size:11px;">(${p._displayStageName})</span>` : ''}</span>
+                                            <span>${nameParts.primary}${nameParts.secondary ? ` <span style="font-weight:600; color:var(--muted); font-size:11px;">(${nameParts.secondary})</span>` : ''}</span>
                                             ${uncategorizedDot}
                                         </span>
                                     </td>
@@ -7812,6 +7846,18 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
             window.networkSetSort = function(mode) {
                 window._networkSortMode = mode;
                 document.getElementById('network-sort-menu').style.display = 'none';
+                if (window._networkLastProfiles) window.renderCRM(window._networkLastProfiles);
+            };
+
+            // "Nombre a mostrar" (2026-09-19, pedido del PO) -- ver _networkNameCellParts.
+            // axis='primary': real vs artístico. axis='order': normal vs "Apellido, Nombre".
+            window.networkSetNameMode = function(axis, value) {
+                window._networkNameDisplayMode = Object.assign(
+                    { primary: 'real', order: 'normal' },
+                    window._networkNameDisplayMode,
+                    { [axis]: value }
+                );
+                document.getElementById('network-more-menu').style.display = 'none';
                 if (window._networkLastProfiles) window.renderCRM(window._networkLastProfiles);
             };
 
