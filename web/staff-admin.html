@@ -7123,21 +7123,31 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
             // faltaba usarla; antes el avatar siempre mostraba iniciales aunque
             // hubiera una foto real subida). Cae a iniciales si no hay foto.
             // Teléfonos adicionales (2026-09-19, pedido del PO: "+" azul junto a
-            // TELÉFONO para agregar más números, cada uno con un tipo -- resuelto con
-            // emoji en vez de palabras largas: 📱 iPhone/Celular, 💼 Trabajo,
-            // 🏠 Personal, 🏢 Oficina). Se guardan en phones_extra (jsonb), aparte del
-            // teléfono principal que ya existía.
-            const NETWORK_PHONE_TYPE_EMOJI = { iphone: '📱', trabajo: '💼', personal: '🏠', oficina: '🏢' };
+            // TELÉFONO para agregar más números, cada uno con un tipo). Corrección:
+            // "estos 📱💼🏠🏢 no son emoji simples" -- un <select> nativo no puede
+            // mostrar SVG (solo texto), así que el tipo pasa a ser un botón que cicla
+            // entre 4 íconos de línea (mismo lenguaje feather-style del resto de la
+            // barra) en vez de emoji a color. Se guardan en phones_extra (jsonb).
+            const NETWORK_PHONE_TYPE_ORDER = ['iphone', 'trabajo', 'personal', 'oficina'];
+            const NETWORK_PHONE_TYPE_ICON = {
+                iphone: '<rect x="7" y="2" width="10" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>',
+                trabajo: '<rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>',
+                personal: '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+                oficina: '<rect x="4" y="2" width="16" height="20" rx="1"/><line x1="8" y1="7" x2="8" y2="7"/><line x1="16" y1="7" x2="16" y2="7"/><line x1="8" y1="12" x2="8" y2="12"/><line x1="16" y1="12" x2="16" y2="12"/><line x1="8" y1="17" x2="8" y2="17"/><line x1="16" y1="17" x2="16" y2="17"/>',
+            };
+            const _networkPhoneTypeIconSvg = (tipo) => `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${NETWORK_PHONE_TYPE_ICON[tipo] || NETWORK_PHONE_TYPE_ICON.iphone}</svg>`;
+            window._networkCyclePhoneType = function(btn) {
+                const cur = btn.getAttribute('data-tipo') || 'iphone';
+                const next = NETWORK_PHONE_TYPE_ORDER[(NETWORK_PHONE_TYPE_ORDER.indexOf(cur) + 1) % NETWORK_PHONE_TYPE_ORDER.length];
+                btn.setAttribute('data-tipo', next);
+                btn.innerHTML = _networkPhoneTypeIconSvg(next);
+            };
             // 2026-09-19, corrección del PO viendo su propia captura (2 rondas): el
-            // ícono de tipo va AFUERA de la barra del número, a la izquierda -- no
-            // pegado por dentro (como la lupa del buscador, que era el intento
-            // anterior) ni en una fila separada de abajo. Es su propia burbuja
-            // pequeña, al lado, fuera de la casilla del número.
+            // ícono de tipo va AFUERA de la barra del número, a la izquierda, suelto,
+            // sin burbuja -- no pegado por dentro ni en una fila separada de abajo.
             const _networkPhoneExtraRowHtml = (entry, idx) => `
                 <div class="net-phone-extra-row" data-idx="${idx}" style="display:flex; gap:6px; align-items:center; margin-top:6px;">
-                    <select style="flex:none; width:26px; height:26px; text-align:center; background:transparent; border:none; color:var(--net-text); font-size:16px; padding:0; cursor:pointer;">
-                        ${Object.keys(NETWORK_PHONE_TYPE_EMOJI).map(key => `<option value="${key}" ${entry.tipo === key ? 'selected' : ''}>${NETWORK_PHONE_TYPE_EMOJI[key]}</option>`).join('')}
-                    </select>
+                    <button type="button" class="net-phone-type-btn" data-tipo="${entry.tipo || 'iphone'}" onclick="window._networkCyclePhoneType(this)" title="Cambiar tipo" style="flex:none; width:26px; height:26px; padding:0; background:transparent; border:none; color:var(--net-text); display:flex; align-items:center; justify-content:center; cursor:pointer;">${_networkPhoneTypeIconSvg(entry.tipo || 'iphone')}</button>
                     <input type="text" class="net-phone-extra-input" value="${_networkAttrEsc(entry.numero || '')}" placeholder="Número"
                         style="flex:1; min-width:0; background:rgba(0,0,0,0.22); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.3); color:var(--net-text); padding:8px 10px; border-radius:10px; font:inherit; font-size:13px;">
                     <button type="button" onclick="this.closest('.net-phone-extra-row').remove()" title="Quitar" style="flex:none; width:22px; height:22px; padding:0; color:#ef4444; background:transparent; border:none; font-size:20px; font-weight:800; line-height:1; cursor:pointer;">−</button>
@@ -7994,7 +8004,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 // array vacío es un valor real, distinto de "no tocar" (por eso el RPC
                 // usa COALESCE(p_phones_extra, phones_extra) con NULL, nunca con '[]').
                 const phonesExtra = [...document.querySelectorAll('#network-phones-extra .net-phone-extra-row')].map(row => ({
-                    tipo: row.querySelector('select').value,
+                    tipo: row.querySelector('.net-phone-type-btn').getAttribute('data-tipo'),
                     numero: row.querySelector('.net-phone-extra-input').value.trim(),
                 })).filter(e => e.numero);
                 // Correos adicionales (2026-09-19) -- mismo criterio que teléfonos:
