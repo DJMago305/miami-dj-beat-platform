@@ -8120,9 +8120,13 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 // por la cola de aprobación de ELIXIS, no por un botón directo aquí).
                 const rawPhone = (p._displayPhone && p._displayPhone !== '—') ? p._displayPhone.replace(/[^\d+]/g, '') : '';
                 const rawEmail = (p._displayEmail && p._displayEmail !== '—') ? p._displayEmail : '';
+                // 2026-09-19, corrección del PO: al ponerle color:var(--net-text) al
+                // <a>, Safari/macOS renderiza estos emoji en modo texto monocromo (el
+                // "SF Symbol" plano que se ve en la captura) en vez del emoji real a
+                // color -- el color solo debe afectar texto, nunca un glifo de emoji.
                 const actionBtn = (href, icon, title) => href
-                    ? `<a href="${href}" title="${title}" target="${href.indexOf('http') === 0 ? '_blank' : '_self'}" rel="noopener" style="display:inline-flex; align-items:center; justify-content:center; width:38px; height:38px; border-radius:50%; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); color:var(--net-text); font-size:15px; text-decoration:none; cursor:pointer;">${icon}</a>`
-                    : `<span title="Sin dato para ${title.toLowerCase()}" style="display:inline-flex; align-items:center; justify-content:center; width:38px; height:38px; border-radius:50%; background:var(--net-glass-bg); border:1px solid var(--net-glass-border); color:var(--net-text); opacity:0.3; font-size:15px;">${icon}</span>`;
+                    ? `<a href="${href}" title="${title}" target="${href.indexOf('http') === 0 ? '_blank' : '_self'}" rel="noopener" style="display:inline-flex; align-items:center; justify-content:center; width:38px; height:38px; border-radius:50%; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); font-size:17px; text-decoration:none; cursor:pointer;">${icon}</a>`
+                    : `<span title="Sin dato para ${title.toLowerCase()}" style="display:inline-flex; align-items:center; justify-content:center; width:38px; height:38px; border-radius:50%; background:var(--net-glass-bg); border:1px solid var(--net-glass-border); opacity:0.3; font-size:17px;">${icon}</span>`;
                 const quickActionsHtml = `<div style="display:flex; justify-content:center; gap:10px; margin-bottom:20px;">
                     ${actionBtn(rawPhone ? `sms:${rawPhone}` : '', '💬', 'Mensaje')}
                     ${actionBtn(rawPhone ? `tel:${rawPhone}` : '', '📞', 'Llamar')}
