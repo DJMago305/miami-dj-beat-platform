@@ -6947,11 +6947,12 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
             // iguales con los muñequitos porque son grupos, no es necesario crear
             // diferente emojis") -- antes cada categoría traía su propio emoji.
             const NETWORK_GROUP_ICON = '👥';
-            // "Todos" usa un ícono distinto (3 siluetas) al de las categorías (2
-            // siluetas) -- mismo lenguaje visual que "Todos los contactos" en la
-            // app nativa de Contactos, pedido explícito del PO ("ponle 3 muñequitos
-            // no 2").
-            const NETWORK_ALL_ICON = '👪';
+            // "Todos" usa un ícono de 3 siluetas (no 2, pedido explícito del PO dos
+            // veces: "ponle 3 muñequitos no 2") -- se arma con el mismo glifo de
+            // "persona" que ya usan las categorías (👥/👤) en vez del emoji de
+            // "familia" (👪), que confundiría con la categoría real "Familia
+            // (Equipo Interno)".
+            const NETWORK_ALL_ICON = '👥👤';
             const NETWORK_TABS = [
                 { id: 'artistas', label: NETWORK_GROUP_ICON + ' Artistas', cats: ['DJ', 'HoraLoca', 'Band', 'Solista', 'Visuales', 'MC', 'Payaso'] },
                 { id: 'venues', label: NETWORK_GROUP_ICON + ' Venues y Proveedores', cats: ['Comercial'] },
