@@ -184,6 +184,119 @@
             margin-bottom: 16px;
         }
 
+        /* ── Network (#crm) día/noche (2026-09-18) ──────────────────────────
+           El shell de staff.html ya difunde data-mode="light"/"dark" a este
+           iframe (broadcastTheme en staff.html) pero esta página nunca lo
+           escuchaba -- todo el admin era oscuro fijo. En vez de migrar TODO
+           staff-admin.html (fuera de alcance, cientos de admin-cards ajenas
+           a este ticket), esto le da al Network su propio micro-tema
+           auto-contenido, mismo patrón que ya usa business-financial-
+           intelligence.html para su página completa: tokens --net-* con
+           valor oscuro por defecto, redefinidos SOLO dentro de #crm cuando
+           el body trae data-mode="light". --muted/--gold también se
+           redefinen aquí, pero SOLO dentro de #crm -- no tocan el resto de
+           la página. */
+        #crm {
+            --net-line: rgba(255,255,255,0.10);
+            --net-line-soft: rgba(255,255,255,0.05);
+            --net-surface: rgba(255,255,255,0.02);
+            --net-surface-2: rgba(255,255,255,0.05);
+            --net-hover: rgba(255,255,255,0.06);
+            --net-text: #ffffff;
+            --net-text-dim: #d8d8dc;
+            --net-input-bg: rgba(255,255,255,0.04);
+            --net-input-border: rgba(255,255,255,0.12);
+            --net-card-bg: #141118;
+            --net-overlay: rgba(0,0,0,0.55);
+            --net-tab-active-bg: rgba(197,160,89,0.14);
+            --net-avatar-bg: rgba(197,160,89,0.18);
+            --net-avatar-border: rgba(197,160,89,0.35);
+            --net-badge-neutral-bg: rgba(255,255,255,0.06);
+            --net-badge-neutral-border: rgba(255,255,255,0.15);
+            --net-badge-neutral-text: rgba(255,255,255,0.55);
+            /* 2026-09-18, pedido del PO ("más degradado como el que te mostré, que
+               se vea la diferencia"): recorrido completo de arriba a abajo, mismo
+               efecto de la tarjeta de Contactos (claro arriba -> color -> oscuro
+               abajo), en nuestro dorado de marca en vez del morado de la referencia. */
+            --net-panel-gradient: radial-gradient(140% 70% at 50% -25%, rgba(244,222,182,0.85), transparent 62%),
+                linear-gradient(180deg, #e4cea0 0%, #8a6f45 24%, #3a2e1c 55%, #16130e 82%, #0a0a10 100%);
+            --net-glass-bg: rgba(255,255,255,0.08);
+            --net-glass-border: rgba(255,255,255,0.14);
+        }
+        body[data-mode="light"] #crm {
+            background: #f3f1ec;
+            border-color: rgba(15,20,30,0.12);
+            color: #14171f;
+            --muted: #5b6478;
+            --gold: #8c6a2f;
+            --net-line: rgba(15,20,30,0.14);
+            --net-line-soft: rgba(15,20,30,0.08);
+            --net-surface: #ffffff;
+            --net-surface-2: #efece4;
+            --net-hover: rgba(15,20,30,0.05);
+            --net-text: #14171f;
+            --net-text-dim: #3a3f4b;
+            --net-input-bg: #faf8f3;
+            --net-input-border: rgba(15,20,30,0.18);
+            --net-card-bg: #ffffff;
+            --net-overlay: rgba(20,20,25,0.4);
+            --net-tab-active-bg: rgba(140,106,47,0.14);
+            --net-avatar-bg: rgba(140,106,47,0.16);
+            --net-avatar-border: rgba(140,106,47,0.4);
+            --net-badge-neutral-bg: rgba(15,20,30,0.05);
+            --net-badge-neutral-border: rgba(15,20,30,0.18);
+            --net-badge-neutral-text: rgba(15,20,30,0.55);
+            --net-panel-gradient: radial-gradient(140% 70% at 50% -20%, rgba(255,255,255,0.75), transparent 65%),
+                linear-gradient(180deg, #fdf8ee 0%, #f2dfb8 35%, #e2c48c 70%, #cfab68 100%);
+            --net-glass-bg: rgba(255,255,255,0.55);
+            --net-glass-border: rgba(20,20,25,0.10);
+        }
+        body[data-mode="light"] #crm input,
+        body[data-mode="light"] #crm select,
+        body[data-mode="light"] #crm textarea {
+            color: #14171f;
+        }
+
+        /* Contraer/expandir el sidebar de categorías del Network -- mismo patrón
+           que .staff-side3.collapsed en staff.html: se achica a solo íconos. */
+        #network-sidebar-wrap.net-collapsed {
+            flex: 0 0 56px !important;
+        }
+        /* !important porque los botones de categoría traen su propio
+           display:flex inline (para el layout normal) -- sin esto el inline
+           gana y el texto nunca se esconde al contraer. */
+        #network-sidebar-wrap.net-collapsed .net-tab-label {
+            display: none !important;
+        }
+        #network-sidebar-wrap.net-collapsed .net-tab-btn {
+            justify-content: center !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+        #network-sidebar-wrap.net-collapsed #network-sidebar-toggle {
+            margin: 0 auto;
+        }
+
+        /* 2026-09-18, pedido del PO: con el panel de edición abierto, esas columnas
+           (email/teléfono/PRO/fecha/compliance/fuente) ya no hacen falta en la
+           tabla -- ese mismo dato, MÁS detallado y editable, vive ahora en el
+           panel de la derecha. Con el panel cerrado se ven todas las columnas
+           como siempre; abrir el panel solo comprime la tabla a la columna de
+           nombre, igual que la lista angosta de Contactos cuando hay alguien
+           seleccionado. Ningún dato se pierde, solo se deja de duplicar. */
+        #crm-container.net-panel-open table th:not(:first-child),
+        #crm-container.net-panel-open table td:not(:first-child) {
+            display: none;
+        }
+        #crm-container.net-panel-open table {
+            min-width: 0;
+            width: 100%;
+        }
+        #network-resize-handle:hover > div,
+        #network-resize-handle:active > div {
+            background: var(--gold) !important;
+        }
+
         /* ── ANTI-CLS: paneles de eventos reservan altura mínima ── */
         #fashion-show-panel,
         #event-blueprint {
@@ -1842,7 +1955,12 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
       #mainHeader, #owner-tabs, #mainNav, .footer, #mdj-social-sticky-bar { display: none !important; }
       aside.sidebar { display: none !important; }
       main.container { max-width: none !important; padding-top: 0 !important; }
-      .admin-grid { display: block !important; }
+      /* .admin-grid trae margin-top:20px pensado para cuando esta página se ve
+         standalone (debajo del header del sitio). Adentro del iframe ese
+         respiro sobra y se filtra hacia arriba (colapso de márgenes) hasta
+         empujar TODAS las secciones 20px -- Network, Leads, DJs, Certificados,
+         etc. por igual. Raíz real del "espacio muerto" reportado 2026-09-18. */
+      .admin-grid { display: block !important; margin-top: 0 !important; }
       .admin-grid > .content, .content { width: 100% !important; max-width: 100% !important; }
       body { padding-top: 0 !important; }
       #mdj-back-portal { position: fixed; top: 12px; left: 14px; z-index: 99999; display: inline-flex; align-items: center; gap: 6px;
@@ -2226,70 +2344,90 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                 </div>
 
                 <!-- CRM / VIP Section -->
-                <div class="admin-card" id="crm" style="display:none;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                        <div>
-                            <h3 style="margin:0; color:var(--gold);">📖 Directorio Global (CRM)</h3>
-                            <p class="fineprint">Base de datos centralizada para comunicación futura</p>
+                <div class="admin-card" id="crm" style="display:none; padding:0; overflow:hidden;">
+                  <div style="display:flex; align-items:stretch; min-height:72vh;">
+                    <!-- Sidebar de Network (2026-09-18, retoque pedido por el PO con
+                         referencia directa a macOS Contactos: la columna de categorías
+                         llega hasta arriba, a todo lo alto -- NO empieza debajo del
+                         encabezado/tarjeta VIP como antes). Agrupan las 11 categorías
+                         reales de siempre en 4 grupos grandes (Artistas / Venues y
+                         Proveedores / Clientes y Contratistas / Familia). Prototipo
+                         cero: de aquí salen todos los demás retoques visuales.
+                         Botón de contraer/expandir: mismo ícono y patrón que ya usa
+                         #side3-collapse en staff.html (rectángulo con línea vertical). -->
+                    <div id="network-sidebar-wrap" style="flex:0 0 220px; display:flex; flex-direction:column; border-right:1px solid var(--net-line); background:var(--net-surface); transition:flex-basis .15s ease;">
+                        <div style="padding:10px 8px 2px; display:flex; justify-content:flex-end;">
+                            <button type="button" id="network-sidebar-toggle" onclick="window.toggleNetworkSidebar()" title="Contraer / expandir categorías" aria-label="Contraer o expandir categorías" style="background:transparent; border:none; color:var(--muted); cursor:pointer; padding:6px; border-radius:6px; display:flex; align-items:center; justify-content:center;">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+                            </button>
                         </div>
-                        <div style="display:flex; gap:10px;">
-                            <button class="btn secondary small" onclick="window.loadCRM && window.loadCRM()">↺ Actualizar</button>
+                        <div id="network-tabs" style="flex:1; display:flex; flex-direction:column; gap:2px; padding:0 12px 18px;">
                         </div>
                     </div>
 
-                    <!-- ── FASE 1 · Captura de Fechas VIP → client_profiles.birth_date / wedding_anniversary ── -->
-                    <div id="vip-dates-card" style="border:1px solid rgba(197,160,89,0.25); border-radius:12px; padding:14px 16px; margin-bottom:16px; background:rgba(6,6,10,0.35);">
-                      <div style="font-size:13px; font-weight:800; color:var(--gold); letter-spacing:.06em; margin-bottom:10px;">🎂 FECHAS VIP · CUMPLEAÑOS / ANIVERSARIO</div>
-                      <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end;">
-                        <div style="flex:2; min-width:200px;">
-                          <label style="display:block; font-size:10px; color:#aaa; margin-bottom:4px; letter-spacing:.08em;">CLIENTE</label>
-                          <select id="vip-client" style="width:100%; background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.15); color:#fff; padding:8px 10px; border-radius:8px; font:inherit;"><option value="">— cargando… —</option></select>
-                        </div>
+                    <div style="flex:1; min-width:0; display:flex; flex-direction:column;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 24px 12px 28px; border-bottom:1px solid var(--net-line);">
                         <div>
-                          <label style="display:block; font-size:10px; color:#aaa; margin-bottom:4px; letter-spacing:.08em;">🎂 CUMPLEAÑOS</label>
-                          <input type="date" id="vip-bday" style="background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.15); color:#fff; padding:8px 10px; border-radius:8px; font:inherit;">
+                            <h3 style="margin:0; color:var(--gold);">🌐 Network<span class="mdj-help" tabindex="0"><span class="mdj-help-icon">?</span><span class="mdj-help-tip">Directorio global del negocio — antes "Directorio Global (CRM)". Prototipo 2026-09-18: pestañas + fuente del dato. Pendiente para después: detección de duplicados y fotos automáticas.</span></span></h3>
                         </div>
-                        <div>
-                          <label style="display:block; font-size:10px; color:#aaa; margin-bottom:4px; letter-spacing:.08em;">🎉 ANIVERSARIO</label>
-                          <input type="date" id="vip-anniv" style="background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.15); color:#fff; padding:8px 10px; border-radius:8px; font:inherit;">
+                        <div style="display:flex; gap:10px; align-items:center;">
+                            <!-- Editar / + (2026-09-18) -- mismos dos botones que trae la barra
+                                 de macOS Contactos junto al buscador. Todavía no hay backend de
+                                 escritura real para el Network (eso es la tarjeta de contacto
+                                 editable, pendiente aparte) -- por ahora "Editar" y las opciones
+                                 del "+" avisan honestamente que están pendientes de construir, en
+                                 vez de simular un guardado que no existe. -->
+                            <button class="btn secondary small" onclick="window.networkEditStub && window.networkEditStub()" style="border-radius:999px; padding:7px 16px; font-size:13px; font-weight:700; color:var(--net-text); border:1px solid var(--net-line); background:var(--net-hover);">Editar</button>
+                            <div style="position:relative;">
+                                <button id="network-add-btn" class="btn secondary small" onclick="window.toggleNetworkAddMenu(event)" title="Agregar" aria-label="Agregar" style="width:36px; height:36px; padding:0; line-height:1; font-size:20px; font-weight:800; color:var(--net-text); border:1px solid var(--net-line); background:var(--net-hover); border-radius:50%; display:flex; align-items:center; justify-content:center;">+</button>
+                                <div id="network-add-menu" style="display:none; position:absolute; top:calc(100% + 6px); left:0; z-index:200; min-width:220px; background:var(--net-card-bg); border:1px solid var(--net-line); border-radius:10px; box-shadow:0 12px 32px rgba(0,0,0,0.4); padding:6px; font-size:13px;">
+                                    <button onclick="window.networkAddStub('Nuevo contacto')" style="display:block; width:100%; text-align:left; background:transparent; border:none; color:var(--net-text); padding:8px 10px; border-radius:6px; cursor:pointer; font:inherit;">Nuevo contacto</button>
+                                    <button onclick="window.networkAddStub('Nueva lista')" style="display:block; width:100%; text-align:left; background:transparent; border:none; color:var(--net-text); padding:8px 10px; border-radius:6px; cursor:pointer; font:inherit;">Nueva lista</button>
+                                    <div style="height:1px; background:var(--net-line); margin:6px 4px;"></div>
+                                    <div style="padding:6px 10px; font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--net-text-dim);">Agregar campo a tarjeta</div>
+                                    <button onclick="window.networkAddStub('Teléfono')" style="display:block; width:100%; text-align:left; background:transparent; border:none; color:var(--net-text); padding:8px 10px; border-radius:6px; cursor:pointer; font:inherit;">Teléfono</button>
+                                    <button onclick="window.networkAddStub('Correo electrónico')" style="display:block; width:100%; text-align:left; background:transparent; border:none; color:var(--net-text); padding:8px 10px; border-radius:6px; cursor:pointer; font:inherit;">Correo electrónico</button>
+                                    <button onclick="window.networkAddStub('Cumpleaños')" style="display:block; width:100%; text-align:left; background:transparent; border:none; color:var(--net-text); padding:8px 10px; border-radius:6px; cursor:pointer; font:inherit;">Cumpleaños</button>
+                                </div>
+                            </div>
+                            <!-- Barra de búsqueda (2026-09-18) -- referencia directa que pidió el
+                                 PO: la píldora oscura con lupa de macOS Contactos. Filtra los
+                                 contactos ya cargados por nombre/email/teléfono, en vivo. -->
+                            <div style="position:relative; display:flex; align-items:center;">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--net-text-dim)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute; left:12px; pointer-events:none;"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                <input type="text" id="network-search" oninput="window.searchNetwork(this.value)" placeholder="Buscar" style="background:var(--net-hover); border:1px solid var(--net-line); border-radius:999px; color:var(--net-text); padding:7px 14px 7px 32px !important; font:inherit; font-size:13px !important; width:180px; box-sizing:border-box; transition:width .15s ease;" onfocus="this.style.width='240px'" onblur="if(!this.value)this.style.width='180px'">
+                            </div>
+                            <button class="btn secondary small" onclick="window.loadCRM && window.loadCRM()" title="Actualizar" aria-label="Actualizar" style="width:36px; height:36px; padding:0; line-height:1; font-size:18px; color:rgba(197,160,89,.98); border:1px solid rgba(197,160,89,.55); background:rgba(197,160,89,.12); border-radius:8px; display:flex; align-items:center; justify-content:center;">↺</button>
+                            <!-- Cerrar el modo página completa (2026-09-18, pedido del PO: un
+                                 solo grupo de botones, no dos flotando por separado). Llama a la
+                                 función expuesta por el padre (staff.html) ya que #staff-side3
+                                 vive fuera de este iframe. -->
+                            <button class="btn secondary small" onclick="window.parent.exitNetworkFullPage && window.parent.exitNetworkFullPage()" title="Cerrar y volver al menú de Staff" aria-label="Cerrar y volver al menú de Staff" style="width:36px; height:36px; padding:0; line-height:1; font-size:18px; color:rgba(197,160,89,.98); border:1px solid rgba(197,160,89,.55); background:rgba(197,160,89,.12); border-radius:8px; display:flex; align-items:center; justify-content:center;">✕</button>
                         </div>
-                        <button id="vip-save" style="background:var(--gold); color:#1a1206; font-weight:800; border:0; padding:9px 18px; border-radius:8px; cursor:pointer; font:inherit;">Guardar</button>
-                        <span id="vip-msg" style="font-size:12px; color:#aaa;"></span>
-                      </div>
                     </div>
-                    <script>
-                    (function(){
-                      function q(id){return document.getElementById(id);}
-                      async function initVip(){
-                        var sel=q('vip-client'); if(!sel) return;
-                        var sb=window.getSupabaseClient?window.getSupabaseClient():window.supabase;
-                        if(!sb || !sb.from || !sb.auth){ return setTimeout(initVip,300); }
-                        if(!(await sb.auth.getSession()).data.session){ return setTimeout(initVip,300); }
-                        var r=await sb.from('client_profiles').select('id, full_name, company_name, birth_date, wedding_anniversary').order('full_name');
-                        if(r.error){ sel.innerHTML='<option value="">Error: '+r.error.message+'</option>'; return; }
-                        var rows=r.data||[];
-                        sel.innerHTML='<option value="">— elige cliente —</option>'+rows.map(function(c){
-                          var name=(c.company_name? c.company_name+' · ':'')+(c.full_name||'Sin nombre');
-                          return '<option value="'+c.id+'" data-b="'+(c.birth_date||'')+'" data-a="'+(c.wedding_anniversary||'')+'">'+name+'</option>';
-                        }).join('');
-                        sel.onchange=function(){ var o=sel.options[sel.selectedIndex]; q('vip-bday').value=o.getAttribute('data-b')||''; q('vip-anniv').value=o.getAttribute('data-a')||''; q('vip-msg').textContent=''; };
-                        q('vip-save').onclick=async function(){
-                          var id=sel.value; if(!id){ q('vip-msg').textContent='Elige un cliente.'; return; }
-                          var payload={ birth_date:q('vip-bday').value||null, wedding_anniversary:q('vip-anniv').value||null };
-                          q('vip-msg').textContent='Guardando…';
-                          var up=await sb.from('client_profiles').update(payload).eq('id',id);
-                          if(up.error){ q('vip-msg').textContent='Error: '+up.error.message; return; }
-                          q('vip-msg').textContent='✅ Guardado — recarga la Matrix para ver la capa VIP';
-                          var o=sel.options[sel.selectedIndex]; o.setAttribute('data-b',payload.birth_date||''); o.setAttribute('data-a',payload.wedding_anniversary||'');
-                        };
-                      }
-                      initVip();
-                    })();
-                    </script>
 
-                    <div id="crm-container">
-                        <div class="loading-spinner">Cargando directorio global...</div>
+                    <!-- 2026-09-18, corrección del PO: las tablas completas (todas las
+                         columnas) se quedan como estaban, ocupando todo el ancho. El
+                         panel sólido de edición NO vive siempre visible -- aparece como
+                         columna fija a la derecha SOLO cuando seleccionas una fila y
+                         aprietas "Editar" (ver window.networkEditStub/openNetworkEditPanel).
+                         Nunca flotante/overlay -- sólido, empuja la tabla, no la tapa. -->
+                    <div id="network-split-row" style="flex:1; min-height:0; display:flex;">
+                        <div id="crm-container" style="flex:1; min-width:0; overflow-y:auto;">
+                            <div class="loading-spinner">Cargando directorio global...</div>
+                        </div>
+                        <!-- Barra vertical ajustable (2026-09-18, pedido del PO): arrastra para
+                             correr el panel de edición a gusto -- ver window._networkPanelDrag*
+                             abajo. Ancho guardado en localStorage para que quede como lo dejó
+                             quien esté editando (conveniencia de este navegador, no dato real). -->
+                        <div id="network-resize-handle" onmousedown="window.networkPanelDragStart(event)" style="display:none; flex:none; width:6px; cursor:col-resize; background:transparent; position:relative;">
+                            <div style="position:absolute; top:0; bottom:0; left:2px; width:2px; background:var(--net-line);"></div>
+                        </div>
+                        <div id="network-detail-panel" style="display:none; flex:0 0 520px; min-width:320px; max-width:70vw; overflow-y:auto; padding:32px; background:var(--net-panel-gradient);">
+                        </div>
                     </div>
+                    </div><!-- /columna derecha -->
+                  </div><!-- /fila sidebar+contenido -->
                 </div>
 
                 <!-- Certification Registry Section -->
@@ -6606,14 +6744,20 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     // se trae aparte (misma consulta directa, sin RPC — esta página ya lee
                     // dj_profiles/client_profiles así, es una superficie solo-staff) para
                     // cruzar compliance legal (Contrato / W-9) sin tocar el esquema.
-                    const [clientsRes, djsRes, contractsRes] = await Promise.all([
+                    const [clientsRes, djsRes, contractsRes, leadsRes] = await Promise.all([
                         db.from('client_profiles').select('id, full_name, email, phone, is_commercial, company_name, tier_level, total_spent, total_events, created_at').order('total_spent', { ascending: false }),
                         db.from('dj_profiles').select('id, full_name, stage_name, dj_name, email, phone, role, artist_specialty, bio, status, plan, is_premium, created_at').order('created_at', { ascending: false }),
-                        db.from('signed_contracts').select('id, artist_profile_id, contract_type, signer_email, status')
+                        db.from('signed_contracts').select('id, artist_profile_id, contract_type, signer_email, status'),
+                        // Fuente del dato (2026-09-18, pedido del PO): no hay una columna real de
+                        // "origen" en client_profiles -- se deriva por email compartido con leads
+                        // (si coincide, vino de un formulario/reserva real; si no, es una cuenta
+                        // creada directo). Honesto, no inventa un dato que no existe.
+                        db.from('leads').select('email').not('email', 'is', null),
                     ]);
 
                     if(clientsRes.error) throw clientsRes.error;
                     if(djsRes.error) throw djsRes.error;
+                    const leadEmails = new Set((leadsRes.data || []).map(l => (l.email || '').toLowerCase().trim()).filter(Boolean));
 
                     // Mapas de compliance: por artist_profile_id (artistas reales) y por
                     // email en minúsculas (todos — clientes/venues/staff no tienen fila en
@@ -6683,6 +6827,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         allContacts.push({
                             ...c,
                             _source: 'client',
+                            _fuente: cEmail && leadEmails.has(cEmail) ? 'Lead / formulario de reservas' : 'Cuenta creada directo',
                             _category: isCommercial ? 'Comercial' : 'Personal',
                             _displayName: c.company_name ? `${c.company_name} (${c.full_name || 'Sin Nombre'})` : (c.full_name || 'Sin Nombre'),
                             _displayEmail: c.email || '—',
@@ -6717,6 +6862,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         const baseContact = {
                             ...d,
                             _source: 'artist',
+                            _fuente: roleStr === 'admin' || roleStr === 'owner' || roleStr === 'manager' || roleStr === 'seller' ? 'Equipo interno (asignado por Owner)' : 'Registro de artista (auto-servicio)',
                             _displayName: d.stage_name || d.dj_name || d.full_name || 'Sin Nombre',
                             _displayEmail: d.email || '—',
                             _displayPhone: d.phone || '—',
@@ -6787,13 +6933,85 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 }
             };
             
+            // Pestañas del Network — agrupan las 11 categorías reales en 4 vistas,
+            // mismo criterio de agrupación que el PO usa en macOS Contacts.
+            const NETWORK_TABS = [
+                { id: 'artistas', label: '🎤 Artistas', cats: ['DJ', 'HoraLoca', 'Band', 'Solista', 'Visuales', 'MC', 'Payaso'] },
+                { id: 'venues', label: '🏢 Venues y Proveedores', cats: ['Comercial'] },
+                { id: 'clientes', label: '👥 Clientes y Contratistas', cats: ['Personal', 'Staff'] },
+                { id: 'familia', label: '🏠 Familia (Equipo Interno)', cats: ['MDJBStaff'] }
+            ];
+
+            // Iniciales para el círculo-avatar (estilo Contactos) cuando no hay foto real.
+            const _networkInitials = (name) => (String(name || '').trim().split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || '?');
+
+            // Etiqueta corta de categoría para la línea secundaria de cada fila de la
+            // lista (reemplaza los encabezados de tabla de antes -- ver abajo).
+            const NETWORK_CATEGORY_LABEL = {
+                DJ: 'DJ', HoraLoca: 'Hora Loca', Band: 'Músico en Vivo', Solista: 'Cantante / Solista',
+                Visuales: 'Captura y Visuales', MC: 'MC / Presentador', Payaso: 'Payaso',
+                Staff: 'Staff (Eventos)', MDJBStaff: 'Equipo Interno',
+                Personal: 'Cliente Personal', Comercial: 'Cliente Comercial / Venue'
+            };
+
+            const _networkTierColor = (t) => {
+                if(t==='DIAMOND') return '#b9f2ff';
+                if(t==='GOLD') return '#e8b96a';
+                if(t==='SILVER') return '#c0c0c0';
+                return '#a1a1aa'; // NEW
+            };
+
+            // Badges de compliance legal (Contrato + W-9) — verde con link real si
+            // ya existe el registro (abre/descarga vía ?view_record=<id>, mismo
+            // patrón que account-settings.html); gris/naranja y clicable si falta
+            // (abre el generador de envíos en la plantilla correcta vía
+            // ?open_send=<template>, prefiliando nombre/contacto — ver
+            // tryOpenSendFromQuery() en contracts-engine.html).
+            const _networkBadgeStyle = (bg, border, color) =>
+                `display:inline-flex;align-items:center;gap:4px;background:${bg};border:1px solid ${border};color:${color};padding:3px 8px;border-radius:999px;font-size:10px;font-weight:800;text-decoration:none;white-space:nowrap;backdrop-filter:blur(6px);`;
+            const _networkComplianceCell = (p) => {
+                const email = (p._displayEmail && p._displayEmail !== '—') ? p._displayEmail : '';
+                const name = encodeURIComponent(p._displayName || '');
+                const contact = encodeURIComponent(email);
+                const comp = p._compliance || {};
+
+                const contractBadge = comp.contractId
+                    ? `<a href="./contracts-engine.html?view_record=${encodeURIComponent(comp.contractId)}" target="_blank" rel="noopener" style="${_networkBadgeStyle('rgba(34,197,94,0.12)', 'rgba(34,197,94,0.35)', '#4ade80')}">📄 Contrato</a>`
+                    : (email
+                        ? `<a href="./contracts-engine.html?open_send=${encodeURIComponent(p._contractTemplate || 'private_event')}&name=${name}&contact=${contact}" target="_blank" rel="noopener" style="${_networkBadgeStyle('var(--net-badge-neutral-bg)', 'var(--net-badge-neutral-border)', 'var(--net-badge-neutral-text)')}">Sin Contrato</a>`
+                        : `<span style="${_networkBadgeStyle('var(--net-badge-neutral-bg)', 'var(--net-badge-neutral-border)', 'var(--net-badge-neutral-text)')}">Sin Contrato</span>`);
+
+                const w9Badge = comp.w9Id
+                    ? `<a href="./contracts-engine.html?view_record=${encodeURIComponent(comp.w9Id)}" target="_blank" rel="noopener" style="${_networkBadgeStyle('rgba(34,197,94,0.12)', 'rgba(34,197,94,0.35)', '#4ade80')}">🧾 W-9</a>`
+                    : (email
+                        ? `<a href="./contracts-engine.html?open_send=w9&name=${name}&contact=${contact}" target="_blank" rel="noopener" style="${_networkBadgeStyle('rgba(251,146,60,0.12)', 'rgba(251,146,60,0.35)', '#fb923c')}">Pendiente W-9</a>`
+                        : `<span style="${_networkBadgeStyle('rgba(251,146,60,0.08)', 'rgba(251,146,60,0.2)', 'rgba(251,146,60,0.45)')}">Pendiente W-9</span>`);
+
+                return `<div style="display:flex; gap:6px; flex-wrap:wrap;">${contractBadge}${w9Badge}</div>`;
+            };
+
             window.renderCRM = function(profiles) {
+                window._networkLastProfiles = profiles;
+                window._networkRowData = [];
+                if (!window._networkActiveTab) window._networkActiveTab = 'artistas';
                 const container = document.getElementById('crm-container');
+                const tabsContainer = document.getElementById('network-tabs');
                 if(profiles.length === 0) {
-                    container.innerHTML = '<p class="fineprint">No se encontraron contactos.</p>';
+                    container.innerHTML = '<p class="fineprint" style="padding:16px;">No se encontraron contactos.</p>';
+                    if (tabsContainer) tabsContainer.innerHTML = '';
                     return;
                 }
-                
+
+                // Búsqueda en vivo (2026-09-18, barra estilo Contactos) -- filtra por
+                // nombre/email/teléfono ANTES de agrupar, para que los contadores del
+                // sidebar también reflejen solo lo que coincide con la búsqueda.
+                const searchQ = (window._networkSearchQuery || '').trim().toLowerCase();
+                const visibleProfiles = searchQ.length < 1 ? profiles : profiles.filter(p => {
+                    return (p._displayName || '').toLowerCase().includes(searchQ)
+                        || (p._displayEmail || '').toLowerCase().includes(searchQ)
+                        || (p._displayPhone || '').toLowerCase().includes(searchQ);
+                });
+
                 // Group profiles by category
                 const groups = {
                     'Personal': [],
@@ -6808,76 +7026,79 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     'DJ': [],
                     'MDJBStaff': []
                 };
-                
-                profiles.forEach(p => {
+
+                visibleProfiles.forEach(p => {
                     if (groups[p._category]) {
                         groups[p._category].push(p);
                     }
                 });
 
-                const getTierColor = (t) => {
-                    if(t==='DIAMOND') return '#b9f2ff';
-                    if(t==='GOLD') return '#e8b96a';
-                    if(t==='SILVER') return '#c0c0c0';
-                    return '#a1a1aa'; // NEW
-                };
+                // Pintar el sidebar de grupos -- mismo lenguaje visual que la barra
+                // lateral de macOS Contactos (grupo + chevron de disclosure), a
+                // pedido explícito del PO. Cada grupo es una CATEGORÍA real, no una
+                // cuenta externa (aquí no hay "iCloud" -- todo vive en Supabase).
+                if (tabsContainer) {
+                    tabsContainer.innerHTML =
+                        `<div class="net-tab-label" style="font-size:10px; font-weight:800; letter-spacing:.08em; color:var(--muted); text-transform:uppercase; padding:6px 2px 8px;">Categorías</div>` +
+                        NETWORK_TABS.map(t => {
+                            const active = t.id === window._networkActiveTab;
+                            const count = t.cats.reduce((sum, cat) => sum + (groups[cat] ? groups[cat].length : 0), 0);
+                            const activeBg = 'var(--net-tab-active-bg)';
+                            const spaceIdx = t.label.indexOf(' ');
+                            const icon = spaceIdx > -1 ? t.label.slice(0, spaceIdx) : t.label;
+                            const text = spaceIdx > -1 ? t.label.slice(spaceIdx + 1) : '';
+                            return `<button type="button" class="net-tab-btn" onclick="window.switchNetworkTab('${t.id}')" title="${t.label}" style="
+                                display:flex; align-items:center; justify-content:space-between; gap:8px;
+                                padding:8px 10px; border:none; border-radius:6px; text-align:left;
+                                background:${active ? activeBg : 'transparent'};
+                                color:${active ? 'var(--gold)' : 'var(--net-text-dim)'};
+                                font-weight:${active ? '800' : '600'}; font-size:13px; cursor:pointer; white-space:nowrap;
+                                transition:background 0.15s, color 0.15s;
+                            " onmouseover="if(this.style.background==='transparent')this.style.background='var(--net-hover)'" onmouseout="this.style.background='${active ? activeBg : 'transparent'}'">
+                                <span style="flex:none;">${icon}</span>
+                                <span class="net-tab-label" style="flex:1; display:flex; align-items:center; justify-content:space-between; gap:8px; overflow:hidden;">
+                                    <span style="overflow:hidden; text-overflow:ellipsis;">${text}</span>
+                                    <span style="display:flex; align-items:center; gap:6px; flex:none;">
+                                        <span style="font-size:11px; color:var(--muted);">${count}</span>
+                                        <span style="font-size:10px; color:var(--muted);">${active ? '▾' : '▸'}</span>
+                                    </span>
+                                </span>
+                            </button>`;
+                        }).join('');
+                }
 
-                let html = '';
+                // 2026-09-18, corrección del PO sobre el intento anterior: las tablas
+                // completas (todas las columnas) se QUEDAN como estaban -- la rejilla
+                // de solo nombres no era la idea. Lo que cambia es que un clic en una
+                // fila solo SELECCIONA (la resalta); el panel sólido de edición no se
+                // abre solo hasta que se aprieta el botón "Editar" de arriba con una
+                // fila ya seleccionada -- ver window.networkEditStub().
+                window._networkRowData = [];
 
-                // Badges de compliance legal (Contrato + W-9) — verde con link real si
-                // ya existe el registro (abre/descarga vía ?view_record=<id>, mismo
-                // patrón que account-settings.html); gris/naranja y clicable si falta
-                // (abre el generador de envíos en la plantilla correcta vía
-                // ?open_send=<template>, prefiliando nombre/contacto — ver
-                // tryOpenSendFromQuery() en contracts-engine.html).
-                const badgeStyle = (bg, border, color) =>
-                    `display:inline-flex;align-items:center;gap:4px;background:${bg};border:1px solid ${border};color:${color};padding:3px 8px;border-radius:999px;font-size:10px;font-weight:800;text-decoration:none;white-space:nowrap;backdrop-filter:blur(6px);`;
-                const buildComplianceCell = (p) => {
-                    const email = (p._displayEmail && p._displayEmail !== '—') ? p._displayEmail : '';
-                    const name = encodeURIComponent(p._displayName || '');
-                    const contact = encodeURIComponent(email);
-                    const comp = p._compliance || {};
-
-                    const contractBadge = comp.contractId
-                        ? `<a href="./contracts-engine.html?view_record=${encodeURIComponent(comp.contractId)}" target="_blank" rel="noopener" style="${badgeStyle('rgba(34,197,94,0.12)', 'rgba(34,197,94,0.35)', '#4ade80')}">📄 Contrato</a>`
-                        : (email
-                            ? `<a href="./contracts-engine.html?open_send=${encodeURIComponent(p._contractTemplate || 'private_event')}&name=${name}&contact=${contact}" target="_blank" rel="noopener" style="${badgeStyle('rgba(255,255,255,0.06)', 'rgba(255,255,255,0.15)', 'rgba(255,255,255,0.45)')}">Sin Contrato</a>`
-                            : `<span style="${badgeStyle('rgba(255,255,255,0.06)', 'rgba(255,255,255,0.15)', 'rgba(255,255,255,0.3)')}">Sin Contrato</span>`);
-
-                    const w9Badge = comp.w9Id
-                        ? `<a href="./contracts-engine.html?view_record=${encodeURIComponent(comp.w9Id)}" target="_blank" rel="noopener" style="${badgeStyle('rgba(34,197,94,0.12)', 'rgba(34,197,94,0.35)', '#4ade80')}">🧾 W-9</a>`
-                        : (email
-                            ? `<a href="./contracts-engine.html?open_send=w9&name=${name}&contact=${contact}" target="_blank" rel="noopener" style="${badgeStyle('rgba(251,146,60,0.12)', 'rgba(251,146,60,0.35)', '#fb923c')}">Pendiente W-9</a>`
-                            : `<span style="${badgeStyle('rgba(251,146,60,0.08)', 'rgba(251,146,60,0.2)', 'rgba(251,146,60,0.45)')}">Pendiente W-9</span>`);
-
-                    return `<div style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center;">${contractBadge}${w9Badge}</div>`;
-                };
-
-                // Helper function to render a table for a specific group
                 const renderTable = (title, icon, groupData, isClient, index) => {
                     const tableId = `crm-table-${index}`;
                     const iconId = `crm-icon-${index}`;
-                    
-                    // Si no hay datos, mostramos la tabla vacía para que la categoría siempre exista visualmente
+
                     let tableHtml = `
-                        <div style="margin-bottom: 20px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
-                            <div onclick="toggleCRMTable('${tableId}', '${iconId}')" style="cursor: pointer; padding: 15px; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; border-radius: 8px;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
+                        <div style="margin-bottom: 20px; background: var(--net-surface); border-radius: 8px; border: 1px solid var(--net-line-soft);">
+                            <div onclick="toggleCRMTable('${tableId}', '${iconId}')" style="cursor: pointer; padding: 15px; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; border-radius: 8px;" onmouseover="this.style.background='var(--net-hover)'" onmouseout="this.style.background='transparent'">
                                 <h4 style="color: var(--gold); margin: 0; font-size: 16px;">
                                     ${icon} ${title} (${groupData.length})
                                 </h4>
                                 <span id="${iconId}" style="color: var(--gold); font-size: 12px; transition: transform 0.3s;">▼</span>
                             </div>
                             <div id="${tableId}" style="display: none; padding: 0 15px 15px 15px; overflow-x: auto;">
-                                <table style="width: 100%; min-width: 600px; border-collapse: collapse; border: 1px solid rgba(255,255,255,0.1);">
+                                <table style="width: 100%; min-width: 600px; border-collapse: collapse; border: 1px solid var(--net-line);">
                                     <thead>
-                                        <tr style="background: rgba(255,255,255,0.02);">
-                                            <th style="text-align:left; padding:10px; border: 1px solid rgba(255,255,255,0.1);">Nombre / Entidad</th>
-                                            <th style="text-align:left; padding:10px; border: 1px solid rgba(255,255,255,0.1);">Email</th>
-                                            <th style="text-align:left; padding:10px; border: 1px solid rgba(255,255,255,0.1);">Teléfono</th>
-                                            <th style="text-align:center; padding:10px; border: 1px solid rgba(255,255,255,0.1);">PRO / Nivel</th>
-                                            <th style="text-align:center; padding:10px; border: 1px solid rgba(255,255,255,0.1);">Fecha Suscripción</th>
-                                            <th style="text-align:center; padding:10px; border: 1px solid rgba(255,255,255,0.1);">Compliance Legal</th>
-                                            ${isClient ? '<th style="text-align:center; padding:10px; border: 1px solid rgba(255,255,255,0.1);">Eventos</th><th style="text-align:right; padding:10px; border: 1px solid rgba(255,255,255,0.1);">Gasto</th>' : ''}
+                                        <tr style="background: var(--net-surface);">
+                                            <th style="text-align:left; padding:10px; border: 1px solid var(--net-line);">Nombre / Entidad</th>
+                                            <th style="text-align:left; padding:10px; border: 1px solid var(--net-line);">Email</th>
+                                            <th style="text-align:left; padding:10px; border: 1px solid var(--net-line);">Teléfono</th>
+                                            <th style="text-align:center; padding:10px; border: 1px solid var(--net-line);">PRO / Nivel</th>
+                                            <th style="text-align:center; padding:10px; border: 1px solid var(--net-line);">Fecha Suscripción</th>
+                                            <th style="text-align:center; padding:10px; border: 1px solid var(--net-line);">Compliance Legal</th>
+                                            ${isClient ? '<th style="text-align:center; padding:10px; border: 1px solid var(--net-line);">Eventos</th><th style="text-align:right; padding:10px; border: 1px solid var(--net-line);">Gasto</th>' : ''}
+                                            <th style="text-align:left; padding:10px; border: 1px solid var(--net-line);">Fuente</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -6886,7 +7107,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     if (groupData.length === 0) {
                         tableHtml += `
                             <tr>
-                                <td colspan="${isClient ? 8 : 6}" style="padding:15px; text-align:center; font-size:12px; color:var(--muted); border: 1px solid rgba(255,255,255,0.1);">
+                                <td colspan="${isClient ? 9 : 7}" style="padding:15px; text-align:center; font-size:12px; color:var(--muted); border: 1px solid var(--net-line);">
                                     No hay registros en esta categoría aún.
                                 </td>
                             </tr>
@@ -6895,25 +7116,35 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         groupData.forEach(p => {
                             let proHtml = '';
                             if (isClient) {
-                                const color = getTierColor(p._proStatus);
-                                proHtml = `<span style="background:rgba(255,255,255,0.1); padding:4px 8px; border-radius:4px; font-size:11px; font-weight:800; color:${color}; border:1px solid ${color};">${p._proStatus}</span>`;
+                                const color = _networkTierColor(p._proStatus);
+                                proHtml = `<span style="background:var(--net-surface-2); padding:4px 8px; border-radius:4px; font-size:11px; font-weight:800; color:${color}; border:1px solid ${color};">${p._proStatus}</span>`;
                             } else {
                                 const pColor = p._proStatus === 'PRO' ? '#e8b96a' : '#a1a1aa';
                                 proHtml = `<span style="color:${pColor}; font-size:11px; font-weight:800;">${p._proStatus}</span>`;
                             }
 
+                            window._networkRowData.push(p);
+                            const rowIdx = window._networkRowData.length - 1;
+                            const selected = rowIdx === window._networkSelectedIdx;
+
                             tableHtml += `
-                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
-                                    <td style="padding:10px; font-weight:700; border: 1px solid rgba(255,255,255,0.1);">${p._displayName}</td>
-                                    <td style="padding:10px; font-size:12px; border: 1px solid rgba(255,255,255,0.1);">${p._displayEmail}</td>
-                                    <td style="padding:10px; font-size:12px; color:var(--muted); border: 1px solid rgba(255,255,255,0.1);">${p._displayPhone}</td>
-                                    <td style="padding:10px; text-align:center; border: 1px solid rgba(255,255,255,0.1);">${proHtml}</td>
-                                    <td style="padding:10px; text-align:center; font-size:12px; color:var(--muted); border: 1px solid rgba(255,255,255,0.1);">${p._createdAt}</td>
-                                    <td style="padding:10px; text-align:center; border: 1px solid rgba(255,255,255,0.1);">${buildComplianceCell(p)}</td>
+                                <tr class="net-data-row" data-idx="${rowIdx}" onclick="window.selectNetworkContact(${rowIdx})" style="cursor:pointer; border-bottom: 1px solid var(--net-line-soft); transition: background 0.2s; background:${selected ? 'var(--net-tab-active-bg)' : 'transparent'}; box-shadow:${selected ? 'inset 3px 0 0 var(--gold)' : 'none'};" onmouseover="if(this.getAttribute('data-idx')!='${window._networkSelectedIdx}')this.style.background='var(--net-hover)'" onmouseout="this.style.background='${selected ? 'var(--net-tab-active-bg)' : 'transparent'}'">
+                                    <td style="padding:10px; font-weight:700; border: 1px solid var(--net-line);">
+                                        <span style="display:inline-flex; align-items:center; gap:8px;">
+                                            <span style="flex:none; width:26px; height:26px; border-radius:50%; background:var(--net-avatar-bg); border:1px solid var(--net-avatar-border); color:var(--gold); font-size:10px; font-weight:800; display:flex; align-items:center; justify-content:center;">${_networkInitials(p._displayName)}</span>
+                                            <span>${p._displayName}</span>
+                                        </span>
+                                    </td>
+                                    <td style="padding:10px; font-size:12px; border: 1px solid var(--net-line);">${p._displayEmail}</td>
+                                    <td style="padding:10px; font-size:12px; color:var(--muted); border: 1px solid var(--net-line);">${p._displayPhone}</td>
+                                    <td style="padding:10px; text-align:center; border: 1px solid var(--net-line);">${proHtml}</td>
+                                    <td style="padding:10px; text-align:center; font-size:12px; color:var(--muted); border: 1px solid var(--net-line);">${p._createdAt}</td>
+                                    <td style="padding:10px; text-align:center; border: 1px solid var(--net-line);">${_networkComplianceCell(p)}</td>
                                     ${isClient ? `
-                                        <td style="padding:10px; text-align:center; border: 1px solid rgba(255,255,255,0.1);">${p.total_events || 0}</td>
-                                        <td style="padding:10px; text-align:right; color:var(--gold); border: 1px solid rgba(255,255,255,0.1);">$${Number(p.total_spent || 0).toFixed(2)}</td>
+                                        <td style="padding:10px; text-align:center; border: 1px solid var(--net-line);">${p.total_events || 0}</td>
+                                        <td style="padding:10px; text-align:right; color:var(--gold); border: 1px solid var(--net-line);">$${Number(p.total_spent || 0).toFixed(2)}</td>
                                     ` : ''}
+                                    <td style="padding:10px; font-size:11px; color:var(--muted); border: 1px solid var(--net-line);">${p._fuente || '—'}</td>
                                 </tr>
                             `;
                         });
@@ -6928,32 +7159,176 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     return tableHtml;
                 };
 
-                // Render all tables
-                html += renderTable('Clientes Personales', '👤', groups['Personal'], true, 1);
-                html += renderTable('Clientes Comerciales / Venues', '👨‍💼', groups['Comercial'], true, 2);
-                html += renderTable('DJs', '🎧', groups['DJ'], false, 3);
-                html += renderTable('Hora Loca Experience', '🎭', groups['HoraLoca'], false, 4);
-                html += renderTable('Músicos en Vivo', '🎷', groups['Band'], false, 5);
-                html += renderTable('Cantantes / Solistas', '🎤', groups['Solista'], false, 6);
-                html += renderTable('Captura y Visuales', '📸', groups['Visuales'], false, 7);
-                html += renderTable('MC y Presentadores', '🎙️', groups['MC'], false, 8);
-                html += renderTable('Staff (Eventos)', '🪪', groups['Staff'], false, 9);
-                html += renderTable('Payasos', '🤡', groups['Payaso'], false, 10);
-                html += renderTable('MDJB Staff (Equipo Interno)', '🏢', groups['MDJBStaff'], false, 11);
+                const ALL_TABLES = [
+                    { cat: 'Personal', title: 'Clientes Personales', icon: '👤', isClient: true },
+                    { cat: 'Comercial', title: 'Clientes Comerciales / Venues', icon: '👨‍💼', isClient: true },
+                    { cat: 'DJ', title: 'DJs', icon: '🎧', isClient: false },
+                    { cat: 'HoraLoca', title: 'Hora Loca Experience', icon: '🎭', isClient: false },
+                    { cat: 'Band', title: 'Músicos en Vivo', icon: '🎷', isClient: false },
+                    { cat: 'Solista', title: 'Cantantes / Solistas', icon: '🎤', isClient: false },
+                    { cat: 'Visuales', title: 'Captura y Visuales', icon: '📸', isClient: false },
+                    { cat: 'MC', title: 'MC y Presentadores', icon: '🎙️', isClient: false },
+                    { cat: 'Staff', title: 'Staff (Eventos)', icon: '🪪', isClient: false },
+                    { cat: 'Payaso', title: 'Payasos', icon: '🤡', isClient: false },
+                    { cat: 'MDJBStaff', title: 'MDJB Staff (Equipo Interno)', icon: '🏢', isClient: false }
+                ];
 
+                const activeTabDef = NETWORK_TABS.find(t => t.id === window._networkActiveTab) || NETWORK_TABS[0];
+                let html = '';
+                let idx = 0;
+                ALL_TABLES.filter(t => activeTabDef.cats.includes(t.cat)).forEach(t => {
+                    idx++;
+                    html += renderTable(t.title, t.icon, groups[t.cat], t.isClient, idx);
+                });
                 container.innerHTML = html;
-                
-                // Open the first table by default
+
                 setTimeout(() => {
                     if (window.toggleCRMTable) window.toggleCRMTable('crm-table-1', 'crm-icon-1');
                 }, 100);
             };
-            
+
+            window.switchNetworkTab = function(tabId) {
+                window._networkActiveTab = tabId;
+                window._networkSelectedIdx = null;
+                window.closeNetworkEditPanel();
+                if (window._networkLastProfiles) window.renderCRM(window._networkLastProfiles);
+            };
+
+            // Búsqueda en vivo del sidebar de Network -- ver uso en renderCRM().
+            window.searchNetwork = function(query) {
+                window._networkSearchQuery = query || '';
+                window._networkSelectedIdx = null;
+                window.closeNetworkEditPanel();
+                if (window._networkLastProfiles) window.renderCRM(window._networkLastProfiles);
+            };
+
+            // Contraer/expandir el sidebar de categorías -- mismo botón e ícono que
+            // #side3-collapse en staff.html, pedido explícito del PO (2026-09-18).
+            window.toggleNetworkSidebar = function() {
+                const wrap = document.getElementById('network-sidebar-wrap');
+                if (wrap) wrap.classList.toggle('net-collapsed');
+            };
+
+            // "Editar" (2026-09-18, corrección del PO): las tablas completas se ven
+            // siempre; el panel sólido de detalle SOLO se abre al apretar este botón
+            // con una fila ya seleccionada -- nunca automático al hacer clic en la fila.
+            // "Editar" ahora es un interruptor (2026-09-18, pedido del PO): si el
+            // panel ya está abierto, lo cierra; si está cerrado, lo abre con el
+            // contacto seleccionado.
+            window.networkEditStub = function() {
+                if (window._networkEditPanelOpen) {
+                    window.closeNetworkEditPanel();
+                    return;
+                }
+                const idx = window._networkSelectedIdx;
+                const p = idx != null ? (window._networkRowData || [])[idx] : null;
+                if (!p) {
+                    alert('Selecciona primero un contacto de la tabla (haz clic en su fila) y luego aprieta Editar.');
+                    return;
+                }
+                window.openNetworkEditPanel(p);
+            };
+            window.toggleNetworkAddMenu = function(ev) {
+                if (ev) ev.stopPropagation();
+                const menu = document.getElementById('network-add-menu');
+                if (!menu) return;
+                const willOpen = menu.style.display === 'none';
+                menu.style.display = willOpen ? 'block' : 'none';
+                if (willOpen) {
+                    const closeOnOutside = (e) => {
+                        if (!menu.contains(e.target) && e.target.id !== 'network-add-btn') {
+                            menu.style.display = 'none';
+                            document.removeEventListener('click', closeOnOutside);
+                        }
+                    };
+                    setTimeout(() => document.addEventListener('click', closeOnOutside), 0);
+                }
+            };
+            window.networkAddStub = function(label) {
+                document.getElementById('network-add-menu').style.display = 'none';
+                alert('"' + label + '" todavía no está construido -- pendiente de definir a qué tabla real se guarda.');
+            };
+
+            // Selección de fila (2026-09-18, corrección del PO): SOLO resalta -- ya
+            // no abre el panel de detalle automáticamente. Eso ahora requiere
+            // apretar "Editar" a propósito (ver window.networkEditStub arriba).
+            window.selectNetworkContact = function(idx) {
+                window._networkSelectedIdx = idx;
+                const rows = document.querySelectorAll('#crm-container .net-data-row');
+                rows.forEach(row => {
+                    const sel = Number(row.getAttribute('data-idx')) === idx;
+                    row.style.background = sel ? 'var(--net-tab-active-bg)' : 'transparent';
+                    row.style.boxShadow = sel ? 'inset 3px 0 0 var(--gold)' : 'none';
+                });
+                // Si el panel ya estaba abierto (editando a otro contacto), lo
+                // actualiza en vivo para que siga la selección sin un segundo clic.
+                if (window._networkEditPanelOpen) {
+                    const p = (window._networkRowData || [])[idx];
+                    if (p) window.renderNetworkDetail(p);
+                }
+            };
+
+            // Abre/cierra la columna del panel sólido -- oculta por defecto (flex:0,
+            // width:0), solo aparece cuando se pide explícitamente con "Editar".
+            window.openNetworkEditPanel = function(p) {
+                const panel = document.getElementById('network-detail-panel');
+                const container = document.getElementById('crm-container');
+                const handle = document.getElementById('network-resize-handle');
+                if (!panel) return;
+                window._networkEditPanelOpen = true;
+                panel.style.display = 'block';
+                if (handle) handle.style.display = 'block';
+                if (container) container.classList.add('net-panel-open');
+                // Ancho recordado en este navegador (conveniencia del que edita, no dato
+                // real -- si falla o nunca se guardó, se queda con los 520px de siempre).
+                try {
+                    const saved = localStorage.getItem('mdjNetworkPanelWidth');
+                    if (saved) panel.style.flexBasis = saved + 'px';
+                } catch (e) {}
+                window.renderNetworkDetail(p);
+            };
+            window.closeNetworkEditPanel = function() {
+                const panel = document.getElementById('network-detail-panel');
+                const container = document.getElementById('crm-container');
+                const handle = document.getElementById('network-resize-handle');
+                if (panel) panel.style.display = 'none';
+                if (handle) handle.style.display = 'none';
+                if (container) container.classList.remove('net-panel-open');
+                window._networkEditPanelOpen = false;
+            };
+
+            // Barra vertical ajustable (2026-09-18, pedido explícito del PO): arrastra
+            // para correr el panel de edición a gusto de quien esté editando. Mientras
+            // más a la izquierda el mouse, más ANCHO el panel (está pegado a la derecha).
+            window.networkPanelDragStart = function(ev) {
+                ev.preventDefault();
+                const panel = document.getElementById('network-detail-panel');
+                const row = document.getElementById('network-split-row');
+                if (!panel || !row) return;
+                const rowRect = row.getBoundingClientRect();
+                const onMove = (e) => {
+                    let newWidth = rowRect.right - e.clientX;
+                    const minW = 320, maxW = Math.round(rowRect.width * 0.7);
+                    newWidth = Math.max(minW, Math.min(maxW, newWidth));
+                    panel.style.flexBasis = newWidth + 'px';
+                };
+                const onUp = () => {
+                    document.removeEventListener('mousemove', onMove);
+                    document.removeEventListener('mouseup', onUp);
+                    document.body.style.cursor = '';
+                    document.body.style.userSelect = '';
+                    try { localStorage.setItem('mdjNetworkPanelWidth', parseInt(panel.style.flexBasis, 10)); } catch (e) {}
+                };
+                document.body.style.cursor = 'col-resize';
+                document.body.style.userSelect = 'none';
+                document.addEventListener('mousemove', onMove);
+                document.addEventListener('mouseup', onUp);
+            };
+
             window.toggleCRMTable = function(tableId, iconId) {
                 const table = document.getElementById(tableId);
                 const icon = document.getElementById(iconId);
                 if (!table || !icon) return;
-                
                 if (table.style.display === 'none') {
                     table.style.display = 'block';
                     icon.style.transform = 'rotate(180deg)';
@@ -6961,6 +7336,82 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     table.style.display = 'none';
                     icon.style.transform = 'rotate(0deg)';
                 }
+            };
+
+            // Panel de detalle SÓLIDO (2026-09-18, pedido explícito del PO con
+            // referencia directa a macOS Contactos: "todo se recoge y se abre este
+            // panel sólido, no flotante"). Vive siempre en el layout, nunca como
+            // overlay/modal. Trae TODO lo que antes vivía en columnas de tabla
+            // (email/teléfono/PRO/compliance/fuente) -- nada se perdió, solo cambió
+            // de lugar. Sigue siendo una VISTA; guardar cambios reales es un RPC
+            // aparte, pendiente de que se pida explícitamente.
+            window.renderNetworkDetail = function(p) {
+                const panel = document.getElementById('network-detail-panel');
+                if (!panel) return;
+                if (!p) {
+                    panel.innerHTML = '<p class="fineprint" style="padding:16px;">Elige un contacto de la lista para ver su ficha.</p>';
+                    return;
+                }
+
+                const field = (label, value, placeholder) => `
+                    <div style="margin-bottom:14px;">
+                        <label style="display:block; font-size:10px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:4px;">${label}</label>
+                        <input type="text" value="${(value || '').toString().replace(/"/g, '&quot;')}" placeholder="${placeholder || '—'}" readonly
+                            style="width:100%; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); color:var(--net-text); padding:8px 10px; border-radius:10px; font:inherit; font-size:13px;">
+                    </div>`;
+
+                let proHtml = '';
+                if (p._proStatus) {
+                    if (p._category === 'Personal' || p._category === 'Comercial') {
+                        const color = _networkTierColor(p._proStatus);
+                        proHtml = `<span style="background:var(--net-surface-2); padding:4px 8px; border-radius:4px; font-size:11px; font-weight:800; color:${color}; border:1px solid ${color};">${p._proStatus}</span>`;
+                    } else {
+                        const pColor = p._proStatus === 'PRO' ? '#e8b96a' : '#a1a1aa';
+                        proHtml = `<span style="color:${pColor}; font-size:11px; font-weight:800;">${p._proStatus}</span>`;
+                    }
+                }
+                const isClient = p._category === 'Personal' || p._category === 'Comercial';
+
+                panel.innerHTML = `
+                    <div style="max-width:460px; margin:0 auto; text-align:center; position:relative;">
+                        <button onclick="window.closeNetworkEditPanel()" aria-label="Cerrar edición" title="Cerrar" style="position:absolute; top:-8px; right:-8px; background:transparent; border:none; color:var(--muted); font-size:22px; cursor:pointer; line-height:1;">×</button>
+                        <div style="width:104px; height:104px; border-radius:50%; margin:0 auto 14px; background:var(--net-glass-bg); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border:1px solid var(--net-glass-border); box-shadow:0 0 0 1px rgba(197,160,89,0.15), 0 12px 32px rgba(0,0,0,0.25); color:var(--gold); font-size:34px; font-weight:800; display:flex; align-items:center; justify-content:center;">${_networkInitials(p._displayName)}</div>
+                        <h2 style="margin:0 0 2px; color:var(--net-text); font-size:20px; text-shadow:0 1px 4px rgba(0,0,0,0.35);">${p._displayName || 'Sin Nombre'}</h2>
+                        <div style="font-size:12px; color:rgba(20,15,8,0.62); font-weight:600; margin-bottom:4px;">${NETWORK_CATEGORY_LABEL[p._category] || p._category}${proHtml ? ' · ' : ''}${proHtml}</div>
+                        <div style="font-size:11px; color:rgba(20,15,8,0.5); font-weight:600; margin-bottom:22px;">${p._fuente || '—'}</div>
+
+                        <div style="text-align:left;">
+                            ${field('Teléfono', p._displayPhone, 'Sin teléfono registrado')}
+                            ${field('Email', p._displayEmail, 'Sin email registrado')}
+                            <div style="display:flex; gap:16px; margin-bottom:14px; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); border-radius:10px; padding:10px 14px;">
+                                <div style="flex:1;">
+                                    <label style="display:block; font-size:10px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:4px;">Contrato</label>
+                                    <div>${p._compliance && p._compliance.contractId ? '<span style="color:#4ade80; font-weight:700; font-size:12px;">✅ Firmado</span>' : '<span style="color:#fb923c; font-weight:700; font-size:12px;">Pendiente</span>'}</div>
+                                </div>
+                                <div style="flex:1;">
+                                    <label style="display:block; font-size:10px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:4px;">W-9</label>
+                                    <div>${p._compliance && p._compliance.w9Id ? '<span style="color:#4ade80; font-weight:700; font-size:12px;">✅ Firmado</span>' : '<span style="color:#fb923c; font-weight:700; font-size:12px;">Pendiente</span>'}</div>
+                                </div>
+                            </div>
+                            ${isClient ? `
+                            <div style="display:flex; gap:16px; margin-bottom:14px; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); border-radius:10px; padding:10px 14px;">
+                                <div style="flex:1;">
+                                    <label style="display:block; font-size:10px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:4px;">Eventos</label>
+                                    <div style="color:var(--net-text); font-weight:700;">${p.total_events || 0}</div>
+                                </div>
+                                <div style="flex:1;">
+                                    <label style="display:block; font-size:10px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:4px;">Gasto Total</label>
+                                    <div style="color:var(--gold); font-weight:700;">$${Number(p.total_spent || 0).toFixed(2)}</div>
+                                </div>
+                            </div>` : ''}
+                            <div style="margin-bottom:4px;">
+                                <label style="display:block; font-size:10px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:4px;">Notas</label>
+                                <textarea readonly placeholder="Sin notas todavía" rows="2" style="width:100%; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); color:var(--net-text); padding:8px 10px; border-radius:10px; font:inherit; font-size:13px; resize:none;"></textarea>
+                            </div>
+                            <p class="fineprint" style="margin-top:12px;">Vista de solo lectura por ahora -- editar y guardar campos aquí es un paso aparte, pendiente de que se pida explícitamente.</p>
+                        </div>
+                    </div>
+                `;
             };
 
             // ══ VENUES / SALAS / TAQUILLA — CRUD anidado de 4 niveles ══════════════

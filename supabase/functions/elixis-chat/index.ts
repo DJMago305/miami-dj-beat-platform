@@ -1430,6 +1430,48 @@ serve(async (req: Request) => {
         },
     };
 
+    // 2026-09-18, pedido explícito del PO ("Network" -- lo que hoy es
+    // "Directorio Global (CRM)" en staff-admin.html, solo de lectura y a
+    // mano). buscar_cliente arriba SOLO mira client_profiles -- no ve DJs,
+    // bandas, MCs, payasos, staff interno, ni si alguien tiene contrato/W-9
+    // firmado. Esta herramienta expone la MISMA clasificación que ya usa esa
+    // pantalla (categoría por especialidad/bio, cruce de compliance legal),
+    // para que ELIXIS pueda consultarla por voz/chat en vez de que el staff
+    // tenga que ir a mirar la tabla a mano. Sin escritura todavía -- eso
+    // queda para un ticket aparte, a propósito (tocar contratos/W-9 de
+    // alguien por chat es mas delicado que solo consultarlos).
+    const CONTACT_NETWORK_TOOL = {
+        name: "consultar_red_contactos",
+        description:
+            "Consulta el Directorio Global del negocio (\"Network\"): TODOS los contactos reales -- " +
+            "clientes (personales y comerciales/venues) Y todo tipo de talento (DJs, bandas, solistas, " +
+            "Hora Loca, visuales, MC, payasos, staff de evento, staff interno de MDJB) -- con su estado " +
+            "de compliance legal (contrato de servicio y W-9 firmados o pendientes). Distinta de " +
+            "buscar_cliente (esa SOLO ve clientes, sin categoría ni compliance). Usala para preguntas " +
+            "como \"¿qué DJs no tienen contrato firmado?\", \"dame los contactos de Hora Loca\", o " +
+            "\"busca a Fulano en el directorio\". Sin filtros, trae los mas recientes -- pide un filtro " +
+            "mas especifico si el resultado no alcanza. NUNCA inventes un contacto que no aparezca aqui.",
+        input_schema: {
+            type: "object",
+            properties: {
+                query: {
+                    type: "string",
+                    description: "Texto a buscar: nombre, email, teléfono o empresa (parcial, opcional).",
+                },
+                categoria: {
+                    type: "string",
+                    enum: ["cliente_personal", "cliente_comercial", "dj", "banda", "solista", "hora_loca", "visuales", "mc", "payaso", "staff_evento", "staff_interno", "todas"],
+                    description: "Filtra por categoría del directorio. Default 'todas' si no se especifica.",
+                },
+                compliance: {
+                    type: "string",
+                    enum: ["sin_contrato", "sin_w9", "todos"],
+                    description: "Filtra por estado de compliance legal. 'sin_contrato'/'sin_w9' = solo quienes NO lo tienen firmado todavia. Default 'todos'.",
+                },
+            },
+        },
+    };
+
     const MUSIC_TOOL = {
         name: "consultar_musica",
         description:
@@ -1671,6 +1713,7 @@ serve(async (req: Request) => {
             || toolName === "consultar_agenda_artista"
             || toolName === "consultar_catalogo_precios"
             || toolName === "buscar_cliente"
+            || toolName === "consultar_red_contactos"
             || toolName === "consultar_musica"
             || toolName === "consultar_efemerides"
             || toolName === "consultar_historial_bitacora"
@@ -2301,6 +2344,168 @@ serve(async (req: Request) => {
         return JSON.stringify({ ok: true, count: data?.length ?? 0, clientes: data ?? [] });
     }
 
+    /* Mismo criterio de categorización que web/staff-admin.html ("Network") --
+       una sola fuente de verdad conceptual, aunque el runtime es distinto
+       (Deno vs navegador) y no se puede compartir el archivo literal. Si se
+       cambia el regex de categorías allá, hay que replicarlo aquí también. */
+    async function runContactNetworkTool(input: Record<string, unknown>): Promise<string> {
+        const query = String(input?.query ?? "").trim().toLowerCase();
+        const categoriaFiltro = String(input?.categoria ?? "todas").trim();
+        const complianceFiltro = String(input?.compliance ?? "todos").trim();
+
+        const [clientsRes, djsRes, contractsRes, leadsRes] = await Promise.all([
+            ADMIN.from("client_profiles").select("id, full_name, email, phone, is_commercial, company_name, tier_level, total_spent, total_events, created_at"),
+            ADMIN.from("dj_profiles").select("id, full_name, stage_name, dj_name, email, phone, role, artist_specialty, bio, status, plan, is_premium, created_at"),
+            ADMIN.from("signed_contracts").select("id, artist_profile_id, contract_type, signer_email, status"),
+            ADMIN.from("leads").select("email").not("email", "is", null),
+        ]);
+        if (clientsRes.error) return JSON.stringify({ error: `client_profiles: ${clientsRes.error.message}` });
+        if (djsRes.error) return JSON.stringify({ error: `dj_profiles: ${djsRes.error.message}` });
+        if (contractsRes.error) return JSON.stringify({ error: `signed_contracts: ${contractsRes.error.message}` });
+
+        const leadEmails = new Set(
+            (leadsRes.data ?? []).map((l: Record<string, unknown>) => String(l.email ?? "").toLowerCase().trim()).filter(Boolean),
+        );
+
+        const SERVICE_CONTRACT_TYPES = new Set([
+            "DJ_AGREEMENT", "VENUE_AGREEMENT", "CORPORATE_AGREEMENT", "STAFF_AGREEMENT",
+            "LIVE_BAND_AGREEMENT", "SOLO_ARTIST_AGREEMENT", "SUBCONTRACTOR_SHOW_AGREEMENT", "PRIVATE_EVENT_AGREEMENT",
+        ]);
+        type ComplianceBucket = { contractId: string | null; w9Id: string | null };
+        const complianceByProfileId: Record<string, ComplianceBucket> = {};
+        const complianceByEmail: Record<string, ComplianceBucket> = {};
+        (contractsRes.data ?? []).forEach((c: Record<string, unknown>) => {
+            const isW9 = c.contract_type === "W9";
+            const bucket: ComplianceBucket = { contractId: null, w9Id: null };
+            if (isW9) bucket.w9Id = String(c.id);
+            else if (SERVICE_CONTRACT_TYPES.has(String(c.contract_type))) bucket.contractId = String(c.id);
+            const mergeInto = (map: Record<string, ComplianceBucket>, key: string | null) => {
+                if (!key) return;
+                const cur = map[key] || { contractId: null, w9Id: null };
+                if (bucket.contractId) cur.contractId = bucket.contractId;
+                if (bucket.w9Id) cur.w9Id = bucket.w9Id;
+                map[key] = cur;
+            };
+            mergeInto(complianceByProfileId, c.artist_profile_id ? String(c.artist_profile_id) : null);
+            mergeInto(complianceByEmail, String(c.signer_email ?? "").toLowerCase().trim() || null);
+        });
+        const getCompliance = (profileId: string | null, email: string | null): ComplianceBucket => {
+            const byId = profileId ? complianceByProfileId[profileId] : null;
+            const byEmail = email ? complianceByEmail[email.toLowerCase().trim()] : null;
+            return {
+                contractId: byId?.contractId || byEmail?.contractId || null,
+                w9Id: byId?.w9Id || byEmail?.w9Id || null,
+            };
+        };
+
+        const talentEmails = new Set<string>();
+        (djsRes.data ?? []).forEach((d: Record<string, unknown>) => {
+            if (!d.artist_specialty && !d.bio && d.status === "PENDING_REVIEW") return;
+            if (d.email) talentEmails.add(String(d.email).toLowerCase().trim());
+            if (d.full_name) talentEmails.add(String(d.full_name).toLowerCase().trim());
+            if (d.stage_name) talentEmails.add(String(d.stage_name).toLowerCase().trim());
+            if (d.dj_name) talentEmails.add(String(d.dj_name).toLowerCase().trim());
+        });
+
+        type ContactoRed = {
+            _categoria: string; _fuente: string; _nombre: string; _email: string | null; _telefono: string | null;
+            _compliance: ComplianceBucket; _nivel?: string; _eventos?: number; _gasto?: number;
+        };
+        const contactos: ContactoRed[] = [];
+
+        (clientsRes.data ?? []).forEach((c: Record<string, unknown>) => {
+            const cEmail = String(c.email ?? "").toLowerCase().trim();
+            const cName = String(c.full_name ?? "").toLowerCase().trim();
+            if ((cEmail && talentEmails.has(cEmail)) || (cName && talentEmails.has(cName))) return;
+            const isCommercial = !!c.is_commercial;
+            contactos.push({
+                _categoria: isCommercial ? "cliente_comercial" : "cliente_personal",
+                _fuente: cEmail && leadEmails.has(cEmail) ? "Lead / formulario de reservas" : "Cuenta creada directo",
+                _nombre: c.company_name ? `${c.company_name} (${c.full_name || "Sin Nombre"})` : String(c.full_name || "Sin Nombre"),
+                _email: (c.email as string) || null,
+                _telefono: (c.phone as string) || null,
+                _compliance: getCompliance(null, (c.email as string) || null),
+                _nivel: (c.tier_level as string) || "NEW",
+                _eventos: Number(c.total_events ?? 0),
+                _gasto: Number(c.total_spent ?? 0),
+            });
+        });
+
+        const CATEGORY_MAP: Record<string, string> = {
+            DJ: "dj", HoraLoca: "hora_loca", Band: "banda", Solista: "solista",
+            Visuales: "visuales", MC: "mc", Payaso: "payaso", Staff: "staff_evento", MDJBStaff: "staff_interno",
+        };
+        (djsRes.data ?? []).forEach((d: Record<string, unknown>) => {
+            if (!d.stage_name && !d.artist_specialty && !d.bio && d.status === "PENDING_REVIEW") return;
+            const spec = (String(d.artist_specialty ?? "") + " " + String(d.bio ?? "")).toLowerCase();
+            const roleStr = String(d.role ?? "").toLowerCase().trim();
+            const esInterno = roleStr === "admin" || roleStr === "owner" || roleStr === "manager" || roleStr === "seller";
+            const fuente = esInterno ? "Equipo interno (asignado por Owner)" : "Registro de artista (auto-servicio)";
+            const nombre = String(d.stage_name || d.dj_name || d.full_name || "Sin Nombre");
+            const compliance = getCompliance((d.id as string) || null, (d.email as string) || null);
+
+            let asignadas: string[] = [];
+            if (esInterno) asignadas.push("MDJBStaff");
+            if (/\b(bartender|mesero|chef|staff)\b/.test(spec)) asignadas.push("Staff");
+            if (/\b(hora loca|robot|personaje|zanquero)\b/.test(spec)) asignadas.push("HoraLoca");
+            if (/\b(band|banda|bandas|orquesta|orquestas|músicos|musicos)\b/.test(spec)) asignadas.push("Band");
+            if (/\b(cantante|solista|vocalista|saxo|percusión|percusion)\b/.test(spec)) asignadas.push("Solista");
+            if (/\b(foto|video|vj|drone|booth|espejo|visuales)\b/.test(spec)) asignadas.push("Visuales");
+            if (/\b(mc|host|presentador|maestro de ceremonia)\b/.test(spec)) asignadas.push("MC");
+            if (/\b(payaso|payasos|circo|santa|infantil)\b/.test(spec)) asignadas.push("Payaso");
+            if (/\b(dj)\b/.test(spec) || asignadas.length === 0) asignadas.push("DJ");
+            asignadas = [...new Set(asignadas)];
+
+            asignadas.forEach((cat) => {
+                contactos.push({
+                    _categoria: CATEGORY_MAP[cat] || "dj",
+                    _fuente: fuente,
+                    _nombre: nombre,
+                    _email: (d.email as string) || null,
+                    _telefono: (d.phone as string) || null,
+                    _compliance: compliance,
+                });
+            });
+        });
+
+        let filtrados = contactos;
+        if (categoriaFiltro && categoriaFiltro !== "todas") {
+            filtrados = filtrados.filter((c) => c._categoria === categoriaFiltro);
+        }
+        if (complianceFiltro === "sin_contrato") {
+            filtrados = filtrados.filter((c) => !c._compliance.contractId);
+        } else if (complianceFiltro === "sin_w9") {
+            filtrados = filtrados.filter((c) => !c._compliance.w9Id);
+        }
+        if (query.length >= 2) {
+            filtrados = filtrados.filter((c) =>
+                (c._nombre || "").toLowerCase().includes(query) ||
+                (c._email || "").toLowerCase().includes(query) ||
+                (c._telefono || "").toLowerCase().includes(query)
+            );
+        }
+
+        const total = filtrados.length;
+        const resultado = filtrados.slice(0, 25).map((c) => ({
+            nombre: c._nombre,
+            email: c._email,
+            telefono: c._telefono,
+            categoria: c._categoria,
+            fuente: c._fuente,
+            contrato_firmado: !!c._compliance.contractId,
+            w9_firmado: !!c._compliance.w9Id,
+            ...(c._nivel ? { nivel: c._nivel, eventos: c._eventos, gasto_total_usd: c._gasto } : {}),
+        }));
+
+        return JSON.stringify({
+            ok: true,
+            total_encontrados: total,
+            mostrando: resultado.length,
+            ...(total > 25 ? { aviso: "Hay más resultados de los mostrados -- pide un filtro más específico (categoria/compliance/query)." } : {}),
+            contactos: resultado,
+        });
+    }
+
     async function runMemoryTool(input: Record<string, unknown>): Promise<string> {
         const clave = String(input?.clave ?? "").trim().toLowerCase()
             .replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 128);
@@ -2838,7 +3043,7 @@ serve(async (req: Request) => {
                     // extended thinking (abajo) tampoco lo acepta junto.
                     ...thinkingParam,
                     system: systemContent,
-                    tools: [FINANCIAL_TOOL, LEAD_NOTE_TOOL, AGENDA_READ_TOOL, AGENDA_WRITE_TOOL, AGENDA_EVENTOS_TOOL, RESIDENCY_TOOL, EFEMERIDES_TOOL, INCIDENT_WRITE_TOOL, INCIDENT_READ_TOOL, CATALOG_READ_TOOL, CATALOG_PRICE_TOOL, QUOTE_WRITE_TOOL, CLIENT_SEARCH_TOOL, SMS_QUEUE_TOOL, EMAIL_QUEUE_TOOL, CONFIRM_SEND_TOOL, MUSIC_TOOL, MEMORY_TOOL, SEGUIMIENTO_ANUAL_TOOL, CUMPLEANOS_CONTACTOS_TOOL, LIBRO_EVENTO_TOOL, VENUE_EVENTS_TOOL, VENUE_RESERVATION_TOOL],
+                    tools: [FINANCIAL_TOOL, LEAD_NOTE_TOOL, AGENDA_READ_TOOL, AGENDA_WRITE_TOOL, AGENDA_EVENTOS_TOOL, RESIDENCY_TOOL, EFEMERIDES_TOOL, INCIDENT_WRITE_TOOL, INCIDENT_READ_TOOL, CATALOG_READ_TOOL, CATALOG_PRICE_TOOL, QUOTE_WRITE_TOOL, CLIENT_SEARCH_TOOL, CONTACT_NETWORK_TOOL, SMS_QUEUE_TOOL, EMAIL_QUEUE_TOOL, CONFIRM_SEND_TOOL, MUSIC_TOOL, MEMORY_TOOL, SEGUIMIENTO_ANUAL_TOOL, CUMPLEANOS_CONTACTOS_TOOL, LIBRO_EVENTO_TOOL, VENUE_EVENTS_TOOL, VENUE_RESERVATION_TOOL],
                     messages: convo,
                 }),
             });
@@ -3001,6 +3206,16 @@ serve(async (req: Request) => {
                     await recordAiKpi(failed ? "tool_error" : "tool_ok");
                 } else if (toolName === "buscar_cliente") {
                     out = await runClientSearchTool((b.input as Record<string, unknown>) ?? {});
+                    let failed = true;
+                    try {
+                        const parsed = JSON.parse(out) as { error?: unknown; ok?: unknown };
+                        failed = parsed == null || parsed.error != null || parsed.ok !== true;
+                    } catch {
+                        failed = true;
+                    }
+                    await recordAiKpi(failed ? "tool_error" : "tool_ok");
+                } else if (toolName === "consultar_red_contactos") {
+                    out = await runContactNetworkTool((b.input as Record<string, unknown>) ?? {});
                     let failed = true;
                     try {
                         const parsed = JSON.parse(out) as { error?: unknown; ok?: unknown };
