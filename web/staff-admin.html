@@ -6748,7 +6748,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     // se trae aparte (misma consulta directa, sin RPC — esta página ya lee
                     // dj_profiles/client_profiles así, es una superficie solo-staff) para
                     // cruzar compliance legal (Contrato / W-9) sin tocar el esquema.
-                    const [clientsRes, djsRes, contractsRes, leadsRes, listsRes, listMembersRes] = await Promise.all([
+                    const [clientsRes, djsRes, contractsRes, leadsRes, listsRes, listMembersRes, referenciaRes] = await Promise.all([
                         db.from('client_profiles').select('id, full_name, email, phone, birth_date, is_commercial, company_name, tier_level, total_spent, total_events, created_at').order('total_spent', { ascending: false }),
                         db.from('dj_profiles').select('id, full_name, stage_name, dj_name, email, phone, birth_date, role, artist_specialty, bio, status, plan, is_premium, created_at').order('created_at', { ascending: false }),
                         db.from('signed_contracts').select('id, artist_profile_id, contract_type, signer_email, status'),
@@ -6762,6 +6762,12 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         // Clientes/Familia. Viven en network_lists/network_list_members.
                         db.from('network_lists').select('id, name').order('created_at', { ascending: true }),
                         db.from('network_list_members').select('list_id, fuente, contacto_id'),
+                        // Contactos de referencia (2026-09-19, pedido del PO: importar su base
+                        // de datos externa de proveedores/artistas/prospectos SIN cuenta real
+                        // -- "no tienen cuenta con nosotros, solo son parte de nuestra base de
+                        // datos para publicidad"). Tabla aparte de client_profiles/dj_profiles
+                        // porque no representan cuentas reales.
+                        db.from('network_referencia_contactos').select('id, nombre, telefono, email, empresa, notas, origen_csv'),
                     ]);
 
                     if(clientsRes.error) throw clientsRes.error;
@@ -6947,6 +6953,26 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         });
                     });
                     
+                    // Contactos de referencia -- sin cuenta real, por eso no tienen
+                    // _category (no encajan en ningún ALL_TABLES/NETWORK_TABS derivado
+                    // de datos reales de cuenta). Solo aparecen en "Todos" y en las
+                    // categorías personalizadas a las que se les asignó explícitamente.
+                    (referenciaRes.data || []).forEach(r => {
+                        allContacts.push({
+                            ...r,
+                            _source: 'referencia',
+                            _category: null,
+                            _fuente: 'Contacto de referencia (sin cuenta)',
+                            _displayName: r.nombre || 'Sin Nombre',
+                            _displayEmail: r.email || '—',
+                            _displayPhone: r.telefono || '—',
+                            _displayBirthDate: '—',
+                            _proStatus: null,
+                            _createdAt: '—',
+                            _compliance: { contractId: null, w9Id: null },
+                        });
+                    });
+
                     window.allCRMProfiles = allContacts;
                     renderCRM(window.allCRMProfiles);
                 } catch(e) {
@@ -7017,7 +7043,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
             // usaba window.saveNetworkContact, ahora compartida con las categorías
             // personalizadas (network_list_members guarda "fuente" para saber en
             // cuál de las dos tablas está cada contacto).
-            const _networkFuenteDe = (p) => (p._category === 'Personal' || p._category === 'Comercial') ? 'client' : 'dj';
+            const _networkFuenteDe = (p) => p._source === 'referencia' ? 'referencia' : ((p._category === 'Personal' || p._category === 'Comercial') ? 'client' : 'dj');
 
             // Una misma persona real puede tener varias categorías automáticas a la
             // vez (ej. Owner que es DJ + Staff (Eventos) + Equipo Interno), así que
@@ -7305,7 +7331,9 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     } else {
                         groupData.forEach(p => {
                             let proHtml = '';
-                            if (isClient) {
+                            if (!p._proStatus) {
+                                proHtml = '<span style="color:var(--muted); font-size:11px;">—</span>';
+                            } else if (isClient) {
                                 const color = _networkTierColor(p._proStatus);
                                 proHtml = `<span style="background:var(--net-surface-2); padding:4px 8px; border-radius:4px; font-size:11px; font-weight:800; color:${color}; border:1px solid ${color};">${p._proStatus}</span>`;
                             } else {
@@ -7738,7 +7766,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
                 if (!sb || !sb.rpc) { if (msg) msg.textContent = 'Sin conexión a la base.'; return; }
 
-                const fuente = (p._category === 'Personal' || p._category === 'Comercial') ? 'client' : 'dj';
+                const fuente = _networkFuenteDe(p);
                 const phone = (document.getElementById('network-field-phone') || {}).value || null;
                 const email = (document.getElementById('network-field-email') || {}).value || null;
                 // Fecha de nacimiento -- viene del carrete de 3 columnas (Mes/Día/Año,
@@ -7753,9 +7781,12 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 }
 
                 if (msg) msg.textContent = 'Guardando…';
-                const { data, error } = await sb.rpc('network_contacto_actualizar', {
-                    p_fuente: fuente, p_id: p.id, p_phone: phone, p_email: email, p_birth_date: birthDate
-                });
+                // Contactos de referencia (sin cuenta real) viven en su propia tabla,
+                // con su propio RPC más simple -- no tienen birth_date ni las columnas
+                // de negocio que sí tiene network_contacto_actualizar.
+                const { data, error } = fuente === 'referencia'
+                    ? await sb.rpc('network_referencia_actualizar', { p_id: p.id, p_phone: phone, p_email: email })
+                    : await sb.rpc('network_contacto_actualizar', { p_fuente: fuente, p_id: p.id, p_phone: phone, p_email: email, p_birth_date: birthDate });
                 if (error) { if (msg) msg.textContent = 'Error: ' + error.message; return; }
                 if (data && data.ok === false) { if (msg) msg.textContent = 'Error: ' + data.error; return; }
 
@@ -7930,7 +7961,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         <button onclick="window.closeNetworkEditPanel()" aria-label="Cerrar edición" title="Cerrar" style="position:absolute; top:-8px; right:-8px; background:transparent; border:none; color:var(--muted); font-size:22px; cursor:pointer; line-height:1;">×</button>
                         <div style="width:104px; height:104px; border-radius:50%; margin:0 auto 14px; background:var(--net-glass-bg); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border:1px solid var(--net-glass-border); box-shadow:0 0 0 1px rgba(197,160,89,0.15), 0 12px 32px rgba(0,0,0,0.25); color:var(--gold); font-size:34px; font-weight:800; display:flex; align-items:center; justify-content:center;">${_networkInitials(p._displayName)}</div>
                         <h2 style="margin:0 0 2px; color:var(--net-text); font-size:20px; text-shadow:0 1px 4px rgba(0,0,0,0.35);">${p._displayName || 'Sin Nombre'}</h2>
-                        <div style="font-size:12px; color:rgba(20,15,8,0.62); font-weight:600; margin-bottom:16px;">${NETWORK_CATEGORY_LABEL[p._category] || p._category}${proHtml ? ' · ' : ''}${proHtml}</div>
+                        <div style="font-size:12px; color:rgba(20,15,8,0.62); font-weight:600; margin-bottom:16px;">${NETWORK_CATEGORY_LABEL[p._category] || p._category || 'Contacto de referencia'}${proHtml ? ' · ' : ''}${proHtml}</div>
                         ${quickActionsHtml}
 
                         <div style="text-align:left;">
