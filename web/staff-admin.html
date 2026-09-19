@@ -2396,7 +2396,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                                  vez de simular un guardado que no existe. -->
                             <button class="btn secondary small" onclick="window.networkEditStub && window.networkEditStub()" style="border-radius:999px; padding:7px 16px; font-size:13px; font-weight:700; color:var(--net-text); border:1px solid var(--net-line); background:var(--net-hover);">Editar</button>
                             <div style="position:relative;">
-                                <button id="network-add-btn" class="btn secondary small" onclick="window.toggleNetworkAddMenu(event)" title="Agregar" aria-label="Agregar" style="width:36px; height:36px; padding:0; line-height:1; font-size:20px; font-weight:800; color:var(--net-text); border:1px solid var(--net-line); background:var(--net-hover); border-radius:50%; display:flex; align-items:center; justify-content:center;">+</button>
+                                <button id="network-add-btn" class="btn secondary small" onclick="window.toggleNetworkAddMenu(event)" title="Agregar" aria-label="Agregar" style="width:36px; height:36px; padding:0; line-height:1; font-size:20px; font-weight:800; color:var(--net-text); border:1px solid var(--net-glass-border); background:var(--net-glass-bg); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border-radius:50%; display:flex; align-items:center; justify-content:center;">+</button>
                                 <div id="network-add-menu" style="display:none; position:absolute; top:calc(100% + 6px); left:0; z-index:200; min-width:220px; background:var(--net-card-bg); border:1px solid var(--net-line); border-radius:10px; box-shadow:0 12px 32px rgba(0,0,0,0.4); padding:6px; font-size:13px;">
                                     <button onclick="window.networkAddStub('Nuevo contacto')" style="display:block; width:100%; text-align:left; background:transparent; border:none; color:var(--net-text); padding:8px 10px; border-radius:6px; cursor:pointer; font:inherit;">Nuevo contacto</button>
                                     <button onclick="window.networkAddStub('Nueva lista')" style="display:block; width:100%; text-align:left; background:transparent; border:none; color:var(--net-text); padding:8px 10px; border-radius:6px; cursor:pointer; font:inherit;">Nueva lista</button>
@@ -7346,13 +7346,12 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
 
                     let tableHtml = `
                         <div style="margin-bottom: 20px; background: var(--net-surface); border-radius: 8px; border: 1px solid var(--net-line-soft);">
-                            <div onclick="toggleCRMTable('${tableId}', '${iconId}')" style="cursor: pointer; padding: 15px; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; border-radius: 8px;" onmouseover="this.style.background='var(--net-hover)'" onmouseout="this.style.background='transparent'">
+                            <div style="padding: 15px; display: flex; justify-content: space-between; align-items: center; border-radius: 8px;">
                                 <h4 style="color: var(--gold); margin: 0; font-size: 16px;">
                                     ${icon} ${title} (${groupData.length})
                                 </h4>
-                                <span id="${iconId}" style="color: var(--gold); font-size: 12px; transition: transform 0.3s;">▼</span>
                             </div>
-                            <div id="${tableId}" style="display: none; padding: 0 15px 15px 15px; overflow-x: auto;">
+                            <div id="${tableId}" style="padding: 0 15px 15px 15px; overflow-x: auto;">
                                 <table style="width: 100%; min-width: 600px; border-collapse: collapse; border: 1px solid var(--net-line);">
                                     <thead>
                                         <tr style="background: var(--net-surface);">
@@ -7483,10 +7482,6 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     html = renderTable(title, NETWORK_GROUP_ICON, members, false, 1);
                 }
                 container.innerHTML = html;
-
-                setTimeout(() => {
-                    if (window.toggleCRMTable) window.toggleCRMTable('crm-table-1', 'crm-icon-1');
-                }, 100);
             };
 
             window.switchNetworkTab = function(tabId) {
@@ -7932,19 +7927,6 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 document.body.style.userSelect = 'none';
                 document.addEventListener('mousemove', onMove);
                 document.addEventListener('mouseup', onUp);
-            };
-
-            window.toggleCRMTable = function(tableId, iconId) {
-                const table = document.getElementById(tableId);
-                const icon = document.getElementById(iconId);
-                if (!table || !icon) return;
-                if (table.style.display === 'none') {
-                    table.style.display = 'block';
-                    icon.style.transform = 'rotate(180deg)';
-                } else {
-                    table.style.display = 'none';
-                    icon.style.transform = 'rotate(0deg)';
-                }
             };
 
             // Panel de detalle SÓLIDO (2026-09-18, pedido explícito del PO con
