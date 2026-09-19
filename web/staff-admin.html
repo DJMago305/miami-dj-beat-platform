@@ -7335,12 +7335,19 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     const members = _networkDedupeByContact(visibleProfiles.filter(p => memberKeys.has(_networkFuenteDe(p) + ':' + p.id)));
                     html = renderTable(list ? list.name : 'Categoría', NETWORK_GROUP_ICON, members, false, 1);
                 } else {
+                    // Una sola tabla plana por categoría (2026-09-19, pedido explícito
+                    // del PO: "quita todo eso... esto tiene otro rumbo más profesional"
+                    // -- el desglose en acordeones por sub-categoría, uno por uno, se
+                    // quita por completo. Mismo patrón ya usado en "Todos" y en las
+                    // categorías personalizadas: una tabla, todo el detalle real sigue
+                    // disponible en el panel al hacer clic en "Editar".
                     const activeTabDef = NETWORK_TABS.find(t => t.id === activeTab) || NETWORK_TABS[0];
-                    let idx = 0;
-                    ALL_TABLES.filter(t => activeTabDef.cats.includes(t.cat)).forEach(t => {
-                        idx++;
-                        html += renderTable(t.title, t.icon, groups[t.cat], t.isClient, idx);
-                    });
+                    const members = _networkDedupeByContact(
+                        visibleProfiles.filter(p => activeTabDef.cats.includes(p._category))
+                    );
+                    const spaceIdx = activeTabDef.label.indexOf(' ');
+                    const title = spaceIdx > -1 ? activeTabDef.label.slice(spaceIdx + 1) : activeTabDef.label;
+                    html = renderTable(title, NETWORK_GROUP_ICON, members, false, 1);
                 }
                 container.innerHTML = html;
 
