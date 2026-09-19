@@ -6966,6 +6966,13 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
             const NETWORK_TABS = [
                 { id: 'artistas', label: NETWORK_GROUP_ICON + ' Artistas', cats: ['DJ', 'HoraLoca', 'Band', 'Solista', 'Visuales', 'MC', 'Payaso'] }
             ];
+            // Categorías personalizadas que el PO ancló como fijas -- "estas 3 fijas
+            // [Todos, Artistas, Staff] así está bien, las demás las creo yo"
+            // (2026-09-19). Se identifican por nombre (no por id) porque viven en
+            // network_lists como cualquier categoría personalizada -- solo cambia
+            // dónde se pintan (arriba, junto a Todos/Artistas) y que no se pueden
+            // eliminar (si acaso, renombrar).
+            const NETWORK_PINNED_CUSTOM_NAMES = ['staff'];
 
             // Iniciales para el círculo-avatar (estilo Contactos) cuando no hay foto real.
             const _networkInitials = (name) => (String(name || '').trim().split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || '?');
@@ -7139,13 +7146,35 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                                 </span>
                             </button>`;
                         }).join('') +
+                        // Categorías personalizadas ancladas (ver NETWORK_PINNED_CUSTOM_NAMES)
+                        // -- mismo estilo fijo que Todos/Artistas, sin menú "⋯" (no se
+                        // eliminan). Siguen siendo network_lists reales por debajo.
+                        (window._networkCustomLists || []).filter(l => NETWORK_PINNED_CUSTOM_NAMES.includes(String(l.name || '').trim().toLowerCase())).map(list => {
+                            const tabId = 'custom:' + list.id;
+                            const active = tabId === window._networkActiveTab;
+                            const activeBg = 'var(--net-tab-active-bg)';
+                            const count = (window._networkCustomMembers || []).filter(m => m.list_id === list.id).length;
+                            return `<button type="button" class="net-tab-btn" onclick="window.switchNetworkTab('${tabId}')" title="${list.name}" style="
+                                display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%;
+                                padding:8px 10px; border:none; border-radius:6px; text-align:left;
+                                background:${active ? activeBg : 'transparent'};
+                                color:${active ? 'var(--gold)' : 'var(--net-text-dim)'};
+                                font-weight:${active ? '800' : '600'}; font-size:13px; cursor:pointer; white-space:nowrap;
+                                transition:background 0.15s, color 0.15s;
+                            " onmouseover="if(this.style.background==='transparent')this.style.background='var(--net-hover)'" onmouseout="this.style.background='${active ? activeBg : 'transparent'}'">
+                                <span style="flex:none; color:var(--gold);">${NETWORK_GROUP_ICON}</span>
+                                <span class="net-tab-label" style="flex:1; display:flex; align-items:center; justify-content:space-between; gap:8px; overflow:hidden;">
+                                    <span style="overflow:hidden; text-overflow:ellipsis;">${list.name}</span>
+                                    <span style="font-size:11px; color:var(--muted); flex:none;">${count}</span>
+                                </span>
+                            </button>`;
+                        }).join('') +
                         // Categorías personalizadas (2026-09-19, pedido del PO: "no cambies la
                         // palabra Categorías por lista, déjalo así, solo el signo de + para
-                        // crear una categoría nueva") -- libres, creadas por el staff, viven
-                        // en la MISMA lista que Artistas/Venues/Clientes/Familia, con su
-                        // menú de "..." para renombrar/eliminar (las 4 de arriba no lo traen
-                        // porque son estructurales, no se pueden borrar).
-                        (window._networkCustomLists || []).map(list => {
+                        // crear una categoría nueva") -- libres, creadas por el staff, con su
+                        // menú de "..." para renombrar/eliminar (Todos/Artistas/las ancladas
+                        // no lo traen porque no se pueden borrar).
+                        (window._networkCustomLists || []).filter(l => !NETWORK_PINNED_CUSTOM_NAMES.includes(String(l.name || '').trim().toLowerCase())).map(list => {
                             const tabId = 'custom:' + list.id;
                             const active = tabId === window._networkActiveTab;
                             const activeBg = 'var(--net-tab-active-bg)';
