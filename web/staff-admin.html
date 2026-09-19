@@ -6744,7 +6744,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     // se trae aparte (misma consulta directa, sin RPC — esta página ya lee
                     // dj_profiles/client_profiles así, es una superficie solo-staff) para
                     // cruzar compliance legal (Contrato / W-9) sin tocar el esquema.
-                    const [clientsRes, djsRes, contractsRes, leadsRes] = await Promise.all([
+                    const [clientsRes, djsRes, contractsRes, leadsRes, listsRes, listMembersRes] = await Promise.all([
                         db.from('client_profiles').select('id, full_name, email, phone, is_commercial, company_name, tier_level, total_spent, total_events, created_at').order('total_spent', { ascending: false }),
                         db.from('dj_profiles').select('id, full_name, stage_name, dj_name, email, phone, role, artist_specialty, bio, status, plan, is_premium, created_at').order('created_at', { ascending: false }),
                         db.from('signed_contracts').select('id, artist_profile_id, contract_type, signer_email, status'),
@@ -6753,10 +6753,17 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         // (si coincide, vino de un formulario/reserva real; si no, es una cuenta
                         // creada directo). Honesto, no inventa un dato que no existe.
                         db.from('leads').select('email').not('email', 'is', null),
+                        // Categorías personalizadas (2026-09-19, pedido del PO): libres, creadas
+                        // por el staff -- NO derivadas de datos, a diferencia de Artistas/Venues/
+                        // Clientes/Familia. Viven en network_lists/network_list_members.
+                        db.from('network_lists').select('id, name').order('created_at', { ascending: true }),
+                        db.from('network_list_members').select('list_id, fuente, contacto_id'),
                     ]);
 
                     if(clientsRes.error) throw clientsRes.error;
                     if(djsRes.error) throw djsRes.error;
+                    window._networkCustomLists = listsRes.data || [];
+                    window._networkCustomMembers = listMembersRes.data || [];
                     const leadEmails = new Set((leadsRes.data || []).map(l => (l.email || '').toLowerCase().trim()).filter(Boolean));
 
                     // Mapas de compliance: por artist_profile_id (artistas reales) y por
@@ -6954,6 +6961,12 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 Personal: 'Cliente Personal', Comercial: 'Cliente Comercial / Venue'
             };
 
+            // 'client' (client_profiles) | 'dj' (dj_profiles) -- misma regla que ya
+            // usaba window.saveNetworkContact, ahora compartida con las categorías
+            // personalizadas (network_list_members guarda "fuente" para saber en
+            // cuál de las dos tablas está cada contacto).
+            const _networkFuenteDe = (p) => (p._category === 'Personal' || p._category === 'Comercial') ? 'client' : 'dj';
+
             const _networkTierColor = (t) => {
                 if(t==='DIAMOND') return '#b9f2ff';
                 if(t==='GOLD') return '#e8b96a';
@@ -7039,7 +7052,10 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 // cuenta externa (aquí no hay "iCloud" -- todo vive en Supabase).
                 if (tabsContainer) {
                     tabsContainer.innerHTML =
-                        `<div class="net-tab-label" style="font-size:10px; font-weight:800; letter-spacing:.08em; color:var(--muted); text-transform:uppercase; padding:6px 2px 8px;">Categorías</div>` +
+                        `<div class="net-tab-label" style="display:flex; align-items:center; justify-content:space-between; font-size:10px; font-weight:800; letter-spacing:.08em; color:var(--muted); text-transform:uppercase; padding:6px 2px 8px;">
+                            <span>Categorías</span>
+                            <button type="button" onclick="window.networkCreateCategory()" title="Crear categoría" aria-label="Crear categoría" style="background:transparent; border:none; color:var(--net-text-dim); cursor:pointer; font-size:16px; font-weight:800; line-height:1; padding:0 2px;">+</button>
+                        </div>` +
                         NETWORK_TABS.map(t => {
                             const active = t.id === window._networkActiveTab;
                             const count = t.cats.reduce((sum, cat) => sum + (groups[cat] ? groups[cat].length : 0), 0);
@@ -7064,6 +7080,40 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                                     </span>
                                 </span>
                             </button>`;
+                        }).join('') +
+                        // Categorías personalizadas (2026-09-19, pedido del PO: "no cambies la
+                        // palabra Categorías por lista, déjalo así, solo el signo de + para
+                        // crear una categoría nueva") -- libres, creadas por el staff, viven
+                        // en la MISMA lista que Artistas/Venues/Clientes/Familia, con su
+                        // menú de "..." para renombrar/eliminar (las 4 de arriba no lo traen
+                        // porque son estructurales, no se pueden borrar).
+                        (window._networkCustomLists || []).map(list => {
+                            const tabId = 'custom:' + list.id;
+                            const active = tabId === window._networkActiveTab;
+                            const activeBg = 'var(--net-tab-active-bg)';
+                            const count = (window._networkCustomMembers || []).filter(m => m.list_id === list.id).length;
+                            const nameEsc = String(list.name || '').replace(/'/g, "\\'");
+                            return `<div class="net-custom-row" style="position:relative; display:flex; align-items:center;">
+                                <button type="button" class="net-tab-btn" onclick="window.switchNetworkTab('${tabId}')" title="${nameEsc}" style="
+                                    flex:1; min-width:0; display:flex; align-items:center; justify-content:space-between; gap:8px;
+                                    padding:8px 10px; border:none; border-radius:6px; text-align:left;
+                                    background:${active ? activeBg : 'transparent'};
+                                    color:${active ? 'var(--gold)' : 'var(--net-text-dim)'};
+                                    font-weight:${active ? '800' : '600'}; font-size:13px; cursor:pointer; white-space:nowrap;
+                                    transition:background 0.15s, color 0.15s;
+                                " onmouseover="if(this.style.background==='transparent')this.style.background='var(--net-hover)'" onmouseout="this.style.background='${active ? activeBg : 'transparent'}'">
+                                    <span style="flex:none;">🏷️</span>
+                                    <span class="net-tab-label" style="flex:1; display:flex; align-items:center; justify-content:space-between; gap:8px; overflow:hidden;">
+                                        <span style="overflow:hidden; text-overflow:ellipsis;">${list.name}</span>
+                                        <span style="font-size:11px; color:var(--muted); flex:none;">${count}</span>
+                                    </span>
+                                </button>
+                                <button type="button" class="net-tab-label" onclick="window.toggleNetworkCategoryMenu(event, '${list.id}')" title="Más opciones" aria-label="Más opciones" style="flex:none; background:transparent; border:none; color:var(--net-text-dim); cursor:pointer; font-size:14px; padding:4px 6px;">⋯</button>
+                                <div id="network-category-menu-${list.id}" style="display:none; position:absolute; top:100%; right:0; z-index:210; min-width:170px; background:var(--net-card-bg); border:1px solid var(--net-line); border-radius:10px; box-shadow:0 12px 32px rgba(0,0,0,0.4); padding:6px; font-size:13px;">
+                                    <button onclick="window.networkRenameCategory('${list.id}', '${nameEsc}')" style="display:block; width:100%; text-align:left; background:transparent; border:none; color:var(--net-text); padding:8px 10px; border-radius:6px; cursor:pointer; font:inherit;">✏️ Renombrar categoría</button>
+                                    <button onclick="window.networkDeleteCategory('${list.id}', '${nameEsc}')" style="display:block; width:100%; text-align:left; background:transparent; border:none; color:#f87171; padding:8px 10px; border-radius:6px; cursor:pointer; font:inherit;">🗑️ Eliminar categoría</button>
+                                </div>
+                            </div>`;
                         }).join('');
                 }
 
@@ -7173,13 +7223,29 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     { cat: 'MDJBStaff', title: 'MDJB Staff (Equipo Interno)', icon: '🏢', isClient: false }
                 ];
 
-                const activeTabDef = NETWORK_TABS.find(t => t.id === window._networkActiveTab) || NETWORK_TABS[0];
                 let html = '';
-                let idx = 0;
-                ALL_TABLES.filter(t => activeTabDef.cats.includes(t.cat)).forEach(t => {
-                    idx++;
-                    html += renderTable(t.title, t.icon, groups[t.cat], t.isClient, idx);
-                });
+                const activeTab = window._networkActiveTab || 'artistas';
+
+                if (activeTab.indexOf('custom:') === 0) {
+                    // Categoría personalizada -- una sola tabla mezclando client_profiles
+                    // y dj_profiles (por eso no puede reusar ALL_TABLES/groups, que
+                    // separan por categoría derivada). isClient=false: se muestra la
+                    // ficha simple; el detalle completo sigue disponible en el panel.
+                    const listId = activeTab.slice('custom:'.length);
+                    const list = (window._networkCustomLists || []).find(l => String(l.id) === listId);
+                    const memberKeys = new Set((window._networkCustomMembers || [])
+                        .filter(m => String(m.list_id) === listId)
+                        .map(m => m.fuente + ':' + m.contacto_id));
+                    const members = visibleProfiles.filter(p => memberKeys.has(_networkFuenteDe(p) + ':' + p.id));
+                    html = renderTable(list ? list.name : 'Categoría', '🏷️', members, false, 1);
+                } else {
+                    const activeTabDef = NETWORK_TABS.find(t => t.id === activeTab) || NETWORK_TABS[0];
+                    let idx = 0;
+                    ALL_TABLES.filter(t => activeTabDef.cats.includes(t.cat)).forEach(t => {
+                        idx++;
+                        html += renderTable(t.title, t.icon, groups[t.cat], t.isClient, idx);
+                    });
+                }
                 container.innerHTML = html;
 
                 setTimeout(() => {
@@ -7207,6 +7273,118 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
             window.toggleNetworkSidebar = function() {
                 const wrap = document.getElementById('network-sidebar-wrap');
                 if (wrap) wrap.classList.toggle('net-collapsed');
+            };
+
+            // Categorías personalizadas (2026-09-19) -- crear/renombrar/eliminar,
+            // llaman a los RPC de supabase/scripts/20260919010000_network_listas_personalizadas.sql.
+            // Recargan window.loadCRM() al terminar para traer la lista de nuevo con
+            // conteos reales -- estas categorías son pocas, no vale la pena mantener
+            // un caché local aparte que se pueda desincronizar.
+            window.networkCreateCategory = async function() {
+                const name = (window.prompt('Nombre de la nueva categoría:') || '').trim();
+                if (!name) return;
+                const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+                if (!sb || !sb.rpc) return;
+                const { data, error } = await sb.rpc('network_list_crear', { p_name: name });
+                if (error || (data && data.ok === false)) {
+                    alert('Error creando la categoría: ' + (error ? error.message : data.error));
+                    return;
+                }
+                if (window.loadCRM) await window.loadCRM();
+                window.switchNetworkTab('custom:' + data.id);
+            };
+
+            window.toggleNetworkCategoryMenu = function(ev, listId) {
+                if (ev) ev.stopPropagation();
+                document.querySelectorAll('[id^="network-category-menu-"]').forEach(m => {
+                    if (m.id !== 'network-category-menu-' + listId) m.style.display = 'none';
+                });
+                const menu = document.getElementById('network-category-menu-' + listId);
+                if (!menu) return;
+                const willOpen = menu.style.display === 'none';
+                menu.style.display = willOpen ? 'block' : 'none';
+                if (willOpen) {
+                    const closeOnOutside = (e) => {
+                        if (!menu.contains(e.target)) {
+                            menu.style.display = 'none';
+                            document.removeEventListener('click', closeOnOutside);
+                        }
+                    };
+                    setTimeout(() => document.addEventListener('click', closeOnOutside), 0);
+                }
+            };
+
+            window.networkRenameCategory = async function(listId, currentName) {
+                const menu = document.getElementById('network-category-menu-' + listId);
+                if (menu) menu.style.display = 'none';
+                const name = (window.prompt('Nuevo nombre de la categoría:', currentName) || '').trim();
+                if (!name || name === currentName) return;
+                const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+                if (!sb || !sb.rpc) return;
+                const { data, error } = await sb.rpc('network_list_renombrar', { p_id: listId, p_name: name });
+                if (error || (data && data.ok === false)) {
+                    alert('Error renombrando: ' + (error ? error.message : data.error));
+                    return;
+                }
+                if (window.loadCRM) await window.loadCRM();
+            };
+
+            window.networkDeleteCategory = async function(listId, name) {
+                const menu = document.getElementById('network-category-menu-' + listId);
+                if (menu) menu.style.display = 'none';
+                if (!confirm('¿Eliminar la categoría "' + name + '"? Los contactos no se borran, solo dejan de estar agrupados aquí.')) return;
+                const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+                if (!sb || !sb.rpc) return;
+                const { data, error } = await sb.rpc('network_list_eliminar', { p_id: listId });
+                if (error || (data && data.ok === false)) {
+                    alert('Error eliminando: ' + (error ? error.message : data.error));
+                    return;
+                }
+                if (window._networkActiveTab === 'custom:' + listId) window._networkActiveTab = 'artistas';
+                if (window.loadCRM) await window.loadCRM();
+            };
+
+            // Asignar/quitar el contacto ABIERTO en el panel de una categoría, por
+            // nombre -- crea la categoría si no existe (network_list_asignar_por_nombre),
+            // "se le pone el nombre del grupo y automáticamente aparece ahí dentro".
+            window.addNetworkCategoryToContact = async function() {
+                const input = document.getElementById('network-cat-input');
+                const name = (input ? input.value : '').trim();
+                if (!name) return;
+                const idx = window._networkSelectedIdx;
+                const p = idx != null ? (window._networkRowData || [])[idx] : null;
+                if (!p) return;
+                const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+                if (!sb || !sb.rpc) return;
+                const { data, error } = await sb.rpc('network_list_asignar_por_nombre', {
+                    p_list_name: name, p_fuente: _networkFuenteDe(p), p_contacto_id: p.id
+                });
+                if (error || (data && data.ok === false)) {
+                    alert('Error asignando categoría: ' + (error ? error.message : data.error));
+                    return;
+                }
+                if (input) input.value = '';
+                if (window.loadCRM) await window.loadCRM();
+                window.selectNetworkContact(idx);
+                if (window._networkEditPanelOpen) window.renderNetworkDetail((window._networkRowData || [])[idx]);
+            };
+
+            window.removeNetworkCategoryFromContact = async function(listId) {
+                const idx = window._networkSelectedIdx;
+                const p = idx != null ? (window._networkRowData || [])[idx] : null;
+                if (!p) return;
+                const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+                if (!sb || !sb.rpc) return;
+                const { data, error } = await sb.rpc('network_list_quitar', {
+                    p_list_id: listId, p_fuente: _networkFuenteDe(p), p_contacto_id: p.id
+                });
+                if (error || (data && data.ok === false)) {
+                    alert('Error quitando categoría: ' + (error ? error.message : data.error));
+                    return;
+                }
+                if (window.loadCRM) await window.loadCRM();
+                window.selectNetworkContact(idx);
+                if (window._networkEditPanelOpen) window.renderNetworkDetail((window._networkRowData || [])[idx]);
             };
 
             // "Editar" (2026-09-18, corrección del PO): las tablas completas se ven
@@ -7413,6 +7591,20 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 }
                 const isClient = p._category === 'Personal' || p._category === 'Comercial';
 
+                // Categorías personalizadas asignadas a este contacto (2026-09-19,
+                // pedido del PO: "por lógica en la tarjeta grande tiene que existir el
+                // campo Categorías"). Cruza network_list_members (ya cargado por
+                // loadCRM) con este contacto por fuente+id -- nunca vuelve a leer la
+                // base solo para pintar los chips.
+                const fuente = _networkFuenteDe(p);
+                const myListIds = (window._networkCustomMembers || [])
+                    .filter(m => m.fuente === fuente && String(m.contacto_id) === String(p.id))
+                    .map(m => m.list_id);
+                const myLists = (window._networkCustomLists || []).filter(l => myListIds.includes(l.id));
+                const chipsHtml = myLists.length
+                    ? myLists.map(l => `<span style="display:inline-flex; align-items:center; gap:5px; background:var(--net-tab-active-bg); color:var(--gold); border:1px solid rgba(197,160,89,0.4); padding:3px 8px 3px 10px; border-radius:999px; font-size:11px; font-weight:700;">🏷️ ${l.name}<button onclick="window.removeNetworkCategoryFromContact('${l.id}')" aria-label="Quitar" style="background:transparent; border:none; color:inherit; cursor:pointer; font-size:13px; line-height:1; padding:0;">×</button></span>`).join('')
+                    : `<span style="font-size:12px; color:var(--muted);">Sin categorías asignadas</span>`;
+
                 panel.innerHTML = `
                     <div style="max-width:460px; margin:0 auto; text-align:center; position:relative;">
                         <button onclick="window.closeNetworkEditPanel()" aria-label="Cerrar edición" title="Cerrar" style="position:absolute; top:-8px; right:-8px; background:transparent; border:none; color:var(--muted); font-size:22px; cursor:pointer; line-height:1;">×</button>
@@ -7427,6 +7619,14 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                             <div style="display:flex; align-items:center; gap:10px; margin:-4px 0 14px;">
                                 <button onclick="window.saveNetworkContact()" style="background:var(--gold); color:#1a1206; font-weight:800; border:0; padding:8px 16px; border-radius:8px; cursor:pointer; font:inherit; font-size:13px;">Guardar</button>
                                 <span id="network-save-msg" style="font-size:12px; color:var(--muted);"></span>
+                            </div>
+                            <div style="margin-bottom:14px;">
+                                <label style="display:block; font-size:10px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:6px;">Categorías</label>
+                                <div id="network-cat-chips" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;">${chipsHtml}</div>
+                                <div style="display:flex; gap:8px;">
+                                    <input type="text" id="network-cat-input" placeholder="Nombre de categoría…" style="flex:1; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); color:var(--net-text); padding:7px 10px; border-radius:10px; font:inherit; font-size:13px;" onkeydown="if(event.key==='Enter'){event.preventDefault(); window.addNetworkCategoryToContact();}">
+                                    <button onclick="window.addNetworkCategoryToContact()" style="background:var(--net-hover); color:var(--net-text); font-weight:700; border:1px solid var(--net-line); padding:7px 14px; border-radius:8px; cursor:pointer; font:inherit; font-size:13px;">Agregar</button>
+                                </div>
                             </div>
                             <div style="display:flex; gap:16px; margin-bottom:14px; background:var(--net-glass-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--net-glass-border); border-radius:10px; padding:10px 14px;">
                                 <div style="flex:1;">
