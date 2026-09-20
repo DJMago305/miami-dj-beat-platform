@@ -132,8 +132,13 @@
     { s: 6, key: null,             nav: 'flow',      href: './staff.html?vista=cashflow', txt: 'Cash Flow' },
     /* Puesto 7 · STAFF. Lleva la clase del gate determinista por rol que ya usa
        la tira de owner: artista, cliente e invitado no lo ven. Sigue pendiente
-       el requisito pleno de la ley RBAC —sacarlo del DOM, no solo ocultarlo. */
-    { s: 7, key: 'nav-staff',      nav: 'staff',     href: './staff.html',        txt: 'Staff',
+       el requisito pleno de la ley RBAC —sacarlo del DOM, no solo ocultarlo.
+       `?vista=gobernanza` agregado 2026-09-19 (bug real reportado por el PO:
+       "se salta la entrada a mi perfil") -- Agenda/Cash Flow ya mandaban su
+       `?vista=`, pero Staff no, así que siempre caía en el fallback de
+       staff.html (que aterriza en Mi Perfil sin parámetro) en vez de quedarse
+       en Staff. */
+    { s: 7, key: 'nav-staff',      nav: 'staff',     href: './staff.html?vista=gobernanza', txt: 'Staff',
       id: 'mainNav-staff-or-profile', cls: 'mdj-staff-mainnav dj-tab-btn--staff-only' },
     /* MI PERFIL vuelve al puesto 8 (2026-09-02, chequeo pedido por el PO tras
        cerrar las cortinas de arranque: "que los puestos esten en la misma
@@ -2674,7 +2679,12 @@
   function mdjBuildArtistStaffMainNavHref() {
     var idn = window.__mdjLastPlatformIdentity;
     if (idn && idn.staffInDb) {
-      if (idn.managementInDb) return './staff.html';
+      // 2026-09-19, bug real reportado por el PO ("se salta la entrada a mi
+      // perfil"): esta función sobreescribe el href del link "Staff" DESPUÉS
+      // de que #mainNav ya se construyó -- corregir solo la tabla de puestos
+      // (arriba en este archivo) no bastaba, esta era la fuente real del
+      // bare './staff.html' que aterriza en Mi Perfil por default.
+      if (idn.managementInDb) return './staff.html?vista=gobernanza';
       return './admin-dashboard.html#staff';
     }
     return mdjBuildStaffEntryLoginHref();
