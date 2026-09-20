@@ -5008,8 +5008,17 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 /** Rol UI solo desde dj_profiles.role (misma regla que el lock de seguridad). */
                 function applyStaffDashboardRole(profile, session) {
                     const rn = String(profile && profile.role ? profile.role : '').toLowerCase().trim();
+                    // 2026-09-19, parte 2 del retiro de admin-dashboard.html (bug real
+                    // encontrado): admin/manager caían en 'SUPER_ADMIN' -- el mismo trato
+                    // que Owner -- así que la rama de abajo que sí distingue
+                    // 'ADMIN'/'MANAGER' (esconder el gestor de precios) nunca se ejecutaba.
+                    // 'SUPER_ADMIN' queda reservado de verdad para owner.
                     if (rn === 'seller') {
                         window.userRole = 'SALES_STAFF';
+                    } else if (rn === 'admin') {
+                        window.userRole = 'ADMIN';
+                    } else if (rn === 'manager') {
+                        window.userRole = 'MANAGER';
                     } else {
                         window.userRole = 'SUPER_ADMIN';
                     }
