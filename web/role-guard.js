@@ -148,8 +148,10 @@
         }
     };
 
-    // Log page visit for sensitive pages
-    const AUDIT_PAGES = ['account-settings', 'admin-dashboard', 'dj-profile', 'client-portal'];
+    // Log page visit for sensitive pages. 'admin-dashboard' -> 'staff-admin'
+    // 2026-09-19 (panel viejo retirado, ver docs/ESTADO_MAESTRO.md) -- nunca
+    // se había agregado 'staff-admin' aquí, así que hoy se corrige de paso.
+    const AUDIT_PAGES = ['account-settings', 'staff-admin', 'dj-profile', 'client-portal'];
     if (AUDIT_PAGES.some(p => path.includes(p))) {
         window.__mdjpro.logEvent('page_view');
     }

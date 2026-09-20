@@ -532,7 +532,8 @@
   var MDJ_VISTAS_INTERNAS = {
     'academia.html': 1,
     'dj-tools.html': 1,
-    'admin-dashboard.html': 1,
+    // 'admin-dashboard.html' retirado 2026-09-19 (parte 2 del retiro, ver
+    // docs/ESTADO_MAESTRO.md) -- el archivo ya no existe.
     'weather-lab.html': 1,
     'cash-flow.html': 1,
     'dj-dashboard.html': 1,
@@ -2641,7 +2642,8 @@
   function mdjIsStaffBuildingPage() {
     try {
       var page = (window.location.pathname.split('/').pop() || '').toLowerCase();
-      return page === 'admin-dashboard.html' || page === 'account-profile.html' || page === 'staff.html';
+      // 'admin-dashboard.html' retirado 2026-09-19 -- el archivo ya no existe.
+      return page === 'account-profile.html' || page === 'staff.html';
     } catch (eSb) {
       return false;
     }
@@ -6641,7 +6643,7 @@
     'dj-knowledge.html': 1,
     'weather-lab.html': 1,
     'dj-dashboard.html': 1,
-    'admin-dashboard.html': 1,
+    // 'admin-dashboard.html' retirado 2026-09-19 -- el archivo ya no existe.
     'account-settings.html': 1
   };
   if (!_OWNER_STRIP_PAGES[_page]) return;
@@ -6725,7 +6727,8 @@
     var staffEl = c.querySelector('a[data-mdj-nav="staff"]');
     var _staffBuildingPage = typeof window.mdjIsStaffBuildingPage === 'function'
       ? window.mdjIsStaffBuildingPage()
-      : (_page === 'admin-dashboard.html' || _page === 'account-profile.html' || _page === 'staff.html');
+      // 'admin-dashboard.html' retirado 2026-09-19 -- el archivo ya no existe.
+      : (_page === 'account-profile.html' || _page === 'staff.html');
     if (!_staffBuildingPage) {
       if (!staffEl) {
         staffEl = document.createElement('a');
