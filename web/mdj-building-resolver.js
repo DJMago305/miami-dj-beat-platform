@@ -56,16 +56,18 @@
       profile:   './account-profile.html',
       settings:  './account-settings.html',
       portal:    './account-profile.html',
-      dashboard: './admin-dashboard.html',
+      // admin-dashboard.html retirado 2026-09-19 -- staff-admin.html (dentro
+      // del iframe de staff.html) es la fuente real hoy. Ver docs/ESTADO_MAESTRO.md.
+      dashboard: './staff.html?vista=gobernanza',
       login_redirect: './account-profile.html'
     }),
     staff: Object.freeze({
-      home:      './admin-dashboard.html',
+      home:      './staff.html?vista=gobernanza',
       profile:   './account-profile.html',
       settings:  './account-settings.html',
       portal:    './account-settings.html',
-      dashboard: './admin-dashboard.html',
-      login_redirect: './admin-dashboard.html'
+      dashboard: './staff.html?vista=gobernanza',
+      login_redirect: './staff.html?vista=gobernanza'
     }),
     artist: Object.freeze({
       home:      './dj-profile.html',
@@ -110,7 +112,7 @@
       { key: 'home',    labelKey: 'nav-home',     href: './index.html',                      optional: false },
       { key: 'profile', labelKey: 'nav-my-profile',href: './account-profile.html',           optional: false },
       { key: 'config',  labelKey: 'nav-config',   href: './account-settings.html',           optional: false },
-      { key: 'staff',   labelKey: 'nav-staff',    href: './admin-dashboard.html',            optional: false },
+      { key: 'staff',   labelKey: 'nav-staff',    href: './staff.html?vista=gobernanza',    optional: false },
       { key: 'flow',    labelKey: 'nav-flow',      href: './dj-dashboard.html?tab=flow',     optional: true  },
       { key: 'jobs',    labelKey: 'nav-jobs',      href: './jobs.html',                      optional: false },
       { key: 'agenda',  labelKey: 'nav-agenda',    href: './dj-dashboard.html?tab=dashboard',optional: true  },
@@ -123,7 +125,7 @@
       { key: 'home',    labelKey: 'nav-home',      href: './index.html',           optional: false },
       { key: 'profile', labelKey: 'nav-my-profile', href: './account-profile.html',optional: false },
       { key: 'config',  labelKey: 'nav-config',    href: './account-settings.html',optional: false },
-      { key: 'staff',   labelKey: 'nav-staff',     href: './admin-dashboard.html', optional: false },
+      { key: 'staff',   labelKey: 'nav-staff',     href: './staff.html?vista=gobernanza', optional: false },
       { key: 'jobs',    labelKey: 'nav-jobs',       href: './jobs.html',           optional: false },
       { key: 'contact', labelKey: 'nav-contact',    href: './index.html#contact',  optional: false }
     ]),
