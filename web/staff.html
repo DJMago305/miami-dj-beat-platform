@@ -1037,17 +1037,6 @@
       background:#0b0f18;color:rgba(255,255,255,.55);font-size:13px;letter-spacing:.04em;z-index:2;}
     .agenda-loading.hidden{display:none;}
 
-    /* ── Módulo stub (manager/vendedor — estructura RBAC lista) ── */
-    .stub-wrap{display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 116px);padding:24px;}
-    .stub-card{max-width:560px;text-align:center;background:var(--panel);border:1px solid var(--line);
-      border-radius:18px;padding:40px 34px;}
-    .stub-card h2{margin:0 0 10px;font-size:22px;color:var(--gold-lt);}
-    .stub-card p{margin:0 0 22px;color:rgba(255,255,255,.66);line-height:1.55;font-size:14px;}
-    .stub-card .go{display:inline-block;background:rgba(197,160,89,.14);border:1px solid rgba(197,160,89,.45);
-      color:var(--gold-lt);text-decoration:none;font-weight:800;font-size:12.5px;letter-spacing:.06em;
-      text-transform:uppercase;border-radius:10px;padding:12px 20px;transition:background .2s;}
-    .stub-card .go:hover{background:rgba(197,160,89,.24);}
-
     /* ══════════ Módulo GOBERNANZA (autocontenido · Human-in-the-Loop) ══════════ */
     .gov-demo{font-size:9px;font-weight:800;letter-spacing:.10em;text-transform:uppercase;
       color:#e0b64d;background:rgba(224,182,77,.10);border:1px solid rgba(224,182,77,.34);
@@ -1351,7 +1340,7 @@
     /* Campana de notificaciones (contratos pendientes de firma) — inyectada
        igual que el FAB de incidentes de arriba: independiente, fixed,
        jamás dentro de #staff-topnav. La rejilla/tira de arriba y su pintado
-       por rol (paintStaffTopnav/mountOwner/mountStub) no se tocan. */
+       por rol (paintStaffTopnav/mountOwner) no se tocan. */
     .mdj-notif-bell{position:fixed;top:14px;right:18px;z-index:9500;}
     .mdj-notif-bell-btn{position:relative;width:38px;height:38px;border-radius:50%;
       display:inline-flex;align-items:center;justify-content:center;font-size:17px;
@@ -2061,16 +2050,10 @@
       </section>
     </div>
 
-    <!-- ═══ Módulo STUB (manager/vendedor) — estructura RBAC lista, vista por construir ═══ -->
-    <div id="module-stub" class="staff-module">
-      <div class="stub-wrap">
-        <div class="stub-card">
-          <h2 id="stub-title">Módulo</h2>
-          <p id="stub-desc" data-i18n="staff-stub-desc">Tu vista de staff se habilitará aquí muy pronto. La estructura RBAC ya está lista.</p>
-          <a class="go" href="./admin-dashboard.html" data-i18n="staff-stub-goto">Ir a mi panel actual</a>
-        </div>
-      </div>
-    </div>
+    <!-- Módulo STUB (manager/vendedor) retirado 2026-09-19, parte 2 del retiro
+         de admin-dashboard.html: admin/manager/seller entran ahora a
+         #module-owner igual que el Owner, con la tira restringida a "Staff"
+         (Gobernanza) -- ver mountOwner(sb, role) e initStaff() más abajo. -->
   </main>
 
   <script>
@@ -2204,17 +2187,24 @@
              DESPUES de pintar la tira (844 pinta, 859 cablea), asi que lo encuentra. */
           '<button type="button" id="ofm-daynight" class="ofm-daynight" title="Modo día / noche" aria-label="Modo día / noche (global)"></button>';
       }
+      /* 2026-09-19, parte 2 del retiro de admin-dashboard.html: "Mi Panel"
+         (que bounceaba a admin-dashboard.html) se reemplaza por un botón
+         "Staff" real -- data-top="gobernanza" es el MISMO mecanismo que ya
+         usa el Owner, engancha con paintStaffTopnav/showView y entra al
+         edificio real (Network/Clientes/Equipo/etc, restringido por rol
+         dentro de staff-admin.html). Ya no hace falta ningún link al panel
+         viejo para estos 2 roles. */
       if(role==='seller'){
         return start+
           '<button type="button" class="active" data-i18n="staff-nav-ventas">Ventas</button>'+
           '<button type="button" data-href="./account-profile.html">MI PERFIL</button>'+
-          '<button type="button" data-href="./admin-dashboard.html" data-i18n="staff-nav-mipanel">Mi Panel</button>';
+          '<button type="button" data-top="gobernanza" data-i18n="staff-nav-staff">Staff</button>';
       }
       return start+
         '<button type="button" data-href="./dj-tools.html" data-i18n="staff-nav-djtools">DJ Tools</button>'+
         '<button type="button" class="active" data-i18n="staff-nav-operaciones">Operaciones</button>'+
         '<button type="button" data-href="./account-profile.html">MI PERFIL</button>'+
-        '<button type="button" data-href="./admin-dashboard.html" data-i18n="staff-nav-mipanel">Mi Panel</button>';
+        '<button type="button" data-top="gobernanza" data-i18n="staff-nav-staff">Staff</button>';
     }
 
     /* ── Gate STAFF (solo fila dj_profiles.role, nunca JWT solo — patrón admin-dashboard) ── */
@@ -2358,8 +2348,8 @@
     /* ── Campana de notificaciones (contratos pendientes de firma) ──
        Mismo patrón que mountIncidentReporter arriba: elemento propio,
        inyectado a document.body, fixed — nunca dentro de #staff-topnav ni
-       de sus funciones de pintado por rol (paintStaffTopnav/mountOwner/
-       mountStub), que quedan intactas. Consulta única al montar (sin
+       de sus funciones de pintado por rol (paintStaffTopnav/mountOwner),
+       que quedan intactas. Consulta única al montar (sin
        polling ni websockets) contra contract_sends — ver
        supabase/scripts/20260825_contract_sends_pending_flow.sql. */
     function mountNotifBell(sb){
@@ -2432,7 +2422,7 @@
             var who = (r.contact_person || r.name || 'Lead sin nombre').replace(/</g, '&lt;');
             var tipo = (r.event_type || '').replace(/</g, '&lt;');
             var when = r.created_at ? new Date(r.created_at).toLocaleDateString('es-US') : '—';
-            return '<a class="mdj-notif-bell-item" href="./admin-dashboard.html">' +
+            return '<a class="mdj-notif-bell-item" href="./staff.html?vista=gobernanza">' +
               '<span class="mdj-notif-bell-item-who">' + who + (tipo ? ' · ' + tipo : '') + '</span>' +
               '<span class="mdj-notif-bell-item-meta">' + when + '</span></a>';
           }).join('');
@@ -2520,13 +2510,25 @@
       var out=el('staff-logout');
       if(out) out.addEventListener('click', async function(){ try{ await sb.auth.signOut(); }catch(e){} location.replace('./index.html'); });
 
-      if(role==='owner'){ mountOwner(sb); }
-      else { mountStub(role); }  // admin/manager → operaciones · seller → ventas
+      // 2026-09-19, parte 2 del retiro de admin-dashboard.html: admin/manager/
+      // seller entran al MISMO edificio que el Owner (mountOwner), no a un
+      // stub -- "vistas restringidas por rol" (RBAC en la interfaz, ya
+      // reforzado por RLS real en la base). mountOwner(sb, role) restringe la
+      // tira superior y fuerza la vista Gobernanza para no-owner; el resto de
+      // restricciones vive dentro de staff-admin.html (applyStaffDashboardRole).
+      mountOwner(sb, role);
     }
 
     /* ── Módulo OWNER: Matrix (BFI + Caja Real Fase 4) + ELIXIS + Gobernanza ── */
-    function mountOwner(sb){
-      el('brand-sub').textContent=(window.i18n && window.i18n.t('staff-owner-command-center')) || 'Owner Command Center';
+    function mountOwner(sb, role){
+      role = role || 'owner';
+      var _brandSubKey = role==='owner' ? 'staff-owner-command-center'
+                        : role==='seller' ? 'staff-nav-ventas'
+                        : 'staff-nav-operaciones';
+      var _brandSubFallback = role==='owner' ? 'Owner Command Center'
+                             : role==='seller' ? 'Centro de Ventas'
+                             : 'Centro de Operaciones';
+      el('brand-sub').textContent=(window.i18n && window.i18n.t(_brandSubKey)) || _brandSubFallback;
       el('module-owner').classList.add('active');
 
       // switch de vistas (Financiero ⇄ ELIXIS)
@@ -4078,7 +4080,7 @@
         box.innerHTML = html;
       }
 
-      paintStaffTopnav(staffTopnavHtml('owner'), showView);
+      paintStaffTopnav(staffTopnavHtml(role), showView);
       /* Aterrizaje. Por defecto Gobernanza (FINANCIERO quedo fusionado en CASH
          FLOW), pero se puede pedir una vista concreta con ?vista=.
          Lo usa MI PERFIL de la cabecera: para owner/staff ese puesto trae aqui, y
@@ -4096,7 +4098,19 @@
          siempre en Gobernanza -- su propia ficha no la veia nunca sin escribir
          la URL a mano. Es la estacion del ROL la que manda al entrar, no una
          pestana interna. */
-      showView(MDJ_VISTAS_VALIDAS[mdjVistaPedida] ? mdjVistaPedida : 'miperfil');
+      if (role === 'owner') {
+        showView(MDJ_VISTAS_VALIDAS[mdjVistaPedida] ? mdjVistaPedida : 'miperfil');
+      } else {
+        /* 2026-09-19, parte 2: admin/manager/seller SOLO tienen Gobernanza --
+           financiero/elixis/agenda/cashflow/miperfil(ficha de Owner)/config
+           son del Owner ("acceso total: caja real, Matrix BFI, márgenes,
+           precios, configuración y soberanía del sistema", texto real de la
+           propia tarjeta de Gobernanza). Se ignora cualquier ?vista= pedida
+           -- un valor manual en la URL no debe abrir una vista ajena a su rol.
+           El resto de la restricción real (qué secciones/datos ve dentro de
+           Gobernanza) vive en staff-admin.html vía RLS + applyStaffDashboardRole. */
+        showView('gobernanza');
+      }
 
 
       // ── DÍA/NOCHE GLOBAL del portal (botón central ÚNICO). Alterna data-theme en <html> + DIFUNDE a los marcos (base lista para adaptar los secundarios). ──
@@ -4425,15 +4439,6 @@
       fill(0); schedule();
     }
 
-    /* ── Módulo STUB: manager/vendedor (estructura lista, vista por construir) ── */
-    function mountStub(role){
-      var isSeller = (role==='seller');
-      var _stT = function (k, f) { return (window.i18n && window.i18n.t(k)) || f; };
-      el('brand-sub').textContent = isSeller ? _stT('staff-nav-ventas','Ventas') : _stT('staff-nav-operaciones','Operaciones');
-      el('stub-title').textContent = isSeller ? _stT('staff-stub-title-ventas','Módulo de Ventas') : _stT('staff-stub-title-operaciones','Módulo de Operaciones');
-      el('module-stub').classList.add('active');
-      paintStaffTopnav(staffTopnavHtml(role));
-    }
   })();
   </script>
   <script src="./js/mdj-tema-portal.js?v=20260819-tema"></script>
