@@ -35,3 +35,10 @@ INSERT INTO public.network_list_members (list_id, fuente, contacto_id)
 SELECT 'f91092e6-c408-4f05-9bcf-834ebf20ac22', 'referencia', id
 FROM public.network_referencia_contactos
 WHERE nombre = 'Chavelys Valle' AND origen_csv = 'Recordatorios de calendario (gerardoa4@hotmail.com)';
+
+-- Kenny Gonzalez -- nota agregada después de un cross-check contra
+-- FORM4_Familia.csv (misma hoja de origen), que traía esta relación
+-- sin confirmar. Sin categoría porque sigue sin confirmarse.
+UPDATE public.network_referencia_contactos
+   SET notas = 'Podría ser sobrino del PO, sin confirmar (nota de origen: "El PO no está seguro de la relación").'
+ WHERE nombre = 'Kenny Gonzalez' AND origen_csv = 'Recordatorios de calendario (gerardoa4@hotmail.com)';
