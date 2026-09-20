@@ -83,7 +83,7 @@
        en un ciclo infinito cada ~200-300ms (medido en vivo, nunca se
        detenía): el efecto "se corrige un segundo y se regresa el error"
        que reportó el PO. */
-    { s: 7, href: './staff.html',                i18n: 'nav-staff',      nav: 'staff',     txt: 'Staff',
+    { s: 7, href: './staff.html?vista=gobernanza', i18n: 'nav-staff',      nav: 'staff',     txt: 'Staff',
       cls: 'dj-tab-btn--staff-only' },
     { s: 8, href: './account-settings.html',     i18n: 'nav-my-profile', nav: 'mi-portal', txt: 'MI PERFIL',
       id: 'mainNav-mi-portal-link', cls: 'mdj-mi-portal-mainnav mdj-mi-portal-gold' },

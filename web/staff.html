@@ -4168,6 +4168,14 @@
          debe REGRESAR a Staff de verdad: vuelve al panel de Gobernanza/Permisos
          (la vista con la que arranca Staff) y marca ese link como activo. */
       function exitFullPage(){
+        /* 2026-09-19, bug real reportado por el PO: "abro Clientes y cuando
+           cliqueo Leads se cierra esa serie" -- este guard faltaba. La función
+           se llama en CADA click de acordeón/sub-item (líneas de abajo), no
+           solo al cerrar Network fullpage de verdad -- sin el guard, resetea
+           el sidebar entero (cierra todos los grupos, marca "Permisos" activo)
+           aunque fullpage nunca estuviera abierto, deshaciendo el estado que
+           el propio handler de click acababa de fijar un instante antes. */
+        if(!side.classList.contains('fullpage-active')) return;
         side.classList.remove('fullpage-active');
         if(shell) shell.classList.remove('fullpage-tight');
         showPanel('gob');
