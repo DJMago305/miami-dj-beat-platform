@@ -94,7 +94,7 @@
         var hrefStaff =
             typeof window.mdjBuildArtistStaffMainNavHref === 'function'
                 ? window.mdjBuildArtistStaffMainNavHref()
-                : './login.html?next=./admin-dashboard.html&mdj_staff_entry=1';
+                : './login.html?next=./staff.html?vista=gobernanza&mdj_staff_entry=1';
 
         var nav = document.createElement('nav');
         nav.className = 'dj-owner-tabs';

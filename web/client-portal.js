@@ -3522,7 +3522,7 @@ const PortalApp = {
                 return true;
             }
             if (_cpRole === 'admin' || _cpRole === 'manager' || _cpRole === 'seller') {
-                window.location.href = './admin-dashboard.html?from_client_portal=1';
+                window.location.href = './staff.html?vista=gobernanza&from_client_portal=1';
                 return true;
             }
             var email = String(session.user.email || '').trim().toLowerCase();

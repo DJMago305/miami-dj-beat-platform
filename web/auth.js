@@ -426,7 +426,11 @@ function mdjPerformPostAuthRedirect(db, user) {
                TRES caminos que resuelven el mismo destino; los tres van igualados. */
             targetUrl = './staff.html?vista=miperfil';
         } else if (isStaffForRedirect) {
-            targetUrl = './admin-dashboard.html';
+            // 2026-09-19: admin-dashboard.html es el panel viejo, congelado desde
+            // el 16-sep -- todo el desarrollo real vive en staff-admin.html
+            // (dentro del iframe de staff.html). Repuntado como parte del retiro
+            // gradual del panel viejo (ver docs/ESTADO_MAESTRO.md).
+            targetUrl = './staff.html?vista=gobernanza';
         } else if (role === 'client') {
             targetUrl = './client-portal.html';
             try {
@@ -456,7 +460,7 @@ function mdjPerformPostAuthRedirect(db, user) {
                 rawRole === 'dj' ||
                 rawRole === 'artist';
             const staffEntry = params.get('mdj_staff_entry') === '1';
-            const isAdminDashboardNext = /admin-dashboard\.html|\/admin-dashboard/i.test(nextUrl);
+            const isAdminDashboardNext = /admin-dashboard\.html|\/admin-dashboard|staff\.html\?vista=gobernanza/i.test(nextUrl);
             if (staffEntry && isAdminDashboardNext) {
                 const staffInDb = idn
                     ? !!idn.staffInDb
@@ -476,7 +480,7 @@ function mdjPerformPostAuthRedirect(db, user) {
             }
             if (
                 isArtistSession &&
-                /account-settings\.html|client-portal\.html|admin-dashboard\.html|\/admin-dashboard/i.test(nextUrl)
+                /account-settings\.html|client-portal\.html|admin-dashboard\.html|\/admin-dashboard|staff\.html/i.test(nextUrl)
             ) {
                 window.location.assign('./dj-dashboard.html?tab=settings');
                 return true;
@@ -720,7 +724,7 @@ function mdjLoginSafeFallbackUrl(user) {
     const ut = String(mdjGet(user.user_metadata, 'user_type') || '').toLowerCase();
     if (raw === 'owner') return './staff.html?vista=miperfil';   /* mismo destino que arriba */
     if (raw === 'client' || ut === 'client') return './client-portal.html';
-    if (raw === 'admin' || raw === 'manager' || raw === 'seller') return './admin-dashboard.html';
+    if (raw === 'admin' || raw === 'manager' || raw === 'seller') return './staff.html?vista=gobernanza';
     if (raw === 'talent' || raw === 'dj' || raw === 'artist' || ut === 'talent' || ut === 'artist' || ut === 'dj') {
         return './account-settings.html';
     }

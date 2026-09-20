@@ -880,7 +880,7 @@
         lines: lines,
         taxPct: t.taxPct,
         notes: notes,
-        sourceReturnUrl: './admin-dashboard.html'
+        sourceReturnUrl: './staff.html?vista=gobernanza'
       };
       try {
         global.mdjOpenInvoicePrint(payload);
