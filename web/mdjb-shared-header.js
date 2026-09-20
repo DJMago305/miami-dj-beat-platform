@@ -2672,7 +2672,9 @@
 
   /** Login staff entry — flag mdj_staff_entry evita cadena auth → CONFIG artista (ART-007B). */
   function mdjBuildStaffEntryLoginHref() {
-    return './login.html?next=./admin-dashboard.html&mdj_staff_entry=1';
+    // 2026-09-19: repuntado a staff.html (ver mdjApplyStaffNavHref arriba) --
+    // auth.js:459 reconoce este mismo next= exacto para completar el flujo.
+    return './login.html?next=./staff.html?vista=gobernanza&mdj_staff_entry=1';
   }
 
   /** Riel artista #mainNav-artist — STAFF → puerta edificio staff (no CONFIG). */
@@ -2684,8 +2686,11 @@
       // de que #mainNav ya se construyó -- corregir solo la tabla de puestos
       // (arriba en este archivo) no bastaba, esta era la fuente real del
       // bare './staff.html' que aterriza en Mi Perfil por default.
-      if (idn.managementInDb) return './staff.html?vista=gobernanza';
-      return './admin-dashboard.html#staff';
+      // Mismo destino para management y no-management -- el RBAC real (RLS +
+      // is_staff()/is_staff_management() dentro de staff-admin.html) ya
+      // restringe qué puede ver/hacer cada uno, no hace falta un panel aparte
+      // (admin-dashboard.html, retirado -- ver docs/ESTADO_MAESTRO.md).
+      return './staff.html?vista=gobernanza';
     }
     return mdjBuildStaffEntryLoginHref();
   }
@@ -6863,7 +6868,11 @@
 
   function _isAdminRedirect(url) {
     if (!url || typeof url !== 'string') return false;
-    return url.indexOf('admin-dashboard') !== -1;
+    // 2026-09-19: admin-dashboard.html se retira -- el mismo redirect
+    // erróneo ahora llegaría como staff.html?vista=gobernanza (ver
+    // auth.js/mdjBuildArtistStaffMainNavHref). Se bloquea igual, mismo
+    // guard contra la misma condición de carrera.
+    return url.indexOf('admin-dashboard') !== -1 || url.indexOf('staff.html?vista=gobernanza') !== -1;
   }
 
   /* Interceptar location.assign */

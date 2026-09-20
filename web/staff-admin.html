@@ -3637,7 +3637,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                 if (!isStaffPortal) {
                     document.documentElement.classList.remove('mdj-admin-gate-pending');
                     const ut = String((session.user && session.user.user_metadata && session.user.user_metadata.user_type) || '').toLowerCase();
-                    const staffEntryLogin = './login.html?next=./admin-dashboard.html&mdj_staff_entry=1';
+                    const staffEntryLogin = './login.html?next=./staff.html?vista=gobernanza&mdj_staff_entry=1';
                     /* Sin rol staff: puerta login staff — nunca CONFIG artista (ART-007B). */
                     if (profile && !profileError) {
                         if (roleNorm === 'client' || roleNorm === 'cliente') {
@@ -4818,7 +4818,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         lines: saleLines.length ? saleLines : [{ desc: 'Services', qty: 1, unit: grandTotal }],
                         taxPct: 7,
                         notes: notes,
-                        sourceReturnUrl: './admin-dashboard.html'
+                        sourceReturnUrl: './staff.html?vista=gobernanza'
                     };
                     if (typeof window.mdjOpenInvoicePrint === 'function') {
                         window.mdjOpenInvoicePrint(invPayload);

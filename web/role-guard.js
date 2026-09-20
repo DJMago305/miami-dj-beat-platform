@@ -16,9 +16,12 @@
     const ROLE_HOME = {
         artist: './dj-profile.html',
         owner: './dj-dashboard.html',
-        admin: './admin-dashboard.html',
-        manager: './admin-dashboard.html',
-        seller: './admin-dashboard.html',
+        // 2026-09-19: repuntado a staff.html (panel viejo admin-dashboard.html
+        // congelado desde el 16-sep, todo el desarrollo real vive en
+        // staff-admin.html dentro de su iframe). Ver docs/ESTADO_MAESTRO.md.
+        admin: './staff.html?vista=gobernanza',
+        manager: './staff.html?vista=gobernanza',
+        seller: './staff.html?vista=gobernanza',
         client: './client-portal.html',
     };
 

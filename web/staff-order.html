@@ -609,7 +609,11 @@
         </div>
         <div style="display:flex;gap:8px;align-items:center;">
           <a id="so-ver-orden-btn" href="#" target="_blank" style="display:inline-flex;align-items:center;padding:7px 18px;border-radius:6px;border:1px solid rgba(255,255,255,0.18);background:rgba(255,255,255,0.05);color:#fff;font-size:13px;font-weight:600;text-decoration:none;white-space:nowrap;">Ver Orden</a>
-          <a id="so-back-btn" href="./admin-dashboard.html#leads">Volver a Leads</a>
+          <!-- 2026-09-19: admin-dashboard.html se retira -- staff.html no tiene
+               todavía un deep-link directo a Leads (solo a vistas de nivel
+               superior como gobernanza), así que esto aterriza en Gobernanza;
+               Leads queda a un clic dentro de "Clientes". -->
+          <a id="so-back-btn" href="./staff.html?vista=gobernanza">Volver a Leads</a>
         </div>
       </div>
 
