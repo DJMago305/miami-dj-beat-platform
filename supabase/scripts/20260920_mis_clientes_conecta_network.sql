@@ -172,3 +172,7 @@ begin
   end loop;
 end;
 $$;
+
+-- CORRECCIÓN 2026-09-20: solo la llama find_or_create_master_client (SECURITY DEFINER) y el
+-- backend; sin chequeo de auth propio, no debe ser ejecutable por anon/authenticated.
+revoke execute on function public.master_client_sincronizar_network(uuid, uuid) from anon, authenticated;

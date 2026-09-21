@@ -68,3 +68,10 @@ $$;
 
 revoke all on function public.calendar_caldav_leer_password(uuid) from public;
 grant execute on function public.calendar_caldav_leer_password(uuid) to service_role;
+
+-- CORRECCIÓN 2026-09-20: Supabase concede EXECUTE a anon/authenticated por defecto en
+-- funciones nuevas de `public`; `revoke ... from public` NO lo quita. Sin esto, cualquiera
+-- podía leer/escribir Vault con estas funciones. Aplicado en producción.
+revoke execute on function public.calendar_caldav_guardar_password(text, text) from anon, authenticated;
+revoke execute on function public.calendar_caldav_actualizar_password(uuid, text) from anon, authenticated;
+revoke execute on function public.calendar_caldav_leer_password(uuid) from anon, authenticated;

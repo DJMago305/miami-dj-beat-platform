@@ -37,3 +37,6 @@ $$;
 
 revoke all on function public.calendario_evento_quitar(uuid) from public;
 grant execute on function public.calendario_evento_quitar(uuid) to authenticated;
+
+-- CORRECCIÓN 2026-09-20: Supabase da EXECUTE a anon por defecto; solo usuarios con sesión.
+revoke execute on function public.calendario_evento_quitar(uuid) from anon;
