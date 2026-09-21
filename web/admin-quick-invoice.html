@@ -162,7 +162,7 @@
               : { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             lead_id: id,
-            amount_cents: Math.max(Math.round(amt * 100), 100),
+            kind: 'balance',
             description: desc || 'Miami DJ Beat — payment'
           })
         });

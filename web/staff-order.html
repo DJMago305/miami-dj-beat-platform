@@ -1098,7 +1098,7 @@
       var summaryHtml = lines.length
         ? '<div class="mdj-eb-crm-summary">' +
           '<div class="mdj-eb-crm-sum-row"><span class="mdj-eb-crm-sum-lbl">Subtotal servicios</span><span class="mdj-eb-crm-sum-val">' + money(subtotalAll) + '</span></div>' +
-          '<div class="mdj-eb-crm-sum-row mdj-eb-crm-sum-row--deposit"><span class="mdj-eb-crm-sum-lbl">Depósito 30%</span><span class="mdj-eb-crm-sum-val">' + money(dep30) + '</span></div>' +
+          '<div class="mdj-eb-crm-sum-row mdj-eb-crm-sum-row--deposit"><span class="mdj-eb-crm-sum-lbl">Depósito 50%</span><span class="mdj-eb-crm-sum-val">' + money(dep30) + '</span></div>' +
           '<div class="mdj-eb-crm-sum-row"><span class="mdj-eb-crm-sum-lbl">Balance 70%</span><span class="mdj-eb-crm-sum-val">' + money(bal70) + '</span></div>' +
           '<div class="mdj-eb-crm-sum-row mdj-eb-crm-sum-row--tax"><span class="mdj-eb-crm-sum-lbl">Sales Tax (7%)</span><span class="mdj-eb-crm-sum-val">' + money(tax) + '</span></div>' +
           '<div class="mdj-eb-crm-sum-row mdj-eb-crm-sum-row--total"><span class="mdj-eb-crm-sum-lbl">TOTAL</span><span class="mdj-eb-crm-sum-val">' + money(total) + '</span></div>' +
@@ -1156,7 +1156,7 @@
         }, 0);
         var tax   = Math.round(sub * TAX_RATE * 100) / 100;
         var total = Math.round((sub + tax) * 100) / 100;
-        return { subtotal: sub, tax: tax, total: total, deposit: Math.round(sub * 0.30 * 100)/100 };
+        return { subtotal: sub, tax: tax, total: total, deposit: Math.round(sub * 0.50 * 100)/100 };
       })();
 
       var payload = {

@@ -25,7 +25,7 @@
   function calcEventDepositUsd(totalUsd) {
     var bal = Number(totalUsd);
     if (!isFinite(bal) || bal < 0) bal = 0;
-    return Math.max(bal * 0.3, 150);
+    return Math.max(bal * 0.5, 150);
   }
 
   function mdjCorpZelleEmail() {
@@ -1339,8 +1339,7 @@
               : { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             lead_id: leadId,
-            amount_cents: amountCents,
-            deposit_required_usd: depositUsd,
+            kind: chargeMode === 'full' ? 'balance' : 'deposit',
             description: checkoutDesc
           })
         });

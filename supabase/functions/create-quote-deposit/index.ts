@@ -1,4 +1,4 @@
-// Miami DJ Beat LLC — staff-only Stripe Checkout for a converted quote deposit (30% of subtotal).
+// Miami DJ Beat LLC — staff-only Stripe Checkout for a converted quote deposit (50% of subtotal).
 // Amounts come from the database. The client never supplies dollars.
 // Env: STRIPE_SECRET_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SITE_URL
 
@@ -150,7 +150,7 @@ serve(async (req) => {
         billing_address_collection: "auto",
         "line_items[0][price_data][currency]": "usd",
         "line_items[0][price_data][unit_amount]": String(amountCents),
-        "line_items[0][price_data][product_data][name]": "Depósito 30% — Miami DJ Beat LLC",
+        "line_items[0][price_data][product_data][name]": "Depósito 50% — Miami DJ Beat LLC",
         "line_items[0][price_data][product_data][description]": eventLabel,
         "line_items[0][quantity]": "1",
         success_url: `${SITE_URL}/quote.html?id=${quoteId}&payment=success`,

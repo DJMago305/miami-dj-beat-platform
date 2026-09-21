@@ -172,7 +172,7 @@
         }).join("");
         var date = q.event_date ? String(q.event_date) : "Date TBD";
         var taxPct = Math.round(Number(q.tax_rate || 0.07) * 100);
-        var depPct = Math.round(Number(q.deposit_rate || 0.30) * 100);
+        var depPct = Math.round(Number(q.deposit_rate || 0.50) * 100);
         var waText = "Hello, I am reviewing proposal " + q.id + " from Miami DJ Beat LLC.";
         var notes = q.notes ? '<p class="notes">' + esc(q.notes) + "</p>" : "";
         root.innerHTML =

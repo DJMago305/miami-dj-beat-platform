@@ -942,7 +942,7 @@ window.checkoutNextStep = function() {
     if (detTb) detTb.innerHTML = detailedHtml;
 
     document.getElementById('inv-subtotal').innerText = '$' + subtotal.toFixed(2);
-    document.getElementById('inv-deposit').innerText = '$' + (subtotal * 0.3).toFixed(2);
+    document.getElementById('inv-deposit').innerText = '$' + (subtotal * 0.5).toFixed(2);
     document.getElementById('inv-balance').innerText = '$' + subtotal.toFixed(2);
     
     // Advance Visual State

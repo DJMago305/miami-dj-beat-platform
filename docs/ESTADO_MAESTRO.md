@@ -1802,3 +1802,75 @@ Rama local `feature/apple-calendar-caldav-backend` (2 commits, **sin PR abierto,
 5. **Apple Calendar**: formulario en Config y prueba con la cuenta real del PO.
 6. Auditoría de funciones abiertas restantes (`booth_*`, `fenix_can`, …; las de MDJPRO no se tocan sin orden), límite de intentos en la validación de cupones, cifrar tokens de Google, eliminar la ficha de prueba "gerardo A valle" en Network.
 7. Visión del PO sin construir: aviso de cumpleaños al staff y ELIXIS buscando en Network antes que en internet.
+
+## [2026-09-21] Hilo Maestro — Cupones fases 2 y 3 ESCRITAS (rama `feature/cupones-fase2-servidor-calcula`, NO desplegadas) + hallazgo crítico en `leads`
+
+- **Decisiones del PO (2026-09-21)**: el servidor calcula SIEMPRE el monto; el depósito que se cobra es el que muestra la pantalla (30 % del total, mínimo $150, o el fijado por el staff) y el saldo final es todo lo que falta.
+- **Error heredado descubierto**: `payDepositStripe` cobraba el 30 % del número que recibía, y recibía ya el depósito → se cobraba ~$150 en vez del depósito mostrado (y el "Pay Final Balance" cobraba solo 30 % del saldo). Ningún evento tenía pagos (7 eventos, 0 pagos), así que no hubo dinero mal cobrado.
+- **Fase 2** (`create-event-payment`): el navegador manda `{lead_id, kind: deposit|balance, coupon_code?}`, nunca montos. Cupón: resta del total ANTES del 7 % de impuesto, solo en el depósito, un cupón por evento, no se combina con el crédito de referido; reserva con `discount_reserve`; `quote:true` calcula sin crear pago. Llamadores actualizados: `client-portal.js`, `admin-quick-invoice.html`, `production-module.js`.
+- **Fase 3**: `stripe-webhook` llama `discount_confirm_y_ajustar_total` (única que gasta el uso y baja `total_amount` en descuento × 1.07, idempotente) y en `checkout.session.expired` `discount_release`. SQL: `supabase/scripts/20260921_cupones_fase3_confirmar_y_ajustar_total.sql` (columna `leads.coupon_discount_cents`, función, barrido horario). El portal resta `coupon_discount_cents` del carrito para que su recálculo no pierda el cupón. **Probado en producción con transacción deshecha** (total 1605 → 1578.25, reintento no vuelve a descontar, sesión inexistente rechazada; verificado después: sin columna, sin función, uses=0).
+- **Orden de despliegue obligatorio**: 1) aplicar el SQL de fase 3; 2) desplegar `create-event-payment` y `stripe-webhook`; 3) publicar la web (si no, el portal pide una columna que no existe). Antes de todo: verificar que la clave de Stripe guardada es de pruebas (`cs_test_`), y suscribir el webhook de pruebas también a `checkout.session.expired` (si no, el barrido de 26 h libera igual).
+- **🔴 HALLAZGO CRÍTICO (sin arreglar, decisión del PO)**: la política `leads_update_client_email` y las concesiones de columna permiten que un cliente con sesión edite `total_amount`, `balance_paid` y `payment_status` de SU evento (sin trigger que lo impida). Puede fijarse `PAID` sin pagar o bajar el total antes de que el servidor calcule el cobro. El portal además reescribe todo el lead desde el navegador (`syncLead`). Cerrarlo exige decidir quién es dueño de `total_amount` (recalcular en el servidor). Hasta entonces, "el servidor calcula el monto" cierra el hueco de `amount_cents` pero NO el de estas columnas.
+
+## [2026-09-21] Hilo Maestro — Plan "el servidor es dueño del dinero de `leads`" (diseño + Capa A probada, sin aplicar)
+
+- **Decisión del PO:** "el servidor debe ser dueño de `total_amount`". Plan completo en `docs/plan-dinero-de-leads-dueno-servidor.md`; ítems R31–R33 en el Road Master Map.
+- **Capa A** (`supabase/scripts/20260921_leads_proteger_columnas_de_dinero.sql`, NO aplicada): disparador que revierte en silencio `balance_paid`, `payment_status`, `deposit_required_usd`, `coupon_discount_cents` y `stripe_*` cuando los escribe un no-staff por la API, y fuerza valores de fábrica en INSERT. No afecta a staff, service_role ni funciones definer (el Zelle por RPC sigue funcionando). Log: WARNING `LEADS_DINERO_BLOQUEADO`. **Probada en producción con transacción deshecha (7 casos con JWT simulado)**; `total_amount` sigue editable a propósito (Capa B). Error propio corregido en el camino: mi primer diseño registraba intentos en una tabla que el rol del cliente no puede escribir; se cambió por el log de Postgres.
+- **Capa B** (diseño): conviven dos orígenes del total — la cotización del staff (`event_quote_record` → `event_quote_convert_to_order`, precios del staff) y el carrito del cliente (precios del navegador; origen de los 2 leads de cliente actuales). **B1** compuerta `total_aprobado` (el cliente no puede aprobarse; `create-event-payment` se niega a cobrar un total no aprobado; botón "Aprobar total" para staff) y **B2** catálogo + recálculo en el servidor.
+- **Aviso sobre el mapa:** V13–V15 se pusieron verdes (integridad 16/19) porque el código nuevo está en el repositorio, en una rama sin desplegar. Las sondas ven el repo, no Supabase; se anotó el aviso en las tres. No están cerradas en producción hasta desplegar.
+
+## [2026-09-21] Hilo Maestro — Capa A APLICADA y B1 aplicada (base de datos) en producción
+
+- **Capa A aplicada (a pedido del PO: "sí, aplica la capa A")**: disparador `trg_leads_proteger_columnas_de_dinero` en `leads`. Verificado después con el disparador real (transacción deshecha): el cliente que intenta `PAID`/`balance_paid` ve UNPAID/0 y un campo normal sí se guarda; staff escribe dinero; el Zelle por RPC sigue funcionando; los 7 eventos intactos. Agregó de paso la columna `leads.coupon_discount_cents` (la fase 3 de cupones la usa; el resto de la fase 3 sigue SIN aplicar).
+- **B1 aplicada (base de datos)**: columnas `total_aprobado_*`, disparador ampliado, RPC `lead_aprobar_total(lead, total_visto)`; backfill: 5 eventos de staff aprobados, 2 de cliente (`a81679dc`, `932fe157`) pendientes de aprobación. **Falta desplegar** `create-event-payment` (gate 409 `total_pendiente_aprobacion`) y el portal (aviso al cliente + botón "Approve total" para gerente) — rama `feature/cupones-fase2-servidor-calcula`, sin commit. Hasta desplegar, el cobro en producción sigue sin exigir aprobación.
+- **Llamador olvidado corregido en la rama**: `managerGenerateClientStripeLink` y el lead de emergencia de invitado (`client-portal.js`) seguían mandando `amount_cents`; ahora mandan `kind:'balance'`.
+- **Requisito nuevo del PO para B2**: "si se cambian los precios en las fuentes, todo el precio, también en el carrito y el pago, deben actualizarse" → carrito por referencia al catálogo. Decisión pendiente: qué pasa con eventos ya aprobados o con pagos hechos (recomendado: congelar el total pactado desde el primer pago). Ver `docs/plan-dinero-de-leads-dueno-servidor.md` §6.
+- **Bug existente descubierto (sin arreglar)**: `mdj_client_create_event_lead` falla siempre (`notes` jsonb vs parámetro text).
+
+## [2026-09-21] Hilo Maestro — B2 paso 1: inventario de fuentes de precio (solo lectura)
+
+- Documento: `docs/inventario-precios.md`. **13 fuentes** de precio. Ya existe un mecanismo de precio único (`platform_settings.rentals_catalog_prices`, overlay por SKU que leen el editor de staff, `rentals.js` y ELIXIS), pero **en producción está vacío**: todos los precios vigentes son los escritos en el código.
+- **Conflictos entre canales**: fotografía 350 (ELIXIS) vs 700 (web) vs 800 (staff, foto+video), video 500 vs 950, CO2 300 vs 400, confeti 120/450/200, uplighting 200/350, moving heads 150/350/400, PA grande 750 vs 600, saxofón 400/450/600; Hora Loca Premium 1200 y Basic 800 solo existen en el panel de staff. El evento de $5,082.50 se armó con el catálogo de `staff-order.html`.
+- **Otros defectos**: `line_total_usd = 0` en las 7 líneas de esa orden; el carrito guarda precios y no referencias; `event_quote_record` no valida el precio contra un catálogo; `saveAllPrices` sobrescribe todo el overlay; `rentals.json` es copia muerta; precios escritos a mano en ≥4 lugares por producto (HTML, `translations.js`, `rentals.js`, servidor) más FAQ/JSON-LD.
+- Pendiente del PO: resolver los conflictos, decidir Hora Loca Premium/Basic, tarifa por DJ y regla de congelado (§7 del inventario). Nada modificado en código ni en producción.
+
+## [2026-09-21] Hilo Maestro — Congelado del total desde el primer pago APLICADO (decisión del PO)
+
+- Decisión del PO: "congela el total desde el primer pago". Aplicado en producción en el disparador de `leads` (`supabase/scripts/20260921_leads_total_aprobado_b1.sql` actualizado): con `balance_paid > 0`, el cliente ya no puede cambiar `total_amount` (se revierte, log `LEADS_DINERO_BLOQUEADO`). Solo el staff puede reabrirlo. Probado en transacción deshecha (5 casos); 0 eventos con pago hoy.
+- Falta: foto de precios al primer pago cuando el carrito pase a SKU (B2); bloquear en el portal agregar/quitar servicios tras el primer pago (cambio visible) y congelar `notes.selected_services` en la base. Detalle en `docs/plan-dinero-de-leads-dueno-servidor.md` §8.
+
+## [2026-09-21] Hilo Maestro — Formulario de conflictos de precio publicado + regla «Call para cotización»
+
+- Formulario privado (artifact `UijHs2NwDiQAbUkMGdnquz`, versión 3) para que el PO marque el precio correcto de cada conflicto del `docs/inventario-precios.md`. Incluye tarjetas «Qué incluye» de fotografía y video (horas, fotos editadas, galería, entrega, dron, material sin editar) y la fila «Álbum o libro de fotos» (incluido / no se ofrece / extra aparte con precio). Referencia de mercado (Miami) añadida en esas tarjetas.
+- **Decisión del PO:** lo que no se sepa se deja en blanco con la nota «Call para cotización» (precio NULL; línea fuera del total automático; carrito pendiente de aprobación del staff). Detalle en `docs/plan-dinero-de-leads-dueno-servidor.md` §9.
+- Pendiente: el PO llena el formulario y pega la respuesta; con ella se siembra `service_catalog`.
+
+## [2026-09-21] Hilo Maestro — Corrección del PO: las tarifas de DJ son PAGO al DJ, no precio al cliente
+
+- El PO aclaró que 1500/850/500/350/250 (boda, corporativo, club, restaurante, infantil, holidays) son **lo que se le paga al DJ**; el cliente paga un **paquete completo** (ejemplo del PO: $4,500). Mis comparaciones de mercado anteriores para el DJ (boda «en rango», holidays «en línea») mezclaban pago con precio: retiradas.
+- El sistema ya tiene `leads.dj_agreed_payout_usd` y `dj_profiles.commission_rate` (15 %), pero ELIXIS/web cobran esos mismos números al cliente. `service_catalog` deberá llevar `pago_dj_usd` y `precio_cliente_usd` separados. Formulario actualizado (fila «Lo que se COBRA al cliente por el paquete completo» + referencia de mercado); no se halló ningún paquete publicado de $4,500. Detalle en `docs/plan-dinero-de-leads-dueno-servidor.md` §10.
+
+## [2026-09-21] Hilo Maestro — Investigación de mercado (4 informes) y propuesta de precios de lujo v1
+
+- Pedido del PO: investigación profunda de mercado y precios «teniendo en cuenta que somos lujo». Se hicieron 4 investigaciones en paralelo (bodas/quinceañeras; corporativo, holidays, restaurantes, clubs, privadas e infantiles; equipos y servicios; estrategia de precios de lujo).
+- **Propuesta v1:** `docs/propuesta-precios-luxury.md` (borrador, nada cambiado en el sistema). Regla `precio_cliente = pago_dj × múltiplo` (≈2× / 3× / 4–5×), precios de DJ al cliente por tipo de evento, ~35 equipos y servicios con rango investigado, confianza ALTA/MEDIA/BAJA y fuentes. El formulario de conflictos (artifact, v10) ofrece cada propuesta como opción «Propuesta lujo».
+- **Hallazgos clave:** techo público más alto de un paquete de boda: $4,995 (Eddie B.); **no se halló un paquete completo publicado de $4,500**; las productoras de lujo no publican precios; casi todos los datos de club/restaurante son PAGO al DJ, no precio al cliente; depósito de mercado 50 % (el sistema cobra 30 % con mínimo $150).
+- **Pendiente del PO:** aprobar la regla de múltiplos y nombres reales de paquetes; depósito 30 % → 50 %; costos reales de MDJB para validar el margen; pago al DJ de la fiesta privada; horas base de restaurantes/holidays; llenar el formulario.
+
+## [2026-09-21] Hilo Maestro — Depósito de reserva 30 % → 50 % (decisión del PO)
+
+- Aplicado en producción (BD): `mdj_event_deposit_required_usd`, `event_quote_record`, `event_quote_convert_to_order` y el default de `event_quotes.deposit_rate` ahora usan 50 % (mínimo $150). Script: `supabase/scripts/20260921_deposito_50_por_ciento.sql`; probado en transacción deshecha ($1,000 → $500; $200 → $150).
+- Código en la rama `feature/cupones-fase2-servidor-calcula` (sin desplegar): 14 archivos + `?v=`. Hasta desplegar, BD 50 % y portal/edge functions 30 % (0 eventos con pago, sin riesgo activo). Los eventos y cotizaciones existentes conservan su depósito. Detalle: `docs/plan-dinero-de-leads-dueno-servidor.md` §12.
+
+## [2026-09-21] Hilo Maestro — Pendientes recalculados al 50 % (a pedido del PO)
+
+- Recalculado el depósito de lo pendiente de pago (sin pagos, no cancelado): lead `a81679dc` $324.00 → **$2,541.25**; órdenes del constructor `a2e6f7fc` $1,425 → **$2,375** y `70896da3` $481.50 → **$802.50**; cotización en borrador `9a8649ef` $465 → **$775**. El lead `932fe157` no tenía depósito fijado: ya calcula 50 % solo ($802.50). No se tocaron los 5 leads cancelados. Detalle al final de `supabase/scripts/20260921_deposito_50_por_ciento.sql`.
+- Observación: el depósito de las órdenes del constructor se calcula sobre bases distintas (a2e6f7fc sobre el subtotal sin impuesto; 70896da3 y el portal sobre el total con impuesto). Sin unificar; pendiente cuando el catálogo único fije una sola base.
+- **Corrección (2026-09-21, PO):** el lead `a81679dc` conserva su depósito manual de **$324.00** (revertido de $2,541.25); es un acuerdo del PO, no se recalcula. Las órdenes `a2e6f7fc`/`70896da3` y la cotización `9a8649ef` siguen recalculadas al 50 %.
+
+## [2026-09-21] Hilo Maestro — Despliegue del depósito 50 %: SQL de la fase 3 aplicado; funciones pendientes de desplegar
+
+- **Aplicado en producción:** `discount_confirm_y_ajustar_total(text)` (solo `service_role`) y el barrido horario `discount_release_stale_hourly` (pg_cron, 26 h). Verificado: `anon`/`authenticated` sin ejecución; 1 tarea de cron.
+- **NO desplegado todavía:** las 4 funciones (`stripe-webhook`, `create-event-payment`, `create-quote-deposit`, `elixis-chat`). El despliegue por consola (`supabase functions deploy`) fue bloqueado por el clasificador de permisos de la sesión; pegar los archivos por la herramienta de Supabase no es seguro para el webhook (50 KB) ni para `elixis-chat` (181 KB). Deben desplegarse desde la terminal del PO. Ajustes de verificación de sesión ya confirmados en producción: las 4 tienen `verify_jwt=false` (config.toml cubre 3; `elixis-chat` requiere `--no-verify-jwt`).
+- **Web (portal, panel de staff, páginas) sin desplegar:** requiere commit + PR, que según `CLAUDE.md` solo se abre con la palabra «aprobado» del PO tras ver los cambios visibles (aviso «Total pending team approval», botón «Approve total», etiquetas de depósito 50 %).
+- Estado actual: BD 50 %; código desplegado 30 % (0 eventos con pago).

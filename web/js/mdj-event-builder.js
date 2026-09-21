@@ -1603,7 +1603,7 @@
         }).join('');
 
         var totals = computeTotals();
-        var deposit30 = Math.round(totals.subtotal * 0.30 * 100) / 100;
+        var deposit30 = Math.round(totals.subtotal * 0.50 * 100) / 100; // (nombre histórico) depósito = 50 %
         var balance70 = Math.round(totals.subtotal * 0.70 * 100) / 100;
 
         // Si sectionsHtml está vacío pero hay líneas, es que todas son addon sin mapear
@@ -1615,7 +1615,7 @@
         var summaryHtml = state.lines.length
             ? '<div class="mdj-eb-crm-summary">' +
               '<div class="mdj-eb-crm-sum-row"><span class="mdj-eb-crm-sum-lbl">Subtotal servicios</span><span class="mdj-eb-crm-sum-val">' + money(totals.subtotal) + '</span></div>' +
-              '<div class="mdj-eb-crm-sum-row mdj-eb-crm-sum-row--deposit"><span class="mdj-eb-crm-sum-lbl">Depósito 30%</span><span class="mdj-eb-crm-sum-val">' + money(deposit30) + '</span></div>' +
+              '<div class="mdj-eb-crm-sum-row mdj-eb-crm-sum-row--deposit"><span class="mdj-eb-crm-sum-lbl">Depósito 50%</span><span class="mdj-eb-crm-sum-val">' + money(deposit30) + '</span></div>' +
               '<div class="mdj-eb-crm-sum-row"><span class="mdj-eb-crm-sum-lbl">Balance 70%</span><span class="mdj-eb-crm-sum-val">' + money(balance70) + '</span></div>' +
               '<div class="mdj-eb-crm-sum-row mdj-eb-crm-sum-row--tax"><span class="mdj-eb-crm-sum-lbl">Sales Tax (7%)</span><span class="mdj-eb-crm-sum-val">' + money(totals.tax) + '</span></div>' +
               '<div class="mdj-eb-crm-sum-row mdj-eb-crm-sum-row--total"><span class="mdj-eb-crm-sum-lbl">TOTAL</span><span class="mdj-eb-crm-sum-val">' + money(totals.total) + '</span></div>' +
@@ -1857,7 +1857,7 @@
             subtotal_usd:   totals.subtotal  || 0,
             tax_usd:        totals.tax        || 0,
             total_usd:      totals.total      || 0,
-            deposit_usd:    Math.round((totals.total || 0) * 0.30 * 100) / 100,
+            deposit_usd:    Math.round((totals.total || 0) * 0.50 * 100) / 100,
             order_status:   'pending',
             updated_at:     new Date().toISOString()
         };

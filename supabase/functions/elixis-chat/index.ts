@@ -1554,7 +1554,7 @@ serve(async (req: Request) => {
         name: "generar_cotizacion_evento",
         description:
             "Genera un borrador de cotización de Miami DJ Beat LLC (event_quotes). " +
-            "El servidor calcula line = unit × qty, tax 7% y depósito 30% sobre el subtotal. " +
+            "El servidor calcula line = unit × qty, tax 7% y depósito 50% sobre el subtotal. " +
             "No crea órdenes formales. No inventes SKUs ni montos: usa el catálogo.",
         input_schema: {
             type: "object",
@@ -2321,7 +2321,7 @@ serve(async (req: Request) => {
             ok: true,
             brand: "Miami DJ Beat LLC",
             tax_rate: 0.07,
-            deposit_rate: 0.30,
+            deposit_rate: 0.50,
             extra_hour_sku: "dj_extra_hour",
             items,
         });
