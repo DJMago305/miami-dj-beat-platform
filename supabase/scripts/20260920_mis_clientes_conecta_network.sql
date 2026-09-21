@@ -36,6 +36,7 @@ declare
   v_ref_id uuid;
   v_lista_cliente_id uuid;
   v_dj_nombre text;
+  v_dj_user uuid;
 begin
   select * into v_mc from public.master_clients where id = p_master_client_id;
   if v_mc is null then return null; end if;
@@ -43,11 +44,27 @@ begin
   -- Origen: qué DJ trajo este cliente, para que ELIXIS pueda recomendar a
   -- ese DJ cuando el contacto salga de su calendario/base.
   if p_dj_id is not null then
-    select coalesce(nullif(trim(stage_name),''), nullif(trim(dj_name),''), nullif(trim(full_name),'')) into v_dj_nombre
+    select coalesce(nullif(trim(stage_name),''), nullif(trim(dj_name),''), nullif(trim(full_name),'')), user_id into v_dj_nombre, v_dj_user
       from public.dj_profiles where id = p_dj_id;
   end if;
 
   v_phone_10 := nullif(right(regexp_replace(coalesce(v_mc.normalized_phone, ''), '\D', '', 'g'), 10), '');
+
+  -- Si el teléfono/email ya pertenece a una cuenta REAL (cliente o DJ), no se
+  -- crea un duplicado en Network: esa persona ya aparece con su ficha real
+  -- (caso Wendy E Ayala, 2026-09-20). Un DJ que guarda un cliente no debe
+  -- modificar el perfil de otra cuenta, así que aquí simplemente se omite.
+  if exists (
+    select 1 from public.client_profiles c
+     where (v_phone_10 is not null and right(regexp_replace(coalesce(c.phone, ''), '\D', '', 'g'), 10) = v_phone_10)
+        or (v_mc.normalized_email is not null and lower(trim(c.email)) = v_mc.normalized_email)
+  ) or exists (
+    select 1 from public.dj_profiles d
+     where (v_phone_10 is not null and right(regexp_replace(coalesce(d.phone, ''), '\D', '', 'g'), 10) = v_phone_10)
+        or (v_mc.normalized_email is not null and lower(trim(d.email)) = v_mc.normalized_email)
+  ) then
+    return null;
+  end if;
 
   -- Coincidencia por teléfono (últimos 10 dígitos) o email exacto -- NUNCA
   -- por nombre solo (regla de la sesión: mismo nombre no implica misma
@@ -59,7 +76,7 @@ begin
 
   if v_ref_id is null then
     insert into public.network_referencia_contactos (nombre, telefono, email, birth_date, origen_csv, origen_persona_id, origen_persona_nombre)
-    values (v_mc.name, v_mc.normalized_phone, v_mc.normalized_email, v_mc.birthday, 'mis_clientes_dj', p_dj_id, v_dj_nombre)
+    values (coalesce(nullif(trim(v_mc.name), ''), v_mc.normalized_email, v_mc.normalized_phone, 'Sin nombre'), v_mc.normalized_phone, v_mc.normalized_email, v_mc.birthday, 'mis_clientes_dj', v_dj_user, v_dj_nombre)
     returning id into v_ref_id;
   else
     update public.network_referencia_contactos set
