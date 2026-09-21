@@ -377,6 +377,12 @@
   @media (max-width:900px){.rem-grid{grid-template-columns:1fr;}.newform{grid-template-columns:1fr 1fr;}}
   @media (max-width:840px){.year-grid{grid-template-columns:repeat(2,1fr);}.day-layout{grid-template-columns:1fr;gap:16px;}.day-split{display:none;}.toolbar{grid-template-columns:auto 1fr auto;}}
   @media (max-width:560px){.year-grid{grid-template-columns:1fr;}.seg button{padding:6px 9px;font-size:12px;}.ctx .iso{margin-left:0;}}
+  /* Acciones sobre el evento seleccionado (vista Día): X roja = eliminar, palomita azul = editar. Discretas: círculo fino, sin relleno. */
+  .evact{width:28px !important;height:28px !important;border-radius:50% !important;border:1.5px solid currentColor !important;margin-left:4px;transition:opacity .15s,background .15s;}
+  .evact svg{width:14px;height:14px;}
+  .evact-del{color:#ef4444 !important;} .evact-edit{color:#3b82f6 !important;}
+  .evact:not(:disabled):hover{background:color-mix(in srgb,currentColor 14%,transparent) !important;}
+  .evact:disabled{opacity:.28;cursor:not-allowed !important;}
   /* Pantalla completa / full-width — la app llena toda la ventana */
   .wrap{padding:0 !important;min-height:0 !important;}
   /* Altura NATURAL del contenido (sin forzar 100vh): el iframe host se auto-ajusta
@@ -410,7 +416,8 @@
         <button class="iconbtn" id="btnNotz" title="Notarización (solo manager)" data-i18n-title="coi-tt-notarizacion">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9.3 12l1.9 1.9L15 10"/></svg>
         </button>
-        <button class="iconbtn" title="Nuevo evento" data-i18n-title="coi-tt-nuevo-evento"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></button>
+        <button class="iconbtn evact evact-del" id="btnEvDel" type="button" title="Eliminar el evento seleccionado (vista Día)" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M8 8l8 8M16 8l-8 8"/></svg></button>
+        <button class="iconbtn evact evact-edit" id="btnEvEdit" type="button" title="Editar el evento seleccionado (vista Día)" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 12.5l3.5 3.5 7.5-8"/></svg></button>
       </div>
       <div class="seg" role="tablist" id="seg">
         <button role="tab" data-view="dia" data-i18n="coi-tab-dia">Día</button>
@@ -886,6 +893,7 @@
     else if(v==="continuidad")renderCon();
     else if(v==="notarizacion")renderNotz();
     else renderCrm();
+    updateEvActions();
   }
 
   function renderYear(){
@@ -1303,6 +1311,48 @@
   // solo se va a mostrar el contenido que está seleccionado a la izquierda").
   // Sin selección todavía (o de otro día), se muestra el primer evento por
   // defecto -- nunca un panel vacío habiendo eventos ese día.
+
+  // ═══ Acciones sobre el evento seleccionado (vista Día) ═══
+  // X roja = eliminar, palomita azul = editar. Reutilizan los flujos que YA existen
+  // (Residencia y lead suelto) y agregan "quitar" para las filas de
+  // elixis_agenda_eventos (Google/ELIXIS) vía calendario_evento_quitar (baja suave).
+  var btnEvDel=document.getElementById("btnEvDel"), btnEvEdit=document.getElementById("btnEvEdit");
+  function evActKinds(e){
+    var staff=(window.__COI_STAFF===true), k={del:null,edit:null};
+    if(!e) return k;
+    if(e.residencyId && staff){ k.del="res"; k.edit="res"; }
+    else if(e.leadId && staff && String(e.leadStatus).toUpperCase()!=="CANCELLED"){ k.del="lead"; }
+    else if(e.rowId || e.bookingId){ k.del="row"; }
+    return k;
+  }
+  function updateEvActions(){
+    if(!btnEvDel||!btnEvEdit) return;
+    var k=(state.view==="dia")?evActKinds(state.sel):{del:null,edit:null};
+    btnEvDel.disabled=!k.del; btnEvEdit.disabled=!k.edit;
+    btnEvDel.title=k.del?"Eliminar el evento seleccionado":"Eliminar: selecciona en la vista Día un evento que se pueda eliminar";
+    btnEvEdit.title=k.edit?"Editar el evento seleccionado (cambiar DJ)":"Editar: este tipo de evento todavía no se puede editar";
+  }
+  if(btnEvDel) btnEvDel.addEventListener("click",function(){
+    var e=state.sel, k=evActKinds(e).del, card=document.querySelector("#detail .ev-card");
+    if(!k||!card) return;
+    if(k==="res"){ var b=card.querySelector(".res-del-btn"); if(b) b.click(); }
+    else if(k==="lead"){ var b2=card.querySelector(".lead-del-btn"); if(b2) b2.click(); }
+    else if(k==="row"){
+      if(!confirm('¿Quitar "'+e.t+'" de la agenda? Queda oculto y se puede recuperar; no se toca tu Google Calendar.')) return;
+      btnEvDel.disabled=true;
+      var sb=(window.getSupabaseClient? window.getSupabaseClient() : window.supabase);
+      sb.rpc("calendario_evento_quitar",{p_id:(e.rowId||e.bookingId)}).then(function(r){
+        if(r.error) throw r.error;
+        if(r.data && r.data.ok===false) throw new Error(r.data.error||"no se pudo");
+        state.sel=null; loadPersonalCalendarSync(); loadElixisBookings();
+      }).catch(function(err){ alert("No se pudo quitar: "+(err.message||err)); updateEvActions(); });
+    }
+  });
+  if(btnEvEdit) btnEvEdit.addEventListener("click",function(){
+    var k=evActKinds(state.sel).edit, card=document.querySelector("#detail .ev-card");
+    if(k==="res"&&card){ var b=card.querySelector(".res-dj-btn"); if(b) b.click(); }
+  });
+
   function renderDayDetail(d){
     var el=document.getElementById("detail");if(!el)return;
     var list=evOn(key(d)).slice().sort(function(a,b){var sa=a.ad?-1:(a.s==null?0:a.s),sb=b.ad?-1:(b.s==null?0:b.s);return sa-sb;});
@@ -1334,6 +1384,7 @@
       var tl=document.querySelector(".day-layout .day-tl");
       if(tl) el.style.height=Math.round(tl.getBoundingClientRect().height)+"px";
     });
+    updateEvActions();
   }
 
   function buildReminders(){
@@ -1788,7 +1839,7 @@
       if(!sb || !sb.from || !sb.auth){ return setTimeout(loadPersonalCalendarSync, 300); }
       if(!(await sb.auth.getSession()).data.session){ return setTimeout(loadPersonalCalendarSync, 300); }
       var r=await sb.from("elixis_agenda_eventos")
-        .select("user_id,dj_nombre,venue_nombre,fecha_inicio,tipo,notas")
+        .select("id,user_id,dj_nombre,venue_nombre,fecha_inicio,tipo,notas")
         .eq("estado","activo")
         .in("tipo",["cumpleanos","nota"]);
       if(r.error) throw r.error;
@@ -1829,12 +1880,12 @@
           var artId=prof.id;
           var nm=prof.stage_name||prof.dj_name||prof.full_name||row.dj_nombre||"DJ";
           if(!ARTISTS.some(function(a){return a.id===artId;})) ARTISTS.push({id:artId, n:nm, c:DJ_PALETTE[pal++ % DJ_PALETTE.length]});
-          out.push({ d:iso, cal:"personal", ad:true, kind:(row.tipo==="cumpleanos"?"cumple":"nota"), t:titulo, artist:artId });
+          out.push({ d:iso, cal:"personal", ad:true, kind:(row.tipo==="cumpleanos"?"cumple":"nota"), t:titulo, artist:artId, rowId:row.id });
         } else {
           var cliente=clientByUser[row.user_id], ckey="u:"+row.user_id;
           var cnm=(cliente&&cliente.full_name)||row.dj_nombre||"Cliente";
           if(!CLIENT_ACCOUNTS.some(function(c){return c.id===ckey;})) CLIENT_ACCOUNTS.push({id:ckey, n:cnm, c:DJ_PALETTE[cpal++ % DJ_PALETTE.length]});
-          out.push({ d:iso, cal:"personal", ad:true, kind:(row.tipo==="cumpleanos"?"cumple":"nota"), t:titulo, clientId:ckey });
+          out.push({ d:iso, cal:"personal", ad:true, kind:(row.tipo==="cumpleanos"?"cumple":"nota"), t:titulo, clientId:ckey, rowId:row.id });
         }
       });
       _syncEv=out;
