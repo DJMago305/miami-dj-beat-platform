@@ -1685,3 +1685,20 @@ Rama local `feature/apple-calendar-caldav-backend` (2 commits, **sin PR abierto,
 - **Jurisdicción**: el motor de clima cae en el dominio del especialista Weather (JURISDICCIONES §5); el Hilo Maestro lo tocó **solo por orden expresa del PO** y con el cambio mínimo. Avisar al hilo Weather al retomar.
 - **Verificado en el contenedor real (`dj-dashboard.html`)**: sin GPS (mi navegador no tiene) → `UBICACIÓN APROXIMADA · BASE (SIN GPS)`; con una última ubicación real simulada en Kendall → `📍 Kendall, FL` + `ÚLTIMA UBICACIÓN CONOCIDA` (la API resolvió el nombre desde lat/lon). **No probado**: el camino de GPS real concedido (mi navegador no lo entrega) — confirmación pendiente del PO en Safari con el permiso activado. Los estados ya cacheados antes del cambio no traen `source` y muestran `CONDICIONES ACTUALES` hasta refrescarse (≤12 min).
 - **Pendiente real**: que el PO permita la ubicación en Safari (Configuración → Sitios web → Ubicación) y confirme que ve su zona real; PR de la rama `feature/clima-ubicacion-honesta` sin abrir hasta que el PO diga "sí, ábrelo".
+## [2026-09-20] Hilo Maestro — Cierre del PR #431 (calendario Google manda, Apple Calendar backend, Mis clientes → Network)
+
+- **PR #431 fusionado a `main` por el PO** (2026-09-21 03:32 UTC, commit `0d4ca1ae`), verificado de forma independiente con `gh pr view` antes de darlo por hecho. Rama `feature/apple-calendar-caldav-backend` borrada (local y remota), `main` local actualizado. El detalle de cada pieza está en las entradas de arriba de esta misma fecha.
+- **Ya en producción y ahora también en `main`**: edge functions `calendar-caldav-connect`, `calendar-evento-editar` (v2), `calendar-reconcile`; migraciones de Vault, Mis clientes→Network y `calendario_evento_quitar`; temporizador `reconcile_google_calendar_cron` (id 7, 60 s de timeout aplicado por el PO); botones X roja / palomita azul, corrección de fecha de todo el día, pantalla completa, y franja de logo+buscador oculta solo en la pestaña Agenda.
+- **Pendiente real, en orden**:
+  1. **Prueba contra el Google real** (editar, borrar, y que la conciliación cancele un evento borrado en Google): falta que el PO cree el evento "PRUEBA MDJB" (30-sep) en su Google Calendar.
+  2. **Confirmación visual del PO en Safari**: pantalla completa nativa del calendario y Agenda sin la franja.
+  3. Fusionar a mano el duplicado de Wendy (`wendyeayala@hotmail.com`) desde su ficha en Network (la RPC exige sesión de staff); eliminar la ficha de prueba "gerardo A valle" en Network si el PO quiere.
+  4. Formulario de conexión de Apple Calendar en Config + prueba con la cuenta real del PO (contraseña de aplicación); resincronización periódica de Apple y expansión de RRULE.
+  5. Archivo espejo de la migración `calendar_caldav_apple_columns` en `supabase/scripts/`.
+  6. Editar la fecha de bodas/leads y residencias (hoy solo "Reemplazar DJ" en residencias).
+  7. Los duplicados de cumpleaños pueden reaparecer el año próximo (Google los manda en dos calendarios); solución de raíz no construida.
+  8. Aviso de cumpleaños al staff y búsqueda de ELIXIS ("quién cumple este mes", "busca una compañía de mobiliario") sobre Network: visión del PO, no construida.
+  9. Tokens de Google en texto plano; revisar si otras funciones `SECURITY DEFINER` antiguas tienen el mismo patrón de EXECUTE abierto a `anon` (no auditado).
+  10. La rama `docs/auditoria-forense-general-2026-09-20` sigue en GitHub sin PR: la auditoría general nunca se fusionó.
+
+- **PR #432 (Clima: ubicación honesta) fusionado a `main` por el PO** (2026-09-21 03:38 UTC, commit `6b778933`), verificado con `gh pr view`; rama borrada. Pendiente de esa entrega: que el PO active el permiso de ubicación en Safari y confirme que ve su zona real (camino de GPS concedido no probado en el navegador integrado) y avisar al hilo Weather del cambio en `mdjb-weather-core.js`.
