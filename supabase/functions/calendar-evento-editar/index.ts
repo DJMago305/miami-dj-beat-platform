@@ -86,7 +86,7 @@ serve(async (req: Request) => {
     const { data: { user }, error: authErr } = await ADMIN.auth.getUser(jwt);
     if (authErr || !user?.id) return json({ ok: false, error: "invalid_session" }, 401);
 
-    let p: { id?: string; titulo?: string; fecha?: string; inicio_iso?: string; fin_iso?: string };
+    let p: { id?: string; accion?: string; titulo?: string; fecha?: string; inicio_iso?: string; fin_iso?: string };
     try { p = await req.json(); } catch { return json({ ok: false, error: "json_invalido" }, 400); }
 
     const id = String(p.id || "");
@@ -99,7 +99,8 @@ serve(async (req: Request) => {
     const finIso = p.fin_iso ? new Date(p.fin_iso) : null;
     if ((inicioIso && isNaN(inicioIso.getTime())) || (finIso && isNaN(finIso.getTime()))) return json({ ok: false, error: "hora_invalida" }, 400);
     if (inicioIso && finIso && finIso <= inicioIso) return json({ ok: false, error: "fin_antes_de_inicio" }, 400);
-    if (titulo === undefined && fecha === undefined && !inicioIso) return json({ ok: false, error: "nada_que_cambiar" }, 400);
+    const esQuitar = p.accion === "quitar";
+    if (!esQuitar && titulo === undefined && fecha === undefined && !inicioIso) return json({ ok: false, error: "nada_que_cambiar" }, 400);
 
     const { data: fila, error: filaErr } = await ADMIN
         .from("elixis_agenda_eventos")
@@ -112,6 +113,42 @@ serve(async (req: Request) => {
         .from("dj_profiles").select("role").eq("user_id", user.id).maybeSingle();
     const esStaff = STAFF_ROLES.includes(String(perfilStaff?.role || "").toLowerCase());
     if (!esStaff && fila.user_id !== user.id) return json({ ok: false, error: "forbidden" }, 403);
+
+
+    // ── QUITAR / ELIMINAR ──────────────────────────────────────────────────
+    // Google manda: si el evento es de Google y Google deja borrarlo, se borra AHÍ primero;
+    // luego se da de baja la copia local (estado='cancelado', recuperable). Los cumpleaños de
+    // contactos (y los eventos de cumpleaños automáticos de Google) no se pueden borrar en
+    // Google -> solo se ocultan aquí y se avisa.
+    if (esQuitar) {
+        const esGoogleQ = fila.agent_id === "calendar-sync" && !!fila.external_event_id;
+        let borradoEnGoogle = false;
+        let aviso: string | undefined;
+        if (esGoogleQ && fila.tipo !== "cumpleanos") {
+            const { data: integ } = await ADMIN
+                .from("user_calendar_integrations").select("refresh_token")
+                .eq("user_id", fila.user_id).eq("provider", "google").eq("calendar_id", "primary").eq("status", "active").maybeSingle();
+            if (!integ?.refresh_token) return json({ ok: false, error: "google_no_conectado", detalle: "Esa cuenta ya no tiene Google Calendar conectado; no se borró nada." }, 409);
+            const token = await refrescarAccessToken(integ.refresh_token);
+            if (!token) return json({ ok: false, error: "google_token", detalle: "No se pudo renovar el acceso a Google; no se borró nada." }, 502);
+            const dRes = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${encodeURIComponent(fila.external_event_id)}?sendUpdates=none`, {
+                method: "DELETE", headers: { Authorization: `Bearer ${token}` },
+            });
+            if (dRes.ok || dRes.status === 410 || dRes.status === 404) {
+                borradoEnGoogle = true;
+            } else if (dRes.status === 400 || dRes.status === 403) {
+                aviso = "Google no permite borrar este evento (es automático, como los cumpleaños); se ocultó solo aquí.";
+            } else {
+                console.error("[calendar-evento-editar] Google DELETE falló:", dRes.status);
+                return json({ ok: false, error: "google_rechazo", status: dRes.status, detalle: "Google no aceptó el borrado; no se modificó nada." }, 502);
+            }
+        } else if (esGoogleQ) {
+            aviso = "Los cumpleaños de contactos no se pueden borrar en Google; se ocultó solo aquí.";
+        }
+        const { error: qErr } = await ADMIN.from("elixis_agenda_eventos").update({ estado: "cancelado", updated_at: new Date().toISOString() }).eq("id", id);
+        if (qErr) return json({ ok: false, error: "no_se_pudo_guardar_local", detalle: borradoEnGoogle ? "Google SÍ lo borró; la copia local se corregirá en la próxima conciliación." : undefined }, 500);
+        return json({ ok: true, accion: "quitar", google: borradoEnGoogle, aviso }, 200);
+    }
 
     const esGoogle = fila.agent_id === "calendar-sync" && !!fila.external_event_id;
     let nuevoInicio: string | null = null;

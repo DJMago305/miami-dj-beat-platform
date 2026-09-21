@@ -1339,13 +1339,18 @@
     if(k==="res"){ var b=card.querySelector(".res-del-btn"); if(b) b.click(); }
     else if(k==="lead"){ var b2=card.querySelector(".lead-del-btn"); if(b2) b2.click(); }
     else if(k==="row"){
-      if(!confirm('¿Quitar "'+e.t+'" de la agenda? Queda oculto y se puede recuperar; no se toca tu Google Calendar.')) return;
+      var _esNota=(e.rowId && e.kind==="nota"), _esCumple=(e.kind==="cumple");
+      var _msg=_esNota ? ('¿Eliminar "'+e.t+'"?\n\nSe elimina también de tu Google Calendar (Google manda). Si Google no permite borrarlo, se oculta solo aquí.')
+        : (_esCumple ? ('¿Quitar "'+e.t+'" de la agenda?\n\nLos cumpleaños de contactos no se pueden borrar en Google: se oculta solo aquí. Para cambiar la fecha, corrígela en el contacto.')
+        : ('¿Quitar "'+e.t+'" de la agenda? Queda oculto y se puede recuperar.'));
+      if(!confirm(_msg)) return;
       btnEvDel.disabled=true;
       var sb=(window.getSupabaseClient? window.getSupabaseClient() : window.supabase);
-      sb.rpc("calendario_evento_quitar",{p_id:(e.rowId||e.bookingId)}).then(function(r){
-        if(r.error) throw r.error;
-        if(r.data && r.data.ok===false) throw new Error(r.data.error||"no se pudo");
-        state.sel=null; loadPersonalCalendarSync(); loadElixisBookings();
+      sb.functions.invoke("calendar-evento-editar",{body:{id:(e.rowId||e.bookingId), accion:"quitar"}}).then(async function(r){
+        if(r.error){ var det=""; try{ var j=await r.error.context.json(); det=j.detalle||j.error||""; }catch(_x){} throw new Error(det||r.error.message); }
+        if(!r.data || r.data.ok!==true) throw new Error((r.data&&(r.data.detalle||r.data.error))||"no se pudo");
+        if(r.data.aviso) alert(r.data.aviso);
+        state.sel=null; loadPersonalCalendarSync(); loadElixisBookings(); render();
       }).catch(function(err){ alert("No se pudo quitar: "+(err.message||err)); updateEvActions(); });
     }
   });
