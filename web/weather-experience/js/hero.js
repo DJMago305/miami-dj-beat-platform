@@ -2,7 +2,7 @@
 // shared modules the backend Edge Function uses — no duplicated math.
 import { moonPhase as moonPhaseAt } from './astro.js';
 import { constellations, moonAltAz as moonAltAzRaw } from './celestial.js';
-import { MDJ_WeatherHub } from '../../js/mdjb-weather-core.js?v=20260825-weather-realfeed';   // SSOT: un solo fetch/caché compartido (Fase 2, TICKET-WEATHER-01)
+import { MDJ_WeatherHub } from '../../js/mdjb-weather-core.js?v=20260920-ubicacion-honesta';   // SSOT: un solo fetch/caché compartido (Fase 2, TICKET-WEATHER-01)
 
 // PREVIEW = true shows the dev controls (weather/time/date/scene/live). In the
 // real app set to false to hide them (users must not fake the weather).
@@ -543,6 +543,9 @@ function renderUI(s){
   $('c-cond').textContent=s.condition.label;
   $('c-hilo').innerHTML=s.condition.hi+'&nbsp;&nbsp;'+s.condition.lo;
   $('c-loc').textContent='📍 '+s.location.name;
+  // Aviso honesto de dónde salió la ubicación (2026-09-20): antes, sin GPS, mostraba Miami Lakes en silencio.
+  const _sub=document.querySelector('.loc .sub');
+  if(_sub){ const src=s.location&&s.location.source; _sub.textContent = src==='base' ? 'UBICACIÓN APROXIMADA · BASE (SIN GPS)' : src==='ultima' ? 'ÚLTIMA UBICACIÓN CONOCIDA' : 'CONDICIONES ACTUALES'; }
   const m=s.metrics;
   $('metrics').innerHTML=
     mrow('HUMEDAD',m.humidity,'color:var(--cool)')+

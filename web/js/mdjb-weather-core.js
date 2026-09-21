@@ -26,7 +26,9 @@ import { constellations, moonAltAz } from '../weather-experience/js/celestial.js
 // Miami Lakes, FL — BASE CORPORATIVA (fallback si el GPS se niega/offline/timeout)
 const LOC = { lat: 25.9115, lon: -80.3012, tz: 'America/New_York', name: 'Miami Lakes, FL' };
 const TTL_MS = 12 * 60 * 1000;     // caché compartida 12 min (rango 10-15 del ticket)
-const LS_KEY = 'mdjb:weather:v1';  // clave de localStorage (compartida entre iframes del mismo origen)
+const LS_KEY = 'mdjb:weather:v1';
+const LS_GPS = 'mdjb:weather:lastgps:v1';   // última ubicación REAL (GPS) del usuario, para no caer a la base si el GPS falla
+const GPS_MAX_AGE_MS = 30 * 24 * 3600 * 1000;  // clave de localStorage (compartida entre iframes del mismo origen)
 
 const ENDPOINT = () => (typeof window !== 'undefined' && window.MDJB_ATMO_ENDPOINT) || '';
 
@@ -79,7 +81,12 @@ function readCache() {
 function writeCache(state) {
   try { localStorage.setItem(LS_KEY, JSON.stringify({ state, fetchedAt: Date.now() })); } catch (_e) {}
 }
-const isFresh = (fetchedAt) => (Date.now() - fetchedAt) < TTL_MS;
+const isFresh = (fetchedAt, state) => {
+  // Si el estado se pidió con la ubicación de RESERVA (base), se reintenta pronto: el usuario pudo
+  // dar permiso de GPS justo después y no debe quedarse 12 min con Miami Lakes.
+  const ttl = (state && state.location && state.location.source === 'base') ? 60000 : TTL_MS;
+  return (Date.now() - fetchedAt) < ttl;
+};
 
 // ── OWM → AtmosphericState (Opción B, PO 2026-08-25) ──────────────────────────
 // Si la Edge Function devuelve OpenWeather CRUDO (weather+main+clouds), el hub lo
@@ -210,6 +217,7 @@ async function doFetch(coords) {
     const r = await fetch(url, { cache: 'no-store', signal: ctrl.signal });
     if (!r.ok) throw new Error('http ' + r.status);
     const s = normalize(await r.json());               // OWM crudo → AtmosphericState (Opción B)
+    s.location.source = coords.src || 'gps';           // 'gps' | 'ultima' | 'base' -- para avisar cuando la ubicación es aproximada
     if (!isValidState(s)) throw new Error('malformed AtmosphericState');
     const adelanto = await fetchAlertaAdelantada(coords, ctrl);   // best-effort, nunca bloquea ni rompe lo de arriba
     return aplicarAlerta(s, adelanto);
@@ -224,23 +232,36 @@ function notify(reason) {
 // Si el usuario autoriza GPS: coords precisas (la zona real: Hialeah/Kendall/Doral/etc.,
 // la ciudad la resuelve el Edge Function desde lat/lon). Si niega/offline/timeout: Miami Lakes.
 let _coordsCache = null, _coordsAt = 0;
+function readLastGps() {
+  try {
+    const o = JSON.parse(localStorage.getItem(LS_GPS) || 'null');
+    if (o && typeof o.lat === 'number' && typeof o.lon === 'number' && (Date.now() - o.at) < GPS_MAX_AGE_MS) return o;
+  } catch (_e) {}
+  return null;
+}
+function saveLastGps(lat, lon) { try { localStorage.setItem(LS_GPS, JSON.stringify({ lat, lon, at: Date.now() })); } catch (_e) {} }
 function getCoords() {
   const tz = -new Date().getTimezoneOffset() / 60;
-  const fb = { lat: LOC.lat, lon: LOC.lon, tz };                 // base corporativa (Miami Lakes)
-  // reutiliza la última ubicación por 10 min (no re-pedir GPS en cada refresh)
-  if (_coordsCache && (Date.now() - _coordsAt) < 600000) return Promise.resolve(_coordsCache);
+  // Sin GPS ahora: 1º la última ubicación REAL guardada; 2º la base corporativa (Miami Lakes).
+  const sinGps = () => {
+    const last = readLastGps();
+    return last ? { lat: last.lat, lon: last.lon, tz, src: 'ultima' } : { lat: LOC.lat, lon: LOC.lon, tz, src: 'base' };
+  };
+  // reutiliza la ubicación 10 min si fue GPS real; si fue reserva, solo 45 s (para notar pronto un permiso nuevo)
+  const ttlCoords = (_coordsCache && _coordsCache.src === 'gps') ? 600000 : 45000;
+  if (_coordsCache && (Date.now() - _coordsAt) < ttlCoords) return Promise.resolve(_coordsCache);
   return new Promise((res) => {
-    if (typeof navigator === 'undefined' || !navigator.geolocation) { _coordsCache = fb; _coordsAt = Date.now(); return res(fb); }
+    if (typeof navigator === 'undefined' || !navigator.geolocation) { const c = sinGps(); _coordsCache = c; _coordsAt = Date.now(); return res(c); }
     let done = false;
     const finish = (c) => { if (done) return; done = true; clearTimeout(to); _coordsCache = c; _coordsAt = Date.now(); res(c); };
-    const to = setTimeout(() => finish(fb), 6000);               // timeout → fallback
+    const to = setTimeout(() => finish(sinGps()), 6000);         // timeout → última real / base
     try {
       navigator.geolocation.getCurrentPosition(
-        (p) => finish({ lat: p.coords.latitude, lon: p.coords.longitude, tz }),   // GPS OK
-        () => finish(fb),                                                          // negado/error → fallback
+        (p) => { saveLastGps(p.coords.latitude, p.coords.longitude); finish({ lat: p.coords.latitude, lon: p.coords.longitude, tz, src: 'gps' }); },   // GPS OK
+        () => finish(sinGps()),                                                    // negado/error → última real / base
         { timeout: 6000, maximumAge: 600000 }
       );
-    } catch (_e) { finish(fb); }
+    } catch (_e) { finish(sinGps()); }
   });
 }
 
@@ -270,7 +291,7 @@ const MDJ_WeatherHub = {
     // 1. hidratar de la caché compartida (otra vista pudo haber fetcheado ya)
     if (!_state) { const c = readCache(); if (c) { _state = c.state; _fetchedAt = c.fetchedAt; } }
     // 2. ¿fresco? avisar a los suscriptores y devolver — SIN geolocalizar ni red.
-    if (_state && isFresh(_fetchedAt)) { notify('live'); return _state; }
+    if (_state && isFresh(_fetchedAt, _state)) { notify('live'); return _state; }
     // 3. dedup del fetch en vuelo
     if (_inflight) return _inflight;
     _inflight = (async () => {
