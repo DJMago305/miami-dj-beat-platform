@@ -145,7 +145,7 @@
     ],
     [
       "L4",
-      "^web/(admin-dashboard|admin|staff-order)\\.html$"
+      "^web/(admin|staff-order)\\.html$"
     ],
     [
       "L4",
@@ -582,8 +582,7 @@
         "web/staff.html",
         "web/staff-agenda.html",
         "web/staff-admin.html",
-        "web/staff-order.html",
-        "web/admin-dashboard.html"
+        "web/staff-order.html"
       ]
     },
     {
@@ -1169,6 +1168,105 @@
         "expect": "absent"
       },
       "severity": "alta"
+    },
+    {
+      "id": "V13",
+      "severity": "media",
+      "title": "El cobro de depósitos acepta el monto que manda el navegador",
+      "detail": "create-event-payment (sin JWT, CORS *) lee amount_cents y deposit_required_usd del body; el segundo sobrescribe leads.deposit_required_usd. Atenuante: stripe-webhook registra el monto realmente cobrado y solo marca PAID si alcanza el total. Riesgo acotado: integridad del depósito mostrado.",
+      "probe": {
+        "kind": "grep",
+        "pattern": "body\\.amount_cents|body\\.deposit_required_usd",
+        "paths": [
+          "supabase/functions/create-event-payment"
+        ],
+        "expect": "absent"
+      }
+    },
+    {
+      "id": "V14",
+      "severity": "media",
+      "title": "Los cupones no bajan el cobro de Stripe",
+      "detail": "El portal muestra el descuento pero payDepositStripe() manda el depósito completo. La fase 1 (tabla y funciones de reserva) está aplicada e inerte; falta que create-event-payment llame discount_reserve y cobre el monto final.",
+      "probe": {
+        "kind": "grep",
+        "pattern": "discount_reserve",
+        "paths": [
+          "supabase/functions"
+        ],
+        "expect": "present"
+      }
+    },
+    {
+      "id": "V15",
+      "severity": "media",
+      "title": "El uso de un cupón nunca se gasta",
+      "detail": "mdj_redeem_discount_code nunca se llamaba y se cerró a anon. Falta que stripe-webhook llame discount_confirm al confirmarse el pago y discount_release si la sesión vence.",
+      "probe": {
+        "kind": "grep",
+        "pattern": "discount_confirm",
+        "paths": [
+          "supabase/functions/stripe-webhook"
+        ],
+        "expect": "present"
+      }
+    },
+    {
+      "id": "V16",
+      "severity": "media",
+      "title": "El clima de la web no usa Apple WeatherKit",
+      "detail": "OpenWeather gratis es una foto del momento y no coincide con el radar del teléfono. mdj-weatherkit está desplegada pero responde 401 NOT_ENABLED (Apple no ve WeatherKit habilitado para el identificador firmante) y la web sigue apuntando a mdj-weather.",
+      "probe": {
+        "kind": "grep",
+        "pattern": "mdj-weatherkit",
+        "paths": [
+          "web/weather-experience",
+          "web/js"
+        ],
+        "expect": "present"
+      }
+    },
+    {
+      "id": "V17",
+      "severity": "media",
+      "title": "Los tokens de Google Calendar se guardan en texto plano",
+      "detail": "calendar-oauth-callback escribe access_token y refresh_token sin cifrar en user_calendar_integrations. La contraseña de aplicación de Apple, en cambio, va cifrada en Supabase Vault.",
+      "probe": {
+        "kind": "grep",
+        "pattern": "access_token: accessToken",
+        "paths": [
+          "supabase/functions/calendar-oauth-callback"
+        ],
+        "expect": "absent"
+      }
+    },
+    {
+      "id": "V18",
+      "severity": "media",
+      "title": "Apple Calendar: backend sin formulario de conexión",
+      "detail": "calendar-caldav-connect está desplegada pero ninguna pantalla la llama: el usuario no puede pegar su Apple ID y contraseña de aplicación.",
+      "probe": {
+        "kind": "grep",
+        "pattern": "calendar-caldav-connect",
+        "paths": [
+          "web"
+        ],
+        "expect": "present"
+      }
+    },
+    {
+      "id": "V19",
+      "severity": "media",
+      "title": "Funciones privilegiadas de recordatorios, cupones e identidades cerradas a anon",
+      "detail": "Cerradas el 2026-09-21: encolar_recordatorio (además blindada por dentro), cron_dispatch_pending_reminders, mdj_redeem_discount_code, generate_mdj_user_id y mdjb_ensure_code_core. Esta sonda mira el respaldo en el repo; el estado real se comprueba con has_function_privilege. Quedan sin revisar booth_*, fenix_can y otras.",
+      "probe": {
+        "kind": "grep",
+        "pattern": "revoke execute on function public\\.(encolar_recordatorio|cron_dispatch_pending_reminders|mdj_redeem_discount_code|generate_mdj_user_id|mdjb_ensure_code_core)",
+        "paths": [
+          "supabase/scripts"
+        ],
+        "expect": "present"
+      }
     }
   ],
   "capabilities": [
@@ -1271,7 +1369,9 @@
       ],
       "unknowns": [
         "¿Hay reintento y idempotencia probados para el webhook?",
-        "Sin documento propio que describa el contrato del webhook."
+        "Sin documento propio que describa el contrato del webhook.",
+        "create-event-payment (sin JWT, CORS *) acepta amount_cents y deposit_required_usd del navegador; el webhook solo registra lo realmente cobrado y marca PAID únicamente si alcanza el total.",
+        "Los cupones del portal son decorativos: se resta en pantalla pero Stripe cobra el depósito completo (ver cap-cupones)."
       ]
     },
     {
@@ -1351,7 +1451,7 @@
       "sot": "supabase/functions/notify-new-lead/index.ts",
       "impl": [
         "supabase/functions/notify-new-lead",
-        "web/admin-dashboard.html",
+        "web/staff-admin.html",
         "web/js/artists.js"
       ],
       "tests": [],
@@ -1725,7 +1825,11 @@
         "supabase/functions/atmosphere",
         "web/weather-lab.html",
         "web/js/weather-engine.js",
-        "web/js/weather-logistics.js"
+        "web/js/weather-logistics.js",
+        "supabase/functions/mdj-weather",
+        "supabase/functions/mdj-weatherkit",
+        "web/js/mdjb-weather-core.js",
+        "web/weather-experience"
       ],
       "tests": [],
       "docs": [],
@@ -1734,7 +1838,9 @@
         "cap-agenda"
       ],
       "unknowns": [
-        "La experiencia HERO existe sin desplegar: ¿entra a producción o se queda en laboratorio?"
+        "La experiencia HERO existe sin desplegar: ¿entra a producción o se queda en laboratorio?",
+        "La ubicación cae en silencio a Miami Lakes si el navegador no entrega GPS (una Mac ubica por Wi-Fi/IP, no por GPS). Desde 2026-09-20 el rótulo bajo la ciudad avisa si es aproximada o la última conocida.",
+        "OpenWeather gratis es una foto del momento y no coincide con el radar de Apple: WeatherKit responde 401 NOT_ENABLED (identificador sin WeatherKit) y la web sigue apuntando a mdj-weather."
       ]
     },
     {
@@ -1795,6 +1901,93 @@
       "tests": [],
       "docs": [
         "docs/incidentes/2026-08-19-salto-pestanas-estacion-artista.md"
+      ]
+    },
+    {
+      "id": "cap-calendar-sync",
+      "name": "Sincronización de calendarios (Google / Apple)",
+      "layer": "L5",
+      "sot": "supabase/functions/calendar-reconcile/index.ts",
+      "impl": [
+        "supabase/functions/calendar-oauth-init",
+        "supabase/functions/calendar-oauth-callback",
+        "supabase/functions/calendar-sync-webhook",
+        "supabase/functions/calendar-channel-renew",
+        "supabase/functions/calendar-reconcile",
+        "supabase/functions/calendar-evento-editar",
+        "supabase/functions/calendar-caldav-connect",
+        "supabase/functions/_shared/google-calendar-sync.ts",
+        "supabase/functions/_shared/apple-calendar-sync.ts",
+        "web/calendario-operacional-inteligente.html"
+      ],
+      "tests": [],
+      "docs": [],
+      "deps": [
+        "cap-agenda",
+        "cap-identity"
+      ],
+      "used": [
+        "cap-agenda",
+        "cap-artist-agenda",
+        "cap-elixis"
+      ],
+      "unknowns": [
+        "Editar y borrar en Google están desplegados pero NO probados contra un Google real (falta el evento de prueba PRUEBA MDJB); la conciliación cada 6 h corrió bien en las 4 conexiones.",
+        "Apple/iCloud (CalDAV): backend desplegado, sin formulario en Config, sin prueba con cuenta real, sin resincronización periódica ni expansión de eventos recurrentes.",
+        "Los tokens de Google se guardan en texto plano en user_calendar_integrations (la contraseña de Apple sí va cifrada en Vault).",
+        "Google entrega los cumpleaños en dos calendarios (principal y contactos): quedan duplicados y pueden reaparecer el año próximo."
+      ]
+    },
+    {
+      "id": "cap-network",
+      "name": "Network — directorio global de contactos",
+      "layer": "L4",
+      "sot": "web/staff-admin.html",
+      "impl": [
+        "web/staff-admin.html",
+        "web/calendario-operacional-inteligente.html",
+        "supabase/scripts/20260919040000_network_referencia_contactos.sql",
+        "supabase/scripts/20260919190000_network_referencia_fusion_duplicados.sql",
+        "supabase/scripts/20260920_mis_clientes_conecta_network.sql"
+      ],
+      "tests": [],
+      "docs": [],
+      "deps": [
+        "cap-identity",
+        "cap-leads"
+      ],
+      "used": [
+        "cap-elixis",
+        "cap-agenda"
+      ],
+      "unknowns": [
+        "Visión del PO sin construir: aviso al staff de quién cumple años para mandar una promoción, y que ELIXIS busque en Network antes que en internet (proveedores, sponsors, venues).",
+        "La fusión de duplicados por la RPC exige sesión de staff y deja auditoría; la de Wendy (2026-09-21) se hizo a nivel de datos y no dejó esa entrada."
+      ]
+    },
+    {
+      "id": "cap-cupones",
+      "name": "Cupones de descuento",
+      "layer": "L7",
+      "sot": "supabase/scripts/20260921_cupones_fase1_discount_redemptions.sql",
+      "impl": [
+        "supabase/scripts/20260921_cupones_fase1_discount_redemptions.sql",
+        "supabase/scripts/20260921_mdj_redeem_discount_code_cerrada.sql",
+        "web/client-portal.js",
+        "supabase/functions/create-event-payment",
+        "supabase/functions/stripe-webhook"
+      ],
+      "tests": [],
+      "docs": [],
+      "deps": [
+        "cap-stripe",
+        "cap-client-portal"
+      ],
+      "used": [],
+      "unknowns": [
+        "Hoy son decorativos: el descuento solo se resta en pantalla y ningún cupón se ha gastado (uses = 0).",
+        "Fase 1 (tabla discount_redemptions + funciones de reserva/confirmación) hecha e inerte; fases 2 y 3 (cobro con descuento y gasto al confirmar el pago) por construir.",
+        "Decisiones tomadas el 2026-09-21 (el PO adopta la recomendación): el cupón resta del TOTAL del evento antes del impuesto (el ahorro es real); un cupón por evento, sin sumarse al crédito de referido; el 5 % de lealtad se mantiene; el servidor calcula siempre el monto; el uso se cuenta solo al confirmar Stripe. Pagos de prueba: 2026-09-22 con Stripe en modo de pruebas (claves de pruebas a configurar por el PO, nunca en el chat)."
       ]
     }
   ],
@@ -2084,6 +2277,113 @@
       "deps": [],
       "impact": "medio",
       "evidence": "supabase/scripts/mrm_verificacion_R20_R21_PRODUCCION.sql"
+    },
+    {
+      "id": "R22",
+      "title": "Cupones reales: el servidor calcula el descuento y Stripe cobra el monto final",
+      "why": "Hoy el cupón es decorativo. Decisiones tomadas el 2026-09-21: descuento sobre el total antes del impuesto, un cupón por evento sin sumar el crédito de referido, monto siempre calculado por el servidor. Se prueba con Stripe en modo de pruebas (2026-09-22).",
+      "done": "create-event-payment llama discount_reserve; sin cupón se comporta exactamente igual que hoy.",
+      "ref": {
+        "kind": "integrity",
+        "id": "V14"
+      },
+      "deps": [],
+      "impact": "alto"
+    },
+    {
+      "id": "R23",
+      "title": "El cupón se gasta cuando Stripe confirma el pago",
+      "why": "Sin esto los topes de uso no funcionan: ningún cupón se cuenta nunca.",
+      "done": "stripe-webhook llama discount_confirm al confirmarse el pago y discount_release si la sesión vence.",
+      "ref": {
+        "kind": "integrity",
+        "id": "V15"
+      },
+      "deps": [
+        "R22"
+      ],
+      "impact": "alto"
+    },
+    {
+      "id": "R24",
+      "title": "El servidor decide el monto del depósito",
+      "why": "El navegador hoy propone el monto y el depósito requerido; el servidor debe calcularlos.",
+      "done": "create-event-payment ya no lee amount_cents ni deposit_required_usd del body.",
+      "ref": {
+        "kind": "integrity",
+        "id": "V13"
+      },
+      "deps": [],
+      "impact": "alto"
+    },
+    {
+      "id": "R25",
+      "title": "Conectar Apple WeatherKit al clima de la web",
+      "why": "Que el clima coincida con el radar del teléfono. Bloqueado primero en el portal de Apple Developer (NOT_ENABLED) y después en la conexión de la web.",
+      "done": "La web consulta mdj-weatherkit (con OpenWeather de respaldo).",
+      "ref": {
+        "kind": "integrity",
+        "id": "V16"
+      },
+      "deps": [],
+      "impact": "medio"
+    },
+    {
+      "id": "R26",
+      "title": "Formulario de conexión de Apple Calendar en Config",
+      "why": "El backend ya existe; sin formulario nadie puede conectar su cuenta. Debe probarse con la cuenta real del PO (contraseña de aplicación).",
+      "done": "Una pantalla llama a calendar-caldav-connect.",
+      "ref": {
+        "kind": "integrity",
+        "id": "V18"
+      },
+      "deps": [],
+      "impact": "medio"
+    },
+    {
+      "id": "R27",
+      "title": "Cifrar los tokens de Google Calendar",
+      "why": "Hoy quedan en texto plano; Apple ya usa Supabase Vault.",
+      "done": "calendar-oauth-callback deja de escribir access_token en claro.",
+      "ref": {
+        "kind": "integrity",
+        "id": "V17"
+      },
+      "deps": [],
+      "impact": "medio"
+    },
+    {
+      "id": "R28",
+      "title": "Probar editar, borrar y conciliar contra un Google real",
+      "why": "Todo está desplegado pero solo se probó con datos de producción, no escribiendo en el Google del PO.",
+      "done": "Con el evento PRUEBA MDJB: cambiar su fecha, borrarlo, y ver que un borrado hecho en Google desaparece aquí.",
+      "ref": {
+        "kind": "none"
+      },
+      "deps": [],
+      "impact": "alto"
+    },
+    {
+      "id": "R29",
+      "title": "Revisar las funciones privilegiadas abiertas que faltan",
+      "why": "De 68 funciones SECURITY DEFINER abiertas a anon se cerraron 5 tras leer su código; quedan booth_*, fenix_can y otras sin revisar a fondo (las de licencias MDJPRO no se tocan sin orden del PO).",
+      "done": "Cada función restante queda clasificada como pública a propósito o cerrada.",
+      "ref": {
+        "kind": "none"
+      },
+      "deps": [],
+      "impact": "medio"
+    },
+    {
+      "id": "R30",
+      "title": "Aviso de cumpleaños al staff y búsqueda de ELIXIS sobre Network",
+      "why": "Visión del PO: Network como base general (clientes, proveedores, sponsors, venues); ELIXIS busca ahí antes que en internet, y un contacto que viene del calendario de un DJ recomienda a ese DJ.",
+      "done": "Existe el aviso de cumpleaños próximos y una herramienta de ELIXIS de solo lectura sobre Network.",
+      "ref": {
+        "kind": "none"
+      },
+      "deps": [],
+      "impact": "medio"
     }
   ]
 }

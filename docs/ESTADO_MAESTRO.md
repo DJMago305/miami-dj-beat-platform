@@ -1742,3 +1742,63 @@ Rama local `feature/apple-calendar-caldav-backend` (2 commits, **sin PR abierto,
 - **Pendiente real**: (a) PO: qué rótulo ve bajo la ciudad y si Safari tiene el permiso; (b) PO: identificador con WeatherKit habilitado en Apple Developer → `APPLE_WEATHERKIT_SUB`; (c) tras (b), decidir si se construye la conexión de la web a WeatherKit (con OpenWeather de respaldo).
 
 - **Cupones, fase 2 — estado de las decisiones del PO (2026-09-21)**: **modo de pruebas de Stripe: el PO dice que ya lo tiene activo y que las pruebas de pago se hacen el 2026-09-22** (decisión 4 resuelta; falta que él ponga en la configuración del proyecto, sin pegarlas en el chat, la clave secreta de pruebas y la clave de firma del aviso de pruebas para un camino de pruebas separado del cobro real). **Decisiones 1 y 2 aún sin resolver** (se le explicaron con ejemplos numéricos: descuento sobre el depósito vs sobre el total —con el hallazgo de que restar solo del depósito NO ahorra nada al cliente, porque `stripe-webhook` marca `PAID` solo cuando `balance_paid >= total_amount`— y cupón único vs acumulable con referido/lealtad). **Decisión 3 (el servidor calcula siempre el monto)**: pendiente de confirmar por el PO. Convención existente a respetar: los descuentos del carrito se aplican **antes del impuesto** (`total = (sub − descuento) × 1.07`); hoy en la zona de pago el cupón tiene precedencia sobre el descuento por referido aunque sea menor.
+
+## [2026-09-21] Hilo Maestro — CONSTANCIA CONSOLIDADA DE LA JORNADA 2026-09-20/21: qué se hizo, qué se corrigió y qué queda
+
+> Resumen ordenado de todo el trabajo de la jornada, para que quede constancia en un solo lugar. El detalle técnico de cada pieza está en las entradas fechadas de arriba; aquí se separa **lo entregado**, **lo que se corrigió (incluidos errores propios)**, **las decisiones del PO** y **lo que sigue abierto**.
+
+### 1. Entregado y fusionado a `main` por el PO (verificado en GitHub antes de darlo por hecho)
+- **PR #431** — Calendario "Google manda": botones X roja (eliminar) y palomita azul (editar) sobre el evento seleccionado; edición y borrado que se escriben primero en Google (`calendar-evento-editar`); conciliación periódica con Google (`calendar-reconcile`, temporizador cada 6 h); backend de Apple/iCloud Calendar (`calendar-caldav-connect`, contraseña de aplicación cifrada en Vault); "Mis clientes" conectado con Network; pantalla completa del calendario; franja de logo + buscador global oculta solo en la pestaña Agenda.
+- **PR #432** — Clima: recuerda la última ubicación real y avisa cuando la ubicación es aproximada.
+- **PR #433** — Cierre de #431/#432 en este registro.
+- **PR #434** — Seguridad: 3 funciones cerradas + cupones fase 1 (solo base de datos) + espejos en el repo.
+- **Pendiente de PR (rama `docs/auditoria-funcion4-ids`)**: cierre de la función #4, fusión del duplicado de Wendy, diagnóstico del clima, esta constancia y la actualización del Road Master Map.
+
+### 2. Ya en producción (base de datos y funciones; el respaldo está en `supabase/scripts/`)
+- Edge functions: `calendar-caldav-connect`, `calendar-evento-editar` (v2), `calendar-reconcile`. Temporizador `reconcile_google_calendar_cron` (id 7, 60 s de margen).
+- Base de datos: wrappers de Vault, `calendario_evento_quitar`, `master_client_sincronizar_network`, tabla `discount_redemptions` + 4 funciones de cupones (solo `service_role`, inertes).
+- Seguridad: `encolar_recordatorio` blindada por dentro; cerradas a `anon`/`authenticated` `cron_dispatch_pending_reminders`, `mdj_redeem_discount_code`, `generate_mdj_user_id` y `mdjb_ensure_code_core`.
+
+### 3. Lo que se corrigió (errores encontrados, propios y heredados)
+**Heredados / hallazgos del sistema**
+- El formulario "Nuevo cliente" traía la fecha de cumpleaños `2026-08-15` fija: una fecha inventada se guardaba como real. Quitada (ningún registro estaba contaminado).
+- Los eventos de "todo el día" de Google se pintaban **un día antes** (medianoche UTC leída en hora de Miami): el cumpleaños del PO salía el 24 en vez del 25. Corregido.
+- La sincronización de Google **nunca propagaba eliminaciones** (sin `sync_token`) y el calendario de cumpleaños de contactos **no tenía canal de avisos**: cerrado con la conciliación periódica.
+- Google entrega cada cumpleaños dos veces (calendario principal y de contactos): se quitaron las 2 copias sobrantes del 25-sep (pueden reaparecer el año próximo).
+- Los cupones eran **decorativos**: se restaban en pantalla pero Stripe cobraba el depósito completo, y `mdj_redeem_discount_code` nunca se llamaba (`uses = 0`).
+- `create-event-payment` (sin sesión) acepta el monto y el depósito requerido del navegador (riesgo acotado: el webhook solo registra lo realmente cobrado).
+- El Road Master Map seguía listando `admin-dashboard.html` (borrado el 2026-09-19) como parte de "Leads".
+
+**Errores propios, reconocidos y corregidos**
+- Las funciones de Vault que creé quedaron abiertas a cualquiera (Supabase concede `EXECUTE` por defecto); no había ninguna contraseña guardada. Cerradas y verificadas. **Lección**: `REVOKE … FROM anon` no basta si `PUBLIC` tiene `EXECUTE`; hay que revocar de `public` y comprobar con `has_function_privilege` (me pasó otra vez con `encolar_recordatorio` y lo detecté al verificar).
+- La conexión "Mis clientes → Network" tuvo 2 fallos míos al aplicarla (`nombre` obligatorio con un cliente sin nombre; `origen_persona_id` apunta a `auth.users`, no a `dj_profiles.id`) y creó un duplicado de Wendy (ya tenía cuenta real). Corregidos: la función ya no duplica a quien tiene cuenta real; duplicado fusionado.
+- El primer arreglo de pantalla completa encogía el calendario en monitores anchos (1900 → 1192 px); lo revertí por una queja que provenía de mi navegador y no del Safari del PO, y lo restauré. **Lección**: no dar por bueno un arreglo de pantalla completa sin probarlo en el navegador real del PO.
+- Sobreestimé la gravedad de 2 funciones (`cron_dispatch_pending_reminders`, `mdj_redeem_discount_code`): al leer el código eran bajas. La #1 (`encolar_recordatorio`) sí era seria: permitía programar SMS "de Miami DJ Beat" a cualquier número con texto propio dentro del nombre.
+- Mi primera prueba de los disparadores de perfil dio un falso negativo (toqué un campo que no los activa); se repitió bien y se dejó anotado.
+- Al pedirme la fusión del duplicado de Wendy no había sesión de staff en mi navegador: se hizo a nivel de datos (sin suplantar identidad) y **no dejó la entrada de auditoría** que habría escrito la RPC.
+- Confusión Apple/Google aclarada: las ventanas y el correo de "Apple" al activar Google Calendar eran del llavero de iCloud/Safari; Apple Calendar nunca había estado construido.
+- Un PR (#434) lo di por abierto correctamente y el PO creyó que lo había fusionado yo: se verificó en GitHub que **nunca fusiono**; los comandos aparecen con el usuario del PO porque usan su sesión de GitHub.
+- Clima: dije "Miami Lakes es la base de reserva"; la evidencia lo afina: con las coordenadas de Hialeah OpenWeather devuelve "Hialeah", así que la petición no llevaba esas coordenadas (una Mac ubica por Wi-Fi/IP, no por GPS del teléfono), y la "lluvia" era el dato real de OpenWeather (0.56 mm/h), distinto del radar de Apple.
+
+### 4. Decisiones del PO de la jornada
+- **Agenda**: quitar logo y buscador global solo en las páginas de Agenda. Hecho.
+- **Cupones** (2026-09-21): primero respondió que el cupón "resta del depósito"; tras ver que eso no ahorra nada al cliente (el webhook marca `PAID` solo si `balance_paid >= total_amount`) decidió **"mejor tu recomendación"**: el cupón resta del **total** del evento **antes del impuesto**; **un cupón por evento**, sin sumarse al crédito de referido; el 5 % de lealtad se mantiene; **el servidor calcula siempre el monto**; el uso cuenta **solo al confirmar Stripe**.
+- **Stripe en modo de pruebas**: el PO dice que ya lo tiene activo; **las pruebas de pago se hacen el 2026-09-22**. Las claves de pruebas las configura él en el proyecto, nunca en el chat.
+- Modo de trabajo de la auditoría de seguridad: una función a la vez, primero explicación en solo lectura y después el arreglo.
+
+### 5. Road Master Map actualizado (`docs/roadmap/master-map.json`, regenerado con `node docs/roadmap/build.mjs`; el HTML no se edita a mano)
+- **Capacidades nuevas**: `cap-calendar-sync` (Google/Apple), `cap-network`, `cap-cupones`. **Ampliadas**: `cap-weather` y `cap-stripe` (con sus incógnitas honestas).
+- **Hallazgos con sonda automática** (se ponen verdes solos cuando se arreglen el código o el respaldo): V13 monto del navegador, V14 cupones no bajan el cobro, V15 el uso nunca se gasta, V16 WeatherKit no usado, V17 tokens de Google en texto plano, V18 Apple sin formulario — todos **abiertos**; V19 funciones cerradas a `anon` — **cumplido**.
+- **Hoja de ruta**: R22–R30 (cupones reales, gasto del cupón al confirmar, monto decidido por el servidor, WeatherKit, formulario de Apple, cifrar tokens de Google, prueba real contra Google, funciones abiertas restantes, aviso de cumpleaños/ELIXIS sobre Network).
+- **Correcciones**: eliminadas las referencias al archivo retirado `admin-dashboard.html`; las capacidades nuevas no apuntan a este registro como documento (sus frases históricas "aún no existe" se leían como contradicciones falsas).
+- **Resultado**: `truth mode 28 verified · 0 proposed · 1 unknown · 0 con deriva`; integridad 13/19 (6 abiertos reales). Antes: 25 verificadas y 0 hallazgos de esta jornada.
+- **Límite conocido**: `index.html` se regenera solo con cada commit (hook `post-commit`) pero no se versiona; la página publicada como Artifact no se actualiza sola.
+
+### 6. Pendiente real, en orden
+1. **Cupones fase 2 y 3** con las decisiones ya tomadas; **pruebas de pago el 2026-09-22** con Stripe en modo de pruebas (el PO debe poner la clave secreta de pruebas y la clave de firma del aviso de pruebas).
+2. **Prueba real contra Google** (evento "PRUEBA MDJB", 30-sep): editar, borrar y que un borrado hecho en Google desaparezca aquí.
+3. **Confirmaciones visuales del PO**: pantalla completa del calendario y Agenda sin franja en su Safari; que Network muestre una sola Wendy; qué rótulo ve el clima bajo la ciudad.
+4. **WeatherKit**: el PO debe habilitar/identificar en el portal de Apple Developer el identificador con WeatherKit (`NOT_ENABLED`) y fijar `APPLE_WEATHERKIT_SUB`; luego decidir la conexión de la web.
+5. **Apple Calendar**: formulario en Config y prueba con la cuenta real del PO.
+6. Auditoría de funciones abiertas restantes (`booth_*`, `fenix_can`, …; las de MDJPRO no se tocan sin orden), límite de intentos en la validación de cupones, cifrar tokens de Google, eliminar la ficha de prueba "gerardo A valle" en Network.
+7. Visión del PO sin construir: aviso de cumpleaños al staff y ELIXIS buscando en Network antes que en internet.
