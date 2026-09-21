@@ -1921,7 +1921,14 @@
       var pal=0, cpal=0, out=[];
       rows.forEach(function(row){
         var prof=profByUser[row.user_id];
-        var d0=new Date(row.fecha_inicio), iso=d0.getFullYear()+"-"+pad(d0.getMonth()+1)+"-"+pad(d0.getDate());
+        var d0=new Date(row.fecha_inicio);
+        // Eventos de "todo el día" de Google se guardan a medianoche UTC (fecha sin hora): leerlos en hora
+        // local los pintaba un día ANTES en Miami (25 sep 00:00Z = 24 sep 8 p. m.). Si es medianoche UTC
+        // exacta, la fecha real es la UTC.
+        var _todoElDia=(d0.getUTCHours()===0 && d0.getUTCMinutes()===0 && d0.getUTCSeconds()===0);
+        var iso=_todoElDia
+          ? d0.getUTCFullYear()+"-"+pad(d0.getUTCMonth()+1)+"-"+pad(d0.getUTCDate())
+          : d0.getFullYear()+"-"+pad(d0.getMonth()+1)+"-"+pad(d0.getDate());
         var titulo=row.notas||row.venue_nombre||(row.tipo==="cumpleanos"?"Cumpleaños":"Evento personal");
         if(prof){
           var artId=prof.id;
