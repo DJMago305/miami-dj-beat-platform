@@ -1190,7 +1190,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                           // vieja (sin "Mis clientes" real, sin serie acotada, sin bookings
                           // privado/boda) hasta un hard-refresh manual -- bumpear esta cadena
                           // cada vez que calendario-operacional-inteligente.html cambie.
-                          if(frame && !frame.getAttribute('src')) frame.setAttribute('src', './calendario-operacional-inteligente.html?v=20260918-mis-clientes-real');
+                          if(frame && !frame.getAttribute('src')) frame.setAttribute('src', './calendario-operacional-inteligente.html?v=20260920-google-manda');
                           if(box) box.style.display = 'block';
                           if(personal) personal.style.display = 'none';
                         }catch(_e){}
@@ -7384,6 +7384,25 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
     })();
   </script>
   <script src="./mdj-mobile-header-fix.js?v=20260916-purga-a"></script>
+
+<!-- 2026-09-20 (PO, "quítalos en las páginas de Agenda"): en la vista Agenda la franja flotante (logo + buscador
+     global, #mdj-flotante-visitante) sobra -- el calendario trae su propio buscador -- y dejaba ~100px de aire.
+     Solo en la pestaña Agenda (#tab-dashboard activa); Cash Flow y Config conservan la franja. No se toca el
+     componente compartido ni header-unified.css (blast radius cero), mismo criterio que mdjb-music-intelligence.html.
+     El doble selector de clase sube la especificidad sobre las 3 reglas de header-unified.css que reservan 84px. -->
+<style>
+  body.mdj-agenda-sin-franja #mdj-flotante-visitante { display: none !important; }
+  body.mdj-agenda-sin-franja.mdj-agenda-sin-franja #tab-dashboard #booth-hero-container,
+  body.mdj-agenda-sin-franja.mdj-agenda-sin-franja #booth-hero-container { margin-top: 0 !important; }
+</style>
+<script>
+(function(){
+  var panel = document.getElementById('tab-dashboard'); if(!panel) return;
+  function sync(){ document.body.classList.toggle('mdj-agenda-sin-franja', panel.classList.contains('active')); }
+  sync();
+  try { new MutationObserver(sync).observe(panel, { attributes: true, attributeFilter: ['class'] }); } catch(_e){}
+})();
+</script>
 </body>
 
 </html>
