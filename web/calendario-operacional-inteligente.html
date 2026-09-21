@@ -384,6 +384,12 @@
      entera scrollea como una sola pieza, fluida, sin atrapamiento/imán del scroll
      anidado. PO 2026-08-22 · UI-0822. */
   .app{max-width:none !important;border-radius:0 !important;border-left:none !important;border-right:none !important;min-height:0 !important;box-shadow:none !important;}
+  /* Pantalla completa nativa (2026-09-20): las 2 reglas de arriba fuerzan altura
+     natural para el iframe embebido; en fullscreen el viewport es todo el monitor
+     y eso dejaba un hueco negro debajo. Solo en ese modo el contenido se estira. */
+  html.is-fs .wrap{min-height:100vh !important;display:flex;flex-direction:column;}
+  html.is-fs .app{min-height:100vh !important;flex:1 1 auto;}
+  html.is-fs .grid-scroll{max-height:calc(100vh - 300px);}
 </style>
 
 <div class="wrap">
@@ -1988,6 +1994,9 @@
 (function(){
   var fsBtn=document.getElementById("fsToggle"); if(!fsBtn) return;
   function inFS(){ return document.fullscreenElement || document.webkitFullscreenElement; }
+  function syncFS(){ document.documentElement.classList.toggle("is-fs", !!inFS()); }
+  document.addEventListener("fullscreenchange", syncFS);
+  document.addEventListener("webkitfullscreenchange", syncFS);
   fsBtn.addEventListener("click", function(){
     if(inFS()){ (document.exitFullscreen || document.webkitExitFullscreen || function(){}).call(document); }
     else { var el=document.documentElement; (el.requestFullscreen || el.webkitRequestFullscreen || function(){}).call(el); }
