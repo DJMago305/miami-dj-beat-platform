@@ -3,7 +3,7 @@
 // Monetary math lives here and in event_quote_record. The LLM never supplies dollars.
 
 export const TAX_RATE = 0.07;
-export const DEPOSIT_RATE = 0.30;
+export const DEPOSIT_RATE = 0.50;
 export const EXTRA_HOUR_SKU = "dj_extra_hour";
 export const EXTRA_HOUR_USD = 100;
 

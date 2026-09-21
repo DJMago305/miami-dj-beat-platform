@@ -303,6 +303,16 @@ serve(async (req) => {
     try {
         switch (event.type) {
 
+            // ── Pago de evento abandonado/vencido: devolver el cupo del cupón reservado ──
+            case "checkout.session.expired": {
+                const expired = event.data.object;
+                if (expired.metadata?.lead_id && expired.metadata?.coupon_code) {
+                    const { error: relErr } = await supabase.rpc("discount_release", { p_stripe_session_id: expired.id });
+                    if (relErr) console.error("[Webhook] discount_release:", relErr.message);
+                }
+                break;
+            }
+
             // ── Payment successful ──────────────────────────────
             case "checkout.session.completed": {
                 const session = event.data.object;
@@ -382,6 +392,16 @@ serve(async (req) => {
                 // ── Branch A: Event Deposit (client paying for event) ──
                 if (leadId) {
                     const amountPaid = (session.amount_total ?? 0) / 100; // cents → dollars
+
+                    // Cupón: SOLO aquí (Stripe confirmó el pago) se gasta el uso y baja total_amount. Idempotente ante reintentos.
+                    // Sin cupón devuelve error "sin_reserva", que es lo normal y se ignora.
+                    if (Number(session.metadata?.discount_cents ?? 0) > 0 || session.metadata?.coupon_code) {
+                        const { data: dc, error: dcErr } = await supabase.rpc("discount_confirm_y_ajustar_total", {
+                            p_stripe_session_id: session.id,
+                        });
+                        if (dcErr) throw new Error(`discount_confirm: ${dcErr.message}`); // 500 → Stripe reintenta
+                        console.log(`[Webhook] cupón ${session.metadata?.coupon_code}: ${JSON.stringify(dc)}`);
+                    }
 
                     // Fetch current lead to add paid amount
                     const { data: lead } = await supabase

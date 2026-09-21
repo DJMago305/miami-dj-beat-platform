@@ -1,6 +1,13 @@
 // supabase/functions/create-event-payment/index.ts
-// Creates a Stripe Checkout session for a client to pay their event deposit.
-// Called from client-portal.html when the client clicks "Pagar Depósito".
+// Creates a Stripe Checkout session for a client to pay their event deposit or final balance.
+// Called from client-portal.js (payDepositStripe).
+// EL SERVIDOR CALCULA SIEMPRE EL MONTO (decisión del PO, 2026-09-21): el navegador ya no manda amount_cents ni
+// deposit_required_usd. Manda { lead_id, kind: "deposit" | "balance", coupon_code? }.
+//   deposit → leads.deposit_required_usd si el staff lo fijó; si no, 50 % del total con mínimo $150 (lo que muestra la pantalla).
+//   balance → todo lo que falta por pagar (total_amount − balance_paid).
+//   cupón   → resta del total ANTES del impuesto (7 %), un cupón por evento, no se suma al crédito de referido,
+//             solo en el depósito. Se RESERVA aquí (discount_reserve); el uso se gasta cuando Stripe confirma (stripe-webhook).
+//   { quote: true } calcula y devuelve los montos sin crear sesión ni reservar (para mostrar el número real en pantalla).
 // Env vars: STRIPE_SECRET_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SITE_URL
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -9,6 +16,9 @@ const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY")!;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const SITE_URL = Deno.env.get("SITE_URL") || "https://miamidjbeat.vercel.app";
+const TAX_RATE = 0.07; // igual que computePortalCartTotals() en client-portal.js
+const DEPOSIT_RATE = 0.50; // depósito de reserva: 50 % del total (decisión del PO, 2026-09-21)
+const MIN_DEPOSIT_CENTS = 15000; // depósito mínimo $150
 
 const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
@@ -24,17 +34,20 @@ serve(async (req) => {
         const body = await req.json();
 
         const lead_id = (body.lead_id ?? "").trim();
-        const amount_cents = parseInt(body.amount_cents ?? "15000", 10); // default $150
-        const description = (body.description ?? "Depósito de Reserva — Miami DJ Beat").trim();
+        const kind = String(body.kind ?? "deposit").toLowerCase();
+        const couponCode = String(body.coupon_code ?? "").trim();
+        const quoteOnly = body.quote === true;
+        const description = (body.description ?? "").toString().trim().slice(0, 120);
 
         if (!lead_id) return json({ ok: false, error: "lead_id requerido" }, 400);
+        if (kind !== "deposit" && kind !== "balance") return json({ ok: false, error: "kind debe ser deposit o balance" }, 400);
         if (!STRIPE_SECRET_KEY) return json({ ok: false, error: "STRIPE_SECRET_KEY no configurado" }, 500);
 
         // ── Fetch lead (incluye caja de cobro: lead + enlace a client_profiles) ─
         const { data: lead, error: leadErr } = await sb
             .from("leads")
             .select(
-                "id, email, event_type, event_date, location, assigned_dj_name, contact_person, stripe_customer_id, client_user_id",
+                "id, email, event_type, event_date, location, assigned_dj_name, contact_person, stripe_customer_id, client_user_id, total_amount, balance_paid, deposit_required_usd, total_aprobado_usd",
             )
             .eq("id", lead_id)
             .single();
@@ -45,6 +58,79 @@ serve(async (req) => {
 
         const clientEmail = (lead.email ?? "").trim();
         const eventLabel = `${lead.event_type ?? "Evento"} — ${lead.event_date ?? ""}`;
+
+        // ── Monto: lo decide el servidor ──────────────────────────
+        const totalCents = Math.round((parseFloat(String(lead.total_amount ?? 0)) || 0) * 100);
+        const paidCents = Math.round((parseFloat(String(lead.balance_paid ?? 0)) || 0) * 100);
+        const remainingCents = totalCents - paidCents;
+        if (totalCents <= 0) return json({ ok: false, error: "El evento no tiene un total definido" }, 400);
+        if (remainingCents <= 0) return json({ ok: false, error: "El evento ya está pagado" }, 409);
+
+        // El total lo arma el navegador y no es de confianza: solo se cobra un total que el staff (o el servidor) aprobó.
+        // La aprobación está atada al monto; si alguien cambió total_amount después, ya no coincide y no se cobra.
+        const approvedUsd = lead.total_aprobado_usd != null ? parseFloat(String(lead.total_aprobado_usd)) : NaN;
+        const totalApproved = isFinite(approvedUsd) && Math.abs(Math.round(approvedUsd * 100) - totalCents) === 0;
+        if (!totalApproved && !quoteOnly) {
+            return json({
+                ok: false, code: "total_pendiente_aprobacion",
+                error: "El total de este evento está pendiente de aprobación del equipo. Te avisaremos cuando puedas pagar.",
+            }, 409);
+        }
+
+        let chargeCents = 0;
+        let discountCents = 0;
+        let couponApplied: { code: string; label: string } | null = null;
+        let reserveCode = "";
+
+        if (kind === "balance") {
+            if (couponCode) return json({ ok: false, error: "Los cupones aplican solo al depósito" }, 400);
+            chargeCents = remainingCents;
+        } else {
+            if (paidCents > 0) return json({ ok: false, error: "El depósito ya fue pagado; usa kind=balance" }, 409);
+            let effectiveTotalCents = totalCents;
+
+            if (couponCode) {
+                // Un cupón por evento y no se suma al crédito de referido (que ya viene dentro de total_amount).
+                if (lead.client_user_id) {
+                    const { data: cpRef } = await sb.from("client_profiles")
+                        .select("source_ref, discount_eligible").eq("user_id", String(lead.client_user_id)).maybeSingle();
+                    if (cpRef?.source_ref && cpRef?.discount_eligible !== false) {
+                        return json({ ok: false, error: "Este evento ya tiene el crédito de referido; no se combina con cupones" }, 409);
+                    }
+                }
+                // El cupón resta del total ANTES del impuesto.
+                const preTaxCents = Math.round(totalCents / (1 + TAX_RATE));
+                const rpcName = quoteOnly ? "mdj_validate_discount_code" : "discount_reserve";
+                const rpcArgs = quoteOnly
+                    ? { p_code: couponCode, p_order_cents: preTaxCents }
+                    : { p_code: couponCode, p_lead_id: lead_id, p_order_cents: preTaxCents };
+                const { data: dr, error: drErr } = await sb.rpc(rpcName, rpcArgs);
+                if (drErr) return json({ ok: false, error: `Cupón: ${drErr.message}` }, 500);
+                const okC = quoteOnly ? dr?.valid === true : dr?.ok === true;
+                if (!okC) return json({ ok: false, error: String(dr?.error ?? "Cupón no válido") }, 422);
+                discountCents = Number(dr.discount_cents) || 0;
+                couponApplied = { code: String(dr.code), label: String(dr.label ?? dr.code) };
+                reserveCode = couponCode;
+                effectiveTotalCents = Math.round((preTaxCents - discountCents) * (1 + TAX_RATE));
+            }
+
+            const depOverride = parseFloat(String(lead.deposit_required_usd ?? ""));
+            const baseDeposit = isFinite(depOverride) && depOverride > 0
+                ? Math.round(depOverride * 100)
+                : Math.max(Math.round(effectiveTotalCents * DEPOSIT_RATE), MIN_DEPOSIT_CENTS);
+            chargeCents = Math.min(baseDeposit, effectiveTotalCents - paidCents);
+        }
+
+        if (chargeCents < 50) return json({ ok: false, error: "Monto por debajo del mínimo de Stripe" }, 400);
+        const payDescription = description ||
+            (kind === "balance" ? "Saldo final — Miami DJ Beat" : "Depósito de Reserva — Miami DJ Beat");
+
+        if (quoteOnly) {
+            return json({
+                ok: true, quote: true, kind, total_approved: totalApproved, amount_cents: chargeCents, discount_cents: discountCents,
+                coupon: couponApplied, total_cents: totalCents, remaining_cents: remainingCents,
+            });
+        }
 
         /** Caja **comprador** (portales / eventos). NUNCA reutilizar el customer del artista (Pro en dj_profiles). */
         let customerId: string | null =
@@ -114,27 +200,23 @@ serve(async (req) => {
             await sb.from("client_profiles").update({ buyer_stripe_customer_id: customerId }).eq("user_id", clientUid);
         }
 
-        const depositRequiredUsd = body.deposit_required_usd != null
-            ? parseFloat(String(body.deposit_required_usd))
-            : null;
-        if (depositRequiredUsd != null && isFinite(depositRequiredUsd) && depositRequiredUsd > 0) {
-            await sb.from("leads").update({ deposit_required_usd: depositRequiredUsd }).eq("id", lead_id);
-        }
-
         // ── Create Stripe Checkout Session (one-time payment) ──
         const checkoutParams: Record<string, string> = {
             mode: "payment",
             billing_address_collection: "auto",
             "line_items[0][price_data][currency]": "usd",
-            "line_items[0][price_data][unit_amount]": String(amount_cents),
-            "line_items[0][price_data][product_data][name]": description,
+            "line_items[0][price_data][unit_amount]": String(chargeCents),
+            "line_items[0][price_data][product_data][name]": payDescription,
             "line_items[0][price_data][product_data][description]": eventLabel,
             "line_items[0][quantity]": "1",
             success_url: `${SITE_URL}/client-portal.html?lead=${lead_id}&payment=success`,
             cancel_url: `${SITE_URL}/client-portal.html?lead=${lead_id}&payment=cancelled`,
             "metadata[lead_id]": lead_id,
             "metadata[account_lane]": "buyer",
-            "metadata[product_line]": "event_deposit",
+            "metadata[product_line]": kind === "balance" ? "event_balance" : "event_deposit",
+            "metadata[payment_kind]": kind,
+            "metadata[discount_cents]": String(discountCents),
+            "metadata[coupon_code]": couponApplied?.code ?? "",
             "metadata[event_type]": lead.event_type ?? "",
             "metadata[event_date]": lead.event_date ?? "",
         };
@@ -155,7 +237,21 @@ serve(async (req) => {
         });
 
         const session = await checkoutRes.json();
-        if (session.error) throw new Error(session.error.message);
+        if (session.error) {
+            if (reserveCode) {
+                // No se llegó a abrir el pago: devolver el cupo del cupón de inmediato.
+                await sb.from("discount_redemptions").update({ status: "released", released_at: new Date().toISOString() })
+                    .eq("lead_id", lead_id).eq("status", "reserved").is("stripe_session_id", null);
+            }
+            throw new Error(session.error.message);
+        }
+        if (reserveCode) {
+            // Idempotente: misma reserva, ahora atada a la sesión para que el webhook la confirme o la libere.
+            await sb.rpc("discount_reserve", {
+                p_code: reserveCode, p_lead_id: lead_id,
+                p_order_cents: Math.round(totalCents / (1 + TAX_RATE)), p_stripe_session_id: session.id,
+            });
+        }
 
         // ── Update lead: mark payment as pending ───────────────
         await sb.from("leads").update({
@@ -163,7 +259,7 @@ serve(async (req) => {
             payment_status: "PENDING",
         }).eq("id", lead_id);
 
-        return json({ ok: true, url: session.url, session_id: session.id });
+        return json({ ok: true, url: session.url, session_id: session.id, amount_cents: chargeCents, discount_cents: discountCents });
 
     } catch (e) {
         return json({ ok: false, error: String(e) }, 500);

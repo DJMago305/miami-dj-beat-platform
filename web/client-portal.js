@@ -430,7 +430,7 @@ async function mdjPortalFetchCheckoutJson(resp) {
 function portalCalcEventDepositUsd(totalUsd) {
     var bal = parseFloat(totalUsd);
     if (!isFinite(bal) || bal < 0) bal = 0;
-    return Math.max(bal * 0.3, 150);
+    return Math.max(bal * 0.5, 150);
 }
 
 function portalCorpZelleEmail() {
@@ -1004,7 +1004,7 @@ function portalWelcomeSubI18nKey(ctx, clientRow) {
  */
 async function portalFetchLeadsForLoggedInUser(db, sessionUserId, emailNorm) {
     var cols =
-        'id,email,client_user_id,event_type,event_date,event_start_time,event_end_time,location,status,created_at,payment_status,balance_paid,total_amount';
+        'id,email,client_user_id,event_type,event_date,event_start_time,event_end_time,location,status,created_at,payment_status,balance_paid,total_amount,coupon_discount_cents,total_aprobado_usd';
     var seen = {};
     var rows = [];
     function absorb(data) {
@@ -1105,7 +1105,7 @@ var MDJ_LEADS_HUB_COLUMNS =
     'id,email,client_user_id,event_type,event_date,status,created_at,payment_status,balance_paid,total_amount';
 
 var MDJ_LEADS_BROWSER_COLUMNS =
-    'id,email,client_user_id,full_name,phone,event_type,event_date,event_start_time,event_end_time,status,created_at,location,notes,payment_status,balance_paid,total_amount,assigned_staff_id,assigned_staff_name';
+    'id,email,client_user_id,full_name,phone,event_type,event_date,event_start_time,event_end_time,status,created_at,location,notes,payment_status,balance_paid,total_amount,assigned_staff_id,assigned_staff_name,coupon_discount_cents,total_aprobado_usd';
 
 var MDJ_LEADS_SAFE_COLUMNS = MDJ_LEADS_BROWSER_COLUMNS;
 
@@ -1227,6 +1227,13 @@ const PortalApp = {
         if (bonusUsd > 0) {
             discount += bonusUsd;
             discountNote += '• ' + portalT('portal-reservation-bonus-line') + ': -$' + bonusUsd.toFixed(2) + '<br>';
+        }
+        // Cupón ya cobrado (lo escribe solo el servidor al confirmar el pago): sigue restando antes del impuesto,
+        // para que el recálculo de total_amount desde el carrito no lo pierda.
+        var couponUsd = (parseInt((this.currentLead || {}).coupon_discount_cents, 10) || 0) / 100;
+        if (couponUsd > 0) {
+            discount += couponUsd;
+            discountNote += '• Cupón aplicado: -$' + couponUsd.toFixed(2) + '<br>';
         }
         if (discount > sub) discount = sub;
         const tax = (sub - discount) * 0.07;
@@ -2515,7 +2522,7 @@ const PortalApp = {
         this.renderPaymentZones({ total, paid, balance, pStatus });
 
         // Manager billing link (legacy host, still used for manager-only overlay)
-        if (this.isManager && balance > 0 && this.getManagerBillingUnlocked()) {
+        if (this.isManager && balance > 0 && this.getManagerBillingUnlocked() && this.isTotalApproved()) {
             this.showManagerStripeLinkButton(balance);
         }
 
@@ -2538,6 +2545,40 @@ const PortalApp = {
         this.updateReservationBonusBanner();
     },
 
+    /** El total solo se puede cobrar si el staff/servidor lo aprobó (leads.total_aprobado_usd = total_amount). */
+    isTotalApproved() {
+        var l = this.currentLead || {};
+        var a = parseFloat(l.total_aprobado_usd);
+        var t = parseFloat(l.total_amount);
+        return isFinite(a) && isFinite(t) && Math.abs(a - t) < 0.005;
+    },
+
+    /** Solo staff (manager): aprueba el total que está viendo. El servidor rechaza si el total cambió mientras tanto. */
+    async approveTotal(totalVisto) {
+        var btn = document.getElementById('btn-approve-total');
+        if (btn) { btn.disabled = true; btn.textContent = 'Approving…'; }
+        try {
+            var db = window.getSupabaseClient();
+            var r = await db.rpc('lead_aprobar_total', { p_lead_id: this.currentLead.id, p_total_visto: totalVisto });
+            if (r.error) throw r.error;
+            var d = r.data || {};
+            if (d.ok === false) {
+                if (d.error === 'el_total_cambio') {
+                    this.currentLead.total_amount = d.total_actual;
+                    alert('The total changed while you were reviewing it ($' + Number(d.total_actual).toFixed(2) + '). Review it again before approving.');
+                    this.updatePayments();
+                    return;
+                }
+                throw new Error(String(d.error || 'rpc_failed'));
+            }
+            this.currentLead.total_aprobado_usd = d.total_aprobado_usd;
+            this.updatePayments();
+        } catch (e) {
+            alert('Could not approve the total: ' + (e && e.message ? e.message : e));
+            if (btn) { btn.disabled = false; btn.textContent = 'Approve total'; }
+        }
+    },
+
     /**
      * Renders the dynamic deposit / payment action zones (2 + 3) into #portal-payment-zones.
      * States: UNPAID → deposit action; PENDING_ZELLE → awaiting confirmation; PARTIAL → final balance; PAID → complete.
@@ -2548,7 +2589,38 @@ const PortalApp = {
         host.innerHTML = '';
 
         // Skip for managers — they use the legacy manager billing button
-        if (this.isManager) return;
+        if (this.isManager) {
+            // Staff: el total que armó el cliente (o que se cambió) debe aprobarse antes de poder cobrarse.
+            if (total > 0.009 && !this.isTotalApproved()) {
+                var self0m = this;
+                var apDiv = document.createElement('div');
+                apDiv.className = 'pf-zone pf-zone--pending';
+                apDiv.innerHTML =
+                    '<div class="pf-pending-title">Total pending approval</div>' +
+                    '<div class="pf-pending-note">Review the services and prices above. Once approved ($' + total.toFixed(2) +
+                    '), the client can pay. If the client changes anything afterwards, it needs approval again.</div>';
+                var apBtn = document.createElement('button');
+                apBtn.type = 'button';
+                apBtn.id = 'btn-approve-total';
+                apBtn.className = 'pf-pay-btn';
+                apBtn.textContent = 'Approve total';
+                apBtn.onclick = function () { void self0m.approveTotal(total); };
+                apDiv.appendChild(apBtn);
+                host.appendChild(apDiv);
+            }
+            return;
+        }
+        // Cliente: sin total aprobado no se ofrece pagar con tarjeta.
+        var totalPendiente = total > 0.009 && !this.isTotalApproved();
+        if (totalPendiente && pStatus !== 'PAID') {
+            host.innerHTML =
+                '<div class="pf-zone pf-zone--pending">' +
+                '<div class="pf-pending-icon">&#9203;</div>' +
+                '<div class="pf-pending-title">Total pending team approval</div>' +
+                '<div class="pf-pending-note">Our team is reviewing the services and prices of your event. You will be able to pay as soon as it is approved.</div>' +
+                '</div>';
+            return;
+        }
 
         var l = this.currentLead || {};
         var depositUsd = l.deposit_required_usd != null && isFinite(parseFloat(l.deposit_required_usd))
@@ -2623,7 +2695,7 @@ const PortalApp = {
             finalBtn.id = 'btn-stripe-pay';
             finalBtn.className = 'pf-pay-btn pf-pay-btn--ghost';
             finalBtn.textContent = 'Pay Final Balance · $' + balance.toFixed(2);
-            finalBtn.onclick = function () { void self.payDepositStripe(balance); };
+            finalBtn.onclick = function () { void self.payDepositStripe('balance'); };
             var remZone = host.querySelector('.pf-zone--remaining');
             if (remZone) remZone.appendChild(finalBtn);
             return;
@@ -2650,7 +2722,7 @@ const PortalApp = {
             (discountCents > 0
                 ? '<div class="pf-deposit-original">was $' + depositUsd.toFixed(2) + '</div>'
                 : '') +
-            '<div class="pf-deposit-pct">30% of contract · minimum $150</div>' +
+            '<div class="pf-deposit-pct">50% of contract · minimum $150</div>' +
             discountBadge +
             '</div>';
         host.insertAdjacentHTML('beforeend', depositHtml);
@@ -2697,7 +2769,7 @@ const PortalApp = {
         stripeBtn.id = 'btn-stripe-pay';
         stripeBtn.className = 'pf-pay-btn';
         stripeBtn.textContent = 'Pay Deposit via Card · $' + depositAfterDiscount.toFixed(2);
-        stripeBtn.onclick = function () { void self.payDepositStripe(depositAfterDiscount); };
+        stripeBtn.onclick = function () { void self.payDepositStripe('deposit', appliedDiscount && appliedDiscount.source === 'coupon' ? appliedDiscount.code : ''); };
         var depZone = host.querySelector('.pf-zone--deposit');
         if (depZone) depZone.appendChild(stripeBtn);
 
@@ -2953,6 +3025,7 @@ const PortalApp = {
     showStripePayButton(balance) {
         var host = document.getElementById('portal-pay-cta-host');
         if (!host || !this.currentLead) return;
+        if (!this.isManager && !this.isTotalApproved()) return; // total pendiente de aprobación: no se ofrece pagar
         var paid = parseFloat(this.currentLead.balance_paid) || 0;
         var st = this.currentLead.payment_status || 'UNPAID';
         var needsGold = st === 'UNPAID' || paid < 0.01;
@@ -2964,7 +3037,7 @@ const PortalApp = {
         btn.innerHTML = needsGold
             ? `Pay Now &nbsp;·&nbsp; $${balance.toFixed(2)}`
             : `Pay balance — $${balance.toFixed(2)}`;
-        btn.onclick = () => this.payDepositStripe(balance);
+        btn.onclick = () => this.payDepositStripe('balance');
         host.appendChild(btn);
     },
 
@@ -3066,13 +3139,15 @@ const PortalApp = {
         }
     },
 
-    async payDepositStripe(balance) {
+    /**
+     * El SERVIDOR calcula el monto (create-event-payment): aquí solo se dice qué se paga.
+     * kind = 'deposit' (50 % con mínimo $150, o el depósito fijado por el staff) | 'balance' (todo lo que falta).
+     */
+    async payDepositStripe(kind, couponCode) {
         const btn = document.getElementById('btn-stripe-pay');
         if (btn) { btn.textContent = 'Conectando con Stripe...'; btn.disabled = true; }
 
         try {
-            // Deposit = 30% of balance or minimum $150
-            const depositAmount = Math.max(Math.round(balance * 0.30 * 100), 15000);
             const CHECKOUT_FN =
                 typeof window.mdbSupabaseFunctionUrl === 'function'
                     ? window.mdbSupabaseFunctionUrl('create-event-payment')
@@ -3087,9 +3162,10 @@ const PortalApp = {
                         : { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     lead_id: this.currentLead.id,
-                    amount_cents: depositAmount,
+                    kind: kind === 'balance' ? 'balance' : 'deposit',
+                    coupon_code: couponCode || undefined,
                     description:
-                        'Depósito de Reserva — ' +
+                        (kind === 'balance' ? 'Saldo final — ' : 'Depósito de Reserva — ') +
                         String(this.currentLead.event_type != null ? this.currentLead.event_type : 'Evento') +
                         ' · ' +
                         String(this.currentLead.event_date != null ? this.currentLead.event_date : 'TBD'),
@@ -3103,13 +3179,13 @@ const PortalApp = {
             window.open(result.url, '_blank', 'noopener,noreferrer');
             if (btn) {
                 btn.disabled = false;
-                btn.textContent = `Pay Now · $${balance.toFixed(2)}`;
+                btn.textContent = 'Pay Now';
             }
         } catch (err) {
             alert('Error al conectar con Stripe: ' + err.message);
             if (btn) {
                 btn.disabled = false;
-                btn.textContent = `Pay Now · $${balance.toFixed(2)} — Retry`;
+                btn.textContent = 'Pay Now — Retry';
             }
         }
     },
@@ -3221,7 +3297,7 @@ const PortalApp = {
                         : { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     lead_id: this.currentLead.id,
-                    amount_cents: amountCents,
+                    kind: 'balance',
                     description:
                         'Pago de evento — ' +
                         String(this.currentLead.event_type != null ? this.currentLead.event_type : 'Evento') +
@@ -4058,7 +4134,7 @@ const PortalApp = {
                         : { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     lead_id: newId,
-                    amount_cents: amountCents,
+                    kind: 'balance',
                     description: desc || 'Miami DJ Beat — payment (guest)'
                 })
             });

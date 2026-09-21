@@ -1173,7 +1173,7 @@
       "id": "V13",
       "severity": "media",
       "title": "El cobro de depósitos acepta el monto que manda el navegador",
-      "detail": "create-event-payment (sin JWT, CORS *) lee amount_cents y deposit_required_usd del body; el segundo sobrescribe leads.deposit_required_usd. Atenuante: stripe-webhook registra el monto realmente cobrado y solo marca PAID si alcanza el total. Riesgo acotado: integridad del depósito mostrado.",
+      "detail": "create-event-payment (sin JWT, CORS *) lee amount_cents y deposit_required_usd del body; el segundo sobrescribe leads.deposit_required_usd. Atenuante: stripe-webhook registra el monto realmente cobrado y solo marca PAID si alcanza el total. Riesgo acotado: integridad del depósito mostrado. AVISO: esta sonda solo ve el REPOSITORIO; que quede verde no prueba que la función esté desplegada en Supabase ni que la migración esté aplicada. Confirmar el despliegue aparte (get_edge_function / catálogo) antes de darlo por cerrado en producción.",
       "probe": {
         "kind": "grep",
         "pattern": "body\\.amount_cents|body\\.deposit_required_usd",
@@ -1187,7 +1187,7 @@
       "id": "V14",
       "severity": "media",
       "title": "Los cupones no bajan el cobro de Stripe",
-      "detail": "El portal muestra el descuento pero payDepositStripe() manda el depósito completo. La fase 1 (tabla y funciones de reserva) está aplicada e inerte; falta que create-event-payment llame discount_reserve y cobre el monto final.",
+      "detail": "El portal muestra el descuento pero payDepositStripe() manda el depósito completo. La fase 1 (tabla y funciones de reserva) está aplicada e inerte; falta que create-event-payment llame discount_reserve y cobre el monto final. AVISO: esta sonda solo ve el REPOSITORIO; que quede verde no prueba que la función esté desplegada en Supabase ni que la migración esté aplicada. Confirmar el despliegue aparte (get_edge_function / catálogo) antes de darlo por cerrado en producción.",
       "probe": {
         "kind": "grep",
         "pattern": "discount_reserve",
@@ -1201,7 +1201,7 @@
       "id": "V15",
       "severity": "media",
       "title": "El uso de un cupón nunca se gasta",
-      "detail": "mdj_redeem_discount_code nunca se llamaba y se cerró a anon. Falta que stripe-webhook llame discount_confirm al confirmarse el pago y discount_release si la sesión vence.",
+      "detail": "mdj_redeem_discount_code nunca se llamaba y se cerró a anon. Falta que stripe-webhook llame discount_confirm al confirmarse el pago y discount_release si la sesión vence. AVISO: esta sonda solo ve el REPOSITORIO; que quede verde no prueba que la función esté desplegada en Supabase ni que la migración esté aplicada. Confirmar el despliegue aparte (get_edge_function / catálogo) antes de darlo por cerrado en producción.",
       "probe": {
         "kind": "grep",
         "pattern": "discount_confirm",
@@ -2384,6 +2384,43 @@
       },
       "deps": [],
       "impact": "medio"
+    },
+    {
+      "id": "R31",
+      "title": "Cerrar el dinero de leads al cliente (Capa A) — APLICADA en producción el 2026-09-21",
+      "why": "Un cliente con sesión puede marcarse PAID o cambiar lo pagado de su propio evento (RLS de leads sin protección de columnas). Verificado en producción el 2026-09-21; sin evidencia de abuso (0 pagos).",
+      "done": "El disparador de supabase/scripts/20260921_leads_proteger_columnas_de_dinero.sql está aplicado en producción y un cliente que intenta escribir esas columnas las ve revertidas.",
+      "ref": {
+        "kind": "none"
+      },
+      "deps": [],
+      "impact": "alto"
+    },
+    {
+      "id": "R32",
+      "title": "Compuerta de aprobación del total (Capa B1) — base de datos APLICADA 2026-09-21; falta desplegar el cobro y el portal",
+      "why": "El total del evento lo arma el navegador con precios editables; el PO decidió que el servidor debe ser dueño de total_amount. Mientras no exista catálogo, el total de un cliente necesita aprobación del staff antes de cobrar.",
+      "done": "leads.total_aprobado existe y solo lo escribe staff/servidor; create-event-payment se niega a cobrar un total no aprobado; hay botón Aprobar total en el panel de staff.",
+      "ref": {
+        "kind": "none"
+      },
+      "deps": [
+        "R31"
+      ],
+      "impact": "alto"
+    },
+    {
+      "id": "R33",
+      "title": "Catálogo de precios y recálculo del total en el servidor (Capa B2)",
+      "why": "Quitar la fricción de R32: el servidor recalcula el total desde un catálogo validado por el PO y aprueba solo cuando coincide. Plan en docs/plan-dinero-de-leads-dueno-servidor.md. Requisito del PO: si cambia un precio en la fuente, el carrito y el pago se actualizan; decidir qué pasa con eventos ya aprobados o con pagos. Inventario hecho (docs/inventario-precios.md): 13 fuentes; ya existe el overlay platform_settings.rentals_catalog_prices (vacío en producción) y hay conflictos de precio entre canales (p. ej. fotografía 350 vs 700, CO2 300 vs 400). Propuesta de precios de lujo v1 en docs/propuesta-precios-luxury.md; las tarifas de DJ del PO son pago al DJ, el precio al cliente es un paquete (pago_dj_usd y precio_cliente_usd por separado).",
+      "done": "Existe service_catalog validado por el PO, mdj_lead_recalcular_total con test de paridad contra el portal y aprobación automática cuando el total coincide.",
+      "ref": {
+        "kind": "none"
+      },
+      "deps": [
+        "R32"
+      ],
+      "impact": "alto"
     }
   ]
 }
