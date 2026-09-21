@@ -1395,7 +1395,11 @@
       html+='<div class="newform">'
         +'<div><label>Nombre</label><input id="f-n" placeholder="Nombre y apellido"></div>'
         +'<div><label>Estado</label><select id="f-e"><option>Potencial</option><option>Activo</option><option>VIP</option></select></div>'
-        +'<div><label>Cumpleaños</label><input id="f-b" type="date" value="2026-08-15"></div>';
+        // Sin value por defecto (2026-09-20): un <input type="date"> con
+        // fecha fija se guardaba como si el DJ la hubiera puesto a propósito
+        // si no la tocaba -- el calendario y ahora también Network solo
+        // deben recibir una fecha cuando alguien realmente la escribió.
+        +'<div><label>Cumpleaños (opcional)</label><input id="f-b" type="date"></div>';
       // Selector de artista SOLO owner -- un artista guarda siempre bajo su
       // propio perfil (state.artist), no hay nada que elegir. "Canal" (2026-
       // 09-18) se quitó del formulario de artista: no existe columna real
