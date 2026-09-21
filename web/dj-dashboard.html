@@ -1154,7 +1154,7 @@
                           // esto un artista con este iframe ya cacheado (DJYuyo, etc.) podía
                           // seguir viendo la versión vieja de "Mis clientes"/calendario hasta
                           // un hard-refresh manual. Bumpear al cambiar el archivo.
-                          if(frame && !frame.getAttribute('src')) frame.setAttribute('src', './calendario-operacional-inteligente.html?v=20260920-acciones-evento');
+                          if(frame && !frame.getAttribute('src')) frame.setAttribute('src', './calendario-operacional-inteligente.html?v=20260920-editar-evento');
                           var sess = (await sb.auth.getSession()).data.session;
                           if(!sess){
                             /* Sin sesion se devuelve el calendario personal, que es lo que
