@@ -80,6 +80,24 @@ function redactar(tipo: string, d: Record<string, unknown>) {
                 mensaje: `${cual} queda pagado por completo. Gracias.`,
                 url: "/client-billing.html",
             };
+        // Avisos a DJs: el trigger de la base (_dj_notificar) ya guarda titulo y
+        // mensaje redactados en `datos`, aqui solo se reenvian.
+        case "evento_asignado":
+        case "evento_movido":
+        case "evento_cancelado":
+        case "evento_reasignado":
+        case "evento_recordatorio_24h":
+        case "evento_recordatorio_2h":
+        // Cancelaciones (DJ/artista/cliente): urgente al staff, acuse y resolucion a quien pidio.
+        case "cancelacion_urgente":
+        case "cancelacion_recibida":
+        case "cancelacion_resuelta": {
+            const titulo = String(d?.titulo ?? "").trim();
+            const mensaje = String(d?.mensaje ?? "").trim();
+            if (!titulo || !mensaje) return null;
+            const url = String(d?.url ?? "").startsWith("/") ? String(d.url) : "/dj-dashboard.html";
+            return { titulo, mensaje, url };
+        }
         default:
             return null;
     }
@@ -101,11 +119,16 @@ serve(async (req: Request) => {
     // Comparacion normal: la clave no se compara en tiempo constante porque el
     // atacante no puede medir nada util a traves de la red de Supabase, pero se
     // exige que exista y tenga largo suficiente para no aceptar "" == "".
+    const auth = req.headers.get("Authorization") ?? "";
+    const jwt = auth.startsWith("Bearer ") ? auth.slice(7).trim() : "";
+    // Mismo secreto de sistema que ya usan los demas crons (calendar-reconcile,
+    // notify-yearly-recall...): pg_cron lo lee de Vault y lo manda como Bearer.
+    const secretoSistema = Deno.env.get("CRON_EDGE_AUTH_SECRET") ?? "";
     if (claveCron.length >= 20 && traeCron === claveCron) {
         autorizado = true;
+    } else if (secretoSistema.length >= 20 && jwt === secretoSistema) {
+        autorizado = true;
     } else {
-        const auth = req.headers.get("Authorization") ?? "";
-        const jwt = auth.startsWith("Bearer ") ? auth.slice(7).trim() : "";
         if (jwt) {
             const { data: { user } } = await ADMIN.auth.getUser(jwt);
             if (user?.id) {

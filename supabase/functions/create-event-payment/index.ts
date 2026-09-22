@@ -47,13 +47,19 @@ serve(async (req) => {
         const { data: lead, error: leadErr } = await sb
             .from("leads")
             .select(
-                "id, email, event_type, event_date, location, assigned_dj_name, contact_person, stripe_customer_id, client_user_id, total_amount, balance_paid, deposit_required_usd, total_aprobado_usd",
+                "id, email, event_type, event_date, location, assigned_dj_name, contact_person, stripe_customer_id, client_user_id, total_amount, balance_paid, deposit_required_usd, total_aprobado_usd, status",
             )
             .eq("id", lead_id)
             .single();
 
         if (leadErr || !lead) {
             return json({ ok: false, error: "Lead no encontrado" }, 404);
+        }
+
+        // Un evento cancelado o ya completado no se cobra: el cobro se crearía sobre algo que ya no existe.
+        const leadStatus = String(lead.status ?? "").toUpperCase();
+        if (leadStatus === "CANCELLED" || leadStatus === "COMPLETED") {
+            return json({ ok: false, code: "evento_no_cobrable", error: leadStatus === "CANCELLED" ? "El evento está cancelado" : "El evento ya está completado" }, 409);
         }
 
         const clientEmail = (lead.email ?? "").trim();
