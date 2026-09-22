@@ -22,11 +22,11 @@
   <!-- Tipografia institucional del menu (Inter 800). Sin esta hoja la barra cae en la
        sustituta del sistema y el texto sale ~2% mas ancho, desplazando el eje X. -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=optional" rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css?v=20260916-venues-cta" />
+    <link rel="stylesheet" href="./styles.css?v=20260921-hub-scrollbar-fuera" />
   <link rel="stylesheet" href="./header-unified.css?v=20260916-estacion-gap-fix" />
     <link rel="stylesheet" href="./mdj-assistant.css?v=20260306-1" />
     <!-- Idioma: mismos scripts que el resto del sitio (sin esto, ES/EN no reciben listeners). -->
-    <script src="./translations.js?v=20260921-deposito-50"></script>
+    <script src="./translations.js?v=20260921-baile1"></script>
     <script src="./i18n.js?v=20260420-index-experience-rutas"></script>
     <style>
         :root {
@@ -2632,6 +2632,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                         <div class="tile">
                             <h4 style="color: var(--gold); border-bottom: 1px solid var(--line); padding-bottom: 5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; font-size: 14px;">STAFF (EVENTOS)</h4>
                             <div style="margin-top: 10px;"><label class="fineprint">Bartender Pro</label><input type="number" id="catalog-staff_bartender" value="250" class="price-input catalog-input"></div>
+                            <div style="margin-top: 10px;"><label class="fineprint">Flair Bartender (Show)</label><input type="number" id="catalog-staff_bartender_flair" value="1200" class="price-input catalog-input"></div>
                             <div style="margin-top: 10px;"><label class="fineprint">Mesero / Waiter</label><input type="number" id="catalog-staff_meseros" value="200" class="price-input catalog-input"></div>
                             <div style="margin-top: 10px;"><label class="fineprint">Chef / Catering</label><input type="number" id="catalog-staff_chef" value="400" class="price-input catalog-input"></div>
                         </div>
@@ -3636,7 +3637,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
 
                 if (!isStaffPortal) {
                     document.documentElement.classList.remove('mdj-admin-gate-pending');
-                    const ut = String((session.user && session.user.user_metadata && session.user.user_metadata.user_type) || '').toLowerCase();
+                    const ut = (typeof window.mdjUserTypeLegacy === 'function') ? window.mdjUserTypeLegacy(session.user) : ''; /* solo pista heredada */
                     const staffEntryLogin = './login.html?next=./staff.html?vista=gobernanza&mdj_staff_entry=1';
                     /* Sin rol staff: puerta login staff — nunca CONFIG artista (ART-007B). */
                     if (profile && !profileError) {
@@ -9314,7 +9315,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
 
     <script src="./header-smart-search.js?v=20260415-CORE-CONNECTIONS"></script>
     <script src="./mdj-owner-tabs-marquee.js?v=20260818-nav-canonico"></script>
-    <script src="./mdjb-shared-header.js?v=20260919-staff-vista-fix"></script>
+    <script src="./mdjb-shared-header.js?v=20260921-svc-activo4"></script>
   <script src="./mdj-social-bar.js?v=20260819-social-contact-only"></script>
 
 <!-- ══════════════════════════════════════════════════════════════════════

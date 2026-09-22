@@ -14,7 +14,7 @@
   <!-- Tipografia institucional del menu (Inter 800). Sin esta hoja la barra caia en la
        sustituta del sistema y el texto salia ~2% mas ancho, desplazando el eje X. -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=optional" rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css?v=20260916-venues-cta" />
+    <link rel="stylesheet" href="./styles.css?v=20260921-hub-scrollbar-fuera" />
   <link rel="stylesheet" href="./header-unified.css?v=20260916-estacion-gap-fix" />
     <link rel="stylesheet" href="./profile.css?v=20260820-ancho-total" />
     <style>
@@ -101,6 +101,18 @@
             padding-left: clamp(4px, 0.4vw, 8px) !important;
             padding-right: clamp(4px, 0.4vw, 8px) !important;
         }
+        /* ── Selector de categorías (2026-09-21) ── */
+        #mdj-catpick { max-width: 96rem; margin: 0 auto 24px; }
+        #mdj-catpick .mdj-catpick-head { text-align: center; margin-bottom: 16px; }
+        #mdj-catpick .mdj-catpick-title { margin: 0 0 6px; font-size: 22px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--gold, #c5a059); }
+        #mdj-catpick .mdj-catpick-hint { margin: 0; font-size: 13px; color: rgba(255,255,255,.55); }
+        .mdj-catpick-open { margin-top: 14px; padding: 12px 24px; border-radius: 999px; border: 1px solid rgba(197,160,89,.6); background: rgba(197,160,89,.10); color: var(--gold, #c5a059); font: 800 13px/1 inherit; letter-spacing: .12em; text-transform: uppercase; cursor: pointer; }
+        .mdj-catpick-open:hover { background: rgba(197,160,89,.2); }
+        .mdj-catpick-open[hidden] { display: none; }
+        .mdj-catpick-open:focus-visible { outline: 2px solid var(--gold, #c5a059); outline-offset: 2px; }
+        /* el carrusel de tarjetas con foto queda como almacén (sus casillas siguen mandando `roles`) */
+        #selection-screen .jobs-role-carousel-shell { display: none !important; }
+
 
         .hero-2027 {
             position: relative;
@@ -1031,58 +1043,6 @@
             text-shadow: 0 2px 14px rgba(0, 0, 0, 0.45), 0 0 28px rgba(197, 160, 89, 0.35);
         }
 
-        /* Artista: estado LITE vs PRO (no confundir con facturación de cliente / portal cliente). */
-        #jobs-artist-plan-banner {
-            display: none;
-            max-width: 72rem;
-            margin: 0 auto 18px;
-            padding: 12px 16px;
-            border-radius: 14px;
-            border: 1px solid rgba(197, 160, 89, 0.45);
-            background: rgba(10, 10, 14, 0.72);
-            color: rgba(255, 255, 255, 0.88);
-            font-size: 13px;
-            font-weight: 600;
-            line-height: 1.45;
-            text-align: center;
-        }
-
-        #jobs-artist-plan-banner a {
-            color: var(--gold);
-            font-weight: 800;
-            text-decoration: underline;
-            text-underline-offset: 3px;
-        }
-
-        #jobs-artist-plan-banner .jobs-artist-plan-banner__badge--pro {
-            display: inline-block;
-            margin-right: 8px;
-            padding: 2px 10px;
-            border-radius: 8px;
-            background: rgba(197, 160, 89, 0.25);
-            color: var(--gold);
-            font-size: 11px;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-        }
-
-        #jobs-artist-plan-banner .jobs-artist-plan-banner--pastdue {
-            display: inline-block;
-            margin-right: 8px;
-            padding: 2px 10px;
-            border-radius: 8px;
-            background: #f59e0b;
-            color: #0a0a0a;
-            font-size: 11px;
-            font-weight: 900;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-        }
-
-        #jobs-artist-plan-banner .jobs-artist-plan-banner__tier {
-            color: var(--gold);
-            font-weight: 800;
-        }
 
         #selection-screen .level-portal-container.hidden-by-prefill {
             display: none !important;
@@ -1913,16 +1873,13 @@
 
         <!-- Contenido (z-index 2 — encima del video) -->
         <div class="hero-content" style="position:relative;z-index:2;">
-            <span class="kinetic-subtitle" data-i18n="jobs-hero-era">ERA OF AI</span>
-            <h1 class="kinetic-title" data-i18n="jobs-hero-title">DOMINA EL<br>MERCADO DJ</h1>
-            <p class="hero-desc" data-i18n="jobs-hero-desc">Sistemas de Reclutamiento Cuántico para la Elite del
-                Entretenimiento Global.</p>
+            <span class="kinetic-subtitle" data-i18n="jobs-hero-era">EL MUNDO ARTÍSTICO EVOLUCIONA</span>
+            <h1 class="kinetic-title" data-i18n="jobs-hero-title">DA TU PRIMER<br>PASO</h1>
+            <p class="hero-desc" data-i18n="jobs-hero-desc">El oficio no se acaba, cambia: hoy la tecnología y la IA te ponen frente a más eventos. Tú pones el talento. Elige tu categoría y entra a la red.</p>
         </div>
 
         <p class="jobs-hero-welcome"
-            data-i18n="jobs-hero-welcome">Bienvenido al portal Pro de Miami DJ Beat. La tecnología te permite
-            escalar, nosotros te damos el escenario. <br><strong>Transformamos talento en
-                autoridad.</strong></p>
+            data-i18n="jobs-hero-welcome">Entra para <strong>buscar trabajo</strong> y ser considerado en contratos de la red. La tecnología te permite escalar; nosotros te damos el escenario.</p>
 
         <!-- Indicador de Scroll -->
         <div class="scroll-indicator">
@@ -2020,8 +1977,14 @@
             <p id="jobs-client-to-artist-banner" class="jobs-client-to-artist-banner" style="display:none;max-width:48rem;margin:0 auto 20px;padding:12px 16px;border-radius:14px;border:1px solid rgba(197,160,89,0.45);background:rgba(197,160,89,0.12);color:rgba(255,255,255,0.92);font-size:13px;font-weight:600;line-height:1.45;text-align:center;"
                 data-i18n="jobs-client-wants-artist-msg" role="status"></p>
             <div class="jobs-role-roles-block" style="max-width:96rem;margin:0 auto 28px;">
-                <p class="jobs-role-carousel-sign" data-i18n="jobs-role-carousel-heading">Selecciona tus categorías</p>
-                <div id="jobs-artist-plan-banner" role="status" aria-live="polite"></div>
+                <div id="mdj-catpick">
+                    <div class="mdj-catpick-head">
+                        <h2 class="mdj-catpick-title" id="mdj-catpick-title">Elige tu categoría</h2>
+                        <p class="mdj-catpick-hint" id="mdj-catpick-hint"></p>
+                        <button type="button" class="mdj-catpick-open" id="mdj-catpick-open">Ver categorías</button>
+                    </div>
+                    <div id="mdj-cat-subs" hidden></div>
+                </div>
                 <div class="jobs-role-carousel-shell" role="region"
                     aria-label="Open roles — select one or more; scroll horizontally or use the arrows.">
                     <button type="button" class="jobs-role-carousel-btn" id="jobs-role-carousel-prev"
@@ -2901,7 +2864,9 @@
             }
         })();
     </script>
-    <script defer src="./translations.js?v=20260916-sft-live-kiosk"></script>
+    <script defer src="./js/mdj-categorias.js?v=20260921-face4"></script>
+    <script defer src="./js/jobs-categorias.js?v=20260921-9"></script>
+    <script defer src="./translations.js?v=20260921-baile1"></script>
     <script defer src="./i18n.js?v=20260418-PURGE-SEAL"></script>
     <script defer src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
     <script>
@@ -2934,7 +2899,6 @@
                     .eq('user_id', session.user.id)
                     .maybeSingle();
                 if (profile && profile.photo_url) document.querySelector('.avatar').src = profile.photo_url;
-                void updateJobsArtistPlanStatusBanner(session, profile);
                 // Wire up "Get PRO" header button for logged-in artists
                 var getProBtn = document.getElementById('header-get-pro-btn');
                 if (getProBtn) {
@@ -2954,62 +2918,16 @@
                     }
                 }
             } else {
-                void updateJobsArtistPlanStatusBanner(null, null);
             }
             void updateJobsAfterRolesCta();
         }
 
-        /** Franja clara: cuenta de artista (LITE vs MDJ PRO) — distinta del portal/facturación de cliente. */
-        function updateJobsArtistPlanStatusBanner(session, profile) {
-            var el = document.getElementById('jobs-artist-plan-banner');
-            if (!el) return;
-            if (!session || getSessionAccountRole(session) !== 'artist') {
-                el.style.display = 'none';
-                el.innerHTML = '';
-                return;
-            }
-            var prem =
-                window.MDB_SUBSCRIPTION && typeof window.MDB_SUBSCRIPTION.isPremiumTier === 'function'
-                    ? window.MDB_SUBSCRIPTION.isPremiumTier(profile)
-                    : false;
-            var subRaw = (profile && profile.subscription_status) ? String(profile.subscription_status).toLowerCase() : '';
-            var lang =
-                (typeof document !== 'undefined' &&
-                    document.documentElement &&
-                    document.documentElement.lang &&
-                    String(document.documentElement.lang).toLowerCase().indexOf('en') === 0) ||
-                (window.i18n && window.i18n.currentLang === 'en');
-            el.style.display = 'block';
-            if (subRaw === 'past_due') {
-                el.innerHTML =
-                    '<span class="jobs-artist-plan-banner__badge jobs-artist-plan-banner--pastdue" data-i18n="jobs-artist-banner-past-due-kicker">Payment issue</span>' +
-                    '<span data-i18n="jobs-artist-banner-past-due-body">Your PRO renewal failed or the charge is past due. Update your payment method in the artist dashboard (Settings / billing) to restore full PRO access.</span>';
-                try {
-                    if (window.i18n && typeof window.i18n.updateUI === 'function') window.i18n.updateUI();
-                } catch (eUp) { void eUp; }
-                return;
-            }
-            if (prem) {
-                el.innerHTML = lang
-                    ? '<span class="jobs-artist-plan-banner__badge jobs-artist-plan-banner__badge--pro">MDJ PRO</span>Artist subscription active — this is not the client billing portal.'
-                    : '<span class="jobs-artist-plan-banner__badge jobs-artist-plan-banner__badge--pro">MDJ PRO</span>Suscripción de artista activa — no es el portal de facturación de clientes.';
-            } else {
-                var up = './jobs.html?plan=PRO';
-                el.innerHTML = lang
-                    ? '<span class="jobs-artist-plan-banner__tier">Free (LITE)</span> — Upgrade to <strong>MDJ PRO</strong> for premium roster tools. <a href="' +
-                      up +
-                      '">Artist plans</a> (not client VIP).'
-                    : '<span class="jobs-artist-plan-banner__tier">Gratis (LITE)</span> — Pasa a <strong>MDJ PRO</strong> para herramientas premium. <a href="' +
-                      up +
-                      '">Planes de artista</a> (no es VIP de cliente).';
-            }
-        }
 
         /** Alineado con role-guard.js: cliente ≠ artista (perfil profesional solo artistas). */
         function getSessionAccountRole(session) {
             if (!session || !session.user) return 'client';
             var r = session.user.app_metadata && session.user.app_metadata.role;
-            if (!r && session.user.user_metadata) r = session.user.user_metadata.user_type;
+            if (!r && typeof window.mdjUserTypeLegacy === 'function') r = window.mdjUserTypeLegacy(session.user); /* user_type: solo pista heredada */
             if (!r) r = 'client';
             r = String(r).toLowerCase();
             if (r === 'talent' || r === 'dj') r = 'artist';
@@ -3034,7 +2952,13 @@
         function mdjJobsBuildArtistSpecialtyLine() {
             var codes = getJobsSelectedRolesSorted();
             if (!codes.length) return '';
-            var labels = codes.map(function (c) { return getJobsRoleDisplayLabel(c); }).filter(Boolean);
+            var subsBy = window.__mdjJobsSubsByFamily || {};
+            var canonFam = window.__mdjJobsFamilyCanon || {};
+            var labels = codes.map(function (c) {
+                var l = canonFam[String(c).toUpperCase()] || getJobsRoleDisplayLabel(c); if (!l) return '';
+                var extra = subsBy[String(c).toUpperCase()] || [];
+                return extra.length ? [l].concat(extra).join(' · ') : l;
+            }).filter(Boolean);
             return labels.join(' · ');
         }
 
@@ -3058,6 +2982,14 @@
             var codes = getJobsSelectedRolesSorted();
             var labels = codes.map(function (c) { return getJobsRoleDisplayLabel(c); });
             var summary = labels.length ? labels.join(' · ') : '—';
+            /* Etiquetas para artist_specialty: familia + subcategorías elegidas en el selector nuevo */
+            var subsBy = window.__mdjJobsSubsByFamily || {};
+            var canonFam = window.__mdjJobsFamilyCanon || {};
+            var specLabels = codes.map(function (c, i) {
+                var extra = subsBy[String(c).toUpperCase()] || [];
+                var base = canonFam[String(c).toUpperCase()] || labels[i];   /* nombre que reconoce account-settings */
+                return extra.length ? [base].concat(extra).join(' · ') : base;
+            });
 
             document.querySelectorAll('.jobs-portal-roles-mirror-values').forEach(function (el) {
                 el.textContent = summary;
@@ -3088,7 +3020,9 @@
             try {
                 sessionStorage.setItem('mdj_jobs_roster_categories', JSON.stringify({
                     codes: codes,
-                    labels: labels,
+                    labels: specLabels,
+                    idiomas: window.__mdjJobsIdiomas || [],
+                    categoria: window.__mdjJobsCategoria || null,
                     ts: Date.now()
                 }));
             } catch (e) { void e; }
@@ -5503,11 +5437,11 @@
             <div style="font-size: 30px; z-index: 10;">🤖</div>
         </div>
     </div>
-    <script defer src="./mdj-identity.js?v=20260617-buyer-artist-fix-1"></script>
-    <script src="./auth.js?v=20260820-unificacion"></script>
+    <script defer src="./mdj-identity.js?v=20260921-rol-unico"></script>
+    <script src="./auth.js?v=20260921-idiomas"></script>
 
     <script defer src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
-      <script defer src="./mdjb-shared-header.js?v=20260919-staff-vista-fix"></script>
+      <script defer src="./mdjb-shared-header.js?v=20260921-svc-activo4"></script>
   <script defer src="./mdj-mainnav-infinite.js?v=20260818-nav-canonico"></script>
     <script defer src="./mdj-owner-tabs-marquee.js?v=20260818-nav-canonico"></script>
     <script defer src="./mdj-profile-nav-context.js?v=20260818-nav-canonico"></script>

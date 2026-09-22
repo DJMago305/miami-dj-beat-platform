@@ -72,6 +72,7 @@ export const CATALOG_FALLBACK: CatalogItem[] = [
     { sku: "hl_character", name: "Hora Loca Character", unit_usd: 550, bucket: "talent" },
     { sku: "hl_hadas", name: "Hora Loca Hadas", unit_usd: 750, bucket: "talent" },
     { sku: "staff_bartender", name: "Bartender Pro", unit_usd: 250, bucket: "talent" },
+    { sku: "staff_bartender_flair", name: "Flair Bartender (Show)", unit_usd: 1200, bucket: "talent" },
     { sku: "staff_meseros", name: "Mesero / Waiter", unit_usd: 200, bucket: "talent" },
     { sku: "staff_chef", name: "Chef / Catering", unit_usd: 400, bucket: "talent" },
     { sku: "payaso_gif", name: "GIF / Energy", unit_usd: 250, bucket: "talent" },
