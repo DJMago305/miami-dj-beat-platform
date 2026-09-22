@@ -25,23 +25,74 @@
   </script>
   <script type="application/ld+json">
   {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What does the Large Event Sound System include?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A high-performance line array setup for concerts or large-format weddings, built for flawless acoustic coverage across big venues."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Do you rent wireless microphones for speeches or toasts?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes — professional-grade UHF wireless microphones (Shure/Sennheiser) with extended interference-free range, ideal for speeches and singers."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I rent an audio mixer separately from a PA system?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes — the analog/digital mixing console with built-in EQ and effects can be rented on its own or combined with any PA package."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Which areas do you serve?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "We serve Miami, Fort Lauderdale, Miami-Dade County, Broward County and South Florida."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I get a quote?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Request a quote from this page, call (305) 607-1780, or email miamidjbeat@gmail.com. Tell us your date, venue and what you need and we will send you a quote."
+      }
+    }
+  ]
+}
+  </script>
+  <script type="application/ld+json">
+  {
     "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": [
+    "@type": "BreadcrumbList",
+    "itemListElement": [
       {
-        "@type": "Question",
-        "name": "What does the Large Event Sound System include?",
-        "acceptedAnswer": { "@type": "Answer", "text": "A high-performance line array setup for concerts or large-format weddings, built for flawless acoustic coverage across big venues." }
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://www.miamidjbeat.com/"
       },
       {
-        "@type": "Question",
-        "name": "Do you rent wireless microphones for speeches or toasts?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Yes — professional-grade UHF wireless microphones (Shure/Sennheiser) with extended interference-free range, ideal for speeches and singers." }
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Services",
+        "item": "https://www.miamidjbeat.com/rentals.html"
       },
       {
-        "@type": "Question",
-        "name": "Can I rent an audio mixer separately from a PA system?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Yes — the analog/digital mixing console with built-in EQ and effects can be rented on its own or combined with any PA package." }
+        "@type": "ListItem",
+        "position": 3,
+        "name": "Renta de Audio y Sonido Profesional Miami",
+        "item": "https://www.miamidjbeat.com/pro-audio-dj.html"
       }
     ]
   }
@@ -67,7 +118,7 @@
     href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Outfit:wght@300;400;500;600;700&display=optional"
     rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=optional" rel="stylesheet" />
-  <link rel="stylesheet" href="./styles.css?v=20260916-venues-cta" />
+  <link rel="stylesheet" href="./styles.css?v=20260921-hub-scrollbar-fuera" />
   <link rel="stylesheet" href="./header-unified.css?v=20260916-estacion-gap-fix" />
   <link rel="stylesheet" href="./mdj-assistant.css?v=20260306-1" />
   <style>
@@ -79,20 +130,7 @@
       margin: 0 auto 50px;
     }
 
-    .paudio-hero-copy .mdj-pa-breadcrumb {
-      font-size: 11px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      margin-bottom: 18px;
-      color: rgba(255, 255, 255, 0.55);
-      font-weight: 600;
-    }
 
-    .paudio-hero-copy .mdj-pa-breadcrumb a {
-      color: var(--gold);
-      font-weight: 700;
-      text-decoration: none;
-    }
 
     .paudio-hero-copy h1 {
       font-family: 'Cormorant Garamond', 'Times New Roman', serif;
@@ -245,10 +283,11 @@
     body.page-pro-audio-dj #mainHeader #mainNav.mdj-mainnav-flex.nav.top-nav > a.active {
       font-size: 15px !important;
     }
+    .paudio-hero-copy { padding-top: 24px; }
   </style>
 </head>
 
-<body class="notranslate page-pro-audio-dj">
+<body class="notranslate page-pro-audio-dj" data-mdj-back="./rentals.html">
 
   <header class="header mdj-header-unified" id="mainHeader">
     <div class="header-top">
@@ -342,7 +381,7 @@
     </div>
   </header>
 
-    <video id="paudio-hero-kb-bg" class="hero-shell-video hero-kb-bg" autoplay muted loop playsinline preload="metadata"
+    <video id="paudio-hero-kb-bg" class="hero-shell-video hero-kb-bg" autoplay muted playsinline preload="metadata"
         poster="./assets/audio/pa-large.jpg"
         data-hero-playlist="./assets/audio/pa-large.mp4,./assets/audio/pa-medium.mp4"
         style="position: fixed; inset: 0; z-index: 1; pointer-events: none; width: 100%; height: 100%; object-fit: cover; opacity: 0.45; filter: blur(2px);">
@@ -353,11 +392,6 @@
 
   <main class="container" style="padding: 100px 18px; position: relative; z-index: 10;">
     <div class="paudio-hero-copy">
-      <div class="mdj-pa-breadcrumb">
-        <a href="./index.html" data-i18n="nav-home">Home</a>
-        ·
-        <a href="./rentals.html" data-i18n="nav-services">Services</a>
-      </div>
       <h1 data-i18n="paudio-page-h1">Professional Audio &amp; Sound Rental in Miami</h1>
       <p class="mdj-pa-lead" data-i18n="paudio-page-lead">From an intimate small PA system to a large-format line array — professional speakers, wireless microphones, DJ monitors, and mixers for any event size.</p>
     </div>
@@ -445,6 +479,16 @@
       <details class="paudio-faq-item">
         <summary data-i18n="paudio-faq-q3">Can I rent an audio mixer separately from a PA system?</summary>
         <p data-i18n="paudio-faq-a3">Yes — the mixing console can be rented on its own or combined with any PA package. <a href="./rentals.html?checkout=fromcart">Configure your equipment</a> · <a href="tel:+13056071780">(305) 607-1780</a></p>
+      </details>
+
+      <details class="paudio-faq-item">
+        <summary data-i18n="paudio-faq-q4">Which areas do you serve?</summary>
+        <p data-i18n="paudio-faq-a4">We serve Miami, Fort Lauderdale, Miami-Dade County, Broward County and South Florida.</p>
+      </details>
+
+      <details class="paudio-faq-item">
+        <summary data-i18n="paudio-faq-q5">How do I get a quote?</summary>
+        <p data-i18n="paudio-faq-a5">Request a quote from this page, call (305) 607-1780, or email miamidjbeat@gmail.com. Tell us your date, venue and what you need and we will send you a quote.</p>
       </details>
     </section>
   </main>
@@ -626,18 +670,19 @@
         });
     })();
     </script>
-  <script src="./translations.js?v=20260916-sft-live-kiosk"></script>
+  <script src="./translations.js?v=20260921-baile1"></script>
   <script src="./i18n.js?v=20260420-index-experience-rutas"></script>
   <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
-  <script src="./mdj-identity.js?v=20260617-buyer-artist-fix-1"></script>
-  <script src="./auth.js?v=20260820-unificacion"></script>
-  <script src="./mdjb-shared-header.js?v=20260919-staff-vista-fix"></script>
+  <script src="./mdj-identity.js?v=20260921-rol-unico"></script>
+  <script src="./auth.js?v=20260921-idiomas"></script>
+  <script src="./mdjb-shared-header.js?v=20260921-svc-activo4"></script>
   <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
   <script src="./mdj-mainnav-infinite.js?v=20260818-nav-canonico"></script>
   <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
   <script src="./mdj-social-bar.js?v=20260819-social-contact-only"></script>
   <script defer src="./js/mdj-cart-pill.js?v=20260616-pill-5"></script>
   <script src="./mdj-mobile-header-fix.js?v=20260916-purga-a"></script>
+  <script defer src="./js/mdj-back-button.js?v=20260921-2"></script>
 </body>
 
 </html>

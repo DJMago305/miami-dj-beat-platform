@@ -25,7 +25,7 @@
   <!-- Tipografia institucional del menu (Inter 800). Sin esta hoja la barra cae en la
        sustituta del sistema y el texto sale ~2% mas estrecho, desplazando el eje X. -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=optional" rel="stylesheet" />
-  <link rel="stylesheet" href="./styles.css?v=20260916-venues-cta" />
+  <link rel="stylesheet" href="./styles.css?v=20260921-hub-scrollbar-fuera" />
   <link rel="stylesheet" href="./header-unified.css?v=20260916-estacion-gap-fix" />
   <link rel="stylesheet" href="./mdj-assistant.css?v=20260306-1" />
   <style>
@@ -64,26 +64,8 @@
       color: #2c2833;
     }
 
-    .mdj-wp-breadcrumb {
-      font-size: 11px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      margin-bottom: 22px;
-      color: rgba(44, 40, 51, 0.55);
-      font-weight: 600;
-    }
 
-    .mdj-wp-breadcrumb a {
-      color: #7a6140;
-      font-weight: 700;
-      text-decoration: none;
-      border-bottom: 1px solid rgba(122, 97, 64, 0.35);
-    }
 
-    .mdj-wp-breadcrumb a:hover {
-      color: #4a3928;
-      border-bottom-color: rgba(74, 57, 40, 0.55);
-    }
 
     .mdj-wp-copy h1 {
       font-family: 'Cormorant Garamond', 'Times New Roman', serif;
@@ -360,9 +342,29 @@
       font-size: 15px !important;
     }
   </style>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://www.miamidjbeat.com/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Wedding planning",
+        "item": "https://www.miamidjbeat.com/wedding-planning.html"
+      }
+    ]
+  }
+  </script>
 </head>
 
-<body class="notranslate page-wedding-planning">
+<body class="notranslate page-wedding-planning" data-mdj-back="./index.html">
 
   <header class="header mdj-header-unified" id="mainHeader">
     <div class="header-top">
@@ -452,11 +454,6 @@
   <div class="mdj-wp-shell">
     <div class="mdj-wp-editorial">
       <div class="mdj-wp-copy">
-        <div class="mdj-wp-breadcrumb">
-          <a href="./index.html" data-i18n="nav-home">Home</a>
-          ·
-          <a href="./index.html#experience" data-i18n="nav-rentals">Events</a>
-        </div>
         <h1 data-i18n="wedding-plan-h1"></h1>
         <p class="mdj-wp-lead" data-i18n="wedding-plan-lead"></p>
 
@@ -560,12 +557,12 @@
   })();
   </script>
   <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
-  <script src="./translations.js?v=20260916-sft-live-kiosk"></script>
+  <script src="./translations.js?v=20260921-baile1"></script>
   <script src="./i18n.js?v=20260420-index-experience-rutas"></script>
   <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
-  <script src="./mdj-identity.js?v=20260617-buyer-artist-fix-1"></script>
-  <script src="./auth.js?v=20260820-unificacion"></script>
-  <script src="./mdjb-shared-header.js?v=20260919-staff-vista-fix"></script>
+  <script src="./mdj-identity.js?v=20260921-rol-unico"></script>
+  <script src="./auth.js?v=20260921-idiomas"></script>
+  <script src="./mdjb-shared-header.js?v=20260921-svc-activo4"></script>
   <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
   <script src="./mdj-mainnav-infinite.js?v=20260818-nav-canonico"></script>
   <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
@@ -573,6 +570,7 @@
   <!-- Cart pill: badge + redirect to rentals -->
   <script defer src="./js/mdj-cart-pill.js?v=20260616-pill-5"></script>
   <script src="./mdj-mobile-header-fix.js?v=20260916-purga-a"></script>
+  <script defer src="./js/mdj-back-button.js?v=20260921-2"></script>
 </body>
 
 </html>

@@ -46,6 +46,32 @@
     ]
   }
   </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://www.miamidjbeat.com/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Services",
+        "item": "https://www.miamidjbeat.com/rentals.html"
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": "Renta de Mobiliario y Decoración Miami",
+        "item": "https://www.miamidjbeat.com/furniture-dj.html"
+      }
+    ]
+  }
+  </script>
     <!-- GEO/SEO -- medicion: GA4 activo desde 2026-08-29 (ID real). -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7XRWGTCQ5L"></script>
     <script>
@@ -67,7 +93,7 @@
     href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Outfit:wght@300;400;500;600;700&display=optional"
     rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=optional" rel="stylesheet" />
-  <link rel="stylesheet" href="./styles.css?v=20260916-venues-cta" />
+  <link rel="stylesheet" href="./styles.css?v=20260921-hub-scrollbar-fuera" />
   <link rel="stylesheet" href="./header-unified.css?v=20260916-estacion-gap-fix" />
   <link rel="stylesheet" href="./mdj-assistant.css?v=20260306-1" />
   <style>
@@ -80,20 +106,7 @@
       margin: 0 auto 40px;
     }
 
-    .furndj-hero-copy .mdj-fn-breadcrumb {
-      font-size: 11px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      margin-bottom: 18px;
-      color: rgba(255, 255, 255, 0.55);
-      font-weight: 600;
-    }
 
-    .furndj-hero-copy .mdj-fn-breadcrumb a {
-      color: var(--gold);
-      font-weight: 700;
-      text-decoration: none;
-    }
 
     .furndj-hero-copy h1 {
       font-family: 'Cormorant Garamond', 'Times New Roman', serif;
@@ -334,10 +347,11 @@
         margin-top: 6px;
       }
     }
+    .furndj-hero-copy { padding-top: 24px; }
   </style>
 </head>
 
-<body class="notranslate page-furniture-dj">
+<body class="notranslate page-furniture-dj" data-mdj-back="./rentals.html">
 
   <header class="header mdj-header-unified" id="mainHeader">
     <div class="header-top">
@@ -431,7 +445,7 @@
     </div>
   </header>
 
-    <video id="furndj-hero-kb-bg" class="hero-shell-video hero-kb-bg" autoplay muted loop playsinline preload="metadata"
+    <video id="furndj-hero-kb-bg" class="hero-shell-video hero-kb-bg" autoplay muted playsinline preload="metadata"
         poster="./assets/furniture-decor/floral-decor.jpg"
         data-hero-playlist="./assets/furniture-decor/floral-decor.mp4,./assets/furniture-decor/dining-tables.mp4,./assets/furniture-decor/backdrops.mp4"
         style="position: fixed; inset: 0; z-index: 1; pointer-events: none; width: 100%; height: 100%; object-fit: cover; opacity: 0.45; filter: blur(2px);">
@@ -442,11 +456,6 @@
 
   <main class="container" style="padding: 100px 18px 140px; position: relative; z-index: 10;">
     <div class="furndj-hero-copy">
-      <div class="mdj-fn-breadcrumb">
-        <a href="./index.html" data-i18n="nav-home">Home</a>
-        ·
-        <a href="./rentals.html" data-i18n="nav-services">Services</a>
-      </div>
       <h1 data-i18n="furndj-page-h1">Furniture &amp; Decor Rental in Miami</h1>
       <p class="mdj-fn-lead" data-i18n="furndj-page-lead">Tables, chairs, floral arrangements, and custom themed decorations — build your own combination below and see your estimate update live.</p>
     </div>
@@ -893,18 +902,19 @@
         }
     })();
     </script>
-  <script src="./translations.js?v=20260916-sft-live-kiosk"></script>
+  <script src="./translations.js?v=20260921-baile1"></script>
   <script src="./i18n.js?v=20260420-index-experience-rutas"></script>
   <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
-  <script src="./mdj-identity.js?v=20260617-buyer-artist-fix-1"></script>
-  <script src="./auth.js?v=20260820-unificacion"></script>
-  <script src="./mdjb-shared-header.js?v=20260919-staff-vista-fix"></script>
+  <script src="./mdj-identity.js?v=20260921-rol-unico"></script>
+  <script src="./auth.js?v=20260921-idiomas"></script>
+  <script src="./mdjb-shared-header.js?v=20260921-svc-activo4"></script>
   <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
   <script src="./mdj-mainnav-infinite.js?v=20260818-nav-canonico"></script>
   <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
   <script src="./mdj-social-bar.js?v=20260819-social-contact-only"></script>
   <script defer src="./js/mdj-cart-pill.js?v=20260616-pill-5"></script>
   <script src="./mdj-mobile-header-fix.js?v=20260916-purga-a"></script>
+  <script defer src="./js/mdj-back-button.js?v=20260921-2"></script>
 </body>
 
 </html>

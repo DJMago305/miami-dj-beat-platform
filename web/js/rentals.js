@@ -14,21 +14,6 @@ if (typeof window.t !== 'function') {
   window.t = (key, fallback) => fallback;
 }
 
-/**
- * Contrato producto — Hub «Entretenimiento y Talento» (`#talent-selector-modal`).
- * Congelado a propósito: regresiones frecuentes = preview vídeo en hover del carrusel + anillos de lista en tarjetas.
- * No cambiar flags sin ticket + Captain/Architect; si `true`, el código legacy correspondiente no está en el bundle.
- * Ver `.cursorrules` → «Talent selector hub (CONTRACT)».
- */
-if (!window.MDJ_RENTALS_TALENT_HUB_CONTRACT) {
-    window.MDJ_RENTALS_TALENT_HUB_CONTRACT = Object.freeze({
-        /** `true` = volver a cablear preview en `#talent-shell-focus` al hover en `.talent-selector-carousel` (no activo). */
-        enableCarouselHeroVideoPreview: false,
-        /** `true` = volver a inyectar anillos/checkbox shortlist en tarjetas del carrusel (inyección completa no incluida). */
-        enableHubShortlistPickRings: false
-    });
-}
-
 /* FIX-SAFARI13-OPTIONAL-CHAINING-01 (2026-09-09): "?." no existe en Safari
    13 -- el motor lanza SyntaxError al PARSEAR el archivo entero (no un
    error en runtime), asi que ninguna funcion de este archivo llegaba a
@@ -808,21 +793,11 @@ window.premiumTransition = (outId, inId, callback) => {
                 inModal.classList.remove('modal-fade-in');
             }, 600);
 
-            if (inId === 'talent-selector-modal') {
-                if (typeof window.mdjEnsureTalentHubInfiniteOnOpen === 'function') {
-                    window.mdjEnsureTalentHubInfiniteOnOpen();
-                } else if (typeof window.mdjResetTalentSelectorCarousel === 'function') {
-                    requestAnimationFrame(() => window.mdjResetTalentSelectorCarousel());
-                }
-            }
         } else {
             document.body.classList.remove('body-modal-lock');
         }
 
         if (window.i18n) window.i18n.updateUI();
-        if (inId === 'talent-selector-modal' && typeof window.mdjSyncTalentSelectorCopy === 'function') {
-            window.mdjSyncTalentSelectorCopy();
-        }
     }, 400);
 };
 
@@ -1065,10 +1040,6 @@ window.checkoutSubmit = async function() {
 };
 
 document.addEventListener('click', async (e) => {
-    /* Hub talent selector: checkbox/label must not bubble to [data-action] on the parent card. */
-    if (e.target.closest && e.target.closest('#talent-selector-modal .mdj-talent-hub-pick')) {
-        return;
-    }
     const packCard = e.target.closest('[data-action="select-hl-package"]');
     if (packCard) {
         window.updateHoraLocaHero(packCard.getAttribute('data-id'));
@@ -1309,14 +1280,10 @@ document.addEventListener('click', async (e) => {
         return;
     }
 
-    if (e.target.closest('[data-action="back-from-talent-selector"]')) {
-        window.premiumTransition('talent-selector-modal', null);
-        return;
-    }
+
 
     if (e.target.closest('[data-action="close-all"]')) {
         const modals = [
-            'talent-selector-modal',
             'horaloca-modal',
             'roster-modal',
             'staff-modal',
@@ -1344,139 +1311,31 @@ document.addEventListener('click', async (e) => {
         return;
     }
 
-    // 2. SOFT BACK HORA LOCA
-    if (e.target.closest('[data-action="back-to-selector"]')) {
-        window.premiumTransition('horaloca-modal', 'talent-selector-modal', () => {
-            const hlIframe = document.getElementById('hl-hero-iframe');
-            if (hlIframe) hlIframe.src = '';
-        });
-        return;
-    }
 
-    // 3. SOFT BACK ROSTER
-    if (e.target.closest('[data-action="back-to-selector-roster"]')) {
-        window.premiumTransition('roster-modal', 'talent-selector-modal', () => {
-            const rsVideo = document.getElementById('live-hero-video');
-            if (rsVideo) {
-                rsVideo.pause();
-                rsVideo.src = '';
-            }
-        });
-        return;
-    }
 
-    // 3.2 SOFT BACK STAFF
-    if (e.target.closest('[data-action="back-to-selector-staff"]')) {
-        window.premiumTransition('staff-modal', 'talent-selector-modal', () => {
-            const sv = document.getElementById('staff-hero-video');
-            if (sv) {
-                try {
-                    sv.pause();
-                    sv.removeAttribute('src');
-                    sv.load();
-                } catch (e) { /* ignore */ }
-            }
-        });
-        return;
-    }
 
-    // 3.3 SOFT BACK PAYASOS
-    if (e.target.closest('[data-action="back-to-selector-payasos"]')) {
-        window.premiumTransition('payasos-modal', 'talent-selector-modal', () => {
-            const pv = document.getElementById('payasos-hero-video');
-            if (pv) {
-                try {
-                    pv.pause();
-                    pv.removeAttribute('src');
-                    pv.load();
-                } catch (e) { /* ignore */ }
-            }
-        });
-        return;
-    }
 
-    // 3.5 SOFT BACK MC
-    if (e.target.closest('[data-action="back-to-selector-mc"]')) {
-        window.premiumTransition('mc-modal', 'talent-selector-modal');
-        return;
-    }
 
-    // 3.8 SOFT BACK DJ
-    if (e.target.closest('[data-action="back-to-selector-dj"]')) {
-        window.premiumTransition('dj-modal', 'talent-selector-modal', () => {
-            const djVideo = document.getElementById('dj-hero-video');
-            if (djVideo) {
-                djVideo.pause();
-                djVideo.src = '';
-            }
-        });
-        return;
-    }
 
-    // 4. OPEN CATEGORIES (PRO LEVEL)
-    // OPEN HORA LOCA
-    if (e.target.closest('[data-action="open-horaloca"]')) {
-        window.premiumTransition('talent-selector-modal', 'horaloca-modal', () => {
-            if (window.hlPackages && window.hlPackages.length && window.updateHoraLocaHero) {
-                window.updateHoraLocaHero(window.hlPackages[0].id);
-            }
-        });
-        return;
-    }
 
-    // OPEN MUSICIANS
-    if (e.target.closest('[data-action="open-musicians"]')) {
-        window.activeCategory = 'live';
-        window.activeLiveTabLocked = 'sax';
-        window.premiumTransition('talent-selector-modal', 'roster-modal', () => {
-            if (window.renderLiveHero) window.renderLiveHero('sax', false);
-        });
-        return;
-    }
 
-    // OPEN STAFF (modal propio: hero + Bartender / Meseros / Chef — mismo ADN que Músicos en Vivo)
-    if (e.target.closest('[data-action="open-staff"]')) {
-        window.activeStaffTabLocked = 'bartender';
-        window.premiumTransition('talent-selector-modal', 'staff-modal', () => {
-            if (window.renderStaffHero) window.renderStaffHero('bartender', false);
-            if (window._bindStaffGridHeroHover) window._bindStaffGridHeroHover();
-        });
-        return;
-    }
 
-    // OPEN PAYASOS (modal propio: hero + 4 reels — mismo ADN que Staff)
-    if (e.target.closest('[data-action="open-payasos"]')) {
-        window.activePayasosTabLocked = 'gif';
-        window.premiumTransition('talent-selector-modal', 'payasos-modal', () => {
-            if (window.renderPayasosHero) window.renderPayasosHero('gif', false);
-            if (window._bindPayasosGridHeroHover) window._bindPayasosGridHeroHover();
-        });
-        return;
-    }
 
-    // OPEN MC
-    if (e.target.closest('[data-action="open-mc"]')) {
-        window.premiumTransition('talent-selector-modal', 'mc-modal');
-        return;
-    }
 
-    // OPEN DJ / Performance (hub card — mismo contrato que el resto de categorías)
-    if (e.target.closest('[data-action="open-dj"]')) {
-        window.premiumTransition('talent-selector-modal', 'dj-modal', () => {
-            if (window.renderDjHero) window.renderDjHero('weddings', false);
-        });
-        return;
-    }
 
-    // OPEN VISUALS
-    if (e.target.closest('[data-action="open-visuals"]')) {
-        window.activeCategory = 'visuals';
-        window.activeVisualTabLocked = 'photo';
-        window.premiumTransition('talent-selector-modal', 'roster-modal', () => {
-            if (window.renderLiveHero) window.renderLiveHero('photo', false);
-        });
-        return;
-    }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     // Booth & Magic Mirror (Rentals home tile) → Captura y Visuales, tab Photo Booth 360
     if (e.target.closest('[data-action="open-booth-visuals"]')) {
@@ -1550,12 +1409,6 @@ document.addEventListener('click', async (e) => {
 });
 
 document.addEventListener('change', (e) => {
-    if (e.target && e.target.classList && e.target.classList.contains('mdj-talent-hub-cb')) {
-        if (typeof window.mdjSyncSelectedTalentFromHub === 'function') {
-            window.mdjSyncSelectedTalentFromHub(e.target);
-        }
-        return;
-    }
     const toggle = e.target.closest('[data-action="toggle-pack"]');
     if (toggle) {
         const id = toggle.getAttribute('data-id');
@@ -1621,435 +1474,6 @@ function mdjRentalsTryResumeCheckoutAfterAuth() {
         }
     } catch (e) { /* ignore */ }
 }
-
-/** Tarjetas canónicas del hub (sin :scope — compat WebKit/iOS). */
-function mdjTalentCarouselOriginalCards(track) {
-    if (!track || !track.children) return [];
-    return Array.prototype.filter.call(track.children, function (el) {
-        if (el.nodeType !== 1) return false;
-        if (!el.classList.contains('talent-cat-card')) return false;
-        return !el.classList.contains('mdj-talent-loop-clone');
-    });
-}
-
-/** Hub = categorías ENTRAR solamente; nunca perfiles DJ sueltos en el carrusel. */
-window.mdjRentalsStripPublicDjTalentCards = function () {
-    var track = document.querySelector('#talent-selector-modal .talent-selector-carousel');
-    if (!track) return;
-    var hadLoop = track.dataset.mdjSimpleLoop === '1';
-    track.querySelectorAll('[data-mdj-public-dj], .mdj-rentals-public-dj').forEach(function (el) {
-        el.remove();
-    });
-    if (hadLoop && typeof window.mdjRebuildTalentSelectorInfiniteCarousel === 'function') {
-        window.mdjRebuildTalentSelectorInfiniteCarousel();
-    }
-    try {
-        delete track.dataset.mdjArtistsHydrated;
-    } catch (eDel) {
-        void eDel;
-    }
-};
-
-/**
- * Hub talento: duplicado simple del carril + salto en scroll (mitad = un set completo).
- */
-window.mdjRebuildTalentSelectorInfiniteCarousel = function () {
-    var track = document.querySelector('#talent-selector-modal .talent-selector-carousel');
-    if (!track) return;
-    track.querySelectorAll('.mdj-talent-loop-clone').forEach(function (n) {
-        n.remove();
-    });
-    try {
-        delete track.dataset.mdjHubPickInjected;
-    } catch (eH) { /* ignore */ }
-    track.classList.remove('mdj-talent-carousel-infinite');
-    track.dataset.mdjInfiniteCarousel = '';
-    track.dataset.mdjSimpleLoop = '';
-    if (track._mdjLoopScroll) {
-        track.removeEventListener('scroll', track._mdjLoopScroll);
-        delete track._mdjLoopScroll;
-    }
-    if (typeof window.mdjInjectTalentHubShortlistUi === 'function') {
-        window.mdjInjectTalentHubShortlistUi();
-    }
-    if (typeof window.initTalentSelectorInfiniteCarousel === 'function') {
-        window.initTalentSelectorInfiniteCarousel();
-    }
-    var tm = document.getElementById('talent-selector-modal');
-    if (tm && tm.classList.contains('modal-visible') && typeof window.mdjTalentSelectorInfiniteApply === 'function') {
-        requestAnimationFrame(function () {
-            requestAnimationFrame(function () {
-                window.mdjTalentSelectorInfiniteApply();
-            });
-        });
-    }
-};
-
-window.mdjTalentSelectorInfiniteApply = function () {
-    var track = document.querySelector('#talent-selector-modal .talent-selector-carousel');
-    if (!track || track.dataset.mdjSimpleLoop !== '1') {
-        if (track) track.scrollLeft = 0;
-        return;
-    }
-    var sw = track.scrollWidth;
-    // PENDIENTE (ticket): left border del hub aún mordido — scroll alignment mejorado,
-    // offset izquierdo sin resolver por conflicto de especificidad CSS vs inline block.
-    if (sw > 120) {
-        var firstCard = track.querySelector('.talent-cat-card:not(.mdj-talent-loop-clone)');
-        var slot = firstCard ? (firstCard.offsetWidth + 20) : 270;
-        var raw = Math.round(sw / 4);
-        track.scrollLeft = Math.round(raw / slot) * slot;
-    }
-};
-
-window.mdjTalentSelectorInfiniteApplyRetry = function (attempt) {
-    attempt = attempt == null ? 0 : attempt;
-    if (typeof window.mdjTalentSelectorInfiniteApply === 'function') window.mdjTalentSelectorInfiniteApply();
-    var track = document.querySelector('#talent-selector-modal .talent-selector-carousel');
-    if (!track || track.dataset.mdjSimpleLoop !== '1') return;
-    if (track.scrollWidth > 120 || attempt >= 24) return;
-    setTimeout(function () {
-        window.mdjTalentSelectorInfiniteApplyRetry(attempt + 1);
-    }, 48);
-};
-
-/**
- * Hub Entretenimiento y Talento: mantiene tarjetas sin UI de shortlist (anillos).
- * `MDJ_RENTALS_TALENT_HUB_CONTRACT.enableHubShortlistPickRings` debe permanecer `false` salvo reimplementación firmada.
- */
-window.mdjInjectTalentHubShortlistUi = function () {
-    const track = document.querySelector('#talent-selector-modal .talent-selector-carousel');
-    if (!track) return;
-    track.querySelectorAll('.mdj-talent-hub-pick').forEach(function (n) {
-        n.remove();
-    });
-    mdjTalentCarouselOriginalCards(track).forEach(function (card) {
-        card.classList.remove('mdj-talent-hub-card', 'mdj-talent-hub-selected');
-    });
-    track.querySelectorAll('.mdj-talent-loop-clone').forEach(function (clone) {
-        clone.classList.remove('mdj-talent-hub-selected');
-    });
-    track.dataset.mdjHubPickInjected = '1';
-};
-
-window.mdjSyncSelectedTalentFromHub = function (checkboxEl) {
-    if (!checkboxEl) return;
-    const hubId = checkboxEl.getAttribute('data-talent-hub-id');
-    const action = checkboxEl.getAttribute('data-talent-action') || '';
-    const card = checkboxEl.closest('.talent-cat-card');
-    const titleEl = card ? card.querySelector('.hero-card-title') : null;
-    const name = titleEl ? titleEl.textContent.trim() : action;
-    window.selectedTalent = Array.isArray(window.selectedTalent) ? window.selectedTalent : [];
-    window.selectedTalent = window.selectedTalent.filter((t) => t && t.hubId !== hubId);
-    if (checkboxEl.checked) {
-        window.selectedTalent.push({ hubId, action, name, kind: 'hub', price: 0 });
-    }
-    if (card) {
-        const track = document.querySelector('#talent-selector-modal .talent-selector-carousel');
-        const on = !!checkboxEl.checked;
-        if (track && action) {
-            track.querySelectorAll('.talent-cat-card').forEach(function (c) {
-                if ((c.getAttribute('data-action') || '') !== action) return;
-                c.classList.toggle('mdj-talent-hub-selected', on);
-                const ocb = c.querySelector('.mdj-talent-hub-cb');
-                if (ocb && ocb !== checkboxEl) {
-                    ocb.checked = on;
-                }
-            });
-        } else {
-            card.classList.toggle('mdj-talent-hub-selected', on);
-        }
-    }
-};
-
-/** Presupuesto: líneas con precio + categorías del hub marcadas */
-window.getSelectedTalentForBudget = function () {
-    return {
-        lineItems: Array.isArray(window.selectedPackage) ? window.selectedPackage.slice() : [],
-        hubShortlist: Array.isArray(window.selectedTalent) ? window.selectedTalent.slice() : []
-    };
-};
-
-window.initTalentSelectorInfiniteCarousel = function () {
-    var track = document.querySelector('#talent-selector-modal .talent-selector-carousel');
-    if (!track || track.dataset.mdjSimpleLoop === '1') return;
-    var originals = mdjTalentCarouselOriginalCards(track);
-    if (originals.length < 2) return;
-    originals.forEach(function (el) {
-        var k = el.cloneNode(true);
-        k.classList.add('mdj-talent-loop-clone');
-        k.removeAttribute('id');
-        k.setAttribute('tabindex', '-1');
-        k.setAttribute('aria-hidden', 'true');
-        track.appendChild(k);
-    });
-    track.classList.add('mdj-talent-carousel-infinite');
-    track.dataset.mdjInfiniteCarousel = '1';
-    track.dataset.mdjSimpleLoop = '1';
-    var jumping = false;
-    track._mdjLoopScroll = function () {
-        if (jumping) return;
-        var sw = track.scrollWidth;
-        var cw = track.clientWidth || 0;
-        if (sw < 80) return;
-        var half = sw / 2;
-        var max = Math.max(0, sw - cw);
-        var sl = track.scrollLeft;
-        var th = 18;
-        if (sl >= max - th) {
-            jumping = true;
-            track.scrollLeft = sl - half;
-            requestAnimationFrame(function () {
-                jumping = false;
-            });
-        } else if (sl <= th) {
-            jumping = true;
-            track.scrollLeft = sl + half;
-            requestAnimationFrame(function () {
-                jumping = false;
-            });
-        }
-    };
-    track.addEventListener('scroll', track._mdjLoopScroll, { passive: true });
-    requestAnimationFrame(function () {
-        requestAnimationFrame(function () {
-            if (typeof window.mdjTalentSelectorInfiniteApplyRetry === 'function') {
-                window.mdjTalentSelectorInfiniteApplyRetry(0);
-            }
-        });
-    });
-};
-
-window.mdjEnsureTalentHubInfiniteOnOpen = function () {
-    var tm = document.getElementById('talent-selector-modal');
-    if (!tm || !tm.classList.contains('modal-visible')) return;
-    if (typeof window.mdjRentalsStripPublicDjTalentCards === 'function') {
-        window.mdjRentalsStripPublicDjTalentCards();
-    }
-    requestAnimationFrame(function () {
-        requestAnimationFrame(function () {
-            var track = document.querySelector('#talent-selector-modal .talent-selector-carousel');
-            if (!track) return;
-            if (typeof window.mdjInjectTalentHubShortlistUi === 'function') {
-                window.mdjInjectTalentHubShortlistUi();
-            }
-            if (track.dataset.mdjSimpleLoop !== '1' && typeof window.initTalentSelectorInfiniteCarousel === 'function') {
-                window.initTalentSelectorInfiniteCarousel();
-            }
-            if (typeof window.mdjTalentSelectorInfiniteApply === 'function') {
-                window.mdjTalentSelectorInfiniteApply();
-            }
-            if (typeof window.mdjTalentSelectorInfiniteApplyRetry === 'function') {
-                window.mdjTalentSelectorInfiniteApplyRetry(0);
-            }
-            setTimeout(function () {
-                if (typeof window.mdjTalentSelectorInfiniteApply === 'function') {
-                    window.mdjTalentSelectorInfiniteApply();
-                }
-                if (typeof window.mdjTalentSelectorInfiniteApplyRetry === 'function') {
-                    window.mdjTalentSelectorInfiniteApplyRetry(0);
-                }
-            }, 180);
-        });
-    });
-};
-
-/** Talent selector — hover en tarjetas con data-talent-hero-src: preview en #talent-shell-focus (object-fit cover). */
-window.mdjResetTalentSelectorCarousel = function () {
-    const track = document.querySelector('#talent-selector-modal .talent-selector-carousel');
-    if (!track) return;
-    const apply = function () {
-        if (track.dataset.mdjSimpleLoop === '1' && typeof window.mdjTalentSelectorInfiniteApply === 'function') {
-            window.mdjTalentSelectorInfiniteApply();
-            if (typeof window.mdjTalentSelectorInfiniteApplyRetry === 'function') {
-                window.mdjTalentSelectorInfiniteApplyRetry(0);
-            }
-        } else {
-            track.scrollLeft = 0;
-        }
-    };
-    requestAnimationFrame(function () {
-        requestAnimationFrame(apply);
-    });
-};
-
-/**
- * Escucha global en el modal: cualquier clic en tarjeta hub alterna checkbox + clase dorada (sin depender del track).
- */
-window.mdjBindTalentModalHubGlobalClick = function () {
-    const modal = document.getElementById('talent-selector-modal');
-    if (!modal || modal.dataset.mdjHubGlobalClick === '1') return;
-    modal.dataset.mdjHubGlobalClick = '1';
-    modal.addEventListener(
-        'click',
-        function (e) {
-            const card = e.target && e.target.closest && e.target.closest('.mdj-talent-hub-card');
-            if (!card || !modal.contains(card) || card.classList.contains('mdj-talent-loop-clone')) return;
-            if (!card.closest('.talent-selector-carousel')) return;
-            if (e.target.closest && e.target.closest('.mdj-talent-card-enter')) return;
-
-            const input = card.querySelector('.mdj-talent-hub-cb');
-            if (!input) return;
-
-            if (e.target === input) {
-                card.classList.toggle('mdj-talent-hub-selected', input.checked);
-                if (typeof window.mdjSyncSelectedTalentFromHub === 'function') {
-                    window.mdjSyncSelectedTalentFromHub(input);
-                }
-                e.stopPropagation();
-                return;
-            }
-            if (e.target.closest && e.target.closest('.mdj-talent-hub-pick')) {
-                window.requestAnimationFrame(function () {
-                    card.classList.toggle('mdj-talent-hub-selected', input.checked);
-                    if (typeof window.mdjSyncSelectedTalentFromHub === 'function') {
-                        window.mdjSyncSelectedTalentFromHub(input);
-                    }
-                });
-                e.stopPropagation();
-                return;
-            }
-
-            input.checked = !input.checked;
-            card.classList.toggle('mdj-talent-hub-selected', input.checked);
-            if (typeof window.mdjSyncSelectedTalentFromHub === 'function') {
-                window.mdjSyncSelectedTalentFromHub(input);
-            }
-            e.preventDefault();
-            e.stopPropagation();
-        },
-        true
-    );
-};
-
-window.mdjBindTalentHubWholeCardToggle = function () {
-    if (typeof window.mdjBindTalentModalHubGlobalClick === 'function') {
-        window.mdjBindTalentModalHubGlobalClick();
-    }
-};
-
-/** Vídeo hero del hub: solo `#talent-shell-ambient` en el carrusel de categorías — ver `MDJ_RENTALS_TALENT_HUB_CONTRACT.enableCarouselHeroVideoPreview` (debe quedar `false`). */
-window.initTalentSelectorShellHover = function () {
-    const amb = document.getElementById('talent-shell-ambient');
-    const foc = document.getElementById('talent-shell-focus');
-    const shell = document.querySelector('#talent-selector-modal .cinematic-hero-shell');
-    if (!amb || !foc || !shell) return;
-
-    const heroEls = function () {
-        return document.querySelectorAll('#talent-selector-modal [data-talent-hero-src]');
-    };
-
-    const applyFocus = (url, el) => {
-        if (!url) return;
-        const rurl = typeof window.resolveMdAssetVideoUrl === 'function' ? window.resolveMdAssetVideoUrl(url) : url;
-        foc.muted = true;
-        if (foc.dataset.mdjPreviewUrl === rurl) {
-            foc.classList.add('is-visible');
-            amb.classList.add('talent-shell-ambient-dim');
-            shell.classList.add('talent-shell-hero-preview-on');
-            heroEls().forEach((n) => n.classList.remove('active'));
-            if (el) el.classList.add('active');
-            if (typeof window.mdjActivateVideo === 'function') { window.mdjActivateVideo(foc); } else { foc.play().catch(() => {}); }
-            return;
-        }
-        foc.dataset.mdjPreviewUrl = rurl;
-        foc.src = rurl;
-        if (typeof window.mdjHeroVideoPrime === 'function') window.mdjHeroVideoPrime(foc);
-        foc.classList.add('is-visible');
-        amb.classList.add('talent-shell-ambient-dim');
-        shell.classList.add('talent-shell-hero-preview-on');
-        heroEls().forEach((n) => n.classList.remove('active'));
-        if (el) el.classList.add('active');
-        foc.load();
-        if (typeof window.mdjActivateVideo === 'function') { window.mdjActivateVideo(foc); } else { foc.play().catch(() => {}); }
-    };
-
-    const clearFocus = () => {
-        delete foc.dataset.mdjPreviewUrl;
-        foc.classList.remove('is-visible');
-        amb.classList.remove('talent-shell-ambient-dim');
-        shell.classList.remove('talent-shell-hero-preview-on');
-        heroEls().forEach((n) => n.classList.remove('active'));
-        try {
-            foc.pause();
-            foc.removeAttribute('src');
-            foc.load();
-        } catch (e) { /* ignore */ }
-    };
-
-    foc.addEventListener('error', clearFocus);
-
-    /*
-     * Hub: sin delegación pointer/focus en `.talent-selector-carousel` → #talent-shell-focus (contrato congelado).
-     * Modales internos: hover propio (render* / _bind*GridHeroHover), no reutilizar este shell para ese carrusel.
-     */
-
-    heroEls().forEach((node) => {
-        if (node.closest && node.closest('.talent-selector-carousel')) return;
-        const url = node.getAttribute('data-talent-hero-src');
-        if (!url) return;
-        node.addEventListener('pointerenter', () => applyFocus(url, node));
-        node.addEventListener('pointerleave', (e) => {
-            const rt = e.relatedTarget;
-            if (rt && rt.closest && rt.closest('[data-talent-hero-src]')) return;
-            clearFocus();
-        });
-        node.addEventListener('focusin', () => applyFocus(url, node));
-        node.addEventListener('focusout', clearFocus);
-    });
-};
-
-/**
- * Hub Entretenimiento: arrastrar/scroll horizontal dispara un `click` fantasma al soltar → abre otro modal.
- * Suprimimos el click si (1) hubo arrastre con puntero o (2) el scrollLeft del carrusel cambió desde el pointerdown.
- * pointerdown en capture para capturar aunque el target sea una tarjeta hija.
- */
-window.initTalentCarouselDragClickGuard = function () {
-    const carousel = document.querySelector('#talent-selector-modal .talent-selector-carousel');
-    if (!carousel || carousel.dataset.mdjDragClickGuard === '1') return;
-    carousel.dataset.mdjDragClickGuard = '1';
-
-    let originX = 0;
-    let originY = 0;
-    let pointerDown = false;
-    let moved = false;
-    const MOVE_PX = 5;
-
-    carousel.addEventListener('pointerdown', (e) => {
-        if (e.button != null && e.button !== 0) return;
-        pointerDown = true;
-        moved = false;
-        originX = e.clientX;
-        originY = e.clientY;
-    }, true);
-
-    carousel.addEventListener('pointermove', (e) => {
-        if (!pointerDown) return;
-        if (Math.abs(e.clientX - originX) >= MOVE_PX || Math.abs(e.clientY - originY) >= MOVE_PX) {
-            moved = true;
-        }
-    }, { passive: true });
-
-    const endPointer = () => {
-        pointerDown = false;
-    };
-    carousel.addEventListener('pointerup', endPointer);
-    carousel.addEventListener('pointercancel', endPointer);
-
-    /* Solo suprimir click tras arrastre real; no matar clics en tarjetas de categoría (.talent-cat-card). */
-    carousel.addEventListener('click', (e) => {
-        if (!moved) return;
-        const card = e.target && e.target.closest ? e.target.closest('.talent-cat-card[data-action]') : null;
-        if (card) {
-            moved = false;
-            return;
-        }
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        moved = false;
-    }, true);
-};
 
 document.addEventListener('DOMContentLoaded', async () => {
     // 1. Fetch dynamic prices from Supabase and override local data
@@ -2157,77 +1581,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    const runTalentHubChrome = () => {
-        if (typeof window.mdjRentalsStripPublicDjTalentCards === 'function') {
-            window.mdjRentalsStripPublicDjTalentCards();
-        }
-        if (typeof window.mdjInjectTalentHubShortlistUi === 'function') {
-            window.mdjInjectTalentHubShortlistUi();
-        }
-        if (typeof window.initTalentSelectorInfiniteCarousel === 'function') {
-            window.initTalentSelectorInfiniteCarousel();
-        }
-        if (typeof window.mdjBindTalentHubWholeCardToggle === 'function') {
-            window.mdjBindTalentHubWholeCardToggle();
-        }
-        if (typeof window.initTalentSelectorShellHover === 'function') {
-            window.initTalentSelectorShellHover();
-        }
-        if (typeof window.initTalentCarouselDragClickGuard === 'function') {
-            window.initTalentCarouselDragClickGuard();
-        }
-        if (typeof window.mdjRentalsInitStripDragClickGuard === 'function') {
-            ['staff-roster-grid', 'mc-roster-scroll'].forEach(function (sid) {
-                const el = document.getElementById(sid);
-                if (el) window.mdjRentalsInitStripDragClickGuard(el);
-            });
-        }
-    };
-
-    if (window.MDJ_ARTISTS && typeof window.MDJ_ARTISTS.hydrateRentalsTalentHubCarousel === 'function') {
-        window.MDJ_ARTISTS.hydrateRentalsTalentHubCarousel = function () {
-            if (typeof window.mdjRentalsStripPublicDjTalentCards === 'function') {
-                window.mdjRentalsStripPublicDjTalentCards();
-            }
-            var tr = document.querySelector('#talent-selector-modal .talent-selector-carousel');
-            if (tr) tr.dataset.mdjArtistsHydrated = '1';
-            return Promise.resolve();
-        };
-        window.MDJ_ARTISTS.hydrateRentalsTalentHubCarousel().then(runTalentHubChrome).catch(() => runTalentHubChrome());
-    } else {
-        runTalentHubChrome();
+    if (typeof window.mdjRentalsInitStripDragClickGuard === 'function') {
+        ['staff-roster-grid', 'mc-roster-scroll'].forEach(function (sid) {
+            const el = document.getElementById(sid);
+            if (el) window.mdjRentalsInitStripDragClickGuard(el);
+        });
     }
-    if (window.mdjTalentCarouselLoadBound !== '1') {
-        window.mdjTalentCarouselLoadBound = '1';
-        window.addEventListener(
-            'load',
-            function () {
-                const tr = document.querySelector('#talent-selector-modal .talent-selector-carousel');
-                if (typeof window.mdjInjectTalentHubShortlistUi === 'function') {
-                    window.mdjInjectTalentHubShortlistUi();
-                }
-                if (tr && tr.dataset.mdjSimpleLoop !== '1' && typeof window.initTalentSelectorInfiniteCarousel === 'function') {
-                    try {
-                        window.initTalentSelectorInfiniteCarousel();
-                    } catch (eL) {
-                        void eL;
-                    }
-                }
-                if (typeof window.mdjBindTalentHubWholeCardToggle === 'function') {
-                    window.mdjBindTalentHubWholeCardToggle();
-                }
-                if (typeof window.mdjTalentSelectorInfiniteApplyRetry === 'function') {
-                    window.mdjTalentSelectorInfiniteApplyRetry(0);
-                }
-            },
-            { passive: true }
-        );
-    }
-    document.addEventListener('languageChanged', function () {
-        if (typeof window.mdjRebuildTalentSelectorInfiniteCarousel === 'function') {
-            window.mdjRebuildTalentSelectorInfiniteCarousel();
-        }
-    });
     if (typeof window.initMcModalMagicHover === 'function') {
         window.initMcModalMagicHover();
     }
