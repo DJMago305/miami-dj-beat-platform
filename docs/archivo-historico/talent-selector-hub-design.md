@@ -1,3 +1,7 @@
+> ⚠️ **HISTÓRICO — retirado 2026-09-22.** El modal `#talent-selector-modal` que describe este documento ya no existe en el sitio: el PO pidió quitarlo (`web/rentals.html`, `web/services.html`, `web/js/rentals.js`, `web/js/artists.js`, claves `talent_selector_*` en `translations.js`). Se conserva aquí solo como referencia de diseño de lo que existió. Ver `docs/gobernanza-cursor-legacy.md` y `docs/ESTADO_MAESTRO.md` (2026-09-21, cont. 30).
+
+---
+
 # Talent selector hub — diseño de referencia (Event Services / `rentals.html`)
 
 **Ámbito:** modal `#talent-selector-modal` (hub “Entretenimiento y Talento”). Este documento fija el estilo aprobado para **tipografía**, **tarjetas** y **carrusel infinito**. No cambiar “por gusto”: cualquier ajuste va con ticket explícito.
