@@ -40,8 +40,8 @@
     var cr = o.clientRow;
     var dr = dj && dj.role != null ? n(dj.role) : '';
     var hasClientRow = !!(cr && (cr.user_id != null));
-    var ut = u && u.user_metadata ? n(u.user_metadata.user_type) : '';
     var appR = u && u.app_metadata ? n(u.app_metadata.role) : '';
+    var ut = (!appR && u && u.user_metadata) ? n(u.user_metadata.user_type) : ''; /* user_type lo escribe el usuario: solo sin rol de servidor */
     var isExplicitClient = ut === 'client';
     var staffInDb = !!dr && STAFF[dr] === 1;
     var managementInDb = !!dr && MANAGEMENT[dr] === 1;

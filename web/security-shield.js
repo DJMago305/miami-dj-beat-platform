@@ -23,8 +23,8 @@ const MIAMI_DJ_SECURITY = {
     /** Checks if the current device is known for the user. */
     checkDevice: async (user, db) => {
         const fingerprint = MIAMI_DJ_SECURITY.getDeviceFingerprint();
-        const userType = mdjGet(user.user_metadata, 'user_type') || 'client';
-        const table = userType === 'talent' ? 'dj_profiles' : 'client_profiles';
+        const _r = String(mdjResolveEffectiveUserRole(user) || 'client').toLowerCase();
+        const table = (_r === 'client') ? 'client_profiles' : 'dj_profiles';
 
         const { data: profile, error } = await db.from(table)
             .select('known_devices, security_preference, email, phone')

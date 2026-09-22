@@ -16,7 +16,7 @@
   <!-- Tipografia institucional del menu (Inter 800). Sin esta hoja la barra cae en la
        sustituta del sistema y el texto sale ~2% mas estrecho, desplazando el eje X. -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=optional" rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css?v=20260916-venues-cta" />
+    <link rel="stylesheet" href="./styles.css?v=20260921-hub-scrollbar-fuera" />
   <link rel="stylesheet" href="./header-unified.css?v=20260916-estacion-gap-fix" />
     <link rel="stylesheet" href="./mdj-outlined-fields.css?v=20260513-outlined-float" />
     <style>
@@ -1163,13 +1163,13 @@
     })();
     </script>
     <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
-    <script src="./translations.js?v=20260916-sft-live-kiosk"></script>
+    <script src="./translations.js?v=20260921-baile1"></script>
     <script src="./i18n.js?v=20260513-outlined-hold-skip"></script>
-    <script src="./security-shield.js?v=20260305-1"></script>
+    <script src="./security-shield.js?v=20260921-rol-unico"></script>
     <script src="./js/mdj-account-forms.js?v=20260513-outlined-float"></script>
     <script src="./account-address-data.js?v=20260422-country-select-only"></script>
-    <script src="./mdj-identity.js?v=20260617-buyer-artist-fix-1"></script>
-    <script src="./auth.js?v=20260820-unificacion"></script>
+    <script src="./mdj-identity.js?v=20260921-rol-unico"></script>
+    <script src="./auth.js?v=20260921-idiomas"></script>
 
     <script>
         (function syncReferralFromUrl() {
@@ -1878,7 +1878,20 @@
             const qp = new URLSearchParams(window.location.search);
             const signupForJobsFree = (qp.get('signup') || '').toLowerCase() === 'free' && redirect === 'jobs';
 
-            function buildPostAuthReturnUrl() {
+            /* Contenedores: ?redirect= lo escribe cualquiera (p. ej. el CONFIG de un invitado apunta a account-settings).
+               El destino real se corrige por ROL: cliente → client-account; artista/staff/owner → account-settings. */
+            function containerAwareTarget(target, user) {
+                try {
+                    const r = (typeof window.mdjResolveEffectiveUserRole === 'function')
+                        ? String(window.mdjResolveEffectiveUserRole(user) || 'client').toLowerCase() : 'client';
+                    const esCliente = (r === 'client' || r === 'cliente');
+                    if (target === 'account-settings' && esCliente) return 'client-account';
+                    if (target === 'client-account' && !esCliente) return 'account-settings';
+                } catch (eC) { /* sin rol resoluble: se deja el destino tal cual; la guarda del destino decide */ }
+                return target;
+            }
+
+            function buildPostAuthReturnUrl(user) {
                 const lead = qp.get('lead');
                 const eventType = qp.get('type');
                 const ref = qp.get('ref');
@@ -1887,7 +1900,7 @@
                 const tabRedirect = qp.get('tab');
                 const panelRedirect = qp.get('panel');
 
-                let finalUrl = `./${redirect}.html?from_auth=1&`;
+                let finalUrl = `./${containerAwareTarget(redirect, user)}.html?from_auth=1&`;
                 if (lead) finalUrl += `lead=${encodeURIComponent(lead)}&`;
                 if (eventType) finalUrl += `type=${encodeURIComponent(eventType)}&`;
                 if (ref) finalUrl += `ref=${encodeURIComponent(ref)}&`;
@@ -1913,7 +1926,7 @@
                         return;
                     }
                 }
-                window.location.href = buildPostAuthReturnUrl();
+                window.location.href = buildPostAuthReturnUrl(session.user);
             }
 
             db.auth.getSession().then(function (res) {
@@ -1986,7 +1999,7 @@
     </div>
 
     <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
-      <script src="./mdjb-shared-header.js?v=20260919-staff-vista-fix"></script>
+      <script src="./mdjb-shared-header.js?v=20260921-svc-activo4"></script>
   <script id="mdj-vista-cero-guest-nav-restore">
 (function () {
   function mdjVistaCeroGuest() {
