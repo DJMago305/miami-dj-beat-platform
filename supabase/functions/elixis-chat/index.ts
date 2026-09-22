@@ -235,6 +235,17 @@ Estas son TODAS las herramientas que tienes. No hay ninguna otra:
 6. consultar_catalogo_precios — precios oficiales. Nunca inventes un precio.
 7. cambiar_precio_catalogo — cambiar el precio de un sku del catalogo. SOLO
    owner/admin; si te lo pide otro rol, dilo con franqueza y no lo intentes.
+7b. consultar_tarifa_artista — la tarifa de un ARTISTA concreto (o de una
+   categoria) para rentarlo. Devuelve lo que el artista CONFIRMO (por show y/o
+   por hora) o, si no ha confirmado, la tarifa BASE de Miami DJ Beat como
+   punto de partida. Toda tarifa es NEGOCIABLE: dilo asi -- los precios pueden
+   variar segun los requisitos del evento y la politica de cada artista. Es
+   informacion PRIVADA del staff: nunca la des a un cliente. Si viene
+   sin_base=true no hay tarifa base definida: dilo y no inventes un numero.
+   El bartender de FLAIR (show, tira botellas) no comparte la base del bartender
+   clasico: si viene sin_base, dilo. Puedes filtrar por idioma (es/en/bilingue).
+   Para DJs y MC la base no es una sola cifra: viene por tipo de evento en
+   bases_por_tipo_evento (bodas, privadas, clubs...); usa la que corresponda.
 8. buscar_cliente — encontrar un cliente o lead.
 9. generar_cotizacion_evento — preparar un BORRADOR de cotizacion.
 10. crear_nota_lead — dejar una nota interna en un lead existente.
@@ -1341,6 +1352,24 @@ serve(async (req: Request) => {
         },
     };
 
+    const ARTIST_RATE_TOOL = {
+        name: "consultar_tarifa_artista",
+        description:
+            "Consulta la tarifa PRIVADA de un artista suscrito (cantante, orquesta, DJ, musico, bartender...) para rentarlo. " +
+            "Devuelve la tarifa que el ARTISTA confirmo (tarifa_show_usd / tarifa_hora_usd) o, si no la ha confirmado, la tarifa BASE " +
+            "de Miami DJ Beat del catalogo (base_precio_usd) como punto de partida de negociacion. Toda tarifa es negociable y puede variar " +
+            "segun los requisitos del evento y la politica de cada artista. Solo staff. NUNCA inventes un precio: si sin_base=true no hay base definida.",
+        input_schema: {
+            type: "object",
+            properties: {
+                query: { type: "string", description: "Nombre artistico o nombre del artista (parcial)." },
+                categoria: { type: "string", description: "Texto de la categoria/tipo, ej. 'singer', 'saxo', 'musicos en vivo', 'bartender', 'dj'." },
+                idioma: { type: "string", enum: ["es", "en", "bilingue"], description: "Filtra por idioma con el que trabaja el artista. 'bilingue' = solo los que trabajan en ambos; 'es' o 'en' incluyen tambien a los bilingues." },
+                limite: { type: "number", description: "Maximo de artistas (default 8, tope 15)." },
+            },
+        },
+    };
+
     const VENUE_EVENTS_TOOL = {
         name: "consultar_eventos_venue",
         description:
@@ -1712,6 +1741,7 @@ serve(async (req: Request) => {
             toolName === "consultar_finanzas"
             || toolName === "consultar_agenda_artista"
             || toolName === "consultar_catalogo_precios"
+            || toolName === "consultar_tarifa_artista"
             || toolName === "buscar_cliente"
             || toolName === "consultar_red_contactos"
             || toolName === "consultar_musica"
@@ -2324,6 +2354,69 @@ serve(async (req: Request) => {
             deposit_rate: 0.50,
             extra_hour_sku: "dj_extra_hour",
             items,
+        });
+    }
+
+    async function runArtistRateTool(input: Record<string, unknown>): Promise<string> {
+        const q = String(input?.query ?? "").trim();
+        const cat = String(input?.categoria ?? "").trim();
+        const limite = Math.min(15, Math.max(1, Number(input?.limite ?? 8) || 8));
+        if (q.length < 2 && cat.length < 2) {
+            return JSON.stringify({ error: "indica query (nombre) o categoria, minimo 2 caracteres" });
+        }
+        let qb = ADMIN.from("dj_profiles")
+            .select("user_id, stage_name, dj_name, full_name, artist_specialty, category, status, role, idiomas")
+            .not("role", "in", "(owner,admin,manager,seller)")
+            .limit(limite);
+        const idiomaFiltro = String(input?.idioma ?? "").trim().toLowerCase();
+        if (idiomaFiltro === "bilingue") qb = qb.contains("idiomas", ["bilingue"]);
+        else if (idiomaFiltro === "es" || idiomaFiltro === "en") qb = qb.overlaps("idiomas", [idiomaFiltro, "bilingue"]);
+        if (q.length >= 2) {
+            const like = `%${q.replace(/[%,()]/g, " ")}%`;
+            qb = qb.or(`stage_name.ilike.${like},dj_name.ilike.${like},full_name.ilike.${like}`);
+        }
+        if (cat.length >= 2) {
+            const likeC = `%${cat.replace(/[%,()]/g, " ")}%`;
+            qb = qb.or(`artist_specialty.ilike.${likeC},category.ilike.${likeC}`);
+        }
+        const { data: perfiles, error } = await qb;
+        if (error) return JSON.stringify({ error: `dj_profiles: ${error.message}` });
+        const overlay = await loadCatalogOverlay();
+        const catalogo = mergeCatalog(overlay);
+        const artistas: Record<string, unknown>[] = [];
+        for (const p of (perfiles ?? []) as Record<string, unknown>[]) {
+            const { data: ef, error: e2 } = await ADMIN.rpc("artist_rate_effective", { p_user: p.user_id });
+            const row = Array.isArray(ef) ? ef[0] : ef;
+            if (e2 || !row) { artistas.push({ nombre: p.stage_name || p.dj_name || p.full_name, error: e2?.message ?? "sin_datos" }); continue; }
+            const base = row.base_sku ? catalogo.find((i) => i.sku === row.base_sku) : null;
+            // DJs y MC no tienen UNA tarifa base: el catalogo los cobra por TIPO DE EVENTO (dj_weddings, dj_private... / mc_*).
+            const texto = `${p.artist_specialty ?? ""} ${p.category ?? ""}`;
+            const familia = (!base && /\bdj\b/i.test(texto)) ? "dj_" : (!base && /(\bmc\b|maestro de ceremonias|presentador)/i.test(texto)) ? "mc_" : null;
+            const basesPorEvento = familia
+                ? catalogo.filter((i) => i.sku.startsWith(familia)).map((i) => ({ sku: i.sku, servicio: i.name, precio_usd: i.unit_usd }))
+                : null;
+            artistas.push({
+                nombre: row.nombre,
+                tipo: p.artist_specialty ?? null,
+                categoria: p.category ?? null,
+                estado: p.status ?? null,
+                idiomas: p.idiomas ?? null,               // es | en | bilingue (bilingue = ambos)
+                fuente: row.fuente,                       // artista_confirmada | base_miamidjbeat
+                tarifa_show_usd: row.tarifa_show_usd,
+                tarifa_hora_usd: row.tarifa_hora_usd,
+                base_sku: row.base_sku,
+                base_nombre: base?.name ?? null,
+                base_precio_usd: base?.unit_usd ?? null,
+                bases_por_tipo_evento: basesPorEvento,   // DJ / MC: precios regulares por tipo de evento (catalogo)
+                sin_base: row.fuente === "base_miamidjbeat" && !base && !basesPorEvento,
+                negociable: true,
+            });
+        }
+        return JSON.stringify({
+            ok: true,
+            count: artistas.length,
+            nota: "Tarifas privadas del staff. Negociables: pueden variar segun los requisitos del evento y la politica de cada artista.",
+            artistas,
         });
     }
 
@@ -3043,7 +3136,7 @@ serve(async (req: Request) => {
                     // extended thinking (abajo) tampoco lo acepta junto.
                     ...thinkingParam,
                     system: systemContent,
-                    tools: [FINANCIAL_TOOL, LEAD_NOTE_TOOL, AGENDA_READ_TOOL, AGENDA_WRITE_TOOL, AGENDA_EVENTOS_TOOL, RESIDENCY_TOOL, EFEMERIDES_TOOL, INCIDENT_WRITE_TOOL, INCIDENT_READ_TOOL, CATALOG_READ_TOOL, CATALOG_PRICE_TOOL, QUOTE_WRITE_TOOL, CLIENT_SEARCH_TOOL, CONTACT_NETWORK_TOOL, SMS_QUEUE_TOOL, EMAIL_QUEUE_TOOL, CONFIRM_SEND_TOOL, MUSIC_TOOL, MEMORY_TOOL, SEGUIMIENTO_ANUAL_TOOL, CUMPLEANOS_CONTACTOS_TOOL, LIBRO_EVENTO_TOOL, VENUE_EVENTS_TOOL, VENUE_RESERVATION_TOOL],
+                    tools: [FINANCIAL_TOOL, LEAD_NOTE_TOOL, AGENDA_READ_TOOL, AGENDA_WRITE_TOOL, AGENDA_EVENTOS_TOOL, RESIDENCY_TOOL, EFEMERIDES_TOOL, INCIDENT_WRITE_TOOL, INCIDENT_READ_TOOL, CATALOG_READ_TOOL, ARTIST_RATE_TOOL, CATALOG_PRICE_TOOL, QUOTE_WRITE_TOOL, CLIENT_SEARCH_TOOL, CONTACT_NETWORK_TOOL, SMS_QUEUE_TOOL, EMAIL_QUEUE_TOOL, CONFIRM_SEND_TOOL, MUSIC_TOOL, MEMORY_TOOL, SEGUIMIENTO_ANUAL_TOOL, CUMPLEANOS_CONTACTOS_TOOL, LIBRO_EVENTO_TOOL, VENUE_EVENTS_TOOL, VENUE_RESERVATION_TOOL],
                     messages: convo,
                 }),
             });
@@ -3181,6 +3274,16 @@ serve(async (req: Request) => {
                     await recordAiKpi(failed ? "tool_error" : "tool_ok");
                 } else if (toolName === "consultar_catalogo_precios") {
                     out = await runCatalogReadTool((b.input as Record<string, unknown>) ?? {});
+                    let failed = true;
+                    try {
+                        const parsed = JSON.parse(out) as { error?: unknown; ok?: unknown };
+                        failed = parsed == null || parsed.error != null || parsed.ok !== true;
+                    } catch {
+                        failed = true;
+                    }
+                    await recordAiKpi(failed ? "tool_error" : "tool_ok");
+                } else if (toolName === "consultar_tarifa_artista") {
+                    out = await runArtistRateTool((b.input as Record<string, unknown>) ?? {});
                     let failed = true;
                     try {
                         const parsed = JSON.parse(out) as { error?: unknown; ok?: unknown };

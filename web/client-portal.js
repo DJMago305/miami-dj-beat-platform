@@ -35,7 +35,6 @@ var PORTAL_COI_DOW1 = ['d', 'l', 'm', 'm', 'j', 'v', 's'];
 var PORTAL_COI_DOWL = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
 var PORTAL_COI_DATE_TYPES = { birthday: 'Cumpleaños', anniversary: 'Aniversario', other: '' };
 var PORTAL_COI_START = 8, PORTAL_COI_END = 27, PORTAL_COI_HPX = 48;
-
 function portalCoiKey(d) {
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 }
@@ -118,7 +117,10 @@ function renderPortalCalendar(leads, importantDates) {
         '<div class="coi-toolbar">' +
         '<div class="coi-brand">🎧</div>' +
         '<div class="seg-wrap"><div class="seg">' + segHtml + '</div></div>' +
-        '<button type="button" class="coi-icon-btn" onclick="portalCoiOpenAddModal()" aria-label="Agregar fecha importante" title="Agregar fecha importante">+</button>' +
+        '<div class="coi-tools">' +
+        (host.id === 'portal-calendar-widget' ? '<button type="button" class="coi-glass" onclick="portalCoiOpenRestoreModal()" aria-label="Restaurar órdenes borradas" title="Restaurar órdenes borradas">&#128260;</button>' : '') +
+        '<button type="button" class="coi-glass" onclick="portalCoiOpenAddModal()" aria-label="Agregar fecha importante" title="Agregar fecha importante">+</button>' +
+        '</div>' +
         '</div>' +
         '<div class="head">' + built.title +
         '<div class="nav">' +
@@ -190,7 +192,8 @@ function portalCoiBuildYear() {
             var evs = (!cls || cls === 'today') ? portalCoiEventsOn(dt) : [];
             var dotCls = evs.some(function (e) { return e.cal === 'cliente'; }) ? ' cliente' : '';
             var dot = evs.length ? '<span class="dot' + dotCls + '"></span>' : '';
-            html += '<button type="button" class="' + cls + '" onclick="portalCoiGoToDay(\'' + portalCoiKey(dt) + '\')">' + dnum + dot + '</button>';
+            var tip = evs.length ? ' title="' + portalEscapeHtml(evs.map(function (e) { return e.t; }).join(' · ')) + '"' : '';
+            html += '<button type="button" class="' + cls + '"' + tip + ' onclick="portalCoiGoToDay(\'' + portalCoiKey(dt) + '\')">' + dnum + dot + '</button>';
         }
         html += '</div></div>';
     }
@@ -335,6 +338,15 @@ function portalCoiOpenAddModal() {
     var backdrop = wrap.firstElementChild;
     backdrop.addEventListener('click', function (ev) { if (ev.target === backdrop) portalCoiCloseModal(); });
     document.body.appendChild(backdrop);
+    // Vista Día: se está mirando UN día, así que ya viene ese día. En Semana/Mes/Año se elige día, mes y año.
+    try {
+        var dEl = document.getElementById('coiDateValue');
+        if (dEl && _portalCoiState && _portalCoiState.view === 'dia') {
+            dEl.value = portalCoiKey(_portalCoiState.date);
+            var hint = backdrop.querySelector('.hint');
+            if (hint) hint.textContent = 'Se agregará a ' + _portalCoiState.date.getDate() + ' de ' + PORTAL_COI_MONTHS_L[_portalCoiState.date.getMonth()] + ' de ' + _portalCoiState.date.getFullYear() + '. Se repite cada año.';
+        }
+    } catch (ePre) { /* sin prellenado: se elige la fecha a mano */ }
     setTimeout(function () { var el = document.getElementById('coiDateName'); if (el) el.focus(); }, 30);
 }
 function portalCoiCloseModal() {
@@ -370,7 +382,7 @@ async function portalCoiSaveImportantDate() {
         var list = (current && current.data && Array.isArray(current.data.important_dates)) ? current.data.important_dates.slice() : [];
         var entry = {
             id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
-            name: name, date_type: type, month: month, day: day,
+            name: name, date_type: type, month: month, day: day, year: parseInt(parts[0], 10) || null,
             created_at: new Date().toISOString()
         };
         list.push(entry);
@@ -379,7 +391,18 @@ async function portalCoiSaveImportantDate() {
 
         _portalCoiImportant = list;
         portalCoiCloseModal();
+        // Ir a la fecha guardada (en la misma vista) para que el cliente la vea, y avisar que quedó guardada.
+        // Si la fecha escrita ya pasó (p. ej. el año de nacimiento de un cumpleaños), se va a la PRÓXIMA vez que ocurre.
+        var hoy0 = new Date(); hoy0.setHours(0, 0, 0, 0);
+        var yy = parseInt(parts[0], 10) || hoy0.getFullYear();
+        var destino = new Date(yy, month - 1, day);
+        if (destino < hoy0) {
+            destino = new Date(hoy0.getFullYear(), month - 1, day);
+            if (destino < hoy0) destino = new Date(hoy0.getFullYear() + 1, month - 1, day);
+        }
+        if (_portalCoiState) _portalCoiState.date = destino;
         renderPortalCalendar();
+        portalToast('✓ Guardado: ' + name + ' · ' + day + ' de ' + PORTAL_COI_MONTHS_L[month - 1] + '. Se repite cada año.');
     } catch (eSave) {
         showErr('No se pudo guardar. Intenta de nuevo.');
     } finally {
@@ -387,23 +410,218 @@ async function portalCoiSaveImportantDate() {
     }
 }
 
+function portalToast(msg) {
+    var t = document.createElement('div');
+    t.setAttribute('role', 'status');
+    t.textContent = msg;
+    t.style.cssText = 'position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:100001;max-width:min(92vw,460px);padding:12px 18px;border-radius:14px;font-size:14px;font-weight:700;color:#fff;background:rgba(20,22,32,0.78);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid rgba(197,160,89,0.55);box-shadow:0 8px 30px rgba(0,0,0,0.45);';
+    document.body.appendChild(t);
+    setTimeout(function () { t.style.transition = 'opacity .4s'; t.style.opacity = '0'; setTimeout(function () { t.remove(); }, 450); }, 3600);
+}
+
+/* «Restaurar» junto al «+»: recupera órdenes que el cliente BORRÓ (borrar solo oculta). Vuelven a Historial. */
+async function portalCoiOpenRestoreModal() {
+    if (document.getElementById('portalCoiRestoreBackdrop')) return;
+    var db = window.getSupabaseClient ? window.getSupabaseClient() : null;
+    var wrap = document.createElement('div');
+    wrap.innerHTML = '<div class="coi-modal-backdrop" id="portalCoiRestoreBackdrop"><div class="coi-modal">' +
+        '<h3>Restaurar órdenes borradas</h3><p class="hint">Aquí están las órdenes que borraste de tu historial. Vuelven a «Historial».</p>' +
+        '<div id="portalCoiRestoreList" style="max-height:50vh;overflow:auto;margin:6px 0 12px;"><p class="hint">Cargando…</p></div>' +
+        '<div class="coi-actions"><button type="button" class="coi-btn cancel" id="portalCoiRestoreClose">Cerrar</button></div></div></div>';
+    var bd = wrap.firstElementChild;
+    function cerrar() { bd.remove(); }
+    bd.addEventListener('click', function (ev) { if (ev.target === bd) cerrar(); });
+    document.body.appendChild(bd);
+    bd.querySelector('#portalCoiRestoreClose').addEventListener('click', cerrar);
+    var list = bd.querySelector('#portalCoiRestoreList');
+    try {
+        if (!db) throw new Error('sin conexión');
+        var r = await db.from('leads').select('id,event_type,event_date,status,oculto_cliente_en')
+            .not('oculto_cliente_en', 'is', null).order('oculto_cliente_en', { ascending: false }).limit(30);
+        if (r.error) throw r.error;
+        var hoy = new Date().toISOString().slice(0, 10);
+        // Las nuevas que ya vencieron sin ejecutarse no se ofrecen (la limpieza las quitó y no hay qué recuperar).
+        var rows = (r.data || []).filter(function (x) {
+            var st = String(x.status || '').toUpperCase();
+            return !((st === 'NEW' || st === 'MATCHED') && x.event_date && x.event_date < hoy);
+        });
+        if (!rows.length) { list.innerHTML = '<p class="hint">No tienes órdenes borradas.</p>'; return; }
+        list.innerHTML = rows.map(function (x) {
+            var lbl = { CANCELLED: 'Cancelada', COMPLETED: 'Completada' }[String(x.status || '').toUpperCase()] || 'Orden';
+            return '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid rgba(255,255,255,0.1);">' +
+                '<div style="min-width:0;"><div style="font-weight:700;font-size:14px;">' + portalEscapeHtml(x.event_type || 'Evento') + '</div>' +
+                '<div style="font-size:12px;opacity:.65;">' + portalEscapeHtml(String(x.event_date || '—').replace(/-/g, ' / ')) + ' · ' + lbl + '</div></div>' +
+                '<button type="button" data-rest="' + portalEscapeHtml(x.id) + '" style="flex:none;padding:6px 10px;border-radius:6px;border:1px solid rgba(197,160,89,0.6);background:rgba(197,160,89,0.45);color:#fff;font-size:12px;font-weight:700;cursor:pointer;min-width:36px;display:inline-grid;place-items:center;" title="Restaurar" aria-label="Restaurar">&#128260;</button></div>';
+        }).join('');
+        list.querySelectorAll('[data-rest]').forEach(function (b) {
+            b.addEventListener('click', async function () {
+                b.disabled = true;
+                try {
+                    var out = await db.rpc('cliente_recuperar_orden_borrada', { p_lead: b.getAttribute('data-rest') });
+                    if (out.error) throw out.error;
+                    if (!out.data || !out.data.ok) throw new Error('No se pudo restaurar esta orden.');
+                    window.location.reload();
+                } catch (e) { b.disabled = false; portalToast((e && e.message) || 'No se pudo restaurar.'); }
+            });
+        });
+    } catch (e) {
+        list.innerHTML = '<p class="hint" style="color:#ff8080;">No se pudieron cargar. Inténtalo de nuevo.</p>';
+    }
+}
+
+// Confirmación dentro de la página. El confirm() nativo se bloquea en navegadores embebidos y en ventanas
+// que ya lo suprimieron: devuelve false sin mostrar nada y el botón parece muerto.
+function portalConfirmar(mensaje, textoOk) {
+    return new Promise(function (resolve) {
+        var fondo = document.createElement('div');
+        fondo.setAttribute('role', 'dialog');
+        fondo.setAttribute('aria-modal', 'true');
+        fondo.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,0.72);display:flex;align-items:center;justify-content:center;padding:16px;';
+        var caja = document.createElement('div');
+        caja.style.cssText = 'max-width:380px;width:100%;background:#121212;border:1px solid rgba(197,160,89,0.5);border-radius:14px;padding:22px;color:#fff;font-family:inherit;';
+        var txt = document.createElement('div');
+        txt.style.cssText = 'font-size:14px;line-height:1.5;margin-bottom:18px;';
+        txt.textContent = mensaje;
+        var fila = document.createElement('div');
+        fila.style.cssText = 'display:flex;gap:10px;justify-content:flex-end;';
+        function boton(etq, estilo, valor) {
+            var b = document.createElement('button');
+            b.type = 'button';
+            b.textContent = etq;
+            b.style.cssText = 'padding:9px 16px;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;' + estilo;
+            b.addEventListener('click', function () { cerrar(valor); });
+            return b;
+        }
+        function cerrar(v) {
+            document.removeEventListener('keydown', tecla);
+            fondo.remove();
+            resolve(v);
+        }
+        function tecla(e) { if (e.key === 'Escape') cerrar(false); }
+        var bNo = boton('Cancelar', 'background:transparent;border:1px solid rgba(255,255,255,0.25);color:#fff;', false);
+        var bSi = boton(textoOk || 'Aceptar', 'background:rgba(220,60,60,0.85);border:1px solid rgba(220,60,60,0.9);color:#fff;', true);
+        fila.appendChild(bNo); fila.appendChild(bSi);
+        caja.appendChild(txt); caja.appendChild(fila); fondo.appendChild(caja);
+        fondo.addEventListener('click', function (e) { if (e.target === fondo) cerrar(false); });
+        document.addEventListener('keydown', tecla);
+        document.body.appendChild(fondo);
+        bNo.focus();
+    });
+}
+
+// ── Cancelación pedida por el cliente ─────────────────────────────────────────
+// Una orden confirmada, con DJ o con pagos NO se borra: el cliente pide la cancelación con MOTIVO y el equipo decide
+// (el servidor también lo impide). Nunca se le promete reembolso.
+function portalOrdenNecesitaSolicitud(l) {
+    var st = String((l && l.status) || '').toUpperCase();
+    if (st === 'CANCELLED' || st === 'COMPLETED') return false;
+    return st === 'CONFIRMED' || st === 'MATCHED' || Number(l && l.balance_paid) > 0 || !!(l && l.assigned_dj_id);
+}
+var PORTAL_CANC_OPCIONES = {
+    titulo: 'Cancelar mi evento',
+    aviso: 'Enviar esto NO cancela tu evento todavía: nuestro equipo lo revisa de inmediato y te confirma. ' +
+           'Si ya hiciste un pago, el reembolso (si aplica) lo decide el equipo y no está garantizado. ' +
+           'Hasta que te confirmemos, tu evento sigue reservado.',
+    confirmacion: 'Nuestro equipo la está revisando con urgencia y te confirmará. Hasta entonces tu evento sigue reservado.',
+    etiquetas: { emergencia_salud: 'Emergencia o salud', conflicto_agenda: 'Conflicto de agenda', cliente_pidio: 'Ya no haremos el evento',
+                 pago_o_lugar: 'Problema con el pago o el lugar', otro: 'Otro' }
+};
+async function portalSolicitarCancelacion(leadId, titulo, btn) {
+    if (typeof window.MDJCancelarEvento !== 'function') { alert('No se pudo abrir el formulario. Recarga la página.'); return; }
+    var enviada = await window.MDJCancelarEvento(leadId, titulo, PORTAL_CANC_OPCIONES);
+    if (enviada) {
+        if (btn) { btn.outerHTML = '<span data-cancel-pendiente style="display:inline-block;padding:6px 10px;border-radius:6px;border:1px solid rgba(255,107,134,0.5);background:rgba(255,45,85,0.12);color:#ff6b86;font-size:12px;font-weight:700;white-space:nowrap;">⏳ Cancelación en revisión</span>'; }
+        var zona = document.getElementById('portal-cancel-zone');
+        if (zona) zona.innerHTML = '<p class="fineprint" style="margin:0;color:#ff6b86;font-weight:700;">⏳ Cancelación en revisión: el equipo te confirmará.</p>';
+    }
+}
+// Marca «en revisión» los botones de las órdenes que ya tienen una solicitud abierta (consulta una sola vez por render).
+async function portalMarcarCancelacionesAbiertas() {
+    try {
+        var db = window.getSupabaseClient ? window.getSupabaseClient() : null;
+        var btns = document.querySelectorAll('[data-cancel-lead]');
+        if (!db || !btns.length) return;
+        var r = await db.from('cancelaciones_solicitadas').select('lead_id').in('estado', ['urgente', 'en_atencion']);
+        var abiertas = {};
+        ((r && r.data) || []).forEach(function (x) { if (x.lead_id) abiertas[x.lead_id] = true; });
+        btns.forEach(function (b) {
+            if (abiertas[b.getAttribute('data-cancel-lead')]) {
+                b.outerHTML = '<span data-cancel-pendiente style="display:inline-block;padding:6px 10px;border-radius:6px;border:1px solid rgba(255,107,134,0.5);background:rgba(255,45,85,0.12);color:#ff6b86;font-size:12px;font-weight:700;white-space:nowrap;">⏳ Cancelación en revisión</span>';
+            }
+        });
+    } catch (e) { /* sin datos: se deja el botón */ }
+}
+
+// ── Historial: borrar (ocultar) y restaurar ────────────────────────────────────
+// «Borrar» oculta la orden del portal del cliente; el registro (y sus pagos) queda guardado para el equipo.
+async function portalOcultarOrden(leadId, btn) {
+    var db = window.getSupabaseClient ? window.getSupabaseClient() : null;
+    if (!db) { alert('Error: no se pudo conectar.'); return; }
+    var ok = await portalConfirmar('¿Borrar esta orden de tu historial? Dejará de aparecer aquí.', 'Borrar');
+    if (!ok) return;
+    if (btn) btn.disabled = true;
+    try {
+        var r = await db.rpc('cliente_ocultar_orden', { p_lead: leadId });
+        if (r.error) throw r.error;
+        var d = r.data || {};
+        if (!d.ok) throw new Error(d.error === 'no_es_historial' ? 'Esta orden todavía está activa.' : 'No se pudo borrar. Escríbenos y lo hacemos por ti.');
+        var row = btn && btn.closest('tr'); if (row) row.remove();
+    } catch (e) {
+        await portalConfirmar('No se pudo borrar: ' + ((e && e.message) || e), 'Entendido');
+        if (btn) btn.disabled = false;
+    }
+}
+async function portalRestaurarOrden(leadId, btn) {
+    var db = window.getSupabaseClient ? window.getSupabaseClient() : null;
+    if (!db) { alert('Error: no se pudo conectar.'); return; }
+    var ok = await portalConfirmar('¿Restaurar esta orden? Volverá a «Próximos» y nuestro equipo la revisará de nuevo.', 'Restaurar');
+    if (!ok) return;
+    if (btn) btn.disabled = true;
+    try {
+        var r = await db.rpc('cliente_restaurar_orden', { p_lead: leadId });
+        if (r.error) throw r.error;
+        var d = r.data || {};
+        if (!d.ok) {
+            var MSG = {
+                requiere_staff: 'Esta orden tuvo un pago o un DJ asignado, así que solo nuestro equipo puede reabrirla. Escríbenos y lo resolvemos.',
+                fecha_pasada: 'La fecha de este evento ya pasó, no se puede restaurar.',
+                vencida: 'Pasó el plazo para restaurarla. Escríbenos si la necesitas.'
+            };
+            throw new Error(MSG[d.error] || 'No se pudo restaurar. Escríbenos y lo resolvemos.');
+        }
+        window.location.reload();
+    } catch (e) {
+        await portalConfirmar((e && e.message) || String(e), 'Entendido');
+        if (btn) btn.disabled = false;
+    }
+}
+
 async function portalDeleteLead(leadId, btn) {
-    if (!confirm('¿Eliminar esta orden? Esta acción no se puede deshacer.')) return;
     var db = window.getSupabaseClient ? window.getSupabaseClient() : null;
     if (!db) { alert('Error: no se pudo conectar.'); return; }
     var origText = btn.textContent;
-    btn.textContent = '...';
     btn.disabled = true;
     try {
+        // Una orden con pagos no se borra: se le pide al cliente que escriba al equipo (el servidor también lo impide).
+        var { data: lead } = await db.from('leads').select('balance_paid').eq('id', leadId).maybeSingle();
+        if (lead && Number(lead.balance_paid) > 0) {
+            await portalConfirmar('Esta orden ya tiene un pago registrado, por eso no se puede eliminar desde aquí. Escríbenos y el equipo la cancela contigo.', 'Entendido');
+            btn.disabled = false;
+            return;
+        }
+        var ok = await portalConfirmar('¿Eliminar esta orden? Esta acción no se puede deshacer.', 'Eliminar');
+        if (!ok) { btn.disabled = false; return; }
+        btn.textContent = '...';
         // Delete associated EBO first (avoid orphan)
         await db.from('event_builder_orders').delete().eq('lead_id', leadId);
-        // Delete the lead
-        var { error } = await db.from('leads').delete().eq('id', leadId);
+        // Delete the lead. Se pide de vuelta la fila borrada: sin error pero sin filas = no se borró nada.
+        var { data: borradas, error } = await db.from('leads').delete().eq('id', leadId).select('id');
         if (error) throw error;
+        if (!borradas || !borradas.length) throw new Error('No se pudo eliminar esta orden. Escríbenos y la cancelamos por ti.');
         var row = btn.closest('tr');
         if (row) row.remove();
     } catch (e) {
-        alert('Error al eliminar: ' + (e.message || e));
+        await portalConfirmar('No se pudo eliminar: ' + ((e && e.message) || e), 'Entendido');
         btn.textContent = origText;
         btn.disabled = false;
     }
@@ -910,6 +1128,14 @@ function portalEventDayStartMs(eventDate) {
     return d.getTime();
 }
 
+/** Va a «Historial»: ya pasó la fecha, o la orden está cancelada/completada (no debe quedarse en «Próximos»). */
+function portalLeadEsHistorial(lead) {
+    var st = String((lead && lead.status) || '').toUpperCase();
+    var ost = String((lead && lead.order_status) || '').toLowerCase();
+    if (st === 'CANCELLED' || st === 'COMPLETED' || ost === 'cancelled') return true;
+    return portalLeadIsPast(lead);
+}
+
 function portalLeadIsPast(lead) {
     var ms = portalEventDayStartMs(lead && lead.event_date);
     if (ms == null) return false;
@@ -1004,7 +1230,7 @@ function portalWelcomeSubI18nKey(ctx, clientRow) {
  */
 async function portalFetchLeadsForLoggedInUser(db, sessionUserId, emailNorm) {
     var cols =
-        'id,email,client_user_id,event_type,event_date,event_start_time,event_end_time,location,status,created_at,payment_status,balance_paid,total_amount,coupon_discount_cents,total_aprobado_usd';
+        'id,email,client_user_id,event_type,event_date,event_start_time,event_end_time,location,status,created_at,payment_status,balance_paid,total_amount,coupon_discount_cents,total_aprobado_usd,cancelada_en,oculto_cliente_en';
     var seen = {};
     var rows = [];
     function absorb(data) {
@@ -1021,6 +1247,7 @@ async function portalFetchLeadsForLoggedInUser(db, sessionUserId, emailNorm) {
             .from('leads')
             .select(cols)
             .eq('client_user_id', sessionUserId)
+            .is('oculto_cliente_en', null)   // las que el cliente borró o se autolimpiaron ya no se muestran
             .order('created_at', { ascending: false })
             .limit(50);
         if (r1.error) lastErr = r1.error;
@@ -1031,6 +1258,7 @@ async function portalFetchLeadsForLoggedInUser(db, sessionUserId, emailNorm) {
             .from('leads')
             .select(cols)
             .ilike('email', emailNorm)
+            .is('oculto_cliente_en', null)
             .order('created_at', { ascending: false })
             .limit(50);
         if (r2.error && !lastErr) lastErr = r2.error;
@@ -1074,8 +1302,7 @@ async function mdjPortalResolveStaff(db, user) {
     if (!db || !user) return false;
     var appR = String((user.app_metadata && user.app_metadata.role) || '').toLowerCase();
     if (appR === 'admin' || appR === 'manager' || appR === 'seller') return true;
-    var ut = String((user.user_metadata && user.user_metadata.user_type) || '').toLowerCase();
-    if (ut === 'admin' || ut === 'manager' || ut === 'seller') return true;
+    // (user_type ya no otorga permisos de staff: lo escribe el propio usuario)
     try {
         var pr = await db.from('dj_profiles').select('role').eq('user_id', user.id).maybeSingle();
         var dr = String((pr && pr.data && pr.data.role) || '').toLowerCase();
@@ -1834,7 +2061,13 @@ const PortalApp = {
             this.renderLeadInfo();
             this.updatePayments();
             this.startCountdown();
-            try { renderPortalCalendar([leadData], (this.clientProfile && this.clientProfile.important_dates) || []); } catch (eCalSingle) { /* no bloquea el resto del portal */ }
+            try {
+                // Se entra a UNA orden: el calendario abre en Día, en la fecha del evento (no en el mes de hoy). PO 2026-09-21.
+                var mEv = String(leadData.event_date || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+                if (mEv) _portalCoiState = { date: new Date(+mEv[1], +mEv[2] - 1, +mEv[3]), view: 'dia' };
+                renderPortalCalendar([leadData], (this.clientProfile && this.clientProfile.important_dates) || []);
+            } catch (eCalSingle) { /* no bloquea el resto del portal */ }
+            try { void this.renderBackLink(); } catch (eBack) { /* no bloquea el resto del portal */ }
             if (this.isManager) {
                 this.setupManagerBillingBarrier();
             }
@@ -2583,7 +2816,58 @@ const PortalApp = {
      * Renders the dynamic deposit / payment action zones (2 + 3) into #portal-payment-zones.
      * States: UNPAID → deposit action; PENDING_ZELLE → awaiting confirmation; PARTIAL → final balance; PAID → complete.
      */
+    /** «← Mis eventos»: la vista de una orden no tenía cómo volver a la lista. Solo se muestra si el cliente tiene más de una orden. */
+    async renderBackLink() {
+        var host = document.getElementById('portal-back-row');
+        if (!host) return;
+        var n = 0, uid = '';
+        var snap = this._sessionSnapshot;
+        try { uid = snap && snap.user ? String(snap.user.id) : ''; } catch (e0) { uid = ''; }
+        try {
+            var raw = uid ? sessionStorage.getItem(PORTAL_HUB_STORAGE_KEY) : null;
+            var o = raw ? JSON.parse(raw) : null;
+            if (o && String(o.uid) === uid && Date.now() - Number(o.ts || 0) < 86400000) n = (o.ids || []).length;
+        } catch (e1) { n = 0; }
+        if (!n) {
+            try {
+                var db = window.getSupabaseClient ? window.getSupabaseClient() : null;
+                var email = snap && snap.user && snap.user.email ? String(snap.user.email).trim().toLowerCase() : '';
+                if (db && uid) { var q = await portalFetchLeadsForLoggedInUser(db, uid, email); n = ((q && q.data) || []).length; }
+            } catch (e2) { n = 0; }
+        }
+        if (n > 1) {
+            host.innerHTML = '<a href="./client-portal.html" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:999px;border:1px solid rgba(197,160,89,0.55);color:#d4af37;font-size:13px;font-weight:800;text-decoration:none;background:rgba(0,0,0,0.25);">← Mis eventos</a>';
+        } else {
+            host.innerHTML = '';
+        }
+    },
+
+    /** Zona «Cancelar mi evento» de la vista de una sola orden (mismo diálogo y mismas reglas que la lista). */
+    renderCancelZone() {
+        var zona = document.getElementById('portal-cancel-zone');
+        var l = this.currentLead;
+        if (!zona || !l) return;
+        if (!portalOrdenNecesitaSolicitud(l)) {
+            var st = String(l.status || '').toUpperCase();
+            zona.innerHTML = st === 'CANCELLED' ? '<p class="fineprint" style="margin:0;opacity:.7;">Este evento está cancelado.</p>' : '';
+            return;
+        }
+        var titulo = (l.event_type || 'Evento') + (l.event_date ? ' — ' + l.event_date : '');
+        zona.innerHTML = '<button type="button" id="portal-cancel-btn" style="padding:8px 16px;border-radius:8px;border:1px solid rgba(220,60,60,0.6);background:rgba(220,60,60,0.35);color:#fff;font-size:13px;font-weight:700;cursor:pointer;">Cancelar mi evento</button>' +
+            '<p class="fineprint" style="margin:8px 0 0;opacity:.7;">Envías una solicitud con el motivo; nuestro equipo la revisa de inmediato. Cancelar no garantiza un reembolso.</p>';
+        var b = document.getElementById('portal-cancel-btn');
+        if (b) b.onclick = function () { void portalSolicitarCancelacion(l.id, titulo, b); };
+        (async function () {
+            try {
+                var db = window.getSupabaseClient ? window.getSupabaseClient() : null;
+                var r = db ? await db.from('cancelaciones_solicitadas').select('id').eq('lead_id', l.id).in('estado', ['urgente', 'en_atencion']).limit(1) : null;
+                if (r && r.data && r.data.length) zona.innerHTML = '<p class="fineprint" style="margin:0;color:#ff6b86;font-weight:700;">⏳ Cancelación en revisión: el equipo te confirmará.</p>';
+            } catch (e) { /* se deja el botón */ }
+        })();
+    },
+
     renderPaymentZones({ total, paid, balance, pStatus }) {
+        try { this.renderCancelZone(); } catch (eCz) { /* no bloquea los pagos */ }
         var host = document.getElementById('portal-payment-zones');
         if (!host) return;
         host.innerHTML = '';
@@ -2676,17 +2960,22 @@ const PortalApp = {
 
         if (pStatus === 'PARTIAL' || (paid > 0.01 && balance > 0.01)) {
             // Deposit confirmed, balance remaining
+            // Con saldo <= 0 (total sin definir, o pagado de más) NO hay «pago final»: ni saldo negativo ni botón de cobro.
+            var hayPendiente = balance > 0.01;
             var remainHtml =
                 '<div class="pf-zone pf-zone--confirmed">' +
                 '<div class="pf-confirmed-mark">&#10003; Deposit received</div>' +
                 '<div class="pf-confirmed-amount">$' + paid.toFixed(2) + ' confirmed</div>' +
                 '</div>' +
-                '<div class="pf-zone pf-zone--remaining">' +
-                '<div class="pf-remaining-title">Final payment</div>' +
-                '<div class="pf-row"><span class="pf-label">Remaining balance</span><span class="pf-val pf-val--due">$' + balance.toFixed(2) + '</span></div>' +
-                '<div class="pf-row"><span class="pf-label">Due by</span><span class="pf-val">' + portalEscapeHtml(dueDateStr) + '</span></div>' +
-                '</div>';
+                (hayPendiente ?
+                    '<div class="pf-zone pf-zone--remaining">' +
+                    '<div class="pf-remaining-title">Final payment</div>' +
+                    '<div class="pf-row"><span class="pf-label">Remaining balance</span><span class="pf-val pf-val--due">$' + balance.toFixed(2) + '</span></div>' +
+                    '<div class="pf-row"><span class="pf-label">Due by</span><span class="pf-val">' + portalEscapeHtml(dueDateStr) + '</span></div>' +
+                    '</div>'
+                : '');
             host.insertAdjacentHTML('beforeend', remainHtml);
+            if (!hayPendiente) return;
 
             // Final balance stripe button
             var self = this;
@@ -3601,6 +3890,11 @@ const PortalApp = {
                 window.location.href = './staff.html?vista=gobernanza&from_client_portal=1';
                 return true;
             }
+            if (_cpRole === 'artist' || _cpRole === 'dj' || _cpRole === 'talent') {
+                /* Contenedores: el artista tiene su propia estación; el portal del cliente no es suyo. */
+                window.location.href = './dj-dashboard.html?from_client_portal=1';
+                return true;
+            }
             var email = String(session.user.email || '').trim().toLowerCase();
             if (!email) return false;
 
@@ -3717,10 +4011,10 @@ const PortalApp = {
         } catch (eL) { /* ignore */ }
 
         var upcoming = (leads || []).filter(function (L) {
-            return !portalLeadIsPast(L);
+            return !portalLeadEsHistorial(L);
         });
         var past = (leads || []).filter(function (L) {
-            return portalLeadIsPast(L);
+            return portalLeadEsHistorial(L);
         });
 
         var TH = 'padding:9px 14px;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#fff;background:rgba(197,160,89,0.50);border:1px solid rgba(197,160,89,0.30);text-align:left;white-space:nowrap;';
@@ -3748,6 +4042,12 @@ const PortalApp = {
                 ? (ORDER_COLORS[rawSt] || '#d4af37')
                 : (rawLeadSt ? (LEAD_STATUS_COLORS[rawLeadSt] || '#d4af37') : '#d4af37');
             var st = '<span style="color:' + stColor + ';font-weight:700;">' + stLabel + '</span>';
+            // Canceladas en Historial: cuántos días faltan para que se borren solas (30 desde la cancelación).
+            if (rawLeadSt === 'CANCELLED' && l.cancelada_en) {
+                var diasVan = Math.floor((Date.now() - new Date(l.cancelada_en).getTime()) / 86400000);
+                var diasFalta = Math.max(0, 30 - diasVan);
+                st += '<div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.5);margin-top:3px;">Se borra sola en ' + diasFalta + ' día' + (diasFalta === 1 ? '' : 's') + '</div>';
+            }
             var lid  = l.id ? String(l.id).slice(0,8).toUpperCase() : '—';
             var href      = './client-portal.html?lead=' + encodeURIComponent(l.id);
             var hrefOrder = './client-portal.html?lead=' + encodeURIComponent(l.id);
@@ -3755,7 +4055,20 @@ const PortalApp = {
                 '<span style="font-family:monospace;font-size:13px;font-weight:700;color:#fff;letter-spacing:0.05em;">#' + lid + '</span>';
             var btns =
                 '<a href="' + hrefOrder + '" style="display:inline-block;padding:6px 10px;border-radius:6px;border:1px solid rgba(197,160,89,0.6);background:rgba(197,160,89,0.45);color:#fff;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;vertical-align:middle;">Ver Orden</a>' +
-                '&nbsp;<button onclick="portalDeleteLead(\'' + l.id + '\',this)" style="display:inline-block;padding:6px 12px;border-radius:6px;border:1px solid rgba(220,60,60,0.6);background:rgba(220,60,60,0.45);color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;box-sizing:border-box;vertical-align:middle;min-width:64px;text-align:center;overflow:hidden;flex-shrink:0;">Delete</button>';
+                (function () {
+                    var rawSt = String(l.status || '').toUpperCase();
+                    var BTN_DEL = '&nbsp;<button onclick="portalOcultarOrden(\'' + l.id + '\',this)" style="display:inline-block;padding:6px 12px;border-radius:6px;border:1px solid rgba(220,60,60,0.6);background:rgba(220,60,60,0.45);color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;box-sizing:border-box;vertical-align:middle;min-width:64px;text-align:center;overflow:hidden;flex-shrink:0;">Delete</button>';
+                    // Historial: cancelada → Restaurar (mismo estilo que «Ver Orden») + Delete; completada/pasada → solo Delete
+                    if (rawSt === 'CANCELLED') {
+                        return '&nbsp;<button onclick="portalRestaurarOrden(\'' + l.id + '\',this)" style="display:inline-block;padding:6px 10px;border-radius:6px;border:1px solid rgba(197,160,89,0.6);background:rgba(197,160,89,0.45);color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;vertical-align:middle;min-width:36px;text-align:center;" title="Restaurar" aria-label="Restaurar">&#128260;</button>' + BTN_DEL;
+                    }
+                    if (rawSt === 'COMPLETED' || portalLeadIsPast(l)) return BTN_DEL;
+                    if (portalOrdenNecesitaSolicitud(l)) {
+                        var tituloCancel = encodeURIComponent((l.event_type || 'Evento') + (l.event_date ? ' — ' + l.event_date : '')).replace(/'/g, '%27');
+                        return '&nbsp;<button data-cancel-lead="' + l.id + '" onclick="portalSolicitarCancelacion(\'' + l.id + '\', decodeURIComponent(\'' + tituloCancel + '\'), this)" style="display:inline-block;padding:6px 12px;border-radius:6px;border:1px solid rgba(220,60,60,0.6);background:rgba(220,60,60,0.45);color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;box-sizing:border-box;vertical-align:middle;min-width:64px;text-align:center;overflow:hidden;flex-shrink:0;">Cancelar</button>';
+                    }
+                    return '&nbsp;<button onclick="portalDeleteLead(\'' + l.id + '\',this)" style="display:inline-block;padding:6px 12px;border-radius:6px;border:1px solid rgba(220,60,60,0.6);background:rgba(220,60,60,0.45);color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;box-sizing:border-box;vertical-align:middle;min-width:64px;text-align:center;overflow:hidden;flex-shrink:0;">Delete</button>';
+                })();
             return '<tr>' +
                 '<td style="' + TD + '">' + leadPill + '</td>' +
                 '<td style="' + TD + '">' + ty + '</td>' +
@@ -3817,6 +4130,7 @@ const PortalApp = {
                 sectionPast +
                 '</div></div>';
             this.portalInjectDupWeddingIfNeeded(leads, session, clientRow, main);
+            setTimeout(portalMarcarCancelacionesAbiertas, 0);
             try { renderPortalCalendar(leads || [], (clientRow && clientRow.important_dates) || []); } catch (eCal) { /* no bloquea el resto del portal */ }
         }
         try {

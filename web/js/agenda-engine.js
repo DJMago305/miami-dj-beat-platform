@@ -692,6 +692,7 @@ async function initAgendaEngine() {
                     .from('leads')
                     .select('id, event_type, event_date, location, status, budget, notes')
                     .eq('assigned_dj_id', profileRow.id)
+                    .neq('status', 'CANCELLED')
                     .order('event_date', { ascending: true });
                 if (!error && Array.isArray(data)) {
                     window.mdjAgendaEngineContext.assignedLeads = data;

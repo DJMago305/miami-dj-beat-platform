@@ -142,6 +142,10 @@ function mdjResolveEffectiveUserRole(user) {
     if (!user) return 'client';
     const appR = String(mdjGet(user.app_metadata, 'role') || '').toLowerCase();
     if (appR === 'admin' || appR === 'manager' || appR === 'seller' || appR === 'owner') return appR;
+    // app_metadata.role lo pone SOLO el servidor (el usuario no puede editarlo): si existe, MANDA sobre user_type,
+    // que el propio usuario puede escribir desde el navegador. user_type queda solo para cuentas viejas sin rol.
+    if (appR === 'client') return 'client';
+    if (appR === 'artist' || appR === 'dj' || appR === 'talent') return appR === 'artist' ? 'artist' : 'talent';
     const ut = String(mdjGet(user.user_metadata, 'user_type') || '').toLowerCase();
     if (ut === 'client') return 'client';
     if (ut === 'talent' || ut === 'dj' || ut === 'artist') {
@@ -152,8 +156,20 @@ function mdjResolveEffectiveUserRole(user) {
     return appR || ut || 'client';
 }
 
+
+/**
+ * user_type SOLO como pista heredada. Lo escribe el propio usuario (updateUser), así que NUNCA decide permisos:
+ * si el servidor ya fijó app_metadata.role, se ignora por completo. Toda lectura de user_type en la web pasa por aquí.
+ */
+function mdjUserTypeLegacy(user) {
+    if (!user) return '';
+    if (String(mdjGet(user.app_metadata, 'role') || '').trim()) return '';
+    return String(mdjGet(user.user_metadata, 'user_type') || '').toLowerCase();
+}
+
 if (typeof window !== 'undefined') {
     window.mdjResolveEffectiveUserRole = mdjResolveEffectiveUserRole;
+    window.mdjUserTypeLegacy = mdjUserTypeLegacy;
 }
 
 /**
@@ -299,7 +315,7 @@ function mdjBuildPostAuthReturnUrlFromQuery(search, user) {
         /* Evita bucle: ?redirect=login → ./login.html tras auth */
         if (raw === 'login') return null;
 
-        const ut = user ? String(mdjGet(user.user_metadata, 'user_type') || '').toLowerCase() : '';
+        const ut = user ? mdjUserTypeLegacy(user) : '';
         const appR = user ? String(mdjGet(user.app_metadata, 'role') || '').toLowerCase() : '';
         const isArtistJwt = ut === 'talent' || ut === 'dj' || appR === 'artist';
         /* Destinos de cliente / perfil / manager prohibidos para JWT de artista (no abrir admin con sesión de DJ). */
@@ -319,7 +335,7 @@ function mdjBuildPostAuthReturnUrlFromQuery(search, user) {
             const signup = (qp.get('signup') || '').toLowerCase();
             const isNewFreeJobsSignup = signup === 'free';
             if (!isNewFreeJobsSignup) {
-                const ut = String(mdjGet(user.user_metadata, 'user_type') || '').toLowerCase();
+                const ut = mdjUserTypeLegacy(user);
                 const appR = String(mdjGet(user.app_metadata, 'role') || '').toLowerCase();
                 const isTalent = ut === 'talent' || ut === 'dj' || appR === 'artist';
                 if (isTalent) {
@@ -390,7 +406,7 @@ function mdjPerformPostAuthRedirect(db, user) {
                 ? window.mdjClassifyPlatformIdentity({ user, djRow, clientRow })
                 : null;
         let rawRole = mdjResolveEffectiveUserRole(user);
-        const utExplicit = String(mdjGet(user.user_metadata, 'user_type') || '').toLowerCase();
+        const utExplicit = mdjUserTypeLegacy(user);
         if (rawRole === 'client' && db && utExplicit !== 'client') {
             try {
                 const r = djRow ? String(djRow.role || '').toLowerCase() : '';
@@ -434,7 +450,7 @@ function mdjPerformPostAuthRedirect(db, user) {
         } else if (role === 'client') {
             targetUrl = './client-portal.html';
             try {
-                const utNav = String(mdjGet(user.user_metadata, 'user_type') || '').toLowerCase();
+                const utNav = mdjUserTypeLegacy(user);
                 if (utNav !== 'client' && djRow && djRow.role !== 'client') {
                     targetUrl = './dj-profile.html?id=' + encodeURIComponent(user.id);
                 }
@@ -569,12 +585,14 @@ async function mdjApplyJobsRosterToDjProfile(db, userId) {
                 .filter(Boolean)
                 .join(' · ');
         }
+        const idiomas = (Array.isArray(jobCat.idiomas) ? jobCat.idiomas : []).filter(function (x) { return x === 'es' || x === 'en' || x === 'bilingue'; });
+        const patch = { roles: rolesStr, artist_specialty: specLine || null };
+        if (idiomas.length) patch.idiomas = idiomas;   // solo si eligió: nunca borra los que ya tenía
+        const CATS_OK = ['animador','bartender','cantante','dj','fotografia','horaloca','mc','mesero','musico','orquesta','payasos','staff'];
+        if (typeof jobCat.categoria === 'string' && CATS_OK.indexOf(jobCat.categoria) !== -1) patch.categoria = jobCat.categoria;
         const { error } = await db
             .from('dj_profiles')
-            .update({
-                roles: rolesStr,
-                artist_specialty: specLine || null
-            })
+            .update(patch)
             .eq('user_id', userId);
         void error;
     } catch (e) {
@@ -596,7 +614,8 @@ async function mdjEnsureAuthProfileRows(db, user) {
     const appMeta = user.app_metadata || {};
     const resolved = mdjResolveEffectiveUserRole(user);
     const rawRole = String(resolved || 'client').toLowerCase();
-    if (rawRole === 'admin' || rawRole === 'manager' || rawRole === 'seller') return;
+    // staff y owner NO son clientes: nunca se les crea client_profiles (así nacían los perfiles duales)
+    if (rawRole === 'admin' || rawRole === 'manager' || rawRole === 'seller' || rawRole === 'owner') return;
 
     const isTalent = rawRole === 'talent' || rawRole === 'dj' || rawRole === 'artist';
     const email = (user.email || '').trim();
@@ -721,14 +740,15 @@ function withTimeout(promise, ms, label) {
 function mdjLoginSafeFallbackUrl(user) {
     if (!user) return './index.html';
     const raw = String(mdjResolveEffectiveUserRole(user) || '').toLowerCase();
-    const ut = String(mdjGet(user.user_metadata, 'user_type') || '').toLowerCase();
+    const ut = mdjUserTypeLegacy(user);
     if (raw === 'owner') return './staff.html?vista=miperfil';   /* mismo destino que arriba */
     if (raw === 'client' || ut === 'client') return './client-portal.html';
     if (raw === 'admin' || raw === 'manager' || raw === 'seller') return './staff.html?vista=gobernanza';
     if (raw === 'talent' || raw === 'dj' || raw === 'artist' || ut === 'talent' || ut === 'artist' || ut === 'dj') {
         return './account-settings.html';
     }
-    return './account-settings.html';
+    /* Rol desconocido = CLIENTE (mínimo privilegio; igual que role-guard.js). Antes caía en el contenedor del ARTISTA. */
+    return './client-portal.html';
 }
 
 function mdjForceAuthNavigation(url) {
@@ -929,7 +949,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     alert(`🚨 ¡NUEVO DISPOSITIVO DETECTADO!\n\nHemos enviado una alerta a tu ${channel} (${securityCheck.email || securityCheck.phone}).\nDebes aprobar este acceso antes de continuar.`);
 
                     // En un sistema real aquí invocaríamos la Edge Function para disparar el mensaje.
-                    await window.MDJPRO_SECURITY.registerDevice(user.id, mdjGet(user.user_metadata, 'user_type') || 'client', db);
+                    await window.MDJPRO_SECURITY.registerDevice(user.id, mdjUserTypeLegacy(user) || (String(mdjGet(user.app_metadata, 'role') || '').toLowerCase() === 'artist' ? 'talent' : 'client'), db);
                 }
                 */
 

@@ -229,7 +229,7 @@
 
     var user     = session.user;
     var appRole  = _n((user.app_metadata  && user.app_metadata.role)  || '');
-    var userType = _n((user.user_metadata && user.user_metadata.user_type) || '');
+    var userType = appRole ? '' : _n((user.user_metadata && user.user_metadata.user_type) || ''); /* solo pista heredada */
 
     /* ── Consume mdjClassifyPlatformIdentity (mdj-identity.js) ─────── */
     var idn = null;

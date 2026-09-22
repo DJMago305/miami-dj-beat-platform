@@ -156,17 +156,19 @@ Do not collapse these into a generic "user" when the task is about permissions, 
 - Full agent checklist: **`.cursor/rules/workflow-control.mdc`** (always applied).
 - Human-readable protocol: **`docs/workflow-control.md`**.
 
-# Talent selector hub (Event Services / `web/rentals.html`) — tipografía y carrusel
+# Talent selector hub (Event Services / `web/rentals.html`) — RETIRADO 2026-09-22
 
-- **Referencia de diseño canónica:** **`docs/design/talent-selector-hub-design.md`** (eyebrow Cinzel + título Playfair italic, tarjetas glass, CTA ENTRAR/ENTER, carrusel infinito en `rentals.js`).
-- Las líneas ancla **`talent_selector_eyebrow`** y **`talent_selector_title`** son piezas de marca: no cambiar estilo ni copy salvo petición explícita del Captain/Architect o ticket.
+> ⚠️ **Esta sección describe un modal que ya no existe.** El PO pidió retirar el hub viejo (`#talent-selector-modal`) el 2026-09-21/22: se quitó el markup, el CSS y el bloque de JS correspondiente de `web/rentals.html`, `web/services.html` y `web/js/rentals.js` (incluida la bandera `MDJ_RENTALS_TALENT_HUB_CONTRACT`, las claves i18n `talent_selector_*` y la función `hydrateRentalsTalentHubCarousel` de `web/js/artists.js`). Servicios ahora navega directo a páginas propias por categoría (`dj-miami.html`, `event-entertainment-miami.html`, etc.). Se deja el contrato original abajo solo como referencia histórica de lo que existió; no aplica a nada vivo. Ver `docs/design/talent-selector-hub-design.md` (movido a `docs/archivo-historico/`) y `docs/ESTADO_MAESTRO.md` (2026-09-21, cont. 30).
 
-## Talent selector hub — CONTRACT (anti-regresión; `web/js/rentals.js`)
+- **Referencia de diseño (histórica):** **`docs/archivo-historico/talent-selector-hub-design.md`** (eyebrow Cinzel + título Playfair italic, tarjetas glass, CTA ENTRAR/ENTER, carrusel infinito — todo retirado).
+- Las líneas ancla **`talent_selector_eyebrow`** y **`talent_selector_title`** ya no existen en `translations.js`.
+
+## Talent selector hub — CONTRACT (histórico; el código de `web/js/rentals.js` que describía ya no está)
 
 - **`window.MDJ_RENTALS_TALENT_HUB_CONTRACT`** (`Object.freeze` al cargar): banderas de producto para el modal **`#talent-selector-modal`**. **No** poner a `true` sin ticket + Captain/Architect y código asociado restaurado/revisado.
-- **`enableCarouselHeroVideoPreview: false`** — En el paso del hub, **no** se debe disparar vídeo en **`#talent-shell-focus`** al pasar el mouse/teclado sobre las tarjetas del **`.talent-selector-carousel`**. El fondo visible en ese paso es el flujo del hero en **`#talent-shell-ambient`**. Los modales **internos** (DJ, roster, Hora Loca, Staff, Payasos, etc.) siguen teniendo preview/hover **en su propio modal**, no replicar el patrón del shell del hub sobre el carrusel de categorías.
-- **`enableHubShortlistPickRings: false`** — **Sin** anillos / checkbox de "lista rápida" en las tarjetas del carrusel del hub; `mdjInjectTalentHubShortlistUi` solo **limpia** restos si los hubiera.
-- **Prohibido** "mejorar" reintroduciendo preview o anillos en el hub **sin** ampliar el ticket; si el producto cambia, actualizar **contrato + código + prueba manual** en el mismo cambio.
+- **`enableCarouselHeroVideoPreview: false`** — En el paso del hub, **no** se debe disparar vídeo en **`#talent-shell-focus`** al pasar el mouse/teclado sobre las tarjetas del **`.talent-selector-carousel`**. El fondo visible en ese paso es el flujo del hero en **`#talent-shell-ambient`**. Los modales **internos** (DJ, roster, Hora Loca, Staff, Payasos, etc.) seguían teniendo preview/hover **en su propio modal**, no replicar el patrón del shell del hub sobre el carrusel de categorías.
+- **`enableHubShortlistPickRings: false`** — **Sin** anillos / checkbox de "lista rápida" en las tarjetas del carrusel del hub; `mdjInjectTalentHubShortlistUi` solo **limpiaba** restos si los hubiera.
+- Si algún día se reintroduce un hub de talento, es una construcción nueva con ticket propio, no una restauración de este contrato.
 
 ## 📍 LEY DE EXCLUSIVIDAD DE ENTORNO LOCAL (PARCHES DE OJOS)
 - Tu único universo de edición está dentro de la carpeta local: `./web/`

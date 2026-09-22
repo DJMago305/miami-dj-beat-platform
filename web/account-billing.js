@@ -82,7 +82,7 @@
         }
         btn.disabled = false;
         btn.addEventListener('click', function () {
-            window.location.href = './account-settings.html#account-payment-methods';
+            window.location.href = './client-account.html';
         });
     }
 

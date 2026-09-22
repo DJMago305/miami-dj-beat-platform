@@ -39,7 +39,7 @@
   <!-- Tipografia institucional del menu (Inter 800). Sin esta hoja la barra cae en la
        sustituta del sistema y el texto sale ~2% mas estrecho, desplazando el eje X. -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=optional" rel="stylesheet" />
-<link rel="stylesheet" href="./styles.css?v=20260916-venues-cta" />
+<link rel="stylesheet" href="./styles.css?v=20260921-hub-scrollbar-fuera" />
   <link rel="stylesheet" href="./header-unified.css?v=20260916-estacion-gap-fix" />
     <link rel="stylesheet" href="./mdj-assistant.css" />
     <style>
@@ -821,13 +821,29 @@
             font-size: 17px; font-weight: 700; line-height: 1;
         }
         .portal-coi .coi-icon-btn:hover { background: var(--panel-2); color: var(--ink); }
+        /* Burbujas de cristal esmerilado (pedido del PO 2026-09-21): «Restaurar» y «+» junto al selector de vista. */
+        .portal-coi .coi-tools { flex: none; display: flex; align-items: center; gap: 8px; }
+        .portal-coi .coi-glass {
+            min-width: 34px; height: 34px; padding: 0; border-radius: 999px; cursor: pointer;
+            display: inline-grid; place-items: center; line-height: 1; font-size: 20px; font-weight: 700; font-family: inherit;
+            color: #fff; border: 1px solid rgba(255,255,255,0.22);
+            background: rgba(255,255,255,0.10);
+            -webkit-backdrop-filter: blur(14px) saturate(140%); backdrop-filter: blur(14px) saturate(140%);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 0 4px 14px rgba(0,0,0,0.35);
+            transition: background .15s, border-color .15s, transform .15s;
+        }
+        .portal-coi .coi-glass--txt { padding: 0 16px; font-size: 13px; letter-spacing: .02em; }
+        .portal-coi .coi-glass .emo, .portal-coi .coi-glass { font-family: -apple-system, 'Apple Color Emoji', 'Segoe UI Emoji', system-ui, sans-serif; }
+        .portal-coi .coi-glass:hover { background: rgba(255,255,255,0.18); border-color: rgba(197,160,89,0.7); }
+        .portal-coi .coi-glass:active { transform: scale(.96); }
+        .portal-coi .coi-glass:focus-visible { outline: 2px solid #c5a059; outline-offset: 2px; }
         /* Selector Día/Semana/Mes/Año -- mismas clases .seg de calendario-operacional-inteligente.html. */
         .portal-coi .seg { display: inline-flex; background: var(--panel-2); border-radius: 11px; padding: 3px; border: 1px solid var(--line-soft); }
         .portal-coi .seg button {
             border: none; background: transparent; cursor: pointer; font-family: inherit;
             font-size: 14px; font-weight: 600; color: var(--ink-soft); padding: 6px 14px; border-radius: 8px;
         }
-        .portal-coi .seg button[aria-selected="true"] { background: var(--panel); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+        .portal-coi .seg button[aria-selected="true"] { background: color-mix(in srgb, var(--set) 16%, transparent); color: var(--set); font-weight: 700; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--set) 45%, transparent); } /* vista activa en color, igual que el calendario del artista */
         .portal-coi .head {
             display: flex; align-items: baseline; justify-content: space-between;
             gap: 14px; margin-bottom: 10px;
@@ -1109,6 +1125,7 @@
     <section class="portal-header">
         <div class="container">
             <div id="loyalty-tier-container"></div>
+            <div id="portal-back-row" style="margin:0 0 14px;text-align:left;"></div>
             <div id="portal-header-identity" class="portal-header-identity">
                 <div id="portal-welcome-avatar" class="portal-welcome-avatar" aria-hidden="true"></div>
                 <div class="portal-welcome-text" style="max-width: min(640px, 92vw); margin: 0 auto">
@@ -1274,8 +1291,9 @@
                     <a href="./client-billing.html" data-i18n="portal-payment-security-link">Facturación y métodos de pago →</a>
                 </div>
                 <p class="fineprint" style="margin-top: 14px; text-align: center;">
-                    <a href="./account-settings.html" style="color: var(--gold); font-weight: 800;">Dirección de facturación y evento · Billing &amp; event address →</a>
+                    <a href="./client-account.html" style="color: var(--gold); font-weight: 800;">Dirección de facturación y evento · Billing &amp; event address →</a>
                 </p>
+                <div id="portal-cancel-zone" style="margin-top:18px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.08);text-align:center;"></div>
             </div>
 
             <!-- Calendar Widget -->
@@ -1340,10 +1358,11 @@
     </script>
     <script src="./js/mdj-safe-storage.js?v=20260616-1"></script>
     <script src="./supabase-config.js?v=20260602-auth-gate-1"></script>
-    <script src="./translations.js?v=20260916-sft-live-kiosk"></script>
+    <script src="./translations.js?v=20260921-baile1"></script>
     <script src="./i18n.js?v=20260415-CORE-CONNECTIONS"></script>
     <script src="./invoice-print-bridge.js?v=20260420"></script>
-    <script src="./client-portal.js?v=20260921-total-aprobado"></script>
+    <script src="./js/mdj-cancelar.js?v=20260921-cancelar-3"></script>
+    <script src="./client-portal.js?v=20260921-rol-servidor"></script>
     <!-- MDJ Assistant Booth (AI Sales Agent) -->
     <div id="mdj-assistant-booth">
         <!-- Chat Window & Trigger defined in mdj-assistant.css/js -->
@@ -1376,8 +1395,8 @@
     <script src="./mdj-assistant.js?v=20260415-CORE-CONNECTIONS"></script>
 
     <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
-  <script src="./mdj-identity.js?v=20260617-buyer-artist-fix-1"></script>
-      <script src="./mdjb-shared-header.js?v=20260919-staff-vista-fix"></script>
+  <script src="./mdj-identity.js?v=20260921-rol-unico"></script>
+      <script src="./mdjb-shared-header.js?v=20260921-svc-activo4"></script>
   <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
   <script src="./mdj-mainnav-infinite.js?v=20260818-nav-canonico"></script>
   <script src="./mdj-social-bar.js?v=20260819-social-contact-only"></script>

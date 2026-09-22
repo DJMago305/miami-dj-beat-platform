@@ -324,10 +324,15 @@
           .then(function (r) {
             var role = r.data && r.data.role;
             var rl = String(role || '').toLowerCase();
-            var isClient = rl === 'client' || rl === 'cliente';
+            /* Contenedores: el cliente NO tiene fila en dj_profiles. Sin fila se mira el rol del JWT y, si tampoco hay,
+               se trata como CLIENTE (mínimo privilegio, igual que role-guard.js). Antes «sin fila» caía en el artista. */
+            var jwtRole = '';
+            try { jwtRole = (typeof window.mdjResolveEffectiveUserRole === 'function') ? String(window.mdjResolveEffectiveUserRole(session.user) || '').toLowerCase() : ''; } catch (eJ) { jwtRole = ''; }
+            var esRolCliente = function (x) { return x === 'client' || x === 'cliente'; };
+            var isClient = rl ? esRolCliente(rl) : (jwtRole ? esRolCliente(jwtRole) : true);
             if (kind === 'dash') return isClient ? './client-portal.html' : './dj-dashboard.html';
             if (kind === 'profile') return isClient ? './client-portal.html' : './dj-profile.html';
-            if (kind === 'settings') return isClient ? './account-settings.html' : './dj-dashboard.html';
+            if (kind === 'settings') return isClient ? './client-account.html' : './dj-dashboard.html';
             return './client-portal.html';
           });
       })

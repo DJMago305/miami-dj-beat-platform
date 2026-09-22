@@ -2890,14 +2890,14 @@
         var sess = res && res.data && res.data.session;
         var id = sess && sess.user && sess.user.id ? String(sess.user.id).trim() : '';
         if (!id) return '';
-        var metaUt =
-          sess.user && sess.user.user_metadata && sess.user.user_metadata.user_type
-            ? String(sess.user.user_metadata.user_type).toLowerCase()
-            : '';
         var appRole =
           sess.user && sess.user.app_metadata && sess.user.app_metadata.role
             ? String(sess.user.app_metadata.role).toLowerCase()
             : '';
+        var metaUt =
+          !appRole && sess.user && sess.user.user_metadata && sess.user.user_metadata.user_type
+            ? String(sess.user.user_metadata.user_type).toLowerCase()
+            : ''; /* user_type: solo pista heredada sin rol de servidor */
         if (metaUt === 'client' || appRole === 'client') return '';
         window.__mdjNavOwnUserId = id;
         return id;
@@ -4939,6 +4939,9 @@
    * | staff        | admin-dashboard |
    * | home (extra) | find-dj, directory, directorio |
    */
+  var MDJ_PAGINAS_SERVICIOS = ['dj-miami', 'event-entertainment-miami', 'weddings', 'quinceanera', 'corporate', 'club-dj', 'private-family-dj', 'seasonal-parties',
+    'mc-dj', 'festival-dj', 'latin-dj', 'florida-keys', 'live-musicians-dj', 'staff-dj', 'flair-bartender-miami', 'wedding-dance-lessons-miami', 'quinceanera-waltz-lessons-miami', 'hora-loca', 'capture-visuals-dj', 'payasos-dj',
+    'pro-audio-dj', 'lighting-dj', 'tents-dj', 'stages-dj', 'furniture-dj', 'inflatables-dj', 'special-effects-dj', 'wedding-planning'];
   function mdjResolveNavKeyFromBase(base) {
     var b = String(base || '').toLowerCase().replace(/\.html?$/i, '');
     if (b === 'admin-dashboard' || b === 'admin_dashboard') return 'staff';
@@ -4949,7 +4952,8 @@
     if (b === 'booth' || b === 'ai-booth' || b === 'ai_booth' || b === 'cabina') return 'booth';
     if (b === 'dj-tools' || b === 'djtools' || b === 'djs-tools' || b === 'dj_tools') return 'tools';
     if (b === 'jobs' || b === 'trabajos' || b === 'empleos') return 'jobs';
-    if (b === 'rentals' || b === 'services' || b === 'servicios') return 'services';
+    /* PO 2026-09-21: dentro de Servicios (el hub y TODA página de servicio) queda marcada la pestaña SERVICIOS. Lista explícita de archivos. */
+    if (b === 'rentals' || b === 'services' || b === 'servicios' || MDJ_PAGINAS_SERVICIOS.indexOf(b) !== -1) return 'services';
     if (b === 'eventos' || b === 'events' || b === 'experiencias') return 'venues';
     if (b === 'contact' || b === 'contacto') return 'contact';
     if (b === 'find-dj' || b === 'directory' || b === 'directorio') return 'home';
@@ -5218,8 +5222,8 @@
           var djProfileErr = pr && pr.error ? pr.error : null;
           var clientRow = cpr && cpr.data ? cpr.data : null;
           var hasClientRow = !!(clientRow && clientRow.user_id);
-          var metaUt = session.user && session.user.user_metadata && session.user.user_metadata.user_type;
           var appRole = session.user && session.user.app_metadata && session.user.app_metadata.role;
+          var metaUt = !appRole && session.user && session.user.user_metadata && session.user.user_metadata.user_type; /* solo pista heredada */
           var djRowRole = p ? String(p.role || '').toLowerCase() : '';
           var metaUtLower = metaUt ? String(metaUt).toLowerCase() : '';
           /* Dos caminos: cuenta de usuario (cliente) ≠ artista. Si el JWT dice explícitamente client, nunca UI de DJ aunque exista dj_profiles. */
@@ -7060,14 +7064,15 @@
 (function mdjServicesDropdown() {
   'use strict';
 
+  /* Espejo de las tarjetas del hub Servicios (PO 2026-09-21): DJs / Música en Vivo / Staff / Entretenimiento y Talento + los dos servicios sueltos.
+     Las páginas por tipo de evento (bodas, quince, corporativo, clubs…) cuelgan de «DJs» (dj-miami.html). */
   var SERVICES = [
-    { href: './events.html', key: 'nav-svc-events', txt: 'Event Production' },
+    { href: './dj-miami.html', key: 'rentals-dj-title', txt: 'DJs' },
+    { href: './live-musicians-dj.html', key: 'rentals-live-title', txt: 'Música en Vivo' },
+    { href: './staff-dj.html', key: 'rentals-staff-title', txt: 'Staff' },
+    { href: './event-entertainment-miami.html', key: 'rentals-wireless-title', txt: 'Entretenimiento y Talento' },
     { href: './rentals.html', key: 'nav-svc-rentals', txt: 'DJ Equipment Rental' },
-    { href: './weddings.html', key: 'nav-svc-weddings', txt: 'Wedding DJ Services' },
-    { href: './quinceanera.html', key: 'nav-svc-quince', txt: 'Quinceañera DJ' },
-    { href: './corporate.html', key: 'nav-svc-corporate', txt: 'Corporate DJ & AV' },
-    { href: './latin-dj.html', key: 'nav-svc-latin', txt: 'Latin & Open-Format DJ' },
-    { href: './florida-keys.html', key: 'nav-svc-keys', txt: 'Florida Keys Destination DJ' }
+    { href: './events.html', key: 'nav-svc-events', txt: 'Event Production' }
   ];
 
   var panel = null;
@@ -7244,6 +7249,161 @@
       }
     }
   };
+})();
+
+/* ── MDJB 2026-09-21: Desplegable "Trabajos" con las categorías de artista ──
+   Orden del PO: al tocar TRABAJOS se abre una lista de categorías (orden alfabético); al elegir una, jobs.html abre
+   directamente las subcategorías de ESA categoría. MISMO patrón que el desplegable de Servicios (arriba): el panel
+   vive FUERA de #mainNav (el normalizador de slots barre lo que cuelgue de ahí), anclado a document.body y posicionado
+   con JS contra el enlace real. Solo actúa si existe [data-mdj-nav="jobs"] en #mainNav (nav público); en las
+   estaciones de artista/staff ese slot no existe y no hace nada.
+   La lista (key/nombre) debe coincidir con web/js/jobs-categorias.js: scripts/verificar-contenedores.mjs (C9) lo comprueba. */
+(function mdjJobsDropdown() {
+  'use strict';
+
+  var CATS = [
+    { key: 'animador',   es: 'Animador',              en: 'Host / Animator' },
+    { key: 'bartender',  es: 'Bartender',             en: 'Bartender' },
+    { key: 'cantante',   es: 'Cantante',              en: 'Singer' },
+    { key: 'dj',         es: 'DJ',                    en: 'DJ' },
+    { key: 'fotografia', es: 'Fotografía y Video',    en: 'Photo & Video' },
+    { key: 'horaloca',   es: 'Hora Loca',             en: 'Hora Loca' },
+    { key: 'mc',         es: 'MC',                    en: 'MC' },
+    { key: 'mesero',     es: 'Mesero/a',              en: 'Waiter / Waitress' },
+    { key: 'musico',     es: 'Músico independiente',  en: 'Independent musician' },
+    { key: 'orquesta',   es: 'Orquesta o Banda',      en: 'Orchestra / Band' },
+    { key: 'payasos',    es: 'Payasos y Comediantes', en: 'Clowns & Comedians' },
+    { key: 'staff',      es: 'Staff de eventos',      en: 'Event staff' }
+  ];
+
+  var panel = null;
+  var closeTimer = null;
+  var CLOSE_DELAY_MS = 260;
+  var styleInjected = false;
+
+  function lang() {
+    return String(document.documentElement.lang || 'es').toLowerCase().slice(0, 2) === 'en' ? 'en' : 'es';
+  }
+  function anchorEl() { return document.querySelector('#mainNav [data-mdj-nav="jobs"]'); }
+
+  function injectStyle() {
+    if (styleInjected) return;
+    styleInjected = true;
+    var s = document.createElement('style');
+    s.id = 'mdj-jobs-dropdown-style';
+    s.textContent =
+      '#jobs-dropdown-panel.nav-dropdown-menu{position:fixed;transform:translateX(-50%);' +
+      'background:rgba(10,10,10,0.95);border:1px solid rgba(197,160,89,0.3);border-radius:12px;' +
+      'padding:10px 0;min-width:240px;box-shadow:0 10px 30px rgba(0,0,0,0.8);overflow-y:auto;' +
+      '-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);' +
+      'transition:opacity .3s cubic-bezier(.4,0,.2,1),visibility .3s cubic-bezier(.4,0,.2,1);' +
+      'opacity:0;visibility:hidden;pointer-events:none;z-index:3000;}' +
+      '#jobs-dropdown-panel.nav-dropdown-menu.is-open{opacity:1;visibility:visible;pointer-events:auto;}' +
+      '@media (prefers-reduced-motion:reduce){#jobs-dropdown-panel.nav-dropdown-menu{transition:none;}}';
+    document.head.appendChild(s);
+  }
+
+  function buildPanel() {
+    if (panel) return panel;
+    injectStyle();
+    panel = document.createElement('div');
+    panel.id = 'jobs-dropdown-panel';
+    panel.className = 'nav-dropdown-menu';
+    panel.setAttribute('role', 'menu');
+    panel.setAttribute('aria-label', 'Trabajos');
+    CATS.forEach(function (c) {
+      var a = document.createElement('a');
+      a.href = './jobs.html?categoria=' + c.key;
+      a.setAttribute('role', 'menuitem');
+      a.setAttribute('data-cat', c.key);
+      a.textContent = c.es;
+      /* Ya estamos en jobs.html: elegir la categoría sin recargar la página */
+      a.addEventListener('click', function (ev) {
+        if (/\/jobs\.html$/i.test(location.pathname) && typeof window.mdjJobsElegirCategoria === 'function') {
+          ev.preventDefault();
+          window.mdjJobsElegirCategoria(c.key);
+          close();
+        }
+      });
+      panel.appendChild(a);
+    });
+    document.body.appendChild(panel);
+    panel.addEventListener('mouseenter', cancelClose);
+    panel.addEventListener('mouseleave', scheduleClose);
+    return panel;
+  }
+
+  function relabel() {
+    var L = lang();
+    CATS.forEach(function (c) {
+      var a = panel.querySelector('a[data-cat="' + c.key + '"]');
+      if (a) a.textContent = c[L];
+    });
+    panel.setAttribute('aria-label', L === 'en' ? 'Jobs' : 'Trabajos');
+  }
+
+  function position(anchor) {
+    var r = anchor.getBoundingClientRect();
+    var p = buildPanel();
+    p.style.top = (r.bottom + 8) + 'px';
+    p.style.left = (r.left + r.width / 2) + 'px';
+    p.style.maxHeight = Math.max(160, window.innerHeight - r.bottom - 24) + 'px';
+  }
+
+  function open(anchor) {
+    cancelClose();
+    position(anchor);
+    relabel();
+    panel.classList.add('is-open');
+    anchor.setAttribute('aria-expanded', 'true');
+  }
+  function scheduleClose() { cancelClose(); closeTimer = setTimeout(close, CLOSE_DELAY_MS); }
+  function cancelClose() { if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; } }
+  function close() {
+    if (panel) panel.classList.remove('is-open');
+    var a = anchorEl();
+    if (a) a.setAttribute('aria-expanded', 'false');
+  }
+  function isFinePointer() {
+    return !!(window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches);
+  }
+
+  function attach() {
+    var anchor = anchorEl();
+    if (!anchor || anchor.__mdjJobsHooked) return;
+    anchor.__mdjJobsHooked = true;
+    anchor.setAttribute('aria-haspopup', 'true');
+    anchor.setAttribute('aria-expanded', 'false');
+
+    anchor.addEventListener('mouseenter', function () { open(anchor); });
+    anchor.addEventListener('mouseleave', scheduleClose);
+    anchor.addEventListener('focus', function () { open(anchor); });
+    anchor.addEventListener('blur', scheduleClose);
+
+    /* Táctil sin hover: el primer toque abre la lista; con la lista abierta, un segundo toque deja pasar a jobs.html */
+    anchor.addEventListener('click', function (ev) {
+      if (isFinePointer()) return;
+      if (panel && panel.classList.contains('is-open')) return;
+      ev.preventDefault();
+      open(anchor);
+    });
+    document.addEventListener('click', function (ev) {
+      if (!panel || !panel.classList.contains('is-open')) return;
+      if (ev.target === anchor || anchor.contains(ev.target)) return;
+      if (panel.contains(ev.target)) return;
+      close();
+    });
+    document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') close(); });
+    window.addEventListener('scroll', close, { passive: true });
+    window.addEventListener('resize', close);
+  }
+
+  function boot() {
+    attach();
+    var n = 0;
+    var iv = setInterval(function () { n++; attach(); if (n >= 10) clearInterval(iv); }, 300);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();
 
 /* ══════════════════════════════════════════════════════════════════════════

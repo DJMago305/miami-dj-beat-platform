@@ -26,7 +26,7 @@
         rel="stylesheet">
     <!-- FullCalendar CSS -->
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css?v=20260916-venues-cta" />
+    <link rel="stylesheet" href="./styles.css?v=20260921-hub-scrollbar-fuera" />
     <link rel="stylesheet" href="./header-unified.css?v=20260916-estacion-gap-fix" />
     <link rel="stylesheet" href="./profile.css?v=20260820-ancho-total" />
     <link rel="stylesheet" href="./mdj-assistant.css?v=20260411-booth-policy" />
@@ -107,8 +107,8 @@
     <script src="https://www.youtube.com/iframe_api"></script>
 
     <!-- mdjResolveEffectiveUserRole debe existir antes del guard (sesión talent/dj vs JWT app_metadata). -->
-    <script src="./auth.js?v=20260820-unificacion"></script>
-    <script src="./role-guard.js?v=20260425-dj-panel-jwt-staff" data-role="dj"></script>
+    <script src="./auth.js?v=20260921-idiomas"></script>
+    <script src="./role-guard.js?v=20260921-rol-servidor" data-role="dj"></script>
     <style>
         body {
             /* Antes 110px fijo: el #mainHeader real es más alto (var --header-height en artista); el contenido/main
@@ -1154,7 +1154,7 @@
                           // esto un artista con este iframe ya cacheado (DJYuyo, etc.) podía
                           // seguir viendo la versión vieja de "Mis clientes"/calendario hasta
                           // un hard-refresh manual. Bumpear al cambiar el archivo.
-                          if(frame && !frame.getAttribute('src')) frame.setAttribute('src', './calendario-operacional-inteligente.html?v=20260920-google-manda');
+                          if(frame && !frame.getAttribute('src')) frame.setAttribute('src', './calendario-operacional-inteligente.html?v=20260921-vista-activa');
                           var sess = (await sb.auth.getSession()).data.session;
                           if(!sess){
                             /* Sin sesion se devuelve el calendario personal, que es lo que
@@ -1174,6 +1174,37 @@
                         }catch(_e){}
                       }
                       pickAgenda();
+                      /* AUTO-AJUSTE de altura del iframe del calendario a su contenido (mismo patrón que
+                         staff-agenda.html, UI-0822): sin scroll interno la agenda se desplaza como UNA sola
+                         pieza. Con altura fija (calc(100vh - 120px)) el contenido del mes (~944px) era más alto que
+                         el marco (700px): la rueda del ratón desplazaba el calendario por dentro y la barra de
+                         arriba (campana, Día/Semana/Mes) quedaba cortada «debajo del clima». PO 2026-09-21. */
+                      (function(){
+                        var f = document.getElementById('staff-matrix-frame');
+                        if(!f) return;
+                        function sizeIt(){
+                          try{
+                            var d = f.contentDocument; if(!d) return;
+                            // Se mide el CALENDARIO (.app), no el documento: documentElement.scrollHeight nunca baja
+                            // del alto del marco, así que al volver de «Año» a «Mes» sobraba espacio en blanco.
+                            var app = d.querySelector('.app'), h = 0;
+                            if(app) h = Math.ceil(app.getBoundingClientRect().bottom + (d.defaultView.pageYOffset || 0)) + 8;
+                            if(!h) h = Math.max(d.documentElement ? d.documentElement.scrollHeight : 0, d.body ? d.body.scrollHeight : 0);
+                            if(h > 0) f.style.setProperty('height', h + 'px', 'important');
+                          }catch(_e){}
+                        }
+                        f.addEventListener('load', function(){
+                          sizeIt();
+                          try{
+                            var d = f.contentDocument;
+                            if(window.ResizeObserver && d && d.body){
+                              var ro = new ResizeObserver(sizeIt); ro.observe(d.body);
+                              var ap = d.querySelector('.app'); if(ap) ro.observe(ap);
+                            }
+                          }catch(_e){}
+                          setTimeout(sizeIt, 300); setTimeout(sizeIt, 1200); setTimeout(sizeIt, 3000);
+                        });
+                      })();
                     })();
                     </script>
                     <div class="agenda-sidebar calendar-column" style="display:none; position: relative; z-index: 80;">
@@ -4570,6 +4601,15 @@
 
                     <!-- NOTIFICATIONS -->
                     <div id="panel-notifications" class="acct-panel">
+                        <h1 class="acct-h1">Avisos de tus eventos</h1>
+                        <div class="acct-card" style="padding:18px 20px;margin-bottom:28px;">
+                            <label style="display:flex;align-items:center;gap:12px;cursor:pointer;">
+                                <input type="checkbox" id="dj-push-toggle" style="width:18px;height:18px;accent-color:#c5a059;">
+                                <span style="font-size:14px;font-weight:700;color:#fff;">Avisos en este dispositivo</span>
+                            </label>
+                            <div id="dj-push-pista" style="font-size:12px;color:rgba(255,255,255,0.45);margin:8px 0 0 30px;line-height:1.45;"></div>
+                            <div id="dj-avisos-lista" style="margin-top:14px;"></div>
+                        </div>
                         <h1 class="acct-h1">Inbox · Tickets</h1>
                         <p style="font-size:13px;color:rgba(255,255,255,0.45);margin:0 0 24px;">El centro de soporte y comunicación con el equipo está en tu panel de configuración.</p>
                         <div class="acct-card" style="padding:28px 24px;text-align:center;">
@@ -5035,7 +5075,7 @@
             <div data-i18n="footer-rights-llc">© 2026 Miami DJ Beat LLC. Pro Division Access.</div>
         </div>
     </footer>
-    <script src="./translations.js?v=20260916-sft-live-kiosk"></script>
+    <script src="./translations.js?v=20260921-baile1"></script>
     <script src="./i18n.js?v=20260415-ADN-ULTIMATE-LAUNCH"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="./profile-loader.js?v=20260513-agenda-deploy"></script>
@@ -5261,6 +5301,9 @@
             if (target) target.classList.add('active');
             document.querySelectorAll('.acct-side-link').forEach(b => b.classList.remove('active'));
             if (btn) btn.classList.add('active');
+            if (id === 'notifications' && typeof window.MDJDjAvisosAbrir === 'function') {
+                window.MDJDjAvisosAbrir();
+            }
             if (id === 'billing' && typeof refreshBillingPanel === 'function') {
                 refreshBillingPanel();
             }
@@ -6791,12 +6834,19 @@
                 const nowIso = new Date().toISOString();
                 const { data: rows, error } = await sb
                     .from('artist_agenda')
-                    .select('id,starts_at,ends_at,title,body,source')
+                    .select('id,starts_at,ends_at,title,body,source,agent_id')
                     .eq('dj_user_id', session.user.id)
                     .gte('starts_at', nowIso)
                     .order('starts_at', { ascending: true })
                     .limit(40);
                 if (error) throw error;
+                // Turnos de residencia con solicitud de cancelación abierta (clave residencia|fecha)
+                const pendTurno = {};
+                try {
+                    const { data: pt } = await sb.from('cancelaciones_solicitadas')
+                        .select('residency_id, fecha_evento, estado').in('estado', ['urgente', 'en_atencion']).not('residency_id', 'is', null);
+                    (pt || []).forEach(p => { pendTurno[p.residency_id + '|' + p.fecha_evento] = p.estado; });
+                } catch (_) { /* sin datos: se muestra el botón */ }
                 if (!rows || rows.length === 0) {
                     container.innerHTML = `
                         <div style="text-align:center; padding:30px;">
@@ -6808,7 +6858,15 @@
                     <div style="display:flex; flex-direction:column; gap:14px;">
                         ${rows.map(function (ev) {
                     const src = String(ev.source || '');
-                    const srcLabel = src === 'assignment' ? 'Asignado' : (src === 'elixis' ? 'ELIXIS' : src);
+                    const srcLabel = src === 'assignment' ? 'Asignado' : (src === 'residency' ? 'Turno' : (src === 'elixis' ? 'ELIXIS' : src));
+                    // Turno de residencia: la clave guarda residencia y fecha («residency:<uuid>:<YYYY-MM-DD>»)
+                    const mTurno = src === 'residency' ? String(ev.agent_id || '').match(/^residency:([0-9a-f-]{36}):(\d{4}-\d{2}-\d{2})$/i) : null;
+                    let turnoAccion = '';
+                    if (mTurno) {
+                        turnoAccion = pendTurno[mTurno[1] + '|' + mTurno[2]]
+                            ? '<span style="padding:8px 16px; background:rgba(255,45,85,0.12); border:1px solid rgba(255,45,85,0.4); border-radius:20px; color:#ff6b86; font-size:12px; font-weight:800;">⏳ Cancelación en revisión</span>'
+                            : '<button onclick="mdjCancelarTurno(\'' + mTurno[1] + '\', \'' + mTurno[2] + '\', decodeURIComponent(\'' + encodeURIComponent((ev.title || 'Turno') + ' — ' + mTurno[2]).replace(/'/g, '%27') + '\'))" style="padding:8px 16px; background:rgba(255,45,85,0.10); border:1px solid rgba(255,45,85,0.35); border-radius:20px; color:#ff6b86; font-size:12px; font-weight:800; cursor:pointer;">🚫 Cancelar / no puedo asistir</button>';
+                    }
                     return `
                             <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(197,160,89,0.22); border-radius:16px; padding:18px;">
                                 <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
@@ -6826,6 +6884,7 @@
                                     </div>
                                 </div>
                                 ${ev.body ? '<p class="fineprint" style="margin:0; opacity:0.75; line-height:1.45;">' + mdjEscAgenda(ev.body) + '</p>' : ''}
+                                ${turnoAccion ? '<div style="margin-top:12px;">' + turnoAccion + '</div>' : ''}
                             </div>`;
                 }).join('')}
                     </div>
@@ -6872,6 +6931,14 @@
 
                 if (error) throw error;
 
+                // Solicitudes de cancelación que este DJ ya tiene abiertas (para mostrar «en revisión» en vez del botón)
+                const pendCancel = {};
+                try {
+                    const { data: pend } = await sb.from('cancelaciones_solicitadas')
+                        .select('lead_id, estado').in('estado', ['urgente', 'en_atencion']);
+                    (pend || []).forEach(p => { if (p.lead_id) pendCancel[p.lead_id] = p.estado; });
+                } catch (_) { /* sin datos: se muestra el botón */ }
+
                 if (profile && typeof window.mdjAgendaRefreshAssignedLeads === 'function') {
                     await window.mdjAgendaRefreshAssignedLeads(sb, profile);
                     if (window.mdjCalendarInstance && typeof window.mdjCalendarInstance.refetchEvents === 'function') {
@@ -6898,9 +6965,10 @@
                     const evDate = ev.event_date ? new Date(ev.event_date + 'T00:00:00') : null;
                     const isPast = evDate && evDate < today;
                     const daysUntil = evDate ? Math.ceil((evDate - today) / 86400000) : null;
-                    const urgency = daysUntil !== null && daysUntil <= 7 && !isPast;
+                    const urgency = daysUntil !== null && daysUntil <= 7 && !isPast && ev.status !== 'CANCELLED';
 
-                    const statusColor = ev.status === 'CONFIRMED' ? '#22c55e'
+                    const isCancelled = ev.status === 'CANCELLED';
+                    const statusColor = isCancelled ? '#ef4444' : ev.status === 'CONFIRMED' ? '#22c55e'
                         : ev.status === 'MATCHED' ? '#c5a059'
                             : ev.status === 'COMPLETED' ? '#64748b'
                                 : '#94a3b8';
@@ -6909,14 +6977,14 @@
                     const waLink = phoneVal ? `https://wa.me/${phoneVal}?text=${encodeURIComponent('Hola, soy tu DJ asignado de Miami DJ Beat para tu evento el ' + (ev.event_date || ''))}` : null;
 
                     return `
-                            <div style="background: rgba(255,255,255,0.03); border: 1px solid ${urgency ? 'rgba(197,160,89,0.6)' : isPast ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.1)'}; border-radius:16px; padding:18px; ${isPast ? 'opacity:0.6;' : ''}">
+                            <div style="background: rgba(255,255,255,0.03); border: 1px solid ${urgency ? 'rgba(197,160,89,0.6)' : isPast ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.1)'}; border-radius:16px; padding:18px; ${isPast || isCancelled ? 'opacity:0.6;' : ''}">
                                 <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; gap:10px; flex-wrap:wrap;">
                                     <div>
                                         <div style="font-weight:900; font-size:16px; color:#fff;">${ev.event_type || 'Evento'}</div>
                                         <div style="font-size:12px; color:var(--muted); margin-top:3px;">📍 ${ev.location || 'Sin ubicación'}</div>
                                     </div>
                                     <div style="text-align:right; display:flex; flex-direction:column; gap:5px; align-items:flex-end;">
-                                        <span style="background:${statusColor}22; color:${statusColor}; border:1px solid ${statusColor}55; border-radius:20px; padding:3px 10px; font-size:11px; font-weight:800;">${ev.status}</span>
+                                        <span style="background:${statusColor}22; color:${statusColor}; border:1px solid ${statusColor}55; border-radius:20px; padding:3px 10px; font-size:11px; font-weight:800;">${isCancelled ? 'CANCELADO' : ev.status}</span>
                                         ${urgency ? '<span style="background:rgba(197,160,89,0.15); color:var(--gold); border-radius:20px; padding:3px 10px; font-size:11px; font-weight:800;">⚡ ' + daysUntil + ' días</span>' : ''}
                                         ${isPast ? '<span style="color:var(--muted); font-size:11px;">Pasado</span>' : ''}
                                     </div>
@@ -6936,15 +7004,18 @@
                                     </div>
                                 </div>
                                 <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                                    <a href="./client-portal.html?lead=${ev.id}" target="_blank"
-                                        style="padding:8px 16px; background:rgba(197,160,89,0.15); border:1px solid rgba(197,160,89,0.4); border-radius:20px; color:var(--gold); font-size:12px; font-weight:800; text-decoration:none;">
-                                        🎯 Ver Portal
-                                    </a>
+                                    <!-- (2026-09-21) «Ver Portal» retirado: el portal del cliente es OTRO contenedor y no admite artistas; los datos del evento ya están en esta tarjeta. -->
                                     ${waLink ? `<a href="${waLink}" target="_blank"
                                         style="padding:8px 16px; background:rgba(37,211,102,0.12); border:1px solid rgba(37,211,102,0.35); border-radius:20px; color:#25d366; font-size:12px; font-weight:800; text-decoration:none;">
                                         💬 WhatsApp
                                     </a>` : ''}
-                                    ${!isPast && ev.status !== 'COMPLETED' ? `<button onclick="markEventComplete('${ev.id}')"
+                                    ${!isPast && ev.status !== 'COMPLETED' && ev.status !== 'CANCELLED' ? (pendCancel[ev.id]
+                                        ? `<span style="padding:8px 16px; background:rgba(255,45,85,0.12); border:1px solid rgba(255,45,85,0.4); border-radius:20px; color:#ff6b86; font-size:12px; font-weight:800;">⏳ Cancelación en revisión</span>`
+                                        : `<button onclick="mdjCancelarDesdeTarjeta('${ev.id}', decodeURIComponent('${encodeURIComponent((ev.event_type || 'Evento') + (ev.event_date ? ' — ' + ev.event_date : '')).replace(/'/g, '%27')}'))"
+                                        style="padding:8px 16px; background:rgba(255,45,85,0.10); border:1px solid rgba(255,45,85,0.35); border-radius:20px; color:#ff6b86; font-size:12px; font-weight:800; cursor:pointer;">
+                                        🚫 Cancelar / no puedo asistir
+                                    </button>`) : ''}
+                                    ${!isPast && ev.status !== 'COMPLETED' && ev.status !== 'CANCELLED' ? `<button onclick="markEventComplete('${ev.id}')"
                                         style="padding:8px 16px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:20px; color:rgba(255,255,255,0.5); font-size:12px; font-weight:800; cursor:pointer;">
                                         ✅ Marcar Completado
                                     </button>` : ''}
@@ -6961,6 +7032,18 @@
                 console.error('loadAssignedEvents error:', e);
                 container.innerHTML = '<div class="fineprint" style="color:#ff5555; padding:20px; text-align:center;">Error cargando eventos. Intenta de nuevo.</div>';
             }
+        };
+
+        window.mdjCancelarTurno = async (residencyId, fecha, titulo) => {
+            if (typeof window.MDJCancelarEvento !== 'function') { alert('No se pudo abrir el formulario. Recarga la página.'); return; }
+            const enviada = await window.MDJCancelarEvento(null, titulo, { residencyId: residencyId, fecha: fecha });
+            if (enviada && typeof window.loadArtistAgenda === 'function') window.loadArtistAgenda();
+        };
+
+        window.mdjCancelarDesdeTarjeta = async (leadId, titulo) => {
+            if (typeof window.MDJCancelarEvento !== 'function') { alert('No se pudo abrir el formulario. Recarga la página.'); return; }
+            const enviada = await window.MDJCancelarEvento(leadId, titulo);
+            if (enviada) loadAssignedEvents();
         };
 
         window.markEventComplete = async (leadId) => {
@@ -7019,6 +7102,7 @@
                             .eq('is_read', false)
                             .neq('from_uid', uid);
                         var n = Number(count) || 0;
+                        if (typeof window.MDJDjAvisosNoLeidos === 'function') n += await window.MDJDjAvisosNoLeidos();
                         var badge = document.getElementById('notif-unread-badge');
                         var bell  = document.getElementById('notif-bell-icon');
                         if (!badge) return;
@@ -7138,12 +7222,16 @@
     </div>
 
     <!-- ══ MDJ Dashboard: módulos agenda + clima + flujo (orden fijo; hub conecta al final) ══ -->
+    <script src="./push-config.js?v=20260820-push-1"></script>
+    <script src="./js/mdj-push.js?v=20260820-push-1"></script>
+    <script src="./js/dj-avisos.js?v=20260921-avisos-3"></script>
+    <script src="./js/mdj-cancelar.js?v=20260921-cancelar-3"></script>
     <script src="./js/event-weather.js?v=20260513-hourly-fix"></script>
     <script src="./js/weather-engine.js?v=20260513-fase1-agenda"></script>
     <script src="./weather-astral.js?v=20260312-3"></script>
     <script type="module" src="./js/event-intelligence.js?v=20260317-200"></script>
     <script>window.MDJ_DASHBOARD_DEFER_AGENDA = true;</script>
-    <script src="./js/agenda-engine.js?v=20260527-exec-fix"></script>
+    <script src="./js/agenda-engine.js?v=20260921-sin-cancelados"></script>
     <script src="./js/mdj-dashboard-hub.js?v=20260513-fase2-flow"></script>
     <script src="./flow-handler.js?v=202605132300-ledger-filters"></script>
 
@@ -7387,7 +7475,7 @@
     </script>
 
     <script src="./header-smart-search.js?v=20260421-smartsearch-dj-directory"></script>
-    <script src="./mdjb-shared-header.js?v=20260919-staff-vista-fix"></script>
+    <script src="./mdjb-shared-header.js?v=20260921-svc-activo4"></script>
     <script src="./js/mdj-profile-owner-link.js?v=20260516-perf-ab-1"></script>
   <script src="./mdj-owner-tabs-marquee.js?v=20260818-nav-canonico"></script>
   <script src="./mdj-social-bar.js?v=20260819-social-contact-only"></script>

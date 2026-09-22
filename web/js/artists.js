@@ -40,21 +40,6 @@
         return 'lite';
     }
 
-    /**
-     * Hub talent selector: category cards only (ENTRAR → dj-modal, etc.).
-     * Strips any legacy injected public-DJ cards; does not load public_dj_profiles here.
-     * @returns {Promise<void>}
-     */
-    function hydrateRentalsTalentHubCarousel() {
-        var track = document.querySelector('#talent-selector-modal .talent-selector-carousel');
-        if (!track || track.dataset.mdjArtistsHydrated === '1') return Promise.resolve();
-        track.querySelectorAll('[data-mdj-public-dj], .mdj-rentals-public-dj').forEach(function (el) {
-            el.remove();
-        });
-        track.dataset.mdjArtistsHydrated = '1';
-        return Promise.resolve();
-    }
-
     function getArtistRegistrationUrl() {
         return './login.html?signup=free&redirect=dj-dashboard';
     }
@@ -118,7 +103,6 @@
 
     global.MDJ_ARTISTS = {
         getSubscriptionTier: getSubscriptionTier,
-        hydrateRentalsTalentHubCarousel: hydrateRentalsTalentHubCarousel,
         getArtistRegistrationUrl: getArtistRegistrationUrl,
         getSubscriptionPlansUrl: getSubscriptionPlansUrl,
         saveArtistOnboardingProfile: saveArtistOnboardingProfile

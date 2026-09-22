@@ -25,31 +25,59 @@
     </script>
     <script type="application/ld+json">
     {
-      "@context": "https://schema.org",
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "Do you charge a travel fee for events in the Florida Keys?",
-          "acceptedAnswer": { "@type": "Answer", "text": "Travel fees may apply depending on the exact location in the Keys and the scope of equipment involved — this is included as a line item in your custom quote, never a surprise on the invoice." }
-        },
-        {
-          "@type": "Question",
-          "name": "What power requirements do you need for a beach or outdoor event?",
-          "acceptedAnswer": { "@type": "Answer", "text": "We coordinate power access (or generator needs, if the location requires one) directly with you and your venue ahead of time, based on the sound and lighting equipment your event calls for." }
-        },
-        {
-          "@type": "Question",
-          "name": "Can we do planning meetings remotely if we're not local to Miami?",
-          "acceptedAnswer": { "@type": "Answer", "text": "Yes. We coordinate planning calls and video meetings for clients planning a destination event in the Keys, so you don't need to be in Miami to plan your day." }
-        },
-        {
-          "@type": "Question",
-          "name": "Do you have experience at venues in the Florida Keys?",
-          "acceptedAnswer": { "@type": "Answer", "text": "Yes. We currently hold a weekly residency at Sundowners in Key Largo, giving us direct, ongoing experience with waterfront setups and logistics in the area." }
-        }
-      ]
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Do you charge a travel fee for events in the Florida Keys?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Travel fees may apply depending on the exact location in the Keys and the scope of equipment involved — this is included as a line item in your custom quote, never a surprise on the invoice."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What power requirements do you need for a beach or outdoor event?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "We coordinate power access (or generator needs, if the location requires one) directly with you and your venue ahead of time, based on the sound and lighting equipment your event calls for."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can we do planning meetings remotely if we're not local to Miami?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. We coordinate planning calls and video meetings for clients planning a destination event in the Keys, so you don't need to be in Miami to plan your day."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Do you have experience at venues in the Florida Keys?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. We currently hold a weekly residency at Sundowners in Key Largo, giving us direct, ongoing experience with waterfront setups and logistics in the area."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Which areas do you serve?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "We serve Miami, Fort Lauderdale, Miami-Dade County, Broward County and South Florida."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I get a quote?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Request a quote from this page, call (305) 607-1780, or email miamidjbeat@gmail.com. Tell us your date, venue and what you need and we will send you a quote."
+      }
     }
+  ]
+}
     </script>
     <!-- GEO/SEO Fase 6 -- medicion: GA4 activo desde 2026-08-29 (ID real). -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-7XRWGTCQ5L"></script>
@@ -75,7 +103,7 @@
     <!-- Tipografia institucional del menu (Inter 800). Sin esta hoja la barra caia en la
          sustituta del sistema y el texto salia ~2% mas ancho, desplazando el eje X. -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=optional" rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css?v=20260916-venues-cta" />
+    <link rel="stylesheet" href="./styles.css?v=20260921-hub-scrollbar-fuera" />
     <link rel="stylesheet" href="./header-unified.css?v=20260916-estacion-gap-fix" />
     <link rel="stylesheet" href="./profile.css?v=20260820-ancho-total" />
     <style>
@@ -314,6 +342,16 @@
                 <summary data-i18n="fk-faq-q4">Do you have experience at venues in the Florida Keys?</summary>
                 <p data-i18n="fk-faq-a4">Yes. We currently hold a weekly residency at Sundowners in Key Largo, giving us direct, ongoing experience with waterfront setups and logistics in the area. <a href="tel:+13056071780">(305) 607-1780</a> · <a href="mailto:miamidjbeat@gmail.com">miamidjbeat@gmail.com</a></p>
             </details>
+
+      <details class="fk-faq-item">
+        <summary data-i18n="fk-faq-q5">Which areas do you serve?</summary>
+        <p data-i18n="fk-faq-a5">We serve Miami, Fort Lauderdale, Miami-Dade County, Broward County and South Florida.</p>
+      </details>
+
+      <details class="fk-faq-item">
+        <summary data-i18n="fk-faq-q6">How do I get a quote?</summary>
+        <p data-i18n="fk-faq-a6">Request a quote from this page, call (305) 607-1780, or email miamidjbeat@gmail.com. Tell us your date, venue and what you need and we will send you a quote.</p>
+      </details>
         </section>
     </main>
 
@@ -346,12 +384,12 @@
     })();
     </script>
     <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
-    <script src="./translations.js?v=20260916-sft-live-kiosk"></script>
+    <script src="./translations.js?v=20260921-baile1"></script>
     <script src="./i18n.js?v=20260420-index-experience-rutas"></script>
     <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
-    <script src="./mdj-identity.js?v=20260617-buyer-artist-fix-1"></script>
-    <script src="./auth.js?v=20260820-unificacion"></script>
-    <script src="./mdjb-shared-header.js?v=20260919-staff-vista-fix"></script>
+    <script src="./mdj-identity.js?v=20260921-rol-unico"></script>
+    <script src="./auth.js?v=20260921-idiomas"></script>
+    <script src="./mdjb-shared-header.js?v=20260921-svc-activo4"></script>
     <script src="./mdj-mainnav-infinite.js?v=20260818-nav-canonico"></script>
     <script src="./mdj-social-bar.js?v=20260819-social-contact-only"></script>
     <script src="./mdj-mobile-header-fix.js?v=20260916-purga-a"></script>

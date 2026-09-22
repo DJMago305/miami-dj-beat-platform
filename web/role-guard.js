@@ -11,6 +11,12 @@
 
     const LOGIN_URL = './login.html';
     const DENIED_URL = './index.html';
+    /* Destino del CLIENTE cuando la página no es suya: cada página declara su contenedor con data-client-home
+       (p. ej. account-settings.html → ./client-account.html). Sin él, se usa ROLE_HOME[client]. */
+    const CLIENT_HOME_OVERRIDE = (document.currentScript && document.currentScript.dataset && document.currentScript.dataset.clientHome) || '';
+    /* Las páginas protegidas nacen ocultas (data-mdj-guard="pending" en <html>) hasta que la guarda decide:
+       así un rol equivocado nunca ve, ni por un instante, el contenedor de otro. */
+    function _revelar() { try { document.documentElement.removeAttribute('data-mdj-guard'); } catch (e) { /* noop */ } }
 
     // ── Route map: which role lands where after login ───────────
     const ROLE_HOME = {
@@ -72,6 +78,7 @@
             p.includes('booth.html') ||
             p.includes('academia.html');
 
+        if (isPublicPage) _revelar();
         if (!isPublicPage) {
             console.log('[RoleGuard] No session found, redirecting to login.');
             window.location.href = `${LOGIN_URL}?next=${encodeURIComponent(window.location.pathname + window.location.search)}`;
@@ -88,7 +95,9 @@
     } else {
         const ut = String((session.user && session.user.user_metadata && session.user.user_metadata.user_type) || '').toLowerCase();
         const appR = String((session.user && session.user.app_metadata && session.user.app_metadata.role) || '').toLowerCase();
-        if (ut === 'talent' || ut === 'dj' || ut === 'artist') {
+        if (appR === 'client' || appR === 'artist' || appR === 'dj' || appR === 'talent') {
+            rawRole = appR; // el rol del servidor manda; user_type lo escribe el usuario
+        } else if (ut === 'talent' || ut === 'dj' || ut === 'artist') {
             rawRole = ut === 'artist' ? 'artist' : 'talent';
         } else {
             rawRole = appR || ut || 'client';
@@ -123,10 +132,13 @@
 
         if (!allowed) {
             console.warn(`[RoleGuard] Access denied. Required: ${PAGE_ROLE}, Got: ${role}`);
-            window.location.href = ROLE_HOME[role] || DENIED_URL;
+            window.location.replace((role === 'client' && CLIENT_HOME_OVERRIDE) ? CLIENT_HOME_OVERRIDE : (ROLE_HOME[role] || DENIED_URL));
             return;
         }
     }
+
+    // ── Rol permitido: se muestra la página ─────────────────────
+    _revelar();
 
     // ── Expose to window for other scripts ─────────────────────
     window.__mdjpro = window.__mdjpro || {};

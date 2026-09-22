@@ -25,28 +25,82 @@
   </script>
   <script type="application/ld+json">
   {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Can you run a themed night, like a Halloween party?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes — themed and holiday nights are one of our specialties. We build the set and the room's energy around the theme (Halloween, seasonal takeovers, brand nights), coordinating with the venue on lighting cues and any effects so the whole night feels intentional, not just a regular set with decorations."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Do you do ongoing weekly residencies?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. We work with venues on a consistent weekly or recurring night, building a regular crowd over time rather than a one-off booking."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Do you bring your own sound and lighting, or use the venue's?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Either — we work with the venue's existing booth and sound system when it's solid, and bring our own professional sound, lighting, or cold spark effects when the room needs it."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can you handle a guest set or a one-night takeover?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Guest sets and brand-night takeovers are common bookings for us — we coordinate with the venue ahead of time on the vibe, any specific requests, and set length."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Which areas do you serve?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "We serve Miami, Fort Lauderdale, Miami-Dade County, Broward County and South Florida."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I get a quote?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Request a quote from this page, call (305) 607-1780, or email miamidjbeat@gmail.com. Tell us your date, venue and what you need and we will send you a quote."
+      }
+    }
+  ]
+}
+  </script>
+  <script type="application/ld+json">
+  {
     "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": [
+    "@type": "BreadcrumbList",
+    "itemListElement": [
       {
-        "@type": "Question",
-        "name": "Can you run a themed night, like a Halloween party?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Yes — themed and holiday nights are one of our specialties. We build the set and the room's energy around the theme (Halloween, seasonal takeovers, brand nights), coordinating with the venue on lighting cues and any effects so the whole night feels intentional, not just a regular set with decorations." }
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://www.miamidjbeat.com/"
       },
       {
-        "@type": "Question",
-        "name": "Do you do ongoing weekly residencies?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Yes. We work with venues on a consistent weekly or recurring night, building a regular crowd over time rather than a one-off booking." }
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Services",
+        "item": "https://www.miamidjbeat.com/rentals.html"
       },
       {
-        "@type": "Question",
-        "name": "Do you bring your own sound and lighting, or use the venue's?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Either — we work with the venue's existing booth and sound system when it's solid, and bring our own professional sound, lighting, or cold spark effects when the room needs it." }
-      },
-      {
-        "@type": "Question",
-        "name": "Can you handle a guest set or a one-night takeover?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Yes. Guest sets and brand-night takeovers are common bookings for us — we coordinate with the venue ahead of time on the vibe, any specific requests, and set length." }
+        "@type": "ListItem",
+        "position": 3,
+        "name": "Club & Resident DJ Miami",
+        "item": "https://www.miamidjbeat.com/club-dj.html"
       }
     ]
   }
@@ -66,13 +120,15 @@
   <meta property="og:title" content="Club &amp; Resident DJ Miami | Nightlife, Residencies &amp; Themed Nights | Miami DJ Beat" />
   <meta property="og:description" content="Club and resident DJ in Miami: weekly residencies, themed and holiday nights, and guest set takeovers. Professional sound, lighting, and a DJ who reads the room." />
   <meta property="og:url" content="https://www.miamidjbeat.com/club-dj.html" />
+  <meta property="og:image" content="https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/assets/home_hero_4k_wide.webp" />
+  <meta name="twitter:card" content="summary_large_image" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
     href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Outfit:wght@300;400;500;600;700&display=optional"
     rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=optional" rel="stylesheet" />
-  <link rel="stylesheet" href="./styles.css?v=20260916-venues-cta" />
+  <link rel="stylesheet" href="./styles.css?v=20260921-hub-scrollbar-fuera" />
   <link rel="stylesheet" href="./header-unified.css?v=20260916-estacion-gap-fix" />
   <link rel="stylesheet" href="./mdj-assistant.css?v=20260306-1" />
   <style>
@@ -86,20 +142,7 @@
       margin: 0 auto 50px;
     }
 
-    .club-hero-copy .mdj-wp-breadcrumb {
-      font-size: 11px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      margin-bottom: 18px;
-      color: rgba(255, 255, 255, 0.55);
-      font-weight: 600;
-    }
 
-    .club-hero-copy .mdj-wp-breadcrumb a {
-      color: var(--gold);
-      font-weight: 700;
-      text-decoration: none;
-    }
 
     .club-hero-copy h1 {
       font-family: 'Cormorant Garamond', 'Times New Roman', serif;
@@ -213,10 +256,11 @@
     body.page-club-dj #mainHeader #mainNav.mdj-mainnav-flex.nav.top-nav > a.active {
       font-size: 15px !important;
     }
+    .club-hero-copy { padding-top: 24px; }
   </style>
 </head>
 
-<body class="notranslate page-club-dj">
+<body class="notranslate page-club-dj" data-mdj-back="./dj-miami.html">
 
   <header class="header mdj-header-unified" id="mainHeader">
     <div class="header-top">
@@ -320,11 +364,6 @@
 
   <main class="container" style="padding: 100px 18px; position: relative; z-index: 10;">
     <div class="club-hero-copy">
-      <div class="mdj-wp-breadcrumb">
-        <a href="./index.html" data-i18n="nav-home">Home</a>
-        ·
-        <a href="./rentals.html" data-i18n="nav-services">Services</a>
-      </div>
       <h1 data-i18n="club-dj-h1">Club &amp; Resident DJ Miami</h1>
       <p class="mdj-wp-lead" data-i18n="club-dj-lead">A DJ who reads the room and keeps the dance floor full from open to close — weekly residencies, themed and holiday nights, and guest set takeovers across Miami-Dade and Broward.</p>
     </div>
@@ -384,6 +423,16 @@
       <details class="club-faq-item">
         <summary data-i18n="club-dj-faq-q4">Can you handle a guest set or a one-night takeover?</summary>
         <p data-i18n="club-dj-faq-a4">Yes. Guest sets and brand-night takeovers are common bookings for us — we coordinate with the venue ahead of time on the vibe, any specific requests, and set length. <a href="tel:+13056071780">(305) 607-1780</a> · <a href="mailto:miamidjbeat@gmail.com">miamidjbeat@gmail.com</a></p>
+      </details>
+
+      <details class="club-faq-item">
+        <summary data-i18n="club-dj-faq-q5">Which areas do you serve?</summary>
+        <p data-i18n="club-dj-faq-a5">We serve Miami, Fort Lauderdale, Miami-Dade County, Broward County and South Florida.</p>
+      </details>
+
+      <details class="club-faq-item">
+        <summary data-i18n="club-dj-faq-q6">How do I get a quote?</summary>
+        <p data-i18n="club-dj-faq-a6">Request a quote from this page, call (305) 607-1780, or email miamidjbeat@gmail.com. Tell us your date, venue and what you need and we will send you a quote.</p>
       </details>
     </section>
   </main>
@@ -467,18 +516,19 @@
         }
     })();
     </script>
-  <script src="./translations.js?v=20260916-sft-live-kiosk"></script>
+  <script src="./translations.js?v=20260921-baile1"></script>
   <script src="./i18n.js?v=20260420-index-experience-rutas"></script>
   <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
-  <script src="./mdj-identity.js?v=20260617-buyer-artist-fix-1"></script>
-  <script src="./auth.js?v=20260820-unificacion"></script>
-  <script src="./mdjb-shared-header.js?v=20260919-staff-vista-fix"></script>
+  <script src="./mdj-identity.js?v=20260921-rol-unico"></script>
+  <script src="./auth.js?v=20260921-idiomas"></script>
+  <script src="./mdjb-shared-header.js?v=20260921-svc-activo4"></script>
   <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
   <script src="./mdj-mainnav-infinite.js?v=20260818-nav-canonico"></script>
   <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
   <script src="./mdj-social-bar.js?v=20260819-social-contact-only"></script>
   <script defer src="./js/mdj-cart-pill.js?v=20260616-pill-5"></script>
   <script src="./mdj-mobile-header-fix.js?v=20260916-purga-a"></script>
+  <script defer src="./js/mdj-back-button.js?v=20260921-2"></script>
 </body>
 
 </html>

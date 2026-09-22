@@ -11,7 +11,7 @@
   <!-- Tipografia institucional del menu (Inter 800). Sin esta hoja la barra cae en la
        sustituta del sistema y el texto sale ~2% mas estrecho, desplazando el eje X. -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=optional" rel="stylesheet" />
-<link rel="stylesheet" href="./styles.css?v=20260916-venues-cta" />
+<link rel="stylesheet" href="./styles.css?v=20260921-hub-scrollbar-fuera" />
   <link rel="stylesheet" href="./header-unified.css?v=20260916-estacion-gap-fix" />
   <link rel="stylesheet" href="./mdj-outlined-fields.css?v=20260421-account-forms" />
   <style>
@@ -1135,6 +1135,7 @@
         justify-content: flex-start;
       }
     }
+  
   </style>
 </head>
 
@@ -1435,7 +1436,7 @@
         </div>
         <div class="ca-profile-contact-group">
         <div class="ca-profile-contact-tile ca-profile-contact-tile--phone" id="ca-profile-phone-card">
-          <div class="ca-profile-contact-tile__icon" aria-hidden="true">☎</div>
+          <div class="ca-profile-contact-tile__icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div>
           <div class="ca-profile-contact-tile__body">
             <div class="ca-profile-contact-tile__head">
               <h2 data-i18n="client-account-profile-phone-title">Phone</h2>
@@ -1448,7 +1449,7 @@
         </div>
 
         <div class="ca-profile-contact-tile ca-profile-contact-tile--mail" id="ca-profile-mail-card">
-          <div class="ca-profile-contact-tile__icon" aria-hidden="true">✉</div>
+          <div class="ca-profile-contact-tile__icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></div>
           <div class="ca-profile-contact-tile__body">
             <div class="ca-profile-contact-tile__head">
               <h2 data-i18n="client-account-profile-mail-title">Mail</h2>
@@ -1705,9 +1706,9 @@
             <h2>Soporte · Tickets</h2>
           </div>
           <div class="system-card-body" style="text-align:center;padding:20px;">
-            <div style="font-size:32px;margin-bottom:10px;">📬</div>
+            <div style="font-size:36px;margin-bottom:12px;">📬</div>
             <p style="font-size:13px;color:rgba(255,255,255,0.45);margin:0 0 16px;line-height:1.5;">¿Tienes un problema con tu reserva o necesitas asistencia?<br>Abre un ticket y el equipo te responderá.</p>
-            <a href="./account-settings.html?panel=notifications"
+            <a href="./index.html#contact"
                style="display:inline-block;background:linear-gradient(135deg,#c5a059,#f0cc80);color:#000;font-weight:900;font-size:13px;letter-spacing:0.05em;padding:10px 26px;border-radius:8px;text-decoration:none;">
                Abrir Ticket de Soporte →
             </a>
@@ -1825,7 +1826,7 @@
   </script>
   <script src="./supabase-config.js?v=20260602-auth-gate-1"></script>
   <script src="./role-guard.js" data-role="client"></script>
-  <script src="./translations.js?v=20260916-sft-live-kiosk"></script>
+  <script src="./translations.js?v=20260921-baile1"></script>
   <script src="./i18n.js?v=20260415-CORE-CONNECTIONS"></script>
   <script src="./js/mdj-account-forms.js?v=20260421-account-forms"></script>
   <script src="./account-address-data.js?v=20260429"></script>
@@ -1835,8 +1836,8 @@
 <script src="./js/mdj-push.js?v=20260820-push-1"></script>
 <script src="./js/mdj-push-cliente.js?v=20260904-toggle-timeout"></script>
   <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
-  <script src="./mdj-identity.js?v=20260617-buyer-artist-fix-1"></script>
-  <script src="./mdjb-shared-header.js?v=20260919-staff-vista-fix"></script>
+  <script src="./mdj-identity.js?v=20260921-rol-unico"></script>
+  <script src="./mdjb-shared-header.js?v=20260921-svc-activo4"></script>
   <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
   <script src="./mdj-mainnav-infinite.js?v=20260818-nav-canonico"></script>
   <script src="./mdj-social-bar.js?v=20260819-social-contact-only"></script>

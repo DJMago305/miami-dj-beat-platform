@@ -14,11 +14,11 @@ const corsHeaders = {
 
 const sb = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
-function isStaffFromJwt(user: { app_metadata?: Record<string, unknown>; user_metadata?: Record<string, unknown> } | null): boolean {
+// Solo app_metadata.role (lo fija el servidor). user_metadata.user_type lo escribe el propio usuario: NUNCA da permisos.
+function isStaffFromJwt(user: { app_metadata?: Record<string, unknown> } | null): boolean {
   if (!user) return false;
   const a = String(user.app_metadata?.role ?? "").toLowerCase();
-  const t = String(user.user_metadata?.user_type ?? "").toLowerCase();
-  return a === "admin" || a === "manager" || t === "admin" || t === "manager";
+  return a === "admin" || a === "manager";
 }
 
 async function isStaffFromDjProfiles(userId: string): Promise<boolean> {
