@@ -25,23 +25,74 @@
   </script>
   <script type="application/ld+json">
   {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Do you provide bartenders for events?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes — bar service and a premium cocktail experience for your event, quoted by setup."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Do you provide waitstaff?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes — professional table service for your guests, quoted by setup."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I add a live chef to my event?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes — a live kitchen and catering presentation, quoted by setup."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Which areas do you serve?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "We serve Miami, Fort Lauderdale, Miami-Dade County, Broward County and South Florida."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I get a quote?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Request a quote from this page, call (305) 607-1780, or email miamidjbeat@gmail.com. Tell us your date, venue and what you need and we will send you a quote."
+      }
+    }
+  ]
+}
+  </script>
+  <script type="application/ld+json">
+  {
     "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": [
+    "@type": "BreadcrumbList",
+    "itemListElement": [
       {
-        "@type": "Question",
-        "name": "Do you provide bartenders for events?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Yes — bar service and a premium cocktail experience for your event, quoted by setup." }
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://www.miamidjbeat.com/"
       },
       {
-        "@type": "Question",
-        "name": "Do you provide waitstaff?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Yes — professional table service for your guests, quoted by setup." }
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Services",
+        "item": "https://www.miamidjbeat.com/rentals.html"
       },
       {
-        "@type": "Question",
-        "name": "Can I add a live chef to my event?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Yes — a live kitchen and catering presentation, quoted by setup." }
+        "@type": "ListItem",
+        "position": 3,
+        "name": "Event Staff for Hire Miami",
+        "item": "https://www.miamidjbeat.com/staff-dj.html"
       }
     ]
   }
@@ -67,13 +118,11 @@
     href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Outfit:wght@300;400;500;600;700&display=optional"
     rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=optional" rel="stylesheet" />
-  <link rel="stylesheet" href="./styles.css?v=20260916-venues-cta" />
+  <link rel="stylesheet" href="./styles.css?v=20260921-hub-scrollbar-fuera" />
   <link rel="stylesheet" href="./header-unified.css?v=20260916-estacion-gap-fix" />
   <link rel="stylesheet" href="./mdj-assistant.css?v=20260306-1" />
   <style>
     .sf-hero-copy { text-align: center; max-width: 720px; margin: 0 auto 50px; }
-    .sf-hero-copy .mdj-sf-breadcrumb { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 18px; color: rgba(255, 255, 255, 0.55); font-weight: 600; }
-    .sf-hero-copy .mdj-sf-breadcrumb a { color: var(--gold); font-weight: 700; text-decoration: none; }
     .sf-hero-copy h1 { font-family: 'Cormorant Garamond', 'Times New Roman', serif; font-size: clamp(2.4rem, 5vw, 3.6rem); font-weight: 600; color: #fff; margin: 0 0 18px; line-height: 1.08; text-shadow: 0 4px 15px rgba(0, 0, 0, 0.8); }
     .sf-hero-copy .mdj-sf-lead { font-size: 1.05rem; line-height: 1.65; color: rgba(255, 255, 255, 0.8); margin: 0 auto; max-width: 56ch; font-weight: 400; }
     .sf-package-item { border: 1px solid rgba(197, 160, 89, 0.25); border-radius: 12px; padding: 16px 20px; margin-bottom: 12px; background: rgba(255, 255, 255, 0.03); max-width: 760px; margin-left: auto; margin-right: auto; }
@@ -95,10 +144,13 @@
     body.page-staff-dj #mainHeader.header.mdj-header-unified .header-nav .container { overflow: visible !important; overflow-x: visible !important; overflow-y: visible !important; }
     body.page-staff-dj #mainHeader #mainNav.mdj-mainnav-flex.nav.top-nav > a,
     body.page-staff-dj #mainHeader #mainNav.mdj-mainnav-flex.nav.top-nav > a.active { font-size: 15px !important; }
+    .sf-pkg-flair-link a { color: var(--gold); font-weight: 700; text-decoration: none; }
+    .sf-pkg-flair-link a:hover { text-decoration: underline; }
+    .sf-hero-copy { padding-top: 24px; }
   </style>
 </head>
 
-<body class="notranslate page-staff-dj">
+<body class="notranslate page-staff-dj" data-mdj-back="./rentals.html">
 
   <header class="header mdj-header-unified" id="mainHeader">
     <div class="header-top">
@@ -192,7 +244,7 @@
     </div>
   </header>
 
-    <video id="sf-hero-kb-bg" class="hero-shell-video hero-kb-bg" autoplay muted loop playsinline preload="metadata"
+    <video id="sf-hero-kb-bg" class="hero-shell-video hero-kb-bg" autoplay muted playsinline preload="metadata"
         poster="./assets/mdj-staff-videos/fotos/staff-hero-poster.jpg"
         style="position: fixed; inset: 0; z-index: 1; pointer-events: none; width: 100%; height: 100%; object-fit: cover; opacity: 0.45; filter: blur(2px);"
         data-hero-playlist="./assets/mdj-staff-videos/Bartender.mp4,./assets/mdj-staff-videos/Meseros.mp4,./assets/mdj-staff-videos/Cheff.mp4">
@@ -203,11 +255,6 @@
 
   <main class="container" style="padding: 100px 18px; position: relative; z-index: 10;">
     <div class="sf-hero-copy">
-      <div class="mdj-sf-breadcrumb">
-        <a href="./index.html" data-i18n="nav-home">Home</a>
-        ·
-        <a href="./rentals.html" data-i18n="nav-services">Services</a>
-      </div>
       <h1 data-i18n="sf-page-h1">Event Staff in Miami</h1>
       <p class="mdj-sf-lead" data-i18n="sf-page-lead">Bartenders, professional waitstaff, and a live chef — real hospitality staff to add to your event, quoted by setup.</p>
     </div>
@@ -219,6 +266,7 @@
           <span class="sf-pkg-price" data-i18n="sf-pkg-price-quote">Custom Quote</span>
         </summary>
         <p data-i18n="sf-pkg-bartender-desc">Bar service and premium cocktail experience.</p>
+        <p class="sf-pkg-flair-link"><a href="./flair-bartender-miami.html" data-i18n="sf-pkg-bartender-flair-link">Want a show? Meet the flair bartender</a></p>
       </details>
     </div>
 
@@ -264,6 +312,16 @@
       <details class="sf-faq-item">
         <summary data-i18n="sf-faq-q3">Can I add a live chef to my event?</summary>
         <p data-i18n="sf-faq-a3">Yes — a live kitchen and catering presentation, quoted by setup. <a href="tel:+13056071780">(305) 607-1780</a> · <a href="mailto:miamidjbeat@gmail.com">miamidjbeat@gmail.com</a></p>
+      </details>
+
+      <details class="sf-faq-item">
+        <summary data-i18n="sf-faq-q4">Which areas do you serve?</summary>
+        <p data-i18n="sf-faq-a4">We serve Miami, Fort Lauderdale, Miami-Dade County, Broward County and South Florida.</p>
+      </details>
+
+      <details class="sf-faq-item">
+        <summary data-i18n="sf-faq-q5">How do I get a quote?</summary>
+        <p data-i18n="sf-faq-a5">Request a quote from this page, call (305) 607-1780, or email miamidjbeat@gmail.com. Tell us your date, venue and what you need and we will send you a quote.</p>
       </details>
     </section>
   </main>
@@ -338,6 +396,8 @@
                 var playlist = playlistAttr.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
                 if (playlist.length > 1) {
                     var idx = 0;
+                    v.loop = false;   // con loop el evento «ended» nunca llega y solo salía el primer video
+                    v.addEventListener('error', function () { v.dispatchEvent(new Event('ended')); });   // un clip roto se salta
                     v.addEventListener('ended', function () {
                         idx = (idx + 1) % playlist.length;
                         var next = playlist[idx];
@@ -356,18 +416,19 @@
         }
     })();
     </script>
-  <script src="./translations.js?v=20260916-sft-live-kiosk"></script>
+  <script src="./translations.js?v=20260921-baile1"></script>
   <script src="./i18n.js?v=20260420-index-experience-rutas"></script>
   <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
-  <script src="./mdj-identity.js?v=20260617-buyer-artist-fix-1"></script>
-  <script src="./auth.js?v=20260820-unificacion"></script>
-  <script src="./mdjb-shared-header.js?v=20260919-staff-vista-fix"></script>
+  <script src="./mdj-identity.js?v=20260921-rol-unico"></script>
+  <script src="./auth.js?v=20260921-idiomas"></script>
+  <script src="./mdjb-shared-header.js?v=20260921-svc-activo4"></script>
   <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
   <script src="./mdj-mainnav-infinite.js?v=20260818-nav-canonico"></script>
   <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
   <script src="./mdj-social-bar.js?v=20260819-social-contact-only"></script>
   <script defer src="./js/mdj-cart-pill.js?v=20260616-pill-5"></script>
   <script src="./mdj-mobile-header-fix.js?v=20260916-purga-a"></script>
+  <script defer src="./js/mdj-back-button.js?v=20260921-2"></script>
 </body>
 
 </html>
