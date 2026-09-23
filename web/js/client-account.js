@@ -874,7 +874,7 @@
       billing_country: data.billing_country || null,
       notify_email_bookings: data.notify_email_bookings !== false,
       notify_email_marketing: data.notify_email_marketing !== false,
-      notify_sms: data.notify_sms !== false,
+      notify_sms: data.notify_sms === true,
     });
     if (data.language_preference === 'es' || data.language_preference === 'en') {
       row.language_preference = data.language_preference;
@@ -968,7 +968,7 @@
 
     if ((el = document.getElementById('ca-notify-bookings'))) el.checked = !(cp && cp.notify_email_bookings === false);
     if ((el = document.getElementById('ca-notify-marketing'))) el.checked = !(cp && cp.notify_email_marketing === false);
-    if ((el = document.getElementById('ca-notify-sms'))) el.checked = !(cp && cp.notify_sms === false);
+    if ((el = document.getElementById('ca-notify-sms'))) el.checked = !!(cp && cp.notify_sms === true);
   }
 
   async function saveProfile(session, statusId, returnOverview) {
