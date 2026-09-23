@@ -1874,7 +1874,7 @@
             <p style="margin-top:4px;"><a href="./legal.html?doc=SMS_TERMS.md" data-i18n="account-pref-sms-terms-link" style="color:var(--gold);text-decoration:underline;font-size:12px;" target="_blank" rel="noopener">Message and data rates may apply. SMS Terms.</a></p>
           </div>
           <label class="apple-switch">
-            <input type="checkbox" id="pref-notify-sms" checked aria-labelledby="pref-notify-sms-title" />
+            <input type="checkbox" id="pref-notify-sms" aria-labelledby="pref-notify-sms-title" />
             <span class="slider"></span>
           </label>
         </div>
@@ -3576,13 +3576,13 @@
             var m = document.getElementById('pref-notify-marketing');
             var s = document.getElementById('pref-notify-sms');
             if (!e || !m || !s) return;
-            function tri(col) {
+            function tri(col, fallback) {
               if (cpRow && typeof cpRow[col] === 'boolean') return cpRow[col];
-              return true;
+              return fallback;
             }
-            e.checked = tri('notify_email_bookings');
-            m.checked = tri('notify_email_marketing');
-            s.checked = tri('notify_sms');
+            e.checked = tri('notify_email_bookings', true);
+            m.checked = tri('notify_email_marketing', true);
+            s.checked = tri('notify_sms', false);
           })(cp);
 
           var langSel = document.getElementById('select-platform-language');
@@ -3963,7 +3963,7 @@
                 var elPrefSms = document.getElementById('pref-notify-sms');
                 var notifyEmailBookings = elPrefEmail ? !!elPrefEmail.checked : true;
                 var notifyEmailMarketing = elPrefMkt ? !!elPrefMkt.checked : true;
-                var notifySms = elPrefSms ? !!elPrefSms.checked : true;
+                var notifySms = elPrefSms ? !!elPrefSms.checked : false;
 
                 /* Sin getSession aquí: otra ida a red sumaba latencia; la sesión del login/carga sigue válida para este guardado */
                 var sessionUser = session.user;
