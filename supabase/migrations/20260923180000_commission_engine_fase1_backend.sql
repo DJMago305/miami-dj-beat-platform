@@ -41,6 +41,16 @@ declare
   v_lead record;
   v_mc_id uuid;
 begin
+  -- Solo staff financiero (owner/admin/manager/seller) o service_role.
+  -- IMPORTANTE: nunca comparar current_user aquí -- dentro de una función
+  -- security definer, current_user siempre es el DUEÑO de la función
+  -- (ej. 'postgres'), no el llamador real; comparar contra eso anularía el
+  -- control de acceso para cualquiera que la invoque. Verificado en vivo:
+  -- ver nota de la sección de verificación al final de este archivo.
+  if not (coalesce(auth.role(), '') = 'service_role' or public.can_read_financial(auth.uid())) then
+    raise exception 'forbidden: solo staff financiero puede resolver el cliente maestro de un lead';
+  end if;
+
   select id, email, phone into v_lead from public.leads where id = p_lead_id;
   if v_lead.id is null then return null; end if;
 
@@ -74,6 +84,7 @@ as $$
   select dj_id
   from public.dj_client_affiliations
   where master_client_id = p_master_client_id
+    and (coalesce(auth.role(), '') = 'service_role' or public.can_read_financial(auth.uid()))
     and coalesce(active, true) = true
   order by created_at asc
   limit 1
@@ -109,7 +120,7 @@ create policy commission_rules_owner_write on public.commission_rules
   with check (exists (select 1 from public.dj_profiles d where d.user_id = auth.uid() and lower(trim(coalesce(d.role,''))) in ('owner','admin')));
 
 insert into public.commission_rules (tier_key, precio_lista_usd, pago_dj_usd, comision_referido_dj_usd, descuento_primera_vez_usd, cuota_empresa_usd, notas)
-select 'paquete_550', 550, 350, 20, 30, 100, 'Ejemplo original del PO, 2026-09-23 -- confirmado exacto contra 3 escenarios de prueba.'
+select 'paquete_550', 550, 350, 20, 30, 100, 'Ejemplo original del PO, 2026-09-23 -- confirmado exacto contra 4 escenarios de prueba.'
 where not exists (select 1 from public.commission_rules where tier_key = 'paquete_550' and effective_to is null);
 
 insert into public.commission_rules (tier_key, precio_lista_usd, pago_dj_usd, comision_referido_dj_usd, descuento_primera_vez_usd, cuota_empresa_usd, notas)
@@ -162,7 +173,12 @@ create policy referral_sale_commissions_service_role on public.referral_sale_com
 -- 5) Función de cálculo -- se llama MANUALMENTE por ahora (sin trigger
 --    automático). Resuelve master_client_id si aún no está resuelto en el
 --    lead, determina origen del cliente, si es su 1er evento aprobado, y
---    aplica la fórmula del modelo de negocio de arriba.
+--    aplica la fórmula del modelo de negocio de arriba. Si el lead no tiene
+--    commission_tier_key asignado (o el tier no tiene cuota de empresa
+--    definida) y el cliente es referido por un DJ, NO se inventa un reparto
+--    -- se guarda con status='pending_tier_review' y los montos en null,
+--    porque antes de esta corrección un tier faltante le daba el 100% del
+--    margen al vendedor y $0 a la empresa por accidente.
 create or replace function public.calcular_comision_venta(p_lead_id uuid)
 returns uuid
 language plpgsql
@@ -175,16 +191,22 @@ declare
   v_client_origin text;
   v_is_first boolean;
   v_rule record;
+  v_rule_found boolean;
   v_pago_dj numeric;
   v_comision_ref numeric := 0;
   v_descuento numeric := 0;
-  v_cuota_empresa numeric := 0;
+  v_cuota_empresa numeric;
   v_tax numeric := 0;
   v_margen_bruto numeric;
   v_comision_vendedor numeric;
   v_split_pct numeric;
+  v_status text := 'pending';
   v_id uuid;
 begin
+  if not (coalesce(auth.role(), '') = 'service_role' or public.can_read_financial(auth.uid())) then
+    raise exception 'forbidden: solo staff financiero puede calcular comisiones de venta';
+  end if;
+
   select * into v_lead from public.leads where id = p_lead_id;
   if v_lead.id is null or v_lead.total_aprobado_usd is null then
     return null;
@@ -212,24 +234,38 @@ begin
   select * into v_rule from public.commission_rules
     where tier_key = v_lead.commission_tier_key and effective_to is null
     order by effective_from desc limit 1;
+  v_rule_found := v_rule.id is not null;
 
   v_tax := round(v_lead.total_aprobado_usd * coalesce(v_rule.tax_rate, 0.07), 2);
   v_margen_bruto := v_lead.total_aprobado_usd - v_pago_dj;
 
   if v_client_origin = 'dj_referral' then
-    if v_is_first then
-      v_comision_ref := coalesce(v_rule.comision_referido_dj_usd, 0);
-      v_descuento := coalesce(v_rule.descuento_primera_vez_usd, 0);
-      v_cuota_empresa := coalesce(v_rule.cuota_empresa_usd, 0);
+    if not v_rule_found then
+      v_status := 'pending_tier_review';
+      v_comision_ref := null;
+      v_descuento := null;
+      v_cuota_empresa := null;
+      v_comision_vendedor := null;
     else
-      v_comision_ref := 0;
-      v_descuento := 0;
-      v_cuota_empresa := coalesce(v_rule.cuota_empresa_usd, 0) + coalesce(v_rule.comision_referido_dj_usd, 0) + coalesce(v_rule.descuento_primera_vez_usd, 0);
+      if v_is_first then
+        v_comision_ref := coalesce(v_rule.comision_referido_dj_usd, 0);
+        v_descuento := coalesce(v_rule.descuento_primera_vez_usd, 0);
+        v_cuota_empresa := v_rule.cuota_empresa_usd;
+      else
+        v_comision_ref := 0;
+        v_descuento := 0;
+        v_cuota_empresa := coalesce(v_rule.cuota_empresa_usd, 0) + coalesce(v_rule.comision_referido_dj_usd, 0) + coalesce(v_rule.descuento_primera_vez_usd, 0);
+      end if;
+      if v_cuota_empresa is null and v_rule.split_vendedor_pct is not null then
+        v_cuota_empresa := (v_margen_bruto - v_comision_ref - v_descuento) * (1 - v_rule.split_vendedor_pct);
+      end if;
+      if v_cuota_empresa is null then
+        v_status := 'pending_tier_review';
+        v_comision_vendedor := null;
+      else
+        v_comision_vendedor := v_margen_bruto - v_comision_ref - v_descuento - v_cuota_empresa;
+      end if;
     end if;
-    if v_rule.cuota_empresa_usd is null and v_rule.split_vendedor_pct is not null then
-      v_cuota_empresa := (v_margen_bruto - v_comision_ref - v_descuento) * (1 - v_rule.split_vendedor_pct);
-    end if;
-    v_comision_vendedor := v_margen_bruto - v_comision_ref - v_descuento - v_cuota_empresa;
   else
     v_split_pct := coalesce(v_rule.split_vendedor_pct, 0.5);
     v_comision_vendedor := v_margen_bruto * v_split_pct;
@@ -243,7 +279,7 @@ begin
   ) values (
     p_lead_id, v_lead.master_client_id, v_client_origin, v_owner_dj, v_is_first, v_lead.commission_tier_key,
     v_pago_dj, v_comision_ref, v_descuento, v_cuota_empresa,
-    v_lead.assigned_staff_id, v_comision_vendedor, v_lead.total_aprobado_usd, v_tax, 'pending'
+    v_lead.assigned_staff_id, v_comision_vendedor, v_lead.total_aprobado_usd, v_tax, v_status
   )
   on conflict (lead_id) do update set
     master_client_id = excluded.master_client_id, client_origin = excluded.client_origin,
@@ -251,7 +287,8 @@ begin
     pago_dj_usd = excluded.pago_dj_usd, comision_referido_usd = excluded.comision_referido_usd,
     descuento_usd = excluded.descuento_usd, cuota_empresa_usd = excluded.cuota_empresa_usd,
     vendedor_id = excluded.vendedor_id, comision_vendedor_usd = excluded.comision_vendedor_usd,
-    precio_venta_usd = excluded.precio_venta_usd, tax_usd = excluded.tax_usd, calculado_en = now()
+    precio_venta_usd = excluded.precio_venta_usd, tax_usd = excluded.tax_usd, status = excluded.status,
+    calculado_en = now()
   returning id into v_id;
 
   return v_id;
@@ -260,13 +297,31 @@ $$;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- Verificación ya corrida en vivo (2026-09-23) con leads/master_clients
--- sintéticos, borrados después de confirmar -- 3 escenarios, todos exactos:
+-- sintéticos, borrados después de confirmar -- 4 escenarios, todos exactos:
 --   1) Referido por DJ, 1er evento, paquete_550: comisión $20, descuento $30,
 --      cuota empresa $100, vendedor $50. ✔ coincide con el ejemplo del PO.
 --   2) Mismo cliente, 2do evento: comisión $0, descuento $0, cuota empresa
 --      $150 (se dobla), vendedor $50 (no cambia). ✔
 --   3) Cliente traído por el vendedor (sin DJ dueño): margen $200, reparto
 --      $100/$100. ✔ 50/50 exacto.
+--   4) Referido por DJ SIN tier asignado (ej. boda sin commission_tier_key):
+--      status='pending_tier_review', montos en null -- ya NO da 100% al
+--      vendedor / $0 a la empresa como en el primer intento de esta función.
+--
+-- Auto-revisión encontró y corrigió 2 problemas antes de dar esto por bueno:
+--   (a) Seguridad: las 3 funciones eran security definer sin verificar quién
+--       las llama -- cualquier usuario autenticado podía invocarlas. Se
+--       agregó el check can_read_financial(auth.uid())/service_role.
+--   (b) Ese mismo check, en su primer intento, incluía `current_user =
+--       'postgres'` como atajo para poder probarlo yo mismo -- pero DENTRO
+--       de una función security definer, current_user SIEMPRE es el dueño de
+--       la función (postgres), sin importar quién la invoque, así que esa
+--       condición anulaba el control de acceso para todo el mundo. Detectado
+--       simulando una sesión real no-staff (set_config request.jwt.claims +
+--       SET LOCAL ROLE authenticated) -- la llamada NO debía funcionar y sí
+--       funcionó, lo cual expuso el bug. Corregido quitando ese atajo;
+--       re-verificado con una sesión no-staff (bloqueada, error `forbidden`)
+--       y una sesión owner real (funcionó).
 --
 -- Pendiente, explícitamente fuera de esta migración (Fase 2):
 --   - Trigger automático en leads (hoy se llama calcular_comision_venta()
