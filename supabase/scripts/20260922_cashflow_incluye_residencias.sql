@@ -127,10 +127,17 @@ BEGIN
         LEFT JOIN public.dj_profiles dp
             ON dp.id = COALESCE(ex.dj_id, rd.base_dj_id)
     ),
+    -- DJMago305 es la propia persona del dueño (Identity: Owner vs DJ) -- lo que
+    -- "gana" en sus propios turnos NUNCA es un pago personal, es ingreso de la
+    -- empresa. Se excluye explícitamente de su Cash Flow personal (2026-09-22,
+    -- pedido directo del PO). Si algún día se necesita generalizar esto a otros
+    -- casos, conviene una columna real en dj_profiles en vez de este hardcode.
     residency_lines AS (
         SELECT occ_date AS bucket_date, (ROUND(dj_pay_usd * 100))::bigint AS gross_cents
         FROM residency_effective
-        WHERE effective_dj_id = p_uid AND NOT skipped
+        WHERE effective_dj_id = p_uid
+          AND NOT skipped
+          AND p_uid <> '3f5d5196-273c-458e-a4af-6b3545422177'::uuid
     ),
     residency_daily AS (
         SELECT
