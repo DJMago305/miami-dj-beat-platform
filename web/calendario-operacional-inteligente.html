@@ -50,6 +50,7 @@
     --line:rgba(30,40,90,0.10);--line-soft:rgba(30,40,90,0.055);
     --today:#ff2d55;--today-ink:#fff;
     --set:#ff2e86;--staff:#ff7a4d;--prod:#8b6cff;--pago:#10b3a3;--clima:#f5a623;--cliente:#3d8bff;--personal:#54d29a;--owner:#8a91b4;
+    --reserva:#2ecc71;--cancelado:#ff3b30;
     --pot:#f5a623;--act:#10b3a3;--vip:#ff2e86;
     --shadow:0 18px 44px -26px rgba(24,30,70,0.40);
     --sunset:linear-gradient(115deg,#ff2e86,#ff7a4d 55%,#ffbe3d);
@@ -864,7 +865,7 @@
   }
 
   function renderLegend(){
-    var items=[["set","Sets / Reservas"],["staff","Staff / Cobertura"],["prod","Producción"],["pago","Pagos / Cobros"],["clima","Clima"],["cliente","Clientes (cumple/aniv.)"],["personal","Calendario personal (Google)"]];
+    var items=[["reserva","Reservas"],["cancelado","Cancelado"],["staff","Staff / Cobertura"],["prod","Producción"],["pago","Pagos / Cobros"],["clima","Clima"],["cliente","Clientes (cumple/aniv.)"],["personal","Calendario personal (Google)"]];
     var h="";items.forEach(function(it){h+='<span class="li" style="--c:var(--'+it[0]+')"><span class="sq"></span>'+it[1]+'</span>';});
     h+='<span class="note">'+(state.role==="owner"?"vista master · datos de todos los artistas":"herramienta del artista · datos aislados")+'</span>';
     legend.innerHTML=h;
@@ -1448,7 +1449,7 @@
       if(e.cal==="cliente")r.push({dt:parse(e.d),icon:e.kind==="aniv"?"🎉":"🎂",title:e.t.replace(/^🎂 |^🎉 /,""),sub:(e.client?e.client.estado+" · "+e.client.note:""),chan:e.client?e.client.chan:"WhatsApp",cal:"cliente",art:e.artist,auto:true,ev:e});
       else if(e.cal==="pago")r.push({dt:parse(e.d),icon:"💵",title:e.t,sub:"Cobro / conciliación",chan:"Interno",cal:"pago",art:e.artist,ev:e});
       else if(e.cal==="clima")r.push({dt:parse(e.d),icon:"🌧",title:e.t,sub:"Riesgo operativo",chan:"Push",cal:"clima",art:e.artist,ev:e});
-      else if(e.cal==="set")r.push({dt:parse(e.d),icon:"🎧",title:e.t,sub:e.venue||"Evento confirmado",chan:"Push",cal:"set",art:e.artist,ev:e});
+      else if(e.cal==="reserva")r.push({dt:parse(e.d),icon:"🎧",title:e.t,sub:e.venue||"Evento confirmado",chan:"Push",cal:"reserva",art:e.artist,ev:e});
       else if(e.cal==="personal")r.push({dt:parse(e.d),icon:e.kind==="cumple"?"🎂":"📅",title:e.t,sub:"Sincronizado de "+(e.clientId?clientAccName(e.clientId):artName(e.artist)),chan:"Push",cal:"personal",art:e.artist,auto:true,ev:e});
     });
     r.sort(function(a,b){return a.dt-b.dt;});return r;
@@ -1703,7 +1704,7 @@
       var meta={};
       if(L.total_amount||L.budget) meta.pago={ v:(L.total_amount? "$"+L.total_amount : String(L.budget)), s:(L.payment_status||L.status||"") };
       if(L.assigned_staff_name) meta.staff={ v:L.assigned_staff_name, s:"staff asignado" };
-      evs.push({ d:L.event_date, cal:"set", artist:did, clientId:ck, ad:(s===null),
+      evs.push({ d:L.event_date, cal:(String(L.status||"").toUpperCase()==="CANCELLED"?"cancelado":"reserva"), artist:did, clientId:ck, ad:(s===null),
                  s:(s===null?0:s), e:(e!==null?e:(s!==null?s+2:0)),
                  t:(L.event_type||L.name||"Evento")+(L.status? " · "+L.status : ""),
                  venue:venue, meta:(Object.keys(meta).length? meta : null),
@@ -1864,7 +1865,7 @@
           // cada DJ distinto obtiene su propio identificador, nunca la marca
           // generica de un solo artista.
           var _djKey=(_exc?_exc.dj_id:rule.dj_id)||("name:"+(_djName||"Sin asignar"));
-          evs.push({ d:iso, cal:"set", artist:_djKey, ad:false,
+          evs.push({ d:iso, cal:"reserva", artist:_djKey, ad:false,
             s:(s===null?0:s), e:(e!==null?e:(s!==null?s+2:0)),
             t:_titulo+(_exc?" (DJ de reemplazo)":""), venue:(rule.venue||""),
             // Trazabilidad para reasignar/eliminar esta ocurrencia puntual:
@@ -2014,7 +2015,7 @@
             s:(row.tarifa_venue_cents!=null?"venue paga $"+(row.tarifa_venue_cents/100):"tu pago")
           } };
         }
-        out.push({ d:iso, cal:"set", artist:artId, ad:false, s:s, e:e,
+        out.push({ d:iso, cal:"reserva", artist:artId, ad:false, s:s, e:e,
           t:(row.notas||row.venue_nombre||(row.tipo==="boda"?"Boda":"Evento privado")),
           venue:(row.venue_nombre||""), meta:meta,
           bookingId:row.id, bookingTipo:row.tipo });
