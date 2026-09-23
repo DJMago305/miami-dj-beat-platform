@@ -971,13 +971,30 @@
                   leads.forEach(function(ev){ if(ev.status==='CANCELLED') return;
                     events.push({ lead:(ev.event_type||'Evento')+(ev.status?' · '+(ST[ev.status]||ev.status):''), loc:ev.location||'—', start:'Sin horario', end:'Sin horario', s:null, e:null }); });
                   // 2) Residencias recurrentes de hoy — MISMO origen que el calendario (residency_schedule por día de semana)
-                  var rsel='day_of_week,venue,start_time,end_time';
+                  var rsel='id,day_of_week,venue,start_time,end_time';
                   // Puerta SEGURA primero (candado de venue_pay a nivel DB); si aún no existe, cae a la base.
                   var rq = await sb.from('residency_schedule_secure').select(rsel+',dj_id').eq('active',true).eq('day_of_week',dow);
                   if(rq.error) rq = await sb.from('residency_schedule_secure').select(rsel).eq('active',true).eq('day_of_week',dow);
                   if(rq.error) rq = await sb.from('residency_schedule').select(rsel+',dj_id').eq('active',true).eq('day_of_week',dow);
                   if(rq.error) rq = await sb.from('residency_schedule').select(rsel).eq('active',true).eq('day_of_week',dow);
-                  ((rq.data)||[]).filter(function(r){ return !r.dj_id || r.dj_id===prof.id; }).forEach(function(r){
+                  var _rrules = (rq.data)||[];
+                  // Excepciones puntuales de HOY ("solo esta fecha, DJ distinto" -- residency_schedule_exceptions).
+                  // Sin esto, una residencia alternada (ej. DJYuyo/DJSolitario semana por medio) siempre mostraba
+                  // al DJ de la regla base como si le tocara TODAS las semanas -- mismo mecanismo que loadResidencies()
+                  // en calendario-operacional-inteligente.html, aplicado aquí solo para la fecha de hoy.
+                  var _excByRuleId = {};
+                  try {
+                    var _ruleIds = _rrules.map(function(rl){ return rl.id; }).filter(Boolean);
+                    if (_ruleIds.length) {
+                      var exq = await sb.from('residency_schedule_exceptions').select('residency_id,dj_id,skip').eq('exception_date', iso).in('residency_id', _ruleIds);
+                      (exq.data||[]).forEach(function(ex){ _excByRuleId[ex.residency_id] = ex; });
+                    }
+                  } catch(_exErr) { /* no bloquear el widget si falla la consulta de excepciones */ }
+                  _rrules.forEach(function(r){
+                    var _exc = _excByRuleId[r.id];
+                    if (_exc && _exc.skip) return;   // eliminada solo hoy
+                    var _effDjId = _exc ? _exc.dj_id : r.dj_id;
+                    if (_effDjId && _effDjId !== prof.id) return;   // hoy le toca a otro DJ
                     var s=num(r.start_time), e=num(r.end_time); if(e!=null && s!=null && e<s) e+=24;
                     events.push({ lead:'Residencia · '+(r.venue||''), loc:r.venue||'—', start:t12(r.start_time)||'Sin horario', end:t12(r.end_time)||'Sin horario', s:s, e:e }); });
                   if(!events.length) return null;
@@ -7475,7 +7492,7 @@
     </script>
 
     <script src="./header-smart-search.js?v=20260421-smartsearch-dj-directory"></script>
-    <script src="./mdjb-shared-header.js?v=20260921-svc-activo4"></script>
+    <script src="./mdjb-shared-header.js?v=20260922-hero-below-header"></script>
     <script src="./js/mdj-profile-owner-link.js?v=20260516-perf-ab-1"></script>
   <script src="./mdj-owner-tabs-marquee.js?v=20260818-nav-canonico"></script>
   <script src="./mdj-social-bar.js?v=20260819-social-contact-only"></script>

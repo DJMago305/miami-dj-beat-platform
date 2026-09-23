@@ -152,6 +152,9 @@
           enableBillingFields();
           loadPaymentMethods(caSession);
         }
+        if (panel === 'evaluacion' && caSession) {
+          loadEvaluacionPanel(caSession);
+        }
       });
     });
     document.querySelectorAll('[data-ca-goto]').forEach(function (btn) {
@@ -344,6 +347,160 @@
         '</td></tr>';
       if (plannedBody) plannedBody.innerHTML = err;
       if (pastBody) pastBody.innerHTML = err;
+    }
+  }
+
+  /* ── Evaluación del cliente (privada, insert-only) ────────────────────
+     Distinta de dj_public_reviews (5 estrellas, público): esta es una
+     calificación Mal/Regular/Bueno/Excelente + opinión, ligada a un lead
+     específico ya completado (leads.event_completed_at). Guarda vía
+     evaluar_evento_cliente (RPC, única vía de entrada) -- el cliente nunca
+     puede releer lo que envió, mismo principio que el libro de incidentes
+     del artista (R14/R15). */
+  var _evalLoaded = false;
+  var _evalLeadId = null;
+  var _evalCalificacion = null;
+
+  async function fetchEvaluableLeads(session) {
+    var client = db();
+    if (!client || !session || !session.user) return [];
+    var uid = session.user.id;
+    var emailNorm = session.user.email ? String(session.user.email).trim().toLowerCase() : '';
+    var cols = 'id,email,client_user_id,venue,location,event_type,event_date,assigned_dj_name,event_completed_at,evaluado_en';
+    var seen = {};
+    var rows = [];
+    function absorb(data) {
+      (data || []).forEach(function (row) {
+        if (row && row.id && row.event_completed_at && !seen[row.id]) {
+          seen[row.id] = true;
+          rows.push(row);
+        }
+      });
+    }
+    if (uid) {
+      var r1 = await client.from('leads').select(cols).eq('client_user_id', uid).not('event_completed_at', 'is', null).order('event_date', { ascending: false }).limit(50);
+      absorb(r1.data);
+    }
+    if (emailNorm) {
+      var r2 = await client.from('leads').select(cols).ilike('email', emailNorm).not('event_completed_at', 'is', null).order('event_date', { ascending: false }).limit(50);
+      absorb(r2.data);
+    }
+    return rows;
+  }
+
+  function _evalLeadLabel(lead) {
+    return (lead.venue || lead.location || t('client-account-eval-event-fallback', 'Event')) + ' — ' + formatEventDate(lead.event_date);
+  }
+
+  function renderEvalPending(leads) {
+    var body = document.getElementById('ca-eval-pending-body');
+    if (!body) return;
+    if (!leads.length) {
+      body.innerHTML = '<p class="fineprint">' + escapeHtml(t('client-account-eval-pending-empty', 'No completed events waiting for a rating.')) + '</p>';
+      return;
+    }
+    body.innerHTML = leads.map(function (lead) {
+      return '<div class="ca-eval-row"><div class="ca-eval-row__meta">' + escapeHtml(_evalLeadLabel(lead)) +
+        (lead.assigned_dj_name ? '<small>' + escapeHtml(lead.assigned_dj_name) + '</small>' : '') +
+        '</div><button type="button" class="sys-btn secondary ca-eval-start" data-lead-id="' + escapeHtml(lead.id) + '">' +
+        escapeHtml(t('client-account-eval-rate-btn', 'Rate')) + '</button></div>';
+    }).join('');
+    body.querySelectorAll('.ca-eval-start').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var lead = leads.filter(function (l) { return l.id === btn.getAttribute('data-lead-id'); })[0];
+        if (lead) openEvalForm(lead);
+      });
+    });
+  }
+
+  function renderEvalDone(leads) {
+    var body = document.getElementById('ca-eval-done-body');
+    if (!body) return;
+    if (!leads.length) {
+      body.innerHTML = '<p class="fineprint">' + escapeHtml(t('client-account-eval-done-empty', 'Nothing rated yet.')) + '</p>';
+      return;
+    }
+    body.innerHTML = leads.map(function (lead) {
+      return '<div class="ca-eval-row"><div class="ca-eval-row__meta">' + escapeHtml(_evalLeadLabel(lead)) + '</div>' +
+        '<span class="ca-eval-row__done">✓ ' + escapeHtml(t('client-account-eval-done-tag', 'Rated')) + '</span></div>';
+    }).join('');
+  }
+
+  function openEvalForm(lead) {
+    _evalLeadId = lead.id;
+    _evalCalificacion = null;
+    var card = document.getElementById('ca-eval-form-card');
+    var title = document.getElementById('ca-eval-form-title');
+    if (title) title.textContent = _evalLeadLabel(lead);
+    document.querySelectorAll('#ca-eval-scale .ca-eval-chip').forEach(function (c) { c.classList.remove('is-selected'); });
+    var opinion = document.getElementById('ca-eval-opinion'); if (opinion) opinion.value = '';
+    setStatus(document.getElementById('ca-eval-status'), '', true);
+    if (card) {
+      card.style.display = '';
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+
+  function closeEvalForm() {
+    _evalLeadId = null;
+    _evalCalificacion = null;
+    var card = document.getElementById('ca-eval-form-card');
+    if (card) card.style.display = 'none';
+  }
+
+  async function submitEval(session) {
+    var statusEl = document.getElementById('ca-eval-status');
+    if (!_evalLeadId) { setStatus(statusEl, t('client-account-eval-pick-first', 'Pick an event above first.'), false); return; }
+    if (!_evalCalificacion) { setStatus(statusEl, t('client-account-eval-pick-rating', 'Choose a rating before submitting.'), false); return; }
+    var client = db();
+    if (!client) return;
+    var btn = document.getElementById('ca-eval-submit');
+    var opinion = (document.getElementById('ca-eval-opinion').value || '').trim() || null;
+    try {
+      if (btn) { btn.disabled = true; }
+      var res = await client.rpc('evaluar_evento_cliente', {
+        p_lead_id: _evalLeadId,
+        p_calificacion: _evalCalificacion,
+        p_opinion: opinion,
+      });
+      if (res.error) throw res.error;
+      closeEvalForm();
+      setStatus(document.getElementById('ca-eval-status'), '', true);
+      await loadEvaluacionPanel(session);
+    } catch (e) {
+      setStatus(statusEl, (e && e.message) || t('client-account-eval-error', 'Could not save your rating.'), false);
+    } finally {
+      if (btn) { btn.disabled = false; }
+    }
+  }
+
+  function wireEvalStaticControls(session) {
+    document.querySelectorAll('#ca-eval-scale .ca-eval-chip').forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        document.querySelectorAll('#ca-eval-scale .ca-eval-chip').forEach(function (c) { c.classList.remove('is-selected'); });
+        chip.classList.add('is-selected');
+        _evalCalificacion = chip.getAttribute('data-val');
+      });
+    });
+    var cancelBtn = document.getElementById('ca-eval-cancel');
+    if (cancelBtn) cancelBtn.addEventListener('click', closeEvalForm);
+    var submitBtn = document.getElementById('ca-eval-submit');
+    if (submitBtn) submitBtn.addEventListener('click', function () { submitEval(session); });
+  }
+
+  async function loadEvaluacionPanel(session) {
+    var pendingBody = document.getElementById('ca-eval-pending-body');
+    if (pendingBody) pendingBody.innerHTML = '<p class="fineprint">' + escapeHtml(t('client-account-eval-loading', 'Loading your events…')) + '</p>';
+    if (!_evalLoaded) { _evalLoaded = true; wireEvalStaticControls(session); }
+    try {
+      var leads = await fetchEvaluableLeads(session);
+      leads.sort(sortPast);
+      var pending = leads.filter(function (l) { return !l.evaluado_en; });
+      var done = leads.filter(function (l) { return l.evaluado_en; });
+      renderEvalPending(pending);
+      renderEvalDone(done);
+    } catch (e) {
+      if (pendingBody) pendingBody.innerHTML = '<p class="fineprint">' + escapeHtml(t('client-account-events-error', 'Could not load events.')) + '</p>';
     }
   }
 

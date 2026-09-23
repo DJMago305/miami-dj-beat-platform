@@ -1441,6 +1441,10 @@
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           Agenda / Disponibilidad
         </button>
+        <button class="acct-side-link" onclick="showPanel('reporte',this)">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+          Reporte
+        </button>
         <button class="acct-side-link" onclick="showPanel('rewards',this)">
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
           Recompensas
@@ -1989,8 +1993,7 @@
 
     <!-- PANEL: CATEGORÍA ──────────────────────────────────────── -->
     <div id="panel-categoria" class="acct-panel" style="padding-top:16px;">
-      <h1 class="acct-h1">Categoría Artística</h1>
-      <p style="font-size:13px;color:rgba(255,255,255,0.5);margin:0 0 24px;">Esta línea aparece en tu perfil público encima de tu nombre.</p>
+      <h1 class="acct-h1" style="margin-bottom:24px;">Categoría Artística<span class="mdj-help" tabindex="0"><span class="mdj-help-icon">?</span><span class="mdj-help-tip">Esta línea aparece en tu perfil público encima de tu nombre.</span></span></h1>
 
       <div class="acct-card">
         <div class="acct-card-body" style="padding:24px 28px 28px;">
@@ -2021,14 +2024,13 @@
             <label class="cfg-label" style="font-size:10px;letter-spacing:2px;display:block;margin-bottom:10px;">Preview</label>
             <p style="font-size:11px;color:rgba(255,255,255,0.4);margin:0 0 10px;">Así aparecerás:</p>
             <div id="cat-preview" style="padding:14px 20px;background:rgba(197,160,89,0.06);border:1px solid rgba(197,160,89,0.22);border-radius:10px;font-size:13px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:rgba(197,160,89,0.9);line-height:1.5;min-height:44px;">
-              DJ · OPEN FORMAT · HIALEAH
+              DJ · OPEN FORMAT
             </div>
-            <p style="font-size:11px;color:rgba(255,255,255,0.3);margin:6px 0 0;">La ciudad se agrega automáticamente desde tu perfil.</p>
           </div>
 
           <!-- ── FEEDBACK + SAVE ── -->
           <p id="cat-msg" style="display:none;font-size:13px;margin-bottom:12px;"></p>
-          <button id="cat-save-btn" class="sys-btn primary" type="button">Guardar categoría</button>
+          <button id="cat-save-btn" class="sys-btn primary" type="button">Save</button>
 
         </div>
       </div>
@@ -2036,9 +2038,7 @@
       <!-- ── TARIFA PRIVADA (solo artistas; la ve el equipo de Miami DJ Beat) ── -->
       <div id="tar-card" class="acct-card" style="display:none;margin-top:20px;">
         <div class="acct-card-body" style="padding:24px 28px 28px;">
-          <h2 class="acct-h1" style="font-size:18px;margin:0 0 6px;">Tu tarifa</h2>
-          <p style="font-size:13px;color:rgba(255,255,255,0.5);margin:0 0 6px;">Privada: solo la ve el equipo de Miami DJ Beat. No aparece en tu perfil público ni la ven los clientes.</p>
-          <p style="font-size:12px;color:rgba(255,255,255,0.4);margin:0 0 20px;">Si no confirmas tu precio, Miami DJ Beat usará su tarifa base como punto de partida para negociar contigo.</p>
+          <h2 class="acct-h1" style="font-size:18px;margin:0 0 20px;">Tu tarifa<span class="mdj-help" tabindex="0"><span class="mdj-help-icon">?</span><span class="mdj-help-tip">Privada: solo la ve el equipo de Miami DJ Beat. No aparece en tu perfil público ni la ven los clientes. Si no confirmas tu precio, Miami DJ Beat usará su tarifa base como punto de partida para negociar contigo.</span></span></h2>
 
           <label class="cfg-label" style="font-size:10px;letter-spacing:2px;display:block;margin-bottom:10px;">Cómo cobras</label>
           <div id="tar-modo" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
@@ -2060,7 +2060,7 @@
           <p id="tar-estado" style="font-size:12px;color:rgba(255,255,255,0.4);margin:8px 0 20px;"></p>
 
           <p id="tar-msg" style="display:none;font-size:13px;margin-bottom:12px;"></p>
-          <button id="tar-save-btn" class="sys-btn primary" type="button">Guardar tarifa</button>
+          <button id="tar-save-btn" class="sys-btn primary" type="button">Save</button>
         </div>
       </div>
     </div><!-- /panel-categoria -->
@@ -2227,6 +2227,112 @@
       </button>
 
     </div><!-- /panel-agenda -->
+
+    <!-- PANEL: REPORTE (R14-R15, libro de incidentes) ────────────── -->
+    <div id="panel-reporte" class="acct-panel">
+      <h1 class="acct-h1">Reporte</h1>
+      <p style="font-size:13px;color:rgba(255,255,255,0.5);margin:0 0 28px;">Reporta un incidente o una diferencia de facturación de un evento tuyo. Queda guardado de forma permanente para el equipo de Miami DJ Beat — una vez enviado, no podrás volver a verlo ni editarlo.</p>
+
+      <div class="acct-card">
+        <div class="acct-card-body" style="padding:28px 32px 32px;max-width:960px;">
+
+          <!-- ── EVENTO (buscador inteligente: por fecha, venue o DJ; día/hora se derivan solos) ── -->
+          <div style="margin-bottom:24px;position:relative;" id="rep-evento-wrap">
+            <label class="cfg-label" style="font-size:10px;letter-spacing:2px;" for="rep-evento">Evento relacionado</label>
+            <input type="text" id="rep-evento" class="sys-input" style="margin-top:8px;width:100%;" placeholder="Busca por fecha, venue o DJ…" autocomplete="off" />
+            <p id="rep-evento-detalle" style="font-size:12px;color:rgba(197,160,89,0.85);margin:8px 0 0;display:none;"></p>
+            <p id="rep-evento-quien" style="font-size:11px;color:rgba(255,255,255,0.4);margin:6px 0 0;display:none;"></p>
+          </div>
+
+          <!-- ── EVENTO MANUAL (solo si se elige "Otro") ── -->
+          <div id="rep-evento-manual-wrap" style="display:none;margin:-8px 0 24px;padding:16px;border:1px solid rgba(197,160,89,0.22);border-radius:10px;background:rgba(197,160,89,0.04);">
+            <div style="display:flex;gap:16px;flex-wrap:wrap;">
+              <div style="flex:1;min-width:220px;">
+                <label class="cfg-label" style="font-size:9px;letter-spacing:1.5px;opacity:.7;" for="rep-evento-manual-nombre">Nombre del evento / venue</label>
+                <input type="text" id="rep-evento-manual-nombre" class="sys-input" style="margin-top:6px;width:100%;" placeholder="Ej. Boda en el Biltmore" autocomplete="off" />
+              </div>
+              <div style="flex:0 0 200px;">
+                <label class="cfg-label" style="font-size:9px;letter-spacing:1.5px;opacity:.7;" for="rep-evento-manual-fecha">Fecha del evento</label>
+                <input type="date" id="rep-evento-manual-fecha" class="sys-input" style="margin-top:6px;width:100%;" />
+              </div>
+            </div>
+          </div>
+
+          <!-- ── DIVIDER ── -->
+          <div style="border-top:1px solid rgba(255,255,255,0.07);margin:24px -32px 24px;"></div>
+
+          <!-- ── CÓMO ESTUVO EL EVENTO (opcional) ── -->
+          <div style="margin-bottom:24px;">
+            <label class="cfg-label" style="font-size:10px;letter-spacing:2px;display:block;margin-bottom:10px;">¿Cómo estuvo el evento? <span style="opacity:.5;">(opcional)</span></label>
+            <div style="display:flex;gap:16px;flex-wrap:wrap;">
+              <div style="flex:1;min-width:200px;">
+                <label class="cfg-label" style="font-size:9px;letter-spacing:1.5px;opacity:.6;" for="rep-asistencia">Asistencia</label>
+                <select id="rep-asistencia" class="sys-input" style="margin-top:6px;">
+                  <option value="">— Sin dato —</option>
+                  <option value="baja">Poca gente</option>
+                  <option value="media">Medio lleno</option>
+                  <option value="full">Full event</option>
+                </select>
+              </div>
+              <div style="flex:1;min-width:200px;">
+                <label class="cfg-label" style="font-size:9px;letter-spacing:1.5px;opacity:.6;" for="rep-ventas">Ventas</label>
+                <select id="rep-ventas" class="sys-input" style="margin-top:6px;">
+                  <option value="">— Sin dato —</option>
+                  <option value="bajo">Bajo</option>
+                  <option value="medio">Medio</option>
+                  <option value="alto">Alto</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── DIVIDER ── -->
+          <div style="border-top:1px solid rgba(255,255,255,0.07);margin:24px -32px 24px;"></div>
+
+          <!-- ── INCIDENTES (barras inteligentes repetibles) ── -->
+          <div style="margin-bottom:8px;">
+            <label class="cfg-label" style="font-size:10px;letter-spacing:2px;display:block;margin-bottom:10px;">Incidentes <span style="opacity:.5;">(opcional — agrega uno por cada cosa que pasó)</span></label>
+            <div id="rep-incidentes-list"></div>
+            <p style="font-size:11px;color:rgba(255,255,255,0.35);margin:10px 0 0;line-height:1.5;">Ejemplos de línea de trabajo: lluvia, corte de luz, problemas de sonido, incendio. El detalle específico de cada uno va en "Detalles", más abajo.</p>
+          </div>
+
+          <!-- ── DIVIDER ── -->
+          <div style="border-top:1px solid rgba(255,255,255,0.07);margin:24px -32px 24px;"></div>
+
+          <!-- ── FACTURACIÓN (opcional, aparte de incidentes) ── -->
+          <div style="margin-bottom:8px;">
+            <label class="cfg-label" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <input type="checkbox" id="rep-facturacion-check" style="width:16px;height:16px;">
+              <span style="font-size:10px;letter-spacing:2px;">También hay una diferencia de facturación <span style="opacity:.5;">(opcional)</span></span>
+            </label>
+            <div id="rep-monto-wrap" style="display:none;margin:14px 0 0;max-width:260px;">
+              <label class="cfg-label" style="font-size:10px;letter-spacing:2px;" for="rep-monto">Diferencia reportada (USD)</label>
+              <input id="rep-monto" type="text" inputmode="decimal" class="sys-input" style="margin-top:8px;" placeholder="0.00" autocomplete="off" />
+            </div>
+          </div>
+
+          <!-- ── DIVIDER ── -->
+          <div style="border-top:1px solid rgba(255,255,255,0.07);margin:24px -32px 24px;"></div>
+
+          <!-- ── DETALLES (texto libre, compartido por incidentes/facturación) ── -->
+          <div style="margin-bottom:24px;" id="rep-detalles-wrap">
+            <label class="cfg-label" style="font-size:10px;letter-spacing:2px;" for="rep-descripcion">Detalles</label>
+            <textarea id="rep-descripcion" class="sys-input rep-textarea-lg" rows="14" style="margin-top:8px;resize:vertical;width:100%;" placeholder="Describe qué pasó, con el mayor detalle posible…"></textarea>
+          </div>
+
+          <!-- ── NOTA ADICIONAL (independiente, opcional) ── -->
+          <div style="margin-bottom:24px;">
+            <label class="cfg-label" style="font-size:10px;letter-spacing:2px;" for="rep-nota-adicional">Nota adicional <span style="opacity:.5;">(opcional)</span></label>
+            <textarea id="rep-nota-adicional" class="sys-input rep-textarea-lg" rows="5" style="margin-top:8px;resize:vertical;width:100%;" placeholder="Cualquier otra cosa que quieras dejar anotada sobre este evento…"></textarea>
+          </div>
+
+          <!-- ── FEEDBACK + SAVE ── -->
+          <p id="rep-msg" style="display:none;font-size:13px;margin-bottom:12px;"></p>
+          <button id="rep-save-btn" class="sys-btn primary" type="button">Save</button>
+
+        </div>
+      </div>
+    </div><!-- /panel-reporte -->
 
     <!-- PANEL: RECOMPENSAS ────────────────────────────────────── -->
     <div id="panel-rewards" class="acct-panel">
@@ -4662,6 +4768,7 @@
         document.querySelectorAll('.acct-side-link').forEach(function (b) { b.classList.remove('active'); });
         if (btn) btn.classList.add('active');
         if (id === 'categoria' && typeof loadCategoriaPanel === 'function') loadCategoriaPanel();
+        if (id === 'reporte' && typeof loadReportePanel === 'function') loadReportePanel();
         if (id === 'billing' && typeof refreshBillingPanel === 'function') refreshBillingPanel();
         if (id === 'agenda' && typeof loadSettingsForm === 'function') {
           loadSettingsForm().catch(function (e) { console.warn('[agenda] load error:', e); });
@@ -4683,7 +4790,8 @@
       /* ── TICKET-CONFIG-CATEGORIA-001 v3: Taxonomía final Miami DJ Beat ───── */
       (function () {
 
-        /* ── Chip styles (injected once) ──────────────────────────────── */
+        /* ── Chip styles (injected once) ── reusada también por el panel Reporte,
+           expuesta abajo para no duplicar el CSS de .mdj-cat-chip. ── */
         var _catStyleDone = false;
         function _injectCatStyles() {
           if (_catStyleDone) return; _catStyleDone = true;
@@ -4696,7 +4804,30 @@
             '.mdj-cat-chip:hover{border-color:rgba(197,160,89,0.35);color:rgba(197,160,89,0.8);}',
             '.mdj-cat-chip input{display:none;}',
             '.mdj-cat-chip:has(input:checked){border-color:rgba(197,160,89,0.65);',
-            'background:rgba(197,160,89,0.09);color:rgba(197,160,89,1);font-weight:800;}'
+            'background:rgba(197,160,89,0.09);color:rgba(197,160,89,1);font-weight:800;}',
+            /* Ícono de ayuda "?" — mismo patrón de staff-admin.html (banco de íconos):
+               títulos de sección van solos, la explicación aparece al pasar el mouse/foco. */
+            '.mdj-help{position:relative;display:inline-flex;flex:0 0 auto;align-items:center;',
+            'justify-content:center;cursor:help;outline:none;vertical-align:middle;margin-left:8px;}',
+            '.mdj-help-icon{display:inline-flex;align-items:center;justify-content:center;width:18px;',
+            'height:18px;border-radius:50%;border:1px solid rgba(197,160,89,0.55);',
+            'background:rgba(197,160,89,0.12);color:rgba(197,160,89,0.98);font-size:11px;',
+            'font-weight:800;line-height:1;}',
+            '.mdj-help-tip{position:absolute;top:calc(100% + 8px);left:0;z-index:60;',
+            'width:min(300px,calc(100vw - 48px));padding:10px 12px;border-radius:10px;',
+            'border:1px solid rgba(197,160,89,0.42);background:rgba(8,12,20,0.97);',
+            'color:rgba(248,250,252,0.92);font-size:12px !important;font-weight:500;line-height:1.45;',
+            'text-transform:none;box-shadow:0 12px 32px rgba(0,0,0,0.45);opacity:0;visibility:hidden;',
+            'pointer-events:none;transition:opacity .15s ease,visibility .15s ease;}',
+            '.mdj-help:hover .mdj-help-tip,.mdj-help:focus .mdj-help-tip,',
+            '.mdj-help:focus-within .mdj-help-tip{opacity:1;visibility:visible;}',
+            /* Reporte (R15): la caja de texto principal debe invitar a escribir,
+               no lucir como un recuadro de subir archivos. */
+            '.rep-textarea-lg{padding:20px 22px !important;font-size:15px !important;',
+            'line-height:1.7 !important;background:#17171a !important;',
+            'border-radius:10px !important;border-color:rgba(255,255,255,0.14) !important;}',
+            '.rep-textarea-lg::placeholder{color:rgba(255,255,255,0.28);}',
+            '.rep-textarea-lg:focus{background:#1d1d20 !important;border-color:rgba(197,160,89,0.4) !important;}'
           ].join('');
           document.head.appendChild(s);
         }
@@ -4716,8 +4847,7 @@
         function _buildSpecialty() { return _CAT().buildSpecialty(_cat.cat, _cat.subs, _needsComercial() ? _cat.comercial : ''); }
         function _updatePreview() {
           var preview = document.getElementById('cat-preview'); if (!preview) return;
-          var spec = _buildSpecialty(), city = window._mdjCatCity || '';
-          preview.textContent = (city ? (spec + ' · ' + city) : spec).toUpperCase() || '—';
+          preview.textContent = (_buildSpecialty() || '').toUpperCase() || '—';
         }
         function _renderCat() {
           _CAT().renderPanel(document.getElementById('cat-subs-box'), _cat, {
@@ -4757,7 +4887,7 @@
           } catch (err) {
             _catShowMsg(msg, 'Error: ' + (err.message || err), 'error');
           } finally {
-            if (btn) { btn.disabled = false; btn.textContent = 'Guardar categoría'; }
+            if (btn) { btn.disabled = false; btn.textContent = 'Save'; }
           }
         }
 
@@ -4801,7 +4931,7 @@
             if ((show !== null && isNaN(show)) || (hora !== null && isNaN(hora))) { _catShowMsg(msg, 'Escribe solo números, por ejemplo 500 o 500.50.', 'error'); return; }
             if (btn) { btn.disabled = true; btn.textContent = 'Guardando…'; }
             var { error } = await sb.from('artist_rates')
-              .upsert({ user_id: session.user.id, tarifa_show_usd: show, tarifa_hora_usd: hora }, { onConflict: 'user_id' });
+              .upsert({ user_id: session.user.id, tarifa_show_usd: show, tarifa_hora_usd: hora, tarifa_modo: m }, { onConflict: 'user_id' });
             if (error) throw error;
             var est = document.getElementById('tar-estado');
             if (est) est.textContent = (show === null && hora === null)
@@ -4811,7 +4941,7 @@
           } catch (err) {
             _catShowMsg(msg, 'No se pudo guardar: ' + (err.message || err), 'error');
           } finally {
-            if (btn) { btn.disabled = false; btn.textContent = 'Guardar tarifa'; }
+            if (btn) { btn.disabled = false; btn.textContent = 'Save'; }
           }
         }
         async function _loadTarifa(sb, session) {
@@ -4820,12 +4950,14 @@
           var rol = String((typeof window.mdjResolveEffectiveUserRole === 'function' ? window.mdjResolveEffectiveUserRole(session.user) : '') || '').toLowerCase();
           if (!(rol === 'artist' || rol === 'talent' || rol === 'dj')) { card.style.display = 'none'; return; }
           card.style.display = '';
-          var { data: r } = await sb.from('artist_rates').select('tarifa_show_usd, tarifa_hora_usd, confirmada_en').eq('user_id', session.user.id).maybeSingle();
+          var { data: r } = await sb.from('artist_rates').select('tarifa_show_usd, tarifa_hora_usd, tarifa_modo, confirmada_en').eq('user_id', session.user.id).maybeSingle();
           var show = r && r.tarifa_show_usd != null ? String(r.tarifa_show_usd) : '';
           var hora = r && r.tarifa_hora_usd != null ? String(r.tarifa_hora_usd) : '';
           var showEl = document.getElementById('tar-show'), horaEl = document.getElementById('tar-hora');
           if (showEl) showEl.value = show; if (horaEl) horaEl.value = hora;
-          var modo = (show && !hora) ? 'show' : (!show && hora) ? 'hora' : 'ambas';
+          /* Modo explícito guardado por el artista; si la fila es previa a este campo (null),
+             se infiere de qué campos tienen valor -- solo como respaldo, no como fuente normal. */
+          var modo = (r && r.tarifa_modo) ? r.tarifa_modo : ((show && !hora) ? 'show' : (!show && hora) ? 'hora' : 'ambas');
           var rd = document.querySelector('input[name="tar-modo"][value="' + modo + '"]'); if (rd) rd.checked = true;
           _tarAplicarModo();
           var est = document.getElementById('tar-estado');
@@ -4840,6 +4972,8 @@
         }
 
         /* Public entry point — called by showPanel('categoria') */
+        window.__mdjInjectChipStyles = _injectCatStyles;
+
         window.loadCategoriaPanel = async function loadCategoriaPanel() {
           _injectCatStyles();
           var sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
@@ -4848,7 +4982,7 @@
             var { data: { session } } = await sb.auth.getSession();
             if (!session) return;
             var { data: p } = await sb.from('dj_profiles')
-              .select('categoria, artist_specialty, city, idiomas')
+              .select('categoria, artist_specialty, idiomas')
               .eq('user_id', session.user.id)
               .maybeSingle();
             _fillSelect();
@@ -4858,7 +4992,6 @@
             /* lo que sobra en artist_specialty y no es subcategoría = nombre comercial (Hora Loca / Payasos) */
             var partes = String((p && p.artist_specialty) || '').split('·').map(function (x) { return x.trim(); }).filter(Boolean).slice(1);
             _cat.comercial = c ? partes.filter(function (x) { return c.subs.indexOf(x) === -1; }).join(' · ') : '';
-            window._mdjCatCity = (p && p.city) || '';
             var sel = document.getElementById('cat-tipo'); if (sel) sel.value = _cat.cat || '';
             _wireListeners();
             _renderCat();
@@ -4868,6 +5001,309 @@
 
       }());
       /* ── /TICKET-CONFIG-CATEGORIA-001 ────────────────────────────────── */
+
+      /* ── TICKET-R14-R15: Reporte (libro de incidentes, inmutable) ─────────
+         Formulario del artista: elige su evento (día/hora se derivan solos,
+         nunca se escriben a mano); todo lo demás es opcional -- si el evento
+         salió bien, no hay nada que llenar ni que enviar. Puede reportar
+         cómo estuvo el evento (asistencia/ventas), uno o varios incidentes
+         (barra inteligente + botón azul "+" para agregar más), una nota
+         adicional libre, y aparte -- si aplica -- una diferencia de
+         facturación. Al guardar, TODO en un solo envío vía
+         `libro_incidentes_reportar` (RPC, la ÚNICA vía de entrada a la
+         tabla) y LIMPIA el formulario -- el artista nunca puede releer lo
+         que envió, a propósito (ver docs/roadmap/master-map.json, R15). */
+      (function () {
+        var _repEventos = [];
+        var _repWired = false;
+        var _repMiNombre = '';
+        var _repIncSeq = 0;
+        var _repEventoSel = null; /* { id, manual } — evento realmente elegido, distinto del texto escrito */
+        var REP_EVENTO_OTRO = 'Otro (evento no listado)';
+
+        var REP_INCIDENTE_OPCIONES = [
+          ['', '— Selecciona —'],
+          ['lluvia', 'Lluvia'],
+          ['corte_de_luz', 'Corte de luz'],
+          ['sonido', 'Problemas de sonido'],
+          ['incendio', 'Incendio'],
+          ['otro', 'Otro']
+        ];
+
+        function _repFmtFechaHora(ev) {
+          if (!ev || !ev.event_date) return '';
+          var d = new Date(ev.event_date + 'T00:00:00');
+          var fecha = d.toLocaleDateString('es-US', { day: 'numeric', month: 'long', year: 'numeric' });
+          var hora = ev.start_time ? (' · ' + String(ev.start_time).slice(0, 5)) : '';
+          return 'Fecha: ' + fecha + hora;
+        }
+
+        function _repEventoLabel(ev) {
+          var fecha = _repFmtFechaHora(ev).replace('Fecha: ', '');
+          return fecha + ' — ' + (ev.venue || 'Evento');
+        }
+
+        function _repAplicarEvento() {
+          var detalle = document.getElementById('rep-evento-detalle');
+          var quien = document.getElementById('rep-evento-quien');
+          var ev = (_repEventoSel && !_repEventoSel.manual)
+            ? _repEventos.filter(function (e) { return e.id === _repEventoSel.id; })[0]
+            : null;
+          if (detalle) {
+            if (ev) { detalle.textContent = _repFmtFechaHora(ev); detalle.style.display = ''; }
+            else { detalle.textContent = ''; detalle.style.display = 'none'; }
+          }
+          if (quien) {
+            if (ev && _repMiNombre) { quien.textContent = 'DJ de este evento: ' + _repMiNombre + ' · Reportado por: ' + _repMiNombre + ' (Artista)'; quien.style.display = ''; }
+            else { quien.textContent = ''; quien.style.display = 'none'; }
+          }
+        }
+
+        function _repCerrarDropdownEvento() {
+          var dd = document.getElementById('rep-evento-dropdown');
+          if (dd && dd.parentNode) dd.parentNode.removeChild(dd);
+        }
+
+        function _repFiltrarEventos(q) {
+          q = String(q || '').trim().toLowerCase();
+          if (!q) return _repEventos.slice(0, 10);
+          return _repEventos.filter(function (e) {
+            var venue = String(e.venue || '').toLowerCase();
+            var fecha = _repEventoLabel(e).toLowerCase();
+            var dj = String(_repMiNombre || '').toLowerCase();
+            return venue.indexOf(q) !== -1 || fecha.indexOf(q) !== -1 || dj.indexOf(q) !== -1;
+          });
+        }
+
+        function _repElegirEvento(ev) {
+          _repEventoSel = { id: ev.id, manual: false };
+          var input = document.getElementById('rep-evento');
+          if (input) input.value = _repEventoLabel(ev);
+          var manualWrap = document.getElementById('rep-evento-manual-wrap');
+          if (manualWrap) manualWrap.style.display = 'none';
+          _repCerrarDropdownEvento();
+          _repAplicarEvento();
+        }
+
+        function _repElegirOtro() {
+          _repEventoSel = { id: null, manual: true };
+          var input = document.getElementById('rep-evento');
+          if (input) input.value = REP_EVENTO_OTRO;
+          var manualWrap = document.getElementById('rep-evento-manual-wrap');
+          if (manualWrap) manualWrap.style.display = '';
+          _repCerrarDropdownEvento();
+          _repAplicarEvento();
+        }
+
+        function _repRenderDropdownEvento(matches) {
+          _repCerrarDropdownEvento();
+          var wrap = document.getElementById('rep-evento-wrap');
+          var input = document.getElementById('rep-evento');
+          if (!wrap || !input) return;
+          var dd = document.createElement('div');
+          dd.id = 'rep-evento-dropdown';
+          dd.setAttribute('role', 'listbox');
+          dd.className = 'mdj-header-event-teaser-dropdown';
+          var html = '<div class="mdj-teaser-head">Tus eventos (más recientes primero)</div><ul class="mdj-teaser-list">';
+          matches.forEach(function (e, i) {
+            html += '<li><button type="button" class="mdj-teaser-row" data-idx="' + i + '">' +
+              String(_repEventoLabel(e)).replace(/</g, '&lt;') + '</button></li>';
+          });
+          html += '<li><button type="button" class="mdj-teaser-row" data-otro="1" style="color:rgba(197,160,89,0.9);">' +
+            REP_EVENTO_OTRO + '</button></li></ul>';
+          dd.innerHTML = html;
+          dd.addEventListener('mousedown', function (e) { e.preventDefault(); });
+          wrap.appendChild(dd);
+          dd.querySelectorAll('.mdj-teaser-row[data-idx]').forEach(function (btn) {
+            btn.addEventListener('click', function () { _repElegirEvento(matches[Number(btn.dataset.idx)]); });
+          });
+          var otroBtn = dd.querySelector('.mdj-teaser-row[data-otro]');
+          if (otroBtn) otroBtn.addEventListener('click', _repElegirOtro);
+        }
+
+        function _repWireEventoBuscador() {
+          var input = document.getElementById('rep-evento');
+          if (!input || input.dataset.wired) return;
+          input.dataset.wired = '1';
+          input.addEventListener('focus', function () { _repRenderDropdownEvento(_repFiltrarEventos(input.value === REP_EVENTO_OTRO ? '' : input.value)); });
+          input.addEventListener('input', function () {
+            _repEventoSel = null;
+            var manualWrap = document.getElementById('rep-evento-manual-wrap');
+            if (manualWrap) manualWrap.style.display = 'none';
+            _repAplicarEvento();
+            _repRenderDropdownEvento(_repFiltrarEventos(input.value));
+          });
+          input.addEventListener('blur', function () { setTimeout(_repCerrarDropdownEvento, 150); });
+        }
+
+        function _repRenderIncidentButtons() {
+          var rows = document.querySelectorAll('#rep-incidentes-list .rep-inc-row');
+          rows.forEach(function (row, i) {
+            var btn = row.querySelector('.rep-inc-btn');
+            if (!btn) return;
+            var isLast = (i === rows.length - 1);
+            btn.classList.toggle('rep-inc-btn-add', isLast);
+            btn.classList.toggle('rep-inc-btn-remove', !isLast);
+            btn.textContent = isLast ? '+' : '✕';
+            btn.title = isLast ? 'Agregar otro incidente' : 'Quitar este incidente';
+            btn.style.background = isLast ? '#2f6fed' : '#ef4444';
+          });
+        }
+
+        function _repAddIncidentRow() {
+          var list = document.getElementById('rep-incidentes-list');
+          if (!list) return;
+          var rid = 'rep-inc-' + (++_repIncSeq);
+          var row = document.createElement('div');
+          row.className = 'rep-inc-row';
+          row.dataset.rid = rid;
+          row.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:8px;';
+          var opts = REP_INCIDENTE_OPCIONES.map(function (o) { return '<option value="' + o[0] + '">' + o[1] + '</option>'; }).join('');
+          row.innerHTML = '<select class="sys-input rep-inc-select" style="flex:1;">' + opts + '</select>' +
+            '<button type="button" class="rep-inc-btn" style="width:30px;height:30px;border-radius:50%;border:none;color:#fff;font-size:18px;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;"></button>';
+          list.appendChild(row);
+          _repRenderIncidentButtons();
+        }
+
+        function _repIncidentesActuales() {
+          return Array.prototype.slice.call(document.querySelectorAll('#rep-incidentes-list .rep-inc-select'))
+            .map(function (s) { return s.value; })
+            .filter(function (v) { return v; })
+            .map(function (v) { return { subtipo: v }; });
+        }
+
+        function _repAplicarFacturacion() {
+          var check = document.getElementById('rep-facturacion-check');
+          var montoWrap = document.getElementById('rep-monto-wrap');
+          if (montoWrap) montoWrap.style.display = (check && check.checked) ? '' : 'none';
+        }
+
+        function _repMsg(text, ok) {
+          var el = document.getElementById('rep-msg');
+          if (!el) return;
+          el.textContent = text;
+          el.style.color = ok ? '#34d399' : '#ef4444';
+          el.style.display = 'block';
+          setTimeout(function () { el.style.display = 'none'; }, 4500);
+        }
+
+        function _repLimpiarFormulario() {
+          var sel = document.getElementById('rep-evento'); if (sel) sel.value = '';
+          _repEventoSel = null;
+          var manualWrap = document.getElementById('rep-evento-manual-wrap'); if (manualWrap) manualWrap.style.display = 'none';
+          var mn = document.getElementById('rep-evento-manual-nombre'); if (mn) mn.value = '';
+          var mf = document.getElementById('rep-evento-manual-fecha'); if (mf) mf.value = '';
+          var asis = document.getElementById('rep-asistencia'); if (asis) asis.value = '';
+          var vent = document.getElementById('rep-ventas'); if (vent) vent.value = '';
+          var list = document.getElementById('rep-incidentes-list'); if (list) list.innerHTML = '';
+          _repAddIncidentRow();
+          var check = document.getElementById('rep-facturacion-check'); if (check) check.checked = false;
+          var monto = document.getElementById('rep-monto'); if (monto) monto.value = '';
+          var desc = document.getElementById('rep-descripcion'); if (desc) desc.value = '';
+          var nota = document.getElementById('rep-nota-adicional'); if (nota) nota.value = '';
+          _repAplicarFacturacion();
+          _repAplicarEvento();
+        }
+
+        async function _repGuardar() {
+          var btn = document.getElementById('rep-save-btn');
+          var sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+          if (!sb) return;
+
+          var eventoId = (_repEventoSel && !_repEventoSel.manual) ? _repEventoSel.id : null;
+          var eventoManualNombre = (document.getElementById('rep-evento-manual-nombre').value || '').trim() || null;
+          var eventoManualFecha = document.getElementById('rep-evento-manual-fecha').value || null;
+          var asistencia = document.getElementById('rep-asistencia').value || null;
+          var ventas = document.getElementById('rep-ventas').value || null;
+          var incidentes = _repIncidentesActuales();
+          var detalles = (document.getElementById('rep-descripcion').value || '').trim() || null;
+          var notaAdicional = (document.getElementById('rep-nota-adicional').value || '').trim() || null;
+          var facturacion = !!document.getElementById('rep-facturacion-check').checked;
+          var montoRaw = (document.getElementById('rep-monto').value || '').trim().replace(',', '.');
+          var monto = null;
+
+          if (facturacion && montoRaw !== '') {
+            monto = Number(montoRaw);
+            if (!isFinite(monto) || monto < 0) { _repMsg('Escribe solo números en el monto, por ejemplo 150 o 150.50.', false); return; }
+          }
+          if (facturacion && !detalles) { _repMsg('Describe en "Detalles" qué pasó con la facturación antes de guardar.', false); return; }
+          if (!asistencia && !ventas && !incidentes.length && !facturacion && !notaAdicional) {
+            _repMsg('No hay nada que reportar — este formulario es opcional. Si todo estuvo bien, no hace falta enviarlo.', false);
+            return;
+          }
+
+          try {
+            var { data: { session } } = await sb.auth.getSession();
+            if (!session) { _repMsg('Sin sesión activa.', false); return; }
+            if (btn) { btn.disabled = true; btn.textContent = 'Guardando…'; }
+            var { data, error } = await sb.rpc('libro_incidentes_reportar', {
+              p_dj_event_id: eventoId,
+              p_asistencia: asistencia,
+              p_ventas: ventas,
+              p_incidentes: incidentes,
+              p_detalles: detalles,
+              p_nota_adicional: notaAdicional,
+              p_facturacion: facturacion,
+              p_monto_reportado: monto,
+              p_evento_manual_nombre: eventoManualNombre,
+              p_evento_manual_fecha: eventoManualFecha
+            });
+            if (error) throw error;
+            var yaExistia = Array.isArray(data) && data.length && data[0].ya_existia_reporte;
+            _repLimpiarFormulario();
+            _repMsg(yaExistia
+              ? 'Reporte guardado. Ya había un reporte previo de este evento — el tuyo se agregó al registro.'
+              : 'Reporte guardado. Gracias.', true);
+          } catch (err) {
+            _repMsg('No se pudo guardar: ' + (err.message || err), false);
+          } finally {
+            if (btn) { btn.disabled = false; btn.textContent = 'Save'; }
+          }
+        }
+
+        function _repWireListeners() {
+          if (_repWired) return; _repWired = true;
+          _repWireEventoBuscador();
+          var list = document.getElementById('rep-incidentes-list');
+          if (list) list.addEventListener('click', function (e) {
+            var btn = e.target.closest('.rep-inc-btn');
+            if (!btn) return;
+            if (btn.classList.contains('rep-inc-btn-add')) { _repAddIncidentRow(); }
+            else { btn.closest('.rep-inc-row').remove(); _repRenderIncidentButtons(); }
+          });
+          var check = document.getElementById('rep-facturacion-check'); if (check) check.addEventListener('change', _repAplicarFacturacion);
+          var btn = document.getElementById('rep-save-btn'); if (btn) btn.addEventListener('click', _repGuardar);
+          if (!list.children.length) _repAddIncidentRow();
+        }
+
+        /* Público — llamado por showPanel('reporte') */
+        window.loadReportePanel = async function loadReportePanel() {
+          if (typeof window.__mdjInjectChipStyles === 'function') window.__mdjInjectChipStyles();
+          var sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+          if (!sb) return;
+          try {
+            var { data: { session } } = await sb.auth.getSession();
+            if (!session) return;
+            if (!_repMiNombre) {
+              var meta = session.user.user_metadata || {};
+              _repMiNombre = meta.full_name || (session.user.email || '').split('@')[0] || 'Artista';
+              try {
+                var { data: dp } = await sb.from('dj_profiles').select('stage_name, dj_name').eq('user_id', session.user.id).maybeSingle();
+                if (dp && (dp.stage_name || dp.dj_name)) _repMiNombre = dp.stage_name || dp.dj_name;
+              } catch (e) { /* no fatal */ }
+            }
+            var { data: eventos } = await sb.from('dj_events')
+              .select('id, venue, event_date, start_time')
+              .eq('dj_user_id', session.user.id)
+              .order('event_date', { ascending: false });
+            _repEventos = eventos || [];
+            _repWireListeners();
+            _repAplicarFacturacion();
+            _repAplicarEvento();
+          } catch (e) { console.warn('[reporte] loadReportePanel:', e); }
+        };
+      }());
+      /* ── /TICKET-R14-R15 ──────────────────────────────────────────────── */
 
       /* ── Populate sidebar avatar/name/email from existing session data ── */
       function _hydrateSidebarFromSession() {
@@ -7850,7 +8286,7 @@
     </script>
     <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
     <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
-      <script src="./mdjb-shared-header.js?v=20260921-svc-activo4"></script>
+      <script src="./mdjb-shared-header.js?v=20260922-hero-below-header"></script>
   <script src="./mdj-profile-nav-context.js?v=20260818-nav-canonico"></script>
   <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
   <script src="./mdj-mainnav-infinite.js?v=20260818-nav-canonico"></script>
