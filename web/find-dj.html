@@ -353,7 +353,9 @@
     <script src="./translations.js?v=20260921-baile1"></script>
     <script src="./i18n.js?v=20260226-1"></script>
     <script src="./subscription.js?v=20260422-find-dj-rank"></script>
-    <script>
+    <script type="module">
+        import { tokenize, matchesQuery, simulateDbOrderedSlice, compareForSearch, canonicalHref, renderResultCardHTML } from './find-dj-search.mjs';
+
         const db = supabase.createClient(window.MDB_SUPABASE_URL, window.MDB_SUPABASE_ANON_KEY);
 
         function sanitizeSearchToken(s) {
@@ -404,104 +406,49 @@
             const intent = params.get('intent');
             const categoryFromUrl = params.get('category') || params.get('role') || specialtyQ;
 
-            var selectFull = 'user_id, dj_slug, stage_name, full_name, mdjb_id, photo_url, bio_short, city, roles, artist_specialty, plan, plan_type, plan_status, plan_expires_at, is_premium, subscription_status';
-            var selectMid  = 'user_id, dj_slug, stage_name, full_name, photo_url, bio_short, city, roles, artist_specialty, plan';
-            var selectMin  = 'user_id, dj_slug, stage_name, photo_url, bio_short, city, roles, artist_specialty, plan';
-
-            function buildNameFilter(q, mode) {
-                // mode: 'full' = stage+full_name+mdjb_id | 'mid' = stage+full_name | 'min' = stage only
-                if (mode === 'full') {
-                    q = q.or('stage_name.ilike.%' + nameQ + '%,full_name.ilike.%' + nameQ + '%,mdjb_id.ilike.%' + nameQ + '%');
-                } else if (mode === 'mid') {
-                    q = q.or('stage_name.ilike.%' + nameQ + '%,full_name.ilike.%' + nameQ + '%');
-                } else {
-                    q = q.ilike('stage_name', '%' + nameQ + '%');
-                }
-                return q;
-            }
-
-            function buildQuery(sel, nameMode) {
-                var q = db.from('public_dj_profiles').select(sel).eq('available', true);
-                if (city) q = q.ilike('city', '%' + city + '%');
-                if (nameQ) {
-                    q = buildNameFilter(q, nameMode || 'min');
-                } else if (specialtyQ) {
-                    var spTokens = specialtyQ.split(/\s+/).filter(Boolean);
-                    var spClauses = [];
-                    spTokens.forEach(function (tok) {
-                        spClauses.push('artist_specialty.ilike.%' + tok + '%');
-                        spClauses.push('roles.ilike.%' + tok + '%');
-                    });
-                    q = q.or(spClauses.join(','));
-                } else {
-                    // Directory mode: only DJ-type artists
-                    q = q.or('artist_specialty.ilike.%dj%,roles.ilike.%dj%');
-                }
-                return q.limit(120);
-            }
-
-            // Cascade: full (stage+full_name+mdjb_id) → mid (stage+full_name) → min (stage only)
-            var res = await buildQuery(selectFull, 'full');
-            if (res.error) res = await buildQuery(selectMid, 'mid');
-            if (res.error) res = await buildQuery(selectMin, 'min');
-
-            const { data: raw, error } = res;
+            // Fuente única de "quién es público/buscable": la Public Talent
+            // Projection (public_dj_talent). Esta página ya NO decide su propia
+            // elegibilidad -- eso es responsabilidad exclusiva de la vista, que
+            // traduce 1:1 la misma qualifies() del generador de páginas estáticas.
+            // Ver docs/audit-dj-public-profiles-master-2026-09-13-FINAL.md §14.
+            const { data: raw, error } = await db.from('public_dj_talent').select('*').limit(500);
 
             if (error) {
                 msg.innerHTML = 'Error: ' + error.message;
                 return;
             }
 
-            var data = raw || [];
-            if (window.MDB_SUBSCRIPTION && typeof window.MDB_SUBSCRIPTION.searchRankScore === 'function') {
-                data = data.slice().sort(function (a, b) {
-                    return window.MDB_SUBSCRIPTION.searchRankScore(b) - window.MDB_SUBSCRIPTION.searchRankScore(a);
+            var rows = raw || [];
+            if (city) {
+                var cityNorm = city.toLowerCase();
+                rows = rows.filter(function (dj) {
+                    return dj.city && dj.city.toLowerCase().indexOf(cityNorm) !== -1;
                 });
             }
+
+            // La vista public_dj_talent YA aplicó la elegibilidad y la
+            // proyección mínima en SQL -- aquí solo coincide/ordena, nunca
+            // se vuelve a decidir "quién es público" (§14 de la auditoría).
+            var rawQuery = nameQ || specialtyQ || '';
+            var tokens = tokenize(rawQuery);
+            var matched = rows.filter(function (dj) { return matchesQuery(dj, tokens); });
+            var sliced = simulateDbOrderedSlice(matched, 120);
+            var data = sliced.slice().sort(compareForSearch(rawQuery, tokens));
 
             let line = 'Found ' + data.length + ' talents.';
             if (nameQ) line += ' (name/slug: “' + nameQ + '”)';
             if (intent === 'availability') line += ' — refine date & filters for availability.';
             msg.innerHTML = line;
             grid.innerHTML = data.map(function (dj) {
-                var esc = function (s) {
-                    return String(s == null ? '' : s)
-                        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-                };
-                var name = esc(dj.stage_name || dj.dj_slug || 'Artist');
-                var img = esc(dj.photo_url || '');
-                var uid = dj.user_id != null ? String(dj.user_id).trim() : '';
-                var profHref = uid
-                    ? './profile.html?id=' + encodeURIComponent(uid) + '&ref=' + encodeURIComponent(uid)
-                    : '#';
-                var rentQ = 'utm_source=find-dj&intent=rent&dj=' + encodeURIComponent(uid || String(dj.dj_slug || '').trim());
-                var rentHref = './rentals.html?' + rentQ;
-                var rentLabel = esc(rentalCtaLabel(dj, categoryFromUrl));
-                var imgSrc = img || './assets/dj-avatar-placeholder.png';
-                var rawSpecialty = String(dj.artist_specialty || dj.roles || '').split(',')[0].trim();
-                var specialtyTag = rawSpecialty ? esc(rawSpecialty.slice(0, 18)) : '';
-                var cityStr = dj.city ? '📍 ' + esc(dj.city) : '';
-                var bioStr = dj.bio_short ? esc(String(dj.bio_short).slice(0, 110)) : '';
-                var disabledAttrs = uid ? '' : ' onclick="return false" style="opacity:0.5;pointer-events:none"';
-                return (
-                    '<article class="find-dj-chip">' +
-                    '<a class="find-dj-chip__link" href="' + profHref + '"' + disabledAttrs + '>' +
-                    '<div class="find-dj-chip__photo-wrap">' +
-                    '<img class="find-dj-chip__photo" src="' + imgSrc + '" alt="' + name + '" loading="lazy" />' +
-                    (specialtyTag ? '<span class="find-dj-chip__specialty-tag">' + specialtyTag + '</span>' : '') +
-                    '</div>' +
-                    '<div class="find-dj-chip__body">' +
-                    '<div class="find-dj-chip__name-row">' +
-                    '<span class="find-dj-chip__name">' + name + '</span>' +
-                    tierBadgeHtml(dj) +
-                    '</div>' +
-                    (cityStr ? '<span class="find-dj-chip__city">' + cityStr + '</span>' : '') +
-                    (bioStr ? '<p class="find-dj-chip__bio">' + bioStr + '</p>' : '') +
-                    '</div>' +
-                    '</a>' +
-                    '<a class="find-dj-chip__rent" href="' + (uid ? rentHref : '#') + '"' + (uid ? '' : ' onclick="return false"') + '>' + rentLabel + '</a>' +
-                    '</article>'
-                );
+                var href = canonicalHref(dj);
+                var rentQ = 'utm_source=find-dj&intent=rent&dj=' + encodeURIComponent(String(dj.dj_slug || '').trim());
+                var rentHref = href ? './rentals.html?' + rentQ : '#';
+                var rentLabel = rentalCtaLabel(dj, categoryFromUrl);
+                return renderResultCardHTML(dj, {
+                    tierBadgeHtml: tierBadgeHtml(dj),
+                    rentHref: rentHref,
+                    rentLabel: rentLabel,
+                });
             }).join('');
         }
 
