@@ -292,6 +292,13 @@
       #mi-cockpit .rp-resize-handle{position:absolute;right:0;top:0;bottom:0;width:8px;cursor:col-resize;touch-action:none;}
       #mi-cockpit .rp-resize-handle:hover{background:linear-gradient(90deg,transparent,var(--gold-wash));}
       #mi-cockpit .rp-table tbody td{white-space:normal;}
+      /* Copiar Título - Artista por fila (2026-09-24, pedido del PO: "necesito eso para
+         buscarla en Serato DJ") -- botón chico junto al nombre, mismo ícono de copiar
+         que ya usa "Copy Tracklist", nada nuevo inventado. */
+      #mi-cockpit .rp-copy-one{flex:none;display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;padding:0;margin-right:6px;
+        background:transparent;border:1px solid var(--border-strong);border-radius:6px;color:var(--text-dim);cursor:pointer;vertical-align:middle;}
+      #mi-cockpit .rp-copy-one:hover{color:var(--gold);border-color:var(--gold);}
+      #mi-cockpit .rp-copy-one svg{width:12px;height:12px;}
       #mi-cockpit .rp-input{width:100%;background:var(--surface-2);border:1px solid var(--border-strong);border-radius:6px;color:var(--text);font-family:var(--font-mono);font-size:12.5px;padding:6px 8px;text-align:center;}
       #mi-cockpit .rp-input::placeholder{color:var(--text-faint);}
       #mi-cockpit .rp-input:focus-visible{outline:2px solid var(--gold);}
@@ -1912,11 +1919,32 @@ function repartoTrackById(id){
 function repartoGenreLabel(g){
   return g==='reparto' ? 'Reparto' : (g==='reparto-pop' ? 'Reparto Pop' : '');
 }
+function copyOneTrack(title, artist){
+  var text = title + (artist ? ' - ' + artist : '');
+  function done(ok){ toast(ok ? 'Copiado: '+title : 'No se pudo copiar en este navegador'); }
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){ done(true); }).catch(function(){ done(false); });
+  } else {
+    try{
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      done(true);
+    }catch(e){ done(false); }
+  }
+}
+function wireTrackCopyButtons(mount){
+  mount.querySelectorAll('.rp-copy-one').forEach(function(btn){
+    btn.addEventListener('click', function(){ copyOneTrack(btn.getAttribute('data-copy-t'), btn.getAttribute('data-copy-a')); });
+  });
+}
 function renderRepartoTrackRow(t, idx){
   return (
     '<tr>'+
       '<td class="num">'+(idx+1)+'</td>'+
-      '<td class="track-name">'+esc(t.title)+'</td>'+
+      '<td class="track-name"><button class="rp-copy-one" data-copy-t="'+esc(t.title)+'" data-copy-a="'+esc(t.artist)+'" title="Copiar para buscar en Serato">'+iconSvg('copy')+'</button>'+esc(t.title)+'</td>'+
       '<td>'+esc(t.artist)+'</td>'+
       '<td><select class="rp-genre-select" data-rp-genre="'+t.id+'">'+
         [['', 'Sin definir'], ['reparto','Reparto'], ['reparto-pop','Reparto Pop']].map(function(opt){
@@ -2014,6 +2042,7 @@ function wireRepartoInputs(mount){
   });
   var copyBtn = mount.querySelector('#rpCopyBtn');
   if (copyBtn) copyBtn.addEventListener('click', copyRepartoTracklist);
+  wireTrackCopyButtons(mount);
   initRepartoResize(mount);
 }
 function renderRepartoCaseStudy(){
@@ -2070,7 +2099,7 @@ function renderNinetiesTrackRow(t, idx){
   return (
     '<tr>'+
       '<td class="num">'+(idx+1)+'</td>'+
-      '<td class="track-name">'+esc(t.title)+'</td>'+
+      '<td class="track-name"><button class="rp-copy-one" data-copy-t="'+esc(t.title)+'" data-copy-a="'+esc(t.artist)+'" title="Copiar para buscar en Serato">'+iconSvg('copy')+'</button>'+esc(t.title)+'</td>'+
       '<td>'+esc(t.artist)+'</td>'+
       '<td><input class="rp-input" type="text" inputmode="numeric" placeholder="—" value="'+(t.bpm==null?'':t.bpm)+'" data-nh-bpm="'+t.id+'"></td>'+
       '<td><input class="rp-input" type="text" inputmode="numeric" placeholder="—" value="'+(t.energyEstimate==null?'':t.energyEstimate)+'" data-nh-energy="'+t.id+'"></td>'+
@@ -2133,6 +2162,7 @@ function wireNinetiesInputs(mount){
   });
   var copyBtn = mount.querySelector('#nhCopyBtn');
   if (copyBtn) copyBtn.addEventListener('click', copyNinetiesTracklist);
+  wireTrackCopyButtons(mount);
   initRepartoResize(mount);
 }
 function renderNinetiesCaseStudy(){
