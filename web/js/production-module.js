@@ -113,6 +113,26 @@
     return emailEl ? emailEl.value.trim().toLowerCase() : '';
   }
 
+  /** Motor de Comisiones (2026-09-24): quien cierra el precio/DJ en este panel
+   * queda registrado como "vendedor" del lead vía mdj_assign_staff_to_lead
+   * (RPC ya existente, nunca llamada desde ningún frontend hasta ahora) --
+   * sin esto el motor de comisiones no tiene a quién asignarle la comisión
+   * de vendedor. La RPC exige is_staff_management (owner/admin/manager,
+   * NO seller) -- si quien guarda es un vendedor, la RPC devuelve
+   * {ok:false, error:'management_only'} y esta función lo ignora en
+   * silencio: no bloquea el guardado real del lead por esto. */
+  async function _assignVendedorAlLead(db, leadId) {
+    if (!leadId) return;
+    try {
+      var sess = await db.auth.getSession();
+      var uid = sess && sess.data && sess.data.session && sess.data.session.user && sess.data.session.user.id;
+      if (!uid) return;
+      await db.rpc('mdj_assign_staff_to_lead', { p_lead_id: leadId, p_staff_user_id: uid });
+    } catch (e) {
+      /* best-effort: nunca rompe el guardado del lead por esto */
+    }
+  }
+
   /** Panel 5 — modo de cobro Stripe: deposit (default) | full */
   function readProdCobroChargeMode() {
     var fullEl = document.getElementById('prod-cobro-charge-mode-full');
@@ -1197,6 +1217,7 @@
       if (existingId && /^[0-9a-f-]{36}$/i.test(existingId)) {
         var up = await db.from('leads').update(base).eq('id', existingId).select('id').single();
         if (up.error) throw up.error;
+        await _assignVendedorAlLead(db, existingId);
         return existingId;
       }
       if (!email) {
@@ -1215,6 +1236,7 @@
       var ins = await db.from('leads').insert([insPayload]).select('id').single();
       if (ins.error) throw ins.error;
       if (leadEl && ins.data && ins.data.id) leadEl.value = ins.data.id;
+      await _assignVendedorAlLead(db, ins.data.id);
       return ins.data.id;
     },
 
