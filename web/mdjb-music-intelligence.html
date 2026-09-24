@@ -647,8 +647,7 @@ var TRACKS = [
 ];
 
 var EXPERIENCES = [
-  {id:'reparto', name:'The Haunting House Of Baila Con Micho', sub:'Experience', desc:'Reparto / Reparto Pop DJ prep tracklist — event starting 2026-09-24. BPM, genre and energy filled in live by the DJ.', status:'enabled'},
-  {id:'nineties', name:"90's Hit's", sub:'Experience', desc:'Mix discoTK Cuba — 18 real Eurodance/Italo-dance tracks, BPM filled from public sources where published.', status:'enabled'},
+  {id:'reparto', name:'The Haunting House Of Baila Con Micho', sub:'Experience', desc:'Two choreographies for this event (starting 2026-09-24): Reparto / Reparto Pop, and a 90\'s Hit\'s set (Mix discoTK Cuba). BPM filled from public sources where published, or live by the DJ.', status:'enabled'},
   {id:'one-hit-wonder', name:'One Hit Wonder', sub:'Experience', desc:'Global recognition across generations — songs that land on any floor, any culture, any decade.', status:'enabled'},
   {id:'generational-journey', name:'Generational Journey', sub:'Experience', desc:'A guided decade-by-decade arc built for long-format events.', status:'soon'},
   {id:'latin-classics', name:'Latin Classics', sub:'Experience', desc:'Salsa, merengue, bachata and reggaeton lineage, curated by era.', status:'soon'},
@@ -972,7 +971,7 @@ function renderHome(){
     btn.addEventListener('click', function(){
       var id = btn.getAttribute('data-enter-experience');
       state.experience = id;
-      setView((id==='reparto'||id==='nineties') ? 'learning' : 'event');
+      setView(id==='reparto' ? 'learning' : 'event');
     });
   });
 }
@@ -986,7 +985,7 @@ function renderExperiences(){
     btn.addEventListener('click', function(){
       var id = btn.getAttribute('data-enter-experience');
       state.experience = id;
-      setView((id==='reparto'||id==='nineties') ? 'learning' : 'event');
+      setView(id==='reparto' ? 'learning' : 'event');
     });
   });
 }
@@ -2141,10 +2140,10 @@ function renderNinetiesCaseStudy(){
   if (!mount) return;
   var header =
     '<div class="panel-head" style="border:none;padding:0 0 10px;">'+
-      '<span class="label" style="display:flex;align-items:center;gap:8px;">'+iconSvg('music')+' Real DJ Prep — 90\'s Hit\'s (Mix discoTK Cuba)</span>'+
-      '<span class="badge gold">Eurodance / Italo-dance</span>'+
+      '<span class="label" style="display:flex;align-items:center;gap:8px;">'+iconSvg('music')+' Segunda coreografía — 90\'s Hit\'s (Mix discoTK Cuba)</span>'+
+      '<span class="badge gold">The Haunting House Of Baila Con Micho · Eurodance / Italo-dance</span>'+
     '</div>'+
-    '<p class="view-desc" style="margin:0 0 14px;">Tracklist real dado directo por el PO, con su link de YouTube por canción. BPM buscado en fuentes públicas (Tunebat/SongBPM/Spotify) — solo se llenó cuando existía un dato real publicado; el resto queda en blanco para llenarse en vivo, nunca inventado.</p>';
+    '<p class="view-desc" style="margin:0 0 14px;">Segundo tracklist del mismo evento (2026-09-24) — la otra coreografía, aparte de Reparto. Dado directo por el PO, con su link de YouTube por canción. BPM buscado en fuentes públicas (Tunebat/SongBPM/Spotify) — solo se llenó cuando existía un dato real publicado; el resto queda en blanco para llenarse en vivo, nunca inventado.</p>';
 
   if (state.ninetiesData){
     mount.innerHTML = header + renderNinetiesBody();
