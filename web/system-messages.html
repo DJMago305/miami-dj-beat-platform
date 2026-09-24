@@ -230,6 +230,11 @@
       <section id="panel-plantillas" class="panel">
         <label>Nombre de la plantilla</label>
         <input type="text" id="tNombre" placeholder="Ej: Recordatorio de pago">
+        <label>Ocasión (opcional — la convierte en tarjeta de invitación)</label>
+        <input type="text" id="tOcasion" placeholder="Ej: Cumpleaños" list="tOcasionList">
+        <datalist id="tOcasionList"><option value="Cumpleaños"></option></datalist>
+        <label>Link de venta (opcional — botón de la tarjeta)</label>
+        <input type="text" id="tLinkUrl" placeholder="./private-family-dj.html">
         <label>Texto</label>
         <textarea id="tCuerpo" placeholder="Texto reutilizable…"></textarea>
         <button class="primary" id="btnGuardarPlantilla">Guardar plantilla</button>
@@ -462,12 +467,39 @@
     }catch(e){}
   })();
 
-  // ── Plantillas ────────────────────────────────────────────────────────
+  // ── Plantillas / banco de tarjetas de invitación por ocasión ────────────
+  // Pedido del PO (2026-09-23, pospuesto a esta sesión): mensajes pre-hechos
+  // por fecha/ocasión (cumpleaños, etc.) para copiar/pegar o mandar sin
+  // redactar cada vez -- con botón real a la página de venta correspondiente.
+  // Misma tabla de siempre (system_messages_templates), solo con 2 columnas
+  // opcionales nuevas (ocasion, link_url) -- una plantilla sin ocasión sigue
+  // siendo la plantilla simple de solo texto que ya existía.
+  function copiarTextoPlano(texto, etiqueta){
+    function done(ok){ toastPlantilla(ok ? 'Copiado: ' + etiqueta : 'No se pudo copiar en este navegador'); }
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(texto).then(function(){ done(true); }).catch(function(){ done(false); });
+    } else {
+      try{
+        var ta = document.createElement('textarea');
+        ta.value = texto; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        done(true);
+      }catch(e){ done(false); }
+    }
+  }
+  function toastPlantilla(msg){
+    var status = document.getElementById('plantillaStatus');
+    if (!status) return;
+    status.textContent = msg; status.className = 'status-msg ok';
+    setTimeout(function(){ if (status.textContent === msg) status.textContent = ''; }, 2500);
+  }
   async function cargarPlantillas(){
     var list = document.getElementById('listPlantillas');
     var sel = document.getElementById('fPlantilla');
     try{
-      var res = await sb.from('system_messages_templates').select('id, nombre, cuerpo').order('creado_en', { ascending: false });
+      var res = await sb.from('system_messages_templates').select('id, nombre, cuerpo, ocasion, link_url').order('creado_en', { ascending: false });
       if (res.error) throw res.error;
       var rows = res.data || [];
       sel.innerHTML = '<option value="">— ninguna —</option>' + rows.map(function(t){
@@ -475,9 +507,26 @@
       }).join('');
       sel.setAttribute('data-map', JSON.stringify(rows.reduce(function(m, t){ m[t.id] = t.cuerpo; return m; }, {})));
       list.innerHTML = rows.length ? rows.map(function(t){
+        var cuerpoAttr = esc(t.cuerpo).replace(/"/g, '&quot;');
+        if (t.ocasion || t.link_url){
+          // Tarjeta de invitación real: ocasión + texto + botón a la página de venta + copiar solo texto.
+          return '<div class="card tpl-item" style="flex-direction:column;align-items:stretch;gap:8px;">' +
+            (t.ocasion ? '<span class="msg-badge unread" style="align-self:flex-start;">' + esc(t.ocasion) + '</span>' : '') +
+            '<div class="tpl-name">' + esc(t.nombre) + '</div>' +
+            '<div class="tpl-body" style="white-space:normal;overflow:visible;">' + esc(t.cuerpo) + '</div>' +
+            '<div style="display:flex; gap:8px; flex-wrap:wrap;">' +
+              (t.link_url ? '<a class="primary" style="text-decoration:none; display:inline-block; margin-top:0;" href="' + esc(t.link_url) + '" target="_blank" rel="noopener">Ver página de venta</a>' : '') +
+              '<button class="ghost" data-copy-tpl="' + cuerpoAttr + '" data-copy-tpl-nombre="' + esc(t.nombre) + '">Copiar solo texto</button>' +
+            '</div>' +
+          '</div>';
+        }
         return '<div class="card tpl-item"><div><div class="tpl-name">' + esc(t.nombre) + '</div>' +
-          '<div class="tpl-body">' + esc(t.cuerpo) + '</div></div></div>';
+          '<div class="tpl-body">' + esc(t.cuerpo) + '</div></div>' +
+          '<button class="ghost" data-copy-tpl="' + cuerpoAttr + '" data-copy-tpl-nombre="' + esc(t.nombre) + '">Copiar</button></div>';
       }).join('') : '<div class="empty">Sin plantillas todavía.</div>';
+      list.querySelectorAll('[data-copy-tpl]').forEach(function(btn){
+        btn.addEventListener('click', function(){ copiarTextoPlano(btn.getAttribute('data-copy-tpl'), btn.getAttribute('data-copy-tpl-nombre')); });
+      });
     }catch(e){
       list.innerHTML = '<div class="empty">No se pudo cargar (' + esc(e.message || e) + ').</div>';
     }
@@ -489,15 +538,18 @@
   document.getElementById('btnGuardarPlantilla').addEventListener('click', async function(){
     var nombre = document.getElementById('tNombre').value.trim();
     var cuerpo = document.getElementById('tCuerpo').value.trim();
+    var ocasion = document.getElementById('tOcasion').value.trim();
+    var linkUrl = document.getElementById('tLinkUrl').value.trim();
     var status = document.getElementById('plantillaStatus');
     status.textContent = ''; status.className = 'status-msg';
     if (nombre.length < 2 || cuerpo.length < 2){ status.textContent = 'Completá nombre y texto.'; status.className = 'status-msg err'; return; }
     try{
       var uid = (await sb.auth.getUser()).data.user.id;
-      var res = await sb.from('system_messages_templates').insert({ nombre: nombre, cuerpo: cuerpo, creado_por: uid });
+      var res = await sb.from('system_messages_templates').insert({ nombre: nombre, cuerpo: cuerpo, ocasion: ocasion || null, link_url: linkUrl || null, creado_por: uid });
       if (res.error) throw res.error;
       status.textContent = 'Plantilla guardada.'; status.className = 'status-msg ok';
       document.getElementById('tNombre').value = ''; document.getElementById('tCuerpo').value = '';
+      document.getElementById('tOcasion').value = ''; document.getElementById('tLinkUrl').value = '';
       cargarPlantillas();
     }catch(e){
       status.textContent = 'Error: ' + (e.message || e); status.className = 'status-msg err';
