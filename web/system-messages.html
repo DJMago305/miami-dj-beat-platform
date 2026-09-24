@@ -1,0 +1,755 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mensajes del Sistema</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
+<script>
+    var mdjLibAusente = !(window.supabase && typeof window.supabase.createClient === 'function');
+    if (mdjLibAusente) {
+        document.write('<script src="./vendor/supabase-js-2.112.3.legacy.js?v=20260818-safari-legacy"><\/script>');
+    }
+</script>
+<script src="./supabase-config.js?v=20260923-system-messages"></script>
+<style>
+  :root{
+    --bg:#0a0a0c; --surface:#131316; --surface-2:#1b1b20; --border:#2a2a30;
+    --text:#eceef1; --text-dim:#9a9aa4; --gold:#c5a059; --gold-bright:#e3c68b;
+    --good:#3ddc84; --danger:#ff5a6a;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;font-size:14px;display:flex;flex-direction:column;}
+  .titlebar{flex:none;padding:18px 22px 14px;border-bottom:1px solid var(--border);}
+  h1{font-size:19px;font-weight:800;margin:0 0 4px;}
+  .sub{color:var(--text-dim);font-size:12px;margin:0;max-width:70ch;}
+  /* Barra de utilidades — debajo del título, ancho completo, arranca pegada
+     al borde izquierdo (donde arranca la barra lateral), no flotando centrada. */
+  .toolbar{flex:none;display:flex;align-items:center;gap:8px;padding:10px 22px;border-bottom:1px solid var(--border);background:var(--surface);}
+  .toolbar button.ghost{padding:7px 14px;font-size:12px;}
+  .toolbar .spacer{flex:1;}
+  .toolbar .count{font-size:11.5px;color:var(--text-dim);}
+  .shell{flex:1;display:flex;min-height:0;}
+  .tab-btn.active{color:var(--gold-bright);border-color:var(--gold-dim,var(--gold));background:rgba(197,160,89,.12);}
+  .content{flex:1;min-width:0;overflow:hidden;padding:0;}
+  .panel{display:none;}
+  .panel.active{display:block;height:100%;overflow-y:auto;padding:22px 24px 60px;box-sizing:border-box;}
+
+  /* Recibidos: lista de hilos (izquierda) + conversación (derecha), separadas
+     por una barra vertical ajustable -- MISMO patrón de #network-resize-handle
+     en staff-admin.html (arrastrar con mousedown/mousemove, ancho recordado en
+     localStorage). No es un componente nuevo, es el mismo copiado literal. */
+  #panel-recibidos.active{display:flex;padding:0;overflow:hidden;}
+  #hilos-list{flex:1;min-width:220px;overflow-y:auto;padding:8px;}
+  /* Fila = MISMO patrón que la fila de contacto en Network (staff-admin.html,
+     avatar de iniciales 26px + nombre, sin overlap ni texto de más). Lo único
+     que se agrega es el emoji de mensajes 💬 delante, que se enciende verde
+     cuando el hilo tiene algo sin leer -- pedido explícito del PO. */
+  .hilo-row{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;margin-bottom:2px;}
+  .hilo-row:hover{background:var(--surface-2);}
+  .hilo-row.active{background:rgba(197,160,89,.14);box-shadow:inset 3px 0 0 var(--gold);}
+  .hilo-msg-ic{flex:none;display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;font-size:12.5px;opacity:.32;transition:opacity .15s,box-shadow .15s,background .15s;}
+  .hilo-msg-ic.unread{opacity:1;background:rgba(61,220,132,.22);box-shadow:0 0 8px rgba(61,220,132,.55);}
+  .hilo-avatar{flex:none;border-radius:50%;background:rgba(197,160,89,.18);border:1px solid rgba(197,160,89,.35);color:var(--gold);font-weight:800;display:flex;align-items:center;justify-content:center;}
+  .hilo-nombre{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  #msg-resize-handle{flex:none;width:6px;cursor:col-resize;background:transparent;position:relative;}
+  #msg-resize-handle > div{position:absolute;top:0;bottom:0;left:2px;width:2px;background:var(--border);}
+  #msg-resize-handle:hover > div, #msg-resize-handle:active > div{background:var(--gold);}
+  /* Panel derecho -- MISMO degradado dorado que #network-detail-panel en
+     staff-admin.html (--net-panel-gradient, modo oscuro), copiado literal:
+     antes era la ficha editable del contacto, ahora es el hilo de conversación. */
+  #hilo-detail{flex:0 0 400px;min-width:300px;max-width:70vw;display:flex;flex-direction:column;
+    background:radial-gradient(140% 70% at 50% -25%, rgba(244,222,182,.85), transparent 62%),
+      linear-gradient(180deg, #e4cea0 0%, #8a6f45 24%, #3a2e1c 55%, #16130e 82%, #0a0a10 100%);}
+  /* Fijo de verdad -- vive FUERA de .hilo-thread (que es lo único que hace
+     scroll), así que el hilo nunca puede pasar por delante del avatar/nombre;
+     como mucho pasa por detrás, oculto bajo esta caja. Pedido del PO: "eso
+     queda flotante pero fijo, no se mueve" -- SIN raya ni sombra que corte el
+     degradado, que se vea de una sola pieza (corregido: el PO no pidió dividir
+     la plantilla, solo que el hilo no le pase por delante). */
+  .hilo-detail-hero{flex:none;text-align:center;padding:28px 18px 16px;position:relative;z-index:2;}
+  .hilo-hero-avatar{width:80px;height:80px;margin:0 auto 12px;border-radius:50%;background:rgba(255,255,255,.08);
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.14);
+    color:var(--gold-bright);font-size:28px;font-weight:800;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 0 0 1px rgba(197,160,89,.15),0 12px 32px rgba(0,0,0,.25);}
+  .hilo-hero-name{font-size:18px;font-weight:800;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.35);}
+  .hilo-hero-tel{font-size:12px;color:rgba(255,255,255,.7);margin-top:2px;}
+  .hilo-thread{flex:1;min-height:0;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:9px;}
+  /* Burbujas flotantes estilo chat de teléfono (pedido explícito del PO:
+     "es el mismo concepto del chat del teléfono") -- azul para lo que
+     mandamos, gris para lo que llega, con la esquina achatada de siempre. */
+  .bubble{max-width:70%;padding:9px 14px;font-size:14.5px;line-height:1.35;color:#fff;position:relative;}
+  /* Pedido del PO: burbuja con opacidad (no sólida) -- mismo criterio "glass"
+     que ya usa el resto de la app, con blur para que se vea como cristal, no
+     como transparencia plana. */
+  .bubble.in{align-self:flex-start;background:rgba(58,58,60,.5);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-radius:18px 18px 18px 4px;}
+  .bubble.out{align-self:flex-end;background:rgba(11,132,254,.5);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-radius:18px 18px 4px 18px;}
+  .bubble-time{font-size:10px;margin-top:3px;opacity:.65;}
+  .bubble.out .bubble-time{text-align:right;}
+  /* Caja para responder sin salir del hilo -- mismo criterio del compositor
+     de iMessage: texto + adjuntar + enviar, pegado abajo del todo. */
+  .hilo-compose{flex:none;display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(0,0,0,.35);border-top:1px solid rgba(255,255,255,.08);}
+  /* Mismo botón "+" de burbuja de cristal opaco que usa Network para
+     Agregar/Ordenar/Más opciones (staff-admin.html: --net-glass-bg/--net-glass-border
+     + backdrop-filter blur) -- no una presilla de correo, un "+" real. */
+  .hilo-attach{flex:none;width:32px;height:32px;padding:0;line-height:1;border-radius:50%;
+    border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.08);
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    color:#3b82f6;font-size:19px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .hilo-attach.picked{color:#3ddc84;}
+  #hiloComposeInput{flex:1;min-width:0;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#fff;padding:8px 14px;border-radius:999px;font:inherit;font-size:13.5px;}
+  #hiloComposeInput::placeholder{color:rgba(255,255,255,.55);}
+  .hilo-send-btn{flex:none;width:32px;height:32px;border-radius:50%;border:none;background:var(--gold);color:#151107;font-size:14px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .hilo-send-btn:disabled{opacity:.4;cursor:not-allowed;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;}
+  .msg-row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+  .msg-phone{font-weight:700;font-size:13px;}
+  .msg-time{font-size:11px;color:var(--text-dim);white-space:nowrap;}
+  .msg-body{margin-top:6px;font-size:13.5px;line-height:1.5;color:var(--text);}
+  .msg-badge{display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:999px;margin-left:8px;}
+  .msg-badge.unread{background:rgba(197,160,89,.18);color:var(--gold-bright);}
+  .msg-badge.out{background:rgba(61,220,132,.15);color:var(--good);}
+  .msg-badge.fail{background:rgba(255,90,106,.15);color:var(--danger);}
+  .empty{color:var(--text-dim);font-size:13px;text-align:center;padding:30px 10px;}
+  label{display:block;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-dim);margin:12px 0 5px;}
+  input[type=text], input[type=tel], textarea, select{
+    width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);
+    padding:10px 12px;border-radius:8px;font:inherit;
+  }
+  textarea{resize:vertical;min-height:90px;}
+  button.primary{margin-top:16px;background:var(--gold);border:none;color:#151107;font-weight:800;padding:11px 20px;border-radius:8px;cursor:pointer;font:inherit;}
+  button.primary:disabled{opacity:.5;cursor:not-allowed;}
+  button.ghost{background:none;border:1px solid var(--border);color:var(--text);padding:9px 16px;border-radius:8px;cursor:pointer;font:inherit;font-size:12.5px;}
+  .status-msg{margin-top:10px;font-size:12.5px;}
+  .status-msg.ok{color:var(--good);}
+  .status-msg.err{color:var(--danger);}
+  .tpl-item{display:flex;justify-content:space-between;align-items:center;gap:10px;}
+  .tpl-name{font-weight:700;font-size:13px;}
+  .tpl-body{color:var(--text-dim);font-size:12px;margin-top:3px;max-width:60ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+  /* Selector de destinatarios — mismo modelo que Contactos (iOS/macOS): lista
+     de grupos con contador, tocás uno y ves sus miembros con checkbox. */
+  .picker-ov{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:500;}
+  .picker-ov[hidden]{display:none;}
+  .picker-box{width:min(680px,94vw);max-height:82vh;background:var(--surface);border:1px solid var(--border);border-radius:14px;display:flex;flex-direction:column;overflow:hidden;}
+  .picker-head{flex:none;display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border);}
+  .picker-head h2{font-size:15px;margin:0;flex:1;}
+  .picker-body{flex:1;min-height:0;display:flex;}
+  .picker-groups{width:220px;flex:none;border-right:1px solid var(--border);overflow-y:auto;padding:6px 0;}
+  .picker-group-row{display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:none;color:var(--text);font:inherit;font-size:13px;font-weight:600;padding:11px 16px;cursor:pointer;text-align:left;}
+  .picker-group-row:hover, .picker-group-row.active{background:var(--surface-2);}
+  .picker-group-row .n{color:var(--text-dim);font-size:12px;font-weight:400;}
+  .picker-members{flex:1;min-width:0;overflow-y:auto;padding:6px 0;}
+  .picker-member-row{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;}
+  .picker-member-row:hover{background:var(--surface-2);}
+  .picker-member-row input{width:16px;height:16px;flex:none;}
+  .picker-member-name{font-size:13px;font-weight:600;}
+  .picker-member-phone{font-size:11px;color:var(--text-dim);}
+  .picker-selectall{display:flex;align-items:center;gap:10px;padding:9px 16px;border-bottom:1px solid var(--border);font-size:12px;font-weight:700;color:var(--gold-bright);cursor:pointer;}
+  .picker-foot{flex:none;display:flex;align-items:center;gap:10px;padding:12px 16px;border-top:1px solid var(--border);}
+  .picker-foot .count{flex:1;font-size:12.5px;color:var(--text-dim);}
+  .recip-chip{display:inline-flex;align-items:center;gap:6px;background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:5px 10px 5px 12px;font-size:12px;margin:0 6px 6px 0;}
+  .recip-chip button{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:13px;padding:0;line-height:1;}
+  .recip-chips{margin-bottom:6px;}
+  .warn-box{background:rgba(226,165,63,.1);border:1px solid rgba(226,165,63,.4);border-radius:8px;padding:12px 14px;font-size:12.5px;line-height:1.5;color:#e2a53f;margin-top:12px;}
+  .warn-box b{color:#f0c674;}
+</style>
+</head>
+<body>
+  <div class="toolbar">
+    <h1 style="margin:0 12px 0 0; white-space:nowrap; color:var(--gold-bright);">Mensajes del Sistema</h1>
+    <button class="ghost" id="btnRefreshRecibidos" title="Actualizar" aria-label="Actualizar" style="padding:7px 10px;"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
+    <button class="ghost" id="btnAbrirTodos">👥 Todos</button>
+    <button class="ghost" id="btnAbrirGrupos">👥 Grupos</button>
+    <button class="ghost" id="btnAbrirNetwork" title="Elegir contacto o grupo directo desde Network">🌐 Network</button>
+    <span style="width:1px; height:20px; background:var(--border); margin:0 2px;"></span>
+    <button class="ghost tab-btn active" data-tab="recibidos" title="Recibidos">💬</button>
+    <button class="ghost tab-btn" data-tab="enviar">✏️ Enviar</button>
+    <button class="ghost tab-btn" data-tab="plantillas" title="Tools — plantillas de texto ahora; flyers/imágenes cuando construyamos Fase 2">🔧 Tools</button>
+    <span class="spacer"></span>
+    <div style="display:flex; align-items:center; gap:14px; font-size:12.5px;" title="Recibidos sin leer (rojo) / Enviados (verde)">
+      <span>💬</span>
+      <span style="display:flex; align-items:center; gap:5px;"><span style="width:9px; height:9px; border-radius:50%; background:var(--danger); display:inline-block;"></span><b id="bellRecibidos">0</b></span>
+      <span style="display:flex; align-items:center; gap:5px;"><span style="width:9px; height:9px; border-radius:50%; background:var(--good); display:inline-block;"></span><b id="bellEnviados">0</b></span>
+    </div>
+  </div>
+
+  <!-- Selector de destinatarios (mismo modelo que Contactos: grupos con contador → miembros con checkbox) -->
+  <div class="picker-ov" id="pickerOv" hidden>
+    <div class="picker-box">
+      <div class="picker-head">
+        <h2>Elegir destinatarios</h2>
+        <button class="ghost" id="btnPickerTeclado">⌨️ Nuevo número</button>
+        <button class="ghost" id="btnPickerCerrar">Cerrar</button>
+      </div>
+      <div id="pickerTecladoRow" style="display:none; gap:8px; padding:10px 16px; border-bottom:1px solid var(--border);">
+        <input type="text" id="pkNombre" placeholder="Nombre" style="flex:1;">
+        <input type="tel" id="pkTelefono" placeholder="+13055551234" style="flex:1;">
+        <button class="ghost" id="btnPickerAgregarNumero">Agregar</button>
+      </div>
+      <div class="picker-body">
+        <div class="picker-groups" id="pickerGroups"><div class="empty">Cargando…</div></div>
+        <div class="picker-members" id="pickerMembers"><div class="empty">Elegí un grupo.</div></div>
+      </div>
+      <div class="picker-foot">
+        <span class="count" id="pickerCount">0 seleccionados</span>
+        <button class="ghost" id="btnPickerCancelar">Cancelar</button>
+        <button class="primary" id="btnPickerUsar" style="margin-top:0;">Usar seleccionados</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="shell">
+    <div class="content">
+      <section id="panel-recibidos" class="panel active">
+        <div id="hilos-list"><div class="empty">Cargando…</div></div>
+        <div id="msg-resize-handle" onmousedown="window.msgPanelDragStart(event)"><div></div></div>
+        <div id="hilo-detail"><div class="empty" style="padding:24px;">Elegí una conversación de la lista.</div></div>
+      </section>
+
+      <section id="panel-enviar" class="panel">
+        <label>Destinatarios</label>
+        <div class="recip-chips" id="recipChips"></div>
+        <div style="display:flex; gap:8px; margin-bottom:4px;">
+          <button class="ghost" id="btnAbrirDirectorio2">👥 Elegir de Contactos</button>
+        </div>
+        <label>Nombre (solo si es 1 destinatario manual)</label>
+        <input type="text" id="fNombre" placeholder="Nombre del cliente o artista">
+        <label>Teléfono (solo si es 1 destinatario manual)</label>
+        <input type="tel" id="fTelefono" placeholder="+13055551234">
+        <label>Plantilla (opcional)</label>
+        <select id="fPlantilla"><option value="">— ninguna —</option></select>
+        <label>Mensaje</label>
+        <textarea id="fCuerpo" placeholder="Se antepone &quot;MIAMI DJ BEAT LLC:&quot; automáticamente si no lo escribís."></textarea>
+        <div id="enviarWarn"></div>
+        <button class="primary" id="btnEnviar">Enviar SMS</button>
+        <div id="enviarStatus" class="status-msg"></div>
+      </section>
+
+      <section id="panel-plantillas" class="panel">
+        <label>Nombre de la plantilla</label>
+        <input type="text" id="tNombre" placeholder="Ej: Recordatorio de pago">
+        <label>Texto</label>
+        <textarea id="tCuerpo" placeholder="Texto reutilizable…"></textarea>
+        <button class="primary" id="btnGuardarPlantilla">Guardar plantilla</button>
+        <div id="plantillaStatus" class="status-msg"></div>
+        <div id="listPlantillas" style="margin-top:20px;"></div>
+      </section>
+    </div>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+  var sb = null;
+
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function fmtTime(iso){
+    try{ return new Date(iso).toLocaleString('es-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' }); }
+    catch(e){ return iso; }
+  }
+
+  // ── Navegación (botones en la barra de arriba) ───────────────────────────
+  document.querySelectorAll('.tab-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
+      document.querySelectorAll('.panel').forEach(function(p){ p.classList.remove('active'); });
+      btn.classList.add('active');
+      document.getElementById('panel-' + btn.getAttribute('data-tab')).classList.add('active');
+    });
+  });
+
+  // ── Campana (recibidos sin leer / enviados) ──────────────────────────────
+  function actualizarCampana(recibidosSinLeer, enviadosTotal){
+    if (recibidosSinLeer != null) document.getElementById('bellRecibidos').textContent = recibidosSinLeer;
+    if (enviadosTotal != null) document.getElementById('bellEnviados').textContent = enviadosTotal;
+  }
+  async function cargarConteoEnviados(){
+    try{
+      var inicioHoy = new Date(); inicioHoy.setHours(0,0,0,0);
+      var res = await sb.from('system_messages').select('id', { count: 'exact', head: true })
+        .eq('direccion', 'saliente').gte('creado_en', inicioHoy.toISOString());
+      actualizarCampana(null, res.count || 0);
+    }catch(e){}
+  }
+
+  // ── Recibidos: hilos por contacto (lista izquierda + conversación derecha) ──
+  // Misma idea que la ficha de Network: una fila por contacto real (agrupado
+  // por teléfono, ambas direcciones), clic la selecciona y a la derecha se ve
+  // el hilo completo en orden cronológico.
+  var hilos = [];       // [{telefono, nombre, mensajes:[...], ultimoCuerpo, ultimoTiempo, sinLeer}]
+  var hiloActivo = null; // últimos 10 dígitos del teléfono seleccionado
+
+  async function cargarRecibidos(){
+    var listEl = document.getElementById('hilos-list');
+    listEl.innerHTML = '<div class="empty">Cargando…</div>';
+    try{
+      var res = await sb.from('system_messages')
+        .select('id, telefono, destinatario_nombre, cuerpo, media_url, direccion, leido, creado_en')
+        .order('creado_en', { ascending: true })
+        .limit(500);
+      if (res.error) throw res.error;
+      var rows = res.data || [];
+      var byTel = {};
+      rows.forEach(function(r){
+        if (!r.telefono) return;
+        var key = last10Digitos(r.telefono) || r.telefono;
+        if (!byTel[key]) byTel[key] = { telefono: r.telefono, nombre: null, mensajes: [] };
+        byTel[key].mensajes.push(r);
+        if (r.destinatario_nombre) byTel[key].nombre = r.destinatario_nombre;
+      });
+      hilos = Object.keys(byTel).map(function(k){
+        var h = byTel[k];
+        h.nombre = h.nombre || nombrePorTelefono(h.telefono) || h.telefono;
+        var ultimo = h.mensajes[h.mensajes.length - 1];
+        h.ultimoCuerpo = ultimo.cuerpo; h.ultimoTiempo = ultimo.creado_en;
+        h.sinLeer = h.mensajes.filter(function(m){ return m.direccion === 'entrante' && !m.leido; }).length;
+        h._key = k;
+        return h;
+      }).sort(function(a, b){ return new Date(b.ultimoTiempo) - new Date(a.ultimoTiempo); });
+      actualizarCampana(hilos.reduce(function(s, h){ return s + h.sinLeer; }, 0), null);
+      if (!hilos.length){ listEl.innerHTML = '<div class="empty">Sin conversaciones todavía.</div>'; renderHiloDetail(null); return; }
+      renderHilos();
+      if (hiloActivo && byTel[hiloActivo]) renderHiloDetail(hiloActivo);
+      else seleccionarHilo(hilos[0]._key);
+    }catch(e){
+      listEl.innerHTML = '<div class="empty">No se pudo cargar (' + esc(e.message || e) + ').</div>';
+    }
+  }
+  function initialesDe(nombre){
+    return (String(nombre || '').trim().split(/\s+/).slice(0, 2).map(function(w){ return w[0] || ''; }).join('').toUpperCase()) || '?';
+  }
+  function renderHilos(){
+    var el = document.getElementById('hilos-list');
+    el.innerHTML = hilos.map(function(h){
+      return '<div class="hilo-row' + (h._key === hiloActivo ? ' active' : '') + '" data-tel="' + esc(h._key) + '">' +
+        '<span class="hilo-msg-ic' + (h.sinLeer ? ' unread' : '') + '" title="' + (h.sinLeer ? h.sinLeer + ' sin leer' : 'Sin mensajes nuevos') + '">💬</span>' +
+        '<span class="hilo-avatar" style="width:26px;height:26px;font-size:11px;">' + esc(initialesDe(h.nombre)) + '</span>' +
+        '<span class="hilo-nombre">' + esc(h.nombre) + '</span>' +
+      '</div>';
+    }).join('');
+    el.querySelectorAll('.hilo-row').forEach(function(row){
+      row.addEventListener('click', function(){ seleccionarHilo(row.getAttribute('data-tel')); });
+    });
+  }
+  function seleccionarHilo(key){
+    hiloActivo = key;
+    document.querySelectorAll('#hilos-list .hilo-row').forEach(function(r){ r.classList.toggle('active', r.getAttribute('data-tel') === key); });
+    renderHiloDetail(key);
+  }
+  async function renderHiloDetail(key){
+    var el = document.getElementById('hilo-detail');
+    var h = key ? hilos.filter(function(x){ return x._key === key; })[0] : null;
+    if (!h){ el.innerHTML = '<div class="empty" style="padding:24px;">Elegí una conversación de la lista.</div>'; return; }
+    el.innerHTML = '<div class="hilo-detail-hero">' +
+        '<div class="hilo-hero-avatar">' + esc(initialesDe(h.nombre)) + '</div>' +
+        '<div class="hilo-hero-name">' + esc(h.nombre) + '</div>' +
+        '<div class="hilo-hero-tel">' + esc(h.telefono) + '</div></div>' +
+      '<div class="hilo-thread">' + h.mensajes.slice().reverse().map(function(m){
+        var media = '';
+        if (m.media_url){
+          media = /\.(mp4|mov|webm)(\?|$)/i.test(m.media_url)
+            ? '<video src="' + esc(m.media_url) + '" controls style="max-width:220px;border-radius:12px;display:block;' + (m.cuerpo ? 'margin-bottom:6px;' : '') + '"></video>'
+            : '<img src="' + esc(m.media_url) + '" style="max-width:220px;border-radius:12px;display:block;' + (m.cuerpo ? 'margin-bottom:6px;' : '') + '">';
+        }
+        return '<div class="bubble ' + (m.direccion === 'saliente' ? 'out' : 'in') + '">' + media +
+          (m.cuerpo ? '<div>' + esc(m.cuerpo) + '</div>' : '') + '<div class="bubble-time">' + esc(fmtTime(m.creado_en)) + '</div></div>';
+      }).join('') + '</div>' +
+      '<div class="hilo-compose">' +
+        '<button type="button" id="hiloAttachBtn" class="hilo-attach" title="Adjuntar foto o video">+</button>' +
+        '<input type="file" id="hiloAttachInput" accept="image/*,video/*" style="display:none;">' +
+        '<input type="text" id="hiloComposeInput" placeholder="Mensaje…" autocomplete="off">' +
+        '<button type="button" id="hiloSendBtn" class="hilo-send-btn" title="Enviar" aria-label="Enviar">➤</button>' +
+      '</div>';
+    // Pedido del PO: el más nuevo va arriba, los más antiguos quedan debajo
+    // (mismo criterio que la lista de hilos) -- por eso el hilo arranca
+    // scrolleado arriba, no abajo como un chat normal.
+    // Responder sin salir del hilo -- mismo envío real que ya usa la pestaña
+    // "Enviar" (enviarUno -> system-messages-send), solo que aquí ya sabemos
+    // el destinatario porque es el hilo abierto. El "+" sube la foto/video al
+    // MISMO bucket público que ya usa la foto de contacto de Network
+    // (avatars/staff-uploads/..., ver uploadNetworkPhoto en staff-admin.html)
+    // ANTES de mandar, y la URL pública va como MediaUrl a Twilio (MMS real).
+    (function(){
+      var input = el.querySelector('#hiloComposeInput');
+      var sendBtn = el.querySelector('#hiloSendBtn');
+      var attachBtn = el.querySelector('#hiloAttachBtn');
+      var attachInput = el.querySelector('#hiloAttachInput');
+      var pendingFile = null;
+      attachBtn.addEventListener('click', function(){ attachInput.click(); });
+      attachInput.addEventListener('change', function(){
+        pendingFile = (attachInput.files && attachInput.files[0]) || null;
+        attachBtn.classList.toggle('picked', !!pendingFile);
+        attachBtn.textContent = pendingFile ? '✓' : '+';
+        attachBtn.title = pendingFile ? ('Adjunto: ' + pendingFile.name + ' (clic para cambiar)') : 'Adjuntar foto o video';
+      });
+      async function enviarDesdeHilo(){
+        var texto = input.value.trim();
+        if (!texto && !pendingFile) return;
+        sendBtn.disabled = true; attachBtn.disabled = true;
+        try{
+          var mediaUrl = null;
+          if (pendingFile){
+            sendBtn.title = 'Subiendo…';
+            var ext = (pendingFile.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+            var path = 'staff-uploads/system-messages/' + last10Digitos(h.telefono) + '/' + Date.now() + '.' + ext;
+            var up = await sb.storage.from('avatars').upload(path, pendingFile, { upsert: true, cacheControl: '3600' });
+            if (up.error) throw up.error;
+            mediaUrl = sb.storage.from('avatars').getPublicUrl(path).data.publicUrl;
+          }
+          var session = (await sb.auth.getSession()).data.session;
+          var r = await enviarUno(session, h.telefono, h.nombre, texto, mediaUrl);
+          if (r.ok){
+            input.value = ''; pendingFile = null; attachInput.value = '';
+            attachBtn.classList.remove('picked'); attachBtn.textContent = '+'; attachBtn.title = 'Adjuntar foto o video';
+            await cargarRecibidos();
+          } else alert('No se pudo enviar: ' + (r.error || 'error desconocido'));
+        }catch(e){
+          alert('No se pudo enviar: ' + (e.message || e));
+        }finally{
+          sendBtn.disabled = false; attachBtn.disabled = false; sendBtn.title = 'Enviar';
+        }
+      }
+      sendBtn.addEventListener('click', enviarDesdeHilo);
+      input.addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); enviarDesdeHilo(); } });
+    })();
+    // Abrir el hilo marca leídos sus entrantes pendientes -- como un inbox real,
+    // sin botón aparte. Misma señal que ya usaba el card individual antes.
+    var pendientes = h.mensajes.filter(function(m){ return m.direccion === 'entrante' && !m.leido; });
+    if (pendientes.length){
+      for (var i = 0; i < pendientes.length; i++){
+        try{ await sb.rpc('system_messages_marcar_leido', { p_id: pendientes[i].id }); }catch(e){}
+        pendientes[i].leido = true;
+      }
+      h.sinLeer = 0;
+      renderHilos();
+      actualizarCampana(hilos.reduce(function(s, x){ return s + x.sinLeer; }, 0), null);
+      try{ window.parent.postMessage({ type: 'mdjb:msg-read' }, '*'); }catch(e){}
+    }
+  }
+  document.getElementById('btnRefreshRecibidos').addEventListener('click', cargarRecibidos);
+
+  // Barra vertical ajustable entre la lista de hilos y la conversación --
+  // MISMO patrón que #network-resize-handle/networkPanelDragStart en
+  // staff-admin.html (copiado literal, solo cambian los ids de destino).
+  window.msgPanelDragStart = function(ev){
+    ev.preventDefault();
+    var panel = document.getElementById('hilo-detail');
+    var row = document.getElementById('panel-recibidos');
+    if (!panel || !row) return;
+    var rowRect = row.getBoundingClientRect();
+    function onMove(e){
+      var newWidth = rowRect.right - e.clientX;
+      var minW = 300, maxW = Math.round(rowRect.width * 0.7);
+      newWidth = Math.max(minW, Math.min(maxW, newWidth));
+      panel.style.flexBasis = newWidth + 'px';
+    }
+    function onUp(){
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.body.style.cursor = ''; document.body.style.userSelect = '';
+      try{ localStorage.setItem('mdjMsgPanelWidth', parseInt(panel.style.flexBasis, 10)); }catch(e){}
+    }
+    document.body.style.cursor = 'col-resize'; document.body.style.userSelect = 'none';
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  };
+  (function(){
+    try{
+      var savedW = localStorage.getItem('mdjMsgPanelWidth');
+      if (savedW) document.getElementById('hilo-detail').style.flexBasis = savedW + 'px';
+    }catch(e){}
+  })();
+
+  // ── Plantillas ────────────────────────────────────────────────────────
+  async function cargarPlantillas(){
+    var list = document.getElementById('listPlantillas');
+    var sel = document.getElementById('fPlantilla');
+    try{
+      var res = await sb.from('system_messages_templates').select('id, nombre, cuerpo').order('creado_en', { ascending: false });
+      if (res.error) throw res.error;
+      var rows = res.data || [];
+      sel.innerHTML = '<option value="">— ninguna —</option>' + rows.map(function(t){
+        return '<option value="' + esc(t.id) + '">' + esc(t.nombre) + '</option>';
+      }).join('');
+      sel.setAttribute('data-map', JSON.stringify(rows.reduce(function(m, t){ m[t.id] = t.cuerpo; return m; }, {})));
+      list.innerHTML = rows.length ? rows.map(function(t){
+        return '<div class="card tpl-item"><div><div class="tpl-name">' + esc(t.nombre) + '</div>' +
+          '<div class="tpl-body">' + esc(t.cuerpo) + '</div></div></div>';
+      }).join('') : '<div class="empty">Sin plantillas todavía.</div>';
+    }catch(e){
+      list.innerHTML = '<div class="empty">No se pudo cargar (' + esc(e.message || e) + ').</div>';
+    }
+  }
+  document.getElementById('fPlantilla').addEventListener('change', function(){
+    var map = JSON.parse(this.getAttribute('data-map') || '{}');
+    if (map[this.value]) document.getElementById('fCuerpo').value = map[this.value];
+  });
+  document.getElementById('btnGuardarPlantilla').addEventListener('click', async function(){
+    var nombre = document.getElementById('tNombre').value.trim();
+    var cuerpo = document.getElementById('tCuerpo').value.trim();
+    var status = document.getElementById('plantillaStatus');
+    status.textContent = ''; status.className = 'status-msg';
+    if (nombre.length < 2 || cuerpo.length < 2){ status.textContent = 'Completá nombre y texto.'; status.className = 'status-msg err'; return; }
+    try{
+      var uid = (await sb.auth.getUser()).data.user.id;
+      var res = await sb.from('system_messages_templates').insert({ nombre: nombre, cuerpo: cuerpo, creado_por: uid });
+      if (res.error) throw res.error;
+      status.textContent = 'Plantilla guardada.'; status.className = 'status-msg ok';
+      document.getElementById('tNombre').value = ''; document.getElementById('tCuerpo').value = '';
+      cargarPlantillas();
+    }catch(e){
+      status.textContent = 'Error: ' + (e.message || e); status.className = 'status-msg err';
+    }
+  });
+
+  // ── Enviar ────────────────────────────────────────────────────────────
+  async function enviarUno(session, telefono, nombre, cuerpo, mediaUrl){
+    var resp = await fetch(window.MDB_SUPABASE_URL + '/functions/v1/system-messages-send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token, 'apikey': window.MDB_SUPABASE_ANON_KEY },
+      body: JSON.stringify({ telefono: telefono, destinatario_nombre: nombre || null, cuerpo: cuerpo, media_url: mediaUrl || null })
+    });
+    var out = await resp.json().catch(function(){ return {}; });
+    return { ok: resp.ok, error: out.error };
+  }
+  document.getElementById('btnEnviar').addEventListener('click', async function(){
+    var btn = this;
+    var status = document.getElementById('enviarStatus');
+    status.textContent = ''; status.className = 'status-msg';
+    var cuerpo = document.getElementById('fCuerpo').value.trim();
+    if (!cuerpo){ status.textContent = 'Falta el mensaje.'; status.className = 'status-msg err'; return; }
+
+    var destinos = recipientes.length ? recipientes.slice() : (function(){
+      var telefono = document.getElementById('fTelefono').value.trim();
+      var nombre = document.getElementById('fNombre').value.trim();
+      return telefono ? [{ telefono: telefono, nombre: nombre }] : [];
+    })();
+    if (!destinos.length){ status.textContent = 'Falta el destinatario.'; status.className = 'status-msg err'; return; }
+
+    if (destinos.length > 5 && !confirm('Vas a mandar este mensaje a ' + destinos.length + ' personas de una vez. ¿Confirmás que todas esperan recibirlo?')) return;
+
+    btn.disabled = true; btn.textContent = destinos.length > 1 ? ('Enviando 0/' + destinos.length + '…') : 'Enviando…';
+    try{
+      var session = (await sb.auth.getSession()).data.session;
+      var okCount = 0, failCount = 0;
+      for (var i = 0; i < destinos.length; i++){
+        var r = await enviarUno(session, destinos[i].telefono, destinos[i].nombre, cuerpo);
+        if (r.ok) okCount++; else failCount++;
+        if (destinos.length > 1) btn.textContent = 'Enviando ' + (i + 1) + '/' + destinos.length + '…';
+      }
+      status.className = failCount ? 'status-msg err' : 'status-msg ok';
+      status.textContent = failCount ? ('✓ ' + okCount + ' enviados, ✕ ' + failCount + ' fallaron.') : ('✓ Enviado a ' + okCount + (okCount === 1 ? ' persona.' : ' personas.'));
+      document.getElementById('fCuerpo').value = ''; document.getElementById('fTelefono').value = ''; document.getElementById('fNombre').value = '';
+      recipientes = []; renderRecipChips();
+      cargarConteoEnviados();
+    }catch(e){
+      status.textContent = 'Error: ' + (e.message || e); status.className = 'status-msg err';
+    }finally{
+      btn.disabled = false; btn.textContent = 'Enviar SMS';
+    }
+  });
+
+  // ── Directorio / selector de destinatarios (mismo dato que Network) ─────
+  // Categorías DJ/Staff/HoraLoca/Band/Solista/Visuales/MC/Payaso portadas
+  // TAL CUAL de web/staff-admin.html (function loadCRM) -- no se reinventa.
+  var directorio = null; // { grupos: [{key,label,count,contactos:[{nombre,telefono}]}] }
+  var pickerGrupoActivo = null;
+  var pickerSeleccion = {}; // telefono -> {nombre, telefono}
+  var recipientes = []; // [{nombre, telefono}] — destinatarios confirmados para "Enviar"
+
+  function categorizarDj(d){
+    var roleStr = (d.role || '').toLowerCase().trim();
+    var isStaff = roleStr === 'admin' || roleStr === 'owner' || roleStr === 'manager' || roleStr === 'seller';
+    if (isStaff) return ['MDJBStaff'];
+    var spec = ((d.artist_specialty || '') + ' ' + (d.bio || '')).toLowerCase();
+    var cats = [];
+    if (/\b(bartender|mesero|chef|staff)\b/.test(spec)) cats.push('Staff');
+    if (/\b(hora loca|robot|personaje|zanquero)\b/.test(spec)) cats.push('HoraLoca');
+    if (/\b(band|banda|bandas|orquesta|orquestas|músicos|musicos)\b/.test(spec)) cats.push('Band');
+    if (/\b(cantante|solista|vocalista|saxo|percusión|percusion)\b/.test(spec)) cats.push('Solista');
+    if (/\b(foto|video|vj|drone|booth|espejo|visuales)\b/.test(spec)) cats.push('Visuales');
+    if (/\b(mc|host|presentador|maestro de ceremonia)\b/.test(spec)) cats.push('MC');
+    if (/\b(payaso|payasos|circo|santa|infantil)\b/.test(spec)) cats.push('Payaso');
+    if (/\b(dj)\b/.test(spec) || cats.length === 0) cats.push('DJ');
+    return Array.from(new Set(cats));
+  }
+  var GRUPO_LABELS = { DJ:'DJ', Staff:'Staff (evento)', HoraLoca:'Hora Loca', Band:'Banda/Orquesta', Solista:'Solista', Visuales:'Visuales', MC:'MC', Payaso:'Payaso', MDJBStaff:'Equipo Miami DJ Beat', Comercial:'Clientes · Comercial', Personal:'Clientes · Personal' };
+
+  async function cargarDirectorio(){
+    var byGrupo = {};
+    function push(key, nombre, telefono){
+      if (!telefono) return;
+      if (!byGrupo[key]) byGrupo[key] = [];
+      byGrupo[key].push({ nombre: nombre || telefono, telefono: telefono });
+    }
+    try{
+      var djsRes = await sb.from('dj_profiles').select('full_name, stage_name, dj_name, phone, role, artist_specialty, bio');
+      (djsRes.data || []).forEach(function(d){
+        if (!d.phone) return;
+        var nombre = d.full_name || d.stage_name || d.dj_name || 'Sin nombre';
+        categorizarDj(d).forEach(function(cat){ push(cat, nombre, d.phone); });
+      });
+      var clientsRes = await sb.from('client_profiles').select('full_name, phone, is_commercial');
+      (clientsRes.data || []).forEach(function(c){
+        if (!c.phone) return;
+        push(c.is_commercial ? 'Comercial' : 'Personal', c.full_name || 'Sin nombre', c.phone);
+      });
+    }catch(e){ /* directorio.grupos queda vacio, se ve "Sin datos" abajo */ }
+    var grupos = Object.keys(byGrupo).map(function(key){
+      return { key: key, label: GRUPO_LABELS[key] || key, count: byGrupo[key].length, contactos: byGrupo[key] };
+    }).sort(function(a,b){ return b.count - a.count; });
+    // "Todos" -- mismo contacto puede estar en varios grupos (un DJ que también
+    // hace de MC, etc.); se deduplica por teléfono para no repetirlo en la
+    // lista general, y se ordena alfabético (mismo comportamiento que Contactos).
+    var vistos = {};
+    var todos = [];
+    grupos.forEach(function(g){ g.contactos.forEach(function(c){ if (!vistos[c.telefono]){ vistos[c.telefono] = true; todos.push(c); } }); });
+    todos.sort(function(a,b){ return a.nombre.localeCompare(b.nombre, 'es'); });
+    directorio = { grupos: grupos, todos: { key: '__todos__', label: 'Todos', count: todos.length, contactos: todos } };
+    indexarDirectorio();
+  }
+  // Cruce teléfono -> nombre real (Network) para los mensajes ENTRANTES, que
+  // solo traen el número (así llega desde Twilio, sin nombre). Se normaliza a
+  // los últimos 10 dígitos porque dj_profiles/client_profiles no siempre
+  // guardan el mismo formato que el E.164 que usa Twilio (+1XXXXXXXXXX).
+  var _telIndex = null;
+  function last10Digitos(tel){ return String(tel || '').replace(/\D/g, '').slice(-10); }
+  function indexarDirectorio(){
+    _telIndex = {};
+    if (!directorio) return;
+    directorio.todos.contactos.forEach(function(c){
+      var k = last10Digitos(c.telefono);
+      if (k) _telIndex[k] = c.nombre;
+    });
+  }
+  function nombrePorTelefono(tel){
+    return (_telIndex && _telIndex[last10Digitos(tel)]) || null;
+  }
+  function grupoPorKey(key){
+    if (key === '__todos__') return directorio && directorio.todos;
+    return directorio && directorio.grupos.find(function(g){ return g.key === key; });
+  }
+
+  function renderPickerGroups(){
+    var el = document.getElementById('pickerGroups');
+    if (!directorio || !directorio.grupos.length){ el.innerHTML = '<div class="empty">Sin datos.</div>'; return; }
+    el.innerHTML = directorio.grupos.map(function(g){
+      return '<button type="button" class="picker-group-row' + (pickerGrupoActivo === g.key ? ' active' : '') + '" data-key="' + esc(g.key) + '">' +
+        esc(g.label) + '<span class="n">' + g.count + '</span></button>';
+    }).join('');
+    el.querySelectorAll('.picker-group-row').forEach(function(btn){
+      btn.addEventListener('click', function(){ pickerGrupoActivo = btn.getAttribute('data-key'); renderPickerGroups(); renderPickerMembers(); });
+    });
+  }
+  function renderPickerMembers(){
+    var el = document.getElementById('pickerMembers');
+    var grupo = grupoPorKey(pickerGrupoActivo);
+    if (!grupo){ el.innerHTML = '<div class="empty">Elegí un grupo.</div>'; return; }
+    var todosMarcados = grupo.contactos.every(function(c){ return pickerSeleccion[c.telefono]; });
+    var html = '<label class="picker-selectall"><input type="checkbox" id="pickerSelectAll" ' + (todosMarcados ? 'checked' : '') + '> Seleccionar los ' + grupo.count + ' de ' + esc(grupo.label) + '</label>';
+    html += grupo.contactos.map(function(c){
+      var marcado = !!pickerSeleccion[c.telefono];
+      return '<label class="picker-member-row"><input type="checkbox" data-tel="' + esc(c.telefono) + '" data-nombre="' + esc(c.nombre) + '" ' + (marcado ? 'checked' : '') + '>' +
+        '<span><div class="picker-member-name">' + esc(c.nombre) + '</div><div class="picker-member-phone">' + esc(c.telefono) + '</div></span></label>';
+    }).join('');
+    el.innerHTML = html;
+    document.getElementById('pickerSelectAll').addEventListener('change', function(){
+      grupo.contactos.forEach(function(c){
+        if (this.checked) pickerSeleccion[c.telefono] = c; else delete pickerSeleccion[c.telefono];
+      }.bind(this));
+      renderPickerMembers(); renderPickerCount();
+    });
+    el.querySelectorAll('.picker-member-row input[data-tel]').forEach(function(cb){
+      cb.addEventListener('change', function(){
+        var tel = cb.getAttribute('data-tel'), nombre = cb.getAttribute('data-nombre');
+        if (cb.checked) pickerSeleccion[tel] = { nombre: nombre, telefono: tel }; else delete pickerSeleccion[tel];
+        renderPickerMembers(); renderPickerCount();
+      });
+    });
+  }
+  function renderPickerCount(){
+    var n = Object.keys(pickerSeleccion).length;
+    document.getElementById('pickerCount').textContent = n + (n === 1 ? ' seleccionado' : ' seleccionados');
+  }
+  function abrirPicker(grupoInicial){
+    document.getElementById('pickerOv').hidden = false;
+    if (grupoInicial !== undefined) pickerGrupoActivo = grupoInicial;
+    if (!directorio) { document.getElementById('pickerGroups').innerHTML = '<div class="empty">Cargando…</div>'; cargarDirectorio().then(function(){ renderPickerGroups(); renderPickerMembers(); }); }
+    else { renderPickerGroups(); renderPickerMembers(); }
+    renderPickerCount();
+  }
+  function cerrarPicker(){ document.getElementById('pickerOv').hidden = true; }
+  document.getElementById('btnAbrirTodos').addEventListener('click', function(){ abrirPicker('__todos__'); });
+  document.getElementById('btnAbrirGrupos').addEventListener('click', function(){ abrirPicker(null); });
+  document.getElementById('btnAbrirDirectorio2').addEventListener('click', function(){ abrirPicker(null); });
+  document.getElementById('btnAbrirNetwork').addEventListener('click', function(){
+    window.parent.openNetworkForMessages && window.parent.openNetworkForMessages();
+  });
+  window.addEventListener('message', function(e){
+    var d = e.data;
+    if (!d || d.type !== 'mdjb:network-picked' || !Array.isArray(d.contacts)) return;
+    d.contacts.forEach(function(c){ if (c && c.telefono) recipientes.push({ nombre: c.nombre || c.telefono, telefono: c.telefono }); });
+    renderRecipChips();
+    document.querySelector('.tab-btn[data-tab="enviar"]').click();
+  });
+  document.getElementById('btnPickerCerrar').addEventListener('click', cerrarPicker);
+  document.getElementById('btnPickerTeclado').addEventListener('click', function(){
+    var row = document.getElementById('pickerTecladoRow');
+    row.style.display = row.style.display === 'flex' ? 'none' : 'flex';
+  });
+  document.getElementById('btnPickerAgregarNumero').addEventListener('click', function(){
+    var nombre = document.getElementById('pkNombre').value.trim();
+    var telefono = document.getElementById('pkTelefono').value.trim();
+    if (!telefono){ return; }
+    pickerSeleccion[telefono] = { nombre: nombre || telefono, telefono: telefono };
+    document.getElementById('pkNombre').value = ''; document.getElementById('pkTelefono').value = '';
+    document.getElementById('pickerTecladoRow').style.display = 'none';
+    renderPickerCount();
+  });
+  document.getElementById('btnPickerCancelar').addEventListener('click', function(){ pickerSeleccion = {}; cerrarPicker(); });
+  document.getElementById('btnPickerUsar').addEventListener('click', function(){
+    recipientes = Object.keys(pickerSeleccion).map(function(k){ return pickerSeleccion[k]; });
+    pickerSeleccion = {};
+    renderRecipChips();
+    cerrarPicker();
+    document.querySelector('.tab-btn[data-tab="enviar"]').click();
+  });
+
+  // ── Chips de destinatarios en "Enviar" ───────────────────────────────────
+  function renderRecipChips(){
+    var el = document.getElementById('recipChips');
+    var manual = document.getElementById('fTelefono');
+    if (!recipientes.length){ el.innerHTML = ''; manual.disabled = false; return; }
+    manual.disabled = true; manual.value = '';
+    el.innerHTML = recipientes.map(function(r, i){
+      return '<span class="recip-chip">' + esc(r.nombre) + '<button type="button" data-i="' + i + '">✕</button></span>';
+    }).join('');
+    el.querySelectorAll('button[data-i]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        recipientes.splice(Number(btn.getAttribute('data-i')), 1);
+        renderRecipChips();
+      });
+    });
+    var warn = document.getElementById('enviarWarn');
+    warn.innerHTML = recipientes.length > 5
+      ? '<div class="warn-box"><b>' + recipientes.length + ' destinatarios.</b> Vas a mandar el mismo mensaje a todas estas personas de una vez. Confirmá que esperan recibirlo de vos — mandar el mismo texto a mucha gente que no lo pidió puede hacer que Twilio suspenda el número.</div>'
+      : '';
+  }
+
+  function init(){
+    sb = window.getSupabaseClient ? window.getSupabaseClient() : null;
+    if (!sb){ setTimeout(init, 150); return; }
+    // Directorio primero: así Recibidos ya puede ponerle nombre real al
+    // número entrante desde la primera carga, en vez de mostrar el teléfono
+    // y esperar a que alguien abra el selector de Network.
+    cargarDirectorio().then(cargarRecibidos);
+    cargarPlantillas();
+    cargarConteoEnviados();
+  }
+  init();
+})();
+</script>
+</body>
+</html>

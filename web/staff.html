@@ -1894,6 +1894,9 @@
                este menú lateral, ver enterNetworkFullPage/exitNetworkFullPage). -->
           <button type="button" class="side3-link side3-link-standalone" data-sec="admin" data-nav="crm" data-standalone="1" title="Network"><span class="side3-ic">🌐</span><span class="side3-tx">Network</span></button>
 
+          <!-- Mensajes del Sistema (2026-09-23): SMS reales, entrada y salida -->
+          <button type="button" class="side3-link side3-link-standalone" data-sec="msg" title="Mensajes del Sistema"><span class="side3-ic">💬</span><span class="side3-tx">Mensajes del Sistema</span></button>
+
           <!-- Grupo EQUIPO -->
           <button type="button" class="side3-group" data-group="equipo" aria-label="Equipo" data-i18n-aria="side3-equipo">
             <span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span class="side3-tx" data-i18n="side3-equipo">Equipo</span><span class="side3-car">▾</span>
@@ -2080,6 +2083,12 @@
           <div class="sc3-panel" id="sc3-legal">
             <div class="sc3-loading" id="legal-loading"><span class="acc-spin"></span> <span data-i18n="staff-cargando-legal">Cargando Bóveda Legal…</span></div>
             <iframe id="legal-frame" class="sc3-frame" data-src="./contracts-engine.html?v=20260826-docdock" aria-label="Bóveda Legal" loading="lazy" allow="fullscreen" allowfullscreen></iframe>
+          </div>
+          <!-- Mensajes del Sistema (2026-09-23): SMS reales entrantes+salientes con
+               clientes y artistas, mismo patrón de panel dedicado + iframe perezoso. -->
+          <div class="sc3-panel" id="sc3-msg">
+            <div class="sc3-loading" id="sc3-msg-loading"><span class="acc-spin"></span> Cargando Mensajes del Sistema…</div>
+            <iframe id="sc3-msg-iframe" class="sc3-frame" data-src="./system-messages.html?v=20260924-v2" aria-label="Mensajes del Sistema" loading="lazy"></iframe>
           </div>
         </div><!-- /staff-content3 -->
        </div><!-- /staff-shell -->
@@ -2407,6 +2416,8 @@
           '<div id="mdj-notif-bell-list" class="mdj-notif-bell-list"></div>' +
           '<div class="mdj-notif-bell-title">Pedidos sin leer</div>' +
           '<div id="mdj-notif-bell-list-merch" class="mdj-notif-bell-list"></div>' +
+          '<div class="mdj-notif-bell-title">Mensajes nuevos</div>' +
+          '<div id="mdj-notif-bell-list-msg" class="mdj-notif-bell-list"></div>' +
         '</div>';
       document.body.appendChild(wrap);
       var pill = document.createElement('button');
@@ -2429,6 +2440,9 @@
       // sidebar (ver markAllRead en staff-merch-orders.html) — no al cambiar de estado.
       window.addEventListener('message', function(e){
         if(e.data && e.data.type === 'mdjb:merch-read') refreshNotifBell(sb);
+        // Mismo patrón: system-messages.html avisa al marcar un SMS leído,
+        // así el número rojo de la campana baja sin esperar el refresco de 60s.
+        if(e.data && e.data.type === 'mdjb:msg-read') refreshNotifBell(sb);
       });
 
       refreshNotifBell(sb);
@@ -2436,10 +2450,10 @@
       setInterval(function(){ refreshNotifBell(sb); }, 60000);   // una cancelación urgente no puede esperar a un refresco manual
       if(/[?&]cancelaciones=1/.test(location.search)) setTimeout(function(){ openCancelacionesPanel(sb); }, 800);   // viene del push urgente
     }
-    var _notifContractCount = 0, _notifMerchCount = 0, _notifLeadsCount = 0, _notifCancelCount = 0;
+    var _notifContractCount = 0, _notifMerchCount = 0, _notifLeadsCount = 0, _notifCancelCount = 0, _notifMsgCount = 0;
     function _paintNotifBadge(){
       var badge = el('mdj-notif-bell-badge');
-      var total = _notifContractCount + _notifMerchCount + _notifLeadsCount + _notifCancelCount;
+      var total = _notifContractCount + _notifMerchCount + _notifLeadsCount + _notifCancelCount + _notifMsgCount;
       if(total > 0){ badge.hidden = false; badge.textContent = String(total); }
       else badge.hidden = true;
       // Con cancelaciones sin resolver la campana y el badge se ponen rojos y aparece el aviso fijo.
@@ -2454,6 +2468,43 @@
       await loadNewLeads(sb);
       await loadPendingContracts(sb);
       await loadUnreadMerchOrders(sb);
+      await loadUnreadSystemMessages(sb);
+    }
+    // ── Mensajes del Sistema sin leer (SMS entrantes) ─────────────────────────
+    // Mismo patrón que loadUnreadMerchOrders: cuenta real contra system_messages,
+    // sin polling extra (ya corre en el intervalo de 60s de refreshNotifBell).
+    async function loadUnreadSystemMessages(sb){
+      var list = el('mdj-notif-bell-list-msg');
+      try{
+        var res = await sb.from('system_messages')
+          .select('id, telefono, destinatario_nombre, cuerpo, creado_en')
+          .eq('direccion', 'entrante').eq('leido', false)
+          .order('creado_en', { ascending: false });
+        if(res && res.error) throw res.error;
+        var rows = (res && res.data) || [];
+        _notifMsgCount = rows.length;
+        if(rows.length){
+          list.innerHTML = rows.map(function(r){
+            var who = (r.destinatario_nombre || r.telefono || 'Número desconocido').replace(/</g, '&lt;');
+            var cuerpo = (r.cuerpo || '').replace(/</g, '&lt;').slice(0, 60);
+            return '<a class="mdj-notif-bell-item mdj-notif-goto-msg" href="javascript:void(0)">' +
+              '<span class="mdj-notif-bell-item-who">' + who + '</span>' +
+              '<span class="mdj-notif-bell-item-meta">' + cuerpo + '</span></a>';
+          }).join('');
+          list.querySelectorAll('.mdj-notif-goto-msg').forEach(function(a){
+            a.addEventListener('click', function(){
+              var link = document.querySelector('.side3-link[data-sec="msg"]');
+              if(link) link.click();
+            });
+          });
+        } else {
+          list.innerHTML = '<div class="mdj-notif-bell-empty">Sin mensajes nuevos</div>';
+        }
+      }catch(e){
+        _notifMsgCount = 0;
+        if(list) list.innerHTML = '<div class="mdj-notif-bell-empty">Sin mensajes nuevos</div>';
+      }
+      _paintNotifBadge();
     }
     // ── Cancelaciones urgentes (DJ / artista / cliente) ───────────────────────────
     // Fuente: tabla cancelaciones_solicitadas (RLS: solo owner/admin/manager). Las decisiones van por la RPC
@@ -4367,7 +4418,7 @@
     function wireStaffSidebar(){
       var side=el('staff-side3'); if(!side) return;
       var iframe=el('sc3-iframe'), loading=el('sc3-loading'), loadTx=el('sc3-load-tx');
-      var panels={ gob:el('sc3-gob'), admin:el('sc3-admin'), inbox:el('sc3-inbox'), legal:el('sc3-legal'), pedidos:el('sc3-pedidos') };
+      var panels={ gob:el('sc3-gob'), admin:el('sc3-admin'), inbox:el('sc3-inbox'), legal:el('sc3-legal'), pedidos:el('sc3-pedidos'), msg:el('sc3-msg') };
       function showPanel(k){ for(var p in panels){ if(panels[p]) panels[p].classList.toggle('active', p===k); } }
       /* botón: contrae/expande toda la barra a solo iconos */
       var col=el('side3-collapse'); if(col) col.addEventListener('click', function(){ side.classList.toggle('collapsed'); });
@@ -4400,6 +4451,9 @@
         if(!side.classList.contains('fullpage-active')) return;
         side.classList.remove('fullpage-active');
         if(shell) shell.classList.remove('fullpage-tight');
+        // Por si se sale de Network en modo selector (venía de MSM) sin elegir
+        // nada -- que la próxima vez abra en modo normal, no atascado.
+        if(iframe) iframe.__loaded = false;
         showPanel('gob');
         side.querySelectorAll('.side3-link').forEach(function(x){ x.classList.remove('active'); });
         var gobLink = side.querySelector('.side3-link[data-sec="gob"]');
@@ -4412,6 +4466,33 @@
         if(gobItems) gobItems.classList.add('open');
       }
       window.exitNetworkFullPage = exitFullPage;
+      /* 2026-09-23: puente Mensajes del Sistema <-> Network. MSM e iframe de
+         Network (dentro de #sc3-admin) son hermanos, no padre/hijo -- ninguno
+         puede postMessage directo al otro, así que este archivo (el padre
+         común de ambos) hace de relevo, mismo patrón que ya usan Bóveda Legal
+         (mdjb:open-template) y Pedidos (mdjb:merch-filter) más abajo. */
+      window.openNetworkForMessages = function(){
+        showPanel('admin');
+        enterFullPage();
+        if(loading){ loading.classList.remove('hidden'); if(loadTx) loadTx.textContent = 'Cargando Network…'; }
+        var ADMIN_V = '20260923-back-btn-fix';
+        iframe.onload = function(){ iframe.__loaded = true; if(loading) loading.classList.add('hidden'); };
+        iframe.setAttribute('src', './staff-admin.html?v=' + ADMIN_V + '&msmPick=1#crm');
+        setTimeout(function(){ if(loading) loading.classList.add('hidden'); }, 9000);
+        side.querySelectorAll('.side3-link').forEach(function(x){ x.classList.remove('active'); });
+      };
+      window.mdjbRelayToMsm = function(payload){
+        var f = el('sc3-msg-iframe');
+        if(f && f.contentWindow){ try{ f.contentWindow.postMessage(payload, '*'); }catch(e){} }
+        // Network vuelve a modo normal la próxima vez que se abra -- sin esto
+        // se quedaría "atascado" en modo selector para MSM en toda la sesión.
+        iframe.__loaded = false;
+        exitFullPage();
+        showPanel('msg');
+        side.querySelectorAll('.side3-link').forEach(function(x){ x.classList.remove('active'); });
+        var msgLink = side.querySelector('.side3-link[data-sec="msg"]');
+        if(msgLink) msgLink.classList.add('active');
+      };
       /* grupos = acordeón (uno abierto a la vez, "abanico") */
       side.querySelectorAll('.side3-group').forEach(function(g){ g.addEventListener('click', function(){
         exitFullPage();
@@ -4432,7 +4513,7 @@
           // los iframes de este archivo (ver staff-merch-orders.html/contracts-engine.html
           // más arriba) -- el PO estuvo probando una copia vieja cacheada del panel de
           // Network sin darse cuenta. Bump este sufijo cada vez que se edite el archivo.
-          var ADMIN_V = '20260919-foto-y-cumpleanos';
+          var ADMIN_V = '20260923-back-btn-fix';
           var url='./staff-admin.html?v='+ADMIN_V;
           if(opt.go) url='./staff-admin.html?v='+ADMIN_V+'&go='+opt.go+(opt.hash?('#'+opt.hash):'');
           else if(opt.hash) url='./staff-admin.html?v='+ADMIN_V+'#'+opt.hash;
@@ -4466,6 +4547,12 @@
           var f=el('sc3-inbox-iframe'), il=el('sc3-inbox-loading');
           if(f && !f.getAttribute('src')){ if(f.addEventListener) f.addEventListener('load', function(){ if(il) il.classList.add('hidden'); });
             f.setAttribute('src', f.getAttribute('data-src')); setTimeout(function(){ if(il) il.classList.add('hidden'); }, 9000); }
+          return;
+        }
+        if(sec==='msg'){ showPanel('msg');
+          var fm=el('sc3-msg-iframe'), ilm=el('sc3-msg-loading');
+          if(fm && !fm.getAttribute('src')){ if(fm.addEventListener) fm.addEventListener('load', function(){ if(ilm) ilm.classList.add('hidden'); });
+            fm.setAttribute('src', fm.getAttribute('data-src')); setTimeout(function(){ if(ilm) ilm.classList.add('hidden'); }, 9000); }
           return;
         }
         var merchFilter=a.getAttribute('data-merch-filter');
