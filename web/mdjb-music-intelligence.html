@@ -648,6 +648,7 @@ var TRACKS = [
 
 var EXPERIENCES = [
   {id:'reparto', name:'The Haunting House Of Baila Con Micho', sub:'Experience', desc:'Reparto / Reparto Pop DJ prep tracklist — event starting 2026-09-24. BPM, genre and energy filled in live by the DJ.', status:'enabled'},
+  {id:'nineties', name:"90's Hit's", sub:'Experience', desc:'Mix discoTK Cuba — 18 real Eurodance/Italo-dance tracks, BPM filled from public sources where published.', status:'enabled'},
   {id:'one-hit-wonder', name:'One Hit Wonder', sub:'Experience', desc:'Global recognition across generations — songs that land on any floor, any culture, any decade.', status:'enabled'},
   {id:'generational-journey', name:'Generational Journey', sub:'Experience', desc:'A guided decade-by-decade arc built for long-format events.', status:'soon'},
   {id:'latin-classics', name:'Latin Classics', sub:'Experience', desc:'Salsa, merengue, bachata and reggaeton lineage, curated by era.', status:'soon'},
@@ -749,7 +750,9 @@ var state = {
   caseStudyData: null,
   caseStudyLoading: false,
   repartoData: null,
-  repartoLoading: false
+  repartoLoading: false,
+  ninetiesData: null,
+  ninetiesLoading: false
 };
 
 function trackById(id){ for (var i=0;i<TRACKS.length;i++){ if (TRACKS[i].id===id) return TRACKS[i]; } return null; }
@@ -969,7 +972,7 @@ function renderHome(){
     btn.addEventListener('click', function(){
       var id = btn.getAttribute('data-enter-experience');
       state.experience = id;
-      setView(id==='reparto' ? 'learning' : 'event');
+      setView((id==='reparto'||id==='nineties') ? 'learning' : 'event');
     });
   });
 }
@@ -983,7 +986,7 @@ function renderExperiences(){
     btn.addEventListener('click', function(){
       var id = btn.getAttribute('data-enter-experience');
       state.experience = id;
-      setView(id==='reparto' ? 'learning' : 'event');
+      setView((id==='reparto'||id==='nineties') ? 'learning' : 'event');
     });
   });
 }
@@ -1791,12 +1794,14 @@ function renderLearning(){
       '</div>'+
     '</div>'+
     '<div id="caseStudyMount" style="margin-top:24px;"></div>'+
-    '<div id="repartoMount" style="margin-top:24px;"></div>';
+    '<div id="repartoMount" style="margin-top:24px;"></div>'+
+    '<div id="ninetiesMount" style="margin-top:24px;"></div>';
   el.querySelectorAll('[data-learn]').forEach(function(b){
     b.addEventListener('click', function(){ state.learnTrackId = b.getAttribute('data-learn'); renderLearning(); });
   });
   renderCaseStudy();
   renderRepartoCaseStudy();
+  renderNinetiesCaseStudy();
 }
 
 /* ============================= REAL CASE STUDY: THE ONE HIT WONDER EXPERIENCE =============================
@@ -2050,6 +2055,125 @@ function loadRepartoCaseStudy(){
       state.repartoLoading = false;
       console.log('Reparto tracklist load failed:', err && err.message);
       if (state.view==='learning') renderRepartoCaseStudy();
+    });
+}
+
+/* ============================= 90's HIT'S: DJ PREP TRACKLIST (editable, no backend) =============================
+   Mismo patrón que la sección de Reparto de arriba (misma mecánica de tabla/copiar/redimensionar), pero sin la
+   columna de género (no aplica a este mix) — tracklist real dado por el PO ("Mix discoTK Cuba"), BPM buscado en
+   fuentes públicas (Tunebat/SongBPM) donde existe, nunca inventado. */
+function ninetiesTrackById(id){
+  if (!state.ninetiesData) return null;
+  for (var i=0;i<state.ninetiesData.tracks.length;i++){ if (state.ninetiesData.tracks[i].id===id) return state.ninetiesData.tracks[i]; }
+  return null;
+}
+function renderNinetiesTrackRow(t, idx){
+  return (
+    '<tr>'+
+      '<td class="num">'+(idx+1)+'</td>'+
+      '<td class="track-name">'+esc(t.title)+'</td>'+
+      '<td>'+esc(t.artist)+'</td>'+
+      '<td><input class="rp-input" type="text" inputmode="numeric" placeholder="—" value="'+(t.bpm==null?'':t.bpm)+'" data-nh-bpm="'+t.id+'"></td>'+
+      '<td><input class="rp-input" type="text" inputmode="numeric" placeholder="—" value="'+(t.energyEstimate==null?'':t.energyEstimate)+'" data-nh-energy="'+t.id+'"></td>'+
+    '</tr>'
+  );
+}
+function renderNinetiesBody(){
+  var tracks = state.ninetiesData.tracks;
+  var withBpm = tracks.filter(function(t){ return t.bpm!=null; }).length;
+  return (
+    '<div class="rp-toolbar"><button class="btn btn-gold btn-sm" id="nhCopyBtn">'+iconSvg('copy')+' Copy Tracklist</button></div>'+
+    '<div class="result-count">'+tracks.length+' tracks · '+withBpm+' con BPM real · '+(tracks.length-withBpm)+' sin publicar (a llenar en vivo)</div>'+
+    '<div class="panel scrollx"><table class="rp-table"><colgroup>'+
+      '<col class="rp-col-n"><col class="rp-col-track"><col class="rp-col-artist"><col class="rp-col-bpm"><col class="rp-col-energy">'+
+    '</colgroup><thead><tr>'+
+      ['#','Track','Artist','BPM','Energy'].map(function(h){ return '<th>'+h+'<span class="rp-resize-handle"></span></th>'; }).join('')+
+    '</tr></thead><tbody>'+
+      tracks.map(function(t, idx){ return renderNinetiesTrackRow(t, idx); }).join('')+
+    '</tbody></table></div>'+
+    '<p class="rp-hint">Arrastra el borde derecho de cada columna para ampliarla · BPM real cuando se encontró en fuente pública, editable en este navegador (no hay backend).</p>'
+  );
+}
+function copyNinetiesTracklist(){
+  var tracks = state.ninetiesData ? state.ninetiesData.tracks : [];
+  var lines = ['#\tTrack\tArtist\tBPM\tEnergy'];
+  tracks.forEach(function(t, idx){
+    lines.push([idx+1, t.title, t.artist, (t.bpm==null?'':t.bpm), (t.energyEstimate==null?'':t.energyEstimate)].join('\t'));
+  });
+  var text = lines.join('\n');
+  function done(ok){ toast(ok ? 'Tracklist copiado — '+tracks.length+' canciones' : 'No se pudo copiar en este navegador'); }
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){ done(true); }).catch(function(){ done(false); });
+  } else {
+    try{
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      done(true);
+    }catch(e){ done(false); }
+  }
+}
+function wireNinetiesInputs(mount){
+  mount.querySelectorAll('[data-nh-bpm]').forEach(function(inp){
+    inp.addEventListener('input', function(){
+      var v = inp.value.replace(/[^0-9.]/g,'');
+      inp.value = v;
+      var t = ninetiesTrackById(inp.getAttribute('data-nh-bpm'));
+      if (t) t.bpm = v==='' ? null : Number(v);
+    });
+  });
+  mount.querySelectorAll('[data-nh-energy]').forEach(function(inp){
+    inp.addEventListener('input', function(){
+      var v = inp.value.replace(/[^0-9]/g,'').slice(0,2);
+      inp.value = v;
+      var t = ninetiesTrackById(inp.getAttribute('data-nh-energy'));
+      if (t) t.energyEstimate = v==='' ? null : Number(v);
+    });
+  });
+  var copyBtn = mount.querySelector('#nhCopyBtn');
+  if (copyBtn) copyBtn.addEventListener('click', copyNinetiesTracklist);
+  initRepartoResize(mount);
+}
+function renderNinetiesCaseStudy(){
+  var mount = document.getElementById('ninetiesMount');
+  if (!mount) return;
+  var header =
+    '<div class="panel-head" style="border:none;padding:0 0 10px;">'+
+      '<span class="label" style="display:flex;align-items:center;gap:8px;">'+iconSvg('music')+' Real DJ Prep — 90\'s Hit\'s (Mix discoTK Cuba)</span>'+
+      '<span class="badge gold">Eurodance / Italo-dance</span>'+
+    '</div>'+
+    '<p class="view-desc" style="margin:0 0 14px;">Tracklist real dado directo por el PO, con su link de YouTube por canción. BPM buscado en fuentes públicas (Tunebat/SongBPM/Spotify) — solo se llenó cuando existía un dato real publicado; el resto queda en blanco para llenarse en vivo, nunca inventado.</p>';
+
+  if (state.ninetiesData){
+    mount.innerHTML = header + renderNinetiesBody();
+    wireNinetiesInputs(mount);
+    return;
+  }
+  if (state.ninetiesLoading){
+    mount.innerHTML = header + '<div class="move-empty">Loading tracklist…</div>';
+    return;
+  }
+  mount.innerHTML = header + '<div class="move-empty">Could not load the tracklist yet. <button class="btn btn-sm" id="ninetiesRetry">Load Tracklist</button></div>';
+  var retryBtn = document.getElementById('ninetiesRetry');
+  if (retryBtn) retryBtn.addEventListener('click', loadNinetiesCaseStudy);
+  loadNinetiesCaseStudy();
+}
+function loadNinetiesCaseStudy(){
+  if (state.ninetiesLoading || state.ninetiesData) return;
+  state.ninetiesLoading = true;
+  fetch('./data/90s-hits-experience.json')
+    .then(function(r){ if (!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    .then(function(data){
+      state.ninetiesData = data;
+      state.ninetiesLoading = false;
+      if (state.view==='learning') renderNinetiesCaseStudy();
+    })
+    .catch(function(err){
+      state.ninetiesLoading = false;
+      console.log('90s tracklist load failed:', err && err.message);
+      if (state.view==='learning') renderNinetiesCaseStudy();
     });
 }
 
