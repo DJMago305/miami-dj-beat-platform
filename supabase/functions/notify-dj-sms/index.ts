@@ -68,17 +68,17 @@ serve(async (req) => {
     
     // Motor de Traducción Dinámica
     if (reminder.reminder_type === "24h") {
-        msgBody = isSpanish 
-            ? `MDJPRO ALERT: Mañana tienes cobertura en ${reminder.event.venue} a las ${miamiTimeDesc}. Prepárate.`
-            : `MDJPRO ALERT: Tomorrow you have coverage at ${reminder.event.venue} at ${miamiTimeDesc}. Get ready.`;
+        msgBody = isSpanish
+            ? `MIAMI DJ BEAT LLC: MDJPRO ALERT: Mañana tienes cobertura en ${reminder.event.venue} a las ${miamiTimeDesc}. Prepárate.`
+            : `MIAMI DJ BEAT LLC: MDJPRO ALERT: Tomorrow you have coverage at ${reminder.event.venue} at ${miamiTimeDesc}. Get ready.`;
     } else if (reminder.reminder_type === "2h") {
-        msgBody = isSpanish 
-            ? `MDJPRO: Faltan 2 Horas para presenciar en ${reminder.event.venue}. Comienza despliegue a locación.`
-            : `MDJPRO: 2 Hours until setlist time at ${reminder.event.venue}. Begin deployment to loc.`;
+        msgBody = isSpanish
+            ? `MIAMI DJ BEAT LLC: MDJPRO: Faltan 2 Horas para presenciar en ${reminder.event.venue}. Comienza despliegue a locación.`
+            : `MIAMI DJ BEAT LLC: MDJPRO: 2 Hours until setlist time at ${reminder.event.venue}. Begin deployment to loc.`;
     } else {
-        msgBody = isSpanish 
-            ? `MDJPRO STANDBY: 30 Minutos. Verifica consola, audio y repórtate listo en cabina (${reminder.event.venue}).`
-            : `MDJPRO STANDBY: 30 Minutes. Verify setup and hold ready in booth (${reminder.event.venue}).`;
+        msgBody = isSpanish
+            ? `MIAMI DJ BEAT LLC: MDJPRO STANDBY: 30 Minutos. Verifica consola, audio y repórtate listo en cabina (${reminder.event.venue}).`
+            : `MIAMI DJ BEAT LLC: MDJPRO STANDBY: 30 Minutes. Verify setup and hold ready in booth (${reminder.event.venue}).`;
     }
 
     // Disparo Nativo a TWILIO SMS REST API

@@ -110,7 +110,14 @@ serve(async (req: Request) => {
                 "Content-Type": "application/x-www-form-urlencoded",
                 Authorization: "Basic " + btoa(`${sid}:${token}`),
             },
-            body: new URLSearchParams({ To: fila.telefono, From: from, Body: fila.mensaje }).toString(),
+            body: new URLSearchParams({
+                To: fila.telefono,
+                From: from,
+                // El numero no muestra nombre de negocio en el telefono del cliente (no
+                // existe CNAM para SMS) -- se antepone la marca al texto en vez, salvo
+                // que el mensaje ya la traiga (ELIXIS a veces la redacta ella misma).
+                Body: /^miami dj beat/i.test(fila.mensaje) ? fila.mensaje : `MIAMI DJ BEAT LLC: ${fila.mensaje}`,
+            }).toString(),
         });
         const cuerpo = await r.json().catch(() => ({}));
 

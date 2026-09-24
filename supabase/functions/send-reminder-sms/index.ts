@@ -76,7 +76,7 @@ type ReminderRow = {
 // el esqueleto solo cubre el template por defecto en español.
 const TEMPLATES: Record<string, (name: string | null) => string> = {
   contract_pending_reminder: (name) =>
-    `Hola${name ? " " + name : ""}, este es un recordatorio de Miami DJ Beat LLC: ` +
+    `MIAMI DJ BEAT LLC: Hola${name ? " " + name : ""}, este es un recordatorio: ` +
     `tienes un contrato pendiente de firma. Por favor revisa el enlace que te enviamos.`,
 };
 

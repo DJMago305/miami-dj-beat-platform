@@ -2388,6 +2388,74 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                             <h3 style="margin:0; color:var(--gold);">🌐 Network<span class="mdj-help" tabindex="0"><span class="mdj-help-icon">?</span><span class="mdj-help-tip">Directorio global del negocio — antes "Directorio Global (CRM)". Prototipo 2026-09-18: pestañas + fuente del dato. Detecta contactos de referencia que ya tienen cuenta real y permite fusionarlos (2026-09-19). Pendiente para después: fotos automáticas.</span></span></h3>
                         </div>
                         <div style="display:flex; gap:10px; align-items:center;">
+                            <!-- Volver a Staff (2026-09-23, pedido del PO: no podía salir de
+                                 Network y el ✕ dorado de más abajo no lo devolvía a Staff --
+                                 corregido para usar el botón «regresar» REAL y único del sitio
+                                 (.mdj-back-btn, js/mdj-back-button.js: círculo dorado, ícono
+                                 corner-down-left) en vez de una flecha azul inventada, y
+                                 llamando a la MISMA función real que ya expone staff.html. -->
+                            <button class="mdj-back-btn" onclick="window.parent.exitNetworkFullPage && window.parent.exitNetworkFullPage()" title="Volver a Staff" aria-label="Volver a Staff" style="width:38px; height:34px; padding:0; border-radius:999px; border:1px solid rgba(197,160,89,.5); background:rgba(0,0,0,.35); color:var(--gold,#c5a059); display:inline-flex; align-items:center; justify-content:center;">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 10 4 15 9 20"></polyline><path d="M20 4v7a4 4 0 0 1-4 4H4"></path></svg>
+                            </button>
+                            <!-- Modo selector para Mensajes del Sistema (2026-09-23): Network se
+                                 abre con ?msmPick=1 cuando viene del botón 🌐 de MSM. Sin botones
+                                 nuevos, a pedido del PO -- gestos nativos tipo Finder/Contactos:
+                                   · Doble clic en un contacto -> manda ESE contacto solo.
+                                   · Clic + Shift sobre varios contactos -> los va acumulando.
+                                   · Doble clic en uno de los ya acumulados -> manda TODOS esos.
+                                   · Doble clic en el nombre de una categoría (barra lateral) ->
+                                     manda el grupo completo que quede cargado.
+                                 No toca selectNetworkContact/switchNetworkTab (delegación aparte,
+                                 encima del click normal, que sigue intacto). -->
+                            <span id="msm-pick-hint" style="display:none; font-size:11px; color:var(--gold); font-weight:700;" title="Doble clic en un contacto = solo ese. Shift+clic para juntar varios, doble clic en uno de ellos para mandarlos. Doble clic en el nombre de una categoría = todo el grupo.">📨 Modo selector activo</span>
+                            <script>
+                            (function(){
+                                if (!/[?&]msmPick=1/.test(location.search)) return;
+                                var hint = document.getElementById('msm-pick-hint');
+                                if (hint) hint.style.display = 'inline';
+                                var multi = {}; // idx -> true, acumulado con Shift+clic
+
+                                function telefonoDe(row){ return row && (row.phone || row.telefono || ''); }
+                                function nombreDe(row){ return row && (row._displayName || row.full_name || row.nombre || telefonoDe(row)); }
+                                function enviarAMsm(contactos){
+                                    contactos = contactos.filter(function(c){ return c.telefono; });
+                                    if (!contactos.length) return;
+                                    window.parent.mdjbRelayToMsm && window.parent.mdjbRelayToMsm({ type: 'mdjb:network-picked', contacts: contactos });
+                                }
+
+                                // Shift+clic: acumula sin disparar el click normal de selección detallada.
+                                document.addEventListener('click', function(e){
+                                    if (!e.shiftKey) return;
+                                    var tr = e.target.closest('.net-data-row');
+                                    if (!tr) return;
+                                    var idx = Number(tr.getAttribute('data-idx'));
+                                    if (multi[idx]) delete multi[idx]; else multi[idx] = true;
+                                    tr.style.outline = multi[idx] ? '2px solid #3b82f6' : 'none';
+                                }, true);
+
+                                // Doble clic en una fila -> manda el acumulado (si hay >1) o esa sola.
+                                document.addEventListener('dblclick', function(e){
+                                    var tr = e.target.closest('.net-data-row');
+                                    if (tr){
+                                        var idxs = Object.keys(multi).map(Number);
+                                        var filas = window._networkRowData || [];
+                                        var objetivo = idxs.length ? idxs : [Number(tr.getAttribute('data-idx'))];
+                                        enviarAMsm(objetivo.map(function(i){ var r = filas[i]; return { nombre: nombreDe(r), telefono: telefonoDe(r) }; }));
+                                        return;
+                                    }
+                                    // Doble clic en el nombre/pestaña de una categoría -> el grupo completo.
+                                    var tab = e.target.closest('.net-tab-btn, .net-tab-label');
+                                    if (tab){
+                                        setTimeout(function(){
+                                            var filas = window._networkRowData || [];
+                                            if (!filas.length) return;
+                                            if (!confirm('Vas a llevar ' + filas.length + ' contactos de este grupo a Mensajes del Sistema. ¿Seguro?')) return;
+                                            enviarAMsm(filas.map(function(r){ return { nombre: nombreDe(r), telefono: telefonoDe(r) }; }));
+                                        }, 250); // deja que switchNetworkTab (click normal) termine de re-renderizar la tabla
+                                    }
+                                }, true);
+                            })();
+                            </script>
                             <!-- Orden / Más opciones (2026-09-19, pedido del PO: "te faltan dos
                                  herramientas en la barra al lado de editar" -- mismo círculo azul
                                  que el botón de actualizar). Orden es real (ver renderTable);

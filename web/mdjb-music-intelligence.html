@@ -106,6 +106,7 @@
     font-size:14px;line-height:1.5;
     -webkit-font-smoothing:antialiased;
     overflow-x:hidden;
+    display:flex;align-items:stretch;
   }
   @media (prefers-reduced-motion: reduce){#mi-cockpit *{animation-duration:.001ms !important; transition-duration:.001ms !important;} }#mi-cockpit h1, #mi-cockpit h2, #mi-cockpit h3, #mi-cockpit h4{font-family:var(--font-display);font-weight:800;letter-spacing:.01em;text-wrap:balance;margin:0;}#mi-cockpit button{font-family:inherit;}#mi-cockpit ::selection{background:var(--gold-dim);color:#fff;}#mi-cockpit a{color:inherit;}#mi-cockpit .num{font-family:var(--font-mono);font-variant-numeric:tabular-nums;}#mi-cockpit .label{
     font-family:var(--font-body);font-weight:600;font-size:10.5px;letter-spacing:.11em;
@@ -130,7 +131,7 @@
   }#mi-cockpit .panel-body{padding:16px;}#mi-cockpit /* ---------- App shell ---------- */
   #app{min-height:100%;display:flex;flex-direction:column;}#mi-cockpit .topbar{
     height:var(--header-h);flex:none;display:flex;align-items:center;
-    padding:0 18px 0 16px;gap:18px;border-bottom:1px solid var(--border);
+    padding:0 18px 0 32px;gap:18px;border-bottom:1px solid var(--border);
     background:var(--bg-elevated);position:relative;z-index:20;
   }
   /* FOUC/overlap fix (2026-09-07): en "estacion" (html.mdj-estacion-previa /
@@ -158,10 +159,10 @@
     width:34px;height:34px;border-radius:var(--radius-sm);border:1px solid transparent;background:transparent;
     color:var(--text-dim);display:flex;align-items:center;justify-content:center;cursor:pointer;
     transition:background-color .12s ease, color .12s ease, border-color .12s ease;position:relative;
-  }#mi-cockpit .icon-btn:hover{background:var(--surface-2);color:var(--text);border-color:var(--border-strong);}#mi-cockpit .icon-btn.active{color:var(--gold);border-color:var(--gold-dim);background:var(--gold-wash);}#mi-cockpit .icon-btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}#mi-cockpit .shell{flex:1;display:flex;min-height:0;}#mi-cockpit .rail{
+  }#mi-cockpit .icon-btn:hover{background:var(--surface-2);color:var(--text);border-color:var(--border-strong);}#mi-cockpit .icon-btn.active{color:var(--gold);border-color:var(--gold-dim);background:var(--gold-wash);}#mi-cockpit .icon-btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}#mi-cockpit .shell{flex:1;display:flex;flex-direction:column;min-height:0;min-width:0;}#mi-cockpit .rail{
     width:var(--rail-w);flex:none;border-right:1px solid var(--border);background:var(--bg-elevated);
     display:flex;flex-direction:column;padding:14px 10px;gap:2px;transition:width .16s ease;overflow-y:auto;
-  }#mi-cockpit .rail.collapsed{width:var(--rail-w-collapsed);}#mi-cockpit .rail-group-label{
+  }#mi-cockpit .rail.collapsed{width:var(--rail-w-collapsed);}#mi-cockpit .rail-top{display:flex;align-items:center;justify-content:flex-start;padding:2px 10px 12px;position:sticky;top:0;z-index:2;background:var(--bg-elevated);}#mi-cockpit .rail-toggle{display:flex;align-items:center;justify-content:center;width:36px;height:34px;flex:none;background:rgba(255,255,255,.05);border:1px solid var(--border-strong);border-radius:8px;color:var(--gold);cursor:pointer;}#mi-cockpit .rail-toggle svg{width:17px;height:17px;}#mi-cockpit .rail-toggle:hover{background:var(--gold-wash);}#mi-cockpit .rail-group-label{
     font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-faint);
     padding:12px 10px 6px;
   }#mi-cockpit .rail.collapsed .rail-group-label, #mi-cockpit .rail.collapsed .nav-label, #mi-cockpit .rail.collapsed .nav-tag{display:none;}#mi-cockpit .nav-item{
@@ -273,6 +274,31 @@
       .mi-gate-pill.gold{background:linear-gradient(135deg,var(--gold),#e8b84b); color:#000;}
       .mi-gate-pill.ghost{border:1px solid rgba(255,255,255,0.2); color:#fff; font-weight:600;}
       #mi-cockpit{min-height:70vh;}
+      /* Pantalla completa del cockpit (botón btnFocus): oculta el menú real del
+         sitio y quita el hueco reservado del body para que el cockpit ocupe
+         toda la altura. Scoped a body.mdj-mi-fullscreen, solo mientras está activo. */
+      body.mdj-mi-fullscreen #mainHeader{display:none !important;}
+      body.mdj-mi-fullscreen{padding-top:0 !important;}
+      body.mdj-mi-fullscreen #mdj-flotante-visitante{display:none !important;}
+      /* ---------- Reparto Experience: editable case-study table ---------- */
+      #mi-cockpit .rp-table{table-layout:fixed;}
+      #mi-cockpit .rp-table col.rp-col-n{width:44px;}
+      #mi-cockpit .rp-table col.rp-col-track{width:280px;}
+      #mi-cockpit .rp-table col.rp-col-artist{width:260px;}
+      #mi-cockpit .rp-table col.rp-col-genre{width:150px;}
+      #mi-cockpit .rp-table col.rp-col-bpm{width:90px;}
+      #mi-cockpit .rp-table col.rp-col-energy{width:110px;}
+      #mi-cockpit .rp-table thead th{position:relative;}
+      #mi-cockpit .rp-resize-handle{position:absolute;right:0;top:0;bottom:0;width:8px;cursor:col-resize;touch-action:none;}
+      #mi-cockpit .rp-resize-handle:hover{background:linear-gradient(90deg,transparent,var(--gold-wash));}
+      #mi-cockpit .rp-table tbody td{white-space:normal;}
+      #mi-cockpit .rp-input{width:100%;background:var(--surface-2);border:1px solid var(--border-strong);border-radius:6px;color:var(--text);font-family:var(--font-mono);font-size:12.5px;padding:6px 8px;text-align:center;}
+      #mi-cockpit .rp-input::placeholder{color:var(--text-faint);}
+      #mi-cockpit .rp-input:focus-visible{outline:2px solid var(--gold);}
+      #mi-cockpit .rp-genre-select{width:100%;background:var(--surface-2);border:1px solid var(--border-strong);color:var(--text);font-family:var(--font-body);font-size:12px;padding:6px 8px;border-radius:6px;}
+      #mi-cockpit .rp-genre-select:focus-visible{outline:2px solid var(--gold);}
+      #mi-cockpit .rp-toolbar{display:flex;justify-content:flex-end;padding:0 0 12px;}
+      #mi-cockpit .rp-hint{color:var(--text-faint);font-size:11px;margin:8px 0 0;}
     </style>
 </head>
 
@@ -401,27 +427,12 @@
       </div>
     </div>
       <div id="mi-cockpit" style="display:none;">
-  <header class="topbar">
-    <div class="brand">
-      <div class="brand-text">
-        <span class="b-name">MDJB MUSIC INTELLIGENCE</span>
-        <span class="b-sub">DJ Programming &amp; Floor Intelligence</span>
-      </div>
-    </div>
-    <div class="topbar-center">
-      <div class="experience-pill"><span class="dot"></span><span id="expPillLabel">ONE HIT WONDER EXPERIENCE</span></div>
-      <span class="badge" id="modeBadge" style="margin-left:8px;align-self:center;">EXPERIENCED</span>
-    </div>
-    <div class="topbar-right">
-      <button class="icon-btn" id="btnDjMode" title="DJ Mode — switch Experienced / Guided reasoning" aria-label="Toggle Experienced or Guided DJ mode"></button>
-      <button class="icon-btn" id="btnEventStatus" title="Event status" aria-label="Event status"></button>
-      <button class="icon-btn" id="btnSettings" title="Settings" aria-label="Open settings"></button>
-      <button class="icon-btn" id="btnFocus" title="Full screen booth focus" aria-label="Toggle full screen focus"></button>
-    </div>
-  </header>
-
-  <div class="shell">
     <nav class="rail" id="rail">
+      <div class="rail-top">
+        <button type="button" class="rail-toggle" id="railToggle" title="Contraer / expandir menú" aria-label="Contraer o expandir el menú lateral">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+        </button>
+      </div>
       <div class="rail-group-label">Cockpit</div>
       <button class="nav-item" data-view="home"><span class="icon" data-icon="home"></span><span class="nav-label">Home</span></button>
       <button class="nav-item" data-view="experiences"><span class="icon" data-icon="layers"></span><span class="nav-label">Experiences</span></button>
@@ -445,6 +456,26 @@
         </div>
       </div>
     </nav>
+
+    <div class="shell">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-text">
+            <span class="b-name">MDJB MUSIC INTELLIGENCE</span>
+            <span class="b-sub">DJ Programming &amp; Floor Intelligence</span>
+          </div>
+        </div>
+        <div class="topbar-center">
+          <div class="experience-pill"><span class="dot"></span><span id="expPillLabel">ONE HIT WONDER EXPERIENCE</span></div>
+          <span class="badge" id="modeBadge" style="margin-left:8px;align-self:center;">EXPERIENCED</span>
+        </div>
+        <div class="topbar-right">
+          <button class="icon-btn" id="btnDjMode" title="DJ Mode — switch Experienced / Guided reasoning" aria-label="Toggle Experienced or Guided DJ mode"></button>
+          <button class="icon-btn" id="btnEventStatus" title="Event status" aria-label="Event status"></button>
+          <button class="icon-btn" id="btnSettings" title="Settings" aria-label="Open settings"></button>
+          <button class="icon-btn" id="btnFocus" title="Full screen booth focus" aria-label="Toggle full screen focus"></button>
+        </div>
+      </header>
 
     <main id="main">
       <section class="view" id="view-home"></section>
@@ -551,7 +582,8 @@ var ICONS = {
   trendUp:'<path d="M4 13.5 9 8.5 12 11.5 16 6.5"/><path d="M12.5 6.5h3.5v3.5"/>',
   trendDown:'<path d="M4 6.5 9 11.5 12 8.5 16 13.5"/><path d="M12.5 13.5h3.5v-3.5"/>',
   trendNew:'<path d="M10 4v12M4 10h12"/>',
-  trendFlat:'<path d="M4 10h12"/>'
+  trendFlat:'<path d="M4 10h12"/>',
+  copy:'<rect x="7.5" y="7.5" width="9.5" height="9.5" rx="1.5"/><path d="M12.5 7.5V5a1.5 1.5 0 0 0-1.5-1.5H4A1.5 1.5 0 0 0 2.5 5v8A1.5 1.5 0 0 0 4 14.5h2.5"/>'
 };
 function iconSvg(name){
   return '<svg class="icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+(ICONS[name]||'')+'</svg>';
@@ -615,6 +647,7 @@ var TRACKS = [
 ];
 
 var EXPERIENCES = [
+  {id:'reparto', name:'The Haunting House Of Baila Con Micho', sub:'Experience', desc:'Reparto / Reparto Pop DJ prep tracklist — event starting 2026-09-24. BPM, genre and energy filled in live by the DJ.', status:'enabled'},
   {id:'one-hit-wonder', name:'One Hit Wonder', sub:'Experience', desc:'Global recognition across generations — songs that land on any floor, any culture, any decade.', status:'enabled'},
   {id:'generational-journey', name:'Generational Journey', sub:'Experience', desc:'A guided decade-by-decade arc built for long-format events.', status:'soon'},
   {id:'latin-classics', name:'Latin Classics', sub:'Experience', desc:'Salsa, merengue, bachata and reggaeton lineage, curated by era.', status:'soon'},
@@ -714,7 +747,9 @@ var state = {
   discoverQuery: '',
   caseStudyEdition: 'anglo',
   caseStudyData: null,
-  caseStudyLoading: false
+  caseStudyLoading: false,
+  repartoData: null,
+  repartoLoading: false
 };
 
 function trackById(id){ for (var i=0;i<TRACKS.length;i++){ if (TRACKS[i].id===id) return TRACKS[i]; } return null; }
@@ -932,8 +967,9 @@ function renderHome(){
     '<div class="exp-grid">'+renderExperienceGrid()+'</div>';
   el.querySelectorAll('[data-enter-experience]').forEach(function(btn){
     btn.addEventListener('click', function(){
-      state.experience = btn.getAttribute('data-enter-experience');
-      setView('event');
+      var id = btn.getAttribute('data-enter-experience');
+      state.experience = id;
+      setView(id==='reparto' ? 'learning' : 'event');
     });
   });
 }
@@ -945,8 +981,9 @@ function renderExperiences(){
     '<div class="exp-grid">'+renderExperienceGrid()+'</div>';
   el.querySelectorAll('[data-enter-experience]').forEach(function(btn){
     btn.addEventListener('click', function(){
-      state.experience = btn.getAttribute('data-enter-experience');
-      setView('event');
+      var id = btn.getAttribute('data-enter-experience');
+      state.experience = id;
+      setView(id==='reparto' ? 'learning' : 'event');
     });
   });
 }
@@ -1753,11 +1790,13 @@ function renderLearning(){
         '</div>'+
       '</div>'+
     '</div>'+
-    '<div id="caseStudyMount" style="margin-top:24px;"></div>';
+    '<div id="caseStudyMount" style="margin-top:24px;"></div>'+
+    '<div id="repartoMount" style="margin-top:24px;"></div>';
   el.querySelectorAll('[data-learn]').forEach(function(b){
     b.addEventListener('click', function(){ state.learnTrackId = b.getAttribute('data-learn'); renderLearning(); });
   });
   renderCaseStudy();
+  renderRepartoCaseStudy();
 }
 
 /* ============================= REAL CASE STUDY: THE ONE HIT WONDER EXPERIENCE =============================
@@ -1858,6 +1897,162 @@ function loadCaseStudy(){
     });
 }
 
+/* ============================= REPARTO EXPERIENCE: DJ PREP TRACKLIST (editable, no backend) =============================
+   Real tracklist curated from the PO's own YouTube screenshots for the 2026-09-24 event — NOT a formal
+   dossier like One Hit Wonder. BPM/genre/energy are left null on load; the DJ fills them in live here. */
+function repartoTrackById(id){
+  if (!state.repartoData) return null;
+  for (var i=0;i<state.repartoData.tracks.length;i++){ if (state.repartoData.tracks[i].id===id) return state.repartoData.tracks[i]; }
+  return null;
+}
+function repartoGenreLabel(g){
+  return g==='reparto' ? 'Reparto' : (g==='reparto-pop' ? 'Reparto Pop' : '');
+}
+function renderRepartoTrackRow(t, idx){
+  return (
+    '<tr>'+
+      '<td class="num">'+(idx+1)+'</td>'+
+      '<td class="track-name">'+esc(t.title)+'</td>'+
+      '<td>'+esc(t.artist)+'</td>'+
+      '<td><select class="rp-genre-select" data-rp-genre="'+t.id+'">'+
+        [['', 'Sin definir'], ['reparto','Reparto'], ['reparto-pop','Reparto Pop']].map(function(opt){
+          return '<option value="'+opt[0]+'"'+((t.genre||'')===opt[0]?' selected':'')+'>'+opt[1]+'</option>';
+        }).join('')+
+      '</select></td>'+
+      '<td><input class="rp-input" type="text" inputmode="numeric" placeholder="—" value="'+(t.bpm==null?'':t.bpm)+'" data-rp-bpm="'+t.id+'"></td>'+
+      '<td><input class="rp-input" type="text" inputmode="numeric" placeholder="—" value="'+(t.energyEstimate==null?'':t.energyEstimate)+'" data-rp-energy="'+t.id+'"></td>'+
+    '</tr>'
+  );
+}
+function renderRepartoBody(){
+  var tracks = state.repartoData.tracks;
+  var repartoCount = tracks.filter(function(t){ return t.genre==='reparto'; }).length;
+  var popCount = tracks.filter(function(t){ return t.genre==='reparto-pop'; }).length;
+  return (
+    '<div class="rp-toolbar"><button class="btn btn-gold btn-sm" id="rpCopyBtn">'+iconSvg('copy')+' Copy Tracklist</button></div>'+
+    '<div class="result-count">'+tracks.length+' tracks · '+repartoCount+' Reparto · '+popCount+' Reparto Pop · '+(tracks.length-repartoCount-popCount)+' sin clasificar</div>'+
+    '<div class="panel scrollx"><table class="rp-table"><colgroup>'+
+      '<col class="rp-col-n"><col class="rp-col-track"><col class="rp-col-artist"><col class="rp-col-genre"><col class="rp-col-bpm"><col class="rp-col-energy">'+
+    '</colgroup><thead><tr>'+
+      ['#','Track','Artist','Genre','BPM','Energy'].map(function(h){ return '<th>'+h+'<span class="rp-resize-handle"></span></th>'; }).join('')+
+    '</tr></thead><tbody>'+
+      tracks.map(function(t, idx){ return renderRepartoTrackRow(t, idx); }).join('')+
+    '</tbody></table></div>'+
+    '<p class="rp-hint">Arrastra el borde derecho de cada columna para ampliarla · BPM / Energy / Género se guardan solo en este navegador, no hay backend.</p>'
+  );
+}
+function copyRepartoTracklist(){
+  var tracks = state.repartoData ? state.repartoData.tracks : [];
+  var lines = ['#\tTrack\tArtist\tGenre\tBPM\tEnergy'];
+  tracks.forEach(function(t, idx){
+    lines.push([idx+1, t.title, t.artist, repartoGenreLabel(t.genre), (t.bpm==null?'':t.bpm), (t.energyEstimate==null?'':t.energyEstimate)].join('\t'));
+  });
+  var text = lines.join('\n');
+  function done(ok){ toast(ok ? 'Tracklist copiado — '+tracks.length+' canciones' : 'No se pudo copiar en este navegador'); }
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){ done(true); }).catch(function(){ done(false); });
+  } else {
+    try{
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      done(true);
+    }catch(e){ done(false); }
+  }
+}
+function initRepartoResize(mount){
+  var table = mount.querySelector('.rp-table');
+  if (!table) return;
+  var cols = table.querySelectorAll('colgroup col');
+  table.querySelectorAll('thead th').forEach(function(th, i){
+    var handle = th.querySelector('.rp-resize-handle');
+    if (!handle) return;
+    var col = cols[i];
+    handle.addEventListener('pointerdown', function(e){
+      var startX = e.clientX;
+      var startWidth = col.getBoundingClientRect().width || th.getBoundingClientRect().width;
+      handle.setPointerCapture(e.pointerId);
+      function onMove(ev){ col.style.width = Math.max(40, startWidth + (ev.clientX - startX)) + 'px'; }
+      function onUp(){
+        handle.removeEventListener('pointermove', onMove);
+        handle.removeEventListener('pointerup', onUp);
+      }
+      handle.addEventListener('pointermove', onMove);
+      handle.addEventListener('pointerup', onUp);
+    });
+  });
+}
+function wireRepartoInputs(mount){
+  mount.querySelectorAll('[data-rp-genre]').forEach(function(sel){
+    sel.addEventListener('change', function(){
+      var t = repartoTrackById(sel.getAttribute('data-rp-genre'));
+      if (t) t.genre = sel.value || null;
+      renderRepartoCaseStudy();
+    });
+  });
+  mount.querySelectorAll('[data-rp-bpm]').forEach(function(inp){
+    inp.addEventListener('input', function(){
+      var v = inp.value.replace(/[^0-9.]/g,'');
+      inp.value = v;
+      var t = repartoTrackById(inp.getAttribute('data-rp-bpm'));
+      if (t) t.bpm = v==='' ? null : Number(v);
+    });
+  });
+  mount.querySelectorAll('[data-rp-energy]').forEach(function(inp){
+    inp.addEventListener('input', function(){
+      var v = inp.value.replace(/[^0-9]/g,'').slice(0,2);
+      inp.value = v;
+      var t = repartoTrackById(inp.getAttribute('data-rp-energy'));
+      if (t) t.energyEstimate = v==='' ? null : Number(v);
+    });
+  });
+  var copyBtn = mount.querySelector('#rpCopyBtn');
+  if (copyBtn) copyBtn.addEventListener('click', copyRepartoTracklist);
+  initRepartoResize(mount);
+}
+function renderRepartoCaseStudy(){
+  var mount = document.getElementById('repartoMount');
+  if (!mount) return;
+  var header =
+    '<div class="panel-head" style="border:none;padding:0 0 10px;">'+
+      '<span class="label" style="display:flex;align-items:center;gap:8px;">'+iconSvg('music')+' Real DJ Prep — The Haunting House Of Baila Con Micho</span>'+
+      '<span class="badge gold">Reparto / Reparto Pop · Event 2026-09-24</span>'+
+    '</div>'+
+    '<p class="view-desc" style="margin:0 0 14px;">Real tracklist curated from the PO\'s own YouTube screenshots — not a formal production dossier like the One Hit Wonder case study. BPM, Genre and Energy are left blank on purpose (no source data exists for them) and are filled in live, here, by the DJ before the set — nothing here is invented. Edits stay in this browser only (no backend) until you copy the list out.</p>';
+
+  if (state.repartoData){
+    mount.innerHTML = header + renderRepartoBody();
+    wireRepartoInputs(mount);
+    return;
+  }
+  if (state.repartoLoading){
+    mount.innerHTML = header + '<div class="move-empty">Loading tracklist…</div>';
+    return;
+  }
+  mount.innerHTML = header + '<div class="move-empty">Could not load the tracklist yet. <button class="btn btn-sm" id="repartoRetry">Load Tracklist</button></div>';
+  var retryBtn = document.getElementById('repartoRetry');
+  if (retryBtn) retryBtn.addEventListener('click', loadRepartoCaseStudy);
+  loadRepartoCaseStudy();
+}
+function loadRepartoCaseStudy(){
+  if (state.repartoLoading || state.repartoData) return;
+  state.repartoLoading = true;
+  fetch('./data/reparto-experience.json')
+    .then(function(r){ if (!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    .then(function(data){
+      state.repartoData = data;
+      state.repartoLoading = false;
+      if (state.view==='learning') renderRepartoCaseStudy();
+    })
+    .catch(function(err){
+      state.repartoLoading = false;
+      console.log('Reparto tracklist load failed:', err && err.message);
+      if (state.view==='learning') renderRepartoCaseStudy();
+    });
+}
+
 /* ============================= VIEW: CONFIG ============================= */
 function renderConfig(){
   var el = document.getElementById('view-config');
@@ -1918,12 +2113,33 @@ document.getElementById('btnSettings').addEventListener('click', function(){ set
 document.getElementById('btnEventStatus').addEventListener('click', function(){
   toast(state.history.length ? 'Event status: ACTIVE — '+Object.keys(state.playedIds).length+' tracks played' : 'Event status: STANDBY — no tracks played yet');
 });
+document.getElementById('railToggle').addEventListener('click', toggleFocusMode);
+/* Pantalla completa real: oculta #mainHeader (el menú real del sitio) y le cede
+   todo el alto a #mi-cockpit — no es solo el Fullscreen API del navegador, que
+   nunca toca el propio menú de la página. Mismo botón alterna ambos sentidos;
+   ESC (nativo del navegador al salir de requestFullscreen, o manual si el
+   navegador lo bloquea) también vuelve al estado normal con el menú visible. */
+function setCockpitFullscreen(on){
+  document.body.classList.toggle('mdj-mi-fullscreen', on);
+  document.getElementById('btnFocus').classList.toggle('active', on);
+  if (on){
+    var el = document.documentElement;
+    try{ (el.requestFullscreen||el.webkitRequestFullscreen||function(){}).call(el); }catch(e){}
+  } else if (document.fullscreenElement || document.webkitFullscreenElement){
+    try{ (document.exitFullscreen||document.webkitExitFullscreen||function(){}).call(document); }catch(e){}
+  }
+}
 document.getElementById('btnFocus').addEventListener('click', function(){
-  var el = document.documentElement;
-  try{
-    if (!document.fullscreenElement){ (el.requestFullscreen||el.webkitRequestFullscreen||function(){}).call(el); document.getElementById('btnFocus').classList.add('active'); }
-    else { (document.exitFullscreen||document.webkitExitFullscreen||function(){}).call(document); document.getElementById('btnFocus').classList.remove('active'); }
-  }catch(e){ toggleFocusMode(); document.getElementById('btnFocus').classList.toggle('active', state.djMode); }
+  setCockpitFullscreen(!document.body.classList.contains('mdj-mi-fullscreen'));
+});
+document.addEventListener('fullscreenchange', function(){
+  if (!document.fullscreenElement && document.body.classList.contains('mdj-mi-fullscreen')) setCockpitFullscreen(false);
+});
+document.addEventListener('webkitfullscreenchange', function(){
+  if (!document.webkitFullscreenElement && document.body.classList.contains('mdj-mi-fullscreen')) setCockpitFullscreen(false);
+});
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape' && document.body.classList.contains('mdj-mi-fullscreen')) setCockpitFullscreen(false);
 });
 
 function renderHeaderBits(){

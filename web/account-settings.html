@@ -1130,6 +1130,14 @@
     .acct-wrap.mdj-side-collapsed .acct-side-email { display:none; }
     .acct-wrap.mdj-side-collapsed .acct-side-link { justify-content:center; gap:0; padding:13px 0; font-size:0; }
     .acct-wrap.mdj-side-collapsed .acct-side-link svg { opacity:.8; }
+    /* PO 2026-09-23: sidebar debe llegar hasta la barra real de menú (#mainHeader,
+       84px) en vez de arrancar debajo de la franja flotante de marca+buscador, y
+       compartir el mismo color de fondo que esa barra. La franja flotante
+       (#mdj-flotante-visitante, compartida en todo el sitio) se corre a la derecha
+       del ancho del sidebar para que no quede flotando encima de él. Scoped SOLO
+       a esta página — nunca tocar la regla base que usan las demás. */
+    body.mdj-account-settings .acct-side { top: 84px !important; max-height: calc(100vh - 84px) !important; background: rgba(10, 8, 6, 0.5) !important; }
+    body.mdj-account-settings #mdj-flotante-visitante { left: 240px !important; }
     .acct-body { background: #0a0a0a; padding: 52px; overflow-y: visible; }
     .acct-panel { display: none; }
     .acct-panel.active { display: block; animation: mdj-panel-reveal 0.35s ease 0.25s both; }
