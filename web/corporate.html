@@ -383,8 +383,11 @@
             /* Chrome pausa video-only "de fondo" para ahorrar bateria
                (goo.gl/LdLk22) -- el primer play() casi siempre es rechazado
                por esto, un segundo intento inmediato despues normalmente
-               funciona. Se re-intenta tambien si el navegador lo vuelve a
-               pausar mas tarde en la sesion (mientras la pestana este visible). */
+               funciona. Si Chrome lo vuelve a pausar, se reintenta hasta 3
+               veces (nunca infinito -- eso generaba un parpadeo visible cada
+               ~2s cuando la pestana no tenia foco real de ventana); pasado
+               ese tope, se espera a que la pestana recupere foco o
+               visibilidad de verdad (2026-09-26, bug real reportado por el PO). */
             function attemptPlay() {
                 var p = v.play();
                 if (p && p.catch) {
