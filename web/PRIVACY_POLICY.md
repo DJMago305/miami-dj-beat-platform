@@ -1,6 +1,6 @@
 # MIAMI DJ BEAT PLATFORM — PRIVACY POLICY
 
-Last Updated: September 4, 2026
+Last Updated: September 26, 2026
 
 At Miami DJ Beat ("the Platform"), we take your privacy and data security seriously. This Privacy Policy describes how we collect, use, and protect your information across our website, client portal, and management tools.
 
@@ -48,11 +48,14 @@ To protect the privacy of all parties and prevent data leakage or off-platform s
 
 If you choose to connect your Google Calendar ("Sync Google Calendar" in your account settings), the Platform requests limited access to your calendar through Google's OAuth system:
 
-- **What we access**: Only your event data (`calendar.events` scope) — the ability to read and create calendar entries. We do **not** request access to your Gmail, Google Drive, contacts, or any other Google product.
-- **Why we access it**: To display your own booked events on your Platform calendar, and to reflect a confirmed booking automatically once you complete a purchase, so you have one place to see your schedule.
-- **How it's stored**: Your Google OAuth tokens are stored encrypted in our Supabase database, protected by Row Level Security, and are never visible to other users or DJs/staff outside your own account.
-- **How to disconnect**: You can turn this off at any time from the same "Sync Google Calendar" switch in your account settings, or by revoking the Platform's access directly from your [Google Account permissions page](https://myaccount.google.com/permissions). Turning it off pauses the connection; it does not delete your Google Calendar data.
-- **No sharing**: We never sell, share, or use your Google Calendar data for advertising or any purpose other than displaying it back to you within the Platform.
+- **What we access**: Only your event data (`calendar.events` scope): the titles, dates, times, notes and location of events in your calendars, including Google's birthdays calendar. The Platform can create, edit and delete calendar events, but only when you (or Platform staff acting on a booking) make that change inside the Platform. We do **not** request access to your Gmail, Google Drive, contacts, or any other Google product.
+- **Why we access it**: To show your events on your Platform calendar, to reflect a confirmed booking on your Google Calendar once a purchase is completed, and to prepare birthday follow-ups for the clients and contacts of Miami DJ Beat LLC.
+- **How it's stored**: Your Google authorization tokens and the events we sync are stored in our Supabase database. Access is controlled by Row Level Security so other DJs and clients cannot read your tokens or your synced events, and our database host encrypts stored data at rest. Access to synced events is limited to you, the Miami DJ Beat LLC owner and administrators, and staff members who use the Platform's internal assistant (ELIXIS) to review upcoming birthday follow-ups.
+- **AI assistant**: When staff ask ELIXIS about upcoming birthdays, the names and dates of the relevant synced birthday events are sent to our AI provider (Anthropic) only to generate that answer. We do not use Google Calendar data to develop, improve or train AI or machine-learning models.
+- **How to disconnect**: You can turn this off at any time from the "Sync Google Calendar" switch in your account settings, or by revoking the Platform's access directly from your [Google Account permissions page](https://myaccount.google.com/permissions). Turning the switch off pauses syncing; it does not by itself delete the authorization token or events that were already synced.
+- **Retention and deletion**: We keep your Google authorization token and synced events while your connection is active or paused. To have them deleted, email **miamidjbeat@gmail.com** and we will delete your stored token and synced Google Calendar events within 30 days. Your original events in your Google Calendar are not affected.
+- **No sharing**: We never sell your Google Calendar data, and we never use it for advertising. We do not share it with third parties except our infrastructure provider (Supabase), our AI provider as described above, or when required by law.
+- **Google API Services User Data Policy**: Miami DJ Beat's use and transfer to any other app of information received from Google APIs will adhere to the [Google API Services User Data Policy](https://developers.google.com/terms/api-services-user-data-policy), including the Limited Use requirements.
 
 ## 7. DISPUTE RESOLUTION
 
