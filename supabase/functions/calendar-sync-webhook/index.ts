@@ -24,7 +24,7 @@
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { BIRTHDAYS_CALENDAR_ID, listarEventosGoogle, procesarEventosGoogle, refrescarAccessToken } from "../_shared/google-calendar-sync.ts";
+import { accessTokenDesdeVault, BIRTHDAYS_CALENDAR_ID, listarEventosGoogle, procesarEventosGoogle } from "../_shared/google-calendar-sync.ts";
 
 const SUPABASE_URL_FALLBACK = "https://hkuvuqupbxwkiykxvqdr.supabase.co";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -51,7 +51,7 @@ serve(async (req: Request) => {
     // esta notificacion -- el body viene vacio, no hay otra forma de saberlo.
     const { data: integracion, error: e1 } = await ADMIN
         .from("user_calendar_integrations")
-        .select("user_id, calendar_id, access_token, refresh_token, sync_token, status")
+        .select("user_id, calendar_id, google_refresh_token_secret_id, sync_token, status")
         .eq("channel_id", channelId)
         .eq("provider", "google")
         .maybeSingle();
@@ -70,21 +70,16 @@ serve(async (req: Request) => {
     const calendarId = String(integracion.calendar_id || "primary");
     const tipoDefault: "cumpleanos" | "nota" = calendarId === BIRTHDAYS_CALENDAR_ID ? "cumpleanos" : "nota";
 
-    let accessToken = String(integracion.access_token ?? "");
+    // El access_token ya no se guarda: se canjea en cada notificación desde el refresh_token
+    // cifrado en Vault (dura ~1 h; una llamada extra a Google por aviso es despreciable).
     const syncToken = String(integracion.sync_token ?? "");
-
-    let resultado = await listarEventosGoogle(accessToken, calendarId, syncToken);
-    if (!resultado.ok && resultado.status === 401) {
-        // access_token vencido -- se refresca UNA vez con el refresh_token guardado.
-        const nuevo = await refrescarAccessToken(String(integracion.refresh_token ?? ""));
-        if (!nuevo) {
-            await ADMIN.from("user_calendar_integrations").update({ status: "expired" }).eq("channel_id", channelId);
-            return new Response("token_expired", { status: 200 });
-        }
-        accessToken = nuevo;
-        await ADMIN.from("user_calendar_integrations").update({ access_token: accessToken }).eq("channel_id", channelId);
-        resultado = await listarEventosGoogle(accessToken, calendarId, syncToken);
+    const accessToken = await accessTokenDesdeVault(ADMIN, integracion.google_refresh_token_secret_id);
+    if (!accessToken) {
+        await ADMIN.from("user_calendar_integrations").update({ status: "expired" }).eq("channel_id", channelId);
+        return new Response("token_expired", { status: 200 });
     }
+
+    const resultado = await listarEventosGoogle(accessToken, calendarId, syncToken);
     if (!resultado.ok) {
         console.error("[calendar-sync-webhook] events.list fallo:", resultado.status);
         return new Response("events_list_failed", { status: 200 }); // 200: no queremos que Google reintente en bucle un fallo persistente

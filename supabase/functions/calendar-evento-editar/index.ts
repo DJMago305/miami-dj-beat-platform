@@ -60,6 +60,15 @@ async function refrescarAccessToken(refreshToken: string): Promise<string | null
     } catch (e) { console.error("[calendar-evento-editar] refresh_token red:", e); return null; }
 }
 
+// El refresh_token vive cifrado en Supabase Vault (user_calendar_integrations.google_refresh_token_secret_id).
+// deno-lint-ignore no-explicit-any
+async function refrescarDesdeVault(admin: any, secretId: string | null | undefined): Promise<string | null> {
+    if (!secretId) return null;
+    const { data, error } = await admin.rpc("calendar_google_leer_token", { p_secret_id: secretId });
+    if (error || typeof data !== "string" || !data) { console.error("[calendar-evento-editar] no se pudo leer el token de Vault:", error?.message); return null; }
+    return refrescarAccessToken(data);
+}
+
 const FECHA_RE = /^\d{4}-\d{2}-\d{2}$/;
 const STAFF_ROLES = ["owner", "admin", "manager", "seller"];
 
@@ -126,10 +135,10 @@ serve(async (req: Request) => {
         let aviso: string | undefined;
         if (esGoogleQ && fila.tipo !== "cumpleanos") {
             const { data: integ } = await ADMIN
-                .from("user_calendar_integrations").select("refresh_token")
+                .from("user_calendar_integrations").select("google_refresh_token_secret_id")
                 .eq("user_id", fila.user_id).eq("provider", "google").eq("calendar_id", "primary").eq("status", "active").maybeSingle();
-            if (!integ?.refresh_token) return json({ ok: false, error: "google_no_conectado", detalle: "Esa cuenta ya no tiene Google Calendar conectado; no se borró nada." }, 409);
-            const token = await refrescarAccessToken(integ.refresh_token);
+            if (!integ?.google_refresh_token_secret_id) return json({ ok: false, error: "google_no_conectado", detalle: "Esa cuenta ya no tiene Google Calendar conectado; no se borró nada." }, 409);
+            const token = await refrescarDesdeVault(ADMIN, integ.google_refresh_token_secret_id);
             if (!token) return json({ ok: false, error: "google_token", detalle: "No se pudo renovar el acceso a Google; no se borró nada." }, 502);
             const dRes = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${encodeURIComponent(fila.external_event_id)}?sendUpdates=none`, {
                 method: "DELETE", headers: { Authorization: `Bearer ${token}` },
@@ -160,11 +169,11 @@ serve(async (req: Request) => {
         }
         const { data: integ } = await ADMIN
             .from("user_calendar_integrations")
-            .select("refresh_token")
+            .select("google_refresh_token_secret_id")
             .eq("user_id", fila.user_id).eq("provider", "google").eq("calendar_id", "primary").eq("status", "active")
             .maybeSingle();
-        if (!integ?.refresh_token) return json({ ok: false, error: "google_no_conectado", detalle: "Esa cuenta ya no tiene Google Calendar conectado." }, 409);
-        const token = await refrescarAccessToken(integ.refresh_token);
+        if (!integ?.google_refresh_token_secret_id) return json({ ok: false, error: "google_no_conectado", detalle: "Esa cuenta ya no tiene Google Calendar conectado." }, 409);
+        const token = await refrescarDesdeVault(ADMIN, integ.google_refresh_token_secret_id);
         if (!token) return json({ ok: false, error: "google_token", detalle: "No se pudo renovar el acceso a Google; reconecta Google Calendar." }, 502);
 
         const base = `https://www.googleapis.com/calendar/v3/calendars/primary/events/${encodeURIComponent(fila.external_event_id)}`;

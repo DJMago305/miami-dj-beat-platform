@@ -44,6 +44,25 @@ export async function refrescarAccessToken(refreshToken: string): Promise<string
     }
 }
 
+// El refresh_token vive cifrado en Supabase Vault (user_calendar_integrations.
+// google_refresh_token_secret_id); solo el service_role puede leerlo vía este RPC.
+// deno-lint-ignore no-explicit-any
+export async function leerRefreshToken(admin: any, secretId: string | null | undefined): Promise<string> {
+    if (!secretId) return "";
+    const { data, error } = await admin.rpc("calendar_google_leer_token", { p_secret_id: secretId });
+    if (error) {
+        console.error("[google-calendar-sync] no se pudo leer el token de Vault:", error.message);
+        return "";
+    }
+    return typeof data === "string" ? data : "";
+}
+
+// Lee el refresh_token de Vault y lo canjea por un access_token vigente.
+// deno-lint-ignore no-explicit-any
+export async function accessTokenDesdeVault(admin: any, secretId: string | null | undefined): Promise<string | null> {
+    return refrescarAccessToken(await leerRefreshToken(admin, secretId));
+}
+
 export type EventoGoogle = {
     id: string;
     status?: string;
