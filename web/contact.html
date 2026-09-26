@@ -178,35 +178,37 @@
       max-width: 920px;
     }
 
-    body.page-mdj-contact .mdj-contact-cta-row a {
+    body.page-mdj-contact .mdj-contact-cta-row a.mdj-cta-chip {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: 13px 22px;
-      border-radius: 50px;
-      font-size: 14px;
-      font-weight: 800;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
+      color: #fff;
       text-decoration: none;
-      transition: transform 0.15s ease, box-shadow 0.2s ease;
-      white-space: nowrap;
+      opacity: 1;
+      transition: transform 0.2s ease, filter 0.2s ease;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
     }
 
-    body.page-mdj-contact .mdj-contact-cta-row a.mdj-cta-gold {
+    body.page-mdj-contact .mdj-contact-cta-row a.mdj-cta-chip svg {
+      width: 26px;
+      height: 26px;
+      display: block;
+    }
+
+    body.page-mdj-contact .mdj-contact-cta-row a.mdj-cta-wa { background: linear-gradient(180deg, #2fe676 0%, #25d366 50%, #1da851 100%); }
+    body.page-mdj-contact .mdj-contact-cta-row a.mdj-cta-phone { background: linear-gradient(145deg, #5cdb95 0%, #27ae60 100%); }
+    body.page-mdj-contact .mdj-contact-cta-row a.mdj-cta-mail { background: linear-gradient(145deg, #5b9cf5 0%, #2d6cdf 55%, #1a5fbf 100%); }
+    body.page-mdj-contact .mdj-contact-cta-row a.mdj-cta-avail {
       background: linear-gradient(135deg, rgba(197, 160, 89, 0.95), rgba(160, 120, 55, 0.9));
       color: #0a0a0c;
-      box-shadow: 0 4px 20px rgba(197, 160, 89, 0.32);
     }
 
-    body.page-mdj-contact .mdj-contact-cta-row a.mdj-cta-outline {
-      border: 1px solid rgba(197, 160, 89, 0.45);
-      color: var(--gold, #c5a059);
-      background: rgba(15, 18, 28, 0.55);
-    }
-
-    body.page-mdj-contact .mdj-contact-cta-row a:hover {
-      transform: translateY(-1px);
+    body.page-mdj-contact .mdj-contact-cta-row a.mdj-cta-chip:hover {
+      transform: translateY(-2px) scale(1.06);
+      filter: brightness(1.08);
     }
 
     body.page-mdj-contact .mdj-contact-layout {
@@ -316,22 +318,30 @@
     }
 
     body.page-mdj-contact .mdj-contact-social-row a {
-      display: inline-flex;
-      align-items: center;
-      padding: 8px 14px;
-      border-radius: 999px;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.1);
       border: 1px solid rgba(255, 255, 255, 0.12);
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: rgba(255, 255, 255, 0.82);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      opacity: 1;
       text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    body.page-mdj-contact .mdj-contact-social-row a svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
     }
 
     body.page-mdj-contact .mdj-contact-social-row a:hover {
-      border-color: rgba(197, 160, 89, 0.45);
-      color: var(--gold, #c5a059);
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
     }
 
     body.page-mdj-contact #lead-form.admin-card {
@@ -359,6 +369,75 @@
       font-size: clamp(1.25rem, 2.5vw, 1.6rem);
       color: var(--gold, #c5a059);
       font-weight: 800;
+    }
+
+    body.page-mdj-contact .mdj-contact-team-band {
+      max-width: 920px;
+      margin: clamp(28px, 4vw, 44px) auto clamp(36px, 5vw, 52px);
+      padding: clamp(28px, 4.5vw, 44px) clamp(24px, 4vw, 44px);
+      border-radius: 18px;
+      border: 1px solid rgba(197, 160, 89, 0.4);
+      background: linear-gradient(165deg, rgba(20, 22, 34, 0.94) 0%, rgba(8, 10, 18, 0.9) 100%);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+      text-align: center;
+    }
+
+    body.page-mdj-contact .mdj-contact-team-band h2 {
+      margin: 0 0 14px;
+      font-size: clamp(1.5rem, 3.2vw, 2rem);
+      font-weight: 900;
+      color: var(--gold, #c5a059);
+      letter-spacing: 0.02em;
+    }
+
+    body.page-mdj-contact .mdj-contact-team-band p {
+      margin: 0 auto 12px;
+      max-width: 680px;
+      font-size: clamp(15px, 1.6vw, 17px);
+      line-height: 1.65;
+      color: rgba(255, 255, 255, 0.82);
+    }
+
+    body.page-mdj-contact .mdj-contact-team-band__roles {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin: 20px 0 26px;
+    }
+
+    body.page-mdj-contact .mdj-contact-team-band__roles span {
+      padding: 7px 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(197, 160, 89, 0.35);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    body.page-mdj-contact .mdj-contact-team-band__btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 50px;
+      padding: 13px 34px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(197, 160, 89, 0.95), rgba(160, 120, 55, 0.9));
+      color: #0a0a0c;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-decoration: none;
+      opacity: 1;
+      box-shadow: 0 4px 20px rgba(197, 160, 89, 0.32);
+      transition: transform 0.15s ease, box-shadow 0.2s ease;
+    }
+
+    body.page-mdj-contact .mdj-contact-team-band__btn:hover {
+      transform: translateY(-1px);
     }
 
     body.page-mdj-contact .mdj-contact-youtube-band {
@@ -650,11 +729,11 @@
         </header>
 
         <div class="mdj-contact-cta-row" aria-label="Quick contact actions">
-          <a class="mdj-cta-gold" href="https://wa.me/13056071780?text=Hello%2C%20I%27d%20like%20to%20check%20availability%20for%20an%20event."
-            target="_blank" rel="noopener noreferrer">WhatsApp</a>
-          <a class="mdj-cta-outline" href="tel:+13056071780">Call Now</a>
-          <a class="mdj-cta-outline" href="mailto:miamidjbeat@gmail.com">Email</a>
-          <a class="mdj-cta-gold" href="#lead-form">Request Availability</a>
+          <a class="mdj-cta-chip mdj-cta-wa" href="https://wa.me/13056071780?text=Hello%2C%20I%27d%20like%20to%20check%20availability%20for%20an%20event."
+            target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" title="WhatsApp"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg></a>
+          <a class="mdj-cta-chip mdj-cta-phone" href="tel:+13056071780" aria-label="Call now" title="Call now"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill="currentColor" d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg></a>
+          <a class="mdj-cta-chip mdj-cta-mail" href="mailto:miamidjbeat@gmail.com" aria-label="Email" title="Email"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill="currentColor" d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5L4 8V6l8 5 8-5v2z"/></svg></a>
+          <a class="mdj-cta-chip mdj-cta-avail" href="#lead-form" aria-label="Request availability" title="Request availability"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></a>
         </div>
 
         <h2 class="mdj-contact-section-title">How can we help?</h2>
@@ -684,6 +763,18 @@
             <p>Join the roster or book featured Miami DJ Beat talent.</p>
           </a>
         </div>
+
+        <section class="mdj-contact-team-band" aria-labelledby="contactTeamTitle">
+          <h2 id="contactTeamTitle" data-i18n="contact-team-band-title">Meet our team</h2>
+          <p data-i18n="contact-team-band-p1">Behind every Miami DJ Beat event are real people and artificial intelligence agents working together so your celebration is tailored to you, from the first conversation to the last song.</p>
+          <p data-i18n="contact-team-band-p2">Meet the people who take care of you, and the AI assistant that supports them.</p>
+          <div class="mdj-contact-team-band__roles">
+            <span data-i18n="contact-team-band-r1">Founder &amp; Owner</span>
+            <span data-i18n="contact-team-band-r2">Sales &amp; Executive Assistant</span>
+            <span data-i18n="contact-team-band-r3">ELIXIS · AI Assistant</span>
+          </div>
+          <a class="mdj-contact-team-band__btn" href="./equipo.html" data-i18n="contact-team-band-btn">Meet the team</a>
+        </section>
 
         <section class="mdj-contact-youtube-band" aria-label="YouTube Tutorials and Miami DJ Beat Videos">
           <h2>YouTube Tutorials &amp; Miami DJ Beat Videos</h2>
@@ -823,12 +914,12 @@
             <div class="mdj-contact-corp-panel__row">
               <span class="mdj-contact-corp-panel__label">Channels</span>
               <div class="mdj-contact-social-row">
-                <a href="https://instagram.com/miamidjbeat" target="_blank" rel="noopener noreferrer">Instagram</a>
-                <a href="https://tiktok.com/@miamidjbeat" target="_blank" rel="noopener noreferrer">TikTok</a>
-                <a href="https://facebook.com/miamidjbeat" target="_blank" rel="noopener noreferrer">Facebook</a>
-                <a href="https://www.youtube.com/@Miamidjbeat" target="_blank" rel="noopener noreferrer">YouTube</a>
-                <a href="https://yelp.com/biz/miami-dj-beat-miami-gardens" target="_blank" rel="noopener noreferrer">Yelp</a>
-                <a href="#">Spotify</a>
+                <a href="https://instagram.com/miamidjbeat" target="_blank" rel="noopener noreferrer" aria-label="Instagram" title="Instagram"><svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg></a>
+                <a href="https://tiktok.com/@miamidjbeat" target="_blank" rel="noopener noreferrer" aria-label="TikTok" title="TikTok"><svg viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.32 6.32 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.78a4.85 4.85 0 0 1-1.01-.09z"/></svg></a>
+                <a href="https://facebook.com/miamidjbeat" target="_blank" rel="noopener noreferrer" aria-label="Facebook" title="Facebook"><svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
+                <a href="https://www.youtube.com/@Miamidjbeat" target="_blank" rel="noopener noreferrer" aria-label="YouTube" title="YouTube"><svg viewBox="0 0 24 24"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.6 5.8a3 3 0 0 0 2.1 2.1C4.5 20.5 12 20.5 12 20.5s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8zM9.5 15.5v-7l6.5 3.5-6.5 3.5z"/></svg></a>
+                <a href="https://yelp.com/biz/miami-dj-beat-miami-gardens" target="_blank" rel="noopener noreferrer" aria-label="Yelp" title="Yelp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7.6885 15.1415-3.6715.8483c-.3769.0871-.755.183-1.1452.155-.2611-.0188-.5122-.0414-.7606-.213a1.179 1.179 0 0 1-.331-.3594c-.3486-.5519-.3656-1.3661-.3697-2.0004a6.2874 6.2874 0 0 1 .3314-2.0642 1.857 1.857 0 0 1 .1073-.2474 2.3426 2.3426 0 0 1 .1255-.2165 2.4572 2.4572 0 0 1 .1563-.1975 1.1736 1.1736 0 0 1 .399-.2831 1.082 1.082 0 0 1 .4592-.0837c.2355.0016.5139.052.91.1734.0555.0191.1237.0382.1856.0572.3277.1013.7048.2404 1.1499.3987.6863.2404 1.3663.487 2.0463.7397l1.2117.4423c.2217.0807.4363.18.6412.297.174.0984.3273.2298.4512.387a1.217 1.217 0 0 1 .192.4309 1.2205 1.2205 0 0 1-.872 1.4522c-.0468.0151-.0852.0239-.1085.0293l-1.105.2553-.0031-.001zM18.8208 7.565a1.8506 1.8506 0 0 0-.2042-.1754 2.4082 2.4082 0 0 0-.2077-.1394 2.3607 2.3607 0 0 0-.2269-.109 1.1705 1.1705 0 0 0-.482-.0796 1.0862 1.0862 0 0 0-.4498.1263c-.2107.1048-.4388.2732-.742.5551-.042.0417-.0947.0886-.142.133-.2502.2351-.5286.5252-.8599.863a114.6363 114.6363 0 0 0-1.5166 1.5629l-.8962.9293a4.1897 4.1897 0 0 0-.4466.5483 1.541 1.541 0 0 0-.2364.5459 1.2199 1.2199 0 0 0 .0107.4518l.0046.02a1.218 1.218 0 0 0 1.4184.923 1.162 1.162 0 0 0 .1105-.0213l4.7781-1.104c.3766-.087.7587-.1667 1.097-.3631.2269-.1316.4428-.262.5909-.5252a1.1793 1.1793 0 0 0 .1405-.4683c.0733-.6512-.2668-1.3908-.5403-1.963a6.2792 6.2792 0 0 0-1.2001-1.7103zM8.9703.0754a8.6724 8.6724 0 0 0-.83.1564c-.2754.066-.548.1383-.8146.2236-.868.2844-2.0884.8063-2.295 1.8065-.1165.5655.1595 1.1439.3737 1.66.2595.6254.614 1.1889.9373 1.7777.8543 1.5545 1.7245 3.0993 2.5922 4.6457.259.4617.5416 1.0464 1.043 1.2856a1.058 1.058 0 0 0 .1013.0383c.2248.0851.4699.1016.7041.0471a4.3015 4.3015 0 0 0 .0418-.0097 1.2136 1.2136 0 0 0 .5658-.3397 1.1033 1.1033 0 0 0 .079-.0822c.3463-.435.3454-1.0833.3764-1.6134.1042-1.771.2139-3.5423.3009-5.3142.0332-.6712.1055-1.3333.0655-2.0096-.0328-.5579-.0368-1.1984-.3891-1.6563-.6218-.8073-1.9476-.741-2.8523-.6158zm2.084 15.9505a1.1053 1.1053 0 0 0-1.2306-.4145 1.1398 1.1398 0 0 0-.1526.0633 1.4806 1.4806 0 0 0-.2171.1354c-.1992.1475-.3668.3392-.5196.5315-.0386.049-.074.1143-.12.1562l-.7686 1.0573a113.9168 113.9168 0 0 0-1.2913 1.789c-.278.3895-.5184.7184-.7083 1.0094-.036.0547-.0734.116-.1075.1647-.2277.3522-.3566.6092-.4228.8381a1.0945 1.0945 0 0 0-.046.4721c.0211.1655.0768.3246.1635.467.046.0715.0957.1406.1487.207a2.334 2.334 0 0 0 .1754.1825 1.843 1.843 0 0 0 .2108.1732c.5304.369 1.1112.6342 1.722.8391a6.0958 6.0958 0 0 0 1.5716.3004c.091.0046.1821.0025.2728-.006a2.3878 2.3878 0 0 0 .2506-.0351 2.3862 2.3862 0 0 0 .2447-.071 1.1927 1.1927 0 0 0 .4175-.2658c.1127-.113.1994-.249.2541-.3989.0889-.2214.1473-.5026.1857-.92.0034-.0593.0118-.1305.0177-.1958.0304-.3463.0443-.7531.0666-1.2315.0375-.7357.067-1.4681.0903-2.2026 0 0 .0495-1.3053.0494-1.306.0113-.3008.002-.6342-.0814-.9336a1.396 1.396 0 0 0-.1756-.4054zm8.6754 2.0439c-.1605-.176-.3878-.3514-.7462-.5682-.0518-.0288-.1124-.0674-.1684-.1009-.2985-.1795-.658-.3684-1.078-.5965a120.7615 120.7615 0 0 0-1.9427-1.042l-1.1515-.6107c-.0597-.0175-.1203-.0607-.1766-.0878-.2212-.1058-.4558-.2045-.6992-.2498a1.4915 1.4915 0 0 0-.2545-.0265 1.1527 1.1527 0 0 0-.1648.01 1.1077 1.1077 0 0 0-.9227.9133 1.4186 1.4186 0 0 0 .0159.439c.0563.3065.1932.6096.3346.875l.615 1.1526c.3422.65.6884 1.2963 1.0435 1.9406.229.4202.4196.7799.5982 1.078.0338.056.0721.1163.1011.1682.2173.3584.392.584.569.7458.1146.1107.252.195.4026.247.1583.0525.326.071.4919.0546a2.368 2.368 0 0 0 .251-.0435c.0817-.022.1622-.048.241-.0784a1.863 1.863 0 0 0 .2475-.1143 6.1018 6.1018 0 0 0 1.2818-.9597c.4596-.4522.8659-.9454 1.182-1.51.044-.08.0819-.163.1138-.2483a2.49 2.49 0 0 0 .0773-.2411c.0186-.083.033-.1669.0429-.2513a1.188 1.188 0 0 0-.0565-.491 1.0933 1.0933 0 0 0-.248-.4041z"/></svg></a>
+                <a href="#" aria-label="Spotify" title="Spotify"><svg viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg></a>
               </div>
             </div>
           </aside>
@@ -865,7 +956,7 @@
   })();
   </script>
   <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
-  <script src="./translations.js?v=20260926-equipo-puerta"></script>
+  <script src="./translations.js?v=20260926-contact-equipo-band"></script>
   <script src="./i18n.js?v=20260415-CORE-CONNECTIONS"></script>
   <script src="./mdj-identity.js?v=20260921-rol-unico"></script>
   <script src="./auth.js?v=20260921-idiomas"></script>
