@@ -3117,7 +3117,7 @@ const translations = {
             { "q": "¿Cuál es la 'verdad dura' sobre la democratización del DJing según el Módulo 2?", "opts": ["Que ya no vale la pena ser DJ porque hay demasiada competencia", "Que el equipo caro sigue siendo inaccesible", "Que acceso no significa preparación: tecnología no reemplaza cultura ni criterio", "Que las plataformas digitales han eliminado el trabajo presencial", "Que solo los DJs con millones de seguidores pueden tener éxito hoy"], "ans": 2 },
             { "q": "¿Qué debe conocer un DJ completo según la lección final del Módulo 2?", "opts": ["Solo los géneros electrónicos modernos en tendencia", "La historia completa: Bronx, Disco, House, Techno, Raves, EDM y era digital", "El funcionamiento técnico de todos los DAWs disponibles", "Los nombres de los 100 DJs más pagados del mundo", "Los algoritmos de cada red social para maximizar visualizaciones"], "ans": 1 }
         ],
-        "rentals-hero-subtitle": "SONIDO, ILUMINACIÓN, TARIMAS Y EQUIPO DE PRODUCCIÓN",
+        "rentals-hero-subtitle": "DJ, SONIDO, ILUMINACIÓN, TARIMAS Y EQUIPO DE PRODUCCIÓN",
         "btn-home": "Inicio",
         "hl_cat_title_1": "Hora Loca Experience",
         "hl_cat_desc_1": "Dentro: paquetes Hora Loca, personajes, robots LED y opciones para sumar.",
@@ -6743,7 +6743,7 @@ const translations = {
             { "q": "What is the 'hard truth' about the democratization of DJing according to Module 2?", "opts": ["That it's no longer worth being a DJ because there's too much competition", "That expensive equipment remains inaccessible", "That access does not mean preparation: technology does not replace culture or criteria", "That digital platforms have eliminated in-person work", "That only DJs with millions of followers can be successful today"], "ans": 2 },
             { "q": "What should a complete DJ know according to the final lesson of Module 2?", "opts": ["Only modern electronic genres on trend", "The full history: Bronx, Disco, House, Techno, Raves, EDM, and digital era", "The technical functioning of all available DAWs", "The names of the 100 highest-paid DJs in the world", "The algorithms of each social network to maximize views"], "ans": 1 }
         ],
-        "rentals-hero-subtitle": "SOUND, LIGHTING, STAGES & PRODUCTION EQUIPMENT",
+        "rentals-hero-subtitle": "DJ, SOUND, LIGHTING, STAGES & PRODUCTION EQUIPMENT",
         "btn-home": "Home",
         "btn-back": "Back",
         "hl_cat_title_1": "Hora Loca Experience",
