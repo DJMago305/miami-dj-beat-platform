@@ -1292,6 +1292,10 @@
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           <span data-i18n="client-account-nav-evaluacion">Rate my event</span>
         </button></li>
+        <li><button type="button" data-ca-panel="legal" aria-selected="false">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          <span>Documentos Legales</span>
+        </button></li>
       </ul>
     </aside>
 
@@ -1755,6 +1759,21 @@
         <!-- Las autorizaciones (email/marketing/SMS/calendario/push) se movieron
              al final de la pestaña Perfil -- pedido explícito del PO (2026-09-04).
              Esta pestaña se queda solo con el acceso al Hub de Soporte. -->
+      </section>
+
+      <!-- PANEL: DOCUMENTOS LEGALES (2026-09-26): políticas y términos que aplican a un CLIENTE.
+           Mismos documentos y enlaces que el panel "Documentos Legales" de account-settings.html
+           (Privacidad + SMS para todos, Términos del Cliente para el cliente). -->
+      <section class="ca-panel" id="ca-panel-legal" data-ca-panel="legal" role="tabpanel" hidden>
+        <h1>Documentos Legales</h1>
+        <p style="font-size:13px;color:rgba(255,255,255,0.45);margin:0 0 16px;line-height:1.6;">
+          Los documentos que aplican a tu cuenta. Se abren completos en una pestaña nueva.
+        </p>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <a href="./legal.html?doc=PRIVACY_POLICY.md" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:13px 18px;color:#fff;text-decoration:none;font-size:14px;font-weight:600;"><span style="width:20px;text-align:center;">🔒</span><span style="flex:1;">Política de Privacidad</span><span style="color:var(--gold);font-size:12px;font-weight:800;">Abrir</span></a>
+          <a href="./legal.html?doc=SMS_TERMS.md" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:13px 18px;color:#fff;text-decoration:none;font-size:14px;font-weight:600;"><span style="width:20px;text-align:center;">💬</span><span style="flex:1;">Términos de SMS</span><span style="color:var(--gold);font-size:12px;font-weight:800;">Abrir</span></a>
+          <a href="./legal.html?doc=CLIENT_TERMS.md" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:13px 18px;color:#fff;text-decoration:none;font-size:14px;font-weight:600;"><span style="width:20px;text-align:center;">📋</span><span style="flex:1;">Términos del Cliente</span><span style="color:var(--gold);font-size:12px;font-weight:800;">Abrir</span></a>
+        </div>
       </section>
 
       <!-- PANEL: EVALUACIÓN DEL CLIENTE (privada, insert-only) ────────────── -->
