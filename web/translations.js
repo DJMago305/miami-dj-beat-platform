@@ -4652,7 +4652,7 @@ const translations = {
         "quince-dj-faq-q6": "How do I get a quote?",
         "quince-dj-faq-a6": "Request a quote from this page, call (305) 607-1780, or email miamidjbeat@gmail.com. Tell us your date, venue and what you need and we will send you a quote.",
         "footer-svc-quince": "Quinceañera DJ",
-        "corporate-dj-h1": "Corporate Event DJ &amp; Audio-Visual Production in Miami",
+        "corporate-dj-h1": "Corporate Event DJ &amp; Audiovisual Production in Miami",
         "corporate-dj-lead": "Professional, punctual, and camera-ready.<span class='mdj-hl-lead-sub'>Wireless microphones for speakers and executives, ambient music for networking, and high-energy transitions for brand activations, across Miami-Dade and Broward.</span>",
         "corporate-dj-cat1-title": "Brand Activations &amp; Product Launches",
         "corporate-dj-cat1-desc": "High-energy transitions and curated music that keep the room engaged during launch moments and brand experiences.",
