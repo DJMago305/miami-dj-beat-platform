@@ -138,6 +138,12 @@
        anterior. Sin fondo de body propio: hereda el fondo oscuro global
        (--bg) del sitio, igual que weddings.html. */
     .quince-hero-copy {
+      /* PO 2026-09-26: vista limpia del hero -- solo el hero debe verse al entrar */
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
       text-align: center;
       max-width: 720px;
       margin: 0 auto 50px;

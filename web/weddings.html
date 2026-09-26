@@ -160,6 +160,12 @@
     /* Arquitectura unificada con latin-dj.html/corporate.html: video real detrás
        (hero-kb-bg), contenido directo sobre el fondo oscuro (sin tarjeta sólida) */
     .weddings-hero-copy {
+      /* PO 2026-09-26: vista limpia del hero -- solo el hero debe verse al entrar */
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
       text-align: center;
       max-width: 720px;
       margin: 0 auto 50px;
