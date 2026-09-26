@@ -2861,6 +2861,14 @@
          luego la consulta, luego pintar la lista. -->
     <div id="panel-legal" class="acct-panel">
       <h1 class="acct-h1">Documentos Legales</h1>
+
+      <h2 style="font-size:14px;font-weight:800;color:var(--gold);letter-spacing:.06em;text-transform:uppercase;margin:6px 0 6px;">Políticas y términos de tu cuenta</h2>
+      <p style="font-size:13px;color:rgba(255,255,255,0.45);margin:0 0 12px;line-height:1.6;">
+        Los documentos que aplican a tu tipo de cuenta. Se abren completos en una pestaña nueva.
+      </p>
+      <div id="legal-policies-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:30px;"></div>
+
+      <h2 style="font-size:14px;font-weight:800;color:var(--gold);letter-spacing:.06em;text-transform:uppercase;margin:6px 0 6px;">Tus contratos firmados</h2>
       <p style="font-size:13px;color:rgba(255,255,255,0.45);margin:0 0 8px;line-height:1.6;">
         Tus contratos y formularios firmados con Miami DJ Beat LLC — descarga tu copia certificada cuando la necesites.
       </p>
@@ -4789,7 +4797,7 @@
         if (id === 'notifications') loadInboxPanel();
         if (id === 'soundfortips') loadSftPanel();
         if (id === 'devices') loadDevicesPanel();
-        if (id === 'legal') loadLegalContractsPanel();
+        if (id === 'legal') { loadLegalPoliciesBlock(); loadLegalContractsPanel(); }
         if (id === 'socials') { _loadSocials(); _wiresSocialsInputs && _wiresSocialsInputs(); _updateSocialsPreview && _updateSocialsPreview(); }
         if (id === 'create-profile') loadCreateProfilePanel();
       }
@@ -6929,6 +6937,52 @@
         } catch(e) { console.warn('[legal] load:', e); if (list) list.innerHTML = '<p style="color:rgba(255,80,80,0.6);text-align:center;padding:30px 0;font-size:13px;">Error al cargar documentos.</p>'; }
       }
       window.loadLegalContractsPanel = loadLegalContractsPanel;
+
+      /* Políticas y términos públicos (los que abre legal.html), separados por quién debe leerlos.
+         Todos: Privacidad + SMS · Artista/DJ: + Contrato DJ · Artista PRO: + Pro Partner ·
+         Owner/Admin/Manager/Seller: los cinco. (Cliente: lo ve en client-account.html.) */
+      var LEGAL_POLICY_LABELS = {
+        'PRIVACY_POLICY.md':     { ic: '🔒', tx: 'Política de Privacidad' },
+        'SMS_TERMS.md':          { ic: '💬', tx: 'Términos de SMS' },
+        'CLIENT_TERMS.md':       { ic: '📋', tx: 'Términos del Cliente' },
+        'DJ_AGREEMENT.md':       { ic: '🎧', tx: 'Contrato DJ' },
+        'PRO_PARTNER_POLICY.md': { ic: '🤝', tx: 'Política Pro Partner' }
+      };
+      function legalDocsForRole(role, isPremium) {
+        var r = String(role || '').toLowerCase();
+        var todos = ['PRIVACY_POLICY.md', 'SMS_TERMS.md', 'CLIENT_TERMS.md', 'DJ_AGREEMENT.md', 'PRO_PARTNER_POLICY.md'];
+        if (r === 'owner' || r === 'admin' || r === 'manager' || r === 'seller') return todos;
+        var docs = ['PRIVACY_POLICY.md', 'SMS_TERMS.md'];
+        if (r) docs.push('DJ_AGREEMENT.md');
+        if (r && isPremium) docs.push('PRO_PARTNER_POLICY.md');
+        return docs;
+      }
+      window.legalDocsForRole = legalDocsForRole;
+
+      async function loadLegalPoliciesBlock() {
+        var list = document.getElementById('legal-policies-list');
+        if (!list) return;
+        var role = '', isPremium = false;
+        try {
+          var sb = window.getSupabaseClient ? window.getSupabaseClient() : (window._supabase || window._supabaseClient);
+          var sess = sb ? (await sb.auth.getSession()).data.session : null;
+          if (sess) {
+            var { data: djRow } = await sb.from('dj_profiles').select('role, plan, is_premium')
+              .eq('user_id', sess.user.id).maybeSingle();
+            role = djRow && djRow.role ? String(djRow.role).toLowerCase() : '';
+            var pl = djRow && djRow.plan ? String(djRow.plan).toLowerCase() : '';
+            isPremium = !!(djRow && (djRow.is_premium || pl === 'pro' || pl === 'elite'));
+          }
+        } catch (e) { console.warn('[legal] rol:', e); }
+        list.innerHTML = legalDocsForRole(role, isPremium).map(function (f) {
+          var d = LEGAL_POLICY_LABELS[f];
+          return '<a href="./legal.html?doc=' + encodeURIComponent(f) + '" target="_blank" rel="noopener" ' +
+            'style="display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:13px 18px;color:#fff;text-decoration:none;font-size:14px;font-weight:600;">' +
+            '<span style="width:20px;text-align:center;">' + d.ic + '</span><span style="flex:1;">' + d.tx + '</span>' +
+            '<span style="color:var(--gold);font-size:12px;font-weight:800;">Abrir</span></a>';
+        }).join('');
+      }
+      window.loadLegalPoliciesBlock = loadLegalPoliciesBlock;
 
       /* Desvincular un dispositivo por ID */
       window.deactivateDevice = async function (deviceId) {

@@ -1934,7 +1934,7 @@
       "unknowns": [
         "Editar y borrar en Google están desplegados pero NO probados contra un Google real (falta el evento de prueba PRUEBA MDJB); la conciliación cada 6 h corrió bien en las 4 conexiones.",
         "Apple/iCloud (CalDAV): backend desplegado, sin formulario en Config, sin prueba con cuenta real, sin resincronización periódica ni expansión de eventos recurrentes.",
-        "Los tokens de Google se guardan en texto plano en user_calendar_integrations (la contraseña de Apple sí va cifrada en Vault).",
+        "El refresh_token de Google ya va cifrado en Supabase Vault (2026-09-26, cierra V17) y el access_token dejó de guardarse; falta probar en vivo con la ruta nueva calendar-oauth-callback (exige reconectar con Google), calendar-channel-renew (no había canal por vencer) y calendar-evento-editar (escribe en el Google real).",
         "Google entrega los cumpleaños en dos calendarios (principal y contactos): quedan duplicados y pueden reaparecer el año próximo."
       ]
     },

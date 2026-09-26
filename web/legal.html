@@ -98,6 +98,49 @@
             display: block;
         }
 
+        /* Página completa + columna lateral ACORDEÓNICA: patrón .staff-side3 / .side3-* de staff.html
+           copiado tal cual (columna sólida a todo el alto, grupo con ▾, ítems adentro, línea vertical).
+           La columna queda fija justo debajo del header (--header-height + --header-nav-band = 156px). */
+        main.legal-shell {
+            display: flex;
+            align-items: flex-start;
+            max-width: none;
+            margin: 0;
+            padding: calc(var(--header-height) + var(--header-nav-band)) 0 0;
+            min-height: 100vh;
+        }
+
+        .legal-side3 {
+            width: 250px;
+            flex: none;
+            background: #0a0e16;
+            border-right: 1px solid var(--line);
+            position: sticky;
+            top: calc(var(--header-height) + var(--header-nav-band));
+            height: calc(100vh - var(--header-height) - var(--header-nav-band));
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 10px 0 44px;
+        }
+
+        .side3-grouprow { display: flex; align-items: center; }
+        .side3-group, .side3-link { display: flex; align-items: center; gap: 11px; width: 100%; background: none; border: none; color: rgba(255, 255, 255, .78); font-family: inherit; text-align: left; cursor: pointer; white-space: nowrap; text-decoration: none; }
+        .side3-group { flex: 1; min-width: 0; gap: 6px; padding: 12px 8px 12px 15px; font-size: 11px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; color: var(--gold); }
+        .side3-group:hover { background: rgba(255, 255, 255, .04); }
+        .side3-link { padding: 9px 14px 9px 17px; font-size: 13px; font-weight: 600; }
+        .side3-link:hover { background: rgba(255, 255, 255, .05); color: #fff; }
+        .side3-link.active { background: rgba(197, 160, 89, .16); color: var(--gold-lt, #e0c07a); box-shadow: inset 3px 0 0 var(--gold); }
+        .side3-ic { flex: none; width: 18px; display: inline-flex; align-items: center; justify-content: center; color: currentColor; font-size: 13px; }
+        .side3-tx { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+        .side3-car { flex: none; font-size: 10px; color: var(--gold); transition: transform .2s; }
+        .side3-group:not(.open) .side3-car { transform: rotate(-90deg); }
+        .side3-items { overflow: hidden; max-height: 0; transition: max-height .22s ease; }
+        .side3-items.open { max-height: 340px; }
+        .side3-back { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 34px; margin-right: 6px; color: var(--muted); text-decoration: none; transition: .2s; }
+        .side3-back:hover { color: var(--gold); }
+
+        main.legal-shell .legal-card { flex: 1; min-width: 0; margin: 24px 32px 80px; }
+
         .back-link {
             display: inline-flex;
             align-items: center;
@@ -201,40 +244,35 @@
   </div>
 </header>
 
-    <main class="legal-container"
-        style="display:grid;grid-template-columns:240px 1fr;gap:28px;align-items:start;max-width:1100px;">
+    <main class="legal-container legal-shell">
 
-        <!-- ── SIDEBAR NAVIGATION ── -->
-        <nav id="legalNav" style="position:sticky;top:100px;">
-            <div
-                style="font-size:10px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:14px;padding-left:4px;">
-                DOCUMENTOS LEGALES</div>
-            <div id="navLinks" style="display:flex;flex-direction:column;gap:6px;">
-                <a class="legal-nav-btn active" data-doc="PRIVACY_POLICY.md" href="#"
-                    onclick="loadDoc(this);return false;">
-                    🔒 Política de Privacidad
-                </a>
-                <a class="legal-nav-btn" data-doc="CLIENT_TERMS.md" href="#" onclick="loadDoc(this);return false;">
-                    📋 Términos del Cliente
-                </a>
-                <a class="legal-nav-btn" data-doc="DJ_AGREEMENT.md" href="#" onclick="loadDoc(this);return false;">
-                    🎧 Contrato DJ
-                </a>
-                <a class="legal-nav-btn" data-doc="PRO_PARTNER_POLICY.md" href="#"
-                    onclick="loadDoc(this);return false;">
-                    🤝 Política Pro Partner
-                </a>
-                <a class="legal-nav-btn" data-doc="SMS_TERMS.md" href="#" onclick="loadDoc(this);return false;">
-                    💬 Términos de SMS
-                </a>
+        <!-- ── COLUMNA LATERAL ACORDEÓNICA (patrón .side3-* de staff.html) ── -->
+        <aside class="legal-side3" id="legalNav">
+            <div class="side3-grouprow">
+                <button type="button" class="side3-group open" id="legalGroupBtn" aria-expanded="true"
+                    aria-controls="navLinks"><span class="side3-tx">DOCUMENTOS LEGALES</span><span
+                        class="side3-car">▾</span></button>
+                <a class="side3-back" href="javascript:history.back()" aria-label="Regresar" title="Regresar"
+                    data-i18n-aria="btn-regresar" data-i18n-title="btn-regresar"><svg viewBox="0 0 24 24" width="18"
+                        height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" aria-hidden="true">
+                        <polyline points="9 10 4 15 9 20"></polyline>
+                        <path d="M20 4v7a4 4 0 0 1-4 4H4"></path>
+                    </svg></a>
             </div>
-            <div style="margin-top:24px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.07);">
-                <a href="javascript:history.back()"
-                    style="font-size:13px;color:var(--muted);text-decoration:none;display:flex;align-items:center;gap:6px;transition:.2s;"
-                    onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--muted)'">←
-                    Volver</a>
+            <div class="side3-items open" id="navLinks">
+                <a class="side3-link legal-nav-btn active" data-doc="PRIVACY_POLICY.md" href="#"
+                    onclick="loadDoc(this);return false;"><span class="side3-ic">🔒</span><span class="side3-tx">Política de Privacidad</span></a>
+                <a class="side3-link legal-nav-btn" data-doc="CLIENT_TERMS.md" href="#"
+                    onclick="loadDoc(this);return false;"><span class="side3-ic">📋</span><span class="side3-tx">Términos del Cliente</span></a>
+                <a class="side3-link legal-nav-btn" data-doc="DJ_AGREEMENT.md" href="#"
+                    onclick="loadDoc(this);return false;"><span class="side3-ic">🎧</span><span class="side3-tx">Contrato DJ</span></a>
+                <a class="side3-link legal-nav-btn" data-doc="PRO_PARTNER_POLICY.md" href="#"
+                    onclick="loadDoc(this);return false;"><span class="side3-ic">🤝</span><span class="side3-tx">Política Pro Partner</span></a>
+                <a class="side3-link legal-nav-btn" data-doc="SMS_TERMS.md" href="#"
+                    onclick="loadDoc(this);return false;"><span class="side3-ic">💬</span><span class="side3-tx">Términos de SMS</span></a>
             </div>
-        </nav>
+        </aside>
 
         <!-- ── DOCUMENT CONTENT ── -->
         <div class="legal-card" id="legal-content">
@@ -245,52 +283,25 @@
     </main>
 
     <style>
-        .legal-nav-btn {
-            display: block;
-            padding: 10px 14px;
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.07);
-            color: rgba(255, 255, 255, 0.6);
-            text-decoration: none;
-            font-size: 13px;
-            font-weight: 500;
-            transition: all .2s;
-        }
-
-        .legal-nav-btn:hover {
-            background: rgba(197, 160, 89, 0.08);
-            border-color: rgba(197, 160, 89, 0.25);
-            color: #fff;
-        }
-
-        .legal-nav-btn.active {
-            background: rgba(197, 160, 89, 0.12);
-            border-color: rgba(197, 160, 89, 0.4);
-            color: var(--gold);
-            font-weight: 700;
-        }
-
         @media(max-width:700px) {
-            main.legal-container {
-                grid-template-columns: 1fr !important;
+            main.legal-shell {
+                flex-direction: column;
+                align-items: stretch;
+                padding-top: 120px;
             }
 
-            #legalNav {
+            .legal-side3 {
                 position: static;
-                display: flex;
-                gap: 8px;
-                flex-wrap: wrap;
+                width: auto;
+                height: auto;
+                border-right: 0;
+                border-bottom: 1px solid var(--line);
+                padding-bottom: 10px;
             }
 
-            #navLinks {
-                flex-direction: row;
-                flex-wrap: wrap;
-            }
-
-            .legal-nav-btn {
-                font-size: 12px;
-                padding: 8px 12px;
+            main.legal-shell .legal-card {
+                margin: 16px 12px 60px;
+                padding: 24px 18px;
             }
         }
     </style>
@@ -347,6 +358,18 @@
                 body.innerHTML = `<p style="color:#fc8181;">Error: ${err.message}</p>`;
             }
         }
+
+        // Acordeón del grupo (mismo comportamiento que .side3-group en staff.html)
+        (function () {
+            var g = document.getElementById('legalGroupBtn');
+            var items = document.getElementById('navLinks');
+            g.addEventListener('click', function () {
+                var abierto = !g.classList.contains('open');
+                g.classList.toggle('open', abierto);
+                items.classList.toggle('open', abierto);
+                g.setAttribute('aria-expanded', abierto ? 'true' : 'false');
+            });
+        })();
 
         // Initial load
         loadDoc(null);
