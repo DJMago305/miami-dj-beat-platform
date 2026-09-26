@@ -18,7 +18,7 @@
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { cerrarCanalWatch, crearCanalWatch, refrescarAccessToken } from "../_shared/google-calendar-sync.ts";
+import { accessTokenDesdeVault, cerrarCanalWatch, crearCanalWatch } from "../_shared/google-calendar-sync.ts";
 
 const SUPABASE_URL_FALLBACK = "https://hkuvuqupbxwkiykxvqdr.supabase.co";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -43,7 +43,7 @@ serve(async (req: Request) => {
     const limite = new Date(Date.now() + RENEW_WINDOW_HOURS * 60 * 60 * 1000).toISOString();
     const { data: porVencer, error } = await ADMIN
         .from("user_calendar_integrations")
-        .select("user_id, calendar_id, access_token, refresh_token, channel_id, channel_resource_id")
+        .select("user_id, calendar_id, google_refresh_token_secret_id, channel_id, channel_resource_id")
         .eq("provider", "google")
         .eq("status", "active")
         .lte("channel_expires_at", limite);
@@ -62,10 +62,9 @@ serve(async (req: Request) => {
         const calendarId = String(fila.calendar_id || "primary");
         const clave = `${uid}:${calendarId}`;
         try {
-            // El access_token guardado dura ~1h; si el canal vive dias, ya
-            // esta vencido -- se refresca siempre aqui en vez de intentar
-            // primero con el viejo y esperar un 401.
-            const accessToken = await refrescarAccessToken(String(fila.refresh_token ?? ""));
+            // El access_token ya no se guarda: se canjea aqui desde el
+            // refresh_token cifrado en Vault.
+            const accessToken = await accessTokenDesdeVault(ADMIN, fila.google_refresh_token_secret_id);
             if (!accessToken) {
                 await ADMIN.from("user_calendar_integrations")
                     .update({ status: "expired" })
@@ -73,10 +72,6 @@ serve(async (req: Request) => {
                 resultados[clave] = "refresh_token_invalido";
                 continue;
             }
-            await ADMIN.from("user_calendar_integrations")
-                .update({ access_token: accessToken })
-                .eq("user_id", uid).eq("provider", "google").eq("calendar_id", calendarId);
-
             const webhookUrl = `${SUPABASE_URL}/functions/v1/calendar-sync-webhook`;
             const canal = await crearCanalWatch(accessToken, calendarId, webhookUrl);
             if (!canal) {

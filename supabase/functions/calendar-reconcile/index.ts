@@ -42,6 +42,15 @@ async function refrescarAccessToken(refreshToken: string): Promise<string | null
     } catch (e) { console.error("[calendar-reconcile] refresh_token red:", e); return null; }
 }
 
+// El refresh_token vive cifrado en Supabase Vault (user_calendar_integrations.google_refresh_token_secret_id).
+// deno-lint-ignore no-explicit-any
+async function refrescarDesdeVault(admin: any, secretId: string | null | undefined): Promise<string | null> {
+    if (!secretId) return null;
+    const { data, error } = await admin.rpc("calendar_google_leer_token", { p_secret_id: secretId });
+    if (error || typeof data !== "string" || !data) { console.error("[calendar-reconcile] no se pudo leer el token de Vault:", error?.message); return null; }
+    return refrescarAccessToken(data);
+}
+
 type EventoGoogle = { id: string; status?: string; summary?: string; start?: { dateTime?: string; date?: string }; end?: { dateTime?: string; date?: string } };
 
 /** events.list completo con paginación. null = falló alguna página (no se concilia nada). */
@@ -77,7 +86,7 @@ serve(async (req: Request) => {
 
     const { data: filas, error } = await ADMIN
         .from("user_calendar_integrations")
-        .select("user_id, calendar_id, refresh_token")
+        .select("user_id, calendar_id, google_refresh_token_secret_id")
         .eq("provider", "google").eq("status", "active");
     if (error) return new Response(JSON.stringify({ error: "lookup_failed" }), { status: 500, headers: { "Content-Type": "application/json" } });
 
@@ -91,7 +100,7 @@ serve(async (req: Request) => {
         const clave = `${uid}:${calendarId}`;
         const tipo = calendarId === BIRTHDAYS_CALENDAR_ID ? "cumpleanos" : "nota";
         try {
-            const token = await refrescarAccessToken(String(fila.refresh_token ?? ""));
+            const token = await refrescarDesdeVault(ADMIN, fila.google_refresh_token_secret_id);
             if (!token) { resultados[clave] = "token_invalido"; continue; }
             const eventos = await listarTodo(token, calendarId, desde, hasta);
             if (!eventos) { resultados[clave] = "lectura_incompleta_sin_cambios"; continue; }

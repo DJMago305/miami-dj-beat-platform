@@ -157,15 +157,32 @@ serve(async (req: Request) => {
         for (const cal of CALENDARIOS) {
             // refresh_token solo llega la PRIMERA vez que el usuario autoriza
             // (o con prompt=consent forzado) -- si por algun motivo no llega,
-            // se preserva el que ya hubiera en la fila anterior en vez de
-            // pisarlo con NULL.
+            // se preserva el secreto que ya hubiera en la fila anterior en vez
+            // de pisarlo con NULL. El token va CIFRADO en Supabase Vault (un
+            // secreto por fila); nunca se guarda en texto plano.
             const { data: filaExistente } = await ADMIN
                 .from("user_calendar_integrations")
-                .select("refresh_token")
+                .select("google_refresh_token_secret_id")
                 .eq("user_id", userId)
                 .eq("provider", "google")
                 .eq("calendar_id", cal.id)
                 .maybeSingle();
+
+            let secretId: string | null = filaExistente?.google_refresh_token_secret_id ?? null;
+            let vaultErr: string | null = null;
+            if (refreshToken) {
+                const v = secretId
+                    ? await ADMIN.rpc("calendar_google_actualizar_token", { p_secret_id: secretId, p_token: refreshToken })
+                    : await ADMIN.rpc("calendar_google_guardar_token", { p_token: refreshToken });
+                if (v.error) vaultErr = v.error.message;
+                else if (!secretId) secretId = String(v.data);
+            }
+            if (vaultErr) {
+                console.error(`[calendar-oauth-callback] Vault error (${cal.id}):`, vaultErr);
+                // Nunca se cae a texto plano: si no se pudo cifrar, no se conecta.
+                if (cal.id === "primary") return redirectAPerfil("error", "save_failed");
+                continue;
+            }
 
             const { error: upsertErr } = await ADMIN
                 .from("user_calendar_integrations")
@@ -173,8 +190,9 @@ serve(async (req: Request) => {
                     user_id: userId,
                     provider: "google",
                     calendar_id: cal.id,
-                    access_token: accessToken,
-                    refresh_token: refreshToken || filaExistente?.refresh_token || null,
+                    access_token: null,
+                    refresh_token: null,
+                    google_refresh_token_secret_id: secretId,
                     status: "active",
                     last_synced_at: null,
                     updated_at: new Date().toISOString(),
