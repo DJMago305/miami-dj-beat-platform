@@ -41,7 +41,7 @@
       "name": "How much setup time do you need before the event?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Setup time depends on the scope of audio, lighting, and staging equipment — we coordinate load-in and sound check windows directly with your venue and event schedule in advance."
+        "text": "Setup time depends on the scope of audio, lighting, and staging equipment. We coordinate load-in and sound check windows directly with your venue and event schedule in advance."
       }
     },
     {
@@ -265,10 +265,10 @@
         style="position: fixed; inset: 0; z-index: 3; pointer-events: none; background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.8) 100%);"></div>
 
     <main class="container" style="padding: 100px 18px; position: relative; z-index: 10;">
-        <div style="text-align: center; margin-bottom: 60px;">
+        <div style="text-align: center; min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; justify-content: center;">
             <h1 data-i18n="corporate-dj-h1"
-                style="font-family: 'Playfair Display', serif; font-size: clamp(34px, 4.6vw, 58px); -webkit-text-fill-color: rgba(197, 160, 89, 0.15); -webkit-text-stroke: 1px var(--gold); filter: drop-shadow(0 0 15px rgba(197, 160, 89, 0.2));">
-                Corporate Event DJ &amp; Audio-Visual Production in Miami</h1>
+                style="font-family: 'Playfair Display', serif; font-size: clamp(24px, 6.5vw, 58px); color: #fff; -webkit-text-fill-color: #fff; text-shadow: 0 4px 20px rgba(0,0,0,0.8); text-transform: uppercase; text-wrap: balance; overflow-wrap: normal; word-break: keep-all; filter: drop-shadow(0 0 15px rgba(197, 160, 89, 0.2));">
+                Corporate Event DJ &amp; Audiovisual Production in Miami</h1>
             <p data-i18n="corporate-dj-lead" style="color: rgba(255,255,255,0.75); font-size: 16px; max-width: 62ch; margin: 20px auto 0; line-height: 1.6;">
                 Professional, punctual, and camera-ready — wireless microphones for speakers and executives, ambient music for networking, and high-energy transitions for brand activations, across Miami-Dade and Broward.</p>
         </div>
@@ -321,7 +321,7 @@
 
             <details class="corporate-faq-item">
                 <summary data-i18n="corporate-dj-faq-q2">How much setup time do you need before the event?</summary>
-                <p data-i18n="corporate-dj-faq-a2">Setup time depends on the scope of audio, lighting, and staging equipment — we coordinate load-in and sound check windows directly with your venue and event schedule in advance.</p>
+                <p data-i18n="corporate-dj-faq-a2">Setup time depends on the scope of audio, lighting, and staging equipment. We coordinate load-in and sound check windows directly with your venue and event schedule in advance.</p>
             </details>
 
             <details class="corporate-faq-item">
@@ -331,7 +331,7 @@
 
             <details class="corporate-faq-item">
                 <summary data-i18n="corporate-dj-faq-q4">Can the music be curated for our brand and audience?</summary>
-                <p data-i18n="corporate-dj-faq-a4">Yes. We curate music to match your brand tone and audience — from ambient background music during networking to higher-energy transitions for brand activations and award moments. <a href="tel:+13056071780">(305) 607-1780</a></p>
+                <p data-i18n="corporate-dj-faq-a4">Yes. We curate music to match your brand tone and audience, from ambient background music during networking to higher-energy transitions for brand activations and award moments.<a href="tel:+13056071780">(305) 607-1780</a></p>
             </details>
 
       <details class="corporate-faq-item">
@@ -395,9 +395,17 @@
             }
             if (typeof window.mdjEnsureVideoResolved === 'function') window.mdjEnsureVideoResolved(v);
             try { v.load(); attemptPlay(); } catch (e) { /* noop */ }
+            var mdjHeroRetries = 0;
             v.addEventListener('pause', function () {
-                if (!document.hidden) attemptPlay();
+                if (!document.hidden && document.hasFocus() && mdjHeroRetries < 3) {
+                    mdjHeroRetries++;
+                    attemptPlay();
+                }
             });
+            document.addEventListener('visibilitychange', function () {
+                if (!document.hidden) { mdjHeroRetries = 0; attemptPlay(); }
+            });
+            window.addEventListener('focus', function () { mdjHeroRetries = 0; attemptPlay(); });
 
             /* Serie de vídeo del hero: cuando el clip activo termina, pasa al
                siguiente de data-hero-playlist -- mismo <video>, un solo clip

@@ -115,7 +115,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Outfit:wght@300;400;500;600;700&display=optional"
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Outfit:wght@300;400;500;600;700&display=optional"
     rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=optional" rel="stylesheet" />
   <link rel="stylesheet" href="./styles.css?v=20260921-hub-scrollbar-fuera" />
@@ -125,6 +125,12 @@
     /* Misma arquitectura que weddings.html/hora-loca.html: video real fijo detrás
        (hero-kb-bg), contenido en flujo normal sobre el fondo oscuro. */
     .seasonal-hero-copy {
+      /* PO 2026-09-26: vista limpia del hero -- solo el hero debe verse al entrar */
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
       text-align: center;
       max-width: 720px;
       margin: 0 auto 50px;
@@ -133,8 +139,12 @@
 
 
     .seasonal-hero-copy h1 {
-      font-family: 'Cormorant Garamond', 'Times New Roman', serif;
-      font-size: clamp(2.4rem, 5vw, 3.6rem);
+      font-family: 'Playfair Display', serif;
+      text-transform: uppercase;
+      text-wrap: balance;
+      overflow-wrap: normal;
+      word-break: keep-all;
+      font-size: clamp(1.7rem, 6.5vw, 3.6rem);
       font-weight: 600;
       color: #fff;
       margin: 0 0 18px;
@@ -349,7 +359,7 @@
   <main class="container" style="padding: 100px 18px; position: relative; z-index: 10;">
     <div class="seasonal-hero-copy">
       <h1 data-i18n="seasonal-page-h1">Themed Parties &amp; Special Events DJ in Miami</h1>
-      <p class="mdj-sp-lead" data-i18n="seasonal-page-lead">Halloween, St. Patrick's Day, and 4th of July -- themed music curation and bilingual MC hosting for your seasonal celebration, with custom pricing built around your setup.</p>
+      <p class="mdj-sp-lead" data-i18n="seasonal-page-lead">Halloween, St. Patrick's Day, and 4th of July.<span class='mdj-hl-lead-sub'>Themed music curation and bilingual MC hosting for your seasonal celebration, with custom pricing built around your setup.</span></p>
     </div>
 
     <div class="seasonal-mosaic" aria-label="Halloween DJ event gallery">
@@ -394,7 +404,7 @@
       </div>
       <div class="tile glass-card" style="padding: 24px !important;">
         <h2 data-i18n="seasonal-tile6-h2">Christmas Eve &amp; New Year's Eve</h2>
-        <p data-i18n="seasonal-tile6-p">Our highest-demand dates of the year -- book early. Premium curated sets for Nochebuena and New Year's countdown celebrations.</p>
+        <p data-i18n="seasonal-tile6-p">Our highest-demand dates of the year, book early. Premium curated sets for Nochebuena and New Year's countdown celebrations.</p>
         <div class="value" style="color: rgba(212, 175, 55, 0.7); font-size: 15px; font-weight: 600; margin-top: 12px;" data-i18n="seasonal-tile6-price">$1,500</div>
         <button type="button" class="seasonal-add-btn" data-sku="dj_seasonal_nye" data-suffix="0" data-i18n="seasonal-add-btn">Add to my event</button>
       </div>
@@ -426,7 +436,7 @@
 
       <details class="seasonal-faq-item">
         <summary data-i18n="seasonal-faq-q3">Can I book a themed DJ package alongside other services?</summary>
-        <p data-i18n="seasonal-faq-a3">Yes -- you can combine your themed party package with any other service (lighting, staff, entertainment). <a href="tel:+13056071780">(305) 607-1780</a> · <a href="mailto:miamidjbeat@gmail.com">miamidjbeat@gmail.com</a></p>
+        <p data-i18n="seasonal-faq-a3">Yes, you can combine your themed party package with any other service (lighting, staff, entertainment). <a href=\"tel:+13056071780\">(305) 607-1780</a> · <a href=\"mailto:miamidjbeat@gmail.com\">miamidjbeat@gmail.com</a><a href="tel:+13056071780">(305) 607-1780</a> · <a href="mailto:miamidjbeat@gmail.com">miamidjbeat@gmail.com</a></p>
       </details>
 
       <details class="seasonal-faq-item">
@@ -501,9 +511,17 @@
                esto resuelve el src real de inmediato en vez de esperarlo. */
             if (typeof window.mdjEnsureVideoResolved === 'function') window.mdjEnsureVideoResolved(v);
             try { v.load(); attemptPlay(); } catch (e) { /* noop */ }
+            var mdjHeroRetries = 0;
             v.addEventListener('pause', function () {
-                if (!document.hidden) attemptPlay();
+                if (!document.hidden && document.hasFocus() && mdjHeroRetries < 3) {
+                    mdjHeroRetries++;
+                    attemptPlay();
+                }
             });
+            document.addEventListener('visibilitychange', function () {
+                if (!document.hidden) { mdjHeroRetries = 0; attemptPlay(); }
+            });
+            window.addEventListener('focus', function () { mdjHeroRetries = 0; attemptPlay(); });
 
             /* Serie de vídeo del hero: cuando el clip activo termina, pasa al
                siguiente de data-hero-playlist -- mismo <video>, un solo clip

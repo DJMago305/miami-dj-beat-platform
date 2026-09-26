@@ -336,13 +336,17 @@ Riesgo: romper carga del catálogo.
         style="position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 3; pointer-events: none; background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.8) 100%);"></div>
 
     <main class="container" style="padding: 100px 18px; position: relative; z-index: 10;">
-        <div style="text-align: center; margin-bottom: 80px;">
+        <!-- Vista limpia del hero (PO 2026-09-26): solo el hero debe verse al entrar,
+             el resto (tarjetas + FAQ) sube al hacer scroll. min-height:100vh con fallback
+             100dvh (mobile con barra de direcciones) -- min-height, no height, para que un
+             texto más largo en otro idioma no corte contenido. -->
+        <div style="text-align: center; min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; justify-content: center;">
             <h1 id="rentals-headline"
-                style="font-family: 'Playfair Display', serif; font-size: clamp(40px, 5vw, 70px); -webkit-text-fill-color: rgba(197, 160, 89, 0.15); -webkit-text-stroke: 1px var(--gold); filter: drop-shadow(0 0 15px rgba(197, 160, 89, 0.2)); opacity: 0; transform: translateY(30px); animation: revealText 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;"
+                style="font-family: 'Playfair Display', serif; font-size: clamp(28px, 6.5vw, 70px); color: #fff; -webkit-text-fill-color: #fff; text-shadow: 0 4px 20px rgba(0,0,0,0.8); text-transform: uppercase; text-wrap: balance; overflow-wrap: normal; word-break: keep-all; filter: drop-shadow(0 0 15px rgba(197, 160, 89, 0.2)); opacity: 0; transform: translateY(30px); animation: revealText 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;"
                 data-i18n="rentals-title">Event Production & Equipment Rental Miami</h1>
             <p style="color: var(--gold); font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 3px; margin-top: 15px; opacity: 0; animation: revealText 1s 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;"
                 data-i18n="rentals-hero-subtitle">
-                Sound, Lighting, Stages & Production Equipment</p>
+                DJ, Sound, Lighting, Stages & Production Equipment</p>
         </div>
 
         <div id="rentals-services-grid" class="grid3 rentals-grid-4">
@@ -392,6 +396,20 @@ Riesgo: romper carga del catálogo.
                     style="font-family: 'Playfair Display', serif; font-size: 24px; margin-bottom: 8px;">
                     Entretenimiento y Talento</h3>
                 <p data-i18n="rentals-wireless-desc" style="color: rgba(255,255,255,0.7); line-height: 1.6;">Hora Loca, payasos y captura y visuales para tu evento.</p>
+                <div class="value"
+                    style="color: rgba(212, 175, 55, 0.7); font-size: 15px; font-weight: 600; margin-top: 12px; margin-bottom: 20px;"
+                    data-i18n="rentals-pa-pack-price">Presupuesto a medida</div>
+                <span class="btn primary full"
+                    style="border-radius: 50px;" data-i18n="rentals-check-availability">Consultar
+                    Disponibilidad</span>
+            </a>
+
+            <!-- Captura y Visuales — página propia capture-visuals-dj.html, ya indexada en sitemap.xml pero sin tarjeta hasta ahora (PO 2026-09-26). Claves rentals-capture-title/desc ya existían en translations.js desde el 2026-09-22, huérfanas. -->
+            <a href="./capture-visuals-dj.html" class="tile glass-card" style="opacity: 0; animation: revealText 0.8s 0.6s ease-out forwards;">
+                <h3 data-i18n="rentals-capture-title"
+                    style="font-family: 'Playfair Display', serif; font-size: 24px; margin-bottom: 8px;">
+                    Captura y Visuales</h3>
+                <p data-i18n="rentals-capture-desc" style="color: rgba(255,255,255,0.7); line-height: 1.6;">Fotografía, videografía, drone, cabina 360 (photo booth) y Magic Mirror para tu evento.</p>
                 <div class="value"
                     style="color: rgba(212, 175, 55, 0.7); font-size: 15px; font-weight: 600; margin-top: 12px; margin-bottom: 20px;"
                     data-i18n="rentals-pa-pack-price">Presupuesto a medida</div>

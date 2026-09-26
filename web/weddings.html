@@ -33,7 +33,7 @@
       "name": "How do we choose the music for our wedding?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "We build your playlist together — you share your must-plays and do-not-plays, and your MC/DJ curates the rest live based on the room, keeping your ceremony, cocktail hour, and reception flowing naturally."
+        "text": "We build your playlist together, you share your must-plays and do-not-plays, and your MC/DJ curates the rest live based on the room, keeping your ceremony, cocktail hour, and reception flowing naturally."
       }
     },
     {
@@ -41,7 +41,7 @@
       "name": "How do you coordinate timing with our ceremony and reception?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "We coordinate directly with you (and your planner or coordinator, if you have one) on a timeline for ceremony, cocktail hour, and reception cues — introductions, first dance, toasts, and cake cutting."
+        "text": "We coordinate directly with you (and your planner or coordinator, if you have one) on a timeline for ceremony, cocktail hour, and reception cues: introductions, first dance, toasts, and cake cutting."
       }
     },
     {
@@ -65,7 +65,7 @@
       "name": "Why choose Miami DJ Beat for your wedding?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Because a wedding needs more than someone who presses play. You get a bilingual DJ and MC who coordinates your ceremony, cocktail hour, and reception as one seamless experience, backed by professional sound, wireless microphones, and uplighting — with your timeline planned in advance and technical support on-site throughout your day."
+        "text": "Because a wedding needs more than someone who presses play. You get a bilingual DJ and MC who coordinates your ceremony, cocktail hour, and reception as one seamless experience, backed by professional sound, wireless microphones, and uplighting, with your timeline planned in advance and technical support on-site throughout your day."
       }
     },
     {
@@ -81,7 +81,7 @@
       "name": "What details set a real wedding DJ apart from just any DJ?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "A wedding-caliber setup includes bilingual hosting for ceremony and reception, wireless microphones for vows and toasts, ambient uplighting to match your venue, cold spark effects for a first dance or grand entrance, and sound systems sized correctly for your space — production details, not just a playlist."
+        "text": "A wedding-caliber setup includes bilingual hosting for ceremony and reception, wireless microphones for vows and toasts, ambient uplighting to match your venue, cold spark effects for a first dance or grand entrance, and sound systems sized correctly for your space: production details, not just a playlist."
       }
     },
     {
@@ -148,7 +148,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Outfit:wght@300;400;500;600;700&display=optional"
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Outfit:wght@300;400;500;600;700&display=optional"
     rel="stylesheet" />
   <!-- Tipografia institucional del menu (Inter 800). Sin esta hoja la barra cae en la
        sustituta del sistema y el texto sale ~2% mas estrecho, desplazando el eje X. -->
@@ -160,6 +160,12 @@
     /* Arquitectura unificada con latin-dj.html/corporate.html: video real detrás
        (hero-kb-bg), contenido directo sobre el fondo oscuro (sin tarjeta sólida) */
     .weddings-hero-copy {
+      /* PO 2026-09-26: vista limpia del hero -- solo el hero debe verse al entrar */
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
       text-align: center;
       max-width: 720px;
       margin: 0 auto 50px;
@@ -168,8 +174,12 @@
 
 
     .weddings-hero-copy h1 {
-      font-family: 'Cormorant Garamond', 'Times New Roman', serif;
-      font-size: clamp(2.4rem, 5vw, 3.6rem);
+      font-family: 'Playfair Display', serif;
+      text-transform: uppercase;
+      text-wrap: balance;
+      overflow-wrap: normal;
+      word-break: keep-all;
+      font-size: clamp(1.7rem, 6.5vw, 3.6rem);
       font-weight: 600;
       color: #fff;
       margin: 0 0 18px;
@@ -413,7 +423,7 @@
   <main class="container" style="padding: 100px 18px; position: relative; z-index: 10;">
     <div class="weddings-hero-copy">
       <h1 data-i18n="wedding-dj-h1">Wedding DJ Miami</h1>
-      <p class="mdj-wp-lead" data-i18n="wedding-dj-lead">Bilingual DJ and MC coverage for your ceremony, cocktail hour, and reception — professional sound, uplighting, and music curated to your story, serving weddings across Miami-Dade and Broward.</p>
+      <p class="mdj-wp-lead" data-i18n="wedding-dj-lead">Bilingual DJ and MC coverage for your ceremony, cocktail hour, and reception.<span class='mdj-hl-lead-sub'>Professional sound, uplighting, and music curated to your story, serving weddings across Miami-Dade and Broward.</span></p>
     </div>
 
     <div class="weddings-mosaic">
@@ -436,7 +446,7 @@
 
     <div class="grid3 weddings-tiers" style="gap: 30px; max-width: 1100px; margin: 0 auto;">
       <div class="tile glass-card" style="padding: 24px !important;">
-        <h2 data-i18n="wedding-dj-tier1-h2">Ceremony — Wireless Microphones</h2>
+        <h2 data-i18n="wedding-dj-tier1-h2">Ceremony: Wireless Microphones</h2>
         <p data-i18n="wedding-dj-tier1-p">Clear, reliable wireless microphone coverage for officiants, vows, and readings, coordinated with your ceremony timeline.</p>
       </div>
       <div class="tile glass-card" style="padding: 24px !important;">
@@ -444,8 +454,8 @@
         <p data-i18n="wedding-dj-tier2-p">Ambient music and sound coverage while your guests mingle, with a smooth transition into your reception.</p>
       </div>
       <div class="tile glass-card" style="padding: 24px !important;">
-        <h2 data-i18n="wedding-dj-tier3-h2">Reception — Bilingual MC &amp; Dance Floor</h2>
-        <p data-i18n="wedding-dj-tier3-p">A bilingual MC (English &amp; Spanish) who guides your reception program — introductions, toasts, first dance, and an open dance floor built around your music taste.</p>
+        <h2 data-i18n="wedding-dj-tier3-h2">Reception: Bilingual MC &amp; Dance Floor</h2>
+        <p data-i18n="wedding-dj-tier3-p">A bilingual MC (English &amp; Spanish) who guides your reception program: introductions, toasts, first dance, and an open dance floor built around your music taste.</p>
       </div>
       <div class="tile glass-card" style="padding: 24px !important;">
         <h2 data-i18n="wedding-dj-addons-h2">Production Add-Ons</h2>
@@ -475,12 +485,12 @@
 
       <details class="weddings-faq-item">
         <summary data-i18n="wedding-dj-faq-q1">How do we choose the music for our wedding?</summary>
-        <p data-i18n="wedding-dj-faq-a1">We build your playlist together — you share your must-plays and do-not-plays, and your MC/DJ curates the rest live based on the room, keeping your ceremony, cocktail hour, and reception flowing naturally.</p>
+        <p data-i18n="wedding-dj-faq-a1">We build your playlist together, you share your must-plays and do-not-plays, and your MC/DJ curates the rest live based on the room, keeping your ceremony, cocktail hour, and reception flowing naturally.</p>
       </details>
 
       <details class="weddings-faq-item">
         <summary data-i18n="wedding-dj-faq-q2">How do you coordinate timing with our ceremony and reception?</summary>
-        <p data-i18n="wedding-dj-faq-a2">We coordinate directly with you (and your planner or coordinator, if you have one) on a timeline for ceremony, cocktail hour, and reception cues — introductions, first dance, toasts, and cake cutting.</p>
+        <p data-i18n="wedding-dj-faq-a2">We coordinate directly with you (and your planner or coordinator, if you have one) on a timeline for ceremony, cocktail hour, and reception cues: introductions, first dance, toasts, and cake cutting.</p>
       </details>
 
       <details class="weddings-faq-item">
@@ -495,7 +505,7 @@
 
       <details class="weddings-faq-item">
         <summary data-i18n="wedding-dj-faq-q5">Why choose Miami DJ Beat for your wedding?</summary>
-        <p data-i18n="wedding-dj-faq-a5">Because a wedding needs more than someone who presses play. You get a bilingual DJ and MC who coordinates your ceremony, cocktail hour, and reception as one seamless experience, backed by professional sound, wireless microphones, and uplighting — with your timeline planned in advance and technical support on-site throughout your day.</p>
+        <p data-i18n="wedding-dj-faq-a5">Because a wedding needs more than someone who presses play. You get a bilingual DJ and MC who coordinates your ceremony, cocktail hour, and reception as one seamless experience, backed by professional sound, wireless microphones, and uplighting, with your timeline planned in advance and technical support on-site throughout your day.</p>
       </details>
 
       <details class="weddings-faq-item">
@@ -505,7 +515,7 @@
 
       <details class="weddings-faq-item">
         <summary data-i18n="wedding-dj-faq-q7">What details set a real wedding DJ apart from just any DJ?</summary>
-        <p data-i18n="wedding-dj-faq-a7">A wedding-caliber setup includes bilingual hosting for ceremony and reception, wireless microphones for vows and toasts, ambient uplighting to match your venue, cold spark effects for a first dance or grand entrance, and sound systems sized correctly for your space — production details, not just a playlist.</p>
+        <p data-i18n="wedding-dj-faq-a7">A wedding-caliber setup includes bilingual hosting for ceremony and reception, wireless microphones for vows and toasts, ambient uplighting to match your venue, cold spark effects for a first dance or grand entrance, and sound systems sized correctly for your space: production details, not just a playlist.</p>
       </details>
 
       <details class="weddings-faq-item">
@@ -588,9 +598,17 @@
                 }
             }
             try { v.load(); attemptPlay(); } catch (e) { /* noop */ }
+            var mdjHeroRetries = 0;
             v.addEventListener('pause', function () {
-                if (!document.hidden) attemptPlay();
+                if (!document.hidden && document.hasFocus() && mdjHeroRetries < 3) {
+                    mdjHeroRetries++;
+                    attemptPlay();
+                }
             });
+            document.addEventListener('visibilitychange', function () {
+                if (!document.hidden) { mdjHeroRetries = 0; attemptPlay(); }
+            });
+            window.addEventListener('focus', function () { mdjHeroRetries = 0; attemptPlay(); });
         }
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', kick);

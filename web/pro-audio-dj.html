@@ -41,7 +41,7 @@
       "name": "Do you rent wireless microphones for speeches or toasts?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Yes — professional-grade UHF wireless microphones (Shure/Sennheiser) with extended interference-free range, ideal for speeches and singers."
+        "text": "Yes, professional-grade UHF wireless microphones (Shure/Sennheiser) with extended interference-free range, ideal for speeches and singers."
       }
     },
     {
@@ -115,7 +115,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Outfit:wght@300;400;500;600;700&display=optional"
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Outfit:wght@300;400;500;600;700&display=optional"
     rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=optional" rel="stylesheet" />
   <link rel="stylesheet" href="./styles.css?v=20260921-hub-scrollbar-fuera" />
@@ -125,6 +125,12 @@
     /* Misma arquitectura que hora-loca.html/weddings.html: video real fijo detrás
        (hero-kb-bg), contenido en flujo normal sobre el fondo oscuro. */
     .paudio-hero-copy {
+      /* PO 2026-09-26: vista limpia del hero -- solo el hero debe verse al entrar */
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
       text-align: center;
       max-width: 720px;
       margin: 0 auto 50px;
@@ -133,10 +139,14 @@
 
 
     .paudio-hero-copy h1 {
-      font-family: 'Cormorant Garamond', 'Times New Roman', serif;
+      font-family: 'Playfair Display', serif;
+      text-transform: uppercase;
+      text-wrap: balance;
+      overflow-wrap: normal;
+      word-break: keep-all;
       /* Fallback cross-browser: tamaño fijo antes de clamp() (Safari <13.1 no soporta clamp) */
       font-size: 2.6rem;
-      font-size: clamp(2.4rem, 5vw, 3.6rem);
+      font-size: clamp(1.7rem, 6.5vw, 3.6rem);
       font-weight: 600;
       color: #fff;
       margin: 0 0 18px;
@@ -393,7 +403,7 @@
   <main class="container" style="padding: 100px 18px; position: relative; z-index: 10;">
     <div class="paudio-hero-copy">
       <h1 data-i18n="paudio-page-h1">Professional Audio &amp; Sound Rental in Miami</h1>
-      <p class="mdj-pa-lead" data-i18n="paudio-page-lead">From an intimate small PA system to a large-format line array — professional speakers, wireless microphones, DJ monitors, and mixers for any event size.</p>
+      <p class="mdj-pa-lead" data-i18n="paudio-page-lead">From an intimate small PA system to a large-format line array.<span class='mdj-hl-lead-sub'>Professional speakers, wireless microphones, DJ monitors, and mixers for any event size.</span></p>
     </div>
 
     <div class="paudio-package-item">
@@ -483,12 +493,12 @@
 
       <details class="paudio-faq-item">
         <summary data-i18n="paudio-faq-q2">Do you rent wireless microphones for speeches or toasts?</summary>
-        <p data-i18n="paudio-faq-a2">Yes — professional-grade UHF wireless microphones (Shure/Sennheiser) with extended interference-free range, ideal for speeches and singers.</p>
+        <p data-i18n="paudio-faq-a2">Yes, professional-grade UHF wireless microphones (Shure/Sennheiser) with extended interference-free range, ideal for speeches and singers.</p>
       </details>
 
       <details class="paudio-faq-item">
         <summary data-i18n="paudio-faq-q3">Can I rent an audio mixer separately from a PA system?</summary>
-        <p data-i18n="paudio-faq-a3">Yes — the mixing console can be rented on its own or combined with any PA package. <a href="./rentals.html?checkout=fromcart">Configure your equipment</a> · <a href="tel:+13056071780">(305) 607-1780</a></p>
+        <p data-i18n="paudio-faq-a3">Yes, the mixing console can be rented on its own or combined with any PA package. <a href=\"./rentals.html?checkout=fromcart\">Configure your equipment</a> · <a href=\"tel:+13056071780\">(305) 607-1780</a><a href="./rentals.html?checkout=fromcart">Configure your equipment</a> · <a href="tel:+13056071780">(305) 607-1780</a></p>
       </details>
 
       <details class="paudio-faq-item">
@@ -578,9 +588,17 @@
             }
             if (typeof window.mdjEnsureVideoResolved === 'function') window.mdjEnsureVideoResolved(v);
             try { v.load(); attemptPlay(); } catch (e) { /* noop */ }
+            var mdjHeroRetries = 0;
             v.addEventListener('pause', function () {
-                if (!document.hidden) attemptPlay();
+                if (!document.hidden && document.hasFocus() && mdjHeroRetries < 3) {
+                    mdjHeroRetries++;
+                    attemptPlay();
+                }
             });
+            document.addEventListener('visibilitychange', function () {
+                if (!document.hidden) { mdjHeroRetries = 0; attemptPlay(); }
+            });
+            window.addEventListener('focus', function () { mdjHeroRetries = 0; attemptPlay(); });
         }
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', kick);

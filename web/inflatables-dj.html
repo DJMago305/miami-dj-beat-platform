@@ -99,7 +99,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Outfit:wght@300;400;500;600;700&display=optional"
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Outfit:wght@300;400;500;600;700&display=optional"
     rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=optional" rel="stylesheet" />
   <link rel="stylesheet" href="./styles.css?v=20260921-hub-scrollbar-fuera" />
@@ -109,6 +109,12 @@
     /* Misma arquitectura que pro-audio-dj.html/stages-dj.html: video real fijo
        detrás (hero-kb-bg), contenido en flujo normal sobre el fondo oscuro. */
     .inflatdj-hero-copy {
+      /* PO 2026-09-26: vista limpia del hero -- solo el hero debe verse al entrar */
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
       text-align: center;
       max-width: 720px;
       margin: 0 auto 50px;
@@ -117,10 +123,14 @@
 
 
     .inflatdj-hero-copy h1 {
-      font-family: 'Cormorant Garamond', 'Times New Roman', serif;
+      font-family: 'Playfair Display', serif;
+      text-transform: uppercase;
+      text-wrap: balance;
+      overflow-wrap: normal;
+      word-break: keep-all;
       /* Fallback cross-browser: tamaño fijo antes de clamp() (Safari <13.1 no soporta clamp) */
       font-size: 2.6rem;
-      font-size: clamp(2.4rem, 5vw, 3.6rem);
+      font-size: clamp(1.7rem, 6.5vw, 3.6rem);
       font-weight: 600;
       color: #fff;
       margin: 0 0 18px;
@@ -377,7 +387,7 @@
   <main class="container" style="padding: 100px 18px; position: relative; z-index: 10;">
     <div class="inflatdj-hero-copy">
       <h1 data-i18n="inflatdj-page-h1">Bounce House &amp; Inflatable Rental in Miami</h1>
-      <p class="mdj-if-lead" data-i18n="inflatdj-page-lead">Five bounce house options for kids' parties and family events — from a compact castle to a combo slide and water slide — safe, fun inflatable structures for any backyard or celebration.</p>
+      <p class="mdj-if-lead" data-i18n="inflatdj-page-lead">Five bounce house options for kids' parties and family events, from a compact castle to a combo slide and water slide.<span class='mdj-hl-lead-sub'>Safe, fun inflatable structures for any backyard or celebration.</span></p>
     </div>
 
     <div class="inflatdj-package-item">
@@ -416,7 +426,7 @@
           <span class="inflatdj-pkg-name" data-i18n="inflatdj-pkg-combo-name">Combo Castle &amp; Slide</span>
           <span class="inflatdj-pkg-price inflatdj-add-to-cart" data-sku="castle_combo" data-price="500" data-i18n="inflatdj-pkg-combo-price">$500</span>
         </summary>
-        <p data-i18n="inflatdj-pkg-combo-desc">Larger combo unit with a built-in slide and bounce area — the most popular upgrade for bigger kids' parties.</p>
+        <p data-i18n="inflatdj-pkg-combo-desc">Larger combo unit with a built-in slide and bounce area: the most popular upgrade for bigger kids' parties.</p>
       </details>
     </div>
 
@@ -426,7 +436,7 @@
           <span class="inflatdj-pkg-name" data-i18n="inflatdj-pkg-waterslide-name">Water Slide Combo</span>
           <span class="inflatdj-pkg-price inflatdj-add-to-cart" data-sku="castle_waterslide" data-price="700" data-i18n="inflatdj-pkg-waterslide-price">$700</span>
         </summary>
-        <p data-i18n="inflatdj-pkg-waterslide-desc">An inflatable water slide combo for Miami's hot days — the top-tier option for maximum fun.</p>
+        <p data-i18n="inflatdj-pkg-waterslide-desc">An inflatable water slide combo for Miami's hot days: the top-tier option for maximum fun.</p>
       </details>
     </div>
 
@@ -532,9 +542,17 @@
             }
             if (typeof window.mdjEnsureVideoResolved === 'function') window.mdjEnsureVideoResolved(v);
             try { v.load(); attemptPlay(); } catch (e) { /* noop */ }
+            var mdjHeroRetries = 0;
             v.addEventListener('pause', function () {
-                if (!document.hidden) attemptPlay();
+                if (!document.hidden && document.hasFocus() && mdjHeroRetries < 3) {
+                    mdjHeroRetries++;
+                    attemptPlay();
+                }
             });
+            document.addEventListener('visibilitychange', function () {
+                if (!document.hidden) { mdjHeroRetries = 0; attemptPlay(); }
+            });
+            window.addEventListener('focus', function () { mdjHeroRetries = 0; attemptPlay(); });
         }
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', kick);

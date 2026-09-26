@@ -8226,3 +8226,16 @@ main#app {
 @media (max-width: 700px) {
   h1, h2, h3, h4 { overflow-wrap: break-word; }
 }
+
+/* PO 2026-09-26: en los párrafos de presentación del hero (ej. capture-visuals-dj.html
+   "Fotografía, videografía... — cobertura real..."), el PO pidió sacar el guión largo y
+   bajar la frase corta final a su propia línea, en vez de unirlas con "—" en el mismo
+   renglón (se veía "estéticamente feo"). Clase compartida para reutilizar en todo el
+   sitio, no solo en la página piloto. */
+.mdj-hl-lead-sub {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.92em;
+  color: var(--gold);
+  opacity: 0.95;
+}

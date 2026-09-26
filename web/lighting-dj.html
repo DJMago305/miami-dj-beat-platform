@@ -41,7 +41,7 @@
       "name": "Can I rent an LED wall sized for my venue?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Yes — our modular LED walls are quoted according to your venue's exact measurements, for dynamic visuals, monogram displays, and DJ booth facades."
+        "text": "Yes, our modular LED walls are quoted according to your venue's exact measurements, for dynamic visuals, monogram displays, and DJ booth facades."
       }
     },
     {
@@ -115,7 +115,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Outfit:wght@300;400;500;600;700&display=optional"
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Outfit:wght@300;400;500;600;700&display=optional"
     rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=optional" rel="stylesheet" />
   <link rel="stylesheet" href="./styles.css?v=20260921-hub-scrollbar-fuera" />
@@ -125,6 +125,12 @@
     /* Misma arquitectura que pro-audio-dj.html/hora-loca.html: video real fijo
        detrás (hero-kb-bg), contenido en flujo normal sobre el fondo oscuro. */
     .lighting-hero-copy {
+      /* PO 2026-09-26: vista limpia del hero -- solo el hero debe verse al entrar */
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
       text-align: center;
       max-width: 720px;
       margin: 0 auto 50px;
@@ -133,10 +139,14 @@
 
 
     .lighting-hero-copy h1 {
-      font-family: 'Cormorant Garamond', 'Times New Roman', serif;
+      font-family: 'Playfair Display', serif;
+      text-transform: uppercase;
+      text-wrap: balance;
+      overflow-wrap: normal;
+      word-break: keep-all;
       /* Fallback cross-browser: tamaño fijo antes de clamp() (Safari <13.1 no soporta clamp) */
       font-size: 2.6rem;
-      font-size: clamp(2.4rem, 5vw, 3.6rem);
+      font-size: clamp(1.7rem, 6.5vw, 3.6rem);
       font-weight: 600;
       color: #fff;
       margin: 0 0 18px;
@@ -393,7 +403,7 @@
   <main class="container" style="padding: 100px 18px; position: relative; z-index: 10;">
     <div class="lighting-hero-copy">
       <h1 data-i18n="lighting-page-h1">Event Lighting &amp; LED Screen Rental in Miami</h1>
-      <p class="mdj-lt-lead" data-i18n="lighting-page-lead">Intelligent moving heads, modular LED walls, and architectural uplighting to transform any venue — from club-ready nightlife lighting to elegant perimeter color.</p>
+      <p class="mdj-lt-lead" data-i18n="lighting-page-lead">Intelligent moving heads, modular LED walls, and architectural uplighting to transform any venue.<span class='mdj-hl-lead-sub'>Luces de club o un elegante perímetro de color.</span></p>
     </div>
 
     <div class="lighting-package-item">
@@ -443,7 +453,7 @@
 
       <details class="lighting-faq-item">
         <summary data-i18n="lighting-faq-q2">Can I rent an LED wall sized for my venue?</summary>
-        <p data-i18n="lighting-faq-a2">Yes — our modular LED walls are quoted according to your venue's exact measurements, for dynamic visuals, monogram displays, and DJ booth facades.</p>
+        <p data-i18n="lighting-faq-a2">Yes, our modular LED walls are quoted according to your venue's exact measurements, for dynamic visuals, monogram displays, and DJ booth facades.</p>
       </details>
 
       <details class="lighting-faq-item">
@@ -538,9 +548,17 @@
             }
             if (typeof window.mdjEnsureVideoResolved === 'function') window.mdjEnsureVideoResolved(v);
             try { v.load(); attemptPlay(); } catch (e) { /* noop */ }
+            var mdjHeroRetries = 0;
             v.addEventListener('pause', function () {
-                if (!document.hidden) attemptPlay();
+                if (!document.hidden && document.hasFocus() && mdjHeroRetries < 3) {
+                    mdjHeroRetries++;
+                    attemptPlay();
+                }
             });
+            document.addEventListener('visibilitychange', function () {
+                if (!document.hidden) { mdjHeroRetries = 0; attemptPlay(); }
+            });
+            window.addEventListener('focus', function () { mdjHeroRetries = 0; attemptPlay(); });
         }
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', kick);

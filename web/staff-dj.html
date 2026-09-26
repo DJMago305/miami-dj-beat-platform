@@ -33,7 +33,7 @@
       "name": "Do you provide bartenders for events?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Yes — bar service and a premium cocktail experience for your event, quoted by setup."
+        "text": "Yes, bar service and a premium cocktail experience for your event, quoted by setup."
       }
     },
     {
@@ -41,7 +41,7 @@
       "name": "Do you provide waitstaff?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Yes — professional table service for your guests, quoted by setup."
+        "text": "Yes, professional table service for your guests, quoted by setup."
       }
     },
     {
@@ -115,15 +115,15 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Outfit:wght@300;400;500;600;700&display=optional"
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Outfit:wght@300;400;500;600;700&display=optional"
     rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=optional" rel="stylesheet" />
   <link rel="stylesheet" href="./styles.css?v=20260921-hub-scrollbar-fuera" />
   <link rel="stylesheet" href="./header-unified.css?v=20260916-estacion-gap-fix" />
   <link rel="stylesheet" href="./mdj-assistant.css?v=20260306-1" />
   <style>
-    .sf-hero-copy { text-align: center; max-width: 720px; margin: 0 auto 50px; }
-    .sf-hero-copy h1 { font-family: 'Cormorant Garamond', 'Times New Roman', serif; font-size: clamp(2.4rem, 5vw, 3.6rem); font-weight: 600; color: #fff; margin: 0 0 18px; line-height: 1.08; text-shadow: 0 4px 15px rgba(0, 0, 0, 0.8); }
+    .sf-hero-copy { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; justify-content: center; text-align: center; max-width: 720px; margin: 0 auto 50px; }
+    .sf-hero-copy h1 { font-family: 'Playfair Display', serif; text-transform: uppercase; text-wrap: balance; overflow-wrap: normal; word-break: keep-all; font-size: clamp(1.7rem, 6.5vw, 3.6rem); font-weight: 600; color: #fff; margin: 0 0 18px; line-height: 1.08; text-shadow: 0 4px 15px rgba(0, 0, 0, 0.8); }
     .sf-hero-copy .mdj-sf-lead { font-size: 1.05rem; line-height: 1.65; color: rgba(255, 255, 255, 0.8); margin: 0 auto; max-width: 56ch; font-weight: 400; }
     .sf-package-item { border: 1px solid rgba(197, 160, 89, 0.25); border-radius: 12px; padding: 16px 20px; margin-bottom: 12px; background: rgba(255, 255, 255, 0.03); max-width: 760px; margin-left: auto; margin-right: auto; }
     .sf-package-item summary { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; cursor: pointer; list-style: none; }
@@ -256,7 +256,7 @@
   <main class="container" style="padding: 100px 18px; position: relative; z-index: 10;">
     <div class="sf-hero-copy">
       <h1 data-i18n="sf-page-h1">Event Staff in Miami</h1>
-      <p class="mdj-sf-lead" data-i18n="sf-page-lead">Bartenders, professional waitstaff, and a live chef — real hospitality staff to add to your event, quoted by setup.</p>
+      <p class="mdj-sf-lead" data-i18n="sf-page-lead">Bartenders, professional waitstaff, and a live chef.<span class='mdj-hl-lead-sub'>Real hospitality staff to add to your event, quoted by setup.</span></p>
     </div>
 
     <div class="sf-package-item">
@@ -301,17 +301,17 @@
 
       <details class="sf-faq-item">
         <summary data-i18n="sf-faq-q1">Do you provide bartenders for events?</summary>
-        <p data-i18n="sf-faq-a1">Yes — bar service and a premium cocktail experience for your event, quoted by setup.</p>
+        <p data-i18n="sf-faq-a1">Yes, bar service and a premium cocktail experience for your event, quoted by setup.</p>
       </details>
 
       <details class="sf-faq-item">
         <summary data-i18n="sf-faq-q2">Do you provide waitstaff?</summary>
-        <p data-i18n="sf-faq-a2">Yes — professional table service for your guests, quoted by setup.</p>
+        <p data-i18n="sf-faq-a2">Yes, professional table service for your guests, quoted by setup.</p>
       </details>
 
       <details class="sf-faq-item">
         <summary data-i18n="sf-faq-q3">Can I add a live chef to my event?</summary>
-        <p data-i18n="sf-faq-a3">Yes — a live kitchen and catering presentation, quoted by setup. <a href="tel:+13056071780">(305) 607-1780</a> · <a href="mailto:miamidjbeat@gmail.com">miamidjbeat@gmail.com</a></p>
+        <p data-i18n="sf-faq-a3">Yes, a live kitchen and catering presentation, quoted by setup. <a href=\"tel:+13056071780\">(305) 607-1780</a> · <a href=\"mailto:miamidjbeat@gmail.com\">miamidjbeat@gmail.com</a><a href="tel:+13056071780">(305) 607-1780</a> · <a href="mailto:miamidjbeat@gmail.com">miamidjbeat@gmail.com</a></p>
       </details>
 
       <details class="sf-faq-item">
@@ -387,9 +387,17 @@
             }
             if (typeof window.mdjEnsureVideoResolved === 'function') window.mdjEnsureVideoResolved(v);
             try { v.load(); attemptPlay(); } catch (e) { /* noop */ }
+            var mdjHeroRetries = 0;
             v.addEventListener('pause', function () {
-                if (!document.hidden) attemptPlay();
+                if (!document.hidden && document.hasFocus() && mdjHeroRetries < 3) {
+                    mdjHeroRetries++;
+                    attemptPlay();
+                }
             });
+            document.addEventListener('visibilitychange', function () {
+                if (!document.hidden) { mdjHeroRetries = 0; attemptPlay(); }
+            });
+            window.addEventListener('focus', function () { mdjHeroRetries = 0; attemptPlay(); });
 
             var playlistAttr = v.getAttribute('data-hero-playlist');
             if (playlistAttr) {

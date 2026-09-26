@@ -59,7 +59,7 @@
       "name": "Can the court and the father-daughter dance be included?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Yes. Tell us who will dance — the quinceañera, damas, chambelanes and family — when you request your quote."
+        "text": "Yes. Tell us who will dance (the quinceañera, damas, chambelanes and family) when you request your quote."
       }
     },
     {
@@ -134,7 +134,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Outfit:wght@300;400;500;600;700&display=optional"
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Outfit:wght@300;400;500;600;700&display=optional"
     rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=optional" rel="stylesheet" />
   <link rel="stylesheet" href="./styles.css?v=20260921-hub-scrollbar-fuera" />
@@ -144,6 +144,12 @@
     /* Misma arquitectura que weddings.html/quinceanera.html: video real fijo detrás
        (hero-kb-bg), contenido en flujo normal sobre el fondo oscuro. */
     .qvl-hero-copy {
+      /* PO 2026-09-26: vista limpia del hero -- solo el hero debe verse al entrar */
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
       text-align: center;
       max-width: 720px;
       margin: 0 auto 50px;
@@ -153,6 +159,9 @@
       font-size: 11px;
       letter-spacing: 0.14em;
       text-transform: uppercase;
+      text-wrap: balance;
+      overflow-wrap: normal;
+      word-break: keep-all;
       margin-bottom: 18px;
       color: rgba(255, 255, 255, 0.55);
       font-weight: 600;
@@ -165,8 +174,9 @@
     }
 
     .qvl-hero-copy h1 {
-      font-family: 'Cormorant Garamond', 'Times New Roman', serif;
-      font-size: clamp(2.4rem, 5vw, 3.6rem);
+      font-family: 'Playfair Display', serif;
+      text-transform: uppercase;
+      font-size: clamp(1.7rem, 6.5vw, 3.6rem);
       font-weight: 600;
       color: #fff;
       margin: 0 0 18px;
@@ -489,7 +499,7 @@
 
       <details class="qvl-faq-item">
         <summary data-i18n="qvl-faq-q3">Can the court and the father-daughter dance be included?</summary>
-        <p data-i18n="qvl-faq-a3">Yes. Tell us who will dance — the quinceañera, damas, chambelanes and family — when you request your quote.</p>
+        <p data-i18n="qvl-faq-a3">Yes. Tell us who will dance (the quinceañera, damas, chambelanes and family) when you request your quote.</p>
       </details>
 
       <details class="qvl-faq-item">
@@ -567,7 +577,10 @@
             }
             if (typeof window.mdjEnsureVideoResolved === 'function') window.mdjEnsureVideoResolved(v);
             try { v.load(); attemptPlay(); } catch (e) { /* noop */ }
-            v.addEventListener('pause', function () { if (!document.hidden) attemptPlay(); });
+            var mdjHeroRetries = 0;
+            v.addEventListener('pause', function () { if (!document.hidden && document.hasFocus() && mdjHeroRetries < 3) { mdjHeroRetries++; attemptPlay(); } });
+            document.addEventListener('visibilitychange', function () { if (!document.hidden) { mdjHeroRetries = 0; attemptPlay(); } });
+            window.addEventListener('focus', function () { mdjHeroRetries = 0; attemptPlay(); });
         }
         if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', kick); } else { kick(); }
     })();
