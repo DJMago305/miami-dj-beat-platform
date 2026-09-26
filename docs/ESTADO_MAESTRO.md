@@ -2451,3 +2451,5 @@ Sesión larga en la misma rama (`feature/rentals-tarjeta-captura-y-visuales`), a
 - **`corporate.html`**: "Audio-Visual" → "Audiovisual" (una palabra) en el h1 en inglés, ya coincidía así en español.
 - **`private-family-dj.html`**: título simplificado a "DJ para Fiestas Privadas y Familiares" (sin "en Miami") + "Miami-Dade, Broward y los Cayos de Florida" como frase de cobertura en dorado, reemplazando la descripción anterior — decisión explícita del PO, geografía real (Cayos = condado Monroe, no Dade).
 - **Documentado en memoria para no repetir**: `feedback_hero_typography_consistency_rule.md` (Playfair Display + mayúsculas siempre en este patrón de hero) y `feedback_translations_js_quote_escaping_gotcha.md` (comillas simples para HTML dentro de strings de `translations.js`, y correr `node --check` siempre después de tocar ese archivo).
+
+**[2026-09-26] Confirmación del PO, pendiente cerrado**: el arreglo del video del hero (PR #485, tope de reintentos + reanudar solo con foco real) fue confirmado por el PO en su propio navegador real — "ya lo revisé, quedó bien". Sin pendientes abiertos de esta sesión.
