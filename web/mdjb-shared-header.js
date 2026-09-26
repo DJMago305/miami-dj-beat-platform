@@ -4956,6 +4956,8 @@
     if (b === 'rentals' || b === 'services' || b === 'servicios' || MDJ_PAGINAS_SERVICIOS.indexOf(b) !== -1) return 'services';
     if (b === 'eventos' || b === 'events' || b === 'experiencias') return 'venues';
     if (b === 'contact' || b === 'contacto') return 'contact';
+    /* PO 2026-09-26: «Nuestro Equipo» se entra desde Contacto → en equipo.html queda marcada la pestaña CONTACTO. */
+    if (b === 'equipo') return 'contact';
     if (b === 'find-dj' || b === 'directory' || b === 'directorio') return 'home';
     if (b === 'dj-profile' || b === 'perfil-dj' || b === 'perfil_dj') {
       try {
