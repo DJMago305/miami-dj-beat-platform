@@ -3622,7 +3622,23 @@ const translations = {
         "cabina-gate-title": "Área Exclusiva para DJs Suscritos",
         "cabina-gate-subtitle": "Accede a los protocolos tácticos de rescate, talleres de crisis y la rúbrica de certificación oficial.",
         "cabina-gate-login": "Iniciar Sesión",
-        "cabina-gate-signup": "Registrarse"
+        "cabina-gate-signup": "Registrarse",
+        "equipo-h1": "Nuestro Equipo",
+        "equipo-sub": "Las personas detrás de Miami DJ Beat LLC.",
+        "equipo-owner-title": "Fundador &amp; Propietario",
+        "equipo-owner-p1": "Gerardo A Valle es el Fundador y Propietario de Miami DJ Beat LLC, una plataforma moderna de entretenimiento y medios enfocada en DJs, artistas, la cultura de la vida nocturna y experiencias de eventos premium. Con más de 30 años de experiencia en la industria de la música y el entretenimiento, ha construido una carrera que combina visión artística, experiencia en eventos en vivo, branding e innovación digital.",
+        "equipo-owner-p2": "Desde trabajar en clubes internacionales y grandes recintos de entretenimiento hasta desarrollar nuevos conceptos para la promoción de artistas y la conexión con el público, Gerardo A Valle se ha consolidado como líder creativo y empresario estratégico. Su trayectoria abarca la producción musical, la creación de contenido audiovisual, las operaciones de eventos, el desarrollo de artistas y la gestión de negocios de entretenimiento.",
+        "equipo-owner-p3": "A través de Miami DJ Beat LLC, su visión es crear una plataforma de nueva generación que conecte a artistas, recintos, marcas y audiencias, elevando el profesionalismo y las oportunidades dentro de la industria del entretenimiento. Su liderazgo refleja una fusión de experiencia, innovación y un profundo conocimiento de la cultura nocturna y musical.",
+        "equipo-wendy-title": "Vendedora &amp; Asistente Ejecutiva",
+        "equipo-wendy-p1": "Wendy E Ayala nació en Guayaquil, Ecuador, y es ecuatoriana e italiana. Estudió contabilidad en el Colegio Letras y Vida de la ciudad de Guayaquil y desde 2005 vive en Miami, la ciudad donde hoy desarrolla su trabajo en Miami DJ Beat LLC.",
+        "equipo-wendy-p2": "En Miami DJ Beat LLC se desempeña como vendedora y asistente ejecutiva. Como vendedora, es una de las personas que atiende a los clientes que buscan DJ y producción de eventos y les ayuda a armar su cotización. Como asistente ejecutiva, apoya al fundador y la operación diaria de la empresa.",
+        "equipo-wendy-p3": "Está casada con Gerardo A Valle, fundador de Miami DJ Beat LLC.",
+        "equipo-ai-heading": "Nuestro asistente de inteligencia artificial",
+        "equipo-ai-note": "No es una persona: es una herramienta digital, y por eso la presentamos aparte.",
+        "equipo-elixis-title": "Asistente de inteligencia artificial",
+        "equipo-elixis-p1": "ELIXIS es el asistente de inteligencia artificial de Miami DJ Beat LLC. No es una persona: es una herramienta digital que trabaja detrás de escena junto a nuestro equipo. Lo decimos con claridad porque quien se relaciona con una inteligencia artificial merece saberlo.",
+        "equipo-elixis-p2": "Su imagen está inspirada en DJMago, el DJ fundador y owner de la corporación, Gerardo A Valle. La semejanza es solo visual: ELIXIS no es Gerardo, no habla en su nombre y no reemplaza a ninguna persona del equipo.",
+        "equipo-elixis-p3": "ELIXIS apoya la operación diaria: ayuda a organizar la agenda, a preparar cotizaciones y borradores de mensajes, y a tener la información del equipo a la mano. Como toda inteligencia artificial, puede equivocarse, por eso las decisiones finales son siempre de personas, y cualquier mensaje que llega a un cliente lo revisa y lo aprueba alguien de nuestro equipo."
     },
     en: {
         "horaloca_hero_eyebrow": "ELEVATING CELEBRATIONS TO UNFORGETTABLE EXPERIENCES",
@@ -7249,6 +7265,22 @@ const translations = {
         "cabina-gate-title": "Exclusive Area for Subscribed DJs",
         "cabina-gate-subtitle": "Access tactical rescue protocols, crisis workshops, and the official certification rubric.",
         "cabina-gate-login": "Log In",
-        "cabina-gate-signup": "Sign Up"
+        "cabina-gate-signup": "Sign Up",
+        "equipo-h1": "Our Team",
+        "equipo-sub": "The people behind Miami DJ Beat LLC.",
+        "equipo-owner-title": "Founder &amp; Owner",
+        "equipo-owner-p1": "Gerardo A Valle is the Founder and Owner of Miami DJ Beat LLC, a modern entertainment and media platform focused on DJs, artists, nightlife culture, and premium event experiences. With more than 30 years of experience in the music and entertainment industry, he has built a career that combines artistic vision, live event expertise, branding, and digital innovation.",
+        "equipo-owner-p2": "From working in international clubs and large-scale entertainment venues to developing new concepts for artist promotion and audience engagement, Gerardo A Valle has established himself as both a creative leader and strategic entrepreneur. His background spans music production, audiovisual content creation, event operations, artist development, and entertainment business management.",
+        "equipo-owner-p3": "Through Miami DJ Beat LLC, his vision is to create a next-generation platform that connects artists, venues, brands, and audiences while elevating professionalism and opportunities within the entertainment industry. His leadership reflects a fusion of experience, innovation, and a deep understanding of nightlife and music culture.",
+        "equipo-wendy-title": "Sales Representative &amp; Executive Assistant",
+        "equipo-wendy-p1": "Wendy E Ayala was born in Guayaquil, Ecuador, and is Ecuadorian and Italian. She studied accounting at Colegio Letras y Vida in the city of Guayaquil and has lived in Miami since 2005, the city where she now does her work at Miami DJ Beat LLC.",
+        "equipo-wendy-p2": "At Miami DJ Beat LLC she works as a sales representative and executive assistant. As a sales representative, she is one of the people who assists clients looking for a DJ and event production and helps them put together their quote. As an executive assistant, she supports the founder and the company's day-to-day operations.",
+        "equipo-wendy-p3": "She is married to Gerardo A Valle, founder of Miami DJ Beat LLC.",
+        "equipo-ai-heading": "Our artificial intelligence assistant",
+        "equipo-ai-note": "It is not a person: it is a digital tool, which is why we present it separately.",
+        "equipo-elixis-title": "Artificial intelligence assistant",
+        "equipo-elixis-p1": "ELIXIS is the artificial intelligence assistant of Miami DJ Beat LLC. It is not a person: it is a digital tool that works behind the scenes alongside our team. We say this clearly because anyone interacting with an artificial intelligence deserves to know.",
+        "equipo-elixis-p2": "Its image is inspired by DJMago, the founding DJ and owner of the corporation, Gerardo A Valle. The resemblance is purely visual: ELIXIS is not Gerardo, does not speak on his behalf and does not replace any member of the team.",
+        "equipo-elixis-p3": "ELIXIS supports daily operations: it helps organize the calendar, prepare quotes and message drafts, and keep team information at hand. Like any artificial intelligence, it can make mistakes, so final decisions are always made by people, and any message that reaches a client is reviewed and approved by someone on our team."
     }
 };
