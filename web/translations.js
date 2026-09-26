@@ -7,7 +7,7 @@ const translations = {
         "live_musicians_cat_desc": "Saxofón, percusión, cantante o banda completa, tocando en vivo junto a tu DJ.",
         "capture_visuals_cat_title": "Captura y Visuales",
         "capture_visuals_cat_desc": "Foto, video, drone, cabina 360 y Magic Mirror para documentar tu evento.",
-        "py-page-h1": "Payasos, Show de Magia y Entretenimiento Infantil en Miami",
+        "py-page-h1": "Show de Magia, Payasos y Entretenimiento Infantil en Miami",
         "py-page-lead": "Payaso de alta energía, show de escenario completo, variedad estilo circo, show de magia, globoflexia, pinta caritas y apariciones temáticas de Santa.<span class='mdj-hl-lead-sub'>Entretenimiento real para cumpleaños, fiestas infantiles y familias, cotizado según el montaje.</span>",
         "py-pkg-gif-name": "GIF / Energía",
         "py-pkg-price-quote": "Cotización personalizada",
