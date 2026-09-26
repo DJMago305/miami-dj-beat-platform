@@ -383,9 +383,10 @@
     </div>
   </header>
 
-    <video id="horaloca-hero-kb-bg" class="hero-shell-video hero-kb-bg" autoplay muted loop playsinline preload="metadata"
+    <video id="horaloca-hero-kb-bg" class="hero-shell-video hero-kb-bg" autoplay muted playsinline preload="metadata"
         poster="./assets/hora-loca/hora-loca-hero-poster.jpg"
-        style="position: fixed; inset: 0; z-index: 1; pointer-events: none; width: 100%; height: 100%; object-fit: cover; opacity: 0.45; filter: blur(2px);">
+        style="position: fixed; inset: 0; z-index: 1; pointer-events: none; width: 100%; height: 100%; object-fit: cover; opacity: 0.45; filter: blur(2px);"
+        data-hero-playlist="./assets/hora-loca/hora-loca-hero.mp4,./assets/hora-loca/hora-loca-robot.mp4,./assets/hora-loca/hora-loca-brasil.mp4,./assets/hora-loca/hora-loca-cubana.mp4,./assets/hora-loca/hora-loca-character.mp4,./assets/hora-loca/hora-loca-hadas.mp4">
         <source data-src="./assets/hora-loca/hora-loca-hero.mp4" type="video/mp4">
     </video>
     <div class="hero-video-overlay"
@@ -580,6 +581,24 @@
                 if (!document.hidden) { mdjHeroRetries = 0; attemptPlay(); }
             });
             window.addEventListener('focus', function () { mdjHeroRetries = 0; attemptPlay(); });
+
+            var playlistAttr = v.getAttribute('data-hero-playlist');
+            if (playlistAttr) {
+                var playlist = playlistAttr.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+                if (playlist.length > 1) {
+                    var idx = 0;
+                    v.loop = false;   // con loop el evento «ended» nunca llega y solo salía el primer video
+                    v.addEventListener('error', function () { v.dispatchEvent(new Event('ended')); });   // un clip roto se salta
+                    v.addEventListener('ended', function () {
+                        idx = (idx + 1) % playlist.length;
+                        var next = playlist[idx];
+                        var resolved = typeof window.resolveMdAssetPublicUrl === 'function' ? window.resolveMdAssetPublicUrl(next) : next;
+                        v.src = resolved;
+                        v.load();
+                        attemptPlay();
+                    });
+                }
+            }
         }
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', kick);
