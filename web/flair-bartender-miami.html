@@ -618,9 +618,17 @@
                 }
             }
             try { v.load(); attemptPlay(); } catch (e) { /* noop */ }
+            var mdjHeroRetries = 0;
             v.addEventListener('pause', function () {
-                if (!document.hidden) attemptPlay();
+                if (!document.hidden && document.hasFocus() && mdjHeroRetries < 3) {
+                    mdjHeroRetries++;
+                    attemptPlay();
+                }
             });
+            document.addEventListener('visibilitychange', function () {
+                if (!document.hidden) { mdjHeroRetries = 0; attemptPlay(); }
+            });
+            window.addEventListener('focus', function () { mdjHeroRetries = 0; attemptPlay(); });
         }
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', kick);

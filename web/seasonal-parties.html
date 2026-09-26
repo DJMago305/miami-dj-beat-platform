@@ -511,9 +511,17 @@
                esto resuelve el src real de inmediato en vez de esperarlo. */
             if (typeof window.mdjEnsureVideoResolved === 'function') window.mdjEnsureVideoResolved(v);
             try { v.load(); attemptPlay(); } catch (e) { /* noop */ }
+            var mdjHeroRetries = 0;
             v.addEventListener('pause', function () {
-                if (!document.hidden) attemptPlay();
+                if (!document.hidden && document.hasFocus() && mdjHeroRetries < 3) {
+                    mdjHeroRetries++;
+                    attemptPlay();
+                }
             });
+            document.addEventListener('visibilitychange', function () {
+                if (!document.hidden) { mdjHeroRetries = 0; attemptPlay(); }
+            });
+            window.addEventListener('focus', function () { mdjHeroRetries = 0; attemptPlay(); });
 
             /* Serie de vídeo del hero: cuando el clip activo termina, pasa al
                siguiente de data-hero-playlist -- mismo <video>, un solo clip

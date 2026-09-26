@@ -577,7 +577,10 @@
             }
             if (typeof window.mdjEnsureVideoResolved === 'function') window.mdjEnsureVideoResolved(v);
             try { v.load(); attemptPlay(); } catch (e) { /* noop */ }
-            v.addEventListener('pause', function () { if (!document.hidden) attemptPlay(); });
+            var mdjHeroRetries = 0;
+            v.addEventListener('pause', function () { if (!document.hidden && document.hasFocus() && mdjHeroRetries < 3) { mdjHeroRetries++; attemptPlay(); } });
+            document.addEventListener('visibilitychange', function () { if (!document.hidden) { mdjHeroRetries = 0; attemptPlay(); } });
+            window.addEventListener('focus', function () { mdjHeroRetries = 0; attemptPlay(); });
         }
         if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', kick); } else { kick(); }
     })();
