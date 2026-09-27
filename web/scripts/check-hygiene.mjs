@@ -20,7 +20,6 @@ const ALLOW = {
   'certificate-template_LOCKED.html': 'plantilla de certificado bloqueada a propósito',
   'includes/site-header.html': 'fuente canónica del encabezado, se copia a cada página',
   'staff-config.html': 'se incrusta como iframe dentro de staff.html (nombre armado por código)',
-  'mdj-commander.html': 'PENDIENTE DEL PO (2026-09-27): prototipo del Comandante; abre y funciona (con pantallas Radar/Decisiones/Más de demostración que staff.html no tiene); lo real ya vive en staff.html. Decidir si se archiva',
   'documents/wedding-blueprint-iris-angel-2026.html': 'documento de un evento concreto, se comparte por enlace directo',
 };
 const ALLOW_PREFIX = {
