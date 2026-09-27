@@ -1,4 +1,8 @@
 /* Categorías de artista — UNA sola fuente para jobs.html y Configuración de cuenta (account-settings.html). 2026-09-21.
+ * 2026-09-27: "Captura y Visuales" se dividió de 1 categoría ('fotografia', que lo juntaba todo) a 3 propias
+ * ('fotografia'=Fotógrafo, 'dron'=Dron, 'filmmaker'=Filmmaker) -- confirmado por el PO, son categorías distintas.
+ * También se separó "Músicos en Vivo" del desplegable simple de registro (antes 1 opción combinada) en sus 3
+ * categorías reales ya existentes aquí: 'musico', 'orquesta', 'cantante'. Ver web/auth.js (SIGNUP_SPECIALTY_TO_CATEGORIA).
  *
  * REGLA DEL PO: cada artista tiene UNA categoría (no son compatibles entre sí: un DJ no es una Hora Loca; un DJ sí puede ser animador o
  * productor, eso son SUBcategorías) + sus subcategorías + el idioma con el que trabaja (es / en / bilingue).
@@ -27,8 +31,13 @@
       subs: ['Singer'] },
     { key: 'dj',           es: 'DJ',                  en: 'DJ',                   family: 'DJ',
       subs: ['Open Format', 'Latin Format', 'Wedding', 'Corporate', 'Official', 'Resident', 'Warm-Up', 'Mobile', 'Club', 'Private Events', 'Festival', 'Luxury Events', 'Bilingual', 'Radio', 'Producer', 'DJ Host', 'Artistic Manager', 'Headliner', 'Opening', 'Closing', 'Support', 'Guest', 'Tour', 'Show', 'Scratch', 'Competition', 'Destination Wedding', 'Yacht Party'] },
-    { key: 'fotografia',   es: 'Fotografía y Video',  en: 'Photo & Video',        family: 'Captura y Visuales',
-      subs: ['Photographer', 'Videographer', 'Drone Operator', 'Content Creator', 'Live Streaming', 'Event Coverage', 'Photo Booth', '360 Booth', 'LED Visuals', 'VJ'] },
+    { key: 'fotografia',   es: 'Fotógrafo',           en: 'Photographer',        family: 'Captura y Visuales',
+      subs: ['Photographer', 'Content Creator', 'Event Coverage', 'Photo Booth'] },
+    { key: 'dron',         es: 'Dron',                en: 'Drone Operator',       family: 'Captura y Visuales',
+      subs: ['Drone Operator'] },
+    { key: 'filmmaker',    es: 'Filmmaker',           en: 'Filmmaker',            family: 'Captura y Visuales',
+      /* «Cabina 360» va DENTRO de Filmmaker, no de Fotógrafo -- confirmado por el PO 2026-09-27. */
+      subs: ['Videographer', 'Live Streaming', '360 Booth', 'LED Visuals', 'VJ'] },
     { key: 'horaloca',     es: 'Hora Loca',           en: 'Hora Loca',            family: 'Hora Loca Experience',
       subs: HORA_LOCA },
     { key: 'mc',           es: 'MC',                  en: 'MC',                   family: 'MC y Presentadores',

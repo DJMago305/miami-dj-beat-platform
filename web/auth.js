@@ -588,7 +588,7 @@ async function mdjApplyJobsRosterToDjProfile(db, userId) {
         const idiomas = (Array.isArray(jobCat.idiomas) ? jobCat.idiomas : []).filter(function (x) { return x === 'es' || x === 'en' || x === 'bilingue'; });
         const patch = { roles: rolesStr, artist_specialty: specLine || null };
         if (idiomas.length) patch.idiomas = idiomas;   // solo si eligió: nunca borra los que ya tenía
-        const CATS_OK = ['animador','bartender','cantante','dj','fotografia','horaloca','mc','mesero','musico','orquesta','payasos','staff'];
+        const CATS_OK = ['animador','bartender','cantante','dj','dron','filmmaker','fotografia','horaloca','mc','mesero','musico','orquesta','payasos','staff'];
         if (typeof jobCat.categoria === 'string' && CATS_OK.indexOf(jobCat.categoria) !== -1) patch.categoria = jobCat.categoria;
         const { error } = await db
             .from('dj_profiles')
@@ -1236,6 +1236,36 @@ document.addEventListener('DOMContentLoaded', () => {
                     const specialtyVal = specialtyEl && specialtyEl.value ? specialtyEl.value.trim() : null;
                     if (specialtyVal) {
                         profilePayload.artist_specialty = specialtyVal;
+                        // Cablea también `categoria` (el mismo campo canónico que ya escribe
+                        // mdjApplyJobsRosterToDjProfile() más abajo) -- antes de este cambio,
+                        // este camino de alta directa (el desplegable "Profesión / Especialidad"
+                        // de este formulario) solo guardaba artist_specialty en texto crudo y
+                        // `categoria` quedaba NULL para siempre, a menos que la persona entrara
+                        // después a Configuración → Categoría. Mapeo 1:1 contra las 14 opciones
+                        // reales de este <select> (web/login.html, id="signup-specialty" --
+                        // 2026-09-27, confirmado por el PO: "Músico en Vivo / Orquesta / Banda"
+                        // se dividió en musico/orquesta/cantante, y "Fotógrafo / Videógrafo" se
+                        // dividió en fotografia/dron/filmmaker -- son categorías distintas, no
+                        // subcategorías de una sola); validado contra la misma lista CATS_OK que
+                        // usa esa otra función, para nunca escribir una categoría inválida.
+                        const SIGNUP_SPECIALTY_TO_CATEGORIA = {
+                            'dj': 'dj',
+                            'bartender': 'bartender',
+                            'mesero': 'mesero',
+                            'cocinero': 'staff',       // sin categoría propia -- subcategoría de "Staff" (Cook)
+                            'drone': 'dron',
+                            'mc': 'mc',
+                            'fotografo': 'fotografia',
+                            'filmmaker': 'filmmaker',
+                            'musico': 'musico',
+                            'orquesta': 'orquesta',
+                            'cantante': 'cantante',
+                            'hora loca': 'horaloca',
+                            'payaso': 'payasos',
+                            'staff': 'staff'
+                        };
+                        const categoriaVal = SIGNUP_SPECIALTY_TO_CATEGORIA[specialtyVal.toLowerCase()];
+                        if (categoriaVal) profilePayload.categoria = categoriaVal;
                     } else {
                         // Fallback: read from jobs roster sessionStorage if available
                         try {
@@ -1244,6 +1274,13 @@ document.addEventListener('DOMContentLoaded', () => {
                                 const jobR = JSON.parse(rawR);
                                 const firstLabel = Array.isArray(jobR && jobR.labels) && jobR.labels.length ? String(jobR.labels[0]).trim().toLowerCase() : null;
                                 if (firstLabel) profilePayload.artist_specialty = firstLabel;
+                                // Mismo cableo que arriba: si el roster de jobs.html ya trae una
+                                // categoria canónica válida, se usa aquí también (este bloque solo
+                                // corre cuando NO hay valor en el <select> del formulario).
+                                const CATS_OK = ['animador', 'bartender', 'cantante', 'dj', 'dron', 'filmmaker', 'fotografia', 'horaloca', 'mc', 'mesero', 'musico', 'orquesta', 'payasos', 'staff'];
+                                if (typeof jobR.categoria === 'string' && CATS_OK.indexOf(jobR.categoria) !== -1) {
+                                    profilePayload.categoria = jobR.categoria;
+                                }
                             }
                         } catch (eSpec) { void eSpec; }
                     }
