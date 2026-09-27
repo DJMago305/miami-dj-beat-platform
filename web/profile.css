@@ -199,8 +199,15 @@ body.dj-profile.dj-profile-contact-locked #tab-public #pub-social-icons {
 body.dj-profile.dj-profile-contact-locked #tab-public #pub-social-icons > a,
 body.dj-profile.dj-profile-contact-locked #tab-public .contact-icons-grid > a,
 body.dj-profile.dj-profile-contact-locked #tab-public .contact-icons-grid button,
-body.dj-profile.dj-profile-contact-locked #tab-public #public-action-buttons button[onclick*="gotoAffiliateWeb"],
 body.dj-profile.dj-profile-contact-locked #tab-public #public-action-buttons button[onclick*="scrollIntoView"] {
+    /* 2026-09-27, pedido del PO: el botón "WEB MIAMI DJ BEAT"
+       (button[onclick*="gotoAffiliateWeb"]) se quitó de este candado -- lleva
+       a nuestro propio sitio principal, no es información personal del DJ
+       como teléfono/correo/redes sociales (esos sí se quedan bloqueados
+       igual que siempre). No tiene sentido comercial bloquear el acceso al
+       sitio propio detrás de VIP. Confirmado en producción real (sin sesión)
+       que el botón salía borroso/inactivo exactamente como el resto del
+       contacto personal antes de este cambio. */
     filter: blur(8px);
     opacity: 0.55;
     pointer-events: none !important;
