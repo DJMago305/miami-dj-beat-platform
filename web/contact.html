@@ -115,21 +115,17 @@
       pointer-events: none;
     }
 
+    /* Mismo h1 de hero aprobado en rentals.html: Playfair Display, mayúsculas, relleno blanco sólido + sombra (regla de tipografía de hero, PO 2026-09-26). */
     body.page-mdj-contact .mdj-contact-page-hero__title {
       margin: 0 0 14px;
-      font-family: 'Playfair Display', 'Palatino Linotype', Georgia, serif;
-      font-size: clamp(2.35rem, 6vw, 4.1rem);
-      font-weight: 600;
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(28px, 6.5vw, 70px);
       text-transform: uppercase;
-      letter-spacing: 0.14em;
       line-height: 1.08;
-      color: var(--gold, #c5a059);
-      -webkit-text-fill-color: rgba(197, 160, 89, 0.16);
-      -webkit-text-stroke: 1px rgba(197, 160, 89, 0.82);
-      text-shadow:
-        0 4px 28px rgba(0, 0, 0, 0.88),
-        0 0 44px rgba(197, 160, 89, 0.26);
-      filter: drop-shadow(0 0 16px rgba(197, 160, 89, 0.2));
+      color: #fff;
+      -webkit-text-fill-color: #fff;
+      text-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+      filter: drop-shadow(0 0 15px rgba(197, 160, 89, 0.2));
     }
 
     body.page-mdj-contact .mdj-contact-page-hero__subtitle {
@@ -371,7 +367,29 @@
       font-weight: 800;
     }
 
-    body.page-mdj-contact .mdj-contact-team-band {
+    /* Título fuera de la tarjeta, arriba: misma tipografía del hero (Playfair Display, mayúsculas, blanco sólido). */
+    body.page-mdj-contact .mdj-contact-band-heading {
+      max-width: 920px;
+      margin: clamp(28px, 4vw, 44px) auto 14px;
+      text-align: center;
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(24px, 4.2vw, 42px);
+      font-weight: 700;
+      text-transform: uppercase;
+      line-height: 1.1;
+      color: #fff;
+      -webkit-text-fill-color: #fff;
+      text-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+      filter: drop-shadow(0 0 15px rgba(197, 160, 89, 0.2));
+      text-wrap: balance;
+    }
+
+    /* Título largo (nombre propio, no se traduce): se deja usar más ancho para que quepa en una línea en pantalla grande. */
+    body.page-mdj-contact .mdj-contact-band-heading.mdj-contact-band-heading--wide {
+      max-width: 1400px;
+    }
+
+    body.page-mdj-contact .mdj-contact-band {
       max-width: 920px;
       margin: clamp(28px, 4vw, 44px) auto clamp(36px, 5vw, 52px);
       padding: clamp(28px, 4.5vw, 44px) clamp(24px, 4vw, 44px);
@@ -382,7 +400,51 @@
       text-align: center;
     }
 
-    body.page-mdj-contact .mdj-contact-team-band h2 {
+    body.page-mdj-contact .mdj-contact-band.mdj-contact-band--titled {
+      margin-top: 0;
+    }
+
+    /* Texto de presentación por fuera de la tarjeta (mismo tratamiento tipográfico del texto de las bandas). */
+    body.page-mdj-contact .mdj-contact-band-intro {
+      max-width: 920px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    body.page-mdj-contact .mdj-contact-band-intro {
+      max-width: 1100px;
+    }
+
+    /* Jerarquía: una frase principal (destacada) y una línea de apoyo más discreta, con aire entre ambas. */
+    body.page-mdj-contact .mdj-contact-band-intro p {
+      margin: 0 auto;
+      max-width: none;
+      text-wrap: balance;
+    }
+
+    body.page-mdj-contact .mdj-contact-band-intro .mdj-contact-band-intro__lead {
+      font-size: clamp(17px, 1.9vw, 21px);
+      font-weight: 500;
+      line-height: 1.5;
+      color: rgba(255, 255, 255, 0.95);
+    }
+
+    body.page-mdj-contact .mdj-contact-band-intro .mdj-contact-band-intro__sub {
+      margin-top: 14px;
+      font-size: clamp(14px, 1.5vw, 16px);
+      line-height: 1.5;
+      color: rgba(255, 255, 255, 0.62);
+    }
+
+    body.page-mdj-contact .mdj-contact-band.mdj-contact-band--action {
+      margin-top: 28px;
+    }
+
+    body.page-mdj-contact .mdj-contact-band--action .mdj-contact-band__roles {
+      margin: 0 0 22px;
+    }
+
+    body.page-mdj-contact .mdj-contact-band h2 {
       margin: 0 0 14px;
       font-size: clamp(1.5rem, 3.2vw, 2rem);
       font-weight: 900;
@@ -390,7 +452,7 @@
       letter-spacing: 0.02em;
     }
 
-    body.page-mdj-contact .mdj-contact-team-band p {
+    body.page-mdj-contact .mdj-contact-band p {
       margin: 0 auto 12px;
       max-width: 680px;
       font-size: clamp(15px, 1.6vw, 17px);
@@ -398,7 +460,7 @@
       color: rgba(255, 255, 255, 0.82);
     }
 
-    body.page-mdj-contact .mdj-contact-team-band__roles {
+    body.page-mdj-contact .mdj-contact-band__roles {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
@@ -406,7 +468,7 @@
       margin: 20px 0 26px;
     }
 
-    body.page-mdj-contact .mdj-contact-team-band__roles span {
+    body.page-mdj-contact .mdj-contact-band__roles span {
       padding: 7px 16px;
       border-radius: 999px;
       border: 1px solid rgba(197, 160, 89, 0.35);
@@ -417,7 +479,11 @@
       color: rgba(255, 255, 255, 0.85);
     }
 
-    body.page-mdj-contact .mdj-contact-team-band__btn {
+    body.page-mdj-contact .mdj-contact-band__spacer {
+      height: 18px;
+    }
+
+    body.page-mdj-contact .mdj-contact-band__btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -436,35 +502,30 @@
       transition: transform 0.15s ease, box-shadow 0.2s ease;
     }
 
-    body.page-mdj-contact .mdj-contact-team-band__btn:hover {
+    body.page-mdj-contact .mdj-contact-band__btn:hover {
       transform: translateY(-1px);
     }
 
+    /* Sin caja: los videos se ven sobre el fondo de la página, como en YouTube (PO 2026-09-26). */
     body.page-mdj-contact .mdj-contact-youtube-band {
-      max-width: 920px;
+      max-width: 1400px;
       margin: 0 auto clamp(36px, 5vw, 52px);
-      padding: clamp(22px, 3.5vw, 32px) clamp(24px, 4vw, 40px);
-      border-radius: 18px;
-      border: 1px solid rgba(197, 160, 89, 0.28);
-      background: linear-gradient(165deg, rgba(14, 16, 26, 0.92) 0%, rgba(8, 10, 18, 0.88) 100%);
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+      padding: 0;
       text-align: center;
     }
 
-    body.page-mdj-contact .mdj-contact-youtube-band h2 {
-      margin: 0 0 12px;
-      font-size: clamp(1.35rem, 2.8vw, 1.75rem);
-      font-weight: 900;
-      color: var(--gold, #c5a059);
-      letter-spacing: 0.02em;
+    /* Mismo tratamiento del texto de presentación de las otras secciones. */
+    body.page-mdj-contact .mdj-contact-youtube-band > p {
+      margin: 0 auto 22px;
+      max-width: none;
+      text-wrap: balance;
+      font-size: clamp(15px, 1.6vw, 17px);
+      line-height: 1.65;
+      color: rgba(255, 255, 255, 0.82);
     }
 
-    body.page-mdj-contact .mdj-contact-youtube-band p {
-      margin: 0 auto 22px;
-      max-width: 62ch;
-      font-size: clamp(0.95rem, 1.6vw, 1.08rem);
-      line-height: 1.55;
-      color: rgba(255, 255, 255, 0.78);
+    body.page-mdj-contact .mdj-contact-youtube-band .mdj-contact-band__btn {
+      margin: 0 auto 30px;
     }
 
     body.page-mdj-contact .mdj-contact-youtube-channel-btn {
@@ -493,29 +554,35 @@
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
     }
 
+    /* Los videos ocupan todo el ancho de la pantalla (no solo la columna central): se sale del contenedor de 920 px. */
+    body.page-mdj-contact {
+      overflow-x: clip;
+    }
+
     body.page-mdj-contact .mdj-contact-youtube-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: clamp(14px, 2.5vw, 20px);
-      max-width: 1100px;
-      margin: 0 auto;
+      grid-template-columns: 1fr;
+      gap: 26px clamp(14px, 2vw, 24px);
+      width: 100vw;
+      margin: 0 0 0 calc(50% - 50vw);
+      padding: 0 clamp(16px, 3vw, 48px);
+      box-sizing: border-box;
       text-align: left;
+    }
+
+    @media (min-width: 560px) {
+      body.page-mdj-contact .mdj-contact-youtube-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (min-width: 1000px) {
+      body.page-mdj-contact .mdj-contact-youtube-grid { grid-template-columns: repeat(4, 1fr); }
     }
 
     body.page-mdj-contact .mdj-contact-youtube-video-card {
       margin: 0;
-      border-radius: 16px;
-      border: 1px solid rgba(197, 160, 89, 0.22);
-      background: linear-gradient(180deg, rgba(16, 18, 28, 0.96) 0%, rgba(8, 10, 18, 0.94) 100%);
-      overflow: hidden;
-      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
-      transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    body.page-mdj-contact .mdj-contact-youtube-video-card:hover {
-      border-color: rgba(197, 160, 89, 0.5);
-      transform: translateY(-4px);
-      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.38);
+      background: none;
+      border: 0;
+      box-shadow: none;
     }
 
     body.page-mdj-contact .mdj-contact-youtube-video-card__link {
@@ -530,6 +597,7 @@
       position: relative;
       aspect-ratio: 16 / 9;
       overflow: hidden;
+      border-radius: 12px;
       background: #0a0c14;
     }
 
@@ -542,15 +610,14 @@
     }
 
     body.page-mdj-contact .mdj-contact-youtube-video-card:hover .mdj-contact-youtube-video-card__thumb img {
-      transform: scale(1.04);
-      filter: brightness(0.82);
+      filter: brightness(0.85);
     }
 
     body.page-mdj-contact .mdj-contact-youtube-video-card__thumb::after {
       content: "";
       position: absolute;
       inset: 0;
-      background: linear-gradient(180deg, transparent 45%, rgba(0, 0, 0, 0.55) 100%);
+      background: none;
       pointer-events: none;
     }
 
@@ -572,10 +639,12 @@
       line-height: 1;
       transform: translate(-50%, -50%);
       box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
-      transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+      opacity: 0;
+      transition: opacity 0.2s ease, background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
     }
 
     body.page-mdj-contact .mdj-contact-youtube-video-card:hover .mdj-contact-youtube-video-card__play {
+      opacity: 1;
       background: rgba(197, 160, 89, 0.82);
       border-color: rgba(255, 255, 255, 0.95);
       transform: translate(-50%, -50%) scale(1.06);
@@ -585,30 +654,37 @@
       display: flex;
       flex-direction: column;
       flex: 1;
-      gap: 8px;
-      padding: 16px 16px 18px;
+      gap: 4px;
+      padding: 12px 2px 0;
     }
 
     body.page-mdj-contact .mdj-contact-youtube-video-card__body h3 {
       margin: 0;
-      font-size: 0.98rem;
-      font-weight: 800;
-      line-height: 1.3;
-      color: rgba(255, 255, 255, 0.95);
-      letter-spacing: 0.01em;
+      font-size: 1rem;
+      font-weight: 600;
+      line-height: 1.35;
+      color: #fff;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }
 
     body.page-mdj-contact .mdj-contact-youtube-video-card__body p {
       margin: 0;
       max-width: none;
-      font-size: 0.82rem;
-      line-height: 1.45;
+      font-size: 0.85rem;
+      line-height: 1.4;
       color: rgba(255, 255, 255, 0.62);
       text-align: left;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }
 
     body.page-mdj-contact .mdj-contact-youtube-video-card__cta {
-      display: inline-flex;
+      display: none;
       align-items: center;
       align-self: flex-start;
       margin-top: auto;
@@ -736,52 +812,33 @@
           <a class="mdj-cta-chip mdj-cta-avail" href="#lead-form" aria-label="Request availability" title="Request availability"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></a>
         </div>
 
-        <h2 class="mdj-contact-section-title" data-i18n="contact-help-title">How can we help?</h2>
-        <div class="mdj-contact-entry-grid">
-          <a class="mdj-contact-entry-card" href="./weddings.html">
-            <h3 data-i18n="contact-help-weddings-t">Weddings</h3>
-            <p data-i18n="contact-help-weddings-d">Ceremony, reception, and premium wedding production.</p>
-          </a>
-          <a class="mdj-contact-entry-card" href="./corporate.html">
-            <h3 data-i18n="contact-help-corp-t">Corporate Events</h3>
-            <p data-i18n="contact-help-corp-d">Brand activations, galas, and executive entertainment.</p>
-          </a>
-          <a class="mdj-contact-entry-card" href="./private-family-dj.html">
-            <h3 data-i18n="contact-help-private-t">Private Parties</h3>
-            <p data-i18n="contact-help-private-d">Birthdays, quinces, anniversaries, and home celebrations.</p>
-          </a>
-          <a class="mdj-contact-entry-card" href="./club-dj.html">
-            <h3 data-i18n="contact-help-clubs-t">Clubs &amp; Venues</h3>
-            <p data-i18n="contact-help-clubs-d">Residencies, venue partnerships, and nightlife programming.</p>
-          </a>
-          <a class="mdj-contact-entry-card" href="./rentals.html">
-            <h3 data-i18n="contact-help-rentals-t">Rentals</h3>
-            <p data-i18n="contact-help-rentals-d">Sound, lighting, staging, and event gear packages.</p>
-          </a>
-          <a class="mdj-contact-entry-card" href="./find-dj.html">
-            <h3 data-i18n="contact-help-talent-t">Talent / Artists</h3>
-            <p data-i18n="contact-help-talent-d">Book featured Miami DJ Beat talent.</p>
-          </a>
-        </div>
+        <h2 class="mdj-contact-band-heading" id="contactTalentTitle" data-i18n="contact-talent-title">Talent &amp; Artists</h2>
+        <section class="mdj-contact-band mdj-contact-band--titled" aria-labelledby="contactTalentTitle">
+          <p data-i18n="contact-talent-p1">Book featured Miami DJ Beat talent for your event.</p>
+          <p data-i18n="contact-talent-p2">Find the DJ that fits your celebration.</p>
+          <div class="mdj-contact-band__spacer"></div>
+          <a class="mdj-contact-band__btn" href="./find-dj.html" data-i18n="contact-talent-btn">Find my DJ</a>
+        </section>
 
-        <section class="mdj-contact-team-band" aria-labelledby="contactTeamTitle">
-          <h2 id="contactTeamTitle" data-i18n="contact-team-band-title">Meet our team</h2>
-          <p data-i18n="contact-team-band-p1">Behind every Miami DJ Beat event are real people and artificial intelligence agents working together so your celebration is tailored to you, from the first conversation to the last song.</p>
-          <p data-i18n="contact-team-band-p2">Meet the people who take care of you, and the AI assistant that supports them.</p>
-          <div class="mdj-contact-team-band__roles">
+        <h2 class="mdj-contact-band-heading" id="contactTeamTitle" data-i18n="contact-team-band-title">Meet our team</h2>
+        <div class="mdj-contact-band-intro">
+          <p class="mdj-contact-band-intro__lead" data-i18n="contact-team-band-p1">Real people and artificial intelligence agents work side by side so your celebration is tailored to you, from the first conversation to the last song.</p>
+          <p class="mdj-contact-band-intro__sub" data-i18n="contact-team-band-p2">Meet the people who look after you, and the AI assistant that supports them.</p>
+        </div>
+        <section class="mdj-contact-band mdj-contact-band--action" aria-labelledby="contactTeamTitle">
+          <div class="mdj-contact-band__roles">
             <span data-i18n="contact-team-band-r1">Founder &amp; Owner</span>
             <span data-i18n="contact-team-band-r2">Sales &amp; Executive Assistant</span>
             <span data-i18n="contact-team-band-r3">ELIXIS · AI Assistant</span>
           </div>
-          <a class="mdj-contact-team-band__btn" href="./equipo.html" data-i18n="contact-team-band-btn">Meet the team</a>
+          <a class="mdj-contact-band__btn" href="./equipo.html" data-i18n="contact-team-band-btn">Meet the team</a>
         </section>
 
         <section class="mdj-contact-youtube-band" aria-label="YouTube Tutorials and Miami DJ Beat Videos">
-          <h2>YouTube Tutorials &amp; Miami DJ Beat Videos</h2>
-          <p>DJ tutorials, event tips, music production, gear walkthroughs, and behind-the-scenes content from Miami DJ
-            Beat.</p>
-          <a class="mdj-contact-youtube-channel-btn" href="https://www.youtube.com/@Miamidjbeat" target="_blank"
-            rel="noopener noreferrer">Visit YouTube Channel</a>
+          <h2 class="mdj-contact-band-heading mdj-contact-band-heading--wide">YouTube Tutorials | Miami DJ Beat Videos</h2>
+          <p data-i18n="contact-yt-desc">DJ tutorials, event tips, music production, gear walkthroughs, and behind-the-scenes content from Miami DJ Beat.</p>
+          <a class="mdj-contact-band__btn" href="https://www.youtube.com/@Miamidjbeat" target="_blank"
+            rel="noopener noreferrer" data-i18n="contact-yt-btn">Visit YouTube Channel</a>
           <div class="mdj-contact-youtube-grid">
             <article class="mdj-contact-youtube-video-card">
               <a class="mdj-contact-youtube-video-card__link"
@@ -956,15 +1013,14 @@
   })();
   </script>
   <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
-  <script src="./translations.js?v=20260926-contact-servicios"></script>
+  <script src="./translations.js?v=20260926-contact-editorial"></script>
   <script src="./i18n.js?v=20260415-CORE-CONNECTIONS"></script>
   <script src="./mdj-identity.js?v=20260921-rol-unico"></script>
   <script src="./auth.js?v=20260921-idiomas"></script>
   <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
   <script src="./mdjb-shared-header.js?v=20260922-hero-below-header"></script>
   <script src="./mdj-mainnav-infinite.js?v=20260818-nav-canonico"></script>
-  <script src="./mdj-social-bar.js?v=20260819-social-contact-only"></script>
-  <script src="./js/mdj-footer-legal.js?v=20260926-legal"></script>
+  <script src="./js/mdj-footer-legal.js?v=20260926-legal-franja5"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       if (window.i18n && typeof window.i18n.init === 'function') window.i18n.init();
