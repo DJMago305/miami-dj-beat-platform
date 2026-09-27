@@ -321,12 +321,53 @@
             background: rgba(255, 255, 255, 0.08);
             color: rgba(255, 255, 255, 0.55);
         }
+
+        /* ── búsqueda en vivo (tipeo progresivo) — rescatada del worktree
+           dj-profile-engine-hardening (2026-09-13), reintegrada 2026-09-27
+           contra el find-dj.html bilingüe actual. Filtra en memoria sobre
+           las filas ya traídas de public_dj_talent — sin una consulta por
+           tecla. ── */
+        .find-dj-live-search-wrap {
+            max-width: 520px;
+            margin: 20px auto 0;
+            padding: 0 20px;
+        }
+
+        .find-dj-live-search {
+            width: 100%;
+            padding: 13px 16px;
+            font-size: 15px;
+            font-weight: 600;
+            font-family: inherit;
+            color: var(--text);
+            background: var(--card);
+            border: 1.5px solid var(--border);
+            border-radius: 14px;
+            outline: none;
+            transition: border-color .2s, box-shadow .2s;
+        }
+
+        .find-dj-live-search::placeholder {
+            color: var(--muted);
+            font-weight: 500;
+        }
+
+        .find-dj-live-search:focus {
+            border-color: rgba(197, 160, 89, 0.65);
+            box-shadow: 0 0 0 3px rgba(197, 160, 89, 0.15);
+        }
     </style>
 
     <div style="max-width:1160px;margin:32px auto 0;padding:0 20px;text-align:center;">
         <h1 style="margin:0 0 8px;" data-i18n="fdj-h1">Encuentra tu DJ en Miami</h1>
         <p class="muted" style="margin:0;" data-i18n="fdj-sub">Explora DJs disponibles en la plataforma de Miami DJ Beat, filtrados por disponibilidad y especialidad.</p>
         <p class="muted" style="margin:6px 0 0;font-size:13px;" data-i18n="fdj-links">¿Quieres leer su perfil completo primero? <a href="./dj/directorio.html">Ver perfiles públicos</a> · ¿Verificar una credencial? <a href="./directory.html">Directorio de certificación</a></p>
+    </div>
+    <div class="find-dj-live-search-wrap">
+        <input type="search" id="find-dj-live-search" class="find-dj-live-search"
+            data-i18n-hold="fdj-live-search-placeholder"
+            placeholder="Escribe un nombre… ej. DJ Mago" autocomplete="off" enterkeyhint="search"
+            data-i18n-aria="fdj-live-search-aria" aria-label="Buscar DJ por nombre, en vivo" />
     </div>
     <div id="state-msg" style="text-align:center;color:var(--muted);padding:24px 20px 20px;"></div>
     <div class="dj-grid" id="dj-grid"></div>
@@ -358,7 +399,7 @@
     <script src="./i18n.js?v=20260226-1"></script>
     <script src="./subscription.js?v=20260422-find-dj-rank"></script>
     <script type="module">
-        import { tokenize, matchesQuery, simulateDbOrderedSlice, compareForSearch, canonicalHref, renderResultCardHTML } from './find-dj-search.mjs?v=20260927-bilingue';
+        import { tokenize, matchesQuery, simulateDbOrderedSlice, compareForSearch, canonicalHref, renderResultCardHTML, filterByNameQuery } from './find-dj-search.mjs?v=20260927-bilingue';
 
         const db = supabase.createClient(window.MDB_SUPABASE_URL, window.MDB_SUPABASE_ANON_KEY);
 
@@ -404,6 +445,14 @@
             return T('fdj-rent-talent', 'Rentar este talento');
         }
 
+        // Estado para la búsqueda en vivo — el universo completo YA elegible
+        // (public_dj_talent + filtro de ciudad, si lo hay), llenado UNA vez
+        // por searchDJs(). El listener `input` de más abajo filtra esto en
+        // memoria, sin volver a consultar Supabase por tecla.
+        var ALL_ROWS = [];
+        var CATEGORY_FROM_URL = '';
+        var liveDebounceTimer = null;
+
         async function searchDJs() {
             const grid = document.getElementById('dj-grid');
             const msg = document.getElementById('state-msg');
@@ -438,6 +487,9 @@
                 });
             }
 
+            ALL_ROWS = rows;
+            CATEGORY_FROM_URL = categoryFromUrl;
+
             // La vista public_dj_talent YA aplicó la elegibilidad y la
             // proyección mínima en SQL -- aquí solo coincide/ordena, nunca
             // se vuelve a decidir "quién es público" (§14 de la auditoría).
@@ -449,6 +501,44 @@
 
             window.__findDjLast = { data: data, nameQ: nameQ, intent: intent, categoryFromUrl: categoryFromUrl };
             renderResults();
+
+            // Búsqueda en vivo — input real con evento `input` (no
+            // `change`/`keyup`): dispara en cada inserción/borrado, incluido
+            // pegado y backspace. Se precarga con la query de entrada (?q=)
+            // si la hay, para que quien llegó desde el buscador del header
+            // vea su propia búsqueda ahí, editable.
+            var liveInput = document.getElementById('find-dj-live-search');
+            if (liveInput) {
+                if (nameQ) liveInput.value = nameQ;
+                liveInput.addEventListener('input', function () { handleLiveInput(liveInput); });
+            }
+        }
+
+        // Filtro puro en memoria sobre ALL_ROWS (ya viene de public_dj_talent,
+        // ya elegible) — filterByNameQuery() solo compara contra stage_name
+        // aplastado (nunca bio/ciudad/especialidad) y trata la query literal
+        // "DJ" como el comando "todo el universo" (isRootDjQuery, dentro del
+        // módulo), no como una exigencia de substring. Reutiliza el mismo
+        // estado/render que ya sabe pintarse y repintarse al cambiar de
+        // idioma (window.__findDjLast + renderResults()).
+        function renderForLiveQuery(rawQuery) {
+            var matched = filterByNameQuery(ALL_ROWS, rawQuery);
+            var tokens = tokenize(rawQuery);
+            var data = matched.slice().sort(compareForSearch(rawQuery, tokens));
+            window.__findDjLast = { data: data, nameQ: rawQuery, intent: null, categoryFromUrl: CATEGORY_FROM_URL };
+            renderResults();
+        }
+
+        function handleLiveInput(inputEl) {
+            // Debounce corto: el filtro en sí es un solo pase O(N) en memoria
+            // y no necesitaría debounce a esta escala, pero un tecleo/backspace
+            // sostenido o un pegado largo dispara varios eventos `input`
+            // seguidos — 120ms evita reconstruir el grid en cada uno sin
+            // introducir demora perceptible ni ninguna consulta de red.
+            if (liveDebounceTimer) clearTimeout(liveDebounceTimer);
+            liveDebounceTimer = setTimeout(function () {
+                renderForLiveQuery(inputEl.value);
+            }, 120);
         }
 
         // Mensaje de resultados y tarjetas: se vuelven a dibujar cuando cambia el idioma (perilla ES/EN), sin volver a consultar.
