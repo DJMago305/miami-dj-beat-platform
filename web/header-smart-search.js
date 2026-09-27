@@ -584,6 +584,18 @@
     });
   }
 
+  function hintText() {
+    return t('header-search-privacy-hint',
+      'Search covers public pages, the talent directory, and event name/date teasers. Full event details require sign-in.',
+      'La búsqueda cubre páginas públicas, el directorio de talento y avances de nombre/fecha de eventos. Los detalles completos del evento requieren iniciar sesión.');
+  }
+
+  function titleText() {
+    return t('header-search-title',
+      'Smart search: site pages, talent directory, or event name/date (teaser). Sign in for full event details.',
+      'Búsqueda inteligente: páginas del sitio, directorio de talento o nombre/fecha de un evento (avance). Inicia sesión para ver los detalles completos.');
+  }
+
   function attachHint(input) {
     var id = 'header-search-privacy-hint';
     if (document.getElementById(id)) return;
@@ -591,8 +603,7 @@
     span.id = id;
     span.className = 'visually-hidden';
     span.setAttribute('aria-live', 'polite');
-    span.textContent =
-      'Search covers public pages, the talent directory, and event name/date teasers. Full event details require sign-in.';
+    span.textContent = hintText();
     input.setAttribute('aria-describedby', id);
     if (input.parentNode) input.parentNode.appendChild(span);
   }
@@ -645,14 +656,14 @@
       input.dataset.mdjLangPlaceholderBound = '1';
       document.addEventListener('languageChanged', function () {
         applyPlaceholder(input);
+        input.setAttribute('title', titleText());
+        var h = document.getElementById('header-search-privacy-hint');
+        if (h) h.textContent = hintText();
       });
     }
     input.setAttribute('autocomplete', 'off');
     input.setAttribute('spellcheck', 'false');
-    input.setAttribute(
-      'title',
-      'Smart search: site pages, talent directory, or event name/date (teaser). Sign in for full event details.'
-    );
+    input.setAttribute('title', titleText());
     attachHint(input);
 
     input.addEventListener('keydown', function (e) {

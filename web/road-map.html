@@ -1,3 +1,4 @@
+<html lang="es">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Road Map IA — MIAMI DJ BEAT LLC</title>
@@ -17,6 +18,7 @@
      escucha [data-mdj-tema-toggle], el mismo enganche que usan
      admin-dashboard, account-settings y dj-dashboard. -->
 <link rel="stylesheet" href="./mdj-assistant.css?v=20260411-booth-policy" />
+<script src="./js/mdj-lang-boot.js?v=20260927-boot"></script>
 <script src="./js/mdj-tema-portal.js"></script>
 <style>
 :root{
@@ -464,280 +466,285 @@ section.on>.cap-head{background:linear-gradient(90deg,var(--gold-a16),transparen
 <nav class="rm-menu" id="rmMenu" aria-label="Menu"></nav>
 
 <button type="button" class="rm-tema" data-mdj-tema-toggle
-        aria-label="Modo dia o noche" title="Modo dia o noche">&#9728;&#65039;</button>
+        aria-label="Modo dia o noche" title="Modo dia o noche" data-i18n-aria="rmx-a01" data-i18n-title="rmx-a01">&#9728;&#65039;</button>
 
 <a class="rm-cerrar" href="./staff.html?vista=miperfil"
-   aria-label="Cerrar y volver a Mi Perfil" title="Cerrar">&times;</a>
+   aria-label="Cerrar y volver a Mi Perfil" title="Cerrar" data-i18n-aria="rmx-a02" data-i18n-title="rmx-a03">&times;</a>
 
 <div class="rm-deck">
   <button class="play" id="play">▶&nbsp; Recorrido</button>
   <button id="prev" disabled>←</button>
   <button id="next" disabled>→</button>
   <span class="pos" id="pos">— / 0</span>
-  <span class="cap" id="cap"><b>Tu recorrido</b><span>Pulsa Recorrido y te lo explico paso a paso.</span></span>
+  <span class="cap" id="cap"><b data-i18n="rmx-001">Tu recorrido</b><span data-i18n="rmx-002">Pulsa Recorrido y te lo explico paso a paso.</span></span>
 </div>
 
 <div class="rm-open">
-  <p class="eyebrow">MIAMI DJ BEAT LLC · Road Map IA</p>
-  <h1>Cómo funciona esta plataforma</h1>
-  <p>Humanos y agentes de inteligencia artificial trabajando en equipo: las personas deciden, los agentes preparan el terreno. Este recorrido te enseña la parte que te toca a ti — y lo conduce el propio sistema, que es la mejor forma de demostrar que funciona.</p>
+  <p class="eyebrow" data-i18n="rmx-003">MIAMI DJ BEAT LLC · Road Map IA</p>
+  <h1 data-i18n="rmx-004">Cómo funciona esta plataforma</h1>
+  <p data-i18n="rmx-005">Humanos y agentes de inteligencia artificial trabajando en equipo: las personas deciden, los agentes preparan el terreno. Este recorrido te enseña la parte que te toca a ti — y lo conduce el propio sistema, que es la mejor forma de demostrar que funciona.</p>
   <div class="rm-who" id="rmWho"></div>
 </div>
 
 
     <section class="chapter" id="cap-1" data-aud="cliente artista vendedor manager owner">
-      <div class="cap-head"><span class="cap-n">Capítulo 1</span><h2>El ecosistema en una vista</h2></div>
-      <p class="cap-lead">Miami DJ Beat no es un sitio web con una base de datos detrás: son diez capas apiladas, cada una con un trabajo distinto y con permiso para hablar solo con sus vecinas.</p>
-      <figure><svg class="gr" viewBox="0 0 1100 776" role="img" aria-label="Las 10 capas de la plataforma y de qué se ocupa cada una."><text class="band-meta" x="20" y="26" style="letter-spacing:1.6px">LAS CAPAS DE LA PLATAFORMA</text><g><rect class="band-bg" x="20" y="46" width="1060" height="62" rx="9"/><rect class="band-edge" x="20" y="46" width="4" height="62"/><text class="band-id" x="38" y="72">L1</text><text class="band-name" x="76" y="72">Marca y experiencia pública</text><text class="band-meta" x="38" y="92">Sitio público, servicios, catálogo de artistas, contenido y captura de leads.</text></g><g><rect class="band-bg" x="20" y="118" width="1060" height="62" rx="9"/><rect class="band-edge" x="20" y="118" width="4" height="62"/><text class="band-id" x="38" y="144">L2</text><text class="band-name" x="76" y="144">Identidad y acceso</text><text class="band-meta" x="38" y="164">Autenticación, rol, autorización, sesión y políticas RLS en la base.</text></g><g><rect class="band-bg" x="20" y="190" width="1060" height="62" rx="9"/><rect class="band-edge" x="20" y="190" width="4" height="62"/><text class="band-id" x="38" y="216">L3</text><text class="band-name" x="76" y="216">Portales por rol</text><text class="band-meta" x="38" y="236">Experiencias separadas de Cliente, Artista y Staff/Operaciones.</text></g><g><rect class="band-bg" x="20" y="262" width="1060" height="62" rx="9"/><rect class="band-edge" x="20" y="262" width="4" height="62"/><text class="band-id" x="38" y="288">L4</text><text class="band-name" x="76" y="288">Núcleo comercial</text><text class="band-meta" x="38" y="308">Leads, CRM, mensajería de portal, órdenes y conversión.</text></g><g><rect class="band-bg" x="20" y="334" width="1060" height="62" rx="9"/><rect class="band-edge" x="20" y="334" width="4" height="62"/><text class="band-id" x="38" y="360">L5</text><text class="band-name" x="76" y="360">Operación de eventos</text><text class="band-meta" x="38" y="380">Agenda, ciclo del evento, asignación de talento y logística.</text></g><g><rect class="band-bg" x="20" y="406" width="1060" height="62" rx="9"/><rect class="band-edge" x="20" y="406" width="4" height="62"/><text class="band-id" x="38" y="432">L6</text><text class="band-name" x="76" y="432">Documentos y cumplimiento</text><text class="band-meta" x="38" y="452">Certificados, verificación pública, legal y evidencia.</text></g><g><rect class="band-bg" x="20" y="478" width="1060" height="62" rx="9"/><rect class="band-edge" x="20" y="478" width="4" height="62"/><text class="band-id" x="38" y="504">L7</text><text class="band-name" x="76" y="504">Núcleo financiero</text><text class="band-meta" x="38" y="524">Stripe, ledger, facturación, payouts, Sound For Tips e inteligencia de caja.</text></g><g><rect class="band-bg" x="20" y="550" width="1060" height="62" rx="9"/><rect class="band-edge" x="20" y="550" width="4" height="62"/><text class="band-id" x="38" y="576">L8</text><text class="band-name" x="76" y="576">Inteligencia y automatización</text><text class="band-meta" x="38" y="596">ELIXIS, Booth, voz, atmósfera y automatismos.</text></g><g><rect class="band-bg" x="20" y="622" width="1060" height="62" rx="9"/><rect class="band-edge" x="20" y="622" width="4" height="62"/><text class="band-id" x="38" y="648">L9</text><text class="band-name" x="76" y="648">Datos e integraciones</text><text class="band-meta" x="38" y="668">Esquema, licenciamiento MDJ PRO, SMS y servicios externos.</text></g><g><rect class="band-bg" x="20" y="694" width="1060" height="62" rx="9"/><rect class="band-edge" x="20" y="694" width="4" height="62"/><text class="band-id" x="38" y="720">L10</text><text class="band-name" x="76" y="720">Gobierno y evolución</text><text class="band-meta" x="38" y="740">Documentación, decisiones, tickets, runbooks y auditorías.</text></g></svg></figure>
-      <div class="cap-body"><p>Léelo de abajo hacia arriba y de arriba hacia abajo. Arriba está lo que el público toca. Abajo está lo que ningún usuario ve nunca: el esquema de datos, las políticas de acceso y el gobierno del proyecto.</p><p>La regla que sostiene todo el mapa es una sola: <b>un concepto de negocio tiene un solo dueño</b>. El dinero se calcula en un único motor; la identidad se decide en una única capa; la agenda vive en un único lugar. Cuando una pantalla necesita un dato, lo pide — no lo vuelve a calcular.</p><p>El número al final de cada franja es cuántas piezas reales del repositorio viven hoy en esa capa. Ese número lo cuenta el generador, no yo.</p></div>
+      <div class="cap-head"><span class="cap-n" data-i18n="rmx-006">Capítulo 1</span><h2 data-i18n="rmx-007">El ecosistema en una vista</h2></div>
+      <p class="cap-lead" data-i18n="rmx-008">Miami DJ Beat no es un sitio web con una base de datos detrás: son diez capas apiladas, cada una con un trabajo distinto y con permiso para hablar solo con sus vecinas.</p>
+      <figure><svg class="gr" viewBox="0 0 1100 776" role="img" aria-label="Las 10 capas de la plataforma y de qué se ocupa cada una." data-i18n-aria="rmx-a04"><text class="band-meta" x="20" y="26" style="letter-spacing:1.6px" data-i18n="rmx-009">LAS CAPAS DE LA PLATAFORMA</text><g><rect class="band-bg" x="20" y="46" width="1060" height="62" rx="9"/><rect class="band-edge" x="20" y="46" width="4" height="62"/><text class="band-id" x="38" y="72">L1</text><text class="band-name" x="76" y="72" data-i18n="rmx-010">Marca y experiencia pública</text><text class="band-meta" x="38" y="92" data-i18n="rmx-011">Sitio público, servicios, catálogo de artistas, contenido y captura de leads.</text></g><g><rect class="band-bg" x="20" y="118" width="1060" height="62" rx="9"/><rect class="band-edge" x="20" y="118" width="4" height="62"/><text class="band-id" x="38" y="144">L2</text><text class="band-name" x="76" y="144" data-i18n="rmx-012">Identidad y acceso</text><text class="band-meta" x="38" y="164" data-i18n="rmx-013">Autenticación, rol, autorización, sesión y políticas RLS en la base.</text></g><g><rect class="band-bg" x="20" y="190" width="1060" height="62" rx="9"/><rect class="band-edge" x="20" y="190" width="4" height="62"/><text class="band-id" x="38" y="216">L3</text><text class="band-name" x="76" y="216" data-i18n="rmx-014">Portales por rol</text><text class="band-meta" x="38" y="236" data-i18n="rmx-015">Experiencias separadas de Cliente, Artista y Staff/Operaciones.</text></g><g><rect class="band-bg" x="20" y="262" width="1060" height="62" rx="9"/><rect class="band-edge" x="20" y="262" width="4" height="62"/><text class="band-id" x="38" y="288">L4</text><text class="band-name" x="76" y="288" data-i18n="rmx-016">Núcleo comercial</text><text class="band-meta" x="38" y="308" data-i18n="rmx-017">Leads, CRM, mensajería de portal, órdenes y conversión.</text></g><g><rect class="band-bg" x="20" y="334" width="1060" height="62" rx="9"/><rect class="band-edge" x="20" y="334" width="4" height="62"/><text class="band-id" x="38" y="360">L5</text><text class="band-name" x="76" y="360" data-i18n="rmx-018">Operación de eventos</text><text class="band-meta" x="38" y="380" data-i18n="rmx-019">Agenda, ciclo del evento, asignación de talento y logística.</text></g><g><rect class="band-bg" x="20" y="406" width="1060" height="62" rx="9"/><rect class="band-edge" x="20" y="406" width="4" height="62"/><text class="band-id" x="38" y="432">L6</text><text class="band-name" x="76" y="432" data-i18n="rmx-020">Documentos y cumplimiento</text><text class="band-meta" x="38" y="452" data-i18n="rmx-021">Certificados, verificación pública, legal y evidencia.</text></g><g><rect class="band-bg" x="20" y="478" width="1060" height="62" rx="9"/><rect class="band-edge" x="20" y="478" width="4" height="62"/><text class="band-id" x="38" y="504">L7</text><text class="band-name" x="76" y="504" data-i18n="rmx-022">Núcleo financiero</text><text class="band-meta" x="38" y="524" data-i18n="rmx-023">Stripe, ledger, facturación, payouts, Sound For Tips e inteligencia de caja.</text></g><g><rect class="band-bg" x="20" y="550" width="1060" height="62" rx="9"/><rect class="band-edge" x="20" y="550" width="4" height="62"/><text class="band-id" x="38" y="576">L8</text><text class="band-name" x="76" y="576" data-i18n="rmx-024">Inteligencia y automatización</text><text class="band-meta" x="38" y="596" data-i18n="rmx-025">ELIXIS, Booth, voz, atmósfera y automatismos.</text></g><g><rect class="band-bg" x="20" y="622" width="1060" height="62" rx="9"/><rect class="band-edge" x="20" y="622" width="4" height="62"/><text class="band-id" x="38" y="648">L9</text><text class="band-name" x="76" y="648" data-i18n="rmx-026">Datos e integraciones</text><text class="band-meta" x="38" y="668" data-i18n="rmx-027">Esquema, licenciamiento MDJ PRO, SMS y servicios externos.</text></g><g><rect class="band-bg" x="20" y="694" width="1060" height="62" rx="9"/><rect class="band-edge" x="20" y="694" width="4" height="62"/><text class="band-id" x="38" y="720">L10</text><text class="band-name" x="76" y="720" data-i18n="rmx-028">Gobierno y evolución</text><text class="band-meta" x="38" y="740" data-i18n="rmx-029">Documentación, decisiones, tickets, runbooks y auditorías.</text></g></svg></figure>
+      <div class="cap-body"><p data-i18n="rmx-030">Léelo de abajo hacia arriba y de arriba hacia abajo. Arriba está lo que el público toca. Abajo está lo que ningún usuario ve nunca: el esquema de datos, las políticas de acceso y el gobierno del proyecto.</p><p data-i18n="rmx-031">La regla que sostiene todo el mapa es una sola: <b>un concepto de negocio tiene un solo dueño</b>. El dinero se calcula en un único motor; la identidad se decide en una única capa; la agenda vive en un único lugar. Cuando una pantalla necesita un dato, lo pide — no lo vuelve a calcular.</p><p data-i18n="rmx-032">El número al final de cada franja es cuántas piezas reales del repositorio viven hoy en esa capa. Ese número lo cuenta el generador, no yo.</p></div>
     </section>
     <section class="chapter" id="cap-2" data-aud="artista vendedor manager owner">
-      <div class="cap-head"><span class="cap-n">Capítulo 2</span><h2>Quién es quién</h2></div>
-      <p class="cap-lead">Antes de que nada funcione, el sistema tiene que saber quién eres. No hay una sola cuenta con superpoderes: hay categorías, y cada una vive en su propio portal.</p>
-      <figure><svg class="gr" viewBox="0 0 940 334" role="img" aria-label="Owner arriba; debajo tres portales separados — Cliente, Artista y Staff — y bajo todos ellos las políticas RLS de la base de datos.">
+      <div class="cap-head"><span class="cap-n" data-i18n="rmx-033">Capítulo 2</span><h2 data-i18n="rmx-034">Quién es quién</h2></div>
+      <p class="cap-lead" data-i18n="rmx-035">Antes de que nada funcione, el sistema tiene que saber quién eres. No hay una sola cuenta con superpoderes: hay categorías, y cada una vive en su propio portal.</p>
+      <figure><svg class="gr" viewBox="0 0 940 334" role="img" aria-label="Owner arriba; debajo tres portales separados — Cliente, Artista y Staff — y bajo todos ellos las políticas RLS de la base de datos." data-i18n-aria="rmx-a05">
   <defs><marker id="pa2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
     <path d="M0 0L10 5L0 10z" fill="var(--mut)"/></marker></defs><g class="pstep p-core"><rect x="300" y="22" width="340" height="66" rx="8"/>
-    <text class="pt" x="470" y="52" text-anchor="middle">OWNER</text>
-    <text class="ps" x="470" y="72" text-anchor="middle">visión completa · aprueba lo consecuente</text></g><path class="parrow" d="M470 92 V106 H166 V127" marker-end="url(#pa2)"/><g class="pstep p-cli"><rect x="22" y="132" width="288" height="78" rx="8"/>
-      <text class="pt" x="37" y="162">CLIENTE</text>
-      <text class="ps" x="37" y="184">sus eventos, facturas y documentos</text>
-      <text class="ps dim" x="37" y="200">portal propio · navegación propia</text></g><path class="parrow" d="M470 92 V106 H473 V127" marker-end="url(#pa2)"/><g class="pstep p-art"><rect x="329" y="132" width="288" height="78" rx="8"/>
-      <text class="pt" x="344" y="162">ARTISTA</text>
-      <text class="ps" x="344" y="184">su perfil, agenda, asignaciones y payouts</text>
-      <text class="ps dim" x="344" y="200">portal propio · navegación propia</text></g><path class="parrow" d="M470 92 V106 H780 V127" marker-end="url(#pa2)"/><g class="pstep p-stf"><rect x="636" y="132" width="288" height="78" rx="8"/>
-      <text class="pt" x="651" y="162">STAFF</text>
-      <text class="ps" x="651" y="184">operación, cobros y asignaciones · por grado</text>
-      <text class="ps dim" x="651" y="200">portal propio · navegación propia</text></g><path class="parrow" d="M166 214 V245" marker-end="url(#pa2)"/><path class="parrow" d="M473 214 V245" marker-end="url(#pa2)"/><path class="parrow" d="M780 214 V245" marker-end="url(#pa2)"/><g class="pstep p-gate"><rect x="22" y="250" width="896" height="62" rx="8"/>
-    <text class="pt" x="470" y="278" text-anchor="middle">POLÍTICAS RLS EN LA BASE</text>
-    <text class="ps" x="470" y="298" text-anchor="middle">el frontend esconde botones — la base niega el dato</text></g>
+    <text class="pt" x="470" y="52" text-anchor="middle" data-i18n="rmx-036">OWNER</text>
+    <text class="ps" x="470" y="72" text-anchor="middle" data-i18n="rmx-037">visión completa · aprueba lo consecuente</text></g><path class="parrow" d="M470 92 V106 H166 V127" marker-end="url(#pa2)"/><g class="pstep p-cli"><rect x="22" y="132" width="288" height="78" rx="8"/>
+      <text class="pt" x="37" y="162" data-i18n="rmx-038">CLIENTE</text>
+      <text class="ps" x="37" y="184" data-i18n="rmx-039">sus eventos, facturas y documentos</text>
+      <text class="ps dim" x="37" y="200" data-i18n="rmx-040">portal propio · navegación propia</text></g><path class="parrow" d="M470 92 V106 H473 V127" marker-end="url(#pa2)"/><g class="pstep p-art"><rect x="329" y="132" width="288" height="78" rx="8"/>
+      <text class="pt" x="344" y="162" data-i18n="rmx-041">ARTISTA</text>
+      <text class="ps" x="344" y="184" data-i18n="rmx-042">su perfil, agenda, asignaciones y payouts</text>
+      <text class="ps dim" x="344" y="200" data-i18n="rmx-040">portal propio · navegación propia</text></g><path class="parrow" d="M470 92 V106 H780 V127" marker-end="url(#pa2)"/><g class="pstep p-stf"><rect x="636" y="132" width="288" height="78" rx="8"/>
+      <text class="pt" x="651" y="162" data-i18n="rmx-043">STAFF</text>
+      <text class="ps" x="651" y="184" data-i18n="rmx-044">operación, cobros y asignaciones · por grado</text>
+      <text class="ps dim" x="651" y="200" data-i18n="rmx-040">portal propio · navegación propia</text></g><path class="parrow" d="M166 214 V245" marker-end="url(#pa2)"/><path class="parrow" d="M473 214 V245" marker-end="url(#pa2)"/><path class="parrow" d="M780 214 V245" marker-end="url(#pa2)"/><g class="pstep p-gate"><rect x="22" y="250" width="896" height="62" rx="8"/>
+    <text class="pt" x="470" y="278" text-anchor="middle" data-i18n="rmx-045">POLÍTICAS RLS EN LA BASE</text>
+    <text class="ps" x="470" y="298" text-anchor="middle" data-i18n="rmx-046">el frontend esconde botones — la base niega el dato</text></g>
 </svg></figure>
-      <div class="cap-body"><p>Cliente, Artista y Staff son <b>tres mundos separados a propósito</b>. Cada portal se implementa por su cuenta, incluida su barra de navegación. Compartir un menú entre portales ya fue una regresión en V1 y por eso no se repite.</p><p>El Owner no es un DJ. Son dos cuentas distintas, con correo y login distintos, aunque las manejen las mismas manos. Esa separación es lo que permite auditar quién hizo qué.</p><p>La decisión de qué puede ver cada quien <b>no se toma en el navegador</b>. Se toma en la base, con políticas RLS. El frontend solo esconde botones; la base es la que niega el dato.</p><p>Cada rol entra por su propia barra, y <b>esa decisión se toma antes de que la página se pinte</b>. La sesión ya vive en el navegador y el rol viaja dentro del token, así que no hay que preguntarle nada al servidor para saber qué menú dibujar. Antes se pintaba uno y se cambiaba después: la barra saltaba a la vista. Elegir antes no da permisos —eso lo sigue decidiendo la base con RLS—, solo evita el parpadeo.</p></div>
+      <div class="cap-body"><p data-i18n="rmx-047">Cliente, Artista y Staff son <b>tres mundos separados a propósito</b>. Cada portal se implementa por su cuenta, incluida su barra de navegación. Compartir un menú entre portales ya fue una regresión en V1 y por eso no se repite.</p><p data-i18n="rmx-048">El Owner no es un DJ. Son dos cuentas distintas, con correo y login distintos, aunque las manejen las mismas manos. Esa separación es lo que permite auditar quién hizo qué.</p><p data-i18n="rmx-049">La decisión de qué puede ver cada quien <b>no se toma en el navegador</b>. Se toma en la base, con políticas RLS. El frontend solo esconde botones; la base es la que niega el dato.</p><p data-i18n="rmx-050">Cada rol entra por su propia barra, y <b>esa decisión se toma antes de que la página se pinte</b>. La sesión ya vive en el navegador y el rol viaja dentro del token, así que no hay que preguntarle nada al servidor para saber qué menú dibujar. Antes se pintaba uno y se cambiaba después: la barra saltaba a la vista. Elegir antes no da permisos —eso lo sigue decidiendo la base con RLS—, solo evita el parpadeo.</p></div>
     </section>
     <section class="chapter" id="cap-3" data-aud="cliente vendedor manager owner">
-      <div class="cap-head"><span class="cap-n">Capítulo 3</span><h2>El viaje del cliente</h2></div>
-      <p class="cap-lead">Desde que alguien busca un DJ en Miami hasta que la noche termina y queda la factura pagada. Este es el recorrido que más veces se repite en la plataforma.</p>
-      <figure><svg class="gr" viewBox="0 0 942 252" role="img" aria-label="El viaje del cliente: Descubre → Pide fecha → Propuesta → Documento → Depósito → Evento confirmado → La noche → Cierre">
+      <div class="cap-head"><span class="cap-n" data-i18n="rmx-051">Capítulo 3</span><h2 data-i18n="rmx-052">El viaje del cliente</h2></div>
+      <p class="cap-lead" data-i18n="rmx-053">Desde que alguien busca un DJ en Miami hasta que la noche termina y queda la factura pagada. Este es el recorrido que más veces se repite en la plataforma.</p>
+      <figure><svg class="gr" viewBox="0 0 942 252" role="img" aria-label="El viaje del cliente: Descubre → Pide fecha → Propuesta → Documento → Depósito → Evento confirmado → La noche → Cierre" data-i18n-aria="rmx-a06">
   <defs><marker id="pa" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
     <path d="M0 0L10 5L0 10z" fill="var(--mut)"/></marker></defs><g class="pstep">
       <rect x="22" y="22" width="202" height="74" rx="8"/>
       <text class="pn" x="35" y="44">01</text>
-      <text class="pt" x="35" y="66">Descubre</text>
-      <text class="ps" x="35" y="84">sitio público · catálogo</text></g><path class="parrow" d="M228 59 H249" marker-end="url(#pa)"/><g class="pstep">
+      <text class="pt" x="35" y="66" data-i18n="rmx-054">Descubre</text>
+      <text class="ps" x="35" y="84" data-i18n="rmx-055">sitio público · catálogo</text></g><path class="parrow" d="M228 59 H249" marker-end="url(#pa)"/><g class="pstep">
       <rect x="254" y="22" width="202" height="74" rx="8"/>
       <text class="pn" x="267" y="44">02</text>
-      <text class="pt" x="267" y="66">Pide fecha</text>
-      <text class="ps" x="267" y="84">nace el lead</text></g><path class="parrow" d="M460 59 H481" marker-end="url(#pa)"/><g class="pstep">
+      <text class="pt" x="267" y="66" data-i18n="rmx-056">Pide fecha</text>
+      <text class="ps" x="267" y="84" data-i18n="rmx-057">nace el lead</text></g><path class="parrow" d="M460 59 H481" marker-end="url(#pa)"/><g class="pstep">
       <rect x="486" y="22" width="202" height="74" rx="8"/>
       <text class="pn" x="499" y="44">03</text>
-      <text class="pt" x="499" y="66">Propuesta</text>
-      <text class="ps" x="499" y="84">servicio y monto</text></g><path class="parrow" d="M692 59 H713" marker-end="url(#pa)"/><g class="pstep p-gate">
+      <text class="pt" x="499" y="66" data-i18n="rmx-058">Propuesta</text>
+      <text class="ps" x="499" y="84" data-i18n="rmx-059">servicio y monto</text></g><path class="parrow" d="M692 59 H713" marker-end="url(#pa)"/><g class="pstep p-gate">
       <rect x="718" y="22" width="202" height="74" rx="8"/>
       <text class="pn" x="731" y="44">04</text>
-      <text class="pt" x="731" y="66">Documento</text>
-      <text class="ps" x="731" y="84">acuerdo firmado</text></g><path class="parrow wrap" d="M819 100 V116 H123 V143" marker-end="url(#pa)"/><g class="pstep p-gate">
+      <text class="pt" x="731" y="66" data-i18n="rmx-060">Documento</text>
+      <text class="ps" x="731" y="84" data-i18n="rmx-061">acuerdo firmado</text></g><path class="parrow wrap" d="M819 100 V116 H123 V143" marker-end="url(#pa)"/><g class="pstep p-gate">
       <rect x="22" y="148" width="202" height="74" rx="8"/>
       <text class="pn" x="35" y="170">05</text>
-      <text class="pt" x="35" y="192">Depósito</text>
-      <text class="ps" x="35" y="210">Stripe o comprobante</text></g><path class="parrow" d="M228 185 H249" marker-end="url(#pa)"/><g class="pstep p-ok">
+      <text class="pt" x="35" y="192" data-i18n="rmx-062">Depósito</text>
+      <text class="ps" x="35" y="210" data-i18n="rmx-063">Stripe o comprobante</text></g><path class="parrow" d="M228 185 H249" marker-end="url(#pa)"/><g class="pstep p-ok">
       <rect x="254" y="148" width="202" height="74" rx="8"/>
       <text class="pn" x="267" y="170">06</text>
-      <text class="pt" x="267" y="192">Evento confirmado</text>
-      <text class="ps" x="267" y="210">entra a la agenda</text></g><path class="parrow" d="M460 185 H481" marker-end="url(#pa)"/><g class="pstep">
+      <text class="pt" x="267" y="192" data-i18n="rmx-064">Evento confirmado</text>
+      <text class="ps" x="267" y="210" data-i18n="rmx-065">entra a la agenda</text></g><path class="parrow" d="M460 185 H481" marker-end="url(#pa)"/><g class="pstep">
       <rect x="486" y="148" width="202" height="74" rx="8"/>
       <text class="pn" x="499" y="170">07</text>
-      <text class="pt" x="499" y="192">La noche</text>
-      <text class="ps" x="499" y="210">ejecución y soporte</text></g><path class="parrow" d="M692 185 H713" marker-end="url(#pa)"/><g class="pstep">
+      <text class="pt" x="499" y="192" data-i18n="rmx-066">La noche</text>
+      <text class="ps" x="499" y="210" data-i18n="rmx-067">ejecución y soporte</text></g><path class="parrow" d="M692 185 H713" marker-end="url(#pa)"/><g class="pstep">
       <rect x="718" y="148" width="202" height="74" rx="8"/>
       <text class="pn" x="731" y="170">08</text>
-      <text class="pt" x="731" y="192">Cierre</text>
-      <text class="ps" x="731" y="210">factura final y portal</text></g>
+      <text class="pt" x="731" y="192" data-i18n="rmx-068">Cierre</text>
+      <text class="ps" x="731" y="210" data-i18n="rmx-069">factura final y portal</text></g>
 </svg></figure>
-      <div class="cap-body"><p>El cliente entra por la capa pública, pide una fecha y con eso nace un <b>lead</b>. Ese lead es el mismo objeto que después se convierte en evento: no se vuelve a teclear en otro sistema.</p><p>Antes de que el evento se confirme hay dos compuertas que no se saltan: el <b>documento</b> (acuerdo de servicio) y el <b>depósito</b>. Si una falla, el evento no avanza de estado, aunque la fecha ya esté en el calendario.</p><p>Después del evento, el cliente conserva su portal: su historial, sus facturas, sus comprobantes y el chat con el equipo. No se le cierra la puerta cuando termina la noche.</p><p>Cuando alguien sin cuenta llega a la ficha de un DJ, <b>ve el perfil entero</b> —presentación, biografía, valoraciones, disponibilidad, comentarios y QR— pero con la <b>barra de Inicio</b>, no con la estación de trabajo del artista. La ficha es una página de conversión: está para que ese visitante explore, se suscriba y contrate, no para enseñarle herramientas que no le pertenecen.</p></div>
+      <div class="cap-body"><p data-i18n="rmx-070">El cliente entra por la capa pública, pide una fecha y con eso nace un <b>lead</b>. Ese lead es el mismo objeto que después se convierte en evento: no se vuelve a teclear en otro sistema.</p><p data-i18n="rmx-071">Antes de que el evento se confirme hay dos compuertas que no se saltan: el <b>documento</b> (acuerdo de servicio) y el <b>depósito</b>. Si una falla, el evento no avanza de estado, aunque la fecha ya esté en el calendario.</p><p data-i18n="rmx-072">Después del evento, el cliente conserva su portal: su historial, sus facturas, sus comprobantes y el chat con el equipo. No se le cierra la puerta cuando termina la noche.</p><p data-i18n="rmx-073">Cuando alguien sin cuenta llega a la ficha de un DJ, <b>ve el perfil entero</b> —presentación, biografía, valoraciones, disponibilidad, comentarios y QR— pero con la <b>barra de Inicio</b>, no con la estación de trabajo del artista. La ficha es una página de conversión: está para que ese visitante explore, se suscriba y contrate, no para enseñarle herramientas que no le pertenecen.</p></div>
     </section>
     <section class="chapter" id="cap-4" data-aud="artista manager owner">
-      <div class="cap-head"><span class="cap-n">Capítulo 4</span><h2>El viaje del artista</h2></div>
-      <p class="cap-lead">Un artista no es un recurso que el sistema asigna: es un usuario con su propio portal, su propia agenda y su propio dinero.</p>
-      <figure><svg class="gr" viewBox="0 0 942 252" role="img" aria-label="El viaje del artista: Onboarding → Perfil público → Disponibilidad → Oferta → Evento → Payout → Agenda personal">
+      <div class="cap-head"><span class="cap-n" data-i18n="rmx-074">Capítulo 4</span><h2 data-i18n="rmx-075">El viaje del artista</h2></div>
+      <p class="cap-lead" data-i18n="rmx-076">Un artista no es un recurso que el sistema asigna: es un usuario con su propio portal, su propia agenda y su propio dinero.</p>
+      <figure><svg class="gr" viewBox="0 0 942 252" role="img" aria-label="El viaje del artista: Onboarding → Perfil público → Disponibilidad → Oferta → Evento → Payout → Agenda personal" data-i18n-aria="rmx-a07">
   <defs><marker id="pa" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
     <path d="M0 0L10 5L0 10z" fill="var(--mut)"/></marker></defs><g class="pstep">
       <rect x="22" y="22" width="202" height="74" rx="8"/>
       <text class="pn" x="35" y="44">01</text>
-      <text class="pt" x="35" y="66">Onboarding</text>
-      <text class="ps" x="35" y="84">alta y verificación</text></g><path class="parrow" d="M228 59 H249" marker-end="url(#pa)"/><g class="pstep">
+      <text class="pt" x="35" y="66" data-i18n="rmx-077">Onboarding</text>
+      <text class="ps" x="35" y="84" data-i18n="rmx-078">alta y verificación</text></g><path class="parrow" d="M228 59 H249" marker-end="url(#pa)"/><g class="pstep">
       <rect x="254" y="22" width="202" height="74" rx="8"/>
       <text class="pn" x="267" y="44">02</text>
-      <text class="pt" x="267" y="66">Perfil público</text>
-      <text class="ps" x="267" y="84">lo que el cliente ve</text></g><path class="parrow" d="M460 59 H481" marker-end="url(#pa)"/><g class="pstep">
+      <text class="pt" x="267" y="66" data-i18n="rmx-079">Perfil público</text>
+      <text class="ps" x="267" y="84" data-i18n="rmx-080">lo que el cliente ve</text></g><path class="parrow" d="M460 59 H481" marker-end="url(#pa)"/><g class="pstep">
       <rect x="486" y="22" width="202" height="74" rx="8"/>
       <text class="pn" x="499" y="44">03</text>
-      <text class="pt" x="499" y="66">Disponibilidad</text>
-      <text class="ps" x="499" y="84">fechas y bloqueos</text></g><path class="parrow" d="M692 59 H713" marker-end="url(#pa)"/><g class="pstep p-gate">
+      <text class="pt" x="499" y="66" data-i18n="rmx-081">Disponibilidad</text>
+      <text class="ps" x="499" y="84" data-i18n="rmx-082">fechas y bloqueos</text></g><path class="parrow" d="M692 59 H713" marker-end="url(#pa)"/><g class="pstep p-gate">
       <rect x="718" y="22" width="202" height="74" rx="8"/>
       <text class="pn" x="731" y="44">04</text>
-      <text class="pt" x="731" y="66">Oferta</text>
-      <text class="ps" x="731" y="84">acepta o rechaza</text></g><path class="parrow wrap" d="M819 100 V116 H123 V143" marker-end="url(#pa)"/><g class="pstep">
+      <text class="pt" x="731" y="66" data-i18n="rmx-083">Oferta</text>
+      <text class="ps" x="731" y="84" data-i18n="rmx-084">acepta o rechaza</text></g><path class="parrow wrap" d="M819 100 V116 H123 V143" marker-end="url(#pa)"/><g class="pstep">
       <rect x="22" y="148" width="202" height="74" rx="8"/>
       <text class="pn" x="35" y="170">05</text>
-      <text class="pt" x="35" y="192">Evento</text>
-      <text class="ps" x="35" y="210">detalles e instrucciones</text></g><path class="parrow" d="M228 185 H249" marker-end="url(#pa)"/><g class="pstep p-ok">
+      <text class="pt" x="35" y="192" data-i18n="rmx-085">Evento</text>
+      <text class="ps" x="35" y="210" data-i18n="rmx-086">detalles e instrucciones</text></g><path class="parrow" d="M228 185 H249" marker-end="url(#pa)"/><g class="pstep p-ok">
       <rect x="254" y="148" width="202" height="74" rx="8"/>
       <text class="pn" x="267" y="170">06</text>
-      <text class="pt" x="267" y="192">Payout</text>
-      <text class="ps" x="267" y="210">su centro financiero</text></g><path class="parrow" d="M460 185 H481" marker-end="url(#pa)"/><g class="pstep p-warn">
+      <text class="pt" x="267" y="192" data-i18n="rmx-087">Payout</text>
+      <text class="ps" x="267" y="210" data-i18n="rmx-088">su centro financiero</text></g><path class="parrow" d="M460 185 H481" marker-end="url(#pa)"/><g class="pstep p-warn">
       <rect x="486" y="148" width="202" height="74" rx="8"/>
       <text class="pn" x="499" y="170">07</text>
-      <text class="pt" x="499" y="192">Agenda personal</text>
-      <text class="ps" x="499" y="210">en rediseño</text></g>
+      <text class="pt" x="499" y="192" data-i18n="rmx-089">Agenda personal</text>
+      <text class="ps" x="499" y="210" data-i18n="rmx-090">en rediseño</text></g>
 </svg></figure>
-      <div class="cap-body"><p>El artista entra por onboarding, arma su perfil público y define su disponibilidad. Ese perfil es lo que el cliente ve en el catálogo, así que la calidad del perfil es parte del producto.</p><p>Cuando hay un evento que le calza, recibe una <b>oferta de asignación</b> que puede aceptar o rechazar. La asignación no se le impone en silencio.</p><p>Su centro financiero le muestra lo suyo y solo lo suyo. Un artista nunca ve el ledger de otro; eso lo garantiza la capa de identidad, no una pantalla.</p><p>La reserva de un DJ escribe en <b>el sistema</b> (source assignment).</p><p>La estación del artista es <b>la misma en todas sus pantallas</b>: Academia, Agenda, DJ Tools, Cursos, Conocimiento, Configuración y su propia ficha. Y una precisión que conviene no confundir: lo que el artista ve en Agenda es el <b>Calendario Operacional Inteligente</b>, el mismo motor que usa la casa. Su calendario personal sigue existiendo, pero no es lo que se le muestra.</p></div>
+      <div class="cap-body"><p data-i18n="rmx-091">El artista entra por onboarding, arma su perfil público y define su disponibilidad. Ese perfil es lo que el cliente ve en el catálogo, así que la calidad del perfil es parte del producto.</p><p data-i18n="rmx-092">Cuando hay un evento que le calza, recibe una <b>oferta de asignación</b> que puede aceptar o rechazar. La asignación no se le impone en silencio.</p><p data-i18n="rmx-093">Su centro financiero le muestra lo suyo y solo lo suyo. Un artista nunca ve el ledger de otro; eso lo garantiza la capa de identidad, no una pantalla.</p><p data-i18n="rmx-094">La reserva de un DJ escribe en <b>el sistema</b> (source assignment).</p><p data-i18n="rmx-095">La estación del artista es <b>la misma en todas sus pantallas</b>: Academia, Agenda, DJ Tools, Cursos, Conocimiento, Configuración y su propia ficha. Y una precisión que conviene no confundir: lo que el artista ve en Agenda es el <b>Calendario Operacional Inteligente</b>, el mismo motor que usa la casa. Su calendario personal sigue existiendo, pero no es lo que se le muestra.</p></div>
     </section>
     <section class="chapter" id="cap-5" data-aud="vendedor manager owner">
-      <div class="cap-head"><span class="cap-n">Capítulo 5</span><h2>El día del staff</h2></div>
-      <p class="cap-lead">El portal de staff es el puesto de mando: aquí se ve lo que los otros dos portales no pueden ver, y aquí se toman las decisiones que mueven dinero y fechas.</p>
-      <figure><svg class="gr" viewBox="0 0 942 252" role="img" aria-label="El día del staff: Bandeja de leads → Califica → Agenda → Asigna artista → Cobra → Produce → Concilia">
+      <div class="cap-head"><span class="cap-n" data-i18n="rmx-096">Capítulo 5</span><h2 data-i18n="rmx-097">El día del staff</h2></div>
+      <p class="cap-lead" data-i18n="rmx-098">El portal de staff es el puesto de mando: aquí se ve lo que los otros dos portales no pueden ver, y aquí se toman las decisiones que mueven dinero y fechas.</p>
+      <figure><svg class="gr" viewBox="0 0 942 252" role="img" aria-label="El día del staff: Bandeja de leads → Califica → Agenda → Asigna artista → Cobra → Produce → Concilia" data-i18n-aria="rmx-a08">
   <defs><marker id="pa" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
     <path d="M0 0L10 5L0 10z" fill="var(--mut)"/></marker></defs><g class="pstep">
       <rect x="22" y="22" width="202" height="74" rx="8"/>
       <text class="pn" x="35" y="44">01</text>
-      <text class="pt" x="35" y="66">Bandeja de leads</text>
-      <text class="ps" x="35" y="84">entra trabajo nuevo</text></g><path class="parrow" d="M228 59 H249" marker-end="url(#pa)"/><g class="pstep">
+      <text class="pt" x="35" y="66" data-i18n="rmx-099">Bandeja de leads</text>
+      <text class="ps" x="35" y="84" data-i18n="rmx-100">entra trabajo nuevo</text></g><path class="parrow" d="M228 59 H249" marker-end="url(#pa)"/><g class="pstep">
       <rect x="254" y="22" width="202" height="74" rx="8"/>
       <text class="pn" x="267" y="44">02</text>
-      <text class="pt" x="267" y="66">Califica</text>
-      <text class="ps" x="267" y="84">servicio, fecha, monto</text></g><path class="parrow" d="M460 59 H481" marker-end="url(#pa)"/><g class="pstep">
+      <text class="pt" x="267" y="66" data-i18n="rmx-101">Califica</text>
+      <text class="ps" x="267" y="84" data-i18n="rmx-102">servicio, fecha, monto</text></g><path class="parrow" d="M460 59 H481" marker-end="url(#pa)"/><g class="pstep">
       <rect x="486" y="22" width="202" height="74" rx="8"/>
       <text class="pn" x="499" y="44">03</text>
-      <text class="pt" x="499" y="66">Agenda</text>
-      <text class="ps" x="499" y="84">conflicto y disponibilidad</text></g><path class="parrow" d="M692 59 H713" marker-end="url(#pa)"/><g class="pstep">
+      <text class="pt" x="499" y="66" data-i18n="rmx-103">Agenda</text>
+      <text class="ps" x="499" y="84" data-i18n="rmx-104">conflicto y disponibilidad</text></g><path class="parrow" d="M692 59 H713" marker-end="url(#pa)"/><g class="pstep">
       <rect x="718" y="22" width="202" height="74" rx="8"/>
       <text class="pn" x="731" y="44">04</text>
-      <text class="pt" x="731" y="66">Asigna artista</text>
-      <text class="ps" x="731" y="84">oferta al talento</text></g><path class="parrow wrap" d="M819 100 V116 H123 V143" marker-end="url(#pa)"/><g class="pstep p-gate">
+      <text class="pt" x="731" y="66" data-i18n="rmx-105">Asigna artista</text>
+      <text class="ps" x="731" y="84" data-i18n="rmx-106">oferta al talento</text></g><path class="parrow wrap" d="M819 100 V116 H123 V143" marker-end="url(#pa)"/><g class="pstep p-gate">
       <rect x="22" y="148" width="202" height="74" rx="8"/>
       <text class="pn" x="35" y="170">05</text>
-      <text class="pt" x="35" y="192">Cobra</text>
-      <text class="ps" x="35" y="210">confirma el pago</text></g><path class="parrow" d="M228 185 H249" marker-end="url(#pa)"/><g class="pstep">
+      <text class="pt" x="35" y="192" data-i18n="rmx-107">Cobra</text>
+      <text class="ps" x="35" y="210" data-i18n="rmx-108">confirma el pago</text></g><path class="parrow" d="M228 185 H249" marker-end="url(#pa)"/><g class="pstep">
       <rect x="254" y="148" width="202" height="74" rx="8"/>
       <text class="pn" x="267" y="170">06</text>
-      <text class="pt" x="267" y="192">Produce</text>
-      <text class="ps" x="267" y="210">logística y montaje</text></g><path class="parrow" d="M460 185 H481" marker-end="url(#pa)"/><g class="pstep p-ok">
+      <text class="pt" x="267" y="192" data-i18n="rmx-109">Produce</text>
+      <text class="ps" x="267" y="210" data-i18n="rmx-110">logística y montaje</text></g><path class="parrow" d="M460 185 H481" marker-end="url(#pa)"/><g class="pstep p-ok">
       <rect x="486" y="148" width="202" height="74" rx="8"/>
       <text class="pn" x="499" y="170">07</text>
-      <text class="pt" x="499" y="192">Concilia</text>
-      <text class="ps" x="499" y="210">payouts y caja</text></g>
+      <text class="pt" x="499" y="192" data-i18n="rmx-111">Concilia</text>
+      <text class="ps" x="499" y="210" data-i18n="rmx-112">payouts y caja</text></g>
 </svg></figure>
-      <div class="cap-body"><p>El staff trabaja sobre agregadores: la agenda y el Matrix <b>leen</b> datos de toda la plataforma pero reparten hacia abajo solo lo necesario. Es un flujo de una sola dirección, y quien lo hace cumplir es RLS.</p><p>Las acciones que importan — confirmar un cobro, asignar un artista, cambiar el estado de un evento — dejan rastro. Una acción consecuente sin registro es un defecto, no una comodidad.</p><p>Dentro del staff hay grados: management y ventas no ven lo mismo. El portal es uno, los permisos son varios.</p><p>El el sistema lleva <b>riel interno</b> —con Fénix AI y el atajo a Staff— en las nueve pantallas de gestión, no solo en dos. Antes, entrar en el panel de administración devolvía el menú del visitante.</p></div>
+      <div class="cap-body"><p data-i18n="rmx-113">El staff trabaja sobre agregadores: la agenda y el Matrix <b>leen</b> datos de toda la plataforma pero reparten hacia abajo solo lo necesario. Es un flujo de una sola dirección, y quien lo hace cumplir es RLS.</p><p data-i18n="rmx-114">Las acciones que importan — confirmar un cobro, asignar un artista, cambiar el estado de un evento — dejan rastro. Una acción consecuente sin registro es un defecto, no una comodidad.</p><p data-i18n="rmx-115">Dentro del staff hay grados: management y ventas no ven lo mismo. El portal es uno, los permisos son varios.</p><p data-i18n="rmx-116">El sistema lleva <b>riel interno</b> —con Fénix AI y el atajo a Staff— en las nueve pantallas de gestión, no solo en dos. Antes, entrar en el panel de administración devolvía el menú del visitante.</p></div>
     </section>
     <section class="chapter" id="cap-6" data-aud="cliente artista vendedor manager owner">
-      <div class="cap-head"><span class="cap-n">Capítulo 6</span><h2>Cómo se mueve el dinero</h2></div>
-      <p class="cap-lead">Un solo motor calcula. Todo lo demás lo consulta. Esa es la única regla que el núcleo financiero no negocia.</p>
-      <figure><svg class="gr" viewBox="0 0 942 252" role="img" aria-label="Cómo se mueve el dinero: Entrada → Registro → financial-engine → Factura cliente → Payout artista → Caja del owner">
+      <div class="cap-head"><span class="cap-n" data-i18n="rmx-117">Capítulo 6</span><h2 data-i18n="rmx-118">Cómo se mueve el dinero</h2></div>
+      <p class="cap-lead" data-i18n="rmx-119">Un solo motor calcula. Todo lo demás lo consulta. Esa es la única regla que el núcleo financiero no negocia.</p>
+      <figure><svg class="gr" viewBox="0 0 942 252" role="img" aria-label="Cómo se mueve el dinero: Entrada → Registro → financial-engine → Factura cliente → Payout artista → Caja del owner" data-i18n-aria="rmx-a09">
   <defs><marker id="pa" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
     <path d="M0 0L10 5L0 10z" fill="var(--mut)"/></marker></defs><g class="pstep">
       <rect x="22" y="22" width="202" height="74" rx="8"/>
       <text class="pn" x="35" y="44">01</text>
-      <text class="pt" x="35" y="66">Entrada</text>
-      <text class="ps" x="35" y="84">Stripe · Zelle · propina</text></g><path class="parrow" d="M228 59 H249" marker-end="url(#pa)"/><g class="pstep">
+      <text class="pt" x="35" y="66" data-i18n="rmx-120">Entrada</text>
+      <text class="ps" x="35" y="84" data-i18n="rmx-121">Stripe · Zelle · propina</text></g><path class="parrow" d="M228 59 H249" marker-end="url(#pa)"/><g class="pstep">
       <rect x="254" y="22" width="202" height="74" rx="8"/>
       <text class="pn" x="267" y="44">02</text>
-      <text class="pt" x="267" y="66">Registro</text>
-      <text class="ps" x="267" y="84">ledger y estado de pago</text></g><path class="parrow" d="M460 59 H481" marker-end="url(#pa)"/><g class="pstep p-core">
+      <text class="pt" x="267" y="66" data-i18n="rmx-122">Registro</text>
+      <text class="ps" x="267" y="84" data-i18n="rmx-123">ledger y estado de pago</text></g><path class="parrow" d="M460 59 H481" marker-end="url(#pa)"/><g class="pstep p-core">
       <rect x="486" y="22" width="202" height="74" rx="8"/>
       <text class="pn" x="499" y="44">03</text>
-      <text class="pt" x="499" y="66">financial-engine</text>
-      <text class="ps" x="499" y="84">el único que calcula</text></g><path class="parrow" d="M692 59 H713" marker-end="url(#pa)"/><g class="pstep">
+      <text class="pt" x="499" y="66" data-i18n="rmx-124">financial-engine</text>
+      <text class="ps" x="499" y="84" data-i18n="rmx-125">el único que calcula</text></g><path class="parrow" d="M692 59 H713" marker-end="url(#pa)"/><g class="pstep">
       <rect x="718" y="22" width="202" height="74" rx="8"/>
       <text class="pn" x="731" y="44">04</text>
-      <text class="pt" x="731" y="66">Factura cliente</text>
-      <text class="ps" x="731" y="84">portal del cliente</text></g><path class="parrow wrap" d="M819 100 V116 H123 V143" marker-end="url(#pa)"/><g class="pstep p-ok">
+      <text class="pt" x="731" y="66" data-i18n="rmx-126">Factura cliente</text>
+      <text class="ps" x="731" y="84" data-i18n="rmx-127">portal del cliente</text></g><path class="parrow wrap" d="M819 100 V116 H123 V143" marker-end="url(#pa)"/><g class="pstep p-ok">
       <rect x="22" y="148" width="202" height="74" rx="8"/>
       <text class="pn" x="35" y="170">05</text>
-      <text class="pt" x="35" y="192">Payout artista</text>
-      <text class="ps" x="35" y="210">centro financiero</text></g><path class="parrow" d="M228 185 H249" marker-end="url(#pa)"/><g class="pstep p-ok">
+      <text class="pt" x="35" y="192" data-i18n="rmx-128">Payout artista</text>
+      <text class="ps" x="35" y="210" data-i18n="rmx-129">centro financiero</text></g><path class="parrow" d="M228 185 H249" marker-end="url(#pa)"/><g class="pstep p-ok">
       <rect x="254" y="148" width="202" height="74" rx="8"/>
       <text class="pn" x="267" y="170">06</text>
-      <text class="pt" x="267" y="192">Caja del owner</text>
-      <text class="ps" x="267" y="210">BFI y flujo de caja</text></g>
+      <text class="pt" x="267" y="192" data-i18n="rmx-130">Caja del owner</text>
+      <text class="ps" x="267" y="210" data-i18n="rmx-131">BFI y flujo de caja</text></g>
 </svg></figure>
-      <div class="cap-body"><p>El dinero entra por Stripe o por comprobante manual, se registra, y desde ahí lo consume todo el que tenga permiso: la factura del cliente, el payout del artista, la caja del owner.</p><p>el motor correspondiente es el único que produce cifras. Ninguna pantalla suma por su cuenta y ningún agente inventa un número: cuando ELIXIS habla de dinero, llama al motor.</p><p>Sound For Tips corre sobre el mismo esquema: propina del fan, comisión de plataforma, liquidación. No es un segundo sistema financiero, es otra entrada al mismo.</p></div>
+      <div class="cap-body"><p data-i18n="rmx-132">El dinero entra por Stripe o por comprobante manual, se registra, y desde ahí lo consume todo el que tenga permiso: la factura del cliente, el payout del artista, la caja del owner.</p><p data-i18n="rmx-133">el motor correspondiente es el único que produce cifras. Ninguna pantalla suma por su cuenta y ningún agente inventa un número: cuando ELIXIS habla de dinero, llama al motor.</p><p data-i18n="rmx-134">Sound For Tips corre sobre el mismo esquema: propina del fan, comisión de plataforma, liquidación. No es un segundo sistema financiero, es otra entrada al mismo.</p></div>
     </section>
     <section class="chapter" id="cap-7" data-aud="manager owner">
-      <div class="cap-head"><span class="cap-n">Capítulo 7</span><h2>ELIXIS, la capa de inteligencia</h2></div>
-      <p class="cap-lead">La capa más joven del ecosistema y la que se vigila más de cerca. ELIXIS lee, calcula, anota, agenda y cotiza en borrador. No envía mensajes ni mueve dinero.</p>
-      <figure><svg class="gr" viewBox="0 0 940 470" role="img" aria-label="ELIXIS recibe contexto de lectura, tiene una sola herramienta real hacia el motor financiero, y le faltan tres piezas: registro de agentes, gate de aprobación en código y auditoría de acciones.">
+      <div class="cap-head"><span class="cap-n" data-i18n="rmx-135">Capítulo 7</span><h2 data-i18n="rmx-136">ELIXIS, la capa de inteligencia</h2></div>
+      <p class="cap-lead" data-i18n="rmx-137">La capa más joven del ecosistema y la que se vigila más de cerca. ELIXIS lee, calcula, anota, agenda y cotiza en borrador. No envía mensajes ni mueve dinero.</p>
+      <figure><svg class="gr" viewBox="0 0 940 470" role="img" aria-label="ELIXIS recibe contexto de lectura, tiene una sola herramienta real hacia el motor financiero, y le faltan tres piezas: registro de agentes, gate de aprobación en código y auditoría de acciones." data-i18n-aria="rmx-a10">
   <defs><marker id="pa3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
-    <path d="M0 0L10 5L0 10z" fill="var(--mut)"/></marker></defs><text class="glab" x="22" y="26">CONTEXTO QUE RECIBE (lectura)</text><g class="pstep"><rect x="22" y="40" width="212" height="42" rx="7"/>
-      <text class="pt sm" x="34" y="59">roster de artistas</text>
-      <text class="ps" x="34" y="74">public_dj_profiles</text></g>
+    <path d="M0 0L10 5L0 10z" fill="var(--mut)"/></marker></defs><text class="glab" x="22" y="26" data-i18n="rmx-138">CONTEXTO QUE RECIBE (lectura)</text><g class="pstep"><rect x="22" y="40" width="212" height="42" rx="7"/>
+      <text class="pt sm" x="34" y="59" data-i18n="rmx-139">roster de artistas</text>
+      <text class="ps" x="34" y="74" data-i18n="rmx-140">public_dj_profiles</text></g>
       <path class="parrow" d="M238 61 H300" marker-end="url(#pa3)"/><g class="pstep"><rect x="22" y="92" width="212" height="42" rx="7"/>
-      <text class="pt sm" x="34" y="111">bookings próximos</text>
-      <text class="ps" x="34" y="126">órdenes y estado</text></g>
+      <text class="pt sm" x="34" y="111" data-i18n="rmx-141">bookings próximos</text>
+      <text class="ps" x="34" y="126" data-i18n="rmx-142">órdenes y estado</text></g>
       <path class="parrow" d="M238 113 H300" marker-end="url(#pa3)"/><g class="pstep"><rect x="22" y="144" width="212" height="42" rx="7"/>
-      <text class="pt sm" x="34" y="163">pipeline de leads</text>
-      <text class="ps" x="34" y="178">estado comercial</text></g>
+      <text class="pt sm" x="34" y="163" data-i18n="rmx-143">pipeline de leads</text>
+      <text class="ps" x="34" y="178" data-i18n="rmx-144">estado comercial</text></g>
       <path class="parrow" d="M238 165 H300" marker-end="url(#pa3)"/><g class="pstep p-warn"><rect x="22" y="196" width="212" height="42" rx="7"/>
-      <text class="pt sm" x="34" y="215">residencias y tarifas</text>
-      <text class="ps" x="34" y="230">hardcodeado hoy</text></g>
+      <text class="pt sm" x="34" y="215" data-i18n="rmx-145">residencias y tarifas</text>
+      <text class="ps" x="34" y="230" data-i18n="rmx-146">hardcodeado hoy</text></g>
       <path class="parrow" d="M238 217 H300" marker-end="url(#pa3)"/><g class="pstep"><rect x="22" y="248" width="212" height="42" rx="7"/>
-      <text class="pt sm" x="34" y="267">resumen financiero</text>
-      <text class="ps" x="34" y="282">vía el motor</text></g>
+      <text class="pt sm" x="34" y="267" data-i18n="rmx-147">resumen financiero</text>
+      <text class="ps" x="34" y="282" data-i18n="rmx-148">vía el motor</text></g>
       <path class="parrow" d="M238 269 H300" marker-end="url(#pa3)"/><g class="pstep p-core"><rect x="304" y="96" width="252" height="128" rx="9"/>
-    <text class="pt" x="430" y="132" text-anchor="middle">ELIXIS</text>
-    <text class="ps" x="430" y="154" text-anchor="middle">Edge Function · lado servidor</text>
-    <text class="ps" x="430" y="172" text-anchor="middle">verifica el rol contra la base</text>
-    <text class="ps dim" x="430" y="196" text-anchor="middle">redacta, calcula y recomienda</text>
-    <text class="ps dim" x="430" y="212" text-anchor="middle">no envía, no cobra, no muta</text></g><path class="parrow" d="M560 160 H636" marker-end="url(#pa3)"/>
-  <text class="glab sm" x="566" y="152">1 tool real</text>
+    <text class="pt" x="430" y="132" text-anchor="middle" data-i18n="rmx-149">ELIXIS</text>
+    <text class="ps" x="430" y="154" text-anchor="middle" data-i18n="rmx-150">Edge Function · lado servidor</text>
+    <text class="ps" x="430" y="172" text-anchor="middle" data-i18n="rmx-151">verifica el rol contra la base</text>
+    <text class="ps dim" x="430" y="196" text-anchor="middle" data-i18n="rmx-152">redacta, calcula y recomienda</text>
+    <text class="ps dim" x="430" y="212" text-anchor="middle" data-i18n="rmx-153">no envía, no cobra, no muta</text></g><path class="parrow" d="M560 160 H636" marker-end="url(#pa3)"/>
+  <text class="glab sm" x="566" y="152" data-i18n="rmx-154">1 tool real</text>
   <g class="pstep p-ok"><rect x="640" y="128" width="278" height="64" rx="8">
-    </rect><text class="pt" x="654" y="156">financial-engine</text>
-    <text class="ps" x="654" y="176">el único que calcula dinero</text></g><text class="glab" x="22" y="316">LO QUE FALTA PARA QUE PUEDA EJECUTAR</text><g class="pstep p-miss"><rect x="22" y="330" width="286" height="62" rx="8"/>
-      <text class="pt" x="36" y="358">Registro de agentes</text>
-      <text class="ps" x="36" y="378">misión, tools, permisos, memoria</text></g><g class="pstep p-miss"><rect x="324" y="330" width="286" height="62" rx="8"/>
-      <text class="pt" x="338" y="358">Gate de aprobación</text>
-      <text class="ps" x="338" y="378">en código, no en el prompt</text></g><g class="pstep p-miss"><rect x="626" y="330" width="286" height="62" rx="8"/>
-      <text class="pt" x="640" y="358">Auditoría de acciones</text>
-      <text class="ps" x="640" y="378">actor · acción · resultado</text></g><text class="glab sm" x="22" y="424">Mientras ELIXIS no tenga ninguna herramienta de escritura, estos tres huecos son tolerables. El día que la tenga, se vuelven bloqueantes.</text>
+    </rect><text class="pt" x="654" y="156" data-i18n="rmx-124">financial-engine</text>
+    <text class="ps" x="654" y="176" data-i18n="rmx-155">el único que calcula dinero</text></g><text class="glab" x="22" y="316" data-i18n="rmx-156">LO QUE FALTA PARA QUE PUEDA EJECUTAR</text><g class="pstep p-miss"><rect x="22" y="330" width="286" height="62" rx="8"/>
+      <text class="pt" x="36" y="358" data-i18n="rmx-157">Registro de agentes</text>
+      <text class="ps" x="36" y="378" data-i18n="rmx-158">misión, tools, permisos, memoria</text></g><g class="pstep p-miss"><rect x="324" y="330" width="286" height="62" rx="8"/>
+      <text class="pt" x="338" y="358" data-i18n="rmx-159">Gate de aprobación</text>
+      <text class="ps" x="338" y="378" data-i18n="rmx-160">en código, no en el prompt</text></g><g class="pstep p-miss"><rect x="626" y="330" width="286" height="62" rx="8"/>
+      <text class="pt" x="640" y="358" data-i18n="rmx-161">Auditoría de acciones</text>
+      <text class="ps" x="640" y="378" data-i18n="rmx-162">actor · acción · resultado</text></g><text class="glab sm" x="22" y="424" data-i18n="rmx-163">Mientras ELIXIS no tenga ninguna herramienta de escritura, estos tres huecos son tolerables. El día que la tenga, se vuelven bloqueantes.</text>
 </svg></figure>
-      <div class="cap-body"><p>ELIXIS corre del lado del servidor, verifica el rol de quien pregunta contra la base antes de responder, y recibe contexto vivo: artistas, bookings, pipeline, residencias, finanzas y catálogo de Miami DJ Beat LLC.</p><p>Las tools pasan por <b>el sistema</b> y el catálogo vive en el motor correspondiente. Lectura: finanzas, agenda, catálogo de precios. Escritura auditada: nota de lead, bloque de agenda, borrador de cotización.</p><p>el motor correspondiente persiste un draft en el motor correspondiente con totales calculados en el RPC. No crea órdenes formales ni sesiones de Stripe: eso lo hace staff con el motor correspondiente y el motor correspondiente.</p><p></p><p>Un límite de diseño que conviene conocer: el bucle de herramientas de ELIXIS da <b>tres vueltas</b>. Si una petición encadena más llamadas que eso, ELIXIS cierra en texto contando lo que quedó hecho y lo que falta. Por eso una tarea muy larga se pide mejor por partes.</p></div>
+      <div class="cap-body"><p data-i18n="rmx-164">ELIXIS corre del lado del servidor, verifica el rol de quien pregunta contra la base antes de responder, y recibe contexto vivo: artistas, bookings, pipeline, residencias, finanzas y catálogo de Miami DJ Beat LLC.</p><p data-i18n="rmx-165">Las tools pasan por <b>el sistema</b> y el catálogo vive en el motor correspondiente. Lectura: finanzas, agenda, catálogo de precios. Escritura auditada: nota de lead, bloque de agenda, borrador de cotización.</p><p data-i18n="rmx-166">el motor correspondiente persiste un draft en el motor correspondiente con totales calculados en el RPC. No crea órdenes formales ni sesiones de Stripe: eso lo hace staff con el motor correspondiente y el motor correspondiente.</p><p></p><p data-i18n="rmx-167">Un límite de diseño que conviene conocer: el bucle de herramientas de ELIXIS da <b>tres vueltas</b>. Si una petición encadena más llamadas que eso, ELIXIS cierra en texto contando lo que quedó hecho y lo que falta. Por eso una tarea muy larga se pide mejor por partes.</p></div>
     </section>
     <section class="chapter" id="cap-8" data-aud="owner">
-      <div class="cap-head"><span class="cap-n">Capítulo 8</span><h2>Datos, gobierno y cómo evoluciona</h2></div>
-      <p class="cap-lead">La parte que nadie ve y que decide si la plataforma envejece bien o se contradice a sí misma.</p>
-      <figure><svg class="gr" viewBox="0 0 942 252" role="img" aria-label="Datos, gobierno y cómo evoluciona: Migración → Ticket → Implementación → Validación local → Aprobación PO → Release controlado">
+      <div class="cap-head"><span class="cap-n" data-i18n="rmx-168">Capítulo 8</span><h2 data-i18n="rmx-169">Datos, gobierno y cómo evoluciona</h2></div>
+      <p class="cap-lead" data-i18n="rmx-170">La parte que nadie ve y que decide si la plataforma envejece bien o se contradice a sí misma.</p>
+      <figure><svg class="gr" viewBox="0 0 942 252" role="img" aria-label="Datos, gobierno y cómo evoluciona: Migración → Ticket → Implementación → Validación local → Aprobación PO → Release controlado" data-i18n-aria="rmx-a11">
   <defs><marker id="pa" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
     <path d="M0 0L10 5L0 10z" fill="var(--mut)"/></marker></defs><g class="pstep p-core">
       <rect x="22" y="22" width="202" height="74" rx="8"/>
       <text class="pn" x="35" y="44">01</text>
-      <text class="pt" x="35" y="66">Migración</text>
-      <text class="ps" x="35" y="84">el esquema solo cambia aquí</text></g><path class="parrow" d="M228 59 H249" marker-end="url(#pa)"/><g class="pstep">
+      <text class="pt" x="35" y="66" data-i18n="rmx-171">Migración</text>
+      <text class="ps" x="35" y="84" data-i18n="rmx-172">el esquema solo cambia aquí</text></g><path class="parrow" d="M228 59 H249" marker-end="url(#pa)"/><g class="pstep">
       <rect x="254" y="22" width="202" height="74" rx="8"/>
       <text class="pn" x="267" y="44">02</text>
-      <text class="pt" x="267" y="66">Ticket</text>
-      <text class="ps" x="267" y="84">por qué se cambia</text></g><path class="parrow" d="M460 59 H481" marker-end="url(#pa)"/><g class="pstep">
+      <text class="pt" x="267" y="66" data-i18n="rmx-173">Ticket</text>
+      <text class="ps" x="267" y="84" data-i18n="rmx-174">por qué se cambia</text></g><path class="parrow" d="M460 59 H481" marker-end="url(#pa)"/><g class="pstep">
       <rect x="486" y="22" width="202" height="74" rx="8"/>
       <text class="pn" x="499" y="44">03</text>
-      <text class="pt" x="499" y="66">Implementación</text>
-      <text class="ps" x="499" y="84">código en rama</text></g><path class="parrow" d="M692 59 H713" marker-end="url(#pa)"/><g class="pstep p-gate">
+      <text class="pt" x="499" y="66" data-i18n="rmx-175">Implementación</text>
+      <text class="ps" x="499" y="84" data-i18n="rmx-176">código en rama</text></g><path class="parrow" d="M692 59 H713" marker-end="url(#pa)"/><g class="pstep p-gate">
       <rect x="718" y="22" width="202" height="74" rx="8"/>
       <text class="pn" x="731" y="44">04</text>
-      <text class="pt" x="731" y="66">Validación local</text>
-      <text class="ps" x="731" y="84">antes de tocar producción</text></g><path class="parrow wrap" d="M819 100 V116 H123 V143" marker-end="url(#pa)"/><g class="pstep p-gate">
+      <text class="pt" x="731" y="66" data-i18n="rmx-177">Validación local</text>
+      <text class="ps" x="731" y="84" data-i18n="rmx-178">antes de tocar producción</text></g><path class="parrow wrap" d="M819 100 V116 H123 V143" marker-end="url(#pa)"/><g class="pstep p-gate">
       <rect x="22" y="148" width="202" height="74" rx="8"/>
       <text class="pn" x="35" y="170">05</text>
-      <text class="pt" x="35" y="192">Aprobación PO</text>
-      <text class="ps" x="35" y="210">decisión del owner</text></g><path class="parrow" d="M228 185 H249" marker-end="url(#pa)"/><g class="pstep p-ok">
+      <text class="pt" x="35" y="192" data-i18n="rmx-179">Aprobación PO</text>
+      <text class="ps" x="35" y="210" data-i18n="rmx-180">decisión del owner</text></g><path class="parrow" d="M228 185 H249" marker-end="url(#pa)"/><g class="pstep p-ok">
       <rect x="254" y="148" width="202" height="74" rx="8"/>
       <text class="pn" x="267" y="170">06</text>
-      <text class="pt" x="267" y="192">Release controlado</text>
-      <text class="ps" x="267" y="210">con rollback listo</text></g>
+      <text class="pt" x="267" y="192" data-i18n="rmx-181">Release controlado</text>
+      <text class="ps" x="267" y="210" data-i18n="rmx-182">con rollback listo</text></g>
 </svg></figure>
-      <div class="cap-body"><p></p><p>Cada decisión con impacto duradero deja documento. Los tickets, los runbooks y las auditorías forenses del repositorio son el historial de por qué la plataforma es como es.</p><p>La regla de oro para lo que viene: <b>ningún documento puede afirmar un estado que el código contradice</b>. Cuando los dos discrepan, se audita — no se crea una segunda verdad. Este mapa existe justamente para que esa discrepancia se vea sola.</p></div>
+      <div class="cap-body"><p></p><p data-i18n="rmx-183">Cada decisión con impacto duradero deja documento. Los tickets, los runbooks y las auditorías forenses del repositorio son el historial de por qué la plataforma es como es.</p><p data-i18n="rmx-184">La regla de oro para lo que viene: <b>ningún documento puede afirmar un estado que el código contradice</b>. Cuando los dos discrepan, se audita — no se crea una segunda verdad. Este mapa existe justamente para que esa discrepancia se vea sola.</p></div>
     </section>
 
+<script src="./translations.js?v=20260927-bilingue-final"></script>
+<script src="./i18n.js?v=20260927-bilingue-roadmap"></script>
 <script>
 (function(){
+  /* Bilingüe: esta página autónoma no lleva la perilla del header; sigue el idioma que el visitante ya eligió en el sitio (i18n.currentLang, por defecto inglés). */
+  function T(es, en){ return (window.i18n && window.i18n.currentLang === 'en') ? en : es; }
+  var lastRol = '';
   var AUD = ["cliente","artista","vendedor","manager","owner"];
-  var LBL = {"cliente":"Cliente","artista":"Artista","vendedor":"Vendedor","manager":"Manager","owner":"Owner"};
+  var LBL = function(k){ return ({"cliente":T("Cliente","Client"),"artista":T("Artista","Artist"),"vendedor":T("Vendedor","Seller"),"manager":"Manager","owner":"Owner"})[k]; };
   var ruta = 'cliente';
 
   function pinta(){
@@ -747,8 +754,8 @@ section.on>.cap-head{background:linear-gradient(90deg,var(--gold-a16),transparen
     var n = document.querySelectorAll('.chapter:not(.hide)').length;
     document.getElementById('pos').textContent = '— / ' + n;
     document.getElementById('rmWho').innerHTML =
-      '<span class="tag t-ok">Tu ruta: ' + (LBL[ruta]||ruta) + '</span>' +
-      '<span class="tiny">' + n + ' capítulos seleccionados para ti</span>';
+      '<span class="tag t-ok">' + T('Tu ruta: ','Your route: ') + (LBL(ruta)||ruta) + '</span>' +
+      '<span class="tiny">' + n + T(' capítulos seleccionados para ti',' chapters selected for you') + '</span>';
     document.getElementById('next').disabled = n === 0;
   }
 
@@ -790,6 +797,7 @@ section.on>.cap-head{background:linear-gradient(90deg,var(--gold-a16),transparen
      con CONFIG y MI PERFIL resueltos por rol igual que hace
      mdjb-shared-header.js. No se inventa ninguno. */
   function pintaMenu(rol){
+    lastRol = rol;
     var m = document.getElementById('rmMenu');
     if (!m || m.classList.contains('on')) return;
     var esStaff = ['owner','admin','manager','management','seller'].indexOf(rol) >= 0;
@@ -803,9 +811,9 @@ section.on>.cap-head{background:linear-gradient(90deg,var(--gold-a16),transparen
 
     if (esStaff) {
       m.innerHTML =
-        '<a href="./index.html">Inicio</a>' +
-        '<a href="./academia.html">Academia</a>' +
-        '<a href="./staff.html?vista=agenda">Agenda</a>' +
+        '<a href="./index.html">' + T('Inicio','Home') + '</a>' +
+        '<a href="./academia.html">' + T('Academia','Academy') + '</a>' +
+        '<a href="./staff.html?vista=agenda">' + T('Agenda','Schedule') + '</a>' +
         '<a href="./account-settings.html">⚙️ Config</a>' +
         '<a href="./dj-tools.html">DJ Tools</a>' +
         '<a href="./staff.html?vista=cashflow">Cash Flow</a>' +
@@ -821,13 +829,13 @@ section.on>.cap-head{background:linear-gradient(90deg,var(--gold-a16),transparen
       var miPerfil = sinSesion ? './login.html'
                   : (esArtista ? './dj-profile.html' : './client-portal.html');
       m.innerHTML =
-        '<a href="./index.html">Inicio</a>' +
-        '<a href="./rentals.html">Servicios</a>' +
-        '<a href="./events.html">Eventos</a>' +
+        '<a href="./index.html">' + T('Inicio','Home') + '</a>' +
+        '<a href="./rentals.html">' + T('Servicios','Services') + '</a>' +
+        '<a href="./events.html">' + T('Eventos','Events') + '</a>' +
         '<a href="./shop.html">Shop</a>' +
         '<a href="' + config + '">⚙️ Config</a>' +
-        '<a href="./jobs.html">Trabajos</a>' +
-        '<a href="./contact.html">Contacto</a>' +
+        '<a href="./jobs.html">' + T('Trabajos','Jobs') + '</a>' +
+        '<a href="./contact.html">' + T('Contacto','Contact') + '</a>' +
         '<a href="' + miPerfil + '">Mi Perfil</a>' + aqui;
     }
     /* El sol NO va aqui dentro. El menu solo existe para staff, asi que un
@@ -837,6 +845,12 @@ section.on>.cap-head{background:linear-gradient(90deg,var(--gold-a16),transparen
     m.classList.add('on');
     document.body.classList.add('con-menu');
   }
+
+  document.addEventListener('languageChanged', function () {
+    var m = document.getElementById('rmMenu'); if (m) { m.classList.remove('on'); pintaMenu(lastRol); }
+    pinta();
+    var pl = document.getElementById('play'); if (pl) pl.textContent = run ? T('❚❚  Pausa','❚❚  Pause') : T('▶  Recorrido','▶  Tour');
+  });
 
   var i=-1, t=null, run=false;
   function lista(){ return [].slice.call(document.querySelectorAll('.chapter:not(.hide)')); }
@@ -851,10 +865,10 @@ section.on>.cap-head{background:linear-gradient(90deg,var(--gold-a16),transparen
     document.getElementById('prev').disabled=i<=0;
     document.getElementById('next').disabled=i>=L.length-1;
   }
-  function stop(){ run=false; clearTimeout(t); document.getElementById('play').textContent='▶  Recorrido'; }
+  function stop(){ run=false; clearTimeout(t); document.getElementById('play').textContent = T('▶  Recorrido','▶  Tour'); }
   function tick(){ if(!run) return; var L=lista(); if(i>=L.length-1){stop();return;} show(i+1); t=setTimeout(tick,7000); }
   document.getElementById('play').addEventListener('click',function(){
-    if(run){stop();return;} run=true; this.textContent='❚❚  Pausa';
+    if(run){stop();return;} run=true; this.textContent = T('❚❚  Pausa','❚❚  Pause');
     if(i>=lista().length-1) i=-1; show(i+1); t=setTimeout(tick,7000);
   });
   document.getElementById('prev').addEventListener('click',function(){stop(); if(i>0) show(i-1);});

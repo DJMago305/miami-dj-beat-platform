@@ -2995,7 +2995,7 @@
     path = String(path).toLowerCase();
     var key = '';
     if (path === 'index.html' || path === '' || path === 'index') key = 'home';
-    else if (path === 'rentals.html' || path === 'services.html') key = 'services';
+    else if (path === 'rentals.html') key = 'services';
     else if (path === 'events.html') key = 'events';
     else if (path === 'jobs.html') key = 'jobs';
     else if (path === 'shop.html') key = 'shop';
@@ -4797,7 +4797,7 @@
         return mdjAppendScriptOnce('./js/mdj-event-builder-adapter.js?v=20260514-eb-1a');
       })
       .then(function () {
-        return mdjAppendScriptOnce('./js/mdj-event-builder.js?v=20260603-eb-context-date-bar-1');
+        return mdjAppendScriptOnce('./js/mdj-event-builder.js?v=20260927-bilingue-cart');
       })
       .then(function () {
         return mdjAppendScriptOnce('./js/mdj-event-builder-rentals-bridge.js?v=20260514-eb-1b1');
@@ -4886,7 +4886,7 @@
       (document.head || document.documentElement).appendChild(lk);
     }
 
-    var fragUrl = './mdj-event-cart-root-fragment.html?v=20260603-cart-topbar-read-1';
+    var fragUrl = './mdj-event-cart-root-fragment.html?v=20260927-bilingue-cart';
     fetch(fragUrl, { cache: 'no-store' })
       .then(function (res) {
         if (!res.ok) throw new Error('event cart fragment ' + res.status);

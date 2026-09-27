@@ -2,11 +2,12 @@
 <html lang="es">
 
 <head>
+    <script src="/js/mdj-lang-boot.js?v=20260927-boot"></script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>MDJPRO — Trabaja con nosotros</title>
     <link rel="canonical" href="https://www.miamidjbeat.com/jobs.html" />
-    <link rel="prefetch" href="./mdj-event-cart-root-fragment.html?v=20260531-month-clean-1" as="fetch" crossorigin />
+    <link rel="prefetch" href="./mdj-event-cart-root-fragment.html?v=20260927-bilingue-cart" as="fetch" crossorigin />
     <link rel="prefetch" href="./mdj-event-cart.css?v=20260531-no-fab-1" as="style" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -1924,26 +1925,26 @@
 
                 <!-- CREAR CUENTA form -->
                 <form id="gate-signup-form" class="form" autocomplete="on" onsubmit="gateSignup(event)">
-                    <p class="gate-intent-explainer" style="margin:0 0 12px;padding:10px 12px;border-radius:10px;border:1px solid rgba(197,160,89,0.35);background:rgba(197,160,89,0.08);font-size:12px;line-height:1.45;color:rgba(255,255,255,0.9);">
+                    <p class="gate-intent-explainer" style="margin:0 0 12px;padding:10px 12px;border-radius:10px;border:1px solid rgba(197,160,89,0.35);background:rgba(197,160,89,0.08);font-size:12px;line-height:1.45;color:rgba(255,255,255,0.9);" data-i18n="jobsx-001">
                         Jobs crea o activa un <strong>perfil artístico</strong> para ofrecer tus servicios en Miami DJ Beat. Confirma tu intención antes de registrarte.
                     </p>
                     <label class="gate-intent-confirm" style="display:flex;gap:10px;align-items:flex-start;margin:0 0 12px;font-size:12px;line-height:1.4;cursor:pointer;">
                         <input type="checkbox" id="gate-artist-intent-ack" style="margin-top:2px;flex-shrink:0;">
-                        <span>Confirmo que quiero crear un perfil artístico para ofrecer servicios (no una cuenta Cliente).</span>
+                        <span data-i18n="jobsx-002">Confirmo que quiero crear un perfil artístico para ofrecer servicios (no una cuenta Cliente).</span>
                     </label>
                     <p style="margin:0 0 14px;font-size:11px;line-height:1.4;text-align:center;">
-                        <a href="./login.html?account=client" style="color:var(--gold);font-weight:700;text-decoration:underline;">¿Solo quieres contratar servicios? Crear cuenta Cliente</a>
+                        <a href="./login.html?account=client" style="color:var(--gold);font-weight:700;text-decoration:underline;" data-i18n="jobsx-003">¿Solo quieres contratar servicios? Crear cuenta Cliente</a>
                     </p>
                     <label><span data-i18n="gate-name-label">NOMBRE ARTÍSTICO</span>
                         <input type="text" id="gate-name" required placeholder="DJ Futuro" autocomplete="name">
                     </label>
                     <label><span>EMAIL <span style="color:#ff5555;">*</span></span>
                         <input type="email" id="gate-signup-email" required placeholder="tu@email.com"
-                            autocomplete="email">
+                            autocomplete="email" data-i18n-hold="jobsx-094">
                     </label>
                     <label><span data-i18n="gate-pass-label">CONTRASEÑA <span style="color:#ff5555;">*</span></span>
                         <input type="password" id="gate-signup-pass" required placeholder="Mínimo 6 caracteres"
-                            minlength="6" autocomplete="new-password">
+                            minlength="6" autocomplete="new-password" data-i18n-hold="jobsx-095">
                     </label>
                     <p id="gate-signup-error" style="color:#ff5555;font-size:12px;margin:0;display:none;"></p>
                     <button type="submit" class="btn primary full" id="gate-signup-btn"
@@ -1957,7 +1958,7 @@
                     onsubmit="gateLogin(event)">
                     <label><span>EMAIL</span>
                         <input type="email" id="gate-login-email" required placeholder="tu@email.com"
-                            autocomplete="email">
+                            autocomplete="email" data-i18n-hold="jobsx-094">
                     </label>
                     <label><span data-i18n="gate-pass-label">CONTRASEÑA</span>
                         <input type="password" id="gate-login-pass" required placeholder="••••••••"
@@ -1979,16 +1980,16 @@
             <div class="jobs-role-roles-block" style="max-width:96rem;margin:0 auto 28px;">
                 <div id="mdj-catpick">
                     <div class="mdj-catpick-head">
-                        <h2 class="mdj-catpick-title" id="mdj-catpick-title">Elige tu categoría</h2>
+                        <h2 class="mdj-catpick-title" id="mdj-catpick-title" data-i18n="jobsx-004">Elige tu categoría</h2>
                         <p class="mdj-catpick-hint" id="mdj-catpick-hint"></p>
-                        <button type="button" class="mdj-catpick-open" id="mdj-catpick-open">Ver categorías</button>
+                        <button type="button" class="mdj-catpick-open" id="mdj-catpick-open" data-i18n="jobsx-005">Ver categorías</button>
                     </div>
                     <div id="mdj-cat-subs" hidden></div>
                 </div>
                 <div class="jobs-role-carousel-shell" role="region"
-                    aria-label="Open roles — select one or more; scroll horizontally or use the arrows.">
+                    aria-label="Categorías abiertas — selecciona una o más; desplázate horizontalmente o usa las flechas." data-i18n-aria="jobsx-096">
                     <button type="button" class="jobs-role-carousel-btn" id="jobs-role-carousel-prev"
-                        aria-label="Anterior" onclick="jobsRoleCarouselScroll(-1)">◀</button>
+                        aria-label="Anterior" onclick="jobsRoleCarouselScroll(-1)" data-i18n-aria="jobsx-097">◀</button>
                     <div class="jobs-role-carousel" id="mdj-jobs-v3-carousel" data-mdj-ui-tick-scroll>
                         <div class="jobs-role-carousel-track">
                             <div class="jobs-role-carousel-loop" id="mdj-jobs-v3-loop">
@@ -2004,9 +2005,9 @@
                                     style="background-image:url('./assets/Jobs/DJ.jpg?v=4');background-position:center;"></div>
                                 <div class="role-photo-gradient"></div>
                                 <div class="role-photo-content">
-                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
+                                    <span class="role-selected-badge" data-i18n="jobsx-006">✓ SELECCIONADO</span>
                                     <span class="role-name">DJ</span>
-                                    <span class="role-subtitle">Mezcla · club · evento</span>
+                                    <span class="role-subtitle" data-i18n="jobsx-007">Mezcla · club · evento</span>
                                 </div>
                             </label>
 
@@ -2022,9 +2023,9 @@
                                     style="background-image:url('./assets/Jobs/HORA_LOCA.jpg?v=4');background-position:center 40%;"></div>
                                 <div class="role-photo-gradient"></div>
                                 <div class="role-photo-content">
-                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
+                                    <span class="role-selected-badge" data-i18n="jobsx-006">✓ SELECCIONADO</span>
                                     <span class="role-name">HORA LOCA EXPERIENCE</span>
-                                    <span class="role-subtitle">Paquetes, personajes, robots LED</span>
+                                    <span class="role-subtitle" data-i18n="jobsx-008">Paquetes, personajes, robots LED</span>
                                 </div>
                             </label>
 
@@ -2040,9 +2041,9 @@
                                     style="background-image:url('./assets/Jobs/LIVE_BAND.jpg?v=4');background-position:center;"></div>
                                 <div class="role-photo-gradient"></div>
                                 <div class="role-photo-content">
-                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
-                                    <span class="role-name">MÚSICOS EN VIVO</span>
-                                    <span class="role-subtitle">Saxo, percusión, voz, bandas</span>
+                                    <span class="role-selected-badge" data-i18n="jobsx-006">✓ SELECCIONADO</span>
+                                    <span class="role-name" data-i18n="jobsx-009">MÚSICOS EN VIVO</span>
+                                    <span class="role-subtitle" data-i18n="jobsx-010">Saxo, percusión, voz, bandas</span>
                                 </div>
                             </label>
 
@@ -2058,9 +2059,9 @@
                                     style="background-image:url('./assets/Jobs/FOTO_BOOTH_360.png?v=2');background-position:center;background-size:cover;"></div>
                                 <div class="role-photo-gradient"></div>
                                 <div class="role-photo-content">
-                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
-                                    <span class="role-name">CAPTURA Y VISUALES</span>
-                                    <span class="role-subtitle">Foto, video, VJ, drone, booth 360</span>
+                                    <span class="role-selected-badge" data-i18n="jobsx-006">✓ SELECCIONADO</span>
+                                    <span class="role-name" data-i18n="jobsx-011">CAPTURA Y VISUALES</span>
+                                    <span class="role-subtitle" data-i18n="jobsx-012">Foto, video, VJ, drone, booth 360</span>
                                 </div>
                             </label>
 
@@ -2076,9 +2077,9 @@
                                     style="background-image:url('./assets/Jobs/MC.jpg?v=4');background-position:center;"></div>
                                 <div class="role-photo-gradient"></div>
                                 <div class="role-photo-content">
-                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
-                                    <span class="role-name">MC Y PRESENTADORES</span>
-                                    <span class="role-subtitle">Maestro de ceremonias, animadores</span>
+                                    <span class="role-selected-badge" data-i18n="jobsx-006">✓ SELECCIONADO</span>
+                                    <span class="role-name" data-i18n="jobsx-013">MC Y PRESENTADORES</span>
+                                    <span class="role-subtitle" data-i18n="jobsx-014">Maestro de ceremonias, animadores</span>
                                 </div>
                             </label>
 
@@ -2094,9 +2095,9 @@
                                     style="background-image:url('./assets/Jobs/BARTENDER.jpg?v=4');background-position:center;"></div>
                                 <div class="role-photo-gradient"></div>
                                 <div class="role-photo-content">
-                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
-                                    <span class="role-name">STAFF (EVENTOS)</span>
-                                    <span class="role-subtitle">Bartender, meseros, chef</span>
+                                    <span class="role-selected-badge" data-i18n="jobsx-006">✓ SELECCIONADO</span>
+                                    <span class="role-name" data-i18n="jobsx-015">STAFF (EVENTOS)</span>
+                                    <span class="role-subtitle" data-i18n="jobsx-016">Bartender, meseros, chef</span>
                                 </div>
                             </label>
 
@@ -2112,20 +2113,20 @@
                                     style="background-image:url('./assets/Jobs/PAYASO.jpg?v=4');background-position:center 20%;"></div>
                                 <div class="role-photo-gradient"></div>
                                 <div class="role-photo-content">
-                                    <span class="role-selected-badge">✓ SELECCIONADO</span>
-                                    <span class="role-name">PAYASOS</span>
-                                    <span class="role-subtitle">Show infantil, circo, Santa</span>
+                                    <span class="role-selected-badge" data-i18n="jobsx-006">✓ SELECCIONADO</span>
+                                    <span class="role-name" data-i18n="jobsx-017">PAYASOS</span>
+                                    <span class="role-subtitle" data-i18n="jobsx-018">Show infantil, circo, Santa</span>
                                 </div>
                             </label>
                             </div>
                         </div>
                     </div>
                     <button type="button" class="jobs-role-carousel-btn" id="jobs-role-carousel-next"
-                        aria-label="Siguiente" onclick="jobsRoleCarouselScroll(1)">▶</button>
+                        aria-label="Siguiente" onclick="jobsRoleCarouselScroll(1)" data-i18n-aria="jobsx-098">▶</button>
                 </div>
                 <!-- Nota fuera de la pista con scroll para no romper el bucle infinito (sin tarjeta al final del track). -->
                 <div class="jobs-role-card-catalog-note" role="note"
-                    aria-label="Aviso: las nuevas categorías de este listado las añade solo el equipo interno de Miami DJ Beat. No es un formulario para solicitar alta.">
+                    aria-label="Aviso: las nuevas categorías de este listado las añade solo el equipo interno de Miami DJ Beat. No es un formulario para solicitar alta." data-i18n-aria="jobsx-099">
                     <div class="jobs-role-card-catalog-note-inner">
                         <span class="jobs-role-card-catalog-note-kicker" data-i18n="jobs-role-carousel-catalog-note-kicker">Equipo Miami DJ Beat</span>
                         <span class="jobs-role-card-catalog-note-title" data-i18n="jobs-role-carousel-catalog-note-title">Las nuevas plazas las definimos nosotros; no es un alta público desde aquí.</span>
@@ -2136,7 +2137,7 @@
 
             <div class="level-portal-container">
                 <div id="jobs-portal-roles-strip" class="jobs-portal-roles-strip" role="region"
-                    aria-label="Selected roster categories for subscription">
+                    aria-label="Categorías del roster seleccionadas para la suscripción" data-i18n-aria="jobsx-100">
                     <span class="jobs-portal-roles-strip-kicker" data-i18n="jobs-portal-roles-strip-kicker">Default roster categories</span>
                     <div id="jobs-portal-roles-strip-chips" class="jobs-portal-roles-strip-chips is-empty">
                         <span data-i18n="jobs-portal-roles-strip-empty">Select at least one category above.</span>
@@ -2162,7 +2163,7 @@
                     <div class="jobs-portal-roles-mirror-values jobs-portal-roles-mirror-values--lite" aria-live="polite">—</div>
                     <div style="margin-top:auto;padding-top:16px;">
                         <div style="padding:12px;background:rgba(255,255,255,0.03);border-radius:10px;border:1px solid rgba(255,255,255,0.07);">
-                            <div style="font-size:22px;font-weight:900;color:#fff;">FREE</div>
+                            <div style="font-size:22px;font-weight:900;color:#fff;" data-i18n="jobsx-019">GRATIS</div>
                             <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:2px;"
                                 data-i18n="jobs-lite-price-note">Basic network access</div>
                         </div>
@@ -2180,8 +2181,8 @@
                     <div class="portal-icon-wrap portal-icon-wrap--pro">
                         <span style="font-size:32px;">💼</span>
                     </div>
-                    <h3 class="portal-title">PLAN PRO MENSUAL</h3>
-                    <p class="portal-desc">Cursos + Certificación. Acceso prioritario a contratos Premium y estatus en la Red Élite.
+                    <h3 class="portal-title" data-i18n="jobsx-020">PLAN PRO MENSUAL</h3>
+                    <p class="portal-desc" data-i18n="jobsx-021">Cursos + Certificación. Acceso prioritario a contratos Premium y estatus en la Red Élite.
                         <br><span style="color:var(--gold); font-size:11px; margin-top:5px; display:block;">Recomendado para: DJs, MCs, Cantantes y Live Bands.</span>
                     </p>
                     <p class="jobs-portal-roles-mirror-label" data-i18n="jobs-portal-card-roles-label">Your roster categories</p>
@@ -2189,12 +2190,12 @@
                     <div style="margin-top:auto;padding-top:16px;">
                         <div style="padding:12px;background:rgba(197,160,89,0.06);border-radius:10px;border:1px solid rgba(197,160,89,0.2);">
                             <span id="portal-card-price-monthly" style="font-size:22px;font-weight:900;color:#fff;">$100</span>
-                            <span style="font-size:12px;color:rgba(255,255,255,0.4);">/mes</span>
+                            <span style="font-size:12px;color:rgba(255,255,255,0.4);" data-i18n="jobsx-022">/mes</span>
                         </div>
                         <button type="button"
                             style="margin-top:12px;width:100%;padding:13px;background:var(--gold);border:none;border-radius:10px;color:#000;font-size:12px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:opacity 0.2s;"
                             onmouseenter="this.style.opacity='0.85'" onmouseleave="this.style.opacity='1'"
-                            onclick="event.stopPropagation(); selectPlan(this.closest('.level-portal'), 'pro_monthly')">
+                            onclick="event.stopPropagation(); selectPlan(this.closest('.level-portal'), 'pro_monthly')" data-i18n="jobsx-023">
                             ⚡ ELEGIR MENSUAL
                         </button>
                     </div>
@@ -2211,8 +2212,8 @@
                     <div class="portal-icon-wrap portal-icon-wrap--pro">
                         <span style="font-size:32px;">🏆</span>
                     </div>
-                    <h3 class="portal-title">PLAN PRO 6 MESES</h3>
-                    <p class="portal-desc">Cursos + Certificación. Acceso prioritario a contratos Premium y estatus en la Red Élite.
+                    <h3 class="portal-title" data-i18n="jobsx-024">PLAN PRO 6 MESES</h3>
+                    <p class="portal-desc" data-i18n="jobsx-025">Cursos + Certificación. Acceso prioritario a contratos Premium y estatus en la Red Élite.
                         <br><span style="color:var(--gold); font-size:11px; margin-top:5px; display:block;">🎁 2 meses gratis vs mensual.</span>
                     </p>
                     <p class="jobs-portal-roles-mirror-label" data-i18n="jobs-portal-card-roles-label">Your roster categories</p>
@@ -2220,12 +2221,12 @@
                     <div style="margin-top:auto;padding-top:16px;">
                         <div style="padding:12px;background:rgba(197,160,89,0.06);border-radius:10px;border:1px solid rgba(197,160,89,0.2);">
                             <span id="portal-card-price-6mo" style="font-size:22px;font-weight:900;color:#fff;">$480</span>
-                            <span style="font-size:12px;color:rgba(255,255,255,0.4);">/6 meses</span>
+                            <span style="font-size:12px;color:rgba(255,255,255,0.4);" data-i18n="jobsx-026">/6 meses</span>
                         </div>
                         <button type="button"
                             style="margin-top:12px;width:100%;padding:13px;background:var(--gold);border:none;border-radius:10px;color:#000;font-size:12px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:opacity 0.2s;"
                             onmouseenter="this.style.opacity='0.85'" onmouseleave="this.style.opacity='1'"
-                            onclick="event.stopPropagation(); selectPlan(this.closest('.level-portal'), 'pro_6mo')">
+                            onclick="event.stopPropagation(); selectPlan(this.closest('.level-portal'), 'pro_6mo')" data-i18n="jobsx-027">
                             ⚡ ELEGIR 6 MESES
                         </button>
                     </div>
@@ -2242,8 +2243,8 @@
                     <div class="portal-icon-wrap portal-icon-wrap--pro">
                         <span style="font-size:32px;">👑</span>
                     </div>
-                    <h3 class="portal-title">PLAN PRO ANUAL</h3>
-                    <p class="portal-desc">Cursos + Certificación. Acceso prioritario a contratos Premium y estatus en la Red Élite.
+                    <h3 class="portal-title" data-i18n="jobsx-028">PLAN PRO ANUAL</h3>
+                    <p class="portal-desc" data-i18n="jobsx-029">Cursos + Certificación. Acceso prioritario a contratos Premium y estatus en la Red Élite.
                         <br><span style="color:var(--gold); font-size:11px; margin-top:5px; display:block;">🎁 3 meses gratis vs mensual.</span>
                     </p>
                     <p class="jobs-portal-roles-mirror-label" data-i18n="jobs-portal-card-roles-label">Your roster categories</p>
@@ -2251,12 +2252,12 @@
                     <div style="margin-top:auto;padding-top:16px;">
                         <div style="padding:12px;background:rgba(197,160,89,0.06);border-radius:10px;border:1px solid rgba(197,160,89,0.2);">
                             <span id="portal-card-price-annual" style="font-size:22px;font-weight:900;color:var(--gold);">$840</span>
-                            <span style="font-size:12px;color:rgba(255,255,255,0.4);">/año</span>
+                            <span style="font-size:12px;color:rgba(255,255,255,0.4);" data-i18n="jobsx-030">/año</span>
                         </div>
                         <button type="button"
                             style="margin-top:12px;width:100%;padding:13px;background:var(--gold);border:none;border-radius:10px;color:#000;font-size:12px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:opacity 0.2s;"
                             onmouseenter="this.style.opacity='0.85'" onmouseleave="this.style.opacity='1'"
-                            onclick="event.stopPropagation(); selectPlan(this.closest('.level-portal'), 'pro_annual')">
+                            onclick="event.stopPropagation(); selectPlan(this.closest('.level-portal'), 'pro_annual')" data-i18n="jobsx-031">
                             ⚡ ELEGIR ANUAL
                         </button>
                     </div>
@@ -2273,17 +2274,17 @@
                         style="display:flex;border:1px solid rgba(197,160,89,0.3);border-radius:10px;overflow:hidden;margin-bottom:12px;">
                         <button type="button" class="jobs-billing-period-btn" id="billing-monthly-btn"
                             data-billing-period="monthly"
-                            style="flex:1;padding:9px;background:var(--gold);color:#000;font-weight:900;font-size:11px;letter-spacing:1px;border:none;cursor:pointer;transition:all 0.2s;">
+                            style="flex:1;padding:9px;background:var(--gold);color:#000;font-weight:900;font-size:11px;letter-spacing:1px;border:none;cursor:pointer;transition:all 0.2s;" data-i18n="jobsx-032">
                             MENSUAL
                         </button>
                         <button type="button" class="jobs-billing-period-btn" id="billing-semestral-btn"
                             data-billing-period="semestral"
-                            style="flex:1;padding:9px;background:transparent;color:rgba(255,255,255,0.4);font-weight:800;font-size:11px;letter-spacing:1px;border:none;cursor:pointer;transition:all 0.2s;border-left:1px solid rgba(197,160,89,0.2);border-right:1px solid rgba(197,160,89,0.2);">
+                            style="flex:1;padding:9px;background:transparent;color:rgba(255,255,255,0.4);font-weight:800;font-size:11px;letter-spacing:1px;border:none;cursor:pointer;transition:all 0.2s;border-left:1px solid rgba(197,160,89,0.2);border-right:1px solid rgba(197,160,89,0.2);" data-i18n="jobsx-033">
                             6 MESES
                         </button>
                         <button type="button" class="jobs-billing-period-btn" id="billing-annual-btn"
                             data-billing-period="annual"
-                            style="flex:1;padding:9px;background:transparent;color:rgba(255,255,255,0.4);font-weight:800;font-size:11px;letter-spacing:1px;border:none;cursor:pointer;transition:all 0.2s;">
+                            style="flex:1;padding:9px;background:transparent;color:rgba(255,255,255,0.4);font-weight:800;font-size:11px;letter-spacing:1px;border:none;cursor:pointer;transition:all 0.2s;" data-i18n="jobsx-034">
                             ANUAL
                         </button>
                     </div>
@@ -2291,7 +2292,7 @@
                         style="padding:12px;background:rgba(197,160,89,0.06);border-radius:10px;border:1px solid rgba(197,160,89,0.15);">
                         <div id="price-monthly-display">
                             <span id="jobs-pro-price-monthly-val" style="font-size:26px;font-weight:900;color:#fff;">$100</span>
-                            <span style="font-size:13px;color:rgba(255,255,255,0.4);">/mes</span>
+                            <span style="font-size:13px;color:rgba(255,255,255,0.4);" data-i18n="jobsx-022">/mes</span>
                         </div>
                         <div id="price-semestral-display" style="display:none;">
                             <span id="jobs-pro-price-semestral-val" style="font-size:26px;font-weight:900;color:#fff;">$480</span>
@@ -2312,17 +2313,17 @@
                     </div>
                     <div style="margin-top:10px;">
                         <input type="text" id="referral-code-input" placeholder="🔗 Código de referido (opcional)"
-                            style="width:100%;padding:9px 12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;color:#fff;font-size:12px;box-sizing:border-box;font-family:inherit;">
+                            style="width:100%;padding:9px 12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;color:#fff;font-size:12px;box-sizing:border-box;font-family:inherit;" data-i18n-hold="jobsx-101">
                         <div id="referral-discount-note"
-                            style="display:none;font-size:11px;color:#22c55e;margin-top:5px;font-weight:700;">✅
+                            style="display:none;font-size:11px;color:#22c55e;margin-top:5px;font-weight:700;" data-i18n="jobsx-035">✅
                             Código válido — $20 de descuento en tu primer mes</div>
                     </div>
                     <input type="hidden" id="billing-period" value="monthly">
                     <div style="margin:14px 0 12px;padding:12px 14px;background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.3);border-radius:10px;display:flex;align-items:flex-start;gap:10px;">
                         <span style="font-size:18px;line-height:1;">🎁</span>
                         <div>
-                            <div style="font-size:11px;font-weight:900;letter-spacing:1px;color:var(--gold);margin-bottom:3px;">INCLUIDO CON EL PLAN PRO</div>
-                            <div style="font-size:12px;color:rgba(255,255,255,0.75);line-height:1.5;">
+                            <div style="font-size:11px;font-weight:900;letter-spacing:1px;color:var(--gold);margin-bottom:3px;" data-i18n="jobsx-036">INCLUIDO CON EL PLAN PRO</div>
+                            <div style="font-size:12px;color:rgba(255,255,255,0.75);line-height:1.5;" data-i18n="jobsx-037">
                                 Acceso completo a la plataforma MDJ <strong style="color:#fff;">+</strong> descarga de la app <strong style="color:var(--gold);">MDJPRO</strong> para Mac — herramienta profesional de gestión de DJ.
                             </div>
                         </div>
@@ -2365,12 +2366,12 @@
         <section class="section hidden" id="pro-form-section">
             <div class="tile"
                 style="max-width: 900px; margin: 0 auto; padding: 60px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05); border-radius: 40px; backdrop-filter: blur(20px);">
-                <div class="form-section-title">REGISTRO DE AUTORIDAD</div>
+                <div class="form-section-title" data-i18n="jobsx-038">REGISTRO DE AUTORIDAD</div>
 
                 <form id="employment-form" class="form" novalidate> <!-- Error banner -->
                     <div id="form-errors"
                         style="display:none;background:rgba(220,38,38,0.1);border:1px solid rgba(220,38,38,0.4);border-radius:14px;padding:16px 20px;margin-bottom:24px;">
-                        <div style="font-weight:800;font-size:13px;letter-spacing:1px;color:#ff5555;margin-bottom:8px;">
+                        <div style="font-weight:800;font-size:13px;letter-spacing:1px;color:#ff5555;margin-bottom:8px;" data-i18n="jobsx-039">
                             COMPLETA LOS SIGUIENTES CAMPOS:</div>
                         <ul id="form-errors-list"
                             style="margin:0;padding-left:18px;color:#ff7777;font-size:13px;line-height:1.8;"></ul>
@@ -2378,61 +2379,71 @@
 
                     <!-- Identity Data -->
                     <div class="grid3">
-                        <label><span>FIRST NAME <span style="color:#ff5555;">*</span></span>
-                            <input type="text" id="first-name" required placeholder="Tu nombre legal">
+                        <label><span data-i18n="jobsx-040">NOMBRE <span style="color:#ff5555;">*</span></span>
+                            <input type="text" id="first-name" required placeholder="Tu nombre legal" data-i18n-hold="jobsx-102">
                         </label>
-                        <label><span>INITIAL <span
-                                    style="color:var(--muted); font-size:10px; font-weight:400; text-transform:none; letter-spacing:0;">(opcional)</span></span>
+                        <label><span data-i18n="jobsx-041">INICIAL <span style="color:var(--muted); font-size:10px; font-weight:400; text-transform:none; letter-spacing:0;">(opcional)</span></span>
                             <input type="text" id="middle-initial" maxlength="1" placeholder="—">
                         </label>
-                        <label><span>LAST NAME <span style="color:#ff5555;">*</span></span>
-                            <input type="text" id="last-name" required placeholder="Tu apellido legal">
+                        <label><span data-i18n="jobsx-042">APELLIDO <span style="color:#ff5555;">*</span></span>
+                            <input type="text" id="last-name" required placeholder="Tu apellido legal" data-i18n-hold="jobsx-103">
                         </label>
                     </div>
 
                     <div class="grid2" style="margin-top: 24px;">
-                        <label><span>FECHA DE NACIMIENTO <span style="color:#ff5555;">*</span></span>
+                        <label><span data-i18n="jobsx-043">FECHA DE NACIMIENTO <span style="color:#ff5555;">*</span></span>
                             <div style="display:flex; gap:6px; margin-top:8px;">
                                 <select id="birth-day" required
                                     style="flex:1; background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(255,255,255,0.15); border-radius:12px; padding:12px; font-size:14px; color-scheme:dark;">
-                                    <option value="">Día</option>
-                                    ${Array.from({length:31}, (_,i)=>i+1).map(d => `<option
-                                        value="${String(d).padStart(2,'0')}">${d}</option>`).join('')}
+                                    <option value="" data-i18n="jobsx-044">Día</option>
                                 </select>
                                 <select id="birth-month" required
                                     style="flex:2; background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(255,255,255,0.15); border-radius:12px; padding:12px; font-size:14px; color-scheme:dark;">
-                                    <option value="">Mes</option>
-                                    <option value="01">Enero</option>
-                                    <option value="02">Febrero</option>
-                                    <option value="03">Marzo</option>
-                                    <option value="04">Abril</option>
-                                    <option value="05">Mayo</option>
-                                    <option value="06">Junio</option>
-                                    <option value="07">Julio</option>
-                                    <option value="08">Agosto</option>
-                                    <option value="09">Septiembre</option>
-                                    <option value="10">Octubre</option>
-                                    <option value="11">Noviembre</option>
-                                    <option value="12">Diciembre</option>
+                                    <option value="" data-i18n="jobsx-045">Mes</option>
+                                    <option value="01" data-i18n="jobsx-046">Enero</option>
+                                    <option value="02" data-i18n="jobsx-047">Febrero</option>
+                                    <option value="03" data-i18n="jobsx-048">Marzo</option>
+                                    <option value="04" data-i18n="jobsx-049">Abril</option>
+                                    <option value="05" data-i18n="jobsx-050">Mayo</option>
+                                    <option value="06" data-i18n="jobsx-051">Junio</option>
+                                    <option value="07" data-i18n="jobsx-052">Julio</option>
+                                    <option value="08" data-i18n="jobsx-053">Agosto</option>
+                                    <option value="09" data-i18n="jobsx-054">Septiembre</option>
+                                    <option value="10" data-i18n="jobsx-055">Octubre</option>
+                                    <option value="11" data-i18n="jobsx-056">Noviembre</option>
+                                    <option value="12" data-i18n="jobsx-057">Diciembre</option>
                                 </select>
                                 <select id="birth-year" required
                                     style="flex:1.5; background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(255,255,255,0.15); border-radius:12px; padding:12px; font-size:14px; color-scheme:dark;">
-                                    <option value="">Año</option>
-                                    ${Array.from({length:60}, (_,i)=>new Date().getFullYear()-18-i).map(y => `<option
-                                        value="${y}">${y}</option>`).join('')}
+                                    <option value="" data-i18n="jobsx-058">Año</option>
                                 </select>
                             </div>
+                            <script>
+                                /* Día (01–31) y año (mayores de 18: desde hace 18 años hacia atrás, 60 años) de nacimiento.
+                                   Antes había aquí texto de plantilla `${Array.from…}` dentro del HTML estático y ningún código llenaba los
+                                   desplegables: solo se veían «Día»/«${d}» y «Año»/«${y}», y como son obligatorios no se podía completar la fecha. */
+                                (function () {
+                                    var d = document.getElementById('birth-day'), y = document.getElementById('birth-year'), i, o;
+                                    if (d && d.options.length <= 1) {
+                                        for (i = 1; i <= 31; i++) { o = document.createElement('option'); o.value = (i < 10 ? '0' : '') + i; o.textContent = String(i); d.appendChild(o); }
+                                    }
+                                    if (y && y.options.length <= 1) {
+                                        var top = new Date().getFullYear() - 18;
+                                        for (i = 0; i < 60; i++) { o = document.createElement('option'); o.value = String(top - i); o.textContent = String(top - i); y.appendChild(o); }
+                                    }
+                                })();
+                            </script>
                         </label>
-                        <label><span>CIUDAD DE RESIDENCIA <span style="color:#ff5555;">*</span></span>
-                            <input type="text" id="job-city" required placeholder="Ej: Miami" autocomplete="address-level2">
+                        <label><span data-i18n="jobsx-059">CIUDAD DE RESIDENCIA <span style="color:#ff5555;">*</span></span>
+                            <input type="text" id="job-city" required placeholder="Ej: Miami" autocomplete="address-level2" data-i18n-hold="jobsx-104">
                         </label>
                     </div>
 
                     <div class="grid2" style="margin-top: 24px;">
-                        <label><span>ESTADO O PROVINCIA <span style="color:#ff5555;">*</span></span>
+                        <label><span data-i18n="jobsx-060">ESTADO O PROVINCIA <span style="color:#ff5555;">*</span></span>
                             <select id="job-state" name="address-level1" required autocomplete="address-level1"
                                 style="width:100%;background:rgba(255,255,255,0.05);color:#fff;border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:12px;font-size:14px;color-scheme:dark;cursor:pointer;-webkit-appearance:menulist;appearance:auto;pointer-events:auto;position:relative;z-index:1;">
-                                <option value="">— Seleccionar —</option>
+                                <option value="" data-i18n="jobsx-061">— Seleccionar —</option>
                             </select>
                         </label>
                         <label aria-hidden="true" style="visibility:hidden;pointer-events:none;"><span>&nbsp;</span>
@@ -2442,26 +2453,24 @@
 
                     <div class="grid2" style="margin-top: 30px;">
                         <label>
-                            <span>STAGE NAME / NOMBRE ARTÍSTICO <span
-                                    style="color:var(--muted); font-size:10px; font-weight:400; text-transform:none; letter-spacing:0;">(opcional
-                                    — si se omite, se usará tu nombre oficial)</span></span>
-                            <input type="text" id="stage-name" placeholder="Ej: DJ Futuro">
+                            <span data-i18n="jobsx-062">NOMBRE ARTÍSTICO <span style="color:var(--muted); font-size:10px; font-weight:400; text-transform:none; letter-spacing:0;">(opcional — si se omite, se usará tu nombre oficial)</span></span>
+                            <input type="text" id="stage-name" placeholder="Ej: DJ Futuro" data-i18n-hold="jobsx-105">
                         </label>
-                        <label><span>NEURAL EMAIL <span style="color:#ff5555;">*</span></span>
+                        <label><span data-i18n="jobsx-063">EMAIL NEURAL <span style="color:#ff5555;">*</span></span>
                             <input type="email" id="job-email" required placeholder="vision@2027.com">
                         </label>
                     </div>
 
                     <div class="grid2" style="margin-top: 24px;">
                         <label>
-                            <span>CONTRASEÑA <span style="color:#ff5555;">*</span></span>
+                            <span data-i18n="jobsx-064">CONTRASEÑA <span style="color:#ff5555;">*</span></span>
                             <input type="password" id="job-password" required minlength="8"
-                                placeholder="Mínimo 8 caracteres" autocomplete="new-password">
+                                placeholder="Mínimo 8 caracteres" autocomplete="new-password" data-i18n-hold="jobsx-106">
                         </label>
                         <label>
-                            <span>CONFIRMAR CONTRASEÑA <span style="color:#ff5555;">*</span></span>
+                            <span data-i18n="jobsx-065">CONFIRMAR CONTRASEÑA <span style="color:#ff5555;">*</span></span>
                             <input type="password" id="job-password-confirm" required minlength="8"
-                                placeholder="Repite tu contraseña" autocomplete="new-password">
+                                placeholder="Repite tu contraseña" autocomplete="new-password" data-i18n-hold="jobsx-107">
                         </label>
                     </div>
 
@@ -2469,10 +2478,10 @@
                     <div
                         style="margin-top: 30px; background: rgba(255,255,255,0.02); padding: 24px 28px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05);">
                         <span
-                            style="display:block; margin-bottom:4px; font-weight:800; color: var(--gold); letter-spacing: 2px; font-size:12px;">PROTOCOLOS
+                            style="display:block; margin-bottom:4px; font-weight:800; color: var(--gold); letter-spacing: 2px; font-size:12px;" data-i18n="jobsx-066">PROTOCOLOS
                             DE LENGUAJE <span style="color:#ff5555;">*</span></span>
                         <span
-                            style="display:block; margin-bottom:14px; font-size:10px; color:rgba(255,255,255,0.35); letter-spacing:1px;">Selecciona
+                            style="display:block; margin-bottom:14px; font-size:10px; color:rgba(255,255,255,0.35); letter-spacing:1px;" data-i18n="jobsx-067">Selecciona
                             al menos un idioma</span>
                         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
                             <label style="display:flex; align-items:center; gap:12px; cursor:pointer;">
@@ -2505,7 +2514,7 @@
                     <!-- Foto de Perfil Simple -->
                     <div style="margin-top: 40px; margin-bottom: 20px;">
                         <span
-                            style="display:block; margin-bottom:15px; font-weight:800; color: var(--gold); letter-spacing: 2px; font-size: 13px;">FOTO
+                            style="display:block; margin-bottom:15px; font-weight:800; color: var(--gold); letter-spacing: 2px; font-size: 13px;" data-i18n="jobsx-068">FOTO
                             DE PERFIL PROFESIONAL <span style="color:#ff5555;">*</span> <span
                                 style="color:var(--muted); font-size:10px; font-weight:400; text-transform:none; letter-spacing:0;">(es
                                 tu imagen pública en la plataforma)</span></span>
@@ -2519,19 +2528,19 @@
                                     style="width: 100%; height: 100%; object-fit: cover; display: none; position: absolute; top:0; left:0;">
                             </div>
                             <div>
-                                <h4 style="margin: 0 0 10px; font-size: 16px;">Sube tu Avatar DJ</h4>
-                                <p style="margin: 0 0 8px; font-size: 13px; color: var(--muted); max-width: 320px;">
+                                <h4 style="margin: 0 0 10px; font-size: 16px;" data-i18n="jobsx-069">Sube tu Avatar DJ</h4>
+                                <p style="margin: 0 0 8px; font-size: 13px; color: var(--muted); max-width: 320px;" data-i18n="jobsx-070">
                                     Tu imagen principal en la plataforma élite. Formato cuadrado recomendado.
                                 </p>
                                 <p
-                                    style="margin: 0 0 15px; font-size: 11px; color: rgba(255,80,80,0.85); max-width: 320px; line-height: 1.5;">
+                                    style="margin: 0 0 15px; font-size: 11px; color: rgba(255,80,80,0.85); max-width: 320px; line-height: 1.5;" data-i18n="jobsx-071">
                                     ⚠️ <strong>POLÍTICA DE IMAGEN:</strong> La foto debe ser limpia — sin nombres,
                                     marcas, logos ni publicidad de ningún tipo. El incumplimiento constituye una
                                     <strong>violación</strong> y resultará en el rechazo de la solicitud.
                                 </p>
                                 <button type="button" class="btn"
                                     onclick="document.getElementById('profile-photo-input').click()"
-                                    style="padding: 10px 20px; font-size: 12px; border-radius: 8px; background: rgba(197, 160, 89, 0.1); color: var(--gold); border: 1px solid var(--gold);">SELECCIONAR
+                                    style="padding: 10px 20px; font-size: 12px; border-radius: 8px; background: rgba(197, 160, 89, 0.1); color: var(--gold); border: 1px solid var(--gold);" data-i18n="jobsx-072">SELECCIONAR
                                     FOTO</button>
                             </div>
                         </div>
@@ -2540,7 +2549,7 @@
                     <input type="file" id="cover-photo-input" accept="image/*" style="display: none;">
                     <input type="file" id="profile-photo-input" accept="image/*" style="display: none;">
 
-                    <div class="form-section-title">BIOGRAFÍA</div>
+                    <div class="form-section-title" data-i18n="jobsx-073">BIOGRAFÍA</div>
 
                     <div
                         style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:20px;padding:32px;margin-bottom:40px;">
@@ -2550,7 +2559,7 @@
                             style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:30px;padding-bottom:24px;border-bottom:1px solid rgba(255,255,255,0.07);">
                             <div>
                                 <div
-                                    style="font-size:11px;font-weight:800;letter-spacing:2px;color:rgba(255,255,255,0.4);text-transform:uppercase;margin-bottom:8px;">
+                                    style="font-size:11px;font-weight:800;letter-spacing:2px;color:rgba(255,255,255,0.4);text-transform:uppercase;margin-bottom:8px;" data-i18n="jobsx-074">
                                     Idioma en que escribes tu bio</div>
                                 <select id="bio-language"
                                     style="background:#111;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:10px 14px;color:#fff;font-size:14px;font-family:inherit;min-width:200px;">
@@ -2564,8 +2573,8 @@
                             </div>
                             <label style="display:flex;align-items:center;gap:14px;cursor:pointer;">
                                 <div>
-                                    <div style="font-size:14px;font-weight:700;color:#fff;">Traducción automática</div>
-                                    <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:2px;">Muestra tu
+                                    <div style="font-size:14px;font-weight:700;color:#fff;" data-i18n="jobsx-075">Traducción automática</div>
+                                    <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:2px;" data-i18n="jobsx-076">Muestra tu
                                         bio en el idioma del visitante</div>
                                 </div>
                                 <div style="position:relative;width:48px;height:26px;flex-shrink:0;">
@@ -2585,7 +2594,7 @@
                         <div style="margin-bottom:24px;">
                             <div
                                 style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                                <label for="bio-short" style="font-size:14px;font-weight:700;color:#fff;">Biografía
+                                <label for="bio-short" style="font-size:14px;font-weight:700;color:#fff;" data-i18n="jobsx-077">Biografía
                                     corta</label>
                                 <span id="bio-short-count" style="font-size:12px;color:rgba(255,255,255,0.35);">0 /
                                     500</span>
@@ -2595,14 +2604,14 @@
                                 oninput="updateBioCount('bio-short','bio-short-count',500)"
                                 style="width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:14px 16px;color:#fff;font-size:14px;line-height:1.6;resize:vertical;font-family:inherit;box-sizing:border-box;outline:none;transition:border-color .2s;"
                                 onfocus="this.style.borderColor='var(--gold)'"
-                                onblur="this.style.borderColor='rgba(255,255,255,0.1)'"></textarea>
+                                onblur="this.style.borderColor='rgba(255,255,255,0.1)'" data-i18n-hold="jobsx-108"></textarea>
                         </div>
 
                         <!-- Biografía larga -->
                         <div>
                             <div
                                 style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                                <label for="bio-long" style="font-size:14px;font-weight:700;color:#fff;">Biografía
+                                <label for="bio-long" style="font-size:14px;font-weight:700;color:#fff;" data-i18n="jobsx-078">Biografía
                                     larga</label>
                                 <span id="bio-long-count" style="font-size:12px;color:rgba(255,255,255,0.35);">0 /
                                     10000</span>
@@ -2612,7 +2621,7 @@
                                 oninput="updateBioCount('bio-long','bio-long-count',10000)"
                                 style="width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:14px 16px;color:#fff;font-size:14px;line-height:1.6;resize:vertical;font-family:inherit;box-sizing:border-box;outline:none;transition:border-color .2s;"
                                 onfocus="this.style.borderColor='var(--gold)'"
-                                onblur="this.style.borderColor='rgba(255,255,255,0.1)'"></textarea>
+                                onblur="this.style.borderColor='rgba(255,255,255,0.1)'" data-i18n-hold="jobsx-109"></textarea>
                         </div>
                     </div>
 
@@ -2629,31 +2638,29 @@
                     <div class="experience-helper"
                         style="background: rgba(255,255,255,0.02); border-radius: 30px; padding: 40px; border: 1px solid rgba(255,255,255,0.05);">
                         <p
-                            style="font-size: 13px; color: var(--gold); margin-bottom: 30px; font-weight: 800; letter-spacing: 2px;">
+                            style="font-size: 13px; color: var(--gold); margin-bottom: 30px; font-weight: 800; letter-spacing: 2px;" data-i18n="jobsx-079">
                             ASISTENTE DE DATOS: AÑADIR EXPERIENCIA ESPECÍFICA
                         </p>
                         <div id="experience-list">
                             <div id="exp-ghost-card" class="ghost-card"
-                                style="border-radius: 20px; border: 1px dashed rgba(255,255,255,0.2); background: rgba(255,255,255,0.01); padding: 25px; color: rgba(255,255,255,0.5); font-size: 14px; margin-bottom: 20px;">
-                                DATABASE EMPTY. <br> Use the (+) toggle to initialize experience logs.
-                            </div>
+                                style="border-radius: 20px; border: 1px dashed rgba(255,255,255,0.2); background: rgba(255,255,255,0.01); padding: 25px; color: rgba(255,255,255,0.5); font-size: 14px; margin-bottom: 20px;" data-i18n="jobsx-080">BASE DE DATOS VACÍA. <br> Usa el botón (+) para iniciar los registros de experiencia.</div>
                         </div>
                         <button type="button" onclick="addExperienceEntry()"
                             style="width: 60px; height: 60px; border-radius: 20px; font-size: 30px; background: rgba(197, 160, 89, 0.1); border: 1px solid var(--gold); color: var(--gold); transition: all 0.3s;"
                             onmouseover="this.style.transform='rotate(90deg) scale(1.1)'; this.style.background='var(--gold)'; this.style.color='#000';"
                             onmouseout="this.style.transform=''; this.style.background='rgba(197, 160, 89, 0.1)'; this.style.color='var(--gold)';"
-                            title="Añadir Experiencia">+</button>
+                            title="Añadir Experiencia" data-i18n-title="jobsx-110">+</button>
                     </div>
             </div>
 
             <div
                 style="margin-top:50px; padding: 50px; background: rgba(197,160,89,0.03); border-radius: 40px; border: 1px solid rgba(197,160,89,0.2);">
-                <div class="form-section-title">EQUIPAMIENTO & TECH RIDER</div>
+                <div class="form-section-title" data-i18n="jobsx-081">EQUIPAMIENTO & TECH RIDER</div>
 
                 <!-- CONTROLLERS -->
                 <div style="margin-bottom:30px;">
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:15px;">
-                        <span style="font-weight:900; font-size:14px; letter-spacing: 2px;">CONSOLAS /
+                        <span style="font-weight:900; font-size:14px; letter-spacing: 2px;" data-i18n="jobsx-082">CONSOLAS /
                             HARDWARE</span>
                         <button type="button"
                             onclick="addTechItem('controllers-list','controlador','Ej: CDJ-3000 / DJM-A9')"
@@ -2673,7 +2680,7 @@
                 <!-- SOFTWARE -->
                 <div style="margin-bottom:30px;">
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:15px;">
-                        <span style="font-weight:900; font-size:14px; letter-spacing: 2px;">SOFTWARE DE DJ</span>
+                        <span style="font-weight:900; font-size:14px; letter-spacing: 2px;" data-i18n="jobsx-083">SOFTWARE DE DJ</span>
                         <button type="button"
                             onclick="addTechItem('software-list','software','Ej: Serato DJ Pro / Rekordbox')"
                             style="background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(255,255,255,0.1); border-radius:10px; width:40px; height:40px; cursor:pointer; font-size:20px;">+</button>
@@ -2682,7 +2689,7 @@
                         <div class="tech-item-row"
                             style="display:flex; gap:12px; margin-bottom:12px; align-items:center;">
                             <input type="text" class="tech-software" placeholder="Ej: Serato DJ Pro / Rekordbox"
-                                style="flex:1;">
+                                style="flex:1;" data-i18n-hold="jobsx-111">
                             <button type="button" onclick="removeTechItem(this)"
                                 style="background:rgba(255,0,0,0.1); color:#ff5555; border:1px solid rgba(255,0,0,0.2); border-radius:10px; width:40px; height:40px; cursor:pointer;">−</button>
                         </div>
@@ -2692,7 +2699,7 @@
                 <!-- AUDIO & EXTRAS -->
                 <div style="margin-bottom:30px;">
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:15px;">
-                        <span style="font-weight:900; font-size:14px; letter-spacing: 2px;">SISTEMA DE AUDIO /
+                        <span style="font-weight:900; font-size:14px; letter-spacing: 2px;" data-i18n="jobsx-084">SISTEMA DE AUDIO /
                             EXTRA</span>
                         <button type="button"
                             onclick="addTechItem('extra-list','extra','Ej: Monitores KRK, Micrófono Shure SM58')"
@@ -2702,7 +2709,7 @@
                         <div class="tech-item-row"
                             style="display:flex; gap:12px; margin-bottom:12px; align-items:center;">
                             <input type="text" class="tech-extra" placeholder="Ej: Monitores, Interfaces, Micrófonos"
-                                style="flex:1;">
+                                style="flex:1;" data-i18n-hold="jobsx-112">
                             <button type="button" onclick="removeTechItem(this)"
                                 style="background:rgba(255,0,0,0.1); color:#ff5555; border:1px solid rgba(255,0,0,0.2); border-radius:10px; width:40px; height:40px; cursor:pointer;">−</button>
                         </div>
@@ -2712,13 +2719,13 @@
                 <!-- Full Set Photo Policy -->
                 <div style="margin-top:40px; padding-top:30px; border-top:1px solid rgba(255,255,255,0.05);">
                     <span
-                        style="font-weight:900; font-size:14px; display:block; margin-bottom:10px; letter-spacing: 1px;">EVIDENCIA
+                        style="font-weight:900; font-size:14px; display:block; margin-bottom:10px; letter-spacing: 1px;" data-i18n="jobsx-085">EVIDENCIA
                         VISUAL DEL SET (HI-RES)</span>
                     <div style="display:flex; align-items:center; gap:20px;">
                         <input type="file" id="set-photo-input" accept="image/*" style="display:none;"
                             onchange="previewSetPhoto(this)">
                         <button type="button" onclick="document.getElementById('set-photo-input').click()"
-                            style="background:rgba(255,255,255,0.05); color:var(--gold); border:1px solid var(--gold); border-radius:12px; padding:15px 30px; font-weight:800; cursor:pointer; letter-spacing: 1px;">SUBIR
+                            style="background:rgba(255,255,255,0.05); color:var(--gold); border:1px solid var(--gold); border-radius:12px; padding:15px 30px; font-weight:800; cursor:pointer; letter-spacing: 1px;" data-i18n="jobsx-086">SUBIR
                             SET COMPLETO</button>
                         <img loading="lazy" id="set-photo-thumb" src="" alt=""
                             style="display:none; width:120px; height:80px; object-fit:cover; border-radius:15px; border:1px solid var(--gold);">
@@ -2735,14 +2742,14 @@
             <!-- Redes Sociales -->
             <div
                 style="margin-top:50px; padding: 50px; background: rgba(0,0,0,0.3); border-radius: 40px; border: 1px solid rgba(255,255,255,0.05);">
-                <div class="form-section-title">REDES SOCIALES &amp; MÚSICA <span
+                <div class="form-section-title" data-i18n="jobsx-087">REDES SOCIALES &amp; MÚSICA <span
                         style="color:#ff5555; font-size:14px;">*</span></div>
-                <p style="margin: -20px 0 30px; font-size: 12px; color: var(--muted);">Completa al menos una red
+                <p style="margin: -20px 0 30px; font-size: 12px; color: var(--muted);" data-i18n="jobsx-088">Completa al menos una red
                     social
                     o plataforma de música — aparecerán en tu perfil público.</p>
                 <div class="grid2">
                     <label><span>INSTAGRAM</span>
-                        <input type="text" id="social-instagram" placeholder="@usuario">
+                        <input type="text" id="social-instagram" placeholder="@usuario" data-i18n-hold="jobsx-113">
                     </label>
                     <label><span>FACEBOOK</span>
                         <input type="text" id="social-facebook" placeholder="facebook.com/...">
@@ -2750,7 +2757,7 @@
                 </div>
                 <div class="grid2" style="margin-top: 25px;">
                     <label><span>TIKTOK</span>
-                        <input type="text" id="social-tiktok" placeholder="@usuario">
+                        <input type="text" id="social-tiktok" placeholder="@usuario" data-i18n-hold="jobsx-113">
                     </label>
                     <label><span>YOUTUBE</span>
                         <input type="text" id="social-youtube" placeholder="youtube.com/...">
@@ -2774,7 +2781,7 @@
                 </div>
                 <div style="margin-top: 25px;">
                     <label><span>WEB</span>
-                        <input type="text" id="social-others" placeholder="https://tuweb.com">
+                        <input type="text" id="social-others" placeholder="https://tuweb.com" data-i18n-hold="jobsx-114">
                     </label>
                 </div>
             </div>
@@ -2782,18 +2789,18 @@
             <!-- Employment account intent (guest signup — hidden when session exists) -->
             <div id="employment-artist-intent-block"
                 style="margin-top: 40px; padding: 24px 28px; background: rgba(197,160,89,0.08); border-radius: 20px; border: 1px solid rgba(197,160,89,0.35);">
-                <p style="margin:0 0 12px;font-size:12px;line-height:1.45;color:rgba(255,255,255,0.9);">
+                <p style="margin:0 0 12px;font-size:12px;line-height:1.45;color:rgba(255,255,255,0.9);" data-i18n="jobsx-089">
                     Al enviar esta solicitud se creará una <strong>cuenta artística/profesional</strong> en Miami DJ Beat. Podrás solicitar trabajos y ofrecer tus servicios como artista. Confirma tu intención antes de continuar.
                 </p>
                 <label style="display:flex;gap:10px;align-items:flex-start;margin:0 0 10px;font-size:12px;line-height:1.4;cursor:pointer;">
                     <input type="checkbox" id="employment-artist-intent-ack" style="margin-top:2px;flex-shrink:0;width:auto;">
-                    <span>Confirmo que quiero crear una cuenta artística/profesional para ofrecer servicios (no una cuenta Cliente).</span>
+                    <span data-i18n="jobsx-090">Confirmo que quiero crear una cuenta artística/profesional para ofrecer servicios (no una cuenta Cliente).</span>
                 </label>
                 <p id="employment-artist-intent-error" style="color:#ff5555;font-size:12px;margin:0 0 10px;display:none;" role="alert"></p>
                 <p style="margin:0;font-size:11px;line-height:1.5;text-align:center;color:rgba(255,255,255,0.75);">
-                    <a href="./login.html?redirect=jobs" style="color:var(--gold);font-weight:700;text-decoration:underline;">¿Ya tienes cuenta? Iniciar sesión</a>
+                    <a href="./login.html?redirect=jobs" style="color:var(--gold);font-weight:700;text-decoration:underline;" data-i18n="jobsx-091">¿Ya tienes cuenta? Iniciar sesión</a>
                     ·
-                    <a href="./login.html?account=client" style="color:var(--gold);font-weight:700;text-decoration:underline;">¿Solo quieres contratar servicios? Crear cuenta Cliente</a>
+                    <a href="./login.html?account=client" style="color:var(--gold);font-weight:700;text-decoration:underline;" data-i18n="jobsx-003">¿Solo quieres contratar servicios? Crear cuenta Cliente</a>
                 </p>
             </div>
 
@@ -2802,7 +2809,7 @@
                 style="margin-top: 40px; padding: 30px; background: rgba(255,255,255,0.02); border-radius: 20px; border: 1px solid rgba(255,255,255,0.05);">
                 <label style="display:flex; align-items:center; gap:15px; font-size: 13px; cursor:pointer;">
                     <input type="checkbox" id="privacy-policy" required style="width:auto;">
-                    <span style="color:var(--muted); text-transform: none; font-weight: 400; letter-spacing: 0;">Acepto
+                    <span style="color:var(--muted); text-transform: none; font-weight: 400; letter-spacing: 0;" data-i18n="jobsx-092">Acepto
                         los <a href="#" style="color:var(--gold);">Protocolos de Seguridad</a> y el tratamiento
                         neural de mis datos bajo visión 2027.</span>
                 </label>
@@ -2810,7 +2817,7 @@
 
             <div style="display: flex; gap: 20px; margin-top: 50px; justify-content: center;">
                 <button type="button" id="pro-submit-btn" onclick="submitProForm()" class="btn primary"
-                    style="padding: 20px 60px; font-size: 18px; border-radius: 15px; text-transform: uppercase; letter-spacing: 2px;">
+                    style="padding: 20px 60px; font-size: 18px; border-radius: 15px; text-transform: uppercase; letter-spacing: 2px;" data-i18n="jobsx-093">
                     🚀 CREA TU PERFIL PRO
                 </button>
             </div>
@@ -2864,9 +2871,9 @@
             }
         })();
     </script>
-    <script defer src="./js/mdj-categorias.js?v=20260921-face4"></script>
+    <script defer src="./js/mdj-categorias.js?v=20260927-sublabels"></script>
     <script defer src="./js/jobs-categorias.js?v=20260921-9"></script>
-    <script defer src="./translations.js?v=20260921-baile1"></script>
+    <script defer src="./translations.js?v=20260927-bilingue-final"></script>
     <script defer src="./i18n.js?v=20260418-PURGE-SEAL"></script>
     <script defer src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
     <script>
@@ -3375,48 +3382,6 @@
                 }, 500);
             })();
 
-            // ── localStorage autofill (from autofill.html helper) ────
-            if (new URLSearchParams(window.location.search).get('autofill') === '1') {
-                const afData = JSON.parse(localStorage.getItem('mdjpro_autofill') || 'null');
-                if (afData) {
-                    const applyFill = () => {
-                        const set = (id, val) => { const el = document.getElementById(id); if (el) { el.value = val; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); } };
-                        const chk = (name, val) => { const el = document.querySelector(`input[name="${name}"][value="${val}"]`); if (el && !el.checked) el.click(); };
-                        const chkId = (id) => { const el = document.getElementById(id); if (el && !el.checked) el.click(); };
-                        set('first-name', afData.firstName);
-                        set('middle-initial', afData.middleInitial);
-                        set('last-name', afData.lastName);
-                        set('stage-name', afData.stageName);
-                        set('job-email', afData.email);
-                        set('job-password', afData.password);
-                        set('job-password-confirm', afData.password);
-                        (afData.languages || []).forEach(l => chk('languages', l));
-                        (afData.roles || []).forEach(r => chk('roles', r));
-                        set('bio-short', afData.bioShort);
-                        set('bio-long', afData.bioLong);
-                        set('bio-language', afData.bioLanguage || 'es');
-                        if (afData.bioAutoTranslate) chkId('bio-auto-translate');
-                        set('social-instagram', afData.instagram);
-                        set('social-youtube', afData.youtube);
-                        set('social-tiktok', afData.tiktok);
-                        set('social-soundcloud', afData.soundcloud);
-                        chkId('privacy-policy');
-                        updateBioCount('bio-short', 'bio-short-count', 500);
-                        updateBioCount('bio-long', 'bio-long-count', 10000);
-                        localStorage.removeItem('mdjpro_autofill');
-                    };
-                    // LITE + continuar: mismo formulario largo sin paso Stripe (PRO exige pago antes).
-                    setTimeout(() => {
-                        const liteCard = document.querySelector('.level-portal[onclick*="lite"]');
-                        if (liteCard) liteCard.click();
-                        setTimeout(() => {
-                            const activateBtn = document.querySelector('#activate-container .btn.primary');
-                            if (activateBtn) { activateBtn.click(); setTimeout(applyFill, 600); }
-                        }, 400);
-                    }, 500);
-                }
-            }
-
             // Validate referral code on blur
             const refInput = document.getElementById('referral-code-input');
             if (refInput) {
@@ -3507,6 +3472,24 @@
             if (note) note.style.display = data ? 'block' : 'none';
         }
 
+        // ── Etiquetas de precio (/mes · …, /6 meses · Ahorra $…, /año · …): dependen del idioma de la perilla ES/EN ──
+        let _jobsPricing = null;
+        function applyPricingLabels() {
+            const s = _jobsPricing;
+            if (!s) return;
+            const setLabel = (boxId, text) => {
+                const box = document.getElementById(boxId);
+                const lbl = box && box.querySelector('span:nth-child(2)');
+                if (lbl) lbl.textContent = text;
+            };
+            const save = jobsGateT('jobs-js-save', 'Ahorra $', 'Save $');
+            if (s.pro_label_monthly) setLabel('price-monthly-display', jobsGateT('jobs-js-per-mo', '/mes', '/mo') + ' · ' + s.pro_label_monthly);
+            if (s.pro_label_semestral) setLabel('price-semestral-display', jobsGateT('jobs-js-per-6mo', '/6 meses', '/6 mo') + ' · ' + save + (s.pro_price_monthly * 6 - parseInt(s.pro_price_semestral)));
+            if (s.pro_label_annual) setLabel('price-annual-display', jobsGateT('jobs-js-per-yr', '/año', '/yr') + ' · ' + save + (s.pro_price_monthly * 12 - parseInt(s.pro_price_annual)));
+        }
+        // i18n.js vuelve a poner los textos fijos al cambiar de idioma: se reaplican las etiquetas con datos del servidor
+        document.addEventListener('languageChanged', function () { setTimeout(applyPricingLabels, 0); });
+
         // ── Load platform pricing from Supabase (admin-configurable) ──
         async function loadPlatformPricing() {
             if (!_supa) return;
@@ -3527,7 +3510,6 @@
                     const priceSpan = moDisplay.querySelector('span:first-child');
                     const labelSpan = moDisplay.querySelector('span:nth-child(2)');
                     if (priceSpan && s.pro_price_monthly) priceSpan.textContent = '$' + s.pro_price_monthly;
-                    if (labelSpan && s.pro_label_monthly) labelSpan.textContent = '/mes · ' + s.pro_label_monthly;
                 }
 
                 // Semestral
@@ -3536,7 +3518,6 @@
                     const priceSpan = semDisplay.querySelector('span:first-child');
                     const labelSpan = semDisplay.querySelector('span:nth-child(2)');
                     if (priceSpan && s.pro_price_semestral) priceSpan.textContent = '$' + s.pro_price_semestral;
-                    if (labelSpan && s.pro_label_semestral) labelSpan.textContent = '/6 meses · Ahorra $' + (s.pro_price_monthly * 6 - parseInt(s.pro_price_semestral));
                 }
 
                 // Annual
@@ -3545,7 +3526,6 @@
                     const priceSpan = yrDisplay.querySelector('span:first-child');
                     const labelSpan = yrDisplay.querySelector('span:nth-child(2)');
                     if (priceSpan && s.pro_price_annual) priceSpan.textContent = '$' + s.pro_price_annual;
-                    if (labelSpan && s.pro_label_annual) labelSpan.textContent = '/año · Ahorra $' + (s.pro_price_monthly * 12 - parseInt(s.pro_price_annual));
                 }
                 // Portal cards prices (new 4-card layout)
                 var cMo = document.getElementById('portal-card-price-monthly');
@@ -3554,6 +3534,8 @@
                 if (c6mo && s.pro_price_semestral) c6mo.textContent = '$' + s.pro_price_semestral;
                 var cAn = document.getElementById('portal-card-price-annual');
                 if (cAn && s.pro_price_annual) cAn.textContent = '$' + s.pro_price_annual;
+                _jobsPricing = s;
+                applyPricingLabels();
             } catch (e) {
                 void e;
             }
@@ -3860,14 +3842,14 @@
             const email = document.getElementById('gate-login-email').value.trim();
             const pass = document.getElementById('gate-login-pass').value;
 
-            btn.disabled = true; btn.textContent = 'Verificando...';
+            btn.disabled = true; btn.textContent = jobsGateT('jobs-js-verifying', 'Verificando...', 'Verifying...');
             err.style.display = 'none';
 
             const { error } = await _supa.auth.signInWithPassword({ email, password: pass });
 
             if (error) {
                 err.textContent = error.message; err.style.display = 'block';
-                btn.disabled = false; btn.innerHTML = '🔑 INICIAR SESIÓN';
+                btn.disabled = false; btn.innerHTML = jobsGateT('jobs-js-login-btn', '🔑 INICIAR SESIÓN', '🔑 LOG IN');
                 return;
             }
 
@@ -4032,7 +4014,7 @@
            que puede ser null para artistas LITE, causando redirect erróneo a client-portal). */
         function jobsCreateAccountFromSelectedPlan() {
             if (!selectedJobsPlan) {
-                alert('Selecciona un plan primero.');
+                alert(jobsGateT('jobs-js-pick-plan', 'Selecciona un plan primero.', 'Select a plan first.'));
                 return false;
             }
             if (selectedJobsPlan === 'lite') {
@@ -4115,10 +4097,10 @@
             var orig = btn ? btn.innerHTML : '';
             if (btn) {
                 btn.disabled = true;
-                btn.innerHTML = 'Conectando con Stripe...';
+                btn.innerHTML = jobsGateT('jobs-js-stripe-connecting', 'Conectando con Stripe...', 'Connecting to Stripe...');
             }
             try {
-                if (!_supa) throw new Error('Sin conexión.');
+                if (!_supa) throw new Error(jobsGateT('jobs-js-no-conn', 'Sin conexión.', 'No connection.'));
                 const { data: { session } } = await _supa.auth.getSession();
                 if (!session) {
                     /* Patch A: guardar plan pendiente para auto-selección al volver */
@@ -4134,7 +4116,7 @@
                 const returnUrl = new URL('dj-dashboard.html', window.location.origin + '/');
                 const checkoutFn =
                     typeof window.mdbSupabaseFunctionUrl === 'function' ? window.mdbSupabaseFunctionUrl('create-checkout') : '';
-                if (!checkoutFn) throw new Error('Supabase no configurado (create-checkout).');
+                if (!checkoutFn) throw new Error(jobsGateT('jobs-js-no-checkout-fn', 'Supabase no configurado (create-checkout).', 'Supabase is not configured (create-checkout).'));
                 const res = await fetch(checkoutFn, {
                         method: 'POST',
                         headers: {
@@ -4153,7 +4135,7 @@
                 try {
                     payload = await res.json();
                 } catch (parseErr) {
-                    throw new Error('Respuesta inválida del servidor de pago (HTTP ' + res.status + ').');
+                    throw new Error(jobsGateT('jobs-js-bad-pay-resp', 'Respuesta inválida del servidor de pago (HTTP ', 'Invalid response from the payment server (HTTP ') + res.status + ').');
                 }
                 if (!res.ok) {
                     var errMsg = typeof payload.error === 'string'
@@ -4161,10 +4143,10 @@
                         : (payload.detail || (payload.error && payload.error.message) || JSON.stringify(payload.error || payload));
                     throw new Error(errMsg || ('HTTP ' + res.status));
                 }
-                if (!payload.url) throw new Error('No se recibió URL de checkout.');
+                if (!payload.url) throw new Error(jobsGateT('jobs-js-no-checkout-url', 'No se recibió URL de checkout.', 'No checkout URL was received.'));
                 window.location.href = payload.url;
             } catch (stripeErr) {
-                alert('Error conectando con el sistema de pago: ' + (stripeErr && stripeErr.message ? stripeErr.message : stripeErr));
+                alert(jobsGateT('jobs-js-pay-conn-err', 'Error conectando con el sistema de pago: ', 'Error connecting to the payment system: ') + (stripeErr && stripeErr.message ? stripeErr.message : stripeErr));
                 if (btn) {
                     btn.disabled = false;
                     btn.innerHTML = orig;
@@ -4528,7 +4510,7 @@
             const state = document.getElementById('modal-state').value;
             const zip = document.getElementById('modal-zip').value;
 
-            if (!street || !city || !zip) return alert("Por favor completa los campos principales (Calle, Ciudad, Zip)");
+            if (!street || !city || !zip) return alert(jobsGateT('jobs-js-addr-required', 'Por favor completa los campos principales (Calle, Ciudad, Zip)', 'Please complete the main fields (Street, City, Zip)'));
 
             const fullAddress = `${street}${suite ? ', ' + suite : ''}, ${city}, ${state} ${zip}`;
             document.getElementById('address-summary').innerText = fullAddress;
@@ -4548,6 +4530,7 @@
         // Experience Helper Logic — full card with days, dates, link
         const DAYS = ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do'];
         const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+        const MONTHS_EN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
         function addExperienceEntry() {
             const container = document.getElementById('experience-list');
@@ -4566,65 +4549,65 @@
             card.innerHTML = `
                 <div class="exp-card-header">
                     <div class="exp-card-fields">
-                        <input type="text" placeholder="Nombre del lugar" class="exp-venue" oninput="aggregateExperience()" style="flex:2;">
-                        <input type="text" placeholder="Tu rol (DJ, MC...)" class="exp-role" oninput="aggregateExperience()" style="flex:1;">
+                        <input type="text" placeholder="${jobsGateT('jobs-js-x-venue', 'Nombre del lugar', 'Venue name')}" class="exp-venue" oninput="aggregateExperience()" style="flex:2;">
+                        <input type="text" placeholder="${jobsGateT('jobs-js-x-role', 'Tu rol (DJ, MC...)', 'Your role (DJ, MC...)')}" class="exp-role" oninput="aggregateExperience()" style="flex:1;">
                     </div>
                     <button type="button" onclick="removeExpEntry(this)"
                         style="background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.15);border-radius:6px;width:32px;height:32px;cursor:pointer;font-size:18px;font-weight:300;flex-shrink:0;"
-                        title="Eliminar">−</button>
+                        title="${jobsGateT('jobs-js-x-remove', 'Eliminar', 'Remove')}">−</button>
                 </div>
                 <div class="exp-days-row">
-                    <span style="font-size:12px;color:var(--muted);margin-right:8px;">Días:</span>
+                    <span style="font-size:12px;color:var(--muted);margin-right:8px;">${jobsGateT('jobs-js-x-days', 'Días:', 'Days:')}</span>
                     ${dayChips}
                 </div>
                 <div class="exp-dates-row" style="display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end;">
                     <div style="flex:1; min-width:180px;">
-                        <label style="font-size:11px; color:var(--muted); display:block; margin-bottom:4px;">Fecha de Inicio:</label>
+                        <label style="font-size:11px; color:var(--muted); display:block; margin-bottom:4px;">${jobsGateT('jobs-js-x-start', 'Fecha de Inicio:', 'Start date:')}</label>
                         <div style="display:flex; gap:4px;">
                             <select class="exp-start-day" onchange="aggregateExperience()" style="flex:1; background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(255,255,255,0.15); border-radius:6px; padding:6px; font-size:12px;">
-                                <option value="">Día</option>
+                                <option value="">${jobsGateT('jobs-js-x-day', 'Día', 'Day')}</option>
                                 ${Array.from({ length: 31 }, (_, i) => i + 1).map(d => `<option value="${String(d).padStart(2, '0')}">${d}</option>`).join('')}
                             </select>
                             <select class="exp-start-month" onchange="aggregateExperience()" style="flex:2; background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(255,255,255,0.15); border-radius:6px; padding:6px; font-size:12px;">
-                                <option value="">Mes</option>
-                                ${MONTHS_ES.map((m, i) => `<option value="${String(i + 1).padStart(2, '0')}">${m}</option>`).join('')}
+                                <option value="">${jobsGateT('jobs-js-x-month', 'Mes', 'Month')}</option>
+                                ${MONTHS_ES.map((m, i) => `<option value="${String(i + 1).padStart(2, '0')}">${jobsGateT('jobs-js-mon' + i, m, MONTHS_EN[i])}</option>`).join('')}
                             </select>
                             <select class="exp-start-year" onchange="aggregateExperience()" style="flex:1.5; background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(255,255,255,0.15); border-radius:6px; padding:6px; font-size:12px;">
-                                <option value="">Año</option>
+                                <option value="">${jobsGateT('jobs-js-x-year', 'Año', 'Year')}</option>
                                 ${Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - i).map(y => `<option value="${y}">${y}</option>`).join('')}
                             </select>
                         </div>
                     </div>
                     <div style="flex:1; min-width:180px;" class="exp-end-label">
-                        <label style="font-size:11px; color:var(--muted); display:block; margin-bottom:4px;">Fecha de Fin:</label>
+                        <label style="font-size:11px; color:var(--muted); display:block; margin-bottom:4px;">${jobsGateT('jobs-js-x-end', 'Fecha de Fin:', 'End date:')}</label>
                         <div style="display:flex; gap:4px;">
                             <select class="exp-end-day" onchange="aggregateExperience()" style="flex:1; background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(255,255,255,0.15); border-radius:6px; padding:6px; font-size:12px;">
-                                <option value="">Día</option>
+                                <option value="">${jobsGateT('jobs-js-x-day', 'Día', 'Day')}</option>
                                 ${Array.from({ length: 31 }, (_, i) => i + 1).map(d => `<option value="${String(d).padStart(2, '0')}">${d}</option>`).join('')}
                             </select>
                             <select class="exp-end-month" onchange="aggregateExperience()" style="flex:2; background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(255,255,255,0.15); border-radius:6px; padding:6px; font-size:12px;">
-                                <option value="">Mes</option>
-                                ${MONTHS_ES.map((m, i) => `<option value="${String(i + 1).padStart(2, '0')}">${m}</option>`).join('')}
+                                <option value="">${jobsGateT('jobs-js-x-month', 'Mes', 'Month')}</option>
+                                ${MONTHS_ES.map((m, i) => `<option value="${String(i + 1).padStart(2, '0')}">${jobsGateT('jobs-js-mon' + i, m, MONTHS_EN[i])}</option>`).join('')}
                             </select>
                             <select class="exp-end-year" onchange="aggregateExperience()" style="flex:1.5; background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(255,255,255,0.15); border-radius:6px; padding:6px; font-size:12px;">
-                                <option value="">Año</option>
+                                <option value="">${jobsGateT('jobs-js-x-year', 'Año', 'Year')}</option>
                                 ${Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - i).map(y => `<option value="${y}">${y}</option>`).join('')}
                             </select>
                         </div>
                     </div>
                     <label class="exp-present-label" style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px;cursor:pointer;margin-bottom:8px;">
                         <input type="checkbox" class="exp-present" onchange="togglePresente(this)" style="width:auto;">
-                        Presente
+                        ${jobsGateT('jobs-js-x-present', 'Presente', 'Present')}
                     </label>
                 </div>
                 <div style="margin-top:8px; display:flex; align-items:center; gap:6px;">
                     <span style="color:var(--muted); font-size:14px; flex-shrink:0;">\uD83D\uDD17</span>
-                    <input type="text" class="exp-link" placeholder="Link del lugar (opcional) — para verificación"
+                    <input type="text" class="exp-link" placeholder="${jobsGateT('jobs-js-venue-link', 'Link del lugar (opcional) — para verificación', 'Venue link (optional) — for verification')}"
                         oninput="aggregateExperience()"
                         style="flex:1;background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:6px 10px;font-size:12px;">
                     <button type="button" onclick="previewLink(this.previousElementSibling)"
                         style="background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:11px;white-space:nowrap;flex-shrink:0;"
-                        title="Previsualizar">Ver</button>
+                        title="${jobsGateT('jobs-js-x-preview', 'Previsualizar', 'Preview')}">${jobsGateT('jobs-js-x-see', 'Ver', 'View')}</button>
                 </div>
             `;
             container.appendChild(card);
@@ -4938,7 +4921,7 @@
                 const originalText = submitBtn ? submitBtn.innerHTML : '';
                 if (submitBtn && submitBtn.disabled) return;
                 if (!_supa) {
-                    alert('No se pudo iniciar la conexión de sesión. Recarga la página o entra desde «Suscripción gratis» en el menú.');
+                    alert(jobsGateT('jobs-js-no-session-conn', 'No se pudo iniciar la conexión de sesión. Recarga la página o entra desde «Suscripción gratis» en el menú.', 'Could not start the session connection. Reload the page or sign in from “Free subscription” in the menu.'));
                     return;
                 }
 
@@ -4955,31 +4938,31 @@
                 const passwordConfirmValEl = document.getElementById('job-password-confirm');
                 const passwordConfirmVal = (passwordConfirmValEl && passwordConfirmValEl.value) || '';
 
-                if (!firstName) errors.push('Nombre (First Name) es requerido');
-                if (!lastName) errors.push('Apellido (Last Name) es requerido');
-                if (!emailVal) errors.push('Email es requerido');
+                if (!firstName) errors.push(jobsGateT('jobs-js-err-first', 'Nombre (First Name) es requerido', 'First name is required'));
+                if (!lastName) errors.push(jobsGateT('jobs-js-err-last', 'Apellido (Last Name) es requerido', 'Last name is required'));
+                if (!emailVal) errors.push(jobsGateT('jobs-js-err-email', 'Email es requerido', 'Email is required'));
                 const stateValEl = document.getElementById('job-state');
                 const stateVal = (stateValEl && stateValEl.value) || '';
-                if (!stateVal) errors.push('Selecciona estado o provincia');
+                if (!stateVal) errors.push(jobsGateT('jobs-js-err-state', 'Selecciona estado o provincia', 'Select a state or province'));
 
                 const selectedRoles = Array.from(document.querySelectorAll('input[name="roles"]:checked')).map(cb => cb.value);
-                if (selectedRoles.length === 0) errors.push('Selecciona al menos un rol (DJ Residente, Eventos, etc.)');
+                if (selectedRoles.length === 0) errors.push(jobsGateT('jobs-js-err-role', 'Selecciona al menos un rol (DJ Residente, Eventos, etc.)', 'Select at least one role (Resident DJ, Events, etc.)'));
 
                 const selectedLangs = Array.from(document.querySelectorAll('input[name="languages"]:checked')).map(cb => cb.value);
-                if (selectedLangs.length === 0) errors.push('Selecciona al menos un idioma');
+                if (selectedLangs.length === 0) errors.push(jobsGateT('jobs-js-err-lang', 'Selecciona al menos un idioma', 'Select at least one language'));
 
-                if (!photoBase64) errors.push('Sube tu foto de perfil (haz clic en el círculo)');
+                if (!photoBase64) errors.push(jobsGateT('jobs-js-err-photo', 'Sube tu foto de perfil (haz clic en el círculo)', 'Upload your profile photo (click the circle)'));
 
                 const socialFields = ['social-instagram', 'social-facebook', 'social-tiktok', 'social-youtube', 'social-soundcloud', 'social-mixcloud', 'social-apple', 'social-spotify', 'social-others'];
                 const hasSocial = socialFields.some(id => {
                     const socialEl = document.getElementById(id);
                     return ((socialEl && socialEl.value) || '').trim() !== '';
                 });
-                if (!hasSocial) errors.push('Añade al menos una red social o plataforma de música');
+                if (!hasSocial) errors.push(jobsGateT('jobs-js-err-social', 'Añade al menos una red social o plataforma de música', 'Add at least one social network or music platform'));
 
                 const privacyCheckedEl = document.getElementById('privacy-policy');
                 const privacyChecked = privacyCheckedEl && privacyCheckedEl.checked;
-                if (!privacyChecked) errors.push('Acepta los Protocolos de Seguridad (checkbox de privacidad)');
+                if (!privacyChecked) errors.push(jobsGateT('jobs-js-err-privacy', 'Acepta los Protocolos de Seguridad (checkbox de privacidad)', 'Accept the Security Protocols (privacy checkbox)'));
 
                 // Show errors if any
                 const errorDiv = document.getElementById('form-errors');
@@ -4998,13 +4981,13 @@
                 // If not logged in, create account with form fields
                 if (!currentSession) {
                     if (passwordVal.length < 8) {
-                        errorList.innerHTML = '<li>La contraseña debe tener al menos 8 caracteres</li>';
+                        errorList.innerHTML = '<li>' + jobsGateT('jobs-js-err-pw-len', 'La contraseña debe tener al menos 8 caracteres', 'The password must be at least 8 characters long') + '</li>';
                         errorDiv.style.display = 'block';
                         errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         return;
                     }
                     if (passwordVal !== passwordConfirmVal) {
-                        errorList.innerHTML = '<li>Las contraseñas no coinciden</li>';
+                        errorList.innerHTML = '<li>' + jobsGateT('jobs-js-err-pw-match', 'Las contraseñas no coinciden', 'The passwords do not match') + '</li>';
                         errorDiv.style.display = 'block';
                         errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         return;
@@ -5036,7 +5019,7 @@
                     }
 
                     submitBtn.disabled = true;
-                    submitBtn.innerHTML = '⚙️ Creando cuenta...';
+                    submitBtn.innerHTML = jobsGateT('jobs-js-creating', '⚙️ Creando cuenta...', '⚙️ Creating account...');
 
                     const stageNameEl1 = document.getElementById('stage-name');
                     const artisticNameVal = ((stageNameEl1 && stageNameEl1.value) || '').trim() || firstName;
@@ -5086,7 +5069,7 @@
                 }
 
                 if (!currentSession) {
-                    alert('No se pudo iniciar sesión. Por favor intenta de nuevo.');
+                    alert(jobsGateT('jobs-js-login-fail', 'No se pudo iniciar sesión. Por favor intenta de nuevo.', 'Could not sign in. Please try again.'));
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = originalText;
                     return;
@@ -5103,7 +5086,7 @@
                 }
 
                 submitBtn.disabled = true;
-                submitBtn.innerHTML = '⚙️ Procesando solicitud...';
+                submitBtn.innerHTML = jobsGateT('jobs-js-processing', '⚙️ Procesando solicitud...', '⚙️ Processing application...');
 
                 const rolesString = selectedRoles.join(', ');
                 const langsString = selectedLangs.join(', ');
@@ -5209,7 +5192,7 @@
                 } catch (e) { /* columns not yet in schema — ok */ }
 
                 if (error) {
-                    alert('Error guardando perfil: ' + error.message);
+                    alert(jobsGateT('jobs-js-save-err', 'Error guardando perfil: ', 'Error saving profile: ') + error.message);
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = originalText;
                 } else {
@@ -5237,12 +5220,12 @@
                         }
                         if (skipCheckout) {
                             try { sessionStorage.removeItem('jobs_pro_checkout_ok'); } catch (eR) { void eR; }
-                            alert('¡Listo! Tu solicitud PRO está registrada. Te llevamos a tu panel de artista.');
+                            alert(jobsGateT('jobs-js-done-pro', '¡Listo! Tu solicitud PRO está registrada. Te llevamos a tu panel de artista.', 'Done! Your PRO application is registered. Taking you to your artist dashboard.'));
                             window.location.href = './dj-dashboard.html?tab=settings&from=jobs_pro_apply';
                             return;
                         }
                         // Fallback: usuario PRO sin pago previo (enlace antiguo / flujo atípico) → Stripe al enviar
-                        submitBtn.innerHTML = 'Redirigiendo a pago...';
+                        submitBtn.innerHTML = jobsGateT('jobs-js-redirect-pay', 'Redirigiendo a pago...', 'Redirecting to payment...');
                         try {
                             const { data: { session: authSession } } = await _supa.auth.getSession();
                             const billingPeriodEl3 = document.getElementById('billing-period');
@@ -5255,7 +5238,7 @@
                                 typeof window.mdbSupabaseFunctionUrl === 'function'
                                     ? window.mdbSupabaseFunctionUrl('create-checkout')
                                     : '';
-                            if (!checkoutFn2) throw new Error('Supabase no configurado (create-checkout).');
+                            if (!checkoutFn2) throw new Error(jobsGateT('jobs-js-no-checkout-fn', 'Supabase no configurado (create-checkout).', 'Supabase is not configured (create-checkout).'));
                             const res = await fetch(checkoutFn2, {
                                 method: 'POST',
                                 headers: {
@@ -5273,7 +5256,7 @@
                             try {
                                 payload = await res.json();
                             } catch (parseErr) {
-                                throw new Error('Respuesta inválida del servidor de pago (HTTP ' + res.status + ').');
+                                throw new Error(jobsGateT('jobs-js-bad-pay-resp', 'Respuesta inválida del servidor de pago (HTTP ', 'Invalid response from the payment server (HTTP ') + res.status + ').');
                             }
                             if (!res.ok) {
                                 var errMsg2 = typeof payload.error === 'string'
@@ -5281,15 +5264,15 @@
                                     : (payload.detail || (payload.error && payload.error.message) || JSON.stringify(payload.error || payload));
                                 throw new Error(errMsg2 || ('HTTP ' + res.status));
                             }
-                            if (!payload.url) throw new Error('No se recibió URL de checkout.');
+                            if (!payload.url) throw new Error(jobsGateT('jobs-js-no-checkout-url', 'No se recibió URL de checkout.', 'No checkout URL was received.'));
                             window.location.href = payload.url;
                         } catch (stripeErr) {
-                            alert('Error conectando con el sistema de pago: ' + stripeErr.message);
+                            alert(jobsGateT('jobs-js-pay-conn-err', 'Error conectando con el sistema de pago: ', 'Error connecting to the payment system: ') + stripeErr.message);
                             submitBtn.disabled = false;
                             submitBtn.innerHTML = originalText;
                         }
                     } else {
-                        alert('¡Listo! Tu solicitud LITE está en revisión. Te llevamos a tu panel de artista.');
+                        alert(jobsGateT('jobs-js-done-lite', '¡Listo! Tu solicitud LITE está en revisión. Te llevamos a tu panel de artista.', 'Done! Your LITE application is under review. Taking you to your artist dashboard.'));
                         window.location.href = './dj-dashboard.html?tab=settings&from=jobs_lite_apply';
                     }
                 }
@@ -5440,7 +5423,7 @@
     <script defer src="./mdj-identity.js?v=20260921-rol-unico"></script>
     <script src="./auth.js?v=20260921-idiomas"></script>
 
-    <script defer src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
+    <script defer src="./header-smart-search.js?v=20260927-bilingue-hint"></script>
       <script defer src="./mdjb-shared-header.js?v=20260921-svc-activo4"></script>
   <script defer src="./mdj-mainnav-infinite.js?v=20260818-nav-canonico"></script>
     <script defer src="./mdj-owner-tabs-marquee.js?v=20260818-nav-canonico"></script>

@@ -1,7 +1,8 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
 
 <head>
+    <script src="/js/mdj-lang-boot.js?v=20260927-boot"></script>
     <script src="./mdj-estacion-preflight.js?v=20260919-staff-vista-fix"></script>
 <script>/* SEMILLA DE ESTACION · antes del primer pintado.
    El guion del header va con defer y al final del documento: cuando decide que
@@ -1470,7 +1471,7 @@
         </button>
         <button class="acct-side-link" onclick="showPanel('billing',this)">
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-          Suscripción y pagos
+          <span data-i18n="acs-billing">Suscripción y pagos</span>
         </button>
         <button class="acct-side-link" onclick="showPanel('soundfortips',this)">
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2v4M8 6h8M6 10h12v10a2 2 0 01-2 2H8a2 2 0 01-2-2V10z"/><path d="M9 14h6M9 18h4"/></svg>
@@ -1586,7 +1587,7 @@
           <label data-i18n="account-username-label">Nombre de usuario / Username</label>
           <input type="text" class="sys-input" id="input-username" placeholder="@YourHandle" maxlength="32"
             autocomplete="nickname" spellcheck="false" />
-          <p class="fineprint" style="margin-top:6px;font-size:11px;opacity:0.55;line-height:1.4;">
+          <p class="fineprint" style="margin-top:6px;font-size:11px;opacity:0.55;line-height:1.4;" data-i18n="acs-hint-user">
             Identificador único de cuenta. Aparece en el avatar del header y puede usarse como acceso alternativo al email.
           </p>
         </div>
@@ -1610,7 +1611,7 @@
             <input type="date" id="input-birthday" autocomplete="bday" placeholder=" " />
             <label for="input-birthday" class="mdj-field-outlined__label">Birthday / Cumpleaños</label>
           </div>
-          <p class="fineprint" style="margin-top:6px;font-size:11px;opacity:0.55;line-height:1.4;">
+          <p class="fineprint" style="margin-top:6px;font-size:11px;opacity:0.55;line-height:1.4;" data-i18n="acs-birthday-hint">
             Miami DJ Beat te lo recuerda cada año. / Miami DJ Beat will remember it every year.
           </p>
         </div>
@@ -1636,7 +1637,7 @@
           <div class="form-group" id="wrap-state-us">
             <label>State</label>
             <select id="select-state-us" class="sys-input sys-select-gold" aria-label="State"></select>
-            <p class="fineprint" style="margin:4px 0 0;font-size:11px;opacity:0.5;">With the list open, press a letter to jump (e.g. F → Florida). Press the same letter again to cycle when several states match (e.g. T → Tennessee / Texas).</p>
+            <p class="fineprint" style="margin:4px 0 0;font-size:11px;opacity:0.5;" data-i18n="acs-state-hint">With the list open, press a letter to jump (e.g. F → Florida). Press the same letter again to cycle when several states match (e.g. T → Tennessee / Texas).</p>
           </div>
           <div class="form-group" id="wrap-state-intl" style="display:none;">
             <label>State / Province</label>
@@ -1691,15 +1692,14 @@
           </div>
           <div class="mdj-hero-panel-info">
             <p class="mdj-hero-desc">
-              Banner shown at the top of your public profile.
+              <span data-i18n="acs-hero-a">Banner shown at the top of your public profile.</span>
               <!-- Medida actualizada 2026-08-21: el hero pasa a sangre, de borde a
                    borde de la pantalla. Con 1920px se quedaba corto y se estiraba
                    en monitores anchos. 2560 cubre pantallas grandes sin ampliar, y
                    la franja visible es de ~380px de alto: el resto lo recorta el
                    encuadre, que se ajusta con los controles de foco de abajo. -->
-              Recommended <strong style="color:rgba(255,255,255,0.65);">2560 &times; 720 px</strong>
-              &nbsp;&middot;&nbsp; JPG, PNG or WebP &nbsp;&middot;&nbsp; Max 8 MB.
-              <br><span style="opacity:.72;">El hero ocupa todo el ancho de la pantalla.
+              <span data-i18n="acs-hero-b">Recommended <strong style="color:rgba(255,255,255,0.65);">2560 &times; 720 px</strong> &nbsp;&middot;&nbsp; JPG, PNG or WebP &nbsp;&middot;&nbsp; Max 8 MB.</span>
+              <br><span style="opacity:.72;" data-i18n="acs-hero-c">El hero ocupa todo el ancho de la pantalla.
               Se ve una franja de unos <strong style="color:rgba(255,255,255,0.65);">380&nbsp;px</strong> de alto:
               deja el motivo principal centrado y usa el encuadre para ajustarlo.</span>
             </p>
@@ -1732,7 +1732,7 @@
 
             </div>
             <!-- Focal point hint -->
-            <p id="hero-focal-hint" class="fineprint" style="display:none; color:rgba(255,255,255,0.3);">
+            <p id="hero-focal-hint" class="fineprint" style="display:none; color:rgba(255,255,255,0.3);" data-i18n="acs-focal-hint">
               Click on the preview or use the arrows to set the focal point
             </p>
             <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
@@ -1745,7 +1745,7 @@
                 </svg>
                 Change Banner
               </button>
-              <span style="font-size:11px;color:rgba(255,255,255,0.25);">or drag &amp; drop onto the image above</span>
+              <span style="font-size:11px;color:rgba(255,255,255,0.25);" data-i18n="acs-drag-hint">or drag &amp; drop onto the image above</span>
               <input type="file" id="hero-upload" hidden accept="image/jpeg,image/png,image/webp" />
             </div>
             <p id="hero-upload-feedback" class="fineprint"
@@ -3138,8 +3138,8 @@
   <script src="./mdj-identity.js?v=20260921-rol-unico"></script>
   <script src="./auth.js?v=20260921-idiomas"></script>
   <script src="./role-guard.js?v=20260921-rol-servidor" data-role="dj" data-client-home="./client-account.html"></script>
-  <script src="./js/mdj-categorias.js?v=20260921-face4"></script>
-  <script src="./translations.js?v=20260921-baile1"></script>
+  <script src="./js/mdj-categorias.js?v=20260927-sublabels"></script>
+  <script src="./translations.js?v=20260927-bilingue-final"></script>
   <script src="./i18n.js?v=20260415-CORE-CONNECTIONS"></script>
   <script src="./account-billing.js?v=20260415-CORE-CONNECTIONS"></script>
   <script src="./account-address-data.js?v=20260429"></script>
@@ -3547,16 +3547,23 @@
             var _isArtist = _role3 === 'talent' || _role3 === 'artist' || _role3 === 'dj' || _role3 === 'performer';
 
             /* Adapt label text */
-            if (_dispLbl) {
-              _dispLbl.textContent = _isExec
-                ? 'Nombre para mostrar / Display Name'
-                : 'Nombre artístico / Artistic Name';
-            }
-            if (_dispHint) {
-              _dispHint.textContent = _isExec
-                ? 'Nombre que aparece en tu perfil público, avatar y hero. Déjalo vacío para usar tu nombre legal.'
-                : 'Tu nombre artístico o alias en el escenario. Aparece en tu perfil público. Déjalo vacío para usar tu nombre legal.';
-            }
+            var _paintDisp = function () {
+              var en = !!(window.i18n && window.i18n.currentLang === 'en');
+              if (_dispLbl) {
+                _dispLbl.textContent = _isExec
+                  ? 'Nombre para mostrar / Display Name'
+                  : 'Nombre artístico / Artistic Name';
+              }
+              if (_dispHint) {
+                _dispHint.textContent = _isExec
+                  ? (en ? 'Name shown on your public profile, avatar and hero. Leave it empty to use your legal name.'
+                        : 'Nombre que aparece en tu perfil público, avatar y hero. Déjalo vacío para usar tu nombre legal.')
+                  : (en ? 'Your stage name or alias. It appears on your public profile. Leave it empty to use your legal name.'
+                        : 'Tu nombre artístico o alias en el escenario. Aparece en tu perfil público. Déjalo vacío para usar tu nombre legal.');
+              }
+            };
+            _paintDisp();
+            document.addEventListener('languageChanged', _paintDisp);
 
             /* Hydrate value from dj_profiles.stage_name */
             if (_dispEl) {
@@ -8347,7 +8354,7 @@
     })();
     </script>
     <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
-    <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
+    <script src="./header-smart-search.js?v=20260927-bilingue-hint"></script>
       <script src="./mdjb-shared-header.js?v=20260922-hero-below-header"></script>
   <script src="./mdj-profile-nav-context.js?v=20260818-nav-canonico"></script>
   <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>

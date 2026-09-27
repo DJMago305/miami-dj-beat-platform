@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="es">
 <head>
+    <script src="/js/mdj-lang-boot.js?v=20260927-boot"></script>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Staff — Miami DJ Beat LLC</title>
@@ -4657,8 +4658,8 @@
               var rb=await sb.rpc('get_dj_public_review_bundle',{p_dj_user_id:sess.user.id});
               if(!rb.error && rb.data){ var d=rb.data; if(typeof d==='string'){ try{ d=JSON.parse(d); }catch(_){ d=null; } } if(d){ rev=Array.isArray(d.reviews)?d.reviews:[]; avg=d.avg_rating; cnt=Number(d.review_count)||0; } }
             }
-            var titEl=el('pf-rev-title'); if(titEl) titEl.textContent = cnt>0 ? 'Opiniones de clientes' : 'Opiniones · sin reseñas aún';
-            var avgEl=el('pf-rev-avg'); if(avgEl) avgEl.textContent = cnt>0 ? ('★ '+Number(avg).toFixed(1)+' · '+cnt+' reseñas') : '';
+            var titEl=el('pf-rev-title'); if(titEl) titEl.textContent = (window.i18n && window.i18n.currentLang==='en') ? (cnt>0 ? 'Client reviews' : 'Reviews · no reviews yet') : (cnt>0 ? 'Opiniones de clientes' : 'Opiniones · sin reseñas aún');
+            var avgEl=el('pf-rev-avg'); if(avgEl) avgEl.textContent = cnt>0 ? ('★ '+Number(avg).toFixed(1)+' · '+cnt+((window.i18n && window.i18n.currentLang==='en') ? ' reviews' : ' reseñas')) : '';
             var listEl=el('pf-reviews');
             if(listEl) mdjRenderRevCarousel(listEl, rev.slice(0,8));
           }catch(er){}
@@ -4703,7 +4704,7 @@
       if(!host) return;
       if(window._pfRevTimer){ clearTimeout(window._pfRevTimer); window._pfRevTimer=null; }
       host.innerHTML='';
-      if(!reviews || !reviews.length){ var em=document.createElement('div'); em.className='pf-empty-rev'; em.textContent='Sin reseñas aún.'; host.appendChild(em); return; }
+      if(!reviews || !reviews.length){ var em=document.createElement('div'); em.className='pf-empty-rev'; em.textContent=(window.i18n && window.i18n.currentLang==='en') ? 'No reviews yet.' : 'Sin reseñas aún.'; host.appendChild(em); return; }
       var vp=document.createElement('div'); vp.className='pf-rev-vp'; vp.setAttribute('aria-live','polite');
       var slide=document.createElement('div'); slide.className='pf-rev-slide'; vp.appendChild(slide); host.appendChild(vp);
       if(reviews.length>1){ var c=document.createElement('div'); c.className='pf-rev-count'; c.id='pf-rev-count'; host.appendChild(c); }
@@ -4749,8 +4750,8 @@
        que jamás se pintaba: ese hueco vacío era el bug que reportó el PO.
        header-smart-search.js se deja: sigue enganchado al #header-smart-search
        de .staff-flota (oculto, no removido). -->
-  <script src="./header-smart-search.js?v=20260820-owner"></script>
-  <script src="./translations.js?v=20260921-baile1"></script>
+  <script src="./header-smart-search.js?v=20260927-bilingue-hint"></script>
+  <script src="./translations.js?v=20260927-bilingue-final"></script>
   <script src="./i18n.js?v=20260427-lang-default"></script>
 </body>
 </html>
