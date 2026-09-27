@@ -1,0 +1,27 @@
+# Higiene del sitio (PO 2026-09-27): que no queden páginas retiradas, páginas huérfanas ni textos sin traducir estructurales.
+# - check-hygiene.mjs: una página con redirección 301 en vercel.json no puede seguir existiendo ni estar enlazada / en el sitemap;
+#   toda página debe alcanzarse desde el menú, el sitemap o los portales (o declararse en la lista ALLOW con su razón).
+# - check-i18n.mjs: claves de traducción faltantes/duplicadas, idioma mal declarado, script de arranque de idioma ausente.
+name: Site hygiene
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  site-hygiene:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Página retirada / huérfana
+        run: node web/scripts/check-hygiene.mjs
+
+      - name: Bilingüismo estructural
+        run: node web/scripts/check-i18n.mjs
