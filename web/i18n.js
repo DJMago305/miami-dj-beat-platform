@@ -71,6 +71,9 @@ const i18n = {
             btn.classList.toggle('active', btn.getAttribute('data-lang') === this.currentLang);
         });
 
+        /* Ya está traducido: se muestra la página (js/mdj-lang-boot.js la oculta solo si el idioma guardado difiere del de la página). */
+        if (document.documentElement) document.documentElement.classList.remove('mdj-i18n-pending');
+
         if (typeof window.updateAuthButtons === 'function') {
             window.updateAuthButtons();
             requestAnimationFrame(() => {

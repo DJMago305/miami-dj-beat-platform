@@ -47,3 +47,9 @@
   - Documentación de gobernanza/planes/contratos → `docs/` (`docs/constitucion-*`, `docs/incidentes/`, `docs/archivo-historico/`).
   - Imágenes/media de artistas → `web/assets/artists/<nombre-artista>/`.
   - Scripts SQL de Supabase → `supabase/scripts/`, con fecha o prefijo descriptivo en el nombre.
+
+9. LIMPIEZA AL CERRAR CADA TRABAJO (2026-09-27):
+- Al terminar un ticket se borra lo que dejó de usarse: páginas reemplazadas, archivos sueltos, ramas ya fusionadas. Nada de restos que parezcan regresiones.
+- Una página reemplazada se borra en el MISMO PR, con redirección 301 en `vercel.json` (los dos archivos), fuera del `sitemap.xml` y con sus enlaces apuntando al reemplazo. Lo verifican `node web/scripts/check-hygiene.mjs` y `node web/scripts/check-i18n.mjs` (workflow `site-hygiene.yml`); si alguno falla, no se abre el PR.
+- Lo que funciona pero NO está terminado NO se borra: se documenta en `docs/tickets/` y se revisa poco a poco. Solo se borra lo que no funciona, tras análisis forense (referencias, historial de git, prueba en el navegador). Lo que haya que reindexar en Google va en un ticket consolidado aparte, como pendiente urgente (ver `docs/tickets/2026-09-27-URGENTE-paginas-en-revision-y-reindexacion.md`).
+- Si una página queda sin enlace a propósito, se declara en `ALLOW` de `web/scripts/check-hygiene.mjs` con su razón. Lo que no sea tuyo (ramas o stashes de otros hilos, worktrees con cambios) se lista al PO, no se borra.

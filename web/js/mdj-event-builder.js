@@ -131,7 +131,13 @@
 
     var ebAssignRefreshInFlight = false;
     var MDJ_EB_ASSIGN_CREATE_EVENT = '__mdj_eb_create_event__';
-    var MDJ_EB_MONTH_SHORT = ['', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    var MDJ_EB_MONTH_SHORT_ES = ['', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    var MDJ_EB_MONTH_SHORT_EN = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    /* Meses cortos según la perilla ES/EN del header (i18n.currentLang; por defecto inglés como el resto del sitio). */
+    function mdjEbMonthShort(mo) {
+        var l = (global.i18n && global.i18n.currentLang) ? global.i18n.currentLang : 'en';
+        return (l === 'es' ? MDJ_EB_MONTH_SHORT_ES : MDJ_EB_MONTH_SHORT_EN)[mo];
+    }
     var ebCtaBusy = false;
 
     var ui = {
@@ -730,9 +736,9 @@
             for (i = 0; i < opts.length; i++) {
                 var mo = parseInt(opts[i].value, 10);
                 if (mo >= 1 && mo <= 12) {
-                    opts[i].textContent = MDJ_EB_MONTH_SHORT[mo];
+                    opts[i].textContent = mdjEbMonthShort(mo);
                 } else if (!opts[i].value) {
-                    opts[i].textContent = 'Mes';
+                    opts[i].textContent = (global.i18n && global.i18n.t('eb-opt-mes')) || 'Mes';
                 }
             }
         }
@@ -2070,6 +2076,10 @@
                 bindUi();
                 mdjEbNormalizeContextBarDateSelects();
                 mdjEbBindAssignSelectOnce();
+                /* Al cambiar ES/EN se reescriben los meses cortos y el resto de etiquetas de la barra de fecha. */
+                global.document.addEventListener('languageChanged', function () {
+                    setTimeout(mdjEbNormalizeContextBarDateSelects, 0);
+                });
                 ebUiBound = true;
             }
             render();

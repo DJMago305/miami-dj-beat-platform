@@ -77,7 +77,7 @@ export function isEligibleForPublicSearch(dj) {
 
 export const PUBLIC_PROJECTION_FIELDS = Object.freeze([
   "user_id", "dj_slug", "stage_name", "photo_url", "city", "roles",
-  "artist_specialty", "plan", "is_premium", "bio_preview",
+  "artist_specialty", "plan", "is_premium", "bio_preview", "bio_preview_en",
 ]);
 
 // Campos que jamás deben sobrevivir la proyección — lista explícita para que
@@ -94,11 +94,14 @@ export const PRIVATE_FIELDS_FORBIDDEN = Object.freeze([
 export function projectPublicFields(dj) {
   const out = {};
   for (const key of PUBLIC_PROJECTION_FIELDS) {
-    if (key === "bio_preview") continue;
+    if (key === "bio_preview" || key === "bio_preview_en") continue;
     out[key] = dj[key] ?? null;
   }
   const src = (dj.bio_short && String(dj.bio_short).trim()) || (dj.bio && String(dj.bio).trim()) || "";
   out.bio_preview = src ? src.slice(0, 160) : null;
+  // Vista previa en inglés (columna bio_preview_en de la vista; null si la migración aún no está aplicada o el DJ no tiene bio_en).
+  const srcEn = dj.bio_preview_en && String(dj.bio_preview_en).trim();
+  out.bio_preview_en = srcEn ? srcEn.slice(0, 160) : null;
   return out;
 }
 
@@ -330,6 +333,8 @@ export function renderResultCardHTML(dj, { tierBadgeHtml = "", rentHref = "#", r
   const specialtyTag = rawSpecialty ? escHtml(rawSpecialty.slice(0, 18)) : "";
   const cityStr = dj.city ? "📍 " + escHtml(dj.city) : "";
   const bioStr = dj.bio_preview ? escHtml(String(dj.bio_preview).slice(0, 110)) : "";
+  // Bilingüe: con vista previa en inglés se dibujan las dos y el CSS de find-dj.html muestra la del idioma activo (html[lang]); sin ella, solo la original.
+  const bioEnStr = dj.bio_preview_en ? escHtml(String(dj.bio_preview_en).slice(0, 110)) : "";
   // Sin dj_slug no hay link — nunca cae a profile.html/dj-profile.html.
   const linkOpenTag = href
     ? `<a class="find-dj-chip__link" href="${escHtml(href)}">`
@@ -349,7 +354,8 @@ export function renderResultCardHTML(dj, { tierBadgeHtml = "", rentHref = "#", r
     tierBadgeHtml +
     '</div>' +
     (cityStr ? '<span class="find-dj-chip__city">' + cityStr + '</span>' : '') +
-    (bioStr ? '<p class="find-dj-chip__bio">' + bioStr + '</p>' : '') +
+    (bioStr ? '<p class="find-dj-chip__bio' + (bioEnStr ? ' find-dj-chip__bio--orig' : '') + '">' + bioStr + '</p>' : '') +
+    (bioEnStr ? '<p class="find-dj-chip__bio find-dj-chip__bio--en">' + bioEnStr + '</p>' : '') +
     '</div>' +
     linkCloseTag +
     (href

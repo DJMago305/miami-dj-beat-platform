@@ -2,6 +2,7 @@
 <html lang="es">
 
 <head>
+    <script src="/js/mdj-lang-boot.js?v=20260927-boot"></script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Encuentra tu DJ — Miami DJ Beat</title>
@@ -261,6 +262,9 @@
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
+        .find-dj-chip__bio--en { display: none; }
+        html[lang="en"] .find-dj-chip__bio--orig { display: none; }
+        html[lang="en"] .find-dj-chip__bio--en { display: -webkit-box; }
 
         .find-dj-chip__tier {
             margin-top: 2px;
@@ -320,9 +324,9 @@
     </style>
 
     <div style="max-width:1160px;margin:32px auto 0;padding:0 20px;text-align:center;">
-        <h1 style="margin:0 0 8px;">Encuentra tu DJ en Miami</h1>
-        <p class="muted" style="margin:0;">Explora DJs disponibles en la plataforma de Miami DJ Beat, filtrados por disponibilidad y especialidad.</p>
-        <p class="muted" style="margin:6px 0 0;font-size:13px;">¿Quieres leer su perfil completo primero? <a href="./dj/directorio.html">Ver perfiles públicos</a> · ¿Verificar una credencial? <a href="./directory.html">Directorio de certificación</a></p>
+        <h1 style="margin:0 0 8px;" data-i18n="fdj-h1">Encuentra tu DJ en Miami</h1>
+        <p class="muted" style="margin:0;" data-i18n="fdj-sub">Explora DJs disponibles en la plataforma de Miami DJ Beat, filtrados por disponibilidad y especialidad.</p>
+        <p class="muted" style="margin:6px 0 0;font-size:13px;" data-i18n="fdj-links">¿Quieres leer su perfil completo primero? <a href="./dj/directorio.html">Ver perfiles públicos</a> · ¿Verificar una credencial? <a href="./directory.html">Directorio de certificación</a></p>
     </div>
     <div id="state-msg" style="text-align:center;color:var(--muted);padding:24px 20px 20px;"></div>
     <div class="dj-grid" id="dj-grid"></div>
@@ -350,11 +354,11 @@
     </script>
     <script src="./supabase-config.js?v=20260816-pr2-wiring"></script>
     <script src="./mdj-referral.js?v=20260816-pr2-wiring"></script>
-    <script src="./translations.js?v=20260921-baile1"></script>
+    <script src="./translations.js?v=20260927-bilingue-final"></script>
     <script src="./i18n.js?v=20260226-1"></script>
     <script src="./subscription.js?v=20260422-find-dj-rank"></script>
     <script type="module">
-        import { tokenize, matchesQuery, simulateDbOrderedSlice, compareForSearch, canonicalHref, renderResultCardHTML } from './find-dj-search.mjs';
+        import { tokenize, matchesQuery, simulateDbOrderedSlice, compareForSearch, canonicalHref, renderResultCardHTML } from './find-dj-search.mjs?v=20260927-bilingue';
 
         const db = supabase.createClient(window.MDB_SUPABASE_URL, window.MDB_SUPABASE_ANON_KEY);
 
@@ -367,6 +371,14 @@
             return new URLSearchParams(window.location.search);
         }
 
+
+        /* Texto según el idioma de la perilla ES/EN (i18n.js); {n} y {q} se reemplazan. */
+        function T(key, fallback, vars) {
+            var v = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t(key) : '';
+            v = v || fallback;
+            if (vars) Object.keys(vars).forEach(function (k) { v = v.replace('{' + k + '}', vars[k]); });
+            return v;
+        }
 
         function tierBadgeHtml(dj) {
             var sub = window.MDB_SUBSCRIPTION;
@@ -385,17 +397,17 @@
                 String(dj && dj.roles != null ? dj.roles : '') + ' ' +
                 String(dj && dj.artist_specialty != null ? dj.artist_specialty : '')
             ).toLowerCase();
-            if (/\borquesta\b|\bbanda\b|\bgrupo\b|\blive\s*band\b|\bensemble\b/i.test(pack)) return 'Rentar esta banda';
-            if (/\bpercusion|percussion|timbal|timbalero|bongo|conga|batista\b/i.test(pack)) return 'Rentar percusión / timbal';
-            if (/\bdj\b|\bdisc\s*jockey\b|\bdeejay\b/i.test(pack)) return 'Rentar este DJ';
-            if (/\bvocal|cantante|singer\b/i.test(pack)) return 'Rentar vocal / artista';
-            return 'Rentar este talento';
+            if (/\borquesta\b|\bbanda\b|\bgrupo\b|\blive\s*band\b|\bensemble\b/i.test(pack)) return T('fdj-rent-band', 'Rentar esta banda');
+            if (/\bpercusion|percussion|timbal|timbalero|bongo|conga|batista\b/i.test(pack)) return T('fdj-rent-perc', 'Rentar percusión / timbal');
+            if (/\bdj\b|\bdisc\s*jockey\b|\bdeejay\b/i.test(pack)) return T('fdj-rent-dj', 'Rentar este DJ');
+            if (/\bvocal|cantante|singer\b/i.test(pack)) return T('fdj-rent-vocal', 'Rentar vocal / artista');
+            return T('fdj-rent-talent', 'Rentar este talento');
         }
 
         async function searchDJs() {
             const grid = document.getElementById('dj-grid');
             const msg = document.getElementById('state-msg');
-            msg.innerHTML = 'Searching...';
+            msg.innerHTML = T('fdj-searching', 'Searching...');
             grid.innerHTML = '';
 
             const cityEl = document.getElementById('f-city');
@@ -414,7 +426,7 @@
             const { data: raw, error } = await db.from('public_dj_talent').select('*').limit(500);
 
             if (error) {
-                msg.innerHTML = 'Error: ' + error.message;
+                msg.innerHTML = T('fdj-error', 'Error:') + ' ' + error.message;
                 return;
             }
 
@@ -435,9 +447,20 @@
             var sliced = simulateDbOrderedSlice(matched, 120);
             var data = sliced.slice().sort(compareForSearch(rawQuery, tokens));
 
-            let line = 'Found ' + data.length + ' talents.';
-            if (nameQ) line += ' (name/slug: “' + nameQ + '”)';
-            if (intent === 'availability') line += ' — refine date & filters for availability.';
+            window.__findDjLast = { data: data, nameQ: nameQ, intent: intent, categoryFromUrl: categoryFromUrl };
+            renderResults();
+        }
+
+        // Mensaje de resultados y tarjetas: se vuelven a dibujar cuando cambia el idioma (perilla ES/EN), sin volver a consultar.
+        function renderResults() {
+            var st = window.__findDjLast;
+            if (!st) return;
+            var data = st.data, nameQ = st.nameQ, intent = st.intent, categoryFromUrl = st.categoryFromUrl;
+            var grid = document.getElementById('dj-grid');
+            var msg = document.getElementById('state-msg');
+            let line = data.length === 1 ? T('fdj-found-one', 'Found 1 talent.') : T('fdj-found-many', 'Found {n} talents.', { n: data.length });
+            if (nameQ) line += ' ' + T('fdj-name-slug', '(name/slug: “{q}”)', { q: nameQ });
+            if (intent === 'availability') line += ' ' + T('fdj-availability', '— refine date & filters for availability.');
             msg.innerHTML = line;
             grid.innerHTML = data.map(function (dj) {
                 var href = canonicalHref(dj);
@@ -455,6 +478,7 @@
         document.addEventListener('DOMContentLoaded', function () {
             searchDJs();
         });
+        document.addEventListener('languageChanged', function () { renderResults(); });
     </script>
 
 
@@ -490,7 +514,7 @@
         </div>
     </div>
 
-    <script src="./header-smart-search.js?v=20260421-smartsearch-dj-directory"></script>
+    <script src="./header-smart-search.js?v=20260927-bilingue-hint"></script>
   <script src="./mdj-identity.js?v=20260921-rol-unico"></script>
       <script src="./mdjb-shared-header.js?v=20260921-svc-activo4"></script>
   <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>

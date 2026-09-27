@@ -830,8 +830,8 @@ window.checkoutNextStep = function() {
     const hoursInput = document.getElementById('chk-hours');
 
     if(dateInput && cityInput) {
-        document.getElementById('inv-date-display').innerText = dateInput.value || 'TBD';
-        document.getElementById('inv-city-display').innerText = cityInput.value || 'TBD';
+        document.getElementById('inv-date-display').innerText = dateInput.value || ((window.i18n && window.i18n.t('rentx-tbd')) || 'TBD');
+        document.getElementById('inv-city-display').innerText = cityInput.value || ((window.i18n && window.i18n.t('rentx-tbd')) || 'TBD');
     }
     document.getElementById('inv-client-name').innerText = nameInput ? nameInput.value : 'Guest Client';
     document.getElementById('inv-client-email').innerText = emailInput ? emailInput.value : '';
@@ -905,7 +905,7 @@ window.checkoutNextStep = function() {
     } else {
         // Fallback for empty/isolated testing
         subtotal = 0;
-        summaryHtml = `<tr><td colspan="2" style="padding: 20px; text-align: center; color: #888;">No items in cart</td></tr>`;
+        summaryHtml = `<tr><td colspan="2" style="padding: 20px; text-align: center; color: #888;">${(window.i18n && window.i18n.t('rentx-empty-cart')) || 'No items in cart'}</td></tr>`;
         detailedHtml = `<tr><td colspan="3" style="padding: 20px; text-align: center; color: #888;">No items matched</td></tr>`;
     }
     

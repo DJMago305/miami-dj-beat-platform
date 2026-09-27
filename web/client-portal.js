@@ -2586,7 +2586,7 @@ const PortalApp = {
         // Wire Edit Package button with the current lead ID
         var editBtn = document.getElementById('btn-edit-package');
         if (editBtn && this.currentLead && this.currentLead.id) {
-            var editHref = './services.html?edit_event=' + encodeURIComponent(this.currentLead.id);
+            var editHref = './rentals.html?edit_event=' + encodeURIComponent(this.currentLead.id);
             editBtn.href = editHref;
             // If payment is already started, show a warning tooltip
             var paid = parseFloat((this.currentLead || {}).balance_paid) || 0;

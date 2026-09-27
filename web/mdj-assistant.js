@@ -193,8 +193,8 @@ window.MDJ_Assistant = {
 
         if (principal === 'buyer' && (wantsAdmin || wantsArtistPanel)) {
             return lead + (isSpanish
-                ? 'con tu cuenta de **cliente** no entras a paneles de artista ni de staff — es por seguridad. Para reservar ve a **' + root + 'services.html**; tu portal está en **' + root + 'client-portal.html**. ¿Qué evento quieres cotizar?'
-                : 'with a **client** account you can’t open artist or staff panels — that’s by design. To book, use **' + root + 'services.html**; your portal is **' + root + 'client-portal.html**. What event should we quote?');
+                ? 'con tu cuenta de **cliente** no entras a paneles de artista ni de staff — es por seguridad. Para reservar ve a **' + root + 'rentals.html**; tu portal está en **' + root + 'client-portal.html**. ¿Qué evento quieres cotizar?'
+                : 'with a **client** account you can’t open artist or staff panels — that’s by design. To book, use **' + root + 'rentals.html**; your portal is **' + root + 'client-portal.html**. What event should we quote?');
         }
 
         if (principal === 'performer' && wantsAdmin) {
@@ -205,8 +205,8 @@ window.MDJ_Assistant = {
 
         if (principal === 'guest' && wantsAdmin) {
             return lead + (isSpanish
-                ? 'esa zona es **interna (staff)**. Si vienes a contratar, empieza en **' + root + 'services.html**; si eres artista, **' + root + 'login.html?signup=free**. ¿Qué tema del manual MDJPRO necesitas?'
-                : 'that area is **internal (staff)**. To hire talent, start at **' + root + 'services.html**; artists at **' + root + 'login.html?signup=free**. Which MDJPRO manual topic do you need?');
+                ? 'esa zona es **interna (staff)**. Si vienes a contratar, empieza en **' + root + 'rentals.html**; si eres artista, **' + root + 'login.html?signup=free**. ¿Qué tema del manual MDJPRO necesitas?'
+                : 'that area is **internal (staff)**. To hire talent, start at **' + root + 'rentals.html**; artists at **' + root + 'login.html?signup=free**. Which MDJPRO manual topic do you need?');
         }
 
         if (principal === 'performer' && !this.boothIsArtistPro() && /librer[ií]a wizard|library wizard|abrir.*(librer|library)|usar.*(librer|library wizard)|cap[ií]tulo 6|chapter 6|06-library/i.test(q)) {
@@ -308,8 +308,8 @@ window.MDJ_Assistant = {
         var eventBridge = '';
         if (/evento|boda|wedding|fiesta|party|contrat|book|hire|cotiz/i.test(q)) {
             eventBridge = isSpanish
-                ? '\n\nPara **reservar talento MDJB** (PRO primero): **' + root + 'services.html** — te conecto con vendedores/manager del equipo.'
-                : '\n\nTo **book MDJB talent** (PRO first): **' + root + 'services.html** — I\'ll connect you with our sales/manager team.';
+                ? '\n\nPara **reservar talento MDJB** (PRO primero): **' + root + 'rentals.html** — te conecto con vendedores/manager del equipo.'
+                : '\n\nTo **book MDJB talent** (PRO first): **' + root + 'rentals.html** — I\'ll connect you with our sales/manager team.';
         }
 
         return this.boothHumanLead(isSpanish, 'ack') + '**' + title + '** — ' + body + '\n\nAbre el capítulo aquí: **' + link + '**' + eventBridge;
@@ -357,8 +357,8 @@ window.MDJ_Assistant = {
 
         if (wantsWebOnly) {
             return lead + (isSpanish
-                ? 'en la **web MDJB** lo esencial es: **' + root + 'rentals.html** (servicios y talento) → **' + root + 'services.html** (cotizar) → **' + root + 'find-dj.html** (roster) → **' + root + 'downloads.html** (MDJPRO). También tienes shop, jobs, academia y tu portal cliente. ¿Profundizamos en **services** o **rentals**?'
-                : 'on **MDJB web**, the essentials are **' + root + 'rentals.html** (services & talent) → **' + root + 'services.html** (quote) → **' + root + 'find-dj.html** (roster) → **' + root + 'downloads.html** (MDJPRO). You also have shop, jobs, academy, and your client portal. Go deeper on **services** or **rentals**?');
+                ? 'en la **web MDJB** lo esencial es: **' + root + 'rentals.html** (servicios y talento) → **' + root + 'rentals.html** (cotizar) → **' + root + 'find-dj.html** (roster) → **' + root + 'downloads.html** (MDJPRO). También tienes shop, jobs, academia y tu portal cliente. ¿Profundizamos en **services** o **rentals**?'
+                : 'on **MDJB web**, the essentials are **' + root + 'rentals.html** (services & talent) → **' + root + 'rentals.html** (quote) → **' + root + 'find-dj.html** (roster) → **' + root + 'downloads.html** (MDJPRO). You also have shop, jobs, academy, and your client portal. Go deeper on **services** or **rentals**?');
         }
 
         if (wantsAppOnly) {
@@ -435,7 +435,7 @@ window.MDJ_Assistant = {
 
     /**
      * Catálogo / mapa del sitio. Fuentes: jobs.html, shop.html, rentals.html (+ rentalCatalogs en web/js/rentals.js),
-     * modal de talento en rentals.html, services.html, course-data.js (módulos).
+     * modal de talento en rentals.html, rentals.html, course-data.js (módulos).
      */
     siteKnowledgeReply: function (userInput, isSpanish) {
         const q = (userInput || '').toLowerCase();
@@ -453,9 +453,9 @@ window.MDJ_Assistant = {
         if (!wantsJobsList && !wantsRentList && !wantsShopList && !wantsEventTalentList && !wantsServicesList && !wantsAcademiaList && !wantsDownloadsList && !wantsTourList) return null;
 
         var jobsEs =
-            "Jobs (./jobs.html) — roles al postularte: DJ, MC, cantante, live band, percussionista, saxofonista, violinista, payaso, hora loca, bartender, mesero, manager artístico, productor musical, influencer/promotor, foto booth 360. **Booth** puede orientar una búsqueda por categoría + fecha (roster público; confirmación final en **./find-dj.html** / **./services.html**).";
+            "Jobs (./jobs.html) — roles al postularte: DJ, MC, cantante, live band, percussionista, saxofonista, violinista, payaso, hora loca, bartender, mesero, manager artístico, productor musical, influencer/promotor, foto booth 360. **Booth** puede orientar una búsqueda por categoría + fecha (roster público; confirmación final en **./find-dj.html** / **./rentals.html**).";
         var jobsEn =
-            "Jobs (./jobs.html) — application roles: DJ, MC, vocalist, live band, percussion, sax, violin, clown, hora loca, bartender, server, artist manager, music producer, influencer/promoter, 360 photo booth. **Booth** can run a category + date lookup on the public roster (finalize availability in **./find-dj.html** / **./services.html**).";
+            "Jobs (./jobs.html) — application roles: DJ, MC, vocalist, live band, percussion, sax, violin, clown, hora loca, bartender, server, artist manager, music producer, influencer/promoter, 360 photo booth. **Booth** can run a category + date lookup on the public roster (finalize availability in **./find-dj.html** / **./rentals.html**).";
 
         var shopEs = "Shop (./shop.html) — categorías de producto en merchandising: tshirts, hats, hoodies (variantes en la página).";
         var shopEn = "Shop (./shop.html) — merch product categories: tshirts, hats, hoodies (see page for variants).";
@@ -466,8 +466,8 @@ window.MDJ_Assistant = {
         var talentEs = "Selector de talento para paquetes (modal en ./rentals.html): DJ / Performance · Hora Loca Experience · Músicos en vivo · Captura y visuales (foto, video, VJ) · MC y presentadores.";
         var talentEn = "Talent picker for packages (modal on ./rentals.html): DJ/Performance · Hora Loca · Live musicians · Photo/Video/VJ · MC & hosts.";
 
-        var servicesEs = "Services (./services.html) — formulario de cotización; tipo de evento en el select: Nightclub & Festival, Elite Corporate, Premium Wedding, Other / Custom.";
-        var servicesEn = "Services (./services.html) — quote form; event type options: Nightclub & Festival, Elite Corporate, Premium Wedding, Other / Custom.";
+        var servicesEs = "Services (./rentals.html) — formulario de cotización; tipo de evento en el select: Nightclub & Festival, Elite Corporate, Premium Wedding, Other / Custom.";
+        var servicesEn = "Services (./rentals.html) — quote form; event type options: Nightclub & Festival, Elite Corporate, Premium Wedding, Other / Custom.";
 
         var academiaEs = "Academia / certificación (courses.html · course-data.js) — 12 módulos: Fundamentos del Sonido, Equipamiento Profesional, Software Profesional, Técnica de Mezcla, MC y Control de Pista, Producción e Iluminación, Organización de Librería, Contratos y Cotizaciones, Marketing Personal DJ, Precios y Finanzas DJ, Mentalidad del DJ Élite, Examen Final + Certificación.";
         var academiaEn = "Academy (courses.html · course-data.js) — 12 modules: sound fundamentals, gear, software, mixing, MC, lighting/production, library, contracts, marketing, pricing/finance, elite mindset, final exam + certification.";
@@ -603,7 +603,7 @@ window.MDJ_Assistant = {
                 [
                     "Si **quieres contratar** una cabina / **foto booth** (incl. 360) para tu evento:",
                     "• **Rentals / paquetes:** **./rentals.html** — arma el paquete; en el **modal de talento** elige **captura y visuales** (foto, video, 360 si aplica).",
-                    "• **Cotización global de evento:** **./services.html** (tipo de evento y detalles).",
+                    "• **Cotización global de evento:** **./rentals.html** (tipo de evento y detalles).",
                     "Si **tienes** equipo y quieres **ofrecerlo** en la red como proveedor: **./jobs.html** → rol **FOTO BOOTH 360** · alta **./login.html?signup=free&redirect=jobs**."
                 ].join("\n"),
                 true
@@ -613,7 +613,7 @@ window.MDJ_Assistant = {
             [
                 "To **book / rent** a **photo booth** (including 360) for your event:",
                 "• **Rentals & packages:** **./rentals.html** — build your package; in the **talent modal** pick **photo / video / capture** (360 when applicable).",
-                "• **Full event quote:** **./services.html**.",
+                "• **Full event quote:** **./rentals.html**.",
                 "If you **operate** a booth and want to **join as a vendor:** **./jobs.html** → **FOTO_BOOTH_360** · **./login.html?signup=free&redirect=jobs**."
             ].join("\n"),
             false
@@ -894,13 +894,13 @@ window.MDJ_Assistant = {
         if (isSpanish) {
             return (
                 "\n\nSi quieres, puedes **programar tu evento con nosotros**: tenemos **muchísimas opciones** que se adaptan a tu medida y presupuesto. " +
-                "Si te interesa seguir, en la web oficial entra con tu **cuenta de cliente** o **crea una nueva**: **./services.html** (cotizar y organizar) · **./login.html** (iniciar sesión o registro). " +
+                "Si te interesa seguir, en la web oficial entra con tu **cuenta de cliente** o **crea una nueva**: **./rentals.html** (cotizar y organizar) · **./login.html** (iniciar sesión o registro). " +
                 "Para la **tienda oficial**, **./shop.html** — invitación clara, sin presión, por si quieres explorar."
             );
         }
         return (
             "\n\nIf you’d like to **plan your event with us**, we have **lots of options** to match your style and budget. " +
-            "On the official site you can use your **client account** or **create one**: **./services.html** (quote / plan your event) · **./login.html** (sign in or sign up). " +
+            "On the official site you can use your **client account** or **create one**: **./rentals.html** (quote / plan your event) · **./login.html** (sign in or sign up). " +
             "For the **official shop**, **./shop.html** — a clear, low-pressure next step if you want to browse."
         );
     },
@@ -1234,9 +1234,9 @@ window.MDJ_Assistant = {
             ctx.candidates = [];
             ctx.pendingInvite = null;
             return isSpanish
-                ? "Perfecto. Cuando quieras **cerrar la reservación**, el equipo puede seguir en **./services.html** o puedes explorar **./find-dj.html**. ¿Algo más?" +
+                ? "Perfecto. Cuando quieras **cerrar la reservación**, el equipo puede seguir en **./rentals.html** o puedes explorar **./find-dj.html**. ¿Algo más?" +
                       this.boothDiplomaticSalesCloser(true)
-                : "Great. When you’re ready to **finalize the booking**, our team can continue in **./services.html** or you can browse **./find-dj.html**. Anything else?" +
+                : "Great. When you’re ready to **finalize the booking**, our team can continue in **./rentals.html** or you can browse **./find-dj.html**. Anything else?" +
                       this.boothDiplomaticSalesCloser(false);
         }
 
@@ -1261,8 +1261,8 @@ window.MDJ_Assistant = {
             if (!ctx.candidates.length) {
                 ctx.step = "idle";
                 return isSpanish
-                    ? "No encontré talento público con esa categoría ahora mismo. Prueba **./find-dj.html** o deja datos en **./services.html** y el equipo asigna por disponibilidad real de agenda."
-                    : "I didn’t find public roster matches for that category right now. Try **./find-dj.html** or **./services.html** so ops can match real calendar availability.";
+                    ? "No encontré talento público con esa categoría ahora mismo. Prueba **./find-dj.html** o deja datos en **./rentals.html** y el equipo asigna por disponibilidad real de agenda."
+                    : "I didn’t find public roster matches for that category right now. Try **./find-dj.html** or **./rentals.html** so ops can match real calendar availability.";
             }
             var lines = [];
             lines.push(
@@ -1388,8 +1388,8 @@ window.MDJ_Assistant = {
         if (!ctx.candidates.length) {
             ctx.step = "idle";
             return isSpanish
-                ? "No hay coincidencias públicas para **" + role + "** en esta fecha (solo talento marcado disponible en red). Sigue en **./find-dj.html** o **./services.html**."
-                : "No public matches for **" + role + "** right now. Continue on **./find-dj.html** or **./services.html**.";
+                ? "No hay coincidencias públicas para **" + role + "** en esta fecha (solo talento marcado disponible en red). Sigue en **./find-dj.html** o **./rentals.html**."
+                : "No public matches for **" + role + "** right now. Continue on **./find-dj.html** or **./rentals.html**.";
         }
         var out = [];
         out.push(
@@ -1487,8 +1487,8 @@ window.MDJ_Assistant = {
                     self.addMessage(
                         "assistant",
                         es
-                            ? "Algo falló al procesar tu mensaje. Intenta de nuevo o abre **./services.html** para hablar con el equipo."
-                            : "Something went wrong processing your message. Try again, or open **./services.html** to reach the team."
+                            ? "Algo falló al procesar tu mensaje. Intenta de nuevo o abre **./rentals.html** para hablar con el equipo."
+                            : "Something went wrong processing your message. Try again, or open **./rentals.html** to reach the team."
                     );
                 }
             });
@@ -1678,8 +1678,8 @@ window.MDJ_Assistant = {
             this.addMessage(
                 "assistant",
                 isSpanish
-                    ? "No pude consultar el roster ahora. Prueba **./find-dj.html** o **./services.html**."
-                    : "I couldn’t query the roster right now. Try **./find-dj.html** or **./services.html**."
+                    ? "No pude consultar el roster ahora. Prueba **./find-dj.html** o **./rentals.html**."
+                    : "I couldn’t query the roster right now. Try **./find-dj.html** or **./rentals.html**."
             );
             return;
         }

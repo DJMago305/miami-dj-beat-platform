@@ -1,7 +1,8 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
 
 <head>
+    <script src="/js/mdj-lang-boot.js?v=20260927-boot"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
   <script>
     /* FIX-LEGACY-SUPABASE-01 (2026-08-19) · el respaldo entra cuando falta la
@@ -559,71 +560,71 @@
   <main id="booth-app">
     <section class="booth-hero" aria-labelledby="booth-title">
       <h1 id="booth-title">The AI Booth</h1>
-      <p class="booth-tagline">Central de operaciones — booking de DJs y eventos. Prospecto real en base de datos.</p>
+      <p class="booth-tagline" data-i18n="boothx-001">Central de operaciones — booking de DJs y eventos. Prospecto real en base de datos.</p>
       <div id="booth-wave" class="booth-wave booth-wave--live" aria-hidden="true"
-        title="AI Booth session — listening for your event details">
+        title="Sesión de AI Booth — escuchando los detalles de tu evento" data-i18n-title="boothx-019">
         <span></span><span></span><span></span><span></span><span></span>
       </div>
     </section>
 
     <div id="booth-vip-strip" class="booth-vip-strip" hidden>
-      <strong>VIP capture</strong> — <span id="booth-vip-strip-text"></span>
+      <strong data-i18n="boothx-002">Captura VIP</strong> — <span id="booth-vip-strip-text"></span>
     </div>
 
-    <div id="booth-intro" class="booth-intro" role="status">
+    <div id="booth-intro" class="booth-intro" role="status" data-i18n="boothx-003">
       Bienvenido a la central de operaciones. Soy el canal dedicado de Miami DJ Beat para tu próximo evento en Miami-Dade o los Keys.
       Completa el prospecto: el equipo recibe la entrada en <strong>public.leads</strong> (notificación vía trigger si está activo).
       El chat con modelo + voz (ElevenLabs u otro) se conecta en backend; aquí no hay API keys de IA en el navegador.
     </div>
     <p class="booth-tts-row" style="margin: 16px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
-      <button type="button" class="btn secondary" id="booth-tts-welcome-btn">Listen to welcome (voice demo)</button>
+      <button type="button" class="btn secondary" id="booth-tts-welcome-btn" data-i18n="boothx-004">Escuchar bienvenida (demo de voz)</button>
       <span id="booth-tts-status" role="status" aria-live="polite" style="font-size: 14px; color: var(--muted);"></span>
     </p>
 
     <section aria-labelledby="booth-lead-heading">
-      <h2 id="booth-lead-heading" class="booth-sr-only">Prospecto de evento</h2>
+      <h2 id="booth-lead-heading" class="booth-sr-only" data-i18n="boothx-005">Prospecto de evento</h2>
       <form id="booth-lead-form" class="booth-lead-form" novalidate>
         <input type="hidden" id="booth-capture-json" name="booth_capture_json" value="" autocomplete="off" />
-        <label for="booth-event-type">Tipo de evento</label>
+        <label for="booth-event-type" data-i18n="boothx-006">Tipo de evento</label>
         <select id="booth-event-type" name="event_type" required>
-          <option value="">Selecciona…</option>
-          <option value="Wedding">Boda</option>
-          <option value="Corporate">Corporativo</option>
-          <option value="Private Party">Fiesta privada</option>
+          <option value="" data-i18n="boothx-007">Selecciona…</option>
+          <option value="Wedding" data-i18n="boothx-008">Boda</option>
+          <option value="Corporate" data-i18n="boothx-009">Corporativo</option>
+          <option value="Private Party" data-i18n="boothx-010">Fiesta privada</option>
           <option value="Venue / Club">Venue / Club</option>
-          <option value="Other">Otro</option>
+          <option value="Other" data-i18n="boothx-011">Otro</option>
         </select>
 
-        <label for="booth-event-date">Fecha del evento</label>
+        <label for="booth-event-date" data-i18n="boothx-012">Fecha del evento</label>
         <input type="date" id="booth-event-date" name="event_date" required />
 
-        <label for="booth-location">Ubicación / zona</label>
-        <input type="text" id="booth-location" name="location" placeholder="Ej. Brickell, Miami Beach…" required />
+        <label for="booth-location" data-i18n="boothx-013">Ubicación / zona</label>
+        <input type="text" id="booth-location" name="location" placeholder="Ej. Brickell, Miami Beach…" required / data-i18n-hold="boothx-020">
 
         <label for="booth-email">Email</label>
         <input type="email" id="booth-email" name="email" autocomplete="email" required />
 
-        <label for="booth-phone">Teléfono</label>
+        <label for="booth-phone" data-i18n="boothx-014">Teléfono</label>
         <input type="tel" id="booth-phone" name="phone" autocomplete="tel" />
 
-        <label for="booth-budget">Presupuesto orientativo</label>
+        <label for="booth-budget" data-i18n="boothx-015">Presupuesto orientativo</label>
         <input type="text" id="booth-budget" name="budget" placeholder="Ej. $2,500 – $5,000" />
 
-        <label for="booth-talent">DJ o estilo deseado (opcional)</label>
-        <textarea id="booth-talent" name="requested_talent" placeholder="Género, open format, bilingüe, etc."></textarea>
+        <label for="booth-talent" data-i18n="boothx-016">DJ o estilo deseado (opcional)</label>
+        <textarea id="booth-talent" name="requested_talent" placeholder="Género, open format, bilingüe, etc." data-i18n-hold="boothx-021"></textarea>
 
-        <button type="submit" class="btn primary full">Enviar prospecto</button>
+        <button type="submit" class="btn primary full" data-i18n="boothx-017">Enviar prospecto</button>
         <p id="booth-lead-status" role="status" aria-live="polite"></p>
       </form>
     </section>
 
-    <div class="booth-chat-placeholder">
+    <div class="booth-chat-placeholder" data-i18n="boothx-018">
       <strong>Próximo paso:</strong> endpoint de chat (Edge Function) con el Prompt Maestro desde <code>docs/ai/system-agent-v1.md</code>
       y herramientas server-side. TTS (ElevenLabs): Edge Function <code>booth-tts</code> + <code>web/js/booth-elevenlabs.js</code> — clave solo en servidor.
     </div>
   </main>
 
-  <script src="./translations.js?v=20260921-baile1"></script>
+  <script src="./translations.js?v=20260927-bilingue-final"></script>
   <script src="./i18n.js?v=20260330"></script>
   <script src="./js/booth-elevenlabs.js?v=20260413"></script>
   <script>
@@ -646,6 +647,9 @@
         var a = document.querySelector('.lang-btn.active');
         return (a && a.getAttribute('data-lang')) === 'es' ? 'es' : 'en';
       }
+
+      /* Mensaje según la perilla ES/EN: bL(español, inglés). */
+      function bL(es, en) { return getLang() === 'es' ? es : en; }
 
       function sanitizeString(s, maxLen) {
         if (s == null || typeof s !== 'string') return '';
@@ -1021,7 +1025,7 @@
           e.preventDefault();
           boothTrack('lead_submit_attempt', { has_capture: isVipCapture(raw) });
           var status = document.getElementById('booth-lead-status');
-          status.textContent = 'Guardando prospecto…';
+          status.textContent = bL('Guardando prospecto…', 'Saving lead…');
           status.style.color = 'var(--accent)';
 
           var fd = new FormData(e.target);
@@ -1071,14 +1075,14 @@
           try {
             var db = window.getSupabaseClient && window.getSupabaseClient();
             if (!db) {
-              status.textContent = 'Error: Supabase no está listo. Recarga la página.';
+              status.textContent = bL('Error: Supabase no está listo. Recarga la página.', 'Error: Supabase is not ready. Reload the page.');
               status.style.color = '#f66';
               return;
             }
             var res = await db.from('leads').insert([payload]).select('id').single();
             if (res.error) {
               boothTrack('lead_submit_error', { error: res.error.message || 'insert_failed' });
-              status.textContent = 'No se pudo guardar: ' + (res.error.message || 'error');
+              status.textContent = bL('No se pudo guardar: ', 'Could not save: ') + (res.error.message || 'error');
               status.style.color = '#f66';
               return;
             }
@@ -1100,7 +1104,7 @@
                 ai_lessons: null
               });
             }
-            status.textContent = 'Prospecto guardado. ID: ' + (data && data.id ? data.id : 'ok') + '. El equipo será notificado si el trigger está activo.';
+            status.textContent = bL('Prospecto guardado. ID: ', 'Lead saved. ID: ') + (data && data.id ? data.id : 'ok') + bL('. El equipo será notificado si el trigger está activo.', '. The team will be notified if the trigger is active.');
             status.style.color = 'var(--gold)';
             var hid = document.getElementById('booth-capture-json');
             if (hid) hid.value = JSON.stringify(raw);
@@ -1123,11 +1127,11 @@
         if (!btn || !st) return;
         if (!window.MDJBoothTTS) {
           btn.disabled = true;
-          st.textContent = 'TTS module not loaded.';
+          st.textContent = bL('Módulo TTS no cargado.', 'TTS module not loaded.');
           return;
         }
         btn.addEventListener('click', async function () {
-          st.textContent = 'Loading voice…';
+          st.textContent = bL('Cargando voz…', 'Loading voice…');
           st.style.color = 'var(--muted)';
           try {
             var g = buildGreetings(raw);
@@ -1139,6 +1143,8 @@
           }
         });
       }
+
+      document.addEventListener('languageChanged', function () { applyUi(); });
 
       function boot() {
         applyUi();
@@ -1159,7 +1165,7 @@
       }
     })();
   </script>
-  <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
+  <script src="./header-smart-search.js?v=20260927-bilingue-hint"></script>
   <script src="./mdj-identity.js?v=20260921-rol-unico"></script>
     <script src="./mdjb-shared-header.js?v=20260921-svc-activo4"></script>
   <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>

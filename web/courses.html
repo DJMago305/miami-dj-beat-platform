@@ -2,6 +2,8 @@
 <html lang="es">
 
 <head>
+    <script src="/js/mdj-lang-boot.js?v=20260927-boot"></script>
+    <script src="./js/courses-i18n.js?v=20260927-bilingue"></script>
     <script src="./mdj-estacion-preflight.js?v=20260919-staff-vista-fix"></script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -877,7 +879,7 @@
                     <p id="mdj-score-num" style="font-size:40px;font-weight:900;color:var(--gold);margin-bottom:28px;">
                     </p>
                     <button onclick="mdjQuizRestart()"
-                        style="padding:14px 36px;background:rgba(197,160,89,0.15);color:var(--gold);border:1px solid rgba(197,160,89,0.4);border-radius:50px;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:1px;">
+                        style="padding:14px 36px;background:rgba(197,160,89,0.15);color:var(--gold);border:1px solid rgba(197,160,89,0.4);border-radius:50px;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:1px;" data-i18n="crsx-001">
                         🔄 REPETIR EXAMEN
                     </button>
                 </div>
@@ -954,8 +956,8 @@
                 document.addEventListener('DOMContentLoaded', function () {
                     (function () {
                         let QUESTIONS = [];
-                    const lang = localStorage.getItem('mdjpro_lang') || 'en';
-                    const langData = translations[lang] || translations['es'];
+                    let lang = localStorage.getItem('mdjpro_lang') || 'en';
+                    let langData = translations[lang] || translations['es'];
                     
                     if (langData && langData["course-quiz-questions"]) {
                         QUESTIONS = langData["course-quiz-questions"];
@@ -972,6 +974,15 @@
                     }
 
                     let current = 0, score = 0, answered = false;
+
+                    /* Perilla ES/EN a mitad del módulo: se recargan textos y preguntas del idioma nuevo y se repinta la pregunta sin contestar. */
+                    document.addEventListener('languageChanged', function () {
+                        lang = (window.i18n && window.i18n.currentLang) || localStorage.getItem('mdjpro_lang') || 'en';
+                        langData = translations[lang] || translations['es'];
+                        if (langData && langData["course-quiz-questions"]) QUESTIONS = langData["course-quiz-questions"];
+                        var b = document.getElementById('mdj-quiz-box');
+                        if (b && b.style.display !== 'none' && !answered) render();
+                    });
 
                     function render() {
                         const q = QUESTIONS[current];
@@ -1017,7 +1028,7 @@
                         }
 
                         const nextLabelKey = current < QUESTIONS.length - 1 ? 'course-quiz-next' : 'course-quiz-result-btn';
-                        const nextLabel = langData[nextLabelKey] || (current < QUESTIONS.length - 1 ? 'SIGUIENTE →' : 'VER RESULTADO');
+                        const nextLabel = langData[nextLabelKey] || (current < QUESTIONS.length - 1 ? mdjCT('SIGUIENTE →','NEXT →') : mdjCT('VER RESULTADO','SEE RESULT'));
                         const nb = document.getElementById('mdj-next-btn');
                         nb.textContent = nextLabel;
                         nb.style.display = 'inline-block';
@@ -1107,17 +1118,17 @@
                 <!-- Score screen -->
                 <div id="mdj2-score-screen" style="display:none;max-width:780px;margin:0 auto;text-align:center;background:rgba(255,255,255,0.02);border:1px solid rgba(197,160,89,0.2);border-radius:24px;padding:60px 40px;">
                     <div id="mdj2-score-icon" style="font-size:64px;margin-bottom:20px;">🏆</div>
-                    <h2 id="mdj2-score-title" style="font-size:32px;font-weight:900;color:#fff;margin-bottom:12px;">¡Módulo Completado!</h2>
-                    <p id="mdj2-score-sub" style="color:var(--muted);font-size:16px;margin-bottom:32px;">Has finalizado la evaluación de Historia Real del DJing.</p>
+                    <h2 id="mdj2-score-title" style="font-size:32px;font-weight:900;color:#fff;margin-bottom:12px;" data-i18n="crsx-002">¡Módulo Completado!</h2>
+                    <p id="mdj2-score-sub" style="color:var(--muted);font-size:16px;margin-bottom:32px;" data-i18n="crsx-003">Has finalizado la evaluación de Historia Real del DJing.</p>
                     <div id="mdj2-score-num" style="font-size:72px;font-weight:900;color:var(--gold);margin-bottom:40px;">100%</div>
-                    <button onclick="mdj2QuizRestart()" style="padding:16px 40px;background:transparent;border:1px solid var(--gold);color:var(--gold);border-radius:50px;font-weight:800;cursor:pointer;transition:all 0.3s;">REPETIR EVALUACIÓN</button>
+                    <button onclick="mdj2QuizRestart()" style="padding:16px 40px;background:transparent;border:1px solid var(--gold);color:var(--gold);border-radius:50px;font-weight:800;cursor:pointer;transition:all 0.3s;" data-i18n="crsx-004">REPETIR EVALUACIÓN</button>
                 </div>
             <script>
                 document.addEventListener('DOMContentLoaded', function () {
                     (function () {
                         let Q2 = [];
-                        const lang = localStorage.getItem('mdjpro_lang') || 'en';
-                        const langData = translations[lang] || translations['es'];
+                        let lang = localStorage.getItem('mdjpro_lang') || 'en';
+                        let langData = translations[lang] || translations['es'];
                         
                         if (langData && langData["course-history-questions"]) {
                             Q2 = langData["course-history-questions"];
@@ -1129,6 +1140,14 @@
                         }
 
                         let cur2 = 0, sc2 = 0, an2 = false;
+
+                        document.addEventListener('languageChanged', function () {
+                            lang = (window.i18n && window.i18n.currentLang) || localStorage.getItem('mdjpro_lang') || 'en';
+                            langData = translations[lang] || translations['es'];
+                            if (langData && langData["course-history-questions"]) Q2 = langData["course-history-questions"];
+                            var b = document.getElementById('mdj2-quiz-box');
+                            if (b && b.style.display !== 'none' && !an2) render2();
+                        });
 
                         function render2() {
                             const q = Q2[cur2], L = ['A', 'B', 'C', 'D', 'E'];
@@ -1169,7 +1188,7 @@
                             }
                             const nb = document.getElementById('mdj2-next-btn');
                             const nextLabelKey = cur2 < Q2.length - 1 ? 'course-quiz-next' : 'course-quiz-result-btn';
-                            nb.textContent = langData[nextLabelKey] || (cur2 < Q2.length - 1 ? 'SIGUIENTE →' : 'VER RESULTADO');
+                            nb.textContent = langData[nextLabelKey] || (cur2 < Q2.length - 1 ? mdjCT('SIGUIENTE →','NEXT →') : mdjCT('VER RESULTADO','SEE RESULT'));
                             nb.style.display = 'inline-block';
                         }
 
@@ -1188,7 +1207,7 @@
                             const title = pct === 100 ? (langData["course-score-100"] || '¡Perfecto!') : pct >= 80 ? (langData["course-score-80"] || 'Excelente') : (langData["course-score-fail"] || 'Sigue estudiando');
                             document.getElementById('mdj2-score-icon').textContent = icon;
                             document.getElementById('mdj2-score-title').textContent = title;
-                            document.getElementById('mdj2-score-sub').textContent = `Respondiste correctamente ${sc2} de ${Q2.length} preguntas`;
+                            document.getElementById('mdj2-score-sub').textContent = `${mdjCT('Respondiste correctamente','You answered correctly')} ${sc2} ${mdjCT('de','of')} ${Q2.length} ${mdjCT('preguntas','questions')}`;
                             document.getElementById('mdj2-score-num').textContent = pct + '%';
                         }
 
@@ -1250,7 +1269,7 @@
                     <p id="mdj3-score-num" style="font-size:40px;font-weight:900;color:var(--gold);margin-bottom:28px;">
                     </p>
                     <button onclick="mdj3QuizRestart()"
-                        style="padding:14px 36px;background:rgba(197,160,89,0.15);color:var(--gold);border:1px solid rgba(197,160,89,0.4);border-radius:50px;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:1px;">
+                        style="padding:14px 36px;background:rgba(197,160,89,0.15);color:var(--gold);border:1px solid rgba(197,160,89,0.4);border-radius:50px;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:1px;" data-i18n="crsx-001">
                         🔄 REPETIR EXAMEN
                     </button>
                 </div>
@@ -1286,12 +1305,13 @@
                         { q: "¿Qué diferencia fundamental separa a un DJ amateur de un DJ profesional en cuanto a librería?", opts: ["El DJ profesional tiene más de 100,000 tracks — el amateur menos de 1,000", "El DJ profesional usa equipos más caros y de mayor calidad", "El DJ amateur acumula música; el DJ profesional construye un sistema con propósito y función", "El DJ profesional always usa Rekordbox; el amateur siempre usa Serato", "El DJ profesional nunca escucha música nueva — solo trabaja con clásicos probados"], ans: 2 },
                         { q: "¿Cuál de los siguientes describes mejor la mentalidad del DJ profesional de Módulo 3?", opts: ["Artista creativo que improvisa todo sin estructura ni preparación previa", "Coleccionista de música que acumula la mayor cantidad de tracks posible", "Técnico + Curador + Ingeniero de datos + Empresario con un ecosistema organizado de cabina", "Especialista en un solo software sin necesidad de adaptarse a otros", "Performer que depende únicamente del talento natural de lectura de pista"], ans: 2 },
                     ];
+                    mdjBindQ(Q3, 'Q3', function () { var b = document.getElementById('mdj3-quiz-box'); if (b && b.style.display !== 'none' && !an3) render3(); });
 
                     let cur3 = 0, sc3 = 0, an3 = false;
 
                     function render3() {
                         const q = Q3[cur3], L = ['A', 'B', 'C', 'D', 'E'];
-                        document.getElementById('mdj3-q-meta').textContent = `PREGUNTA ${cur3 + 1} DE ${Q3.length}`;
+                        document.getElementById('mdj3-q-meta').textContent = `${mdjCT('PREGUNTA','QUESTION')} ${cur3 + 1} ${mdjCT('DE','OF')} ${Q3.length}`;
                         document.getElementById('mdj3-q-text').textContent = q.q;
                         document.getElementById('mdj3-progress-bar').style.width = ((cur3 / Q3.length) * 100) + '%';
                         document.getElementById('mdj3-feedback').style.display = 'none';
@@ -1317,15 +1337,15 @@
                             sc3++;
                             btn.classList.add('correct');
                             fb.style.cssText = 'display:block;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);border-radius:14px;padding:14px 18px;color:#22c55e;font-size:14px;margin-top:20px;font-weight:700;';
-                            fb.textContent = '✅ ¡Correcto!';
+                            fb.textContent = mdjCT('✅ ¡Correcto!','✅ Correct!');
                         } else {
                             btn.classList.add('wrong');
                             document.querySelectorAll('#mdj3-options .mdj-opt')[q.ans].classList.add('correct');
                             fb.style.cssText = 'display:block;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.3);border-radius:14px;padding:14px 18px;color:#ef4444;font-size:14px;margin-top:20px;';
-                            fb.innerHTML = `<strong>❌ FALLO.</strong> La respuesta correcta es: <strong style="color:#22c55e;">${'ABCDE'[q.ans]}) ${q.opts[q.ans]}</strong>`;
+                            fb.innerHTML = `${mdjCT('<strong>❌ FALLO.</strong> La respuesta correcta es:','<strong>❌ WRONG.</strong> The correct answer is:')} <strong style="color:#22c55e;">${'ABCDE'[q.ans]}) ${q.opts[q.ans]}</strong>`;
                         }
                         const nb = document.getElementById('mdj3-next-btn');
-                        nb.textContent = cur3 < Q3.length - 1 ? 'SIGUIENTE →' : 'VER RESULTADO';
+                        nb.textContent = cur3 < Q3.length - 1 ? mdjCT('SIGUIENTE →','NEXT →') : mdjCT('VER RESULTADO','SEE RESULT');
                         nb.style.display = 'inline-block';
                     }
 
@@ -1340,10 +1360,10 @@
                         document.getElementById('mdj3-score-screen').style.display = 'block';
                         const pct = Math.round((sc3 / Q3.length) * 100);
                         const icon = pct >= 90 ? '🏆' : pct >= 70 ? '🎯' : pct >= 50 ? '🎧' : '📚';
-                        const lvl = pct >= 90 ? 'DJ estructurado profesional' : pct >= 70 ? 'DJ intermedio — refuerza los puntos débiles' : pct >= 50 ? 'DJ básico — repasa Serato y Rekordbox' : 'Operador sin sistema — debes estudiar el módulo completo';
+                        const lvl = pct >= 90 ? mdjCT('DJ estructurado profesional','Professional structured DJ') : pct >= 70 ? mdjCT('DJ intermedio — refuerza los puntos débiles','Intermediate DJ — shore up the weak points') : pct >= 50 ? mdjCT('DJ básico — repasa Serato y Rekordbox','Basic DJ — review Serato and Rekordbox') : mdjCT('Operador sin sistema — debes estudiar el módulo completo','Operator without a system — you need to study the whole module');
                         document.getElementById('mdj3-score-icon').textContent = icon;
                         document.getElementById('mdj3-score-title').textContent = lvl;
-                        document.getElementById('mdj3-score-sub').textContent = `Respondiste correctamente ${sc3} de ${Q3.length} preguntas`;
+                        document.getElementById('mdj3-score-sub').textContent = `${mdjCT('Respondiste correctamente','You answered correctly')} ${sc3} ${mdjCT('de','of')} ${Q3.length} ${mdjCT('preguntas','questions')}`;
                         document.getElementById('mdj3-score-num').textContent = pct + '%';
                     }
 
@@ -1364,12 +1384,12 @@
 
                 <div style="text-align:center;margin-bottom:40px;">
                     <div
-                        style="display:inline-flex;align-items:center;gap:8px;background:rgba(197,160,89,0.1);border:1px solid rgba(197,160,89,0.3);border-radius:50px;padding:6px 20px;font-size:11px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:16px;">
+                        style="display:inline-flex;align-items:center;gap:8px;background:rgba(197,160,89,0.1);border:1px solid rgba(197,160,89,0.3);border-radius:50px;padding:6px 20px;font-size:11px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:16px;" data-i18n="crsx-005">
                         EVALUACIÓN · TÉCNICAS DE MEZCLA
                     </div>
-                    <h3 style="font-size:clamp(22px,3vw,34px);font-weight:900;margin-bottom:10px;">Técnicas
+                    <h3 style="font-size:clamp(22px,3vw,34px);font-weight:900;margin-bottom:10px;" data-i18n="crsx-006">Técnicas
                         Profesionales de Mezcla</h3>
-                    <p style="color:var(--muted);font-size:15px;max-width:560px;margin:0 auto;line-height:1.7;">
+                    <p style="color:var(--muted);font-size:15px;max-width:560px;margin:0 auto;line-height:1.7;" data-i18n="crsx-007">
                         28 preguntas sobre beatmatching, tipos de transición, fraseo musical,<br>
                         mezcla por EQ, mezcla armónica y lectura de pista. Sin técnica no hay arte.
                     </p>
@@ -1407,7 +1427,7 @@
                     <p id="mdj4-score-num" style="font-size:40px;font-weight:900;color:var(--gold);margin-bottom:28px;">
                     </p>
                     <button onclick="mdj4QuizRestart()"
-                        style="padding:14px 36px;background:rgba(197,160,89,0.15);color:var(--gold);border:1px solid rgba(197,160,89,0.4);border-radius:50px;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:1px;">
+                        style="padding:14px 36px;background:rgba(197,160,89,0.15);color:var(--gold);border:1px solid rgba(197,160,89,0.4);border-radius:50px;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:1px;" data-i18n="crsx-008">
                         REPETIR EXAMEN
                     </button>
                 </div>
@@ -1568,12 +1588,13 @@
                             ans: 1
                         },
                     ];
+                    mdjBindQ(Q4, 'Q4', function () { var b = document.getElementById('mdj4-quiz-box'); if (b && b.style.display !== 'none' && !an4) render4(); });
 
                     let cur4 = 0, sc4 = 0, an4 = false;
 
                     function render4() {
                         const q = Q4[cur4], L = ['A', 'B', 'C', 'D', 'E'];
-                        document.getElementById('mdj4-q-meta').textContent = `PREGUNTA ${cur4 + 1} DE ${Q4.length}`;
+                        document.getElementById('mdj4-q-meta').textContent = `${mdjCT('PREGUNTA','QUESTION')} ${cur4 + 1} ${mdjCT('DE','OF')} ${Q4.length}`;
                         document.getElementById('mdj4-q-text').textContent = q.q;
                         document.getElementById('mdj4-progress-bar').style.width = ((cur4 / Q4.length) * 100) + '%';
                         document.getElementById('mdj4-feedback').style.display = 'none';
@@ -1599,15 +1620,15 @@
                             sc4++;
                             btn.classList.add('correct');
                             fb.style.cssText = 'display:block;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);border-radius:14px;padding:14px 18px;color:#22c55e;font-size:14px;margin-top:20px;font-weight:700;';
-                            fb.textContent = '✅ ¡Correcto!';
+                            fb.textContent = mdjCT('✅ ¡Correcto!','✅ Correct!');
                         } else {
                             btn.classList.add('wrong');
                             document.querySelectorAll('#mdj4-options .mdj-opt')[q.ans].classList.add('correct');
                             fb.style.cssText = 'display:block;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.3);border-radius:14px;padding:14px 18px;color:#ef4444;font-size:14px;margin-top:20px;';
-                            fb.innerHTML = `<strong>❌ FALLO.</strong> La respuesta correcta es: <strong style="color:#22c55e;">${'ABCDE'[q.ans]}) ${q.opts[q.ans]}</strong>`;
+                            fb.innerHTML = `${mdjCT('<strong>❌ FALLO.</strong> La respuesta correcta es:','<strong>❌ WRONG.</strong> The correct answer is:')} <strong style="color:#22c55e;">${'ABCDE'[q.ans]}) ${q.opts[q.ans]}</strong>`;
                         }
                         const nb = document.getElementById('mdj4-next-btn');
-                        nb.textContent = cur4 < Q4.length - 1 ? 'SIGUIENTE →' : 'VER RESULTADO';
+                        nb.textContent = cur4 < Q4.length - 1 ? mdjCT('SIGUIENTE →','NEXT →') : mdjCT('VER RESULTADO','SEE RESULT');
                         nb.style.display = 'inline-block';
                     }
 
@@ -1622,13 +1643,13 @@
                         document.getElementById('mdj4-score-screen').style.display = 'block';
                         const pct = Math.round((sc4 / Q4.length) * 100);
                         const icon = pct >= 90 ? '🏆' : pct >= 70 ? '🎯' : pct >= 50 ? '🎧' : '📚';
-                        const title = pct >= 90 ? 'Mezcla de élite — dominas la técnica profesional' :
-                            pct >= 70 ? 'Buen nivel técnico — refuerza los puntos débiles' :
-                                pct >= 50 ? 'Base técnica presente — practica y repasa las secciones fallidas' :
-                                    'Necesitas estudiar más antes de continuar al siguiente módulo';
+                        const title = pct >= 90 ? mdjCT('Mezcla de élite — dominas la técnica profesional','Elite mixing — you master professional technique') :
+                            pct >= 70 ? mdjCT('Buen nivel técnico — refuerza los puntos débiles','Good technical level — shore up the weak points') :
+                                pct >= 50 ? mdjCT('Base técnica presente — practica y repasa las secciones fallidas','Technical base in place — practice and review the sections you missed') :
+                                    mdjCT('Necesitas estudiar más antes de continuar al siguiente módulo','You need to study more before moving on to the next module');
                         document.getElementById('mdj4-score-icon').textContent = icon;
                         document.getElementById('mdj4-score-title').textContent = title;
-                        document.getElementById('mdj4-score-sub').textContent = `Respondiste correctamente ${sc4} de ${Q4.length} preguntas`;
+                        document.getElementById('mdj4-score-sub').textContent = `${mdjCT('Respondiste correctamente','You answered correctly')} ${sc4} ${mdjCT('de','of')} ${Q4.length} ${mdjCT('preguntas','questions')}`;
                         document.getElementById('mdj4-score-num').textContent = pct + '%';
                     }
 
@@ -1647,12 +1668,12 @@
             <div id="quiz-anatomia-track" style="margin-bottom:80px;">
                 <div style="text-align:center;margin-bottom:40px;">
                     <div
-                        style="display:inline-flex;align-items:center;gap:8px;background:rgba(197,160,89,0.1);border:1px solid rgba(197,160,89,0.3);border-radius:50px;padding:6px 20px;font-size:11px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:16px;">
+                        style="display:inline-flex;align-items:center;gap:8px;background:rgba(197,160,89,0.1);border:1px solid rgba(197,160,89,0.3);border-radius:50px;padding:6px 20px;font-size:11px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:16px;" data-i18n="crsx-009">
                         EVALUACIÓN · ANATOMÍA DEL TRACK
                     </div>
-                    <h3 style="font-size:clamp(22px,3vw,34px);font-weight:900;margin-bottom:10px;">Anatomía del Track
+                    <h3 style="font-size:clamp(22px,3vw,34px);font-weight:900;margin-bottom:10px;" data-i18n="crsx-010">Anatomía del Track
                         Profesional</h3>
-                    <p style="color:var(--muted);font-size:15px;max-width:560px;margin:0 auto;line-height:1.7;">
+                    <p style="color:var(--muted);font-size:15px;max-width:560px;margin:0 auto;line-height:1.7;" data-i18n="crsx-011">
                         20 preguntas sobre estructura del track, waveform, beatgrid,<br>hot cues y energía musical. Leer
                         un track es una habilidad técnica esencial.
                     </p>
@@ -1687,7 +1708,7 @@
                     <p id="mdj5-score-num" style="font-size:40px;font-weight:900;color:var(--gold);margin-bottom:28px;">
                     </p>
                     <button onclick="mdj5QuizRestart()"
-                        style="padding:14px 36px;background:rgba(197,160,89,0.15);color:var(--gold);border:1px solid rgba(197,160,89,0.4);border-radius:50px;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:1px;">REPETIR
+                        style="padding:14px 36px;background:rgba(197,160,89,0.15);color:var(--gold);border:1px solid rgba(197,160,89,0.4);border-radius:50px;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:1px;" data-i18n="crsx-008">REPETIR
                         EXAMEN</button>
                 </div>
             </div>
@@ -1715,10 +1736,11 @@
                         { q: "¿Qué es el 'energy graph' de un track en Rekordbox?", opts: ["El costo en energía eléctrica del sistema", "La representación visual de la intensidad dinámica del track a lo largo del tiempo — ayuda al DJ a identificar peaks, valles y puntos de mezcla sin necesidad de escuchar", "La calidad de audio del archivo", "El historial de reproducciones del track", "La posición del hot cue principal"], ans: 1 },
                         { q: "Un DJ profesional revisa el waveform del track antes de cada set. ¿Por qué?", opts: ["Solo por estética visual en la pantalla", "Para identificar estructura, puntos de mezcla, secciones de energía y pre-programar hot cues — reduciendo reacciones improvisadas durante el set en vivo", "Porque el software lo requiere antes de reproducir", "Para verificar que el BPM está detectable", "Solo necesario para DJs principiantes"], ans: 1 },
                     ];
+                    mdjBindQ(Q5, 'Q5', function () { var b = document.getElementById('mdj5-quiz-box'); if (b && b.style.display !== 'none' && !a5) r5(); });
                     let c5 = 0, s5 = 0, a5 = false;
-                    function r5() { const q = Q5[c5], L = ['A', 'B', 'C', 'D', 'E']; document.getElementById('mdj5-q-meta').textContent = `PREGUNTA ${c5 + 1} DE ${Q5.length}`; document.getElementById('mdj5-q-text').textContent = q.q; document.getElementById('mdj5-progress-bar').style.width = ((c5 / Q5.length) * 100) + '%'; document.getElementById('mdj5-feedback').style.display = 'none'; document.getElementById('mdj5-next-btn').style.display = 'none'; a5 = false; const ct = document.getElementById('mdj5-options'); ct.innerHTML = ''; q.opts.forEach((o, i) => { const b = document.createElement('button'); b.className = 'mdj-opt'; b.innerHTML = `<span class="mdj-letter">${L[i]}</span><span>${o}</span>`; b.onclick = () => sv5(i, b); ct.appendChild(b); }); }
-                    function sv5(idx, btn) { if (a5) return; a5 = true; const q = Q5[c5]; document.querySelectorAll('#mdj5-options .mdj-opt').forEach(b => b.disabled = true); const fb = document.getElementById('mdj5-feedback'); if (idx === q.ans) { s5++; btn.classList.add('correct'); fb.style.cssText = 'display:block;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);border-radius:14px;padding:14px 18px;color:#22c55e;font-size:14px;margin-top:20px;font-weight:700;'; fb.textContent = '✅ ¡Correcto!'; } else { btn.classList.add('wrong'); document.querySelectorAll('#mdj5-options .mdj-opt')[q.ans].classList.add('correct'); fb.style.cssText = 'display:block;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.3);border-radius:14px;padding:14px 18px;color:#ef4444;font-size:14px;margin-top:20px;'; fb.innerHTML = `<strong>❌ FALLO.</strong> Correcta: <strong style="color:#22c55e;">${'ABCDE'[q.ans]}) ${q.opts[q.ans]}</strong>`; } const nb = document.getElementById('mdj5-next-btn'); nb.textContent = c5 < Q5.length - 1 ? 'SIGUIENTE →' : 'VER RESULTADO'; nb.style.display = 'inline-block'; }
-                    window.mdj5QuizNext = function () { c5++; if (c5 >= Q5.length) { document.getElementById('mdj5-quiz-box').style.display = 'none'; document.getElementById('mdj5-score-screen').style.display = 'block'; const pct = Math.round((s5 / Q5.length) * 100); const icon = pct >= 90 ? '🏆' : pct >= 70 ? '🎯' : pct >= 50 ? '🎧' : '📚'; document.getElementById('mdj5-score-icon').textContent = icon; document.getElementById('mdj5-score-title').textContent = pct >= 90 ? 'Lectura de track de élite' : pct >= 70 ? 'Buen dominio — refuerza los puntos débiles' : pct >= 50 ? 'Base presente — repasa la estructura del track' : 'Necesitas estudiar la anatomía del track antes de continuar'; document.getElementById('mdj5-score-sub').textContent = `Respondiste correctamente ${s5} de ${Q5.length} preguntas`; document.getElementById('mdj5-score-num').textContent = pct + '%'; return; } r5(); };
+                    function r5() { const q = Q5[c5], L = ['A', 'B', 'C', 'D', 'E']; document.getElementById('mdj5-q-meta').textContent = `${mdjCT('PREGUNTA','QUESTION')} ${c5 + 1} ${mdjCT('DE','OF')} ${Q5.length}`; document.getElementById('mdj5-q-text').textContent = q.q; document.getElementById('mdj5-progress-bar').style.width = ((c5 / Q5.length) * 100) + '%'; document.getElementById('mdj5-feedback').style.display = 'none'; document.getElementById('mdj5-next-btn').style.display = 'none'; a5 = false; const ct = document.getElementById('mdj5-options'); ct.innerHTML = ''; q.opts.forEach((o, i) => { const b = document.createElement('button'); b.className = 'mdj-opt'; b.innerHTML = `<span class="mdj-letter">${L[i]}</span><span>${o}</span>`; b.onclick = () => sv5(i, b); ct.appendChild(b); }); }
+                    function sv5(idx, btn) { if (a5) return; a5 = true; const q = Q5[c5]; document.querySelectorAll('#mdj5-options .mdj-opt').forEach(b => b.disabled = true); const fb = document.getElementById('mdj5-feedback'); if (idx === q.ans) { s5++; btn.classList.add('correct'); fb.style.cssText = 'display:block;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);border-radius:14px;padding:14px 18px;color:#22c55e;font-size:14px;margin-top:20px;font-weight:700;'; fb.textContent = mdjCT('✅ ¡Correcto!','✅ Correct!'); } else { btn.classList.add('wrong'); document.querySelectorAll('#mdj5-options .mdj-opt')[q.ans].classList.add('correct'); fb.style.cssText = 'display:block;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.3);border-radius:14px;padding:14px 18px;color:#ef4444;font-size:14px;margin-top:20px;'; fb.innerHTML = `<strong>❌ FALLO.</strong> Correcta: <strong style="color:#22c55e;">${'ABCDE'[q.ans]}) ${q.opts[q.ans]}</strong>`; } const nb = document.getElementById('mdj5-next-btn'); nb.textContent = c5 < Q5.length - 1 ? mdjCT('SIGUIENTE →','NEXT →') : mdjCT('VER RESULTADO','SEE RESULT'); nb.style.display = 'inline-block'; }
+                    window.mdj5QuizNext = function () { c5++; if (c5 >= Q5.length) { document.getElementById('mdj5-quiz-box').style.display = 'none'; document.getElementById('mdj5-score-screen').style.display = 'block'; const pct = Math.round((s5 / Q5.length) * 100); const icon = pct >= 90 ? '🏆' : pct >= 70 ? '🎯' : pct >= 50 ? '🎧' : '📚'; document.getElementById('mdj5-score-icon').textContent = icon; document.getElementById('mdj5-score-title').textContent = pct >= 90 ? mdjCT('Lectura de track de élite','Elite track reading') : pct >= 70 ? mdjCT('Buen dominio — refuerza los puntos débiles','Good command — shore up the weak points') : pct >= 50 ? mdjCT('Base presente — repasa la estructura del track','Base in place — review track structure') : mdjCT('Necesitas estudiar la anatomía del track antes de continuar','You need to study track anatomy before moving on'); document.getElementById('mdj5-score-sub').textContent = `${mdjCT('Respondiste correctamente','You answered correctly')} ${s5} ${mdjCT('de','of')} ${Q5.length} ${mdjCT('preguntas','questions')}`; document.getElementById('mdj5-score-num').textContent = pct + '%'; return; } r5(); };
                     window.mdj5QuizRestart = function () { c5 = 0; s5 = 0; document.getElementById('mdj5-score-screen').style.display = 'none'; document.getElementById('mdj5-quiz-box').style.display = 'block'; r5(); };
                     r5();
                 })();
@@ -1728,12 +1750,12 @@
             <div id="quiz-generos-bpm" style="margin-bottom:80px;">
                 <div style="text-align:center;margin-bottom:40px;">
                     <div
-                        style="display:inline-flex;align-items:center;gap:8px;background:rgba(197,160,89,0.1);border:1px solid rgba(197,160,89,0.3);border-radius:50px;padding:6px 20px;font-size:11px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:16px;">
+                        style="display:inline-flex;align-items:center;gap:8px;background:rgba(197,160,89,0.1);border:1px solid rgba(197,160,89,0.3);border-radius:50px;padding:6px 20px;font-size:11px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:16px;" data-i18n="crsx-012">
                         EVALUACIÓN · GÉNEROS Y BPM
                     </div>
-                    <h3 style="font-size:clamp(22px,3vw,34px);font-weight:900;margin-bottom:10px;">Géneros Musicales DJ
+                    <h3 style="font-size:clamp(22px,3vw,34px);font-weight:900;margin-bottom:10px;" data-i18n="crsx-013">Géneros Musicales DJ
                         y Rangos de BPM</h3>
-                    <p style="color:var(--muted);font-size:15px;max-width:560px;margin:0 auto;line-height:1.7;">
+                    <p style="color:var(--muted);font-size:15px;max-width:560px;margin:0 auto;line-height:1.7;" data-i18n="crsx-014">
                         22 preguntas sobre identificación de géneros, rangos de BPM, características sonoras<br>y cuándo
                         y dónde usar cada género. Conocimiento que todo DJ profesional debe tener.
                     </p>
@@ -1768,7 +1790,7 @@
                     <p id="mdj6-score-num" style="font-size:40px;font-weight:900;color:var(--gold);margin-bottom:28px;">
                     </p>
                     <button onclick="mdj6QuizRestart()"
-                        style="padding:14px 36px;background:rgba(197,160,89,0.15);color:var(--gold);border:1px solid rgba(197,160,89,0.4);border-radius:50px;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:1px;">REPETIR
+                        style="padding:14px 36px;background:rgba(197,160,89,0.15);color:var(--gold);border:1px solid rgba(197,160,89,0.4);border-radius:50px;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:1px;" data-i18n="crsx-008">REPETIR
                         EXAMEN</button>
                 </div>
             </div>
@@ -1798,10 +1820,11 @@
                         { q: "¿Por qué es incorrecto usar los mismos tracks de EDM festival en un club íntimo de 200 personas?", opts: ["No hay diferencia — los tracks suenan igual en cualquier contexto", "El EDM festival está diseñado para masas de 10,000+ personas con impacto inmediato — en club pequeño pierde profundidad, el público siente falta de viaje y narrativa progresiva", "Los tracks de festival son más caros en plataformas digitales", "Solo funciona si el sistema de sonido es bueno", "El BPM del EDM es incompatible con clubes"], ans: 1 },
                         { q: "¿Qué es el 'groove' y por qué importa en la selección de géneros?", opts: ["El volumen de los bajos del sistema", "La sensación rítmica que hace mover el cuerpo — resultado de la combinación de kick, bajo, hi-hats y swing — cada género tiene su groove característico que define si funciona o no en el dance floor", "El nivel de popularidad del género en Spotify", "La velocidad del BPM", "La calidad de masterización del track"], ans: 1 },
                     ];
+                    mdjBindQ(Q6, 'Q6', function () { var b = document.getElementById('mdj6-quiz-box'); if (b && b.style.display !== 'none' && !a6) r6(); });
                     let c6 = 0, s6 = 0, a6 = false;
-                    function r6() { const q = Q6[c6], L = ['A', 'B', 'C', 'D', 'E']; document.getElementById('mdj6-q-meta').textContent = `PREGUNTA ${c6 + 1} DE ${Q6.length}`; document.getElementById('mdj6-q-text').textContent = q.q; document.getElementById('mdj6-progress-bar').style.width = ((c6 / Q6.length) * 100) + '%'; document.getElementById('mdj6-feedback').style.display = 'none'; document.getElementById('mdj6-next-btn').style.display = 'none'; a6 = false; const ct = document.getElementById('mdj6-options'); ct.innerHTML = ''; q.opts.forEach((o, i) => { const b = document.createElement('button'); b.className = 'mdj-opt'; b.innerHTML = `<span class="mdj-letter">${L[i]}</span><span>${o}</span>`; b.onclick = () => sv6(i, b); ct.appendChild(b); }); }
-                    function sv6(idx, btn) { if (a6) return; a6 = true; const q = Q6[c6]; document.querySelectorAll('#mdj6-options .mdj-opt').forEach(b => b.disabled = true); const fb = document.getElementById('mdj6-feedback'); if (idx === q.ans) { s6++; btn.classList.add('correct'); fb.style.cssText = 'display:block;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);border-radius:14px;padding:14px 18px;color:#22c55e;font-size:14px;margin-top:20px;font-weight:700;'; fb.textContent = '✅ ¡Correcto!'; } else { btn.classList.add('wrong'); document.querySelectorAll('#mdj6-options .mdj-opt')[q.ans].classList.add('correct'); fb.style.cssText = 'display:block;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.3);border-radius:14px;padding:14px 18px;color:#ef4444;font-size:14px;margin-top:20px;'; fb.innerHTML = `<strong>❌ FALLO.</strong> Correcta: <strong style="color:#22c55e;">${'ABCDE'[q.ans]}) ${q.opts[q.ans]}</strong>`; } const nb = document.getElementById('mdj6-next-btn'); nb.textContent = c6 < Q6.length - 1 ? 'SIGUIENTE →' : 'VER RESULTADO'; nb.style.display = 'inline-block'; }
-                    window.mdj6QuizNext = function () { c6++; if (c6 >= Q6.length) { document.getElementById('mdj6-quiz-box').style.display = 'none'; document.getElementById('mdj6-score-screen').style.display = 'block'; const pct = Math.round((s6 / Q6.length) * 100); const icon = pct >= 90 ? '🏆' : pct >= 70 ? '🎯' : pct >= 50 ? '🎧' : '📚'; document.getElementById('mdj6-score-icon').textContent = icon; document.getElementById('mdj6-score-title').textContent = pct >= 90 ? 'Conocimiento de géneros de élite' : pct >= 70 ? 'Buen nivel — refuerza los puntos débiles' : pct >= 50 ? 'Base presente — repasa los géneros que fallaste' : 'Debes estudiar más los géneros antes de continuar'; document.getElementById('mdj6-score-sub').textContent = `Respondiste correctamente ${s6} de ${Q6.length} preguntas`; document.getElementById('mdj6-score-num').textContent = pct + '%'; return; } r6(); };
+                    function r6() { const q = Q6[c6], L = ['A', 'B', 'C', 'D', 'E']; document.getElementById('mdj6-q-meta').textContent = `${mdjCT('PREGUNTA','QUESTION')} ${c6 + 1} ${mdjCT('DE','OF')} ${Q6.length}`; document.getElementById('mdj6-q-text').textContent = q.q; document.getElementById('mdj6-progress-bar').style.width = ((c6 / Q6.length) * 100) + '%'; document.getElementById('mdj6-feedback').style.display = 'none'; document.getElementById('mdj6-next-btn').style.display = 'none'; a6 = false; const ct = document.getElementById('mdj6-options'); ct.innerHTML = ''; q.opts.forEach((o, i) => { const b = document.createElement('button'); b.className = 'mdj-opt'; b.innerHTML = `<span class="mdj-letter">${L[i]}</span><span>${o}</span>`; b.onclick = () => sv6(i, b); ct.appendChild(b); }); }
+                    function sv6(idx, btn) { if (a6) return; a6 = true; const q = Q6[c6]; document.querySelectorAll('#mdj6-options .mdj-opt').forEach(b => b.disabled = true); const fb = document.getElementById('mdj6-feedback'); if (idx === q.ans) { s6++; btn.classList.add('correct'); fb.style.cssText = 'display:block;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);border-radius:14px;padding:14px 18px;color:#22c55e;font-size:14px;margin-top:20px;font-weight:700;'; fb.textContent = mdjCT('✅ ¡Correcto!','✅ Correct!'); } else { btn.classList.add('wrong'); document.querySelectorAll('#mdj6-options .mdj-opt')[q.ans].classList.add('correct'); fb.style.cssText = 'display:block;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.3);border-radius:14px;padding:14px 18px;color:#ef4444;font-size:14px;margin-top:20px;'; fb.innerHTML = `<strong>❌ FALLO.</strong> Correcta: <strong style="color:#22c55e;">${'ABCDE'[q.ans]}) ${q.opts[q.ans]}</strong>`; } const nb = document.getElementById('mdj6-next-btn'); nb.textContent = c6 < Q6.length - 1 ? mdjCT('SIGUIENTE →','NEXT →') : mdjCT('VER RESULTADO','SEE RESULT'); nb.style.display = 'inline-block'; }
+                    window.mdj6QuizNext = function () { c6++; if (c6 >= Q6.length) { document.getElementById('mdj6-quiz-box').style.display = 'none'; document.getElementById('mdj6-score-screen').style.display = 'block'; const pct = Math.round((s6 / Q6.length) * 100); const icon = pct >= 90 ? '🏆' : pct >= 70 ? '🎯' : pct >= 50 ? '🎧' : '📚'; document.getElementById('mdj6-score-icon').textContent = icon; document.getElementById('mdj6-score-title').textContent = pct >= 90 ? mdjCT('Conocimiento de géneros de élite','Elite genre knowledge') : pct >= 70 ? mdjCT('Buen nivel — refuerza los puntos débiles','Good level — shore up the weak points') : pct >= 50 ? mdjCT('Base presente — repasa los géneros que fallaste','Base in place — review the genres you missed') : mdjCT('Debes estudiar más los géneros antes de continuar','You need to study genres more before moving on'); document.getElementById('mdj6-score-sub').textContent = `${mdjCT('Respondiste correctamente','You answered correctly')} ${s6} ${mdjCT('de','of')} ${Q6.length} ${mdjCT('preguntas','questions')}`; document.getElementById('mdj6-score-num').textContent = pct + '%'; return; } r6(); };
                     window.mdj6QuizRestart = function () { c6 = 0; s6 = 0; document.getElementById('mdj6-score-screen').style.display = 'none'; document.getElementById('mdj6-quiz-box').style.display = 'block'; r6(); };
                     r6();
                 })();
@@ -1811,12 +1834,12 @@
             <div id="quiz-protocolo-profesional" style="margin-bottom:80px;">
                 <div style="text-align:center;margin-bottom:40px;">
                     <div
-                        style="display:inline-flex;align-items:center;gap:8px;background:rgba(197,160,89,0.1);border:1px solid rgba(197,160,89,0.3);border-radius:50px;padding:6px 20px;font-size:11px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:16px;">
+                        style="display:inline-flex;align-items:center;gap:8px;background:rgba(197,160,89,0.1);border:1px solid rgba(197,160,89,0.3);border-radius:50px;padding:6px 20px;font-size:11px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:16px;" data-i18n="crsx-015">
                         EVALUACIÓN · PROTOCOLO PROFESIONAL
                     </div>
-                    <h3 style="font-size:clamp(22px,3vw,34px);font-weight:900;margin-bottom:10px;">Protocolo y Etiqueta
+                    <h3 style="font-size:clamp(22px,3vw,34px);font-weight:900;margin-bottom:10px;" data-i18n="crsx-016">Protocolo y Etiqueta
                         de Cabina</h3>
-                    <p style="color:var(--muted);font-size:15px;max-width:560px;margin:0 auto;line-height:1.7;">
+                    <p style="color:var(--muted);font-size:15px;max-width:560px;margin:0 auto;line-height:1.7;" data-i18n="crsx-017">
                         18 preguntas sobre rider técnico, etiqueta profesional entre DJs,<br>comunicación con promoters
                         y conducta correcta en la cabina de un club.
                     </p>
@@ -1851,7 +1874,7 @@
                     <p id="mdj7-score-num" style="font-size:40px;font-weight:900;color:var(--gold);margin-bottom:28px;">
                     </p>
                     <button onclick="mdj7QuizRestart()"
-                        style="padding:14px 36px;background:rgba(197,160,89,0.15);color:var(--gold);border:1px solid rgba(197,160,89,0.4);border-radius:50px;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:1px;">REPETIR
+                        style="padding:14px 36px;background:rgba(197,160,89,0.15);color:var(--gold);border:1px solid rgba(197,160,89,0.4);border-radius:50px;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:1px;" data-i18n="crsx-008">REPETIR
                         EXAMEN</button>
                 </div>
             </div>
@@ -1877,10 +1900,11 @@
                         { q: "¿Por qué el DJ debe tener el número de WhatsApp del técnico de sonido del venue antes del evento?", opts: ["Por protocolo social — es cortesía", "Para comunicación directa en caso de fallos técnicos durante el set — el técnico puede resolver problemas de sonido desde la consola principal sin que el DJ tenga que para el set", "Solo para eventos muy grandes", "Para coordinar el setlist con el técnico", "No hay razón — el técnico no puede hacer nada durante el set"], ans: 1 },
                         { q: "¿Cuál es la política correcta sobre fotografías y videos en cabina durante el set?", opts: ["El DJ puede hacer lo que quiera, incluyendo live posts completos", "Verificar que el venue no restrinja el uso de móviles en cabina, limitar la interacción con el teléfono al mínimo durante el set activo — la atención dividida entre el móvil y los decks es una falta de profesionalismo", "Nunca tomar fotos — está siempre prohibido", "Las fotos solo están permitidas durante el breakdown", "El promoter es responsable de las fotos — no el DJ"], ans: 1 },
                     ];
+                    mdjBindQ(Q7, 'Q7', function () { var b = document.getElementById('mdj7-quiz-box'); if (b && b.style.display !== 'none' && !a7) r7(); });
                     let c7 = 0, s7 = 0, a7 = false;
-                    function r7() { const q = Q7[c7], L = ['A', 'B', 'C', 'D', 'E']; document.getElementById('mdj7-q-meta').textContent = `PREGUNTA ${c7 + 1} DE ${Q7.length}`; document.getElementById('mdj7-q-text').textContent = q.q; document.getElementById('mdj7-progress-bar').style.width = ((c7 / Q7.length) * 100) + '%'; document.getElementById('mdj7-feedback').style.display = 'none'; document.getElementById('mdj7-next-btn').style.display = 'none'; a7 = false; const ct = document.getElementById('mdj7-options'); ct.innerHTML = ''; q.opts.forEach((o, i) => { const b = document.createElement('button'); b.className = 'mdj-opt'; b.innerHTML = `<span class="mdj-letter">${L[i]}</span><span>${o}</span>`; b.onclick = () => sv7(i, b); ct.appendChild(b); }); }
-                    function sv7(idx, btn) { if (a7) return; a7 = true; const q = Q7[c7]; document.querySelectorAll('#mdj7-options .mdj-opt').forEach(b => b.disabled = true); const fb = document.getElementById('mdj7-feedback'); if (idx === q.ans) { s7++; btn.classList.add('correct'); fb.style.cssText = 'display:block;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);border-radius:14px;padding:14px 18px;color:#22c55e;font-size:14px;margin-top:20px;font-weight:700;'; fb.textContent = '✅ ¡Correcto!'; } else { btn.classList.add('wrong'); document.querySelectorAll('#mdj7-options .mdj-opt')[q.ans].classList.add('correct'); fb.style.cssText = 'display:block;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.3);border-radius:14px;padding:14px 18px;color:#ef4444;font-size:14px;margin-top:20px;'; fb.innerHTML = `<strong>❌ FALLO.</strong> Correcta: <strong style="color:#22c55e;">${'ABCDE'[q.ans]}) ${q.opts[q.ans]}</strong>`; } const nb = document.getElementById('mdj7-next-btn'); nb.textContent = c7 < Q7.length - 1 ? 'SIGUIENTE →' : 'VER RESULTADO'; nb.style.display = 'inline-block'; }
-                    window.mdj7QuizNext = function () { c7++; if (c7 >= Q7.length) { document.getElementById('mdj7-quiz-box').style.display = 'none'; document.getElementById('mdj7-score-screen').style.display = 'block'; const pct = Math.round((s7 / Q7.length) * 100); const icon = pct >= 90 ? '🏆' : pct >= 70 ? '🎯' : pct >= 50 ? '🎧' : '📚'; document.getElementById('mdj7-score-icon').textContent = icon; document.getElementById('mdj7-score-title').textContent = pct >= 90 ? 'Protocolo de élite — listo para cualquier escenario' : pct >= 70 ? 'Buen nivel profesional — refuerza los puntos débiles' : pct >= 50 ? 'Protocolo básico presente — repasa la sección completa' : 'Debes estudiar el protocolo antes de continuar'; document.getElementById('mdj7-score-sub').textContent = `Respondiste correctamente ${s7} de ${Q7.length} preguntas`; document.getElementById('mdj7-score-num').textContent = pct + '%'; return; } r7(); };
+                    function r7() { const q = Q7[c7], L = ['A', 'B', 'C', 'D', 'E']; document.getElementById('mdj7-q-meta').textContent = `${mdjCT('PREGUNTA','QUESTION')} ${c7 + 1} ${mdjCT('DE','OF')} ${Q7.length}`; document.getElementById('mdj7-q-text').textContent = q.q; document.getElementById('mdj7-progress-bar').style.width = ((c7 / Q7.length) * 100) + '%'; document.getElementById('mdj7-feedback').style.display = 'none'; document.getElementById('mdj7-next-btn').style.display = 'none'; a7 = false; const ct = document.getElementById('mdj7-options'); ct.innerHTML = ''; q.opts.forEach((o, i) => { const b = document.createElement('button'); b.className = 'mdj-opt'; b.innerHTML = `<span class="mdj-letter">${L[i]}</span><span>${o}</span>`; b.onclick = () => sv7(i, b); ct.appendChild(b); }); }
+                    function sv7(idx, btn) { if (a7) return; a7 = true; const q = Q7[c7]; document.querySelectorAll('#mdj7-options .mdj-opt').forEach(b => b.disabled = true); const fb = document.getElementById('mdj7-feedback'); if (idx === q.ans) { s7++; btn.classList.add('correct'); fb.style.cssText = 'display:block;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);border-radius:14px;padding:14px 18px;color:#22c55e;font-size:14px;margin-top:20px;font-weight:700;'; fb.textContent = mdjCT('✅ ¡Correcto!','✅ Correct!'); } else { btn.classList.add('wrong'); document.querySelectorAll('#mdj7-options .mdj-opt')[q.ans].classList.add('correct'); fb.style.cssText = 'display:block;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.3);border-radius:14px;padding:14px 18px;color:#ef4444;font-size:14px;margin-top:20px;'; fb.innerHTML = `<strong>❌ FALLO.</strong> Correcta: <strong style="color:#22c55e;">${'ABCDE'[q.ans]}) ${q.opts[q.ans]}</strong>`; } const nb = document.getElementById('mdj7-next-btn'); nb.textContent = c7 < Q7.length - 1 ? mdjCT('SIGUIENTE →','NEXT →') : mdjCT('VER RESULTADO','SEE RESULT'); nb.style.display = 'inline-block'; }
+                    window.mdj7QuizNext = function () { c7++; if (c7 >= Q7.length) { document.getElementById('mdj7-quiz-box').style.display = 'none'; document.getElementById('mdj7-score-screen').style.display = 'block'; const pct = Math.round((s7 / Q7.length) * 100); const icon = pct >= 90 ? '🏆' : pct >= 70 ? '🎯' : pct >= 50 ? '🎧' : '📚'; document.getElementById('mdj7-score-icon').textContent = icon; document.getElementById('mdj7-score-title').textContent = pct >= 90 ? mdjCT('Protocolo de élite — listo para cualquier escenario','Elite protocol — ready for any scenario') : pct >= 70 ? mdjCT('Buen nivel profesional — refuerza los puntos débiles','Good professional level — shore up the weak points') : pct >= 50 ? mdjCT('Protocolo básico presente — repasa la sección completa','Basic protocol in place — review the whole section') : mdjCT('Debes estudiar el protocolo antes de continuar','You need to study the protocol before moving on'); document.getElementById('mdj7-score-sub').textContent = `${mdjCT('Respondiste correctamente','You answered correctly')} ${s7} ${mdjCT('de','of')} ${Q7.length} ${mdjCT('preguntas','questions')}`; document.getElementById('mdj7-score-num').textContent = pct + '%'; return; } r7(); };
                     window.mdj7QuizRestart = function () { c7 = 0; s7 = 0; document.getElementById('mdj7-score-screen').style.display = 'none'; document.getElementById('mdj7-quiz-box').style.display = 'block'; r7(); };
                     r7();
                 })();
@@ -1890,12 +1914,12 @@
             <div id="quiz-emergencias-cabina" style="margin-bottom:80px;">
                 <div style="text-align:center;margin-bottom:40px;">
                     <div
-                        style="display:inline-flex;align-items:center;gap:8px;background:rgba(197,160,89,0.1);border:1px solid rgba(197,160,89,0.3);border-radius:50px;padding:6px 20px;font-size:11px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:16px;">
+                        style="display:inline-flex;align-items:center;gap:8px;background:rgba(197,160,89,0.1);border:1px solid rgba(197,160,89,0.3);border-radius:50px;padding:6px 20px;font-size:11px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:16px;" data-i18n="crsx-018">
                         EVALUACIÓN · EMERGENCIAS EN CABINA
                     </div>
-                    <h3 style="font-size:clamp(22px,3vw,34px);font-weight:900;margin-bottom:10px;">Protocolo de
+                    <h3 style="font-size:clamp(22px,3vw,34px);font-weight:900;margin-bottom:10px;" data-i18n="crsx-019">Protocolo de
                         Emergencias en Cabina</h3>
-                    <p style="color:var(--muted);font-size:15px;max-width:560px;margin:0 auto;line-height:1.7;">
+                    <p style="color:var(--muted);font-size:15px;max-width:560px;margin:0 auto;line-height:1.7;" data-i18n="crsx-020">
                         15 preguntas sobre qué hacer cuando el equipo falla, el audio se corta<br>o surge cualquier
                         situación de emergencia técnica durante un set en vivo.
                     </p>
@@ -1930,7 +1954,7 @@
                     <p id="mdj8-score-num" style="font-size:40px;font-weight:900;color:var(--gold);margin-bottom:28px;">
                     </p>
                     <button onclick="mdj8QuizRestart()"
-                        style="padding:14px 36px;background:rgba(197,160,89,0.15);color:var(--gold);border:1px solid rgba(197,160,89,0.4);border-radius:50px;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:1px;">REPETIR
+                        style="padding:14px 36px;background:rgba(197,160,89,0.15);color:var(--gold);border:1px solid rgba(197,160,89,0.4);border-radius:50px;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:1px;" data-i18n="crsx-008">REPETIR
                         EXAMEN</button>
                 </div>
             </div>
@@ -1953,10 +1977,11 @@
                         { q: "¿Cuál es el rol del 'kill switch' o botón de mute del mixer en una emergencia?", opts: ["Apagar permanentemente un canal", "Silenciar rápidamente un canal específico para aislar el problema sin interrumpir el resto del audio — herramienta de control inmediato durante situaciones de feedback, distorsión o señal errática", "Solo tiene función creativa — no aplicación de emergencia", "El kill switch apaga todo el sistema de audio", "Solo disponible en mixers DJM-900NXS2 o superior"], ans: 1 },
                         { q: "¿Por qué es importante tener el número del técnico de sonido del venue guardado antes del inicio del evento?", opts: ["Por protocolo de cortesía profesional", "Para contacto inmediato durante emergencias técnicas que requieren intervención desde la consola principal — el DJ no puede resolver los problemas del sistema general del venue sin apoyo del técnico", "Solo necesario si el DJ tiene experiencia limitada", "El técnico del venue está siempre en cabina — no hace falta el número", "No es necessario — el técnico siempre está visible en eventos"], ans: 1 },
                     ];
+                    mdjBindQ(Q8, 'Q8', function () { var b = document.getElementById('mdj8-quiz-box'); if (b && b.style.display !== 'none' && !a8) r8(); });
                     let c8 = 0, s8 = 0, a8 = false;
-                    function r8() { const q = Q8[c8], L = ['A', 'B', 'C', 'D', 'E']; document.getElementById('mdj8-q-meta').textContent = `PREGUNTA ${c8 + 1} DE ${Q8.length}`; document.getElementById('mdj8-q-text').textContent = q.q; document.getElementById('mdj8-progress-bar').style.width = ((c8 / Q8.length) * 100) + '%'; document.getElementById('mdj8-feedback').style.display = 'none'; document.getElementById('mdj8-next-btn').style.display = 'none'; a8 = false; const ct = document.getElementById('mdj8-options'); ct.innerHTML = ''; q.opts.forEach((o, i) => { const b = document.createElement('button'); b.className = 'mdj-opt'; b.innerHTML = `<span class="mdj-letter">${L[i]}</span><span>${o}</span>`; b.onclick = () => sv8(i, b); ct.appendChild(b); }); }
-                    function sv8(idx, btn) { if (a8) return; a8 = true; const q = Q8[c8]; document.querySelectorAll('#mdj8-options .mdj-opt').forEach(b => b.disabled = true); const fb = document.getElementById('mdj8-feedback'); if (idx === q.ans) { s8++; btn.classList.add('correct'); fb.style.cssText = 'display:block;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);border-radius:14px;padding:14px 18px;color:#22c55e;font-size:14px;margin-top:20px;font-weight:700;'; fb.textContent = '✅ ¡Correcto!'; } else { btn.classList.add('wrong'); document.querySelectorAll('#mdj8-options .mdj-opt')[q.ans].classList.add('correct'); fb.style.cssText = 'display:block;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.3);border-radius:14px;padding:14px 18px;color:#ef4444;font-size:14px;margin-top:20px;'; fb.innerHTML = `<strong>❌ FALLO.</strong> Correcta: <strong style="color:#22c55e;">${'ABCDE'[q.ans]}) ${q.opts[q.ans]}</strong>`; } const nb = document.getElementById('mdj8-next-btn'); nb.textContent = c8 < Q8.length - 1 ? 'SIGUIENTE →' : 'VER RESULTADO'; nb.style.display = 'inline-block'; }
-                    window.mdj8QuizNext = function () { c8++; if (c8 >= Q8.length) { document.getElementById('mdj8-quiz-box').style.display = 'none'; document.getElementById('mdj8-score-screen').style.display = 'block'; const pct = Math.round((s8 / Q8.length) * 100); const icon = pct >= 90 ? '🏆' : pct >= 70 ? '🎯' : pct >= 50 ? '🎧' : '📚'; document.getElementById('mdj8-score-icon').textContent = icon; document.getElementById('mdj8-score-title').textContent = pct >= 90 ? 'Gestión de emergencias de élite' : pct >= 70 ? 'Buen manejo de emergencias — refuerza los protocolos débiles' : pct >= 50 ? 'Base presente — repasa los protocolos de emergencia' : 'Debes estudiar los protocolos de emergencia antes de continuar'; document.getElementById('mdj8-score-sub').textContent = `Respondiste correctamente ${s8} de ${Q8.length} preguntas`; document.getElementById('mdj8-score-num').textContent = pct + '%'; return; } r8(); };
+                    function r8() { const q = Q8[c8], L = ['A', 'B', 'C', 'D', 'E']; document.getElementById('mdj8-q-meta').textContent = `${mdjCT('PREGUNTA','QUESTION')} ${c8 + 1} ${mdjCT('DE','OF')} ${Q8.length}`; document.getElementById('mdj8-q-text').textContent = q.q; document.getElementById('mdj8-progress-bar').style.width = ((c8 / Q8.length) * 100) + '%'; document.getElementById('mdj8-feedback').style.display = 'none'; document.getElementById('mdj8-next-btn').style.display = 'none'; a8 = false; const ct = document.getElementById('mdj8-options'); ct.innerHTML = ''; q.opts.forEach((o, i) => { const b = document.createElement('button'); b.className = 'mdj-opt'; b.innerHTML = `<span class="mdj-letter">${L[i]}</span><span>${o}</span>`; b.onclick = () => sv8(i, b); ct.appendChild(b); }); }
+                    function sv8(idx, btn) { if (a8) return; a8 = true; const q = Q8[c8]; document.querySelectorAll('#mdj8-options .mdj-opt').forEach(b => b.disabled = true); const fb = document.getElementById('mdj8-feedback'); if (idx === q.ans) { s8++; btn.classList.add('correct'); fb.style.cssText = 'display:block;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);border-radius:14px;padding:14px 18px;color:#22c55e;font-size:14px;margin-top:20px;font-weight:700;'; fb.textContent = mdjCT('✅ ¡Correcto!','✅ Correct!'); } else { btn.classList.add('wrong'); document.querySelectorAll('#mdj8-options .mdj-opt')[q.ans].classList.add('correct'); fb.style.cssText = 'display:block;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.3);border-radius:14px;padding:14px 18px;color:#ef4444;font-size:14px;margin-top:20px;'; fb.innerHTML = `<strong>❌ FALLO.</strong> Correcta: <strong style="color:#22c55e;">${'ABCDE'[q.ans]}) ${q.opts[q.ans]}</strong>`; } const nb = document.getElementById('mdj8-next-btn'); nb.textContent = c8 < Q8.length - 1 ? mdjCT('SIGUIENTE →','NEXT →') : mdjCT('VER RESULTADO','SEE RESULT'); nb.style.display = 'inline-block'; }
+                    window.mdj8QuizNext = function () { c8++; if (c8 >= Q8.length) { document.getElementById('mdj8-quiz-box').style.display = 'none'; document.getElementById('mdj8-score-screen').style.display = 'block'; const pct = Math.round((s8 / Q8.length) * 100); const icon = pct >= 90 ? '🏆' : pct >= 70 ? '🎯' : pct >= 50 ? '🎧' : '📚'; document.getElementById('mdj8-score-icon').textContent = icon; document.getElementById('mdj8-score-title').textContent = pct >= 90 ? mdjCT('Gestión de emergencias de élite','Elite emergency management') : pct >= 70 ? mdjCT('Buen manejo de emergencias — refuerza los protocolos débiles','Good emergency handling — shore up the weak protocols') : pct >= 50 ? mdjCT('Base presente — repasa los protocolos de emergencia','Base in place — review the emergency protocols') : mdjCT('Debes estudiar los protocolos de emergencia antes de continuar','You need to study the emergency protocols before moving on'); document.getElementById('mdj8-score-sub').textContent = `${mdjCT('Respondiste correctamente','You answered correctly')} ${s8} ${mdjCT('de','of')} ${Q8.length} ${mdjCT('preguntas','questions')}`; document.getElementById('mdj8-score-num').textContent = pct + '%'; return; } r8(); };
                     window.mdj8QuizRestart = function () { c8 = 0; s8 = 0; document.getElementById('mdj8-score-screen').style.display = 'none'; document.getElementById('mdj8-quiz-box').style.display = 'block'; r8(); };
                     r8();
                 })();
@@ -1966,12 +1991,12 @@
             <div id="quiz-salud-auditiva" style="margin-bottom:80px;">
                 <div style="text-align:center;margin-bottom:40px;">
                     <div
-                        style="display:inline-flex;align-items:center;gap:8px;background:rgba(197,160,89,0.1);border:1px solid rgba(197,160,89,0.3);border-radius:50px;padding:6px 20px;font-size:11px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:16px;">
+                        style="display:inline-flex;align-items:center;gap:8px;background:rgba(197,160,89,0.1);border:1px solid rgba(197,160,89,0.3);border-radius:50px;padding:6px 20px;font-size:11px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:16px;" data-i18n="crsx-021">
                         EVALUACIÓN · SALUD AUDITIVA
                     </div>
-                    <h3 style="font-size:clamp(22px,3vw,34px);font-weight:900;margin-bottom:10px;">Salud Auditiva del DJ
+                    <h3 style="font-size:clamp(22px,3vw,34px);font-weight:900;margin-bottom:10px;" data-i18n="crsx-022">Salud Auditiva del DJ
                         Profesional</h3>
-                    <p style="color:var(--muted);font-size:15px;max-width:560px;margin:0 auto;line-height:1.7;">
+                    <p style="color:var(--muted);font-size:15px;max-width:560px;margin:0 auto;line-height:1.7;" data-i18n="crsx-023">
                         15 preguntas sobre protección auditiva profesional, niveles seguros de SPL,<br>prevención del
                         tinnitus y hábitos a largo plazo para proteger tu herramienta de trabajo.
                     </p>
@@ -2006,7 +2031,7 @@
                     <p id="mdj9-score-num" style="font-size:40px;font-weight:900;color:var(--gold);margin-bottom:28px;">
                     </p>
                     <button onclick="mdj9QuizRestart()"
-                        style="padding:14px 36px;background:rgba(197,160,89,0.15);color:var(--gold);border:1px solid rgba(197,160,89,0.4);border-radius:50px;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:1px;">REPETIR
+                        style="padding:14px 36px;background:rgba(197,160,89,0.15);color:var(--gold);border:1px solid rgba(197,160,89,0.4);border-radius:50px;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:1px;" data-i18n="crsx-008">REPETIR
                         EXAMEN</button>
                 </div>
             </div>
@@ -2029,10 +2054,11 @@
                         { q: "¿Qué hábitos de hydratación y nutrición apoyan la salud auditiva del DJ?", opts: ["El alcohol mejora la circulación del oído interno — es beneficioso en pequeñas cantidades", "Buena hidratación (agua), evitar alcohol en exceso (reduce circulación sanguínea al oído interno), dieta rica en Omega-3 y Vitamina B12 que apoyan la función del nervio auditivo — el tabaco es particularmente dañino porque reduce irrigación coclear", "La alimentación no tiene relación con la salud auditiva", "El café antes del set mejora la capacidad auditiva", "Solo importa el volumen de exposición — los hábitos de salud son irrelevantes para el oído"], ans: 1 },
                         { q: "¿Cuál es el protocolo correcto al terminar un set de 4+ horas en un club con volumen alto?", opts: ["Salir directamente a otro club o bar con música — el ambiente social post-trabajo es parte de la cultura DJ", "Dar al oído al menos 12-16 horas de reposo en silencio o exposición mínima a sonido, evitar auriculares al máximo por las siguientes horas, e hidratar bien — la recuperación del oído ocurre en el descanso", "Escuchar música en casa a bajo volumen para 'calibrar' el oído", "Solo necesario si hay tinnitus activo post-set", "El período post-set no es importante — el daño ya ocurrió o no"], ans: 1 },
                     ];
+                    mdjBindQ(Q9, 'Q9', function () { var b = document.getElementById('mdj9-quiz-box'); if (b && b.style.display !== 'none' && !a9) r9(); });
                     let c9 = 0, s9 = 0, a9 = false;
-                    function r9() { const q = Q9[c9], L = ['A', 'B', 'C', 'D', 'E']; document.getElementById('mdj9-q-meta').textContent = `PREGUNTA ${c9 + 1} DE ${Q9.length}`; document.getElementById('mdj9-q-text').textContent = q.q; document.getElementById('mdj9-progress-bar').style.width = ((c9 / Q9.length) * 100) + '%'; document.getElementById('mdj9-feedback').style.display = 'none'; document.getElementById('mdj9-next-btn').style.display = 'none'; a9 = false; const ct = document.getElementById('mdj9-options'); ct.innerHTML = ''; q.opts.forEach((o, i) => { const b = document.createElement('button'); b.className = 'mdj-opt'; b.innerHTML = `<span class="mdj-letter">${L[i]}</span><span>${o}</span>`; b.onclick = () => sv9(i, b); ct.appendChild(b); }); }
-                    function sv9(idx, btn) { if (a9) return; a9 = true; const q = Q9[c9]; document.querySelectorAll('#mdj9-options .mdj-opt').forEach(b => b.disabled = true); const fb = document.getElementById('mdj9-feedback'); if (idx === q.ans) { s9++; btn.classList.add('correct'); fb.style.cssText = 'display:block;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);border-radius:14px;padding:14px 18px;color:#22c55e;font-size:14px;margin-top:20px;font-weight:700;'; fb.textContent = '✅ ¡Correcto!'; } else { btn.classList.add('wrong'); document.querySelectorAll('#mdj9-options .mdj-opt')[q.ans].classList.add('correct'); fb.style.cssText = 'display:block;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.3);border-radius:14px;padding:14px 18px;color:#ef4444;font-size:14px;margin-top:20px;'; fb.innerHTML = `<strong>❌ FALLO.</strong> Correcta: <strong style="color:#22c55e;">${'ABCDE'[q.ans]}) ${q.opts[q.ans]}</strong>`; } const nb = document.getElementById('mdj9-next-btn'); nb.textContent = c9 < Q9.length - 1 ? 'SIGUIENTE →' : 'VER RESULTADO'; nb.style.display = 'inline-block'; }
-                    window.mdj9QuizNext = function () { c9++; if (c9 >= Q9.length) { document.getElementById('mdj9-quiz-box').style.display = 'none'; document.getElementById('mdj9-score-screen').style.display = 'block'; const pct = Math.round((s9 / Q9.length) * 100); const icon = pct >= 90 ? '🏆' : pct >= 70 ? '🎯' : pct >= 50 ? '🎧' : '📚'; document.getElementById('mdj9-score-icon').textContent = icon; document.getElementById('mdj9-score-title').textContent = pct >= 90 ? 'Excelente conciencia auditiva — tu carrera te lo agradecerá' : pct >= 70 ? 'Buen nivel — refuerza los protocolos de protección' : pct >= 50 ? 'Base presente — repasa la sección de salud auditiva' : 'Debes estudiar el módulo completo de salud auditiva'; document.getElementById('mdj9-score-sub').textContent = `Respondiste correctamente ${s9} de ${Q9.length} preguntas`; document.getElementById('mdj9-score-num').textContent = pct + '%'; return; } r9(); };
+                    function r9() { const q = Q9[c9], L = ['A', 'B', 'C', 'D', 'E']; document.getElementById('mdj9-q-meta').textContent = `${mdjCT('PREGUNTA','QUESTION')} ${c9 + 1} ${mdjCT('DE','OF')} ${Q9.length}`; document.getElementById('mdj9-q-text').textContent = q.q; document.getElementById('mdj9-progress-bar').style.width = ((c9 / Q9.length) * 100) + '%'; document.getElementById('mdj9-feedback').style.display = 'none'; document.getElementById('mdj9-next-btn').style.display = 'none'; a9 = false; const ct = document.getElementById('mdj9-options'); ct.innerHTML = ''; q.opts.forEach((o, i) => { const b = document.createElement('button'); b.className = 'mdj-opt'; b.innerHTML = `<span class="mdj-letter">${L[i]}</span><span>${o}</span>`; b.onclick = () => sv9(i, b); ct.appendChild(b); }); }
+                    function sv9(idx, btn) { if (a9) return; a9 = true; const q = Q9[c9]; document.querySelectorAll('#mdj9-options .mdj-opt').forEach(b => b.disabled = true); const fb = document.getElementById('mdj9-feedback'); if (idx === q.ans) { s9++; btn.classList.add('correct'); fb.style.cssText = 'display:block;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);border-radius:14px;padding:14px 18px;color:#22c55e;font-size:14px;margin-top:20px;font-weight:700;'; fb.textContent = mdjCT('✅ ¡Correcto!','✅ Correct!'); } else { btn.classList.add('wrong'); document.querySelectorAll('#mdj9-options .mdj-opt')[q.ans].classList.add('correct'); fb.style.cssText = 'display:block;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.3);border-radius:14px;padding:14px 18px;color:#ef4444;font-size:14px;margin-top:20px;'; fb.innerHTML = `<strong>❌ FALLO.</strong> Correcta: <strong style="color:#22c55e;">${'ABCDE'[q.ans]}) ${q.opts[q.ans]}</strong>`; } const nb = document.getElementById('mdj9-next-btn'); nb.textContent = c9 < Q9.length - 1 ? mdjCT('SIGUIENTE →','NEXT →') : mdjCT('VER RESULTADO','SEE RESULT'); nb.style.display = 'inline-block'; }
+                    window.mdj9QuizNext = function () { c9++; if (c9 >= Q9.length) { document.getElementById('mdj9-quiz-box').style.display = 'none'; document.getElementById('mdj9-score-screen').style.display = 'block'; const pct = Math.round((s9 / Q9.length) * 100); const icon = pct >= 90 ? '🏆' : pct >= 70 ? '🎯' : pct >= 50 ? '🎧' : '📚'; document.getElementById('mdj9-score-icon').textContent = icon; document.getElementById('mdj9-score-title').textContent = pct >= 90 ? mdjCT('Excelente conciencia auditiva — tu carrera te lo agradecerá','Excellent hearing awareness — your career will thank you') : pct >= 70 ? mdjCT('Buen nivel — refuerza los protocolos de protección','Good level — reinforce the protection protocols') : pct >= 50 ? mdjCT('Base presente — repasa la sección de salud auditiva','Base in place — review the hearing health section') : mdjCT('Debes estudiar el módulo completo de salud auditiva','You need to study the whole hearing health module'); document.getElementById('mdj9-score-sub').textContent = `${mdjCT('Respondiste correctamente','You answered correctly')} ${s9} ${mdjCT('de','of')} ${Q9.length} ${mdjCT('preguntas','questions')}`; document.getElementById('mdj9-score-num').textContent = pct + '%'; return; } r9(); };
                     window.mdj9QuizRestart = function () { c9 = 0; s9 = 0; document.getElementById('mdj9-score-screen').style.display = 'none'; document.getElementById('mdj9-quiz-box').style.display = 'block'; r9(); };
                     r9();
                 })();
@@ -2042,12 +2068,12 @@
             <div id="quiz-negocio-contratos" style="margin-bottom:80px;">
                 <div style="text-align:center;margin-bottom:40px;">
                     <div
-                        style="display:inline-flex;align-items:center;gap:8px;background:rgba(197,160,89,0.1);border:1px solid rgba(197,160,89,0.3);border-radius:50px;padding:6px 20px;font-size:11px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:16px;">
+                        style="display:inline-flex;align-items:center;gap:8px;background:rgba(197,160,89,0.1);border:1px solid rgba(197,160,89,0.3);border-radius:50px;padding:6px 20px;font-size:11px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:16px;" data-i18n="crsx-024">
                         EVALUACIÓN · NEGOCIO Y CONTRATOS
                     </div>
-                    <h3 style="font-size:clamp(22px,3vw,34px);font-weight:900;margin-bottom:10px;">Negocio DJ y
+                    <h3 style="font-size:clamp(22px,3vw,34px);font-weight:900;margin-bottom:10px;" data-i18n="crsx-025">Negocio DJ y
                         Contratos Profesionales</h3>
-                    <p style="color:var(--muted);font-size:15px;max-width:560px;margin:0 auto;line-height:1.7;">
+                    <p style="color:var(--muted);font-size:15px;max-width:560px;margin:0 auto;line-height:1.7;" data-i18n="crsx-026">
                         16 preguntas sobre tarifas, estructura de contrato, cláusulas de protección,<br>facturación,
                         derechos de autor y cómo operar como DJ profesional legalmente.
                     </p>
@@ -2082,7 +2108,7 @@
                     <p id="mdj10-score-num"
                         style="font-size:40px;font-weight:900;color:var(--gold);margin-bottom:28px;"></p>
                     <button onclick="mdj10QuizRestart()"
-                        style="padding:14px 36px;background:rgba(197,160,89,0.15);color:var(--gold);border:1px solid rgba(197,160,89,0.4);border-radius:50px;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:1px;">REPETIR
+                        style="padding:14px 36px;background:rgba(197,160,89,0.15);color:var(--gold);border:1px solid rgba(197,160,89,0.4);border-radius:50px;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:1px;" data-i18n="crsx-008">REPETIR
                         EXAMEN</button>
                 </div>
             </div>
@@ -2106,10 +2132,11 @@
                         { q: "¿Por qué el DJ debe mantener un registro de todos sus contratos y pagos recibidos?", opts: ["Solo por organización personal — sin consecuencias reales si no lo hace", "Para control financiero, declaración correcta de impuestos, historial de clientes para marketing, y defensa legal si hay disputas — un DJ que no lleva registros no puede crecer como negocio ni protegerse legalmente", "Solo necesario si el DJ tiene empleados", "El registro lo lleva el promoter — no responsabilidad del DJ", "Solo importa si el DJ gana más de $10,000 al año"], ans: 1 },
                         { q: "¿Qué es el 'buyout' en un contrato de DJ para club y cómo protege ambas partes?", opts: ["Un sistema donde el público paga al DJ directamente", "Un pago fijo acordado previo al evento — el club paga una cantidad fija sin importar la asistencia, y el DJ sabe exactamente cuánto percibirá — protege al DJ de la variabilidad de la taquilla y al club de costos variables impredecibles", "El buyout es solo para DJs de nivel internacional", "Un pago extra que el DJ recibe si supera cierta cantidad de público", "Un sistema de comisiones basado en la bar tab generada"], ans: 1 },
                     ];
+                    mdjBindQ(Q10, 'Q10', function () { var b = document.getElementById('mdj10-quiz-box'); if (b && b.style.display !== 'none' && !a10) r10(); });
                     let c10 = 0, s10 = 0, a10 = false;
-                    function r10() { const q = Q10[c10], L = ['A', 'B', 'C', 'D', 'E']; document.getElementById('mdj10-q-meta').textContent = `PREGUNTA ${c10 + 1} DE ${Q10.length}`; document.getElementById('mdj10-q-text').textContent = q.q; document.getElementById('mdj10-progress-bar').style.width = ((c10 / Q10.length) * 100) + '%'; document.getElementById('mdj10-feedback').style.display = 'none'; document.getElementById('mdj10-next-btn').style.display = 'none'; a10 = false; const ct = document.getElementById('mdj10-options'); ct.innerHTML = ''; q.opts.forEach((o, i) => { const b = document.createElement('button'); b.className = 'mdj-opt'; b.innerHTML = `<span class="mdj-letter">${L[i]}</span><span>${o}</span>`; b.onclick = () => sv10(i, b); ct.appendChild(b); }); }
-                    function sv10(idx, btn) { if (a10) return; a10 = true; const q = Q10[c10]; document.querySelectorAll('#mdj10-options .mdj-opt').forEach(b => b.disabled = true); const fb = document.getElementById('mdj10-feedback'); if (idx === q.ans) { s10++; btn.classList.add('correct'); fb.style.cssText = 'display:block;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);border-radius:14px;padding:14px 18px;color:#22c55e;font-size:14px;margin-top:20px;font-weight:700;'; fb.textContent = '✅ ¡Correcto!'; } else { btn.classList.add('wrong'); document.querySelectorAll('#mdj10-options .mdj-opt')[q.ans].classList.add('correct'); fb.style.cssText = 'display:block;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.3);border-radius:14px;padding:14px 18px;color:#ef4444;font-size:14px;margin-top:20px;'; fb.innerHTML = `<strong>❌ FALLO.</strong> Correcta: <strong style="color:#22c55e;">${'ABCDE'[q.ans]}) ${q.opts[q.ans]}</strong>`; } const nb = document.getElementById('mdj10-next-btn'); nb.textContent = c10 < Q10.length - 1 ? 'SIGUIENTE →' : 'VER RESULTADO'; nb.style.display = 'inline-block'; }
-                    window.mdj10QuizNext = function () { c10++; if (c10 >= Q10.length) { document.getElementById('mdj10-quiz-box').style.display = 'none'; document.getElementById('mdj10-score-screen').style.display = 'block'; const pct = Math.round((s10 / Q10.length) * 100); const icon = pct >= 90 ? '🏆' : pct >= 70 ? '🎯' : pct >= 50 ? '🎧' : '📚'; document.getElementById('mdj10-score-icon').textContent = icon; document.getElementById('mdj10-score-title').textContent = pct >= 90 ? 'Mentalidad de negocio de élite — listo para operar profesionalmente' : pct >= 70 ? 'Buen nivel de negocio — refuerza los puntos contractuales débiles' : pct >= 50 ? 'Base presente — repasa la sección de contratos y tarifas' : 'Debes estudiar el módulo de negocio DJ antes de continuar'; document.getElementById('mdj10-score-sub').textContent = `Respondiste correctamente ${s10} de ${Q10.length} preguntas`; document.getElementById('mdj10-score-num').textContent = pct + '%'; return; } r10(); };
+                    function r10() { const q = Q10[c10], L = ['A', 'B', 'C', 'D', 'E']; document.getElementById('mdj10-q-meta').textContent = `${mdjCT('PREGUNTA','QUESTION')} ${c10 + 1} ${mdjCT('DE','OF')} ${Q10.length}`; document.getElementById('mdj10-q-text').textContent = q.q; document.getElementById('mdj10-progress-bar').style.width = ((c10 / Q10.length) * 100) + '%'; document.getElementById('mdj10-feedback').style.display = 'none'; document.getElementById('mdj10-next-btn').style.display = 'none'; a10 = false; const ct = document.getElementById('mdj10-options'); ct.innerHTML = ''; q.opts.forEach((o, i) => { const b = document.createElement('button'); b.className = 'mdj-opt'; b.innerHTML = `<span class="mdj-letter">${L[i]}</span><span>${o}</span>`; b.onclick = () => sv10(i, b); ct.appendChild(b); }); }
+                    function sv10(idx, btn) { if (a10) return; a10 = true; const q = Q10[c10]; document.querySelectorAll('#mdj10-options .mdj-opt').forEach(b => b.disabled = true); const fb = document.getElementById('mdj10-feedback'); if (idx === q.ans) { s10++; btn.classList.add('correct'); fb.style.cssText = 'display:block;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);border-radius:14px;padding:14px 18px;color:#22c55e;font-size:14px;margin-top:20px;font-weight:700;'; fb.textContent = mdjCT('✅ ¡Correcto!','✅ Correct!'); } else { btn.classList.add('wrong'); document.querySelectorAll('#mdj10-options .mdj-opt')[q.ans].classList.add('correct'); fb.style.cssText = 'display:block;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.3);border-radius:14px;padding:14px 18px;color:#ef4444;font-size:14px;margin-top:20px;'; fb.innerHTML = `<strong>❌ FALLO.</strong> Correcta: <strong style="color:#22c55e;">${'ABCDE'[q.ans]}) ${q.opts[q.ans]}</strong>`; } const nb = document.getElementById('mdj10-next-btn'); nb.textContent = c10 < Q10.length - 1 ? mdjCT('SIGUIENTE →','NEXT →') : mdjCT('VER RESULTADO','SEE RESULT'); nb.style.display = 'inline-block'; }
+                    window.mdj10QuizNext = function () { c10++; if (c10 >= Q10.length) { document.getElementById('mdj10-quiz-box').style.display = 'none'; document.getElementById('mdj10-score-screen').style.display = 'block'; const pct = Math.round((s10 / Q10.length) * 100); const icon = pct >= 90 ? '🏆' : pct >= 70 ? '🎯' : pct >= 50 ? '🎧' : '📚'; document.getElementById('mdj10-score-icon').textContent = icon; document.getElementById('mdj10-score-title').textContent = pct >= 90 ? mdjCT('Mentalidad de negocio de élite — listo para operar profesionalmente','Elite business mindset — ready to operate professionally') : pct >= 70 ? mdjCT('Buen nivel de negocio — refuerza los puntos contractuales débiles','Good business level — shore up the weak contract points') : pct >= 50 ? mdjCT('Base presente — repasa la sección de contratos y tarifas','Base in place — review the contracts and rates section') : mdjCT('Debes estudiar el módulo de negocio DJ antes de continuar','You need to study the DJ business module before moving on'); document.getElementById('mdj10-score-sub').textContent = `${mdjCT('Respondiste correctamente','You answered correctly')} ${s10} ${mdjCT('de','of')} ${Q10.length} ${mdjCT('preguntas','questions')}`; document.getElementById('mdj10-score-num').textContent = pct + '%'; return; } r10(); };
                     window.mdj10QuizRestart = function () { c10 = 0; s10 = 0; document.getElementById('mdj10-score-screen').style.display = 'none'; document.getElementById('mdj10-quiz-box').style.display = 'block'; r10(); };
                     r10();
                 })();
@@ -2119,12 +2146,12 @@
             <div id="quiz-branding-marca" style="margin-bottom:80px;">
                 <div style="text-align:center;margin-bottom:40px;">
                     <div
-                        style="display:inline-flex;align-items:center;gap:8px;background:rgba(197,160,89,0.1);border:1px solid rgba(197,160,89,0.3);border-radius:50px;padding:6px 20px;font-size:11px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:16px;">
+                        style="display:inline-flex;align-items:center;gap:8px;background:rgba(197,160,89,0.1);border:1px solid rgba(197,160,89,0.3);border-radius:50px;padding:6px 20px;font-size:11px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:16px;" data-i18n="crsx-027">
                         EVALUACIÓN · BRANDING Y MARCA PERSONAL
                     </div>
-                    <h3 style="font-size:clamp(22px,3vw,34px);font-weight:900;margin-bottom:10px;">Branding y Marca
+                    <h3 style="font-size:clamp(22px,3vw,34px);font-weight:900;margin-bottom:10px;" data-i18n="crsx-028">Branding y Marca
                         Personal del DJ</h3>
-                    <p style="color:var(--muted);font-size:15px;max-width:560px;margin:0 auto;line-height:1.7;">
+                    <p style="color:var(--muted);font-size:15px;max-width:560px;margin:0 auto;line-height:1.7;" data-i18n="crsx-029">
                         15 preguntas sobre nombre artístico, bio profesional, Electronic Press Kit (EPK),<br>estrategia
                         en redes sociales y cómo posicionarte como DJ profesional en el mercado.
                     </p>
@@ -2159,7 +2186,7 @@
                     <p id="mdj11-score-num"
                         style="font-size:40px;font-weight:900;color:var(--gold);margin-bottom:28px;"></p>
                     <button onclick="mdj11QuizRestart()"
-                        style="padding:14px 36px;background:rgba(197,160,89,0.15);color:var(--gold);border:1px solid rgba(197,160,89,0.4);border-radius:50px;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:1px;">REPETIR
+                        style="padding:14px 36px;background:rgba(197,160,89,0.15);color:var(--gold);border:1px solid rgba(197,160,89,0.4);border-radius:50px;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:1px;" data-i18n="crsx-008">REPETIR
                         EXAMEN</button>
                 </div>
             </div>
@@ -2182,10 +2209,11 @@
                         { q: "¿Qué información de contacto debe aparecer siempre visible en los perfiles y EPK del DJ?", opts: ["Solo el Instagram del DJ", "Email de booking (preferiblemente nombre@tudominio.com), número de WhatsApp de contacto profesional separado del personal, y si aplica, nombre de la agencia o managment — facilitar el contacto reduce la fricción para recibir ofertas", "Solo un formulario de contacto en la web — sin email directo", "Solo el número de teléfono personal", "El contacto solo se proporciona cuando lo piden — no públicamente"], ans: 1 },
                         { q: "¿Por qué el DJ debe separar su marca personal de su vida personal en redes sociales?", opts: ["Por privacidad — pero no afecta la carrera profesional", "Mezclar marca personal con contenido personal (política, vida íntima, conflictos) crea ruido de marca, puede alejar promoters y patrocinadores, y reduce la solidez de la imagen profesional — la marca del DJ debe ser aspiracional y coherente con el nicho musical", "Los promoters prefieren DJs más 'auténticos' con vida personal visible", "Solo importa para DJs que buscan patrocinadores de grandes marcas", "Con más de 10,000 seguidores la separación ya no es necesaria"], ans: 1 },
                     ];
+                    mdjBindQ(Q11, 'Q11', function () { var b = document.getElementById('mdj11-quiz-box'); if (b && b.style.display !== 'none' && !a11) r11(); });
                     let c11 = 0, s11 = 0, a11 = false;
-                    function r11() { const q = Q11[c11], L = ['A', 'B', 'C', 'D', 'E']; document.getElementById('mdj11-q-meta').textContent = `PREGUNTA ${c11 + 1} DE ${Q11.length}`; document.getElementById('mdj11-q-text').textContent = q.q; document.getElementById('mdj11-progress-bar').style.width = ((c11 / Q11.length) * 100) + '%'; document.getElementById('mdj11-feedback').style.display = 'none'; document.getElementById('mdj11-next-btn').style.display = 'none'; a11 = false; const ct = document.getElementById('mdj11-options'); ct.innerHTML = ''; q.opts.forEach((o, i) => { const b = document.createElement('button'); b.className = 'mdj-opt'; b.innerHTML = `<span class="mdj-letter">${L[i]}</span><span>${o}</span>`; b.onclick = () => sv11(i, b); ct.appendChild(b); }); }
-                    function sv11(idx, btn) { if (a11) return; a11 = true; const q = Q11[c11]; document.querySelectorAll('#mdj11-options .mdj-opt').forEach(b => b.disabled = true); const fb = document.getElementById('mdj11-feedback'); if (idx === q.ans) { s11++; btn.classList.add('correct'); fb.style.cssText = 'display:block;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);border-radius:14px;padding:14px 18px;color:#22c55e;font-size:14px;margin-top:20px;font-weight:700;'; fb.textContent = '✅ ¡Correcto!'; } else { btn.classList.add('wrong'); document.querySelectorAll('#mdj11-options .mdj-opt')[q.ans].classList.add('correct'); fb.style.cssText = 'display:block;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.3);border-radius:14px;padding:14px 18px;color:#ef4444;font-size:14px;margin-top:20px;'; fb.innerHTML = `<strong>❌ FALLO.</strong> Correcta: <strong style="color:#22c55e;">${'ABCDE'[q.ans]}) ${q.opts[q.ans]}</strong>`; } const nb = document.getElementById('mdj11-next-btn'); nb.textContent = c11 < Q11.length - 1 ? 'SIGUIENTE →' : 'VER RESULTADO'; nb.style.display = 'inline-block'; }
-                    window.mdj11QuizNext = function () { c11++; if (c11 >= Q11.length) { document.getElementById('mdj11-quiz-box').style.display = 'none'; document.getElementById('mdj11-score-screen').style.display = 'block'; const pct = Math.round((s11 / Q11.length) * 100); const icon = pct >= 90 ? '🏆' : pct >= 70 ? '🎯' : pct >= 50 ? '🎧' : '📚'; document.getElementById('mdj11-score-icon').textContent = icon; document.getElementById('mdj11-score-title').textContent = pct >= 90 ? 'Marca personal de élite — listo para el mercado profesional' : pct >= 70 ? 'Buen nivel de branding — refuerza tu estrategia digital' : pct >= 50 ? 'Base presente — repasa la sección de branding y posicionamiento' : 'Debes estudiar el módulo de branding antes de continuar'; document.getElementById('mdj11-score-sub').textContent = `Respondiste correctamente ${s11} de ${Q11.length} preguntas`; document.getElementById('mdj11-score-num').textContent = pct + '%'; return; } r11(); };
+                    function r11() { const q = Q11[c11], L = ['A', 'B', 'C', 'D', 'E']; document.getElementById('mdj11-q-meta').textContent = `${mdjCT('PREGUNTA','QUESTION')} ${c11 + 1} ${mdjCT('DE','OF')} ${Q11.length}`; document.getElementById('mdj11-q-text').textContent = q.q; document.getElementById('mdj11-progress-bar').style.width = ((c11 / Q11.length) * 100) + '%'; document.getElementById('mdj11-feedback').style.display = 'none'; document.getElementById('mdj11-next-btn').style.display = 'none'; a11 = false; const ct = document.getElementById('mdj11-options'); ct.innerHTML = ''; q.opts.forEach((o, i) => { const b = document.createElement('button'); b.className = 'mdj-opt'; b.innerHTML = `<span class="mdj-letter">${L[i]}</span><span>${o}</span>`; b.onclick = () => sv11(i, b); ct.appendChild(b); }); }
+                    function sv11(idx, btn) { if (a11) return; a11 = true; const q = Q11[c11]; document.querySelectorAll('#mdj11-options .mdj-opt').forEach(b => b.disabled = true); const fb = document.getElementById('mdj11-feedback'); if (idx === q.ans) { s11++; btn.classList.add('correct'); fb.style.cssText = 'display:block;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);border-radius:14px;padding:14px 18px;color:#22c55e;font-size:14px;margin-top:20px;font-weight:700;'; fb.textContent = mdjCT('✅ ¡Correcto!','✅ Correct!'); } else { btn.classList.add('wrong'); document.querySelectorAll('#mdj11-options .mdj-opt')[q.ans].classList.add('correct'); fb.style.cssText = 'display:block;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.3);border-radius:14px;padding:14px 18px;color:#ef4444;font-size:14px;margin-top:20px;'; fb.innerHTML = `<strong>❌ FALLO.</strong> Correcta: <strong style="color:#22c55e;">${'ABCDE'[q.ans]}) ${q.opts[q.ans]}</strong>`; } const nb = document.getElementById('mdj11-next-btn'); nb.textContent = c11 < Q11.length - 1 ? mdjCT('SIGUIENTE →','NEXT →') : mdjCT('VER RESULTADO','SEE RESULT'); nb.style.display = 'inline-block'; }
+                    window.mdj11QuizNext = function () { c11++; if (c11 >= Q11.length) { document.getElementById('mdj11-quiz-box').style.display = 'none'; document.getElementById('mdj11-score-screen').style.display = 'block'; const pct = Math.round((s11 / Q11.length) * 100); const icon = pct >= 90 ? '🏆' : pct >= 70 ? '🎯' : pct >= 50 ? '🎧' : '📚'; document.getElementById('mdj11-score-icon').textContent = icon; document.getElementById('mdj11-score-title').textContent = pct >= 90 ? mdjCT('Marca personal de élite — listo para el mercado profesional','Elite personal brand — ready for the professional market') : pct >= 70 ? mdjCT('Buen nivel de branding — refuerza tu estrategia digital','Good branding level — reinforce your digital strategy') : pct >= 50 ? mdjCT('Base presente — repasa la sección de branding y posicionamiento','Base in place — review the branding and positioning section') : mdjCT('Debes estudiar el módulo de branding antes de continuar','You need to study the branding module before moving on'); document.getElementById('mdj11-score-sub').textContent = `${mdjCT('Respondiste correctamente','You answered correctly')} ${s11} ${mdjCT('de','of')} ${Q11.length} ${mdjCT('preguntas','questions')}`; document.getElementById('mdj11-score-num').textContent = pct + '%'; return; } r11(); };
                     window.mdj11QuizRestart = function () { c11 = 0; s11 = 0; document.getElementById('mdj11-score-screen').style.display = 'none'; document.getElementById('mdj11-quiz-box').style.display = 'block'; r11(); };
                     r11();
                 })();
@@ -2203,12 +2231,12 @@
                 <!-- Header -->
                 <div style="text-align:center;margin-bottom:48px;">
                     <div
-                        style="display:inline-flex;align-items:center;gap:8px;background:rgba(197,160,89,0.1);border:1px solid rgba(197,160,89,0.3);border-radius:50px;padding:6px 20px;font-size:11px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:16px;">
+                        style="display:inline-flex;align-items:center;gap:8px;background:rgba(197,160,89,0.1);border:1px solid rgba(197,160,89,0.3);border-radius:50px;padding:6px 20px;font-size:11px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:16px;" data-i18n="crsx-030">
                         MÓDULO 4 — HISTORIA CON PROPÓSITO
                     </div>
-                    <h2 style="font-size:clamp(26px,4vw,42px);font-weight:900;margin-bottom:12px;">Historia con
+                    <h2 style="font-size:clamp(26px,4vw,42px);font-weight:900;margin-bottom:12px;" data-i18n="crsx-031">Historia con
                         Propósito</h2>
-                    <p style="color:var(--muted);font-size:16px;max-width:560px;margin:0 auto;line-height:1.7;">
+                    <p style="color:var(--muted);font-size:16px;max-width:560px;margin:0 auto;line-height:1.7;" data-i18n="crsx-032">
                         Historia aplicada a ética, disciplina y respeto profesional.<br />
                         No es cultura por cultura: es <strong style="color:#fff;">carácter de cabina.</strong>
                     </p>
@@ -2229,20 +2257,20 @@
                                 style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,10,10,0.1) 0%,rgba(10,10,10,0.85) 100%);">
                             </div>
                             <div
-                                style="position:absolute;bottom:12px;left:16px;font-size:9px;font-weight:800;color:var(--gold);letter-spacing:2px;">
+                                style="position:absolute;bottom:12px;left:16px;font-size:9px;font-weight:800;color:var(--gold);letter-spacing:2px;" data-i18n="crsx-033">
                                 LECCIÓN 01 — COMUNIDAD</div>
                         </div>
                         <!-- content -->
                         <div style="padding:20px 22px 22px;background:rgba(255,255,255,0.02);">
-                            <h3 style="font-size:17px;font-weight:800;margin-bottom:9px;line-height:1.3;">Kool Herc →
+                            <h3 style="font-size:17px;font-weight:800;margin-bottom:9px;line-height:1.3;" data-i18n="crsx-034">Kool Herc →
                                 Comunidad</h3>
-                            <p style="color:var(--muted);font-size:13px;line-height:1.7;margin-bottom:13px;">El DJ nace
+                            <p style="color:var(--muted);font-size:13px;line-height:1.7;margin-bottom:13px;" data-i18n="crsx-035">El DJ nace
                                 como facilitador de comunidad en el Bronx. Sin contratos — con propósito social. Tu set
                                 es responsabilidad, no espectáculo personal.</p>
                             <div
                                 style="padding:11px 13px;background:rgba(197,160,89,0.06);border-radius:10px;border-left:3px solid var(--gold);">
-                                <p style="font-size:11px;color:var(--gold);font-weight:700;margin:0;">Reflexión:</p>
-                                <p style="font-size:12px;color:rgba(255,255,255,0.7);margin:4px 0 0;line-height:1.6;">
+                                <p style="font-size:11px;color:var(--gold);font-weight:700;margin:0;" data-i18n="crsx-036">Reflexión:</p>
+                                <p style="font-size:12px;color:rgba(255,255,255,0.7);margin:4px 0 0;line-height:1.6;" data-i18n="crsx-037">
                                     ¿Cómo contribuye tu set al ambiente social del evento?</p>
                             </div>
                         </div>
@@ -2259,19 +2287,19 @@
                                 style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,10,10,0.1) 0%,rgba(10,10,10,0.85) 100%);">
                             </div>
                             <div
-                                style="position:absolute;bottom:12px;left:16px;font-size:9px;font-weight:800;color:var(--gold);letter-spacing:2px;">
+                                style="position:absolute;bottom:12px;left:16px;font-size:9px;font-weight:800;color:var(--gold);letter-spacing:2px;" data-i18n="crsx-038">
                                 LECCIÓN 02 — DISCIPLINA</div>
                         </div>
                         <div style="padding:20px 22px 22px;background:rgba(255,255,255,0.02);">
-                            <h3 style="font-size:17px;font-weight:800;margin-bottom:9px;line-height:1.3;">Grandmaster
+                            <h3 style="font-size:17px;font-weight:800;margin-bottom:9px;line-height:1.3;" data-i18n="crsx-039">Grandmaster
                                 Flash → Disciplina Técnica</h3>
-                            <p style="color:var(--muted);font-size:13px;line-height:1.7;margin-bottom:13px;">Sin sync.
+                            <p style="color:var(--muted);font-size:13px;line-height:1.7;margin-bottom:13px;" data-i18n="crsx-040">Sin sync.
                                 Sin loops automáticos. Horas de práctica hasta la precisión milimétrica. La herramienta
                                 no reemplaza disciplina. El error se corrige, no se justifica.</p>
                             <div
                                 style="padding:11px 13px;background:rgba(197,160,89,0.06);border-radius:10px;border-left:3px solid var(--gold);">
-                                <p style="font-size:11px;color:var(--gold);font-weight:700;margin:0;">Principio:</p>
-                                <p style="font-size:12px;color:rgba(255,255,255,0.7);margin:4px 0 0;line-height:1.6;">
+                                <p style="font-size:11px;color:var(--gold);font-weight:700;margin:0;" data-i18n="crsx-041">Principio:</p>
+                                <p style="font-size:12px;color:rgba(255,255,255,0.7);margin:4px 0 0;line-height:1.6;" data-i18n="crsx-042">
                                     Herramientas modernas no sustituyen práctica.</p>
                             </div>
                         </div>
@@ -2288,19 +2316,19 @@
                                 style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,10,10,0.1) 0%,rgba(10,10,10,0.85) 100%);">
                             </div>
                             <div
-                                style="position:absolute;bottom:12px;left:16px;font-size:9px;font-weight:800;color:var(--gold);letter-spacing:2px;">
+                                style="position:absolute;bottom:12px;left:16px;font-size:9px;font-weight:800;color:var(--gold);letter-spacing:2px;" data-i18n="crsx-043">
                                 LECCIÓN 03 — RESPETO</div>
                         </div>
                         <div style="padding:20px 22px 22px;background:rgba(255,255,255,0.02);">
-                            <h3 style="font-size:17px;font-weight:800;margin-bottom:9px;line-height:1.3;">Larry Levan →
+                            <h3 style="font-size:17px;font-weight:800;margin-bottom:9px;line-height:1.3;" data-i18n="crsx-044">Larry Levan →
                                 Respeto al Espacio</h3>
-                            <p style="color:var(--muted);font-size:13px;line-height:1.7;margin-bottom:13px;">Levan no
+                            <p style="color:var(--muted);font-size:13px;line-height:1.7;margin-bottom:13px;" data-i18n="crsx-045">Levan no
                                 competía — construía identidad del club. El residente protege la casa. El invitado
                                 respeta la casa. El club es ecosistema.</p>
                             <div
                                 style="padding:11px 13px;background:rgba(197,160,89,0.06);border-radius:10px;border-left:3px solid var(--gold);">
-                                <p style="font-size:11px;color:var(--gold);font-weight:700;margin:0;">Reflexión:</p>
-                                <p style="font-size:12px;color:rgba(255,255,255,0.7);margin:4px 0 0;line-height:1.6;">
+                                <p style="font-size:11px;color:var(--gold);font-weight:700;margin:0;" data-i18n="crsx-036">Reflexión:</p>
+                                <p style="font-size:12px;color:rgba(255,255,255,0.7);margin:4px 0 0;line-height:1.6;" data-i18n="crsx-046">
                                     ¿Por qué sabotear al DJ anterior daña tu propia reputación?</p>
                             </div>
                         </div>
@@ -2317,19 +2345,19 @@
                                 style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,10,10,0.1) 0%,rgba(10,10,10,0.85) 100%);">
                             </div>
                             <div
-                                style="position:absolute;bottom:12px;left:16px;font-size:9px;font-weight:800;color:var(--gold);letter-spacing:2px;">
+                                style="position:absolute;bottom:12px;left:16px;font-size:9px;font-weight:800;color:var(--gold);letter-spacing:2px;" data-i18n="crsx-047">
                                 LECCIÓN 04 — INNOVACIÓN</div>
                         </div>
                         <div style="padding:20px 22px 22px;background:rgba(255,255,255,0.02);">
-                            <h3 style="font-size:17px;font-weight:800;margin-bottom:9px;line-height:1.3;">Chicago &amp;
+                            <h3 style="font-size:17px;font-weight:800;margin-bottom:9px;line-height:1.3;" data-i18n="crsx-048">Chicago &amp;
                                 Detroit → Innovación</h3>
-                            <p style="color:var(--muted);font-size:13px;line-height:1.7;margin-bottom:13px;">Knuckles y
+                            <p style="color:var(--muted);font-size:13px;line-height:1.7;margin-bottom:13px;" data-i18n="crsx-049">Knuckles y
                                 Atkins no copiaron — crearon. Identidad sonora es responsabilidad. Copiar sin criterio
                                 es mediocridad. Innovar requiere estudio profundo.</p>
                             <div
                                 style="padding:11px 13px;background:rgba(197,160,89,0.06);border-radius:10px;border-left:3px solid var(--gold);">
-                                <p style="font-size:11px;color:var(--gold);font-weight:700;margin:0;">Principio:</p>
-                                <p style="font-size:12px;color:rgba(255,255,255,0.7);margin:4px 0 0;line-height:1.6;">Tu
+                                <p style="font-size:11px;color:var(--gold);font-weight:700;margin:0;" data-i18n="crsx-041">Principio:</p>
+                                <p style="font-size:12px;color:rgba(255,255,255,0.7);margin:4px 0 0;line-height:1.6;" data-i18n="crsx-050">Tu
                                     marca sonora es tu firma. Cuídala.</p>
                             </div>
                         </div>
@@ -2346,19 +2374,19 @@
                                 style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,10,10,0.1) 0%,rgba(10,10,10,0.85) 100%);">
                             </div>
                             <div
-                                style="position:absolute;bottom:12px;left:16px;font-size:9px;font-weight:800;color:var(--gold);letter-spacing:2px;">
+                                style="position:absolute;bottom:12px;left:16px;font-size:9px;font-weight:800;color:var(--gold);letter-spacing:2px;" data-i18n="crsx-051">
                                 LECCIÓN 05 — TRADICIÓN</div>
                         </div>
                         <div style="padding:20px 22px 22px;background:rgba(255,255,255,0.02);">
-                            <h3 style="font-size:17px;font-weight:800;margin-bottom:9px;line-height:1.3;">Raves Europeas
+                            <h3 style="font-size:17px;font-weight:800;margin-bottom:9px;line-height:1.3;" data-i18n="crsx-052">Raves Europeas
                                 → Respeto Cultural</h3>
-                            <p style="color:var(--muted);font-size:13px;line-height:1.7;margin-bottom:13px;">Las raves
+                            <p style="color:var(--muted);font-size:13px;line-height:1.7;margin-bottom:13px;" data-i18n="crsx-053">Las raves
                                 no eran solo fiesta — eran movimiento cultural. El DJ no es influencer: es guardián de
                                 una tradición. Representas algo más que tú mismo.</p>
                             <div
                                 style="padding:11px 13px;background:rgba(197,160,89,0.06);border-radius:10px;border-left:3px solid var(--gold);">
-                                <p style="font-size:11px;color:var(--gold);font-weight:700;margin:0;">Principio:</p>
-                                <p style="font-size:12px;color:rgba(255,255,255,0.7);margin:4px 0 0;line-height:1.6;">La
+                                <p style="font-size:11px;color:var(--gold);font-weight:700;margin:0;" data-i18n="crsx-041">Principio:</p>
+                                <p style="font-size:12px;color:rgba(255,255,255,0.7);margin:4px 0 0;line-height:1.6;" data-i18n="crsx-054">La
                                     escena es tradición. Protégela.</p>
                             </div>
                         </div>
@@ -2381,19 +2409,19 @@
                                 style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(10,10,10,0.9) 100%);">
                             </div>
                             <div
-                                style="position:absolute;bottom:12px;left:16px;font-size:9px;font-weight:800;color:var(--gold);letter-spacing:2px;">
+                                style="position:absolute;bottom:12px;left:16px;font-size:9px;font-weight:800;color:var(--gold);letter-spacing:2px;" data-i18n="crsx-055">
                                 LECCIÓN 06 — RESPONSABILIDAD</div>
                         </div>
                         <div style="padding:20px 22px 22px;background:rgba(255,255,255,0.02);">
-                            <h3 style="font-size:17px;font-weight:800;margin-bottom:9px;line-height:1.3;">Era Digital →
+                            <h3 style="font-size:17px;font-weight:800;margin-bottom:9px;line-height:1.3;" data-i18n="crsx-056">Era Digital →
                                 Responsabilidad</h3>
-                            <p style="color:var(--muted);font-size:13px;line-height:1.7;margin-bottom:13px;">Hoy
+                            <p style="color:var(--muted);font-size:13px;line-height:1.7;margin-bottom:13px;" data-i18n="crsx-057">Hoy
                                 cualquiera puede llamarse DJ. Pero acceso no significa mérito. Likes no significan
                                 legado. Streaming no significa preparación. Backup sí es profesional.</p>
                             <div
                                 style="padding:11px 13px;background:rgba(197,160,89,0.06);border-radius:10px;border-left:3px solid var(--gold);">
-                                <p style="font-size:11px;color:var(--gold);font-weight:700;margin:0;">Verdad dura:</p>
-                                <p style="font-size:12px;color:rgba(255,255,255,0.7);margin:4px 0 0;line-height:1.6;">
+                                <p style="font-size:11px;color:var(--gold);font-weight:700;margin:0;" data-i18n="crsx-058">Verdad dura:</p>
+                                <p style="font-size:12px;color:rgba(255,255,255,0.7);margin:4px 0 0;line-height:1.6;" data-i18n="crsx-059">
                                     Viral no es profesional. Preparado sí lo es.</p>
                             </div>
                         </div>
@@ -2405,19 +2433,19 @@
                 <div
                     style="max-width:700px;margin:0 auto;padding:32px;background:rgba(197,160,89,0.06);border:1px solid rgba(197,160,89,0.3);border-radius:20px;text-align:center;">
                     <div style="font-size:28px;margin-bottom:12px;">🏛</div>
-                    <h3 style="font-size:20px;font-weight:900;margin-bottom:12px;">Declaración Final</h3>
+                    <h3 style="font-size:20px;font-weight:900;margin-bottom:12px;" data-i18n="crsx-060">Declaración Final</h3>
                     <p
-                        style="color:rgba(255,255,255,0.75);font-size:15px;line-height:1.8;margin-bottom:24px;font-style:italic;">
+                        style="color:rgba(255,255,255,0.75);font-size:15px;line-height:1.8;margin-bottom:24px;font-style:italic;" data-i18n="crsx-061">
                         "Reconozco que el DJing es una disciplina cultural con historia, técnica y ética.
                         Me comprometo a respetar la cabina, a otros DJs y al público."
                     </p>
                     <div class="mdj-paired-pills" style="--mdj-paired-gap:12px;">
                         <a href="./certification.html"
-                            style="display:inline-flex;align-items:center;gap:8px;padding:14px 28px;background:var(--gold);color:#000;border:none;border-radius:50px;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:1px;text-decoration:none;">
+                            style="display:inline-flex;align-items:center;gap:8px;padding:14px 28px;background:var(--gold);color:#000;border:none;border-radius:50px;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:1px;text-decoration:none;" data-i18n="crsx-062">
                             🏆 IR A CERTIFICACIÓN
                         </a>
                         <a href="./practical-evaluation.html"
-                            style="display:inline-flex;align-items:center;gap:8px;padding:14px 28px;background:rgba(197,160,89,0.12);color:var(--gold);border:1px solid rgba(197,160,89,0.4);border-radius:50px;font-size:14px;font-weight:800;text-decoration:none;letter-spacing:1px;">
+                            style="display:inline-flex;align-items:center;gap:8px;padding:14px 28px;background:rgba(197,160,89,0.12);color:var(--gold);border:1px solid rgba(197,160,89,0.4);border-radius:50px;font-size:14px;font-weight:800;text-decoration:none;letter-spacing:1px;" data-i18n="crsx-063">
                             🎧 EVALUACIÓN PRÁCTICA
                         </a>
                     </div>
@@ -2452,12 +2480,12 @@
             <div id="modulo-5-conexiones" style="margin-bottom:80px;">
                 <div style="text-align:center;margin-bottom:48px;">
                     <div
-                        style="display:inline-flex;align-items:center;gap:8px;background:rgba(197,160,89,0.1);border:1px solid rgba(197,160,89,0.3);border-radius:50px;padding:6px 20px;font-size:11px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:16px;">
+                        style="display:inline-flex;align-items:center;gap:8px;background:rgba(197,160,89,0.1);border:1px solid rgba(197,160,89,0.3);border-radius:50px;padding:6px 20px;font-size:11px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:16px;" data-i18n="crsx-064">
                         MÓDULO 5 — CONEXIONES EN CABINA PROFESIONAL
                     </div>
-                    <h2 style="font-size:clamp(26px,4vw,42px);font-weight:900;margin-bottom:12px;">Conexiones en Cabina
+                    <h2 style="font-size:clamp(26px,4vw,42px);font-weight:900;margin-bottom:12px;" data-i18n="crsx-065">Conexiones en Cabina
                     </h2>
-                    <p style="color:var(--muted);font-size:16px;max-width:560px;margin:0 auto;line-height:1.7;">
+                    <p style="color:var(--muted);font-size:16px;max-width:560px;margin:0 auto;line-height:1.7;" data-i18n="crsx-066">
                         Antes de tocar un botón, debes entender cómo fluye la señal.<br>
                         Un error de conexión puede <strong style="color:#fff;">destruir el audio del evento
                             entero.</strong>
@@ -2475,27 +2503,27 @@
                             </svg>
                         </div>
                         <div
-                            style="font-size:10px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:8px;">
+                            style="font-size:10px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:8px;" data-i18n="crsx-067">
                             5.1 — FLUJO BÁSICO DE SEÑAL</div>
-                        <h3 style="font-size:18px;font-weight:800;margin-bottom:14px;">Orden correcto de conexión</h3>
+                        <h3 style="font-size:18px;font-weight:800;margin-bottom:14px;" data-i18n="crsx-068">Orden correcto de conexión</h3>
                         <ol style="padding-left:18px;display:flex;flex-direction:column;gap:8px;">
-                            <li style="font-size:14px;color:rgba(255,255,255,0.85);line-height:1.6;"><strong
+                            <li style="font-size:14px;color:rgba(255,255,255,0.85);line-height:1.6;" data-i18n="crsx-069"><strong
                                     style="color:#fff;">Fuente</strong> — Laptop / USB / CDJ</li>
                             <li style="font-size:14px;color:rgba(255,255,255,0.85);line-height:1.6;"><strong
-                                    style="color:#fff;">Interface o reproductor</strong></li>
+                                    style="color:#fff;" data-i18n="crsx-070">Interface o reproductor</strong></li>
                             <li style="font-size:14px;color:rgba(255,255,255,0.85);line-height:1.6;"><strong
-                                    style="color:#fff;">Mixer</strong></li>
-                            <li style="font-size:14px;color:rgba(255,255,255,0.85);line-height:1.6;"><strong
+                                    style="color:#fff;" data-i18n="crsx-071">Mixer</strong></li>
+                            <li style="font-size:14px;color:rgba(255,255,255,0.85);line-height:1.6;" data-i18n="crsx-072"><strong
                                     style="color:#fff;">Procesamiento</strong> — si aplica (EQ, compressor)</li>
                             <li style="font-size:14px;color:rgba(255,255,255,0.85);line-height:1.6;"><strong
-                                    style="color:#fff;">Amplificación</strong></li>
+                                    style="color:#fff;" data-i18n="crsx-073">Amplificación</strong></li>
                             <li style="font-size:14px;color:rgba(255,255,255,0.85);line-height:1.6;"><strong
-                                    style="color:#fff;">Bocinas</strong></li>
+                                    style="color:#fff;" data-i18n="crsx-074">Bocinas</strong></li>
                         </ol>
                         <div
                             style="margin-top:16px;padding:12px 14px;background:rgba(229,62,62,0.06);border-radius:10px;border-left:3px solid #e53e3e;">
-                            <p style="font-size:11px;font-weight:800;color:#e53e3e;margin:0 0 4px;">⚠ ERROR COMÚN</p>
-                            <p style="font-size:13px;color:rgba(255,255,255,0.7);margin:0;line-height:1.6;">Conectar
+                            <p style="font-size:11px;font-weight:800;color:#e53e3e;margin:0 0 4px;" data-i18n="crsx-075">⚠ ERROR COMÚN</p>
+                            <p style="font-size:13px;color:rgba(255,255,255,0.7);margin:0;line-height:1.6;" data-i18n="crsx-076">Conectar
                                 salida Master directo a bocina activa y luego mandar otra señal duplicada sin control de
                                 ganancia.</p>
                         </div>
@@ -2518,36 +2546,36 @@
                             </svg>
                         </div>
                         <div
-                            style="font-size:10px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:8px;">
+                            style="font-size:10px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:8px;" data-i18n="crsx-077">
                             5.2 — TIPOS DE SALIDAS EN MIXERS</div>
-                        <h3 style="font-size:18px;font-weight:800;margin-bottom:14px;">Un DJ profesional sabe la
+                        <h3 style="font-size:18px;font-weight:800;margin-bottom:14px;" data-i18n="crsx-078">Un DJ profesional sabe la
                             diferencia</h3>
                         <div style="display:flex;flex-direction:column;gap:10px;">
                             <div
                                 style="padding:12px 14px;background:rgba(197,160,89,0.05);border:1px solid rgba(197,160,89,0.15);border-radius:10px;">
-                                <div style="font-size:11px;font-weight:800;color:var(--gold);margin-bottom:4px;">MASTER
+                                <div style="font-size:11px;font-weight:800;color:var(--gold);margin-bottom:4px;" data-i18n="crsx-079">MASTER
                                     OUT (XLR / TRS)</div>
-                                <p style="font-size:13px;color:rgba(255,255,255,0.75);margin:0;">→ Sistema principal de
+                                <p style="font-size:13px;color:rgba(255,255,255,0.75);margin:0;" data-i18n="crsx-080">→ Sistema principal de
                                     PA</p>
                             </div>
                             <div
                                 style="padding:12px 14px;background:rgba(197,160,89,0.05);border:1px solid rgba(197,160,89,0.15);border-radius:10px;">
-                                <div style="font-size:11px;font-weight:800;color:var(--gold);margin-bottom:4px;">BOOTH
+                                <div style="font-size:11px;font-weight:800;color:var(--gold);margin-bottom:4px;" data-i18n="crsx-081">BOOTH
                                     OUT</div>
-                                <p style="font-size:13px;color:rgba(255,255,255,0.75);margin:0;">→ Monitores del DJ —
+                                <p style="font-size:13px;color:rgba(255,255,255,0.75);margin:0;" data-i18n="crsx-082">→ Monitores del DJ —
                                     volumen independiente</p>
                             </div>
                             <div
                                 style="padding:12px 14px;background:rgba(197,160,89,0.05);border:1px solid rgba(197,160,89,0.15);border-radius:10px;">
-                                <div style="font-size:11px;font-weight:800;color:var(--gold);margin-bottom:4px;">REC OUT
+                                <div style="font-size:11px;font-weight:800;color:var(--gold);margin-bottom:4px;" data-i18n="crsx-083">REC OUT
                                 </div>
-                                <p style="font-size:13px;color:rgba(255,255,255,0.75);margin:0;">→ Grabación del set</p>
+                                <p style="font-size:13px;color:rgba(255,255,255,0.75);margin:0;" data-i18n="crsx-084">→ Grabación del set</p>
                             </div>
                             <div
                                 style="padding:12px 14px;background:rgba(197,160,89,0.05);border:1px solid rgba(197,160,89,0.15);border-radius:10px;">
-                                <div style="font-size:11px;font-weight:800;color:var(--gold);margin-bottom:4px;">AUX OUT
+                                <div style="font-size:11px;font-weight:800;color:var(--gold);margin-bottom:4px;" data-i18n="crsx-085">AUX OUT
                                 </div>
-                                <p style="font-size:13px;color:rgba(255,255,255,0.75);margin:0;">→ Procesamiento externo
+                                <p style="font-size:13px;color:rgba(255,255,255,0.75);margin:0;" data-i18n="crsx-086">→ Procesamiento externo
                                 </p>
                             </div>
                         </div>
@@ -2565,31 +2593,31 @@
                             </svg>
                         </div>
                         <div
-                            style="font-size:10px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:8px;">
+                            style="font-size:10px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:8px;" data-i18n="crsx-087">
                             5.3 — BALANCEADO VS NO BALANCEADO</div>
-                        <h3 style="font-size:18px;font-weight:800;margin-bottom:14px;">Regla de distancia profesional
+                        <h3 style="font-size:18px;font-weight:800;margin-bottom:14px;" data-i18n="crsx-088">Regla de distancia profesional
                         </h3>
                         <div class="mdj-r2" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
                             <div
                                 style="padding:14px;background:rgba(0,200,100,0.05);border:1px solid rgba(0,200,100,0.2);border-radius:12px;text-align:center;">
-                                <div style="font-size:11px;font-weight:800;color:#48bb78;margin-bottom:6px;">✅
+                                <div style="font-size:11px;font-weight:800;color:#48bb78;margin-bottom:6px;" data-i18n="crsx-089">✅
                                     BALANCEADO</div>
-                                <p style="font-size:13px;color:rgba(255,255,255,0.75);margin:0;line-height:1.5;">Menos
+                                <p style="font-size:13px;color:rgba(255,255,255,0.75);margin:0;line-height:1.5;" data-i18n="crsx-090">Menos
                                     ruido<br>Largas distancias</p>
                             </div>
                             <div
                                 style="padding:14px;background:rgba(229,62,62,0.05);border:1px solid rgba(229,62,62,0.2);border-radius:12px;text-align:center;">
-                                <div style="font-size:11px;font-weight:800;color:#e53e3e;margin-bottom:6px;">⚠ NO
+                                <div style="font-size:11px;font-weight:800;color:#e53e3e;margin-bottom:6px;" data-i18n="crsx-091">⚠ NO
                                     BALANCEADO</div>
-                                <p style="font-size:13px;color:rgba(255,255,255,0.75);margin:0;line-height:1.5;">Más
+                                <p style="font-size:13px;color:rgba(255,255,255,0.75);margin:0;line-height:1.5;" data-i18n="crsx-092">Más
                                     interferencia<br>Solo distancias cortas</p>
                             </div>
                         </div>
                         <div
                             style="padding:12px 14px;background:rgba(197,160,89,0.06);border-radius:10px;border-left:3px solid var(--gold);">
-                            <p style="font-size:12px;color:var(--gold);font-weight:700;margin:0 0 4px;">REGLA
+                            <p style="font-size:12px;color:var(--gold);font-weight:700;margin:0 0 4px;" data-i18n="crsx-093">REGLA
                                 PROFESIONAL</p>
-                            <p style="font-size:13px;color:rgba(255,255,255,0.7);margin:0;line-height:1.6;">Más de 5–7
+                            <p style="font-size:13px;color:rgba(255,255,255,0.7);margin:0;line-height:1.6;" data-i18n="crsx-094">Más de 5–7
                                 metros de cable → siempre usa balanceado.</p>
                         </div>
                     </div>
@@ -2613,12 +2641,12 @@
             <div id="modulo-6-cables" style="margin-bottom:80px;">
                 <div style="text-align:center;margin-bottom:48px;">
                     <div
-                        style="display:inline-flex;align-items:center;gap:8px;background:rgba(197,160,89,0.1);border:1px solid rgba(197,160,89,0.3);border-radius:50px;padding:6px 20px;font-size:11px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:16px;">
+                        style="display:inline-flex;align-items:center;gap:8px;background:rgba(197,160,89,0.1);border:1px solid rgba(197,160,89,0.3);border-radius:50px;padding:6px 20px;font-size:11px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:16px;" data-i18n="crsx-095">
                         MÓDULO 6 — TIPOS DE CONEXIONES Y CUÁNDO USARLOS
                     </div>
-                    <h2 style="font-size:clamp(26px,4vw,42px);font-weight:900;margin-bottom:12px;">Tipos de Conexiones
+                    <h2 style="font-size:clamp(26px,4vw,42px);font-weight:900;margin-bottom:12px;" data-i18n="crsx-096">Tipos de Conexiones
                     </h2>
-                    <p style="color:var(--muted);font-size:16px;max-width:560px;margin:0 auto;line-height:1.7;">
+                    <p style="color:var(--muted);font-size:16px;max-width:560px;margin:0 auto;line-height:1.7;" data-i18n="crsx-097">
                         Aquí vamos técnico. Cada cable tiene su función.<br>
                         Usarlo mal es tan grave como no saber mezclar.
                     </p>
@@ -2639,18 +2667,18 @@
                         <div style="position:relative;z-index:1;">
                             <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
                                 <div>
-                                    <div style="font-size:13px;font-weight:800;color:#48bb78;">XLR — Balanceado</div>
-                                    <div style="font-size:11px;color:var(--muted);">3 pines · Cancelación de ruido</div>
+                                    <div style="font-size:13px;font-weight:800;color:#48bb78;" data-i18n="crsx-098">XLR — Balanceado</div>
+                                    <div style="font-size:11px;color:var(--muted);" data-i18n="crsx-099">3 pines · Cancelación de ruido</div>
                                 </div>
                             </div>
                             <div
-                                style="font-size:12px;color:rgba(255,255,255,0.6);margin-bottom:8px;font-weight:700;letter-spacing:1px;">
+                                style="font-size:12px;color:rgba(255,255,255,0.6);margin-bottom:8px;font-weight:700;letter-spacing:1px;" data-i18n="crsx-100">
                                 USO</div>
-                            <p style="font-size:13px;color:rgba(255,255,255,0.8);line-height:1.6;margin-bottom:10px;">
+                            <p style="font-size:13px;color:rgba(255,255,255,0.8);line-height:1.6;margin-bottom:10px;" data-i18n="crsx-101">
                                 Master a PA · Señal profesional · Distancias largas</p>
                             <div
                                 style="padding:8px 12px;background:rgba(229,62,62,0.06);border-radius:8px;border-left:2px solid #e53e3e;">
-                                <p style="font-size:12px;color:#fc8181;margin:0;">✗ Nunca usar adaptadores baratos
+                                <p style="font-size:12px;color:#fc8181;margin:0;" data-i18n="crsx-102">✗ Nunca usar adaptadores baratos
                                     innecesarios</p>
                             </div>
                         </div>
@@ -2668,20 +2696,20 @@
                         <div style="position:relative;z-index:1;">
                             <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
                                 <div>
-                                    <div style="font-size:13px;font-weight:800;color:var(--gold);">TRS 1/4" —
+                                    <div style="font-size:13px;font-weight:800;color:var(--gold);" data-i18n="crsx-103">TRS 1/4" —
                                         Balanceado/Estéreo</div>
-                                    <div style="font-size:11px;color:var(--muted);">3 contactos · Depende del equipo
+                                    <div style="font-size:11px;color:var(--muted);" data-i18n="crsx-104">3 contactos · Depende del equipo
                                     </div>
                                 </div>
                             </div>
                             <div
-                                style="font-size:12px;color:rgba(255,255,255,0.6);margin-bottom:8px;font-weight:700;letter-spacing:1px;">
+                                style="font-size:12px;color:rgba(255,255,255,0.6);margin-bottom:8px;font-weight:700;letter-spacing:1px;" data-i18n="crsx-100">
                                 USO</div>
-                            <p style="font-size:13px;color:rgba(255,255,255,0.8);line-height:1.6;margin-bottom:10px;">
+                            <p style="font-size:13px;color:rgba(255,255,255,0.8);line-height:1.6;margin-bottom:10px;" data-i18n="crsx-105">
                                 Booth · Interfaces · Monitores</p>
                             <div
                                 style="padding:8px 12px;background:rgba(197,160,89,0.06);border-radius:8px;border-left:2px solid var(--gold);">
-                                <p style="font-size:12px;color:var(--gold);margin:0;">⚠ TRS no siempre es balanceado —
+                                <p style="font-size:12px;color:var(--gold);margin:0;" data-i18n="crsx-106">⚠ TRS no siempre es balanceado —
                                     verifica el equipo</p>
                             </div>
                         </div>
@@ -2699,19 +2727,19 @@
                         <div style="position:relative;z-index:1;">
                             <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
                                 <div>
-                                    <div style="font-size:13px;font-weight:800;color:#fc8181;">RCA — No Balanceado</div>
-                                    <div style="font-size:11px;color:var(--muted);">2 conductores · Solo distancias
+                                    <div style="font-size:13px;font-weight:800;color:#fc8181;" data-i18n="crsx-107">RCA — No Balanceado</div>
+                                    <div style="font-size:11px;color:var(--muted);" data-i18n="crsx-108">2 conductores · Solo distancias
                                         cortas</div>
                                 </div>
                             </div>
                             <div
-                                style="font-size:12px;color:rgba(255,255,255,0.6);margin-bottom:8px;font-weight:700;letter-spacing:1px;">
+                                style="font-size:12px;color:rgba(255,255,255,0.6);margin-bottom:8px;font-weight:700;letter-spacing:1px;" data-i18n="crsx-100">
                                 USO</div>
-                            <p style="font-size:13px;color:rgba(255,255,255,0.8);line-height:1.6;margin-bottom:10px;">
+                            <p style="font-size:13px;color:rgba(255,255,255,0.8);line-height:1.6;margin-bottom:10px;" data-i18n="crsx-109">
                                 CDJs antiguos · Equipos domésticos · Distancias cortas</p>
                             <div
                                 style="padding:8px 12px;background:rgba(229,62,62,0.06);border-radius:8px;border-left:2px solid #e53e3e;">
-                                <p style="font-size:12px;color:#fc8181;margin:0;">✗ No recomendado para tiros largos a
+                                <p style="font-size:12px;color:#fc8181;margin:0;" data-i18n="crsx-110">✗ No recomendado para tiros largos a
                                     PA grande</p>
                             </div>
                         </div>
@@ -2729,19 +2757,19 @@
                         <div style="position:relative;z-index:1;">
                             <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
                                 <div>
-                                    <div style="font-size:13px;font-weight:800;color:#90cdf4;">USB — Digital</div>
-                                    <div style="font-size:11px;color:var(--muted);">Datos · Control · Audio Interface
+                                    <div style="font-size:13px;font-weight:800;color:#90cdf4;" data-i18n="crsx-111">USB — Digital</div>
+                                    <div style="font-size:11px;color:var(--muted);" data-i18n="crsx-112">Datos · Control · Audio Interface
                                     </div>
                                 </div>
                             </div>
                             <div
-                                style="font-size:12px;color:rgba(255,255,255,0.6);margin-bottom:8px;font-weight:700;letter-spacing:1px;">
+                                style="font-size:12px;color:rgba(255,255,255,0.6);margin-bottom:8px;font-weight:700;letter-spacing:1px;" data-i18n="crsx-100">
                                 USO</div>
-                            <p style="font-size:13px;color:rgba(255,255,255,0.8);line-height:1.6;margin-bottom:10px;">
+                            <p style="font-size:13px;color:rgba(255,255,255,0.8);line-height:1.6;margin-bottom:10px;" data-i18n="crsx-113">
                                 Datos / control de controller · Audio interface</p>
                             <div
                                 style="padding:8px 12px;background:rgba(229,62,62,0.06);border-radius:8px;border-left:2px solid #e53e3e;">
-                                <p style="font-size:12px;color:#fc8181;margin:0;">✗ No usar como extensión improvisada
+                                <p style="font-size:12px;color:#fc8181;margin:0;" data-i18n="crsx-114">✗ No usar como extensión improvisada
                                     de 15 m</p>
                             </div>
                         </div>
@@ -2759,20 +2787,20 @@
                         <div style="position:relative;z-index:1;">
                             <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
                                 <div>
-                                    <div style="font-size:13px;font-weight:800;color:var(--gold);">Speakon — Amplificado
+                                    <div style="font-size:13px;font-weight:800;color:var(--gold);" data-i18n="crsx-115">Speakon — Amplificado
                                     </div>
-                                    <div style="font-size:11px;color:var(--muted);">Señal amplificada · No es señal de
+                                    <div style="font-size:11px;color:var(--muted);" data-i18n="crsx-116">Señal amplificada · No es señal de
                                         línea</div>
                                 </div>
                             </div>
                             <div
-                                style="font-size:12px;color:rgba(255,255,255,0.6);margin-bottom:8px;font-weight:700;letter-spacing:1px;">
+                                style="font-size:12px;color:rgba(255,255,255,0.6);margin-bottom:8px;font-weight:700;letter-spacing:1px;" data-i18n="crsx-100">
                                 USO</div>
-                            <p style="font-size:13px;color:rgba(255,255,255,0.8);line-height:1.6;margin-bottom:10px;">
+                            <p style="font-size:13px;color:rgba(255,255,255,0.8);line-height:1.6;margin-bottom:10px;" data-i18n="crsx-117">
                                 Amplificador → Bocina pasiva</p>
                             <div
                                 style="padding:8px 12px;background:rgba(197,160,89,0.06);border-radius:8px;border-left:2px solid var(--gold);">
-                                <p style="font-size:12px;color:var(--gold);margin:0;">Es señal amplificada — nunca en
+                                <p style="font-size:12px;color:var(--gold);margin:0;" data-i18n="crsx-118">Es señal amplificada — nunca en
                                     entradas de equipos</p>
                             </div>
                         </div>
@@ -2790,20 +2818,20 @@
                         <div style="position:relative;z-index:1;">
                             <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
                                 <div>
-                                    <div style="font-size:13px;font-weight:800;color:#90cdf4;">PowerCON — Energía
+                                    <div style="font-size:13px;font-weight:800;color:#90cdf4;" data-i18n="crsx-119">PowerCON — Energía
                                         Profesional</div>
-                                    <div style="font-size:11px;color:var(--muted);">Conexión de poder segura · Eventos
+                                    <div style="font-size:11px;color:var(--muted);" data-i18n="crsx-120">Conexión de poder segura · Eventos
                                         grandes</div>
                                 </div>
                             </div>
                             <div
-                                style="font-size:12px;color:rgba(255,255,255,0.6);margin-bottom:8px;font-weight:700;letter-spacing:1px;">
+                                style="font-size:12px;color:rgba(255,255,255,0.6);margin-bottom:8px;font-weight:700;letter-spacing:1px;" data-i18n="crsx-100">
                                 USO</div>
-                            <p style="font-size:13px;color:rgba(255,255,255,0.8);line-height:1.6;margin-bottom:10px;">
+                            <p style="font-size:13px;color:rgba(255,255,255,0.8);line-height:1.6;margin-bottom:10px;" data-i18n="crsx-121">
                                 Energía profesional segura · Cualquier evento grande</p>
                             <div
                                 style="padding:8px 12px;background:rgba(100,149,237,0.06);border-radius:8px;border-left:2px solid #90cdf4;">
-                                <p style="font-size:12px;color:#90cdf4;margin:0;">Estándar de producción profesional —
+                                <p style="font-size:12px;color:#90cdf4;margin:0;" data-i18n="crsx-122">Estándar de producción profesional —
                                     no confundir con extensiones comunes</p>
                             </div>
                         </div>
@@ -2817,12 +2845,12 @@
             <div id="modulo-7-equipos" style="margin-bottom:80px;">
                 <div style="text-align:center;margin-bottom:48px;">
                     <div
-                        style="display:inline-flex;align-items:center;gap:8px;background:rgba(197,160,89,0.1);border:1px solid rgba(197,160,89,0.3);border-radius:50px;padding:6px 20px;font-size:11px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:16px;">
+                        style="display:inline-flex;align-items:center;gap:8px;background:rgba(197,160,89,0.1);border:1px solid rgba(197,160,89,0.3);border-radius:50px;padding:6px 20px;font-size:11px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:16px;" data-i18n="crsx-123">
                         MÓDULO 7 — TIPOS DE EQUIPOS Y CUÁNDO USARLOS
                     </div>
-                    <h2 style="font-size:clamp(26px,4vw,42px);font-weight:900;margin-bottom:12px;">El Equipo Correcto
+                    <h2 style="font-size:clamp(26px,4vw,42px);font-weight:900;margin-bottom:12px;" data-i18n="crsx-124">El Equipo Correcto
                         para tu Tipo DJ</h2>
-                    <p style="color:var(--muted);font-size:16px;max-width:560px;margin:0 auto;line-height:1.7;">
+                    <p style="color:var(--muted);font-size:16px;max-width:560px;margin:0 auto;line-height:1.7;" data-i18n="crsx-125">
                         No hay un setup universal. Cada tipo de DJ tiene su entorno,<br>y el equipo equivocado <strong
                             style="color:#fff;">puede costarte el set y el cliente.</strong>
                     </p>
@@ -2838,28 +2866,28 @@
                             <div>
                                 <div style="font-size:10px;font-weight:800;color:var(--gold);letter-spacing:2px;">7.1
                                 </div>
-                                <h3 style="font-size:17px;font-weight:800;margin:2px 0 0;">DJ Controller</h3>
+                                <h3 style="font-size:17px;font-weight:800;margin:2px 0 0;" data-i18n="crsx-126">DJ Controller</h3>
                             </div>
                         </div>
-                        <p style="font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:12px;">Todo-en-uno (mixer +
+                        <p style="font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:12px;" data-i18n="crsx-127">Todo-en-uno (mixer +
                             decks) conectado a laptop.</p>
                         <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
                             <span
-                                style="font-size:11px;padding:3px 10px;background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.2);border-radius:20px;color:var(--gold);">Open
+                                style="font-size:11px;padding:3px 10px;background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.2);border-radius:20px;color:var(--gold);" data-i18n="crsx-128">Open
                                 Format</span>
                             <span
-                                style="font-size:11px;padding:3px 10px;background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.2);border-radius:20px;color:var(--gold);">Mobile
+                                style="font-size:11px;padding:3px 10px;background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.2);border-radius:20px;color:var(--gold);" data-i18n="crsx-129">Mobile
                                 DJ</span>
                             <span
-                                style="font-size:11px;padding:3px 10px;background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.2);border-radius:20px;color:var(--gold);">Streaming</span>
+                                style="font-size:11px;padding:3px 10px;background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.2);border-radius:20px;color:var(--gold);" data-i18n="crsx-130">Streaming</span>
                         </div>
                         <div style="display:flex;flex-direction:column;gap:6px;">
-                            <div style="font-size:12px;color:#48bb78;">✓ Portátil · Económico · Rápido de setup</div>
-                            <div style="font-size:12px;color:#48bb78;">✓ Ideal para workflow Serato/Rekordbox laptop
+                            <div style="font-size:12px;color:#48bb78;" data-i18n="crsx-131">✓ Portátil · Económico · Rápido de setup</div>
+                            <div style="font-size:12px;color:#48bb78;" data-i18n="crsx-132">✓ Ideal para workflow Serato/Rekordbox laptop
                             </div>
                             <div
                                 style="padding:8px 10px;background:rgba(229,62,62,0.06);border-radius:8px;border-left:2px solid #e53e3e;margin-top:4px;">
-                                <p style="font-size:12px;color:#fc8181;margin:0;">⚠ Si falla la laptop sin backup, el
+                                <p style="font-size:12px;color:#fc8181;margin:0;" data-i18n="crsx-133">⚠ Si falla la laptop sin backup, el
                                     set muere.</p>
                             </div>
                         </div>
@@ -2871,31 +2899,31 @@
                         <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
 
                             <div>
-                                <div style="font-size:10px;font-weight:800;color:var(--gold);letter-spacing:2px;">7.2 —
+                                <div style="font-size:10px;font-weight:800;color:var(--gold);letter-spacing:2px;" data-i18n="crsx-134">7.2 —
                                     CLUB STANDARD</div>
-                                <h3 style="font-size:17px;font-weight:800;margin:2px 0 0;">CDJs / XDJs + Mixer</h3>
+                                <h3 style="font-size:17px;font-weight:800;margin:2px 0 0;" data-i18n="crsx-135">CDJs / XDJs + Mixer</h3>
                             </div>
                         </div>
-                        <p style="font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:12px;">Reproductores
+                        <p style="font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:12px;" data-i18n="crsx-136">Reproductores
                             independientes + mixer profesional.</p>
                         <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
                             <span
-                                style="font-size:11px;padding:3px 10px;background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.2);border-radius:20px;color:var(--gold);">Club
+                                style="font-size:11px;padding:3px 10px;background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.2);border-radius:20px;color:var(--gold);" data-i18n="crsx-137">Club
                                 Pro</span>
                             <span
-                                style="font-size:11px;padding:3px 10px;background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.2);border-radius:20px;color:var(--gold);">Festival
+                                style="font-size:11px;padding:3px 10px;background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.2);border-radius:20px;color:var(--gold);" data-i18n="crsx-138">Festival
                                 DJ</span>
                             <span
-                                style="font-size:11px;padding:3px 10px;background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.2);border-radius:20px;color:var(--gold);">Venues
+                                style="font-size:11px;padding:3px 10px;background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.2);border-radius:20px;color:var(--gold);" data-i18n="crsx-139">Venues
                                 Grandes</span>
                         </div>
                         <div style="display:flex;flex-direction:column;gap:6px;">
-                            <div style="font-size:12px;color:#48bb78;">✓ Estándar en cabinas profesionales</div>
-                            <div style="font-size:12px;color:#48bb78;">✓ Estabilidad · USB (menos dependencia laptop)
+                            <div style="font-size:12px;color:#48bb78;" data-i18n="crsx-140">✓ Estándar en cabinas profesionales</div>
+                            <div style="font-size:12px;color:#48bb78;" data-i18n="crsx-141">✓ Estabilidad · USB (menos dependencia laptop)
                             </div>
                             <div
                                 style="padding:8px 10px;background:rgba(229,62,62,0.06);border-radius:8px;border-left:2px solid #e53e3e;margin-top:4px;">
-                                <p style="font-size:12px;color:#fc8181;margin:0;">⚠ Requiere preparación fuerte en
+                                <p style="font-size:12px;color:#fc8181;margin:0;" data-i18n="crsx-142">⚠ Requiere preparación fuerte en
                                     Rekordbox — export y playlists.</p>
                             </div>
                         </div>
@@ -2909,26 +2937,26 @@
                             <div>
                                 <div style="font-size:10px;font-weight:800;color:var(--gold);letter-spacing:2px;">7.3
                                 </div>
-                                <h3 style="font-size:17px;font-weight:800;margin:2px 0 0;">Turntables (Vinilo / DVS)
+                                <h3 style="font-size:17px;font-weight:800;margin:2px 0 0;" data-i18n="crsx-143">Turntables (Vinilo / DVS)
                                 </h3>
                             </div>
                         </div>
-                        <p style="font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:12px;">2 platos + mixer con
+                        <p style="font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:12px;" data-i18n="crsx-144">2 platos + mixer con
                             vinilo real o timecode DVS.</p>
                         <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
                             <span
-                                style="font-size:11px;padding:3px 10px;background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.2);border-radius:20px;color:var(--gold);">Hip
+                                style="font-size:11px;padding:3px 10px;background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.2);border-radius:20px;color:var(--gold);" data-i18n="crsx-145">Hip
                                 Hop / Scratch</span>
                             <span
-                                style="font-size:11px;padding:3px 10px;background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.2);border-radius:20px;color:var(--gold);">Turntablist</span>
+                                style="font-size:11px;padding:3px 10px;background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.2);border-radius:20px;color:var(--gold);" data-i18n="crsx-146">Turntablist</span>
                             <span
-                                style="font-size:11px;padding:3px 10px;background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.2);border-radius:20px;color:var(--gold);">Heritage</span>
+                                style="font-size:11px;padding:3px 10px;background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.2);border-radius:20px;color:var(--gold);" data-i18n="crsx-147">Heritage</span>
                         </div>
                         <div style="display:flex;flex-direction:column;gap:6px;">
-                            <div style="font-size:12px;color:#48bb78;">✓ Control táctil · Arte · Técnica real</div>
+                            <div style="font-size:12px;color:#48bb78;" data-i18n="crsx-148">✓ Control táctil · Arte · Técnica real</div>
                             <div
                                 style="padding:8px 10px;background:rgba(229,62,62,0.06);border-radius:8px;border-left:2px solid #e53e3e;margin-top:4px;">
-                                <p style="font-size:12px;color:#fc8181;margin:0;">⚠ Logística y calibración más
+                                <p style="font-size:12px;color:#fc8181;margin:0;" data-i18n="crsx-149">⚠ Logística y calibración más
                                     exigentes.</p>
                             </div>
                         </div>
@@ -2942,25 +2970,25 @@
                             <div>
                                 <div style="font-size:10px;font-weight:800;color:var(--gold);letter-spacing:2px;">7.4
                                 </div>
-                                <h3 style="font-size:17px;font-weight:800;margin:2px 0 0;">Standalone DJ (sin laptop)
+                                <h3 style="font-size:17px;font-weight:800;margin:2px 0 0;" data-i18n="crsx-150">Standalone DJ (sin laptop)
                                 </h3>
                             </div>
                         </div>
-                        <p style="font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:12px;">DJ system all-in-one
+                        <p style="font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:12px;" data-i18n="crsx-151">DJ system all-in-one
                             que corre USB/SD sin computadora.</p>
                         <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
                             <span
-                                style="font-size:11px;padding:3px 10px;background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.2);border-radius:20px;color:var(--gold);">Mobile
+                                style="font-size:11px;padding:3px 10px;background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.2);border-radius:20px;color:var(--gold);" data-i18n="crsx-129">Mobile
                                 DJ</span>
                             <span
-                                style="font-size:11px;padding:3px 10px;background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.2);border-radius:20px;color:var(--gold);">Open
+                                style="font-size:11px;padding:3px 10px;background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.2);border-radius:20px;color:var(--gold);" data-i18n="crsx-128">Open
                                 Format</span>
                         </div>
                         <div style="display:flex;flex-direction:column;gap:6px;">
-                            <div style="font-size:12px;color:#48bb78;">✓ Menos fallos de software · Setup rápido</div>
+                            <div style="font-size:12px;color:#48bb78;" data-i18n="crsx-152">✓ Menos fallos de software · Setup rápido</div>
                             <div
                                 style="padding:8px 10px;background:rgba(229,62,62,0.06);border-radius:8px;border-left:2px solid #e53e3e;margin-top:4px;">
-                                <p style="font-size:12px;color:#fc8181;margin:0;">⚠ Límites frente a laptop según
+                                <p style="font-size:12px;color:#fc8181;margin:0;" data-i18n="crsx-153">⚠ Límites frente a laptop según
                                     modelo.</p>
                             </div>
                         </div>
@@ -2974,24 +3002,24 @@
                             <div>
                                 <div style="font-size:10px;font-weight:800;color:var(--gold);letter-spacing:2px;">7.5
                                 </div>
-                                <h3 style="font-size:17px;font-weight:800;margin:2px 0 0;">Interfaz + Mixer Externo
+                                <h3 style="font-size:17px;font-weight:800;margin:2px 0 0;" data-i18n="crsx-154">Interfaz + Mixer Externo
                                     (Híbrido)</h3>
                             </div>
                         </div>
-                        <p style="font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:12px;">Audio interface +
+                        <p style="font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:12px;" data-i18n="crsx-155">Audio interface +
                             mixer externo para routing avanzado.</p>
                         <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
                             <span
-                                style="font-size:11px;padding:3px 10px;background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.2);border-radius:20px;color:var(--gold);">Corporativo</span>
+                                style="font-size:11px;padding:3px 10px;background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.2);border-radius:20px;color:var(--gold);" data-i18n="crsx-156">Corporativo</span>
                             <span
-                                style="font-size:11px;padding:3px 10px;background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.2);border-radius:20px;color:var(--gold);">Streaming
+                                style="font-size:11px;padding:3px 10px;background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.2);border-radius:20px;color:var(--gold);" data-i18n="crsx-157">Streaming
                                 Pro</span>
                         </div>
                         <div style="display:flex;flex-direction:column;gap:6px;">
-                            <div style="font-size:12px;color:#48bb78;">✓ Routing avanzado · Calidad profesional</div>
+                            <div style="font-size:12px;color:#48bb78;" data-i18n="crsx-158">✓ Routing avanzado · Calidad profesional</div>
                             <div
                                 style="padding:8px 10px;background:rgba(229,62,62,0.06);border-radius:8px;border-left:2px solid #e53e3e;margin-top:4px;">
-                                <p style="font-size:12px;color:#fc8181;margin:0;">⚠ Más puntos de falla si no dominas la
+                                <p style="font-size:12px;color:#fc8181;margin:0;" data-i18n="crsx-159">⚠ Más puntos de falla si no dominas la
                                     señal.</p>
                             </div>
                         </div>
@@ -3003,11 +3031,11 @@
             <section class="section" id="preview">
                 <!-- LOCKED SECTION: DO NOT MODIFY -->
         <div class="container">
-                    <h2 style="text-align:center; font-size:clamp(24px,3vw,36px); font-weight:900; margin-bottom:10px;">
+                    <h2 style="text-align:center; font-size:clamp(24px,3vw,36px); font-weight:900; margin-bottom:10px;" data-i18n="crsx-160">
                         📚 Programa del Curso
                     </h2>
                     <p
-                        style="text-align:center; color:var(--muted); max-width:550px; margin:0 auto; font-size:15px; line-height:1.7;">
+                        style="text-align:center; color:var(--muted); max-width:550px; margin:0 auto; font-size:15px; line-height:1.7;" data-i18n="crsx-161">
                         12 módulos diseñados para llevarte de cero a DJ certificado, cubriendo técnica, negocio y
                         mentalidad.
                     </p>
@@ -3015,7 +3043,7 @@
                     <div class="modules-grid">
                         <!-- M1 -->
                         <div class="module-card">
-                            <div class="module-num">MÓDULO 01</div>
+                            <div class="module-num" data-i18n="crsx-162">MÓDULO 01</div>
                             <div class="module-icon mdj-module-icon" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" aria-hidden="true">
                                     <path d="M9 18V5l12-2v13" />
@@ -3029,7 +3057,7 @@
                         </div>
                         <!-- M2 -->
                         <div class="module-card">
-                            <div class="module-num">MÓDULO 02</div>
+                            <div class="module-num" data-i18n="crsx-163">MÓDULO 02</div>
                             <div class="module-icon mdj-module-icon" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" aria-hidden="true">
                                     <path d="M4 14a8 8 0 0116 0" />
@@ -3043,7 +3071,7 @@
                         </div>
                         <!-- M3 -->
                         <div class="module-card">
-                            <div class="module-num">MÓDULO 03</div>
+                            <div class="module-num" data-i18n="crsx-164">MÓDULO 03</div>
                             <div class="module-icon mdj-module-icon" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" aria-hidden="true">
                                     <rect x="3" y="5" width="18" height="12" rx="2" />
@@ -3056,7 +3084,7 @@
                         </div>
                         <!-- M4 -->
                         <div class="module-card">
-                            <div class="module-num">MÓDULO 04</div>
+                            <div class="module-num" data-i18n="crsx-165">MÓDULO 04</div>
                             <div class="module-icon mdj-module-icon" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" aria-hidden="true">
                                     <line x1="4" y1="21" x2="4" y2="14" />
@@ -3076,7 +3104,7 @@
                         </div>
                         <!-- M5 -->
                         <div class="module-card">
-                            <div class="module-num">MÓDULO 05</div>
+                            <div class="module-num" data-i18n="crsx-166">MÓDULO 05</div>
                             <div class="module-icon mdj-module-icon" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" aria-hidden="true">
                                     <path d="M12 14a3 3 0 003-3V6a3 3 0 00-6 0v5a3 3 0 003 3z" />
@@ -3090,7 +3118,7 @@
                         </div>
                         <!-- M6 -->
                         <div class="module-card">
-                            <div class="module-num">MÓDULO 06</div>
+                            <div class="module-num" data-i18n="crsx-167">MÓDULO 06</div>
                             <div class="module-icon mdj-module-icon" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" aria-hidden="true">
                                     <path d="M9 18h6" />
@@ -3104,7 +3132,7 @@
                         </div>
                         <!-- M7 -->
                         <div class="module-card">
-                            <div class="module-num">MÓDULO 07</div>
+                            <div class="module-num" data-i18n="crsx-168">MÓDULO 07</div>
                             <div class="module-icon mdj-module-icon" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" aria-hidden="true">
                                     <path d="M9 5h6a2 2 0 012 2v14H7V7a2 2 0 012-2z" />
@@ -3119,7 +3147,7 @@
                         </div>
                         <!-- M8 -->
                         <div class="module-card">
-                            <div class="module-num">MÓDULO 08</div>
+                            <div class="module-num" data-i18n="crsx-169">MÓDULO 08</div>
                             <div class="module-icon mdj-module-icon" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" aria-hidden="true">
                                     <rect x="3" y="8" width="18" height="12" rx="2" />
@@ -3133,7 +3161,7 @@
                         </div>
                         <!-- M9 -->
                         <div class="module-card">
-                            <div class="module-num">MÓDULO 09</div>
+                            <div class="module-num" data-i18n="crsx-170">MÓDULO 09</div>
                             <div class="module-icon mdj-module-icon" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" aria-hidden="true">
                                     <rect x="7" y="2" width="10" height="20" rx="2" />
@@ -3146,7 +3174,7 @@
                         </div>
                         <!-- M10 -->
                         <div class="module-card">
-                            <div class="module-num">MÓDULO 10</div>
+                            <div class="module-num" data-i18n="crsx-171">MÓDULO 10</div>
                             <div class="module-icon mdj-module-icon" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" aria-hidden="true">
                                     <line x1="12" y1="2" x2="12" y2="22" />
@@ -3159,7 +3187,7 @@
                         </div>
                         <!-- M11 -->
                         <div class="module-card">
-                            <div class="module-num">MÓDULO 11</div>
+                            <div class="module-num" data-i18n="crsx-172">MÓDULO 11</div>
                             <div class="module-icon mdj-module-icon" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" aria-hidden="true">
                                     <path d="M12 5a3 3 0 00-3 3c0 2 1.5 2.8 1.5 4.5a1.5 1.5 0 003 0C13.5 10.8 15 10 15 8a3 3 0 00-3-3z" />
@@ -3174,7 +3202,7 @@
                         <!-- M12 -->
                         <div class="module-card"
                             style="border-color: rgba(197,160,89,0.4); background: rgba(197,160,89,0.03);">
-                            <div class="module-num">MÓDULO 12</div>
+                            <div class="module-num" data-i18n="crsx-173">MÓDULO 12</div>
                             <div class="module-icon mdj-module-icon" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" aria-hidden="true">
                                     <path d="M8 21h8" />
@@ -3415,7 +3443,7 @@
                             </a>
                         </div>
 
-                        <p style="margin-top:24px; font-size:13px; color:var(--muted); position:relative; z-index:1;">
+                        <p style="margin-top:24px; font-size:13px; color:var(--muted); position:relative; z-index:1;" data-i18n="crsx-174">
                             ✅ Garantía de satisfacción 7 días · 🔒 Pago con tarjeta (Stripe) · 📧 miamidjbeat@gmail.com
                         </p>
                     </div>
@@ -3427,11 +3455,11 @@
             <section class="section" id="exam-section" style="margin-bottom:80px;">
                 <!-- LOCKED SECTION: DO NOT MODIFY -->
         <div class="container" style="max-width:780px;">
-                    <h2 style="text-align:center; font-size:clamp(24px,3vw,36px); font-weight:900; margin-bottom:10px;">
+                    <h2 style="text-align:center; font-size:clamp(24px,3vw,36px); font-weight:900; margin-bottom:10px;" data-i18n="crsx-175">
                         🏆 Examen de Certificación Profesional
                     </h2>
                     <p
-                        style="text-align:center; color:var(--muted); font-size:15px; margin-bottom:40px; line-height:1.7;">
+                        style="text-align:center; color:var(--muted); font-size:15px; margin-bottom:40px; line-height:1.7;" data-i18n="crsx-176">
                         Responde las 10 preguntas de selección múltiple. Tu puntuación final se guardará en tu perfil y
                         reflejará en tu <strong style="color:var(--gold);">Rating DJ</strong> dentro de la plataforma.
                     </p>
@@ -3446,9 +3474,9 @@
                     text-align:center;
                 ">
                         <div style="font-size:48px; margin-bottom:20px;">🔒</div>
-                        <h3 style="font-size:22px; font-weight:900; margin-bottom:12px;">Acceso Exclusivo Plan PRO</h3>
+                        <h3 style="font-size:22px; font-weight:900; margin-bottom:12px;" data-i18n="crsx-177">Acceso Exclusivo Plan PRO</h3>
                         <p
-                            style="color:var(--muted); font-size:15px; max-width:420px; margin:0 auto 28px; line-height:1.7;">
+                            style="color:var(--muted); font-size:15px; max-width:420px; margin:0 auto 28px; line-height:1.7;" data-i18n="crsx-178">
                             El examen de certificación está disponible únicamente para DJs con <strong
                                 style="color:var(--gold);">Plan PRO verificado</strong>. Inicia sesión con tu cuenta PRO
                             para acceder.
@@ -3458,12 +3486,12 @@
                             background: linear-gradient(135deg, var(--gold), #e8b84b);
                             color: #000; font-weight: 800; padding: 14px 32px;
                             border-radius: 50px; text-decoration: none; font-size: 15px;
-                        ">🔑 Iniciar Sesión PRO</a>
+                        " data-i18n="crsx-179">🔑 Iniciar Sesión PRO</a>
                             <a href="./jobs.html" style="
                             border: 1px solid rgba(255,255,255,0.2); color: #fff;
                             font-weight: 600; padding: 14px 24px; border-radius: 50px;
                             text-decoration: none; font-size: 15px;
-                        ">💼 Aplicar al Plan PRO</a>
+                        " data-i18n="crsx-180">💼 Aplicar al Plan PRO</a>
                         </div>
                     </div>
 
@@ -3474,7 +3502,7 @@
                         <div style="margin-bottom:30px;">
                             <div
                                 style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                                <span style="font-size:13px; color:var(--muted);">Progreso del Examen</span>
+                                <span style="font-size:13px; color:var(--muted);" data-i18n="crsx-181">Progreso del Examen</span>
                                 <span id="exam-progress-text"
                                     style="font-size:13px; color:var(--gold); font-weight:700;">Pregunta 1 de 10</span>
                             </div>
@@ -3510,7 +3538,7 @@
                             background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1);
                             color:#fff; padding:12px 24px; border-radius:50px; cursor:pointer; font-size:14px; font-weight:600;
                             display:flex; align-items:center; gap:8px; transition:all 0.2s;
-                        " disabled>← Anterior</button>
+                        " disabled data-i18n="crsx-182">← Anterior</button>
                             <button id="btn-next" onclick="nextQuestion()" style="
                             background:linear-gradient(135deg,var(--gold),#e8b84b); border:none;
                             color:#000; padding:12px 28px; border-radius:50px; cursor:pointer; font-size:14px; font-weight:800;
@@ -3532,7 +3560,7 @@
                     ">
                             <div id="result-score"
                                 style="font-size:56px; font-weight:900; color:var(--gold); line-height:1;"></div>
-                            <div style="font-size:14px; color:var(--muted); margin-top:6px;">puntos sobre 100</div>
+                            <div style="font-size:14px; color:var(--muted); margin-top:6px;" data-i18n="crsx-183">puntos sobre 100</div>
                         </div>
                         <div id="result-stars" style="font-size:28px; margin:12px 0;"></div>
                         <p id="result-message"
@@ -3541,9 +3569,9 @@
                         <div id="result-badge"
                             style="display:none; background:linear-gradient(135deg,rgba(197,160,89,0.15),rgba(197,160,89,0.05)); border:1px solid rgba(197,160,89,0.4); border-radius:16px; padding:20px; max-width:400px; margin:0 auto 30px;">
                             <div style="font-size:32px; margin-bottom:8px;">🏆</div>
-                            <div style="font-weight:800; color:var(--gold); font-size:16px;">¡Certificado Desbloqueado!
+                            <div style="font-weight:800; color:var(--gold); font-size:16px;" data-i18n="crsx-184">¡Certificado Desbloqueado!
                             </div>
-                            <div style="font-size:13px; color:var(--muted); margin-top:6px;">Tu puntuación se ha
+                            <div style="font-size:13px; color:var(--muted); margin-top:6px;" data-i18n="crsx-185">Tu puntuación se ha
                                 guardado en
                                 tu perfil DJ y actualizado tu rating en la plataforma.</div>
                         </div>
@@ -3552,12 +3580,12 @@
                             background:linear-gradient(135deg,var(--gold),#e8b84b); color:#000;
                             font-weight:800; padding:14px 28px; border-radius:50px;
                             text-decoration:none; font-size:15px;
-                        ">💎 Ver Mi Perfil DJ</a>
+                        " data-i18n="crsx-186">💎 Ver Mi Perfil DJ</a>
                             <button onclick="retakeExam()" style="
                             border:1px solid rgba(255,255,255,0.2); color:#fff;
                             background:none; font-weight:600; padding:14px 24px;
                             border-radius:50px; cursor:pointer; font-size:15px;
-                        ">🔁 Repetir Examen</button>
+                        " data-i18n="crsx-187">🔁 Repetir Examen</button>
                         </div>
                     </div>
                 </div>
@@ -3572,16 +3600,16 @@
         background: linear-gradient(135deg, rgba(255,80,80,0.06), rgba(255,140,0,0.04));
         border: 1px solid rgba(255,100,50,0.3); border-radius:24px; margin: 0 auto; max-width:580px;">
         <div style="font-size:64px; margin-bottom:16px; animation: pulse 1.5s ease-in-out infinite;">⏳</div>
-        <h3 style="font-size:28px; font-weight:900; color:#fff; margin-bottom:12px;">¡Buen Intento!</h3>
-        <p style="color:#ff8c50; font-weight:700; font-size:18px; margin-bottom:20px;">Fallaste más de 3 preguntas esta
+        <h3 style="font-size:28px; font-weight:900; color:#fff; margin-bottom:12px;" data-i18n="crsx-188">¡Buen Intento!</h3>
+        <p style="color:#ff8c50; font-weight:700; font-size:18px; margin-bottom:20px;" data-i18n="crsx-189">Fallaste más de 3 preguntas esta
             vez.</p>
         <div
             style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:20px 30px; margin:0 auto 28px; display:inline-block;">
-            <div style="font-size:13px; color:var(--muted); margin-bottom:6px;">Podrás intentarlo nuevamente el:</div>
+            <div style="font-size:13px; color:var(--muted); margin-bottom:6px;" data-i18n="crsx-190">Podrás intentarlo nuevamente el:</div>
             <div id="cooldown-date" style="font-size:24px; font-weight:900; color:var(--gold);"></div>
             <div id="cooldown-days" style="font-size:13px; color:var(--muted); margin-top:6px;"></div>
         </div>
-        <p style="color:var(--muted); font-size:14px; max-width:420px; margin:0 auto 28px; line-height:1.7;">
+        <p style="color:var(--muted); font-size:14px; max-width:420px; margin:0 auto 28px; line-height:1.7;" data-i18n="crsx-191">
             Usa este tiempo para repasar los 12 módulos. Cada intento te hace más fuerte. Los grandes DJs fallaron antes
             de triunfar. 💪
         </p>
@@ -3589,7 +3617,7 @@
             background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15);
             color: #fff; font-weight: 600; padding: 14px 28px; border-radius: 50px;
             text-decoration: none; font-size: 15px; display: inline-flex; align-items: center; gap: 8px;
-        ">📚 Repasar los Módulos</a>
+        " data-i18n="crsx-192">📚 Repasar los Módulos</a>
     </div>
 
     <style>
@@ -3686,6 +3714,7 @@
                 correct: "b"
             }
         ];
+        mdjBindQ(EXAM_QUESTIONS, 'EXAM_QUESTIONS', function () { var c = document.getElementById('exam-container'); if (c && c.style.display !== 'none') renderQuestion(); });
 
         let currentQ = 0;
         let answers = new Array(EXAM_QUESTIONS.length).fill(null);
@@ -3703,9 +3732,9 @@
             const daysLeft = Math.ceil((retryDate - now) / (1000 * 60 * 60 * 24));
 
             document.getElementById('cooldown-date').textContent =
-                retryDate.toLocaleDateString('es-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                retryDate.toLocaleDateString(mdjCT('es-US','en-US'), { year: 'numeric', month: 'long', day: 'numeric' });
             document.getElementById('cooldown-days').textContent =
-                `Faltan ${daysLeft} día${daysLeft !== 1 ? 's' : ''}`;
+                mdjCT(`Faltan ${daysLeft} día${daysLeft !== 1 ? 's' : ''}`, `${daysLeft} day${daysLeft !== 1 ? 's' : ''} left`);
 
             const panel = document.getElementById('exam-cooldown');
             panel.style.display = 'block';
@@ -3799,9 +3828,9 @@
             const q = EXAM_QUESTIONS[currentQ];
             const total = EXAM_QUESTIONS.length;
 
-            document.getElementById('exam-progress-text').textContent = `Pregunta ${currentQ + 1} de ${total}`;
+            document.getElementById('exam-progress-text').textContent = mdjCT(`Pregunta ${currentQ + 1} de ${total}`, `Question ${currentQ + 1} of ${total}`);
             document.getElementById('exam-progress-bar').style.width = `${((currentQ + 1) / total) * 100}%`;
-            document.getElementById('question-num').textContent = `PREGUNTA ${currentQ + 1}`;
+            document.getElementById('question-num').textContent = mdjCT(`PREGUNTA ${currentQ + 1}`, `QUESTION ${currentQ + 1}`);
             document.getElementById('question-text').textContent = q.q;
 
             const container = document.getElementById('options-container');
@@ -3825,7 +3854,7 @@
 
             document.getElementById('btn-prev').disabled = currentQ === 0;
             const nextBtn = document.getElementById('btn-next');
-            nextBtn.textContent = currentQ === total - 1 ? '🏆 Enviar Examen' : 'Siguiente →';
+            nextBtn.textContent = currentQ === total - 1 ? mdjCT('🏆 Enviar Examen','🏆 Submit Exam') : mdjCT('Siguiente →','Next →');
             nextBtn.disabled = answers[currentQ] === null;
         }
 
@@ -3890,16 +3919,16 @@
 
             let emoji, title, message, stars;
             if (score >= 90) {
-                emoji = '🏆'; title = '¡Excelente! DJ Élite Certificado'; stars = '⭐⭐⭐⭐⭐';
-                message = `¡Perfecto! ${correct}/10 correctas. Tu rating máximo ha sido registrado en la plataforma. ¡Eres un DJ de élite!`;
+                emoji = '🏆'; title = mdjCT('¡Excelente! DJ Élite Certificado','Excellent! Certified Elite DJ'); stars = '⭐⭐⭐⭐⭐';
+                message = mdjCT(`¡Perfecto! ${correct}/10 correctas. Tu rating máximo ha sido registrado en la plataforma. ¡Eres un DJ de élite!`, `Perfect! ${correct}/10 correct. Your top rating has been recorded on the platform. You are an elite DJ!`);
                 document.getElementById('result-badge').style.display = 'block';
             } else if (score >= 70) {
-                emoji = '🎧'; title = 'DJ Profesional Certificado'; stars = '⭐⭐⭐⭐';
-                message = `${correct}/10 correctas. Superaste el examen. Tu rating ha sido actualizado. ¡Sigue subiendo de nivel!`;
+                emoji = '🎧'; title = mdjCT('DJ Profesional Certificado','Certified Professional DJ'); stars = '⭐⭐⭐⭐';
+                message = mdjCT(`${correct}/10 correctas. Superaste el examen. Tu rating ha sido actualizado. ¡Sigue subiendo de nivel!`, `${correct}/10 correct. You passed the exam. Your rating has been updated. Keep leveling up!`);
                 document.getElementById('result-badge').style.display = 'block';
             } else {
-                emoji = '✅'; title = 'Aprobado — ¡Lo lograste!'; stars = '⭐⭐⭐';
-                message = `${correct}/10 correctas. Pasaste el límite de fallos. ¡Certificado registrado! Sigue repasando para mejorar tu rating.`;
+                emoji = '✅'; title = mdjCT('Aprobado — ¡Lo lograste!','Passed — you did it!'); stars = '⭐⭐⭐';
+                message = mdjCT(`${correct}/10 correctas. Pasaste el límite de fallos. ¡Certificado registrado! Sigue repasando para mejorar tu rating.`, `${correct}/10 correct. You cleared the miss limit. Certificate registered! Keep reviewing to improve your rating.`);
                 document.getElementById('result-badge').style.display = 'block';
             }
 
@@ -3929,7 +3958,7 @@
     <footer class="footer">
         <!-- LOCKED SECTION: DO NOT MODIFY -->
         <div class="container" style="text-align: center;">
-            <div>© 2026 Miami DJ Beat LLC · Academia de DJs Profesionales</div>
+            <div data-i18n="crsx-footer">© 2026 Miami DJ Beat LLC · Academia de DJs Profesionales</div>
         </div>
     </footer>
 
@@ -4121,7 +4150,7 @@
         })();
     </script>
     <script src="./js/academy-media-loader.js?v=20260612-acad-storage"></script>
-    <script src="./translations.js?v=20260921-baile1"></script>
+    <script src="./translations.js?v=20260927-bilingue-final"></script>
     <script src="./i18n.js?v=20260226-1"></script>
     <script>
         const logoutBtn = document.getElementById('logoutBtn');
@@ -4245,8 +4274,8 @@
                         btn.insertAdjacentHTML('afterend',
                             '<div id="mdj-course-owned-badge" style="display:inline-flex;align-items:center;gap:10px;' +
                             'background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.35);color:#22c55e;' +
-                            'font-weight:800;padding:18px 34px;border-radius:50px;font-size:15px;">' +
-                            '✅ Alumno Oficial — Acceso Activo</div>');
+                            'font-weight:800;padding:18px 34px;border-radius:50px;font-size:15px;" data-i18n="crsx-owned">' +
+                            tCourse('crsx-owned', '✅ Alumno Oficial — Acceso Activo') + '</div>');
                     }
                 } else {
                     // Aviso informativo antes del bloque de modulos -- no desactiva los
@@ -4259,8 +4288,8 @@
                             '<div id="mdj-course-locked-banner" style="max-width:700px;margin:0 auto 32px;padding:16px 22px;' +
                             'background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.28);border-radius:16px;' +
                             'text-align:center;color:var(--muted);font-size:14px;">' +
-                            '🔒 Compra el curso ($197 USD, pago único) para desbloquear el acceso completo y tu certificado oficial. ' +
-                            '<a href="#enroll" style="color:var(--gold);font-weight:700;">Ver detalles ↓</a></div>');
+                            '<span data-i18n="crsx-locked">' + tCourse('crsx-locked', '🔒 Compra el curso ($197 USD, pago único) para desbloquear el acceso completo y tu certificado oficial.') + '</span> ' +
+                            '<a href="#enroll" style="color:var(--gold);font-weight:700;" data-i18n="crsx-locked-link">' + tCourse('crsx-locked-link', 'Ver detalles ↓') + '</a></div>');
                     }
                 }
             } catch (e) { console.log('checkCoursePurchaseAccess:', e.message); }
@@ -4304,7 +4333,7 @@
     </div>
 
 
-    <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
+    <script src="./header-smart-search.js?v=20260927-bilingue-hint"></script>
   <script src="./mdj-identity.js?v=20260921-rol-unico"></script>
       <script src="./mdjb-shared-header.js?v=20260921-svc-activo4"></script>
       <script src="./js/mdj-profile-owner-link.js?v=20260516-perf-ab-1"></script>

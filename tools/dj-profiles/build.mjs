@@ -299,7 +299,7 @@ const SERVICE_MAP = [
 function relatedServices(dj) {
   const hay = `${dj.artist_specialty || ""} ${dj.roles || ""}`;
   const hits = SERVICE_MAP.filter((s) => s.re.test(hay));
-  return hits.length ? hits : [{ href: "./services.html", label: "Servicios" }];
+  return hits.length ? hits : [{ href: "./rentals.html", label: "Servicios" }];
 }
 
 // Copiados literales de SOCIAL_ICONS en dj-profile.html (línea ~4589) — no
@@ -443,9 +443,9 @@ const FOOTER_AND_SCRIPTS_HTML = `  <footer class="footer">
   })();
   </script>
   <script src="./supabase-config.js?v=20260904-dj-profiles"></script>
-  <script src="./translations.js?v=20260904-dj-profiles"></script>
+  <script src="./translations.js?v=20260927-bilingue-final"></script>
   <script src="./i18n.js?v=20260904-dj-profiles"></script>
-  <script src="./header-smart-search.js?v=20260904-dj-profiles"></script>
+  <script src="./header-smart-search.js?v=20260927-bilingue-hint"></script>
   <script src="./mdj-identity.js?v=20260904-dj-profiles"></script>
   <script src="./auth.js?v=20260904-dj-profiles"></script>
   <script src="./mdjb-shared-header.js?v=20260904-dj-profiles"></script>
@@ -615,27 +615,27 @@ ${HEADER_HTML}
       <img class="djp-photo" src="${esc(dj.photo_url)}" alt="${esc(name)} — DJ en ${esc(city)}, Miami DJ Beat" loading="eager" fetchpriority="high" />
       <div>
         <h1 class="djp-name">${esc(name)}</h1>
-        <div class="djp-meta">📍 ${esc(city)}${dj.is_resident ? " · DJ Residente" : ""}${hasRealRating ? ` · ★ ${esc(dj.rating)} (${esc(reviewCount)})` : ""}</div>
+        <div class="djp-meta">📍 ${esc(city)}${dj.is_resident ? ' · <span data-i18n="djp-resident">DJ Residente</span>' : ""}${hasRealRating ? ` · ★ ${esc(dj.rating)} (${esc(reviewCount)})` : ""}</div>
         ${identity?.identityLine ? `<p class="djp-identity" style="color:rgba(255,255,255,0.55);font-size:14px;margin:0 0 10px;">${esc(identity.identityLine)}</p>\n        ` : ""}${specialtyTags.length ? `<div class="djp-tags">${specialtyTags.map((t) => `<span class="djp-tag">${esc(t)}</span>`).join("")}</div>` : ""}
         <div class="djp-bio djp-bio-es">${bioParas.map((p) => `<p>${esc(p)}</p>`).join("")}</div>
         ${bioEnParas ? `<div class="djp-bio djp-bio-en">${bioEnParas.map((p) => `<p>${esc(p)}</p>`).join("")}</div>` : ""}
         <div class="djp-cta">
-          <a class="djp-btn gold" href="${bookingHref}">Consultar Disponibilidad</a>
-          <a class="djp-btn ghost" href="${liveProfileHref}">Perfil Artístico</a>
+          <a class="djp-btn gold" href="${bookingHref}" data-i18n="djp-book">Consultar Disponibilidad</a>
+          <a class="djp-btn ghost" href="${liveProfileHref}" data-i18n="djp-profile">Perfil Artístico</a>
         </div>
         ${socialLinks.length ? `<div class="djp-social">${socialLinks.map((s) => `<a href="${esc(s.href)}" target="_blank" rel="noopener noreferrer" title="${s.label}" aria-label="${s.label}">${s.svg}</a>`).join("")}</div>` : ""}
       </div>
     </div>
 
     <div class="djp-services">
-      <h2>Comunícate con nosotros y pregunta por ${esc(name)} — o cualquiera de tus DJs favoritos de nuestra plataforma</h2>
+      <h2><span data-i18n="djp-contact-pre">Comunícate con nosotros y pregunta por </span>${esc(name)}<span data-i18n="djp-contact-post"> — o cualquiera de tus DJs favoritos de nuestra plataforma</span></h2>
       <div class="djp-contact-row">
         <a href="tel:+13056071780">📞 (305) 607-1780</a>
         <a href="mailto:miamidjbeat@gmail.com">✉️ miamidjbeat@gmail.com</a>
       </div>
       <div class="row">
         ${services.map((s) => `<a href="${s.href}">${esc(s.label)}</a>`).join("")}
-        <a href="./dj/directorio.html">Ver todos los DJs</a>
+        <a href="./dj/directorio.html" data-i18n="djp-all-djs">Ver todos los DJs</a>
       </div>
     </div>
   </main>
@@ -660,13 +660,16 @@ export function renderIndexPage(djs) {
   const cards = djs.map((dj) => {
     const city = titleCaseCity(dj.city) || "Miami";
     const bio = stripPhoneNumbers(dj.bio || dj.bio_short || "").slice(0, 140);
+    // Bilingüe real: si existe bio_en, el índice muestra el inglés cuando el sitio está en EN (mismo mecanismo que el perfil).
+    const bioEn = stripPhoneNumbers(dj.bio_en || "").slice(0, 140);
     return `
       <a class="djidx-card" href="./dj/${dj.dj_slug}.html">
         <img src="${esc(dj.photo_url)}" alt="${esc(dj.stage_name)}" loading="lazy" />
         <div>
           <h2>${esc(dj.stage_name)}</h2>
           <p class="djidx-city">📍 ${esc(city)}${isPaid(dj) ? " · PRO" : ""}</p>
-          <p class="djidx-bio">${esc(bio)}${bio.length >= 140 ? "…" : ""}</p>
+          <p class="djidx-bio djidx-bio-es${bioEn ? " has-en" : ""}">${esc(bio)}${bio.length >= 140 ? "…" : ""}</p>${bioEn ? `
+          <p class="djidx-bio djidx-bio-en">${esc(bioEn)}${bioEn.length >= 140 ? "…" : ""}</p>` : ""}
         </div>
       </a>`;
   }).join("");
@@ -708,6 +711,9 @@ ${socialMetaTags({ title: INDEX_TITLE, description: INDEX_DESC, image: SITE_OG_I
     .djidx-card h2{font-size:1.1rem;margin:0 0 4px;color:#e8c987;}
     .djidx-city{font-size:12px;color:rgba(255,255,255,0.55);margin:0 0 6px;}
     .djidx-bio{font-size:13px;color:rgba(255,255,255,0.7);margin:0;line-height:1.5;}
+    .djidx-bio-en{display:none;}
+    html[lang="en"] .djidx-bio-es.has-en{display:none;}
+    html[lang="en"] .djidx-bio-en{display:block;}
   </style>
 </head>
 
@@ -716,9 +722,9 @@ ${HEADER_HTML}
 
   <main>
     <div class="djidx-wrap">
-      <h1>Directorio de DJs</h1>
-      <p>DJs profesionales de Miami DJ Beat, con disponibilidad real y reserva directa.</p>
-      <p style="font-size:14px;color:rgba(255,255,255,0.6);">¿Buscas por disponibilidad, ciudad o especialidad? <a href="../find-dj.html" style="color:var(--gold);">Explora todos los DJs de la plataforma</a> · ¿Quieres verificar una credencial? <a href="../directory.html" style="color:var(--gold);">Directorio de certificación</a></p>
+      <h1 data-i18n="djidx-h1">Directorio de DJs</h1>
+      <p data-i18n="djidx-p1">DJs profesionales de Miami DJ Beat, con disponibilidad real y reserva directa.</p>
+      <p style="font-size:14px;color:rgba(255,255,255,0.6);"><span data-i18n="djidx-p2a">¿Buscas por disponibilidad, ciudad o especialidad? </span><a href="../find-dj.html" style="color:var(--gold);" data-i18n="djidx-p2b">Explora todos los DJs de la plataforma</a><span data-i18n="djidx-p2c"> · ¿Quieres verificar una credencial? </span><a href="../directory.html" style="color:var(--gold);" data-i18n="djidx-p2d">Directorio de certificación</a></p>
       <div class="djidx-grid">${cards}</div>
     </div>
   </main>
