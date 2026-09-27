@@ -5964,6 +5964,27 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
             if (link) { link.select(); document.execCommand('copy'); alert('Referral link copied!'); }
         }
 
+        // ── Pedir reseña: copiar mensaje+enlace (2026-09-27) ───────────────
+        // Mismo patrón exacto que copyProHwToken() de abajo -- navigator.clipboard
+        // con respaldo textarea+execCommand, alert() de confirmación. El botón
+        // manda el mensaje ya armado (dataset.reviewMsg, ver loadAssignedEvents)
+        // para no duplicar la lógica de armar el link aquí.
+        function copyReviewMessage(btn) {
+            const t = btn && btn.dataset ? btn.dataset.reviewMsg : '';
+            if (!t) return;
+            navigator.clipboard.writeText(t).then(function () {
+                alert('Mensaje y enlace de reseña copiados. Pégalo donde ya le estés escribiendo al cliente (WhatsApp, mensaje, correo...).');
+            }).catch(function () {
+                const ta = document.createElement('textarea');
+                ta.value = t;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                alert('Mensaje y enlace de reseña copiados.');
+            });
+        }
+
         function copyProHwToken(e) {
             if (e) e.preventDefault();
             const el = document.getElementById('pro-hw-token-display');
@@ -6900,9 +6921,16 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                     const waLink = phoneVal ? `https://wa.me/${phoneVal}?text=${encodeURIComponent('Hola, soy tu DJ asignado de Miami DJ Beat para tu evento el ' + (ev.event_date || ''))}` : null;
 
                     // Pedir reseña (2026-09-27, pedido del PO) -- solo en eventos COMPLETED.
-                    // Mismo patrón ya usado arriba (waLink): enlaces de esquema de URL
-                    // (wa.me/sms:/mailto:) con el mensaje precargado -- el DJ le da
-                    // enviar desde su propio teléfono/correo, cero infraestructura nueva.
+                    // CORREGIDO el mismo día: la primera versión armaba 3 enlaces de
+                    // esquema de URL (wa.me/sms:/mailto:), uno por canal -- el PO pidió
+                    // simplificar a "copiar y pegar" en vez de eso, para no crear
+                    // redundancia por canal: un solo botón, copia el mensaje+enlace al
+                    // portapapeles, y el DJ lo pega donde ya esté escribiéndole al
+                    // cliente (cualquier app, no solo las 3 que el enlace sabía abrir).
+                    // Mismo patrón EXACTO ya usado en esta misma página (copyProHwToken(),
+                    // más abajo en este archivo): navigator.clipboard.writeText() con
+                    // respaldo textarea+execCommand para navegadores viejos, alert() de
+                    // confirmación -- no una función nueva.
                     // El enlace es el mismo perfil público canónico que ya usa todo el
                     // sitio (dj-profile.html?id=<user_id>&view=public) -- esa página ya
                     // muestra la tarjeta de calificar con estrellas a cualquier visitante
@@ -6913,12 +6941,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                     const reviewMsg = reviewLink
                         ? `¡Hola! Fue un placer ser tu DJ en tu evento. Si tienes un minuto, me ayudarías mucho dejando tu opinión aquí: ${reviewLink} ¡Gracias!`
                         : '';
-                    const reviewWaLink = (ev.status === 'COMPLETED' && phoneVal && reviewLink)
-                        ? `https://wa.me/${phoneVal}?text=${encodeURIComponent(reviewMsg)}` : null;
-                    const reviewSmsLink = (ev.status === 'COMPLETED' && phoneVal && reviewLink)
-                        ? `sms:${phoneVal}?body=${encodeURIComponent(reviewMsg)}` : null;
-                    const reviewMailLink = (ev.status === 'COMPLETED' && ev.email && reviewLink)
-                        ? `mailto:${ev.email}?subject=${encodeURIComponent('¿Cómo estuvo tu evento con Miami DJ Beat?')}&body=${encodeURIComponent(reviewMsg)}` : null;
+                    const canRequestReview = ev.status === 'COMPLETED' && !!reviewLink;
 
                     return `
                             <div style="background: rgba(255,255,255,0.03); border: 1px solid ${urgency ? 'rgba(197,160,89,0.6)' : isPast ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.1)'}; border-radius:16px; padding:18px; ${isPast ? 'opacity:0.6;' : ''}">
@@ -6956,18 +6979,11 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                                         style="padding:8px 16px; background:rgba(37,211,102,0.12); border:1px solid rgba(37,211,102,0.35); border-radius:20px; color:#25d366; font-size:12px; font-weight:800; text-decoration:none;">
                                         💬 WhatsApp
                                     </a>` : ''}
-                                    ${reviewWaLink ? `<a href="${reviewWaLink}" target="_blank"
-                                        style="padding:8px 16px; background:rgba(197,160,89,0.12); border:1px solid rgba(197,160,89,0.35); border-radius:20px; color:var(--gold); font-size:12px; font-weight:800; text-decoration:none;">
-                                        ⭐ Pedir Reseña (WhatsApp)
-                                    </a>` : ''}
-                                    ${reviewSmsLink ? `<a href="${reviewSmsLink}" target="_blank"
-                                        style="padding:8px 16px; background:rgba(197,160,89,0.12); border:1px solid rgba(197,160,89,0.35); border-radius:20px; color:var(--gold); font-size:12px; font-weight:800; text-decoration:none;">
-                                        ⭐ Pedir Reseña (Mensaje)
-                                    </a>` : ''}
-                                    ${reviewMailLink ? `<a href="${reviewMailLink}" target="_blank"
-                                        style="padding:8px 16px; background:rgba(197,160,89,0.12); border:1px solid rgba(197,160,89,0.35); border-radius:20px; color:var(--gold); font-size:12px; font-weight:800; text-decoration:none;">
-                                        ⭐ Pedir Reseña (Correo)
-                                    </a>` : ''}
+                                    ${canRequestReview ? `<button onclick="copyReviewMessage(this)"
+                                        data-review-msg="${reviewMsg.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}"
+                                        style="padding:8px 16px; background:rgba(197,160,89,0.12); border:1px solid rgba(197,160,89,0.35); border-radius:20px; color:var(--gold); font-size:12px; font-weight:800; cursor:pointer;">
+                                        ⭐ Copiar Enlace de Reseña
+                                    </button>` : ''}
                                     ${!isPast && ev.status !== 'COMPLETED' ? `<button onclick="markEventComplete('${ev.id}')"
                                         style="padding:8px 16px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:20px; color:rgba(255,255,255,0.5); font-size:12px; font-weight:800; cursor:pointer;">
                                         ✅ Marcar Completado
