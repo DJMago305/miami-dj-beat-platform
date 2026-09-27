@@ -14,7 +14,28 @@ Declaradas `PENDIENTE DEL PO` en `ALLOW` de `web/scripts/check-hygiene.mjs` para
 | `web/wedding-planning.html` | Planificación de bodas (paquetes Full Planning, etc.), página SEO creada 2026-09-22 (commit 44a456eb) | Abre con encabezado y contenido real; en el sitemap con canonical propio; está en las listas de servicios de `mdjb-shared-header.js` y `scripts/verificar-contenedores.mjs` | **DECIDIDO 2026-09-27 (PO): se enlaza desde Bodas — HECHO** (línea dorada bajo «clases de baile» en `weddings.html`, ES/EN con llaves `wedding-planning-link`). Sigue abierta la revisión de su contenido e idioma (poco a poco) y la reindexación (B.3). |
 | `web/mdj-commander.html` | Prototipo del Comandante (MDJ COMMANDER — AI Executive Command), 3185 líneas | Abre con sesión y funciona; sus pantallas Radar / Decisiones / Más son de demostración y `staff.html` no las tiene; lo real (avatar, voz) ya vive en `staff.html` y en `js/`; `robots.txt` la bloquea; ningún enlace la abre | Revisar qué pantallas hay que transportar a `staff.html` («transportar, no enlazar») antes de archivarla. `staff.html` y varios `.js` la citan como origen de patrones. |
 
-## B. Reindexación pendiente en Google (para el hilo GEO·SEO·IA)
+## B0. Confirmado en producción por este hilo (2026-09-27)
+- Las 301 de `services.html`/`services` responden **308** (Vercel usa 308 para `permanent:true`; para Google equivale a 301) → `/rentals.html`. `/autofill.html` da 404.
+- `sitemap.xml` en producción: sin `services.html`, con `wedding-planning.html`.
+- **Nada de esto lo puede confirmar/ejecutar este hilo en Search Console o GA4** — esa cuenta de Google solo la tiene conectada el hilo de conversación «GEO·SEO·IA» (ver memoria `reference_geo_seo_ia_thread_google_access`). Lo de abajo (B.1-B.4) queda para ese hilo.
+
+## B — RESUELTO 2026-09-27 (la cuenta miamidjbeat@gmail.com SÍ tiene acceso; el fallo inicial fue mío — usé el formato de propiedad de dominio `sc-domain:` en vez de la propiedad real, de prefijo de URL `https://www.miamidjbeat.com/`)
+1. `/services.html`: **nunca estuvo indexada** (última rastreada 17 ago 2026, antes de retirarla) — no hace falta pedir su eliminación del índice.
+2. `/rentals.html`: ya estaba indexada. ✔
+3. `/wedding-planning.html`: ya estaba indexada; se pidió **reindexación** (confirmado: «Se ha solicitado la indexación», cola de rastreo prioritaria) para que tome el contenido de hoy (enlace desde Bodas).
+4. `weddings.html`: ya estaba indexada; se pidió **reindexación** (confirmado) para que tome el gancho de planificación nuevo.
+5. `sitemap.xml`: **reenviado** (Sitemaps → Enviado: 27 sept 2026; antes 22 sept). Google aún no lo relee (eso lo hace por su cuenta).
+6. `/autofill.html`: no requiere acción — nunca se indexó.
+
+Reindexación de las 4 páginas de mayor tráfico — **HECHO 2026-09-27** (orden del PO «pide reindexación de index, find-dj, jobs y shop»):
+- `https://www.miamidjbeat.com/` (home; canonical real, no `/index.html`): ya indexada, reindexación solicitada. ✔
+- `find-dj.html`: **nunca se había rastreado** («Descubierta: actualmente sin indexar», sin página de referencia detectada) — se solicitó su primera indexación.
+- `jobs.html`: ya indexada, reindexación solicitada. ✔
+- `shop.html`: ya indexada, reindexación solicitada. ✔
+
+Las 4 confirmaron «Se ha solicitado la indexación» (cola de rastreo prioritaria). Queda `downloads.html`, `dj-knowledge.html`, `certification.html` y las demás páginas traducidas por pedir cuando convenga; no es urgente.
+
+## B-antiguo (ya resuelto arriba, se deja como referencia)
 1. **`/services.html` retirada** (301 → `/rentals.html`, en `vercel.json` y `web/vercel.json`; ya no está en el sitemap; tenía prioridad 0.9). Acción: en Search Console, inspeccionar `/services.html` y `/rentals.html`, «Validar corrección»/solicitar indexación de `/rentals.html`, reenviar `sitemap.xml`, y comprobar que `services.html` sale del índice.
 2. **`sitemap.xml` cambió** (se quitó `services.html`): reenviarlo.
 3. **`/wedding-planning.html`**: el PO decidió enlazarla desde Bodas (hecho, sin desplegar). Sigue en el sitemap; tras el despliegue, solicitar indexación de `/wedding-planning.html` y de `/weddings.html` (página que ahora la enlaza).
@@ -23,7 +44,7 @@ Declaradas `PENDIENTE DEL PO` en `ALLOW` de `web/scripts/check-hygiene.mjs` para
 6. Al desplegar: verificar que las 301 respondan 301 (no 200 ni 404) en producción.
 
 ## B2. Despliegues necesarios (no basta con fusionar)
-- **Edge Function `booth-chat`** (código ya apunta a `/rentals.html` en vez de `/services.html`): hay que desplegarla; hasta entonces el Booth Assistant puede seguir mandando a `/services.html` (que redirige 301, no rompe).
+- **Edge Function `booth-chat`** — **DESPLEGADA 2026-09-27** (`apply` vía Supabase MCP, versión 64, `verify_jwt` se dejó en `false` como ya estaba — es pública, sin login). Verificado con una llamada real desde `miamidjbeat.com` (sin sesión): responde con `/rentals.html`.
 - **Generador de páginas de DJ** (`tools/dj-profiles/build.mjs`, sincronización diaria): ya trae las llaves i18n; la próxima corrida regenera `web/dj/*.html` con ellas.
 
 - **Migración de la vista `public_dj_talent` (`bio_preview_en`)**: YA APLICADA en producción el 2026-09-27; nada que desplegar en la base. Falta desplegar el frontend (`find-dj.html`, `find-dj-search.mjs`) cuando se fusione el PR, y cargar la biografía en inglés de DJSolitario.
