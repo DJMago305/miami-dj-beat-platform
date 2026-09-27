@@ -6,6 +6,23 @@
     'use strict';
 
     const $ = (id) => document.getElementById(id);
+    /* Texto según la perilla ES/EN del header: cL(español, inglés). Banco de preguntas (text_en/t_en/rubric_en) y veredictos siguen la perilla. */
+    function cL(es, en) {
+        var l = (window.i18n && window.i18n.currentLang) ? window.i18n.currentLang : 'es';
+        return l === 'en' ? en : es;
+    }
+    /* Banco de preguntas: el texto canónico (español) se usa para lógica y puntaje; solo la presentación sigue la perilla. */
+    const SECTION_EN = {
+        'S1: Cultura, Mentalidad y Ética': 'S1: Culture, Mindset & Ethics',
+        'S2: Serato DJ Pro': 'S2: Serato DJ Pro',
+        'S3: Conocimiento Musical': 'S3: Musical Knowledge',
+        'S4: Operación y Seguridad': 'S4: Operation & Safety'
+    };
+    const secName = (sec) => cL(sec, SECTION_EN[sec] || sec);
+    const qText = (q) => cL(q.text, q.text_en || q.text);
+    const oText = (o) => cL(o.t, o.t_en || o.t);
+    const qRubric = (q) => cL(q.rubric, q.rubric_en || q.rubric);
+    const dateLoc = () => cL('es-ES', 'en-US');
     const LS_KEY = 'mdb_cert_last';
 
     /* ── MODO DE EVALUACIÓN ──────────────────────────────────────
@@ -81,8 +98,8 @@
     function startExam() {
         const name = $('djName').value.trim();
         const agree = $('codeAgree').checked;
-        if (!name) { alert('Por favor ingresa tu nombre DJ antes de comenzar.'); $('djName').focus(); return; }
-        if (!agree) { alert('Debes aceptar el Código Profesional para continuar.'); $('codeAgree').parentElement.scrollIntoView({ behavior: 'smooth' }); return; }
+        if (!name) { alert(cL('Por favor ingresa tu nombre DJ antes de comenzar.', 'Please enter your DJ name before starting.')); $('djName').focus(); return; }
+        if (!agree) { alert(cL('Debes aceptar el Código Profesional para continuar.', 'You must accept the Professional Code to continue.')); $('codeAgree').parentElement.scrollIntoView({ behavior: 'smooth' }); return; }
         currentQ = 0;
         mcAnswers = {}; shortTexts = {}; shortScores = {};
         $('quizIntro').classList.add('hidden');
@@ -100,15 +117,15 @@
 
         // Progress
         $('stepBar').style.width = prog + '%';
-        $('stepLabel').textContent = `Pregunta ${currentQ + 1} de ${total}`;
+        $('stepLabel').textContent = cL(`Pregunta ${currentQ + 1} de ${total}`, `Question ${currentQ + 1} of ${total}`);
 
         // Section badge
-        $('stepSection').textContent = q.section;
+        $('stepSection').textContent = secName(q.section);
 
         // Question header
-        $('stepNum').textContent = `PREGUNTA ${currentQ + 1} DE ${total}`;
+        $('stepNum').textContent = cL(`PREGUNTA ${currentQ + 1} DE ${total}`, `QUESTION ${currentQ + 1} OF ${total}`);
         $('stepPoints').textContent = q.points + ' pts';
-        $('stepText').textContent = q.text;
+        $('stepText').textContent = qText(q);
 
         // Reset feedback
         $('stepFeedback').className = 'stepFeedback hidden';
@@ -126,7 +143,7 @@
                 const btn = document.createElement('button');
                 btn.type = 'button';
                 btn.className = 'stepOpt';
-                btn.innerHTML = `<span class="stepOptLetter">${opt.k.toUpperCase()}</span><span>${escapeHtml(opt.t)}</span>`;
+                btn.innerHTML = `<span class="stepOptLetter">${opt.k.toUpperCase()}</span><span>${escapeHtml(oText(opt))}</span>`;
 
                 if (answered) {
                     btn.disabled = true;
@@ -162,8 +179,8 @@
 
             // Rubric
             $('stepRubric').innerHTML = `
-                <div class="rubricTitle">📋 Rúbrica de Auto-evaluación</div>
-                <ul class="rubricList">${q.rubric.map(r => `<li>${escapeHtml(r)}</li>`).join('')}</ul>
+                <div class="rubricTitle">📋 ${cL('Rúbrica de Auto-evaluación', 'Self-assessment rubric')}</div>
+                <ul class="rubricList">${qRubric(q).map(r => `<li>${escapeHtml(r)}</li>`).join('')}</ul>
             `;
 
             // Slider enables SIGUIENTE once moved
@@ -176,7 +193,7 @@
         }
 
         // Button label
-        $('btnNext').textContent = currentQ === total - 1 ? '🎯 CALCULAR RESULTADO' : 'SIGUIENTE →';
+        $('btnNext').textContent = currentQ === total - 1 ? cL('🎯 CALCULAR RESULTADO', '🎯 CALCULATE RESULT') : cL('SIGUIENTE →', 'NEXT →');
     }
 
     /* ── MC ANSWER SELECTION ─────────────────────────────── */
@@ -190,8 +207,8 @@
         const fb = $('stepFeedback');
         fb.className = 'stepFeedback ' + (correct ? 'correct' : 'wrong');
         fb.innerHTML = correct
-            ? '✅ ¡Correcto!'
-            : `❌ Incorrecto — La respuesta correcta es: <strong>${q.answer.toUpperCase()}</strong>`;
+            ? cL('✅ ¡Correcto!', '✅ Correct!')
+            : cL(`❌ Incorrecto — La respuesta correcta es: <strong>${q.answer.toUpperCase()}</strong>`, `❌ Incorrect — The correct answer is: <strong>${q.answer.toUpperCase()}</strong>`);
         if (q.tip) fb.innerHTML += `<div class="stepTip">💡 ${escapeHtml(q.tip)}</div>`;
     }
 
@@ -222,12 +239,12 @@
         const agree = $('codeAgree').checked;
 
         if (!name) {
-            alert('Por favor ingresa tu nombre DJ antes de calcular tu resultado.');
+            alert(cL('Por favor ingresa tu nombre DJ antes de calcular tu resultado.', 'Please enter your DJ name before calculating your result.'));
             $('djName').focus();
             return;
         }
         if (!agree) {
-            alert('Debes aceptar el Código Profesional de Miami DJ Beat para recibir tu resultado.');
+            alert(cL('Debes aceptar el Código Profesional de Miami DJ Beat para recibir tu resultado.', 'You must accept the Miami DJ Beat Professional Code to receive your result.'));
             $('codeAgree').parentElement.scrollIntoView({ behavior: 'smooth' });
             return;
         }
@@ -275,13 +292,13 @@
             $('feedback').innerHTML = `
               <div style="padding:40px;border-radius:24px;background:rgba(229,62,62,0.06);border:1px solid rgba(229,62,62,0.3);text-align:center;">
                 <div style="font-size:48px;margin-bottom:16px;">❌</div>
-                <h3 style="font-size:22px;font-weight:900;color:#fc8181;margin-bottom:12px;">FAIL — Bloque Técnico</h3>
+                <h3 style="font-size:22px;font-weight:900;color:#fc8181;margin-bottom:12px;">${cL('FAIL — Bloque Técnico', 'FAIL — Technical Block')}</h3>
                 <p style="color:rgba(255,255,255,0.8);font-size:15px;line-height:1.7;max-width:480px;margin:0 auto 20px;">
-                  <strong style="color:#fff;">${technicalMisses} de 7</strong> preguntas de Operación/Seguridad incorrectas.<br>
-                  El estándar de élite exige mínimo 5 correctas en Operación Profesional.
+                  <strong style="color:#fff;">${cL(`${technicalMisses} de 7`, `${technicalMisses} of 7`)}</strong> ${cL('preguntas de Operación/Seguridad incorrectas.', 'Operation/Safety questions incorrect.')}<br>
+                  ${cL('El estándar de élite exige mínimo 5 correctas en Operación Profesional.', 'The elite standard requires at least 5 correct in Professional Operation.')}
                 </p>
                 <div style="display:inline-block;padding:10px 20px;background:rgba(229,62,62,0.1);border:1px solid rgba(229,62,62,0.2);border-radius:12px;">
-                  <p style="font-size:13px;color:#fc8181;margin:0;">Estudia los Módulos de Operación y vuelve a intentarlo.</p>
+                  <p style="font-size:13px;color:#fc8181;margin:0;">${cL('Estudia los Módulos de Operación y vuelve a intentarlo.', 'Study the Operation Modules and try again.')}</p>
                 </div>
               </div>
             `;
@@ -337,10 +354,10 @@
 
         /* Level label */
         let level, levelColor;
-        if (pct >= 80) { level = 'DJ Estructurado Profesional'; levelColor = 'var(--good)'; }
-        else if (pct >= 65) { level = 'Nivel Intermedio Alto'; levelColor = 'var(--warn)'; }
-        else if (pct >= 50) { level = 'Nivel Intermedio'; levelColor = 'var(--warn)'; }
-        else { level = 'No Apto Profesional'; levelColor = 'var(--bad)'; }
+        if (pct >= 80) { level = cL('DJ Estructurado Profesional', 'Professional Structured DJ'); levelColor = 'var(--good)'; }
+        else if (pct >= 65) { level = cL('Nivel Intermedio Alto', 'Upper-Intermediate Level'); levelColor = 'var(--warn)'; }
+        else if (pct >= 50) { level = cL('Nivel Intermedio', 'Intermediate Level'); levelColor = 'var(--warn)'; }
+        else { level = cL('No Apto Profesional', 'Not Professionally Ready'); levelColor = 'var(--bad)'; }
 
         /* ── DISPLAY: PUBLIC vs REVIEW MODE ────────────────────────
            REVIEW_MODE = true  → Deferred (no score shown)
@@ -348,26 +365,26 @@
         if (REVIEW_MODE) {
             // ── REVIEW MODE: minimal display, score deferred ──
             const badge = $('levelBadge');
-            badge.textContent = 'En Revisión Oficial';
+            badge.textContent = cL('En Revisión Oficial', 'Under Official Review');
             badge.style.borderColor = 'var(--gold)';
             badge.style.color = 'var(--gold)';
 
             $('scoreLine').innerHTML =
-                `<strong>ID de examen:</strong> <code>${certId}</code>`;
+                `<strong>${cL('ID de examen:', 'Exam ID:')}</strong> <code>${certId}</code>`;
 
             $('preGradLine').innerHTML =
-                `Tu examen ha sido registrado y enviado para validación oficial por el equipo Miami DJ Beat.<br>
-                    <small style="color:var(--muted);">Verifica el estado en: <a href="/verify?id=${certId}" style="color:var(--gold);">/verify?id=${certId}</a></small>`;
+                `${cL('Tu examen ha sido registrado y enviado para validación oficial por el equipo Miami DJ Beat.', 'Your exam has been recorded and sent for official validation by the Miami DJ Beat team.')}<br>
+                    <small style="color:var(--muted);">${cL('Verifica el estado en:', 'Check the status at:')} <a href="/verify?id=${certId}" style="color:var(--gold);">/verify?id=${certId}</a></small>`;
 
             $('feedback').innerHTML = `
                   <div style="padding:40px;border-radius:24px;background:rgba(197,160,89,0.04);border:1px solid rgba(197,160,89,0.2);text-align:center;">
                     <div style="font-size:48px;margin-bottom:16px;">📋</div>
-                    <h3 style="font-size:22px;font-weight:900;color:var(--gold);margin-bottom:12px;">Resultado enviado para validación oficial</h3>
+                    <h3 style="font-size:22px;font-weight:900;color:var(--gold);margin-bottom:12px;">${cL('Resultado enviado para validación oficial', 'Result sent for official validation')}</h3>
                     <p style="color:rgba(255,255,255,0.8);font-size:15px;line-height:1.7;max-width:480px;margin:0 auto 20px;">
-                      El equipo Miami DJ Beat revisará y comunicará el resultado oficial.
+                      ${cL('El equipo Miami DJ Beat revisará y comunicará el resultado oficial.', 'The Miami DJ Beat team will review and communicate the official result.')}
                     </p>
                     <div style="display:inline-block;padding:12px 24px;background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.25);border-radius:12px;">
-                      <p style="font-size:13px;color:var(--muted);margin:0 0 4px;">ID de tu examen</p>
+                      <p style="font-size:13px;color:var(--muted);margin:0 0 4px;">${cL('ID de tu examen', 'Your exam ID')}</p>
                       <code style="font-size:18px;color:var(--gold);font-weight:800;">${certId}</code>
                     </div>
                   </div>
@@ -384,17 +401,17 @@
                 `${totalEarned}/${MAX_POINTS} pts &nbsp;·&nbsp; <strong>${pct}%</strong> &nbsp;·&nbsp; <strong>Registry #:</strong> <code>${registry}</code> &nbsp;·&nbsp; <strong>ID:</strong> <code>${certId}</code>`;
 
             $('preGradLine').innerHTML = preGrad
-                ? `<span style="color:var(--good);font-weight:800;">✅ PRE-GRADUADO</span> — Apto para evaluación práctica (Nivel PRO). Presenta tu ID <strong>${certId}</strong> · Registry <strong>${registry}</strong> al instructor.`
+                ? `<span style="color:var(--good);font-weight:800;">✅ ${cL('PRE-GRADUADO', 'PRE-GRADUATED')}</span> — ${cL(`Apto para evaluación práctica (Nivel PRO). Presenta tu ID <strong>${certId}</strong> · Registry <strong>${registry}</strong> al instructor.`, `Eligible for the practical evaluation (PRO Level). Present your ID <strong>${certId}</strong> · Registry <strong>${registry}</strong> to the instructor.`)}`
                 : (pct < 80)
-                    ? `<span style="color:var(--bad);font-weight:800;">❌ NO PRE-GRADUADO</span> — Score insuficiente <strong>(${pct}%)</strong>. Mínimo requerido: 80%.`
-                    : `<span style="color:var(--bad);font-weight:800;">❌ NO PRE-GRADUADO</span> — Bloque técnico: <strong>${technicalMisses} fallos</strong> en Conexiones/Cables. Máximo permitido: 2.`;
+                    ? `<span style="color:var(--bad);font-weight:800;">❌ ${cL('NO PRE-GRADUADO', 'NOT PRE-GRADUATED')}</span> — ${cL(`Score insuficiente <strong>(${pct}%)</strong>. Mínimo requerido: 80%.`, `Insufficient score <strong>(${pct}%)</strong>. Minimum required: 80%.`)}`
+                    : `<span style="color:var(--bad);font-weight:800;">❌ ${cL('NO PRE-GRADUADO', 'NOT PRE-GRADUATED')}</span> — ${cL(`Bloque técnico: <strong>${technicalMisses} fallos</strong> en Conexiones/Cables. Máximo permitido: 2.`, `Technical block: <strong>${technicalMisses} failures</strong> in Connections/Cables. Maximum allowed: 2.`)}`;
 
             // Animated section score bars
             renderSectionBars(sectionScores, SECTIONS, TECHNICAL_SECTIONS, technicalMisses);
 
             /* Section breakdown */
             const fb = [];
-            fb.push(`<h3 style="margin-bottom:12px;font-size:16px;">Desglose por sección</h3>`);
+            fb.push(`<h3 style="margin-bottom:12px;font-size:16px;">${cL('Desglose por sección', 'Breakdown by section')}</h3>`);
             fb.push(`<div class="breakdown">`);
             SECTIONS.forEach(s => {
                 const sc = sectionScores[s];
@@ -406,11 +423,11 @@
                     ? `<span style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:10px;margin-left:8px;${techMissesInSec === 0 ? 'background:rgba(0,200,100,0.1);color:#48bb78;border:1px solid rgba(0,200,100,0.3);' :
                         techMissesInSec <= 2 ? 'background:rgba(255,191,0,0.1);color:#f6c90e;border:1px solid rgba(255,191,0,0.3);' :
                             'background:rgba(229,62,62,0.1);color:#fc8181;border:1px solid rgba(229,62,62,0.3);'
-                    }">🔒 CRÍTICO (S4) — ${techMissesInSec} fallo${techMissesInSec !== 1 ? 's' : ''}</span>`
+                    }">🔒 ${cL('CRÍTICO (S4)', 'CRITICAL (S4)')} — ${cL(`${techMissesInSec} fallo${techMissesInSec !== 1 ? 's' : ''}`, `${techMissesInSec} miss${techMissesInSec !== 1 ? 'es' : ''}`)}</span>`
                     : '';
                 fb.push(`
                 <div class="bkRow">
-                  <span class="bkLabel">${escapeHtml(s)}${techBadge}</span>
+                  <span class="bkLabel">${escapeHtml(secName(s))}${techBadge}</span>
                   <span class="bkScore" style="color:${col}">${sc.earned}/${sc.max} pts (${sp}%)</span>
                 </div>
               `);
@@ -419,14 +436,14 @@
 
             /* MC misses */
             if (mcMisses.length) {
-                fb.push(`<h3 style="margin:20px 0 12px;font-size:16px;">Preguntas de opción múltiple incorrectas</h3>`);
+                fb.push(`<h3 style="margin:20px 0 12px;font-size:16px;">${cL('Preguntas de opción múltiple incorrectas', 'Incorrect multiple-choice questions')}</h3>`);
                 mcMisses.forEach(({ q, given }) => {
                     const correct = q.options.find(o => o.k === q.answer);
                     fb.push(`
           <div class="kpi">
-            <strong>${escapeHtml(q.text)}</strong>
-            <p style="margin:6px 0 0;color:var(--bad);">Tu respuesta: ${given ? given.toUpperCase() : '—'}</p>
-            <p style="margin:4px 0 0;color:var(--good);">Correcta: ${q.answer.toUpperCase()}) ${escapeHtml(correct ? correct.t : '')}</p>
+            <strong>${escapeHtml(qText(q))}</strong>
+            <p style="margin:6px 0 0;color:var(--bad);">${cL('Tu respuesta:', 'Your answer:')} ${given ? given.toUpperCase() : '—'}</p>
+            <p style="margin:4px 0 0;color:var(--good);">${cL('Correcta:', 'Correct:')} ${q.answer.toUpperCase()}) ${escapeHtml(correct ? oText(correct) : '')}</p>
             ${q.tip ? `<p style="margin:6px 0 0;color:var(--muted);font-size:13px;">💡 ${escapeHtml(q.tip)}</p>` : ''}
           </div>
         `);
@@ -437,15 +454,15 @@
             if (preGrad) {
                 fb.push(`
                   <div class="kpi" style="border: 2px solid var(--gold); background: rgba(197,160,89,0.05); text-align: center; padding: 30px;">
-                    <h3 style="color: var(--gold); font-size: 20px; margin-bottom: 15px;">🏆 CERTIFICACIÓN DISPONIBLE</h3>
-                    <p style="margin-bottom: 20px; font-size: 15px;">Tu certificado oficial de alta fidelidad está listo para ser generado.</p>
+                    <h3 style="color: var(--gold); font-size: 20px; margin-bottom: 15px;">🏆 ${cL('CERTIFICACIÓN DISPONIBLE', 'CERTIFICATION AVAILABLE')}</h3>
+                    <p style="margin-bottom: 20px; font-size: 15px;">${cL('Tu certificado oficial de alta fidelidad está listo para ser generado.', 'Your official high-fidelity certificate is ready to be generated.')}</p>
                     <a href="./certificate-template_v2.html?name=${encodeURIComponent(name)}&cert_no=${encodeURIComponent(certId)}&id=${encodeURIComponent(certId)}&date=${encodeURIComponent(new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }).toUpperCase())}" 
                        target="_blank" 
                        class="btn primary" 
                        style="background: var(--gold); border-color: var(--gold); color: #000; font-weight: 900; padding: 15px 30px;">
-                       GENERAR CERTIFICADO (A4 PDF)
+                       ${cL('GENERAR CERTIFICADO (A4 PDF)', 'GENERATE CERTIFICATE (A4 PDF)')}
                     </a>
-                    <p style="margin-top: 15px; font-size: 12px; color: var(--muted);">Recomendado: Usar "Guardar como PDF" en el diálogo de impresión.</p>
+                    <p style="margin-top: 15px; font-size: 12px; color: var(--muted);">${cL('Recomendado: Usar "Guardar como PDF" en el diálogo de impresión.', 'Recommended: use "Save as PDF" in the print dialog.')}</p>
                   </div>
                 `);
             }
@@ -453,14 +470,13 @@
             /* Declaration block */
             fb.push(`
       <div class="declarationBlock">
-        <strong>Declaración Oficial — ${escapeHtml(name)}</strong>
+        <strong>${cL('Declaración Oficial', 'Official Declaration')} — ${escapeHtml(name)}</strong>
         <p>
-          "Reconozco que el DJing es una disciplina cultural con historia, técnica y ética.
-          Me comprometo a respetar la cabina, a otros DJs y al público."
+          "${cL('Reconozco que el DJing es una disciplina cultural con historia, técnica y ética. Me comprometo a respetar la cabina, a otros DJs y al público.', 'I acknowledge that DJing is a cultural discipline with history, technique and ethics. I commit to respecting the booth, other DJs and the audience.')}"
         </p>
         <p class="sigLine">
-          Firma: <strong>${escapeHtml(name)}</strong> &nbsp;·&nbsp;
-          Fecha: <strong>${new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</strong> &nbsp;·&nbsp;
+          ${cL('Firma:', 'Signature:')} <strong>${escapeHtml(name)}</strong> &nbsp;·&nbsp;
+          ${cL('Fecha:', 'Date:')} <strong>${new Date().toLocaleDateString(dateLoc(), { year: 'numeric', month: 'long', day: 'numeric' })}</strong> &nbsp;·&nbsp;
           ID: <strong>${certId}</strong>
         </p>
       </div>
@@ -471,13 +487,13 @@
       <div class="printCert">
         <div class="printCertInner">
           <div class="printCertLogo">MIAMI DJ BEAT</div>
-          <div class="printCertTitle">Certificación DJ Workflow Professional</div>
+          <div class="printCertTitle">${cL('Certificación DJ Workflow Professional', 'DJ Workflow Professional Certification')}</div>
           <div class="printCertName">${escapeHtml(name)}</div>
           <div class="printCertLevel">${escapeHtml(level)}</div>
           <div class="printCertScore">${pct}% — ${totalEarned}/${MAX_POINTS} pts</div>
           <div class="printCertId">Registry: ${registry} &nbsp;·&nbsp; ID: ${certId}</div>
-          <div class="printCertDate">Fecha: ${new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
-          <div class="printCertVerify">Verificar en: miamidj.beat/verify?id=${certId}</div>
+          <div class="printCertDate">${cL('Fecha:', 'Date:')} ${new Date().toLocaleDateString(dateLoc(), { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+          <div class="printCertVerify">${cL('Verificar en:', 'Verify at:')} miamidj.beat/verify?id=${certId}</div>
           <div class="printCertFooter">Miami DJ Beat LLC · Historia + Técnica + Ética</div>
         </div>
       </div>
@@ -499,7 +515,7 @@
                                   font-size:14px;font-weight:800;cursor:pointer;letter-spacing:1px;
                                   text-decoration:none;transition:opacity .2s;"
                            onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
-                           🎧 Ir a Evaluación Práctica →
+                           🎧 ${cL('Ir a Evaluación Práctica →', 'Go to Practical Evaluation →')}
                         </a>
                     `);
                 }
@@ -526,18 +542,18 @@
             const pct = Math.round((sc.earned / sc.max) * 100);
             const cls = pct >= 80 ? 'good' : pct >= 60 ? 'warn' : 'bad';
             const isTech = technicalSecs.includes(name);
-            const shortName = name.replace(/Sección \d+ — /, '');
+            const shortName = secName(name.replace(/Sección \d+ — /, ''));
             return { name, shortName, pct, cls, sc, isTech };
         });
 
         el.innerHTML = `
               <div class="kpi">
-                <strong style="font-size:14px;">Desglose por Sección</strong>
+                <strong style="font-size:14px;">${cL('Desglose por Sección', 'Breakdown by Section')}</strong>
                 <div class="barsWrap" style="margin-top:14px;">
                   ${rows.map(r => `
                     <div class="barRow">
                       <div class="barTop">
-                        <div class="barLabel">${escapeHtml(r.shortName)}${r.isTech ? ' <span style="font-size:10px;color:var(--warn);">🔒 TÉCNICO</span>' : ''}</div>
+                        <div class="barLabel">${escapeHtml(r.shortName)}${r.isTech ? ' <span style="font-size:10px;color:var(--warn);">🔒 ' + cL('TÉCNICO', 'TECHNICAL') + '</span>' : ''}</div>
                         <div class="barValue">${r.sc.earned}/${r.sc.max} pts &middot; ${r.pct}%</div>
                       </div>
                       <div class="barTrack">
@@ -547,9 +563,9 @@
                   `).join('')}
                 </div>
                 <div class="barNote">
-                  🔒 <strong>Hard Gate Técnico</strong>: ${techMisses} fallo${techMisses !== 1 ? 's' : ''} en bloque técnico
-                  &nbsp;&middot;&nbsp; Máximo permitido: 2 &nbsp;&middot;&nbsp;
-                  ${techMisses <= 2 ? '<span style="color:var(--good);">✔ Dentro del estándar</span>' : '<span style="color:var(--bad);">✖ Fuera del estándar</span>'}
+                  🔒 <strong>${cL('Hard Gate Técnico', 'Technical Hard Gate')}</strong>: ${cL(`${techMisses} fallo${techMisses !== 1 ? 's' : ''} en bloque técnico`, `${techMisses} miss${techMisses !== 1 ? 'es' : ''} in the technical block`)}
+                  &nbsp;&middot;&nbsp; ${cL('Máximo permitido: 2', 'Maximum allowed: 2')} &nbsp;&middot;&nbsp;
+                  ${techMisses <= 2 ? '<span style="color:var(--good);">✔ ' + cL('Dentro del estándar', 'Within the standard') + '</span>' : '<span style="color:var(--bad);">✖ ' + cL('Fuera del estándar', 'Outside the standard') + '</span>'}
                 </div>
               </div>
             `;
@@ -588,6 +604,17 @@
         $('btnNext').addEventListener('click', nextStep);
         $('btnReset').addEventListener('click', reset);
         $('btnPrint').addEventListener('click', () => window.print());
+        /* Cambiar ES/EN a mitad del examen: se repinta la pregunta actual en el otro idioma sin perder lo escrito ni el puntaje marcado. */
+        document.addEventListener('languageChanged', () => {
+            const shell = $('quizShell');
+            const q = questions[currentQ];
+            if (!shell || shell.classList.contains('hidden') || !q) return;
+            if (q.type === 'short') {
+                shortTexts[q.id] = $('stepTxt').value;
+                if (!$('btnNext').disabled) shortScores[q.id] = parseInt($('stepSlider').value) || 0;
+            }
+            renderStep();
+        });
 
         /* Restore last DJ name from localStorage */
         try {

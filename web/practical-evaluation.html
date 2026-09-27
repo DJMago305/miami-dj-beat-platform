@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+    <script src="/js/mdj-lang-boot.js?v=20260927-boot"></script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Miami DJ Beat — Practical Evaluation</title>
@@ -120,57 +121,51 @@
 </header>
 <main class="container">
         <section class="hero card">
-            <h1>Practical Evaluation</h1>
-            <p class="muted">
-                Instructor-only scoring. Passing requires <strong>≥ 85%</strong> overall.
-                Use the DJ's Certification ID (MDB-YYYYMMDD-XXXX) from the theory exam.
-            </p>
+            <h1 data-i18n="pev-001">Practical Evaluation</h1>
+            <p class="muted" data-i18n="pev-002">Instructor-only scoring. Passing requires <strong>≥ 85%</strong> overall. Use the DJ's Certification ID (MDB-YYYYMMDD-XXXX) from the theory exam.</p>
 
             <div class="grid2">
                 <label class="field">
-                    <span>DJ Name</span>
-                    <input id="djName" type="text" placeholder="DJ name" maxlength="50" />
+                    <span data-i18n="pev-003">DJ Name</span>
+                    <input id="djName" type="text" placeholder="DJ name" data-i18n-hold="pev-ph0" maxlength="50" />
                 </label>
 
                 <label class="field">
-                    <span>Certification ID (from theory)</span>
+                    <span data-i18n="pev-004">Certification ID (from theory)</span>
                     <input id="certId" type="text" placeholder="MDB-YYYYMMDD-XXXX" maxlength="25" />
                 </label>
             </div>
 
             <div class="grid2">
                 <label class="field">
-                    <span>Instructor Name</span>
-                    <input id="instructor" type="text" placeholder="Instructor" maxlength="60" />
+                    <span data-i18n="pev-005">Instructor Name</span>
+                    <input id="instructor" type="text" placeholder="Instructor" data-i18n-hold="pev-ph1" maxlength="60" />
                 </label>
 
                 <label class="field">
-                    <span>Venue / Location (optional)</span>
-                    <input id="venue" type="text" placeholder="Club / Studio / Remote" maxlength="80" />
+                    <span data-i18n="pev-006">Venue / Location (optional)</span>
+                    <input id="venue" type="text" placeholder="Club / Studio / Remote" data-i18n-hold="pev-ph2" maxlength="80" />
                 </label>
             </div>
         </section>
 
         <section class="card">
             <div class="sectionHeader">
-                <h2>4 Stations</h2>
-                <p class="muted">Score each station. Use notes for evidence.</p>
+                <h2 data-i18n="pev-007">4 Stations</h2>
+                <p class="muted" data-i18n="pev-008">Score each station. Use notes for evidence.</p>
             </div>
 
             <!-- Station 1 -->
             <div class="q">
                 <div class="qTop">
-                    <div class="qTitle">Station 1 — USB Prep (20 min)</div>
-                    <div class="qMeta">25 pts</div>
+                    <div class="qTitle" data-i18n="pev-009">Station 1 — USB Prep (20 min)</div>
+                    <div class="qMeta" data-i18n="pev-010">25 pts</div>
                 </div>
-                <p class="muted">
-                    Must curate/export a set-ready selection: correct playlists, consistent tags, no duplicates,
-                    emergency folder present.
-                </p>
+                <p class="muted" data-i18n="pev-011">Must curate/export a set-ready selection: correct playlists, consistent tags, no duplicates, emergency folder present.</p>
                 <textarea id="s1_notes"
-                    placeholder="Notes: structure, speed, mistakes, duplicates, export quality..."></textarea>
+                    placeholder="Notes: structure, speed, mistakes, duplicates, export quality..." data-i18n-hold="pev-ph3"></textarea>
                 <div class="sliderRow">
-                    <label for="s1"><span>Score</span><span id="s1_label">0</span></label>
+                    <label for="s1"><span data-i18n="pev-012">Score</span><span id="s1_label">0</span></label>
                     <input id="s1" type="range" min="0" max="25" value="0" step="1">
                 </div>
             </div>
@@ -178,17 +173,14 @@
             <!-- Station 2 -->
             <div class="q">
                 <div class="qTop">
-                    <div class="qTitle">Station 2 — Open Format Transition (95 → 124 BPM)</div>
-                    <div class="qMeta">25 pts</div>
+                    <div class="qTitle" data-i18n="pev-013">Station 2 — Open Format Transition (95 → 124 BPM)</div>
+                    <div class="qMeta" data-i18n="pev-010">25 pts</div>
                 </div>
-                <p class="muted">
-                    Must transition without losing the floor: bridge strategy, phrasing, energy control, clean
-                    execution.
-                </p>
+                <p class="muted" data-i18n="pev-014">Must transition without losing the floor: bridge strategy, phrasing, energy control, clean execution.</p>
                 <textarea id="s2_notes"
-                    placeholder="Notes: bridge track, loops, breakdown timing, EQ discipline, crowd control..."></textarea>
+                    placeholder="Notes: bridge track, loops, breakdown timing, EQ discipline, crowd control..." data-i18n-hold="pev-ph4"></textarea>
                 <div class="sliderRow">
-                    <label for="s2"><span>Score</span><span id="s2_label">0</span></label>
+                    <label for="s2"><span data-i18n="pev-012">Score</span><span id="s2_label">0</span></label>
                     <input id="s2" type="range" min="0" max="25" value="0" step="1">
                 </div>
             </div>
@@ -196,16 +188,14 @@
             <!-- Station 3 -->
             <div class="q">
                 <div class="qTop">
-                    <div class="qTitle">Station 3 — 20-Min Set Structure</div>
-                    <div class="qMeta">25 pts</div>
+                    <div class="qTitle" data-i18n="pev-015">Station 3 — 20-Min Set Structure</div>
+                    <div class="qMeta" data-i18n="pev-010">25 pts</div>
                 </div>
-                <p class="muted">
-                    Must show structure: warm/build/peak/control/clean close (adapted to scenario).
-                </p>
+                <p class="muted" data-i18n="pev-016">Must show structure: warm/build/peak/control/clean close (adapted to scenario).</p>
                 <textarea id="s3_notes"
-                    placeholder="Notes: pacing, track selection logic, structure clarity, overplaying, dead moments..."></textarea>
+                    placeholder="Notes: pacing, track selection logic, structure clarity, overplaying, dead moments..." data-i18n-hold="pev-ph5"></textarea>
                 <div class="sliderRow">
-                    <label for="s3"><span>Score</span><span id="s3_label">0</span></label>
+                    <label for="s3"><span data-i18n="pev-012">Score</span><span id="s3_label">0</span></label>
                     <input id="s3" type="range" min="0" max="25" value="0" step="1">
                 </div>
             </div>
@@ -213,24 +203,22 @@
             <!-- Station 4 -->
             <div class="q">
                 <div class="qTop">
-                    <div class="qTitle">Station 4 — Technical Readiness</div>
-                    <div class="qMeta">25 pts</div>
+                    <div class="qTitle" data-i18n="pev-017">Station 4 — Technical Readiness</div>
+                    <div class="qMeta" data-i18n="pev-010">25 pts</div>
                 </div>
-                <p class="muted">
-                    Beatgrid correction, cue discipline, gain staging, emergency workflow, no red-lining, backups.
-                </p>
+                <p class="muted" data-i18n="pev-018">Beatgrid correction, cue discipline, gain staging, emergency workflow, no red-lining, backups.</p>
                 <textarea id="s4_notes"
-                    placeholder="Notes: beatgrid fixes, cues, gains, clipping, emergency crate, professionalism..."></textarea>
+                    placeholder="Notes: beatgrid fixes, cues, gains, clipping, emergency crate, professionalism..." data-i18n-hold="pev-ph6"></textarea>
                 <div class="sliderRow">
-                    <label for="s4"><span>Score</span><span id="s4_label">0</span></label>
+                    <label for="s4"><span data-i18n="pev-012">Score</span><span id="s4_label">0</span></label>
                     <input id="s4" type="range" min="0" max="25" value="0" step="1">
                 </div>
             </div>
 
             <div class="actions">
-                <button id="btnGrade" class="btn primary">Calculate Result</button>
-                <button id="btnReset" class="btn">Reset</button>
-                <button id="btnPrint" class="btn">Print / Save PDF</button>
+                <button id="btnGrade" class="btn primary" data-i18n="pev-019">Calculate Result</button>
+                <button id="btnReset" class="btn" data-i18n="pev-020">Reset</button>
+                <button id="btnPrint" class="btn" data-i18n="pev-021">Print / Save PDF</button>
             </div>
 
             <div id="result" class="result hidden">
@@ -275,17 +263,20 @@
                     .replaceAll("'", "&#039;");
             }
 
+            /* PT(en, es): texto según la perilla ES/EN (i18n.currentLang; inglés por defecto). */
+            function PT(en, es) { return (window.i18n && window.i18n.currentLang === 'es') ? es : en; }
+
             function calc() {
                 const name = $("djName").value.trim();
                 const certId = $("certId").value.trim();
                 const instructor = $("instructor").value.trim();
 
-                if (!name) { alert("Enter DJ Name."); return; }
+                if (!name) { alert(PT("Enter DJ Name.", "Ingresa el nombre del DJ.")); return; }
                 if (!certId || !/^MDB-\d{8}-[0-9A-Z]{4}$/.test(certId)) {
-                    alert("Enter a valid Certification ID (MDB-YYYYMMDD-XXXX).");
+                    alert(PT("Enter a valid Certification ID (MDB-YYYYMMDD-XXXX).", "Ingresa un ID de certificación válido (MDB-AAAAMMDD-XXXX)."));
                     return;
                 }
-                if (!instructor) { alert("Enter Instructor Name."); return; }
+                if (!instructor) { alert(PT("Enter Instructor Name.", "Ingresa el nombre del instructor.")); return; }
 
                 const s1 = Number($("s1").value || 0);
                 const s2 = Number($("s2").value || 0);
@@ -295,12 +286,12 @@
                 const total = s1 + s2 + s3 + s4;
                 const pct = Math.round((total / MAX) * 100);
 
-                let level = "No Apto (Needs Work)";
+                let level = PT("Not Ready (Needs Work)", "No Apto (Necesita Trabajo)");
                 let color = "var(--bad)";
-                if (pct >= 95) { level = "DJ PRO — Elite Pass"; color = "var(--good)"; }
-                else if (pct >= PASS) { level = "DJ PRO — GRADUADO"; color = "var(--good)"; }
-                else if (pct >= 70) { level = "Intermedio (Re-test Required)"; color = "var(--warn)"; }
-                else { level = "Básico (Training Required)"; color = "var(--bad)"; }
+                if (pct >= 95) { level = PT("DJ PRO — Elite Pass", "DJ PRO — Pase Élite"); color = "var(--good)"; }
+                else if (pct >= PASS) { level = PT("DJ PRO — GRADUATE", "DJ PRO — GRADUADO"); color = "var(--good)"; }
+                else if (pct >= 70) { level = PT("Intermediate (Re-test Required)", "Intermedio (Requiere Nueva Prueba)"); color = "var(--warn)"; }
+                else { level = PT("Basic (Training Required)", "Básico (Requiere Entrenamiento)"); color = "var(--bad)"; }
 
                 const graduated = (pct >= PASS);
 
@@ -309,24 +300,24 @@
                 $("levelBadge").style.borderColor = color;
                 $("levelBadge").style.boxShadow = `0 0 0 3px ${color}22`;
 
-                $("scoreLine").textContent = `${total}/100 points (${pct}%) — Pass line: ${PASS}%`;
+                $("scoreLine").textContent = PT(`${total}/100 points (${pct}%) — Pass line: ${PASS}%`, `${total}/100 puntos (${pct}%) — Línea de aprobación: ${PASS}%`);
 
                 $("gradLine").innerHTML = graduated
-                    ? `✅ <span style="color:var(--good)">GRADUADO</span> — Certified Miami DJ Beat PRO.`
-                    : `❌ <span style="color:var(--bad)">NO GRADUADO</span> — Must re-test practical stations.`;
+                    ? `✅ <span style="color:var(--good)">${PT('GRADUATE', 'GRADUADO')}</span> — ${PT('Certified Miami DJ Beat PRO.', 'PRO certificado de Miami DJ Beat.')}`
+                    : `❌ <span style="color:var(--bad)">${PT('NOT GRADUATED', 'NO GRADUADO')}</span> — ${PT('Must re-test practical stations.', 'Debe repetir las estaciones prácticas.')}`;
 
                 const verifyUrl = `verify.html?id=${encodeURIComponent(certId)}`;
-                $("verifyLine").innerHTML = `Verification link: <strong>${escapeHtml(verifyUrl)}</strong>`;
+                $("verifyLine").innerHTML = `${PT('Verification link:', 'Enlace de verificación:')} <strong>${escapeHtml(verifyUrl)}</strong>`;
 
                 const venue = $("venue").value.trim();
                 const summary = [];
                 summary.push(`<div class="kpi"><strong>DJ:</strong> ${escapeHtml(name)}<br><strong>ID:</strong> ${escapeHtml(certId)}<br><strong>Instructor:</strong> ${escapeHtml(instructor)}${venue ? `<br><strong>Venue:</strong> ${escapeHtml(venue)}` : ""}<br><span class="muted">Date: ${new Date().toLocaleString()}</span></div>`);
-                summary.push(`<div class="kpi"><strong>Station Breakdown</strong>
+                summary.push(`<div class="kpi"><strong>${PT('Station Breakdown', 'Desglose por estación')}</strong>
           <ul>
-            <li>USB Prep: <strong>${s1}/25</strong></li>
-            <li>Open Format Transition: <strong>${s2}/25</strong></li>
-            <li>20-Min Set Structure: <strong>${s3}/25</strong></li>
-            <li>Technical Readiness: <strong>${s4}/25</strong></li>
+            <li>${PT('USB Prep', 'Preparación de USB')}: <strong>${s1}/25</strong></li>
+            <li>${PT('Open Format Transition', 'Transición Open Format')}: <strong>${s2}/25</strong></li>
+            <li>${PT('20-Min Set Structure', 'Estructura de set de 20 min')}: <strong>${s3}/25</strong></li>
+            <li>${PT('Technical Readiness', 'Preparación técnica')}: <strong>${s4}/25</strong></li>
           </ul>
         </div>`);
 
@@ -334,10 +325,10 @@
                     if (!txt) return "";
                     return `<div class="kpi"><strong>${escapeHtml(title)}</strong><div class="muted" style="margin-top:6px;white-space:pre-wrap;">${escapeHtml(txt)}</div></div>`;
                 }
-                summary.push(noteBlock("Station 1 Notes", $("s1_notes").value.trim()));
-                summary.push(noteBlock("Station 2 Notes", $("s2_notes").value.trim()));
-                summary.push(noteBlock("Station 3 Notes", $("s3_notes").value.trim()));
-                summary.push(noteBlock("Station 4 Notes", $("s4_notes").value.trim()));
+                summary.push(noteBlock(PT("Station 1 Notes", "Notas de la estación 1"), $("s1_notes").value.trim()));
+                summary.push(noteBlock(PT("Station 2 Notes", "Notas de la estación 2"), $("s2_notes").value.trim()));
+                summary.push(noteBlock(PT("Station 3 Notes", "Notas de la estación 3"), $("s3_notes").value.trim()));
+                summary.push(noteBlock(PT("Station 4 Notes", "Notas de la estación 4"), $("s4_notes").value.trim()));
 
                 $("summary").innerHTML = summary.join("");
 
@@ -350,7 +341,7 @@
             }
 
             function reset() {
-                if (!confirm("Reset all fields?")) return;
+                if (!confirm(PT("Reset all fields?", "¿Restablecer todos los campos?"))) return;
                 ["djName", "certId", "instructor", "venue"].forEach(id => $(id).value = "");
                 ["s1", "s2", "s3", "s4"].forEach(id => { $(id).value = 0; $(id + "_label").textContent = "0"; });
                 ["s1_notes", "s2_notes", "s3_notes", "s4_notes"].forEach(id => $(id).value = "");
@@ -445,10 +436,10 @@
           document.body.innerHTML = `
             <div style="height:100vh;display:flex;align-items:center;justify-content:center;background:#050810;color:#ff3333;text-align:center;font-family:sans-serif;padding:24px;">
               <div>
-                <h1>⛔ ACCESO DENEGADO</h1>
-                <p>Esta herramienta es solo para staff (instructor/admin).</p>
-                <p style="margin-top:18px;"><a href="${loginRedirect}" style="color:var(--gold,#c5a059);font-weight:800;">Entrar con cuenta staff →</a></p>
-                <p style="margin-top:10px;"><a href="./index.html" style="color:#fff;">Volver al Inicio</a></p>
+                <h1>⛔ ${(window.i18n && window.i18n.currentLang === 'es') ? 'ACCESO DENEGADO' : 'ACCESS DENIED'}</h1>
+                <p>${(window.i18n && window.i18n.currentLang === 'es') ? 'Esta herramienta es solo para staff (instructor/admin).' : 'This tool is for staff only (instructor/admin).'}</p>
+                <p style="margin-top:18px;"><a href="${loginRedirect}" style="color:var(--gold,#c5a059);font-weight:800;">${(window.i18n && window.i18n.currentLang === 'es') ? 'Entrar con cuenta staff →' : 'Sign in with a staff account →'}</a></p>
+                <p style="margin-top:10px;"><a href="./index.html" style="color:#fff;">${(window.i18n && window.i18n.currentLang === 'es') ? 'Volver al Inicio' : 'Back to Home'}</a></p>
               </div>
             </div>`;
         }
@@ -478,9 +469,9 @@
         }
       })();
     </script>
-    <script src="./translations.js?v=20260921-baile1"></script>
+    <script src="./translations.js?v=20260927-bilingue-final"></script>
     <script src="./i18n.js?v=20260411-14"></script>
-    <script src="./header-smart-search.js?v=20260422-cliente-role-db"></script>
+    <script src="./header-smart-search.js?v=20260927-bilingue-hint"></script>
   <script src="./mdj-identity.js?v=20260921-rol-unico"></script>
       <script src="./mdjb-shared-header.js?v=20260921-svc-activo4"></script>
   <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
