@@ -1049,8 +1049,11 @@
                             <option value="cocinero" data-i18n="loginx-014">Cocinero / Chef</option>
                             <option value="drone" data-i18n="loginx-015">Operador de Drone</option>
                             <option value="mc" data-i18n="loginx-016">MC / Presentador / Animador</option>
-                            <option value="fotografo" data-i18n="loginx-017">Fotógrafo / Videógrafo</option>
-                            <option value="musicos en vivo" data-i18n="loginx-018">Músico en Vivo / Orquesta / Banda</option>
+                            <option value="fotografo" data-i18n="loginx-017">Fotógrafo</option>
+                            <option value="filmmaker" data-i18n="loginx-025">Filmmaker / Videógrafo</option>
+                            <option value="musico" data-i18n="loginx-023">Músico</option>
+                            <option value="orquesta" data-i18n="loginx-018">Orquesta o Banda</option>
+                            <option value="cantante" data-i18n="loginx-024">Cantante Solista</option>
                             <option value="hora loca">Hora Loca</option>
                             <option value="payaso" data-i18n="loginx-019">Payaso / Entretenimiento Infantil</option>
                             <option value="staff" data-i18n="loginx-020">Staff General</option>
@@ -1473,24 +1476,36 @@
                     try {
                         var _roster = JSON.parse(sessionStorage.getItem('mdj_jobs_roster_categories') || 'null');
                         if (_roster && Array.isArray(_roster.codes) && _roster.codes.length > 0) {
-                            var _CODE_TO_SPEC = {
-                                'dj':                   'dj',
-                                'mc y presentadores':   'mc',
-                                'staff':                'staff',
-                                'payasos':              'payaso',
-                                'músicos en vivo':      'musicos en vivo',
-                                'musicos en vivo':      'musicos en vivo',
-                                'hora loca experience': 'hora loca',
-                                'hora loca':            'hora loca',
-                                'captura y visuales':   'fotografo',
-                                'bartender':            'bartender',
-                                'mesero':               'mesero',
-                                'cocinero':             'cocinero',
-                                'drone':                'drone'
-                            };
-                            var _firstCode = String(_roster.codes[0]).toLowerCase().trim();
-                            var _specVal = _CODE_TO_SPEC[_firstCode];
-                            if (_specVal) specSel.value = _specVal;
+                            // Preferencia 1: la categoría PRECISA que ya eligió en jobs.html
+                            // (mdj-categorias.js) -- ahí "Músicos en Vivo" sí distingue
+                            // musico/orquesta/cantante, así que si ya viene, se usa tal cual
+                            // en vez de adivinar por familia.
+                            var _CATS_OK = ['animador', 'bartender', 'cantante', 'dj', 'dron', 'filmmaker', 'fotografia', 'horaloca', 'mc', 'mesero', 'musico', 'orquesta', 'payasos', 'staff'];
+                            if (typeof _roster.categoria === 'string' && _CATS_OK.indexOf(_roster.categoria) !== -1) {
+                                specSel.value = _roster.categoria;
+                            } else {
+                                // Preferencia 2: solo la FAMILIA (sin categoria fina) -- último
+                                // recurso, adivina un valor razonable por familia. Para "Músicos
+                                // en Vivo" no hay forma de saber músico/orquesta/cantante desde
+                                // solo la familia, así que se deja SIN preseleccionar (la persona
+                                // elige ella misma entre las 3 opciones reales del desplegable).
+                                var _CODE_TO_SPEC = {
+                                    'dj':                   'dj',
+                                    'mc y presentadores':   'mc',
+                                    'staff':                'staff',
+                                    'payasos':              'payaso',
+                                    'hora loca experience': 'hora loca',
+                                    'hora loca':            'hora loca',
+                                    'captura y visuales':   'fotografo',
+                                    'bartender':            'bartender',
+                                    'mesero':               'mesero',
+                                    'cocinero':             'cocinero',
+                                    'drone':                'drone'
+                                };
+                                var _firstCode = String(_roster.codes[0]).toLowerCase().trim();
+                                var _specVal = _CODE_TO_SPEC[_firstCode];
+                                if (_specVal) specSel.value = _specVal;
+                            }
                         }
                     } catch (eSpec) { void eSpec; }
                 }
