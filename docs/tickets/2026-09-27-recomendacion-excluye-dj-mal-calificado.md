@@ -30,5 +30,12 @@ El PO decidió arrancar. Antes de construir se verificó `leads` (única tabla c
 - Caso de exclusión: simulado con una reseña de 1 estrella dentro de una transacción con `ROLLBACK` (sin dejar ningún dato falso) — DJSolitario desapareció de la lista (8→7). Confirmado `dj_public_reviews` sigue en 3 filas reales tras la prueba.
 
 **Sigue pendiente, sin construir todavía:**
-1. La verificación de contratación confirmada (queda documentada arriba, para cuando `leads`/`bookings` tengan datos reales).
+1. La verificación de contratación confirmada (queda documentada arriba, para cuando `leads`/`bookings` tengan datos reales) — **matizada abajo, no es una sola regla**.
 2. Conectar esta función al flujo público real — sigue viviendo solo en `web/calendario-operacional-inteligente.html` (herramienta interna de staff), no en `find-dj.html` ni en ningún flujo de cliente final.
+
+## ⚠️ Matiz importante (2026-09-27) — no toda reseña viene de un cliente directo
+El PO aclaró algo que complica el punto 4/1 de arriba: **no todas las reseñas vienen de alguien que contrató al DJ directamente.** Si el DJ toca en un lugar público o una residencia (ej. un sundowner, Mojitos Calle 8), cualquiera de los cientos de asistentes de ese venue puede dejar una reseña/comentario en su perfil — nunca contrató al DJ, el venue sí, pero su opinión es igual de real y legítima ("es normal que suceda, son cientos de personas en un venue que les puede gustar o no el DJ").
+
+**Consecuencia para el diseño:** la verificación de "contratación confirmada" (punto 4/1 de arriba) **solo aplica a reseñas de cliente directo** (alguien que reservó al DJ para SU evento privado) — para reseñas de público de venue no hay ninguna reserva individual que verificar, exigirlo estaría mal. El sistema necesita distinguir estos dos orígenes de reseña, no tratarlos igual. Sin resolver todavía cómo se distinguen en la práctica (¿un campo `review_source` en `dj_public_reviews`? ¿otro criterio?) — queda como pregunta abierta nueva.
+
+**También confirmado en la misma conversación:** el propio DJ SÍ puede pedirle reseñas a sus clientes directamente desde su perfil — ya construido, ver `web/staff-agenda.html` (botones "Pedir Reseña" junto a cada evento `COMPLETED`, enlazan al mismo `dj-profile.html?id=...&view=public`).
