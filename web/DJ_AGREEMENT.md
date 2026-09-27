@@ -42,23 +42,23 @@ Contractor shall maintain the strict confidentiality of all proprietary informat
 - **Data Leakage Prohibition**: Contractor is prohibited from sharing, selling, or transferring Client details or Platform operational data to any third-party company or competitor.
 - **Enforcement**: This obligation survives the termination of this Agreement and is subject to the Liquidated Damages specified in Section 7.
 
-## 10. NON-DISPARAGEMENT
+## 11. NON-DISPARAGEMENT
 Contractor agrees not to make any false, disparaging, or derogatory statements (written or oral) regarding the Platform, its employees, or its services on social media, public forums, or to Clients.
 
-## 11. FORCE MAJEURE
+## 12. FORCE MAJEURE
 Neither party shall be liable for failure to perform due to causes beyond their reasonable control, including but not limited to: natural disasters, war, government mandates, or civil unrest. Contractor must notify the Platform within four (4) hours of the occurrence of a Force Majeure event.
 
-## 12. TERMINATION & SUSPENSION RIGHTS
+## 13. TERMINATION & SUSPENSION RIGHTS
 The Platform reserves the right to suspend or terminate Contractor’s access to the marketplace at any time, with or without cause. Grounds for immediate termination include, but are not limited to: circumvention, poor performance ratings, or breach of this Agreement.
 
-## 13. GOVERNING LAW
+## 14. GOVERNING LAW
 This Agreement shall be governed by and construed in accordance with the laws of the State of Florida, USA, without regard to its conflict of law principles.
 
-## 14. DISPUTE RESOLUTION & ARBITRATION
+## 15. DISPUTE RESOLUTION & ARBITRATION
 Any dispute arising out of or relating to this Agreement shall be resolved through binding arbitration in Miami-Dade County, Florida. The prevailing party shall be entitled to recover reasonable attorney’s fees and costs.
 
-## 15. LIMITATION OF LIABILITY
+## 16. LIMITATION OF LIABILITY
 The Platform’s total liability to the Contractor for any claim arising out of this Agreement shall not exceed the total commission earned by the Platform from events performed by the Contractor in the six (6) months preceding the claim.
 
-## 16. ELECTRONIC SIGNATURE & ACCEPTANCE
+## 17. ELECTRONIC SIGNATURE & ACCEPTANCE
 Contractor acknowledges that by clicking "Accept," "Register," or by accepting any event booking via the Platform, Contractor is providing an electronic signature and agrees to be legally bound by the terms of this Agreement as if it were signed in ink.
