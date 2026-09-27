@@ -324,6 +324,50 @@ export function escHtml(s) {
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
+/* ═══ 8b) franja de hero compacta — formato alterno pedido por el PO
+   2026-09-27 ("hero apilado, versión intermedia"): reutiliza literal el
+   mismo lenguaje visual de .djp-hero (tools/dj-profiles/build.mjs, la
+   plantilla real de cada perfil estático) -- mismo font-family/color de
+   nombre (Cormorant Garamond dorado), misma pareja de botones
+   gold/ghost -- pero compacta (foto más chica, una franja horizontal por
+   DJ apilada, no el hero a tamaño completo). No sustituye
+   renderResultCardHTML(): esa función sigue igual, con sus propias
+   pruebas (find-dj-search.test.mjs) intactas -- esta es la NUEVA opción,
+   find-dj.html decide cuál usar. Solo muestra lo que la Public Talent
+   Projection expone de verdad (sin rating/redes sociales -- esos campos
+   no vienen en esta proyección, no se inventan aquí). */
+export function renderHeroStripHTML(dj, { rentHref = "#", rentLabel = "" } = {}) {
+  const name = escHtml(dj.stage_name || dj.dj_slug || "Artist");
+  const img = escHtml(dj.photo_url || "");
+  const href = canonicalHref(dj);
+  const imgSrc = img || "./assets/dj-avatar-placeholder.png";
+  const rawSpecialty = String(dj.artist_specialty || dj.roles || "").split(",")[0].trim();
+  const specialtyTag = rawSpecialty ? escHtml(rawSpecialty.slice(0, 24)) : "";
+  const cityStr = dj.city ? "📍 " + escHtml(dj.city) : "";
+  const bioStr = dj.bio_preview ? escHtml(String(dj.bio_preview).slice(0, 160)) : "";
+  const bioEnStr = dj.bio_preview_en ? escHtml(String(dj.bio_preview_en).slice(0, 160)) : "";
+  const profileHref = href || "#";
+
+  return (
+    '<article class="find-dj-strip">' +
+    '<img class="find-dj-strip__photo" src="' + imgSrc + '" alt="' + name + '" loading="lazy" />' +
+    '<div class="find-dj-strip__body">' +
+    '<h2 class="find-dj-strip__name">' + name + '</h2>' +
+    '<div class="find-dj-strip__meta">' +
+    (cityStr ? '<span>' + cityStr + '</span>' : '') +
+    (specialtyTag ? '<span class="find-dj-strip__tag">' + specialtyTag + '</span>' : '') +
+    '</div>' +
+    (bioStr ? '<p class="find-dj-strip__bio' + (bioEnStr ? ' find-dj-strip__bio--orig' : '') + '">' + bioStr + '</p>' : '') +
+    (bioEnStr ? '<p class="find-dj-strip__bio find-dj-strip__bio--en">' + bioEnStr + '</p>' : '') +
+    '<div class="find-dj-strip__cta">' +
+    (href ? '<a class="find-dj-strip__btn find-dj-strip__btn--gold" href="' + escHtml(profileHref) + '">Perfil Artístico</a>' : '') +
+    (href ? '<a class="find-dj-strip__btn find-dj-strip__btn--ghost" href="' + escHtml(rentHref) + '">' + escHtml(rentLabel) + '</a>' : '') +
+    '</div>' +
+    '</div>' +
+    '</article>'
+  );
+}
+
 export function renderResultCardHTML(dj, { tierBadgeHtml = "", rentHref = "#", rentLabel = "" } = {}) {
   const name = escHtml(dj.stage_name || dj.dj_slug || "Artist");
   const img = escHtml(dj.photo_url || "");
