@@ -1,5 +1,7 @@
 # MIAMI DJ BEAT PLATFORM — PRO PARTNER POLICY (FINAL VERSION)
 
+Last Updated: April 10, 2026
+
 This Pro Partner Policy (the “Policy”) governs the terms under which a Professional DJ (“Pro Partner”) participates in the Miami DJ Beat Platform Pro Partner Program (the “Program”). This Policy supplements and incorporates the DJ Service Agreement and Official Payment Policy. In the event of conflict, the DJ Service Agreement shall control.
 
 Enrollment in the Program is voluntary and subject to continuous compliance with all Platform agreements.

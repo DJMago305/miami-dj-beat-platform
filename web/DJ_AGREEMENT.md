@@ -1,5 +1,7 @@
 # MIAMI DJ BEAT PLATFORM — DJ SERVICE AGREEMENT
 
+Last Updated: September 27, 2026
+
 This DJ Service Agreement (the "Agreement") is entered into by and between the DJ ("Contractor") and Miami DJ Beat Platform ("Platform"). By registering an account and accepting event bookings via the Platform, Contractor agrees to be legally bound by these terms.
 
 ## 1. INDEPENDENT CONTRACTOR STATUS
