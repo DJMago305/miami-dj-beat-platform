@@ -236,6 +236,21 @@
             letter-spacing: 0.04em;
         }
 
+        /* Disponibilidad por fecha (2026-09-27, pedido del PO desde el
+           formulario de búsqueda de dj/directorio.html): solo aparece
+           cuando la URL trae ?date=. Se llena async vía check_dj_availability()
+           -- 3 estados reales del RPC, nunca oculta al DJ, solo informa. */
+        .find-dj-strip__avail {
+            border-radius: 999px;
+            padding: 2px 10px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .find-dj-strip__avail[data-avail-slot="pending"] { color: rgba(255, 255, 255, 0.45); }
+        .find-dj-strip__avail[data-avail-slot="AVAILABLE"] { background: rgba(80, 200, 120, 0.14); border: 1px solid rgba(80, 200, 120, 0.4); color: #8fe3a8; }
+        .find-dj-strip__avail[data-avail-slot="NOT_AVAILABLE"] { background: rgba(220, 90, 90, 0.14); border: 1px solid rgba(220, 90, 90, 0.4); color: #f0a3a3; }
+        .find-dj-strip__avail[data-avail-slot="REQUIRES_CONFIRMATION"] { background: rgba(197, 160, 89, 0.12); border: 1px solid rgba(197, 160, 89, 0.3); color: #e8c987; }
+
         .find-dj-strip__bio {
             line-height: 1.6;
             color: rgba(255, 255, 255, 0.8);
@@ -529,12 +544,18 @@
             grid.innerHTML = '';
 
             const cityEl = document.getElementById('f-city');
-            const city = cityEl ? cityEl.value : '';
             const params = getUrlParams();
+            const city = (cityEl ? cityEl.value : '') || params.get('city') || '';
             const nameQ = sanitizeSearchToken(params.get('q') || '');
             const specialtyQ = sanitizeSearchToken(params.get('specialty') || '');
             const intent = params.get('intent');
             const categoryFromUrl = params.get('category') || params.get('role') || specialtyQ;
+            // Fecha (2026-09-27, pedido del PO -- formulario de búsqueda de
+            // dj/directorio.html): input type="date" siempre manda YYYY-MM-DD,
+            // se valida el formato antes de pasarlo a SQL -- nunca se confía
+            // en el string crudo de la URL.
+            const dateParamRaw = params.get('date') || '';
+            const dateParam = /^\d{4}-\d{2}-\d{2}$/.test(dateParamRaw) ? dateParamRaw : '';
 
             // Fuente única de "quién es público/buscable": la Public Talent
             // Projection (public_dj_talent). Esta página ya NO decide su propia
@@ -565,7 +586,34 @@
             var sliced = simulateDbOrderedSlice(matched, 120);
             var data = sliced.slice().sort(compareForSearch(rawQuery, tokens));
 
-            window.__findDjLast = { data: data, nameQ: nameQ, intent: intent, categoryFromUrl: categoryFromUrl };
+            // Disponibilidad por fecha (2026-09-27, pedido del PO): se resuelve
+            // ANTES de pintar la lista, contra check_dj_availability() real (RPC,
+            // migración 20260927160000) -- un DJ NOT_AVAILABLE nunca se muestra;
+            // si la llamada falla por cualquier motivo, se trata como "a
+            // confirmar" (REQUIRES_CONFIRMATION), nunca se oculta por error de
+            // red. "En caso de no haber DJs disponibles, pasa a staff" (pedido
+            // explícito del PO) -- ver el estado vacío en renderResults().
+            var availByDj = {};
+            if (dateParam && data.length) {
+                msg.innerHTML = T('fdj-checking-availability', 'Verificando disponibilidad…');
+                await Promise.all(data.map(async function (dj) {
+                    if (!dj.dj_slug) { availByDj[dj.dj_slug] = 'REQUIRES_CONFIRMATION'; return; }
+                    try {
+                        var res = await db.rpc('check_dj_availability', {
+                            p_dj_slug: dj.dj_slug,
+                            p_event_date: dateParam,
+                            p_start_time: '00:00:00',
+                            p_end_time: '23:59:00',
+                        });
+                        availByDj[dj.dj_slug] = (res && !res.error && res.data) ? res.data : 'REQUIRES_CONFIRMATION';
+                    } catch (e) {
+                        availByDj[dj.dj_slug] = 'REQUIRES_CONFIRMATION';
+                    }
+                }));
+                data = data.filter(function (dj) { return availByDj[dj.dj_slug] !== 'NOT_AVAILABLE'; });
+            }
+
+            window.__findDjLast = { data: data, nameQ: nameQ, intent: intent, categoryFromUrl: categoryFromUrl, dateParam: dateParam, availByDj: availByDj };
             renderResults();
         }
 
@@ -573,9 +621,24 @@
         function renderResults() {
             var st = window.__findDjLast;
             if (!st) return;
-            var data = st.data, nameQ = st.nameQ, intent = st.intent, categoryFromUrl = st.categoryFromUrl;
+            var data = st.data, nameQ = st.nameQ, intent = st.intent, categoryFromUrl = st.categoryFromUrl, dateParam = st.dateParam, availByDj = st.availByDj || {};
             var grid = document.getElementById('dj-grid');
             var msg = document.getElementById('state-msg');
+
+            // Estado vacío por fecha (2026-09-27, pedido explícito del PO):
+            // "en caso de no haber DJs disponibles se le pasa la orden a
+            // staff para que localice uno o rote alguno -- eso ya es
+            // trabajo 100% de staff/vendedores". Nunca un callejón sin
+            // salida -- siempre un camino real a contact.html.
+            if (dateParam && data.length === 0) {
+                msg.innerHTML = T('fdj-no-availability', 'Ningún DJ de la plataforma quedó libre para esa fecha con estos filtros.');
+                grid.innerHTML = '<div class="find-dj-strip" style="text-align:center;display:block;">' +
+                    '<p style="margin:0 0 16px;color:rgba(255,255,255,0.8);">' + T('fdj-no-availability-cta-lead', 'Nuestro equipo puede localizar o rotar un DJ disponible para tu fecha.') + '</p>' +
+                    '<a class="find-dj-strip__btn find-dj-strip__btn--gold" href="./contact.html">' + T('fdj-no-availability-cta-btn', 'Contactar al equipo') + '</a>' +
+                    '</div>';
+                return;
+            }
+
             let line = data.length === 1 ? T('fdj-found-one', 'Found 1 talent.') : T('fdj-found-many', 'Found {n} talents.', { n: data.length });
             if (nameQ) line += ' ' + T('fdj-name-slug', '(name/slug: “{q}”)', { q: nameQ });
             if (intent === 'availability') line += ' ' + T('fdj-availability', '— refine date & filters for availability.');
@@ -588,6 +651,7 @@
                 return renderHeroStripHTML(dj, {
                     rentHref: rentHref,
                     rentLabel: rentLabel,
+                    availabilityStatus: dateParam ? (availByDj[dj.dj_slug] || null) : null,
                 });
             }).join('');
         }

@@ -336,7 +336,7 @@ export function escHtml(s) {
    find-dj.html decide cuál usar. Solo muestra lo que la Public Talent
    Projection expone de verdad (sin rating/redes sociales -- esos campos
    no vienen en esta proyección, no se inventan aquí). */
-export function renderHeroStripHTML(dj, { rentHref = "#", rentLabel = "" } = {}) {
+export function renderHeroStripHTML(dj, { rentHref = "#", rentLabel = "", availabilityStatus = null } = {}) {
   const name = escHtml(dj.stage_name || dj.dj_slug || "Artist");
   const img = escHtml(dj.photo_url || "");
   const href = canonicalHref(dj);
@@ -347,15 +347,27 @@ export function renderHeroStripHTML(dj, { rentHref = "#", rentLabel = "" } = {})
   const bioStr = dj.bio_preview ? escHtml(String(dj.bio_preview).slice(0, 160)) : "";
   const bioEnStr = dj.bio_preview_en ? escHtml(String(dj.bio_preview_en).slice(0, 160)) : "";
   const profileHref = href || "#";
+  const djSlug = dj && dj.dj_slug ? escHtml(String(dj.dj_slug)) : "";
+  /* Disponibilidad por fecha (2026-09-27, pedido del PO): el llamador
+     (find-dj.html) ya resolvió el estado real contra check_dj_availability()
+     ANTES de armar esta tarjeta -- NOT_AVAILABLE ya se filtró fuera de la
+     lista antes de llegar aquí (nunca se pinta un DJ no disponible), así
+     que el único estado que puede llegar es AVAILABLE o
+     REQUIRES_CONFIRMATION. Sin fecha en la búsqueda, availabilityStatus es
+     null y no se pinta nada -- comportamiento idéntico al de siempre. */
+  const availLabel = availabilityStatus === 'AVAILABLE' ? '✓ Disponible esa fecha'
+    : availabilityStatus === 'REQUIRES_CONFIRMATION' ? 'A confirmar con el equipo'
+    : '';
 
   return (
-    '<article class="find-dj-strip">' +
+    '<article class="find-dj-strip"' + (djSlug ? ' data-dj-slug="' + djSlug + '"' : '') + '>' +
     '<img class="find-dj-strip__photo" src="' + imgSrc + '" alt="' + name + '" loading="lazy" />' +
     '<div class="find-dj-strip__body">' +
     '<h2 class="find-dj-strip__name">' + name + '</h2>' +
     '<div class="find-dj-strip__meta">' +
     (cityStr ? '<span>' + cityStr + '</span>' : '') +
     (specialtyTag ? '<span class="find-dj-strip__tag">' + specialtyTag + '</span>' : '') +
+    (availLabel ? '<span class="find-dj-strip__avail" data-avail-slot="' + escHtml(availabilityStatus) + '">' + availLabel + '</span>' : '') +
     '</div>' +
     (bioStr ? '<p class="find-dj-strip__bio' + (bioEnStr ? ' find-dj-strip__bio--orig' : '') + '">' + bioStr + '</p>' : '') +
     (bioEnStr ? '<p class="find-dj-strip__bio find-dj-strip__bio--en">' + bioEnStr + '</p>' : '') +

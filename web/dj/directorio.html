@@ -41,6 +41,21 @@
     .djidx-hero-copy h1{font-family:'Playfair Display',serif;text-transform:uppercase;text-wrap:balance;overflow-wrap:normal;word-break:keep-all;font-size:clamp(1.7rem,6.5vw,3.6rem);font-weight:600;color:#fff;margin:0 0 18px;line-height:1.08;text-shadow:0 4px 15px rgba(0,0,0,0.8);}
     .djidx-hero-copy p{font-size:1.05rem;line-height:1.65;color:rgba(255,255,255,0.8);margin:0 auto;max-width:56ch;font-weight:400;}
 
+    /* Formulario de búsqueda del hero (2026-09-27, pedido del PO: ciudad +
+       fecha + tipo de evento) -- submit nativo por GET a find-dj.html, sin
+       JS: el navegador arma el querystring solo. Ciudad y tipo de evento
+       filtran de verdad ahí (mismo mecanismo que ya usa el buscador real);
+       la fecha llama a check_dj_availability() (RPC) antes de pintar
+       resultados. */
+    .djidx-search-form{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin:28px auto 0;max-width:640px;}
+    .djidx-search-field{display:flex;flex-direction:column;gap:4px;text-align:left;flex:1 1 150px;min-width:130px;}
+    .djidx-search-field label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:rgba(255,255,255,0.55);}
+    .djidx-search-field input,.djidx-search-field select{background:rgba(14,20,32,.85);border:1px solid rgba(255,255,255,.15);color:#fff;border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;}
+    .djidx-search-field input:focus,.djidx-search-field select:focus{outline:none;border-color:rgba(197,160,89,0.6);}
+    .djidx-search-submit{display:flex;align-items:flex-end;}
+    .djidx-search-submit button{background:#c5a059;color:#0b0f18;border:none;border-radius:10px;padding:11px 22px;font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap;}
+    .djidx-search-submit button:hover{background:#d4b06a;}
+
     .djidx-wrap{max-width:900px;margin:0 auto 100px;padding:0 20px;}
     .djidx-wrap>p{color:rgba(255,255,255,0.65);margin-bottom:28px;}
 
@@ -194,9 +209,32 @@
     <div class="djidx-hero-copy">
       <h1 data-i18n="djidx-h1">Directorio de DJs</h1>
       <p data-i18n="djidx-p1">DJs profesionales de Miami DJ Beat, con disponibilidad real y reserva directa.</p>
+      <p style="font-size:15px;color:rgba(255,255,255,0.75);margin-top:18px;"><span data-i18n="djidx-p2a">¿Buscas por disponibilidad, ciudad o especialidad? </span><a href="../find-dj.html" style="color:var(--gold);" data-i18n="djidx-p2b">Explora todos los DJs de la plataforma</a><span data-i18n="djidx-p2c"> · ¿Quieres verificar una credencial? </span><a href="../directory.html" style="color:var(--gold);" data-i18n="djidx-p2d">Directorio de certificación</a></p>
+
+      <form class="djidx-search-form" action="../find-dj.html" method="get">
+        <div class="djidx-search-field">
+          <label for="djidx-f-city" data-i18n="djidx-form-city">Ciudad</label>
+          <input type="text" id="djidx-f-city" name="city" placeholder="Hialeah, Homestead…" data-i18n-hold="djidx-form-city-ph" />
+        </div>
+        <div class="djidx-search-field">
+          <label for="djidx-f-date" data-i18n="djidx-form-date">Fecha del evento</label>
+          <input type="date" id="djidx-f-date" name="date" />
+        </div>
+        <div class="djidx-search-field">
+          <label for="djidx-f-type" data-i18n="djidx-form-type">Tipo de evento</label>
+          <select id="djidx-f-type" name="specialty">
+            <option value="" data-i18n="djidx-form-type-any">Cualquiera</option>
+            <option value="DJ" data-i18n="djidx-form-type-dj">DJ</option>
+            <option value="Open Format" data-i18n="djidx-form-type-openformat">Open Format</option>
+            <option value="Producer" data-i18n="djidx-form-type-producer">Productor</option>
+          </select>
+        </div>
+        <div class="djidx-search-submit">
+          <button type="submit" data-i18n="djidx-form-submit">Buscar DJs</button>
+        </div>
+      </form>
     </div>
     <div class="djidx-wrap">
-      <p style="font-size:14px;color:rgba(255,255,255,0.6);"><span data-i18n="djidx-p2a">¿Buscas por disponibilidad, ciudad o especialidad? </span><a href="../find-dj.html" style="color:var(--gold);" data-i18n="djidx-p2b">Explora todos los DJs de la plataforma</a><span data-i18n="djidx-p2c"> · ¿Quieres verificar una credencial? </span><a href="../directory.html" style="color:var(--gold);" data-i18n="djidx-p2d">Directorio de certificación</a></p>
       <div class="djidx-strip-list">
       <article class="djidx-strip">
         <img class="djidx-strip__photo" src="https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/avatars/3f5d5196-273c-458e-a4af-6b3545422177/avatar.png" alt="DJMago305" loading="lazy" />
