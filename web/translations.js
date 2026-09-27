@@ -916,7 +916,7 @@ const translations = {
         "jobsx-112": "Ej: Monitores, Interfaces, Micrófonos",
         "jobsx-113": "@usuario",
         "jobsx-114": "https://tuweb.com",
-        "fdj-h1": "Encuentra tu DJ en Miami",
+        "fdj-h1": "DJ en Miami",
         "fdj-sub": "Explora DJs disponibles en la plataforma de Miami DJ Beat, filtrados por disponibilidad y especialidad.",
         "fdj-links": "¿Quieres leer su perfil completo primero? <a href='./dj/directorio.html'>Ver perfiles públicos</a> · ¿Verificar una credencial? <a href='./directory.html'>Directorio de certificación</a>",
         "fdj-rent-band": "Rentar esta banda",
