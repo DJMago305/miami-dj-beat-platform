@@ -8484,15 +8484,31 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 // por canal (mismo enfoque ya decidido para "Pedir Reseña" en
                 // staff-agenda.html). El enlace abre este mismo Network con la ficha
                 // YA seleccionada (?network_open=<fuente>:<id>, leído una vez al cargar
-                // la página, ver más abajo). Mismo patrón de copiar+confirmar ya usado
-                // en esta página (botón "Copiar link" del modal de activación, arriba
-                // en este archivo) -- textContent cambia a "✓ Copiado" 2s, sin alert().
+                // la página, ver más abajo).
+                //
+                // CORREGIDO el mismo día (pedido del PO, con captura): "ese es el botón
+                // oficial para copiar y pegar, debe ser el mismo en los perfiles en
+                // Network" -- refiriéndose al botón dorado de "Compartir Perfil" del
+                // hero de dj-profile.html (.dj-social-icon.share-btn). Se reemplaza el
+                // botón de texto por el MISMO ícono SVG y el mismo estilo cuadrado
+                // dorado (40px, border-radius:10px, fondo var(--gold) sólido, ícono
+                // negro) -- copiado literal de ese botón, no un ícono nuevo. El
+                // copiar+confirmar sigue el mismo patrón ya usado en esta página
+                // (botón "Copiar link" del modal de activación, arriba en este
+                // archivo): el SVG se reemplaza por un check 2s, sin alert().
                 const fichaLink = `https://www.miamidjbeat.com/staff-admin.html?network_open=${encodeURIComponent(fuente + ':' + p.id)}`;
                 const fichaLinkEsc = fichaLink.replace(/'/g, "\\'");
+                // Ícono copiado literal de .dj-social-icon.share-btn en dj-profile.html
+                // (mismo viewBox/width/height/fill/path) -- no pasa por _icoSvg() porque
+                // ese helper es para los íconos de trazo (stroke) de arriba, este es de
+                // relleno sólido (fill), un SVG distinto, no una variante del mismo.
+                const ICO_SHARE = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92c0-1.61-1.31-2.92-2.92-2.92zM18 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM6 13c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm12 7.02c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"/></svg>';
+                const ICO_CHECK = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
                 const copyFichaHtml = `<div style="text-align:center; margin:-10px 0 20px;">
-                    <button onclick="navigator.clipboard.writeText('${fichaLinkEsc}');this.textContent='✓ Copiado';setTimeout(function(){this.textContent='🔗 Copiar Enlace de Ficha (para otro vendedor)';}.bind(this),2000);"
-                        style="background:rgba(197,160,89,0.12); border:1px solid rgba(197,160,89,0.35); color:var(--gold); border-radius:20px; padding:6px 14px; font-size:11px; font-weight:800; cursor:pointer;">
-                        🔗 Copiar Enlace de Ficha (para otro vendedor)
+                    <button onclick="navigator.clipboard.writeText('${fichaLinkEsc}');this.innerHTML='${ICO_CHECK.replace(/'/g, "\\'")}';var _b=this;setTimeout(function(){_b.innerHTML='${ICO_SHARE.replace(/'/g, "\\'")}';},2000);"
+                        title="Copiar Enlace de Ficha (para otro vendedor)"
+                        style="width:40px; height:40px; border-radius:10px; background:var(--gold); color:#000; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center;">
+                        ${ICO_SHARE}
                     </button>
                 </div>`;
 

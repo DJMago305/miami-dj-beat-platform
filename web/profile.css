@@ -183,6 +183,19 @@ body.dj-profile.dj-profile-contact-locked #tab-public .contact-icons-grid {
     position: relative;
 }
 
+/* 2026-09-27, corrección del PO: el ancho de #pub-social-icons depende de
+   cuántos íconos reales tenga el DJ (a veces solo 1, 40px) -- pero el aviso
+   "VIP REQUIRED" de abajo (::after, position:absolute, texto de una sola
+   línea con letter-spacing) necesita bastante más ancho del que unos pocos
+   íconos le dan, y se desbordaba sobre el botón de compartir (.share-btn),
+   que es hermano de este div, no parte del contenido bloqueado. Un ancho
+   mínimo fijo, sin importar cuántos íconos reales haya, le da al aviso
+   sitio real donde dibujarse.  */
+body.dj-profile.dj-profile-contact-locked #tab-public #pub-social-icons {
+    min-width: 168px;
+    min-height: 40px;
+}
+
 body.dj-profile.dj-profile-contact-locked #tab-public #pub-social-icons > a,
 body.dj-profile.dj-profile-contact-locked #tab-public .contact-icons-grid > a,
 body.dj-profile.dj-profile-contact-locked #tab-public .contact-icons-grid button,
