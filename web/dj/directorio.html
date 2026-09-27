@@ -2,6 +2,7 @@
 <html lang="es">
 
 <head>
+    <script src="/js/mdj-lang-boot.js?v=20260927-boot"></script>
   <meta charset="utf-8" />
   <base href="/" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -25,6 +26,9 @@
     .djidx-card h2{font-size:1.1rem;margin:0 0 4px;color:#e8c987;}
     .djidx-city{font-size:12px;color:rgba(255,255,255,0.55);margin:0 0 6px;}
     .djidx-bio{font-size:13px;color:rgba(255,255,255,0.7);margin:0;line-height:1.5;}
+    .djidx-bio-en{display:none;}
+    html[lang="en"] .djidx-bio-es.has-en{display:none;}
+    html[lang="en"] .djidx-bio-en{display:block;}
   </style>
 </head>
 
@@ -123,16 +127,17 @@
 
   <main>
     <div class="djidx-wrap">
-      <h1>Directorio de DJs</h1>
-      <p>DJs profesionales de Miami DJ Beat, con disponibilidad real y reserva directa.</p>
-      <p style="font-size:14px;color:rgba(255,255,255,0.6);">¿Buscas por disponibilidad, ciudad o especialidad? <a href="../find-dj.html" style="color:var(--gold);">Explora todos los DJs de la plataforma</a> · ¿Quieres verificar una credencial? <a href="../directory.html" style="color:var(--gold);">Directorio de certificación</a></p>
+      <h1 data-i18n="djidx-h1">Directorio de DJs</h1>
+      <p data-i18n="djidx-p1">DJs profesionales de Miami DJ Beat, con disponibilidad real y reserva directa.</p>
+      <p style="font-size:14px;color:rgba(255,255,255,0.6);"><span data-i18n="djidx-p2a">¿Buscas por disponibilidad, ciudad o especialidad? </span><a href="../find-dj.html" style="color:var(--gold);" data-i18n="djidx-p2b">Explora todos los DJs de la plataforma</a><span data-i18n="djidx-p2c"> · ¿Quieres verificar una credencial? </span><a href="../directory.html" style="color:var(--gold);" data-i18n="djidx-p2d">Directorio de certificación</a></p>
       <div class="djidx-grid">
       <a class="djidx-card" href="./dj/djmago305.html">
         <img src="https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/avatars/3f5d5196-273c-458e-a4af-6b3545422177/avatar.png" alt="DJMago305" loading="lazy" />
         <div>
           <h2>DJMago305</h2>
           <p class="djidx-city">📍 Hialeah · PRO</p>
-          <p class="djidx-bio">DJMago305 es un DJ y productor musical con una trayectoria consolidada que fusiona la esencia de los ritmos clásicos con el sonido moderno d…</p>
+          <p class="djidx-bio djidx-bio-es has-en">DJMago305 es un DJ y productor musical con una trayectoria consolidada que fusiona la esencia de los ritmos clásicos con el sonido moderno d…</p>
+          <p class="djidx-bio djidx-bio-en">DJMago305 is a DJ and music producer with a solid career that blends the essence of classic beats with the modern sound of house, tech house…</p>
         </div>
       </a>
       <a class="djidx-card" href="./dj/djsolitario.html">
@@ -149,7 +154,8 @@ Con 45 años de vida y una trayectoria internacional invaluable, el DJ cubano Lu
         <div>
           <h2>DJYuyo</h2>
           <p class="djidx-city">📍 Hialeah</p>
-          <p class="djidx-bio">DJ Yuyo es un DJ &quot;Open Format&quot; radicado en Miami con más de dos décadas de experiencia dominando las pistas de baile. Nacido en Cuba y estab…</p>
+          <p class="djidx-bio djidx-bio-es has-en">DJ Yuyo es un DJ &quot;Open Format&quot; radicado en Miami con más de dos décadas de experiencia dominando las pistas de baile. Nacido en Cuba y estab…</p>
+          <p class="djidx-bio djidx-bio-en">DJ Yuyo is a Miami-based &quot;Open Format&quot; DJ with over two decades of experience dominating the dance floor. Born in Cuba and established in th…</p>
         </div>
       </a></div>
     </div>
@@ -182,9 +188,9 @@ Con 45 años de vida y una trayectoria internacional invaluable, el DJ cubano Lu
   })();
   </script>
   <script src="./supabase-config.js?v=20260904-dj-profiles"></script>
-  <script src="./translations.js?v=20260921-sin-flechas"></script>
+  <script src="./translations.js?v=20260927-bilingue-final"></script>
   <script src="./i18n.js?v=20260904-dj-profiles"></script>
-  <script src="./header-smart-search.js?v=20260904-dj-profiles"></script>
+  <script src="./header-smart-search.js?v=20260927-bilingue-hint"></script>
   <script src="./mdj-identity.js?v=20260921-rol-unico"></script>
   <script src="./auth.js?v=20260921-idiomas"></script>
   <script src="./mdjb-shared-header.js?v=20260921-jobs-menu"></script>
