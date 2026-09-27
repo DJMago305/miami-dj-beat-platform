@@ -512,6 +512,18 @@
                esto resuelve el src real de inmediato en vez de esperarlo. */
             if (typeof window.mdjEnsureVideoResolved === 'function') window.mdjEnsureVideoResolved(v);
             try { v.load(); attemptPlay(); } catch (e) { /* noop */ }
+
+            /* Fix 2026-09-27 (mismo hallazgo que dj/directorio.html -- PO:
+               "un disparo de una foto fija entre la rotación de los
+               videos"): el atributo poster nunca se quitaba -- cada .load()
+               al pasar de clip vuelve a pintarlo hasta decodificar el
+               primer frame real del nuevo clip. Se quita para siempre en
+               cuanto el primer clip arranca de verdad ('playing'). */
+            v.addEventListener('playing', function clearPosterOnce() {
+                v.removeAttribute('poster');
+                v.removeEventListener('playing', clearPosterOnce);
+            });
+
             var mdjHeroRetries = 0;
             v.addEventListener('pause', function () {
                 if (!document.hidden && document.hasFocus() && mdjHeroRetries < 3) {
@@ -535,8 +547,26 @@
                 var playlist = playlistAttr.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
                 if (playlist.length > 1) {
                     var idx = 0;
+                    var preloadedNext = false;
+                    /* Precarga del siguiente clip (2026-09-27, mismo hallazgo
+                       del poster): calienta la caché HTTP del navegador con
+                       el siguiente video ~3s antes de que termine el actual,
+                       para acortar el hueco visible de la transición. */
+                    v.addEventListener('timeupdate', function () {
+                        if (preloadedNext || !v.duration || (v.duration - v.currentTime) > 3) return;
+                        preloadedNext = true;
+                        var nextIdx = (idx + 1) % playlist.length;
+                        var nextUrl = playlist[nextIdx];
+                        var resolvedNext = typeof window.resolveMdAssetPublicUrl === 'function' ? window.resolveMdAssetPublicUrl(nextUrl) : nextUrl;
+                        var link = document.createElement('link');
+                        link.rel = 'preload';
+                        link.as = 'video';
+                        link.href = resolvedNext;
+                        document.head.appendChild(link);
+                    });
                     v.addEventListener('ended', function () {
                         idx = (idx + 1) % playlist.length;
+                        preloadedNext = false;
                         var next = playlist[idx];
                         var resolved = typeof window.resolveMdAssetPublicUrl === 'function' ? window.resolveMdAssetPublicUrl(next) : next;
                         v.src = resolved;
