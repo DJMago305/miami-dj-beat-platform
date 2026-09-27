@@ -7705,6 +7705,16 @@
             card.style.display = 'block';
             wrap.style.display = 'block';
 
+            // Enlace directo a "calificar" (2026-09-27, pedido del PO: el enlace
+            // que staff-agenda.html copia para pedir reseña -- "Copiar Enlace de
+            // Reseña" -- debe caer directo en esta tarjeta, no en el tope de la
+            // página). Reusa scrollIntoView, mismo patrón ya usado en esta página
+            // (ver avail-check-card) -- solo el ancla estándar #pub-rate-card en
+            // la URL, sin parámetro nuevo que inventar.
+            if (window.location.hash === '#pub-rate-card') {
+                setTimeout(function () { card.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 50);
+            }
+
             if (viewerIsDjOwner && fanView) {
                 card.classList.add('pub-rate-card--owner-preview');
                 if (cardLabel) cardLabel.textContent = 'TU OPINIÓN';
