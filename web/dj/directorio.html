@@ -26,18 +26,51 @@
   <link rel="stylesheet" href="./header-unified.css?v=20260902-cortinas" />
   <link rel="stylesheet" href="./mdj-assistant.css?v=20260306-1" />
   <style>
-    .djidx-wrap{max-width:1100px;margin:40px auto;padding:0 20px;}
+    .djidx-wrap{max-width:900px;margin:40px auto 100px;padding:0 20px;}
     .djidx-wrap h1{font-family:"Cormorant Garamond",serif;color:#c5a059;font-size:2.4rem;margin-bottom:6px;}
     .djidx-wrap>p{color:rgba(255,255,255,0.65);margin-bottom:28px;}
-    .djidx-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px;}
-    .djidx-card{display:flex;gap:14px;padding:14px;border:1px solid rgba(197,160,89,0.25);border-radius:14px;text-decoration:none;color:inherit;}
-    .djidx-card img{width:72px;height:72px;border-radius:10px;object-fit:cover;flex-shrink:0;}
-    .djidx-card h2{font-size:1.1rem;margin:0 0 4px;color:#e8c987;}
-    .djidx-city{font-size:12px;color:rgba(255,255,255,0.55);margin:0 0 6px;}
-    .djidx-bio{font-size:13px;color:rgba(255,255,255,0.7);margin:0;line-height:1.5;}
+
+    /* HERO APILADO (2026-09-27, pedido del PO -- "las dos" páginas con el
+       mismo diseño): mismo lenguaje visual que .find-dj-strip* en
+       find-dj.html (que a su vez reutiliza .djp-hero de tools/dj-profiles/
+       build.mjs) -- franja horizontal por DJ, apilada verticalmente, foto +
+       nombre en Cormorant Garamond dorado + tag + bio + 2 botones (Perfil
+       Artístico / Rentar este DJ). Reemplaza la cuadrícula chica anterior
+       (.djidx-grid/.djidx-card). Editado a mano: tools/dj-profiles/build.mjs
+       NO se puede correr sobre esta página sin perder datos hand-curated
+       (ver docs/tickets/2026-09-27-URGENTE-dj-profile-engine-hardening-
+       hallazgos.md). */
+    .djidx-strip-list{display:flex;flex-direction:column;gap:18px;}
+
+    .djidx-strip{display:grid;grid-template-columns:140px 1fr;gap:24px;padding:20px;background:rgba(14,20,32,.85);border:1px solid rgba(255,255,255,.09);border-radius:18px;transition:border-color .25s, transform .25s;}
+    .djidx-strip:hover{border-color:rgba(197,160,89,0.5);transform:translateY(-2px);}
+    @media (max-width:560px){.djidx-strip{grid-template-columns:1fr;text-align:center;}}
+
+    .djidx-strip__photo{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:14px;border:1px solid rgba(197,160,89,0.35);}
+
+    .djidx-strip h2{font-family:"Cormorant Garamond",serif;font-size:1.9rem;color:#c5a059;margin:0 0 8px;font-weight:600;}
+
+    .djidx-city{display:flex;flex-wrap:wrap;gap:10px;align-items:center;color:rgba(255,255,255,0.65);font-size:13px;margin:0 0 10px;}
+    @media (max-width:560px){.djidx-city{justify-content:center;}}
+
+    .djidx-tag{background:rgba(197,160,89,0.12);border:1px solid rgba(197,160,89,0.3);color:#e8c987;border-radius:999px;padding:2px 10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;}
+
+    .djidx-bio{line-height:1.6;color:rgba(255,255,255,0.8);font-size:14px;margin:0 0 16px;}
     .djidx-bio-en{display:none;}
     html[lang="en"] .djidx-bio-es.has-en{display:none;}
     html[lang="en"] .djidx-bio-en{display:block;}
+
+    /* Etiquetas cortas en línea (botones) -- misma idea que .djidx-bio-es/en
+       de arriba pero display:inline, para no romper el layout del pill */
+    .djidx-lbl-en{display:none;}
+    html[lang="en"] .djidx-lbl-es{display:none;}
+    html[lang="en"] .djidx-lbl-en{display:inline;}
+
+    .djidx-cta{display:flex;flex-wrap:wrap;gap:12px;}
+    @media (max-width:560px){.djidx-cta{justify-content:center;}}
+    .djidx-btn{display:inline-block;padding:10px 20px;border-radius:999px;font-weight:700;font-size:13px;text-decoration:none;}
+    .djidx-btn--gold{background:#c5a059;color:#0b0f18;}
+    .djidx-btn--ghost{border:1px solid rgba(197,160,89,0.4);color:#e8c987;}
   </style>
 </head>
 
@@ -139,34 +172,46 @@
       <h1 data-i18n="djidx-h1">Directorio de DJs</h1>
       <p data-i18n="djidx-p1">DJs profesionales de Miami DJ Beat, con disponibilidad real y reserva directa.</p>
       <p style="font-size:14px;color:rgba(255,255,255,0.6);"><span data-i18n="djidx-p2a">¿Buscas por disponibilidad, ciudad o especialidad? </span><a href="../find-dj.html" style="color:var(--gold);" data-i18n="djidx-p2b">Explora todos los DJs de la plataforma</a><span data-i18n="djidx-p2c"> · ¿Quieres verificar una credencial? </span><a href="../directory.html" style="color:var(--gold);" data-i18n="djidx-p2d">Directorio de certificación</a></p>
-      <div class="djidx-grid">
-      <a class="djidx-card" href="./dj/djmago305.html">
-        <img src="https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/avatars/3f5d5196-273c-458e-a4af-6b3545422177/avatar.png" alt="DJMago305" loading="lazy" />
+      <div class="djidx-strip-list">
+      <article class="djidx-strip">
+        <img class="djidx-strip__photo" src="https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/avatars/3f5d5196-273c-458e-a4af-6b3545422177/avatar.png" alt="DJMago305" loading="lazy" />
         <div>
           <h2>DJMago305</h2>
-          <p class="djidx-city">📍 Hialeah · PRO</p>
+          <p class="djidx-city">📍 Hialeah <span class="djidx-tag">DJ</span></p>
           <p class="djidx-bio djidx-bio-es has-en">DJMago305 es un DJ y productor musical con una trayectoria consolidada que fusiona la esencia de los ritmos clásicos con el sonido moderno d…</p>
           <p class="djidx-bio djidx-bio-en">DJMago305 is a DJ and music producer with a solid career that blends the essence of classic beats with the modern sound of house, tech house…</p>
+          <div class="djidx-cta">
+            <a class="djidx-btn djidx-btn--gold" href="./dj/djmago305.html"><span class="djidx-lbl-es">Perfil Artístico</span><span class="djidx-lbl-en">Artist Profile</span></a>
+            <a class="djidx-btn djidx-btn--ghost" href="./rentals.html?utm_source=directorio&amp;intent=rent&amp;dj=djmago305"><span class="djidx-lbl-es">Rentar este DJ</span><span class="djidx-lbl-en">Rent this DJ</span></a>
+          </div>
         </div>
-      </a>
-      <a class="djidx-card" href="./dj/djsolitario.html">
-        <img src="https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/avatars/b31e0e33-abfb-49a3-9cf3-076fbbc659a6/avatar.png" alt="DJSolitario" loading="lazy" />
+      </article>
+      <article class="djidx-strip">
+        <img class="djidx-strip__photo" src="https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/avatars/b31e0e33-abfb-49a3-9cf3-076fbbc659a6/avatar.png" alt="DJSolitario" loading="lazy" />
         <div>
           <h2>DJSolitario</h2>
-          <p class="djidx-city">📍 Homestead</p>
+          <p class="djidx-city">📍 Homestead <span class="djidx-tag">DJ</span></p>
           <p class="djidx-bio">Luis Alfonso Uralde: Ritmo Global, Alma Cubana
 Con 45 años de vida y una trayectoria internacional invaluable, el DJ cubano Luis Alfonso Ura…</p>
+          <div class="djidx-cta">
+            <a class="djidx-btn djidx-btn--gold" href="./dj/djsolitario.html"><span class="djidx-lbl-es">Perfil Artístico</span><span class="djidx-lbl-en">Artist Profile</span></a>
+            <a class="djidx-btn djidx-btn--ghost" href="./rentals.html?utm_source=directorio&amp;intent=rent&amp;dj=djsolitario"><span class="djidx-lbl-es">Rentar este DJ</span><span class="djidx-lbl-en">Rent this DJ</span></a>
+          </div>
         </div>
-      </a>
-      <a class="djidx-card" href="./dj/djyuyo.html">
-        <img src="https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/avatars/da00bfbb-b227-4142-9874-ff52fade1cad/avatar.png" alt="DJYuyo" loading="lazy" />
+      </article>
+      <article class="djidx-strip">
+        <img class="djidx-strip__photo" src="https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/avatars/da00bfbb-b227-4142-9874-ff52fade1cad/avatar.png" alt="DJYuyo" loading="lazy" />
         <div>
           <h2>DJYuyo</h2>
-          <p class="djidx-city">📍 Hialeah</p>
+          <p class="djidx-city">📍 Hialeah <span class="djidx-tag">DJ</span></p>
           <p class="djidx-bio djidx-bio-es has-en">DJ Yuyo es un DJ &quot;Open Format&quot; radicado en Miami con más de dos décadas de experiencia dominando las pistas de baile. Nacido en Cuba y estab…</p>
           <p class="djidx-bio djidx-bio-en">DJ Yuyo is a Miami-based &quot;Open Format&quot; DJ with over two decades of experience dominating the dance floor. Born in Cuba and established in th…</p>
+          <div class="djidx-cta">
+            <a class="djidx-btn djidx-btn--gold" href="./dj/djyuyo.html"><span class="djidx-lbl-es">Perfil Artístico</span><span class="djidx-lbl-en">Artist Profile</span></a>
+            <a class="djidx-btn djidx-btn--ghost" href="./rentals.html?utm_source=directorio&amp;intent=rent&amp;dj=djyuyo"><span class="djidx-lbl-es">Rentar este DJ</span><span class="djidx-lbl-en">Rent this DJ</span></a>
+          </div>
         </div>
-      </a></div>
+      </article></div>
     </div>
   </main>
 
