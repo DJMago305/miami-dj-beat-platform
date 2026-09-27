@@ -7128,6 +7128,22 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
 
                     window.allCRMProfiles = allContacts;
                     renderCRM(window.allCRMProfiles);
+
+                    // Deep-link de ficha (2026-09-27, pedido del PO): ?network_open=
+                    // <fuente>:<id> abre directo el panel de ese contacto -- generado
+                    // por el botón "Copiar Enlace de Ficha" de más abajo. Busca en
+                    // allContacts (la lista completa, no _networkRowData -- esa está
+                    // filtrada por la pestaña/categoría activa, un contacto real puede
+                    // no estar en la vista por defecto) para que funcione sin importar
+                    // en qué pestaña haya quedado el contacto. Solo una vez al cargar.
+                    try {
+                        const _openParam = new URLSearchParams(location.search).get('network_open');
+                        if (_openParam) {
+                            const [_fuenteWanted, _idWanted] = _openParam.split(':');
+                            const _match = allContacts.find(c => _networkFuenteDe(c) === _fuenteWanted && String(c.id) === _idWanted);
+                            if (_match) window.openNetworkEditPanel(_match);
+                        }
+                    } catch (eOpen) { void eOpen; }
                 } catch(e) {
                     document.getElementById('crm-container').innerHTML = `<p style="color:red;">Error cargando CRM: ${e.message}</p>`;
                 }
@@ -8462,6 +8478,24 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     ${actionBtn(rawPhone ? `https://wa.me/${rawPhone.replace(/^\+/, '')}` : '', ICO_MESSAGE, 'WhatsApp', 'rgba(37,153,64,0.35)', 'rgba(74,222,128,0.5)', '#4ade80')}
                 </div>`;
 
+                // Copiar enlace de ficha (2026-09-27, pedido del PO): un vendedor que
+                // no puede atender a un contacto se lo comparte a otro por el mismo
+                // canal (WhatsApp/mensaje/correo) -- copia y pega, no un botón de envío
+                // por canal (mismo enfoque ya decidido para "Pedir Reseña" en
+                // staff-agenda.html). El enlace abre este mismo Network con la ficha
+                // YA seleccionada (?network_open=<fuente>:<id>, leído una vez al cargar
+                // la página, ver más abajo). Mismo patrón de copiar+confirmar ya usado
+                // en esta página (botón "Copiar link" del modal de activación, arriba
+                // en este archivo) -- textContent cambia a "✓ Copiado" 2s, sin alert().
+                const fichaLink = `https://www.miamidjbeat.com/staff-admin.html?network_open=${encodeURIComponent(fuente + ':' + p.id)}`;
+                const fichaLinkEsc = fichaLink.replace(/'/g, "\\'");
+                const copyFichaHtml = `<div style="text-align:center; margin:-10px 0 20px;">
+                    <button onclick="navigator.clipboard.writeText('${fichaLinkEsc}');this.textContent='✓ Copiado';setTimeout(function(){this.textContent='🔗 Copiar Enlace de Ficha (para otro vendedor)';}.bind(this),2000);"
+                        style="background:rgba(197,160,89,0.12); border:1px solid rgba(197,160,89,0.35); color:var(--gold); border-radius:20px; padding:6px 14px; font-size:11px; font-weight:800; cursor:pointer;">
+                        🔗 Copiar Enlace de Ficha (para otro vendedor)
+                    </button>
+                </div>`;
+
                 // 2026-09-19, corrección del PO: "la sección de carrusel para el
                 // cumpleaños no me gusta, prefiero el de las casillas con listas
                 // desplegables para seleccionar día, mes y año" -- se reemplaza el
@@ -8581,6 +8615,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         })()}
                         <div style="margin-bottom:16px;"></div>
                         ${quickActionsHtml}
+                        ${copyFichaHtml}
 
                         <div style="text-align:left;">
                             <div style="margin-bottom:14px;">
