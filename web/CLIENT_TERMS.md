@@ -1,5 +1,7 @@
 # MIAMI DJ BEAT PLATFORM — CLIENT TERMS & CONDITIONS
 
+Last Updated: April 10, 2026
+
 These Client Terms & Conditions (the "Terms") govern the access and use of the Miami DJ Beat Platform ("Platform") by individuals or entities seeking to book DJ services ("Clients"). By paying a deposit or using the Platform, you agree to be bound by these Terms.
 
 ## 1. PLATFORM ROLE
