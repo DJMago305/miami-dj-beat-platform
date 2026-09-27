@@ -21,13 +21,27 @@
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"ItemList","itemListElement":[{"@type":"ListItem","position":1,"url":"https://www.miamidjbeat.com/dj/djmago305.html","name":"DJMago305"},{"@type":"ListItem","position":2,"url":"https://www.miamidjbeat.com/dj/djsolitario.html","name":"DJSolitario"},{"@type":"ListItem","position":3,"url":"https://www.miamidjbeat.com/dj/djyuyo.html","name":"DJYuyo"}]}</script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Outfit:wght@300;400;500;600;700&display=optional" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Outfit:wght@300;400;500;600;700&display=optional" rel="stylesheet" />
   <link rel="stylesheet" href="./styles.css?v=20260904-dj-profiles" />
   <link rel="stylesheet" href="./header-unified.css?v=20260902-cortinas" />
   <link rel="stylesheet" href="./mdj-assistant.css?v=20260306-1" />
   <style>
-    .djidx-wrap{max-width:900px;margin:40px auto 100px;padding:0 20px;}
-    .djidx-wrap h1{font-family:"Cormorant Garamond",serif;color:#c5a059;font-size:2.4rem;margin-bottom:6px;}
+    /* HERO DE VIDEO (2026-09-27, pedido del PO -- "un hero como las otras
+       páginas que luzca como las otras páginas"): esta página nunca tuvo el
+       hero de video de pantalla completa que sí tienen weddings.html/
+       rentals.html/club-dj.html -- solo un encabezado de texto plano desde
+       su creación original. Mismo patrón que esas páginas: video real fijo
+       detrás (hero-kb-bg), contenido en flujo normal encima (scrollea sobre
+       el video fijo). Arranca con el video de club-dj.html (pedido
+       explícito del PO) y rota por los 7 videos reales de servicios de DJ
+       ya en producción (mismo mecanismo data-hero-playlist que
+       seasonal-parties.html: un solo <video>, un clip a la vez, cambia al
+       terminar el actual -- nunca carga varios en paralelo). */
+    .djidx-hero-copy{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;justify-content:center;text-align:center;max-width:720px;margin:0 auto 50px;}
+    .djidx-hero-copy h1{font-family:'Playfair Display',serif;text-transform:uppercase;text-wrap:balance;overflow-wrap:normal;word-break:keep-all;font-size:clamp(1.7rem,6.5vw,3.6rem);font-weight:600;color:#fff;margin:0 0 18px;line-height:1.08;text-shadow:0 4px 15px rgba(0,0,0,0.8);}
+    .djidx-hero-copy p{font-size:1.05rem;line-height:1.65;color:rgba(255,255,255,0.8);margin:0 auto;max-width:56ch;font-weight:400;}
+
+    .djidx-wrap{max-width:900px;margin:0 auto 100px;padding:0 20px;}
     .djidx-wrap>p{color:rgba(255,255,255,0.65);margin-bottom:28px;}
 
     /* HERO APILADO (2026-09-27, pedido del PO -- "las dos" páginas con el
@@ -167,10 +181,21 @@
     </div>
   </header>
 
-  <main>
-    <div class="djidx-wrap">
+    <video id="directorio-hero-kb-bg" class="hero-shell-video hero-kb-bg" autoplay muted playsinline preload="metadata"
+        poster="./assets/club-dj/fotos/club-dj-hero-poster.jpg"
+        style="position: fixed; inset: 0; z-index: 1; pointer-events: none; width: 100%; height: 100%; object-fit: cover; opacity: 1; filter: brightness(0.65);"
+        data-hero-playlist="./assets/club-dj/videos/club-dj-hero.mp4,./assets/weddings/videos/weddings-hero.mp4,./assets/quinceanera/videos/quinceanera-hero.mp4,./assets/corporate/videos/porsche-north-miami-hero.mp4,./assets/latin-dj/videos/clubs-nightlife-hero.mp4,./assets/hora-loca/hora-loca-hero.mp4,./assets/mc-dj/videos/mc-host-hero.mp4">
+        <source data-src="./assets/club-dj/videos/club-dj-hero.mp4" type="video/mp4">
+    </video>
+    <div class="hero-video-overlay"
+        style="position: fixed; inset: 0; z-index: 3; pointer-events: none; background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.8) 100%);"></div>
+
+  <main class="container" style="padding: 100px 18px; position: relative; z-index: 10;">
+    <div class="djidx-hero-copy">
       <h1 data-i18n="djidx-h1">Directorio de DJs</h1>
       <p data-i18n="djidx-p1">DJs profesionales de Miami DJ Beat, con disponibilidad real y reserva directa.</p>
+    </div>
+    <div class="djidx-wrap">
       <p style="font-size:14px;color:rgba(255,255,255,0.6);"><span data-i18n="djidx-p2a">¿Buscas por disponibilidad, ciudad o especialidad? </span><a href="../find-dj.html" style="color:var(--gold);" data-i18n="djidx-p2b">Explora todos los DJs de la plataforma</a><span data-i18n="djidx-p2c"> · ¿Quieres verificar una credencial? </span><a href="../directory.html" style="color:var(--gold);" data-i18n="djidx-p2d">Directorio de certificación</a></p>
       <div class="djidx-strip-list">
       <article class="djidx-strip">
@@ -250,6 +275,64 @@ Con 45 años de vida y una trayectoria internacional invaluable, el DJ cubano Lu
   <script src="./mdjb-shared-header.js?v=20260921-jobs-menu"></script>
   <script src="./mdj-mainnav-infinite.js?v=20260904-dj-profiles"></script>
   <script src="./mdj-mobile-header-fix.js?v=20260904-dj-profiles"></script>
+    <script>
+    (function () {
+        function kick() {
+            var v = document.getElementById('directorio-hero-kb-bg');
+            if (!v) return;
+            function attemptPlay() {
+                var p = v.play();
+                if (p && p.catch) {
+                    p.catch(function () {
+                        setTimeout(function () { v.play().catch(function () {}); }, 250);
+                    });
+                }
+            }
+            /* Red de seguridad ya existente en supabase-config.js: si el
+               IntersectionObserver que resuelve <source data-src> aún no le
+               tocó el turno (pestaña recién abierta, throttling del navegador),
+               esto resuelve el src real de inmediato en vez de esperarlo. */
+            if (typeof window.mdjEnsureVideoResolved === 'function') window.mdjEnsureVideoResolved(v);
+            try { v.load(); attemptPlay(); } catch (e) { /* noop */ }
+            var mdjHeroRetries = 0;
+            v.addEventListener('pause', function () {
+                if (!document.hidden && document.hasFocus() && mdjHeroRetries < 3) {
+                    mdjHeroRetries++;
+                    attemptPlay();
+                }
+            });
+            document.addEventListener('visibilitychange', function () {
+                if (!document.hidden) { mdjHeroRetries = 0; attemptPlay(); }
+            });
+            window.addEventListener('focus', function () { mdjHeroRetries = 0; attemptPlay(); });
+
+            /* Serie de vídeo del hero (mismo mecanismo que seasonal-parties.html):
+               cuando el clip activo termina, pasa al siguiente de
+               data-hero-playlist -- mismo <video>, un solo clip cargado a la
+               vez, nada dispara por scroll ni carga varios en paralelo. */
+            var playlistAttr = v.getAttribute('data-hero-playlist');
+            if (playlistAttr) {
+                var playlist = playlistAttr.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+                if (playlist.length > 1) {
+                    var idx = 0;
+                    v.addEventListener('ended', function () {
+                        idx = (idx + 1) % playlist.length;
+                        var next = playlist[idx];
+                        var resolved = typeof window.resolveMdAssetPublicUrl === 'function' ? window.resolveMdAssetPublicUrl(next) : next;
+                        v.src = resolved;
+                        v.load();
+                        attemptPlay();
+                    });
+                }
+            }
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', kick);
+        } else {
+            kick();
+        }
+    })();
+    </script>
 
 </body>
 </html>
