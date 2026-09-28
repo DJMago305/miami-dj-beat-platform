@@ -2186,6 +2186,12 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                   <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>
                   Venues
                 </a>
+                <!-- Owner-only: Tarifas de Comisiones (igual que #content, el gestor de precios) -->
+                <a href="#commission-rules" id="sidebar-commission-rules" class="side-link" onclick="loadCommissionRules()"
+                   style="display:none;align-items:center;gap:9px;color:#c5a059;border-left:2px solid rgba(197,160,89,0.35);">
+                  <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                  Tarifas de Comisiones
+                </a>
                 <!-- Owner-only: Promociones -->
                 <a href="./documents/campaign-center.html" id="sidebar-promociones" class="side-link"
                    style="display:none;align-items:center;gap:9px;color:#c5a059;border-left:2px solid rgba(197,160,89,0.35);">
@@ -2841,6 +2847,57 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                         </div>
                     </div>
 
+                </div>
+
+                <!-- Owner-only: Tarifas del Motor de Comisiones (commission_rules) -->
+                <div class="admin-card" id="commission-rules" style="display:none;">
+                    <h3 style="margin-top:0;">💰 Tarifas del Motor de Comisiones</h3>
+                    <p class="fineprint">Precio de lista, pago al DJ y reparto vendedor/empresa por tier. Guardar un cambio crea una versión nueva y cierra la anterior -- nunca se sobreescribe una tarifa que ya se usó en una venta real.</p>
+
+                    <div class="mdj-venue-form-card">
+                        <strong style="display:block;margin-bottom:14px;font-size:15px;">+ Nuevo tier</strong>
+                        <div class="mdj-venue-form-grid">
+                            <div>
+                                <label for="cr-new-key">Clave del tier (tier_key)</label>
+                                <input type="text" id="cr-new-key" placeholder="ej. paquete_800">
+                            </div>
+                            <div>
+                                <label for="cr-new-precio">Precio de lista (USD)</label>
+                                <input type="number" id="cr-new-precio" class="price-input" step="0.01" min="0" placeholder="0.00">
+                            </div>
+                            <div>
+                                <label for="cr-new-pagodj">Pago al DJ (USD)</label>
+                                <input type="number" id="cr-new-pagodj" class="price-input" step="0.01" min="0" placeholder="0.00">
+                            </div>
+                            <div>
+                                <label for="cr-new-comref">Comisión de referido (USD)</label>
+                                <input type="number" id="cr-new-comref" class="price-input" step="0.01" min="0" value="0">
+                            </div>
+                            <div>
+                                <label for="cr-new-desc">Descuento primera vez (USD)</label>
+                                <input type="number" id="cr-new-desc" class="price-input" step="0.01" min="0" value="0">
+                            </div>
+                            <div>
+                                <label for="cr-new-cuota">Cuota fija empresa (USD)</label>
+                                <input type="number" id="cr-new-cuota" class="price-input" step="0.01" min="0" placeholder="vacío = usa el % de abajo">
+                            </div>
+                            <div>
+                                <label for="cr-new-split">% vendedor si no hay cuota fija</label>
+                                <input type="number" id="cr-new-split" class="price-input" step="0.01" min="0" max="1" placeholder="ej. 0.5">
+                            </div>
+                            <div>
+                                <label for="cr-new-tax">Tasa de impuesto</label>
+                                <input type="number" id="cr-new-tax" class="price-input" step="0.0001" min="0" max="1" value="0.07">
+                            </div>
+                            <div style="grid-column:1/-1;">
+                                <label for="cr-new-notas">Notas</label>
+                                <input type="text" id="cr-new-notas" placeholder="Contexto, ejemplo confirmado, etc.">
+                            </div>
+                        </div>
+                        <button class="btn primary" style="margin-top:14px;" onclick="mdjCreateCommissionRule()">+ Agregar tier</button>
+                    </div>
+
+                    <div id="commission-rules-list" style="margin-top:20px;">Cargando tarifas…</div>
                 </div>
 
                 <!-- MDJPRO — separado de #content (antes vivía escondido al final del catálogo de
@@ -5097,10 +5154,12 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     const promLink = document.getElementById('sidebar-promociones');
                     const mdjDlLink = document.getElementById('sidebar-mdjpro-downloads');
                     const adminCertsLink = document.getElementById('registry-admin-certs-link');
+                    const commRulesLink = document.getElementById('sidebar-commission-rules');
                     window._mdjAdminRole = rn;
                     if (cpLink)   cpLink.style.display   = (rn === 'owner') ? 'flex' : 'none';
                     if (promLink) promLink.style.display  = (rn === 'owner') ? 'flex' : 'none';
                     if (mdjDlLink) mdjDlLink.style.display = (rn === 'owner') ? 'flex' : 'none';
+                    if (commRulesLink) commRulesLink.style.display = (rn === 'owner') ? 'flex' : 'none';
                     /* mdjpro-downloads-panel NO se toca aquí: su visibilidad ya la maneja
                        el router de pestañas (handleHashNavigation) cuando se hace click en
                        el link de arriba -- forzar 'block' aquí lo dejaba pegado debajo de
@@ -5115,7 +5174,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     if (window.userRole === 'SALES_STAFF') {
                         roleBadge.textContent = "Acceso: Equipo de Ventas (seller) — Producción incluida (cotización / alta de cliente Mi Portal)";
                         // Hide sensitive sections (manager/admin only); sellers keep Leads, CRM, DJs, registry, Producción
-                        const itemsToHide = ['content', 'analytics', 'apps', 'staff', 'registry-section', 'mdjpro-downloads-panel', 'site-media'];
+                        const itemsToHide = ['content', 'analytics', 'apps', 'staff', 'registry-section', 'mdjpro-downloads-panel', 'site-media', 'commission-rules'];
                         itemsToHide.forEach(id => {
                             const el = document.getElementById(id);
                             if (el) el.style.display = 'none';
@@ -5138,6 +5197,9 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                             pricingManager.previousElementSibling.style.display = 'none'; // Hide description
                             pricingManager.previousElementSibling.previousElementSibling.style.display = 'none'; // Hide title and button
                         }
+                        // Tarifas de Comisiones: mismo trato que el gestor de precios, solo Owner.
+                        const commRulesCard = document.getElementById('commission-rules');
+                        if (commRulesCard) commRulesCard.style.display = 'none';
                     } else {
                         roleBadge.textContent = "Acceso: Super Admin (Full Control)";
                     }
@@ -8885,6 +8947,117 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 if (error) { alert('❌ Error: ' + error.message); return; }
                 alert('✅ Actualizado.');
                 loadVenues();
+            };
+
+            // Tarifas del Motor de Comisiones (commission_rules) -- mismo patron que Venues:
+            // escritura directa via supabase.from(...), sin RPC intermedia (RLS
+            // commission_rules_owner_write ya restringe a owner/admin). A diferencia de
+            // Venues, "guardar" NUNCA hace update en la fila vigente -- commission_rules es
+            // una tabla versionable a proposito (effective_from/effective_to), asi que
+            // guardar cierra la fila actual y crea una nueva version, para no perder el
+            // historial de que tarifa aplico a que venta.
+            window.loadCommissionRules = async function() {
+                const db = window.getSupabaseClient();
+                if (!db) return;
+                const listEl = document.getElementById('commission-rules-list');
+                const { data, error } = await db.from('commission_rules').select('*').is('effective_to', null).order('tier_key', { ascending: true });
+                if (error) { listEl.textContent = 'Error: ' + error.message; return; }
+                mdjRenderCommissionRulesList(data || []);
+            };
+
+            function mdjCommRuleNum(id) {
+                const el = document.getElementById(id);
+                if (!el || el.value === '') return null;
+                return parseFloat(el.value);
+            }
+
+            function mdjRenderCommissionRulesList(rules) {
+                const listEl = document.getElementById('commission-rules-list');
+                if (!rules.length) { listEl.innerHTML = '<p class="fineprint">Sin tarifas todavía.</p>'; return; }
+                listEl.innerHTML = rules.map(r => `
+                    <div class="mdj-venue-card">
+                        <div class="mdj-venue-card-head" style="display:block;">
+                            <strong style="font-size:16px;">${r.tier_key}</strong>
+                            <span class="mdj-venue-badge">vigente desde ${new Date(r.effective_from).toLocaleDateString()}</span>
+                            <div class="mdj-venue-form-grid" style="margin-top:14px;">
+                                <div><label>Precio de lista (USD)</label><input type="number" class="price-input" id="cr-precio-${r.id}" step="0.01" min="0" value="${r.precio_lista_usd ?? ''}"></div>
+                                <div><label>Pago al DJ (USD)</label><input type="number" class="price-input" id="cr-pagodj-${r.id}" step="0.01" min="0" value="${r.pago_dj_usd ?? ''}"></div>
+                                <div><label>Comisión de referido (USD)</label><input type="number" class="price-input" id="cr-comref-${r.id}" step="0.01" min="0" value="${r.comision_referido_dj_usd ?? 0}"></div>
+                                <div><label>Descuento primera vez (USD)</label><input type="number" class="price-input" id="cr-desc-${r.id}" step="0.01" min="0" value="${r.descuento_primera_vez_usd ?? 0}"></div>
+                                <div><label>Cuota fija empresa (USD)</label><input type="number" class="price-input" id="cr-cuota-${r.id}" step="0.01" min="0" value="${r.cuota_empresa_usd ?? ''}"></div>
+                                <div><label>% vendedor si no hay cuota fija</label><input type="number" class="price-input" id="cr-split-${r.id}" step="0.01" min="0" max="1" value="${r.split_vendedor_pct ?? ''}"></div>
+                                <div><label>Tasa de impuesto</label><input type="number" class="price-input" id="cr-tax-${r.id}" step="0.0001" min="0" max="1" value="${r.tax_rate ?? 0.07}"></div>
+                                <div style="grid-column:1/-1;"><label>Notas</label><input type="text" id="cr-notas-${r.id}" value="${(r.notas || '').replace(/"/g, '&quot;')}"></div>
+                            </div>
+                            <div class="mdj-venue-actions" style="margin-top:14px;">
+                                ${mdjTile('pencil', 'Guardar (nueva versión)', `mdjSaveCommissionRule('${r.id}','${r.tier_key}')`)}
+                                ${mdjTile('trash', 'Retirar tier', `mdjRetireCommissionRule('${r.id}','${r.tier_key}')`, true)}
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            window.mdjCreateCommissionRule = async function() {
+                const db = window.getSupabaseClient();
+                if (!db) return;
+                const keyRaw = document.getElementById('cr-new-key').value.trim();
+                if (!keyRaw) { alert('❌ Falta la clave del tier (tier_key).'); return; }
+                const key = mdjSlugify(keyRaw).replace(/-/g, '_');
+                const { error } = await db.from('commission_rules').insert({
+                    tier_key: key,
+                    precio_lista_usd: mdjCommRuleNum('cr-new-precio'),
+                    pago_dj_usd: mdjCommRuleNum('cr-new-pagodj'),
+                    comision_referido_dj_usd: mdjCommRuleNum('cr-new-comref') ?? 0,
+                    descuento_primera_vez_usd: mdjCommRuleNum('cr-new-desc') ?? 0,
+                    cuota_empresa_usd: mdjCommRuleNum('cr-new-cuota'),
+                    split_vendedor_pct: mdjCommRuleNum('cr-new-split'),
+                    tax_rate: mdjCommRuleNum('cr-new-tax') ?? 0.07,
+                    notas: document.getElementById('cr-new-notas').value.trim() || null,
+                });
+                if (error) { alert('❌ Error: ' + error.message); return; }
+                ['cr-new-key', 'cr-new-precio', 'cr-new-pagodj', 'cr-new-cuota', 'cr-new-split', 'cr-new-notas'].forEach(id => document.getElementById(id).value = '');
+                document.getElementById('cr-new-comref').value = '0';
+                document.getElementById('cr-new-desc').value = '0';
+                document.getElementById('cr-new-tax').value = '0.07';
+                alert('✅ Tier creado.');
+                loadCommissionRules();
+            };
+
+            window.mdjSaveCommissionRule = async function(id, tierKey) {
+                if (!confirm(`Esto crea una NUEVA versión de la tarifa "${tierKey}" y cierra la actual (el historial se conserva, nunca se sobreescribe). ¿Continuar?`)) return;
+                const db = window.getSupabaseClient();
+                if (!db) return;
+                const nuevaFila = {
+                    tier_key: tierKey,
+                    precio_lista_usd: mdjCommRuleNum('cr-precio-' + id),
+                    pago_dj_usd: mdjCommRuleNum('cr-pagodj-' + id),
+                    comision_referido_dj_usd: mdjCommRuleNum('cr-comref-' + id) ?? 0,
+                    descuento_primera_vez_usd: mdjCommRuleNum('cr-desc-' + id) ?? 0,
+                    cuota_empresa_usd: mdjCommRuleNum('cr-cuota-' + id),
+                    split_vendedor_pct: mdjCommRuleNum('cr-split-' + id),
+                    tax_rate: mdjCommRuleNum('cr-tax-' + id) ?? 0.07,
+                    notas: document.getElementById('cr-notas-' + id).value.trim() || null,
+                };
+                const cierre = await db.from('commission_rules').update({ effective_to: new Date().toISOString() }).eq('id', id);
+                if (cierre.error) { alert('❌ Error cerrando la tarifa anterior: ' + cierre.error.message); return; }
+                const alta = await db.from('commission_rules').insert(nuevaFila);
+                if (alta.error) {
+                    alert('⚠️ La tarifa anterior quedó cerrada pero la nueva NO se pudo crear -- ' + alta.error.message + '. Este tier quedó SIN tarifa activa, corrígelo ahora mismo.');
+                    loadCommissionRules();
+                    return;
+                }
+                alert('✅ Nueva versión guardada.');
+                loadCommissionRules();
+            };
+
+            window.mdjRetireCommissionRule = async function(id, tierKey) {
+                if (!confirm(`¿Retirar la tarifa "${tierKey}"? Deja de aplicar a ventas nuevas -- el historial se conserva.`)) return;
+                const db = window.getSupabaseClient();
+                if (!db) return;
+                const { error } = await db.from('commission_rules').update({ effective_to: new Date().toISOString() }).eq('id', id);
+                if (error) { alert('❌ Error: ' + error.message); return; }
+                loadCommissionRules();
             };
 
             window.mdjDeleteVenue = async function(id) {
