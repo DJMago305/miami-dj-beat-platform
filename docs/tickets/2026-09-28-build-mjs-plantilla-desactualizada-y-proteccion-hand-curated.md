@@ -1,5 +1,5 @@
 # TICKET — `tools/dj-profiles/build.mjs`: plantilla desactualizada + sin protección de contenido hand-curated
-Creado 2026-09-28, tras la primera auditoría real de este generador en meses (item pendiente de la lista maestra: "nunca se dejó seguro para volver a correrlo"). Estado: **investigado a fondo, corrida real de prueba revertida, sin construir el fix — documentado para decidir alcance.**
+Creado 2026-09-28, tras la primera auditoría real de este generador en meses (item pendiente de la lista maestra: "nunca se dejó seguro para volver a correrlo"). Estado: **RESUELTO Y CONSTRUIDO (2026-09-28)** — ver sección final.
 
 ## Qué se hizo hoy (sin dañar nada, todo revertido)
 1. Se leyó el archivo completo (1233 líneas) — tiene una cantidad enorme de blindaje **estructural** ya construido: 20 "Correcciones" documentadas (aborto ante colisión de slug, roster vacío, ancla de identidad de `djmago305` protegida contra borrado automático, JSON-LD escapado contra inyección, manifiesto de slugs para distinguir rename de baja real, `seo_publish_status` como compuerta editorial estricta).
@@ -24,10 +24,21 @@ La corrida real dañó 5 archivos existentes:
 ## Qué queda ganado de hoy (real, verificado, listo para commitear aparte)
 - El fix de `PERSON_IDENTITY.owner` (sin `alternateName`) + la restauración de `jobTitle`/`image`/`worksFor` en `equipo.html` — 22/22 pruebas en verde. Esto es independiente del resto del ticket y seguro de fusionar ya.
 
-## Qué falta para que el generador sea seguro de correr de verdad (sin construir todavía, a la espera de decisión de alcance)
-1. **Refrescar `HEADER_HTML`/`FOOTER_AND_SCRIPTS_HTML`** copiándolos de una página real actual (mismo método que ya usa el archivo — "copiados literales", no inventar nada nuevo), incluyendo `mdj-lang-boot.js` y las versiones de cache-bust vigentes.
-2. **Decidir una estrategia de protección de contenido hand-curated** antes de tocar `directorio.html`/`equipo.html`/cualquier perfil ya vivo. Opciones sin decidir: (a) un marcador explícito tipo `<!-- MDJB-GENERATED: NO EDITAR A MANO -->` que el generador exige encontrar intacto antes de sobrescribir — si no lo encuentra, trata el archivo como ajeno (`[SKIP-UNOWNED]`), igual que ya hace con archivos que no reconoce; (b) sacar `directorio.html`/`equipo.html` del alcance del generador por completo y dejar que siga generando SOLO páginas individuales nuevas de DJ (`web/dj/<slug>.html`), nunca las páginas compartidas; (c) otra dirección que decida el PO.
-3. Las etiquetas de especialidad "ricas" (Wedding, Resident, Warm-Up, etc.) de `djmago305.html` — investigar de dónde salieron esas 8 originalmente (¿un campo real que el fetch de `FETCH_COLUMNS` no está trayendo, o edición manual directa en el HTML?) antes de decidir si el generador debe reproducirlas o si son legítimamente hand-curated y quedan fuera de su alcance para siempre.
+## RESUELTO (2026-09-28) — construido, probado, verificado contra producción real
 
-## Recomendación (sin construir, a la espera de orden del PO)
-No volver a correr `build.mjs` sin `--dry-run` hasta resolver los puntos 1-2 de arriba. El modo `--dry-run` sigue siendo seguro de usar en cualquier momento (cero escrituras, ya verificado dos veces hoy).
+**1. Plantilla refrescada.** `HEADER_HTML`/`FOOTER_AND_SCRIPTS_HTML` y el `<head>` de las 3 funciones de render (`renderPage`/`renderIndexPage`/`renderTeamPage`) ahora incluyen `<script src="/js/mdj-lang-boot.js?v=20260927-boot">` (copiado literal de `web/dj/djmago305.html` real) y los cache-busts vigentes de `mdj-identity.js`/`auth.js`/`mdjb-shared-header.js` (`?v=20260921-*`, antes `?v=20260904-dj-profiles`). Documentado en el propio código que estos valores no se autoactualizan — quien vuelva a tocar el generador debe re-copiarlos de una página real.
+
+**2. Protección de contenido hand-curated — dirección elegida: (b), sacar las páginas compartidas del alcance del generador por completo.** Rediseño real del `main()`:
+- El generador **solo crea** páginas de perfil que **no existen todavía en disco** (`plan.create`) — nada que perder ahí.
+- **Nunca vuelve a escribir** un perfil que ya existe (`plan.keep`), sin importar cuánto haya cambiado la fila en la base desde la última corrida.
+- **`directorio.html` y `equipo.html` quedan permanentemente fuera del alcance de escritura automática** — el generador nunca los toca. En vez de escribirlos, imprime un aviso de "ACCIÓN MANUAL REQUERIDA" con la lista exacta de slugs nuevos que hay que agregar a mano.
+- El borrado (`--reconcile`) sigue intacto — sigue siendo seguro porque solo borra páginas de perfil individuales que el propio generador creó y cuyo DJ ya no está en el roster, nunca páginas compartidas.
+
+**3. Etiquetas "ricas" de `djmago305.html` — investigado.** Confirmado por SQL directo: `dj_profiles` no tiene ninguna columna de tags (`information_schema.columns` sin resultados para `%tag%`). Las 8 etiquetas (Wedding, Resident, Warm-Up, Club, Luxury Events, Radio...) son 100% hand-curated, sin respaldo en la base — no es un campo que falte en `FETCH_COLUMNS`, es contenido editado a mano legítimo. Con el rediseño del punto 2, `djmago305.html` nunca se vuelve a reescribir, así que esas etiquetas quedan protegidas automáticamente.
+
+**Verificación:**
+- Test suite: **23/23 en verde** (se agregó la prueba 23, que corre el generador en modo REAL — sin `--dry-run` — contra un scratch temporal vía `MDJB_OUTPUT_DIR`, con un perfil marcado como "ya existente" + `directorio.html`/`equipo.html` con contenido hand-curated sintético, y confirma que ninguno de los tres se toca, mientras que perfiles genuinamente nuevos sí se crean).
+- Corrida real contra producción (`MDJB_ENV=PROD`, `MDJB_OUTPUT_DIR=/tmp/...`, sin tocar `web/`): las 5 páginas correctas (djmago305, dj-ary, djsolitario, djyuyo, julito-dj-pmm) se listaron como `CREATE` porque el scratch estaba vacío — comportamiento esperado y correcto para esa validación aislada. La página nueva (`dj-ary.html`) confirmó traer `mdj-lang-boot.js` y los cache-busts vigentes.
+- `web/assets/lighting/` (hallazgo aparte, encontrado durante esta misma auditoría): NO se toca — el PO confirmó que esas fotos están reservadas para una futura página de renta de equipos, ver `project_lighting_assets_reserved_for_rental_zone` en memoria.
+
+**Pendiente real, fuera de este ticket**: la próxima vez que se quiera publicar `web/dj/dj-ary.html`/`julito-dj-pmm.html` de verdad, hay que (a) correr el generador real apuntando a `web/` (ya seguro), y (b) agregar a mano el enlace/tarjeta correspondiente en `directorio.html` — el generador avisa cuáles faltan, no los agrega solo.
