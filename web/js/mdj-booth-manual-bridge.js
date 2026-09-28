@@ -1,5 +1,5 @@
 /**
- * BOOTH-MANUAL-016 — Manual interactivo MDJPRO: contexto de página + identidad ligera para Booth.
+ * BOOTH-MANUAL-016 — Manual interactivo MDJPRO: contexto de página + identidad ligera para Margi.
  * Solo activo en /manuals/MDJPRO_Manual/{lang}/index.html
  */
 (function () {
