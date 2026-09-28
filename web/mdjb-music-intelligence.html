@@ -225,6 +225,41 @@
   .home-shell{display:flex;align-items:stretch;gap:0;min-height:60vh;margin:-22px -26px;}
   #mi-cockpit .crate-rail{width:280px;flex:none;position:relative;border-right:1px solid var(--border);padding:14px 6px;overflow-y:auto;background:var(--bg-elevated);}
   #mi-cockpit .crate-rail-label{font-family:var(--font-body);font-weight:700;font-size:10px;letter-spacing:.12em;color:var(--text-faint);text-transform:uppercase;padding:4px 10px 10px;}
+  #mi-cockpit .rail-toolbar{position:relative;display:flex;align-items:center;gap:6px;padding:8px 8px 10px;border-bottom:1px solid var(--border);margin-bottom:8px;}
+  #mi-cockpit .rail-tool-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--border-strong);background:var(--surface-2);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;}
+  #mi-cockpit .rail-tool-btn.disabled{opacity:.4;cursor:default;}
+  #mi-cockpit .rail-tool-icon{width:15px;height:15px;display:flex;}
+  #mi-cockpit .rail-tool-icon.crate-yellow .icon{color:var(--gold);}
+  #mi-cockpit .rail-tool-icon.crate-blue .icon{color:#5aa3d8;}
+  #mi-cockpit .rail-search{flex:1;min-width:0;}
+  #mi-cockpit .rail-search input{width:100%;background:var(--surface-2);border:1px solid var(--border-strong);border-radius:6px;color:var(--text);font-size:11.5px;padding:6px 8px;}
+  #mi-cockpit .rail-new-popover{position:absolute;top:34px;left:8px;z-index:20;background:var(--bg-elevated);border:1px solid var(--border-strong);border-radius:8px;box-shadow:0 8px 20px rgba(0,0,0,.5);overflow:hidden;}
+  #mi-cockpit .rail-new-popover button{display:block;width:120px;text-align:left;padding:8px 12px;background:none;border:none;color:var(--text);font-size:12px;cursor:pointer;}
+  #mi-cockpit .rail-new-popover button:hover{background:var(--surface-2);}
+  #mi-cockpit .rail-new-popover button:disabled{color:var(--text-faint);cursor:default;}
+  #mi-cockpit .rail-new-popover button:disabled:hover{background:none;}
+  #mi-cockpit .crate-item.selected{background:var(--gold-wash);}
+  #mi-cockpit .crate-icon.smart .icon{color:#5aa3d8;}
+  #mi-cockpit .crate-edit-smart{margin-left:auto;flex:none;width:20px;height:20px;border:none;background:none;color:var(--text-faint);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  #mi-cockpit .crate-edit-smart:hover{color:var(--text);}
+  #mi-cockpit .crate-edit-smart .icon{width:13px;height:13px;}
+  #mi-cockpit .smart-modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;display:flex;align-items:center;justify-content:center;}
+  #mi-cockpit .smart-modal{width:420px;max-width:92vw;background:var(--bg-elevated);border:1px solid var(--border-strong);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:12px;}
+  #mi-cockpit .smart-modal-head{display:flex;gap:8px;}
+  #mi-cockpit .smart-modal-head input{flex:1;background:var(--surface-2);border:1px solid var(--border-strong);border-radius:6px;color:var(--text);padding:8px 10px;font-size:13px;}
+  #mi-cockpit .smart-modal-head select{flex:none;width:110px;background:var(--surface-2);border:1px solid var(--border-strong);border-radius:6px;color:var(--text);font-size:11.5px;padding:8px;}
+  #mi-cockpit .smart-rules{display:flex;flex-direction:column;gap:6px;max-height:240px;overflow-y:auto;}
+  #mi-cockpit .smart-rule-row{display:flex;gap:6px;align-items:center;}
+  #mi-cockpit .smart-rule-row select, #mi-cockpit .smart-rule-row input{background:var(--surface-2);border:1px solid var(--border-strong);border-radius:6px;color:var(--text);font-size:11.5px;padding:6px 8px;}
+  #mi-cockpit .smart-rule-row .smart-field{flex:1;}
+  #mi-cockpit .smart-rule-row .smart-cond{flex:1.3;}
+  #mi-cockpit .smart-rule-row .smart-value{flex:1.4;min-width:0;}
+  #mi-cockpit .smart-remove-rule{flex:none;width:26px;height:26px;border:none;background:none;color:var(--text-faint);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  #mi-cockpit .smart-remove-rule:hover{color:var(--critical,#d16060);}
+  #mi-cockpit .smart-remove-rule .icon{width:13px;height:13px;}
+  #mi-cockpit .smart-modal-foot{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);padding-top:12px;}
+  #mi-cockpit .smart-live{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-dim);}
+  #mi-cockpit .smart-modal-actions{display:flex;gap:8px;}
   #mi-cockpit .crate-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:var(--radius-sm);cursor:pointer;color:var(--text);font-size:13px;font-weight:600;}
   #mi-cockpit .crate-item:hover{background:var(--surface-2);}
   #mi-cockpit .crate-item.disabled{color:var(--text-faint);cursor:default;opacity:.5;}
@@ -245,6 +280,16 @@
   #mi-cockpit .crate-content-head{color:var(--text-dim);font-size:11.5px;margin-bottom:10px;}
   #mi-cockpit .crate-content-loading{color:var(--text-faint);font-size:12.5px;padding:40px;text-align:center;}
   #mi-cockpit .crate-bridge-error{color:var(--critical, #d16060);font-size:10.5px;padding:6px 10px 10px;line-height:1.4;}
+  #mi-cockpit .track-toolbar{position:relative;display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+  #mi-cockpit .track-tabs{display:flex;gap:2px;background:var(--surface-2);border-radius:8px;padding:2px;flex:none;}
+  #mi-cockpit .track-tab{background:none;border:none;color:var(--text-dim);font-size:11.5px;font-weight:600;padding:6px 12px;border-radius:6px;cursor:pointer;}
+  #mi-cockpit .track-tab.active{background:var(--gold);color:#151107;}
+  #mi-cockpit .track-toolbar-spacer{flex:1;}
+  #mi-cockpit .track-toolbar .rail-search{max-width:200px;flex:none;}
+  #mi-cockpit .track-toolbar .rail-new-popover{top:34px;left:auto;right:0;}
+  #mi-cockpit .track-col-check{display:flex;align-items:center;gap:6px;padding:6px 12px;font-size:12px;color:var(--text);cursor:pointer;}
+  #mi-cockpit .track-col-check:hover{background:var(--surface-2);}
+  #mi-cockpit .rp-table th[draggable]{cursor:grab;}
   #mi-cockpit /* ---------- Event Mode status strip ---------- */
   .status-strip{
     display:flex;align-items:center;gap:0;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);
@@ -1110,6 +1155,150 @@ function renderSourceRail(){
     '</div>';
   }).join('');
 }
+/* ---------- Barra de herramientas de la tabla de tracks (2026-09-28) ----------
+   Investigado antes de construir (soporte oficial de Serato):
+   - Columnas: se reordenan arrastrando el encabezado; clic derecho/ícono de
+     columnas muestra/oculta campos disponibles; layout se guarda solo, sin
+     botón de guardar. Solo se ofrecen campos con DATO REAL detrás — nunca
+     columnas vacías fingiendo tener información (Album/Comment/Label/Year/
+     Length/Bitrate/Samplerate/Size solo aparecen si la fuente es el puente
+     real de Serato, que sí trae esos campos; nuestras Experiences curadas
+     solo tienen Track/Artist/BPM/Key/Genre reales).
+   - Files/Prepare/History: pestañas reales confirmadas. Prepare = cola de
+     sesión (se vacía sola al recargar, igual que Serato al cerrar). History
+     aquí = lo que se cargó de verdad en el Mix Lab esta sesión (no hay
+     reproducción real en las demás vistas, así que no hay nada más que
+     "historial" pueda registrar honestamente).
+   - "Analizar archivos": nuestros datos YA vienen analizados (Serato real o
+     curados a mano) — el botón es honesto sobre esto, no finge analizar audio
+     que no tenemos forma de procesar aquí. */
+var TRACK_FIELD_DEFS = {
+  title:{label:'Track'}, artist:{label:'Artist'}, bpm:{label:'BPM'}, key:{label:'Key'}, genre:{label:'Genre'},
+  album:{label:'Album'}, comment:{label:'Comment'}, composer:{label:'Composer'}, label:{label:'Label'},
+  year:{label:'Year'}, length:{label:'Length'}, bitrate:{label:'Bitrate'}, samplerate:{label:'Samplerate'},
+  size:{label:'Size'}, added:{label:'Added'}, source:{label:'Crate'}
+};
+var TRACK_COLUMNS_KEY = 'mdjbTrackColumns';
+function trackColumnsLoad(){
+  try { var v = JSON.parse(localStorage.getItem(TRACK_COLUMNS_KEY)); return (v&&v.order)?v:null; } catch(e){ return null; }
+}
+function trackColumnsSave(cfg){
+  try { localStorage.setItem(TRACK_COLUMNS_KEY, JSON.stringify(cfg)); } catch(e){}
+}
+function trackFieldValue(t, key){
+  switch(key){
+    case 'length': return t.durationSec!=null ? edFmtTime(t.durationSec) : null;
+    case 'bitrate': return t.bitrateKbps!=null ? Math.round(t.bitrateKbps)+' kbps' : null;
+    case 'samplerate': return t.sampleRateHz!=null ? Math.round(t.sampleRateHz/1000)+' kHz' : null;
+    case 'size': return t.fileSizeBytes!=null ? (t.fileSizeBytes/1024/1024).toFixed(1)+' MB' : null;
+    case 'added': return t.addedAt ? String(t.addedAt).slice(0,10) : null;
+    default: return t[key];
+  }
+}
+if (!state.prepareList) state.prepareList = [];
+if (!state.sessionHistory) state.sessionHistory = [];
+function renderTrackTablePanel(panel, opts){
+  state.trackPanelRows = opts.rows;
+  state.trackPanelFields = opts.availableFields;
+  var cfg = trackColumnsLoad() || {order: opts.availableFields.slice(), hidden:[]};
+  var order = cfg.order.filter(function(f){ return opts.availableFields.indexOf(f)!==-1; });
+  opts.availableFields.forEach(function(f){ if (order.indexOf(f)===-1) order.push(f); });
+  var hidden = cfg.hidden.filter(function(f){ return opts.availableFields.indexOf(f)!==-1; });
+  var visible = order.filter(function(f){ return hidden.indexOf(f)===-1; });
+  var tab = state.trackPanelTab || 'files';
+  var rowsToShow = tab==='prepare' ? state.prepareList : (tab==='history' ? state.sessionHistory : opts.rows);
+  var head = tab==='files' ? opts.headText : (tab==='prepare' ? state.prepareList.length+' tracks en Prepare (se vacía al recargar, igual que Serato)' : state.sessionHistory.length+' tracks cargados en el Mix Lab esta sesión');
+
+  panel.innerHTML =
+    '<div class="track-toolbar">'+
+      '<div class="track-tabs">'+
+        ['files','prepare','history'].map(function(tk){
+          var lbl = {files:'Files', prepare:'Prepare', history:'History'}[tk];
+          var count = tk==='prepare' ? state.prepareList.length : (tk==='history' ? state.sessionHistory.length : 0);
+          return '<button class="track-tab'+(tab===tk?' active':'')+'" data-track-tab="'+tk+'">'+lbl+(count?' ('+count+')':'')+'</button>';
+        }).join('')+
+      '</div>'+
+      '<button class="btn btn-ghost btn-sm" id="btnAnalyzeFiles" title="Nuestros datos ya vienen analizados (Serato real o curados a mano)">Analizar archivos</button>'+
+      '<div class="track-toolbar-spacer"></div>'+
+      '<button class="rail-tool-btn" id="btnTrackColumns" title="Elegir columnas">'+iconSvg('library')+'</button>'+
+      '<div class="rail-search track-search"><input type="text" id="trackSearch" placeholder="Buscar…"></div>'+
+      '<div class="rail-new-popover track-columns-popover" id="trackColumnsPopover" style="display:none;">'+
+        opts.availableFields.map(function(f){
+          return '<label class="track-col-check"><input type="checkbox" data-col="'+f+'" '+(hidden.indexOf(f)===-1?'checked':'')+'> '+TRACK_FIELD_DEFS[f].label+'</label>';
+        }).join('')+
+      '</div>'+
+    '</div>'+
+    '<div class="crate-content-head">'+esc(head)+'</div>'+
+    '<div class="panel scrollx"><table class="rp-table" id="trackTable"><thead><tr>'+
+      '<th class="rp-col-copy-th"></th>'+
+      visible.map(function(f){ return '<th draggable="true" data-col-key="'+f+'">'+TRACK_FIELD_DEFS[f].label+'<span class="rp-resize-handle"></span></th>'; }).join('')+
+    '</tr></thead><tbody>'+
+      (rowsToShow.length ? rowsToShow.map(function(t,i){
+        return '<tr data-row-idx="'+i+'"><td class="rp-copy-cell">'+(tab==='files'?'<button class="rp-copy-one track-add-prepare" data-add-prepare="'+i+'" title="Agregar a Prepare">'+iconSvg('add')+'</button>':'')+'</td>'+
+          visible.map(function(f){
+            var v = trackFieldValue(t, f);
+            var cls = f==='title' ? ' class="track-name"' : (f==='source'?' style="color:var(--text-dim);"':'');
+            return '<td'+cls+'>'+(v==null||v===''?'—':esc(String(v)))+'</td>';
+          }).join('')+
+        '</tr>';
+      }).join('') : '<tr><td colspan="'+(visible.length+1)+'" style="color:var(--text-faint);text-align:center;padding:20px;">'+(tab==='files'?'Sin tracks':(tab==='prepare'?'Arrastra o usa el botón + para agregar tracks aquí':'Nada cargado en el Mix Lab todavía'))+'</td></tr>')+
+    '</tbody></table></div>';
+
+  panel.querySelectorAll('[data-track-tab]').forEach(function(btn){
+    btn.addEventListener('click', function(){ state.trackPanelTab = btn.getAttribute('data-track-tab'); renderTrackTablePanel(panel, opts); });
+  });
+  panel.querySelectorAll('[data-add-prepare]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var idx = parseInt(btn.getAttribute('data-add-prepare'),10);
+      state.prepareList.push(opts.rows[idx]);
+      toast('Agregado a Prepare');
+      renderTrackTablePanel(panel, opts);
+    });
+  });
+  document.getElementById('btnAnalyzeFiles').addEventListener('click', function(){
+    var sinAnalizar = rowsToShow.filter(function(t){ return t.bpm==null; }).length;
+    toast(sinAnalizar ? sinAnalizar+' tracks sin BPM/Key — analízalos directo en tu Serato real, aquí no procesamos audio' : 'Todo lo que ves ya viene analizado (Serato real o curado a mano)');
+  });
+  var colBtn = document.getElementById('btnTrackColumns');
+  var colPop = document.getElementById('trackColumnsPopover');
+  colBtn.addEventListener('click', function(e){ e.stopPropagation(); colPop.style.display = colPop.style.display==='none'?'block':'none'; });
+  document.addEventListener('click', function(){ colPop.style.display='none'; }, {once:true});
+  colPop.querySelectorAll('[data-col]').forEach(function(chk){
+    chk.addEventListener('click', function(e){ e.stopPropagation(); });
+    chk.addEventListener('change', function(){
+      var f = chk.getAttribute('data-col');
+      var newHidden = hidden.slice();
+      if (chk.checked) newHidden = newHidden.filter(function(x){ return x!==f; });
+      else if (newHidden.indexOf(f)===-1) newHidden.push(f);
+      trackColumnsSave({order:order, hidden:newHidden});
+      renderTrackTablePanel(panel, opts);
+    });
+  });
+  var search = document.getElementById('trackSearch');
+  search.addEventListener('click', function(e){ e.stopPropagation(); });
+  search.addEventListener('input', function(){
+    var q = search.value.trim().toLowerCase();
+    panel.querySelectorAll('#trackTable tbody tr[data-row-idx]').forEach(function(tr){
+      var txt = tr.textContent.toLowerCase();
+      tr.style.display = (!q || txt.indexOf(q)!==-1) ? '' : 'none';
+    });
+  });
+  var dragSrc = null;
+  panel.querySelectorAll('#trackTable th[data-col-key]').forEach(function(th){
+    th.addEventListener('dragstart', function(){ dragSrc = th.getAttribute('data-col-key'); });
+    th.addEventListener('dragover', function(e){ e.preventDefault(); });
+    th.addEventListener('drop', function(e){
+      e.preventDefault();
+      var target = th.getAttribute('data-col-key');
+      if (!dragSrc || dragSrc===target) return;
+      var newOrder = order.slice();
+      newOrder.splice(newOrder.indexOf(dragSrc),1);
+      newOrder.splice(newOrder.indexOf(target),0,dragSrc);
+      trackColumnsSave({order:newOrder, hidden:hidden});
+      renderTrackTablePanel(panel, opts);
+    });
+  });
+}
 function homeShowCombinedCatalog(){
   var panel = document.querySelector('.crate-empty');
   if (!panel) return;
@@ -1148,17 +1337,11 @@ function homeShowCombinedCatalog(){
           });
         }
       }
-      panel.innerHTML =
-        '<div class="crate-content-head">'+rows.length+' tracks en todo el catálogo</div>'+
-        '<div class="panel scrollx"><table class="rp-table"><thead><tr>'+
-          ['#','Track','Artist','BPM','Key','Genre','Cajón'].map(function(h){ return '<th>'+h+'</th>'; }).join('')+
-        '</tr></thead><tbody>'+
-          rows.map(function(t,i){
-            return '<tr><td class="num">'+(i+1)+'</td><td class="track-name">'+esc(t.title||'')+'</td><td>'+esc(t.artist||'')+'</td>'+
-              '<td>'+(t.bpm==null?'—':t.bpm)+'</td><td>'+esc(t.key||'—')+'</td><td>'+esc(t.genre||'—')+'</td>'+
-              '<td style="color:var(--text-dim);">'+esc(t.source)+'</td></tr>';
-          }).join('')+
-        '</tbody></table></div>';
+      renderTrackTablePanel(panel, {
+        headText: rows.length+' tracks en todo el catálogo',
+        rows: rows,
+        availableFields: ['title','artist','bpm','key','genre','source']
+      });
     }
   }, 100);
 }
@@ -1247,32 +1430,306 @@ function seratoShowCrateTracks(crateId, name){
   state.seratoLibrary.tracks.forEach(function(t){ tracksByPath[t.path] = t; });
   var rows = (lib.crateTracks||[]).filter(function(ct){ return ct.crateId===crateId; })
     .map(function(ct){ return tracksByPath[ct.trackPath]; }).filter(Boolean);
-  panel.innerHTML =
-    '<div class="crate-content-head">'+esc(name)+' — '+rows.length+' tracks reales (leídos ahora mismo de tu Serato)</div>'+
-    '<div class="panel scrollx"><table class="rp-table"><thead><tr>'+
-      ['#','Track','Artist','BPM','Key','Genre'].map(function(h){ return '<th>'+h+'</th>'; }).join('')+
-    '</tr></thead><tbody>'+
-      rows.map(function(t,i){
-        return '<tr><td class="num">'+(i+1)+'</td><td class="track-name">'+esc(t.title||'')+'</td><td>'+esc(t.artist||'')+'</td>'+
-          '<td>'+(t.bpm==null?'—':t.bpm)+'</td><td>'+esc(t.key||'—')+'</td><td>'+esc(t.genre||'—')+'</td></tr>';
-      }).join('')+
-    '</tbody></table></div>';
+  renderTrackTablePanel(panel, {
+    headText: name+' — '+rows.length+' tracks reales (leídos ahora mismo de tu Serato)',
+    rows: rows,
+    availableFields: ['title','artist','bpm','key','genre','album','year','length','composer','label','comment','bitrate','samplerate','size','added']
+  });
+}
+/* ---------- Mis Cajones: crates propios del DJ (2026-09-28) ----------
+   Igual que en Serato: el botón amarillo (+Crate) NO crea la carpeta directo
+   en la colección — primero pregunta Crate vs Subcrate. Crate = cajón nuevo
+   de primer nivel. Subcrate = cajón nuevo DENTRO del cajón seleccionado
+   (solo aplica a estos cajones propios, amarillos — no a Experiences/Sources/
+   Serato, que son datos curados o reales, no editables a mano). Se guardan
+   solo en localStorage — no hay backend, no se pierden entre sesiones.
+   El botón azul (+Smart Crate) queda apagado a propósito: el flujo real de
+   Serato para crear listas inteligentes está en investigación, no se
+   improvisa una versión a medias. */
+var CUSTOM_CRATES_KEY = 'mdjbCustomCrates';
+function loadCustomCrates(){
+  try { return JSON.parse(localStorage.getItem(CUSTOM_CRATES_KEY) || '[]'); } catch(e){ return []; }
+}
+function saveCustomCrates(list){
+  try { localStorage.setItem(CUSTOM_CRATES_KEY, JSON.stringify(list)); } catch(e){}
+}
+/* ---------- Smart Crate (2026-09-28) — flujo real investigado, no improvisado ----------
+   Confirmado en la documentación oficial de Serato antes de construir:
+   (1) al abrir "New Smart Crate" NO se crea nada todavía — se abre directo la
+       ventana de reglas; Cancel = no se crea nada.
+   (2) cada regla es [campo] [condición] [valor], botón "Add Rule" para sumar más.
+   (3) un solo interruptor global Match All/Any (sin grupos anidados).
+   (4) "Live Update" es un checkbox aparte, encendido por defecto.
+   (5) editar una Smart Crate ya creada usa un ícono de lápiz aparte, no clic derecho.
+   Campos ofrecidos = solo los que de verdad tenemos dato real (Song/Artist/BPM/
+   Key/Genre) — no se listan campos reales de Serato (Album/Comment/Label/etc.)
+   que hoy no existen en nuestros datos, para no fingir una capacidad que no hay. */
+var SMART_FIELDS = [
+  {key:'title', label:'Song'}, {key:'artist', label:'Artist'}, {key:'bpm', label:'BPM'},
+  {key:'key', label:'Key'}, {key:'genre', label:'Genre'}
+];
+var SMART_CONDITIONS = ['Contains','Is','Does not contain','Is not'];
+function smartRuleMatches(track, rule){
+  var raw = track[rule.field];
+  var val = (raw==null ? '' : String(raw)).toLowerCase();
+  var target = (rule.value||'').toLowerCase();
+  switch(rule.condition){
+    case 'Contains': return val.indexOf(target) !== -1;
+    case 'Is': return val === target;
+    case 'Does not contain': return val.indexOf(target) === -1;
+    case 'Is not': return val !== target;
+    default: return false;
+  }
+}
+function smartCrateMatches(track, crate){
+  if (!crate.rules || !crate.rules.length) return false;
+  return crate.matchAll
+    ? crate.rules.every(function(r){ return smartRuleMatches(track, r); })
+    : crate.rules.some(function(r){ return smartRuleMatches(track, r); });
+}
+function renderRailToolbar(){
+  return (
+    '<div class="rail-toolbar">'+
+      '<button class="rail-tool-btn" id="btnNewCrate" title="Nuevo cajón">'+
+        '<span class="rail-tool-icon crate-yellow">'+iconSvg('folder')+'</span>'+
+      '</button>'+
+      '<button class="rail-tool-btn" id="btnNewSmartCrate" title="Nueva Smart Crate">'+
+        '<span class="rail-tool-icon crate-blue">'+iconSvg('folder')+'</span>'+
+      '</button>'+
+      '<div class="rail-search"><input type="text" id="railSearch" placeholder="Buscar cajón…"></div>'+
+      '<div class="rail-new-popover" id="railNewPopover" style="display:none;">'+
+        '<button data-new="crate">Crate</button>'+
+        '<button data-new="subcrate" id="btnNewSubcrate">Subcrate</button>'+
+      '</div>'+
+    '</div>'
+  );
+}
+function myCratesRenderNode(node, depth){
+  var hasKids = node.children && node.children.length>0;
+  var sel = state.railSelectedId===node.id;
+  var isSmart = node.type==='smart';
+  var row = '<div class="crate-item'+(hasKids?' crate-parent':'')+(depth>0?' child':'')+(sel?' selected':'')+'" data-my-crate="'+esc(node.id)+'" style="padding-left:'+(10+depth*20)+'px;">'+
+    (hasKids?'<span class="crate-caret">'+iconSvg('chevRight')+'</span>':'<span class="crate-caret"></span>')+
+    '<span class="crate-icon'+(isSmart?' smart':'')+'">'+iconSvg('folder')+'</span>'+
+    '<span class="crate-name">'+esc(node.name)+'</span>'+
+    (isSmart?'<button class="crate-edit-smart" data-edit-smart="'+esc(node.id)+'" title="Editar reglas">'+iconSvg('gear')+'</button>':'')+
+  '</div>';
+  var kidsHtml = hasKids ? '<div class="crate-children">'+node.children.map(function(c){ return myCratesRenderNode(c, depth+1); }).join('')+'</div>' : '';
+  return row + kidsHtml;
+}
+function renderMyCrates(){
+  var flat = loadCustomCrates();
+  if (!flat.length) return '<div class="crate-item disabled" title="Usa el botón + de arriba para crear el primero">Sin cajones propios todavía</div>';
+  var byId = {};
+  flat.forEach(function(c){ byId[c.id] = {id:c.id, name:c.name, parentId:c.parentId, type:c.type, rules:c.rules, matchAll:c.matchAll, children:[]}; });
+  var roots = [];
+  flat.forEach(function(c){
+    if (c.parentId && byId[c.parentId]) byId[c.parentId].children.push(byId[c.id]);
+    else roots.push(byId[c.id]);
+  });
+  return roots.map(function(r){ return myCratesRenderNode(r, 0); }).join('');
+}
+function smartCrateModalHtml(existing){
+  var rules = (existing && existing.rules && existing.rules.length) ? existing.rules : [{field:'genre', condition:'Contains', value:''}];
+  return (
+    '<div class="smart-modal-backdrop" id="smartModalBackdrop">'+
+      '<div class="smart-modal">'+
+        '<div class="smart-modal-head">'+
+          '<input type="text" id="smartName" placeholder="Nombre del Smart Crate" value="'+esc(existing?existing.name:'')+'">'+
+          '<select id="smartMatchMode"><option value="all"'+((!existing||existing.matchAll)?' selected':'')+'>Match All</option><option value="any"'+(existing&&!existing.matchAll?' selected':'')+'>Match Any</option></select>'+
+        '</div>'+
+        '<div class="smart-rules" id="smartRules">'+
+          rules.map(function(r,i){ return smartRuleRowHtml(r,i); }).join('')+
+        '</div>'+
+        '<button class="btn btn-ghost btn-sm" id="smartAddRule">+ Add Rule</button>'+
+        '<div class="smart-modal-foot">'+
+          '<label class="smart-live"><input type="checkbox" id="smartLiveUpdate" '+((!existing||existing.liveUpdate!==false)?'checked':'')+'> Live Update</label>'+
+          '<div class="smart-modal-actions">'+
+            '<button class="btn btn-ghost btn-sm" id="smartCancel">Cancel</button>'+
+            '<button class="btn btn-gold btn-sm" id="smartSave">Save</button>'+
+          '</div>'+
+        '</div>'+
+      '</div>'+
+    '</div>'
+  );
+}
+function smartRuleRowHtml(rule, idx){
+  return (
+    '<div class="smart-rule-row" data-rule-idx="'+idx+'">'+
+      '<select class="smart-field">'+SMART_FIELDS.map(function(f){ return '<option value="'+f.key+'"'+(rule.field===f.key?' selected':'')+'>'+f.label+'</option>'; }).join('')+'</select>'+
+      '<select class="smart-cond">'+SMART_CONDITIONS.map(function(c){ return '<option'+(rule.condition===c?' selected':'')+'>'+c+'</option>'; }).join('')+'</select>'+
+      '<input type="text" class="smart-value" placeholder="Valor" value="'+esc(rule.value||'')+'">'+
+      '<button class="smart-remove-rule" title="Quitar regla">'+iconSvg('close')+'</button>'+
+    '</div>'
+  );
+}
+function openSmartCrateModal(existingId){
+  var flat = loadCustomCrates();
+  var existing = existingId ? flat.find(function(c){ return c.id===existingId; }) : null;
+  document.getElementById('mi-cockpit').insertAdjacentHTML('beforeend', smartCrateModalHtml(existing));
+  var backdrop = document.getElementById('smartModalBackdrop');
+  var rulesWrap = document.getElementById('smartRules');
+  function addRuleRow(){
+    var idx = rulesWrap.children.length;
+    rulesWrap.insertAdjacentHTML('beforeend', smartRuleRowHtml({field:'genre', condition:'Contains', value:''}, idx));
+    wireRuleRemove(rulesWrap.lastElementChild);
+  }
+  function wireRuleRemove(row){
+    row.querySelector('.smart-remove-rule').addEventListener('click', function(){
+      if (rulesWrap.children.length<=1) return; // al menos una regla, igual que Serato
+      row.remove();
+    });
+  }
+  rulesWrap.querySelectorAll('.smart-rule-row').forEach(wireRuleRemove);
+  document.getElementById('smartAddRule').addEventListener('click', addRuleRow);
+  document.getElementById('smartCancel').addEventListener('click', function(){ backdrop.remove(); });
+  backdrop.addEventListener('click', function(e){ if (e.target===backdrop) backdrop.remove(); });
+  document.getElementById('smartSave').addEventListener('click', function(){
+    var name = document.getElementById('smartName').value.trim();
+    if (!name){ toast('Ponle un nombre al Smart Crate'); return; }
+    var rules = Array.from(rulesWrap.querySelectorAll('.smart-rule-row')).map(function(row){
+      return {
+        field: row.querySelector('.smart-field').value,
+        condition: row.querySelector('.smart-cond').value,
+        value: row.querySelector('.smart-value').value.trim()
+      };
+    }).filter(function(r){ return r.value!==''; });
+    if (!rules.length){ toast('Agrega al menos una regla con un valor'); return; }
+    var matchAll = document.getElementById('smartMatchMode').value==='all';
+    var liveUpdate = document.getElementById('smartLiveUpdate').checked;
+    var list = loadCustomCrates();
+    if (existing){
+      var idx = list.findIndex(function(c){ return c.id===existing.id; });
+      list[idx] = Object.assign({}, list[idx], {name:name, rules:rules, matchAll:matchAll, liveUpdate:liveUpdate});
+    } else {
+      list.push({id:'smart-'+Date.now(), name:name, parentId:null, type:'smart', rules:rules, matchAll:matchAll, liveUpdate:liveUpdate});
+    }
+    saveCustomCrates(list);
+    backdrop.remove();
+    renderHome();
+  });
+}
+function smartCrateShowTracks(crateId){
+  var list = loadCustomCrates();
+  var crate = list.find(function(c){ return c.id===crateId; });
+  if (!crate) return;
+  var panel = document.querySelector('.crate-empty, .crate-content');
+  if (!panel) return;
+  panel.className = 'crate-content';
+  panel.innerHTML = '<div class="crate-content-loading">Evaluando reglas…</div>';
+  loadRepartoCaseStudy();
+  loadNinetiesCaseStudy();
+  loadHalloweenData();
+  var tries = 0;
+  var poll = setInterval(function(){
+    tries++;
+    var ready = (state.repartoData || state.repartoLoading===false) &&
+                (state.ninetiesData || state.ninetiesLoading===false) &&
+                (state.halloweenData || state.halloweenLoading===false);
+    if (ready || tries>100){
+      clearInterval(poll);
+      if (document.querySelector('.crate-content') !== panel) return;
+      var all = [];
+      if (state.repartoData) state.repartoData.tracks.forEach(function(t){ all.push({title:t.title, artist:t.artist, bpm:t.bpm, key:t.key, genre:t.genre, source:'Baila Con Micho · Reparto'}); });
+      if (state.ninetiesData) state.ninetiesData.tracks.forEach(function(t){ all.push({title:t.title, artist:t.artist, bpm:t.bpm, key:null, genre:null, source:'Baila Con Micho · 90\'s Hit\'s'}); });
+      if (state.halloweenData){
+        state.halloweenData.blocks.forEach(function(blk){ blk.sections.forEach(function(sec){ sec.tracks.forEach(function(t){ all.push({title:t.track, artist:t.artist, bpm:t.bpm, key:null, genre:null, source:'Halloween DJ Party'}); }); }); });
+      }
+      var rows = all.filter(function(t){ return smartCrateMatches(t, crate); });
+      renderTrackTablePanel(panel, {
+        headText: crate.name+' (Smart Crate) — '+rows.length+' tracks que cumplen las reglas'+(crate.liveUpdate===false?' · Live Update apagado':''),
+        rows: rows,
+        availableFields: ['title','artist','bpm','key','genre','source']
+      });
+    }
+  }, 100);
+}
+function wireRailToolbar(el){
+  var newBtn = document.getElementById('btnNewCrate');
+  var popover = document.getElementById('railNewPopover');
+  newBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    var open = popover.style.display!=='none';
+    popover.style.display = open?'none':'block';
+    var subBtn = document.getElementById('btnNewSubcrate');
+    var canSub = !!state.railSelectedId;
+    subBtn.disabled = !canSub;
+    subBtn.title = canSub ? '' : 'Selecciona primero un cajón propio para meterle un subcajón';
+  });
+  document.addEventListener('click', function(){ popover.style.display='none'; }, {once:true});
+  popover.querySelectorAll('[data-new]').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      if (btn.disabled) return;
+      var kind = btn.getAttribute('data-new');
+      var name = prompt(kind==='crate' ? 'Nombre del nuevo cajón:' : 'Nombre del nuevo subcajón:');
+      if (!name || !name.trim()) return;
+      var list = loadCustomCrates();
+      var id = 'my-'+Date.now();
+      list.push({id:id, name:name.trim(), parentId: kind==='subcrate' ? state.railSelectedId : null});
+      saveCustomCrates(list);
+      popover.style.display = 'none';
+      renderHome();
+    });
+  });
+  document.getElementById('btnNewSmartCrate').addEventListener('click', function(e){
+    e.stopPropagation();
+    openSmartCrateModal(null);
+  });
+  var search = document.getElementById('railSearch');
+  search.addEventListener('input', function(){
+    var q = search.value.trim().toLowerCase();
+    el.querySelectorAll('#crateRail .crate-item').forEach(function(row){
+      var nameEl = row.querySelector('.crate-name');
+      if (!nameEl) return;
+      var matches = !q || nameEl.textContent.toLowerCase().indexOf(q) !== -1;
+      row.style.display = matches ? '' : 'none';
+    });
+  });
 }
 function renderHome(){
   var el = document.getElementById('view-home');
   el.innerHTML =
     '<div class="home-shell">'+
       '<nav class="crate-rail" id="crateRail">'+
+        renderRailToolbar()+
         '<div class="crate-rail-label">Sources</div>'+
         renderSourceRail()+
         '<div class="crate-rail-label">Serato (puente local)</div>'+
         renderSeratoBridgeSection()+
         '<div class="crate-rail-label">Crates</div>'+
         renderCrateRail()+
+        '<div class="crate-rail-label">Mis Cajones</div>'+
+        renderMyCrates()+
         '<div class="crate-resize-handle" id="crateResizeHandle"><span class="grip-dot"></span><span class="grip-dot"></span><span class="grip-dot"></span></div>'+
       '</nav>'+
       '<div class="crate-empty">Selecciona un cajón para cargar su música — igual que en Serato.</div>'+
     '</div>';
+
+  wireRailToolbar(el);
+  el.querySelectorAll('[data-my-crate]').forEach(function(row){
+    var caret = row.querySelector('.crate-caret');
+    if (caret && row.classList.contains('crate-parent')) caret.addEventListener('click', function(e){
+      e.stopPropagation();
+      row.classList.toggle('open');
+    });
+    row.addEventListener('click', function(e){
+      if (row.classList.contains('crate-parent') && e.target===caret) return;
+      if (e.target.closest && e.target.closest('.crate-edit-smart')) return; // el lápiz tiene su propio handler
+      var id = row.getAttribute('data-my-crate');
+      state.railSelectedId = id;
+      row.classList.toggle('open');
+      el.querySelectorAll('.crate-item.selected').forEach(function(r){ r.classList.remove('selected'); });
+      row.classList.add('selected');
+      if (row.querySelector('.crate-icon.smart')) smartCrateShowTracks(id);
+    });
+  });
+  el.querySelectorAll('[data-edit-smart]').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      openSmartCrateModal(btn.getAttribute('data-edit-smart'));
+    });
+  });
 
   el.querySelectorAll('.crate-item.source:not(.disabled)').forEach(function(row){
     row.addEventListener('click', function(){
@@ -1346,6 +1803,7 @@ function renderHome(){
       document.addEventListener('mouseup', onUp);
     });
   }
+  railScaleApply(railScaleGet());
 }
 function renderExperiences(){
   var el = document.getElementById('view-experiences');
@@ -3087,6 +3545,8 @@ function editorLoadFile(i, file){
   d.cues = [null,null,null,null,null,null,null,null];
   d.loopIn = null; d.loopOut = null; d.loopOn = false; d.firstBeat = null; d.peaks = null;
   document.getElementById('edTitle'+i).textContent = d.name;
+  if (!state.sessionHistory) state.sessionHistory = [];
+  state.sessionHistory.unshift({title:d.name, artist:'', bpm:null, key:null, genre:null, source:'Mix Lab · Deck '+(i+1)});
   document.getElementById('edDrop'+i).classList.add('loaded');
   var url = URL.createObjectURL(file);
   var audio = new Audio(url);
@@ -3329,6 +3789,35 @@ document.addEventListener('webkitfullscreenchange', function(){
 });
 document.addEventListener('keydown', function(e){
   if (e.key === 'Escape' && document.body.classList.contains('mdj-mi-fullscreen')) setCockpitFullscreen(false);
+});
+/* Atajo real de Serato: Ctrl/Cmd + / Ctrl/Cmd - ajusta el tamaño del texto
+   de la librería (crates + tabla) — NO el zoom del waveform/timeline, que es
+   un control aparte en Serato y no aplica aquí (el PO lo aclaró explícito).
+   Persistido en localStorage, igual que Serato recuerda el tamaño elegido. */
+var RAIL_SCALE_KEY = 'mdjbRailScale';
+function railScaleGet(){
+  var v = parseFloat(localStorage.getItem(RAIL_SCALE_KEY));
+  return (v && v>=0.8 && v<=1.6) ? v : 1;
+}
+function railScaleApply(v){
+  var rail = document.getElementById('crateRail');
+  if (rail) rail.style.zoom = v;
+  var content = document.querySelector('.crate-content, .crate-empty');
+  if (content) content.style.zoom = v;
+  try { localStorage.setItem(RAIL_SCALE_KEY, String(v)); } catch(e){}
+}
+document.addEventListener('keydown', function(e){
+  if (!(e.ctrlKey || e.metaKey)) return;
+  if (state.view !== 'home') return; // solo aplica a la librería/cajones, nunca al Editor/timeline
+  var tag = (e.target && e.target.tagName) || '';
+  if (tag==='INPUT' || tag==='TEXTAREA') return;
+  if (e.key==='+' || e.key==='='){
+    e.preventDefault();
+    railScaleApply(Math.min(1.6, railScaleGet()+0.1));
+  } else if (e.key==='-'){
+    e.preventDefault();
+    railScaleApply(Math.max(0.8, railScaleGet()-0.1));
+  }
 });
 
 function renderHeaderBits(){
