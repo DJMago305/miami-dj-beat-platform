@@ -140,6 +140,17 @@
   box-sizing: border-box !important;
 }
 
+/* Respaldo Safari 13.1.2/High Sierra (docs/tickets/2026-09-28-safari13-gap-flexbox-fallback.md):
+   `gap` en flexbox no llega hasta Safari 14.1 -- ahí colapsa a 0 en silencio.
+   @supports not (gap: 1px) es falso en cualquier navegador que sí soporte
+   gap (incluido Safari 14.1+), así que este bloque nunca compite con el de
+   arriba en un navegador moderno -- puramente aditivo, mismo valor. */
+@supports not (gap: 1px) {
+  #mainHeader.header.mdj-header-unified .header-actions .mdj-header-r1-auth-cluster > * + * {
+    margin-left: clamp(8px, 1.2vw, 16px) !important;
+  }
+}
+
 /* Sin contain:layout en el header completo: en algunos navegadores afectaba capas de clic con marca + #mainNav. */
 
 @media (min-width: 1001px) {
@@ -293,6 +304,13 @@
     box-sizing: border-box !important;
   }
 
+  /* Respaldo Safari 13.1.2/High Sierra (ver nota junto al primer bloque @supports de este archivo). */
+  @supports not (gap: 1px) {
+    #mainHeader.header.mdj-header-unified .header-top .container > * + * {
+      margin-left: clamp(16px, 2.8vw, 32px) !important;
+    }
+  }
+
   /*
    * Marca (fénix + ::before + PNG letras): nueva posición pegada a la izquierda del todo.
    * Solo .brand — no mueve .header-actions. margin-left negativo anula padding-left del .container.
@@ -359,6 +377,13 @@
     padding-left: 0 !important;
     column-gap: clamp(6px, 0.6vw, 12px) !important;
     row-gap: 0 !important;
+  }
+
+  /* Respaldo Safari 13.1.2/High Sierra (ver nota junto al primer bloque @supports de este archivo). */
+  @supports not (gap: 1px) {
+    #mainHeader.header.mdj-header-unified .header-top .container > .header-actions > * + * {
+      margin-left: clamp(6px, 0.6vw, 12px) !important;
+    }
   }
 
   /* ══════════════════════════════════════════════════════════════════════════
@@ -575,6 +600,13 @@
     column-gap: var(--mdj-nav-gap) !important;
   }
 
+  /* Respaldo Safari 13.1.2/High Sierra (ver nota junto al primer bloque @supports de este archivo). */
+  @supports not (gap: 1px) {
+    #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav.mdj-mainnav-flex.nav.top-nav > * + * {
+      margin-left: var(--mdj-nav-gap) !important;
+    }
+  }
+
   #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav.mdj-mainnav-flex.nav.top-nav::-webkit-scrollbar {
     width: 0 !important;
     height: 4px !important;
@@ -758,6 +790,13 @@
     margin-right: clamp(8px, 1vw, 20px) !important;
   }
 
+  /* Respaldo Safari 13.1.2/High Sierra (ver nota junto al primer bloque @supports de este archivo). */
+  @supports not (gap: 1px) {
+    #mainHeader.header.mdj-header-unified .header-actions .mdj-header-r1-auth-cluster > * + * {
+      margin-left: clamp(6px, 0.85vw, 12px) !important;
+    }
+  }
+
   #mainHeader.header.mdj-header-unified .header-actions .mdj-header-r1-auth-cluster > #header-login-btn {
     align-self: center !important;
   }
@@ -786,6 +825,13 @@
   #mainHeader.header.mdj-header-unified .header-actions .mdj-header-r1-auth-cluster #header-auth-zone .account-btn.mdj-guest-access-trigger {
     padding: 0 8px 0 4px !important;
     gap: 10px !important;
+  }
+
+  /* Respaldo Safari 13.1.2/High Sierra (ver nota junto al primer bloque @supports de este archivo). */
+  @supports not (gap: 1px) {
+    #mainHeader.header.mdj-header-unified .header-actions .mdj-header-r1-auth-cluster #header-auth-zone .account-btn.mdj-guest-access-trigger > * + * {
+      margin-left: 10px !important;
+    }
   }
 
   /* Reserva de nombre (vacía en invitado) — mismo ancho que .mdj-account-display-name logueado. */
@@ -832,6 +878,13 @@
     flex-wrap: nowrap !important;
     box-sizing: border-box !important;
     overflow: visible !important;
+  }
+
+  /* Respaldo Safari 13.1.2/High Sierra (ver nota junto al primer bloque @supports de este archivo). */
+  @supports not (gap: 1px) {
+    #mainHeader.header.mdj-header-unified .header-actions .header-avatar-cart-row > * + * {
+      margin-left: clamp(6px, 0.6vw, 12px) !important;
+    }
   }
 
   /*
@@ -2084,6 +2137,18 @@ body.mdj-is-client #mainHeader #mainNav > a#mainNav-config-link[data-mdj-nav="cl
     overflow-y: visible !important;
   }
 
+  /* Respaldo Safari 13.1.2/High Sierra (ver nota junto al primer bloque @supports de este archivo). */
+  @supports not (gap: 1px) {
+    body.page-jobs #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav.mdj-mainnav-flex.nav.top-nav > * + *,
+    body.page-shop #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav.mdj-mainnav-flex.nav.top-nav > * + *,
+    body.page-mdj-rentals #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav.mdj-mainnav-flex.nav.top-nav > * + *,
+    body.page-mdj-events #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav.mdj-mainnav-flex.nav.top-nav > * + *,
+    body.mdj-client-account-page #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav.mdj-mainnav-flex.nav.top-nav > * + *,
+    body.mdj-buyer-journey-page #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav.mdj-mainnav-flex.nav.top-nav > * + * {
+      margin-left: var(--mdj-nav-gap) !important;
+    }
+  }
+
   /* Staff/owner nav — páginas compactas: 8 ítems superan el centrado → INICIO queda fuera del borde izquierdo.
    * Mismo fix que home page (body.page-home.mdj-staff-nav): justify-content: flex-start + clip.
    * Especificidad extra (mdj-staff-nav) supera el justify-content: center del bloque de arriba. */
@@ -2186,6 +2251,20 @@ body.mdj-is-client #mainHeader #mainNav > a#mainNav-config-link[data-mdj-nav="cl
     row-gap: 0 !important;
     overflow-x: visible !important;
     overflow-y: visible !important;
+  }
+
+  /* Respaldo Safari 13.1.2/High Sierra (ver nota junto al primer bloque @supports de este archivo). */
+  @supports not (gap: 1px) {
+    body.mdj-is-client #mainHeader.header.mdj-header-unified .header-nav .container
+      > #mainNav.mdj-mainnav-flex.nav.top-nav > * + *,
+    body.mdj-buyer-session #mainHeader.header.mdj-header-unified .header-nav .container
+      > #mainNav.mdj-mainnav-flex.nav.top-nav > * + *,
+    body.mdj-is-client #mainHeader.header.mdj-header-unified .header-nav .container
+      > #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-compact-nav="1"] > * + *,
+    body.mdj-buyer-session #mainHeader.header.mdj-header-unified .header-nav .container
+      > #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-compact-nav="1"] > * + * {
+      margin-left: var(--mdj-nav-gap) !important;
+    }
   }
 
   body.mdj-is-client #mainHeader #mainNav.mdj-mainnav-flex.nav.top-nav[data-mdj-compact-nav="1"]
@@ -2411,6 +2490,13 @@ body.mdj-artist-header-mode #mainHeader.header.mdj-header-unified .header-action
     pointer-events: auto !important;
   }
 
+  /* Respaldo Safari 13.1.2/High Sierra (ver nota junto al primer bloque @supports de este archivo). */
+  @supports not (gap: 1px) {
+    #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav-artist.mdj-artist-mainnav.nav.top-nav > * + * {
+      margin-left: var(--mdj-nav-gap) !important;
+    }
+  }
+
   body.mdj-artist-header-mode
     #mainHeader.header.mdj-header-unified
     .header-nav
@@ -2624,6 +2710,13 @@ body.mdj-artist-header-mode #mainHeader.header.mdj-header-unified .header-action
     grid-template-rows: none !important;
     grid-auto-flow: unset !important;
     column-gap: 10px !important;
+  }
+
+  /* Respaldo Safari 13.1.2/High Sierra (ver nota junto al primer bloque @supports de este archivo). */
+  @supports not (gap: 1px) {
+    body.page-mdj-events #app .mdj-residencies-carousel__track > * + * {
+      margin-left: 10px !important;
+    }
   }
 
   body.page-mdj-events #app .mdj-venues-video-stage,
@@ -3027,6 +3120,16 @@ body.mdj-staff-nav.mdj-account-profile
   column-gap: clamp(6px, 0.8vw, 14px) !important;
 }
 
+/* Respaldo Safari 13.1.2/High Sierra (ver nota junto al primer bloque @supports de este archivo). */
+@supports not (gap: 1px) {
+  body.mdj-staff-nav.mdj-account-profile
+    #mainHeader.header.mdj-header-unified
+    .header-nav .container
+    > #mainNav.mdj-mainnav-flex.nav.top-nav > * + * {
+    margin-left: clamp(6px, 0.8vw, 14px) !important;
+  }
+}
+
 /* ── AGENDA / FLUJO — zero-space (fallback if compact-nav guard fails) ── */
 body.mdj-staff-nav.mdj-account-profile
   #mainHeader.header.mdj-header-unified
@@ -3236,6 +3339,42 @@ body.mdj-staff-nav.page-admin-dashboard
     #mainHeader.header.mdj-header-unified .header-nav .container
     > #mainNav.mdj-mainnav-flex.nav.top-nav {
     column-gap: 2px !important;
+  }
+
+  /* Respaldo Safari 13.1.2/High Sierra (ver nota junto al primer bloque @supports de este archivo). */
+  @supports not (gap: 1px) {
+    body.page-mdj-contact.mdj-buyer-session
+      #mainHeader.header.mdj-header-unified .header-nav .container
+      > #mainNav.mdj-mainnav-flex.nav.top-nav > * + *,
+    body.page-mdj-contact.mdj-is-client
+      #mainHeader.header.mdj-header-unified .header-nav .container
+      > #mainNav.mdj-mainnav-flex.nav.top-nav > * + *,
+    body.page-mdj-rentals.mdj-buyer-session
+      #mainHeader.header.mdj-header-unified .header-nav .container
+      > #mainNav.mdj-mainnav-flex.nav.top-nav > * + *,
+    body.page-mdj-rentals.mdj-is-client
+      #mainHeader.header.mdj-header-unified .header-nav .container
+      > #mainNav.mdj-mainnav-flex.nav.top-nav > * + *,
+    body.page-mdj-events.mdj-buyer-session
+      #mainHeader.header.mdj-header-unified .header-nav .container
+      > #mainNav.mdj-mainnav-flex.nav.top-nav > * + *,
+    body.page-mdj-events.mdj-is-client
+      #mainHeader.header.mdj-header-unified .header-nav .container
+      > #mainNav.mdj-mainnav-flex.nav.top-nav > * + *,
+    body.page-jobs.mdj-buyer-session
+      #mainHeader.header.mdj-header-unified .header-nav .container
+      > #mainNav.mdj-mainnav-flex.nav.top-nav > * + *,
+    body.page-jobs.mdj-is-client
+      #mainHeader.header.mdj-header-unified .header-nav .container
+      > #mainNav.mdj-mainnav-flex.nav.top-nav > * + *,
+    body.mdj-private-dashboard.mdj-buyer-session
+      #mainHeader.header.mdj-header-unified .header-nav .container
+      > #mainNav.mdj-mainnav-flex.nav.top-nav > * + *,
+    body.mdj-private-dashboard.mdj-is-client
+      #mainHeader.header.mdj-header-unified .header-nav .container
+      > #mainNav.mdj-mainnav-flex.nav.top-nav > * + * {
+      margin-left: 2px !important;
+    }
   }
 }
 
@@ -4013,6 +4152,19 @@ body #mainHeader.header.mdj-header-unified
     gap: 8px !important;
   }
 
+  /* Respaldo Safari 13.1.2/High Sierra (ver nota junto al primer bloque @supports de este archivo). */
+  @supports not (gap: 1px) {
+    #mainHeader.header.mdj-header-unified .header-top .container > * + * {
+      margin-left: 4px !important;
+    }
+    #mainHeader.header.mdj-header-unified .header-top .container > .header-actions > * + * {
+      margin-left: 6px !important;
+    }
+    #mainHeader.header.mdj-header-unified .header-actions .header-avatar-cart-row > * + * {
+      margin-left: 8px !important;
+    }
+  }
+
   /* 5 · el relleno lateral vuelve a ser el de móvil. Este archivo impone
          «padding: 0 24px !important» a .header-top .container SIN @media,
          pisando el escalonado de styles.css (max(12px, safe-area+8) a
@@ -4169,6 +4321,19 @@ body #mainHeader.header.mdj-header-unified
 
   #mainHeader.header.mdj-header-unified .header-actions .header-avatar-cart-row {
     gap: 8px !important;
+  }
+
+  /* Respaldo Safari 13.1.2/High Sierra (ver nota junto al primer bloque @supports de este archivo). */
+  @supports not (gap: 1px) {
+    #mainHeader.header.mdj-header-unified .header-top .container > * + * {
+      margin-left: 4px !important;
+    }
+    #mainHeader.header.mdj-header-unified .header-top .container > .header-actions > * + * {
+      margin-left: 6px !important;
+    }
+    #mainHeader.header.mdj-header-unified .header-actions .header-avatar-cart-row > * + * {
+      margin-left: 8px !important;
+    }
   }
 
   /* 5 · el relleno lateral vuelve a ser el de móvil. Este archivo impone
@@ -4360,6 +4525,14 @@ html body #mainHeader#mainHeader.header.mdj-header-unified
   overflow-y: hidden !important;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none !important;
+}
+
+/* Respaldo Safari 13.1.2/High Sierra (ver nota junto al primer bloque @supports de este archivo). */
+@supports not (gap: 1px) {
+  html body #mainHeader#mainHeader.header.mdj-header-unified
+    #mainNav#mainNav.mdj-mainnav-flex.nav.top-nav > * + * {
+    margin-left: clamp(4px, 0.6vw, 10px) !important;
+  }
 }
 
 /* FIX 2026-08-30 (orden PO): el sol/luna vivia con `position:absolute`,
@@ -4825,6 +4998,7 @@ html body #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > 
   align-items: center;
   gap: 13px;
   min-height: 50px;
+
   padding: 11px 18px;                       /* padding horizontal constante */
   border-bottom: 1px solid rgba(255, 255, 255, .07);   /* hairline, no borde grueso */
   color: #f2f4f8;
@@ -4833,6 +5007,13 @@ html body #mainHeader.header.mdj-header-unified #mainNav[data-mdj-slots="10"] > 
   font-weight: 600;
   letter-spacing: .2px;
   text-transform: none;                     /* el patron es de utilidad, no de marca */
+}
+
+/* Respaldo Safari 13.1.2/High Sierra (ver nota junto al primer bloque @supports de este archivo). */
+@supports not (gap: 1px) {
+  #mobileMenu .mobile-nav a.mdj-panel-fila > * + * {
+    margin-left: 13px;
+  }
 }
 
 /* La ultima fila de la tarjeta no lleva divisoria. */
@@ -4943,6 +5124,13 @@ body.mdj-perfil-visitante #mainHeader {
      cruzando la foto del hero. Cada pieza lleva su propia drop-shadow. */
   box-shadow: none;
   pointer-events: auto;
+}
+
+/* Respaldo Safari 13.1.2/High Sierra (ver nota junto al primer bloque @supports de este archivo). */
+@supports not (gap: 1px) {
+  #mdj-flotante-visitante > * + * {
+    margin-left: 14px;
+  }
 }
 
 /* EL AIRE TAMBIEN EN EL CONTENEDOR, PARA >=1001px. Auditado a varias anchuras:
@@ -5081,6 +5269,14 @@ body[data-mdj-estacion] .acct-side { top: 188px !important; }
   flex: 0 0 auto;
   text-decoration: none;
 }
+
+/* Respaldo Safari 13.1.2/High Sierra (ver nota junto al primer bloque @supports de este archivo). */
+@supports not (gap: 1px) {
+  #mdj-flotante-visitante .mdj-flotante-marca > * + * {
+    margin-left: 10px;
+  }
+}
+
 /* Las letras no llevan la altura del aguila: son una marca apaisada y con 38px
    quedarian desproporcionadas al lado del sello. */
 /* El PNG de letras es 1920x1920 CUADRADO con el rotulo en una banda central y
@@ -5187,6 +5383,12 @@ body[data-mdj-estacion] .acct-side { top: 188px !important; }
   /* En pantalla estrecha el buscador si toma el resto: con 380px fijos no cabria
      junto al logo y se saldria de la franja. */
   #mdj-flotante-visitante .header-search-wrap { flex: 1 1 auto; }
+
+  /* Respaldo Safari 13.1.2/High Sierra (ver nota junto al primer bloque @supports de este archivo). */
+  @supports not (gap: 1px) {
+    #mdj-flotante-visitante > * + * { margin-left: 10px; }
+    #mdj-flotante-visitante .mdj-flotante-marca > * + * { margin-left: 7px; }
+  }
 }
 
 
@@ -5636,6 +5838,14 @@ body[data-mdj-estacion] #mainHeader.header.mdj-header-unified {
   html body #mainHeader#mainHeader.header.mdj-header-unified
     #mainNav#mainNav.mdj-mainnav-flex.nav.top-nav {
     gap: 4px !important;
+  }
+
+  /* Respaldo Safari 13.1.2/High Sierra (ver nota junto al primer bloque @supports de este archivo). */
+  @supports not (gap: 1px) {
+    html body #mainHeader#mainHeader.header.mdj-header-unified
+      #mainNav#mainNav.mdj-mainnav-flex.nav.top-nav > * + * {
+      margin-left: 4px !important;
+    }
   }
   html body #mainHeader#mainHeader.header.mdj-header-unified
     #mainNav#mainNav > a[data-mdj-slot]:not([data-mdj-slot="1"])::before,
