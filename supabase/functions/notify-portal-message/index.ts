@@ -6,10 +6,11 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+import { getServiceRoleKey } from "../_shared/service-key.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-const SUPABASE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+const SUPABASE_KEY = getServiceRoleKey();
 const WEBHOOK_SECRET = Deno.env.get("WEBHOOK_SECRET") || Deno.env.get("STRIPE_WEBHOOK_SECRET");
 const PORTAL_NOTIFY_SECRET = Deno.env.get("PORTAL_NOTIFY_SECRET");
 const PORTAL_BASE_URL = (Deno.env.get("SITE_URL") || "https://miamidjbeat.com").replace(/\/$/, "");
@@ -534,7 +535,7 @@ async function authorizeRequest(
 ): Promise<boolean> {
     const auth = (req.headers.get("Authorization") || "").trim();
     const bearer = auth.startsWith("Bearer ") ? auth.slice(7).trim() : "";
-    const serviceKey = (Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "").trim();
+    const serviceKey = (getServiceRoleKey() || "").trim();
     const apikey = (req.headers.get("apikey") || "").trim();
 
     if (serviceKey && bearer && bearer === serviceKey) {

@@ -4,9 +4,10 @@
 // Env vars required: RESEND_API_KEY, MANAGER_EMAIL, FROM_EMAIL, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getServiceRoleKey } from "../_shared/service-key.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const SERVICE_ROLE_KEY = getServiceRoleKey()!;
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 const MANAGER_EMAIL = Deno.env.get("MANAGER_EMAIL") ?? "";
 const FROM_EMAIL = Deno.env.get("FROM_EMAIL") || "Miami DJ Beat <no-reply@miamidjbeat.com>";

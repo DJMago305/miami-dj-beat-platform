@@ -15,6 +15,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import "./mdj-financial-local-services.js"; // side-effect: attach a globalThis
 import { loadStore, persistStore } from "./mapping.ts";
+import { getServiceRoleKey } from "../_shared/service-key.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -25,7 +26,7 @@ const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, "Content-Type": "application/json" } });
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const SERVICE_KEY = getServiceRoleKey()!;
 
 // Motor (una sola instancia; el store se pasa por request = stateless)
 const G = globalThis as any;

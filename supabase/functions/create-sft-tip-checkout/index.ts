@@ -3,6 +3,7 @@
 // Deploy: supabase functions deploy create-sft-tip-checkout
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { getServiceRoleKey } from "../_shared/service-key.ts";
 
 const corsHeaders: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -26,7 +27,7 @@ serve(async (req) => {
 
   const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY");
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const serviceKey = getServiceRoleKey();
   const SITE_URL = (Deno.env.get("SITE_URL") || "https://miamidjbeat.vercel.app").replace(/\/$/, "");
 
   if (!STRIPE_SECRET_KEY || !supabaseUrl || !serviceKey) {

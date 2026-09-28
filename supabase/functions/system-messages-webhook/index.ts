@@ -20,6 +20,7 @@
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getServiceRoleKey } from "../_shared/service-key.ts";
 
 const SUPABASE_URL_FALLBACK = "https://hkuvuqupbxwkiykxvqdr.supabase.co";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || SUPABASE_URL_FALLBACK;
@@ -27,7 +28,7 @@ const WEBHOOK_URL = `${SUPABASE_URL}/functions/v1/system-messages-webhook`;
 
 const ADMIN = createClient(
   SUPABASE_URL,
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+  getServiceRoleKey() ?? "",
   { auth: { persistSession: false, autoRefreshToken: false } },
 );
 

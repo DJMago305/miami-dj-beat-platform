@@ -9,6 +9,7 @@
 // e inyecta client_reference_id + metadata.user_id en la sesión de Stripe.
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getServiceRoleKey } from "../_shared/service-key.ts";
 
 const PROD_ORIGINS = ["https://miamidjbeat.com", "https://www.miamidjbeat.com"];
 
@@ -81,7 +82,7 @@ serve(async (req) => {
 
     const adminAuth = createClient(
         Deno.env.get("SUPABASE_URL")!,
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+        getServiceRoleKey()!,
     );
     const { data: { user }, error: authError } = await adminAuth.auth.getUser(jwt);
     if (authError || !user) {
