@@ -1880,6 +1880,10 @@ const translations = {
             "Selecciona el artista que se encargará del evento. Esta asignación podrá reflejarse en el documento y en el flujo interno del staff.",
         "prod-cobro-dj-payout-lbl": "Pago acordado al DJ (USD)",
         "prod-cobro-deposit-lbl": "Depósito requerido (auto)",
+        "prod-cobro-addon-amount-lbl": "Add-on / horas extra cobradas (USD)",
+        "prod-cobro-addon-dj-lbl": "De eso, pago extra al DJ (USD)",
+        "prod-cobro-addon-dj-help":
+            "Parte del pago al DJ que corresponde solo al add-on/hora extra, aparte de su pago base del paquete.",
         "prod-cobro-charge-mode-lbl": "Monto a cobrar",
         "prod-cobro-charge-mode-deposit": "Depósito / reserva",
         "prod-cobro-charge-mode-full": "Total completo",
@@ -6515,6 +6519,10 @@ const translations = {
             "Select the artist who will handle the event. This assignment may appear in the document and in the internal staff workflow.",
         "prod-cobro-dj-payout-lbl": "Agreed DJ payout (USD)",
         "prod-cobro-deposit-lbl": "Required deposit (auto)",
+        "prod-cobro-addon-amount-lbl": "Add-on / extra hours charged (USD)",
+        "prod-cobro-addon-dj-lbl": "Of that, extra DJ pay (USD)",
+        "prod-cobro-addon-dj-help":
+            "Portion of the DJ's pay that's specifically for the add-on/extra hour, separate from their base package pay.",
         "prod-cobro-charge-mode-lbl": "Amount to charge",
         "prod-cobro-charge-mode-deposit": "Deposit / reservation",
         "prod-cobro-charge-mode-full": "Full amount",
