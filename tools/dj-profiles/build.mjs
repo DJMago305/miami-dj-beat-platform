@@ -91,10 +91,14 @@ export const PERSON_IDENTITY = Object.freeze({
     jobTitle: ["Fundador & Propietario", "DJ"],
     identityLine: "Gerardo A Valle, conocido profesionalmente como DJMago305.",
   },
+  // Sin `alternateName` a propósito (2026-09-28): la versión en vivo de
+  // equipo.html se simplificó al mínimo (@type/@id/name) en algún punto
+  // anterior a esta sesión — confirmado por el PO como la versión correcta
+  // al auditar tools/dj-profiles/build.mjs. El generador converge a ESTA
+  // versión, no a la que tenía antes.
   owner: {
     personId: `${SITE_ORIGIN}/dj/djmago305.html#gerardo-a-valle`,
     name: "Gerardo A Valle",
-    alternateName: "DJMago305",
   },
 });
 
