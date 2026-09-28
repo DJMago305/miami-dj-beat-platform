@@ -1,0 +1,20 @@
+-- 🔴 PRODUCCIÓN (hkuvuqupbxwkiykxvqdr)
+-- 2026-09-28: rol genérico "dj" en identity.user_roles — item #3 de la lista
+-- maestra pendiente, ticket docs/tickets/2026-09-27-rol-generico-dj-identidad-y-pendientes.md.
+--
+-- Dirección elegida por el PO: "roles específicos", usando lo que ya existe
+-- en el enum cuando alcanza (identity.app_role ya tenía 'performer' y
+-- 'producer' sin usar, 0 cuentas) y agregando SOLO lo que de verdad falta.
+-- Ninguno de los valores existentes representa "bartender" con precisión —
+-- Jean Paul (Vergara) es bartender real (categoria='bartender', confirmado
+-- por el PO en el ticket), no un DJ ni un "performer" genérico. Etiquetarlo
+-- como 'performer' habría sido igual de impreciso que dejarlo en 'dj' — no
+-- resuelve el problema de fondo del ticket (que el rol refleje la realidad).
+--
+-- ALTER TYPE ... ADD VALUE no puede usarse en la misma transacción donde el
+-- valor nuevo se referencia después (restricción de Postgres) — por eso
+-- este paso va en su propia migración, separada de la que usa 'bartender'
+-- de verdad (20260928161000_identity_roles_talent_type_backfill.sql).
+--
+-- Idempotente: ADD VALUE IF NOT EXISTS, no borra ni renombra nada.
+ALTER TYPE identity.app_role ADD VALUE IF NOT EXISTS 'bartender';
