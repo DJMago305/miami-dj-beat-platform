@@ -181,7 +181,8 @@
   .hero{text-align:center;padding:34px 10px 26px;}#mi-cockpit .hero h1{font-size:44px;letter-spacing:.01em;}#mi-cockpit .hero p{color:var(--text-dim);font-size:13.5px;letter-spacing:.02em;margin-top:8px;text-transform:uppercase;font-weight:600;}#mi-cockpit .exp-grid{
     display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;max-width:1080px;margin:0 auto;
   }
-  @media(max-width:1040px){#mi-cockpit .exp-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}#mi-cockpit .exp-card{
+  @media(max-width:1040px){#mi-cockpit .exp-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
+  @media(max-width:640px){#mi-cockpit .exp-grid{grid-template-columns:1fr;}}#mi-cockpit .exp-card{
     border-radius:var(--radius);border:1px solid var(--border);background:var(--surface);
     padding:20px 18px;display:flex;flex-direction:column;gap:10px;min-height:186px;position:relative;overflow:hidden;
   }#mi-cockpit .exp-card.enabled{border-color:var(--gold-dim);background:linear-gradient(160deg,var(--surface-2),var(--surface) 60%);}#mi-cockpit .exp-card.enabled::before{
@@ -283,28 +284,35 @@
       body.mdj-mi-fullscreen #mdj-flotante-visitante{display:none !important;}
       /* ---------- Reparto Experience: editable case-study table ---------- */
       #mi-cockpit .rp-table{table-layout:fixed;}
+      #mi-cockpit .rp-table col.rp-col-copy{width:34px;}
+      #mi-cockpit .rp-table th.rp-col-copy-th, #mi-cockpit .rp-table td.rp-copy-cell{padding-left:8px;padding-right:0;text-align:center;}
       #mi-cockpit .rp-table col.rp-col-n{width:44px;}
       #mi-cockpit .rp-table col.rp-col-track{width:280px;}
       #mi-cockpit .rp-table col.rp-col-artist{width:260px;}
+      #mi-cockpit .rp-table col.rp-col-key{width:80px;}
       #mi-cockpit .rp-table col.rp-col-genre{width:150px;}
       #mi-cockpit .rp-table col.rp-col-bpm{width:90px;}
       #mi-cockpit .rp-table col.rp-col-energy{width:110px;}
       #mi-cockpit .rp-table thead th{position:relative;}
+      #mi-cockpit .rp-table th, #mi-cockpit .rp-table td{border-right:1px solid var(--border-strong);}
+      #mi-cockpit .rp-table th:last-child, #mi-cockpit .rp-table td:last-child{border-right:none;}
       #mi-cockpit .rp-resize-handle{position:absolute;right:0;top:0;bottom:0;width:8px;cursor:col-resize;touch-action:none;}
       #mi-cockpit .rp-resize-handle:hover{background:linear-gradient(90deg,transparent,var(--gold-wash));}
       #mi-cockpit .rp-table tbody td{white-space:normal;}
       /* Copiar Título - Artista por fila (2026-09-24, pedido del PO: "necesito eso para
          buscarla en Serato DJ") -- botón chico junto al nombre, mismo ícono de copiar
          que ya usa "Copy Tracklist", nada nuevo inventado. */
-      #mi-cockpit .rp-copy-one{flex:none;display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;padding:0;margin-right:6px;
+      #mi-cockpit .rp-copy-one{flex:none;display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;padding:0;margin:0;
         background:transparent;border:1px solid var(--border-strong);border-radius:6px;color:var(--text-dim);cursor:pointer;vertical-align:middle;}
       #mi-cockpit .rp-copy-one:hover{color:var(--gold);border-color:var(--gold);}
       #mi-cockpit .rp-copy-one svg{width:12px;height:12px;}
-      #mi-cockpit .rp-input{width:100%;background:var(--surface-2);border:1px solid var(--border-strong);border-radius:6px;color:var(--text);font-family:var(--font-mono);font-size:12.5px;padding:6px 8px;text-align:center;}
+      #mi-cockpit .rp-input{width:100%;background:transparent;border:none;border-radius:0;color:var(--text);font-family:var(--font-mono);font-size:12.5px;padding:0;text-align:left;}
       #mi-cockpit .rp-input::placeholder{color:var(--text-faint);}
-      #mi-cockpit .rp-input:focus-visible{outline:2px solid var(--gold);}
-      #mi-cockpit .rp-genre-select{width:100%;background:var(--surface-2);border:1px solid var(--border-strong);color:var(--text);font-family:var(--font-body);font-size:12px;padding:6px 8px;border-radius:6px;}
-      #mi-cockpit .rp-genre-select:focus-visible{outline:2px solid var(--gold);}
+      #mi-cockpit .rp-input:focus-visible{outline:none;background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--gold);}
+      #mi-cockpit .genre-ac{position:relative;}
+      #mi-cockpit .genre-ac-list{position:absolute;top:calc(100% + 2px);left:0;right:0;z-index:40;background:var(--surface-2);border:1px solid var(--border-strong);border-radius:6px;max-height:160px;overflow-y:auto;display:none;box-shadow:0 8px 20px rgba(0,0,0,.4);}
+      #mi-cockpit .genre-ac-item{padding:6px 10px;font-size:12px;cursor:pointer;color:var(--text);}
+      #mi-cockpit .genre-ac-item:hover{background:var(--gold);color:#151107;}
       #mi-cockpit .rp-toolbar{display:flex;justify-content:flex-end;padding:0 0 12px;}
       #mi-cockpit .rp-hint{color:var(--text-faint);font-size:11px;margin:8px 0 0;}
     </style>
@@ -1945,8 +1953,48 @@ function repartoTrackById(id){
   for (var i=0;i<state.repartoData.tracks.length;i++){ if (state.repartoData.tracks[i].id===id) return state.repartoData.tracks[i]; }
   return null;
 }
-function repartoGenreLabel(g){
-  return g==='reparto' ? 'Reparto' : (g==='reparto-pop' ? 'Reparto Pop' : '');
+/* Memoria de géneros: texto libre + autocompletado, pedido explícito del PO ("deveria dejar poner el
+   genero yo y tener una memoria de ayuda inteligente"). Guardado solo en este navegador (localStorage),
+   mismo criterio "sin backend" que BPM/Energy. Sembrada con Reparto/Reparto Pop para no perder las
+   sugerencias que ya existían con el <select> anterior. */
+var GENRE_MEMORY_KEY = 'mdjbGenreMemory';
+function genreMemoryLoad(){
+  try{
+    var raw = localStorage.getItem(GENRE_MEMORY_KEY);
+    if (raw){ var arr = JSON.parse(raw); if (Array.isArray(arr) && arr.length) return arr; }
+  }catch(e){}
+  return ['Reparto','Reparto Pop'];
+}
+function genreMemorySave(list){
+  try{ localStorage.setItem(GENRE_MEMORY_KEY, JSON.stringify(list)); }catch(e){}
+}
+function genreMemoryAdd(g){
+  var name = String(g||'').trim();
+  if (!name) return;
+  var list = genreMemoryLoad();
+  var exists = list.some(function(x){ return x.toLowerCase()===name.toLowerCase(); });
+  if (!exists){ list.push(name); genreMemorySave(list); }
+}
+function genreMemorySuggestions(query){
+  /* WAI-ARIA Authoring Practices (Combobox With List Autocomplete): el listbox solo aparece
+     "when the user types one or more characters" -- nunca antes, ni con el campo vacío en foco. */
+  var q = String(query||'').trim().toLowerCase();
+  if (!q) return [];
+  var list = genreMemoryLoad();
+  return list.filter(function(g){ return g.toLowerCase().indexOf(q) > -1; }).slice(0, 8);
+}
+function repartoGenreSummary(tracks){
+  var map = {}, order = [], unclassified = 0;
+  tracks.forEach(function(t){
+    var g = String(t.genre||'').trim();
+    if (!g){ unclassified++; return; }
+    var key = g.toLowerCase();
+    if (!map[key]){ map[key] = { label: g, count: 0 }; order.push(key); }
+    map[key].count++;
+  });
+  var parts = order.map(function(k){ return map[k].count+' '+map[k].label; });
+  if (unclassified > 0) parts.push(unclassified+' sin clasificar');
+  return tracks.length+' tracks · '+parts.join(' · ');
 }
 function copyOneTrack(title, artist){
   var text = title + (artist ? ' - ' + artist : '');
@@ -1972,14 +2020,13 @@ function wireTrackCopyButtons(mount){
 function renderRepartoTrackRow(t, idx){
   return (
     '<tr>'+
+      '<td class="rp-copy-cell"><button class="rp-copy-one" data-copy-t="'+esc(t.title)+'" data-copy-a="'+esc(t.artist)+'" title="Copiar para buscar en Serato">'+iconSvg('copy')+'</button></td>'+
       '<td class="num">'+(idx+1)+'</td>'+
-      '<td class="track-name"><button class="rp-copy-one" data-copy-t="'+esc(t.title)+'" data-copy-a="'+esc(t.artist)+'" title="Copiar para buscar en Serato">'+iconSvg('copy')+'</button>'+esc(t.title)+'</td>'+
+      '<td class="track-name">'+esc(t.title)+'</td>'+
       '<td>'+esc(t.artist)+'</td>'+
-      '<td><select class="rp-genre-select" data-rp-genre="'+t.id+'">'+
-        [['', 'Sin definir'], ['reparto','Reparto'], ['reparto-pop','Reparto Pop']].map(function(opt){
-          return '<option value="'+opt[0]+'"'+((t.genre||'')===opt[0]?' selected':'')+'>'+opt[1]+'</option>';
-        }).join('')+
-      '</select></td>'+
+      '<td><input class="rp-input" type="text" placeholder="—" value="'+esc(t.key||'')+'" data-rp-key="'+t.id+'"></td>'+
+      '<td class="genre-ac"><input class="rp-input" type="text" placeholder="Escribe un género…" value="'+esc(t.genre||'')+'" data-rp-genre-input="'+t.id+'" autocomplete="off">'+
+        '<div class="genre-ac-list" data-rp-genre-list="'+t.id+'"></div></td>'+
       '<td><input class="rp-input" type="text" inputmode="numeric" placeholder="—" value="'+(t.bpm==null?'':t.bpm)+'" data-rp-bpm="'+t.id+'"></td>'+
       '<td><input class="rp-input" type="text" inputmode="numeric" placeholder="—" value="'+(t.energyEstimate==null?'':t.energyEstimate)+'" data-rp-energy="'+t.id+'"></td>'+
     '</tr>'
@@ -1987,26 +2034,25 @@ function renderRepartoTrackRow(t, idx){
 }
 function renderRepartoBody(){
   var tracks = state.repartoData.tracks;
-  var repartoCount = tracks.filter(function(t){ return t.genre==='reparto'; }).length;
-  var popCount = tracks.filter(function(t){ return t.genre==='reparto-pop'; }).length;
   return (
     '<div class="rp-toolbar"><button class="btn btn-gold btn-sm" id="rpCopyBtn">'+iconSvg('copy')+' Copy Tracklist</button></div>'+
-    '<div class="result-count">'+tracks.length+' tracks · '+repartoCount+' Reparto · '+popCount+' Reparto Pop · '+(tracks.length-repartoCount-popCount)+' sin clasificar</div>'+
+    '<div class="result-count">'+repartoGenreSummary(tracks)+'</div>'+
     '<div class="panel scrollx"><table class="rp-table"><colgroup>'+
-      '<col class="rp-col-n"><col class="rp-col-track"><col class="rp-col-artist"><col class="rp-col-genre"><col class="rp-col-bpm"><col class="rp-col-energy">'+
+      '<col class="rp-col-copy"><col class="rp-col-n"><col class="rp-col-track"><col class="rp-col-artist"><col class="rp-col-key"><col class="rp-col-genre"><col class="rp-col-bpm"><col class="rp-col-energy">'+
     '</colgroup><thead><tr>'+
-      ['#','Track','Artist','Genre','BPM','Energy'].map(function(h){ return '<th>'+h+'<span class="rp-resize-handle"></span></th>'; }).join('')+
+      '<th class="rp-col-copy-th"></th>'+
+      ['#','Track','Artist','Key','Genre','BPM','Energy'].map(function(h){ return '<th>'+h+'<span class="rp-resize-handle"></span></th>'; }).join('')+
     '</tr></thead><tbody>'+
       tracks.map(function(t, idx){ return renderRepartoTrackRow(t, idx); }).join('')+
     '</tbody></table></div>'+
-    '<p class="rp-hint">Arrastra el borde derecho de cada columna para ampliarla · BPM / Energy / Género se guardan solo en este navegador, no hay backend.</p>'
+    '<p class="rp-hint">Arrastra el borde derecho de cada columna para ampliarla (la primera, de copiar, es fija) · BPM / Key / Energy / Género se guardan solo en este navegador, no hay backend.</p>'
   );
 }
 function copyRepartoTracklist(){
   var tracks = state.repartoData ? state.repartoData.tracks : [];
-  var lines = ['#\tTrack\tArtist\tGenre\tBPM\tEnergy'];
+  var lines = ['#\tTrack\tArtist\tKey\tGenre\tBPM\tEnergy'];
   tracks.forEach(function(t, idx){
-    lines.push([idx+1, t.title, t.artist, repartoGenreLabel(t.genre), (t.bpm==null?'':t.bpm), (t.energyEstimate==null?'':t.energyEstimate)].join('\t'));
+    lines.push([idx+1, t.title, t.artist, (t.key||''), (t.genre||''), (t.bpm==null?'':t.bpm), (t.energyEstimate==null?'':t.energyEstimate)].join('\t'));
   });
   var text = lines.join('\n');
   function done(ok){ toast(ok ? 'Tracklist copiado — '+tracks.length+' canciones' : 'No se pudo copiar en este navegador'); }
@@ -2046,11 +2092,44 @@ function initRepartoResize(mount){
   });
 }
 function wireRepartoInputs(mount){
-  mount.querySelectorAll('[data-rp-genre]').forEach(function(sel){
-    sel.addEventListener('change', function(){
-      var t = repartoTrackById(sel.getAttribute('data-rp-genre'));
-      if (t) t.genre = sel.value || null;
+  mount.querySelectorAll('[data-rp-genre-input]').forEach(function(inp){
+    var id = inp.getAttribute('data-rp-genre-input');
+    var list = mount.querySelector('[data-rp-genre-list="'+id+'"]');
+    function commitGenre(value){
+      var t = repartoTrackById(id);
+      var v = String(value||'').trim();
+      if (t) t.genre = v || null;
+      if (v) genreMemoryAdd(v);
       renderRepartoCaseStudy();
+    }
+    function showSuggestions(){
+      if (!list) return;
+      var sugg = genreMemorySuggestions(inp.value);
+      if (!sugg.length){ list.style.display='none'; list.innerHTML=''; return; }
+      list.innerHTML = sugg.map(function(g){ return '<div class="genre-ac-item" data-genre-pick="'+esc(g)+'">'+esc(g)+'</div>'; }).join('');
+      list.style.display='block';
+      list.querySelectorAll('[data-genre-pick]').forEach(function(item){
+        item.addEventListener('mousedown', function(e){
+          e.preventDefault();
+          commitGenre(item.getAttribute('data-genre-pick'));
+        });
+      });
+    }
+    inp.addEventListener('focus', showSuggestions);
+    inp.addEventListener('input', showSuggestions);
+    inp.addEventListener('blur', function(){
+      setTimeout(function(){ commitGenre(inp.value); }, 150);
+    });
+    inp.addEventListener('keydown', function(e){
+      if (e.key==='Enter'){ e.preventDefault(); inp.blur(); }
+    });
+  });
+  mount.querySelectorAll('[data-rp-key]').forEach(function(inp){
+    inp.addEventListener('input', function(){
+      var v = inp.value.toUpperCase().replace(/[^0-9AB]/g,'').slice(0,3);
+      inp.value = v;
+      var t = repartoTrackById(inp.getAttribute('data-rp-key'));
+      if (t) t.key = v || null;
     });
   });
   mount.querySelectorAll('[data-rp-bpm]').forEach(function(inp){
@@ -2082,7 +2161,7 @@ function renderRepartoCaseStudy(){
       '<span class="label" style="display:flex;align-items:center;gap:8px;">'+iconSvg('music')+' Real DJ Prep — The Haunting House Of Baila Con Micho</span>'+
       '<span class="badge gold">Reparto / Reparto Pop · Event 2026-09-24</span>'+
     '</div>'+
-    '<p class="view-desc" style="margin:0 0 14px;">Real tracklist curated from the PO\'s own YouTube screenshots — not a formal production dossier like the One Hit Wonder case study. BPM, Genre and Energy are left blank on purpose (no source data exists for them) and are filled in live, here, by the DJ before the set — nothing here is invented. Edits stay in this browser only (no backend) until you copy the list out.</p>';
+    '<p class="view-desc" style="margin:0 0 14px;">Tracklist real curado de las capturas de YouTube del PO, con BPM/Tonalidad/Género confirmados el 2026-09-28 con la propia librería de Serato del PO (dato real del archivo de audio, no supuesto). Solo Energy queda en blanco — Serato no la mide, es criterio del DJ en vivo. Todo editable aquí; los cambios se guardan solo en este navegador (no hay backend) hasta que copies la lista.</p>';
 
   if (state.repartoData){
     mount.innerHTML = header + renderRepartoBody();
@@ -2104,6 +2183,11 @@ function loadRepartoCaseStudy(){
   fetch('./data/reparto-experience.json')
     .then(function(r){ if (!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
     .then(function(data){
+      var LEGACY = { 'reparto':'Reparto', 'reparto-pop':'Reparto Pop' };
+      data.tracks.forEach(function(t){
+        if (t.genre && LEGACY[t.genre]) t.genre = LEGACY[t.genre];
+        if (t.genre) genreMemoryAdd(t.genre);
+      });
       state.repartoData = data;
       state.repartoLoading = false;
       if (state.view==='experience') renderRepartoCaseStudy();
@@ -2127,8 +2211,9 @@ function ninetiesTrackById(id){
 function renderNinetiesTrackRow(t, idx){
   return (
     '<tr>'+
+      '<td class="rp-copy-cell"><button class="rp-copy-one" data-copy-t="'+esc(t.title)+'" data-copy-a="'+esc(t.artist)+'" title="Copiar para buscar en Serato">'+iconSvg('copy')+'</button></td>'+
       '<td class="num">'+(idx+1)+'</td>'+
-      '<td class="track-name"><button class="rp-copy-one" data-copy-t="'+esc(t.title)+'" data-copy-a="'+esc(t.artist)+'" title="Copiar para buscar en Serato">'+iconSvg('copy')+'</button>'+esc(t.title)+'</td>'+
+      '<td class="track-name">'+esc(t.title)+'</td>'+
       '<td>'+esc(t.artist)+'</td>'+
       '<td><input class="rp-input" type="text" inputmode="numeric" placeholder="—" value="'+(t.bpm==null?'':t.bpm)+'" data-nh-bpm="'+t.id+'"></td>'+
       '<td><input class="rp-input" type="text" inputmode="numeric" placeholder="—" value="'+(t.energyEstimate==null?'':t.energyEstimate)+'" data-nh-energy="'+t.id+'"></td>'+
@@ -2142,13 +2227,14 @@ function renderNinetiesBody(){
     '<div class="rp-toolbar"><button class="btn btn-gold btn-sm" id="nhCopyBtn">'+iconSvg('copy')+' Copy Tracklist</button></div>'+
     '<div class="result-count">'+tracks.length+' tracks · '+withBpm+' con BPM real · '+(tracks.length-withBpm)+' sin publicar (a llenar en vivo)</div>'+
     '<div class="panel scrollx"><table class="rp-table"><colgroup>'+
-      '<col class="rp-col-n"><col class="rp-col-track"><col class="rp-col-artist"><col class="rp-col-bpm"><col class="rp-col-energy">'+
+      '<col class="rp-col-copy"><col class="rp-col-n"><col class="rp-col-track"><col class="rp-col-artist"><col class="rp-col-bpm"><col class="rp-col-energy">'+
     '</colgroup><thead><tr>'+
+      '<th class="rp-col-copy-th"></th>'+
       ['#','Track','Artist','BPM','Energy'].map(function(h){ return '<th>'+h+'<span class="rp-resize-handle"></span></th>'; }).join('')+
     '</tr></thead><tbody>'+
       tracks.map(function(t, idx){ return renderNinetiesTrackRow(t, idx); }).join('')+
     '</tbody></table></div>'+
-    '<p class="rp-hint">Arrastra el borde derecho de cada columna para ampliarla · BPM real cuando se encontró en fuente pública, editable en este navegador (no hay backend).</p>'
+    '<p class="rp-hint">Arrastra el borde derecho de cada columna para ampliarla (la primera, de copiar, es fija) · BPM real cuando se encontró en fuente pública, editable en este navegador (no hay backend).</p>'
   );
 }
 function copyNinetiesTracklist(){
@@ -2264,8 +2350,9 @@ function haTrackById(id){
 function renderHalloweenTrackRow(t){
   return (
     '<tr>'+
+      '<td class="rp-copy-cell"><button class="rp-copy-one" data-copy-t="'+esc(t.track)+'" data-copy-a="'+esc(t.artist)+'" title="Copiar para buscar en Serato">'+iconSvg('copy')+'</button></td>'+
       '<td class="num">'+t.order+'</td>'+
-      '<td class="track-name"><button class="rp-copy-one" data-copy-t="'+esc(t.track)+'" data-copy-a="'+esc(t.artist)+'" title="Copiar para buscar en Serato">'+iconSvg('copy')+'</button>'+esc(t.track)+'</td>'+
+      '<td class="track-name">'+esc(t.track)+'</td>'+
       '<td>'+esc(t.artist)+'</td>'+
       '<td><input class="rp-input" type="text" inputmode="numeric" placeholder="—" value="'+(t.bpm==null?'':t.bpm)+'" data-ha-bpm="'+t.id+'"></td>'+
       '<td><input class="rp-input" type="text" inputmode="numeric" placeholder="—" value="'+(t.energyEstimate==null?'':t.energyEstimate)+'" data-ha-energy="'+t.id+'"></td>'+
@@ -2294,8 +2381,9 @@ function renderHalloweenSection(sec){
     '<div class="rp-toolbar"><button class="btn btn-gold btn-sm" data-ha-copy-section="'+esc(sec.name)+'">'+iconSvg('copy')+' Copy Tracklist</button></div>'+
     '<div class="result-count">'+sec.tracks.length+' tracks</div>'+
     '<div class="panel scrollx"><table class="rp-table"><colgroup>'+
-      '<col class="rp-col-n"><col class="rp-col-track"><col class="rp-col-artist"><col class="rp-col-bpm"><col class="rp-col-energy">'+
+      '<col class="rp-col-copy"><col class="rp-col-n"><col class="rp-col-track"><col class="rp-col-artist"><col class="rp-col-bpm"><col class="rp-col-energy">'+
     '</colgroup><thead><tr>'+
+      '<th class="rp-col-copy-th"></th>'+
       ['#','Track','Artist','BPM','Energy'].map(function(h){ return '<th>'+h+'<span class="rp-resize-handle"></span></th>'; }).join('')+
     '</tr></thead><tbody>'+
       sec.tracks.map(function(t){ return renderHalloweenTrackRow(t); }).join('')+
@@ -2312,11 +2400,13 @@ function renderHalloweenReservePanel(){
     '<p class="view-desc" style="margin:0 0 10px;">'+esc(r.note)+'</p>'+
     '<div class="rp-toolbar"><button class="btn btn-gold btn-sm" id="haReserveCopyBtn">'+iconSvg('copy')+' Copy Tracklist</button></div>'+
     '<div class="panel scrollx"><table class="rp-table"><thead><tr>'+
+      '<th class="rp-col-copy-th"></th>'+
       ['#','Track','Artist','Function'].map(function(h){ return '<th>'+h+'</th>'; }).join('')+
     '</tr></thead><tbody>'+
       r.tracks.map(function(t){
-        return '<tr><td class="num">'+t.order+'</td>'+
-          '<td class="track-name"><button class="rp-copy-one" data-copy-t="'+esc(t.track)+'" data-copy-a="'+esc(t.artist)+'" title="Copiar para buscar en Serato">'+iconSvg('copy')+'</button>'+esc(t.track)+'</td>'+
+        return '<tr><td class="rp-copy-cell"><button class="rp-copy-one" data-copy-t="'+esc(t.track)+'" data-copy-a="'+esc(t.artist)+'" title="Copiar para buscar en Serato">'+iconSvg('copy')+'</button></td>'+
+          '<td class="num">'+t.order+'</td>'+
+          '<td class="track-name">'+esc(t.track)+'</td>'+
           '<td>'+esc(t.artist)+'</td>'+
           '<td style="color:var(--text-dim);">'+esc(t.function)+'</td></tr>';
       }).join('')+
