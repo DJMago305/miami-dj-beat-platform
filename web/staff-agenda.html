@@ -6993,7 +6993,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                                         style="padding:8px 16px; background:rgba(197,160,89,0.12); border:1px solid rgba(197,160,89,0.35); border-radius:20px; color:var(--gold); font-size:12px; font-weight:800; cursor:pointer;">
                                         ⭐ Copiar Enlace de Reseña
                                     </button>` : ''}
-                                    ${!isPast && ev.status !== 'COMPLETED' ? `<button onclick="markEventComplete('${ev.id}')"
+                                    ${!isPast && ev.status !== 'COMPLETED' ? `<button onclick="openMarkCompleteModal('${ev.id}')"
                                         style="padding:8px 16px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:20px; color:rgba(255,255,255,0.5); font-size:12px; font-weight:800; cursor:pointer;">
                                         ✅ Marcar Completado
                                     </button>` : ''}
@@ -7012,13 +7012,79 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
             }
         };
 
-        window.markEventComplete = async (leadId) => {
-            if (!confirm('¿Marcar este evento como COMPLETADO?')) return;
+        /* Marcar Completado (2026-09-28, prerrequisito real encontrado al
+           conectar el ticket de experiencia por venue): ANTES, este botón
+           solo ponía status='COMPLETED' -- nunca escribía
+           event_completed_at, la columna que TODA la lógica de
+           disponibilidad/reseñas/insignias de hoy exige (RPC
+           check_dj_availability, submit_dj_public_review,
+           get_dj_venue_category_badges). Sin esto, ningún dato real podía
+           existir nunca, sin importar qué más se construyera. Corregido:
+           ahora sí escribe event_completed_at = now().
+           Aprovechando el mismo momento (staff completando el evento), se
+           agrega la captura de venue_id + high_impact (preguntas #1/#3 del
+           ticket) -- "el staff lo marca a mano, nunca lo infiere el sistema
+           solo" (decisión explícita del PO). Ambos campos son OPCIONALES:
+           si el staff no conoce el venue todavía, puede completar el
+           evento igual y dejarlo para después -- nunca bloquea el flujo
+           principal. */
+        window.openMarkCompleteModal = async (leadId) => {
+            const old = document.getElementById('mark-complete-modal');
+            if (old) old.remove();
             const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
-            const { error } = await sb.from('leads').update({ status: 'COMPLETED' }).eq('id', leadId);
+            let venues = [];
+            try {
+                const { data } = await sb.from('financial_venues').select('id,name,category').eq('status', 'ACTIVE').order('name');
+                venues = data || [];
+            } catch (e) { /* sin venues, el selector queda solo con "Ninguno" */ }
+
+            const modal = document.createElement('div');
+            modal.id = 'mark-complete-modal';
+            modal.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:9999; display:flex; align-items:center; justify-content:center; padding:20px;';
+            modal.innerHTML = `
+                <div style="background:#11161f; border:1px solid rgba(197,160,89,0.3); border-radius:16px; padding:24px; max-width:420px; width:100%;">
+                    <button onclick="document.getElementById('mark-complete-modal').remove()" style="position:absolute; top:14px; right:14px; background:none; border:none; color:#fff; font-size:22px; cursor:pointer;">&times;</button>
+                    <h3 style="margin:0 0 6px; color:#fff; font-size:18px;">Marcar evento completado</h3>
+                    <p style="margin:0 0 18px; color:rgba(255,255,255,0.55); font-size:13px;">El venue y "alto impacto" son opcionales -- alimentan las insignias de experiencia del DJ, se pueden dejar para después.</p>
+                    <label style="display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:rgba(255,255,255,0.55); margin-bottom:4px;">Venue (opcional)</label>
+                    <select id="mc-venue-select" style="width:100%; background:rgba(14,20,32,.85); border:1px solid rgba(255,255,255,.15); color:#fff; border-radius:10px; padding:10px 12px; font-size:14px; margin-bottom:14px;">
+                        <option value="">Ninguno / no sé todavía</option>
+                        ${venues.map(v => `<option value="${v.id}">${v.name}${v.category ? ' (' + v.category + ')' : ''}</option>`).join('')}
+                    </select>
+                    <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:rgba(255,255,255,0.8); margin-bottom:20px; cursor:pointer;">
+                        <input type="checkbox" id="mc-high-impact" style="width:16px; height:16px;" />
+                        Evento de alto impacto (ej. Haunted House -- escala grande aunque sea único)
+                    </label>
+                    <div style="display:flex; gap:10px;">
+                        <button onclick="document.getElementById('mark-complete-modal').remove()" style="flex:1; padding:10px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:10px; color:rgba(255,255,255,0.6); font-weight:700; cursor:pointer;">Cancelar</button>
+                        <button onclick="window.confirmMarkComplete('${leadId}')" style="flex:1; padding:10px; background:#c5a059; border:none; border-radius:10px; color:#0b0f18; font-weight:800; cursor:pointer;">Confirmar</button>
+                    </div>
+                </div>`;
+            document.body.appendChild(modal);
+        };
+
+        window.confirmMarkComplete = async (leadId) => {
+            const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+            const venueSelect = document.getElementById('mc-venue-select');
+            const highImpactEl = document.getElementById('mc-high-impact');
+            const payload = {
+                status: 'COMPLETED',
+                event_completed_at: new Date().toISOString(),
+                venue_id: (venueSelect && venueSelect.value) ? venueSelect.value : null,
+                high_impact: !!(highImpactEl && highImpactEl.checked),
+            };
+            const { error } = await sb.from('leads').update(payload).eq('id', leadId);
+            const modalEl = document.getElementById('mark-complete-modal');
+            if (modalEl) modalEl.remove();
             if (error) { alert('Error: ' + error.message); return; }
             loadAssignedEvents();
         };
+
+        // Compatibilidad: cualquier llamador viejo a markEventComplete(id) (sin
+        // modal) sigue funcionando -- ahora abre el modal en vez de completar
+        // directo, mismo comportamiento visible para el staff, con el fix de
+        // event_completed_at incluido.
+        window.markEventComplete = window.openMarkCompleteModal;
 
         document.addEventListener('DOMContentLoaded', checkPhotoStatus);
         document.addEventListener('DOMContentLoaded', loadAssignedEvents);

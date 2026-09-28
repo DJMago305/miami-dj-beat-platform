@@ -336,7 +336,25 @@ export function escHtml(s) {
    find-dj.html decide cuál usar. Solo muestra lo que la Public Talent
    Projection expone de verdad (sin rating/redes sociales -- esos campos
    no vienen en esta proyección, no se inventan aquí). */
-export function renderHeroStripHTML(dj, { rentHref = "#", rentLabel = "", availabilityStatus = null } = {}) {
+/* Vocabulario de categorías → texto legible en español (2026-09-28,
+   confirmado por el PO, pregunta #2 del ticket de experiencia por venue).
+   Solo cubre las categorías reales que existen hoy en financial_venues --
+   si en el futuro se agrega una categoría nueva, cae al fallback (el
+   propio valor crudo) en vez de romper, hasta que se agregue su etiqueta
+   aquí explícitamente (nunca inventar el texto sobre la marcha). */
+const VENUE_CATEGORY_LABELS = {
+  sundowner: "sundowners",
+  restaurante_musica: "restaurantes con música en vivo",
+  restaurante: "restaurantes",
+  club: "clubes",
+  fiesta_privada: "fiestas privadas",
+};
+
+function venueCategoryLabel(category) {
+  return VENUE_CATEGORY_LABELS[category] || String(category || "").replace(/_/g, " ");
+}
+
+export function renderHeroStripHTML(dj, { rentHref = "#", rentLabel = "", availabilityStatus = null, venueBadges = [] } = {}) {
   const name = escHtml(dj.stage_name || dj.dj_slug || "Artist");
   const img = escHtml(dj.photo_url || "");
   const href = canonicalHref(dj);
@@ -369,6 +387,19 @@ export function renderHeroStripHTML(dj, { rentHref = "#", rentLabel = "", availa
     (specialtyTag ? '<span class="find-dj-strip__tag">' + specialtyTag + '</span>' : '') +
     (availLabel ? '<span class="find-dj-strip__avail" data-avail-slot="' + escHtml(availabilityStatus) + '">' + availLabel + '</span>' : '') +
     '</div>' +
+    /* Insignias de experiencia por venue (2026-09-28, preguntas #2/#3 del
+       ticket de experiencia por venue): el llamador (find-dj.html) ya
+       resolvió get_dj_venue_category_badges() ANTES de armar esta tarjeta.
+       venueBadges viene vacío para cualquier DJ sin experiencia real
+       registrada -- nunca se fabrica una insignia aquí. */
+    (venueBadges && venueBadges.length
+      ? '<div class="find-dj-strip__venue-badges">' +
+        venueBadges.map(function (b) {
+          var label = b.badge_level === 'comprobada' ? 'Experiencia comprobada en ' : 'Con experiencia verificada en ';
+          return '<span class="find-dj-strip__venue-badge find-dj-strip__venue-badge--' + escHtml(b.badge_level) + '">' + escHtml(label) + escHtml(venueCategoryLabel(b.category)) + '</span>';
+        }).join('') +
+        '</div>'
+      : '') +
     (bioStr ? '<p class="find-dj-strip__bio' + (bioEnStr ? ' find-dj-strip__bio--orig' : '') + '">' + bioStr + '</p>' : '') +
     (bioEnStr ? '<p class="find-dj-strip__bio find-dj-strip__bio--en">' + bioEnStr + '</p>' : '') +
     '<div class="find-dj-strip__cta">' +

@@ -251,6 +251,33 @@
         .find-dj-strip__avail[data-avail-slot="NOT_AVAILABLE"] { background: rgba(220, 90, 90, 0.14); border: 1px solid rgba(220, 90, 90, 0.4); color: #f0a3a3; }
         .find-dj-strip__avail[data-avail-slot="REQUIRES_CONFIRMATION"] { background: rgba(197, 160, 89, 0.12); border: 1px solid rgba(197, 160, 89, 0.3); color: #e8c987; }
 
+        /* Insignias de experiencia por venue (2026-09-28, preguntas #2/#3
+           del ticket de experiencia por venue). Vacío para cualquier DJ sin
+           experiencia real registrada -- nunca se pinta nada fabricado. */
+        .find-dj-strip__venue-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 0 0 12px;
+        }
+        .find-dj-strip__venue-badge {
+            border-radius: 999px;
+            padding: 3px 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .find-dj-strip__venue-badge--verificada {
+            background: rgba(197, 160, 89, 0.10);
+            border: 1px solid rgba(197, 160, 89, 0.28);
+            color: #d9c397;
+        }
+        .find-dj-strip__venue-badge--comprobada {
+            background: rgba(197, 160, 89, 0.18);
+            border: 1px solid rgba(197, 160, 89, 0.5);
+            color: #f0d9a8;
+            font-weight: 700;
+        }
+
         .find-dj-strip__bio {
             line-height: 1.6;
             color: rgba(255, 255, 255, 0.8);
@@ -491,7 +518,7 @@
     <script src="./i18n.js?v=20260226-1"></script>
     <script src="./subscription.js?v=20260422-find-dj-rank"></script>
     <script type="module">
-        import { tokenize, matchesQuery, simulateDbOrderedSlice, compareForSearch, canonicalHref, renderResultCardHTML, renderHeroStripHTML } from './find-dj-search.mjs?v=20260927-hero-apilado';
+        import { tokenize, matchesQuery, simulateDbOrderedSlice, compareForSearch, canonicalHref, renderResultCardHTML, renderHeroStripHTML } from './find-dj-search.mjs?v=20260928-venue-badges';
 
         const db = supabase.createClient(window.MDB_SUPABASE_URL, window.MDB_SUPABASE_ANON_KEY);
 
@@ -613,7 +640,27 @@
                 data = data.filter(function (dj) { return availByDj[dj.dj_slug] !== 'NOT_AVAILABLE'; });
             }
 
-            window.__findDjLast = { data: data, nameQ: nameQ, intent: intent, categoryFromUrl: categoryFromUrl, dateParam: dateParam, availByDj: availByDj };
+            // Insignias de experiencia por venue (2026-09-28, preguntas #2/#3
+            // del ticket de experiencia por venue): get_dj_venue_category_badges()
+            // (migración 20260928091000) -- devuelve filas vacías para
+            // cualquier DJ sin experiencia real registrada todavía (hoy, los
+            // 3 DJs públicos reales), nunca se fabrica nada aquí. Si la
+            // llamada falla, se trata como "sin insignias" (nunca bloquea el
+            // render principal por esto).
+            var venueBadgesByDj = {};
+            if (data.length) {
+                await Promise.all(data.map(async function (dj) {
+                    if (!dj.user_id) { venueBadgesByDj[dj.user_id] = []; return; }
+                    try {
+                        var res = await db.rpc('get_dj_venue_category_badges', { p_dj_user_id: dj.user_id });
+                        venueBadgesByDj[dj.user_id] = (res && !res.error && res.data) ? res.data : [];
+                    } catch (e) {
+                        venueBadgesByDj[dj.user_id] = [];
+                    }
+                }));
+            }
+
+            window.__findDjLast = { data: data, nameQ: nameQ, intent: intent, categoryFromUrl: categoryFromUrl, dateParam: dateParam, availByDj: availByDj, venueBadgesByDj: venueBadgesByDj };
             renderResults();
         }
 
@@ -621,7 +668,7 @@
         function renderResults() {
             var st = window.__findDjLast;
             if (!st) return;
-            var data = st.data, nameQ = st.nameQ, intent = st.intent, categoryFromUrl = st.categoryFromUrl, dateParam = st.dateParam, availByDj = st.availByDj || {};
+            var data = st.data, nameQ = st.nameQ, intent = st.intent, categoryFromUrl = st.categoryFromUrl, dateParam = st.dateParam, availByDj = st.availByDj || {}, venueBadgesByDj = st.venueBadgesByDj || {};
             var grid = document.getElementById('dj-grid');
             var msg = document.getElementById('state-msg');
 
@@ -652,6 +699,7 @@
                     rentHref: rentHref,
                     rentLabel: rentLabel,
                     availabilityStatus: dateParam ? (availByDj[dj.dj_slug] || null) : null,
+                    venueBadges: venueBadgesByDj[dj.user_id] || [],
                 });
             }).join('');
         }
