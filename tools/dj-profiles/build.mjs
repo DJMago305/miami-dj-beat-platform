@@ -16,13 +16,17 @@
 // que ya usa find-dj.html vía MDB_SUBSCRIPTION.searchRankScore), y dentro de
 // cada grupo, alfabético.
 //
-//   node tools/dj-profiles/build.mjs          → genera web/dj/*.html + actualiza sitemap.xml
+//   node tools/dj-profiles/build.mjs          → SOLO crea web/dj/<slug>.html para
+//     DJs nuevos que aún no tienen página (+ sitemap.xml, solo altas/bajas de
+//     /dj/*, y el manifiesto de slugs). Imprime qué falta agregar a mano en
+//     directorio.html/equipo.html — nunca los escribe él mismo (ver Corrección
+//     2026-09-28 más abajo).
 //   node tools/dj-profiles/build.mjs --dry-run → solo imprime el PLAN, no escribe nada
 //   node tools/dj-profiles/build.mjs --dry-run --reconcile → además muestra qué borraría
 //   MDJB_FIXTURE=<ruta.json> node ... --dry-run → corre contra un fixture local, sin red
-//   MDJB_OUTPUT_DIR=<ruta> node ...            → redirige TODA escritura (perfiles,
-//     directorio.html, equipo.html, sitemap.xml, slug-manifest) a esa carpeta en vez
-//     de web/ — para validar una corrida REAL sin tocar jamás el sitio publicado.
+//   MDJB_OUTPUT_DIR=<ruta> node ...            → redirige TODA escritura (perfiles
+//     nuevos, sitemap.xml, slug-manifest) a esa carpeta en vez de web/ — para
+//     validar una corrida REAL sin tocar jamás el sitio publicado.
 //
 // Sin dependencias externas — usa fetch nativo (Node 18+). No modifica
 // profile.html, directory.html, find-dj.html ni ninguna tabla de Supabase.
@@ -36,6 +40,18 @@
 //    identidad). Los borrados ocurren al final y solo con --reconcile.
 // 3. --dry-run ⇒ CERO escrituras en disco. El script nunca escribe en la base
 //    de datos (solo SELECT vía PostgREST).
+// 4. Corrección 2026-09-28 (ticket docs/tickets/2026-09-28-build-mjs-
+//    plantilla-desactualizada-y-proteccion-hand-curated.md) — NUNCA
+//    RE-ESCRIBIR LO QUE YA EXISTE. Una corrida real anterior sobrescribió sin
+//    avisar contenido hand-curated (hero de video, formulario de búsqueda,
+//    insignias de venue, tarjetas de equipo, etiquetas hand-curated, fotos
+//    actualizadas) en 5 archivos ya existentes, porque el generador solo
+//    verificaba PROPIEDAD (¿tiene la marca correcta?), nunca si el archivo
+//    fue editado a mano desde la última corrida. Desde esta corrección: el
+//    generador SOLO escribe páginas de perfil que NO EXISTEN todavía (nada
+//    que perder ahí) y NUNCA vuelve a tocar directorio.html/equipo.html —
+//    esas dos son permanentemente hand-maintained; el generador solo reporta
+//    qué agregar ahí a mano.
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, unlinkSync } from "node:fs";
 import { join, dirname, basename, isAbsolute } from "node:path";
@@ -47,7 +63,8 @@ const WEB = join(ROOT, "web");
 
 // MDJB_OUTPUT_DIR — override de validación local, mismo patrón que MDJB_FIXTURE
 // (Corrección de la orden "FINAL LOCAL VALIDATION"): redirige TODA escritura
-// (perfiles, directorio, equipo.html, sitemap.xml, slug-manifest) a un
+// (perfiles nuevos, sitemap.xml, slug-manifest — directorio.html/equipo.html
+// ya no se escriben nunca, ver Corrección 2026-09-28 más arriba) a un
 // directorio scratch aislado, para poder correr una generación REAL sin tocar
 // jamás web/. Sin esta variable el comportamiento es idéntico al de siempre.
 const OUTPUT_DIR_OVERRIDE = process.env.MDJB_OUTPUT_DIR || null;
@@ -450,12 +467,21 @@ const FOOTER_AND_SCRIPTS_HTML = `  <footer class="footer">
   <script src="./translations.js?v=20260927-bilingue-final"></script>
   <script src="./i18n.js?v=20260904-dj-profiles"></script>
   <script src="./header-smart-search.js?v=20260927-bilingue-hint"></script>
-  <script src="./mdj-identity.js?v=20260904-dj-profiles"></script>
-  <script src="./auth.js?v=20260904-dj-profiles"></script>
-  <script src="./mdjb-shared-header.js?v=20260904-dj-profiles"></script>
+  <script src="./mdj-identity.js?v=20260921-rol-unico"></script>
+  <script src="./auth.js?v=20260921-idiomas"></script>
+  <script src="./mdjb-shared-header.js?v=20260921-jobs-menu"></script>
   <script src="./mdj-mainnav-infinite.js?v=20260904-dj-profiles"></script>
   <script src="./mdj-mobile-header-fix.js?v=20260904-dj-profiles"></script>
 `;
+// ⚠️ Corrección 2026-09-28 (ticket docs/tickets/2026-09-28-build-mjs-plantilla-
+// desactualizada-y-proteccion-hand-curated.md): estos 3 cache-busts
+// (mdj-identity.js/auth.js/mdjb-shared-header.js) estaban meses atrás de lo
+// real (?v=20260904-dj-profiles cuando el sitio ya iba por ?v=20260921-*) —
+// refrescados contra web/dj/djmago305.html real al momento de este commit.
+// Este archivo NO se autoactualiza: quien vuelva a tocar este generador debe
+// re-copiar estos valores de una página real antes de correrlo, mismo
+// patrón que ya usa el propio comentario de HEADER_HTML/FOOTER_AND_SCRIPTS_HTML
+// ("copiados literales... el timestamp de cache-bust cambia").
 
 /* Corrección 18 — OG/Twitter. Todos los valores salen de data que el
    generador YA tiene (metaDesc, canonical, photo_url/background_url). No se
@@ -567,6 +593,7 @@ export function renderPage(dj) {
 <html lang="es">
 
 <head>
+  <script src="/js/mdj-lang-boot.js?v=20260927-boot"></script>
   <meta charset="utf-8" />
   <base href="/" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -682,6 +709,7 @@ export function renderIndexPage(djs) {
 <html lang="es">
 
 <head>
+  <script src="/js/mdj-lang-boot.js?v=20260927-boot"></script>
   <meta charset="utf-8" />
   <base href="/" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -808,6 +836,7 @@ export function renderTeamPage(staff) {
 <html lang="es">
 
 <head>
+  <script src="/js/mdj-lang-boot.js?v=20260927-boot"></script>
   <meta charset="utf-8" />
   <base href="/" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -1183,25 +1212,45 @@ export async function main() {
   }
 
   if (DRY_RUN) {
-    console.log(`\nRESUMEN: --dry-run — ${plan.create.length} a crear, ${plan.keep.length} a actualizar, ${plan.staleRemovable.length} borrable(s)${RECONCILE ? "" : " (sin --reconcile)"}, ${sitemapPlan.added.length} alta(s) de sitemap, ${sitemapPlan.removed.length} baja(s) de sitemap. CERO archivos escritos.`);
+    console.log(`\nRESUMEN: --dry-run — ${plan.create.length} a crear, ${plan.keep.length} ya existe(n) (NUNCA se reescriben), ${plan.staleRemovable.length} borrable(s)${RECONCILE ? "" : " (sin --reconcile)"}, ${sitemapPlan.added.length} alta(s) de sitemap, ${sitemapPlan.removed.length} baja(s) de sitemap. CERO archivos escritos.`);
     return;
   }
 
   // ── WRITE ─────────────────────────────────────────────────────────────────
+  // Corrección 2026-09-28 (ticket docs/tickets/2026-09-28-build-mjs-plantilla-
+  // desactualizada-y-proteccion-hand-curated.md): una corrida real anterior
+  // sobrescribió sin avisar contenido hand-curated en 5 archivos ya existentes
+  // (directorio.html perdió el hero de video/formulario de búsqueda/insignias
+  // de venue; equipo.html perdió tarjetas hand-authored; djmago305.html perdió
+  // etiquetas hand-curated y cache-busts recientes; djyuyo.html revirtió su
+  // foto). Causa raíz: el generador verificaba PROPIEDAD del archivo, nunca si
+  // fue editado a mano después de su última corrida.
+  //
+  // Rediseño de seguridad: el generador SOLO crea páginas de perfil
+  // GENUINAMENTE NUEVAS (slugs en plan.create, que no existen en disco todavía
+  // — nada que perder ahí). Nunca vuelve a escribir un archivo que ya existe
+  // (plan.keep), y nunca toca directorio.html/equipo.html — esas dos quedan
+  // permanentemente fuera del alcance de escritura automática: son páginas
+  // compartidas con historial real de ediciones a mano (hero de video,
+  // formulario de búsqueda, insignias de venue, tarjetas de equipo que no
+  // vienen de dj_profiles). El generador reporta qué haría falta agregar ahí
+  // a mano, nunca lo escribe él mismo.
   if (!existsSync(OUT_DIR)) mkdirSync(OUT_DIR, { recursive: true });
 
-  for (const dj of plan.desired) {
-    const profilePath = join(OUT_DIR, `${dj.dj_slug}.html`);
+  for (const slug of plan.create) {
+    const dj = plan.desired.find((d) => d.dj_slug === slug);
+    const profilePath = join(OUT_DIR, `${slug}.html`);
     writeFileSync(profilePath, renderPage(dj), "utf8");
-    console.log(`✓ ${OUTPUT_DIR_OVERRIDE ? profilePath : `web/dj/${dj.dj_slug}.html`}`);
+    console.log(`✓ CREADA ${OUTPUT_DIR_OVERRIDE ? profilePath : `web/dj/${slug}.html`}`);
+  }
+  if (plan.keep.length) {
+    console.log(`○ SIN TOCAR (${plan.keep.length}, ya existen — nunca se reescriben): ${plan.keep.join(", ")}`);
   }
 
-  const directorioPath = join(OUT_DIR, "directorio.html");
-  writeFileSync(directorioPath, renderIndexPage(plan.desired), "utf8");
-  console.log(`✓ ${OUTPUT_DIR_OVERRIDE ? directorioPath : "web/dj/directorio.html"} (${plan.desired.length} perfiles listados)`);
-
-  writeFileSync(EQUIPO_PATH, renderTeamPage(plan.staff), "utf8");
-  console.log(`✓ ${OUTPUT_DIR_OVERRIDE ? EQUIPO_PATH : "web/equipo.html"} (${plan.staff.length} miembros listados)`);
+  if (plan.create.length) {
+    console.log(`\n⚠️  ACCIÓN MANUAL REQUERIDA — el generador NO escribe directorio.html ni equipo.html:`);
+    console.log(`   Agregar a mano el enlace/tarjeta de: ${plan.create.join(", ")} en web/dj/directorio.html (y en web/equipo.html si aplica a staff).`);
+  }
 
   if (sitemapXmlBefore && (sitemapPlan.added.length || sitemapPlan.removed.length)) {
     writeFileSync(SITEMAP, sitemapPlan.xml, "utf8");
@@ -1211,9 +1260,11 @@ export async function main() {
   writeFileSync(SLUG_MANIFEST, `${JSON.stringify(buildSlugManifest(plan.desired), null, 2)}\n`, "utf8");
   console.log(`✓ ${OUTPUT_DIR_OVERRIDE ? SLUG_MANIFEST : "tools/dj-profiles/.slug-manifest.json"} (${plan.desired.length} entradas)`);
 
-  // Los borrados van AL FINAL, después de que todas las altas/actualizaciones
-  // salieron bien, y solo sobre stale-removable (nunca rename-candidate, nunca
-  // unowned, nunca directorio.html, nunca el ancla de identidad).
+  // Los borrados van AL FINAL, después de que todas las altas salieron bien, y
+  // solo sobre stale-removable (nunca rename-candidate, nunca unowned, nunca
+  // directorio.html, nunca el ancla de identidad). Esto sigue siendo seguro:
+  // solo borra páginas de perfil individuales que ESTE generador creó y cuyo
+  // DJ ya no está en el roster deseado — nunca páginas compartidas.
   if (RECONCILE) {
     for (const slug of plan.staleRemovable) {
       const removePath = join(OUT_DIR, `${slug}.html`);
@@ -1222,7 +1273,7 @@ export async function main() {
     }
   }
 
-  console.log(`\nRESUMEN: ${plan.create.length} creada(s), ${plan.keep.length} actualizada(s), ${RECONCILE ? plan.staleRemovable.length : 0} borrada(s), sitemap +${sitemapPlan.added.length}/-${sitemapPlan.removed.length}.`);
+  console.log(`\nRESUMEN: ${plan.create.length} creada(s), ${plan.keep.length} sin tocar (ya existían), ${RECONCILE ? plan.staleRemovable.length : 0} borrada(s). directorio.html/equipo.html NO se tocaron — ver acción manual arriba si hubo altas.`);
 }
 
 // Solo se ejecuta si se invoca como script; importarlo desde las pruebas no

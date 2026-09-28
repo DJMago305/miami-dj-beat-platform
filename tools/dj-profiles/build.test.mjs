@@ -13,8 +13,9 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync, existsSync, readdirSync, statSync } from "node:fs";
+import { readFileSync, existsSync, readdirSync, statSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { join, dirname } from "node:path";
+import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 
@@ -454,4 +455,60 @@ test("22 · modo REAL sin entorno declarado aborta ANTES de cualquier fetch", ()
   assert.equal(fix.env, "FIXTURE");
   assert.equal(fix.url, null);
   assert.equal(fix.key, null);
+});
+
+/* ──────────── 23 · regresión real: nunca re-escribir lo que ya existe ────
+   Corrección 2026-09-28 (docs/tickets/2026-09-28-build-mjs-plantilla-
+   desactualizada-y-proteccion-hand-curated.md): una corrida real anterior
+   sobrescribió sin avisar contenido hand-curated en 5 archivos ya
+   existentes. Esta prueba corre el generador en modo REAL (sin --dry-run)
+   contra MDJB_OUTPUT_DIR (un scratch temporal, JAMÁS toca web/) y confirma
+   que la corrección real se sostiene: un perfil que ya existe se queda
+   exactamente igual, directorio.html/equipo.html nunca se tocan, y un
+   perfil que genuinamente no existe todavía SÍ se crea. */
+
+test("23 · una corrida REAL nunca reescribe un perfil existente ni toca directorio.html/equipo.html", () => {
+  const scratch = mkdtempSync(join(tmpdir(), "mdjb-build-real-"));
+  try {
+    mkdirSync(join(scratch, "dj"), { recursive: true });
+
+    // "Ya existe" un perfil de djmago305 con una marca hand-curated que el
+    // generador NO conoce -- mismo escenario real que causó la regresión.
+    const marca = "<!-- MARCA-DE-PRUEBA-HAND-CURATED-NO-TOCAR -->";
+    writeFileSync(join(scratch, "dj", "djmago305.html"), renderPage(DJ()) + marca, "utf8");
+
+    // directorio.html/equipo.html "ya existen" con contenido hand-curated
+    // propio -- deben quedar exactamente igual, byte a byte.
+    const directorioHandCurado = "<!-- DIRECTORIO HAND-CURATED, NO GENERADO -->";
+    const equipoHandCurado = "<!-- EQUIPO HAND-CURATED, NO GENERADO -->";
+    writeFileSync(join(scratch, "dj", "directorio.html"), directorioHandCurado, "utf8");
+    writeFileSync(join(scratch, "equipo.html"), equipoHandCurado, "utf8");
+
+    const salida = execFileSync(process.execPath, [join(HERE, "build.mjs")], {
+      env: { ...process.env, MDJB_FIXTURE: FIXTURE, MDJB_OUTPUT_DIR: scratch },
+      encoding: "utf8",
+    });
+
+    // djmago305.html (ya existía) nunca se reescribió.
+    assert.equal(
+      readFileSync(join(scratch, "dj", "djmago305.html"), "utf8").endsWith(marca), true,
+      "el generador reescribió un perfil que ya existía -- regresión real"
+    );
+
+    // directorio.html/equipo.html nunca se tocan, pase lo que pase.
+    assert.equal(readFileSync(join(scratch, "dj", "directorio.html"), "utf8"), directorioHandCurado,
+      "el generador tocó directorio.html -- regresión real");
+    assert.equal(readFileSync(join(scratch, "equipo.html"), "utf8"), equipoHandCurado,
+      "el generador tocó equipo.html -- regresión real");
+
+    // djsolitario/djyuyo NO existían todavía en el scratch -- sí deben crearse.
+    assert.equal(existsSync(join(scratch, "dj", "djsolitario.html")), true, "un perfil genuinamente nuevo debe crearse");
+    assert.equal(existsSync(join(scratch, "dj", "djyuyo.html")), true, "un perfil genuinamente nuevo debe crearse");
+
+    // El reporte de consola avisa la acción manual, nunca escribe él mismo.
+    assert.match(salida, /ACCIÓN MANUAL REQUERIDA/);
+    assert.match(salida, /SIN TOCAR/);
+  } finally {
+    rmSync(scratch, { recursive: true, force: true });
+  }
 });
