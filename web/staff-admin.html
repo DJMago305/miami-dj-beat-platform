@@ -2186,6 +2186,11 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                   <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>
                   Venues
                 </a>
+                <!-- Visible a todo staff (no solo owner) -- cada quien ve solo sus propias filas (vendedor_id = su usuario) -->
+                <a href="#mis-comisiones" class="side-link" onclick="loadMisComisiones()" style="display:flex;align-items:center;gap:9px;">
+                  <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                  Mis Comisiones
+                </a>
                 <!-- Owner-only: Tarifas de Comisiones (igual que #content, el gestor de precios) -->
                 <a href="#commission-rules" id="sidebar-commission-rules" class="side-link" onclick="loadCommissionRules()"
                    style="display:none;align-items:center;gap:9px;color:#c5a059;border-left:2px solid rgba(197,160,89,0.35);">
@@ -2847,6 +2852,23 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                         </div>
                     </div>
 
+                </div>
+
+                <!-- Visible a todo staff -- filtra por vendedor_id = usuario actual, no por rol -->
+                <div class="admin-card" id="mis-comisiones" style="display:none;">
+                    <h3 style="margin-top:0;">💵 Mis Comisiones</h3>
+                    <p class="fineprint">Tu comisión como vendedor por ventas que cerraste. Cada quien ve solo lo suyo -- si nunca cerraste una venta a tu nombre, esto sale vacío.</p>
+                    <div style="display:flex;gap:20px;flex-wrap:wrap;margin:14px 0 20px;">
+                        <div class="mdj-venue-card" style="flex:1;min-width:180px;padding:16px 18px;">
+                            <div class="fineprint" style="margin:0 0 4px;">Total ganado</div>
+                            <div id="mis-comisiones-total" style="font-size:22px;font-weight:800;color:#c5a059;">$0.00</div>
+                        </div>
+                        <div class="mdj-venue-card" style="flex:1;min-width:180px;padding:16px 18px;">
+                            <div class="fineprint" style="margin:0 0 4px;">Ventas contadas</div>
+                            <div id="mis-comisiones-count" style="font-size:22px;font-weight:800;">0</div>
+                        </div>
+                    </div>
+                    <div id="mis-comisiones-list">Cargando…</div>
                 </div>
 
                 <!-- Owner-only: Tarifas del Motor de Comisiones (commission_rules) -->
@@ -5262,7 +5284,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     const target = hrefRaw.replace('#', '');
                     if (!target) return;
                     // Show target section, hide others — with anti-CLS fade
-                    const sections = ['leads', 'actividad', 'eb-orders', 'crm', 'djs', 'staff', 'registry-section', 'analytics', 'content', 'mdjpro-downloads-panel', 'site-media', 'apps', 'production', 'venues', 'wedding-plan', 'create-profiles', 'event-blueprint', 'fashion-show-panel', 'commission-rules'];
+                    const sections = ['leads', 'actividad', 'eb-orders', 'crm', 'djs', 'staff', 'registry-section', 'analytics', 'content', 'mdjpro-downloads-panel', 'site-media', 'apps', 'production', 'venues', 'wedding-plan', 'create-profiles', 'event-blueprint', 'fashion-show-panel', 'commission-rules', 'mis-comisiones'];
                     const eventPanels = ['event-blueprint', 'fashion-show-panel'];
                     sections.forEach(id => {
                         const el = document.getElementById(id);
@@ -9058,6 +9080,64 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 const { error } = await db.from('commission_rules').update({ effective_to: new Date().toISOString() }).eq('id', id);
                 if (error) { alert('❌ Error: ' + error.message); return; }
                 loadCommissionRules();
+            };
+
+            // "Mis Comisiones" -- vendedor ve solo sus propias filas (vendedor_id = su auth.uid()).
+            // RLS ya permite leer TODA la tabla a cualquier staff (can_read_financial); el filtro
+            // por vendedor_id es de esta consulta, no de un permiso nuevo -- ver investigación previa.
+            function mdjComisionMoney(n) {
+                var v = Number(n) || 0;
+                return '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+
+            window.loadMisComisiones = async function() {
+                const db = window.getSupabaseClient();
+                if (!db) return;
+                const listEl = document.getElementById('mis-comisiones-list');
+                const totalEl = document.getElementById('mis-comisiones-total');
+                const countEl = document.getElementById('mis-comisiones-count');
+                const auth = await db.auth.getUser();
+                const uid = auth && auth.data && auth.data.user && auth.data.user.id;
+                if (!uid) { listEl.textContent = 'Sin sesión.'; return; }
+
+                const { data, error } = await db
+                    .from('referral_sale_commissions')
+                    .select('id, client_origin, is_first_event, tier_key, comision_vendedor_usd, addon_comision_vendedor_usd, status, calculado_en')
+                    .eq('vendedor_id', uid)
+                    .order('calculado_en', { ascending: false })
+                    .limit(100);
+
+                if (error) { listEl.textContent = 'Error: ' + error.message; return; }
+                if (!data || !data.length) {
+                    listEl.innerHTML = '<p class="fineprint">Todavía no tienes comisiones registradas -- aparecen aquí cuando cierres una venta y el total quede aprobado.</p>';
+                    totalEl.textContent = mdjComisionMoney(0);
+                    countEl.textContent = '0';
+                    return;
+                }
+
+                let total = 0;
+                data.forEach(function(r) {
+                    total += (Number(r.comision_vendedor_usd) || 0) + (Number(r.addon_comision_vendedor_usd) || 0);
+                });
+                totalEl.textContent = mdjComisionMoney(total);
+                countEl.textContent = String(data.length);
+
+                listEl.innerHTML = '<div style="overflow-x:auto;"><table><thead><tr>' +
+                    '<th>Fecha</th><th>Origen</th><th>Tier</th><th>Comisión</th><th>Estado</th>' +
+                    '</tr></thead><tbody>' +
+                    data.map(function(r) {
+                        const d = r.calculado_en ? new Date(r.calculado_en).toLocaleDateString('es-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
+                        const origen = r.client_origin === 'dj_referral' ? 'Cliente de un DJ' : 'Tu propio cliente';
+                        const monto = (Number(r.comision_vendedor_usd) || 0) + (Number(r.addon_comision_vendedor_usd) || 0);
+                        return '<tr>' +
+                            '<td>' + d + '</td>' +
+                            '<td>' + origen + (r.is_first_event ? ' · 1er evento' : '') + '</td>' +
+                            '<td>' + (r.tier_key || '—') + '</td>' +
+                            '<td style="font-weight:700;color:#00ff88;">' + mdjComisionMoney(monto) + '</td>' +
+                            '<td>' + (r.status || 'pending') + '</td>' +
+                            '</tr>';
+                    }).join('') +
+                    '</tbody></table></div>';
             };
 
             window.mdjDeleteVenue = async function(id) {

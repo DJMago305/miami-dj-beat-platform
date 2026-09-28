@@ -3180,6 +3180,27 @@
                         </div>
                     </div>
 
+                    <div class="flow-table-card" id="referral-owner-commissions-card" style="margin-bottom:32px; display:none;">
+                        <div style="padding:24px; border-bottom:1px solid rgba(255,255,255,0.03); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+                            <div>
+                                <h3 class="chart-title">Comisión por Clientes Referidos</h3>
+                                <p style="margin:6px 0 0;font-size:11px;line-height:1.45;color:rgba(255,255,255,0.4);max-width:480px;">Cuando un cliente que trajiste tú compra otro evento con Miami DJ Beat, te toca una comisión -- distinta a "Comisiones Referidos" de arriba (esa es por enlace/QR).</p>
+                            </div>
+                            <div class="flow-card" style="min-width:160px;">
+                                <div class="flow-card-label">Total ganado</div>
+                                <div id="referral-owner-total" class="flow-card-value" style="color:#f0cc80;">$0.00</div>
+                            </div>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table class="flow-table">
+                                <thead>
+                                    <tr><th>Fecha</th><th>Tier / Evento</th><th>Comisión</th><th>Estado</th></tr>
+                                </thead>
+                                <tbody id="referral-owner-commissions-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
                     <div class="chart-container-large">
                         <div class="chart-header">
                             <h3 class="chart-title">Crecimiento y Posicionamiento</h3>
@@ -7259,6 +7280,7 @@
     <script src="./js/agenda-engine.js?v=20260921-sin-cancelados"></script>
     <script src="./js/mdj-dashboard-hub.js?v=20260513-fase2-flow"></script>
     <script src="./flow-handler.js?v=202605132300-ledger-filters"></script>
+    <script src="./js/dj-referral-commissions.js?v=20260928-comision-cliente-referido"></script>
 
     <!-- Support for External Tab Routing (?tab=settings) -->
     <script>
