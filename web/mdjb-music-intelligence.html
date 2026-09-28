@@ -542,6 +542,11 @@
       }
       async function mdjMiCheckAccess(){
         try {
+          var t = 0;
+          while (t < 80 && (!window.supabase || typeof window.getSupabaseClient !== 'function')) {
+            await new Promise(function (r) { setTimeout(r, 40); });
+            t++;
+          }
           var sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
           if (!sb) { mdjMiSetAccess(false); return; }
           var sess = await sb.auth.getSession();
