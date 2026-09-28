@@ -91,7 +91,7 @@ serve(async (req) => {
 
         const { data: lead } = await sb
             .from("leads")
-            .select("id, email, full_name, event_type, event_date, assigned_staff_id, assigned_staff_name, client_user_id")
+            .select("id, email, contact_person, event_type, event_date, assigned_staff_id, assigned_staff_name, client_user_id")
             .eq("id", msg.lead_id)
             .maybeSingle();
 
@@ -100,7 +100,7 @@ serve(async (req) => {
         }
 
         const eventLabel = [lead.event_type, lead.event_date].filter(Boolean).join(" · ");
-        const clientName = lead.full_name || lead.email || "Your client";
+        const clientName = lead.contact_person || lead.email || "Your client";
         const snippet = String(msg.body).length > 120
             ? String(msg.body).slice(0, 117) + "…"
             : String(msg.body);
