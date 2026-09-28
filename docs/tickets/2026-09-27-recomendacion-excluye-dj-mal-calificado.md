@@ -1,5 +1,5 @@
 # TICKET — Nunca recomendar a un cliente el mismo DJ que calificó mal
-Creado 2026-09-27 a pedido del PO. **PROPUESTO, sin construir.**
+Creado 2026-09-27 a pedido del PO. **CONSTRUIDO Y APLICADO EN PRODUCCIÓN desde el 2026-09-27** — ver sección "CONSTRUIDO Y APLICADO EN PRODUCCIÓN" más abajo. Este encabezado decía "PROPUESTO, sin construir" y quedó desactualizado dentro del mismo documento; re-verificado y re-confirmado en vivo el 2026-09-28 (transacción de prueba con Aron Rosso/Wendy E Ayala, revertida) — sigue funcionando exactamente como se documentó.
 
 ## El pedido del PO, textual
 "El registro nunca más le dará ese DJ a ese cliente... nunca a un cliente que da bajas calificaciones de un DJ se le recomendará el mismo DJ." El PO asumía que esto ya estaba funcionando — no era así, verificado hoy con datos reales, no opinión.

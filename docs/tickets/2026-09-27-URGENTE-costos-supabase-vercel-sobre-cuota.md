@@ -44,3 +44,19 @@ Revisado en vivo (2026-09-28, PO logueado en `vercel.com/djmago305s-projects`), 
 1. **La única palanca real para bajar el costo de Vercel es reducir el número de despliegues** — cada PR fusionado cuesta un build de producción real, sin importar qué tan chico sea el cambio (hasta un PR de solo documentación dispara un build completo). Ya existe la regla de gobernanza de no fragmentar en muchos PRs — aplicarla de verdad es lo que bajaría este número, no un cambio de configuración.
 2. Decidir con el PO una solución real y permanente al cache-control de Supabase Storage (Caso 1) — opciones: CDN delante de Storage tipo Cloudflare, pedir a soporte de Supabase que revise por qué el header no toma efecto, o mover los videos a otro origen que sí cachee bien.
 3. Nada se aplica sin aprobación explícita del PO (regla de gobernanza estándar del repo).
+
+## Caso 1 — causa raíz confirmada de raíz (2026-09-28), fix real listo, sin correr todavía
+
+**Re-verificado con `curl` real, no solo lógica**: 3 peticiones `GET` idénticas seguidas a `hora-loca-character.mp4` (52MB) — las 3 devolvieron `cache-control: no-cache` y transfirieron el archivo COMPLETO cada vez (`bytes_descargados=52291313` las tres veces). El intento anterior de arreglar esto por SQL/CLI (editar `storage.objects.metadata` directo) **nunca pudo haber funcionado**: la documentación oficial de Supabase (Smart CDN) dice que el `cacheControl` real que ve el navegador se fija **al subir/re-subir el archivo** vía la API de Storage, no editando esa fila después. La cuenta sí tiene Smart CDN activo (plan Pro) — pero mientras el header siga en `no-cache`, el CDN revalida en cada petición y no ahorra nada (confirmado: `cf-cache-status: REVALIDATED` en las 3 peticiones, con el cuerpo completo transferido igual).
+
+**Fix real construido, probado en `--dry-run`, listo para correr**: `web/scripts/fix-storage-cache-control.mjs` — re-sube cada uno de los **93 videos reales** del bucket `assets` (confirmado por `COUNT(*)` en `storage.objects`) al mismo path (`upsert:true`, contenido byte-idéntico, descargado del propio endpoint público y vuelto a subir), con `cacheControl: 604800` (1 semana) esta vez fijado correctamente vía el SDK oficial `@supabase/supabase-js` en el momento de la subida.
+
+**Por qué este hilo no lo corre él mismo**: requiere la `SERVICE_ROLE_KEY` real — mismo criterio que con la API Key de Twilio antes en esta sesión, esa clave no debe pasar por este chat. Corre esto tú mismo, desde tu propia terminal:
+
+```bash
+npm install @supabase/supabase-js   # una sola vez, si no lo tienes ya
+SUPABASE_SERVICE_ROLE_KEY=<tu clave real> node web/scripts/fix-storage-cache-control.mjs --dry-run   # primero, para ver la lista (cero descargas/subidas)
+SUPABASE_SERVICE_ROLE_KEY=<tu clave real> node web/scripts/fix-storage-cache-control.mjs              # la corrida real
+```
+
+Verificación posterior sugerida (correr el mismo `curl` de arriba contra un par de videos, debería mostrar `cache-control: max-age=604800` en vez de `no-cache`).
