@@ -2590,18 +2590,39 @@
                             </label>
                         </div>
 
-                        <!-- Biografía corta -->
+                        <!-- Traducción propuesta por IA, pendiente de aprobación (2026-09-28,
+                             Pieza 1 del ticket de auto-traducción) -- oculto por defecto, solo
+                             se muestra si dj_profiles.bio_en_draft tiene texto real. "El modelo
+                             propone, nunca publica directo": este bloque es el único lugar que
+                             mueve el borrador a bio_en real, y solo con un clic humano. -->
+                        <div id="bio-translate-draft-wrap" style="display:none;background:rgba(197,160,89,0.06);border:1px solid rgba(197,160,89,0.25);border-radius:14px;padding:18px;margin-bottom:24px;">
+                            <div style="font-size:11px;font-weight:800;letter-spacing:1px;color:var(--gold);text-transform:uppercase;margin-bottom:8px;" data-i18n="jobsx-115">🤖 Traducción propuesta (revisar antes de usar)</div>
+                            <div id="bio-translate-draft-text" style="font-size:13px;color:rgba(255,255,255,0.85);line-height:1.6;margin-bottom:14px;white-space:pre-wrap;"></div>
+                            <div style="display:flex;gap:10px;">
+                                <button type="button" onclick="mdjUseBioTranslateDraft()" style="padding:8px 16px;background:#c5a059;border:none;border-radius:20px;color:#0b0f18;font-weight:800;font-size:12px;cursor:pointer;" data-i18n="jobsx-116">Usar esta traducción</button>
+                                <button type="button" onclick="mdjDiscardBioTranslateDraft()" style="padding:8px 16px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:20px;color:rgba(255,255,255,0.6);font-weight:700;font-size:12px;cursor:pointer;" data-i18n="jobsx-117">Descartar</button>
+                            </div>
+                        </div>
+
+                        <!-- Biografía corta — límite subido de 500 a 2000 (2026-09-28): investigado al
+                             probar la Pieza 1 del ticket de auto-traducción con la cuenta real de
+                             DJMago305, cuya bio_short guardada ya mide 1026 caracteres. El límite de
+                             500 no protegía ninguna restricción de layout real — la tarjeta de
+                             búsqueda (find-dj-search.mjs → bio_preview) siempre corta a 160
+                             caracteres en la capa de presentación, sin importar cuánto mida el campo
+                             guardado. Con 500, guardar el perfil de DJMago305 habría truncado su bio
+                             real y aprobada. 2000 da margen real sin acercarse a bio_long (10000). -->
                         <div style="margin-bottom:24px;">
                             <div
                                 style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
                                 <label for="bio-short" style="font-size:14px;font-weight:700;color:#fff;" data-i18n="jobsx-077">Biografía
                                     corta</label>
                                 <span id="bio-short-count" style="font-size:12px;color:rgba(255,255,255,0.35);">0 /
-                                    500</span>
+                                    2000</span>
                             </div>
-                            <textarea id="bio-short" rows="3" maxlength="500"
+                            <textarea id="bio-short" rows="3" maxlength="2000"
                                 placeholder="Resumen breve de quién eres como DJ (aparece en tarjetas de búsqueda)..."
-                                oninput="updateBioCount('bio-short','bio-short-count',500)"
+                                oninput="updateBioCount('bio-short','bio-short-count',2000)"
                                 style="width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:14px 16px;color:#fff;font-size:14px;line-height:1.6;resize:vertical;font-family:inherit;box-sizing:border-box;outline:none;transition:border-color .2s;"
                                 onfocus="this.style.borderColor='var(--gold)'"
                                 onblur="this.style.borderColor='rgba(255,255,255,0.1)'" data-i18n-hold="jobsx-108"></textarea>
@@ -3947,6 +3968,21 @@
                     window.photoBase64 = p.photo_url;
                 }
 
+                // ── Biografía (2026-09-28: bug real encontrado al probar la
+                //    Pieza 1 del ticket de auto-traducción con una cuenta real —
+                //    esta sección nunca se llenaba con datos guardados, a
+                //    diferencia de identidad/idiomas/roles/foto/redes de arriba.
+                //    Con el formulario vacío, guardar habría borrado bio_short/
+                //    bio_long reales — mismo tipo de hueco que el bug de
+                //    guardado ya corregido en esta misma pieza.) ──────────
+                setVal('bio-short', p.bio_short);
+                setVal('bio-long', p.bio_long);
+                if (p.bio_language) setVal('bio-language', p.bio_language);
+                const autoTranslateEl = document.getElementById('bio-auto-translate');
+                if (autoTranslateEl) autoTranslateEl.checked = !!p.auto_translate;
+                updateBioCount('bio-short', 'bio-short-count', 2000);
+                updateBioCount('bio-long', 'bio-long-count', 10000);
+
                 // ── Social & music links ─────────────────────────────
                 setVal('social-instagram', p.social_instagram);
                 setVal('social-facebook', p.social_facebook);
@@ -4696,6 +4732,65 @@
             counter.style.color = len > max * 0.9 ? '#f59e0b' : 'rgba(255,255,255,0.35)';
         }
 
+        // ── Traducción propuesta por IA (2026-09-28, Pieza 1 del ticket de
+        //    auto-traducción) — "el modelo propone, nunca publica directo".
+        //    Se revisa al cargar la página; si hay un borrador real en
+        //    dj_profiles.bio_en_draft, se muestra para aprobar/descartar. ──
+        async function mdjCheckBioTranslateDraft() {
+            try {
+                var _supa = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+                if (!_supa) return;
+                var sess = (await _supa.auth.getSession()).data.session;
+                if (!sess) return;
+                var { data } = await _supa.from('dj_profiles').select('bio_en_draft').eq('user_id', sess.user.id).maybeSingle();
+                var draft = data && data.bio_en_draft ? String(data.bio_en_draft).trim() : '';
+                var wrap = document.getElementById('bio-translate-draft-wrap');
+                var textEl = document.getElementById('bio-translate-draft-text');
+                if (!wrap || !textEl) return;
+                if (draft) {
+                    textEl.textContent = draft;
+                    wrap.style.display = 'block';
+                } else {
+                    wrap.style.display = 'none';
+                }
+            } catch (e) { console.warn('[jobs] mdjCheckBioTranslateDraft failed:', e); }
+        }
+
+        async function mdjUseBioTranslateDraft() {
+            try {
+                var _supa = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+                if (!_supa) return;
+                var sess = (await _supa.auth.getSession()).data.session;
+                if (!sess) return;
+                var draftText = (document.getElementById('bio-translate-draft-text') || {}).textContent || '';
+                if (!draftText.trim()) return;
+                // Aquí sí se escribe bio_en real -- pero solo porque un humano
+                // acaba de hacer clic en "Usar esta traducción", no la IA sola.
+                var { error } = await _supa.from('dj_profiles').update({
+                    bio_en: draftText.trim(),
+                    bio_en_draft: null,
+                    bio_en_draft_generated_at: null,
+                }).eq('user_id', sess.user.id);
+                if (error) { alert(jobsGateT('jobs-bio-translate-save-err', 'Error guardando la traducción: ', 'Error saving translation: ') + error.message); return; }
+                var wrap = document.getElementById('bio-translate-draft-wrap');
+                if (wrap) wrap.style.display = 'none';
+                alert(jobsGateT('jobs-bio-translate-saved-ok', 'Traducción guardada en bio_en.', 'Translation saved to bio_en.'));
+            } catch (e) { alert(jobsGateT('jobs-bio-translate-generic-err', 'Error: ', 'Error: ') + (e && e.message)); }
+        }
+
+        async function mdjDiscardBioTranslateDraft() {
+            try {
+                var _supa = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+                if (!_supa) return;
+                var sess = (await _supa.auth.getSession()).data.session;
+                if (!sess) return;
+                await _supa.from('dj_profiles').update({ bio_en_draft: null, bio_en_draft_generated_at: null }).eq('user_id', sess.user.id);
+                var wrap = document.getElementById('bio-translate-draft-wrap');
+                if (wrap) wrap.style.display = 'none';
+            } catch (e) { console.warn('[jobs] mdjDiscardBioTranslateDraft failed:', e); }
+        }
+        document.addEventListener('DOMContentLoaded', mdjCheckBioTranslateDraft);
+
         // ── Tech Rider: Dynamic multi-entry with photo upload ─────────
         function addTechItem(listId, cssClass, placeholder) {
             const list = document.getElementById(listId);
@@ -5179,17 +5274,54 @@
                         lang_score: langScore
                     });
 
-                // Try saving extended bio fields silently (columns may not exist yet)
+                // FIX 2026-09-28 (bug real encontrado al construir la Pieza 1 del
+                // ticket de auto-traducción): este UPDATE mandaba dos nombres de
+                // columna que NUNCA existieron (bio_language sí se agregó recién,
+                // pero "bio_auto_translate" -- la columna real siempre fue
+                // "auto_translate", sin el prefijo). PostgREST rechaza el UPDATE
+                // completo si un solo campo no existe -- este bloque llevaba
+                // fallando en silencio desde siempre (el catch decía "columns may
+                // not exist yet — ok"), así que bio_short/bio_long/auto_translate
+                // NUNCA se guardaron para ningún DJ hasta hoy.
+                var bioAutoTranslateWasOn = false;
                 try {
                     const bioLanguageEl = document.getElementById('bio-language');
                     const bioAutoTranslateEl = document.getElementById('bio-auto-translate');
+                    bioAutoTranslateWasOn = !!(bioAutoTranslateEl && bioAutoTranslateEl.checked);
                     await _supa.from('dj_profiles').update({
                         bio_short: ((bioShortEl && bioShortEl.value) || '').trim(),
                         bio_long: ((bioLongEl && bioLongEl.value) || '').trim(),
                         bio_language: (bioLanguageEl && bioLanguageEl.value) || 'es',
-                        bio_auto_translate: (bioAutoTranslateEl && bioAutoTranslateEl.checked) || false,
+                        auto_translate: bioAutoTranslateWasOn,
                     }).eq('user_id', currentSession.user.id);
-                } catch (e) { /* columns not yet in schema — ok */ }
+                } catch (e) { console.warn('[jobs] extended bio fields save failed:', e && e.message); }
+
+                // Pieza 1 del ticket de auto-traducción (2026-09-28): si el
+                // interruptor está activo y el idioma elegido es español o inglés
+                // (las dos únicas direcciones que dj-bio-translate soporta hoy --
+                // solo existe la columna bio_en, no hay bio_fr/bio_pt/etc.), se
+                // dispara la función SIN esperar su respuesta -- nunca bloquea ni
+                // retrasa el guardado del perfil. La función propone, nunca
+                // publica directo: escribe en bio_en_draft, jamás en bio_en real.
+                if (bioAutoTranslateWasOn) {
+                    try {
+                        const bioLangVal = (document.getElementById('bio-language') || {}).value || 'es';
+                        if (bioLangVal === 'es' || bioLangVal === 'en') {
+                            const sess = (await _supa.auth.getSession()).data.session;
+                            if (sess && typeof window.mdbSupabaseFunctionUrl === 'function') {
+                                fetch(window.mdbSupabaseFunctionUrl('dj-bio-translate'), {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': 'Bearer ' + sess.access_token,
+                                        'apikey': window.MDB_SUPABASE_ANON_KEY || '',
+                                    },
+                                    body: JSON.stringify({ dj_user_id: currentSession.user.id }),
+                                }).catch(function (e) { console.warn('[jobs] dj-bio-translate fetch failed:', e); });
+                            }
+                        }
+                    } catch (eTr) { console.warn('[jobs] auto-translate trigger failed:', eTr); }
+                }
 
                 if (error) {
                     alert(jobsGateT('jobs-js-save-err', 'Error guardando perfil: ', 'Error saving profile: ') + error.message);
