@@ -56,11 +56,24 @@ Verificación de antecedentes penales / historial de seguridad de las personas (
 
 Sin resolver todavía cómo el sistema distingue ambos orígenes en la práctica — queda como pregunta abierta nueva, sumada a las 4 de la sección anterior.
 
-## Preguntas abiertas para cuando el PO autorice arrancar
-1. ¿Quién define/etiqueta la categoría comercial de cada venue — el staff al darlo de alta, o el sistema la infiere de información pública (categoría de Google, descripción del sitio del venue)?
-2. ¿Cuál es el vocabulario exacto de insignias/etiquetas cualitativas que verá el cliente? (ej. "Especialista en fiestas temáticas", "Experiencia comprobada en restaurantes con música en vivo"...)
-3. ¿Cómo se pondera un evento único de alto impacto vs. experiencia repetida en el mismo venue — hace falta una regla concreta, no solo el principio.
-4. ¿De dónde sale el "umbral" de calificación baja que dispara la corrección por categoría (mismo tipo de pregunta que el ticket chico de recomendaciones)?
+## Preguntas abiertas — estado 2026-09-28
 
-## Cómo aplicar
-Sin autorización de construir. Cuando el PO esté listo, esto se convierte en una reconciliación de arquitectura propia (mismo patrón usado para el resto del Owner Financial Matrix) — no se empieza a escribir código desde esta nota.
+1. **✅ RESUELTA (2026-09-27).** ¿Quién define la categoría comercial de cada venue? — Staff la asigna al dar de alta el venue (vocabulario controlado). Construido: `financial_venues.category` (migración `20260927170000`), backfill de los 3 venues reales, aplicado a producción.
+
+2. **✅ RESUELTA (2026-09-28).** ¿Cuál es el vocabulario exacto de insignias? — Confirmado por el PO, 2 niveles, sin números crudos:
+   - *"Con experiencia verificada en `<categoría>`"* — 1+ evento real completado ahí (score ≥ 1).
+   - *"Experiencia comprobada en `<categoría>`"* — score ≥ 3 (repetición real, o un evento de alto impacto).
+   - Sin ningún evento real → ninguna insignia (nunca fabricar una vacía).
+   Construido: `get_dj_venue_category_badges(p_dj_user_id)` (migración `20260928091000`), aplicado a producción, probado en transacción con `ROLLBACK` (3 casos reales) y verificado que los 3 DJs públicos hoy muestran 0 insignias — correcto, cero experiencia real registrada todavía.
+
+3. **✅ RESUELTA (2026-09-28).** ¿Cómo se pondera un evento único de alto impacto? — Confirmado por el PO: el staff lo marca a mano, nunca lo infiere el sistema solo (mismo patrón HITL que ELIXIS). Construido: `leads.high_impact` (boolean, default false, misma migración) — un evento marcado vale 3 eventos normales de su categoría en el score de la insignia.
+
+4. **Sigue abierta.** ¿De dónde sale el "umbral" de calificación baja que dispara la corrección por categoría? (mismo tipo de pregunta que el ticket chico de recomendaciones, que ya usa 1-2 estrellas).
+
+## Prerrequisito construido (2026-09-28, no era una de las 4 preguntas originales, pero bloqueaba las 3 resueltas)
+Se encontró que `leads` (los eventos reales) no tenía ninguna relación con `financial_venues` (`leads.venue`/`event_location` son texto libre, nunca llenado en los 7 leads reales) — sin eso, ninguna insignia podía calcular nada real. Se agregó `leads.venue_id` (FK real a `financial_venues`, migración `20260928090000`) — el prerrequisito estructural para que un evento futuro sí pueda alimentar el modelo.
+
+## Sigue pendiente, sin construir
+- **Conectar las insignias a la interfaz real** (`find-dj.html`/`dj/directorio.html`/`dj-profile.html`) — hoy `get_dj_venue_category_badges()` existe y funciona, pero ningún frontend lo llama todavía.
+- **UI para que staff asigne `venue_id`/`high_impact`** al crear/completar un lead — hoy solo se puede hacer por SQL directo.
+- Pregunta #4 (umbral de calificación baja por categoría).
