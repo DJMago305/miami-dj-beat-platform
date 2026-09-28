@@ -1029,6 +1029,7 @@
           status.style.color = 'var(--accent)';
 
           var fd = new FormData(e.target);
+          var newLeadId = (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : null;
           var payload = {
             event_type: sanitizeNullable(fd.get('event_type'), 80),
             event_date: sanitizeNullable(fd.get('event_date'), 32),
@@ -1040,6 +1041,9 @@
             status: 'NEW',
             source: 'ai_booth'
           };
+          if (newLeadId) {
+            payload.id = newLeadId;
+          }
 
           var capRaw = fd.get('booth_capture_json');
           var attribution = {};
@@ -1079,32 +1083,31 @@
               status.style.color = '#f66';
               return;
             }
-            var res = await db.from('leads').insert([payload]).select('id').single();
+            var res = await db.from('leads').insert([payload]);
             if (res.error) {
               boothTrack('lead_submit_error', { error: res.error.message || 'insert_failed' });
               status.textContent = bL('No se pudo guardar: ', 'Could not save: ') + (res.error.message || 'error');
               status.style.color = '#f66';
               return;
             }
-            var data = res.data;
             boothLeadSaved = true;
-            boothTrack('lead_submit_success', { lead_id: data && data.id ? data.id : null });
+            boothTrack('lead_submit_success', { lead_id: newLeadId });
             var negSummary = buildNegotiationSummaryFromFd(fd);
             await boothLogLearningInteraction(
-              data && data.id ? data.id : null,
+              newLeadId,
               negSummary || 'lead_form_submit',
               'LEAD_INSERT_OK: prospect saved; team queue.'
             );
-            if (data && data.id) {
+            if (newLeadId) {
               await boothSaveAiInteractionRow({
-                lead_id: data.id,
+                lead_id: newLeadId,
                 session_context: buildSessionContextRadar(),
                 chat_summary: negSummary,
                 outcome: 'pending',
                 ai_lessons: null
               });
             }
-            status.textContent = bL('Prospecto guardado. ID: ', 'Lead saved. ID: ') + (data && data.id ? data.id : 'ok') + bL('. El equipo será notificado si el trigger está activo.', '. The team will be notified if the trigger is active.');
+            status.textContent = bL('Prospecto guardado. ID: ', 'Lead saved. ID: ') + (newLeadId || 'ok') + bL('. El equipo será notificado si el trigger está activo.', '. The team will be notified if the trigger is active.');
             status.style.color = 'var(--gold)';
             var hid = document.getElementById('booth-capture-json');
             if (hid) hid.value = JSON.stringify(raw);
