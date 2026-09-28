@@ -331,6 +331,15 @@
         '<input type="number" id="prod-cobro-dj-payout" class="price-input" style="width:100%;margin-top:4px;" min="0" step="0.01" placeholder="0.00" /></div>' +
         '<div><label class="fineprint" data-i18n="prod-cobro-deposit-lbl"></label>' +
         '<input type="text" id="prod-cobro-deposit-display" class="price-input" style="width:100%;margin-top:4px;" readonly tabindex="-1" aria-readonly="true" /></div>' +
+        '<div><label class="fineprint" data-i18n="prod-cobro-addon-amount-lbl"></label>' +
+        '<input type="number" id="prod-cobro-addon-amount" class="price-input" style="width:100%;margin-top:4px;" min="0" step="0.01" placeholder="0.00" /></div>' +
+        '<div><label class="fineprint mdj-prod-inv-field-lbl-row">' +
+        '<span data-i18n="prod-cobro-addon-dj-lbl"></span>' +
+        '<span class="mdj-prod-inv-help mdj-prod-inv-help--inline" tabindex="0">' +
+        '<span class="mdj-prod-inv-help-icon" aria-hidden="true">?</span>' +
+        '<span class="mdj-prod-inv-help-tip" role="tooltip" data-i18n="prod-cobro-addon-dj-help"></span>' +
+        '</span></label>' +
+        '<input type="number" id="prod-cobro-addon-dj" class="price-input" style="width:100%;margin-top:4px;" min="0" step="0.01" placeholder="0.00" /></div>' +
         '</div></div>' +
         '<div class="mdj-prod-inv-panel mdj-prod-inv-panel--totals mdj-prod-inv-box">' +
         this._panelHeadHtml('4', 'prod-inv-panel-3-title', 'prod-inv-panel-3-help') +
@@ -1193,6 +1202,10 @@
       }
       var payoutEl = document.getElementById('prod-cobro-dj-payout');
       var payoutUsd = payoutEl ? parseFloat(payoutEl.value) : NaN;
+      var addonAmountEl = document.getElementById('prod-cobro-addon-amount');
+      var addonAmountUsd = addonAmountEl ? parseFloat(addonAmountEl.value) : NaN;
+      var addonDjEl = document.getElementById('prod-cobro-addon-dj');
+      var addonDjUsd = addonDjEl ? parseFloat(addonDjEl.value) : NaN;
       var depositUsd = calcEventDepositUsd(totalUsd);
       var eventLoc = formatInvAddrLines('ev');
       var base = {
@@ -1203,7 +1216,9 @@
         deposit_required_usd: depositUsd,
         assigned_dj_id: djId,
         assigned_dj_name: djName || null,
-        dj_agreed_payout_usd: isFinite(payoutUsd) && payoutUsd > 0 ? payoutUsd : null
+        dj_agreed_payout_usd: isFinite(payoutUsd) && payoutUsd > 0 ? payoutUsd : null,
+        addon_amount_usd: isFinite(addonAmountUsd) && addonAmountUsd > 0 ? addonAmountUsd : null,
+        addon_dj_payout_usd: isFinite(addonDjUsd) && addonDjUsd > 0 ? addonDjUsd : null
       };
       if (email) {
         base.email = email;
