@@ -406,7 +406,7 @@ serve(async (req) => {
                     // Fetch current lead to add paid amount
                     const { data: lead } = await supabase
                         .from("leads")
-                        .select("balance_paid, total_amount, staff_invoice_id, client_user_id, event_type, event_date")
+                        .select("balance_paid, total_amount, staff_invoice_id, client_user_id, event_type, event_date, contact_person, email")
                         .eq("id", leadId)
                         .single();
 
@@ -431,6 +431,38 @@ serve(async (req) => {
 
                     if (newStatus === "PAID") {
                         await notifyClientBookingConfirmed(supabase, leadId, lead?.client_user_id, lead?.event_type, lead?.event_date);
+                        // Aviso a staff — mismo Resend/env ya usado por merch_orders más abajo.
+                        // Hueco real encontrado: notifyClientBookingConfirmed solo avisa al
+                        // cliente (portal_messages); el equipo no se enteraba de ventas de
+                        // evento cerradas. Si el correo falla, la venta ya quedó registrada
+                        // igual (no bloquea).
+                        try {
+                            const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
+                            const MANAGER_EMAIL = Deno.env.get("MANAGER_EMAIL") ?? "";
+                            const FROM_EMAIL = Deno.env.get("FROM_EMAIL") || "Miami DJ Beat <no-reply@miamidjbeat.com>";
+                            if (RESEND_API_KEY && MANAGER_EMAIL) {
+                                const amountStr = `$${total.toFixed(2)}`;
+                                const custName = lead?.contact_person || "—";
+                                const custEmail = lead?.email || "—";
+                                const label = [lead?.event_type, lead?.event_date].filter(Boolean).join(" · ") || "—";
+                                await fetch("https://api.resend.com/emails", {
+                                    method: "POST",
+                                    headers: { "Authorization": `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+                                    body: JSON.stringify({
+                                        from: FROM_EMAIL,
+                                        to: [MANAGER_EMAIL],
+                                        subject: `🎉 Venta cerrada — ${label} — ${amountStr}`,
+                                        html: `<h2>Evento pagado en su totalidad</h2>
+<p><b>Cliente:</b> ${custName} (${custEmail})</p>
+<p><b>Evento:</b> ${label}</p>
+<p><b>Total pagado:</b> ${amountStr}</p>
+<p><a href="https://miamidjbeat.com/staff.html?vista=agenda">Abrir agenda →</a></p>`,
+                                    }),
+                                });
+                            }
+                        } catch (notifyErr) {
+                            console.error("[Webhook] event sale closed notify email failed:", notifyErr);
+                        }
                     }
 
                     console.log(`✅ Event deposit paid: lead ${leadId} | $${amountPaid} | status → ${newStatus}`);

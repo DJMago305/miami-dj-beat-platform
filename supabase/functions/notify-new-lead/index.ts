@@ -7,7 +7,7 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 const MANAGER_EMAIL = Deno.env.get("MANAGER_EMAIL") ?? "";
 const FROM_EMAIL = Deno.env.get("FROM_EMAIL") || "Miami DJ Beat <no-reply@miamidjbeat.com>";
-const DASHBOARD_URL = Deno.env.get("DASHBOARD_URL") || "https://miamidjbeat.vercel.app/admin-dashboard.html";
+const DASHBOARD_URL = Deno.env.get("DASHBOARD_URL") || "https://miamidjbeat.com/staff.html?vista=agenda";
 
 // CORS helper — Supabase Edge Functions may be called from the browser
 const corsHeaders = {
@@ -52,7 +52,7 @@ serve(async (req) => {
             timeStyle: "short",
         });
 
-        const dashboardLink = `${DASHBOARD_URL}?lead=${encodeURIComponent(String(lead_id))}`;
+        const dashboardLink = `${DASHBOARD_URL}${DASHBOARD_URL.includes("?") ? "&" : "?"}lead=${encodeURIComponent(String(lead_id))}`;
 
         const subject = `🎯 Nuevo Lead — ${event_type} · ${event_date}`;
 
