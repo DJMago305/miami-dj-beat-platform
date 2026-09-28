@@ -657,6 +657,7 @@ var TRACKS = [
 
 var EXPERIENCES = [
   {id:'reparto', name:'The Haunting House Of Baila Con Micho', sub:'Experience', desc:'Two choreographies for this event (starting 2026-09-24): Reparto / Reparto Pop, and a 90\'s Hit\'s set (Mix discoTK Cuba). BPM filled from public sources where published, or live by the DJ.', status:'enabled'},
+  {id:'halloween-party', name:'Halloween DJ Party', sub:'Experience', desc:'5-hour theme-park programming manual — Warm Up, Headliner (Groove/Dark/Tribal → Halloween/Latin/Tech → Peak) and Closer, plus a Halloween Reserve / Quick Exit crate. 88 tracks in the master sequence.', status:'enabled'},
   {id:'one-hit-wonder', name:'One Hit Wonder', sub:'Experience', desc:'Global recognition across generations — songs that land on any floor, any culture, any decade.', status:'enabled'},
   {id:'generational-journey', name:'Generational Journey', sub:'Experience', desc:'A guided decade-by-decade arc built for long-format events.', status:'soon'},
   {id:'latin-classics', name:'Latin Classics', sub:'Experience', desc:'Salsa, merengue, bachata and reggaeton lineage, curated by era.', status:'soon'},
@@ -980,7 +981,7 @@ function renderHome(){
     btn.addEventListener('click', function(){
       var id = btn.getAttribute('data-enter-experience');
       state.experience = id;
-      setView(id==='reparto' ? 'experience' : 'event');
+      setView((id==='reparto'||id==='halloween-party') ? 'experience' : 'event');
     });
   });
 }
@@ -994,7 +995,7 @@ function renderExperiences(){
     btn.addEventListener('click', function(){
       var id = btn.getAttribute('data-enter-experience');
       state.experience = id;
-      setView(id==='reparto' ? 'experience' : 'event');
+      setView((id==='reparto'||id==='halloween-party') ? 'experience' : 'event');
     });
   });
 }
@@ -1825,6 +1826,14 @@ function renderExperienceDetail(){
     renderNinetiesCaseStudy();
     return;
   }
+  if (state.experience === 'halloween-party'){
+    el.innerHTML =
+      '<div class="view-head"><div><span class="eyebrow">Experience</span><h2 class="view-title">Halloween DJ Party</h2>'+
+      '<p class="view-desc">Manual real de programación de 5 horas (PDF entregado por el PO, 2026-09-28). Nada de otras experiencias se mezcla en esta página.</p></div></div>'+
+      '<div id="halloweenMount"></div>';
+    renderHalloweenExperience();
+    return;
+  }
   el.innerHTML =
     '<div class="view-head"><div><span class="eyebrow">Experience</span><h2 class="view-title">Coming soon</h2>'+
     '<p class="view-desc">Esta experiencia todavía no tiene su propia página construida.</p></div></div>';
@@ -2223,6 +2232,224 @@ function loadNinetiesCaseStudy(){
       state.ninetiesLoading = false;
       console.log('90s tracklist load failed:', err && err.message);
       if (state.view==='experience') renderNinetiesCaseStudy();
+    });
+}
+
+/* ============================= HALLOWEEN DJ PARTY: 5-HOUR PROGRAMMING MANUAL (editable, no backend) =============================
+   Manual real de programación entregado por el PO (PDF, 2026-09-28) -- 88 tracks del set principal en 3 bloques
+   (Warm Up / Headliner / Closer, Headliner con 3 tramos internos) + 15 tracks de reserva (Quick Exit). Mismo
+   patrón que Reparto/90's Hit's: BPM/Energy no vienen del manual por track (solo un rango objetivo por bloque),
+   así que se dejan en blanco a propósito y el DJ los llena en vivo, aquí, sin backend. */
+function haAssignIds(data){
+  data.blocks.forEach(function(b){
+    b.sections.forEach(function(s, si){
+      s.tracks.forEach(function(t){ t.id = 'ha-'+b.id+'-'+si+'-'+t.order; });
+    });
+  });
+  data.reserve.tracks.forEach(function(t){ t.id = 'ha-reserve-'+t.order; });
+}
+function haTrackById(id){
+  if (!state.halloweenData) return null;
+  var d = state.halloweenData;
+  for (var bi=0; bi<d.blocks.length; bi++){
+    var sections = d.blocks[bi].sections;
+    for (var si=0; si<sections.length; si++){
+      var tracks = sections[si].tracks;
+      for (var ti=0; ti<tracks.length; ti++){ if (tracks[ti].id===id) return tracks[ti]; }
+    }
+  }
+  for (var ri=0; ri<d.reserve.tracks.length; ri++){ if (d.reserve.tracks[ri].id===id) return d.reserve.tracks[ri]; }
+  return null;
+}
+function renderHalloweenTrackRow(t){
+  return (
+    '<tr>'+
+      '<td class="num">'+t.order+'</td>'+
+      '<td class="track-name"><button class="rp-copy-one" data-copy-t="'+esc(t.track)+'" data-copy-a="'+esc(t.artist)+'" title="Copiar para buscar en Serato">'+iconSvg('copy')+'</button>'+esc(t.track)+'</td>'+
+      '<td>'+esc(t.artist)+'</td>'+
+      '<td><input class="rp-input" type="text" inputmode="numeric" placeholder="—" value="'+(t.bpm==null?'':t.bpm)+'" data-ha-bpm="'+t.id+'"></td>'+
+      '<td><input class="rp-input" type="text" inputmode="numeric" placeholder="—" value="'+(t.energyEstimate==null?'':t.energyEstimate)+'" data-ha-energy="'+t.id+'"></td>'+
+    '</tr>'
+  );
+}
+function renderHalloweenSection(sec){
+  var noteBox = '';
+  if (sec.doDont){
+    noteBox = '<div class="panel" style="margin:10px 0 14px;"><div class="panel-body" style="font-size:12.5px;color:var(--text-dim);line-height:1.6;">'+
+      '<strong style="color:var(--text);">Do:</strong> '+esc(sec.doDont.do)+'<br>'+
+      '<strong style="color:var(--text);">Do not:</strong> '+esc(sec.doDont.dont)+
+    '</div></div>';
+  } else if (sec.criticalRule){
+    noteBox = '<div class="panel" style="margin:10px 0 14px;border-color:var(--gold);"><div class="panel-body" style="font-size:12.5px;color:var(--text);line-height:1.6;"><strong>Critical rule:</strong> '+esc(sec.criticalRule)+'</div></div>';
+  } else if (sec.finalNarrative){
+    noteBox = '<div class="panel" style="margin:10px 0 14px;border-color:var(--gold);"><div class="panel-body" style="font-size:12.5px;color:var(--text);line-height:1.6;"><strong>Final narrative:</strong> '+esc(sec.finalNarrative)+'</div></div>';
+  }
+  return (
+    '<div class="panel-head" style="border:none;padding:14px 0 6px;">'+
+      '<span class="label">'+esc(sec.name)+'</span>'+
+      '<span class="badge gold">'+esc(sec.target)+'</span>'+
+    '</div>'+
+    '<p class="view-desc" style="margin:0 0 10px;">'+esc(sec.howToUse)+'</p>'+
+    noteBox+
+    '<div class="rp-toolbar"><button class="btn btn-gold btn-sm" data-ha-copy-section="'+esc(sec.name)+'">'+iconSvg('copy')+' Copy Tracklist</button></div>'+
+    '<div class="result-count">'+sec.tracks.length+' tracks</div>'+
+    '<div class="panel scrollx"><table class="rp-table"><colgroup>'+
+      '<col class="rp-col-n"><col class="rp-col-track"><col class="rp-col-artist"><col class="rp-col-bpm"><col class="rp-col-energy">'+
+    '</colgroup><thead><tr>'+
+      ['#','Track','Artist','BPM','Energy'].map(function(h){ return '<th>'+h+'<span class="rp-resize-handle"></span></th>'; }).join('')+
+    '</tr></thead><tbody>'+
+      sec.tracks.map(function(t){ return renderHalloweenTrackRow(t); }).join('')+
+    '</tbody></table></div>'
+  );
+}
+function renderHalloweenReservePanel(){
+  var r = state.halloweenData.reserve;
+  return (
+    '<div class="panel-head" style="border:none;padding:20px 0 6px;">'+
+      '<span class="label" style="display:flex;align-items:center;gap:8px;">'+iconSvg('history')+' '+esc(r.label)+'</span>'+
+      '<span class="badge gold">Separate Serato crate</span>'+
+    '</div>'+
+    '<p class="view-desc" style="margin:0 0 10px;">'+esc(r.note)+'</p>'+
+    '<div class="rp-toolbar"><button class="btn btn-gold btn-sm" id="haReserveCopyBtn">'+iconSvg('copy')+' Copy Tracklist</button></div>'+
+    '<div class="panel scrollx"><table class="rp-table"><thead><tr>'+
+      ['#','Track','Artist','Function'].map(function(h){ return '<th>'+h+'</th>'; }).join('')+
+    '</tr></thead><tbody>'+
+      r.tracks.map(function(t){
+        return '<tr><td class="num">'+t.order+'</td>'+
+          '<td class="track-name"><button class="rp-copy-one" data-copy-t="'+esc(t.track)+'" data-copy-a="'+esc(t.artist)+'" title="Copiar para buscar en Serato">'+iconSvg('copy')+'</button>'+esc(t.track)+'</td>'+
+          '<td>'+esc(t.artist)+'</td>'+
+          '<td style="color:var(--text-dim);">'+esc(t.function)+'</td></tr>';
+      }).join('')+
+    '</tbody></table></div>'+
+    '<div class="panel" style="margin-top:14px;"><div class="panel-head"><span class="label">Quick-exit protocol</span></div>'+
+      '<div class="panel-body" style="display:grid;gap:10px;font-size:12.5px;color:var(--text-dim);line-height:1.6;">'+
+        r.quickExitProtocol.map(function(p){ return '<div><strong style="color:var(--text);">'+esc(p.scenario)+':</strong> '+esc(p.action)+'</div>'; }).join('')+
+      '</div>'+
+    '</div>'
+  );
+}
+function copyHalloweenTracklist(sectionName, tracks){
+  var lines = ['#\tTrack\tArtist\tBPM\tEnergy'];
+  tracks.forEach(function(t){
+    lines.push([t.order, t.track, t.artist, (t.bpm==null?'':t.bpm), (t.energyEstimate==null?'':t.energyEstimate)].join('\t'));
+  });
+  var text = lines.join('\n');
+  function done(ok){ toast(ok ? 'Tracklist copiado ('+sectionName+') — '+tracks.length+' canciones' : 'No se pudo copiar en este navegador'); }
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){ done(true); }).catch(function(){ done(false); });
+  } else {
+    try{
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      done(true);
+    }catch(e){ done(false); }
+  }
+}
+function copyHalloweenReserve(){
+  var r = state.halloweenData.reserve;
+  var lines = ['#\tTrack\tArtist\tFunction'];
+  r.tracks.forEach(function(t){ lines.push([t.order, t.track, t.artist, t.function].join('\t')); });
+  var text = lines.join('\n');
+  function done(ok){ toast(ok ? 'Reserve copiado — '+r.tracks.length+' canciones' : 'No se pudo copiar en este navegador'); }
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){ done(true); }).catch(function(){ done(false); });
+  } else {
+    try{
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      done(true);
+    }catch(e){ done(false); }
+  }
+}
+function wireHalloweenInputs(mount){
+  mount.querySelectorAll('[data-ha-bpm]').forEach(function(inp){
+    inp.addEventListener('input', function(){
+      var v = inp.value.replace(/[^0-9.]/g,'');
+      inp.value = v;
+      var t = haTrackById(inp.getAttribute('data-ha-bpm'));
+      if (t) t.bpm = v==='' ? null : Number(v);
+    });
+  });
+  mount.querySelectorAll('[data-ha-energy]').forEach(function(inp){
+    inp.addEventListener('input', function(){
+      var v = inp.value.replace(/[^0-9]/g,'').slice(0,2);
+      inp.value = v;
+      var t = haTrackById(inp.getAttribute('data-ha-energy'));
+      if (t) t.energyEstimate = v==='' ? null : Number(v);
+    });
+  });
+  mount.querySelectorAll('[data-ha-copy-section]').forEach(function(btn, idx){
+    var block = state.halloweenData.blocks.filter(function(b){ return b.id===state.halloweenTab; })[0];
+    var sec = block ? block.sections[idx] : null;
+    if (!sec) return;
+    btn.addEventListener('click', function(){ copyHalloweenTracklist(sec.name, sec.tracks); });
+  });
+  var reserveCopyBtn = mount.querySelector('#haReserveCopyBtn');
+  if (reserveCopyBtn) reserveCopyBtn.addEventListener('click', copyHalloweenReserve);
+  mount.querySelectorAll('[data-ha-tab]').forEach(function(btn){
+    btn.addEventListener('click', function(){ state.halloweenTab = btn.getAttribute('data-ha-tab'); renderHalloweenExperience(); });
+  });
+  wireTrackCopyButtons(mount);
+  initRepartoResize(mount);
+}
+function renderHalloweenExperience(){
+  var mount = document.getElementById('halloweenMount');
+  if (!mount) return;
+  var d = state.halloweenData;
+  var header =
+    '<div class="panel-head" style="border:none;padding:0 0 10px;">'+
+      '<span class="label" style="display:flex;align-items:center;gap:8px;">'+iconSvg('music')+' Real DJ Prep — Halloween DJ Party</span>'+
+      '<span class="badge gold">88 tracks · 5-hour theme-park manual</span>'+
+    '</div>';
+  if (!d){
+    mount.innerHTML = header + (state.halloweenLoading
+      ? '<div class="move-empty">Loading programming manual…</div>'
+      : '<div class="move-empty">Could not load the manual yet. <button class="btn btn-sm" id="haRetry">Load Manual</button></div>');
+    var retryBtn = document.getElementById('haRetry');
+    if (retryBtn) retryBtn.addEventListener('click', loadHalloweenData);
+    if (!state.halloweenLoading && !d) loadHalloweenData();
+    return;
+  }
+  if (!state.halloweenTab) state.halloweenTab = 'warmup';
+  var activeBlock = d.blocks.filter(function(b){ return b.id===state.halloweenTab; })[0] || d.blocks[0];
+  mount.innerHTML = header +
+    '<p class="view-desc" style="margin:0 0 6px;"><strong style="color:var(--text);">Programming concept:</strong> '+esc(d.meta.programmingConcept)+'</p>'+
+    '<p class="view-desc" style="margin:0 0 6px;"><strong style="color:var(--text);">Audience:</strong> '+esc(d.meta.audience)+'</p>'+
+    '<p class="view-desc" style="margin:0 0 14px;"><strong style="color:var(--text);">Master architecture:</strong> '+esc(d.meta.masterArchitecture)+'</p>'+
+    '<div class="panel" style="margin:0 0 16px;"><div class="panel-head"><span class="label">Operating Principle</span></div>'+
+      '<div class="panel-body" style="font-size:12.5px;color:var(--text-dim);line-height:1.6;">'+esc(d.meta.operatingPrinciple)+'</div>'+
+    '</div>'+
+    '<div class="culture-toggle" style="padding:0 0 14px;">'+
+      d.blocks.map(function(b){
+        return '<button class="culture-btn'+(state.halloweenTab===b.id?' active':'')+'" data-ha-tab="'+b.id+'">'+esc(b.label)+'</button>';
+      }).join('')+
+    '</div>'+
+    activeBlock.sections.map(function(sec){ return renderHalloweenSection(sec); }).join('')+
+    renderHalloweenReservePanel()+
+    '<p class="rp-hint" style="margin-top:14px;">Arrastra el borde derecho de cada columna para ampliarla · BPM / Energy se guardan solo en este navegador, no hay backend · Warm Up, Headliner y Closer arriba; Reserve siempre visible abajo porque se usa en cualquier momento del set.</p>';
+  wireHalloweenInputs(mount);
+}
+function loadHalloweenData(){
+  if (state.halloweenLoading || state.halloweenData) return;
+  state.halloweenLoading = true;
+  fetch('./data/halloween-party-experience.json')
+    .then(function(r){ if (!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    .then(function(data){
+      haAssignIds(data);
+      state.halloweenData = data;
+      state.halloweenLoading = false;
+      if (state.view==='experience') renderHalloweenExperience();
+    })
+    .catch(function(err){
+      state.halloweenLoading = false;
+      console.log('Halloween manual load failed:', err && err.message);
+      if (state.view==='experience') renderHalloweenExperience();
     });
 }
 
