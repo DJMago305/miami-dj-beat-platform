@@ -443,6 +443,46 @@ verify_jwt = true
 [functions.send-reminder-sms]
 verify_jwt = false
 
+# ── 2026-09-28: entradas que faltaban en este archivo ──────────────────────
+# Estas 9 siempre se desplegaron a mano con `--no-verify-jwt` (el propio
+# código de cada una trae ese comando en el encabezado), pero nunca se
+# registró aquí. Al desplegar TODAS las funciones de una sola vez
+# (`supabase functions deploy`, sin nombrar una función en particular), la
+# plataforma volvió a su valor por defecto (verify_jwt = true) para
+# cualquiera que no tuviera una entrada explícita — rompiendo el acceso de
+# `mdj-avisos-despachar` (confirmado con logs reales: 401 desde el
+# despliegue) y con riesgo real en las otras 8. Cada una hace su propia
+# verificación adentro (clave de cron, JWT de usuario a mano, o llamada
+# anónima intencional) — el mismo patrón ya documentado arriba para
+# send-reminder-sms.
+
+[functions.mdj-avisos-despachar]
+verify_jwt = false
+
+[functions.mdj-heartbeat]
+verify_jwt = false
+
+[functions.mdj-activate]
+verify_jwt = false
+
+[functions.mdjpro-activate-handoff]
+verify_jwt = false
+
+[functions.mdj-push-enviar]
+verify_jwt = false
+
+[functions.mdj-push-suscribir]
+verify_jwt = false
+
+[functions.create-platform-account]
+verify_jwt = false
+
+[functions.elixis-sms-estado]
+verify_jwt = false
+
+[functions.venue-waitlist-signup]
+verify_jwt = false
+
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
