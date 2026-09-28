@@ -959,7 +959,13 @@
             // descartarlo -- puramente aditivo, ningún lector existente lo
             // necesita todavía (siguen usando name/price/qty como siempre).
             var sku = line.catalog_sku || null;
-            return { name: name, price: price, qty: qty, sku: sku };
+            // Sin esto, mdjEbFetchBusyArtistIdsForDate() nunca encontraba
+            // coincidencia (buscaba selected_artist_id en una línea guardada
+            // que nunca lo tenía) y la verificación de disponibilidad de DJ
+            // pasaba en falso silenciosamente. Aditivo, mismo shape para todo
+            // lector que no use este campo.
+            var selectedArtistId = line.selected_artist_id || null;
+            return { name: name, price: price, qty: qty, sku: sku, selected_artist_id: selectedArtistId };
         });
     }
 
