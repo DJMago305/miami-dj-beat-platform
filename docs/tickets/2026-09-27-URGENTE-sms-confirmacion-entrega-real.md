@@ -1,8 +1,8 @@
-# SMS — resuelto con datos reales de Twilio: SoundForTips entrega, bookings no
+# SMS — CERRADO: ambos toll-free entregan de verdad, confirmado con datos reales
 
 **Fecha:** 2026-09-27
 **Disparado por:** el PO preguntó por el estado real de la verificación toll-free y luego corrigió que ya se había probado.
-**Estado:** RESUELTO CON DATOS REALES DE TWILIO — el PO tenía razón para un número, no para el otro. No hace falta construir nada nuevo.
+**Estado:** CERRADO. `+18334322941` entregaba desde el 23-sept; `+18447474159` se probó en vivo hoy (comando `curl` directo a la API de Twilio, corrido por el propio PO en su terminal, con su Auth Token — nunca compartido en el chat) y Twilio confirma **`Delivered`** a las 2026-09-27 19:07:21 PDT (`+18447474159` → `+13056071780`). Los dos números toll-free de Miami DJ Beat LLC entregan SMS reales. No hace falta construir nada nuevo.
 
 ## Lo que confirman los logs reales de Twilio (consola, 2026-09-27, PO logueado)
 
@@ -23,6 +23,6 @@ Ya existe `supabase/functions/elixis-sms-estado/index.ts` — función de solo l
 
 ## Próximo paso
 
-Nada urgente de código. Si se quiere, probar un envío real por `+18447474159` ahora que está verificado, y confirmar con `elixis-sms-estado` o la consola de Twilio si pasa a `Delivered` como ya hace `+18334322941`. Corregir el webhook de entrantes de `+18447474159` cuando el PO lo autorice.
+Nada urgente de código. Lo único que queda abierto es corregir el webhook de entrantes de `+18447474159` (hoy apunta a la demo de Twilio) cuando el PO lo autorice — no bloquea el envío, solo las respuestas entrantes por ese número.
 
 Familia: [[project_sms_aceptado_no_es_entregado]].
