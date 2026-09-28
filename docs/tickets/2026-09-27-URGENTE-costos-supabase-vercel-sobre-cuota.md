@@ -1,8 +1,8 @@
-# URGENTE — Bajar costos extra: Supabase (egress) + Vercel (por confirmar)
+# Costos extra: Supabase (egress) + Vercel — ambos diagnosticados
 
-**Fecha:** 2026-09-27
+**Fecha:** 2026-09-27 / actualizado 2026-09-28
 **Pedido por el PO:** "hay que revisar cómo bajamos esos costos de gastos extras por encima de lo que podemos, hay que hacer un análisis y vamos a ver los de vercel también, paso a paso, déjalo como tarea urgente los dos casos."
-**Estado:** ANÁLISIS EN CURSO — nada implementado todavía.
+**Estado:** DIAGNÓSTICO COMPLETO en los dos casos. Nada implementado todavía — quedan decisiones reales del PO antes de tocar código o borrar nada.
 
 ## Caso 1 — Supabase: egress por encima de cuota
 
@@ -23,14 +23,23 @@
 
 **Conclusión de este análisis**: no hace falta re-investigar desde cero — el diagnóstico ya existe. Lo que falta es decidir y ejecutar una solución real al problema de fondo (el cache-control que no toma efecto), no solo seguir comprimiendo videos uno por uno cada vez que vuelve a aparecer el aviso.
 
-## Caso 2 — Vercel: costos por confirmar
+## Caso 2 — Vercel: RESUELTO el diagnóstico, causa raíz encontrada
 
-- El PO reportó antes un cargo real de `VERCEL INC. -$22.11` (ver entrada de ESTADO_MAESTRO del 2026-09-27, "Consulta del PO sobre cargos bancarios") — costo legítimo de hosting, no fraude, pero sin desglose todavía de qué lo compone (bandwidth, build minutes, function invocations).
-- Nota ya documentada ese mismo día: más PRs/ramas fragmentadas en una sesión = más despliegues = más minutos de build consumidos. Puede ser parte de la causa.
-- **Bloqueado:** no se pudo revisar el dashboard de uso/facturación de Vercel porque la sesión de Chrome de este hilo no tiene la cuenta de Vercel logueada (se intentó entrar a `vercel.com/dashboard`, redirigió a login). Se necesita que el PO inicie sesión en esa pestaña, o dar acceso de otra forma, para ver el desglose real de uso.
+Revisado en vivo (2026-09-28, PO logueado en `vercel.com/djmago305s-projects`), ciclo actual de facturación (11-sept a 11-oct):
+
+- **Included Credit: $20.00 / $20.00 (agotado). On-Demand Charges: $24.25-$24.36** (varía un poco según filtro/refresco) — esto es lo que ya vio el PO en su banco (`VERCEL INC. -$22.11`, cargo de un ciclo anterior, mismo patrón).
+- **Desglose real, por producto:**
+  - **Build CPU Minutes: 210 horas → $44.21** ← esto es el 99% del gasto de infraestructura, con enorme diferencia sobre todo lo demás.
+  - Observability Events: 41.25K → $0.05
+  - Edge Requests, Fast Data Transfer, CPU adicional de Edge Requests: **$0.00** cada uno (tráfico real del sitio es insignificante en costo).
+  - Infraestructura total: $44.26 − $20 de crédito incluido = ~$24.26 de sobrecargo.
+- **Causa raíz confirmada, no solo sospechada**: la cuenta tiene **5 proyectos de Vercel**, no 1 — `web` (el sitio real, `miamidjbeat.com`), y 4 proyectos huérfanos sin repo conectado (`miami-dj-beat-platform`, `project-iyhe0`, `project-vpete`, `project-hn5fy`, creados entre abril y septiembre). Filtrando el consumo por proyecto: **los 4 huérfanos generan $0.00 de costo** — todo el gasto es 100% del proyecto `web` real.
+- **El aviso de "Node.js 20 deprecated" que sigue apareciendo en el dashboard es de otro proyecto** (`miami-dj-beat-platform`, el huérfano) — no tiene relación con el fix ya aplicado en `web/package.json` (PR #535, que sí corrigió el proyecto real). El huérfano no tiene repo conectado, así que ni siquiera puede desplegar nada — el aviso es inofensivo pero confuso.
+- **Por qué 210 horas de build**: cada PR genera 2 despliegues reales en Vercel (uno "Preview" al hacer push a la rama, uno "Production" al fusionar a `main`) — confirmado mirando `Deployments` del proyecto `web`: en esta sola sesión, 4 PRs (#535-#538) generaron 8 despliegues en ~2 horas. El volumen histórico de PRs de este repo es muy alto (ya pasó de 538 PRs). Esto coincide exacto con la advertencia de gobernanza ya escrita en `docs/ESTADO_MAESTRO.md` el 2026-09-27: "más PRs/ramas fragmentadas = más despliegues = más minutos de build consumidos".
 
 ## Próximos pasos
 
-1. Decidir con el PO una solución real y permanente al cache-control de Supabase Storage (opciones a presentar: CDN delante de Storage tipo Cloudflare, pedir a soporte de Supabase que revise por qué el header no toma efecto, o mover los videos a otro origen que sí cachee bien) — comprimir video por video ya se probó y solo retrasa el problema, no lo resuelve.
-2. Con el PO logueado en Vercel (ya logueado hoy en la pestaña de Twilio/Gmail — falta repetirlo para Vercel), revisar Settings → Usage/Billing del proyecto `web` (`prj_HiMB1S2s94mwlyoQiW8CHtcA4DpF`, team `team_VbkrzHWzFxDgNtAWuT92GElN`) para el desglose real de Caso 2.
-3. Nada se aplica sin aprobación explícita del PO (regla de gobernanza estándar del repo).
+1. **Decisión del PO pendiente sobre los 4 proyectos huérfanos de Vercel** (`miami-dj-beat-platform`, `project-iyhe0`, `project-vpete`, `project-hn5fy`) — no cuestan nada hoy, pero son basura acumulada y uno de ellos genera un aviso confuso de Node.js. Se pueden borrar sin riesgo (no tienen repo conectado, no sirven nada), pero no se borra nada sin que el PO lo autorice explícitamente.
+2. **La única palanca real para bajar el costo de Vercel es reducir el número de despliegues** — cada PR fusionado cuesta un build de producción real, sin importar qué tan chico sea el cambio (hasta un PR de solo documentación dispara un build completo). Ya existe la regla de gobernanza de no fragmentar en muchos PRs — aplicarla de verdad es lo que bajaría este número, no un cambio de configuración.
+3. Decidir con el PO una solución real y permanente al cache-control de Supabase Storage (Caso 1) — opciones: CDN delante de Storage tipo Cloudflare, pedir a soporte de Supabase que revise por qué el header no toma efecto, o mover los videos a otro origen que sí cachee bien.
+4. Nada se aplica sin aprobación explícita del PO (regla de gobernanza estándar del repo).
