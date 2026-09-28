@@ -1,9 +1,16 @@
 // supabase/functions/booth-chat/index.ts
-// AI Booth — chat completions vía OpenAI GPT-4o-mini
+// AI Booth — chat completions vía Anthropic Claude Sonnet 5 (mismo modelo que elixis-chat, 2026-09-28)
 // CORS restringido a dominios MDJ + rate limit 20 req/min/IP
 // System prompt: docs/ai/system-agent-v1.md (Prompt Maestro sección)
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+
+// Mismo modelo/versión que elixis-chat (supabase/functions/elixis-chat/index.ts) --
+// copiado literal, no reinventado. IMPORTANTE (lección real ya pagada en elixis-chat,
+// 2026-08-31): Sonnet 5 NO acepta temperature/top_p/top_k -- la API responde 400 si
+// se manda cualquiera de los tres. No agregar temperature aquí.
+const MODEL = "claude-sonnet-5";
+const ANTHROPIC_VERSION = "2023-06-01";
 
 // ─── CORS ────────────────────────────────────────────────────────────────────
 
@@ -114,27 +121,37 @@ Cuando el usuario esté en el manual o pregunte por MDJPRO:
 - **Roles:** Cliente → /rentals.html, /client-portal.html — **NO** dj-dashboard ni admin. Artista → /dj-dashboard.html, su /dj-profile.html — **NO** admin/manager ni datos de otros. Staff → operaciones según rol DB; **NUNCA** datos privados de terceros.
 - **Ventas eventos:** cierra hacia /rentals.html; escala al equipo vendedor/manager — **NUNCA** recomiendes DJs/artistas fuera de Miami DJ Beat (regla §6).
 
-#### 2D. CLASES WEB RECIENTES (JUN 2026) — BOOTH debe conocer
+#### 2D. NOVEDADES REALES DE LA PLATAFORMA (actualizado 2026-09-28) — BOOTH debe conocer
 
-**MDJPRO V.2.6.5** (línea prod jun-2026): descarga en /downloads.html (pkg Supabase Storage). Novedades app: panel LOAD ROOT en idioma del usuario, feedback claro si falla carpeta, Splash/Hub V.2.6.5, auto-apertura post-instalación, licencia/suscripción sin cambios.
+**MDJPRO V.2.6.7** (release 2026-09-08, la versión real hoy en /downloads.html): organizador IA de Tag Master que limpia la cola automáticamente tras mover tus tracks, motor de reconocimiento de pools de DJ mejorado (Xtendz, Redrums, Blends, Transiciones), lectura nativa de BPM para clasificar tu librería con más precisión, mejoras de estabilidad y compatibilidad. Descarga en /downloads.html (pkg Supabase Storage).
 
 **Downloads + Manual:** acordeón *Manual Interactivo* → visor /manuals/MDJPRO_Manual/{es|en|fr|de|it|pt}/index.html — menú iconos dorados, badge PRO cap.6, Booth integrado abajo-derecha.
 
 **Suite artista (enterprise):** /dj-tools.html hub → /load-root.html · /tag-master.html · /library-wizard.html (PRO) · /cash-flow.html — iconos SVG dorados, no emoji.
 
-**Academia:** /courses.html · /academia.html · /dj-knowledge.html — medios desde Supabase Storage; módulo 6 cables visible; certificación 12 módulos.
+**Academia:** /courses.html · /academia.html · /dj-knowledge.html — ahora bilingüe ES/EN completo (examen de certificación y evaluación práctica incluidos).
+
+**Sitio bilingüe completo:** todo miamidjbeat.com (páginas públicas y portales) responde en español o inglés según el idioma del usuario — no es solo tu idioma de chat, es el sitio entero.
+
+**Depósito de reserva: 50% del total** (mínimo $150) para asegurar la fecha — si preguntan cuánto hay que pagar para reservar, es ese.
+
+**Cupones de descuento reales:** el cliente puede aplicar un código de cupón al pagar el depósito desde su portal — un cupón por evento, se resta del total antes del impuesto.
+
+**Política de cancelación** (si preguntan): dentro de las primeras 24 horas desde el primer pago se puede cancelar con reembolso de lo pagado (menos la comisión de la pasarela de pago); entre 24 horas y 7 días lo evalúa el equipo caso por caso; después de 7 días no hay reembolso. Nunca prometas un reembolso tú mismo — dirige a /rentals.html o a que el equipo lo revise.
+
+**Documentos legales** (términos, contratos, políticas): /legal.html.
 
 **Tu rol Booth:** especialista digital MDJB — explicas cambios públicos, guías por rol, cierras ventas hacia /rentals.html, nunca secretos ni talento externo.
 
-#### 2E. RECORRIDO EXPLÍCITO — MIAMI DJ BEAT + MDJPRO V.2.6.5
+#### 2E. RECORRIDO EXPLÍCITO — MIAMI DJ BEAT + MDJPRO V.2.6.7
 
 Cuando pidan recorrido, tour, o "cómo funciona todo", entrega rutas **con URLs exactas** en este orden:
 
-**Web MDJB:** /index.html → /rentals.html (Event Services y cotizar) → /find-dj.html → /shop.html → /jobs.html → /client-portal.html → /courses.html + /academia.html + /dj-knowledge.html → /downloads.html (V.2.6.5 + manual 6 langs).
+**Web MDJB:** /index.html → /rentals.html (Event Services y cotizar) → /find-dj.html → /shop.html → /jobs.html → /client-portal.html → /courses.html + /academia.html + /dj-knowledge.html → /downloads.html (V.2.6.7 + manual 6 langs).
 
 **Artista (si aplica):** /dj-profile.html → /dj-dashboard.html → /dj-tools.html → /load-root.html · /tag-master.html · /library-wizard.html (PRO) · /cash-flow.html · /login.html?plan=pro.
 
-**App MDJPRO V.2.6.5 (macOS):** downloads .pkg → Hub/Splash V.2.6.5 → LOAD ROOT (i18n) → Zona control (Serato/Rekordbox/VDJ) → Librería PRO → Tag → Modo operativo → Scan/reportes → manual capítulos #01–#16.
+**App MDJPRO V.2.6.7 (macOS):** downloads .pkg → Hub/Splash → LOAD ROOT (i18n) → Zona control (Serato/Rekordbox/VDJ) → Librería PRO → Tag Master (organizador IA) → Modo operativo → Scan/reportes → manual capítulos #01–#16.
 
 Personaliza por rol (cliente/artista/staff/invitado). Cliente: NO dj-dashboard ni admin. Artista LITE: explica PRO sin desbloquear gratis. Entrega rutas con links Markdown pero en **prosa natural** (3–4 oraciones); si conoces el nombre del usuario en contexto, úsalo con naturalidad como en §8 — no en cada frase.
 
@@ -207,6 +224,7 @@ Cuando el usuario pida información o quiera contratar un servicio, dirígelo AL
 | Dashboard DJ / panel de artista | /dj-dashboard.html |
 | Portal cliente / cuenta cliente | /client-portal.html |
 | Login / iniciar sesión / registro | /login.html |
+| Términos, contratos, políticas legales | /legal.html |
 
 FORMATO de respuesta con links: usa siempre formato Markdown así:
 - "Puedes ver las opciones de Hora Loca aquí: [Talent Hub](/rentals.html)"
@@ -360,9 +378,9 @@ serve(async (req: Request) => {
         );
     }
 
-    const apiKey = Deno.env.get("OPENAI_API_KEY") ?? "";
+    const apiKey = Deno.env.get("ANTHROPIC_API_KEY") ?? "";
     if (!apiKey) {
-        console.error("[booth-chat] OPENAI_API_KEY not set");
+        console.error("[booth-chat] ANTHROPIC_API_KEY not set");
         return new Response(
             JSON.stringify({ error: "AI service not configured" }),
             { status: 503, headers: { ...cors, "Content-Type": "application/json" } }
@@ -405,46 +423,50 @@ serve(async (req: Request) => {
         rosterContext +
         (sessionContext ? `\n\n### Contexto de sesión actual:\n${sessionContext}` : "");
 
+    // Anthropic no acepta un mensaje con role "system" dentro de `messages` -- el
+    // prompt del sistema va aparte, en el campo `system` de arriba (mismo patrón
+    // que elixis-chat). `history` solo trae turnos user/assistant previos.
     const messages: ChatMessage[] = [
-        { role: "system", content: systemContent },
         ...history,
         { role: "user", content: userMessage },
     ];
 
-    let openAiRes: Response;
+    let anthropicRes: Response;
     try {
-        openAiRes = await fetch("https://api.openai.com/v1/chat/completions", {
+        anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
             method: "POST",
             headers: {
-                Authorization: `Bearer ${apiKey}`,
+                "x-api-key": apiKey,
+                "anthropic-version": ANTHROPIC_VERSION,
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                model: "gpt-4o-mini",
-                messages,
+                model: MODEL,
                 max_tokens: 350,
-                temperature: 0.72,
+                system: systemContent,
+                messages,
             }),
         });
     } catch (err) {
-        console.error("[booth-chat] OpenAI fetch error:", err);
+        console.error("[booth-chat] Anthropic fetch error:", err);
         return new Response(
             JSON.stringify({ error: "AI provider unreachable" }),
             { status: 502, headers: { ...cors, "Content-Type": "application/json" } }
         );
     }
 
-    if (!openAiRes.ok) {
-        const errBody = await openAiRes.text();
-        console.error("[booth-chat] OpenAI error", openAiRes.status, errBody);
+    if (!anthropicRes.ok) {
+        const errBody = await anthropicRes.text();
+        console.error("[booth-chat] Anthropic error", anthropicRes.status, errBody);
         return new Response(
             JSON.stringify({ error: "AI provider error" }),
             { status: 502, headers: { ...cors, "Content-Type": "application/json" } }
         );
     }
 
-    const data = await openAiRes.json();
-    const reply: string = data.choices?.[0]?.message?.content?.trim() ?? "";
+    const data = await anthropicRes.json();
+    const blocks: Array<Record<string, unknown>> = Array.isArray(data.content) ? data.content : [];
+    const reply: string = blocks.filter((b) => b?.type === "text").map((b) => String(b.text ?? "")).join("").trim();
 
     if (!reply) {
         return new Response(
