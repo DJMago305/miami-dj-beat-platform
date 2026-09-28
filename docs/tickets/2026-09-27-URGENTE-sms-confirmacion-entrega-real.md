@@ -13,9 +13,11 @@ Hay **dos** números toll-free, con historiales completamente distintos:
 
 **Corrección a la nota anterior de este ticket**: la tabla `elixis_sms_pending` no tenía nada después del 2 de septiembre porque, en efecto, nadie ha usado ESE número desde entonces — el dato de Twilio (fuente de verdad real) lo confirma, no era una limitación de búsqueda.
 
-## Hallazgo nuevo, sin relación con lo anterior: `+18447474159` tiene el webhook de entrantes en demo
+## Hallazgo nuevo, ya corregido: `+18447474159` tenía el webhook de entrantes en demo
 
-Revisando su configuración en Twilio: el webhook de "Handling for incoming messages" sigue apuntando a `https://demo.twilio.com/welcome/sms/reply/` (el de ejemplo de Twilio), no a `system-messages-webhook` (el receptor real que si tiene `+18334322941`). Si alguien responde un SMS a este número hoy, esa respuesta no llega a ningún lado de Miami DJ Beat. Corregirlo es un cambio de una sola URL en la consola de Twilio (o vía API), sin tocar código — pendiente de que el PO lo autorice.
+Revisando su configuración en Twilio se encontró que el webhook de "Handling for incoming messages" seguía apuntando a `https://demo.twilio.com/welcome/sms/reply/` (el de ejemplo de Twilio), no a `system-messages-webhook` (el receptor real que ya tenía `+18334322941`) — las respuestas entrantes a este número no llegaban a ningún lado de Miami DJ Beat.
+
+**CORREGIDO (2026-09-27, autorizado explícitamente por el PO)**: en Twilio Console → ese número → Configuration details → Messaging → Edit, se cambió el "Primary method"/webhook URL a `https://hkuvuqupbxwkiykxvqdr.supabase.co/functions/v1/system-messages-webhook` (HTTP POST) — copiado exacto del que ya usa `+18334322941`, sin tocar código ni desplegar nada. Confirmado guardado y visible en la config del número tras el cambio.
 
 ## Verificado antes de proponer construir nada nuevo (condición explícita del PO)
 
@@ -23,6 +25,6 @@ Ya existe `supabase/functions/elixis-sms-estado/index.ts` — función de solo l
 
 ## Próximo paso
 
-Nada urgente de código. Lo único que queda abierto es corregir el webhook de entrantes de `+18447474159` (hoy apunta a la demo de Twilio) cuando el PO lo autorice — no bloquea el envío, solo las respuestas entrantes por ese número.
+Ninguno pendiente en este ticket — ambos números entregan y ambos reciben correctamente. Solo falta que alguien responda un SMS real a `+18447474159` en algún momento para confirmar visualmente que aparece en "Mensajes del Sistema" (`web/system-messages.html`), igual que ya pasa con `+18334322941` — no bloqueante, se verá solo con el uso normal.
 
 Familia: [[project_sms_aceptado_no_es_entregado]].
