@@ -954,7 +954,12 @@
                 price = 0;
             }
             price = Math.round(price * 100) / 100;
-            return { name: name, price: price, qty: qty };
+            // Paso 1 del carrito por referencia (2026-09-28): captura el sku que
+            // YA existe en memoria (state.lines[].catalog_sku) en vez de
+            // descartarlo -- puramente aditivo, ningún lector existente lo
+            // necesita todavía (siguen usando name/price/qty como siempre).
+            var sku = line.catalog_sku || null;
+            return { name: name, price: price, qty: qty, sku: sku };
         });
     }
 
