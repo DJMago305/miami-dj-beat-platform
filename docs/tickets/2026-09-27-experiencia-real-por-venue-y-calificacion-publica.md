@@ -68,12 +68,17 @@ Sin resolver todavía cómo el sistema distingue ambos orígenes en la práctica
 
 3. **✅ RESUELTA (2026-09-28).** ¿Cómo se pondera un evento único de alto impacto? — Confirmado por el PO: el staff lo marca a mano, nunca lo infiere el sistema solo (mismo patrón HITL que ELIXIS). Construido: `leads.high_impact` (boolean, default false, misma migración) — un evento marcado vale 3 eventos normales de su categoría en el score de la insignia.
 
-4. **Sigue abierta.** ¿De dónde sale el "umbral" de calificación baja que dispara la corrección por categoría? (mismo tipo de pregunta que el ticket chico de recomendaciones, que ya usa 1-2 estrellas).
+4. **✅ RESUELTA (2026-09-28).** ¿De dónde sale el "umbral" de calificación baja que dispara la corrección por categoría? — El umbral en sí ya estaba confirmado (1-2 estrellas, mismo del ticket chico) desde que se decidieron las preguntas #1-3; lo que faltaba construir era que la corrección fuera **por categoría específica, no global** — principio #5 de este ticket ("si a un DJ se le asigna una boda y el cliente da una calificación baja, eso baja su visibilidad específicamente en búsquedas de bodas, no en general") + el balance "10 contra 1".
 
-## Prerrequisito construido (2026-09-28, no era una de las 4 preguntas originales, pero bloqueaba las 3 resueltas)
-Se encontró que `leads` (los eventos reales) no tenía ninguna relación con `financial_venues` (`leads.venue`/`event_location` son texto libre, nunca llenado en los 7 leads reales) — sin eso, ninguna insignia podía calcular nada real. Se agregó `leads.venue_id` (FK real a `financial_venues`, migración `20260928090000`) — el prerrequisito estructural para que un evento futuro sí pueda alimentar el modelo.
+   Construido: `get_recommended_djs()` (del ticket chico, PR #519) gana un 3er parámetro opcional `p_category` (migración `20260928092000`). Sin categoría (`NULL`) se comporta EXACTAMENTE igual que antes — el único llamador real hoy (`web/calendario-operacional-inteligente.html`) no pasa categoría, cero cambio para él. Con categoría, la exclusión de 1-2 estrellas solo aplica si esa reseña está ligada (vía `source_lead_id`, la señal de origen del PR #545) a un evento real de ESA categoría específica.
+
+   Probado en transacción con `ROLLBACK` contra datos reales (3 casos): sin categoría → excluido (igual que siempre); misma categoría (sundowner) → excluido; categoría distinta (restaurante) → **no** excluido, confirma el "10 contra 1". Aplicado a 🔴 PROD, verificado que la llamada de 2 parámetros de siempre sigue funcionando sin romper nada (8 resultados, igual que antes).
+
+**Con esto, las 4 preguntas abiertas originales del ticket quedan resueltas y construidas en producción.**
+
+## Prerrequisito construido (2026-09-28, no era una de las 4 preguntas originales, pero bloqueaba las preguntas #2-#4)
+Se encontró que `leads` (los eventos reales) no tenía ninguna relación con `financial_venues` (`leads.venue`/`event_location` son texto libre, nunca llenado en los 7 leads reales) — sin eso, ninguna insignia ni corrección por categoría podía calcular nada real. Se agregó `leads.venue_id` (FK real a `financial_venues`, migración `20260928090000`) — el prerrequisito estructural para que un evento futuro sí pueda alimentar el modelo.
 
 ## Sigue pendiente, sin construir
-- **Conectar las insignias a la interfaz real** (`find-dj.html`/`dj/directorio.html`/`dj-profile.html`) — hoy `get_dj_venue_category_badges()` existe y funciona, pero ningún frontend lo llama todavía.
+- **Conectar las insignias y la corrección por categoría a la interfaz real** (`find-dj.html`/`dj/directorio.html`/`dj-profile.html`) — hoy `get_dj_venue_category_badges()` y el `get_recommended_djs()` con categoría existen y funcionan, pero ningún frontend público los llama todavía (solo la herramienta interna de staff, y sin pasar categoría).
 - **UI para que staff asigne `venue_id`/`high_impact`** al crear/completar un lead — hoy solo se puede hacer por SQL directo.
-- Pregunta #4 (umbral de calificación baja por categoría).
