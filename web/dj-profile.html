@@ -3853,6 +3853,14 @@
         }
 
         /* Founder badge */
+        /* Insignias de experiencia por venue (2026-09-28) -- mismo vocabulario
+           y niveles que find-dj.html/dj/directorio.html, mismo lenguaje
+           visual dorado del resto del hero. */
+        .pub-venue-badges { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 14px; }
+        .pub-venue-badge { border-radius: 999px; padding: 3px 12px; font-size: 11px; font-weight: 600; }
+        .pub-venue-badge--verificada { background: rgba(197, 160, 89, 0.10); border: 1px solid rgba(197, 160, 89, 0.28); color: #d9c397; }
+        .pub-venue-badge--comprobada { background: rgba(197, 160, 89, 0.18); border: 1px solid rgba(197, 160, 89, 0.5); color: #f0d9a8; font-weight: 700; }
+
         .founder-badge {
             display: inline-flex;
             align-items: center;
@@ -4387,7 +4395,13 @@
                         </div>
                     </div>
 
-
+                    <!-- Insignias de experiencia por venue (2026-09-28, preguntas #2/#3
+                         del ticket de experiencia por venue) -- oculto por defecto, solo
+                         se muestra si get_dj_venue_category_badges() devuelve alguna fila
+                         real; nunca se fabrica una insignia vacía. Va después de Badges
+                         en el orden ya establecido arriba (Nombre - Rating - Redes -
+                         Especialidades - Badges). -->
+                    <div id="pub-venue-badges" class="pub-venue-badges" style="display:none;"></div>
 
                 </div>
             </div>
@@ -7202,6 +7216,7 @@
                 } catch (eFlow) { void eFlow; }
             }
             await renderDynamicReviewsAndKPI(p, !!(isOwner && !isPublicQrView), db, targetId);
+            try { await mdjLoadPubVenueBadges(db, targetId); } catch (eVb) { void eVb; }
             window._mdjPubReviewSession = session;
             window._mdjPubReviewOwner = !!(isOwner && !isPublicQrView);
             window._mdjPubReviewSelfBlock = !!isOwner;
@@ -7680,6 +7695,35 @@
                 el.textContent = '';
                 el.style.display = 'none';
             }
+        }
+
+        /* Insignias de experiencia por venue (2026-09-28, preguntas #2/#3 del
+           ticket de experiencia por venue): get_dj_venue_category_badges()
+           (misma RPC que ya usan find-dj.html/dj/directorio.html). Devuelve
+           filas vacías para cualquier DJ sin experiencia real registrada --
+           el contenedor se queda oculto (display:none de fábrica), nunca se
+           fabrica una insignia. Vocabulario ya confirmado por el PO. */
+        var MDJ_VENUE_CATEGORY_LABELS = {
+            sundowner: 'sundowners',
+            restaurante_musica: 'restaurantes con música en vivo',
+            restaurante: 'restaurantes',
+            club: 'clubes',
+            fiesta_privada: 'fiestas privadas',
+        };
+        function mdjVenueCategoryLabel(category) {
+            return MDJ_VENUE_CATEGORY_LABELS[category] || String(category || '').replace(/_/g, ' ');
+        }
+        async function mdjLoadPubVenueBadges(db, djUserId) {
+            var el = document.getElementById('pub-venue-badges');
+            if (!el || !db || !djUserId) return;
+            var res = await db.rpc('get_dj_venue_category_badges', { p_dj_user_id: djUserId });
+            if (!res || res.error || !res.data || !res.data.length) return;
+            el.innerHTML = res.data.map(function (b) {
+                var label = b.badge_level === 'comprobada' ? 'Experiencia comprobada en ' : 'Con experiencia verificada en ';
+                var cls = 'pub-venue-badge pub-venue-badge--' + b.badge_level;
+                return '<span class="' + cls + '">' + label + mdjVenueCategoryLabel(b.category) + '</span>';
+            }).join('');
+            el.style.display = 'flex';
         }
 
         /** CTA valoración: fans/clientes en ?view=public; dueño en pestaña privada solo ve carrusel OPINIONES. */

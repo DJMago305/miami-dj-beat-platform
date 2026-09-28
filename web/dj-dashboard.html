@@ -7067,7 +7067,14 @@
         window.markEventComplete = async (leadId) => {
             if (!confirm('¿Marcar este evento como COMPLETADO?')) return;
             const sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
-            const { error } = await sb.from('leads').update({ status: 'COMPLETED' }).eq('id', leadId);
+            // Fix 2026-09-28 (prerrequisito real del ticket de experiencia por
+            // venue): antes solo ponía status, nunca event_completed_at -- la
+            // columna que exige toda la lógica real de hoy (disponibilidad,
+            // reseñas, insignias). Venue/alto impacto NO se piden aquí a
+            // propósito: "el staff lo marca a mano" (decisión del PO), el DJ
+            // completando su propio evento no debe autoasignarse eso -- el
+            // staff lo agrega después desde staff-agenda.html si aplica.
+            const { error } = await sb.from('leads').update({ status: 'COMPLETED', event_completed_at: new Date().toISOString() }).eq('id', leadId);
             if (error) { alert('Error: ' + error.message); return; }
             loadAssignedEvents();
         };

@@ -84,6 +84,14 @@
 
     .djidx-tag{background:rgba(197,160,89,0.12);border:1px solid rgba(197,160,89,0.3);color:#e8c987;border-radius:999px;padding:2px 10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;}
 
+    /* Insignias de experiencia por venue (2026-09-28, preguntas #2/#3 del
+       ticket de experiencia por venue) -- vacío para cualquier DJ sin
+       experiencia real registrada, nunca se fabrica nada. */
+    .djidx-venue-badges{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 10px;}
+    .djidx-venue-badge{border-radius:999px;padding:3px 12px;font-size:11px;font-weight:600;}
+    .djidx-venue-badge--verificada{background:rgba(197,160,89,0.10);border:1px solid rgba(197,160,89,0.28);color:#d9c397;}
+    .djidx-venue-badge--comprobada{background:rgba(197,160,89,0.18);border:1px solid rgba(197,160,89,0.5);color:#f0d9a8;font-weight:700;}
+
     .djidx-bio{line-height:1.6;color:rgba(255,255,255,0.8);font-size:14px;margin:0 0 16px;}
     .djidx-bio-en{display:none;}
     html[lang="en"] .djidx-bio-es.has-en{display:none;}
@@ -236,11 +244,12 @@
     </div>
     <div class="djidx-wrap">
       <div class="djidx-strip-list">
-      <article class="djidx-strip">
+      <article class="djidx-strip" data-dj-user-id="3f5d5196-273c-458e-a4af-6b3545422177">
         <img class="djidx-strip__photo" src="https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/avatars/3f5d5196-273c-458e-a4af-6b3545422177/avatar.png" alt="DJMago305" loading="lazy" />
         <div>
           <h2>DJMago305</h2>
           <p class="djidx-city">📍 Hialeah <span class="djidx-tag">DJ</span></p>
+          <div class="djidx-venue-badges" data-venue-badges-slot></div>
           <p class="djidx-bio djidx-bio-es has-en">DJMago305 es un DJ y productor musical con una trayectoria consolidada que fusiona la esencia de los ritmos clásicos con el sonido moderno d…</p>
           <p class="djidx-bio djidx-bio-en">DJMago305 is a DJ and music producer with a solid career that blends the essence of classic beats with the modern sound of house, tech house…</p>
           <div class="djidx-cta">
@@ -249,11 +258,12 @@
           </div>
         </div>
       </article>
-      <article class="djidx-strip">
+      <article class="djidx-strip" data-dj-user-id="b31e0e33-abfb-49a3-9cf3-076fbbc659a6">
         <img class="djidx-strip__photo" src="https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/avatars/b31e0e33-abfb-49a3-9cf3-076fbbc659a6/avatar.png" alt="DJSolitario" loading="lazy" />
         <div>
           <h2>DJSolitario</h2>
           <p class="djidx-city">📍 Homestead <span class="djidx-tag">DJ</span></p>
+          <div class="djidx-venue-badges" data-venue-badges-slot></div>
           <p class="djidx-bio">Luis Alfonso Uralde: Ritmo Global, Alma Cubana
 Con 45 años de vida y una trayectoria internacional invaluable, el DJ cubano Luis Alfonso Ura…</p>
           <div class="djidx-cta">
@@ -262,11 +272,12 @@ Con 45 años de vida y una trayectoria internacional invaluable, el DJ cubano Lu
           </div>
         </div>
       </article>
-      <article class="djidx-strip">
+      <article class="djidx-strip" data-dj-user-id="da00bfbb-b227-4142-9874-ff52fade1cad">
         <img class="djidx-strip__photo" src="https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/avatars/da00bfbb-b227-4142-9874-ff52fade1cad/avatar.png" alt="DJYuyo" loading="lazy" />
         <div>
           <h2>DJYuyo</h2>
           <p class="djidx-city">📍 Hialeah <span class="djidx-tag">DJ</span></p>
+          <div class="djidx-venue-badges" data-venue-badges-slot></div>
           <p class="djidx-bio djidx-bio-es has-en">DJ Yuyo es un DJ &quot;Open Format&quot; radicado en Miami con más de dos décadas de experiencia dominando las pistas de baile. Nacido en Cuba y estab…</p>
           <p class="djidx-bio djidx-bio-en">DJ Yuyo is a Miami-based &quot;Open Format&quot; DJ with over two decades of experience dominating the dance floor. Born in Cuba and established in th…</p>
           <div class="djidx-cta">
@@ -405,6 +416,55 @@ Con 45 años de vida y una trayectoria internacional invaluable, el DJ cubano Lu
             document.addEventListener('DOMContentLoaded', kick);
         } else {
             kick();
+        }
+    })();
+    </script>
+
+    <script>
+    (function () {
+        // Insignias de experiencia por venue (2026-09-28, preguntas #2/#3
+        // del ticket de experiencia por venue): llama
+        // get_dj_venue_category_badges() (misma RPC que ya usa find-dj.html)
+        // para cada uno de los 3 DJs reales de esta página. Vacío para
+        // cualquier DJ sin experiencia real registrada -- nunca se fabrica
+        // nada aquí. Vocabulario ya confirmado por el PO.
+        var VENUE_CATEGORY_LABELS = {
+            sundowner: 'sundowners',
+            restaurante_musica: 'restaurantes con música en vivo',
+            restaurante: 'restaurantes',
+            club: 'clubes',
+            fiesta_privada: 'fiestas privadas',
+        };
+        function venueCategoryLabel(category) {
+            return VENUE_CATEGORY_LABELS[category] || String(category || '').replace(/_/g, ' ');
+        }
+        function badgeHtml(badges) {
+            return (badges || []).map(function (b) {
+                var label = b.badge_level === 'comprobada' ? 'Experiencia comprobada en ' : 'Con experiencia verificada en ';
+                var cls = 'djidx-venue-badge djidx-venue-badge--' + b.badge_level;
+                return '<span class="' + cls + '">' + label + venueCategoryLabel(b.category) + '</span>';
+            }).join('');
+        }
+        async function kickVenueBadges() {
+            var db = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+            if (!db) return;
+            var strips = document.querySelectorAll('.djidx-strip[data-dj-user-id]');
+            await Promise.all(Array.prototype.map.call(strips, async function (strip) {
+                var uid = strip.getAttribute('data-dj-user-id');
+                var slot = strip.querySelector('[data-venue-badges-slot]');
+                if (!uid || !slot) return;
+                try {
+                    var res = await db.rpc('get_dj_venue_category_badges', { p_dj_user_id: uid });
+                    if (res && !res.error && res.data && res.data.length) {
+                        slot.innerHTML = badgeHtml(res.data);
+                    }
+                } catch (e) { /* sin insignias, no bloquea el resto de la página */ }
+            }));
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', kickVenueBadges);
+        } else {
+            kickVenueBadges();
         }
     })();
     </script>

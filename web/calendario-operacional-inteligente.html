@@ -1140,6 +1140,20 @@
       }
       h+='<div class="notify-row">'+BELL+'Notificación '+c.chan+' programada · se envía en la fecha.</div>';
       if(state.role==="artista")h+='<div class="opp"><b>Oportunidad:</b> es su '+(e.kind==="aniv"?"aniversario":"cumpleaños")+'. Miami DJ Beat puede gestionarte un evento con este contacto.</div>';
+      /* Categoría de venue (2026-09-28, pregunta #4 del ticket de experiencia
+         por venue): opcional -- sin elegir nada, get_recommended_djs()
+         se comporta EXACTO igual que siempre (p_category=null). Eligiendo
+         una, la exclusión por mala calificación pasa a ser específica de
+         esa categoría, no global (principio "10 contra 1"). Mismas 5
+         categorías reales que ya existen en financial_venues. */
+      h+='<select class="rec-category-select" style="margin-top:8px;width:100%;background:rgba(14,20,32,.85);border:1px solid rgba(255,255,255,.15);color:#fff;border-radius:10px;padding:8px 10px;font-size:13px;">'
+        +'<option value="">Cualquier categoría de venue</option>'
+        +'<option value="sundowner">Sundowner</option>'
+        +'<option value="restaurante_musica">Restaurante con música en vivo</option>'
+        +'<option value="restaurante">Restaurante</option>'
+        +'<option value="club">Club</option>'
+        +'<option value="fiesta_privada">Fiesta privada</option>'
+        +'</select>';
       h+='<button class="act" data-mcid="'+(c.masterClientId||'')+'" data-edate="'+e.d+'">Ofrecer evento — ver DJs recomendados</button>';
       h+='<div class="rec-list" hidden></div>';
     }
@@ -1158,7 +1172,12 @@
     var origText=btn.textContent; btn.disabled=true; btn.textContent="Buscando DJs recomendados…";
     try{
       var sb=(window.getSupabaseClient? window.getSupabaseClient() : window.supabase);
-      var r=await sb.rpc("get_recommended_djs",{p_master_client_id:mcId,p_event_date:eDate});
+      // Categoría opcional (2026-09-28, pregunta #4): el <select> vive
+      // justo antes del botón en el mismo bloque -- sin selección, category
+      // queda '' y se manda null (comportamiento global de siempre).
+      var categorySelect=btn.parentElement.querySelector(".rec-category-select");
+      var category=(categorySelect && categorySelect.value) ? categorySelect.value : null;
+      var r=await sb.rpc("get_recommended_djs",{p_master_client_id:mcId,p_event_date:eDate,p_category:category});
       if(r.error) throw r.error;
       var rows=r.data||[];
       // Motor de Comisiones (2026-09-24): si este cliente tiene un DJ "dueño"
