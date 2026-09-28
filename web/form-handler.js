@@ -131,15 +131,15 @@ document.addEventListener('DOMContentLoaded', function () {
             try {
                 if (!db) throw new Error('Supabase client not ready');
                 leadPayload = mdjBuildLeadPayload(formData, source);
+                const newLeadId = (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : null;
+                if (newLeadId) leadPayload.id = newLeadId;
 
-                const { data: saved, error } = await db
+                const { error } = await db
                     .from('leads')
-                    .insert([leadPayload])
-                    .select('id')
-                    .single();
+                    .insert([leadPayload]);
 
-                if (!error && saved) {
-                    leadId = saved.id;
+                if (!error && newLeadId) {
+                    leadId = newLeadId;
                 } else {
                     dbError = error;
                 }

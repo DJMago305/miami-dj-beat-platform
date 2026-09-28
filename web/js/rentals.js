@@ -993,6 +993,7 @@ window.checkoutSubmit = async function() {
         notesObj.client_user_id = session.user.id;
     }
 
+    var newLeadId = (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : null;
     var payload = {
         event_type: (leadData.type && String(leadData.type).trim()) || 'Event rental',
         event_date: leadData.date || null,
@@ -1005,6 +1006,9 @@ window.checkoutSubmit = async function() {
         source: 'rentals_checkout',
         notes: JSON.stringify(notesObj)
     };
+    if (newLeadId) {
+        payload.id = newLeadId;
+    }
     if (session && session.user) {
         payload.client_user_id = session.user.id;
         var se = session.user.email && String(session.user.email).trim();
@@ -1015,12 +1019,12 @@ window.checkoutSubmit = async function() {
 
     if (sb && payload.email) {
         try {
-            var ins = await sb.from('leads').insert([payload]).select('id').single();
-            if (!ins.error && ins.data && ins.data.id) {
+            var ins = await sb.from('leads').insert([payload]);
+            if (!ins.error && newLeadId) {
                 try {
                     sessionStorage.removeItem('mdj_rentals_cart_backup');
                 } catch (eR) { /* ignore */ }
-                window.location.href = './client-portal.html?lead=' + encodeURIComponent(ins.data.id);
+                window.location.href = './client-portal.html?lead=' + encodeURIComponent(newLeadId);
                 return;
             }
             if (ins.error) {
