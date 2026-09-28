@@ -6935,8 +6935,17 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                     // sitio (dj-profile.html?id=<user_id>&view=public) -- esa página ya
                     // muestra la tarjeta de calificar con estrellas a cualquier visitante
                     // que no sea el dueño del perfil, sin cambios adicionales.
+                    // lead_ref (2026-09-27, pedido del PO -- señal de origen de reseña):
+                    // este botón solo existe para eventos ev.status==='COMPLETED' de
+                    // `leads` -- pasar ev.id deja que submit_dj_public_review() verifique
+                    // (cliente=reviewer, evento completado, mismo DJ) y le dé más peso a
+                    // esta reseña por venir de un evento real, no solo del link genérico
+                    // del perfil. Si el cliente entra sin este parámetro (ej. el DJ
+                    // comparte su perfil directo), la reseña se guarda igual, solo sin el
+                    // peso extra -- ver docs/tickets/2026-09-27-experiencia-real-por-
+                    // venue-y-calificacion-publica.md.
                     const reviewLink = session && session.user
-                        ? `https://www.miamidjbeat.com/dj-profile.html?id=${session.user.id}&view=public#pub-rate-card`
+                        ? `https://www.miamidjbeat.com/dj-profile.html?id=${session.user.id}&lead_ref=${encodeURIComponent(ev.id)}&view=public#pub-rate-card`
                         : null;
                     const reviewMsg = reviewLink
                         ? `¡Hola! Fue un placer ser tu DJ en tu evento. Si tienes un minuto, me ayudarías mucho dejando tu opinión aquí: ${reviewLink} ¡Gracias!`

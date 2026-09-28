@@ -15,7 +15,7 @@ La visión "Reusable Artist Financial Matrix" del PO (5 de agosto, en `project_c
 Cada venue/evento tiene su propia **especificación comercial reconocida** — ejemplos reales dados por el PO:
 - **Mojitos Calle 8**: restaurante cubano, música para bailar + comer + beber.
 - **Bar de playa / sundowner**: cliente típico es comercial (un negocio frente al mar).
-- **Fiesta temática en parque público**: ejemplo real, la fiesta de los jueves del propio PO — tema "Haunted House", evento grande, "mucho impacto y relevancia" aunque sea un evento único, no repetido.
+- **Evento anual de gran escala vía aliado (Baila Con Micho)**: ejemplo real, **Haunted House** — CORRECCIÓN 2026-09-27 (dos rondas de precisión del PO), el ticket original lo describía mal (como "fiesta de los jueves del propio PO" en un parque público, un evento chico y personal). Lo real: **Haunted House** es una fiesta temática de temporada de Halloween que se hace **todos los años en Tropical Park** — la compañía lleva eventos para llenar el parque, **miles de personas** entran. Miami DJ Beat participa vía **Baila Con Micho** (la academia de baile, aliado/subcontratista ya documentado — ver [[project_baila_con_micho_aliado_subcontrato]]): es una relación de doble llamada (Micho llama al PO para eventos, el PO también llama a Micho), y **entran juntos** (MDJ + la academia) a hacer el evento — no es una simple derivación de trabajo, es presencia conjunta. "Mucho impacto y relevancia" — anual, miles de asistentes, evento de escala real, no una fiesta personal del PO.
 
 La experiencia de un DJ en "sundowners" no es la misma que en "clubes" ni en "fiestas privadas" — son pistas separadas, no un promedio.
 
@@ -40,7 +40,7 @@ El PO fue explícito: esto no es "terreno muerto o por explorar" — hay datos r
 El PO resolvió esto directamente: **sí se confía en lo que el DJ declara de sí mismo** (porque muchos datos no están registrados todavía) — pero el sistema lo va midiendo con el tiempo, vía calificaciones reales por tipo de evento:
 - Si a un DJ se le asigna una boda y el cliente da una calificación baja, eso baja su visibilidad específicamente en búsquedas de bodas — no en general.
 - **Principio de balance, textual del PO**: "si el DJ hace 10 bodas con buenas calificaciones y una que no fue favorable, hay un balance, es 10 contra 1, no se puede juzgar por un cliente." Una sola mala experiencia no debe hundir la categoría completa.
-- Un evento único pero grande/de alto impacto (como el "Haunted House" de los jueves) también debe pesar, no solo la repetición — el modelo no puede ser solo "cuántas veces se repitió."
+- Un evento único pero grande/de alto impacto (como Haunted House, vía Baila Con Micho — ver corrección arriba) también debe pesar, no solo la repetición — el modelo no puede ser solo "cuántas veces se repitió."
 
 ### 6. Explícitamente FUERA de este ticket
 Verificación de antecedentes penales / historial de seguridad de las personas (ej. no recomendar a alguien con récord de abuso infantil para una fiesta infantil) — el PO lo planteó en la misma conversación, pero **es un dominio legal separado**, no de datos de negocio: requiere un proveedor certificado de verificación de antecedentes (Checkr, Sterling, etc.), consentimiento firmado, y revisión de un abogado — nunca una "IA de investigación" scrapeando información. No se documenta como parte de este modelo de experiencia/calificación.
