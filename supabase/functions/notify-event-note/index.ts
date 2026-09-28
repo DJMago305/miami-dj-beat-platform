@@ -1,9 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4"
+import { getServiceRoleKey } from "../_shared/service-key.ts"
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY")
 const supabaseUrl = Deno.env.get("SUPABASE_URL")
-const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")
+const supabaseKey = getServiceRoleKey()
 
 // El secreto configurado en los Environment Variables de Supabase (sin fallbacks hardcodeados)
 const EXPECTED_SECRET = Deno.env.get("WEBHOOK_SECRET")

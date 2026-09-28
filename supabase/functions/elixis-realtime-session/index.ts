@@ -20,6 +20,7 @@
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getServiceRoleKey } from "../_shared/service-key.ts";
 
 // ─── MODELO ──────────────────────────────────────────────────────────────────
 // Modelo insignia por decisión del PO: la experiencia humana manda sobre el
@@ -167,7 +168,7 @@ const MAX_SDP_BYTES = 32_768; // una oferta SDP real ronda los 4 KB
 
 // ─── CANDADO RBAC — mismo contrato que elixis-chat ───────────────────────────
 const SUPABASE_URL_FALLBACK = "https://hkuvuqupbxwkiykxvqdr.supabase.co";
-const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const SERVICE_ROLE_KEY = getServiceRoleKey() ?? "";
 const ADMIN = createClient(
     Deno.env.get("SUPABASE_URL") || SUPABASE_URL_FALLBACK,
     SERVICE_ROLE_KEY,

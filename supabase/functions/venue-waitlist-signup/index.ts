@@ -8,6 +8,7 @@
 // policy de insert publico a proposito (ver migracion 20260905120000).
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getServiceRoleKey } from "../_shared/service-key.ts";
 
 const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
@@ -67,7 +68,7 @@ serve(async (req: Request) => {
 
     const supabase = createClient(
         Deno.env.get("SUPABASE_URL")!,
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+        getServiceRoleKey()!,
     );
 
     const { error } = await supabase.from("venue_waitlist_signups").insert({

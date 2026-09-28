@@ -12,6 +12,7 @@
 // Una vez validado en vivo por el PO, se puede apuntar a la clave compartida.
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getServiceRoleKey } from "../_shared/service-key.ts";
 
 const PROD_ORIGINS = ["https://miamidjbeat.com", "https://www.miamidjbeat.com"];
 
@@ -110,7 +111,7 @@ serve(async (req) => {
 
     const supabase = createClient(
         Deno.env.get("SUPABASE_URL")!,
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+        getServiceRoleKey()!,
     );
 
     // Re-precio server-side: se leen los tipos de entrada REALES del evento,

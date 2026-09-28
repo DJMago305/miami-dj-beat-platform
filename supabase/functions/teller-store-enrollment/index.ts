@@ -18,6 +18,7 @@
 // financial-engine.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getServiceRoleKey } from "../_shared/service-key.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -28,7 +29,7 @@ const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, "Content-Type": "application/json" } });
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const SERVICE_KEY = getServiceRoleKey()!;
 const TELLER_ENV = Deno.env.get("TELLER_ENV") || "development"; // "development" real, gratis hasta 100 enrollments
 const TELLER_API = "https://api.teller.io";
 

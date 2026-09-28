@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getServiceRoleKey } from "../_shared/service-key.ts";
 
 /**
  * Checkout MDJPRO (modo subscription) — solo línea **artista / MDJ Pro** (public.dj_profiles).
@@ -68,7 +69,7 @@ serve(async (req) => {
 
         const adminAuth = createClient(
             Deno.env.get("SUPABASE_URL")!,
-            Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+            getServiceRoleKey()!
         );
         const { data: { user }, error: authError } = await adminAuth.auth.getUser(jwt);
         console.log("[DEBUG] getUser result:", user ? "USER_OK uid=" + user.id.slice(0, 8) : "NULL", "error:", authError?.message ?? "none");

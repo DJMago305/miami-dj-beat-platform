@@ -60,3 +60,22 @@ SUPABASE_SERVICE_ROLE_KEY=<tu clave real> node web/scripts/fix-storage-cache-con
 ```
 
 Verificación posterior sugerida (correr el mismo `curl` de arriba contra un par de videos, debería mostrar `cache-control: max-age=604800` en vez de `no-cache`).
+
+## Caso 1 — corrida real ejecutada (2026-09-28), verificación con metodología corregida
+
+**El PO corrió el script él mismo** (`SUPABASE_SERVICE_ROLE_KEY=... node web/scripts/fix-storage-cache-control.mjs`, sin `--dry-run`) — **93/93 corregidos, 0 fallidos**. Confirmado en `storage.objects.metadata->>'cacheControl'` que quedó en `max-age=604800` para los archivos verificados.
+
+**Primera verificación con `curl -I` normal dio un resultado confuso**: seguía mostrando `cache-control: no-cache` y `cf-cache-status: REVALIDATED` incluso después de re-subir y de purgar el CDN entero (`DELETE /storage/v1/cdn/assets`, respuesta `{"message":"success"}`). Esto llevó a pensar, por un momento, que el fix no había funcionado.
+
+**Error de metodología encontrado y corregido**: `Cache-Control: no-cache` **no significa "no cachear"** — significa "cachéalo, pero revalida con el servidor antes de reusarlo" (distinto de `no-store`, que sí prohíbe cachear). `curl -I`/`curl -s` sin más nunca manda esa revalidación (no tiene caché local que revalidar), así que SIEMPRE va a pedir el archivo completo de cero — eso no prueba que el caché no funcione, prueba que estábamos probando mal. Este mismo error de metodología es, con alta probabilidad, la razón por la que la investigación del 22 y 28 de septiembre concluyó "cero ahorro" con exactamente esta misma prueba.
+
+**Prueba correcta (petición condicional con `If-None-Match: <etag>`, simula un navegador real revisitando la página)**:
+```
+status=304 Not Modified, bytes_descargados=0
+cache-control: public, max-age=604800
+```
+Cero bytes transferidos, header correcto. Esto es un ahorro real y verificado, no solo teórico.
+
+**Pendiente, no confirmable por curl**: el ahorro real en la métrica de facturación de Supabase ("Cached Egress", `Settings → Usage`) — eso solo se puede confirmar viendo la tendencia de los próximos 1-2 días, no con pruebas puntuales. Queda anotado para revisar el 2026-09-30.
+
+**⚠️ Incidente de seguridad menor, ya resuelto por el PO**: durante esta corrida, la clave `service_role` (formato JWT legacy) quedó expuesta en texto plano en una captura de pantalla compartida en el chat de Claude Code (se pegó por accidente en un prompt vacío de la terminal, que la mostró completa al fallar como "command not found"). Se le indicó al PO regenerar esa clave de inmediato en el dashboard de Supabase — ningún código de producción la usa (solo scripts de administración como este), así que la rotación no debería romper nada. Confirmar con el PO que ya la rotó antes de cerrar este ticket del todo.
