@@ -56,5 +56,22 @@ Verificado el resultado final: `dj_profiles`=0, `client_profiles`=1, rol=`client
 
 ## Cómo aplicar
 1. DJ Ary y JULITO DJ PMM: aparecerán en `find-dj.html` en cuanto se les cargue una biografía — no requiere ninguna otra migración ni aprobación adicional, la compuerta ya está lista.
-2. El hallazgo del rol genérico (sección 1) queda documentado, sin construir, hasta que el PO decida una dirección.
+2. ~~El hallazgo del rol genérico (sección 1) queda documentado, sin construir, hasta que el PO decida una dirección.~~ **RESUELTO 2026-09-28** — ver sección 5.
 3. Jean Paul y AHI NA MA no van en `find-dj.html` por diseño — no son DJs; si el PO quiere un listado separado para bartenders/staff u orquestas, es un ticket aparte, no pedido hoy.
+
+## 5. Rol genérico `dj` — RESUELTO (2026-09-28), dirección elegida: roles específicos
+El PO eligió la dirección (a) de la sección 1: roles más específicos en `identity.user_roles`, reutilizando lo que ya existía en el enum cuando alcanzaba.
+
+**Auditoría de impacto ANTES de aplicar** (con datos reales, no supuesto): nada en el frontend ni en las Edge Functions lee `identity.user_roles` directamente hoy — la navegación/permisos reales del sitio dependen de `dj_profiles.role` (columna distinta, sin relación automática) y de `auth.jwt() → app_metadata.role` (para las 3 políticas RLS de escritura en `dj_profiles`/`artist_rates`, que ya valen `'artist'` para las 2 cuentas tocadas, no `'dj'`). Conclusión: el cambio es seguro, cero regresión de comportamiento hoy — corrige la fuente de verdad para lógica futura, que es exactamente el problema que documentó la sección 1.
+
+**Cambios aplicados a PRODUCCIÓN:**
+- `identity.app_role` (enum): agregado `'bartender'` — ningún valor existente (`dj`/`performer`/`producer`) representaba con precisión a un bartender; migraciones `20260928160000_identity_role_bartender_enum.sql` + `20260928161000_identity_roles_talent_type_backfill.sql`.
+- `identity.role_allowed()`: `account_type='artist'` ahora acepta `bartender` además de `dj`/`performer`/`producer`.
+- **Jean Paul (Vergara)**: `identity.user_roles.role` → `bartender` (coincide con `categoria='bartender'`, ya escrita en la sección 3).
+- **AHI NA MA (Yury Cabrera)**: `identity.user_roles.role` → `performer` (coincide con `categoria='orquesta'`; el enum ya tenía este valor sin usar, 0 cuentas).
+- El resto de cuentas con `role='dj'` (DJ Ary, DJMago305, DJSolitario, DJYuyo, JULITO DJ PMM, Jaziel) **son DJs reales o perfiles incompletos sin evidencia para reclasificar** — quedan en `dj` sin tocar, a propósito.
+- `dj_profiles.role` (columna activa, distinta) **no se tocó** — fuera de alcance de este ticket, decisión aparte si algún día hace falta.
+
+Verificado de forma independiente tras aplicar: los 9 perfiles reales muestran exactamente el rol esperado en `identity.user_roles`, sin cambios fuera de las 2 filas exactas (guardas dobles `user_id` + `stage_name` en las migraciones).
+
+**Pendiente real, sin construir**: Jaziel sigue sin `artist_specialty`/`categoria` — perfil incompleto, sin evidencia para clasificarlo, queda en `dj` por defecto. Si algún día se decide activar la dirección (c) del ticket (verificación al registrarse), sería la forma de cerrar este hueco de raíz para cuentas futuras.
