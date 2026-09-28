@@ -160,7 +160,39 @@
     width:34px;height:34px;border-radius:var(--radius-sm);border:1px solid transparent;background:transparent;
     color:var(--text-dim);display:flex;align-items:center;justify-content:center;cursor:pointer;
     transition:background-color .12s ease, color .12s ease, border-color .12s ease;position:relative;
-  }#mi-cockpit .icon-btn:hover{background:var(--surface-2);color:var(--text);border-color:var(--border-strong);}#mi-cockpit .icon-btn.active{color:var(--gold);border-color:var(--gold-dim);background:var(--gold-wash);}#mi-cockpit .icon-btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}#mi-cockpit .shell{flex:1;display:flex;flex-direction:column;min-height:0;min-width:0;}#mi-cockpit .rail{
+  }#mi-cockpit .icon-btn:hover{background:var(--surface-2);color:var(--text);border-color:var(--border-strong);}#mi-cockpit .icon-btn.active{color:var(--gold);border-color:var(--gold-dim);background:var(--gold-wash);}#mi-cockpit .icon-btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}#mi-cockpit .icon-btn.round{border-radius:50%;}
+  /* Consolidación como motor independiente: nav del rail migrado al topbar, solo íconos. */
+  #mi-cockpit .topbar-nav{display:flex;align-items:center;gap:3px;flex:1;min-width:0;overflow-x:auto;}
+  #mi-cockpit .topbar-nav .nav-item{width:auto;padding:8px;border-radius:var(--radius-sm);}
+  #mi-cockpit .topbar-nav .nav-label{display:none;}
+  #mi-cockpit .proto-badge-float{position:fixed;left:14px;bottom:14px;z-index:15;max-width:220px;background:var(--bg-elevated);}
+  /* ---------- Editor (Mix Lab) ---------- */
+  #mi-cockpit .ed-decks{display:flex;align-items:flex-start;gap:14px;}
+  #mi-cockpit .ed-deck{flex:1;min-width:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px;display:flex;flex-direction:column;gap:8px;}
+  #mi-cockpit .ed-drop{border:1px dashed var(--border-strong);border-radius:var(--radius-sm);padding:10px;text-align:center;cursor:pointer;color:var(--text-faint);font-size:11.5px;}
+  #mi-cockpit .ed-drop:hover{border-color:var(--gold-dim);color:var(--text-dim);}
+  #mi-cockpit .ed-drop.dragging{border-color:var(--gold);background:var(--gold-wash);}
+  #mi-cockpit .ed-drop.loaded .ed-drop-hint{display:none;}
+  #mi-cockpit .ed-drop.loaded{padding:2px;border-style:solid;border-color:var(--border);}
+  #mi-cockpit .ed-head{display:flex;align-items:center;gap:8px;}
+  #mi-cockpit .ed-titles{flex:1;min-width:0;}
+  #mi-cockpit .ed-title{font-weight:800;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  #mi-cockpit .ed-artist{font-size:11px;color:var(--text-dim);}
+  #mi-cockpit .ed-mini-input{width:56px;background:var(--surface-2);border:1px solid var(--border-strong);border-radius:6px;color:var(--text);font-family:var(--font-mono);font-size:11.5px;padding:5px 6px;text-align:center;flex:none;}
+  #mi-cockpit select.ed-mini-input{width:auto;}
+  #mi-cockpit .ed-wave{width:100%;height:90px;display:block;border-radius:6px;cursor:pointer;background:#0c0c10;}
+  #mi-cockpit .ed-transport{display:flex;align-items:center;gap:10px;}
+  #mi-cockpit .ed-time{font-family:var(--font-mono);font-size:11px;color:var(--text-dim);flex:1;}
+  #mi-cockpit .ed-cues{display:grid;grid-template-columns:repeat(8,1fr);gap:5px;}
+  #mi-cockpit .ed-cue-pad{height:30px;border-radius:6px;border:1px solid var(--border-strong);background:var(--surface-2);color:var(--text-dim);font-weight:700;font-size:12px;cursor:pointer;}
+  #mi-cockpit .ed-cue-pad.set{color:#151107;}
+  #mi-cockpit .ed-loop{display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+  #mi-cockpit .ed-loop .btn.active{background:var(--gold);color:#151107;}
+  #mi-cockpit .ed-compat{width:150px;flex:none;display:flex;flex-direction:column;gap:10px;align-self:center;background:var(--surface-2);border:1px solid var(--border-strong);border-radius:var(--radius-sm);padding:14px 10px;text-align:center;}
+  #mi-cockpit .ed-compat-row{display:flex;flex-direction:column;gap:4px;}
+  #mi-cockpit .ed-compat-row .k{font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);}
+  #mi-cockpit .ed-compat-row span:last-child{font-family:var(--font-mono);font-weight:700;font-size:12.5px;}
+  #mi-cockpit .shell{flex:1;display:flex;flex-direction:column;min-height:0;min-width:0;}#mi-cockpit .rail{
     width:var(--rail-w);flex:none;border-right:1px solid var(--border);background:var(--bg-elevated);
     display:flex;flex-direction:column;padding:14px 10px;gap:2px;transition:width .16s ease;overflow-y:auto;
   }#mi-cockpit .rail.collapsed{width:var(--rail-w-collapsed);}#mi-cockpit .rail-top{display:flex;align-items:center;justify-content:flex-start;padding:2px 10px 12px;position:sticky;top:0;z-index:2;background:var(--bg-elevated);}#mi-cockpit .rail-toggle{display:flex;align-items:center;justify-content:center;width:36px;height:34px;flex:none;background:rgba(255,255,255,.05);border:1px solid var(--border-strong);border-radius:8px;color:var(--gold);cursor:pointer;}#mi-cockpit .rail-toggle svg{width:17px;height:17px;}#mi-cockpit .rail-toggle:hover{background:var(--gold-wash);}#mi-cockpit .rail-group-label{
@@ -188,7 +220,32 @@
   }#mi-cockpit .exp-card.enabled{border-color:var(--gold-dim);background:linear-gradient(160deg,var(--surface-2),var(--surface) 60%);}#mi-cockpit .exp-card.enabled::before{
     content:"";position:absolute;inset:-40% -20% auto auto;width:200px;height:200px;
     background:radial-gradient(circle,var(--gold-wash),transparent 70%);pointer-events:none;
-  }#mi-cockpit .exp-card.soon{opacity:.55;}#mi-cockpit .exp-card h3{font-size:19px;letter-spacing:.01em;line-height:1.05;}#mi-cockpit .exp-card .exp-tag{margin-bottom:2px;}#mi-cockpit .exp-card p{color:var(--text-dim);font-size:12px;margin:0;flex:1;}#mi-cockpit .exp-card .exp-foot{display:flex;align-items:center;justify-content:space-between;margin-top:6px;}#mi-cockpit /* ---------- Event Mode status strip ---------- */
+  }#mi-cockpit .exp-card.soon{opacity:.55;}#mi-cockpit .exp-card h3{font-size:19px;letter-spacing:.01em;line-height:1.05;}#mi-cockpit .exp-card .exp-tag{margin-bottom:2px;}#mi-cockpit .exp-card p{color:var(--text-dim);font-size:12px;margin:0;flex:1;}#mi-cockpit .exp-card .exp-foot{display:flex;align-items:center;justify-content:space-between;margin-top:6px;}#mi-cockpit
+  /* ---------- Home: crate rail (estilo Serato, 2026-09-28) ---------- */
+  .home-shell{display:flex;align-items:stretch;gap:0;min-height:60vh;margin:-22px -26px;}
+  #mi-cockpit .crate-rail{width:280px;flex:none;position:relative;border-right:1px solid var(--border);padding:14px 6px;overflow-y:auto;background:var(--bg-elevated);}
+  #mi-cockpit .crate-rail-label{font-family:var(--font-body);font-weight:700;font-size:10px;letter-spacing:.12em;color:var(--text-faint);text-transform:uppercase;padding:4px 10px 10px;}
+  #mi-cockpit .crate-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:var(--radius-sm);cursor:pointer;color:var(--text);font-size:13px;font-weight:600;}
+  #mi-cockpit .crate-item:hover{background:var(--surface-2);}
+  #mi-cockpit .crate-item.disabled{color:var(--text-faint);cursor:default;opacity:.5;}
+  #mi-cockpit .crate-item.disabled:hover{background:none;}
+  #mi-cockpit .crate-item.child{padding-left:30px;font-size:12.5px;font-weight:500;}
+  #mi-cockpit .crate-icon{color:var(--gold);flex:none;width:15px;height:15px;}
+  #mi-cockpit .crate-item.disabled .crate-icon{color:var(--text-faint);}
+  #mi-cockpit .crate-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
+  #mi-cockpit .crate-caret{flex:none;width:14px;height:14px;color:var(--text-faint);transition:transform .12s ease;}
+  #mi-cockpit .crate-parent.open .crate-caret{transform:rotate(90deg);}
+  #mi-cockpit .crate-children{display:none;}
+  #mi-cockpit .crate-parent.open + .crate-children{display:block;}
+  #mi-cockpit .crate-resize-handle{position:absolute;top:0;right:-4px;width:9px;height:100%;cursor:col-resize;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;z-index:6;}
+  #mi-cockpit .crate-resize-handle .grip-dot{width:3px;height:3px;border-radius:50%;background:var(--text-faint);}
+  #mi-cockpit .crate-resize-handle:hover .grip-dot, #mi-cockpit .crate-resize-handle.dragging .grip-dot{background:var(--gold);}
+  #mi-cockpit .crate-empty{flex:1;display:flex;align-items:center;justify-content:center;color:var(--text-faint);font-size:12.5px;padding:40px;text-align:center;}
+  #mi-cockpit .crate-content{flex:1;min-width:0;padding:16px 20px;overflow-y:auto;}
+  #mi-cockpit .crate-content-head{color:var(--text-dim);font-size:11.5px;margin-bottom:10px;}
+  #mi-cockpit .crate-content-loading{color:var(--text-faint);font-size:12.5px;padding:40px;text-align:center;}
+  #mi-cockpit .crate-bridge-error{color:var(--critical, #d16060);font-size:10.5px;padding:6px 10px 10px;line-height:1.4;}
+  #mi-cockpit /* ---------- Event Mode status strip ---------- */
   .status-strip{
     display:flex;align-items:center;gap:0;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);
     border-radius:var(--radius);margin-bottom:16px;overflow:hidden;
@@ -276,9 +333,17 @@
       .mi-gate-pill.gold{background:linear-gradient(135deg,var(--gold),#e8b84b); color:#000;}
       .mi-gate-pill.ghost{border:1px solid rgba(255,255,255,0.2); color:#fff; font-weight:600;}
       #mi-cockpit{min-height:70vh;}
-      /* Pantalla completa del cockpit (botón btnFocus): oculta el menú real del
-         sitio y quita el hueco reservado del body para que el cockpit ocupe
-         toda la altura. Scoped a body.mdj-mi-fullscreen, solo mientras está activo. */
+      /* Consolidación como motor independiente (2026-09-28, a pedido del PO):
+         esta herramienta ya no muestra el nav compartido del sitio (#mainHeader)
+         -- siempre oculto en esta página, no solo en fullscreen. El toggle de
+         sol/luna que vivía al final de ese nav se reubica dentro del propio
+         topbar del cockpit (ver script de reubicación más abajo). */
+      #mainHeader.header.mdj-header-unified{display:none !important;}
+      body{padding-top:0 !important;}
+      #mdj-flotante-visitante{display:none !important;}
+      /* Pantalla completa del cockpit (botón btnFocus): además de lo de arriba
+         (que ya está oculto siempre), btnFocus sigue pidiendo Fullscreen API
+         real del navegador. Scoped a body.mdj-mi-fullscreen, solo mientras está activo. */
       body.mdj-mi-fullscreen #mainHeader{display:none !important;}
       body.mdj-mi-fullscreen{padding-top:0 !important;}
       body.mdj-mi-fullscreen #mdj-flotante-visitante{display:none !important;}
@@ -443,35 +508,10 @@
       </div>
     </div>
       <div id="mi-cockpit" style="display:none;">
-    <nav class="rail" id="rail">
-      <div class="rail-top">
-        <button type="button" class="rail-toggle" id="railToggle" title="Contraer / expandir menú" aria-label="Contraer o expandir el menú lateral">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
-        </button>
-      </div>
-      <div class="rail-group-label">Cockpit</div>
-      <button class="nav-item" data-view="home"><span class="icon" data-icon="home"></span><span class="nav-label">Home</span></button>
-      <button class="nav-item" data-view="experiences"><span class="icon" data-icon="layers"></span><span class="nav-label">Experiences</span></button>
-      <button class="nav-item" data-view="event"><span class="icon" data-icon="disc"></span><span class="nav-label">Event Mode</span></button>
-      <div class="rail-group-label">Live Intelligence</div>
-      <button class="nav-item" data-view="live"><span class="icon" data-icon="mic"></span><span class="nav-label">Live Listening</span></button>
-      <button class="nav-item" data-view="discover"><span class="icon" data-icon="search"></span><span class="nav-label">Discover</span></button>
-      <div class="rail-group-label">Programming</div>
-      <button class="nav-item" data-view="library"><span class="icon" data-icon="library"></span><span class="nav-label">Library</span></button>
-      <button class="nav-item" data-view="genmap"><span class="icon" data-icon="map"></span><span class="nav-label">Generation Map</span></button>
-      <button class="nav-item" data-view="blocks"><span class="icon" data-icon="blocks"></span><span class="nav-label">Block Builder</span></button>
-      <button class="nav-item" data-view="bridge"><span class="icon" data-icon="bridge"></span><span class="nav-label">Bridge Engine</span></button>
-      <div class="rail-group-label">Record</div>
-      <button class="nav-item" data-view="history"><span class="icon" data-icon="history"></span><span class="nav-label">History</span></button>
-      <button class="nav-item" data-view="learning"><span class="icon" data-icon="book"></span><span class="nav-label">Learning</span></button>
-      <button class="nav-item" data-view="config"><span class="icon" data-icon="gear"></span><span class="nav-label">Config</span></button>
-      <div class="rail-foot">
-        <div class="proto-badge">
-          <b data-i18n="mi-proto-a">PROTOTYPE · NON-PRODUCTION</b>
-          <span data-i18n="mi-proto-b">All tracks &amp; readings are DEMO data</span>
-        </div>
-      </div>
-    </nav>
+    <div class="proto-badge proto-badge-float">
+      <b data-i18n="mi-proto-a">PROTOTYPE · NON-PRODUCTION</b>
+      <span data-i18n="mi-proto-b">All tracks &amp; readings are DEMO data</span>
+    </div>
 
     <div class="shell">
       <header class="topbar">
@@ -481,15 +521,28 @@
             <span class="b-sub">DJ Programming &amp; Floor Intelligence</span>
           </div>
         </div>
-        <div class="topbar-center">
-          <div class="experience-pill"><span class="dot"></span><span id="expPillLabel">ONE HIT WONDER EXPERIENCE</span></div>
-          <span class="badge" id="modeBadge" style="margin-left:8px;align-self:center;">EXPERIENCED</span>
+        <div class="topbar-center topbar-nav" id="topbarNav">
+          <button class="nav-item" data-view="home" title="Home"><span class="icon" data-icon="home"></span><span class="nav-label">Home</span></button>
+          <button class="nav-item" data-view="experiences" title="Experiences"><span class="icon" data-icon="layers"></span><span class="nav-label">Experiences</span></button>
+          <button class="nav-item" data-view="event" title="Event Mode"><span class="icon" data-icon="disc"></span><span class="nav-label">Event Mode</span></button>
+          <button class="nav-item" data-view="live" title="Live Listening"><span class="icon" data-icon="mic"></span><span class="nav-label">Live Listening</span></button>
+          <button class="nav-item" data-view="discover" title="Discover"><span class="icon" data-icon="search"></span><span class="nav-label">Discover</span></button>
+          <button class="nav-item" data-view="library" title="Library"><span class="icon" data-icon="library"></span><span class="nav-label">Library</span></button>
+          <button class="nav-item" data-view="genmap" title="Generation Map"><span class="icon" data-icon="map"></span><span class="nav-label">Generation Map</span></button>
+          <button class="nav-item" data-view="blocks" title="Block Builder"><span class="icon" data-icon="blocks"></span><span class="nav-label">Block Builder</span></button>
+          <button class="nav-item" data-view="bridge" title="Bridge Engine"><span class="icon" data-icon="bridge"></span><span class="nav-label">Bridge Engine</span></button>
+          <button class="nav-item" data-view="history" title="History"><span class="icon" data-icon="history"></span><span class="nav-label">History</span></button>
+          <button class="nav-item" data-view="learning" title="Learning"><span class="icon" data-icon="book"></span><span class="nav-label">Learning</span></button>
+          <button class="nav-item" data-view="editor" title="Editor"><span class="icon" data-icon="waveform"></span><span class="nav-label">Editor</span></button>
+          <button class="nav-item" data-view="config" title="Config"><span class="icon" data-icon="gear"></span><span class="nav-label">Config</span></button>
         </div>
-        <div class="topbar-right">
+        <div class="topbar-right" id="topbarRight">
           <button class="icon-btn" id="btnDjMode" title="DJ Mode — switch Experienced / Guided reasoning" aria-label="Toggle Experienced or Guided DJ mode"></button>
           <button class="icon-btn" id="btnEventStatus" title="Event status" aria-label="Event status"></button>
           <button class="icon-btn" id="btnSettings" title="Settings" aria-label="Open settings"></button>
           <button class="icon-btn" id="btnFocus" title="Full screen booth focus" aria-label="Toggle full screen focus"></button>
+          <button class="icon-btn round" id="btnBack" title="Regresar" aria-label="Regresar"></button>
+          <button class="icon-btn round" id="btnCloseTool" title="Cerrar" aria-label="Cerrar"></button>
         </div>
       </header>
 
@@ -506,6 +559,7 @@
       <section class="view" id="view-history"></section>
       <section class="view" id="view-learning"></section>
       <section class="view" id="view-experience"></section>
+      <section class="view" id="view-editor"></section>
       <section class="view" id="view-config"></section>
     </main>
   </div>
@@ -605,7 +659,14 @@ var ICONS = {
   trendDown:'<path d="M4 6.5 9 11.5 12 8.5 16 13.5"/><path d="M12.5 13.5h3.5v-3.5"/>',
   trendNew:'<path d="M10 4v12M4 10h12"/>',
   trendFlat:'<path d="M4 10h12"/>',
-  copy:'<rect x="7.5" y="7.5" width="9.5" height="9.5" rx="1.5"/><path d="M12.5 7.5V5a1.5 1.5 0 0 0-1.5-1.5H4A1.5 1.5 0 0 0 2.5 5v8A1.5 1.5 0 0 0 4 14.5h2.5"/>'
+  copy:'<rect x="7.5" y="7.5" width="9.5" height="9.5" rx="1.5"/><path d="M12.5 7.5V5a1.5 1.5 0 0 0-1.5-1.5H4A1.5 1.5 0 0 0 2.5 5v8A1.5 1.5 0 0 0 4 14.5h2.5"/>',
+  back:'<polyline points="7.5 8.3 3.3 12.5 7.5 16.7"/><path d="M16.7 3.3v5.8a3.3 3.3 0 0 1-3.3 3.3H3.3"/>',
+  folder:'<path d="M2.5 5.3c0-.7.6-1.3 1.3-1.3h3.4l1.3 1.6h5.7c.7 0 1.3.6 1.3 1.3v6.8c0 .7-.6 1.3-1.3 1.3H3.8c-.7 0-1.3-.6-1.3-1.3Z" fill="currentColor" stroke="none"/>',
+  chevRight:'<path d="M7.5 5l5 5-5 5"/>',
+  waveform:'<path d="M2 10h1.5M5 7v6M8 4v12M11 6v8M14 3v14M17 8v4M18.5 10H20"/>',
+  sparkle:'<path d="M10 2.5 11.6 8 17 10l-5.4 2L10 17.5 8.4 12 3 10l5.4-2Z"/>',
+  speaker:'<rect x="3" y="4" width="7" height="12" rx="1.2"/><path d="M13 6a5 5 0 0 1 0 8M15.3 3.8a8.5 8.5 0 0 1 0 12.4"/>',
+  film:'<rect x="2.5" y="4" width="15" height="12" rx="1.5"/><path d="M7 4v12M13 4v12M2.5 8h4.5M2.5 12h4.5M13 8h4.5M13 12h4.5"/>'
 };
 function iconSvg(name){
   return '<svg class="icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+(ICONS[name]||'')+'</svg>';
@@ -615,6 +676,8 @@ document.getElementById('btnDjMode').innerHTML = iconSvg('book');
 document.getElementById('btnEventStatus').innerHTML = iconSvg('status');
 document.getElementById('btnSettings').innerHTML = iconSvg('gear');
 document.getElementById('btnFocus').innerHTML = iconSvg('focus');
+document.getElementById('btnBack').innerHTML = iconSvg('back');
+document.getElementById('btnCloseTool').innerHTML = iconSvg('close');
 
 /* ============================= DATA ============================= */
 var GENERATIONS = [
@@ -983,20 +1046,306 @@ function renderExperienceGrid(){
   }).join('');
 }
 
+/* Sub-cajones reales por Experience — solo Baila Con Micho tiene dos coreografías
+   separadas confirmadas por el PO; el resto son cajones simples (hoja). */
+var CRATE_CHILDREN = {
+  reparto: [
+    {label:'Reparto / Reparto Pop', anchor:'repartoMount'},
+    {label:'90\'s Hit\'s', anchor:'ninetiesMount'}
+  ]
+};
+function goToCrate(id, anchor){
+  state.experience = id;
+  setView((id==='reparto'||id==='halloween-party') ? 'experience' : 'event');
+  if (anchor){
+    setTimeout(function(){
+      var t = document.getElementById(anchor);
+      if (t) t.scrollIntoView({behavior:'smooth', block:'start'});
+    }, 60);
+  }
+}
+function renderCrateRail(){
+  return EXPERIENCES.map(function(e){
+    var enabled = e.status==='enabled';
+    var kids = CRATE_CHILDREN[e.id];
+    var parentRow =
+      '<div class="crate-item'+(kids?' crate-parent':'')+(enabled?'':' disabled')+'" data-crate="'+e.id+'">'+
+        (kids?'<span class="crate-caret">'+iconSvg('chevRight')+'</span>':'<span class="crate-caret"></span>')+
+        '<span class="crate-icon">'+iconSvg('folder')+'</span>'+
+        '<span class="crate-name">'+esc(e.name)+'</span>'+
+      '</div>';
+    var childRows = kids ? (
+      '<div class="crate-children">'+
+        kids.map(function(k){
+          return '<div class="crate-item child" data-crate="'+e.id+'" data-anchor="'+k.anchor+'">'+
+            '<span class="crate-icon">'+iconSvg('folder')+'</span>'+
+            '<span class="crate-name">'+esc(k.label)+'</span>'+
+          '</div>';
+        }).join('')+
+      '</div>'
+    ) : '';
+    return parentRow + childRows;
+  }).join('');
+}
+/* Fuentes reales, estilo Serato (Todo/Todo el audio/Todos los videos/Medios de
+   comunicación/Stems/Apple Music), investigado antes de agregarlas — no inventadas.
+   Solo "Todo"/"Todo el audio" tienen contenido real hoy (100% de nuestro catálogo
+   es audio); las demás quedan visibles pero apagadas hasta que exista ese contenido
+   real (sin video, sin stems, streaming/Apple Music pendiente de conectar — ver
+   memoria del proyecto). */
+var SOURCES = [
+  {id:'all', label:'Todo', icon:'sparkle', enabled:true},
+  {id:'all-audio', label:'Todo el audio', icon:'speaker', enabled:true},
+  {id:'all-video', label:'Todos los videos', icon:'film', enabled:false, hint:'Sin contenido de video todavía'},
+  {id:'streaming', label:'Medios de comunicación', icon:'status', enabled:false, hint:'Streaming no conectado todavía'},
+  {id:'stems', label:'Stems', icon:'layers', enabled:false, hint:'No disponible todavía'},
+  {id:'apple-music', label:'Apple Music', icon:'music', enabled:false, hint:'Pendiente de conectar tu cuenta (en investigación)'}
+];
+function renderSourceRail(){
+  return SOURCES.map(function(s){
+    return '<div class="crate-item source'+(s.enabled?'':' disabled')+'" data-source="'+s.id+'"'+(s.hint?' title="'+esc(s.hint)+'"':'')+'>'+
+      '<span class="crate-caret"></span>'+
+      '<span class="crate-icon">'+iconSvg(s.icon)+'</span>'+
+      '<span class="crate-name">'+esc(s.label)+'</span>'+
+    '</div>';
+  }).join('');
+}
+function homeShowCombinedCatalog(){
+  var panel = document.querySelector('.crate-empty');
+  if (!panel) return;
+  panel.className = 'crate-content';
+  panel.innerHTML = '<div class="crate-content-loading">Cargando catálogo completo…</div>';
+  loadRepartoCaseStudy();
+  loadNinetiesCaseStudy();
+  loadHalloweenData();
+  var tries = 0;
+  var poll = setInterval(function(){
+    tries++;
+    var ready = (state.repartoData || state.repartoLoading===false) &&
+                (state.ninetiesData || state.ninetiesLoading===false) &&
+                (state.halloweenData || state.halloweenLoading===false);
+    if (ready || tries>100){
+      clearInterval(poll);
+      if (document.querySelector('.crate-content') !== panel) return; // el DJ ya navegó a otra vista
+      var rows = [];
+      if (state.repartoData) state.repartoData.tracks.forEach(function(t){
+        rows.push({title:t.title, artist:t.artist, bpm:t.bpm, key:t.key, genre:t.genre, source:'Baila Con Micho · Reparto'});
+      });
+      if (state.ninetiesData) state.ninetiesData.tracks.forEach(function(t){
+        rows.push({title:t.title, artist:t.artist, bpm:t.bpm, key:null, genre:null, source:'Baila Con Micho · 90\'s Hit\'s'});
+      });
+      if (state.halloweenData){
+        state.halloweenData.blocks.forEach(function(blk){
+          blk.sections.forEach(function(sec){
+            sec.tracks.forEach(function(t){
+              rows.push({title:t.track, artist:t.artist, bpm:t.bpm, key:null, genre:null, source:'Halloween DJ Party'});
+            });
+          });
+        });
+        if (state.halloweenData.reserve && state.halloweenData.reserve.tracks){
+          state.halloweenData.reserve.tracks.forEach(function(t){
+            rows.push({title:t.track, artist:t.artist, bpm:null, key:null, genre:null, source:'Halloween DJ Party · Reserve'});
+          });
+        }
+      }
+      panel.innerHTML =
+        '<div class="crate-content-head">'+rows.length+' tracks en todo el catálogo</div>'+
+        '<div class="panel scrollx"><table class="rp-table"><thead><tr>'+
+          ['#','Track','Artist','BPM','Key','Genre','Cajón'].map(function(h){ return '<th>'+h+'</th>'; }).join('')+
+        '</tr></thead><tbody>'+
+          rows.map(function(t,i){
+            return '<tr><td class="num">'+(i+1)+'</td><td class="track-name">'+esc(t.title||'')+'</td><td>'+esc(t.artist||'')+'</td>'+
+              '<td>'+(t.bpm==null?'—':t.bpm)+'</td><td>'+esc(t.key||'—')+'</td><td>'+esc(t.genre||'—')+'</td>'+
+              '<td style="color:var(--text-dim);">'+esc(t.source)+'</td></tr>';
+          }).join('')+
+        '</tbody></table></div>';
+    }
+  }, 100);
+}
+/* ---------- Puente local con Serato real (2026-09-28) ----------
+   serato-library-engine (repo aparte, ya probado, solo lectura) corre un
+   servidor HTTP local (127.0.0.1, nunca en red) que expone la librería REAL
+   de Serato del DJ. Esta página nunca toca el disco directamente — solo
+   pregunta a ese puente, y si no está corriendo lo dice con claridad, nunca
+   finge una conexión que no existe. */
+var SERATO_BRIDGE_URL = 'http://127.0.0.1:8791/api/serato/library';
+function seratoBuildTree(libraries){
+  var nodes = {}; // chainId -> {id, name, parentId, children:[], crateId(si es real)}
+  function ensure(chain){
+    if (nodes[chain]) return nodes[chain];
+    var parts = chain.split('%%');
+    var name = parts[parts.length-1];
+    var parentChain = parts.length>1 ? parts.slice(0,-1).join('%%') : null;
+    var node = {id:chain, name:name, parentId:parentChain, children:[], crateId:null};
+    nodes[chain] = node;
+    if (parentChain){
+      var parent = ensure(parentChain);
+      parent.children.push(node);
+    }
+    return node;
+  }
+  libraries.forEach(function(lib){
+    lib.crates.forEach(function(c){
+      var node = ensure(c.id);
+      node.crateId = c.id;
+    });
+  });
+  var roots = [];
+  Object.keys(nodes).forEach(function(k){ if (!nodes[k].parentId) roots.push(nodes[k]); });
+  return roots;
+}
+function seratoRenderTreeNode(node, depth){
+  var hasKids = node.children && node.children.length>0;
+  var row = '<div class="crate-item'+(hasKids?' crate-parent':'')+(depth>0?' child':'')+'" data-serato-crate="'+esc(node.crateId||'')+'" data-serato-name="'+esc(node.name)+'" style="padding-left:'+(10+depth*20)+'px;">'+
+    (hasKids?'<span class="crate-caret">'+iconSvg('chevRight')+'</span>':'<span class="crate-caret"></span>')+
+    '<span class="crate-icon">'+iconSvg('folder')+'</span>'+
+    '<span class="crate-name">'+esc(node.name)+'</span>'+
+  '</div>';
+  var kidsHtml = hasKids ? '<div class="crate-children">'+node.children.map(function(c){ return seratoRenderTreeNode(c, depth+1); }).join('')+'</div>' : '';
+  return row + kidsHtml;
+}
+function renderSeratoBridgeSection(){
+  if (state.seratoConnecting){
+    return '<div class="crate-item disabled">Conectando…</div>';
+  }
+  if (state.seratoLibrary){
+    var roots = seratoBuildTree(state.seratoLibrary.libraries);
+    var count = state.seratoLibrary.tracks.length;
+    return '<div class="crate-item" id="seratoRefreshRow" title="'+count+' tracks reales — clic para volver a leer">↻ '+count+' tracks reales</div>'+
+      roots.map(function(r){ return seratoRenderTreeNode(r, 0); }).join('');
+  }
+  return '<div class="crate-item" id="seratoConnectRow">🔌 Conectar puente local</div>'+
+    (state.seratoBridgeError ? '<div class="crate-bridge-error">'+esc(state.seratoBridgeError)+'</div>' : '');
+}
+function seratoConnectBridge(){
+  state.seratoConnecting = true;
+  state.seratoBridgeError = null;
+  renderHome();
+  var ctrl = new AbortController();
+  var timeout = setTimeout(function(){ ctrl.abort(); }, 3000);
+  fetch(SERATO_BRIDGE_URL, {signal: ctrl.signal}).then(function(r){
+    clearTimeout(timeout);
+    if (!r.ok) throw new Error('HTTP '+r.status);
+    return r.json();
+  }).then(function(data){
+    state.seratoLibrary = data;
+    state.seratoConnecting = false;
+    renderHome();
+  }).catch(function(err){
+    clearTimeout(timeout);
+    state.seratoConnecting = false;
+    state.seratoBridgeError = 'Puente local no detectado en 127.0.0.1:8791 — corre "npm run bridge" en serato-library-engine y vuelve a intentar. ('+(err && err.message)+')';
+    renderHome();
+  });
+}
+function seratoShowCrateTracks(crateId, name){
+  var panel = document.querySelector('.crate-empty, .crate-content');
+  if (!panel || !state.seratoLibrary) return;
+  panel.className = 'crate-content';
+  var lib = state.seratoLibrary.libraries[0];
+  var tracksByPath = {};
+  state.seratoLibrary.tracks.forEach(function(t){ tracksByPath[t.path] = t; });
+  var rows = (lib.crateTracks||[]).filter(function(ct){ return ct.crateId===crateId; })
+    .map(function(ct){ return tracksByPath[ct.trackPath]; }).filter(Boolean);
+  panel.innerHTML =
+    '<div class="crate-content-head">'+esc(name)+' — '+rows.length+' tracks reales (leídos ahora mismo de tu Serato)</div>'+
+    '<div class="panel scrollx"><table class="rp-table"><thead><tr>'+
+      ['#','Track','Artist','BPM','Key','Genre'].map(function(h){ return '<th>'+h+'</th>'; }).join('')+
+    '</tr></thead><tbody>'+
+      rows.map(function(t,i){
+        return '<tr><td class="num">'+(i+1)+'</td><td class="track-name">'+esc(t.title||'')+'</td><td>'+esc(t.artist||'')+'</td>'+
+          '<td>'+(t.bpm==null?'—':t.bpm)+'</td><td>'+esc(t.key||'—')+'</td><td>'+esc(t.genre||'—')+'</td></tr>';
+      }).join('')+
+    '</tbody></table></div>';
+}
 function renderHome(){
   var el = document.getElementById('view-home');
   el.innerHTML =
-    '<div class="view-head" style="justify-content:center;text-align:center;display:block;margin-top:8px;">'+
-      '<span class="eyebrow">Choose Your Music Experience</span>'+
-    '</div>'+
-    '<div class="exp-grid">'+renderExperienceGrid()+'</div>';
-  el.querySelectorAll('[data-enter-experience]').forEach(function(btn){
-    btn.addEventListener('click', function(){
-      var id = btn.getAttribute('data-enter-experience');
-      state.experience = id;
-      setView((id==='reparto'||id==='halloween-party') ? 'experience' : 'event');
+    '<div class="home-shell">'+
+      '<nav class="crate-rail" id="crateRail">'+
+        '<div class="crate-rail-label">Sources</div>'+
+        renderSourceRail()+
+        '<div class="crate-rail-label">Serato (puente local)</div>'+
+        renderSeratoBridgeSection()+
+        '<div class="crate-rail-label">Crates</div>'+
+        renderCrateRail()+
+        '<div class="crate-resize-handle" id="crateResizeHandle"><span class="grip-dot"></span><span class="grip-dot"></span><span class="grip-dot"></span></div>'+
+      '</nav>'+
+      '<div class="crate-empty">Selecciona un cajón para cargar su música — igual que en Serato.</div>'+
+    '</div>';
+
+  el.querySelectorAll('.crate-item.source:not(.disabled)').forEach(function(row){
+    row.addEventListener('click', function(){
+      homeShowCombinedCatalog();
     });
   });
+
+  var connectRow = document.getElementById('seratoConnectRow');
+  if (connectRow) connectRow.addEventListener('click', seratoConnectBridge);
+  var refreshRow = document.getElementById('seratoRefreshRow');
+  if (refreshRow) refreshRow.addEventListener('click', function(){ state.seratoLibrary=null; seratoConnectBridge(); });
+  el.querySelectorAll('[data-serato-crate]').forEach(function(row){
+    var caret = row.querySelector('.crate-caret');
+    if (caret && row.classList.contains('crate-parent')) caret.addEventListener('click', function(e){
+      e.stopPropagation();
+      row.classList.toggle('open');
+    });
+    row.addEventListener('click', function(e){
+      if (row.classList.contains('crate-parent') && e.target===caret) return;
+      row.classList.toggle('open');
+      var cid = row.getAttribute('data-serato-crate');
+      if (cid) seratoShowCrateTracks(cid, row.getAttribute('data-serato-name'));
+    });
+  });
+
+  /* Cajón padre = carpeta real: clic en el nombre carga el contenido COMBINADO
+     de todas sus subcarpetas (misma vista, sin ancla) y la abre para mostrarlas;
+     clic solo en el caret expande/colapsa sin navegar. Clic en una subcarpeta
+     muestra solo el contenido de ESA subcarpeta (con ancla). */
+  el.querySelectorAll('.crate-parent[data-crate]').forEach(function(row){
+    var caret = row.querySelector('.crate-caret');
+    if (caret) caret.addEventListener('click', function(e){
+      e.stopPropagation();
+      row.classList.toggle('open');
+    });
+    row.addEventListener('click', function(){
+      row.classList.add('open');
+      goToCrate(row.getAttribute('data-crate'), null);
+    });
+  });
+  el.querySelectorAll('.crate-item.child[data-crate]:not(.disabled)').forEach(function(row){
+    row.addEventListener('click', function(){
+      goToCrate(row.getAttribute('data-crate'), row.getAttribute('data-anchor'));
+    });
+  });
+  el.querySelectorAll('.crate-item[data-crate]:not(.crate-parent):not(.child):not(.disabled)').forEach(function(row){
+    row.addEventListener('click', function(){
+      goToCrate(row.getAttribute('data-crate'), row.getAttribute('data-anchor'));
+    });
+  });
+
+  var handle = document.getElementById('crateResizeHandle');
+  var rail = document.getElementById('crateRail');
+  if (handle && rail){
+    handle.addEventListener('mousedown', function(e){
+      e.preventDefault();
+      var startX = e.clientX, startW = rail.getBoundingClientRect().width;
+      handle.classList.add('dragging');
+      document.body.style.userSelect = 'none';
+      function onMove(ev){
+        var w = Math.min(440, Math.max(180, startW + (ev.clientX - startX)));
+        rail.style.width = w + 'px';
+      }
+      function onUp(){
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+      }
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+  }
 }
 function renderExperiences(){
   var el = document.getElementById('view-experiences');
@@ -2548,6 +2897,329 @@ function loadHalloweenData(){
     });
 }
 
+/* ============================= VIEW: EDITOR (Mix Lab) =============================
+   Editor local de audio real — cues, beatgrid y prueba de mezcla entre 2 bandejas.
+   Nada se sube a ningún servidor: el archivo vive solo en la memoria del navegador
+   (URL.createObjectURL + decodeAudioData). Investigado el funcionamiento real de
+   Serato DJ (8 hot cues coloreados, beatgrid = primer beat + intervalo por BPM,
+   loop manual IN/OUT + 1/2X/2X que escala el loop activo, auto-loop por compases)
+   antes de construir esto — mismo modelo mental, editor aparte, no conectado a Serato. */
+var CUE_COLORS = ['#e34d4d','#e3934d','#4d7fe3','#e3d54d','#4de36a','#e34dc9','#4de3d5','#a34de3'];
+var EDITOR = { decks: [null, null], actx: null };
+function editorNewDeck(){
+  return { name:'', artist:'', audioEl:null, peaks:null, duration:0,
+    cues:[null,null,null,null,null,null,null,null],
+    loopIn:null, loopOut:null, loopOn:false, firstBeat:null };
+}
+function edFmtTime(sec){
+  if (sec==null || isNaN(sec)) return '00:00';
+  var m = Math.floor(sec/60), s = Math.floor(sec%60);
+  return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+}
+function camelotParse(k){
+  if (!k) return null;
+  var m = /^(\d{1,2})([AB])$/i.exec(String(k).trim());
+  if (!m) return null;
+  return {num:parseInt(m[1],10), letter:m[2].toUpperCase()};
+}
+function camelotCompatible(k1,k2){
+  var a=camelotParse(k1), b=camelotParse(k2);
+  if (!a||!b) return null;
+  if (a.num===b.num && a.letter===b.letter) return 'same';
+  if (a.letter===b.letter){
+    var diff = Math.abs(a.num-b.num);
+    if (diff===1 || diff===11) return 'compatible';
+  }
+  if (a.num===b.num && a.letter!==b.letter) return 'relative';
+  return 'clash';
+}
+function editorComputePeaks(audioBuffer, bucketCount){
+  var data = audioBuffer.getChannelData(0);
+  var perBucket = Math.max(1, Math.floor(data.length / bucketCount));
+  var peaks = new Float32Array(bucketCount);
+  for (var i=0;i<bucketCount;i++){
+    var start = i*perBucket, max = 0, end = Math.min(start+perBucket, data.length);
+    for (var j=start;j<end;j++){ var v = Math.abs(data[j]); if (v>max) max=v; }
+    peaks[i]=max;
+  }
+  return peaks;
+}
+function editorDeckHTML(i){
+  return (
+    '<div class="ed-deck">'+
+      '<div class="ed-drop" id="edDrop'+i+'">'+
+        '<input type="file" accept="audio/*" id="edFile'+i+'" style="display:none">'+
+        '<div class="ed-drop-hint">Arrastrar canción aquí</div>'+
+      '</div>'+
+      '<div class="ed-head">'+
+        '<div class="ed-titles"><div class="ed-title" id="edTitle'+i+'">—</div><div class="ed-artist" id="edArtist'+i+'"></div></div>'+
+        '<input class="ed-mini-input" id="edKey'+i+'" placeholder="Key" maxlength="4">'+
+        '<input class="ed-mini-input" id="edBpm'+i+'" placeholder="BPM" inputmode="decimal">'+
+      '</div>'+
+      '<canvas class="ed-wave" id="edWave'+i+'" height="90"></canvas>'+
+      '<div class="ed-transport">'+
+        '<button class="btn btn-gold btn-sm" id="edPlay'+i+'">▶</button>'+
+        '<span class="ed-time" id="edTime'+i+'">00:00 / 00:00</span>'+
+        '<button class="btn btn-ghost btn-sm" id="edSetBeat'+i+'">Set First Beat</button>'+
+      '</div>'+
+      '<div class="ed-cues" id="edCues'+i+'"></div>'+
+      '<div class="ed-loop">'+
+        '<button class="btn btn-ghost btn-sm" id="edLoopIn'+i+'">IN</button>'+
+        '<button class="btn btn-ghost btn-sm" id="edLoopOut'+i+'">OUT</button>'+
+        '<button class="btn btn-ghost btn-sm" id="edLoopToggle'+i+'">LOOP</button>'+
+        '<button class="btn btn-ghost btn-sm" id="edLoopHalf'+i+'">1/2X</button>'+
+        '<button class="btn btn-ghost btn-sm" id="edLoopDouble'+i+'">2X</button>'+
+        '<select class="ed-mini-input" id="edLoopPreset'+i+'"><option value="">Auto…</option>'+
+          [1,2,4,8,16,32].map(function(n){ return '<option value="'+n+'">'+n+' comp.</option>'; }).join('')+
+        '</select>'+
+      '</div>'+
+    '</div>'
+  );
+}
+function editorRedraw(i){
+  var d = EDITOR.decks[i];
+  var canvas = document.getElementById('edWave'+i);
+  if (!d || !canvas) return;
+  var cssW = canvas.clientWidth || 560;
+  if (canvas.width !== cssW) canvas.width = cssW;
+  var w = canvas.width, h = canvas.height;
+  var ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle = 'rgba(255,255,255,.04)';
+  ctx.fillRect(0,0,w,h);
+  var duration = d.duration || (d.audioEl ? d.audioEl.duration : 0) || 0;
+  var playedRatio = (duration && d.audioEl) ? (d.audioEl.currentTime/duration) : 0;
+  if (d.peaks){
+    var n = d.peaks.length;
+    for (var x=0;x<w;x++){
+      var idx = Math.min(n-1, Math.floor(x/w*n));
+      var v = d.peaks[idx]||0;
+      var barH = Math.max(1, v*h*0.92);
+      ctx.fillStyle = (x/w) < playedRatio ? '#c5a059' : '#6b6b78';
+      ctx.fillRect(x, (h-barH)/2, 1, barH);
+    }
+  }
+  if (duration && d.firstBeat!=null){
+    var bpm = parseFloat((document.getElementById('edBpm'+i)||{}).value);
+    if (bpm > 0){
+      var beatSec = 60/bpm;
+      var t = d.firstBeat % beatSec; if (t<0) t += beatSec;
+      var beatCount = Math.round((t - d.firstBeat)/beatSec);
+      var guard = 0;
+      while (t < duration && guard < 4000){
+        var xg = (t/duration)*w;
+        var isBar = (Math.round((t-d.firstBeat)/beatSec)) % 4 === 0;
+        ctx.strokeStyle = isBar ? 'rgba(197,160,89,.65)' : 'rgba(255,255,255,.14)';
+        ctx.lineWidth = isBar ? 1.5 : 1;
+        ctx.beginPath(); ctx.moveTo(xg,0); ctx.lineTo(xg,h); ctx.stroke();
+        t += beatSec; guard++;
+      }
+    }
+  }
+  if (duration && d.loopIn!=null && d.loopOut!=null){
+    var lx1=(d.loopIn/duration)*w, lx2=(d.loopOut/duration)*w;
+    ctx.fillStyle = d.loopOn ? 'rgba(90,163,216,.28)' : 'rgba(90,163,216,.12)';
+    ctx.fillRect(lx1,0,Math.max(1,lx2-lx1),h);
+  }
+  if (duration){
+    d.cues.forEach(function(c,idx){
+      if (c==null) return;
+      var xc = (c/duration)*w;
+      ctx.strokeStyle = CUE_COLORS[idx]; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(xc,0); ctx.lineTo(xc,h); ctx.stroke();
+    });
+    var px = playedRatio*w;
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(px,0); ctx.lineTo(px,h); ctx.stroke();
+  }
+}
+function editorRenderCues(i){
+  var d = EDITOR.decks[i];
+  var wrap = document.getElementById('edCues'+i);
+  if (!d || !wrap) return;
+  wrap.innerHTML = d.cues.map(function(c,idx){
+    var set = c!=null;
+    return '<button class="ed-cue-pad'+(set?' set':'')+'" data-cue="'+idx+'" '+
+      (set?'style="background:'+CUE_COLORS[idx]+';border-color:'+CUE_COLORS[idx]+';"':'')+
+      ' title="'+(set?('Cue '+(idx+1)+' — '+edFmtTime(c)+' (shift+clic para borrar)'):('Marcar cue '+(idx+1)+' en la posición actual'))+'">'+(idx+1)+'</button>';
+  }).join('');
+  wrap.querySelectorAll('[data-cue]').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      var idx = parseInt(btn.getAttribute('data-cue'),10);
+      var dd = EDITOR.decks[i];
+      if (!dd.audioEl) return;
+      if (e.shiftKey && dd.cues[idx]!=null){ dd.cues[idx]=null; editorRenderCues(i); editorRedraw(i); return; }
+      if (dd.cues[idx]==null){
+        dd.cues[idx] = dd.audioEl.currentTime;
+      } else {
+        dd.audioEl.currentTime = dd.cues[idx];
+        dd.audioEl.play();
+        document.getElementById('edPlay'+i).textContent = '⏸';
+      }
+      editorRenderCues(i);
+      editorRedraw(i);
+    });
+  });
+}
+function editorUpdateTime(i){
+  var d = EDITOR.decks[i];
+  var el = document.getElementById('edTime'+i);
+  if (!d || !d.audioEl || !el) return;
+  el.textContent = edFmtTime(d.audioEl.currentTime)+' / '+edFmtTime(d.audioEl.duration);
+}
+function editorUpdateCompat(){
+  var bpm0 = parseFloat((document.getElementById('edBpm0')||{}).value);
+  var bpm1 = parseFloat((document.getElementById('edBpm1')||{}).value);
+  var bEl = document.getElementById('edBpmDelta');
+  if (bEl) bEl.textContent = (bpm0 && bpm1) ? ((bpm0-bpm1>0?'+':'')+(bpm0-bpm1).toFixed(1)+' BPM') : '—';
+  var k0 = (document.getElementById('edKey0')||{}).value;
+  var k1 = (document.getElementById('edKey1')||{}).value;
+  var kEl = document.getElementById('edKeyMatch');
+  if (kEl){
+    var c = camelotCompatible(k0,k1);
+    var labels = {same:'Misma tonalidad ✓', compatible:'Compatible (Camelot) ✓', relative:'Relativa mayor/menor ✓', clash:'Choque de tonalidad ⚠'};
+    kEl.textContent = c ? labels[c] : '—';
+  }
+}
+function editorLoadFile(i, file){
+  var d = EDITOR.decks[i];
+  d.name = file.name.replace(/\.[^.]+$/,'');
+  d.cues = [null,null,null,null,null,null,null,null];
+  d.loopIn = null; d.loopOut = null; d.loopOn = false; d.firstBeat = null; d.peaks = null;
+  document.getElementById('edTitle'+i).textContent = d.name;
+  document.getElementById('edDrop'+i).classList.add('loaded');
+  var url = URL.createObjectURL(file);
+  var audio = new Audio(url);
+  audio.preload = 'auto';
+  d.audioEl = audio;
+  audio.addEventListener('loadedmetadata', function(){
+    d.duration = audio.duration;
+    editorUpdateTime(i);
+    editorRenderCues(i);
+    editorRedraw(i);
+  });
+  audio.addEventListener('timeupdate', function(){
+    if (d.loopOn && d.loopIn!=null && d.loopOut!=null && audio.currentTime >= d.loopOut){
+      audio.currentTime = d.loopIn;
+    }
+    editorUpdateTime(i);
+    editorRedraw(i);
+  });
+  audio.addEventListener('ended', function(){
+    var b = document.getElementById('edPlay'+i); if (b) b.textContent = '▶';
+  });
+  file.arrayBuffer().then(function(buf){
+    if (!EDITOR.actx){ var AC = window.AudioContext || window.webkitAudioContext; EDITOR.actx = new AC(); }
+    return EDITOR.actx.decodeAudioData(buf);
+  }).then(function(audioBuffer){
+    d.peaks = editorComputePeaks(audioBuffer, 1400);
+    editorRedraw(i);
+  }).catch(function(e){
+    toast('No se pudo dibujar el waveform real de este archivo — sigue funcionando sin él');
+    console.log('Editor waveform decode error:', e && e.message);
+  });
+}
+function editorWireDeck(i){
+  var d = EDITOR.decks[i];
+  var drop = document.getElementById('edDrop'+i);
+  var input = document.getElementById('edFile'+i);
+  drop.addEventListener('click', function(){ input.click(); });
+  input.addEventListener('change', function(e){ if (e.target.files[0]) editorLoadFile(i, e.target.files[0]); });
+  drop.addEventListener('dragover', function(e){ e.preventDefault(); drop.classList.add('dragging'); });
+  drop.addEventListener('dragleave', function(){ drop.classList.remove('dragging'); });
+  drop.addEventListener('drop', function(e){
+    e.preventDefault(); drop.classList.remove('dragging');
+    if (e.dataTransfer.files[0]) editorLoadFile(i, e.dataTransfer.files[0]);
+  });
+  document.getElementById('edPlay'+i).addEventListener('click', function(){
+    if (!d.audioEl) return;
+    if (d.audioEl.paused){ d.audioEl.play(); this.textContent='⏸'; }
+    else { d.audioEl.pause(); this.textContent='▶'; }
+  });
+  document.getElementById('edWave'+i).addEventListener('click', function(e){
+    if (!d.audioEl || !d.duration) return;
+    var rect = this.getBoundingClientRect();
+    d.audioEl.currentTime = Math.max(0, Math.min(d.duration, ((e.clientX-rect.left)/rect.width)*d.duration));
+    editorRedraw(i);
+  });
+  document.getElementById('edSetBeat'+i).addEventListener('click', function(){
+    if (!d.audioEl) return;
+    d.firstBeat = d.audioEl.currentTime;
+    editorRedraw(i);
+    toast('Beatgrid: primer beat marcado en '+edFmtTime(d.firstBeat));
+  });
+  document.getElementById('edLoopIn'+i).addEventListener('click', function(){
+    if (!d.audioEl) return;
+    d.loopIn = d.audioEl.currentTime;
+    if (d.loopOut!=null && d.loopOut<=d.loopIn) d.loopOut=null;
+    editorRedraw(i);
+  });
+  document.getElementById('edLoopOut'+i).addEventListener('click', function(){
+    if (!d.audioEl || d.loopIn==null) return;
+    d.loopOut = Math.max(d.audioEl.currentTime, d.loopIn+0.05);
+    d.loopOn = true;
+    editorRedraw(i);
+  });
+  document.getElementById('edLoopToggle'+i).addEventListener('click', function(){
+    if (d.loopIn==null || d.loopOut==null) return;
+    d.loopOn = !d.loopOn;
+    this.classList.toggle('active', d.loopOn);
+    editorRedraw(i);
+  });
+  document.getElementById('edLoopHalf'+i).addEventListener('click', function(){
+    if (d.loopIn==null || d.loopOut==null) return;
+    var len = (d.loopOut-d.loopIn)/2;
+    if (len<0.05) return;
+    d.loopOut = d.loopIn+len;
+    editorRedraw(i);
+  });
+  document.getElementById('edLoopDouble'+i).addEventListener('click', function(){
+    if (d.loopIn==null || d.loopOut==null || !d.duration) return;
+    var len = Math.min(d.duration-d.loopIn, (d.loopOut-d.loopIn)*2);
+    d.loopOut = d.loopIn+len;
+    editorRedraw(i);
+  });
+  document.getElementById('edLoopPreset'+i).addEventListener('change', function(){
+    var bars = parseInt(this.value,10);
+    var bpm = parseFloat((document.getElementById('edBpm'+i)||{}).value);
+    if (!bars || !bpm || !d.audioEl) { this.value=''; return; }
+    var secPerBeat = 60/bpm;
+    d.loopIn = d.audioEl.currentTime;
+    d.loopOut = Math.min(d.duration, d.loopIn + bars*4*secPerBeat);
+    d.loopOn = true;
+    this.value = '';
+    editorRedraw(i);
+  });
+  ['edBpm'+i, 'edKey'+i].forEach(function(id){
+    document.getElementById(id).addEventListener('input', function(){
+      editorUpdateCompat();
+      editorRedraw(i);
+    });
+  });
+  if (d.name){ document.getElementById('edTitle'+i).textContent = d.name; document.getElementById('edDrop'+i).classList.add('loaded'); }
+}
+function renderEditor(){
+  var el = document.getElementById('view-editor');
+  el.innerHTML =
+    '<div class="ed-decks">'+
+      editorDeckHTML(0)+
+      '<div class="ed-compat">'+
+        '<div class="ed-compat-row"><span class="k">BPM Δ</span><span id="edBpmDelta">—</span></div>'+
+        '<div class="ed-compat-row"><span class="k">Key</span><span id="edKeyMatch">—</span></div>'+
+      '</div>'+
+      editorDeckHTML(1)+
+    '</div>';
+  if (!EDITOR.decks[0]) EDITOR.decks[0] = editorNewDeck();
+  if (!EDITOR.decks[1]) EDITOR.decks[1] = editorNewDeck();
+  editorWireDeck(0);
+  editorWireDeck(1);
+  editorRenderCues(0);
+  editorRenderCues(1);
+  editorRedraw(0);
+  editorRedraw(1);
+  editorUpdateCompat();
+}
+
 /* ============================= VIEW: CONFIG ============================= */
 function renderConfig(){
   var el = document.getElementById('view-config');
@@ -2556,7 +3228,7 @@ function renderConfig(){
     '<p class="view-desc">Prototype-level settings. Nothing here writes to a backend — this is a local, non-production shell.</p></div></div>'+
     '<div class="panel">'+
       '<div class="cfg-row"><div><div class="k">Guided Learning Mode</div><div class="d">Same recommendation engine for both — Guided auto-expands WHY reasoning; Experienced stays compact for veteran DJs who just want the numbers.</div></div><button class="switch'+(state.guided?' on':'')+'" id="cfgGuided"></button></div>'+
-      '<div class="cfg-row"><div><div class="k">Booth Focus (Full Screen)</div><div class="d">Collapses the rail to icons only for low-light booth use.</div></div><button class="switch'+(state.djMode?' on':'')+'" id="cfgFocus"></button></div>'+
+      '<div class="cfg-row"><div><div class="k">Booth Focus (Full Screen)</div><div class="d">Hides the browser chrome and gives the cockpit the full screen for low-light booth use.</div></div><button class="switch'+(document.body.classList.contains('mdj-mi-fullscreen')?' on':'')+'" id="cfgFocus"></button></div>'+
       '<div class="cfg-row"><div><div class="k">Default Culture Mode</div><div class="d">Applied when Event Mode is opened fresh.</div></div>'+
         '<select id="cfgCulture" style="background:var(--surface-2);border:1px solid var(--border-strong);color:var(--text);padding:8px 10px;border-radius:6px;">'+
         ['anglo','latino','mixed'].map(function(c){ return '<option value="'+c+'"'+(state.culture===c?' selected':'')+'>'+c.toUpperCase()+'</option>'; }).join('')+'</select></div>'+
@@ -2570,11 +3242,11 @@ function renderConfig(){
 }
 
 /* ============================= NAV / SHELL ============================= */
-var VIEWS = ['home','experiences','event','live','discover','library','genmap','blocks','bridge','history','learning','experience','config'];
+var VIEWS = ['home','experiences','event','live','discover','library','genmap','blocks','bridge','history','learning','experience','editor','config'];
 var RENDERERS = {
   home:renderHome, experiences:renderExperiences, event:renderEvent, live:renderLiveListening, discover:renderDiscover, library:renderLibrary,
   genmap:renderGenMap, blocks:renderBlocks, bridge:renderBridge, history:renderHistory,
-  learning:renderLearning, experience:renderExperienceDetail, config:renderConfig
+  learning:renderLearning, experience:renderExperienceDetail, editor:renderEditor, config:renderConfig
 };
 function setView(v){
   state.view = v;
@@ -2593,22 +3265,44 @@ document.querySelectorAll('.nav-item').forEach(function(btn){
 function toggleGuidedMode(){
   state.guided = !state.guided;
   document.getElementById('btnDjMode').classList.toggle('active', state.guided);
-  var badge = document.getElementById('modeBadge');
-  badge.textContent = state.guided ? 'GUIDED' : 'EXPERIENCED';
-  badge.className = 'badge'+(state.guided?' info':'');
   toast(state.guided ? 'Guided Mode — recommendations now show full reasoning' : 'Experienced Mode — compact readouts, tap Why when needed');
   if (state.view==='event') renderEvent();
 }
 function toggleFocusMode(){
-  state.djMode = !state.djMode;
-  document.getElementById('rail').classList.toggle('collapsed', state.djMode);
+  /* El rail lateral ya no existe (migrado al topbar) — "Booth Focus" en Config
+     ahora dispara la misma pantalla completa real que el ícono del topbar
+     (btnFocus/setCockpitFullscreen), en vez de colapsar un rail que ya no vive aquí. */
+  setCockpitFullscreen(!document.body.classList.contains('mdj-mi-fullscreen'));
 }
 document.getElementById('btnDjMode').addEventListener('click', toggleGuidedMode);
 document.getElementById('btnSettings').addEventListener('click', function(){ setView('config'); });
 document.getElementById('btnEventStatus').addEventListener('click', function(){
   toast(state.history.length ? 'Event status: ACTIVE — '+Object.keys(state.playedIds).length+' tracks played' : 'Event status: STANDBY — no tracks played yet');
 });
-document.getElementById('railToggle').addEventListener('click', toggleFocusMode);
+document.getElementById('btnBack').addEventListener('click', function(){
+  if (history.length > 1) history.back(); else window.location.href = './dj-tools.html';
+});
+document.getElementById('btnCloseTool').addEventListener('click', function(){
+  window.location.href = './dj-tools.html';
+});
+/* Reubica el toggle sol/luna del nav compartido (ahora oculto) dentro del
+   topbar propio del cockpit — mdjb-shared-header.js lo monta de forma async
+   como último hijo de #mainNav, así que se espera hasta que exista. */
+(function relocateDayNight(){
+  var tries = 0;
+  var t = setInterval(function(){
+    tries++;
+    var btn = document.getElementById('mdj-daynight');
+    var target = document.getElementById('topbarRight');
+    if (btn && target){
+      btn.classList.add('icon-btn');
+      target.appendChild(btn);
+      clearInterval(t);
+    } else if (tries > 100){
+      clearInterval(t);
+    }
+  }, 50);
+})();
 /* Pantalla completa real: oculta #mainHeader (el menú real del sitio) y le cede
    todo el alto a #mi-cockpit — no es solo el Fullscreen API del navegador, que
    nunca toca el propio menú de la página. Mismo botón alterna ambos sentidos;
@@ -2638,8 +3332,13 @@ document.addEventListener('keydown', function(e){
 });
 
 function renderHeaderBits(){
+  /* El pill de "experiencia activa" se quitó del topbar (2026-09-28, a pedido
+     del PO — no es el nombre de la plataforma). Función mantenida como no-op
+     seguro por si algo más la sigue llamando. */
+  var el = document.getElementById('expPillLabel');
+  if (!el) return;
   var exp = EXPERIENCES.filter(function(e){ return e.id===state.experience; })[0] || EXPERIENCES[0];
-  document.getElementById('expPillLabel').textContent = exp.name.toUpperCase()+' EXPERIENCE';
+  el.textContent = exp.name.toUpperCase()+' EXPERIENCE';
 }
 
 setInterval(function(){
