@@ -315,19 +315,20 @@ window.MDJ_Assistant = {
         return this.boothHumanLead(isSpanish, 'ack') + '**' + title + '** — ' + body + '\n\nAbre el capítulo aquí: **' + link + '**' + eventBridge;
     },
 
-    /** Snapshot compacto para LLM — recorrido web + MDJPRO V.2.6.5 (siempre en contexto). */
+    /** Snapshot compacto para LLM — recorrido web + MDJPRO V.2.6.7 (siempre en contexto). */
     boothBuildPlatformAgentContext: function () {
         return [
-            'Recorrido MDJB jun-2026',
-            'Web público: index→rentals(servicios/talento)→services(cotizar)→shop→jobs→find-dj→client-portal',
+            'Recorrido MDJB sep-2026',
+            'Web público: index→rentals(servicios/talento/cotizar)→shop→jobs→find-dj→client-portal',
             'Artista: dj-profile→dj-dashboard→dj-tools→load-root|tag-master|library-wizard(PRO)|cash-flow',
-            'Formación: courses/academia/dj-knowledge | Descarga: downloads.html V.2.6.5 + manual 6 langs',
-            'App MDJPRO V.2.6.5 macOS: Splash/Hub→LOAD ROOT→Control(Serato/Rekordbox/VDJ)→Library(PRO)→Tag→Scan→Reportes',
-            'Booth guía por rol; PRO first roster; solo MDJB; sin secretos',
+            'Formación: courses/academia/dj-knowledge (bilingüe ES/EN) | Descarga: downloads.html V.2.6.7 + manual 6 langs',
+            'App MDJPRO V.2.6.7 macOS: Splash/Hub→LOAD ROOT→Control(Serato/Rekordbox/VDJ)→Library(PRO)→Tag Master(IA)→Scan→Reportes',
+            'Depósito de reserva 50% del total (min $150) | Cupones de descuento reales | Cancelación: 24h reembolso / 24h-7d staff / >7d no | Legal: legal.html',
+            'Margi guía por rol; PRO first roster; solo MDJB; sin secretos',
         ].join(' | ');
     },
 
-    /** Recorrido explícito Miami DJ Beat (web) + app MDJPRO V.2.6.5 — respuestas cortas. */
+    /** Recorrido explícito Miami DJ Beat (web) + app MDJPRO V.2.6.7 — respuestas cortas. */
     boothPlatformTourReply: function (userInput, isSpanish) {
         var q = (userInput || '').toLowerCase();
         var ctx = this.boothManualContext();
@@ -363,8 +364,8 @@ window.MDJ_Assistant = {
 
         if (wantsAppOnly) {
             return lead + (isSpanish
-                ? '**MDJPRO V.2.6.5**: baja el .pkg en **' + root + 'downloads.html**, instala, abre el Hub, define **LOAD ROOT**, conecta Serato/Rekordbox/VDJ en Control, y si eres PRO usas Librería y Tag antes del scan. Manual completo: **' + manualIntro + '**. ¿Instalación, Serato o cap. 6 PRO?'
-                : '**MDJPRO V.2.6.5**: grab the .pkg at **' + root + 'downloads.html**, install, open the Hub, set **LOAD ROOT**, hook Serato/Rekordbox/VDJ in Control, and if you\'re PRO use Library and Tag before scanning. Full manual: **' + manualIntro + '**. Install, Serato, or PRO ch.6?');
+                ? '**MDJPRO V.2.6.7**: baja el .pkg en **' + root + 'downloads.html**, instala, abre el Hub, define **LOAD ROOT**, conecta Serato/Rekordbox/VDJ en Control, y si eres PRO usas Librería y Tag antes del scan. Manual completo: **' + manualIntro + '**. ¿Instalación, Serato o cap. 6 PRO?'
+                : '**MDJPRO V.2.6.7**: grab the .pkg at **' + root + 'downloads.html**, install, open the Hub, set **LOAD ROOT**, hook Serato/Rekordbox/VDJ in Control, and if you\'re PRO use Library and Tag before scanning. Full manual: **' + manualIntro + '**. Install, Serato, or PRO ch.6?');
         }
 
         var artistEs =
@@ -377,8 +378,8 @@ window.MDJ_Assistant = {
                 : ' As an **' + roleEn.toLowerCase() + '**, your flow runs **' + root + 'dj-profile.html** → dashboard → **dj-tools**.';
 
         return lead + (isSpanish
-            ? 'te lo resumo como **' + roleEs + '**. En la web: **rentals** y **services** para eventos, **find-dj** para talento MDJB, **downloads** para la app. En **MDJPRO V.2.6.5**: pkg → Hub → LOAD ROOT → control DJ → scan; manual en **' + manualIntro + '**.' + artistEs + ' ¿Quieres que bajemos a **web**, **app** o un **capítulo** concreto?'
-            : 'quick map as **' + roleEn + '**. Web: **rentals** and **services** for events, **find-dj** for MDJB talent, **downloads** for the app. **MDJPRO V.2.6.5**: pkg → Hub → LOAD ROOT → DJ control → scan; manual at **' + manualIntro + '**.' + artistEn + ' Want to go deeper on **web**, the **app**, or a specific **chapter**?');
+            ? 'te lo resumo como **' + roleEs + '**. En la web: **rentals** y **services** para eventos, **find-dj** para talento MDJB, **downloads** para la app. En **MDJPRO V.2.6.7**: pkg → Hub → LOAD ROOT → control DJ → scan; manual en **' + manualIntro + '**.' + artistEs + ' ¿Quieres que bajemos a **web**, **app** o un **capítulo** concreto?'
+            : 'quick map as **' + roleEn + '**. Web: **rentals** and **services** for events, **find-dj** for MDJB talent, **downloads** for the app. **MDJPRO V.2.6.7**: pkg → Hub → LOAD ROOT → DJ control → scan; manual at **' + manualIntro + '**.' + artistEn + ' Want to go deeper on **web**, the **app**, or a specific **chapter**?');
     },
 
     /** Clases Booth — cambios recientes del web (jun 2026). */
@@ -408,8 +409,8 @@ window.MDJ_Assistant = {
 
         if (wantsDownloads || (wantsUpdates && !wantsDjTools && !wantsAcademiaUpdate && !wantsManualWeb)) {
             return lead + (isSpanish
-                ? 'la build actual es **MDJPRO V.2.6.5** en **' + root + 'downloads.html** — LOAD ROOT en tu idioma y la app se abre sola tras instalar. El manual en 6 idiomas está en el mismo acordeón. ¿Te guío en instalación, PRO o reservar un evento?'
-                : 'the current build is **MDJPRO V.2.6.5** at **' + root + 'downloads.html** — LOAD ROOT in your language and the app auto-opens after install. The 6-language manual sits in the same accordion. Install walkthrough, PRO, or booking an event?');
+                ? 'la build actual es **MDJPRO V.2.6.7** en **' + root + 'downloads.html** — LOAD ROOT en tu idioma y la app se abre sola tras instalar. El manual en 6 idiomas está en el mismo acordeón. ¿Te guío en instalación, PRO o reservar un evento?'
+                : 'the current build is **MDJPRO V.2.6.7** at **' + root + 'downloads.html** — LOAD ROOT in your language and the app auto-opens after install. The 6-language manual sits in the same accordion. Install walkthrough, PRO, or booking an event?');
         }
 
         if (wantsManualWeb) {
@@ -453,9 +454,9 @@ window.MDJ_Assistant = {
         if (!wantsJobsList && !wantsRentList && !wantsShopList && !wantsEventTalentList && !wantsServicesList && !wantsAcademiaList && !wantsDownloadsList && !wantsTourList) return null;
 
         var jobsEs =
-            "Jobs (./jobs.html) — roles al postularte: DJ, MC, cantante, live band, percussionista, saxofonista, violinista, payaso, hora loca, bartender, mesero, manager artístico, productor musical, influencer/promotor, foto booth 360. **Booth** puede orientar una búsqueda por categoría + fecha (roster público; confirmación final en **./find-dj.html** / **./rentals.html**).";
+            "Jobs (./jobs.html) — roles al postularte: DJ, MC, cantante, live band, percussionista, saxofonista, violinista, payaso, hora loca, bartender, mesero, manager artístico, productor musical, influencer/promotor, foto booth 360. **Margi** puede orientar una búsqueda por categoría + fecha (roster público; confirmación final en **./find-dj.html** / **./rentals.html**).";
         var jobsEn =
-            "Jobs (./jobs.html) — application roles: DJ, MC, vocalist, live band, percussion, sax, violin, clown, hora loca, bartender, server, artist manager, music producer, influencer/promoter, 360 photo booth. **Booth** can run a category + date lookup on the public roster (finalize availability in **./find-dj.html** / **./rentals.html**).";
+            "Jobs (./jobs.html) — application roles: DJ, MC, vocalist, live band, percussion, sax, violin, clown, hora loca, bartender, server, artist manager, music producer, influencer/promoter, 360 photo booth. **Margi** can run a category + date lookup on the public roster (finalize availability in **./find-dj.html** / **./rentals.html**).";
 
         var shopEs = "Shop (./shop.html) — categorías de producto en merchandising: tshirts, hats, hoodies (variantes en la página).";
         var shopEn = "Shop (./shop.html) — merch product categories: tshirts, hats, hoodies (see page for variants).";
@@ -473,9 +474,9 @@ window.MDJ_Assistant = {
         var academiaEn = "Academy (courses.html · course-data.js) — 12 modules: sound fundamentals, gear, software, mixing, MC, lighting/production, library, contracts, marketing, pricing/finance, elite mindset, final exam + certification.";
 
         var downloadsEs =
-            "Downloads (./downloads.html) — **MDJPRO V.2.6.5** (pkg Storage): LOAD ROOT i18n, auto-open post-install. Accordion **Manual Interactivo** → visor **./manuals/MDJPRO_Manual/{lang}/index.html** (6 idiomas). Suite artista: **./dj-tools.html** (LOAD ROOT, Tag Master, Library Wizard PRO, Cash Flow).";
+            "Downloads (./downloads.html) — **MDJPRO V.2.6.7** (pkg Storage): LOAD ROOT i18n, auto-open post-install. Accordion **Manual Interactivo** → visor **./manuals/MDJPRO_Manual/{lang}/index.html** (6 idiomas). Suite artista: **./dj-tools.html** (LOAD ROOT, Tag Master, Library Wizard PRO, Cash Flow).";
         var downloadsEn =
-            "Downloads (./downloads.html) — **MDJPRO V.2.6.5** (Storage pkg): LOAD ROOT i18n, auto-open post-install. **Interactive Manual** accordion → **./manuals/MDJPRO_Manual/{lang}/index.html** (6 langs). Artist suite: **./dj-tools.html** (LOAD ROOT, Tag Master, Library Wizard PRO, Cash Flow).";
+            "Downloads (./downloads.html) — **MDJPRO V.2.6.7** (Storage pkg): LOAD ROOT i18n, auto-open post-install. **Interactive Manual** accordion → **./manuals/MDJPRO_Manual/{lang}/index.html** (6 langs). Artist suite: **./dj-tools.html** (LOAD ROOT, Tag Master, Library Wizard PRO, Cash Flow).";
 
         var partsEs = [];
         var partsEn = [];
@@ -1011,7 +1012,7 @@ window.MDJ_Assistant = {
             return filtered.slice(0, 8);
         } catch (err) {
             try {
-                console.warn("[Booth] boothFetchRosterByRole:", err && err.message ? err.message : err);
+                console.warn("[Margi] boothFetchRosterByRole:", err && err.message ? err.message : err);
             } catch (e2) {
                 void e2;
             }
@@ -1456,8 +1457,8 @@ window.MDJ_Assistant = {
             if (document.querySelectorAll('.message').length === 0) {
                 var _boothName = window.__mdjBoothDisplayName && window.__mdjBoothDisplayName !== 'Member' ? window.__mdjBoothDisplayName : '';
                 var _boothGreet = _boothName
-                    ? 'Hola, ' + _boothName + '. Soy Booth, el agente de Miami DJ Beat — dime qué necesitas y lo cerramos ahora mismo.'
-                    : 'Soy Booth, el agente de Miami DJ Beat. Reservas, artistas, equipos, cursos — dime qué necesitas y lo resolvemos ahora.';
+                    ? 'Hola, ' + _boothName + '. Soy Margi, la agente de Miami DJ Beat — dime qué necesitas y lo cerramos ahora mismo.'
+                    : 'Soy Margi, la agente de Miami DJ Beat. Reservas, artistas, equipos, cursos — dime qué necesitas y lo resolvemos ahora.';
                 this.addMessage('assistant', _boothGreet);
             }
         } else {
