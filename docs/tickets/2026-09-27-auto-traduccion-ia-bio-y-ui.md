@@ -1,5 +1,5 @@
 # TICKET — Auto-traducción con IA (2 piezas): biografías de DJ + texto de interfaz
-Creado 2026-09-27 a pedido del PO, tras encontrar que `dj_profiles.auto_translate` (columna agregada en el pasado, ver `docs/archivo-historico/ACTUALIZAR_ESTO_EN_SUPABASE.sql`) y el interruptor «traducción automática» de `jobs.html` **nunca tuvieron código detrás**: son un interruptor fantasma. Hoy, todo el texto bilingüe del sitio (diccionario de interfaz + biografías de DJ) se traduce a mano. Este ticket construye las dos piezas que faltan. Estado: **PROPUESTO, sin empezar**.
+Creado 2026-09-27 a pedido del PO, tras encontrar que `dj_profiles.auto_translate` (columna agregada en el pasado, ver `docs/archivo-historico/ACTUALIZAR_ESTO_EN_SUPABASE.sql`) y el interruptor «traducción automática» de `jobs.html` **nunca tuvieron código detrás**: son un interruptor fantasma. Hoy, todo el texto bilingüe del sitio (diccionario de interfaz + biografías de DJ) se traduce a mano. Este ticket construye las dos piezas que faltan. Estado: **Pieza 1 y Pieza 2 CONSTRUIDAS (2026-09-28)**, ver cierres al final de cada sección.
 
 ## Regla de diseño que aplica a las dos piezas (obligatoria)
 Mismo patrón que ya rige a ELIXIS: **el modelo de IA propone, nunca publica directo**. Ninguna de las dos piezas escribe en producción sin que una persona confirme. Justificación: una traducción mala publicada sin revisión daña la voz de un DJ real o rompe un texto legal/técnico; el costo de revisar es bajo, el costo de un error público no lo es.
@@ -18,6 +18,8 @@ Mismo patrón que ya rige a ELIXIS: **el modelo de IA propone, nunca publica dir
 
 **Fuera de alcance de esta pieza:** traducir automáticamente reseñas de clientes, notas internas de staff o cualquier campo que no sea la biografía pública.
 
+**CONSTRUIDA (2026-09-28)** — Edge Function `dj-bio-translate` desplegada a PROD, bloque de aprobación en `jobs.html`, verificado end-to-end con la cuenta real de DJMago305. 3 bugs reales de `jobs.html` encontrados y corregidos en el camino (guardado, carga, límite de campo). Detalle completo y verificación en `docs/ESTADO_MAESTRO.md` (entrada `[2026-09-28] Auto-traducción con IA — Pieza 1`). Backfill posterior: bios reales de DJ Ary y JULITO DJ PMM (español, con el PO como fuente) + borrador en inglés generado — pendiente de aprobación humana desde `jobs.html`.
+
 ---
 
 ## Pieza 2 — Auto-traducción del diccionario de interfaz (`web/translations.js`)
@@ -28,6 +30,16 @@ Mismo patrón que ya rige a ELIXIS: **el modelo de IA propone, nunca publica dir
 1. Script (`web/scripts/check-i18n.mjs` ya detecta llaves usadas sin definir — ver el propio archivo) que, en vez de solo reportar el faltante, puede opcionalmente completarlo: llama a un modelo de lenguaje con el texto en el idioma que sí existe y genera el otro, y **lo escribe en un archivo de propuesta aparte** (p. ej. `web/translations.pending.json`), nunca directo en `translations.js`.
 2. Un humano (o un hilo de Claude en una tarea de revisión) mueve las líneas aprobadas de `translations.pending.json` a `translations.js`. Puede correr como paso opcional del workflow `site-hygiene.yml`, pero **sin permiso para comitear por su cuenta** (regla #1 de `CLAUDE.md`: cero PRs automáticos).
 3. Debe respetar lo ya aprendido a mano en esta sesión: nombres propios no se traducen (DJMago305, ELIXIS, Serato…), HTML interno con comillas simples (ver memoria `feedback_translations_js_quote_escaping_gotcha`), y el criterio de «nunca inventar nombres de producto» para vocabulario como «Event Mode» o «Bridge Engine» del cockpit de Music Intelligence.
+
+**CONSTRUIDA (2026-09-28)** — 2 scripts nuevos, ninguno escribe en `translations.js` sin paso humano intermedio:
+- `web/scripts/i18n-translate-missing.mjs`: detecta claves que existen en un idioma y faltan en el otro (el "hueco de paridad" — mismo caso real de las 81 claves de club-dj/mc-dj/festival-dj de esta sesión), llama a Claude Haiku y escribe las propuestas en `web/translations.pending.json` (nunca en `translations.js`). Respeta la lista de nombres propios/marca que no se traducen. `--dry-run` prueba el detector sin llamar a la API ni necesitar `ANTHROPIC_API_KEY`.
+- `web/scripts/i18n-apply-pending.mjs`: mueve claves YA REVISADAS por un humano (`--keys=a,b,c` o `--all`) de `translations.pending.json` a `translations.js`, serializando con `JSON.stringify` (sintaxis válida garantizada por construcción, resuelve de raíz la trampa de comillas de `feedback_translations_js_quote_escaping_gotcha` en vez de depender de que alguien la recuerde a mano) y auto-verificando con `node --check` antes de terminar. No comitea ni hace push — regla #1 de `CLAUDE.md`.
+
+**Alcance real de esta pieza**: solo el "hueco de paridad" (clave existe en un lado, falta en el otro) — es el caso dominante observado en esta sesión. Claves usadas con `data-i18n` que no existen en NINGÚN lado (texto nuevo escrito directo en una página nueva) siguen reportadas por `check-i18n.mjs` como antes, pero fuera del alcance de esta pieza — se resuelven a mano o en una iteración futura.
+
+Probado con una batería de pruebas sintéticas en el scratchpad (nunca contra el `translations.js` real): hueco solo-en-es, solo-en-en, y ambos en la misma corrida — las 3 pasan `node --check` y `check-i18n.mjs` limpio después de aplicar. La prueba encontró y corrigió un bug real: la inserción no agregaba coma final a la línea anterior cuando esa era la última propiedad del bloque (rompía la sintaxis) — corregido antes de dejarlo listo.
+
+**No wireado a `site-hygiene.yml` todavía** — agregar `ANTHROPIC_API_KEY` como secret de GitHub Actions es una decisión aparte del PO, no tomada aquí por cuenta propia. Hoy corre solo local/manual.
 
 ---
 
