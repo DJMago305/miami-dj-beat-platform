@@ -7806,10 +7806,19 @@
                 btn.textContent = t('profile-review-submitting') || 'Enviando…';
                 try {
                     var comment = commentEl && commentEl.value ? String(commentEl.value).trim() : '';
+                    // lead_ref (2026-09-27, señal de origen de reseña): si el enlace
+                    // "Pedir Reseña" de staff-agenda.html trajo la referencia de un
+                    // evento real, se pasa al RPC -- éste la verifica de verdad
+                    // (cliente=reviewer, evento completado, mismo DJ) antes de darle
+                    // más peso; un lead_ref ausente/inválido no bloquea el envío, solo
+                    // se guarda sin el peso extra (comportamiento ya probado en el RPC).
+                    var leadRefRaw = new URLSearchParams(window.location.search).get('lead_ref') || '';
+                    var leadRef = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(leadRefRaw) ? leadRefRaw : null;
                     var res = await db.rpc('submit_dj_public_review', {
                         p_dj_user_id: djKey,
                         p_rating: st,
-                        p_comment: comment || null
+                        p_comment: comment || null,
+                        p_lead_id: leadRef
                     });
                     if (res.error) {
                         var errMsg = res.error.message || 'No se pudo guardar la reseña.';
