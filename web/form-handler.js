@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', function () {
       source: effectiveSource,
       notes: JSON.stringify(notesObj)
     };
-    if (nameVal) payload.full_name = nameVal;
+    if (nameVal) payload.contact_person = nameVal;
 
     return payload;
   }
