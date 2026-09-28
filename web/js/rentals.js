@@ -966,8 +966,25 @@ window.checkoutSubmit = async function() {
         } catch (eS) { /* ignore */ }
     }
 
+    // FIX-RENTAL-CART-HUERFANO (2026-09-28): antes solo se guardaba en
+    // `rental_cart`, un shape que ni client-portal.js ni staff-order.html
+    // leen jamás -- el cliente confirmaba su reserva y caía en su portal
+    // viendo el carrito vacío. `selected_services` es el shape real que
+    // todos los lectores del carrito ya esperan (name/price/qty), con sku
+    // incluido (mismo patrón aditivo de mdj-event-builder.js). rental_cart
+    // se conserva tal cual, nadie más lo usa, no hace daño dejarlo.
+    var selectedServices = (leadData.cart || []).map(function (item) {
+        return {
+            name: String(item.name || 'Item'),
+            price: parseFloat(item.price) || 0,
+            qty: parseInt(item.quantity, 10) || 1,
+            sku: item.id || null
+        };
+    });
+
     var notesObj = {
         rental_cart: leadData.cart,
+        selected_services: selectedServices,
         rental_hours: leadData.hours,
         rental_subtotal_usd: subtotal,
         source_detail: 'rentals_checkout'
