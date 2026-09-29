@@ -483,6 +483,21 @@ verify_jwt = false
 [functions.venue-waitlist-signup]
 verify_jwt = false
 
+# Lectura pública de clima (OpenWeatherMap) — la clave se queda en el servidor.
+# Sin esta entrada explícita, un redeploy masivo (`supabase functions deploy`
+# sin nombrar función) la devuelve a verify_jwt=true por defecto y el hub del
+# clima (mdjb-weather-core.js, doFetch sin headers) empieza a fallar con
+# 401 UNAUTHORIZED_NO_AUTH_HEADER en silencio — exactamente lo que pasó con
+# las 9 funciones corregidas el 2026-09-28. Encontrado y arreglado 2026-09-28.
+[functions.mdj-weather]
+verify_jwt = false
+
+# Puente a Apple WeatherKit — misma razón que mdj-weather arriba. Hoy responde
+# 200 sin JWT (deploy original con --no-verify-jwt, nunca lo perdió), pero sin
+# esta entrada un redeploy masivo futuro se lo llevaría igual que a mdj-weather.
+[functions.mdj-weatherkit]
+verify_jwt = false
+
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 

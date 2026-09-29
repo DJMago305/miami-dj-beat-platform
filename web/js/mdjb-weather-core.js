@@ -113,11 +113,12 @@ function owmDrivers(id, cloudsAll, rain, windSpeed) {
   return { cloud, storm, wind, rain: rn, snow, fog };
 }
 function fmtHourLbl(h) { h = ((h % 24) + 24) % 24; const ap = h < 12 ? 'am' : 'pm'; let x = h % 12; if (x === 0) x = 12; return x + ap; }
-function buildHourly(temp, id) {
-  const g = owmGlyph(id), h0 = new Date().getHours(), out = [];
-  for (let i = 0; i < 6; i++) out.push({ h: i === 0 ? 'Ahora' : fmtHourLbl(h0 + i * 2), glyph: g, t: (temp + Math.round(Math.sin(i * 0.9) * 2)) + '°' });
+function buildHourlyByGlyph(temp, glyph) {
+  const h0 = new Date().getHours(), out = [];
+  for (let i = 0; i < 6; i++) out.push({ h: i === 0 ? 'Ahora' : fmtHourLbl(h0 + i * 2), glyph, t: (temp + Math.round(Math.sin(i * 0.9) * 2)) + '°' });
   return out;
 }
+function buildHourly(temp, id) { return buildHourlyByGlyph(temp, owmGlyph(id)); }
 const _DIRS = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
 function windDirLabel(deg) { return deg == null ? '' : _DIRS[Math.round(((deg % 360) / 22.5)) % 16]; }
 function owmKey(id) {   // wxKey del motor (para glyphs/escena) desde el código OWM
@@ -156,7 +157,92 @@ function owmToState(o) {
     event: { lead: 'Día sin evento en agenda.', start: 'Sin horario', end: 'Sin horario', buffer: '—', loc: o.name || 'Miami Lakes', sunset: '◔ ' + a.sunset, logi: '' },
   };
 }
+// ── Apple WeatherKit → AtmosphericState (2026-09-28, "el radar que SÍ detecta
+// tormentas que OpenWeatherMap gratis no ve") ─────────────────────────────────
+// mdj-weatherkit reenvía el JSON crudo de Apple sin tocarlo (mismo criterio
+// que mdj-weather con OWM) -- la forma es TOTALMENTE distinta a OWM (SI/Celsius,
+// nombres de campo propios, conditionCode en vez de weather[].id), así que hace
+// falta su propio traductor, no una reutilización de owmToState().
+const _WK_KEY = {
+  Clear: 'clear', MostlyClear: 'clear', Hot: 'clear',
+  PartlyCloudy: 'cloudy', Breezy: 'cloudy', Windy: 'cloudy',
+  MostlyCloudy: 'overcast', Cloudy: 'overcast',
+  Fog: 'fog', FreezingFog: 'fog', Haze: 'fog', Dust: 'fog', Smoke: 'fog',
+  Drizzle: 'rain', FreezingDrizzle: 'rain', Rain: 'rain', HeavyRain: 'rain',
+  Showers: 'rain', SunShowers: 'rain', ScatteredShowers: 'rain', Hail: 'rain',
+  MixedRainfall: 'rain', MixedRainAndSleet: 'rain', FreezingRain: 'rain',
+  Thunderstorm: 'storm', Thunderstorms: 'storm', IsolatedThunderstorms: 'storm',
+  ScatteredThunderstorms: 'storm', StrongStorms: 'storm', SevereThunderstorm: 'storm',
+  Hurricane: 'storm', TropicalStorm: 'storm',
+  Snow: 'snow', HeavySnow: 'snow', Flurries: 'snow', SnowShowers: 'snow',
+  ScatteredSnowShowers: 'snow', Blizzard: 'snow', BlowingSnow: 'snow', Sleet: 'snow',
+  MixedSnowAndSleet: 'snow', MixedRainAndSnow: 'snow', Wintry: 'snow', Frigid: 'snow',
+};
+const _WK_GLYPH = { clear: '☀️', cloudy: '⛅', overcast: '☁️', rain: '🌧️', storm: '⛈️', snow: '🌨️', fog: '🌫️' };
+const _WK_LABEL_ES = {
+  Clear: 'Despejado', MostlyClear: 'Mayormente despejado', PartlyCloudy: 'Parcialmente nublado',
+  MostlyCloudy: 'Mayormente nublado', Cloudy: 'Nublado', Fog: 'Niebla', Haze: 'Bruma',
+  Dust: 'Polvo en suspensión', Smoke: 'Humo', Drizzle: 'Llovizna', Rain: 'Lluvia',
+  HeavyRain: 'Lluvia fuerte', Showers: 'Chubascos', SunShowers: 'Chubascos con sol',
+  ScatteredShowers: 'Chubascos dispersos', Thunderstorm: 'Tormenta eléctrica',
+  Thunderstorms: 'Tormentas eléctricas', IsolatedThunderstorms: 'Tormentas aisladas',
+  ScatteredThunderstorms: 'Tormentas dispersas', StrongStorms: 'Tormentas fuertes',
+  Hurricane: 'Huracán', TropicalStorm: 'Tormenta tropical', Snow: 'Nieve',
+  HeavySnow: 'Nieve fuerte', Flurries: 'Copos aislados', Windy: 'Ventoso', Breezy: 'Brisa',
+};
+function wkKey(code) { return _WK_KEY[code] || 'cloudy'; }
+function wkGlyph(key) { return _WK_GLYPH[key] || '⛅'; }
+function wkLabel(code) { return _WK_LABEL_ES[code] || code || '—'; }
+function weatherKitToState(o) {
+  const cw = o.currentWeather || {};
+  const a = astroAt();
+  const key = wkKey(cw.conditionCode);
+  const tempC = cw.temperature != null ? cw.temperature : 0;
+  const feelsC = cw.temperatureApparent != null ? cw.temperatureApparent : tempC;
+  const temp = Math.round(tempC * 9 / 5 + 32);
+  const feels = Math.round(feelsC * 9 / 5 + 32);
+  const windMph = Math.round((cw.windSpeed || 0) * 0.621371);
+  const humidityPct = Math.round((cw.humidity != null ? cw.humidity : 0) * 100);
+  // uvIndex de Apple es REAL (no estimado por elevación solar como con OWM, que no lo trae en /weather).
+  const uvVal = cw.uvIndex != null ? Math.round(cw.uvIndex) : Math.max(0, Math.round((a.sunElevNorm || 0) * 11));
+  const uvLbl = uvVal === 0 ? '—' : uvVal < 3 ? 'Bajo' : uvVal < 6 ? 'Moderado' : uvVal < 8 ? 'Alto' : 'Muy Alto';
+  const meta = cw.metadata || {};
+  const rainMm = cw.precipitationIntensity || 0;
+  const rn = key === 'rain' ? Math.max(0.4, Math.min(1, rainMm / 3)) : Math.min(1, rainMm / 3);
+  return {
+    condition: {
+      key, label: wkLabel(cw.conditionCode), temp: temp + '°', feels: feels + '°', feelsHot: feels >= 90,
+      // Apple currentWeather no trae máx/mín del día (haría falta forecastDaily, pendiente) --
+      // mismo fallback gracioso que owmToState usa cuando OWM tampoco lo trae.
+      hi: 'Máx: ' + temp + '°', lo: 'Mín: ' + temp + '°',
+    },
+    time: { dayT: a.dayT },
+    drivers: {
+      cloud: Math.max(0, Math.min(1, cw.cloudCover != null ? cw.cloudCover : 0)),
+      storm: key === 'storm' ? 0.9 : 0,
+      wind: Math.max(0, Math.min(1, windMph / 25)),
+      rain: key === 'storm' ? 1 : rn,
+      snow: key === 'snow' ? 0.8 : 0,
+      fog: key === 'fog' ? 0.7 : 0,
+    },
+    metrics: {
+      humidity: humidityPct + '%',
+      windMph: windMph + ' mph', windDir: windDirLabel(cw.windDirection),
+      vis: Math.round((cw.visibility != null ? cw.visibility : 10000) / 1609.34) + ' mi',
+      pressure: ((cw.pressure || 1013) * 0.02953).toFixed(2) + ' inHg',
+      uv: String(uvVal), uvLabel: uvLbl, uvHot: uvVal >= 6,
+    },
+    // Apple no devuelve nombre de ciudad (a diferencia de OWM) -- pendiente aparte
+    // (reverse-geocode); por ahora, mismo fallback que OWM usa cuando o.name falta.
+    location: { name: 'Miami Lakes, FL', short: 'Miami Lakes', lat: meta.latitude, lon: meta.longitude, tz: 'America/New_York' },
+    hourly: buildHourlyByGlyph(temp, wkGlyph(key)),
+    sky: { base: 1 },
+    event: { lead: 'Día sin evento en agenda.', start: 'Sin horario', end: 'Sin horario', buffer: '—', loc: 'Miami Lakes', sunset: '◔ ' + a.sunset, logi: '' },
+  };
+}
 function normalize(raw) {
+  // Apple WeatherKit crudo = tiene currentWeather (y nada de weather[]/main de OWM)
+  if (raw && raw.currentWeather) return weatherKitToState(raw);
   // OWM crudo = tiene weather[]+main+clouds y NO tiene drivers → transformar
   if (raw && Array.isArray(raw.weather) && raw.main && raw.clouds && !raw.drivers) return owmToState(raw);
   return raw;
