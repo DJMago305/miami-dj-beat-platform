@@ -84,6 +84,39 @@ serve(async (req) => {
             }, 409);
         }
 
+        // Capa C (defensa en profundidad, docs/plan-dinero-de-leads-dueno-servidor.md §3):
+        // recalcular server-side con la MISMA fórmula que el navegador
+        // (mdj_lead_recalcular_total, construida y verificada el 2026-09-28) y
+        // comparar contra total_amount. DELIBERADAMENTE NO BLOQUEA todavía
+        // (decisión del PO, 2026-09-29): el bono de reserva depende del tiempo
+        // (48h desde created_at) -- un total aprobado por staff ANTES de esa
+        // ventana y pagado DESPUÉS recalcularía distinto sin que nadie haya
+        // manipulado nada, y bloquear ahí rechazaría un pago legítimo. Por
+        // ahora solo se registra la discrepancia (log estructurado,
+        // greppable) para ver qué tan seguido pasa esto de verdad antes de
+        // decidir una regla de bloqueo. Nunca debe poder romper el cobro real
+        // -- entero en try/catch, best-effort.
+        try {
+            const { data: recalc, error: recalcErr } = await sb.rpc("mdj_lead_recalcular_total", { p_lead_id: lead_id });
+            const row = Array.isArray(recalc) ? recalc[0] : recalc;
+            if (!recalcErr && row && row.total != null) {
+                const recalcTotal = parseFloat(String(row.total));
+                const storedTotal = totalCents / 100;
+                if (Math.abs(recalcTotal - storedTotal) > 0.01) {
+                    console.warn("[create-event-payment] CAPA_C_DISCREPANCIA_TOTAL", JSON.stringify({
+                        lead_id, kind, quoteOnly,
+                        total_amount: storedTotal, total_aprobado_usd: isFinite(approvedUsd) ? approvedUsd : null,
+                        total_recalculado: recalcTotal, diferencia: Math.round((recalcTotal - storedTotal) * 100) / 100,
+                        discount_note: row.discount_note ?? null,
+                    }));
+                }
+            } else if (recalcErr) {
+                console.warn("[create-event-payment] Capa C: mdj_lead_recalcular_total falló (no bloquea el cobro):", recalcErr.message);
+            }
+        } catch (eCapaC) {
+            console.warn("[create-event-payment] Capa C: error inesperado (no bloquea el cobro):", String(eCapaC));
+        }
+
         let chargeCents = 0;
         let discountCents = 0;
         let couponApplied: { code: string; label: string } | null = null;
