@@ -58,15 +58,18 @@
                 el.textContent = '$' + Math.round(price).toLocaleString('en-US');
             });
 
-            // Patrón B (furniture-dj.html): <div data-furn-id="..." data-furn-price="...">
-            // contiene un <span class="furndj-item-unit-price">$6 / chair</span> --
-            // solo se reemplaza el número inicial, se conserva "/ chair" etc.
+            // Patrón B (furniture-dj.html, y lighting-dj.html para items que se
+            // rentan por unidad como Moving Heads): <div data-furn-id="..."
+            // data-furn-price="..."> contiene un span con el sufijo ("$6 / chair",
+            // "$150 / unidad") -- solo se reemplaza el número inicial, se
+            // conserva el sufijo. furndj-item-unit-price y mdj-unit-price-suffix
+            // son el mismo patrón con dos nombres de clase (una por página).
             furnEls.forEach(function (el) {
                 var sku = el.getAttribute('data-furn-id');
                 if (sku == null || live[sku] == null) return;
                 var price = live[sku];
                 el.setAttribute('data-furn-price', String(price));
-                var unitEl = el.querySelector('.furndj-item-unit-price');
+                var unitEl = el.querySelector('.furndj-item-unit-price, .mdj-unit-price-suffix');
                 if (unitEl) {
                     unitEl.removeAttribute('data-i18n');
                     var newPriceStr = '$' + Math.round(price).toLocaleString('en-US');
