@@ -193,6 +193,21 @@ const _WK_LABEL_ES = {
 function wkKey(code) { return _WK_KEY[code] || 'cloudy'; }
 function wkGlyph(key) { return _WK_GLYPH[key] || '⛅'; }
 function wkLabel(code) { return _WK_LABEL_ES[code] || code || '—'; }
+// Apple ya trae en la MISMA respuesta lo que a OWM le hacía falta una segunda
+// llamada aparte (One Call 3.0, nunca activado): forecastNextHour.minutes
+// (lluvia minuto a minuto) y weatherAlerts.alerts (avisos oficiales reales).
+// Mismo shape de salida que fetchAlertaAdelantada() para poder reusar
+// aplicarAlerta() sin duplicar la lógica de "una tormenta activa le gana a
+// la clasificación básica".
+function wkAdelanto(o) {
+  const wa = o.weatherAlerts && Array.isArray(o.weatherAlerts.alerts) ? o.weatherAlerts.alerts : [];
+  const minutes = o.forecastNextHour && Array.isArray(o.forecastNextHour.minutes) ? o.forecastNextHour.minutes : [];
+  const idxLluvia = minutes.findIndex((m) => (m.precipitationIntensity || 0) > 0 || (m.precipitationChance || 0) >= 0.5);
+  return {
+    alerts: wa.map((a) => ({ evento: a.eventType || a.description || 'Aviso', desc: (a.description || '').slice(0, 400), fin: a.expireTime || null })),
+    lluviaEnMin: idxLluvia === -1 ? null : idxLluvia,
+  };
+}
 function weatherKitToState(o) {
   const cw = o.currentWeather || {};
   const a = astroAt();
@@ -209,7 +224,7 @@ function weatherKitToState(o) {
   const meta = cw.metadata || {};
   const rainMm = cw.precipitationIntensity || 0;
   const rn = key === 'rain' ? Math.max(0.4, Math.min(1, rainMm / 3)) : Math.min(1, rainMm / 3);
-  return {
+  const state = {
     condition: {
       key, label: wkLabel(cw.conditionCode), temp: temp + '°', feels: feels + '°', feelsHot: feels >= 90,
       // Apple currentWeather no trae máx/mín del día (haría falta forecastDaily, pendiente) --
@@ -239,7 +254,13 @@ function weatherKitToState(o) {
     sky: { base: 1 },
     event: { lead: 'Día sin evento en agenda.', start: 'Sin horario', end: 'Sin horario', buffer: '—', loc: 'Miami Lakes', sunset: '◔ ' + a.sunset, logi: '' },
   };
+  // aplicarAlerta() está definida más abajo en este mismo módulo -- disponible
+  // aquí porque weatherKitToState() solo se INVOCA en tiempo de ejecución
+  // (nunca durante la evaluación inicial del módulo), cuando el archivo ya
+  // terminó de cargar completo.
+  return aplicarAlerta(state, wkAdelanto(o));
 }
+
 function normalize(raw) {
   // Apple WeatherKit crudo = tiene currentWeather (y nada de weather[]/main de OWM)
   if (raw && raw.currentWeather) return weatherKitToState(raw);
@@ -302,9 +323,14 @@ async function doFetch(coords) {
     const url = ep + '?lat=' + coords.lat.toFixed(4) + '&lon=' + coords.lon.toFixed(4) + '&tz=' + coords.tz;
     const r = await fetch(url, { cache: 'no-store', signal: ctrl.signal });
     if (!r.ok) throw new Error('http ' + r.status);
-    const s = normalize(await r.json());               // OWM crudo → AtmosphericState (Opción B)
+    const s = normalize(await r.json());               // OWM/WeatherKit crudo → AtmosphericState
     s.location.source = coords.src || 'gps';           // 'gps' | 'ultima' | 'base' -- para avisar cuando la ubicación es aproximada
     if (!isValidState(s)) throw new Error('malformed AtmosphericState');
+    // Apple (weatherKitToState) ya aplicó su propio "adelanto" (weatherAlerts +
+    // forecastNextHour) desde la MISMA respuesta -- s.lookAhead ya viene puesto,
+    // sin gastar una segunda llamada de red. Solo OWM necesita el fetch aparte
+    // (One Call 3.0, endpoint distinto).
+    if (s.lookAhead) return s;
     const adelanto = await fetchAlertaAdelantada(coords, ctrl);   // best-effort, nunca bloquea ni rompe lo de arriba
     return aplicarAlerta(s, adelanto);
   } finally { clearTimeout(to); }
