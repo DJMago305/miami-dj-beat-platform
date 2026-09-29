@@ -783,6 +783,66 @@
       ]
     };
 
+    /* ─────────── Nombre (SECTION_CATALOG) → sku real (service_catalog) ───────────
+       Carrito por referencia, sub-paso "mapear staff-order.html"
+       (docs/plan-dinero-de-leads-dueno-servidor.md §3 B2 punto 5). Puramente
+       aditivo -- mismo patrón que PR #576 (event builder del cliente): el sku
+       se agrega a la línea que ya se arma hoy, nada de lo que ya funciona deja
+       de funcionar si el sku sale null.
+       'DJ / Actuación' ($1500, el genérico que PACKAGE_TO_CANONICAL usa para
+       cualquier paquete de boda/corporativo importado del event builder del
+       cliente) se mapea a dj_weddings -- decisión del PO (2026-09-29): "el
+       caso más común de ese precio genérico". dj_holiday paga exactamente lo
+       mismo y también se cotiza aparte sin precio fijo; el nombre genérico no
+       trae información suficiente para distinguir los dos casos hoy. */
+    var CATALOG_NAME_TO_SKU = {
+      'DJ / Actuación':              'dj_weddings',   // ambiguo con dj_holiday -- ver comentario arriba
+      'DJ / Fiestas Privadas':       'dj_private',
+      'DJ / Clubs & Nightlife':      'dj_clubs',
+      'DJ / Eventos Familiares':     'dj_family',
+      'MC Profesional':              'mc_maestro',    // "Maestro de Ceremonias", precio idéntico ($450)
+      'Saxofonista en Vivo':         'live_sax',
+      'Small PA System':             'pa_small',
+      'Medium PA System':            'pa_medium',
+      'Large PA System':             'pa_large',
+      'Wireless Microphone':         'wireless_mic',
+      'DJ Monitor / Stage Monitor':  'dj_monitor',
+      'Uplighting Package':          'uplighting_pack',
+      'Moving Head Lights':          'moving_heads',
+      'High-Top Cocktail Tables':    'f_cocktail',
+      'Premium Seating (per chair)': 'f_chairs',
+      'Custom Linen Package':        'linens_custom_pkg',
+      'CO2 Jets & Cannons':          'fx_co2',
+      'Cold Sparks':                 'fx_sparks',
+      'Confetti Cannons':            'fx_confetti',
+      'Fog / Smoke Machine':         'fx_fog',
+      'Bubble Machine':              'fx_bubbles',
+      '20×20 White Frame Tent':      'tent_20x20',
+      '20×40 White Frame Tent':      'tent_20x40',
+      '40×40 White Frame Tent':      'tent_40x40',
+      'Portable A/C Unit':           'ac_unit',
+      'Full Box Truss Structure':    'truss_box_full',
+      'Water Slide':                 'water_slide'
+    };
+    // 'Hora Loca' comparte el mismo name entre los 2 packs -- se distingue por description.
+    var HORA_LOCA_DESC_TO_SKU = { 'Premium Pack': 'hl_premium', 'Basic Pack': 'hl_basic' };
+    /* Sin equivalente real en service_catalog hoy -- huecos documentados
+       (24), no adivinados: Violinista en Vivo, Payaso / Show Infantil
+       (payaso_santa coincide en precio ($300) pero es "Santa & Seasonal",
+       tema navideño, no un show infantil genérico -- no se fuerza el match
+       solo por el precio), Cobertura Foto / Video, Staff de Evento (por persona),
+       Subwoofer (add-on), LED Wall / Screen, Laser Show Package, Gobo
+       Projection, Pin Spot Lights, Disco Ball, Bar Station Setup, Lounge
+       Furniture Set, Pipe & Drape, Dance Floor, Tent Sidewalls, DJ Riser /
+       Stage Riser, Portable Stage Platform, Podium / Lectern, Standard
+       Bouncy Castle, Combo Obstacle Course, Generator Rental, Event
+       Coordination (hour), Valet Parking Service, Security Guard (per
+       person). */
+    function resolveSkuForLine(name, description) {
+      if (name === 'Hora Loca') return HORA_LOCA_DESC_TO_SKU[description] || null;
+      return CATALOG_NAME_TO_SKU[name] || null;
+    }
+
     var ORDER_STATUS_LABEL = {
       pending:    { label: 'Pendiente',   cls: 'so-status--pending' },
       in_review:  { label: 'En Revisión', cls: 'so-status--in_review' },
@@ -1236,7 +1296,8 @@
         provider_name:  staffName,
         staff_note:     '',
         selected_artist_stage_name: '',
-        description:    description || ''
+        description:    description || '',
+        sku:            resolveSkuForLine(name, description)
       });
       renderLines();
       showToast(name + ' agregado ✓');
@@ -1392,7 +1453,10 @@
         provider_name:              svc.provider_name || (artistName || packageType ? 'MDJB' : ''),
         staff_note:                 svc.staff_note || svc.notes || '',
         selected_artist_stage_name: artistName,
-        description:                description
+        description:                description,
+        // Preserva el sku si ya venía de arriba (event builder del cliente,
+        // PR #576) -- solo lo resuelve por nombre si esta línea nunca tuvo uno.
+        sku:                        svc.sku || resolveSkuForLine(rawName, description)
       };
     }
 
