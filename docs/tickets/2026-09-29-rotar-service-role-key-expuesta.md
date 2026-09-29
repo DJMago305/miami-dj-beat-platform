@@ -36,3 +36,11 @@ Mientras la clave vieja siga activa (aunque no se use en el código), sigue sien
 
 - No se toca ninguna Edge Function — ya están listas.
 - No se desactivan las claves legacy tipo JWT en general (`anon` legacy, etc.) — solo se rota la `service_role` específica que se expuso, una vez migrado el paso 2.
+
+## CERRADO (2026-09-29) — clave rotada y revocada, verificado sin errores
+
+- Confirmado que `SUPABASE_SECRET_KEYS` ya tenía un secreto real configurado (`sb_secret_T5Y93...`, sección "Secret keys" de API Keys) — el código ya lo prefería desde el 28 de septiembre.
+- **Hallazgo adicional durante la verificación**: 8 Edge Functions dependían de `SUPABASE_ANON_KEY` legacy sin respaldo a `SUPABASE_PUBLISHABLE_KEY` — mismo riesgo del lado `anon` que casi rompió la trastienda el 28. Corregido y desplegado (PR #596) — con un tropiezo real en el camino: el primer redeploy se hizo antes de fusionar el PR, así que subió el código viejo sin el arreglo; corregido con un segundo redeploy después de fusionar y confirmar el código real en disco.
+- Auditoría de Database Webhooks y cron jobs antes de revocar: solo `on_portal_message_insert` tenía una clave legacy pegada en su definición — confirmado que no se rompe (la función `notify-portal-message` no verifica la firma del JWT, solo decodifica el payload — hallazgo de seguridad aparte, ver `docs/tickets/2026-09-29-notify-portal-message-auth-bypass.md`). Los 6 cron jobs reales usan su propio secreto en Vault, sin relación con la clave legacy.
+- Rotación real ejecutada por el PO en el Dashboard de Supabase (JWT Keys → Legacy JWT Secret → Revoke), guiado paso a paso desde esta sesión, con capturas verificadas en cada paso antes de confirmar acciones irreversibles. Confirmado con `query_logs`: 0 errores 401 nuevos después de deshabilitar las claves legacy y después de revocar el secreto HS256.
+- La clave `service_role` expuesta el 2026-09-28 ya no es válida — el secreto que la firmaba quedó revocado.
