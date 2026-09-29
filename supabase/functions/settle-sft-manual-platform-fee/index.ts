@@ -36,7 +36,7 @@ serve(async (req) => {
 
   const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY");
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
   const serviceKey = getServiceRoleKey();
 
   if (!STRIPE_SECRET_KEY || !supabaseUrl || !anonKey || !serviceKey) {

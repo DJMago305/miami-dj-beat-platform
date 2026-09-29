@@ -3032,7 +3032,7 @@ serve(async (req: Request) => {
         try {
             const base = Deno.env.get("FINANCIAL_ENGINE_URL") ||
                 `${Deno.env.get("SUPABASE_URL")}/functions/v1/financial-engine`;
-            const key = Deno.env.get("FINANCIAL_ENGINE_KEY") || Deno.env.get("SUPABASE_ANON_KEY") || "";
+            const key = Deno.env.get("FINANCIAL_ENGINE_KEY") || Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY") || "";
             const r = await fetch(base, {
                 method: "POST",
                 headers: { apikey: key, Authorization: authHeader || `Bearer ${key}`, "Content-Type": "application/json" },

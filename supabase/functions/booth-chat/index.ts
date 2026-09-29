@@ -262,7 +262,7 @@ async function fetchProRoster(): Promise<string> {
     }
     try {
         const supabaseUrl = (Deno.env.get("SUPABASE_URL") ?? "").replace(/\/$/, "");
-        const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+        const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? "";
         if (!supabaseUrl || !anonKey) return "";
 
         // Campos públicos seguros — rating, bio, verified, slug para links de perfil
