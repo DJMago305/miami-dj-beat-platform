@@ -299,6 +299,13 @@
     }
     .so-add-input::placeholder { color: var(--muted); }
     .so-add-input:focus { outline: none; border-color: rgba(197,160,89,0.4); }
+    /* Aviso no vinculante: precio guardado distinto del vigente en el catálogo */
+    .so-price-live-warning {
+      margin-top: 3px;
+      font-size: 10px;
+      color: #d9a441;
+      white-space: nowrap;
+    }
     .so-add-label {
       display: block;
       font-size: 13px;
@@ -859,6 +866,7 @@
     var orderStatus  = 'pending';
     var staffName    = 'OWNER'; // default; overwritten with real name on auth
     var cachedClientName = '';
+    var livePrices   = {};      // sku -> {precio, activo}, llenado best-effort por refreshLivePrices()
 
     /* ─────────── DOM refs ─────────── */
     var elLoading   = document.getElementById('so-loading');
@@ -1084,6 +1092,14 @@
                 }).join('') + '</select>';
               var priceInput  = '<input class="so-add-input" style="width:80px;padding:4px 7px;font-size:12px;" type="number" min="0" step="0.01" ' +
                 'data-line-id="' + esc(line.line_id) + '" data-field="unit_price_usd" value="' + unitPrice + '" />';
+              // Aviso visual, no vinculante: precio guardado vs. precio vigente del catálogo
+              // (mdj_catalog_precios_vigentes, PR #584). Informa nada más -- no cambia lo que
+              // se cobra, staff decide si actualiza el número a mano.
+              var liveInfo = line.sku ? livePrices[line.sku] : null;
+              if (liveInfo && liveInfo.activo && liveInfo.precio != null && Math.abs(liveInfo.precio - unitPrice) > 0.01) {
+                priceInput += '<div class="so-price-live-warning" title="Precio vigente en el catálogo hoy">' +
+                  '⚠ catálogo: ' + money(liveInfo.precio) + '</div>';
+              }
               var providerInput = '<input class="so-add-input" style="width:90px;padding:4px 7px;font-size:12px;" type="text" placeholder="MDJB" ' +
                 'data-line-id="' + esc(line.line_id) + '" data-field="provider_name" value="' + esc(line.provider_name || '') + '" />';
               var notesInput  = '<input class="so-add-input" style="width:110px;padding:4px 7px;font-size:12px;" type="text" placeholder="Notas…" ' +
@@ -1568,6 +1584,29 @@
       renderInfoGrid(lead, cachedClientName);
       renderLines();
       bindEvents();
+      refreshLivePrices();
+    }
+
+    /* ─────────── Aviso visual: precio vigente del catálogo ───────────
+       Carrito por referencia, sub-paso "precios en vivo" (PR #584/#587).
+       Best-effort, nunca bloquea la carga de la orden ni el guardado --
+       si falla o no hay ningún sku todavía (lo normal hasta que se creen
+       líneas nuevas con el catálogo ya mapeado), simplemente no muestra
+       ningún aviso. */
+    async function refreshLivePrices() {
+      try {
+        var skus = lines.map(function (l) { return l.sku; }).filter(Boolean);
+        skus = skus.filter(function (s, i) { return skus.indexOf(s) === i; }); // únicos
+        if (!skus.length || !supabase) return;
+        var { data, error } = await supabase.rpc('mdj_catalog_precios_vigentes', { p_skus: skus });
+        if (error || !Array.isArray(data)) return;
+        var next = {};
+        data.forEach(function (row) {
+          next[row.sku] = { precio: row.precio_efectivo_usd != null ? parseFloat(row.precio_efectivo_usd) : null, activo: !!row.activo };
+        });
+        livePrices = next;
+        renderLines();
+      } catch (e) { /* silencioso -- el panel sigue funcionando sin el aviso */ }
     }
 
     /* ─────────── Boot ─────────── */
