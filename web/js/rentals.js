@@ -126,7 +126,7 @@ window.fxItems = {
         id: "fx_dancefloor",
         nameKey: "data_fx_dancefloor_name",
         ctaKey: "btn_add_to_pack",
-        video: "./assets/Special_Effects/Led_Dance_Floor.mp4",
+        video: "./assets/led-screens/Led_Dance_Floor.mp4",
         fallbackName: "Pista de Baile LED (Infinity Floor)",
         fallbackDesc: "A stunning interactive 3D LED dance floor that transforms your entire venue into a luxury nightclub.",
         price: null,

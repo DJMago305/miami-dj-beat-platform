@@ -13,10 +13,20 @@
 // confetti, CO2, etc.), aunque ya NO comparten página ni categoría.
 //
 // Solo mueve estos 2 -- los demás videos de Special_Effects (Bubble_Haze,
-// CO2, Dancin_Cloud, Led_Dance_Floor, Smoke_Machine, SNOW_MACHINE,
-// SPARKULAR, Stadium_Confetti_Blowers, Iluminacion) SÍ son de efectos
-// especiales de verdad y se quedan donde están -- reorganizarlos a todos
-// es un trabajo más grande, aparte.
+// CO2, Dancin_Cloud, Smoke_Machine, SNOW_MACHINE, SPARKULAR,
+// Stadium_Confetti_Blowers) SÍ son de efectos especiales de verdad y se
+// quedan donde están -- reorganizarlos a todos es un trabajo más grande,
+// aparte.
+//
+// ⚠️ ESTADO (2026-09-29): el PO ya movió estos 2 A MANO desde el Dashboard
+// de Supabase (subiendo copias nuevas en vez de correr este script), y de
+// paso también movió Iluminacion.mp4 -> lighting/ y Led_Dance_Floor.mp4 ->
+// led-screens/ (ambos con razón real: el primero es un segundo video de
+// iluminación ya usado como video de Uplighting en rentals.js, el segundo
+// es un producto LED real -- Pista de Baile LED/Infinity Floor). Este
+// script ya NO tiene nada que mover -- se deja como referencia histórica
+// del patrón (SERVICE_ROLE_KEY, lo corre el PO) para la próxima vez que
+// haga falta reorganizar un video real en Storage.
 //
 // ⚠️ Requiere la SERVICE ROLE KEY (nunca la anon/publishable) -- por eso
 // este hilo de Claude no lo corre: la clave de servicio no debe pasar por
