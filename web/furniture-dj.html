@@ -165,8 +165,11 @@
        fondo blanco; foto de ambiente real cuando es una instalación/servicio
        -- ver docs/ESTADO_MAESTRO.md 2026-09-29, auditoría forense de
        furniture-decor/). object-fit: contain preserva fondo blanco/transparente
-       sin recortar el producto; cover se ve mejor en las de ambiente, pero
-       contain es seguro para ambos casos sin conocer cada foto de antemano. */
+       sin recortar el producto. Las fotos de ambiente con proporción muy
+       distinta al cuadro (retrato alto o panorámica) se ven como manchas de
+       color al encogerse enteras dentro de 72x72 -- para esas 3 usamos cover
+       con un object-position afinado a mano para recortar sobre la parte
+       reconocible en vez de reducir toda la escena. */
     .furndj-item-photo {
       grid-column: 1;
       grid-row: 1 / 3;
@@ -176,6 +179,21 @@
       background: #fff;
       object-fit: contain;
       display: block;
+    }
+
+    .furndj-item-photo[src*="dining-tables.jpg"] {
+      object-fit: cover;
+      object-position: center 35%;
+    }
+
+    .furndj-item-photo[src*="floral-decor.jpg"] {
+      object-fit: cover;
+      object-position: center 78%;
+    }
+
+    .furndj-item-photo[src*="led-furniture.jpg"] {
+      object-fit: cover;
+      object-position: center 55%;
     }
 
     .furndj-item-info {
