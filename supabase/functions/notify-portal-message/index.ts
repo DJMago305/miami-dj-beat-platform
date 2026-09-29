@@ -511,23 +511,6 @@ function escHtml(s: string) {
 
 // ── Auth & debounce (unchanged logic) ─────────────────────────────────────────
 
-function decodeJwtPayload(token: string): Record<string, unknown> | null {
-    try {
-        const parts = token.split(".");
-        if (parts.length < 2) return null;
-        const b64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
-        const pad = "=".repeat((4 - (b64.length % 4)) % 4);
-        return JSON.parse(atob(b64 + pad)) as Record<string, unknown>;
-    } catch {
-        return null;
-    }
-}
-
-function bearerIsServiceRole(token: string): boolean {
-    const payload = decodeJwtPayload(token);
-    return payload?.role === "service_role";
-}
-
 async function authorizeRequest(
     req: Request,
     sb: ReturnType<typeof createClient>,
@@ -542,9 +525,6 @@ async function authorizeRequest(
         return true;
     }
     if (serviceKey && apikey && apikey === serviceKey) {
-        return true;
-    }
-    if (bearer && bearerIsServiceRole(bearer)) {
         return true;
     }
 
