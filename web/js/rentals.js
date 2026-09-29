@@ -158,7 +158,7 @@ window.fxItems = {
         id: "fx_uplighting",
         nameKey: "data_light_up_name",
         ctaKey: "btn_add_to_pack",
-        video: "./assets/Special_Effects/Iluminacion.mp4",
+        video: "./assets/lighting/Iluminacion.mp4",
         fallbackName: "Uplighting Arquitectónico",
         fallbackDesc: "Elegant, wireless perimeter lighting designed to bathe your walls in the precise color palette of your event.",
         price: 350,
