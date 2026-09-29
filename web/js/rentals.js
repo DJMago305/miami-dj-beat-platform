@@ -140,7 +140,7 @@ window.fxItems = {
         video: "./assets/Special_Effects/Moving_Head_Lights.mp4",
         fallbackName: "Party & Club Lighting",
         fallbackDesc: "Intelligent moving heads and laser arrays to transform any venue into a high-energy nightlife experience.",
-        price: 350,
+        price: 150,
         emoji: "🪩"
     },
     ledWall: {
@@ -174,7 +174,7 @@ window.lightingItems = {
         video: "./assets/Special_Effects/Moving_Head_Lights.mp4",
         fallbackName: "Party & Club Lighting",
         fallbackDesc: "Intelligent moving heads and laser arrays to transform any venue into a high-energy nightlife experience.",
-        price: 350,
+        price: 150,
         emoji: "🪩"
     },
     ledWall: {
