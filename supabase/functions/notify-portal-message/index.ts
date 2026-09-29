@@ -558,7 +558,7 @@ async function authorizeRequest(
     }
 
     if (bearer && msg?.sender_id) {
-        const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+        const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
         if (anonKey) {
             try {
                 const userClient = createClient(SUPABASE_URL!, anonKey, {
