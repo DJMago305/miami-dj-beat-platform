@@ -2922,3 +2922,9 @@ Sesión dedicada a resolver el pendiente del incidente del 2026-09-28 (clave `se
 - **Rotación real ejecutada por el PO**, guiada paso a paso desde el chat con verificación de cada pantalla antes de confirmar cualquier acción irreversible (crear standby key → rotar → deshabilitar claves legacy → revocar el secreto HS256 legacy). Verificado con `query_logs` en cada paso: 0 errores 401 nuevos, la propia conexión MCP de esta sesión siguió funcionando sin interrupción.
 - **Resultado**: la clave `service_role` expuesta el 28 de septiembre ya no es válida — el secreto que la firmaba quedó revocado de raíz, sin la caída que causó el intento anterior.
 - **Pendiente, aparte**: arreglar `bearerIsServiceRole()` en `notify-portal-message` (ticket #597, PR de código todavía no abierto).
+
+## [2026-09-29] Cierre de pendientes: notify-portal-message + sku del láser
+
+- **PR #599**: `notify-portal-message`'s `bearerIsServiceRole()` (bypass de autorización sin verificar firma, ver ticket #597) eliminado. Confirmado que el webhook real (`on_portal_message_insert`) no dependía de ese camino — su `x-webhook-secret` ya coincidía con `STRIPE_WEBHOOK_SECRET`. Redesplegado por el PO.
+- **PR #600**: sku `light_laser` ($150/unidad, precio al cliente confirmado por el PO) para el Chauvet Scorpion Storm RGX — 2 unidades en storage, mismo patrón de selector de cantidad que Moving Heads. Aplicado y verificado en producción y en vivo.
+- Con esto, todos los pendientes reales de la sesión de páginas de categoría + rotación de clave quedan cerrados, salvo: mover `led-large.jpg`/`led-small.jpg` a la carpeta correcta en Supabase Storage, borrar los videos duplicados en `Special_Effects/`, y decidir sobre las 3 fotos genéricas de stock en `lighting/` — las 3 son tareas manuales del PO, no requieren código.
