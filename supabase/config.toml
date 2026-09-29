@@ -498,6 +498,33 @@ verify_jwt = false
 [functions.mdj-weatherkit]
 verify_jwt = false
 
+# 2026-09-29: mismo patrón de fondo que las entradas de arriba (un redeploy
+# masivo sin nombrar función devuelve verify_jwt a true por defecto) --
+# confirmado con logs reales de hoy: las 4 fallaron 401 en TODAS sus
+# corridas de cron desde medianoche, no un blip aislado. Las 4 verifican
+# su propio secreto interno (Authorization: Bearer $CRON_EDGE_AUTH_SECRET,
+# mismo patrón que send-reminder-sms/notify-dj-sms/mdj-avisos-despachar) --
+# nunca reciben un JWT real porque nada de esto pasa por sesión de usuario.
+[functions.calendar-reconcile]
+verify_jwt = false
+
+[functions.calendar-channel-renew]
+verify_jwt = false
+
+[functions.notify-yearly-recall]
+verify_jwt = false
+
+[functions.mdj-yearly-recall]
+verify_jwt = false
+
+# notify-new-lead NO entra aquí a propósito: se llama desde el navegador con
+# la clave anon normal (ver corsHeaders/comentario "may be called from the
+# browser" en su index.ts), sin secreto propio -- sus 2 fallos del
+# 2026-09-28 23:18-23:21 caen justo en la ventana del incidente de la clave
+# ya documentado (Vulnerabilidad del service_role expuesta), no un hueco de
+# config real. Quitarle verify_jwt sería debilitar una protección que sí
+# necesita.
+
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
