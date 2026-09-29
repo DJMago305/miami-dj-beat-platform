@@ -5,14 +5,14 @@
     <script src="/js/mdj-lang-boot.js?v=20260927-boot"></script>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Renta de Iluminación y Pantallas LED Miami | Moving Heads, LED Walls, Uplighting | Miami DJ Beat</title>
+  <title>Iluminación para Eventos, Fiestas Privadas y Corporativas en Miami | Moving Heads, Uplighting | Miami DJ Beat</title>
   <link rel="canonical" href="https://www.miamidjbeat.com/lighting-dj.html" />
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "Service",
-    "serviceType": "Event Lighting & LED Screen Rental",
-    "name": "Event Lighting & LED Screen Rental Miami",
+    "serviceType": "Event Lighting Rental",
+    "name": "Event Lighting Rental for Weddings, Private & Corporate Parties Miami",
     "provider": { "@type": "EntertainmentBusiness", "@id": "https://www.miamidjbeat.com/#organization", "name": "Miami DJ Beat LLC", "url": "https://www.miamidjbeat.com/" },
     "areaServed": [
       { "@type": "City", "name": "Miami" },
@@ -21,7 +21,7 @@
       { "@type": "AdministrativeArea", "name": "Broward County" },
       { "@type": "AdministrativeArea", "name": "South Florida" }
     ],
-    "description": "Intelligent moving head lighting, modular LED walls, and architectural uplighting for Miami events, weddings, and nightlife productions."
+    "description": "Intelligent moving head lighting and architectural uplighting for Miami weddings, private parties, and corporate events."
   }
   </script>
   <script type="application/ld+json">
@@ -31,18 +31,10 @@
   "mainEntity": [
     {
       "@type": "Question",
-      "name": "What is included in the Party & Club Lighting package?",
+      "name": "What is included in the Moving Heads package?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Intelligent moving heads and laser arrays to transform any venue into a high-energy nightlife experience."
-      }
-    },
-    {
-      "@type": "Question",
-      "name": "Can I rent an LED wall sized for my venue?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Yes, our modular LED walls are quoted according to your venue's exact measurements, for dynamic visuals, monogram displays, and DJ booth facades."
+        "text": "Intelligent Chauvet moving head fixtures, rented per unit, to transform any venue into a high-energy nightlife experience."
       }
     },
     {
@@ -92,7 +84,7 @@
       {
         "@type": "ListItem",
         "position": 3,
-        "name": "Renta de Iluminación y Pantallas LED Miami",
+        "name": "Iluminación para Eventos, Fiestas Privadas y Corporativas en Miami",
         "item": "https://www.miamidjbeat.com/lighting-dj.html"
       }
     ]
@@ -108,10 +100,10 @@
     </script>
     <meta name="google-site-verification" content="BMMzSc4HzEcFPH2SaRYWVi1ORPiIOF2ghKycMgeojn8" />
   <meta name="description"
-    content="Event lighting rental in Miami: intelligent moving heads, modular LED walls, and architectural uplighting. Get a live quote from Miami DJ Beat LLC." />
+    content="Event lighting rental in Miami: intelligent Chauvet moving heads and architectural uplighting for weddings, private and corporate parties. Get a live quote from Miami DJ Beat LLC." />
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="Renta de Iluminación y Pantallas LED Miami | Moving Heads, LED Walls, Uplighting | Miami DJ Beat" />
-  <meta property="og:description" content="Intelligent moving head lighting, modular LED walls, and architectural uplighting for Miami events, weddings, and nightlife productions." />
+  <meta property="og:title" content="Iluminación para Eventos, Fiestas Privadas y Corporativas en Miami | Moving Heads, Uplighting | Miami DJ Beat" />
+  <meta property="og:description" content="Intelligent moving head lighting and architectural uplighting for Miami weddings, private parties, and corporate events." />
   <meta property="og:url" content="https://www.miamidjbeat.com/lighting-dj.html" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -231,6 +223,59 @@
       color: rgba(255, 255, 255, 0.75);
       line-height: 1.65;
       margin: 10px 0 0;
+    }
+
+    /* Selector de cantidad para Moving Heads (PO 2026-09-29: se rentan por
+       unidad física, igual que mobiliario -- mismo widget visual que
+       furndj-item-qty en furniture-dj.html, prefijo propio para esta página). */
+    .lighting-item-qty {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      margin: 14px -5px -5px;
+    }
+
+    .lighting-item-qty > * {
+      margin: 5px;
+    }
+
+    .lighting-qty-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 1px solid var(--gold);
+      background: transparent;
+      color: var(--gold);
+      font-size: 16px;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s ease;
+    }
+
+    .lighting-qty-btn:hover {
+      background: rgba(197, 160, 89, 0.18);
+    }
+
+    .lighting-qty-val {
+      min-width: 22px;
+      text-align: center;
+      font-family: 'Outfit', system-ui, sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .lighting-item-subtotal {
+      font-family: 'Outfit', system-ui, sans-serif;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .lighting-item-subtotal strong {
+      color: #fff;
     }
 
     .lighting-cta-wrap {
@@ -394,36 +439,32 @@
 
     <video id="lighting-hero-kb-bg" class="hero-shell-video hero-kb-bg" autoplay muted playsinline preload="metadata"
         poster="./assets/Special_Effects/fotos/lighting-hero-poster.jpg"
-        data-hero-playlist="./assets/Special_Effects/Moving_Head_Lights.mp4,./assets/Special_Effects/pantalla_LED.mp4"
+        data-hero-playlist="./assets/lighting/Moving_Head_Lights.mp4"
         style="position: fixed; inset: 0; z-index: 1; pointer-events: none; width: 100%; height: 100%; object-fit: cover; opacity: 1; filter: brightness(0.65);">
-        <source data-src="./assets/Special_Effects/Moving_Head_Lights.mp4" type="video/mp4">
+        <source data-src="./assets/lighting/Moving_Head_Lights.mp4" type="video/mp4">
     </video>
     <div class="hero-video-overlay"
         style="position: fixed; inset: 0; z-index: 3; pointer-events: none; background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.8) 100%);"></div>
 
   <main class="container" style="padding: 100px 18px; position: relative; z-index: 10;">
     <div class="lighting-hero-copy">
-      <h1 data-i18n="lighting-page-h1">Event Lighting &amp; LED Screen Rental in Miami</h1>
-      <p class="mdj-lt-lead" data-i18n="lighting-page-lead">Intelligent moving heads, modular LED walls, and architectural uplighting to transform any venue.<span class='mdj-hl-lead-sub'>Luces de club o un elegante perímetro de color.</span></p>
+      <h1 data-i18n="lighting-page-h1">Event Lighting for Weddings, Private &amp; Corporate Parties in Miami</h1>
+      <p class="mdj-lt-lead" data-i18n="lighting-page-lead">Intelligent Chauvet moving heads and architectural uplighting to transform any venue.<span class='mdj-hl-lead-sub'>Luces de club o un elegante perímetro de color.</span></p>
     </div>
 
-    <div class="lighting-package-item">
-      <details>
+    <div class="lighting-package-item" data-furn-id="light_moving_heads" data-furn-price="150">
+      <details open>
         <summary>
-          <span class="lighting-pkg-name" data-i18n="lighting-pkg-moving-name">Party &amp; Club Lighting</span>
-          <span class="lighting-pkg-price lighting-add-to-cart" data-sku="light_moving_heads" data-price="350" data-i18n="lighting-pkg-moving-price">$350</span>
+          <span class="lighting-pkg-name" data-i18n="lighting-pkg-moving-name">Moving Heads (Cabezas Móviles)</span>
+          <span class="lighting-pkg-price mdj-unit-price-suffix" data-i18n="lighting-pkg-moving-price">$150 / unidad</span>
         </summary>
-        <p data-i18n="lighting-pkg-moving-desc">Intelligent moving heads and laser arrays to transform any venue into a high-energy nightlife experience.</p>
-      </details>
-    </div>
-
-    <div class="lighting-package-item">
-      <details>
-        <summary>
-          <span class="lighting-pkg-name" data-i18n="lighting-pkg-led-name">Pantallas LED Gigantes</span>
-          <span class="lighting-pkg-price" data-i18n="lighting-pkg-led-price">Custom by Size</span>
-        </summary>
-        <p data-i18n="lighting-pkg-led-desc">State-of-the-art modular LED walls for dynamic visuals, monogram displays, and DJ booth facades.</p>
+        <p data-i18n="lighting-pkg-moving-desc">Intelligent Chauvet moving head fixtures, rented per unit, to transform any venue into a high-energy nightlife experience.</p>
+        <div class="lighting-item-qty">
+          <button type="button" class="lighting-qty-btn" data-qty-action="down" aria-label="Decrease">−</button>
+          <span class="lighting-qty-val">0</span>
+          <button type="button" class="lighting-qty-btn" data-qty-action="up" aria-label="Increase">+</button>
+          <span class="lighting-item-subtotal">Subtotal: <strong>$0</strong></span>
+        </div>
       </details>
     </div>
 
@@ -445,16 +486,11 @@
 
     <!-- ══ GEO/AEO FAQ — Iluminación y Pantallas LED ══ -->
     <section id="lighting-faq" style="max-width: 760px; margin: 48px auto 0;">
-      <h2 style="font-family: 'Cormorant Garamond', serif; color: #fff; font-size: 28px; margin-bottom: 24px; text-align: center;" data-i18n="lighting-faq-title">Lighting &amp; LED FAQ</h2>
+      <h2 style="font-family: 'Cormorant Garamond', serif; color: #fff; font-size: 28px; margin-bottom: 24px; text-align: center;" data-i18n="lighting-faq-title">Event Lighting FAQ</h2>
 
       <details class="lighting-faq-item">
-        <summary data-i18n="lighting-faq-q1">What is included in the Party & Club Lighting package?</summary>
-        <p data-i18n="lighting-faq-a1">Intelligent moving heads and laser arrays to transform any venue into a high-energy nightlife experience.</p>
-      </details>
-
-      <details class="lighting-faq-item">
-        <summary data-i18n="lighting-faq-q2">Can I rent an LED wall sized for my venue?</summary>
-        <p data-i18n="lighting-faq-a2">Yes, our modular LED walls are quoted according to your venue's exact measurements, for dynamic visuals, monogram displays, and DJ booth facades.</p>
+        <summary data-i18n="lighting-faq-q1">What is included in the Moving Heads package?</summary>
+        <p data-i18n="lighting-faq-a1">Intelligent Chauvet moving head fixtures, rented per unit, to transform any venue into a high-energy nightlife experience.</p>
       </details>
 
       <details class="lighting-faq-item">
@@ -520,6 +556,7 @@
   })();
   </script>
   <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
+  <script defer src="./js/mdj-catalog-live-price.js?v=20260929-precios-en-vivo"></script>
     <script>
     (function () {
         function kick() {
@@ -572,11 +609,15 @@
     (function () {
         /* PO 2026-09-11 (APROBADO, mismo patron que pro-audio-dj.html): un
            clic en el precio agrega ese paquete al carrito real, sin modal ni
-           stepper -- esta categoria se renta por paquete, no por cantidad
-           (Mobiliario y Decoracion es la unica excepcion, tiene su propia
-           calculadora). Escribe directo al localStorage que ya lee/escribe
-           todo el sistema (mismo formato que arma mdj-event-builder-adapter.js)
-           para no cargar el motor completo de ~150KB en esta pagina liviana. */
+           stepper -- esta categoria se renta por paquete, no por cantidad.
+           ACTUALIZADO 2026-09-29 (PO explícito: "las luces también se rentan
+           por unidades... eso usa el mismo sistema que moviliario"): Moving
+           Heads pasa a ser la SEGUNDA excepción junto a Mobiliario y
+           Decoración -- son unidades físicas discretas, no un paquete único.
+           Uplighting se queda con el patrón de un clic = un paquete. Escribe
+           directo al localStorage que ya lee/escribe todo el sistema (mismo
+           formato que arma mdj-event-builder-adapter.js) para no cargar el
+           motor completo de ~150KB en esta pagina liviana. */
         var DRAFT_KEY = 'mdj:event-builder:draft:v1:anon';
 
         function uid() {
@@ -618,7 +659,7 @@
                     line_id: uid(),
                     catalog_sku: sku,
                     category_key: 'lighting',
-                    category_label: 'Iluminación & LED',
+                    category_label: 'Iluminación',
                     slot: 'gear_lighting',
                     name: name,
                     image_url: null,
@@ -646,6 +687,64 @@
             e.preventDefault();
             e.stopPropagation();
             addPackageToCart(el);
+        });
+
+        /* Selector de cantidad (Moving Heads): cada clic +/- escribe la
+           cantidad exacta al carrito real, igual espíritu que
+           furniture-dj.html pero sin barra de total/boton de confirmar
+           aparte -- aquí es el único item con stepper en la página, se
+           actualiza al instante como el resto de los paquetes. */
+        function setQuantity(wrap, qty) {
+            var sku = wrap.getAttribute('data-furn-id');
+            var price = parseFloat(wrap.getAttribute('data-furn-price'));
+            if (!sku || isNaN(price)) return;
+            qty = Math.max(0, qty);
+
+            var nameEl = wrap.querySelector('.lighting-pkg-name');
+            var name = nameEl ? nameEl.textContent.trim() : sku;
+
+            var draft = readDraft();
+            var existing = draft.lines.filter(function (l) { return l.catalog_sku === sku; })[0];
+            if (qty === 0) {
+                if (existing) draft.lines = draft.lines.filter(function (l) { return l.catalog_sku !== sku; });
+            } else if (existing) {
+                existing.quantity = qty;
+                existing.line_total_usd = Math.round(existing.unit_price_usd * qty * 100) / 100;
+            } else {
+                draft.lines.push({
+                    line_id: uid(),
+                    catalog_sku: sku,
+                    category_key: 'lighting',
+                    category_label: 'Iluminación',
+                    slot: 'gear_lighting',
+                    name: name,
+                    image_url: null,
+                    unit_price_usd: price,
+                    quantity: qty,
+                    line_total_usd: Math.round(price * qty * 100) / 100,
+                    replaceable: false,
+                    line_status: 'cotizado'
+                });
+            }
+            writeDraft(draft);
+
+            var valEl = wrap.querySelector('.lighting-qty-val');
+            var subEl = wrap.querySelector('.lighting-item-subtotal strong');
+            if (valEl) valEl.textContent = String(qty);
+            if (subEl) subEl.textContent = '$' + Math.round(price * qty).toLocaleString('en-US');
+        }
+
+        document.addEventListener('click', function (e) {
+            var btn = e.target.closest ? e.target.closest('.lighting-qty-btn') : null;
+            if (!btn) return;
+            e.preventDefault();
+            e.stopPropagation();
+            var wrap = btn.closest('[data-furn-id]');
+            if (!wrap) return;
+            var valEl = wrap.querySelector('.lighting-qty-val');
+            var current = valEl ? parseInt(valEl.textContent, 10) || 0 : 0;
+            var next = btn.getAttribute('data-qty-action') === 'up' ? current + 1 : current - 1;
+            setQuantity(wrap, next);
         });
     })();
     </script>
