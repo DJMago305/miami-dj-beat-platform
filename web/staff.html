@@ -1919,6 +1919,13 @@
                mismo patrón que Network/Mensajes del Sistema arriba. -->
           <button type="button" class="side3-link side3-link-standalone" data-sec="admin" data-nav="mis-comisiones" title="Mis Comisiones"><span class="side3-ic">💰</span><span class="side3-tx">Mis Comisiones</span></button>
 
+          <!-- Cash Flow embebido -- solo vendedora (ver comentario junto al
+               panel #sc3-cashflow más abajo). Oculto por defecto en el HTML;
+               applySide3RoleGate() lo revela SOLO para role==='seller' --
+               owner/admin/manager siguen usando su Cash Flow real (barra
+               superior, #view-cashflow), sin tocar nada de lo suyo. -->
+          <button type="button" class="side3-link side3-link-standalone" data-sec="cashflow" title="Cash Flow" style="display:none;" id="side3-cashflow-link"><span class="side3-ic">📊</span><span class="side3-tx">Cash Flow</span></button>
+
           <!-- Grupo EQUIPO -->
           <button type="button" class="side3-group" data-group="equipo" aria-label="Equipo" data-i18n-aria="side3-equipo">
             <span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span class="side3-tx" data-i18n="side3-equipo">Equipo</span><span class="side3-car">▾</span>
@@ -2113,6 +2120,21 @@
             <div class="sc3-loading" id="sc3-msg-loading"><span class="acc-spin"></span> Cargando Mensajes del Sistema…</div>
             <iframe id="sc3-msg-iframe" class="sc3-frame" data-src="./system-messages.html?v=20260924-tarjetas" aria-label="Mensajes del Sistema" loading="lazy"></iframe>
           </div>
+          <!-- Cash Flow embebido (2026-09-30, orden explícita del PO: "no una
+               pantalla que aparece detrás" -- #view-cashflow del Owner es una
+               sección hermana SIN sidebar; cambiar a ella desde aquí apagaba
+               el menú entero y encendía un layout distinto, la causa real de
+               "siento que hay otra pantalla detrás" que reportó el PO. Mismo
+               contenido (staff-agenda.html?tab=flow, el mismo loadFlowData()
+               ya verificado como aislado por sesión), pero cargado DENTRO de
+               este mismo contenedor -- iframe propio (sc3-cashflow-iframe,
+               NO el mismo id que #cashflow-frame del Owner) para no pelear
+               por el mismo nodo del DOM entre las dos vistas. Solo vendedora
+               ve el link de sidebar que abre este panel (ver applySide3RoleGate). -->
+          <div class="sc3-panel" id="sc3-cashflow">
+            <div class="sc3-loading" id="sc3-cashflow-loading"><span class="acc-spin"></span> Cargando Cash Flow…</div>
+            <iframe id="sc3-cashflow-iframe" class="sc3-frame" data-src="./staff-agenda.html?tab=flow" aria-label="Cash Flow" loading="lazy"></iframe>
+          </div>
         </div><!-- /staff-content3 -->
        </div><!-- /staff-shell -->
       </section>
@@ -2276,15 +2298,16 @@
            <a> a account-profile.html, una página totalmente distinta.
            CASH FLOW (2026-09-30, orden explícita del PO: "los vendedores
            deben tener su pestaña de cash flow, ahí es donde se reflejan las
-           comisiones"): mismo botón/mecanismo que ya usa Owner
-           (data-top="cashflow" → showView('cashflow') → carga staff-agenda.
-           html?tab=flow). Verificado en el código de flow-handler.js antes
-           de darlo: loadFlowData() filtra siempre por el uid de la sesión
-           activa (.eq('dj_user_id', userId), userId=sessionUid) -- nunca un
-           agregado de toda la empresa, así que es seguro para vendedora. */
+           comisiones") — SIN botón propio aquí a propósito, segunda vuelta
+           del mismo pedido: un botón de tope llevaba a #view-cashflow, la
+           sección del Owner sin sidebar, y ESO era "otra pantalla detrás".
+           Cash Flow vive ahora como un link más dentro del sidebar de
+           Ventas (#sc3-cashflow, ver wireStaffSidebar) -- un solo menú, no
+           dos. Verificado antes de darlo: loadFlowData() (flow-handler.js)
+           filtra siempre por el uid de la sesión activa, nunca un agregado
+           de toda la empresa. */
         return start+
           '<button type="button" class="active" data-top="gobernanza" data-i18n="staff-nav-ventas">Ventas</button>'+
-          '<button type="button" data-top="cashflow">Cash Flow</button>'+
           '<button type="button" data-top="miperfil">MI PERFIL</button>';
       }
       return start+
@@ -4400,15 +4423,20 @@
          'miperfil' — que SÍ es genérica por sesión (mountPerfil lee el propio
          dj_profiles del usuario logueado, no datos del Owner) y por eso no
          tenía por qué estar bloqueada para manager/seller.
-         cashflow se suma para seller por orden explícita del PO ("ahí es
+         Cash Flow se suma para seller por orden explícita del PO ("ahí es
          donde se reflejan las comisiones") -- verificado antes de habilitarlo
          que loadFlowData() (flow-handler.js) siempre filtra por el uid de la
-         sesión activa, nunca un agregado de toda la empresa. */
+         sesión activa, nunca un agregado de toda la empresa. NO se agrega
+         'cashflow' a MDJ_VISTAS_POR_ROL.seller a propósito: #view-cashflow
+         es la sección del Owner (sin sidebar) -- ir ahí apagaba el menú
+         entero, la causa real de "otra pantalla detrás" que reportó el PO.
+         Para seller, Cash Flow vive DENTRO de 'gobernanza' como un panel más
+         del sidebar (#sc3-cashflow, ver wireStaffSidebar), un solo shell. */
       var MDJ_VISTAS_POR_ROL = {
         owner:   { financiero:1, elixis:1, gobernanza:1, miperfil:1, agenda:1, cashflow:1, config:1, smartcrate:1 },
         admin:   { gobernanza:1, miperfil:1 },
         manager: { gobernanza:1, miperfil:1 },
-        seller:  { gobernanza:1, miperfil:1, cashflow:1 }
+        seller:  { gobernanza:1, miperfil:1 }
       };
       var mdjVistasRol = MDJ_VISTAS_POR_ROL[role] || { gobernanza: 1 };
       var mdjVistaPedida = '';
@@ -4523,10 +4551,15 @@
           hide('.side3-items[data-items="operaciones"]');
           hide('.side3-link[data-nav="crm"][data-standalone="1"]');
           hide('.side3-link[data-nav="actividad"]');
+          // Cash Flow embebido (ver #sc3-cashflow): oculto por defecto en el
+          // HTML para todos, se revela SOLO aquí -- owner/admin/manager
+          // siguen sin verlo, usan el suyo real en la barra superior.
+          var cfLink = side.querySelector('#side3-cashflow-link');
+          if (cfLink) cfLink.style.display = '';
         }
       })();
       var iframe=el('sc3-iframe'), loading=el('sc3-loading'), loadTx=el('sc3-load-tx');
-      var panels={ gob:el('sc3-gob'), admin:el('sc3-admin'), inbox:el('sc3-inbox'), legal:el('sc3-legal'), pedidos:el('sc3-pedidos'), msg:el('sc3-msg') };
+      var panels={ gob:el('sc3-gob'), admin:el('sc3-admin'), inbox:el('sc3-inbox'), legal:el('sc3-legal'), pedidos:el('sc3-pedidos'), msg:el('sc3-msg'), cashflow:el('sc3-cashflow') };
       function showPanel(k){ for(var p in panels){ if(panels[p]) panels[p].classList.toggle('active', p===k); } }
       /* botón: contrae/expande toda la barra a solo iconos */
       var col=el('side3-collapse'); if(col) col.addEventListener('click', function(){ side.classList.toggle('collapsed'); });
@@ -4675,6 +4708,12 @@
           var fm=el('sc3-msg-iframe'), ilm=el('sc3-msg-loading');
           if(fm && !fm.getAttribute('src')){ if(fm.addEventListener) fm.addEventListener('load', function(){ if(ilm) ilm.classList.add('hidden'); });
             fm.setAttribute('src', fm.getAttribute('data-src')); setTimeout(function(){ if(ilm) ilm.classList.add('hidden'); }, 9000); }
+          return;
+        }
+        if(sec==='cashflow'){ showPanel('cashflow');
+          var fcf=el('sc3-cashflow-iframe'), ilcf=el('sc3-cashflow-loading');
+          if(fcf && !fcf.getAttribute('src')){ if(fcf.addEventListener) fcf.addEventListener('load', function(){ if(ilcf) ilcf.classList.add('hidden'); });
+            fcf.setAttribute('src', fcf.getAttribute('data-src')); setTimeout(function(){ if(ilcf) ilcf.classList.add('hidden'); }, 9000); }
           return;
         }
         var merchFilter=a.getAttribute('data-merch-filter');
