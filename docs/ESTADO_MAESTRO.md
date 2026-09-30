@@ -2989,3 +2989,39 @@ Orden explícita del PO tras ver la segunda pasada: sensación de pantallas desc
 - Mi Perfil (top nav) confirmado con su ficha real: foto real, "Wendy Elizabeth Ayala · STAFF · VENDEDOR" — página aparte a propósito, no tocada.
 
 **Archivos tocados en esta tercera pasada**: `web/staff.html` únicamente (HTML: nuevo panel + link de sidebar; JS: `panels`, click handler `sec==='cashflow'`, `applySide3RoleGate`, `MDJ_VISTAS_POR_ROL`, rama seller de `staffTopnavHtml`). Verificado con `node --check`. **Sigue sin comitear** — pendiente de sumarse al mismo commit/rama de la segunda pasada una vez el PO confirme visualmente esta corrección también.
+
+## [2026-09-30] Cuenta de Wendy — cuarta pasada: corrección de rumbo, "oculto" → "visible con candado" + Agenda + Fénix AI
+
+El PO corrigió explícitamente el modelo de la segunda pasada: **"nunca te dije que quitaras esas cosas... las cosas del owner están restringidas pero muchas cosas se deberían ver, solo lo del owner secretos tendría candado, no es que no lo tengan, solo que para entrar se necesita permiso especial."** Además: falta Fénix AI, y falta Agenda ("como un vendedor no va a poder ver calendario si ese calendario sería el que él tendría para sus contactos").
+
+**Verificado antes de dar cada cosa** (no se dio nada a ciegas):
+- Agenda (`staff-agenda.html`): filtra siempre por `.eq('assigned_dj_id', prof.id)` con `prof` del propio `dj_profiles` de la sesión — su calendario, no el de la empresa. Confirmado.
+- Fénix AI (`#view-elixis`): workspace de IA por sesión, mismo patrón que ya usan artistas/DJs — sin gate adicional necesario.
+
+**Modelo corregido, aplicado en `web/staff.html`:**
+- TODO el sidebar queda visible para seller — Gobernanza, Network, Equipo, Operaciones, Actividad incluidos. Ya no se oculta ningún grupo entero.
+- `SELLER_LOCKED_NAVS` = exactamente los mismos ítems que `staff-admin.html` ya trataba como Owner-only en su propio `applyRoleRestrictions('SALES_STAFF')` (`content`, `analytics`, `apps`, `staff`, `registry-section`, `site-media`, `commission-rules`) + `create-profiles` + `mdjpro` (ya marcados 🔑 en el HTML) + el panel "Permisos"/Gobernanza (texto propio: "caja real, márgenes, configuración").
+- Candado FUNCIONAL, no decorativo: clic en un ítem bloqueado no llama `loadAdmin()` ni fija ningún `src` de iframe — muestra un panel local (`#sc3-locked`, "🔒 Acceso restringido — requiere permiso especial del Owner"). Verificado con `read_network_requests`: cero peticiones a `staff-admin.html`, cero a Stripe.
+- **Network**: el PO decidió explícitamente (pregunta directa, dos opciones) dejarlo **abierto**, no con candado — coincide con la arquitectura ya existente ("Staff matrix: READ all, comparte hacia abajo").
+- Agenda y Fénix AI agregados al top nav de seller (`data-top="agenda"`/`"elixis"`) y a `MDJ_VISTAS_POR_ROL.seller`.
+
+**Verificado en vivo, sesión real de Wendy:**
+- "Permissions" (Gobernanza): 🔒 visible en el link, clic → "Acceso restringido", cero llamadas de red.
+- "Content & Pricing", "Tarifas de Comisiones", "MDJPRO", "Branding & Media", "App Hosting", "Staff", "Crear Perfiles", "Certificados", "Analytics": mismo candado funcional.
+- "Production", "Venues", "Inbox·Tickets": abiertos, cargan de verdad (Venues confirmado cargando en vivo).
+- Network: abierto, 978 contactos reales, sin candado (decisión explícita del PO).
+- Agenda ("SCHEDULE" en EN): carga el dashboard operativo real, "Día sin evento en agenda" para su propia sesión.
+- Fénix AI: carga el workspace de IA completo (carrusel, orbe, chat "Write to ELIXIS...").
+
+**Archivos tocados**: `web/staff.html` únicamente. Verificado con `node --check`. **Sigue sin comitear** — pendiente de que el PO lo vea y confirme antes de sumarlo a la rama.
+
+## [2026-09-30] Cuenta de Wendy — quinta pasada: paridad de barra superior (⚙️ CONFIG + Staff)
+
+El PO señaló directo: "ni siquiera veo config de la cuenta ni la pestaña staff" — comparando la barra de seller contra la del Owner. Agregados con el mismo mecanismo que ya usa Owner, sin inventar nada nuevo:
+- **⚙️ CONFIG** (`<a href="./account-settings.html" data-top="config">`) — su propia cuenta, sin dato ajeno que proteger. Verificado en vivo: carga completa (ID `MDB-SLR-000001`, Role: Seller, foto real, y las pestañas propias de esa página — Categoría, Agenda/Disponibilidad, Reporte, Recompensas, Productos, Inbox·Tickets, Subscription, Dispositivos, Redes Sociales, Documentos Legales, Zona de riesgo).
+- **Staff** (`data-top="gobernanza"`, mismo destino que "Ventas") — restaurado, mismo patrón redundante-a-propósito que ya tiene la barra del Owner.
+- `config:1` agregado a `MDJ_VISTAS_POR_ROL.seller`.
+
+**Sobre "faltan pestañas de Mi Perfil"**: se investigó `#view-miperfil` (el destino interno de "MI PERFIL" en staff.html) — solo tiene 3 secciones (Bio/Opiniones/QR), pero **esto no es una restricción de rol**: es exactamente lo mismo que ve el Owner en el mismo botón, siempre ha sido así. La pregunta de aclaración se descartó sin respuesta; probablemente la confusión real era con ⚙️ CONFIG (que sí tiene muchas más pestañas, ya agregado arriba) — pendiente de que el PO lo confirme al probarlo.
+
+**Archivo tocado**: `web/staff.html` únicamente. `node --check` OK. Probado en vivo (Config carga real, Staff regresa bien al panel, consola limpia). **Sigue sin comitear.**
