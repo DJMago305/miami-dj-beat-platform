@@ -1573,12 +1573,20 @@
             var removeBtn =
                 '<button type="button" class="mdj-eb-line__remove mdj-eb-crm-act-btn mdj-eb-crm-act-btn--rm" data-line-id="' + escapeHtml(line.line_id) + '" title="Quitar">✕</button>';
 
+            // Miniatura estilo Amazon (72px en furniture-dj.html, aquí 32px por ser fila de tabla).
+            // image_url solo existe hoy para Mobiliario y Decoración (PR #602); el resto de
+            // categorías muestra el placeholder vacío hasta que tengan foto propia.
+            var thumbHtml = line.image_url
+                ? '<img class="mdj-eb-crm-thumb" src="' + escapeHtml(line.image_url) + '" alt="" loading="lazy">'
+                : '<span class="mdj-eb-crm-thumb mdj-eb-crm-thumb--empty" aria-hidden="true"></span>';
+
             return (
                 '<tr class="mdj-eb-crm-row' + (isTalent ? ' mdj-eb-crm-row--talent' : '') + '"' +
                 (isTalent ? ' data-mdj-talent-row="1"' : '') +
                 ' data-line-id="' + escapeHtml(line.line_id) + '">' +
                 '<td class="mdj-eb-crm-td mdj-eb-crm-td--ln">' + (idxInCajon + 1) + '</td>' +
-                '<td class="mdj-eb-crm-td mdj-eb-crm-td--svc">' + escapeHtml(line.name) + '</td>' +
+                '<td class="mdj-eb-crm-td mdj-eb-crm-td--svc"><span class="mdj-eb-crm-svc-wrap">' + thumbHtml +
+                '<span class="mdj-eb-crm-svc-name">' + escapeHtml(line.name) + '</span></span></td>' +
                 '<td class="mdj-eb-crm-td mdj-eb-crm-td--desc">' + selCell + '</td>' +
                 '<td class="mdj-eb-crm-td mdj-eb-crm-td--qty">' + qty + '</td>' +
                 '<td class="mdj-eb-crm-td mdj-eb-crm-td--upr">' + money(unitPrice) + '</td>' +
