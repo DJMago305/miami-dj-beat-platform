@@ -915,12 +915,15 @@
                 var name = row.querySelector('.furndj-item-name').textContent.trim();
                 var photoEl = row.querySelector('.furndj-item-photo');
                 var imageUrl = photoEl ? photoEl.getAttribute('src') : null;
+                var descEl = row.querySelector('.furndj-item-desc');
+                var description = descEl ? descEl.textContent.trim() : null;
                 var existing = draft.lines.filter(function (l) { return l.catalog_sku === sku; })[0];
                 if (existing) {
                     existing.quantity = qty;
                     existing.unit_price_usd = price;
                     existing.line_total_usd = Math.round(price * qty * 100) / 100;
                     existing.image_url = imageUrl;
+                    existing.description = description;
                 } else {
                     draft.lines.push({
                         line_id: uid(),
@@ -930,6 +933,7 @@
                         slot: 'gear_furniture',
                         name: name,
                         image_url: imageUrl,
+                        description: description,
                         unit_price_usd: price,
                         quantity: qty,
                         line_total_usd: Math.round(price * qty * 100) / 100,

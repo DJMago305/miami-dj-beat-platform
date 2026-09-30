@@ -1411,6 +1411,7 @@
         payaso:      'Entretenimiento y Talento',
         fx:          'Efectos Especiales',
         lighting:    'Iluminación y Pantallas LED',
+        led_screens: 'Iluminación y Pantallas LED',
         audio:       'Audio y Sonido Profesional',
         tents:       'Carpas y Estructuras',
         furniture:   'Mobiliario y Decoración',
@@ -1527,12 +1528,18 @@
                     || ('./dj-profile.html?id=' + encodeURIComponent(line.selected_artist_id));
             }
 
-            // DESCRIPCIÓN: solo nombre del artista, sin enlace ni flecha
+            // DESCRIPCIÓN: nombre del artista para talento; para equipo/renta,
+            // el detalle del artículo (line.description) cuando la página de
+            // origen ya lo manda -- hoy solo Mobiliario y Decoración lo hace.
             var selCell;
             if (isTalent && line.selected_artist_stage_name) {
                 selCell = '<span class="mdj-eb-crm-sel-name">' + escapeHtml(String(line.selected_artist_stage_name)) + '</span>';
+            } else if (isTalent) {
+                selCell = '<span class="mdj-eb-crm-sel-hint">Seleccionar talento</span>';
+            } else if (line.description) {
+                selCell = '<span title="' + escapeHtml(String(line.description)) + '">' + escapeHtml(String(line.description)) + '</span>';
             } else {
-                selCell = isTalent ? '<span class="mdj-eb-crm-sel-hint">Seleccionar talento</span>' : '';
+                selCell = '';
             }
 
             // PROVEEDOR: MDJB si seleccionado en plataforma, nombre de vendedor si venta manual, — si nada
@@ -1573,12 +1580,20 @@
             var removeBtn =
                 '<button type="button" class="mdj-eb-line__remove mdj-eb-crm-act-btn mdj-eb-crm-act-btn--rm" data-line-id="' + escapeHtml(line.line_id) + '" title="Quitar">✕</button>';
 
+            // Miniatura estilo Amazon (72px en furniture-dj.html, aquí 32px por ser fila de tabla).
+            // image_url solo existe hoy para Mobiliario y Decoración (PR #602); el resto de
+            // categorías muestra el placeholder vacío hasta que tengan foto propia.
+            var thumbHtml = line.image_url
+                ? '<img class="mdj-eb-crm-thumb" src="' + escapeHtml(line.image_url) + '" alt="" loading="lazy">'
+                : '<span class="mdj-eb-crm-thumb mdj-eb-crm-thumb--empty" aria-hidden="true"></span>';
+
             return (
                 '<tr class="mdj-eb-crm-row' + (isTalent ? ' mdj-eb-crm-row--talent' : '') + '"' +
                 (isTalent ? ' data-mdj-talent-row="1"' : '') +
                 ' data-line-id="' + escapeHtml(line.line_id) + '">' +
                 '<td class="mdj-eb-crm-td mdj-eb-crm-td--ln">' + (idxInCajon + 1) + '</td>' +
-                '<td class="mdj-eb-crm-td mdj-eb-crm-td--svc">' + escapeHtml(line.name) + '</td>' +
+                '<td class="mdj-eb-crm-td mdj-eb-crm-td--svc"><span class="mdj-eb-crm-svc-wrap">' + thumbHtml +
+                '<span class="mdj-eb-crm-svc-name">' + escapeHtml(line.name) + '</span></span></td>' +
                 '<td class="mdj-eb-crm-td mdj-eb-crm-td--desc">' + selCell + '</td>' +
                 '<td class="mdj-eb-crm-td mdj-eb-crm-td--qty">' + qty + '</td>' +
                 '<td class="mdj-eb-crm-td mdj-eb-crm-td--upr">' + money(unitPrice) + '</td>' +
@@ -1591,30 +1606,80 @@
             );
         }
 
-        // Renderizar todos los cajones (vacíos con fila placeholder, llenos con sus filas)
-        var sectionsHtml = CAJON_ORDER.filter(function (n) { return n !== 'Servicios Adicionales'; }).concat(
-            linesByCajon['Servicios Adicionales'] && linesByCajon['Servicios Adicionales'].length ? ['Servicios Adicionales'] : []
-        ).map(function (cajonName) {
-            var lines = linesByCajon[cajonName] || [];
-            var isEmpty = lines.length === 0;
-            var countLabel = isEmpty
-                ? '<span class="mdj-eb-cajon-title-bar__count mdj-eb-cajon-title-bar__count--empty">—</span>'
-                : '<span class="mdj-eb-cajon-title-bar__count">' + lines.length + ' servicio' + (lines.length !== 1 ? 's' : '') + '</span>';
-            var bodyContent = isEmpty
-                ? '<tr class="mdj-eb-crm-row--empty"><td colspan="10" class="mdj-eb-crm-td--empty" data-i18n="eb-sin-servicios">Sin servicios seleccionados</td></tr>'
-                : lines.map(renderCrmRow).join('');
+        // Tarjeta estilo Amazon para una línea de equipo/renta (no-talento):
+        // foto grande, nombre, descripción, contador +/- y Eliminar. Reusa
+        // .mdj-eb-line__remove para que el listener delegado ya existente en
+        // linesEl (más abajo, bindUi()) la quite sin cablear nada nuevo.
+        function renderAmazonEquipmentCard(line, index) {
+            void index; // reservado -- la tarjeta no muestra "#", a diferencia de la tabla CRM
+            var qty = Math.max(1, line.quantity || 1);
+            var unitPrice = parseFloat(line.unit_price_usd) || 0;
+            if (!unitPrice && qty > 0) {
+                unitPrice = Math.round((parseFloat(line.line_total_usd) || 0) / qty * 100) / 100;
+            }
+            var subtotalLine = Math.round(qty * unitPrice * 100) / 100;
+            var photoHtml = line.image_url
+                ? '<img class="mdj-eb-amz-photo" src="' + escapeHtml(line.image_url) + '" alt="" loading="lazy">'
+                : '<span class="mdj-eb-amz-photo mdj-eb-amz-photo--empty" aria-hidden="true"></span>';
+            var descHtml = line.description
+                ? '<p class="mdj-eb-amz-desc">' + escapeHtml(String(line.description)) + '</p>'
+                : '';
             return (
-                '<section class="mdj-eb-cajon-section' + (isEmpty ? ' mdj-eb-cajon-section--empty' : '') + '">' +
+                '<div class="mdj-eb-amz-card" data-line-id="' + escapeHtml(line.line_id) + '">' +
+                photoHtml +
+                '<div class="mdj-eb-amz-body">' +
+                '<div class="mdj-eb-amz-name">' + escapeHtml(line.name) + '</div>' +
+                descHtml +
+                '<div class="mdj-eb-amz-actions">' +
+                '<div class="mdj-eb-amz-qty">' +
+                '<button type="button" class="mdj-eb-amz-qty-btn" data-eb-amz-qty="down" data-line-id="' + escapeHtml(line.line_id) + '" aria-label="Disminuir cantidad">−</button>' +
+                '<span class="mdj-eb-amz-qty-val">' + qty + '</span>' +
+                '<button type="button" class="mdj-eb-amz-qty-btn" data-eb-amz-qty="up" data-line-id="' + escapeHtml(line.line_id) + '" aria-label="Aumentar cantidad">+</button>' +
+                '</div>' +
+                '<button type="button" class="mdj-eb-line__remove mdj-eb-amz-remove" data-line-id="' + escapeHtml(line.line_id) + '">Eliminar</button>' +
+                '</div>' +
+                '</div>' +
+                '<div class="mdj-eb-amz-price">' +
+                '<div class="mdj-eb-amz-unit">' + money(unitPrice) + ' / unidad</div>' +
+                '<div class="mdj-eb-amz-subtotal">' + money(subtotalLine) + '</div>' +
+                '</div>' +
+                '</div>'
+            );
+        }
+
+        // Renderizar solo los cajones que tienen artículos -- uno vacío no
+        // aporta nada útil y antes se mostraban los 9 siempre, sin importar
+        // si el cliente había agregado algo o no (pedido del PO 2026-09-29).
+        //
+        // Dentro de cada cajón: el talento (DJ/Hora Loca/etc.) sigue en la
+        // tabla CRM (Estado/Proveedor/Notas sí significan algo ahí -- DJ
+        // asignado, disponibilidad). El equipo/renta se muestra como tarjeta
+        // estilo Amazon (foto grande, nombre, descripción, contador +/-,
+        // Eliminar) -- esas columnas de CRM no aportaban nada en una silla o
+        // un láser. Pedido del PO 2026-09-29, con captura de su propio
+        // carrito de Amazon como referencia.
+        var sectionsHtml = CAJON_ORDER.filter(function (n) {
+            var lines = linesByCajon[n] || [];
+            return lines.length > 0;
+        }).map(function (cajonName) {
+            var lines = linesByCajon[cajonName] || [];
+            var talentLines = lines.filter(lineIsTalentRow);
+            var equipLines = lines.filter(function (l) { return !lineIsTalentRow(l); });
+            var countLabel = '<span class="mdj-eb-cajon-title-bar__count">' + lines.length + ' servicio' + (lines.length !== 1 ? 's' : '') + '</span>';
+            var talentTableHtml = talentLines.length
+                ? '<div class="mdj-eb-crm-scroll"><table class="mdj-eb-crm-table" cellspacing="0" cellpadding="0">' +
+                  CRM_TABLE_HEAD + '<tbody>' + talentLines.map(renderCrmRow).join('') + '</tbody></table></div>'
+                : '';
+            var cardsHtml = equipLines.length
+                ? '<div class="mdj-eb-amz-list">' + equipLines.map(renderAmazonEquipmentCard).join('') + '</div>'
+                : '';
+            return (
+                '<section class="mdj-eb-cajon-section">' +
                 '<div class="mdj-eb-cajon-title-bar">' +
                 '<span class="mdj-eb-cajon-title-bar__name"' + (EB_CAJON_I18N[cajonName] ? ' data-i18n="' + EB_CAJON_I18N[cajonName] + '"' : '') + '>' + escapeHtml(cajonName) + '</span>' +
                 countLabel +
                 '</div>' +
-                '<div class="mdj-eb-crm-scroll">' +
-                '<table class="mdj-eb-crm-table" cellspacing="0" cellpadding="0">' +
-                CRM_TABLE_HEAD +
-                '<tbody>' + bodyContent + '</tbody>' +
-                '</table>' +
-                '</div>' +
+                talentTableHtml + cardsHtml +
                 '</section>'
             );
         }).join('');
@@ -1623,10 +1688,14 @@
         var deposit30 = Math.round(totals.subtotal * 0.50 * 100) / 100; // (nombre histórico) depósito = 50 %
         var balance70 = Math.round(totals.subtotal * 0.70 * 100) / 100;
 
-        // Si sectionsHtml está vacío pero hay líneas, es que todas son addon sin mapear
         var visibleContent = sectionsHtml.trim();
-        if (!visibleContent && state.lines.length > 0) {
-            visibleContent = '<p class="mdj-eb-empty">Cargando categorías… si persiste, recarga la página.</p>';
+        if (!visibleContent) {
+            visibleContent = state.lines.length > 0
+                // Todas las líneas tienen un category_key sin mapear en EB_CAJON_LABELS.
+                ? '<p class="mdj-eb-empty">Cargando categorías… si persiste, recarga la página.</p>'
+                // Carrito realmente vacío -- reusa la misma traducción que ya
+                // existía para la fila placeholder (eb-sin-servicios).
+                : '<p class="mdj-eb-empty" data-i18n="eb-sin-servicios">Sin servicios seleccionados</p>';
         }
 
         var summaryHtml = state.lines.length
@@ -1999,6 +2068,21 @@
                 var removeBtn = e.target.closest('.mdj-eb-line__remove');
                 if (removeBtn) {
                     removeLine(removeBtn.getAttribute('data-line-id'));
+                    return;
+                }
+                var qtyBtn = e.target.closest('[data-eb-amz-qty]');
+                if (qtyBtn) {
+                    var qtyLineId = qtyBtn.getAttribute('data-line-id');
+                    var qtyLine = state.lines.find(function (l) { return l.line_id === qtyLineId; });
+                    if (qtyLine) {
+                        var qtyDelta = qtyBtn.getAttribute('data-eb-amz-qty') === 'up' ? 1 : -1;
+                        var qtyNext = Math.max(1, (qtyLine.quantity || 1) + qtyDelta);
+                        qtyLine.quantity = qtyNext;
+                        var qtyUnit = parseFloat(qtyLine.unit_price_usd) || 0;
+                        qtyLine.line_total_usd = Math.round(qtyUnit * qtyNext * 100) / 100;
+                        persistDraft();
+                        render();
+                    }
                     return;
                 }
                 /* El botón .mdj-eb-line__replace ya no se renderiza (ver render
