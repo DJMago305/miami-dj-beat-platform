@@ -2359,11 +2359,58 @@
       if((n||0)>40){ reveal(); return; }
       setTimeout(function(){ wait(cb,(n||0)+1); }, 250);
     }
+    /* FIX-STAFF-GATE-ROLE-TIMEOUT (2026-09-30): la consulta de rol de abajo
+       puede tardar o fallar bajo degradación de Supabase (visto en vivo hoy:
+       ~20s o directo sin respuesta). Antes, "la consulta no llegó a tiempo" y
+       "confirmé que no eres staff" se trataban IGUAL -- role salía vacío en
+       los dos casos, y hasta al propio Owner lo sacaba de staff.html hacia
+       dj-dashboard.html en silencio, sin error visible. Ahora se distinguen:
+       solo se saca a alguien de staff.html cuando la consulta SÍ respondió y
+       confirmó que su rol no es de staff -- no cuando simplemente no hubo
+       respuesta a tiempo. */
+    function fetchStaffRole(sb, uid, timeoutMs){
+      var q = Promise.resolve(
+        sb.from('dj_profiles').select('role, dj_name').eq('user_id', uid).maybeSingle()
+      ).catch(function(e){ return { data:null, error:e }; });
+      var t = new Promise(function(resolve){ setTimeout(function(){ resolve('timeout'); }, timeoutMs); });
+      return Promise.race([q, t]);
+    }
+    function showStaffGateRetry(){
+      reveal();
+      var m = document.querySelector('main') || document.body;
+      var d = document.createElement('div');
+      d.style.cssText = 'max-width:520px;margin:120px auto;padding:28px 26px;border:1px solid rgba(197,160,89,.4);border-radius:14px;background:#0b0f18;color:rgba(255,255,255,.85);font-size:14px;line-height:1.6;text-align:center;';
+      d.innerHTML = '<div style="font-size:15px;font-weight:800;color:#c5a059;margin-bottom:10px;">No pudimos confirmar tu acceso</div>'
+        + '<div style="margin-bottom:18px;">La verificación de tu cuenta está tardando más de lo normal. No es un error tuyo — puede ser degradación temporal del servicio. Intenta de nuevo.</div>'
+        + '<button type="button" style="background:#c5a059;color:#0b0f18;border:none;border-radius:8px;padding:10px 22px;font-weight:800;cursor:pointer;">Reintentar</button>';
+      d.querySelector('button').addEventListener('click', function(){ location.reload(); });
+      m.appendChild(d);
+    }
     wait(async function(sb){
       try{
         var sess=(await sb.auth.getSession()).data.session;
         if(!sess){ location.replace('./login.html?next=staff.html'); return; }
-        var res=await sb.from('dj_profiles').select('role, dj_name').eq('user_id', sess.user.id).maybeSingle();
+
+        /* Atajo por JWT: app_metadata.role ya viaja firmado en la sesión (mismo
+           campo que ya usa mdjResolveEffectiveUserRole en login.html/auth.js --
+           no es un campo nuevo). Si ya declara un rol de staff, se entra de una
+           vez sin esperar la consulta a dj_profiles -- el nombre para la barra
+           (profile.dj_name) lo completa mountPerfil() cuando esa vista se abre,
+           así que no hace falta tenerlo aquí para no bloquear la entrada. */
+        var jwtRole = String((sess.user.app_metadata && sess.user.app_metadata.role) || '').toLowerCase().trim();
+        var res;
+        if(STAFF_ROLES.indexOf(jwtRole)!==-1){
+          res = { data:{ role: jwtRole, dj_name:'' }, error:null };
+        } else {
+          res = await fetchStaffRole(sb, sess.user.id, 2500);
+          if(res==='timeout' || (res && res.error)){
+            res = await fetchStaffRole(sb, sess.user.id, 5000); // segundo intento, más tiempo
+          }
+          if(res==='timeout' || (res && res.error)){
+            showStaffGateRetry(); return; // inconcluso de verdad: no se saca a nadie de staff.html a ciegas
+          }
+        }
+
         var role=String(res.data&&res.data.role?res.data.role:'').toLowerCase().trim();
         if(STAFF_ROLES.indexOf(role)===-1){
           /* 2026-09-30, TICKET-STAFF-CLIENT-ROUTING-GATE: un cliente no tiene fila en
@@ -4843,7 +4890,27 @@
       (async function(){
         try{
           var sess=(await sb.auth.getSession()).data.session; if(!sess) return;
-          var r=await sb.from('dj_profiles').select('*').eq('user_id', sess.user.id).maybeSingle();
+          /* FIX-STAFF-MIPERFIL-DATA-TIMEOUT (2026-09-30): esta consulta puede
+             tardar o fallar bajo la misma degradación de Supabase que ya se
+             corrigió en el gate y en dj-profile.html -- sin tope de tiempo,
+             la ficha se quedaba con guiones "—" en TODOS los campos, sin
+             ningún aviso, indistinguible de "no tienes datos". Mismo patrón:
+             timeout + un reintento; si de verdad falla, se avisa en vez de
+             dejar guiones mudos. */
+          function fetchOwnProfile(timeoutMs){
+            var q = Promise.resolve(
+              sb.from('dj_profiles').select('*').eq('user_id', sess.user.id).maybeSingle()
+            ).catch(function(e){ return { data:null, error:e }; });
+            var t = new Promise(function(resolve){ setTimeout(function(){ resolve('timeout'); }, timeoutMs); });
+            return Promise.race([q, t]);
+          }
+          var r = await fetchOwnProfile(2500);
+          if(r==='timeout' || (r && r.error)){ r = await fetchOwnProfile(5000); }
+          if(r==='timeout' || (r && r.error)){
+            var nmEl=el('pf-name'); if(nmEl) nmEl.textContent='No se pudo cargar — reintenta';
+            var roleEl=el('pf-role'); if(roleEl) roleEl.textContent='Verificación lenta (Supabase)';
+            return;
+          }
           var p=r.data||{};
           if(p.dj_name) el('pf-name').textContent=p.dj_name;
           // Nuevo motor: NO se usa el rol de artista (DJ · ciudad, eso queda en el viejo). Aquí es la cuenta Staff · Owner.
@@ -4853,12 +4920,19 @@
           el('pf-role').textContent = 'Staff · ' + rotulo;
           var b=el('pf-badge'); if(b) b.textContent='◆ '+rotulo.toUpperCase()+(p.verified===true?' · VERIFICADO':'');
           var photo=p.photo_url||p.avatar_url||p.image_url||'';   // canónico: dj_profiles.photo_url (igual que CONFIG/dj-profile)
-          if(photo){ var im=el('pf-photo'); im.src=photo; if(p.dj_name) im.alt=p.dj_name; }
           // HERO banner — COINCIDE con CONFIG: background_url + focal (photo_focal_x/y) + zoom (hero_bg_zoom), igual que dj-profile
           var bg=(p.background_url||'').toString().trim();
+          var fx=(p.photo_focal_x!=null)?Math.max(0,Math.min(100,Number(p.photo_focal_x))):50;
+          var fy=(p.photo_focal_y!=null)?Math.max(0,Math.min(100,Number(p.photo_focal_y))):50;
+          /* FIX-STAFF-AVATAR-CROP (2026-09-30): mismo patrón que dj-profile.html
+             (bgPhoto/insetPhoto) -- si el avatar es la MISMA foto que el banner,
+             hereda su foco guardado (fx/fy); si es una foto distinta el foco del
+             banner no aplica, así que se usa 'center 28%' (mismo valor fijo que
+             dj-profile.html) para no cortar la cabeza en fotos verticales. */
+          if(photo){ var im=el('pf-photo');
+            im.style.objectPosition = (bg && photo===bg) ? (fx+'% '+fy+'%') : 'center 28%';
+            im.src=photo; if(p.dj_name) im.alt=p.dj_name; }
           if(bg){ var heroEl=el('pf-hero'), bi=el('pf-banner-img');
-            var fx=(p.photo_focal_x!=null)?Math.max(0,Math.min(100,Number(p.photo_focal_x))):50;
-            var fy=(p.photo_focal_y!=null)?Math.max(0,Math.min(100,Number(p.photo_focal_y))):50;
             var zm=(p.hero_bg_zoom!=null)?Math.max(80,Math.min(200,Number(p.hero_bg_zoom))):100;
             if(bi){ bi.style.objectPosition=fx+'% '+fy+'%'; bi.style.transform='scale('+Math.max(1,(zm/100))+')'; bi.style.transformOrigin=fx+'% '+fy+'%'; bi.src=bg; if(p.dj_name) bi.alt='Portada — '+p.dj_name; }  /* scale mínimo 1: el banner SIEMPRE llena el hero (cover), el zoom-in >100% sigue; el zoom-out no deja huecos */
             if(heroEl) heroEl.classList.add('has-banner');
