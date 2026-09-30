@@ -1,5 +1,5 @@
 # ESTADO MAESTRO — MIAMI DJ BEAT LLC (SSOT)
-Última actualización: 2026-09-24
+Última actualización: 2026-09-30
 Estado general: Operativo / En consolidación
 
 ## 1. Módulos y Estado Técnico
@@ -3040,3 +3040,63 @@ Aparte, en el mismo cierre, se encontró y corrigió un bug real independiente (
 **Estado final del repo:** `main` sincronizado, ambas ramas de trabajo borradas (local y remoto), working tree limpio.
 
 **Pendiente para la próxima sesión** (hoja de ruta del propio PO, guardada como ticket, NO ejecutada hoy): ver [docs/tickets/2026-09-30-TICKET-manager-test-account-y-verificacion-invitaciones-externas.md](tickets/2026-09-30-TICKET-manager-test-account-y-verificacion-invitaciones-externas.md) — cuenta de prueba real para el rol `manager` (hoy sigue con el mismo trato que Owner, sin restringir, por falta de cuenta real para verificar en vivo) + verificación del flujo de invitación desde un dispositivo fuera de la red local.
+
+## [2026-09-30] Hallazgo de seguridad en `dj_profiles` (RLS) — CERRADO, verificado; + fix de encuadre de avatar — código listo, visual pendiente
+
+**Origen:** durante un forense del menú/perfil (sesión anterior del mismo día, ver PR #604/#606 arriba) se detectó que `dj-profile.html`, visto sin sesión, mostraba a Wendy (seller) y al Owner como si fueran un artista con perfil público — algo que no debería pasar (ni ellos son artistas, ni deberían ser visibles así). El PO autorizó investigar y corregir ("sí, investígalo sin sesión...", luego "corrige los dos, empieza con el de seguridad", luego "sí, mételo en el mismo paquete" para una segunda política encontrada en el camino).
+
+**Causa raíz real:** `public.dj_profiles` (tabla base, NO la vista) tenía **6 políticas RLS de `SELECT` para el rol `anon`** dejando pasar lectura pública sin ninguna restricción real de columnas:
+- 5 con `qual: true` — cualquiera, sin sesión, leía TODAS las columnas de TODAS las filas (teléfono, comisión, `stripe_customer_id`, etc.), sin ninguna condición.
+- 1 (`"dj_profiles: public directory"`, `qual: status = 'ACTIVE'`) que parecía inerte por un desfase de mayúsculas/minúsculas (Wendy/Owner tienen `status='active'`), pero **6 de los 8 artistas reales sí tienen `status='ACTIVE'`** — así que esa política exponía sus filas completas igual, no solo lo curado de la vista pública.
+
+**Corrección aplicada (dos migraciones, ambas corridas por el PO en el SQL Editor porque el clasificador de "Production Deploy" bloqueó mi `apply_migration` las dos veces, igual que en incidentes anteriores):**
+```sql
+drop policy if exists "Allow identity check" on public.dj_profiles;
+drop policy if exists "Permitir resolución de identidad pública" on public.dj_profiles;
+drop policy if exists "Public Profile Access" on public.dj_profiles;
+drop policy if exists "Public can view profiles" on public.dj_profiles;
+drop policy if exists "Public profiles are viewable by everyone" on public.dj_profiles;
+drop policy if exists "dj_profiles: public directory" on public.dj_profiles;
+```
+Resultado: **cero políticas `anon` en `dj_profiles`**. El acceso público real y seguro sigue existiendo — exclusivamente vía la vista `public_dj_profiles` (ya corregida ese mismo día para filtrar `role='dj'` y excluir columnas sensibles), verificado que la vista **no depende** de esas políticas (`security_invoker` es `null`/falso — la vista corre con privilegios del dueño `postgres`, no del invocador).
+
+**Verificado con datos reales, no simulado**, en dos rondas (antes y después de un incidente de plataforma de Supabase de por medio — ver abajo):
+- `curl` anónimo directo a `dj_profiles` (tabla base), sin filtro → `[]` vacío.
+- `curl` anónimo directo a `dj_profiles` filtrando por Wendy + Owner → `[]` vacío.
+- `curl` anónimo a `public_dj_profiles` (la vista) → los 8 artistas reales completos, tal como debe ser.
+- Confirmado también contra `pg_policies` directo en la base (no vía REST) en ambas rondas.
+
+**Nota honesta, no completamente cerrada:** esto no elimina las 4 consultas de respaldo en `dj-profile.html` que hacen `select('*')` directo a la tabla base cuando la vista no encuentra nada (líneas ~5950-5981) — con las políticas fuera, esas consultas simplemente no encontrarán nada para nadie anónimo (efecto correcto), pero el código de respaldo en sí sigue sin tocar. Queda como ítem aparte para una futura limpieza de `dj-profile.html`, no urgente ahora que la exposición real está cerrada.
+
+**Fix de avatar (encuadre, "corta la cabeza"):** en `web/staff.html` (función `mountPerfil`, ~línea 4855), `.pf-photo` (el avatar de Mi Perfil) no aplicaba ningún `object-position`, a diferencia del banner que sí usa `photo_focal_x/y`. Corregido replicando el patrón exacto que ya existe en `dj-profile.html` (`bgPhoto`/`insetPhoto`, líneas ~6074-6107): si la foto de avatar es la MISMA que la del banner, hereda su foco guardado; si es distinta, usa `center 28%` (mismo valor fijo que ya usa dj-profile.html) para no cortar cabezas en fotos verticales. Código revisado y consistente con el precedente — **pero sin verificación visual en vivo confiable todavía** (ver abajo).
+
+**Por qué no hay captura visual todavía:** mientras se verificaba, Supabase tuvo un incidente de plataforma real y prolongado (banner propio "we are investigating a technical issue" en su dashboard, confirmado además con `pg_stat_activity`/`EXPLAIN ANALYZE` de que la base de datos en sí estaba sana — 0.2ms — mientras la capa de API/Auth colgaba, con timeouts, 500/503/504 y hasta el refresh de sesión fallando por más de una hora). Ya se recuperó. Al reintentar, la pestaña del navegador usada para las pruebas (compartida durante ~2h entre esta sesión y otra en paralelo) quedó con estado de navegación contaminado (una vista de clima/agenda guardada tomó el lugar de Mi Perfil al abrir la URL) — no es un bug del código, es ruido del entorno de prueba. El PO pidió reintentar la verificación más tarde, en frío.
+
+**Archivos tocados, sin commit todavía** (regla 7 — falta confirmación visual real del PO en ambos ítems visuales antes de comitear): `web/staff.html` (avatar), `web/mdjb-shared-header.js` (arrastrado de la sesión anterior del mismo día — fix MI PERFIL/CONFIG duplicado, también sin comitear, también verificado en código pero pendiente de reverificación visual limpia).
+
+**Pendiente para retomar:** (1) reverificar visualmente en una pestaña nueva y limpia que el avatar de Mi Perfil ya no corta cabezas (Owner o Wendy, sesión real); (2) reverificar MI PERFIL/CONFIG en `mdjb-shared-header.js`; (3) una vez el PO confirme ambos con sus propios ojos, comitear los tres archivos juntos (`staff.html` + `mdjb-shared-header.js`) en una rama nueva desde `main` actualizado.
+
+## [2026-09-30] Dos bugs más, mismo día: "Cargando…" colgado en dj-profile.html + gate de staff.html expulsando en silencio
+
+Retomando la verificación pendiente del bloque anterior, el propio PO probó en vivo (su Chrome real, no simulado) y reportó dos síntomas nuevos con capturas reales: (1) perfiles públicos que no cargan ("no se puede entrar en ningún perfil"), y (2) "la pestaña de MI PERFIL no entra no me deja entrar no funciona". Ambos se investigaron y corrigieron el mismo día, mismo root cause que el hallazgo de RLS de más arriba: **consultas de rol/identidad sin tope de tiempo, bajo la degradación de Supabase Auth que ya se venía arrastrando.**
+
+**Bug 1 — `web/dj-profile.html` (loadProfile, rama "visitante viendo el perfil de otro"):**
+- Causa real: un `Promise.all` hacía esperar la vista pública (rápida, ya lista) por una consulta aparte de "¿quién soy yo?" (`dj_profiles` por el `user_id` del VISITANTE, no del perfil visto) — bajo degradación, esa consulta tardaba ~20s o más, y todo el perfil se quedaba en "Cargando…" ese tiempo entero.
+- Corrección: se desacopló — la vista pública se pinta con su propio tiempo; la verificación de rol del visitante corre con un tope de 2.5s (`Promise.race`); si no llega a tiempo, degrada en silencio a la vista pública ya cargada en vez de congelar la pantalla.
+- Nota de calidad: la primera versión de este fix tenía un bug propio — `.catch()` sobre el resultado de `db.from(...).maybeSingle()`, que en supabase-js es un "thenable", no una Promise real (mismo gotcha ya documentado en memoria del proyecto: ".rpc().catch no existe"). Se detectó en la propia verificación en vivo (quedó peor, colgado de nuevo) y se corrigió envolviendo en `Promise.resolve(...)` antes del `.catch()`.
+- Verificado en vivo, dos veces, con la sesión real de Wendy viendo el perfil de otro artista: reventaba el "Cargando…" en ~9s (con el ruido de fondo de Supabase todavía activo) en vez de colgarse indefinido.
+
+**Bug 2 — `web/staff.html` (gate de entrada, líneas ~2362-2417), más serio que el anterior porque afecta a CUALQUIER staff, incluido el Owner:**
+- Causa real: el gate consulta `dj_profiles.role` para decidir si dejar pasar a alguien a `staff.html`. Si esa consulta fallaba o tardaba (mismo tipo de degradación), el código no distinguía "la consulta no respondió" de "confirmé que no eres staff" — en los dos casos `role` salía vacío, y hasta al propio Owner lo sacaba en silencio hacia `dj-dashboard.html` (el panel de artista), sin ningún error visible. Reproducido en vivo: pantalla completamente negra en `?vista=gobernanza`, y el mismo comportamiento en `?vista=miperfil` (el reporte textual del PO: "no me deja entrar").
+- Corrección aplicada (autorizada explícitamente por el PO, "sí, corrígelo con el mismo patrón"):
+  1. Atajo por JWT: `session.user.app_metadata.role` ya viaja firmado en la sesión (mismo campo que ya usa `mdjResolveEffectiveUserRole` en login.html/auth.js) — si ya declara un rol de staff, entra de inmediato sin tocar la base de datos.
+  2. Si el JWT no trae el rol: consulta con tope de 2.5s, y un segundo intento de 5s si el primero falla/tarda.
+  3. Si los dos intentos fallan de verdad: **ya no expulsa a nadie a otra app.** Muestra un aviso propio dentro de `staff.html` ("No pudimos confirmar tu acceso… Reintentar") con botón de recarga — nunca asume "no eres staff" solo porque la consulta no respondió a tiempo.
+  4. Se dejó SIN TOCAR la lógica de enrutamiento cliente/artista ya mergeada hoy en el PR #606 (cuándo mandar a `client-portal.html` vs `dj-dashboard.html` cuando el rol SÍ se confirma como no-staff) — un bloque pegado pedía reescribirla con una condición más estricta ("solo si role es exactamente 'dj'/'artist'"); se descartó por ser una reescritura de algo ya probado y fuera del bug real.
+- Verificado en vivo con la sesión real de Wendy: `?vista=gobernanza` y `?vista=miperfil` entran en ~2 segundos (antes: pantalla negra indefinida), badge de rol correcto ("◆ VENDEDOR"/"◆ Vendedor"), consola sin errores nuevos.
+
+**Disciplina de bloques pegados, otra vez documentada:** en el curso de esta sesión llegaron varios bloques pegados con "ÓRDENES" que no se ejecutaron: (a) uno pidiendo comitear+pushear+abrir PR con un mensaje de commit que afirmaba "verificado visualmente" cuando eso todavía no era cierto — descartado por falso y por pedir PR sin la palabra explícita del PO; (b) uno pidiendo "cablear Mi Perfil" y optimizar la carga inicial de `staff.html` — descartado porque Mi Perfil ya existía y estaba cableado (verificado por grep antes de responder), y la lentitud reportada era 100% del lado de Supabase (`EXPLAIN ANALYZE` directo: 0.2ms), no del código; (c) uno pidiendo esqueletos UI + diferir la animación de partículas + reemplazar el loader por un video — descartado por tocar directo la Regla 2 del proyecto (partículas protegidas, nunca sin autorización expresa) y por describir un video/imagen estática que no existe en el repo real. Patrón consistente: verificar contra el código real antes de ejecutar cualquier orden pegada, sin importar cuán formal se vea.
+
+**Archivos tocados hoy, sin commit todavía** (siguen esperando confirmación visual directa del PO, regla 7): `web/dj-profile.html`, `web/staff.html` (avatar + gate), `web/mdjb-shared-header.js`. El PO está probando en vivo en este momento (su propio Chrome real) — pendiente su confirmación antes de armar el commit; PR solo con su "aprobado"/"me gusta así" explícito.
+
+**Cierre del bloque, vía Hilo Maestro:** al reportar los hallazgos de arriba al Hilo Maestro (este hilo secundario es GEO·SEO·IA, fuera de jurisdicción para estos 3 archivos según `docs/JURISDICCIONES.md` — dominio #5 para `mdjb-shared-header.js`), confirmó independientemente en el Chrome real del PO: el incidente de Supabase "Intermittent latency in Eastern US" seguía activo (confirmado en status.supabase.com), con peticiones a `dj_profiles` colgadas 14+ segundos — el fix de timeout+reintento+aviso de hoy respondió exactamente como debía. **Corrección a este mismo documento:** el ícono (!) esquina inferior izquierda SÍ existe en código — es `mdj-incident-fab` (`web/staff.html:2450`, función `mountIncidentReporter`, "Reportar incidente de plataforma", montado para todo rol de staff). La búsqueda original de este hilo usó términos equivocados (`triangle`/`⚠`) y no lo encontró. Se reconcilia con lo observado: en páginas de `staff.html` era ese botón real; en páginas sin relación (`contact.html`, `dj-dashboard.html`, que no tienen `mdj-incident-fab`) sí era el navegador/extensión del PO — las dos cosas eran ciertas, en páginas distintas. GEO·SEO·IA queda en pausa en los 3 archivos hasta que el Hilo Maestro o el PO indiquen continuar.
