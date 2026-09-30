@@ -2927,4 +2927,101 @@ Sesión dedicada a resolver el pendiente del incidente del 2026-09-28 (clave `se
 
 - **PR #599**: `notify-portal-message`'s `bearerIsServiceRole()` (bypass de autorización sin verificar firma, ver ticket #597) eliminado. Confirmado que el webhook real (`on_portal_message_insert`) no dependía de ese camino — su `x-webhook-secret` ya coincidía con `STRIPE_WEBHOOK_SECRET`. Redesplegado por el PO.
 - **PR #600**: sku `light_laser` ($150/unidad, precio al cliente confirmado por el PO) para el Chauvet Scorpion Storm RGX — 2 unidades en storage, mismo patrón de selector de cantidad que Moving Heads. Aplicado y verificado en producción y en vivo.
+
+## [2026-09-30] Cuenta de Wendy (vendedora) — 3 bugs reales de producción encontrados y corregidos, ninguno desplegado todavía
+
+El PO creó él mismo (yo no creo cuentas) la cuenta de vendedora de Wendy (`wendy.miamidjbeat@gmail.com`, rol `seller` — ya existía completo en el sistema, comisiones/RLS/alta desde staff.html). Lo que debía ser trivial destapó una cadena de bugs reales de producción, cada uno diagnosticado con logs reales antes de tocar código (`feedback_diagnosticar_sin_datos_del_equipo_afectado`):
+
+- **Bug 1 — invite link a `localhost:3000`**: ver [[TICKET-STAFF-INVITE-REDIRECT-LOCALHOST3000]], ya RESUELTO — Site URL/Redirect URLs mal puestos en Supabase Auth (no el código).
+- **Bug 2 — identidad partida en 4 capas**: la cuenta de Wendy terminó con `role='seller'` en `dj_profiles` pero `account_type='client'` en `identity.users` (trigger `enforce_role_coherence()` lo bloqueaba) y `raw_app_meta_data.role` del JWT desactualizado (routing del cliente usa ESTE campo, no las tablas). Corregido a mano en las 4 capas, verificado consistente.
+- **Bug 3 — autocomplete de Chrome mezclando cuentas**: en [account-settings.html:1562-1571](web/account-settings.html:1562), los 3 campos de nombre (`given-name`/`additional-name`/`family-name`) agrupaban con el bloque de dirección (mismo navegador usado para probar la cuenta del Owner y la de Wendy) → Chrome ofreció autocompletar TODO el grupo (nombre incluido) con datos de otra cuenta guardada. Log real capturado: un `PUT /user` con `actor_name: "Gerardo Elizabeth A Valle"` (nombre corrupto, mezcla de ambas cuentas) a las 04:22:27 UTC. Corregido: los 3 campos ahora `autocomplete="off"`. Se autocorrigió solo un minuto después (04:23:48), pero el mecanismo queda cerrado para que no le pase a nadie más.
+- **Bug 4 — el más grave, sitewide**: un link de recuperación/invitación (`type=recovery`) SÍ autentica al usuario (Supabase dispara el evento `PASSWORD_RECOVERY`), pero nada en el sitio escuchaba ese evento — la persona quedaba logueada en silencio, tirada en Home, sin ningún formulario para poner contraseña nueva. Confirmado con logs (`/verify` → 303 → sesión real creada) y reproducido en vivo dos veces (por mí y por el PO, cada uno viendo lo mismo: "Wendy Eliz..." arriba a la derecha, sin más). Corregido en [mdjb-shared-header.js:6071-6090](web/mdjb-shared-header.js:6071) (el header compartido, se carga en todo el sitio): `event === 'PASSWORD_RECOVERY'` → redirige a `reset-password.html?type=recovery`, que ya sabía mostrar el formulario correcto con la sesión activa. Verificado con `node --check` (sintaxis OK) y probado manualmente navegando ahí con la sesión real de Wendy — el formulario "Nueva Contraseña" apareció correcto.
+- **Desbloqueo inmediato de Wendy** (sin esperar el deploy del bug 4): se le mandó un solo correo de recuperación fresco desde el dashboard de Supabase, y se navegó manualmente esa misma sesión autenticada a `reset-password.html?type=recovery`. El PO escribió la contraseña él mismo (regla dura: nunca la escribo yo, ni siquiera bajo presión directa) y confirmó que pudo entrar.
+- **Trabajo pendiente, no relacionado**, encontrado y arreglado el mismo día por orden explícita del PO (pasted formal order, `feedback_agent_relay_copypaste_protocol`) sobre `web/staff.html`: router (`?vista=` ya no se ignora para roles no-owner), sidebar con guardia de rol real (ya no candados decorativos), tab "Ventas" conectado a "Mis Comisiones" real (antes alias falso a Gobernanza), barra superior con `#role-badge`/`#staff-name`/`#staff-logout` restaurados (antes código muerto, sin nodos HTML). Verificado con `node --check` sobre el bloque `<script>` extraído y consola limpia en `localhost:8000`. **Código completo, no mostrado al PO todavía, no desplegado.**
+- **Nada de esto está commiteado ni en rama** — todo vive en el working tree de `main`, mezclado con cambios sin relación de otro hilo paralelo (confirmado por el PO como seguro de ignorar). Pendiente: aislar por archivo (nunca `git add -A`), rama `feature/...` desde `main` limpio, mostrar el fix de `staff.html` al PO para confirmación visual antes de cualquier commit/PR — regla de auditoría visual obligatoria, ningún hilo declara esto "resuelto" sin esa confirmación directa.
 - Con esto, todos los pendientes reales de la sesión de páginas de categoría + rotación de clave quedan cerrados, salvo: mover `led-large.jpg`/`led-small.jpg` a la carpeta correcta en Supabase Storage, borrar los videos duplicados en `Special_Effects/`, y decidir sobre las 3 fotos genéricas de stock en `lighting/` — las 3 son tareas manuales del PO, no requieren código.
+
+## [2026-09-30] Cuenta de Wendy (vendedora) — segunda pasada: matriz de acceso completa del menú + Cash Flow + limpieza de arquitectura
+
+Orden explícita del PO tras probar la primera pasada con la cuenta real de Wendy: revisar TODO el menú lateral (no solo Ventas/Sidebar/Mi Perfil), definir permisos claros para Customers/Network/Team/Operations, eliminar los `.click()` sintéticos por llamadas directas, y agregar Cash Flow (donde de verdad se reflejan las comisiones). Todo verificado en vivo con la sesión real de Wendy en `localhost:8000`, no simulado.
+
+**Matriz de acceso final** (`web/staff.html`, `applySide3RoleGate` + `MDJ_VISTAS_POR_ROL`):
+
+| Sección / Menú | Owner | Manager | Seller (Wendy) | Acción aplicada | Estado de pruebas |
+|---|---|---|---|---|---|
+| Gobernanza (Permisos) | Visible | Visible | **Oculto** | Grupo+panel ocultos enteros — caía ahí por defecto sin elegirlo, contenido exclusivo de Owner (caja real, márgenes, config) | ✅ Verificado en vivo |
+| Clientes → Leads | Visible | Visible | **Visible** | Su cola real de prospectos — aterrizaje por defecto (antes Gobernanza) | ✅ Verificado en vivo |
+| Clientes → Actividad | Visible | Visible | **Oculto** | Log operativo de TODA la plataforma (altas de artista/cliente + leads de todos) — no es su trabajo, es agregado | ✅ Verificado en vivo |
+| Clientes → Órdenes Event Builder | Visible | Visible | **Visible** | Carritos/órdenes de sus propios clientes reales, no un agregado | ✅ Verificado en vivo |
+| Network | Visible | Visible | **Oculto** | Expone la base de contactos COMPLETA de la empresa (978+ registros, todas las categorías) sin filtrar a sus prospectos — métrica de negocio global | ✅ Verificado en vivo |
+| Mensajes del Sistema | Visible | Visible | **Visible** | Herramienta de comunicación con clientes, sin datos agregados | ✅ Cargó sin error |
+| Equipo (DJs/Staff/Crear Perfiles/Certificados/Analytics) | Visible | Visible | **Oculto** | Grupo entero oculto — gestión de staff/plataforma, no de ventas. "Mis Comisiones" se sacó de este grupo a link propio ANTES de ocultarlo | ✅ Verificado en vivo |
+| Mis Comisiones (standalone nuevo) | Visible | Visible | **Visible** | Su comisión real filtrada por `vendedor_id` — hoy $0 porque no ha cerrado ventas, no es un dato inventado | ✅ Verificado en vivo |
+| Operaciones (Contenido/Tarifas/MDJPRO/Marca/Apps/Producción/Venues/Inbox) | Visible | Visible | **Oculto** | Grupo entero oculto — configuración de plataforma y precios, no de ventas | ✅ Verificado en vivo |
+| Bóveda Legal (9 plantillas de contrato) | Visible | Visible | **Visible** | Herramienta para cerrar contratos con sus clientes, sin datos agregados | Sin cambios, no expone métricas |
+| Eventos (6 tipos de blueprint) | Visible | Visible | **Visible** | Herramienta de cotización, sin datos agregados | Sin cambios, no expone métricas |
+| Pedidos (Pendientes/Enviados/Todos) | Visible | Visible | **Visible** | Órdenes individuales de merch, no un agregado de ingresos totales | Sin cambios, no expone métricas |
+| **Cash Flow** (barra superior, NUEVO) | Visible | — | **Visible (agregado hoy)** | Orden explícita del PO: "ahí es donde se reflejan las comisiones". Verificado el código de `flow-handler.js` ANTES de habilitarlo: `loadFlowData()` siempre filtra `.eq('dj_user_id', userId)` con `userId = sessionUid` — nunca un agregado de la empresa | ✅ Verificado en vivo: $0.00 en todos los campos (cuenta nueva, sin `dj_ledger` todavía), incluye "Comisiones Referidos" tal como describió el PO |
+| Mi Perfil | Visible | Visible | Visible | Sin cambios — genérica por sesión | Ya verificado en la ronda anterior |
+
+**Manager**: mismo trato que Owner por ahora (sin gate). No existe una cuenta real de manager para probar un criterio distinto — no se inventa una restricción sin poder verificarla en vivo (regla: no diagnosticar sin datos reales). Pendiente de definir cuando exista una cuenta real.
+
+**Limpieza de arquitectura (orden explícita del PO)**:
+- Eliminados los 2 `.click()` sintéticos que quedaban (aterrizaje inicial en `wireStaffSidebar` y el fallback de `exitFullPage()` al salir de Network) — ambos reemplazados por una llamada directa a `loadAdmin({hash:'leads'}, 'Leads')`, la misma función que ya usa cualquier clic real del menú. Se eliminó también el mecanismo `data-autoload` de `paintStaffTopnav` (quedó sin uso).
+- Todo contenedor oculto por rol ya no ejecuta ninguna llamada — el iframe compartido (`sc3-iframe`) solo fija su `src` cuando el usuario hace clic en un link visible; con los links ocultos (`display:none`, sin listener disparado), ninguna de esas secciones llega a pedir datos.
+
+**Archivos tocados en esta segunda pasada**: `web/staff.html` (HTML: "Mis Comisiones" movida de dentro de Equipo a link standalone; JS: `applySide3RoleGate`, aterrizaje inicial, `exitFullPage`, `paintStaffTopnav`, `staffTopnavHtml` rama seller, `MDJ_VISTAS_POR_ROL`). Verificado con `node --check` en cada paso y probado en vivo en `localhost:8000` con la sesión real de Wendy (rol `seller` confirmado por JWT, no simulado). **Comiteado localmente** (`089ad261`, rama `feature/staff-vendedora-onboarding-fix`, solo los 6 archivos propios de esta tarea — verificado con `git diff origin/main HEAD --stat` antes de comitear). **Sin push, sin PR** — pausado por orden explícita del PO hasta cerrar la navegación (ver bloque siguiente).
+
+## [2026-09-30] Cuenta de Wendy — tercera pasada: navegación unificada (Cash Flow deja de ser "otra pantalla")
+
+Orden explícita del PO tras ver la segunda pasada: sensación de pantallas desconectadas al cambiar de pestaña — "se cambian pestañas, faltan en un lugar, aparecen en otro". Diagnóstico real antes de tocar nada: `#view-cashflow` (la vista que usa el Owner en su barra superior) es una `<section class="staff-view">` **hermana** de `#view-gobernanza`, sin el sidebar `#staff-side3` adentro — al navegar ahí desde "Ventas", el router apaga la sección con el menú y enciende una sección distinta sin él. Eso era literalmente "otra pantalla detrás", no una sensación: la estructura del DOM cambiaba entera.
+
+**Corrección aplicada, solo para `seller` (cero cambios para Owner/Admin/Manager, que siguen usando su Cash Flow real de siempre):**
+- Nuevo panel `#sc3-cashflow` dentro de `#staff-content3` (mismo patrón que Mensajes del Sistema/Bóveda Legal/Inbox: iframe propio con `data-src`, carga perezosa al primer clic). Iframe con id distinto (`sc3-cashflow-iframe`) al del Owner (`cashflow-frame`) para no compartir el mismo nodo entre las dos vistas.
+- Nuevo link standalone "Cash Flow" en el sidebar (`#side3-cashflow-link`), oculto por defecto en el HTML, revelado solo para `role==='seller'` en `applySide3RoleGate`.
+- Quitado el botón "Cash Flow" del top nav de seller (ya no hace falta — vive en el sidebar) y quitado `cashflow` de `MDJ_VISTAS_POR_ROL.seller` (para que nunca vuelva a aterrizar en `#view-cashflow`, la sección sin sidebar).
+- Resultado: para vendedora, TODA la navegación vive ahora en un solo lugar — el sidebar dentro de "Ventas" — con el top nav reducido a Inicio/Academia/Ventas/Mi Perfil (Mi Perfil se deja como página aparte a propósito: mismo patrón que usa el Owner y el resto del sitio, "tu ficha" vs. "tus herramientas de trabajo", no es el bug reportado).
+
+**Verificado en vivo, no simulado** (sesión real de Wendy, `localhost:8000`):
+- Leads → Cash Flow → Leads, repetido a 1512px y a 1280px: el sidebar nunca desaparece, no hay parpadeo, no hay doble scroll — un solo contenedor de trabajo en todo momento.
+- Cash Flow carga datos reales y propios ($0.00 en todo, cuenta nueva sin `dj_ledger`, incluye "Comisiones Referidos" como pidió el PO).
+- Consola limpia en cada paso (`read_console_messages`, sin errores, antes y después de cada clic).
+- Mi Perfil (top nav) confirmado con su ficha real: foto real, "Wendy Elizabeth Ayala · STAFF · VENDEDOR" — página aparte a propósito, no tocada.
+
+**Archivos tocados en esta tercera pasada**: `web/staff.html` únicamente (HTML: nuevo panel + link de sidebar; JS: `panels`, click handler `sec==='cashflow'`, `applySide3RoleGate`, `MDJ_VISTAS_POR_ROL`, rama seller de `staffTopnavHtml`). Verificado con `node --check`. **Sigue sin comitear** — pendiente de sumarse al mismo commit/rama de la segunda pasada una vez el PO confirme visualmente esta corrección también.
+
+## [2026-09-30] Cuenta de Wendy — cuarta pasada: corrección de rumbo, "oculto" → "visible con candado" + Agenda + Fénix AI
+
+El PO corrigió explícitamente el modelo de la segunda pasada: **"nunca te dije que quitaras esas cosas... las cosas del owner están restringidas pero muchas cosas se deberían ver, solo lo del owner secretos tendría candado, no es que no lo tengan, solo que para entrar se necesita permiso especial."** Además: falta Fénix AI, y falta Agenda ("como un vendedor no va a poder ver calendario si ese calendario sería el que él tendría para sus contactos").
+
+**Verificado antes de dar cada cosa** (no se dio nada a ciegas):
+- Agenda (`staff-agenda.html`): filtra siempre por `.eq('assigned_dj_id', prof.id)` con `prof` del propio `dj_profiles` de la sesión — su calendario, no el de la empresa. Confirmado.
+- Fénix AI (`#view-elixis`): workspace de IA por sesión, mismo patrón que ya usan artistas/DJs — sin gate adicional necesario.
+
+**Modelo corregido, aplicado en `web/staff.html`:**
+- TODO el sidebar queda visible para seller — Gobernanza, Network, Equipo, Operaciones, Actividad incluidos. Ya no se oculta ningún grupo entero.
+- `SELLER_LOCKED_NAVS` = exactamente los mismos ítems que `staff-admin.html` ya trataba como Owner-only en su propio `applyRoleRestrictions('SALES_STAFF')` (`content`, `analytics`, `apps`, `staff`, `registry-section`, `site-media`, `commission-rules`) + `create-profiles` + `mdjpro` (ya marcados 🔑 en el HTML) + el panel "Permisos"/Gobernanza (texto propio: "caja real, márgenes, configuración").
+- Candado FUNCIONAL, no decorativo: clic en un ítem bloqueado no llama `loadAdmin()` ni fija ningún `src` de iframe — muestra un panel local (`#sc3-locked`, "🔒 Acceso restringido — requiere permiso especial del Owner"). Verificado con `read_network_requests`: cero peticiones a `staff-admin.html`, cero a Stripe.
+- **Network**: el PO decidió explícitamente (pregunta directa, dos opciones) dejarlo **abierto**, no con candado — coincide con la arquitectura ya existente ("Staff matrix: READ all, comparte hacia abajo").
+- Agenda y Fénix AI agregados al top nav de seller (`data-top="agenda"`/`"elixis"`) y a `MDJ_VISTAS_POR_ROL.seller`.
+
+**Verificado en vivo, sesión real de Wendy:**
+- "Permissions" (Gobernanza): 🔒 visible en el link, clic → "Acceso restringido", cero llamadas de red.
+- "Content & Pricing", "Tarifas de Comisiones", "MDJPRO", "Branding & Media", "App Hosting", "Staff", "Crear Perfiles", "Certificados", "Analytics": mismo candado funcional.
+- "Production", "Venues", "Inbox·Tickets": abiertos, cargan de verdad (Venues confirmado cargando en vivo).
+- Network: abierto, 978 contactos reales, sin candado (decisión explícita del PO).
+- Agenda ("SCHEDULE" en EN): carga el dashboard operativo real, "Día sin evento en agenda" para su propia sesión.
+- Fénix AI: carga el workspace de IA completo (carrusel, orbe, chat "Write to ELIXIS...").
+
+**Archivos tocados**: `web/staff.html` únicamente. Verificado con `node --check`. **Sigue sin comitear** — pendiente de que el PO lo vea y confirme antes de sumarlo a la rama.
+
+## [2026-09-30] Cuenta de Wendy — quinta pasada: paridad de barra superior (⚙️ CONFIG + Staff)
+
+El PO señaló directo: "ni siquiera veo config de la cuenta ni la pestaña staff" — comparando la barra de seller contra la del Owner. Agregados con el mismo mecanismo que ya usa Owner, sin inventar nada nuevo:
+- **⚙️ CONFIG** (`<a href="./account-settings.html" data-top="config">`) — su propia cuenta, sin dato ajeno que proteger. Verificado en vivo: carga completa (ID `MDB-SLR-000001`, Role: Seller, foto real, y las pestañas propias de esa página — Categoría, Agenda/Disponibilidad, Reporte, Recompensas, Productos, Inbox·Tickets, Subscription, Dispositivos, Redes Sociales, Documentos Legales, Zona de riesgo).
+- **Staff** (`data-top="gobernanza"`, mismo destino que "Ventas") — restaurado, mismo patrón redundante-a-propósito que ya tiene la barra del Owner.
+- `config:1` agregado a `MDJ_VISTAS_POR_ROL.seller`.
+
+**Sobre "faltan pestañas de Mi Perfil"**: se investigó `#view-miperfil` (el destino interno de "MI PERFIL" en staff.html) — solo tiene 3 secciones (Bio/Opiniones/QR), pero **esto no es una restricción de rol**: es exactamente lo mismo que ve el Owner en el mismo botón, siempre ha sido así. La pregunta de aclaración se descartó sin respuesta; probablemente la confusión real era con ⚙️ CONFIG (que sí tiene muchas más pestañas, ya agregado arriba) — pendiente de que el PO lo confirme al probarlo.
+
+**Archivo tocado**: `web/staff.html` únicamente. `node --check` OK. Probado en vivo (Config carga real, Staff regresa bien al panel, consola limpia). **Sigue sin comitear.**

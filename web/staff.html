@@ -1466,6 +1466,19 @@
              placeholder="Buscar DJs, tienda, cursos, reservas…"
              autocomplete="off" enterkeyhint="search" aria-label="Buscar" />
     </div>
+    <!-- 2026-09-30, TICKET-STAFF-ROLE-VIEWS: restaurado. initStaff() (más abajo)
+         ya intentaba llenar #role-badge/#staff-name y enganchar #staff-logout
+         desde el día que se escribió, pero los 3 nodos habían sido borrados
+         del HTML sin borrar ese código — quedó buscando elementos que no
+         existían (guardas `if(badge)`/`if(nm)`/`if(out)` los dejaban pasar en
+         silencio, sin romper nada, pero sin mostrar nada tampoco). Efecto real:
+         ni el Owner ni ningún otro rol veía su nombre/rol en la barra, y no
+         había botón de Salir visible en todo staff.html. -->
+    <div class="staff-actions">
+      <span id="role-badge"></span>
+      <span id="staff-name"></span>
+      <button type="button" id="staff-logout">Salir</button>
+    </div>
   </div>
 
   <!-- Menú PRINCIPAL (tira dorada grande, estilo perfil) — interactivo, poblado por RBAC -->
@@ -1898,6 +1911,21 @@
           <!-- Mensajes del Sistema (2026-09-23): SMS reales, entrada y salida -->
           <button type="button" class="side3-link side3-link-standalone" data-sec="msg" title="Mensajes del Sistema"><span class="side3-ic">💬</span><span class="side3-tx">Mensajes del Sistema</span></button>
 
+          <!-- Mis Comisiones (2026-09-30): sacada del grupo EQUIPO a propósito.
+               EQUIPO se oculta entero para seller (orden explícita del PO,
+               matriz de acceso en docs/ESTADO_MAESTRO.md) -- si "Mis
+               Comisiones" se hubiera quedado adentro, el vendedor habría
+               perdido su propia vista real junto con todo lo demás. Standalone,
+               mismo patrón que Network/Mensajes del Sistema arriba. -->
+          <button type="button" class="side3-link side3-link-standalone" data-sec="admin" data-nav="mis-comisiones" title="Mis Comisiones"><span class="side3-ic">💰</span><span class="side3-tx">Mis Comisiones</span></button>
+
+          <!-- Cash Flow embebido -- solo vendedora (ver comentario junto al
+               panel #sc3-cashflow más abajo). Oculto por defecto en el HTML;
+               applySide3RoleGate() lo revela SOLO para role==='seller' --
+               owner/admin/manager siguen usando su Cash Flow real (barra
+               superior, #view-cashflow), sin tocar nada de lo suyo. -->
+          <button type="button" class="side3-link side3-link-standalone" data-sec="cashflow" title="Cash Flow" style="display:none;" id="side3-cashflow-link"><span class="side3-ic">📊</span><span class="side3-tx">Cash Flow</span></button>
+
           <!-- Grupo EQUIPO -->
           <button type="button" class="side3-group" data-group="equipo" aria-label="Equipo" data-i18n-aria="side3-equipo">
             <span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span class="side3-tx" data-i18n="side3-equipo">Equipo</span><span class="side3-car">▾</span>
@@ -1908,7 +1936,6 @@
             <button type="button" class="side3-link" data-sec="admin" data-nav="create-profiles" title="Crear Perfiles" data-i18n-title="side3-crear-perfiles"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg></span><span class="side3-tx" data-i18n="side3-crear-perfiles">Crear Perfiles</span><span class="side3-lock" title="Owner-only" data-i18n-title="side3-owner-only">🔑</span></button>
             <button type="button" class="side3-link" data-sec="admin" data-nav="registry-section" title="Certificados" data-i18n-title="side3-certificados"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span><span class="side3-tx" data-i18n="side3-certificados">Certificados</span></button>
             <button type="button" class="side3-link" data-sec="admin" data-nav="analytics" title="Analytics" data-i18n-title="side3-analytics"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span><span class="side3-tx" data-i18n="side3-analytics">Analytics</span></button>
-            <button type="button" class="side3-link" data-sec="admin" data-nav="mis-comisiones" title="Mis Comisiones"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span><span class="side3-tx">Mis Comisiones</span></button>
           </div>
 
           <!-- Grupo OPERACIONES -->
@@ -2093,6 +2120,32 @@
             <div class="sc3-loading" id="sc3-msg-loading"><span class="acc-spin"></span> Cargando Mensajes del Sistema…</div>
             <iframe id="sc3-msg-iframe" class="sc3-frame" data-src="./system-messages.html?v=20260924-tarjetas" aria-label="Mensajes del Sistema" loading="lazy"></iframe>
           </div>
+          <!-- Cash Flow embebido (2026-09-30, orden explícita del PO: "no una
+               pantalla que aparece detrás" -- #view-cashflow del Owner es una
+               sección hermana SIN sidebar; cambiar a ella desde aquí apagaba
+               el menú entero y encendía un layout distinto, la causa real de
+               "siento que hay otra pantalla detrás" que reportó el PO. Mismo
+               contenido (staff-agenda.html?tab=flow, el mismo loadFlowData()
+               ya verificado como aislado por sesión), pero cargado DENTRO de
+               este mismo contenedor -- iframe propio (sc3-cashflow-iframe,
+               NO el mismo id que #cashflow-frame del Owner) para no pelear
+               por el mismo nodo del DOM entre las dos vistas. Solo vendedora
+               ve el link de sidebar que abre este panel (ver applySide3RoleGate). -->
+          <div class="sc3-panel" id="sc3-cashflow">
+            <div class="sc3-loading" id="sc3-cashflow-loading"><span class="acc-spin"></span> Cargando Cash Flow…</div>
+            <iframe id="sc3-cashflow-iframe" class="sc3-frame" data-src="./staff-agenda.html?tab=flow" aria-label="Cash Flow" loading="lazy"></iframe>
+          </div>
+          <!-- Candado funcional (2026-09-30): el link SÍ se ve en el menú
+               (el PO fue explícito: "no es que no lo tengan, solo que para
+               entrar se necesita permiso especial") -- clic en un ítem
+               🔑 de seller cae aquí en vez de cargar el dato real. -->
+          <div class="sc3-panel" id="sc3-locked">
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;gap:12px;padding:40px;">
+              <div style="font-size:40px;">🔒</div>
+              <h3 style="margin:0;color:var(--gold-lt,var(--gold));">Acceso restringido</h3>
+              <p style="margin:0;max-width:420px;color:rgba(255,255,255,.6);font-size:14px;line-height:1.5;">Esta sección requiere permiso especial del Owner. Pídele que te lo habilite si lo necesitas para tu trabajo.</p>
+            </div>
+          </div>
         </div><!-- /staff-content3 -->
        </div><!-- /staff-shell -->
       </section>
@@ -2243,15 +2296,54 @@
          dentro de staff-admin.html). Ya no hace falta ningún link al panel
          viejo para estos 2 roles. */
       if(role==='seller'){
+        /* "Ventas" (2026-09-30, TICKET-STAFF-ROLE-VIEWS): antes no tenía
+           data-top ni data-href — un botón "activo" sin destino, que dejaba
+           ver debajo lo que hubiera cargado por defecto (Gobernanza estática,
+           Owner-only). Ahora navega de verdad a Gobernanza, y el aterrizaje
+           dentro de ese contenedor (Leads, su cola real de prospectos) se
+           resuelve con una llamada directa en wireStaffSidebar/exitFullPage
+           -- no con un click() simulado sobre el menú (ver esa función para
+           el porqué).
+           MI PERFIL: mismo mecanismo real que usa el Owner (data-top="miperfil",
+           ficha con su propio nombre/foto/rol vía mountPerfil) — antes era un
+           <a> a account-profile.html, una página totalmente distinta.
+           CASH FLOW (2026-09-30, orden explícita del PO: "los vendedores
+           deben tener su pestaña de cash flow, ahí es donde se reflejan las
+           comisiones") — SIN botón propio aquí a propósito, segunda vuelta
+           del mismo pedido: un botón de tope llevaba a #view-cashflow, la
+           sección del Owner sin sidebar, y ESO era "otra pantalla detrás".
+           Cash Flow vive ahora como un link más dentro del sidebar de
+           Ventas (#sc3-cashflow, ver wireStaffSidebar) -- un solo menú, no
+           dos. Verificado antes de darlo: loadFlowData() (flow-handler.js)
+           filtra siempre por el uid de la sesión activa, nunca un agregado
+           de toda la empresa.
+           AGENDA + FÉNIX AI + CONFIG + STAFF (2026-09-30, corrección de
+           rumbo -- el PO aclaró que nunca pidió ocultar/quitar nada de
+           esto, y que la barra de seller debe tener paridad real con la
+           del Owner: "como puedes preguntar y ni siquiera veo config de
+           la cuenta ni la pestaña staff". Mismo botón/mecanismo que usa
+           Owner en los 4 casos, sin inventar uno nuevo:
+             - Agenda: verificada antes de darla, staff-agenda.html filtra
+               siempre por .eq('assigned_dj_id', prof.id) -- su propio
+               calendario, no el de toda la empresa.
+             - ⚙️ CONFIG: mismo destino que el Owner, account-settings.html
+               -- es la cuenta PROPIA de quien la abre, no hay dato ajeno
+               que proteger aquí.
+             - Staff: mismo mecanismo que Ventas (data-top="gobernanza"),
+               igual que en la barra del Owner donde Staff y el resto
+               conviven como entradas distintas al mismo edificio. */
         return start+
-          '<button type="button" class="active" data-i18n="staff-nav-ventas">Ventas</button>'+
-          '<button type="button" data-href="./account-profile.html">MI PERFIL</button>'+
-          '<button type="button" data-top="gobernanza" data-i18n="staff-nav-staff">Staff</button>';
+          '<button type="button" class="active" data-top="gobernanza" data-i18n="staff-nav-ventas">Ventas</button>'+
+          '<button type="button" data-top="agenda" data-i18n="nav-agenda">Agenda</button>'+
+          '<a href="./account-settings.html" data-top="config" data-i18n="staff-nav-config">⚙️ CONFIG</a>'+
+          '<button type="button" data-top="miperfil">MI PERFIL</button>'+
+          '<button type="button" data-top="gobernanza" data-i18n="staff-nav-staff">Staff</button>'+
+          '<button type="button" data-top="elixis" data-i18n="staff-nav-fenix">Fénix AI</button>';
       }
       return start+
         '<button type="button" data-href="./dj-tools.html" data-i18n="staff-nav-djtools">DJ Tools</button>'+
         '<button type="button" class="active" data-i18n="staff-nav-operaciones">Operaciones</button>'+
-        '<button type="button" data-href="./account-profile.html">MI PERFIL</button>'+
+        '<button type="button" data-top="miperfil">MI PERFIL</button>'+
         '<button type="button" data-top="gobernanza" data-i18n="staff-nav-staff">Staff</button>';
     }
 
@@ -2762,8 +2854,12 @@
       MDJ_ROL_ACTUAL = role;
       mountIncidentReporter(sb); // cualquier rol de staff — ver función más abajo
       mountNotifBell(sb); // campana de contratos pendientes — mismo patrón, ver función más abajo
-      // badge + nombre: viven en el HERO. Estos nodos ya no existen en la barra
-      // (eran un duplicado del mismo dato); las guardas los dejan pasar.
+      // 2026-09-30: badge + nombre + logout restaurados en la barra (ver
+      // .staff-actions en el HTML) — antes este bloque buscaba nodos que ya
+      // no existían en el DOM y no hacía nada (las guardas de abajo lo
+      // dejaban pasar en silencio). Complementa, no duplica, la ficha del
+      // HERO (#pf-badge/#pf-name): la barra es visible en TODA vista de
+      // staff.html, la ficha solo cuando 'miperfil' está activa.
       var badge=el('role-badge'), nm=el('staff-name');
       var label = '◆ ' + mdjEtiquetaRol(role);
       if(badge) badge.textContent = label;
@@ -4348,31 +4444,50 @@
          Lo usa MI PERFIL de la cabecera: para owner/staff ese puesto trae aqui, y
          sin el parametro caia en Gobernanza — el owner no veia su ficha por ningun
          lado, aunque estuviera cargada y oculta en esta misma pagina.
-         Lista blanca a proposito: un valor inventado en la URL no puede dejar el
-         portal sin ninguna vista activa. */
-      var MDJ_VISTAS_VALIDAS = { financiero:1, elixis:1, gobernanza:1, miperfil:1, agenda:1, cashflow:1, config:1, smartcrate:1 };
+         Lista blanca POR ROL a proposito: un valor inventado en la URL no puede
+         dejar el portal sin ninguna vista activa, NI puede dejar a un manager/
+         seller pedir una vista ajena (financiero/config/elixis siguen siendo
+         del Owner — caja real, márgenes, configuración del sistema).
+         2026-09-30, corrección real de TICKET-STAFF-ROLE-VIEWS: antes esto
+         forzaba SIEMPRE 'gobernanza' para cualquier no-owner, ignorando incluso
+         'miperfil' — que SÍ es genérica por sesión (mountPerfil lee el propio
+         dj_profiles del usuario logueado, no datos del Owner) y por eso no
+         tenía por qué estar bloqueada para manager/seller.
+         Cash Flow se suma para seller por orden explícita del PO ("ahí es
+         donde se reflejan las comisiones") -- verificado antes de habilitarlo
+         que loadFlowData() (flow-handler.js) siempre filtra por el uid de la
+         sesión activa, nunca un agregado de toda la empresa. NO se agrega
+         'cashflow' a MDJ_VISTAS_POR_ROL.seller a propósito: #view-cashflow
+         es la sección del Owner (sin sidebar) -- ir ahí apagaba el menú
+         entero, la causa real de "otra pantalla detrás" que reportó el PO.
+         Para seller, Cash Flow vive DENTRO de 'gobernanza' como un panel más
+         del sidebar (#sc3-cashflow, ver wireStaffSidebar), un solo shell.
+         2026-09-30, corrección de rumbo (el PO aclaró: "nunca te dije que
+         quitaras esas cosas... solo lo del owner secretos tendría candado,
+         no es que no lo tengan"): 'agenda' y 'elixis' (Fénix AI) se agregan
+         para seller -- verificado antes: staff-agenda.html filtra SIEMPRE
+         por .eq('assigned_dj_id', prof.id) con prof=el propio dj_profiles
+         de la sesión (mismo patrón que Cash Flow), nunca la agenda completa
+         de la empresa. */
+      var MDJ_VISTAS_POR_ROL = {
+        owner:   { financiero:1, elixis:1, gobernanza:1, miperfil:1, agenda:1, cashflow:1, config:1, smartcrate:1 },
+        admin:   { gobernanza:1, miperfil:1 },
+        manager: { gobernanza:1, miperfil:1 },
+        seller:  { gobernanza:1, miperfil:1, agenda:1, elixis:1, config:1 }
+      };
+      var mdjVistasRol = MDJ_VISTAS_POR_ROL[role] || { gobernanza: 1 };
       var mdjVistaPedida = '';
       try {
         mdjVistaPedida = (new URLSearchParams(window.location.search).get('vista') || '').toLowerCase().trim();
       } catch (eVista) { mdjVistaPedida = ''; }
-      /* SIN parametro se entra a MI PERFIL, no a Staff.
-         Entrar desde Inicio no lleva ?vista=, asi que el owner aterrizaba
-         siempre en Gobernanza -- su propia ficha no la veia nunca sin escribir
-         la URL a mano. Es la estacion del ROL la que manda al entrar, no una
-         pestana interna. */
-      if (role === 'owner') {
-        showView(MDJ_VISTAS_VALIDAS[mdjVistaPedida] ? mdjVistaPedida : 'miperfil');
-      } else {
-        /* 2026-09-19, parte 2: admin/manager/seller SOLO tienen Gobernanza --
-           financiero/elixis/agenda/cashflow/miperfil(ficha de Owner)/config
-           son del Owner ("acceso total: caja real, Matrix BFI, márgenes,
-           precios, configuración y soberanía del sistema", texto real de la
-           propia tarjeta de Gobernanza). Se ignora cualquier ?vista= pedida
-           -- un valor manual en la URL no debe abrir una vista ajena a su rol.
-           El resto de la restricción real (qué secciones/datos ve dentro de
-           Gobernanza) vive en staff-admin.html vía RLS + applyStaffDashboardRole. */
-        showView('gobernanza');
-      }
+      /* SIN parametro se entra a MI PERFIL para el owner (su ficha, no la ven
+         nunca sin escribirlo a mano si no); para el resto el aterrizaje sigue
+         siendo Gobernanza (su estación real, con Network/Clientes/Mensajes/
+         Mis Comisiones/etc.) — pero AHORA sí pueden pedir ?vista=miperfil y
+         llegar a su propia ficha, cosa que antes era imposible sin importar
+         qué escribieran en la URL. */
+      var mdjVistaDefault = (role === 'owner') ? 'miperfil' : 'gobernanza';
+      showView(mdjVistasRol[mdjVistaPedida] ? mdjVistaPedida : mdjVistaDefault);
 
 
       // ── DÍA/NOCHE GLOBAL del portal (botón central ÚNICO). Alterna data-theme en <html> + DIFUNDE a los marcos (base lista para adaptar los secundarios). ──
@@ -4413,15 +4528,77 @@
       applyTheme(st, false);
 
       wireGovernance();
-      wireStaffSidebar();
+      wireStaffSidebar(role);
       mountPerfil(sb);
     }
 
     /* ── Menú lateral ACORDEÓNICO (regla del sistema): cada pestaña abre su página entera; una abierta a la vez ── */
-    function wireStaffSidebar(){
+    function wireStaffSidebar(role){
       var side=el('staff-side3'); if(!side) return;
+      /* 2026-09-30, TICKET-STAFF-ROLE-VIEWS: los 🔑/🔓 del HTML eran solo
+         decorativos — no bloqueaban el click, cualquier rol podía abrir
+         cualquier sección (la restricción real vivía un nivel más abajo,
+         dentro del iframe de staff-admin.html, vía applyStaffDashboardRole/
+         applyRoleRestrictions). Esto oculta de verdad los ítems que ese mismo
+         archivo ya trata como restringidos, para que el menú no prometa algo
+         que el iframe después no va a mostrar. Mismo criterio, un solo lugar
+         más (no dos fuentes de verdad distintas). */
+      /* 2026-09-30, MATRIZ DE ACCESO POR ROL — corrección de rumbo: la
+         primera versión ocultaba secciones enteras (Gobernanza/Equipo/
+         Operaciones/Network/Actividad). El PO aclaró que NUNCA pidió eso:
+         "nunca te dije que quitaras esas cosas... las cosas del owner
+         están restringidas pero muchas cosas se deberían ver, solo lo del
+         owner secretos tendría candado, no es que no lo tengan, solo que
+         para entrar se necesita permiso especial." Modelo correcto:
+           · TODO el menú queda visible para seller -- Gobernanza, Network,
+             Equipo, Operaciones, Actividad incluidos.
+           · Solo los ítems que staff-admin.html YA trata como Owner-only
+             en su propio applyRoleRestrictions('SALES_STAFF')
+             (staff-admin.html ~5199: content/analytics/apps/staff/
+             registry-section/site-media/commission-rules) más
+             create-profiles y MDJPRO (marcados 🔑 en el HTML desde antes)
+             y el panel de Permisos/Gobernanza (texto propio: "caja real,
+             márgenes, configuración") quedan con candado FUNCIONAL: el
+             link se ve, el clic no carga el dato real, muestra un aviso
+             de "requiere permiso especial del Owner".
+         Manager: mismo trato que Owner por ahora (no existe una cuenta real
+         de manager para probar distinto; no se inventa una restricción sin
+         poder verificarla en vivo — ver matriz en ESTADO_MAESTRO). */
+      var SELLER_LOCKED_NAVS = ['content','analytics','apps','staff','registry-section','site-media','commission-rules','create-profiles'];
+      (function applySide3RoleGate(){
+        if (role === 'owner' || role === 'manager') return;
+        if (role === 'seller') {
+          // Candado VISUAL (🔑) en los ítems bloqueados -- ya lo traían
+          // create-profiles/commission-rules/mdjpro en el HTML; se agrega
+          // aquí, solo para seller, a los que staff-admin.html ya trataba
+          // como Owner-only pero el HTML nunca marcó con el ícono.
+          SELLER_LOCKED_NAVS.forEach(function(nav){
+            var it = side.querySelector('.side3-link[data-nav="'+nav+'"]');
+            if (it && !it.querySelector('.side3-lock')) {
+              var lock = document.createElement('span');
+              lock.className = 'side3-lock';
+              lock.title = 'Requiere permiso especial del Owner';
+              lock.textContent = '🔑';
+              it.appendChild(lock);
+            }
+          });
+          var permisosLink = side.querySelector('.side3-link[data-sec="gob"]');
+          if (permisosLink && !permisosLink.querySelector('.side3-lock')) {
+            var lockGob = document.createElement('span');
+            lockGob.className = 'side3-lock';
+            lockGob.title = 'Requiere permiso especial del Owner';
+            lockGob.textContent = '🔑';
+            permisosLink.appendChild(lockGob);
+          }
+          // Cash Flow embebido (ver #sc3-cashflow): oculto por defecto en el
+          // HTML para todos, se revela SOLO aquí -- owner/admin/manager
+          // siguen sin verlo, usan el suyo real en la barra superior.
+          var cfLink = side.querySelector('#side3-cashflow-link');
+          if (cfLink) cfLink.style.display = '';
+        }
+      })();
       var iframe=el('sc3-iframe'), loading=el('sc3-loading'), loadTx=el('sc3-load-tx');
-      var panels={ gob:el('sc3-gob'), admin:el('sc3-admin'), inbox:el('sc3-inbox'), legal:el('sc3-legal'), pedidos:el('sc3-pedidos'), msg:el('sc3-msg') };
+      var panels={ gob:el('sc3-gob'), admin:el('sc3-admin'), inbox:el('sc3-inbox'), legal:el('sc3-legal'), pedidos:el('sc3-pedidos'), msg:el('sc3-msg'), cashflow:el('sc3-cashflow'), locked:el('sc3-locked') };
       function showPanel(k){ for(var p in panels){ if(panels[p]) panels[p].classList.toggle('active', p===k); } }
       /* botón: contrae/expande toda la barra a solo iconos */
       var col=el('side3-collapse'); if(col) col.addEventListener('click', function(){ side.classList.toggle('collapsed'); });
@@ -4457,12 +4634,26 @@
         // Por si se sale de Network en modo selector (venía de MSM) sin elegir
         // nada -- que la próxima vez abra en modo normal, no atascado.
         if(iframe) iframe.__loaded = false;
-        showPanel('gob');
         side.querySelectorAll('.side3-link').forEach(function(x){ x.classList.remove('active'); });
-        var gobLink = side.querySelector('.side3-link[data-sec="gob"]');
-        if(gobLink) gobLink.classList.add('active');
         side.querySelectorAll('.side3-group').forEach(function(x){ x.classList.remove('open'); });
         side.querySelectorAll('.side3-items').forEach(function(x){ x.classList.remove('open'); });
+        /* 2026-09-30, hallazgo real probando con la cuenta de Wendy: esto
+           volvía SIEMPRE a Gobernanza/Permisos sin mirar el rol -- para un
+           seller (que ni siquiera tiene ese grupo visible en el menú, ver
+           applySide3RoleGate arriba) significaba salir de Network y caer de
+           nuevo en la pantalla del Owner (caja real, márgenes, config).
+           Mismo aterrizaje que ya usa la carga inicial: Leads. Llamada
+           directa a loadAdmin() (hoisted en este mismo scope, se define más
+           abajo) -- sin simular un click(), por orden explícita del PO. */
+        if (role === 'seller') {
+          var leadsLinkExit = side.querySelector('.side3-link[data-nav="leads"]');
+          if (leadsLinkExit) leadsLinkExit.classList.add('active');
+          loadAdmin({ hash: 'leads', go: null }, 'Leads');
+          return;
+        }
+        showPanel('gob');
+        var gobLink = side.querySelector('.side3-link[data-sec="gob"]');
+        if(gobLink) gobLink.classList.add('active');
         var gobGroup = side.querySelector('.side3-group[data-group="gobernanza"]');
         var gobItems = side.querySelector('.side3-items[data-items="gobernanza"]');
         if(gobGroup) gobGroup.classList.add('open');
@@ -4532,6 +4723,22 @@
       side.querySelectorAll('.side3-link').forEach(function(a){ a.addEventListener('click', function(){
         side.querySelectorAll('.side3-link').forEach(function(x){ x.classList.remove('active'); });
         a.classList.add('active');
+        /* Candado funcional para seller (ver SELLER_LOCKED_NAVS arriba y el
+           comentario en applySide3RoleGate): el link se ve y se puede
+           clickear, pero no carga el dato real -- muestra el aviso de
+           "Acceso restringido" en su lugar. Owner/admin/manager no tocan
+           esta rama (SELLER_LOCKED_NAVS solo existe/aplica para seller). */
+        if (role === 'seller') {
+          var navAttr = a.getAttribute('data-nav');
+          var secAttr = a.getAttribute('data-sec');
+          var goAttr = a.getAttribute('data-go');
+          var esBloqueado = (navAttr && SELLER_LOCKED_NAVS.indexOf(navAttr) !== -1) || secAttr === 'gob' || goAttr === 'mdjpro';
+          if (esBloqueado) {
+            exitFullPage();
+            showPanel('locked');
+            return;
+          }
+        }
         if(a.getAttribute('data-standalone')==='1'){ enterFullPage(); } else { exitFullPage(); }
         var legalTpl=a.getAttribute('data-legal-tpl');
         if(legalTpl){ showPanel('legal');
@@ -4558,6 +4765,12 @@
             fm.setAttribute('src', fm.getAttribute('data-src')); setTimeout(function(){ if(ilm) ilm.classList.add('hidden'); }, 9000); }
           return;
         }
+        if(sec==='cashflow'){ showPanel('cashflow');
+          var fcf=el('sc3-cashflow-iframe'), ilcf=el('sc3-cashflow-loading');
+          if(fcf && !fcf.getAttribute('src')){ if(fcf.addEventListener) fcf.addEventListener('load', function(){ if(ilcf) ilcf.classList.add('hidden'); });
+            fcf.setAttribute('src', fcf.getAttribute('data-src')); setTimeout(function(){ if(ilcf) ilcf.classList.add('hidden'); }, 9000); }
+          return;
+        }
         var merchFilter=a.getAttribute('data-merch-filter');
         if(merchFilter){ showPanel('pedidos');
           var fp=el('sc3-pedidos-iframe'), ilp=el('sc3-pedidos-loading');
@@ -4571,6 +4784,20 @@
         }
         loadAdmin({ hash:a.getAttribute('data-nav')||null, go:a.getAttribute('data-go')||null }, a.getAttribute('title')||'');
       }); });
+      /* 2026-09-30, orden explícita del PO ("Elimina la simulación de clics
+         sintéticos para el aterrizaje inicial... llama directamente a la
+         función de enrutamiento"): con Gobernanza/Equipo/Operaciones/Network
+         ocultos arriba para seller, nada queda marcado "active" al cargar
+         -- aterriza en Leads (su cola real de prospectos, ver matriz de
+         acceso en docs/ESTADO_MAESTRO.md) llamando loadAdmin() de una, sin
+         pasar por el DOM/click(). Mismo helper que usa exitFullPage() más
+         arriba para el mismo caso al salir de Network. */
+      if (role === 'seller') {
+        side.querySelectorAll('.side3-link').forEach(function(x){ x.classList.remove('active'); });
+        var leadsLinkInicial = side.querySelector('.side3-link[data-nav="leads"]');
+        if (leadsLinkInicial) leadsLinkInicial.classList.add('active');
+        loadAdmin({ hash: 'leads', go: null }, 'Leads');
+      }
     }
 
     /* ── Gobernanza (demo): autorizar/denegar mueve la solicitud al registro de auditoría ── */

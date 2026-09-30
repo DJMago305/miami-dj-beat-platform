@@ -108,7 +108,7 @@ serve(async (req: Request) => {
     }
 
     /* ─── Generar link de invitación ─────────────────────────────────────── */
-    const redirectTo = `${SITE_URL}/auth.html?invited=1&type=${account_type}`;
+    const redirectTo = `${SITE_URL}/reset-password.html?invited=1&type=${account_type}`;
 
     const { data: linkData, error: linkError } = await adminSb.auth.admin.generateLink({
       type: "invite",

@@ -6070,6 +6070,21 @@
         var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
         if (sb && sb.auth && typeof sb.auth.onAuthStateChange === 'function') {
           sb.auth.onAuthStateChange(function (event) {
+            /* 2026-09-30: un link de "olvidé mi contraseña"/invitación con
+               type=recovery autentica al usuario (Supabase dispara este evento
+               dedicado) pero antes lo dejaba tirado en la página donde haya
+               caído -- normalmente Home -- sin ningún formulario para poner
+               la contraseña nueva. Caso real: Wendy (vendedora) no podía
+               entrar porque el link "funcionaba" pero no mostraba nada.
+               reset-password.html ya sabe mostrar el panel con la sesión
+               activa (type=recovery en la URL); solo hacía falta mandarlo ahí. */
+            if (event === 'PASSWORD_RECOVERY') {
+              var paginaActual = String(window.location.pathname || '').split('/').pop().toLowerCase();
+              if (paginaActual !== 'reset-password.html') {
+                window.location.replace('./reset-password.html?type=recovery');
+              }
+              return;
+            }
             if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED' || event === 'SIGNED_OUT') {
               if (typeof window.checkSessionForNav === 'function') window.checkSessionForNav();
             }
