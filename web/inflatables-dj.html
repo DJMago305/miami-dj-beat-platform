@@ -174,6 +174,23 @@
       display: none;
     }
 
+    .inflatdj-pkg-titlewrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .inflatdj-item-photo {
+      width: 56px;
+      height: 56px;
+      flex: none;
+      border-radius: 6px;
+      object-fit: contain;
+      background: #fff;
+      display: block;
+    }
+
     .inflatdj-pkg-name {
       font-family: 'Cormorant Garamond', serif;
       font-size: 18px;
@@ -394,7 +411,10 @@
     <div class="inflatdj-package-item">
       <details>
         <summary>
-          <span class="inflatdj-pkg-name" data-i18n="inflatdj-pkg-lite-name">Lite Castle</span>
+          <span class="inflatdj-pkg-titlewrap">
+            <img class="inflatdj-item-photo" src="./assets/inflatables/lite-castle.jpg" alt="" loading="lazy">
+            <span class="inflatdj-pkg-name" data-i18n="inflatdj-pkg-lite-name">Lite Castle</span>
+          </span>
           <span class="inflatdj-pkg-price inflatdj-add-to-cart" data-sku="castle_lite" data-price="250" data-i18n="inflatdj-pkg-lite-price">$250</span>
         </summary>
         <p data-i18n="inflatdj-pkg-lite-desc">Compact bounce house, great for small backyard parties and younger kids.</p>
@@ -404,7 +424,10 @@
     <div class="inflatdj-package-item">
       <details>
         <summary>
-          <span class="inflatdj-pkg-name" data-i18n="inflatdj-pkg-basic-name">Basic Castle</span>
+          <span class="inflatdj-pkg-titlewrap">
+            <img class="inflatdj-item-photo" src="./assets/inflatables/basic-castle.jpg" alt="" loading="lazy">
+            <span class="inflatdj-pkg-name" data-i18n="inflatdj-pkg-basic-name">Basic Castle</span>
+          </span>
           <span class="inflatdj-pkg-price inflatdj-add-to-cart" data-sku="castle_basic" data-price="375" data-i18n="inflatdj-pkg-basic-price">$375</span>
         </summary>
         <p data-i18n="inflatdj-pkg-basic-desc">Standard-size bounce house, a reliable classic for any kids' party.</p>
@@ -414,7 +437,10 @@
     <div class="inflatdj-package-item">
       <details>
         <summary>
-          <span class="inflatdj-pkg-name" data-i18n="inflatdj-pkg-big-name">Big Castle</span>
+          <span class="inflatdj-pkg-titlewrap">
+            <img class="inflatdj-item-photo" src="./assets/inflatables/big-castle.jpg" alt="" loading="lazy">
+            <span class="inflatdj-pkg-name" data-i18n="inflatdj-pkg-big-name">Big Castle</span>
+          </span>
           <span class="inflatdj-pkg-price inflatdj-add-to-cart" data-sku="castle_big" data-price="525" data-i18n="inflatdj-pkg-big-price">$525</span>
         </summary>
         <p data-i18n="inflatdj-pkg-big-desc">Extra-large bounce house with more room to play, ideal for bigger gatherings.</p>
@@ -424,7 +450,10 @@
     <div class="inflatdj-package-item">
       <details>
         <summary>
-          <span class="inflatdj-pkg-name" data-i18n="inflatdj-pkg-combo-name">Combo Castle &amp; Slide</span>
+          <span class="inflatdj-pkg-titlewrap">
+            <img class="inflatdj-item-photo" src="./assets/inflatables/combo-castle.jpg" alt="" loading="lazy">
+            <span class="inflatdj-pkg-name" data-i18n="inflatdj-pkg-combo-name">Combo Castle &amp; Slide</span>
+          </span>
           <span class="inflatdj-pkg-price inflatdj-add-to-cart" data-sku="castle_combo" data-price="500" data-i18n="inflatdj-pkg-combo-price">$500</span>
         </summary>
         <p data-i18n="inflatdj-pkg-combo-desc">Larger combo unit with a built-in slide and bounce area: the most popular upgrade for bigger kids' parties.</p>
@@ -434,7 +463,10 @@
     <div class="inflatdj-package-item">
       <details>
         <summary>
-          <span class="inflatdj-pkg-name" data-i18n="inflatdj-pkg-waterslide-name">Water Slide Combo</span>
+          <span class="inflatdj-pkg-titlewrap">
+            <img class="inflatdj-item-photo" src="./assets/inflatables/waterslide-combo.jpg" alt="" loading="lazy">
+            <span class="inflatdj-pkg-name" data-i18n="inflatdj-pkg-waterslide-name">Water Slide Combo</span>
+          </span>
           <span class="inflatdj-pkg-price inflatdj-add-to-cart" data-sku="castle_waterslide" data-price="700" data-i18n="inflatdj-pkg-waterslide-price">$700</span>
         </summary>
         <p data-i18n="inflatdj-pkg-waterslide-desc">An inflatable water slide combo for Miami's hot days: the top-tier option for maximum fun.</p>
@@ -600,14 +632,21 @@
             var sku = el.getAttribute('data-sku');
             var price = parseFloat(el.getAttribute('data-price'));
             if (!sku || isNaN(price)) return;
-            var nameEl = el.parentElement ? el.parentElement.querySelector('.inflatdj-pkg-name') : null;
+            var row = el.closest('.inflatdj-package-item');
+            var nameEl = row ? row.querySelector('.inflatdj-pkg-name') : null;
             var name = nameEl ? nameEl.textContent.trim() : sku;
+            var photoEl = row ? row.querySelector('.inflatdj-item-photo') : null;
+            var imageUrl = photoEl ? photoEl.getAttribute('src') : null;
+            var descEl = row ? row.querySelector('p') : null;
+            var description = descEl ? descEl.textContent.trim() : null;
 
             var draft = readDraft();
             var existing = draft.lines.filter(function (l) { return l.catalog_sku === sku; })[0];
             if (existing) {
                 existing.quantity += 1;
                 existing.line_total_usd = Math.round(existing.unit_price_usd * existing.quantity * 100) / 100;
+                existing.image_url = imageUrl;
+                existing.description = description;
             } else {
                 draft.lines.push({
                     line_id: uid(),
@@ -616,7 +655,8 @@
                     category_label: 'Kids & Inflatables',
                     slot: 'gear_inflatables',
                     name: name,
-                    image_url: null,
+                    image_url: imageUrl,
+                    description: description,
                     unit_price_usd: price,
                     quantity: 1,
                     line_total_usd: price,
