@@ -174,6 +174,23 @@
       display: none;
     }
 
+    .ledscreens-pkg-titlewrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .ledscreens-item-photo {
+      width: 56px;
+      height: 56px;
+      flex: none;
+      border-radius: 6px;
+      object-fit: contain;
+      background: #fff;
+      display: block;
+    }
+
     .ledscreens-pkg-name {
       font-family: 'Cormorant Garamond', serif;
       font-size: 18px;
@@ -398,7 +415,10 @@
     <div class="ledscreens-package-item" data-furn-id="led_small" data-furn-price="600">
       <details open>
         <summary>
-          <span class="ledscreens-pkg-name" data-i18n="ledscreens-pkg-small-name">LED Wall (Small)</span>
+          <span class="ledscreens-pkg-titlewrap">
+            <img class="ledscreens-item-photo" src="./assets/led-screens/led-video-small.jpg" alt="" loading="lazy">
+            <span class="ledscreens-pkg-name" data-i18n="ledscreens-pkg-small-name">LED Wall (Small)</span>
+          </span>
           <span class="ledscreens-pkg-price ledscreens-add-to-cart mdj-unit-price-suffix" data-i18n="ledscreens-pkg-small-price">$600+</span>
         </summary>
         <p data-i18n="ledscreens-pkg-small-desc">Compact modular LED wall, ideal for DJ booth facades and intimate stage backdrops. Montajes de estructura compleja se cotizan aparte.</p>
@@ -408,7 +428,10 @@
     <div class="ledscreens-package-item" data-furn-id="led_medium" data-furn-price="1200">
       <details>
         <summary>
-          <span class="ledscreens-pkg-name" data-i18n="ledscreens-pkg-medium-name">LED Wall (Medium)</span>
+          <span class="ledscreens-pkg-titlewrap">
+            <img class="ledscreens-item-photo" src="./assets/led-screens/led-video-medium.jpg" alt="" loading="lazy">
+            <span class="ledscreens-pkg-name" data-i18n="ledscreens-pkg-medium-name">LED Wall (Medium)</span>
+          </span>
           <span class="ledscreens-pkg-price ledscreens-add-to-cart mdj-unit-price-suffix" data-i18n="ledscreens-pkg-medium-price">$1,200+</span>
         </summary>
         <p data-i18n="ledscreens-pkg-medium-desc">Mid-size modular LED wall for dynamic visuals and monogram displays at weddings and corporate events. Montajes de estructura compleja se cotizan aparte.</p>
@@ -418,7 +441,10 @@
     <div class="ledscreens-package-item" data-furn-id="led_large" data-furn-price="2500">
       <details>
         <summary>
-          <span class="ledscreens-pkg-name" data-i18n="ledscreens-pkg-large-name">LED Wall (Large)</span>
+          <span class="ledscreens-pkg-titlewrap">
+            <img class="ledscreens-item-photo" src="./assets/led-screens/led-video-large.jpg" alt="" loading="lazy">
+            <span class="ledscreens-pkg-name" data-i18n="ledscreens-pkg-large-name">LED Wall (Large)</span>
+          </span>
           <span class="ledscreens-pkg-price ledscreens-add-to-cart mdj-unit-price-suffix" data-i18n="ledscreens-pkg-large-price">$2,500+</span>
         </summary>
         <p data-i18n="ledscreens-pkg-large-desc">State-of-the-art large-format LED wall for main-stage visuals and immersive productions. Montajes de estructura compleja se cotizan aparte.</p>
@@ -601,12 +627,18 @@
             if (!sku || isNaN(price)) return;
             var nameEl = wrap.querySelector('.ledscreens-pkg-name');
             var name = nameEl ? nameEl.textContent.trim() : sku;
+            var photoEl = wrap.querySelector('.ledscreens-item-photo');
+            var imageUrl = photoEl ? photoEl.getAttribute('src') : null;
+            var descEl = wrap.querySelector('p');
+            var description = descEl ? descEl.textContent.trim() : null;
 
             var draft = readDraft();
             var existing = draft.lines.filter(function (l) { return l.catalog_sku === sku; })[0];
             if (existing) {
                 existing.quantity += 1;
                 existing.line_total_usd = Math.round(existing.unit_price_usd * existing.quantity * 100) / 100;
+                existing.image_url = imageUrl;
+                existing.description = description;
             } else {
                 draft.lines.push({
                     line_id: uid(),
@@ -615,7 +647,8 @@
                     category_label: 'Pantallas LED',
                     slot: 'gear_led_screens',
                     name: name,
-                    image_url: null,
+                    image_url: imageUrl,
+                    description: description,
                     unit_price_usd: price,
                     quantity: 1,
                     line_total_usd: price,
