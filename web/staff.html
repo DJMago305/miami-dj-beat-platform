@@ -39,6 +39,11 @@
   })();
   </script>
   <script src="./supabase-config.js?v=20260814-bfi"></script>
+  <!-- 2026-09-30, TICKET-STAFF-CLIENT-ROUTING-GATE: mdjResolveEffectiveUserRole()
+       (rol efectivo real vía JWT app_metadata, mismo patrón ya usado en login.html)
+       hacía falta para que el gate de abajo pueda distinguir cliente de artista --
+       antes cualquier no-staff caía siempre en dj-dashboard.html. -->
+  <script src="./auth.js?v=20260930-client-routing-gate"></script>
   <script src="./subscription.js?v=20260422-find-dj-rank"></script>
   <script src="./js/smartcrate-harmonic-engine.js?v=20260830-camelot-engine"></script>
   <script src="./js/music-hunter-ring-buffer.js?v=20260830-ring-buffer"></script>
@@ -2360,7 +2365,17 @@
         if(!sess){ location.replace('./login.html?next=staff.html'); return; }
         var res=await sb.from('dj_profiles').select('role, dj_name').eq('user_id', sess.user.id).maybeSingle();
         var role=String(res.data&&res.data.role?res.data.role:'').toLowerCase().trim();
-        if(STAFF_ROLES.indexOf(role)===-1){ location.replace('./dj-dashboard.html'); return; } // no-staff → su edificio
+        if(STAFF_ROLES.indexOf(role)===-1){
+          /* 2026-09-30, TICKET-STAFF-CLIENT-ROUTING-GATE: un cliente no tiene fila en
+             dj_profiles -- role salía vacío y caía siempre en dj-dashboard.html (el
+             panel de ARTISTA), sin importar si de verdad era artista o cliente.
+             mdjResolveEffectiveUserRole() (auth.js) ya resuelve esto en login.html
+             leyendo el JWT (app_metadata.role, con fallback a user_metadata.user_type)
+             -- mismo patrón, no uno nuevo. */
+          var effRole = (typeof window.mdjResolveEffectiveUserRole==='function') ? window.mdjResolveEffectiveUserRole(sess.user) : 'client';
+          if(effRole==='client'){ location.replace('./client-portal.html'); return; }
+          location.replace('./dj-dashboard.html'); return; // artista/talento → su edificio real
+        }
         reveal();
         initStaff(sb, role, res.data||{});
       }catch(e){ reveal(); location.replace('./login.html'); }
