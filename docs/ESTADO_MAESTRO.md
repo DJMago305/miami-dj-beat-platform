@@ -3024,4 +3024,19 @@ El PO señaló directo: "ni siquiera veo config de la cuenta ni la pestaña staf
 
 **Sobre "faltan pestañas de Mi Perfil"**: se investigó `#view-miperfil` (el destino interno de "MI PERFIL" en staff.html) — solo tiene 3 secciones (Bio/Opiniones/QR), pero **esto no es una restricción de rol**: es exactamente lo mismo que ve el Owner en el mismo botón, siempre ha sido así. La pregunta de aclaración se descartó sin respuesta; probablemente la confusión real era con ⚙️ CONFIG (que sí tiene muchas más pestañas, ya agregado arriba) — pendiente de que el PO lo confirme al probarlo.
 
-**Archivo tocado**: `web/staff.html` únicamente. `node --check` OK. Probado en vivo (Config carga real, Staff regresa bien al panel, consola limpia). **Sigue sin comitear.**
+**Archivo tocado**: `web/staff.html` únicamente. `node --check` OK. Probado en vivo (Config carga real, Staff regresa bien al panel, consola limpia). Comiteado y mergeado — ver cierre abajo.
+
+## [2026-09-30] CIERRE DE SESIÓN — vendedora, Cash Flow, navegación unificada y gate cliente/artista, todo mergeado
+
+Las 5 pasadas de arriba (permisos, Cash Flow embebido, navegación unificada, paridad de barra) quedaron consolidadas y mergeadas en **PR [#604](https://github.com/DJMago305/miami-dj-beat-platform/pull/604)** — "feat(staff): UI parity, account settings integration, and schedule access for seller", 3 commits, 4/4 checks verdes, `mergeStateStatus: CLEAN`.
+
+Aparte, en el mismo cierre, se encontró y corrigió un bug real independiente (auditoría de enrutamiento cliente/artista): el gate de `staff.html` solo consultaba `dj_profiles` — un cliente no tiene fila ahí, así que caía siempre en `dj-dashboard.html` (el panel de artista) en vez de `client-portal.html`. Corregido reutilizando `mdjResolveEffectiveUserRole()` (`web/auth.js`, mismo patrón ya usado en `login.html`) — mergeado en **PR [#606](https://github.com/DJMago305/miami-dj-beat-platform/pull/606)**, 4/4 checks verdes.
+
+**Verificación real hecha hoy, no simulada, en las 3 superficies principales:**
+- Owner: sesión real (magic link + trasplante de token entre orígenes vía `window.name`), acceso total confirmado, consola limpia.
+- Seller (Wendy): sesión real, 19 secciones del panel probadas una por una, sin regresión, consola limpia.
+- Client (`wendyeayala@hotmail.com`): confirmado contra la fila real de producción (`app_role='client'`, `client_profiles=true`) y la lógica exacta que se ejecuta — sin clic final en su bandeja de Hotmail (sin acceso a ella; se evaluó y descartó usar la `service_role` key de producción como atajo, por ser un secreto de máximo privilegio fuera del canal del MCP).
+
+**Estado final del repo:** `main` sincronizado, ambas ramas de trabajo borradas (local y remoto), working tree limpio.
+
+**Pendiente para la próxima sesión** (hoja de ruta del propio PO, guardada como ticket, NO ejecutada hoy): ver [docs/tickets/2026-09-30-TICKET-manager-test-account-y-verificacion-invitaciones-externas.md](tickets/2026-09-30-TICKET-manager-test-account-y-verificacion-invitaciones-externas.md) — cuenta de prueba real para el rol `manager` (hoy sigue con el mismo trato que Owner, sin restringir, por falta de cuenta real para verificar en vivo) + verificación del flujo de invitación desde un dispositivo fuera de la red local.
