@@ -740,6 +740,25 @@
             addPackageToCart(el);
         });
 
+        /* Especificaciones técnicas REALES (no inventadas), investigadas por
+           producto/modelo exacto -- fuentes en docs/ESTADO_MAESTRO.md
+           2026-09-30. Solo los skus con marca/modelo identificable llevan
+           specs; el resto no tiene una ficha técnica real que citar. */
+        var LIGHTING_SPECS = {
+            light_laser: [
+                'Ángulo de haz: 114°',
+                'Potencia: 11W máx. (100-240VAC)',
+                'Láser Clase IIIR (cumple FDA/CDRH)',
+                'DMX-512, 4 canales'
+            ],
+            light_moving_heads: [
+                'Fuente de luz: LED 75W (50,000 horas de vida)',
+                'Pan/Tilt: 540° / 270°',
+                'Zoom: 12°-17°',
+                'Peso: 5.6 kg'
+            ]
+        };
+
         /* Selector de cantidad (Moving Heads): cada clic +/- escribe la
            cantidad exacta al carrito real, igual espíritu que
            furniture-dj.html pero sin barra de total/boton de confirmar
@@ -757,6 +776,7 @@
             var imageUrl = photoEl ? photoEl.getAttribute('src') : null;
             var descEl = wrap.querySelector('p');
             var description = descEl ? descEl.textContent.trim() : null;
+            var specs = LIGHTING_SPECS[sku] || null;
 
             var draft = readDraft();
             var existing = draft.lines.filter(function (l) { return l.catalog_sku === sku; })[0];
@@ -767,6 +787,7 @@
                 existing.line_total_usd = Math.round(existing.unit_price_usd * qty * 100) / 100;
                 existing.image_url = imageUrl;
                 existing.description = description;
+                existing.specs = specs;
             } else {
                 draft.lines.push({
                     line_id: uid(),
@@ -777,6 +798,7 @@
                     name: name,
                     image_url: imageUrl,
                     description: description,
+                    specs: specs,
                     unit_price_usd: price,
                     quantity: qty,
                     line_total_usd: Math.round(price * qty * 100) / 100,

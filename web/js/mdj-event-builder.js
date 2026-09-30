@@ -1624,12 +1624,21 @@
             var descHtml = line.description
                 ? '<p class="mdj-eb-amz-desc">' + escapeHtml(String(line.description)) + '</p>'
                 : '';
+            // Especificaciones técnicas reales (investigadas por producto, no
+            // inventadas) -- solo para artículos con marca/modelo identificable.
+            // Ver docs/ESTADO_MAESTRO.md 2026-09-30 para las fuentes de cada una.
+            var specsHtml = (line.specs && line.specs.length)
+                ? '<ul class="mdj-eb-amz-specs">' + line.specs.map(function (s) {
+                    return '<li>' + escapeHtml(String(s)) + '</li>';
+                }).join('') + '</ul>'
+                : '';
             return (
                 '<div class="mdj-eb-amz-card" data-line-id="' + escapeHtml(line.line_id) + '">' +
                 photoHtml +
                 '<div class="mdj-eb-amz-body">' +
                 '<div class="mdj-eb-amz-name">' + escapeHtml(line.name) + '</div>' +
                 descHtml +
+                specsHtml +
                 '<div class="mdj-eb-amz-actions">' +
                 '<div class="mdj-eb-amz-qty">' +
                 '<button type="button" class="mdj-eb-amz-qty-btn" data-eb-amz-qty="down" data-line-id="' + escapeHtml(line.line_id) + '" aria-label="Disminuir cantidad">−</button>' +
