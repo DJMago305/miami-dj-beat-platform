@@ -690,6 +690,23 @@
             try { localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); } catch (e) { /* noop */ }
         }
 
+        /* Especificaciones técnicas REALES (no inventadas), del producto
+           exacto identificado en la foto -- fuentes en docs/ESTADO_MAESTRO.md
+           2026-09-30. Solo fx_co2 y fx_snow tienen marca/modelo identificable. */
+        var FX_SPECS = {
+            fx_co2: [
+                'Alcance de la nube: 20-25 pies, 2-3 pies de ancho',
+                'Duración: ≈1 segundo por libra de capacidad del tanque',
+                'Requiere tanque de CO2 tipo sifón (20-50 lb recomendado)'
+            ],
+            fx_snow: [
+                'Alcance: 25-30 pies (a 45° desde 10 pies de altura)',
+                'Tanque de líquido: 2.3 litros',
+                'Control remoto de 10 pies con entrada DMX',
+                'Nivel de sonido: 63dB a 10 pies'
+            ]
+        };
+
         function addPackageToCart(el) {
             var sku = el.getAttribute('data-sku');
             var price = parseFloat(el.getAttribute('data-price'));
@@ -701,6 +718,7 @@
             var imageUrl = photoEl ? photoEl.getAttribute('src') : null;
             var descEl = row ? row.querySelector('p') : null;
             var description = descEl ? descEl.textContent.trim() : null;
+            var specs = FX_SPECS[sku] || null;
 
             var draft = readDraft();
             var existing = draft.lines.filter(function (l) { return l.catalog_sku === sku; })[0];
@@ -709,6 +727,7 @@
                 existing.line_total_usd = Math.round(existing.unit_price_usd * existing.quantity * 100) / 100;
                 existing.image_url = imageUrl;
                 existing.description = description;
+                existing.specs = specs;
             } else {
                 draft.lines.push({
                     line_id: uid(),
@@ -719,6 +738,7 @@
                     name: name,
                     image_url: imageUrl,
                     description: description,
+                    specs: specs,
                     unit_price_usd: price,
                     quantity: 1,
                     line_total_usd: price,
