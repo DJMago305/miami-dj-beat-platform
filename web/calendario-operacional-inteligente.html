@@ -259,6 +259,23 @@
   .rec-item .rsend{border:none;border-radius:8px;padding:6px 10px;background:var(--cliente);color:#04211d;font-weight:700;font-size:11.5px;cursor:pointer;white-space:nowrap;}
   .rec-item .rsend:disabled{opacity:.4;cursor:not-allowed;}
   .rec-empty{font-size:12px;color:var(--ink-mute);padding:6px 2px;}
+
+  /* "Mis fechas importantes" del Artista (Paso 11, 2026-10-01) -- panel propio,
+     fuera del motor genérico de eventos (ver nota junto a #mdjFechasImportantes
+     en el HTML). Mismos tokens de color que el resto de la app, sin clases
+     nuevas de layout: reusa el patrón visual de .rec-item/.res-dj-form. */
+  .mdj-fip{margin:0 20px 14px;padding:12px 14px;border-radius:12px;background:var(--panel-2);border:1px solid var(--line);}
+  .mdj-fip-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+  .mdj-fip-hd strong{font-size:12.5px;color:var(--ink);}
+  .mdj-fip-add{border:none;cursor:pointer;background:var(--cliente);color:#04211d;font-weight:800;font-size:14px;width:24px;height:24px;border-radius:50%;line-height:1;}
+  .mdj-fip-list{display:flex;flex-direction:column;gap:6px;}
+  .mdj-fip-item{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:9px;background:var(--panel);border:1px solid var(--line);font-size:12.5px;color:var(--ink);}
+  .mdj-fip-item .mdj-fip-dot{width:8px;height:8px;border-radius:50%;background:var(--cliente);flex:none;}
+  .mdj-fip-item .mdj-fip-n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .mdj-fip-item .mdj-fip-d{color:var(--ink-mute);font-size:11.5px;white-space:nowrap;}
+  .mdj-fip-item button{border:none;background:transparent;color:var(--ink-soft);cursor:pointer;font-size:13px;padding:2px 4px;}
+  .mdj-fip-item button:hover{color:var(--ink);}
+  .mdj-fip-empty{font-size:12px;color:var(--ink-mute);padding:4px 2px;}
   /* Aviso "ofrecele primero al DJ dueño" (2026-09-24, Motor de Comisiones) --
      mismos colores que .context-note.note-amber de contracts-engine.html,
      copiados literal para no inventar un estilo nuevo. Aviso suave, nunca
@@ -452,6 +469,17 @@
     </div>
 
     <div class="ctx" id="ctx"></div>
+
+    <!-- Paso 11 (2026-10-01): "Mis fechas importantes" del Artista -- cumpleaños/
+         aniversario/otra, igual a lo que ya tiene Cliente (client-portal.html,
+         Paso 9/10), pero en su propia columna dj_profiles.important_dates
+         (agregada hoy en producción). Vive FUERA de #view a propósito: el
+         motor genérico de eventos (evActKinds/btnEvDel/btnEvEdit) está
+         cableado a elixis_agenda_eventos vía calendar-evento-editar -- mezclar
+         esta fecha ahí intentaría borrar/editar contra la tabla equivocada.
+         Visible solo en Personal/artista real (ver fipDebeVerse), oculta el
+         resto del tiempo. -->
+    <div class="mdj-fip" id="mdjFechasImportantes" hidden></div>
 
     <div class="head">
       <div><h1 id="title">—</h1></div>
@@ -973,7 +1001,7 @@
     // recordatorios (inScope ya filtra), el owner ve el consolidado.
     if(state.role!=="owner" && state.view==="continuidad") state.view="mes";
     nav.className="nav"+((v==="recordatorios"||v==="clientes"||v==="continuidad"||v==="notarizacion")?" hidden":"");
-    updateBadge();renderCtx();renderLegend();
+    updateBadge();renderCtx();renderLegend();renderFechasPersonales();
     if(v==="ano")renderYear();
     else if(v==="mes")renderMonth();
     else if(v==="semana")renderWeek();
@@ -2155,6 +2183,184 @@
       recomputeBaseEv();
       rebuild(); render();
     }catch(err){ console.warn("[Matrix] sincronización de calendario personal:", err.message||err); }
+  }
+
+  // ═══ "Mis fechas importantes" del Artista (Paso 11, 2026-10-01) ═══
+  // Mismo mecanismo de Cliente (client-portal.js, portalCoi*) pero sobre
+  // dj_profiles.important_dates (columna jsonb agregada hoy en producción,
+  // misma forma que client_profiles.important_dates) -- recurrente por
+  // mes/día, empujada a Google vía calendar-push-important-date (misma
+  // función de Cliente, ahora resuelve client_profiles o dj_profiles por
+  // user_id, ver resolverTabla en ese archivo). Panel propio (#mdjFechasImportantes,
+  // fuera de #view) a propósito: el motor genérico de eventos de esta pantalla
+  // (evActKinds/btnEvDel/btnEvEdit) llama a calendar-evento-editar, que opera
+  // sobre elixis_agenda_eventos -- mezclar esta fecha ahí intentaría borrar o
+  // editar contra la tabla equivocada.
+  var _fipLista = [];
+  var _fipLoaded = false;
+  var _fipEditingId = null;
+  function fipDebeVerse(){
+    return state.role === "artista" && state.detailLevel === "personal" && window.__COI_STAFF === false;
+  }
+  function fipEsc(s){
+    return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+  function fipTipoLabel(t){ return t==="birthday"?"Cumpleaños":(t==="anniversary"?"Aniversario":"Fecha"); }
+  async function fipCargar(){
+    if(_fipLoaded) return;
+    try{
+      var sb=(window.getSupabaseClient? window.getSupabaseClient() : window.supabase);
+      if(!sb || !sb.from || !sb.auth) return setTimeout(fipCargar, 300);
+      var sess=(await sb.auth.getSession()).data.session;
+      if(!sess) return setTimeout(fipCargar, 300);
+      var r=await sb.from("dj_profiles").select("important_dates").eq("user_id", sess.user.id).maybeSingle();
+      if(r.error) throw r.error;
+      _fipLista=(r.data && Array.isArray(r.data.important_dates)) ? r.data.important_dates : [];
+      _fipLoaded=true;
+      renderFechasPersonales();
+    }catch(err){ console.warn("[Matrix] mis fechas importantes:", err.message||err); }
+  }
+  function renderFechasPersonales(){
+    var panel=document.getElementById("mdjFechasImportantes");
+    if(!panel) return;
+    if(!fipDebeVerse()){ panel.hidden=true; return; }
+    panel.hidden=false;
+    if(!_fipLoaded){ fipCargar(); panel.innerHTML='<div class="mdj-fip-hd"><strong>Mis fechas importantes</strong></div><div class="mdj-fip-empty">Cargando…</div>'; return; }
+    var MESES=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+    var itemsHtml = _fipLista.length
+      ? _fipLista.map(function(e){
+          return '<div class="mdj-fip-item" data-fip-id="'+e.id+'"><span class="mdj-fip-dot"></span>'+
+            '<span class="mdj-fip-n">'+fipEsc(e.name)+' · '+fipTipoLabel(e.date_type)+'</span>'+
+            '<span class="mdj-fip-d">'+e.day+' '+MESES[e.month-1]+'</span>'+
+            '<button type="button" class="fip-edit" title="Editar">✏️</button>'+
+            '<button type="button" class="fip-del" title="Eliminar">&times;</button>'+
+            '</div>';
+        }).join('')
+      : '<div class="mdj-fip-empty">Sin fechas guardadas todavía.</div>';
+    panel.innerHTML='<div class="mdj-fip-hd"><strong>Mis fechas importantes</strong><button type="button" class="mdj-fip-add" aria-label="Agregar fecha" title="Agregar fecha">+</button></div>'+
+      '<div class="mdj-fip-list">'+itemsHtml+'</div>';
+    // Wiring vía .onclick (mismo patrón ya usado en todo este archivo, p.ej.
+    // los botones de .mini/.mcell en renderYear/renderMonth) -- nunca
+    // onclick="" inline, porque todo este script corre dentro de un cierre
+    // propio (IIFE) y esas funciones nunca llegan a window.
+    var addBtn=panel.querySelector(".mdj-fip-add");
+    if(addBtn) addBtn.onclick=function(){ fipAbrirModal(); };
+    panel.querySelectorAll(".mdj-fip-item").forEach(function(row){
+      var id=row.dataset.fipId;
+      var eb=row.querySelector(".fip-edit"); if(eb) eb.onclick=function(){ fipAbrirModal(id); };
+      var db=row.querySelector(".fip-del"); if(db) db.onclick=function(){ fipEliminar(id); };
+    });
+  }
+  // Modal reusa las clases ya existentes .overlay/.modal (T&C, arriba) y
+  // .res-dj-form/.res-dj-input/.res-dj-msg (edición de residencia/evento) --
+  // sin inventar estilos nuevos de formulario.
+  function fipAbrirModal(editId){
+    if(document.getElementById("fipModalBackdrop")) return;
+    var entrada = editId ? _fipLista.find(function(e){ return e && e.id===editId; }) : null;
+    _fipEditingId = entrada ? editId : null;
+    var titulo = entrada ? "Editar fecha importante" : "Agregar fecha importante";
+    var botonTxt = entrada ? "Guardar cambios" : "Guardar";
+    var wrap=document.createElement("div");
+    wrap.innerHTML=
+      '<div class="overlay" id="fipModalBackdrop" style="z-index:9999;">'+
+      '<div class="modal" style="max-width:420px;">'+
+      '<h3>'+titulo+'</h3>'+
+      '<p class="mlead">Cumpleaños, aniversario o cualquier fecha que no quieras olvidar. Se repite cada año.</p>'+
+      '<div class="res-dj-form">'+
+      '<div><label>Nombre</label><input type="text" class="res-dj-input" id="fipName" maxlength="60" placeholder="Ej. Mi mamá"></div>'+
+      '<div><label>Tipo</label><select class="res-dj-input" id="fipType">'+
+      '<option value="birthday">Cumpleaños</option>'+
+      '<option value="anniversary">Aniversario</option>'+
+      '<option value="other">Otra fecha especial</option>'+
+      '</select></div>'+
+      '<div><label>Fecha</label><input type="date" class="res-dj-input" id="fipDate"></div>'+
+      '<div class="res-dj-msg" id="fipMsg" hidden></div>'+
+      '</div>'+
+      '<div class="mbtns" style="margin-top:14px;">'+
+      '<button type="button" class="cancel" id="fipCancelBtn">Cancelar</button>'+
+      '<button type="button" class="accept" id="fipSaveBtn">'+botonTxt+'</button>'+
+      '</div></div></div>';
+    var backdrop=wrap.firstElementChild;
+    backdrop.addEventListener("click", function(ev){ if(ev.target===backdrop) fipCerrarModal(); });
+    document.body.appendChild(backdrop);
+    document.getElementById("fipCancelBtn").onclick=function(){ fipCerrarModal(); };
+    document.getElementById("fipSaveBtn").onclick=function(){ fipGuardar(); };
+    if(entrada){
+      var n0=document.getElementById("fipName"), t0=document.getElementById("fipType"), d0=document.getElementById("fipDate");
+      if(n0) n0.value=entrada.name||"";
+      if(t0) t0.value=entrada.date_type||"other";
+      if(d0){ var yy0=entrada.year||new Date().getFullYear(); d0.value=yy0+"-"+String(entrada.month).padStart(2,"0")+"-"+String(entrada.day).padStart(2,"0"); }
+    }
+    setTimeout(function(){ var el=document.getElementById("fipName"); if(el) el.focus(); }, 30);
+  }
+  function fipCerrarModal(){
+    var el=document.getElementById("fipModalBackdrop");
+    if(el) el.remove();
+    _fipEditingId=null;
+  }
+  async function fipGuardar(){
+    var editingId=_fipEditingId;
+    var nameEl=document.getElementById("fipName"), typeEl=document.getElementById("fipType"), dateEl=document.getElementById("fipDate");
+    var msgEl=document.getElementById("fipMsg"), btn=document.getElementById("fipSaveBtn");
+    function mostrarErr(m){ if(msgEl){ msgEl.hidden=false; msgEl.className="res-dj-msg err"; msgEl.textContent=m; } }
+    var name=nameEl?nameEl.value.trim():"", type=typeEl?typeEl.value:"other", dateVal=dateEl?dateEl.value:"";
+    if(!name) return mostrarErr("Escribe un nombre.");
+    if(!dateVal) return mostrarErr("Elige una fecha.");
+    var parts=dateVal.split("-"), month=parseInt(parts[1],10), day=parseInt(parts[2],10);
+    if(!month||!day) return mostrarErr("Fecha inválida.");
+    if(btn){ btn.disabled=true; btn.textContent="Guardando…"; }
+    try{
+      var sb=(window.getSupabaseClient? window.getSupabaseClient() : window.supabase);
+      var sess=(await sb.auth.getSession()).data.session;
+      if(!sess) throw new Error("sin_sesion");
+      var current=await sb.from("dj_profiles").select("important_dates").eq("user_id", sess.user.id).maybeSingle();
+      var list=(current && current.data && Array.isArray(current.data.important_dates)) ? current.data.important_dates.slice() : [];
+      var entry;
+      if(editingId){
+        var idx=list.findIndex(function(e){ return e && e.id===editingId; });
+        if(idx===-1){ mostrarErr("No se encontró la fecha a editar."); if(btn){ btn.disabled=false; btn.textContent="Guardar cambios"; } return; }
+        entry=Object.assign({}, list[idx], { name:name, date_type:type, month:month, day:day, year: parseInt(parts[0],10)||null });
+        list[idx]=entry;
+      } else {
+        entry={ id: Date.now().toString(36)+Math.random().toString(36).slice(2,8), name:name, date_type:type, month:month, day:day, year: parseInt(parts[0],10)||null, created_at: new Date().toISOString() };
+        list.push(entry);
+      }
+      var upd=await sb.from("dj_profiles").update({ important_dates: list }).eq("user_id", sess.user.id);
+      if(upd.error) throw upd.error;
+
+      // Paso 9/10 (sync bidireccional, mismo patrón de Cliente): si el artista
+      // tiene Google Calendar conectado, se empuja también allá. Fuego y
+      // olvido -- la fecha ya quedó guardada local, que es lo que importa.
+      try{
+        var base=(window.MDB_SUPABASE_URL||"").replace(/\/$/,"");
+        var fnUrl = typeof window.mdbSupabaseFunctionUrl === "function" ? window.mdbSupabaseFunctionUrl("calendar-push-important-date") : (base+"/functions/v1/calendar-push-important-date");
+        var body={ entry_id: entry.id };
+        if(editingId) body.accion="editar";
+        fetch(fnUrl, { method:"POST", headers:{ "Content-Type":"application/json", Authorization:"Bearer "+sess.access_token, apikey:(window.MDB_SUPABASE_ANON_KEY||"") }, body: JSON.stringify(body) }).catch(function(){});
+      }catch(ePush){ /* silencioso: esto es un plus, no la acción principal */ }
+
+      _fipLista=list;
+      fipCerrarModal();
+      renderFechasPersonales();
+    }catch(eSave){ mostrarErr("No se pudo guardar. Intenta de nuevo."); }
+    finally{ if(btn){ btn.disabled=false; btn.textContent=editingId?"Guardar cambios":"Guardar"; } }
+  }
+  async function fipEliminar(id){
+    if(!window.confirm("¿Quitar esta fecha? Si ya estaba conectada a tu Google Calendar, también se borra allá.")) return;
+    try{
+      var sb=(window.getSupabaseClient? window.getSupabaseClient() : window.supabase);
+      var sess=(await sb.auth.getSession()).data.session;
+      if(!sess) return;
+      var base=(window.MDB_SUPABASE_URL||"").replace(/\/$/,"");
+      var fnUrl = typeof window.mdbSupabaseFunctionUrl === "function" ? window.mdbSupabaseFunctionUrl("calendar-push-important-date") : (base+"/functions/v1/calendar-push-important-date");
+      await fetch(fnUrl, { method:"POST", headers:{ "Content-Type":"application/json", Authorization:"Bearer "+sess.access_token, apikey:(window.MDB_SUPABASE_ANON_KEY||"") }, body: JSON.stringify({ entry_id:id, accion:"eliminar" }) }).catch(function(){});
+      var current=await sb.from("dj_profiles").select("important_dates").eq("user_id", sess.user.id).maybeSingle();
+      var list=(current && current.data && Array.isArray(current.data.important_dates)) ? current.data.important_dates.filter(function(e){ return e.id!==id; }) : [];
+      var upd=await sb.from("dj_profiles").update({ important_dates:list }).eq("user_id", sess.user.id);
+      if(upd.error) throw upd.error;
+      _fipLista=list;
+      renderFechasPersonales();
+    }catch(eDel){ /* silencioso, igual que portalCoiDeleteImportantDate en client-portal.js */ }
   }
 
   // ═══ Eventos reales creados por ELIXIS (modificar_agenda_evento) ═══

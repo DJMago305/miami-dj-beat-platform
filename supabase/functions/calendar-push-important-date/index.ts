@@ -6,6 +6,12 @@
 // esta función la empuja TAMBIÉN a su Google Calendar real, como evento de todo
 // el día que se repite cada año (RRULE:FREQ=YEARLY), solo si tiene Google conectado.
 //
+// Paso 11 (2026-10-01): mismo flujo para Artista -- dj_profiles.important_dates
+// (misma forma jsonb, agregada hoy en producción). La tabla se resuelve por
+// user_id en vez de asumir client_profiles (resolverTabla, abajo): un usuario
+// solo tiene fila en UNA de las dos (taxonomía de cuentas separadas), así que
+// no hay ambigüedad.
+//
 // Dirección contraria a calendar-reconcile/calendar-sync-webhook (que son
 // Google → nosotros) y sobre datos completamente distintos: no toca
 // elixis_agenda_eventos para nada, escribe en el calendario PRIMARY del propio
@@ -72,6 +78,15 @@ type FechaImportante = {
     created_at: string; google_event_id?: string;
 };
 
+// deno-lint-ignore no-explicit-any
+async function resolverTabla(admin: any, userId: string): Promise<"client_profiles" | "dj_profiles" | null> {
+    const c = await admin.from("client_profiles").select("user_id").eq("user_id", userId).maybeSingle();
+    if (c.data) return "client_profiles";
+    const d = await admin.from("dj_profiles").select("user_id").eq("user_id", userId).maybeSingle();
+    if (d.data) return "dj_profiles";
+    return null;
+}
+
 function tituloPara(e: FechaImportante): string {
     if (e.date_type === "birthday") return `🎂 ${e.name} — cumpleaños`;
     if (e.date_type === "anniversary") return `🎉 ${e.name} — aniversario`;
@@ -103,8 +118,11 @@ serve(async (req: Request) => {
     const entryId = String(p.entry_id || "");
     if (!entryId) return json({ ok: false, error: "entry_id_requerido" }, 400);
 
+    const tabla = await resolverTabla(ADMIN, user.id);
+    if (!tabla) return json({ ok: false, error: "perfil_no_encontrado" }, 404);
+
     const { data: perfil, error: perfilErr } = await ADMIN
-        .from("client_profiles").select("important_dates").eq("user_id", user.id).maybeSingle();
+        .from(tabla).select("important_dates").eq("user_id", user.id).maybeSingle();
     if (perfilErr || !perfil) return json({ ok: false, error: "perfil_no_encontrado" }, 404);
 
     const lista: FechaImportante[] = Array.isArray(perfil.important_dates) ? perfil.important_dates.slice() : [];
@@ -208,7 +226,7 @@ serve(async (req: Request) => {
     const googleEventId = String(gEv.id || "");
 
     lista[idx] = { ...entrada, google_event_id: googleEventId };
-    const { error: upErr } = await ADMIN.from("client_profiles").update({ important_dates: lista }).eq("user_id", user.id);
+    const { error: upErr } = await ADMIN.from(tabla).update({ important_dates: lista }).eq("user_id", user.id);
     if (upErr) {
         console.error("[calendar-push-important-date] no se pudo guardar google_event_id local:", upErr.message);
         return json({ ok: true, google_event_id: googleEventId, aviso: "Se creó en Google pero no se pudo guardar el vínculo local; podría duplicarse en un reintento." }, 200);

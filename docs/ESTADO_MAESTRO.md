@@ -3401,3 +3401,22 @@ Incidente de Supabase ya resuelto -- este hilo deja de monitorearlo.
 - **Cache-bust** de `mdjb-shared-header.js` (apuntando a la versión ya comiteada el 2026-09-30).
 
 Con esto, `dj-profile.html` queda sin cambios pendientes de confirmación visual.
+
+## [2026-10-01] Auditoría de preparación para merge (Regla 8) + inicio del Paso 11 (fecha personal del Artista)
+
+El PO preguntó directo: "qué falta por terminar para mandar toda la rama a merge y producción". Auditoría hecha contra `origin/main` (18 commits por delante, `git diff --stat` 98 archivos):
+
+- `check-hygiene.mjs` y `check-i18n.mjs`: limpios. El único error real (`account-pref-calendar-desc` faltante en `translations.js`, usado desde `account-settings.html`/`client-account.html` sin existir en ningún idioma) quedó corregido y comiteado.
+- `web/staff.html` (panel "Adquisición real" en Cash Flow + link SEO·IA en las 3 barras de staff) y `web/road-map.html` (menú de MRM IA unificado al menú público de Inicio): ambos archivos tenían cambios reales del 2026-09-30, completos y bien documentados -- no eran trabajo a medias, solo no habían pasado por este hilo antes.
+- `supabase/scripts/20260930_fix_is_staff_recursion_stack_depth.sql` (el propósito original de la rama, la recursión de `is_staff()`): ya aplicado en PRODUCCIÓN y verificado en vivo ese mismo día -- el archivo es el registro, no un pendiente.
+- PR #610: `MERGEABLE`, sin conflictos contra `main`.
+- Reportado al PO (sin tocar nada): 7 archivos/carpetas sueltos en el working tree que no son de este hilo (`.claude-scratch/`, 4 tickets del 30-09, dos edge functions nuevas sin desplegar `notify-new-purchase`/`notify-new-signup`, un script SQL de revocación de anon write) -- se listan, no se borran ni se comitean.
+- Pendiente de decisión del PO (no bloqueante): la rama toca 98 archivos, mucho más que "calendar sync" -- es su decisión si va como un solo PR o se parte.
+
+El PO decidió seguir con el Paso 11 antes de cerrar el tema del merge.
+
+**Paso 11 (Artista): "Crear fecha personal"**, mismo patrón de Cliente (Paso 9/10) pero del lado Artista:
+- `dj_profiles.important_dates` (jsonb, default `[]`, `NOT NULL`) agregada en PRODUCCIÓN -- antes no existía ningún campo equivalente (solo `birth_date date`, legacy, sin usar). RLS ya cubierta por las políticas de auto-actualización existentes (`auth.uid() = user_id`), sin cambios de permisos necesarios.
+- `calendar-push-important-date` (edge function compartida con Cliente) parametrizada: ahora resuelve la tabla (`client_profiles` o `dj_profiles`) por `user_id` en vez de asumir `client_profiles` -- un usuario solo tiene fila en una de las dos. **Pendiente de desplegar**: el MCP de Supabase bloqueó el deploy (clasificador "Production Deploy", mismo patrón de siempre) -- el PO debe correrlo él mismo vía CLI (`supabase functions deploy calendar-push-important-date`).
+- UI nueva en `calendario-operacional-inteligente.html` (pestaña Personal del Artista, antes de solo lectura): panel "Mis fechas importantes" (`#mdjFechasImportantes`), con agregar/editar/eliminar, visible solo para el artista real (`window.__COI_STAFF===false`) en su propia pestaña Personal -- construido FUERA del motor genérico de eventos de esa pantalla (`evActKinds`/`calendar-evento-editar`) a propósito, porque ese motor apunta a `elixis_agenda_eventos`, no a `dj_profiles`. El sync de Google ya existente (cumpleaños/notas vía `elixis_agenda_eventos`) sigue intacto, sin tocar.
+- `node --check` equivalente (parseo de los 5 `<script>` inline del archivo) verificado OK. **Falta**: confirmación visual del PO en el navegador antes de comitear (Regla 7) -- no probado aún en pantalla.
