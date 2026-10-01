@@ -37,6 +37,28 @@ var _portalCoiImportant = [];
    se pide la primera vez que el cliente abre la pestaña Personal. */
 var _portalCoiPersonalSync = [];
 var _portalCoiPersonalSyncLoaded = false;
+var _portalCoiPersonalSyncLoading = false;
+/* 2026-10-01, paso 5 del mismo pedido: avisar cuando llega un evento NUEVO al
+   calendario personal (Google sync) -- hoy solo se veía si el cliente entraba
+   a mirar la pestaña Personal. "Visto por última vez" se guarda en
+   client_profiles.calendar_sync_last_seen_at (self-update, RLS ya lo
+   permite); clientRow/this.clientProfile ya traen la columna porque ambos
+   fetch usan select('*'). */
+var _portalCoiLastSeen = null;
+function portalCoiPersonalUnreadCount() {
+    return _portalCoiPersonalSync.filter(function (p) {
+        return p.createdAt && (!_portalCoiLastSeen || p.createdAt > _portalCoiLastSeen);
+    }).length;
+}
+async function portalCoiMarcarCalendarSyncVisto() {
+    try {
+        var db = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+        if (!db || !db.from || !db.auth) return;
+        var sess = (await db.auth.getSession()).data.session;
+        if (!sess) return;
+        await db.from('client_profiles').update({ calendar_sync_last_seen_at: new Date().toISOString() }).eq('user_id', sess.user.id);
+    } catch (e) { console.warn('[Portal] marcar calendario personal visto:', e.message || e); }
+}
 
 var PORTAL_COI_MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 var PORTAL_COI_MONTHS_L = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
@@ -118,17 +140,23 @@ function portalCoiEventsOn(dateObj) {
 function portalCoiSetTab(t) {
     if (!_portalCoiState) _portalCoiState = { date: new Date(), view: 'mes', tab: 'evento' };
     _portalCoiState.tab = t;
-    if (t === 'personal' && !_portalCoiPersonalSyncLoaded) { portalCoiLoadPersonalSync(); return; }
+    if (t === 'personal') {
+        _portalCoiLastSeen = new Date();
+        portalCoiMarcarCalendarSyncVisto();
+        if (!_portalCoiPersonalSyncLoaded) { portalCoiLoadPersonalSync(); return; }
+    }
     renderPortalCalendar();
 }
 
 async function portalCoiLoadPersonalSync() {
+    if (_portalCoiPersonalSyncLoaded || _portalCoiPersonalSyncLoading) return;
+    _portalCoiPersonalSyncLoading = true;
     try {
         var db = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
-        if (!db || !db.from || !db.auth) { return setTimeout(portalCoiLoadPersonalSync, 300); }
-        if (!(await db.auth.getSession()).data.session) { return setTimeout(portalCoiLoadPersonalSync, 300); }
+        if (!db || !db.from || !db.auth) { _portalCoiPersonalSyncLoading = false; return setTimeout(portalCoiLoadPersonalSync, 300); }
+        if (!(await db.auth.getSession()).data.session) { _portalCoiPersonalSyncLoading = false; return setTimeout(portalCoiLoadPersonalSync, 300); }
         var r = await db.from('elixis_agenda_eventos')
-            .select('id,fecha_inicio,tipo,notas,venue_nombre')
+            .select('id,fecha_inicio,tipo,notas,venue_nombre,created_at')
             .eq('estado', 'activo')
             .in('tipo', ['cumpleanos', 'nota']);
         if (r.error) throw r.error;
@@ -142,17 +170,19 @@ async function portalCoiLoadPersonalSync() {
             var iso = todoElDia
                 ? d0.getUTCFullYear() + '-' + String(d0.getUTCMonth() + 1).padStart(2, '0') + '-' + String(d0.getUTCDate()).padStart(2, '0')
                 : d0.getFullYear() + '-' + String(d0.getMonth() + 1).padStart(2, '0') + '-' + String(d0.getDate()).padStart(2, '0');
-            return { d: iso, t: row.notas || row.venue_nombre || (row.tipo === 'cumpleanos' ? 'Cumpleaños' : 'Evento personal') };
+            return { d: iso, t: row.notas || row.venue_nombre || (row.tipo === 'cumpleanos' ? 'Cumpleaños' : 'Evento personal'), createdAt: row.created_at ? new Date(row.created_at) : null };
         });
         renderPortalCalendar();
     } catch (err) { console.warn('[Portal] sincronización de calendario personal:', err.message || err); }
+    finally { _portalCoiPersonalSyncLoading = false; }
 }
 
-function renderPortalCalendar(leads, importantDates) {
+function renderPortalCalendar(leads, importantDates, lastSeenAt) {
     var host = document.getElementById('portal-calendar-widget') || document.getElementById('portal-calendar-widget-single');
     if (!host) return;
     if (Array.isArray(leads)) _portalCoiLeads = leads;
     if (Array.isArray(importantDates)) _portalCoiImportant = importantDates;
+    if (lastSeenAt !== undefined) _portalCoiLastSeen = lastSeenAt ? new Date(lastSeenAt) : null;
     if (!_portalCoiState) _portalCoiState = { date: new Date(), view: 'mes' };
 
     var tab = _portalCoiState.tab || 'evento';
@@ -168,8 +198,12 @@ function renderPortalCalendar(leads, importantDates) {
     }).join('');
 
     var TABS = [['evento', 'Mi Evento'], ['personal', 'Personal']];
+    var personalUnread = portalCoiPersonalUnreadCount();
     var tabHtml = TABS.map(function (t) {
-        return '<button type="button" data-tab="' + t[0] + '"' + (t[0] === tab ? ' aria-selected="true"' : '') + ' onclick="portalCoiSetTab(\'' + t[0] + '\')">' + t[1] + '</button>';
+        var badge = (t[0] === 'personal' && personalUnread > 0)
+            ? ' <span style="display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--set);color:#fff;font-size:10px;font-weight:800;line-height:16px;">' + personalUnread + '</span>'
+            : '';
+        return '<button type="button" data-tab="' + t[0] + '"' + (t[0] === tab ? ' aria-selected="true"' : '') + ' onclick="portalCoiSetTab(\'' + t[0] + '\')">' + t[1] + badge + '</button>';
     }).join('');
 
     var legendHtml = (tab === 'personal')
@@ -2129,7 +2163,8 @@ const PortalApp = {
                 // Se entra a UNA orden: el calendario abre en Día, en la fecha del evento (no en el mes de hoy). PO 2026-09-21.
                 var mEv = String(leadData.event_date || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
                 if (mEv) _portalCoiState = { date: new Date(+mEv[1], +mEv[2] - 1, +mEv[3]), view: 'dia' };
-                renderPortalCalendar([leadData], (this.clientProfile && this.clientProfile.important_dates) || []);
+                renderPortalCalendar([leadData], (this.clientProfile && this.clientProfile.important_dates) || [], this.clientProfile && this.clientProfile.calendar_sync_last_seen_at);
+                portalCoiLoadPersonalSync();
             } catch (eCalSingle) { /* no bloquea el resto del portal */ }
             try { void this.renderBackLink(); } catch (eBack) { /* no bloquea el resto del portal */ }
             if (this.isManager) {
@@ -4195,7 +4230,13 @@ const PortalApp = {
                 '</div></div>';
             this.portalInjectDupWeddingIfNeeded(leads, session, clientRow, main);
             setTimeout(portalMarcarCancelacionesAbiertas, 0);
-            try { renderPortalCalendar(leads || [], (clientRow && clientRow.important_dates) || []); } catch (eCal) { /* no bloquea el resto del portal */ }
+            try {
+                renderPortalCalendar(leads || [], (clientRow && clientRow.important_dates) || [], clientRow && clientRow.calendar_sync_last_seen_at);
+                // Paso 5: carga eager (no perezosa) del sync personal -- el badge de
+                // "nuevo" en la pestaña Personal necesita el dato ANTES de que el
+                // cliente la abra, si no, nunca cumple su propósito de avisar.
+                portalCoiLoadPersonalSync();
+            } catch (eCal) { /* no bloquea el resto del portal */ }
         }
         try {
             var cb = document.getElementById('countdown');

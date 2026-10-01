@@ -859,7 +859,8 @@
          datos). Aplica igual a un artista real logeado y a un staff
          inspeccionando a un artista vía requestArtist(). */
       h+='<button class="r-art" data-role="artista" data-detail="full" aria-selected="'+(state.detailLevel==="full")+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.4"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>Mis Eventos</button>';
-      h+='<button class="r-art" data-role="artista" data-detail="personal" aria-selected="'+(state.detailLevel==="personal")+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.4"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>Personal</button>';
+      h+='<button class="r-art" data-role="artista" data-detail="personal" aria-selected="'+(state.detailLevel==="personal")+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.4"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>Personal'
+        +(personalSyncUnreadCount()>0?'<small class="tab-count">'+personalSyncUnreadCount()+'</small>':'')+'</button>';
     }
     /* 2026-09-30, orden del PO -- 3 niveles de detalle para Owner/Admin, 2
        para Manager/Vendedor (nunca ven el detalle completo, ver RLS de
@@ -927,7 +928,11 @@
            artista -- NO pasa por requestArtist() (eso es para ENTRAR al modo
            artista inspeccionando a alguien, con su flujo de consentimiento);
            aquí ya se está dentro, solo cambia qué datos entran a BASE_EV. */
-        if(b.dataset.detail){ state.detailLevel=b.dataset.detail; recomputeBaseEv(); rebuild(); render(); }
+        if(b.dataset.detail){
+          state.detailLevel=b.dataset.detail;
+          if(state.detailLevel==="personal") marcarCalendarSyncVisto();
+          recomputeBaseEv(); rebuild(); render();
+        }
         else requestArtist(state.artist);
       }
     };});
@@ -1903,6 +1908,32 @@
   }
   // ═══ Residencias recurrentes reales (tabla residency_schedule) ═══
   var _leadsEv=[], _resEv=[], _syncEv=[], _bookEv=[], _bookEvBusy=[], _leadsEvBusy=[];
+  /* 2026-10-01, paso 5 del mismo pedido: avisar cuando llega un evento NUEVO
+     al calendario personal (Google sync) del artista -- hoy solo se veía si
+     uno entraba a mirar la pestaña Personal. "Visto por última vez" se
+     guarda en dj_profiles.calendar_sync_last_seen_at (self-update, RLS ya
+     lo permite). _syncEv necesita createdAt (abajo, loadPersonalCalendarSync)
+     para poder contar cuántos son nuevos desde esa fecha. Solo aplica al
+     ARTISTA real (window.__COI_STAFF===false) -- un staff inspeccionando a
+     un artista nunca marca "visto" por él. */
+  var _calendarSyncLastSeen = null;
+  function personalSyncUnreadCount(){
+    return _syncEv.filter(function(e){
+      return e.createdAt && (!_calendarSyncLastSeen || e.createdAt > _calendarSyncLastSeen);
+    }).length;
+  }
+  function marcarCalendarSyncVisto(){
+    _calendarSyncLastSeen = new Date();
+    if(window.__COI_STAFF!==false) return; // solo el artista real marca lo suyo
+    var sb=(window.getSupabaseClient? window.getSupabaseClient() : window.supabase);
+    if(!sb || !sb.from) return;
+    sb.auth.getSession().then(function(r){
+      var sess=r && r.data && r.data.session;
+      if(!sess) return;
+      sb.from('dj_profiles').update({calendar_sync_last_seen_at: _calendarSyncLastSeen.toISOString()}).eq('user_id', sess.user.id)
+        .then(function(){}, function(e){ console.warn('[Matrix] marcar calendario personal visto:', e&&e.message||e); });
+    });
+  }
   /* 2026-09-30, orden del PO: 3 pestañas de detalle, separadas de state.role
      (que sigue gobernando la vista Artista/Cliente/Owner sin tocarla, para
      no arriesgar los +15 chequeos existentes de ese valor en este archivo).
@@ -2063,7 +2094,7 @@
       if(!sb || !sb.from || !sb.auth){ return setTimeout(loadPersonalCalendarSync, 300); }
       if(!(await sb.auth.getSession()).data.session){ return setTimeout(loadPersonalCalendarSync, 300); }
       var r=await sb.from("elixis_agenda_eventos")
-        .select("id,user_id,dj_nombre,venue_nombre,fecha_inicio,tipo,notas")
+        .select("id,user_id,dj_nombre,venue_nombre,fecha_inicio,tipo,notas,created_at")
         .eq("estado","activo")
         .in("tipo",["cumpleanos","nota"]);
       if(r.error) throw r.error;
@@ -2107,16 +2138,17 @@
           ? d0.getUTCFullYear()+"-"+pad(d0.getUTCMonth()+1)+"-"+pad(d0.getUTCDate())
           : d0.getFullYear()+"-"+pad(d0.getMonth()+1)+"-"+pad(d0.getDate());
         var titulo=row.notas||row.venue_nombre||(row.tipo==="cumpleanos"?"Cumpleaños":"Evento personal");
+        var creadoEn=row.created_at?new Date(row.created_at):null;
         if(prof){
           var artId=prof.id;
           var nm=prof.stage_name||prof.dj_name||prof.full_name||row.dj_nombre||"DJ";
           if(!ARTISTS.some(function(a){return a.id===artId;})) ARTISTS.push({id:artId, n:nm, c:DJ_PALETTE[pal++ % DJ_PALETTE.length]});
-          out.push({ d:iso, cal:"personal", ad:true, kind:(row.tipo==="cumpleanos"?"cumple":"nota"), t:titulo, artist:artId, rowId:row.id });
+          out.push({ d:iso, cal:"personal", ad:true, kind:(row.tipo==="cumpleanos"?"cumple":"nota"), t:titulo, artist:artId, rowId:row.id, createdAt:creadoEn });
         } else {
           var cliente=clientByUser[row.user_id], ckey="u:"+row.user_id;
           var cnm=(cliente&&cliente.full_name)||row.dj_nombre||"Cliente";
           if(!CLIENT_ACCOUNTS.some(function(c){return c.id===ckey;})) CLIENT_ACCOUNTS.push({id:ckey, n:cnm, c:DJ_PALETTE[cpal++ % DJ_PALETTE.length]});
-          out.push({ d:iso, cal:"personal", ad:true, kind:(row.tipo==="cumpleanos"?"cumple":"nota"), t:titulo, clientId:ckey, rowId:row.id });
+          out.push({ d:iso, cal:"personal", ad:true, kind:(row.tipo==="cumpleanos"?"cumple":"nota"), t:titulo, clientId:ckey, rowId:row.id, createdAt:creadoEn });
         }
       });
       _syncEv=out;
@@ -2248,7 +2280,7 @@
     if(!sb || !sb.auth){ return setTimeout(setupRole, 300); }
     var sess=(await sb.auth.getSession()).data.session;
     if(!sess){ return setTimeout(setupRole, 300); }
-    var res=await sb.from('dj_profiles').select('id,role,stage_name,dj_name').eq('user_id', sess.user.id).maybeSingle();
+    var res=await sb.from('dj_profiles').select('id,role,stage_name,dj_name,calendar_sync_last_seen_at').eq('user_id', sess.user.id).maybeSingle();
     var role=String(res.data&&res.data.role?res.data.role:'').toLowerCase().trim();
     window.__COI_STAFF = ['admin','owner','manager','seller'].indexOf(role)!==-1;
     if(!window.__COI_STAFF){
@@ -2258,6 +2290,7 @@
       var nm=(res.data&&(res.data.stage_name||res.data.dj_name))||'Mi agenda';
       if(!ARTISTS.some(function(a){return a.id===djId;})) ARTISTS.push({id:djId,n:nm,c:'#3d8bff'});
       state.role='artista'; state.artist=djId; state.consent[djId]=true;
+      _calendarSyncLastSeen = (res.data && res.data.calendar_sync_last_seen_at) ? new Date(res.data.calendar_sync_last_seen_at) : null;
     } else {
       state.role='owner';
       /* Manager/Vendedor arrancan en "Performance" (busy), nunca en el

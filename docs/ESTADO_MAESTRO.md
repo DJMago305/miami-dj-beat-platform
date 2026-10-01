@@ -3242,6 +3242,22 @@ Construido un modal propio (`mdjShowCalendarConsentModal`), mismo código en `we
 
 **Verificado en vivo** (sesión real de Wendy, sin conexión previa): el modal aparece con el texto correcto, el botón queda deshabilitado hasta marcar el checkbox, y "Cancelar" cierra todo sin tocar la base de datos (confirmado: 0 filas). **Incidente de prueba, reportado con transparencia al PO:** al verificar el botón "Continuar a Google" con clics automatizados, sin querer se completó la navegación hasta la pantalla real de Google ("Elige una cuenta", mostrando las 2 cuentas reales del PO) — detenido ahí mismo, se regresó sin elegir ninguna cuenta, confirmado en base de datos que no se guardó ni autorizó nada. El flujo de "Continuar a Google" en sí (una vez el PO decida probarlo con su propia cuenta) queda sin verificar por mí hasta el final, a propósito, para no repetir ese riesgo.
 
+**Commit:** `b06961b0`, 3 archivos (`account-settings.html`, `client-account.html`, `docs/ESTADO_MAESTRO.md`), misma rama (PR #610 abierto).
+
+Incidente de Supabase seguía activo (misma actualización 21:26 UTC) — monitoreo automático continúa.
+
+## [2026-10-01] Paso 5 — badge de "nuevo" en la pestaña Personal (Artista/Cliente)
+
+El PO pidió avisar cuando llega un evento nuevo al calendario personal sincronizado (Google) -- hoy solo se veía si uno entraba a mirar la pestaña Personal.
+
+**DB:** columna `calendar_sync_last_seen_at` nueva en `dj_profiles` y `client_profiles` ("visto por última vez", self-update ya permitido por RLS existente). Backfill a `now()` para las 3 cuentas que ya tenían Google conectado (DJMago305, DJYuyo, Owner) -- sin esto, amanecían con todo su historial sincronizado marcado como "nuevo" el primer día.
+
+**Artista** (`web/calendario-operacional-inteligente.html`): `_syncEv` ahora trae `createdAt`; `personalSyncUnreadCount()` cuenta cuántos son más nuevos que `_calendarSyncLastSeen`; badge en el botón "Personal"; `marcarCalendarSyncVisto()` al abrir esa pestaña actualiza `dj_profiles.calendar_sync_last_seen_at` -- SOLO cuando es el artista real viendo lo suyo, nunca cuando un staff inspecciona a alguien vía `requestArtist()`.
+
+**Cliente** (`web/client-portal.js`): mismo patrón (`portalCoiPersonalUnreadCount()`, `portalCoiMarcarCalendarSyncVisto()`). Carga del sync personal pasó de perezosa (solo al abrir Personal) a eager (apenas abre el portal) -- si no, el badge nunca cumpliría su propósito de avisar sin tener que entrar a mirar.
+
+**Verificado:** Cliente probado en vivo con un arnés HTML aislado y datos simulados -- badge aparece con el conteo correcto, desaparece al abrir la pestaña, sin errores de consola. Artista verificado a nivel de datos reales (RLS simulado + inserción de prueba temporal para DJMago305, confirmado el conteo, borrada después) -- no probado con su sesión real propia (sin credenciales disponibles).
+
 **Commit pendiente de la palabra exacta del PO** en el momento de escribir esto.
 
 Incidente de Supabase seguía activo (misma actualización 21:26 UTC) — monitoreo automático continúa.
