@@ -54,8 +54,16 @@
   .loc{font-size:25px;font-weight:500}.loc .sub{display:block;font-size:12px;letter-spacing:.22em;color:var(--ink-soft);margin-top:4px;font-weight:400}
   /* Floating transparent Roman clock — numerals + two hands, in 3D.
      Contraste adaptativo día/noche (PO 2026-08-25, TICKET-WEATHER-01): variables por
-     modo + transición 1.5s. La clase .is-day la pone hero.js cuando sunElevNorm>0.15. */
-  .clock{position:relative;width:250px;height:250px;margin-top:28px;animation:floatC 7s ease-in-out infinite alternate;
+     modo + transición 1.5s. La clase .is-day la pone hero.js cuando sunElevNorm>0.15.
+     2026-10-01, pedido del PO ("que se auto ajuste, que no se ponga desproporcionado"):
+     width/height con clamp() (fluido, sin salto brusco de breakpoint) -- los números y
+     las manecillas YA NO tienen tamaño fijo en CSS, hero.js los recalcula en píxeles
+     reales cada vez que el tamaño de .clock cambia (carga + resize), proporcional al
+     tamaño real renderizado. Antes los números se posicionaban con coordenadas fijas
+     (asumiendo siempre 250px) y solo el contenedor se achicaba por media query -- se
+     salían de proporción en cualquier ancho que no fuera exactamente uno de los dos
+     breakpoints cableados. */
+  .clock{position:relative;width:clamp(150px,24vw,250px);height:clamp(150px,24vw,250px);margin-top:28px;animation:floatC 7s ease-in-out infinite alternate;
     /* NOCHE / atardecer (default): blanco marfil luminiscente + glow dorado */
     --clk-num:rgba(255,255,255,.58); --clk-num-q:rgba(248,250,252,.88);
     --clk-num-shadow:0 1px 11px rgba(4,10,20,.55),0 0 18px rgba(255,255,255,.32);
@@ -133,8 +141,7 @@
     .temp{font-size:clamp(66px,21vw,104px)}
     .cond{font-size:clamp(17px,5vw,22px)} .hilo{font-size:14px}
     .loc{font-size:20px} .loc .sub{font-size:11px}
-    .clock{width:168px;height:168px;margin-top:16px}
-    .clock .hand.h{height:42px}.clock .hand.m{height:62px}.clock .num{font-size:14px}
+    .clock{margin-top:16px}
     .date .num{font-size:38px}.date .dow,.date .my{font-size:12px}
     .mstrip{margin-top:16px;gap:7px}
     .mstrip .chip{min-width:66px;padding:8px 12px}.mstrip .chip .v{font-size:15px}
