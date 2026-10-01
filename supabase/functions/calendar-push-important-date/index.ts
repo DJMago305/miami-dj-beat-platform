@@ -137,6 +137,44 @@ serve(async (req: Request) => {
 
     if (idx === -1) return json({ ok: false, error: "fecha_no_encontrada" }, 404);
     const entrada = lista[idx];
+
+    // 2026-10-01 (Paso 10): editar una fecha ya guardada. Si nunca se había
+    // empujado a Google, se crea ahora (igual que el flujo normal de abajo);
+    // si ya existe allá, se actualiza ESE mismo evento (PATCH) en vez de
+    // crear uno nuevo y duplicarlo. Si Google ya no tiene el evento (lo borró
+    // alguien desde su propio Google), se crea uno nuevo y se reemplaza el id
+    // guardado -- nunca se deja a medias.
+    if (p.accion === "editar" && entrada.google_event_id) {
+        const { data: integEditar } = await ADMIN
+            .from("user_calendar_integrations").select("google_refresh_token_secret_id")
+            .eq("user_id", user.id).eq("provider", "google").eq("calendar_id", "primary").eq("status", "active").maybeSingle();
+        if (!integEditar?.google_refresh_token_secret_id) return json({ ok: true, skipped: "not_connected" }, 200);
+        const tokenEditar = await refrescarDesdeVault(ADMIN, integEditar.google_refresh_token_secret_id);
+        if (!tokenEditar) return json({ ok: false, error: "google_token" }, 502);
+
+        const anioE = entrada.year || new Date().getFullYear();
+        const fechaInicioE = `${anioE}-${pad2(entrada.month)}-${pad2(entrada.day)}`;
+        const cuerpoE = {
+            summary: tituloPara(entrada),
+            start: { date: fechaInicioE },
+            end: { date: sumarUnDia(fechaInicioE) },
+            recurrence: ["RRULE:FREQ=YEARLY"],
+        };
+        const pRes = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${encodeURIComponent(entrada.google_event_id)}?sendUpdates=none`, {
+            method: "PATCH",
+            headers: { Authorization: `Bearer ${tokenEditar}`, "Content-Type": "application/json" },
+            body: JSON.stringify(cuerpoE),
+        });
+        if (pRes.ok) return json({ ok: true, google_event_id: entrada.google_event_id }, 200);
+        if (pRes.status !== 404 && pRes.status !== 410) {
+            console.error("[calendar-push-important-date] Google PATCH falló:", pRes.status);
+            return json({ ok: false, error: "google_rechazo", status: pRes.status }, 502);
+        }
+        // El evento ya no existe en Google (borrado por fuera) -- se crea de
+        // nuevo más abajo, como si nunca se hubiera empujado.
+        entrada.google_event_id = undefined;
+    }
+
     if (entrada.google_event_id) return json({ ok: true, already: true, google_event_id: entrada.google_event_id }, 200);
 
     const { data: integ } = await ADMIN

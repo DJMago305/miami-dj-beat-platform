@@ -3366,3 +3366,20 @@ Probando con la cuenta real de Cliente ya conectada a Google (Wendy), el PO not�
 **Verificado en el navegador**, contenedor real, sesión real de Wendy ya conectada: tras el fix, `cb.checked === true` y el texto "Última sincronización hace 1 hora." aparece correctamente -- confirmado contra la fila real de `user_calendar_integrations` (`status: active`).
 
 Incidente de Supabase seguía activo (misma actualización 21:26 UTC) — monitoreo automático continúa.
+
+## [2026-10-01] Paso 10 — editar fechas importantes (Cliente), con PATCH real a Google
+
+Hasta ahora solo se podía agregar o eliminar una fecha importante -- para corregir un nombre o una fecha había que borrarla y repetirla desde cero (perdiendo, de paso, el `google_event_id` ya vinculado). El PO eligió este alcance para el Paso 10 sobre otras opciones (CalDAV, fecha personal del lado Artista).
+
+**Frontend** (`web/client-portal.js`): el mismo modal de "Agregar fecha importante" ahora acepta un id opcional (`portalCoiOpenAddModal(editId)`) -- si viene, se pre-llena con los datos reales de esa fecha, cambia el título a "Editar fecha importante" y el botón a "Guardar cambios". `portalCoiSaveImportantDate()` actualiza la fila existente en vez de crear una nueva cuando está en modo edición. Botón nuevo "✏️" junto al de eliminar en la tarjeta del día -- mismo glifo que ya usa `staff-admin.html` para editar, no se inventó uno nuevo.
+
+**Backend** (`calendar-push-important-date`, nueva rama `accion:'editar'`): si la fecha ya tiene `google_event_id`, hace **PATCH** al mismo evento en Google (nunca crea uno duplicado); si Google ya no lo tiene (lo borraron desde fuera), lo crea de nuevo y reemplaza el id guardado; si nunca se había empujado, lo crea por primera vez -- mismo comportamiento que guardar una fecha nueva.
+
+**Verificado de punta a punta con la fecha real del PO** ("Wendy & Gerardo", aniversario real, sin tocar sus datos de verdad al final):
+1. Primera edición (sin `google_event_id` todavía) -- la creó en Google por primera vez vía `accion:'editar'`, confirmado el id nuevo guardado localmente.
+2. Segunda edición, cambiando el nombre a un valor de prueba -- confirmado que el PATCH real llegó a Google (mismo `google_event_id`, sin `already:true`, llamando la función directo con la sesión real de Wendy en vez de confiar solo en el fetch silencioso del frontend).
+3. Tercera edición, devolviendo el nombre a "Wendy & Gerardo" -- restaurado en base de datos y en Google, cero rastro de la prueba.
+
+**Incidente de deploy durante la prueba**: la primera prueba de PATCH dio `already:true` en vez de intentar el PATCH -- la función nunca se había desplegado con el código nuevo (solo se había guardado localmente). Redesplegada antes de repetir la prueba; a partir de ahí el comportamiento fue el esperado.
+
+Incidente de Supabase seguía activo (misma actualización 21:26 UTC) — monitoreo automático continúa.

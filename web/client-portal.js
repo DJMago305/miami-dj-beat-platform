@@ -382,10 +382,16 @@ function portalCoiBuildTimeline(n) {
             // agregar o eliminar cumpleaños").
             html += '<div class="day-cards">' + dayEvents.map(function (e) {
                 var when = e.ad ? 'Todo el día' : (portalCoiFmtT(e.s) + (e.e !== null ? ' – ' + portalCoiFmtT(e.e) : ''));
+                // Paso 10: editar una fecha importante (antes solo se podía agregar o
+                // eliminar). Mismo glifo "✏️" ya usado en staff-admin.html para
+                // editar -- no se inventa un ícono nuevo.
+                var editBtn = (e._kind === 'important')
+                    ? '<button type="button" class="dc-edit" onclick="portalCoiOpenAddModal(\'' + e.id + '\')" aria-label="Editar fecha" title="Editar fecha">✏️</button>'
+                    : '';
                 var delBtn = (e._kind === 'important')
                     ? '<button type="button" class="dc-del" onclick="portalCoiDeleteImportantDate(\'' + e.id + '\')" aria-label="Eliminar fecha" title="Eliminar fecha">&times;</button>'
                     : '';
-                return '<div class="day-card' + (e.cal !== 'set' ? ' ' + e.cal : '') + '">' + delBtn +
+                return '<div class="day-card' + (e.cal !== 'set' ? ' ' + e.cal : '') + '">' + editBtn + delBtn +
                     '<span class="dc-cat"><span class="sq"></span>' + (DC_LABEL[e.cal] || 'Sets / Reservas') + '</span>' +
                     '<h4>' + portalEscapeHtml(e.t) + '</h4><div class="dc-when">' + when + '</div></div>';
             }).join('') + '</div>';
@@ -430,14 +436,22 @@ function portalCoiToday() {
 /* Modal "Agregar fecha importante" -- cumpleaños de un hijo, aniversario, un
    amigo, cualquier fecha que el cliente no quiera olvidar. Recurrente por
    mes/día (no un evento de un solo año). Guarda en client_profiles.important_dates
-   (columna jsonb agregada 2026-09-04, aprobada por el PO). */
-function portalCoiOpenAddModal() {
+   (columna jsonb agregada 2026-09-04, aprobada por el PO).
+   Paso 10: el mismo modal sirve para EDITAR -- se le pasa el id de la fecha
+   ya guardada, se pre-llena con sus datos reales y el guardado actualiza esa
+   misma fila en vez de crear una nueva (ver portalCoiSaveImportantDate). */
+var _portalCoiEditingId = null;
+function portalCoiOpenAddModal(editId) {
     if (document.getElementById('portalCoiModalBackdrop')) return;
+    var entradaEdit = editId ? (_portalCoiImportant || []).find(function (e) { return e && e.id === editId; }) : null;
+    _portalCoiEditingId = entradaEdit ? editId : null;
+    var titulo = entradaEdit ? 'Editar fecha importante' : 'Agregar fecha importante';
+    var botonTxt = entradaEdit ? 'Guardar cambios' : 'Guardar';
     var wrap = document.createElement('div');
     wrap.innerHTML =
         '<div class="coi-modal-backdrop" id="portalCoiModalBackdrop">' +
         '<div class="coi-modal">' +
-        '<h3>Agregar fecha importante</h3>' +
+        '<h3>' + titulo + '</h3>' +
         '<p class="hint">Cumpleaños, aniversario o cualquier fecha que no quieras olvidar de alguien especial. Se repite cada año.</p>' +
         '<div class="coi-field"><label>Nombre</label><input type="text" id="coiDateName" placeholder="Ej. Mi hijo Mateo" maxlength="60" /></div>' +
         '<div class="coi-field"><label>Tipo</label><select id="coiDateType">' +
@@ -449,27 +463,41 @@ function portalCoiOpenAddModal() {
         '<p class="coi-error" id="coiDateError"></p>' +
         '<div class="coi-actions">' +
         '<button type="button" class="coi-btn cancel" onclick="portalCoiCloseModal()">Cancelar</button>' +
-        '<button type="button" class="coi-btn save" id="coiDateSaveBtn" onclick="portalCoiSaveImportantDate()">Guardar</button>' +
+        '<button type="button" class="coi-btn save" id="coiDateSaveBtn" onclick="portalCoiSaveImportantDate()">' + botonTxt + '</button>' +
         '</div></div></div>';
     var backdrop = wrap.firstElementChild;
     backdrop.addEventListener('click', function (ev) { if (ev.target === backdrop) portalCoiCloseModal(); });
     document.body.appendChild(backdrop);
-    // Vista Día: se está mirando UN día, así que ya viene ese día. En Semana/Mes/Año se elige día, mes y año.
-    try {
-        var dEl = document.getElementById('coiDateValue');
-        if (dEl && _portalCoiState && _portalCoiState.view === 'dia') {
-            dEl.value = portalCoiKey(_portalCoiState.date);
-            var hint = backdrop.querySelector('.hint');
-            if (hint) hint.textContent = 'Se agregará a ' + _portalCoiState.date.getDate() + ' de ' + PORTAL_COI_MONTHS_L[_portalCoiState.date.getMonth()] + ' de ' + _portalCoiState.date.getFullYear() + '. Se repite cada año.';
+    if (entradaEdit) {
+        var nameEl0 = document.getElementById('coiDateName');
+        var typeEl0 = document.getElementById('coiDateType');
+        var dateEl0 = document.getElementById('coiDateValue');
+        if (nameEl0) nameEl0.value = entradaEdit.name || '';
+        if (typeEl0) typeEl0.value = entradaEdit.date_type || 'other';
+        if (dateEl0) {
+            var yy0 = entradaEdit.year || new Date().getFullYear();
+            dateEl0.value = yy0 + '-' + String(entradaEdit.month).padStart(2, '0') + '-' + String(entradaEdit.day).padStart(2, '0');
         }
-    } catch (ePre) { /* sin prellenado: se elige la fecha a mano */ }
+    } else {
+        // Vista Día: se está mirando UN día, así que ya viene ese día. En Semana/Mes/Año se elige día, mes y año.
+        try {
+            var dEl = document.getElementById('coiDateValue');
+            if (dEl && _portalCoiState && _portalCoiState.view === 'dia') {
+                dEl.value = portalCoiKey(_portalCoiState.date);
+                var hint = backdrop.querySelector('.hint');
+                if (hint) hint.textContent = 'Se agregará a ' + _portalCoiState.date.getDate() + ' de ' + PORTAL_COI_MONTHS_L[_portalCoiState.date.getMonth()] + ' de ' + _portalCoiState.date.getFullYear() + '. Se repite cada año.';
+            }
+        } catch (ePre) { /* sin prellenado: se elige la fecha a mano */ }
+    }
     setTimeout(function () { var el = document.getElementById('coiDateName'); if (el) el.focus(); }, 30);
 }
 function portalCoiCloseModal() {
     var el = document.getElementById('portalCoiModalBackdrop');
     if (el) el.remove();
+    _portalCoiEditingId = null;
 }
 async function portalCoiSaveImportantDate() {
+    var editingId = _portalCoiEditingId; // capturado antes de cerrar el modal (eso lo limpia)
     var nameEl = document.getElementById('coiDateName');
     var typeEl = document.getElementById('coiDateType');
     var dateEl = document.getElementById('coiDateValue');
@@ -496,12 +524,23 @@ async function portalCoiSaveImportantDate() {
 
         var current = await db.from('client_profiles').select('important_dates').eq('user_id', sess.user.id).maybeSingle();
         var list = (current && current.data && Array.isArray(current.data.important_dates)) ? current.data.important_dates.slice() : [];
-        var entry = {
-            id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
-            name: name, date_type: type, month: month, day: day, year: parseInt(parts[0], 10) || null,
-            created_at: new Date().toISOString()
-        };
-        list.push(entry);
+        var entry;
+        // Paso 10: editar reusa el mismo modal -- si viene con un id ya existente,
+        // se actualiza esa fila en su lugar (mismo id, mismo created_at, mismo
+        // google_event_id si ya tenía uno) en vez de crear una fecha nueva.
+        if (editingId) {
+            var idxEdit = list.findIndex(function (e) { return e && e.id === editingId; });
+            if (idxEdit === -1) { showErr('No se encontró la fecha a editar.'); if (btn) { btn.disabled = false; btn.textContent = 'Guardar cambios'; } return; }
+            entry = Object.assign({}, list[idxEdit], { name: name, date_type: type, month: month, day: day, year: parseInt(parts[0], 10) || null });
+            list[idxEdit] = entry;
+        } else {
+            entry = {
+                id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
+                name: name, date_type: type, month: month, day: day, year: parseInt(parts[0], 10) || null,
+                created_at: new Date().toISOString()
+            };
+            list.push(entry);
+        }
         var upd = await db.from('client_profiles').update({ important_dates: list }).eq('user_id', sess.user.id);
         if (upd.error) throw upd.error;
 
@@ -509,16 +548,21 @@ async function portalCoiSaveImportantDate() {
         // esta fecha se manda también para allá (evento anual recurrente). Si no está
         // conectado, la función no hace nada (skipped) -- nunca bloquea ni avisa de
         // error aquí, la fecha ya quedó guardada en su cuenta, que es lo que importa.
+        // Paso 10: si es una edición, se manda accion:'editar' -- actualiza el evento
+        // ya existente en Google (o lo crea si nunca se había conectado), en vez de
+        // intentar crear uno nuevo y duplicarlo.
         try {
             var baseFn = (typeof window.MDB_SUPABASE_URL === 'string' && window.MDB_SUPABASE_URL) ? window.MDB_SUPABASE_URL.replace(/\/$/, '') : '';
             var keyFn = typeof window.MDB_SUPABASE_ANON_KEY === 'string' ? window.MDB_SUPABASE_ANON_KEY : '';
             var fnPush = typeof window.mdbSupabaseFunctionUrl === 'function'
                 ? window.mdbSupabaseFunctionUrl('calendar-push-important-date')
                 : (baseFn + '/functions/v1/calendar-push-important-date');
+            var pushBody = { entry_id: entry.id };
+            if (editingId) pushBody.accion = 'editar';
             fetch(fnPush, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sess.access_token, apikey: keyFn },
-                body: JSON.stringify({ entry_id: entry.id })
+                body: JSON.stringify(pushBody)
             }).catch(function () { /* silencioso */ });
         } catch (ePush) { /* silencioso: esto es un plus, no la acción principal */ }
 
@@ -535,11 +579,11 @@ async function portalCoiSaveImportantDate() {
         }
         if (_portalCoiState) _portalCoiState.date = destino;
         renderPortalCalendar();
-        portalToast('✓ Guardado: ' + name + ' · ' + day + ' de ' + PORTAL_COI_MONTHS_L[month - 1] + '. Se repite cada año.');
+        portalToast((editingId ? '✓ Actualizado: ' : '✓ Guardado: ') + name + ' · ' + day + ' de ' + PORTAL_COI_MONTHS_L[month - 1] + '. Se repite cada año.');
     } catch (eSave) {
         showErr('No se pudo guardar. Intenta de nuevo.');
     } finally {
-        if (btn) { btn.disabled = false; btn.textContent = 'Guardar'; }
+        if (btn) { btn.disabled = false; btn.textContent = editingId ? 'Guardar cambios' : 'Guardar'; }
     }
 }
 
