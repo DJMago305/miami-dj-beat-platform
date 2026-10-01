@@ -25,9 +25,18 @@ function portalEscapeHtml(s) {
  * herramientas operativas del artista, no aplican a lo que un cliente ve de
  * sí mismo.
  */
-var _portalCoiState = null; // { date: Date, view: 'dia'|'semana'|'mes'|'anio' }
+var _portalCoiState = null; // { date: Date, view: 'dia'|'semana'|'mes'|'anio', tab: 'evento'|'personal' }
 var _portalCoiLeads = [];
 var _portalCoiImportant = [];
+/* 2026-09-30, paso 2 del mismo pedido ("los clientes el de ellos personal y
+   el de la fecha de su evento"): "Mi Evento" (lo de siempre: Sets/Reservas)
+   y "Personal" (fechas importantes agregadas a mano + Google sincronizado,
+   mismo mecanismo ya usado en calendario-operacional-inteligente.html --
+   elixis_agenda_eventos tipo cumpleanos/nota, aislado por RLS a
+   user_id=auth.uid(), sin filtro extra en el cliente). Carga perezosa: solo
+   se pide la primera vez que el cliente abre la pestaña Personal. */
+var _portalCoiPersonalSync = [];
+var _portalCoiPersonalSyncLoaded = false;
 
 var PORTAL_COI_MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 var PORTAL_COI_MONTHS_L = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
@@ -78,6 +87,23 @@ function portalCoiEventLabel(l) {
 function portalCoiEventsOn(dateObj) {
     var key = portalCoiKey(dateObj);
     var out = [];
+    var tab = (_portalCoiState && _portalCoiState.tab) || 'evento';
+    if (tab === 'personal') {
+        // Personal: SOLO lo personal del cliente -- fechas importantes agregadas
+        // a mano + su Google sincronizado. Nunca mezclado con "Mi Evento".
+        var mo = dateObj.getMonth() + 1, da = dateObj.getDate();
+        _portalCoiImportant.forEach(function (imp) {
+            if (imp.month !== mo || imp.day !== da) return;
+            var tLabel = PORTAL_COI_DATE_TYPES[imp.date_type] || '';
+            out.push({ _kind: 'important', cal: 'cliente', t: imp.name + (tLabel ? ' · ' + tLabel : ''), ad: true, s: null, e: null });
+        });
+        _portalCoiPersonalSync.forEach(function (p) {
+            if (p.d !== key) return;
+            out.push({ _kind: 'personal', cal: 'personal', t: p.t, ad: true, s: null, e: null });
+        });
+        return out;
+    }
+    // Mi Evento: SOLO sus reservas reales (Sets/Reservas) -- la fecha de su evento.
     _portalCoiLeads.forEach(function (l) {
         if (l.event_date !== key) return;
         var s = portalCoiTimeDec(l.event_start_time);
@@ -86,13 +112,40 @@ function portalCoiEventsOn(dateObj) {
         if (s !== null && e !== null && e <= s) e += 24;
         out.push({ _kind: 'lead', cal: 'set', t: portalCoiEventLabel(l), ad: ad, s: s, e: e });
     });
-    var mo = dateObj.getMonth() + 1, da = dateObj.getDate();
-    _portalCoiImportant.forEach(function (imp) {
-        if (imp.month !== mo || imp.day !== da) return;
-        var tLabel = PORTAL_COI_DATE_TYPES[imp.date_type] || '';
-        out.push({ _kind: 'important', cal: 'cliente', t: imp.name + (tLabel ? ' · ' + tLabel : ''), ad: true, s: null, e: null });
-    });
     return out;
+}
+
+function portalCoiSetTab(t) {
+    if (!_portalCoiState) _portalCoiState = { date: new Date(), view: 'mes', tab: 'evento' };
+    _portalCoiState.tab = t;
+    if (t === 'personal' && !_portalCoiPersonalSyncLoaded) { portalCoiLoadPersonalSync(); return; }
+    renderPortalCalendar();
+}
+
+async function portalCoiLoadPersonalSync() {
+    try {
+        var db = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+        if (!db || !db.from || !db.auth) { return setTimeout(portalCoiLoadPersonalSync, 300); }
+        if (!(await db.auth.getSession()).data.session) { return setTimeout(portalCoiLoadPersonalSync, 300); }
+        var r = await db.from('elixis_agenda_eventos')
+            .select('id,fecha_inicio,tipo,notas,venue_nombre')
+            .eq('estado', 'activo')
+            .in('tipo', ['cumpleanos', 'nota']);
+        if (r.error) throw r.error;
+        _portalCoiPersonalSyncLoaded = true;
+        _portalCoiPersonalSync = (r.data || []).map(function (row) {
+            var d0 = new Date(row.fecha_inicio);
+            // Mismo ajuste que calendario-operacional-inteligente.html: eventos de
+            // "todo el día" de Google se guardan a medianoche UTC -- leerlos en hora
+            // local los pinta un día antes en Miami.
+            var todoElDia = (d0.getUTCHours() === 0 && d0.getUTCMinutes() === 0 && d0.getUTCSeconds() === 0);
+            var iso = todoElDia
+                ? d0.getUTCFullYear() + '-' + String(d0.getUTCMonth() + 1).padStart(2, '0') + '-' + String(d0.getUTCDate()).padStart(2, '0')
+                : d0.getFullYear() + '-' + String(d0.getMonth() + 1).padStart(2, '0') + '-' + String(d0.getDate()).padStart(2, '0');
+            return { d: iso, t: row.notas || row.venue_nombre || (row.tipo === 'cumpleanos' ? 'Cumpleaños' : 'Evento personal') };
+        });
+        renderPortalCalendar();
+    } catch (err) { console.warn('[Portal] sincronización de calendario personal:', err.message || err); }
 }
 
 function renderPortalCalendar(leads, importantDates) {
@@ -102,6 +155,7 @@ function renderPortalCalendar(leads, importantDates) {
     if (Array.isArray(importantDates)) _portalCoiImportant = importantDates;
     if (!_portalCoiState) _portalCoiState = { date: new Date(), view: 'mes' };
 
+    var tab = _portalCoiState.tab || 'evento';
     var view = _portalCoiState.view;
     var built = (view === 'anio') ? portalCoiBuildYear()
         : (view === 'semana') ? portalCoiBuildTimeline(7)
@@ -113,13 +167,24 @@ function renderPortalCalendar(leads, importantDates) {
         return '<button type="button" data-view="' + v[0] + '"' + (v[0] === view ? ' aria-selected="true"' : '') + ' onclick="portalCoiSetView(\'' + v[0] + '\')">' + v[1] + '</button>';
     }).join('');
 
+    var TABS = [['evento', 'Mi Evento'], ['personal', 'Personal']];
+    var tabHtml = TABS.map(function (t) {
+        return '<button type="button" data-tab="' + t[0] + '"' + (t[0] === tab ? ' aria-selected="true"' : '') + ' onclick="portalCoiSetTab(\'' + t[0] + '\')">' + t[1] + '</button>';
+    }).join('');
+
+    var legendHtml = (tab === 'personal')
+        ? '<span class="coi-legend-item cliente"><span class="dot"></span>Clientes (cumple/aniv.)</span>' +
+          '<span class="coi-legend-item personal"><span class="dot"></span>Calendario personal (Google)</span>'
+        : '<span class="coi-legend-item"><span class="dot"></span>Sets / Reservas</span>';
+
     host.innerHTML =
+        '<div class="coi-toolbar coi-tabrow"><div class="seg-wrap"><div class="seg">' + tabHtml + '</div></div></div>' +
         '<div class="coi-toolbar">' +
         '<div class="coi-brand">🎧</div>' +
         '<div class="seg-wrap"><div class="seg">' + segHtml + '</div></div>' +
         '<div class="coi-tools">' +
         (host.id === 'portal-calendar-widget' ? '<button type="button" class="coi-glass" onclick="portalCoiOpenRestoreModal()" aria-label="Restaurar órdenes borradas" title="Restaurar órdenes borradas">&#128260;</button>' : '') +
-        '<button type="button" class="coi-glass" onclick="portalCoiOpenAddModal()" aria-label="Agregar fecha importante" title="Agregar fecha importante">+</button>' +
+        (tab === 'personal' ? '<button type="button" class="coi-glass" onclick="portalCoiOpenAddModal()" aria-label="Agregar fecha importante" title="Agregar fecha importante">+</button>' : '') +
         '</div>' +
         '</div>' +
         '<div class="head">' + built.title +
@@ -129,10 +194,7 @@ function renderPortalCalendar(leads, importantDates) {
         '<button type="button" class="arrow" onclick="portalCoiNext()" aria-label="Siguiente">&#8250;</button>' +
         '</div></div>' +
         built.body +
-        '<div class="coi-legend">' +
-        '<span class="coi-legend-item"><span class="dot"></span>Sets / Reservas</span>' +
-        '<span class="coi-legend-item cliente"><span class="dot"></span>Clientes (cumple/aniv.)</span>' +
-        '</div>';
+        '<div class="coi-legend">' + legendHtml + '</div>';
 
     if (built.afterRender) built.afterRender(host);
 }
@@ -158,8 +220,8 @@ function portalCoiBuildMonth() {
             html += '<div class="mcell' + (out ? ' out' : '') + (isToday ? ' today' : '') + '"><div class="dnum">' + cur.getDate() + '</div>';
             var list = portalCoiEventsOn(cur);
             list.slice(0, 3).forEach(function (ev) {
-                if (ev.cal === 'cliente') {
-                    html += '<div class="chip cliente"><span class="sq"></span><span>' + portalEscapeHtml(ev.t) + '</span></div>';
+                if (ev.cal !== 'set') {
+                    html += '<div class="chip ' + ev.cal + '"><span class="sq"></span><span>' + portalEscapeHtml(ev.t) + '</span></div>';
                 } else {
                     var tm = (ev.s !== null) ? '<span class="tm">' + portalCoiFmtT(ev.s).replace(':00', '') + '</span> ' : '';
                     html += '<div class="chip"><span class="sq"></span>' + tm + '<span>' + portalEscapeHtml(ev.t) + '</span></div>';
@@ -190,7 +252,8 @@ function portalCoiBuildYear() {
             else { dnum = c - lead - dim + 1; cls = 'out'; dt = new Date(y, m + 1, dnum); }
             if (!cls && portalCoiSameDay(dt, today)) cls = 'today';
             var evs = (!cls || cls === 'today') ? portalCoiEventsOn(dt) : [];
-            var dotCls = evs.some(function (e) { return e.cal === 'cliente'; }) ? ' cliente' : '';
+            var dotCls = evs.some(function (e) { return e.cal === 'cliente'; }) ? ' cliente'
+                : evs.some(function (e) { return e.cal === 'personal'; }) ? ' personal' : '';
             var dot = evs.length ? '<span class="dot' + dotCls + '"></span>' : '';
             var tip = evs.length ? ' title="' + portalEscapeHtml(evs.map(function (e) { return e.t; }).join(' · ')) + '"' : '';
             html += '<button type="button" class="' + cls + '"' + tip + ' onclick="portalCoiGoToDay(\'' + portalCoiKey(dt) + '\')">' + dnum + dot + '</button>';
@@ -244,7 +307,7 @@ function portalCoiBuildTimeline(n) {
     days.forEach(function (dt) {
         html += '<div class="ad-col">';
         portalCoiEventsOn(dt).filter(function (e) { return e.ad; }).forEach(function (e) {
-            html += '<div class="chip' + (e.cal === 'cliente' ? ' cliente' : '') + '"><span class="sq"></span><span>' + portalEscapeHtml(e.t) + '</span></div>';
+            html += '<div class="chip' + (e.cal !== 'set' ? ' ' + e.cal : '') + '"><span class="sq"></span><span>' + portalEscapeHtml(e.t) + '</span></div>';
         });
         html += '</div>';
     });
@@ -267,10 +330,11 @@ function portalCoiBuildTimeline(n) {
     if (n === 1) {
         var dayEvents = portalCoiEventsOn(days[0]);
         if (dayEvents.length) {
+            var DC_LABEL = { cliente: 'Clientes cumple/aniv.', personal: 'Calendario personal (Google)' };
             html += '<div class="day-cards">' + dayEvents.map(function (e) {
                 var when = e.ad ? 'Todo el día' : (portalCoiFmtT(e.s) + (e.e !== null ? ' – ' + portalCoiFmtT(e.e) : ''));
-                return '<div class="day-card' + (e.cal === 'cliente' ? ' cliente' : '') + '">' +
-                    '<span class="dc-cat"><span class="sq"></span>' + (e.cal === 'cliente' ? 'Clientes cumple/aniv.' : 'Sets / Reservas') + '</span>' +
+                return '<div class="day-card' + (e.cal !== 'set' ? ' ' + e.cal : '') + '">' +
+                    '<span class="dc-cat"><span class="sq"></span>' + (DC_LABEL[e.cal] || 'Sets / Reservas') + '</span>' +
                     '<h4>' + portalEscapeHtml(e.t) + '</h4><div class="dc-when">' + when + '</div></div>';
             }).join('') + '</div>';
         } else {

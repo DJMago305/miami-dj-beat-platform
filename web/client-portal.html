@@ -787,7 +787,7 @@
             --panel: #0e1226; --panel-2: #0a0d1e;
             --ink: #f3f5ff; --ink-soft: #aeb6da; --ink-mute: #6b7297;
             --line: rgba(180,190,235,0.32); --line-soft: rgba(180,190,235,0.20);
-            --today: #ff2d55; --today-ink: #fff; --set: #ff2e86; --cliente: #3d8bff;
+            --today: #ff2d55; --today-ink: #fff; --set: #ff2e86; --cliente: #3d8bff; --personal: #54d29a;
             margin-bottom: 28px;
             border: 1px solid var(--line);
             border-radius: 14px;
@@ -899,6 +899,7 @@
         }
         .portal-coi .chip .sq { flex: none; width: 7px; height: 7px; border-radius: 2px; background: var(--set); }
         .portal-coi .chip.cliente .sq { background: var(--cliente); }
+        .portal-coi .chip.personal .sq { background: var(--personal); }
         .portal-coi .chip .tm { color: var(--ink-mute); font-variant-numeric: tabular-nums; }
         .portal-coi .more { font-size: 11px; color: var(--ink-mute); padding: 2px 5px; font-weight: 600; }
         @media (max-width: 480px) {
@@ -922,6 +923,7 @@
         .portal-coi .mini .mcells button.today { background: var(--today); color: var(--today-ink); font-weight: 700; }
         .portal-coi .mini .mcells button .dot { position: absolute; bottom: 1px; width: 4px; height: 4px; border-radius: 50%; background: var(--set); }
         .portal-coi .mini .mcells button .dot.cliente { background: var(--cliente); }
+        .portal-coi .mini .mcells button .dot.personal { background: var(--personal); }
         .portal-coi .mini .mcells button.today .dot { background: #fff; }
 
         /* Vista Semana/Día: línea de tiempo, mismo patrón .tl/.hours/.cols/.tev del artista.
@@ -957,6 +959,7 @@
         }
         .portal-coi .tev.set { background: color-mix(in srgb, var(--set) 20%, var(--panel)); border-left: 3px solid var(--set); }
         .portal-coi .tev.cliente { background: color-mix(in srgb, var(--cliente) 20%, var(--panel)); border-left: 3px solid var(--cliente); }
+        .portal-coi .tev.personal { background: color-mix(in srgb, var(--personal) 20%, var(--panel)); border-left: 3px solid var(--personal); }
         .portal-coi .tev b { display: block; font-size: 13px; font-weight: 700; color: var(--ink); line-height: 1.2; }
         .portal-coi .tev span { font-size: 11.5px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
         .portal-coi .nowline { position: absolute; left: 0; right: 0; height: 2px; background: var(--today); z-index: 5; }
@@ -965,6 +968,7 @@
         .portal-coi .day-card { border: 1px solid var(--line); border-radius: 11px; padding: 12px 14px; background: var(--panel-2); }
         .portal-coi .day-card .dc-cat { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--set); }
         .portal-coi .day-card.cliente .dc-cat { color: var(--cliente); }
+        .portal-coi .day-card.personal .dc-cat { color: var(--personal); }
         .portal-coi .day-card .dc-cat .sq { width: 8px; height: 8px; border-radius: 2px; background: currentColor; }
         .portal-coi .day-card h4 { margin: 6px 0 2px; font-size: 16px; }
         .portal-coi .day-card .dc-when { font-size: 13.5px; color: var(--ink-soft); }
@@ -982,6 +986,8 @@
         .portal-coi .coi-legend-item { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: var(--ink-soft); }
         .portal-coi .coi-legend-item .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--set); }
         .portal-coi .coi-legend-item.cliente .dot { background: var(--cliente); }
+        .portal-coi .coi-legend-item.personal .dot { background: var(--personal); }
+        .portal-coi .coi-tabrow { margin-bottom: 10px; }
 
         /* Modal "Agregar fecha importante" -- para cumpleaños de un hijo, aniversario,
            un amigo, etc. Recurrente por mes/día (no un evento de un solo año). */

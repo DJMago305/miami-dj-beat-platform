@@ -769,11 +769,11 @@
 
   tcCheck.addEventListener("change",function(){tcAccept.disabled=!tcCheck.checked;});
   tcCancel.addEventListener("click",function(){overlay.hidden=true;state.pendingRole=null;});
-  tcAccept.addEventListener("click",function(){state.consent[state.artist]=true;overlay.hidden=true;state.role="artista";state.view="mes";state.sel=null;render();});
+  tcAccept.addEventListener("click",function(){state.consent[state.artist]=true;overlay.hidden=true;state.role="artista";state.detailLevel="full";state.view="mes";state.sel=null;recomputeBaseEv();render();});
 
   function requestArtist(artistId){
     state.artist=artistId;
-    if(state.consent[artistId]){state.role="artista";state.view="mes";state.sel=null;render();}
+    if(state.consent[artistId]){state.role="artista";state.detailLevel="full";state.view="mes";state.sel=null;recomputeBaseEv();render();}
     else{tcTitle.textContent="Permiso de uso de datos · "+artName(artistId);tcCheck.checked=false;tcAccept.disabled=true;overlay.hidden=false;}
   }
 
@@ -848,7 +848,18 @@
       }
       h+='</span>';
     } else {
-      h+='<button class="r-art" data-role="artista" aria-selected="'+(state.role==="artista")+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.4"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>Artista</button>';
+      /* 2026-09-30, paso 2 del mismo pedido ("los artistas solo veran uno de
+         sus fechas asignadas y el de ellos personal"): el botón único
+         "Artista" (solo una etiqueta fija, aria-selected siempre true, sin
+         función real) se reemplaza por el mismo patrón de 2 pestañas que ya
+         tiene Owner/Staff -- "Mis Eventos" (detailLevel "full", el
+         comportamiento de siempre: inScope() ya acota a sus propios eventos)
+         y "Personal" (detailLevel "personal", su propio Google
+         sincronizado -- mismo _syncEv, mismo RLS por user_id, sin cambios de
+         datos). Aplica igual a un artista real logeado y a un staff
+         inspeccionando a un artista vía requestArtist(). */
+      h+='<button class="r-art" data-role="artista" data-detail="full" aria-selected="'+(state.detailLevel==="full")+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.4"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>Mis Eventos</button>';
+      h+='<button class="r-art" data-role="artista" data-detail="personal" aria-selected="'+(state.detailLevel==="personal")+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.4"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>Personal</button>';
     }
     /* 2026-09-30, orden del PO -- 3 niveles de detalle para Owner/Admin, 2
        para Manager/Vendedor (nunca ven el detalle completo, ver RLS de
@@ -911,7 +922,14 @@
         }
         recomputeBaseEv(); rebuild(); render();
       }
-      else if(r==="artista")requestArtist(state.artist);
+      else if(r==="artista"){
+        /* data-detail (2026-09-30): "Mis Eventos"/"Personal" del propio
+           artista -- NO pasa por requestArtist() (eso es para ENTRAR al modo
+           artista inspeccionando a alguien, con su flujo de consentimiento);
+           aquí ya se está dentro, solo cambia qué datos entran a BASE_EV. */
+        if(b.dataset.detail){ state.detailLevel=b.dataset.detail; recomputeBaseEv(); rebuild(); render(); }
+        else requestArtist(state.artist);
+      }
     };});
     var artTabBtn=document.getElementById("artTabBtn");
     if(artTabBtn)artTabBtn.onclick=function(e){e.stopPropagation();state.artistaMenuOpen=!state.artistaMenuOpen;render();};
