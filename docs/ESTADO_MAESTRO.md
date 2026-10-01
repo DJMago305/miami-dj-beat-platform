@@ -3392,3 +3392,12 @@ El incidente de Supabase se marcó resuelto (actualización 2026-10-01 20:23 UTC
 - **`business-financial-intelligence.html`**: botón nuevo, visible solo para Owner, "▶ Arrancar motor con datos reales" -- dispara `financial-engine` con `action:'import_residencies'`, que trae los turnos reales de `residency_schedule` para hidratar las 13 tablas `financial_` (hasta hoy vacías, por eso los KPIs del motor nunca tenían nada real que mostrar -- el motor en sí nunca estuvo roto). Es un botón, no algo que se dispare solo, porque escribir en esas tablas es una acción real que el Owner debe ver y confirmar él mismo, no algo en silencio.
 
 Incidente de Supabase ya resuelto -- este hilo deja de monitorearlo.
+
+## [2026-10-01] Confirmación visual del PO: `dj-profile.html` (fix de timeout de rol + cache-bust, 2026-09-30)
+
+Últimos dos cambios pendientes de este archivo, confirmados por el PO viendo en vivo el perfil de DJMago305 cargar correcto y rápido como Owner (staff viendo el perfil de otro DJ -- justo el camino que toca este fix).
+
+- **FIX-PROFILE-VIEWER-ROLE-TIMEOUT**: antes, ver el perfil de otro DJ hacía un `Promise.all` entre la vista pública (rápida) y la verificación de rol del visitante (lenta bajo degradación de Supabase, hasta ~20s) -- cualquier staff se quedaba en "Cargando…" ese tiempo entero aunque el perfil ya estuviera listo. Ahora la vista pública se pinta con su propio tiempo, y la verificación de rol tiene un tope de 2.5s -- si no llega a tiempo, se degrada en silencio a la vista pública ya cargada en vez de congelar la pantalla.
+- **Cache-bust** de `mdjb-shared-header.js` (apuntando a la versión ya comiteada el 2026-09-30).
+
+Con esto, `dj-profile.html` queda sin cambios pendientes de confirmación visual.
