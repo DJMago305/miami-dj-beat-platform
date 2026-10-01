@@ -909,7 +909,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (btn) btn.textContent = mdjAuthPageBtnT('auth-login-btn-signing-in', 'Signing in…');
                 console.log('[AUTH] login: before signInWithPassword');
-                const { data: authData, error } = await db.auth.signInWithPassword({ email, password });
+                /* FIX-LOGIN-SIGNIN-TIMEOUT (2026-09-30): signInWithPassword no tenía
+                   límite de tiempo -- si Supabase Auth se cuelga (incidente real de
+                   latencia en el este de EE.UU. en curso ese día), el botón se
+                   quedaba en "Signing in…" para siempre, sin llegar nunca al
+                   withTimeout que ya protege performPostAuthRedirect más abajo. */
+                const { data: authData, error } = await withTimeout(
+                    db.auth.signInWithPassword({ email, password }),
+                    12000,
+                    'signInWithPassword'
+                );
                 if (error) throw error;
                 console.log('[AUTH] login: after signInWithPassword', !!(authData && authData.session));
 
@@ -997,6 +1006,14 @@ document.addEventListener('DOMContentLoaded', () => {
                             'Incorrect password. <a class="auth-inline-link" href="./forgot-password.html">Forgot it? Reset here</a>'
                         );
                     showError(html, { tone: 'error', html: true });
+                } else if (String((err && err.message) || '').indexOf('timeout:signInWithPassword') === 0) {
+                    showError(
+                        mdjAuthT(
+                            'auth-login-slow-timeout',
+                            'La plataforma está respondiendo lento en este momento. Intenta de nuevo en unos segundos.',
+                            'The platform is responding slowly right now. Please try again in a few seconds.'
+                        )
+                    );
                 } else {
                     showError(err.message || 'Error al iniciar sesión.');
                 }

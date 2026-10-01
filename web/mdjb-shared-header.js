@@ -130,6 +130,19 @@
       id: 'mainNav-config-link', cls: 'mdj-config-mainnav' },
     { s: 5, key: 'nav-tools',      nav: 'tools',     href: './dj-tools.html',     txt: 'DJ Tools' },
     { s: 6, key: null,             nav: 'flow',      href: './staff.html?vista=cashflow', txt: 'Cash Flow' },
+    /* SEO·IA (2026-09-30, orden del PO: "al lado de cash flow" -- puesto EN EL
+       ORDEN VISUAL justo después de Cash Flow. Se queda con s:10 (no s:6.5 ni
+       renumerar los siguientes): s solo importa para dos reglas de ANCHO fijo
+       en header-unified.css que buscan data-mdj-slot="4" (Config) y
+       data-mdj-slot="8" (MI PERFIL) -- si aquí se corriera Staff a 8, MI
+       PERFIL a 9 y Fénix AI a 10, MI PERFIL perdería su ancho fijo y Staff lo
+       heredaría por error, el MISMO bug de "CONFIG/DJ Tools" que ya se
+       corrigió 2026-09-02 (ver nota debajo del puesto 8). El ORDEN del
+       arreglo (no el número s) es lo que manda la posición visual real bajo
+       flexbox -- confirmado: la rejilla CSS vieja que sí leía "s" para
+       columna está retirada desde 2026-08-31. data-mdj-slots (el TOTAL) sigue
+       subiendo a "10" igual, activando el mismo CSS ya probado con MRM IA. */
+    { s: 10, key: null,            nav: 'seoia',     href: 'https://claude.ai/artifact/Xq8DXWtmh9WMborSAZEdsT', txt: 'SEO·IA', target: '_blank' },
     /* Puesto 7 · STAFF. Lleva la clase del gate determinista por rol que ya usa
        la tira de owner: artista, cliente e invitado no lo ven. Sigue pendiente
        el requisito pleno de la ley RBAC —sacarlo del DOM, no solo ocultarlo.
@@ -154,12 +167,12 @@
       id: 'mainNav-mi-portal-link', cls: 'mdj-mi-portal-mainnav mdj-mi-portal-gold',
       alias: ['mi-portal', 'header-mi-portal'], navAlias: ['my-profile', 'profile'] },
     { s: 9, key: null,             nav: 'fenix',     href: './elixis-console.html', txt: 'Fénix AI' }
-    /* Puesto 10 · MRM IA RETIRADO (2026-09-02, orden directa del PO -- ver
-       nota completa junto a MDJ_NAV_SLOTS arriba). Vivía aquí desde
-       2026-08-30 con el mismo destino/clase que el puesto 9 de la barra
-       pública; el orden vigente hoy es: Inicio, Academia, Agenda, Config,
-       DJ Tools, Cash Flow, Staff, MI PERFIL, Fénix AI -- 9 puestos, no 10.
-       MRM IA vive ahora solo en index.html (Inicio). */
+    /* Puesto 10 histórico · MRM IA RETIRADO (2026-09-02, orden directa del
+       PO -- ver nota completa junto a MDJ_NAV_SLOTS arriba). Vivía aquí
+       desde 2026-08-30 con el mismo destino/clase que el puesto 9 de la
+       barra pública; MRM IA vive ahora solo en index.html (Inicio). El
+       puesto 10 se reutiliza hoy para SEO·IA (ver su definición arriba,
+       justo después de Cash Flow) -- no para traer MRM IA de vuelta. */
   ];
 
   /* ══ ESTACION DE TRABAJO DEL ARTISTA ═══════════════════════════════════════
@@ -1377,6 +1390,10 @@
       if (def.id) a.id = def.id;
       if (def.cls) a.className = def.cls;
       if (def.reserved) { a.setAttribute('aria-hidden', 'true'); a.setAttribute('tabindex', '-1'); }
+      /* def.target (2026-09-30, puesto SEO·IA): único puesto que sale del sitio
+         (Artifact externo). El resto navega interno, así que ningún otro slot
+         define esto -- comportamiento sin cambios para ellos. */
+      if (def.target) { a.setAttribute('target', def.target); a.setAttribute('rel', 'noopener noreferrer'); }
       a.textContent = def.txt;
       return a;
     }
@@ -4092,7 +4109,13 @@
         link.setAttribute('aria-label', mdjGetStaffAccountSettingsMenuLabel());
       } catch (eAr) { /* ignore */ }
     } else {
-      var profileDest = /dj-profile\.html/i.test(String(href || '').trim());
+      /* 2026-09-30: staff.html?vista=miperfil (la ficha interna de staff/seller,
+         ver staffTopnavHtml) es un destino de Mi Perfil tanto como dj-profile.html
+         lo es para un artista -- sin este OR, caía en la rama genérica de abajo y
+         mostraba "MI PORTAL"/"MY PORTAL" en vez de la etiqueta invariable "MI
+         PERFIL" que el PO fijó como única en todo el ecosistema (2026-08-16). */
+      var hrefTrim = String(href || '').trim();
+      var profileDest = /dj-profile\.html/i.test(hrefTrim) || /staff\.html\?vista=miperfil/i.test(hrefTrim);
       link.setAttribute('data-mdj-nav', 'mi-portal');
       if (profileDest) {
         mdjApplyMiPerfilNavLabel(link);
@@ -5437,10 +5460,18 @@
             navTier = 'client_only';
           }
 
+          /* 2026-09-30, hallazgo real del PO en certification.html Y account-settings.html:
+             "MI PERFIL" para staff/seller apuntaba a account-settings.html con la etiqueta
+             '⚙️ CONFIG' (variant:'staff-settings') -- el MISMO destino y la MISMA etiqueta que
+             ya tiene el botón real de Config (#mainNav-config-link), duplicado literal en la
+             barra. MI PERFIL para staff ahora es su propia cosa de verdad: la ficha interna de
+             staff.html (?vista=miperfil), mismo destino que ya usa el botón "MI PERFIL" propio
+             de staff.html (ver staffTopnavHtml) -- consistente en todo el sitio, ya no choca
+             con Config. */
           var miPortalHref = appRoleLower === 'owner'
             ? publicProfileUrl /* owner → public manager profile (dj-profile.html?id=uid) */
-            : (isNavStaffSolo ? './account-settings.html' : './client-portal.html');
-          var miPortalNavOpts = isNavStaffSolo ? { variant: 'staff-settings' } : null;
+            : (isNavStaffSolo ? './staff.html?vista=miperfil' : './client-portal.html');
+          var miPortalNavOpts = null;
 
           var isBuyerSession = mdjResolveBuyerSession({
             isClient: isClient,

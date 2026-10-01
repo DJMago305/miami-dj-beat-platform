@@ -752,7 +752,11 @@ section.on>.cap-head{background:linear-gradient(90deg,var(--gold-a16),transparen
       el.classList.toggle('hide', el.dataset.aud.split(' ').indexOf(ruta) < 0);
     });
     var n = document.querySelectorAll('.chapter:not(.hide)').length;
-    document.getElementById('pos').textContent = '— / ' + n;
+    /* "1 / n" en vez de "— / n" (2026-09-30, el PO lo reportó como error visual
+       antes de pulsar Recorrido): el guión se leía como dato faltante, no
+       como "aún no empiezas" -- un número sí comunica cuántos capítulos hay
+       desde el primer vistazo, sin esperar al primer clic. */
+    document.getElementById('pos').textContent = (n ? '1' : '0') + ' / ' + n;
     document.getElementById('rmWho').innerHTML =
       '<span class="tag t-ok">' + T('Tu ruta: ','Your route: ') + (LBL(ruta)||ruta) + '</span>' +
       '<span class="tiny">' + n + T(' capítulos seleccionados para ti',' chapters selected for you') + '</span>';
@@ -807,37 +811,32 @@ section.on>.cap-head{background:linear-gradient(90deg,var(--gold-a16),transparen
        resto de la web —leidos de #mainNav sin sesion, no inventados—, con
        CONFIG y MI PERFIL llevando a login, igual que alli. */
     var sinSesion = !esStaff && !rol;
-    var aqui = '<a href="./road-map.html" class="aqui" aria-current="page">MRM IA</a>';
-
-    if (esStaff) {
-      m.innerHTML =
-        '<a href="./index.html">' + T('Inicio','Home') + '</a>' +
-        '<a href="./academia.html">' + T('Academia','Academy') + '</a>' +
-        '<a href="./staff.html?vista=agenda">' + T('Agenda','Schedule') + '</a>' +
-        '<a href="./account-settings.html">⚙️ Config</a>' +
-        '<a href="./dj-tools.html">DJ Tools</a>' +
-        '<a href="./staff.html?vista=cashflow">Cash Flow</a>' +
-        '<a href="./staff.html?vista=miperfil">MI PERFIL</a>' +
-        '<a href="./staff.html?vista=gobernanza">Staff</a>' +
-        '<a href="./staff.html?vista=elixis">Fénix AI</a>' + aqui;
-    } else {
-      /* Los 8 slots canonicos. CONFIG y MI PERFIL cambian de destino, nunca de
-         rotulo: "MI PERFIL" es la etiqueta unica del slot 8 para todos. */
-      var esArtista = (rol !== 'cliente' && rol !== 'client');
-      var config  = sinSesion ? './login.html'
-                  : (esArtista ? './account-settings.html' : './client-account.html');
-      var miPerfil = sinSesion ? './login.html'
-                  : (esArtista ? './dj-profile.html' : './client-portal.html');
-      m.innerHTML =
-        '<a href="./index.html">' + T('Inicio','Home') + '</a>' +
-        '<a href="./rentals.html">' + T('Servicios','Services') + '</a>' +
-        '<a href="./events.html">' + T('Eventos','Events') + '</a>' +
-        '<a href="./shop.html">Shop</a>' +
-        '<a href="' + config + '">⚙️ Config</a>' +
-        '<a href="./jobs.html">' + T('Trabajos','Jobs') + '</a>' +
-        '<a href="./contact.html">' + T('Contacto','Contact') + '</a>' +
-        '<a href="' + miPerfil + '">Mi Perfil</a>' + aqui;
-    }
+    /* UN SOLO MENU (2026-09-30, orden del PO: "lo que se debería ver es el
+       menú de inicio" -- vio DJ Tools/Cash Flow/Staff/Fénix AI aquí y no es
+       lo que corresponde). MRM se llega DESDE Inicio (la tarjeta "How the
+       Platform Works"), así que su propio menú debe ser el MISMO que pinta
+       Inicio para cualquier visitante -- los 8 slots públicos, nunca la
+       barra de herramientas internas de staff. Antes esta función tenía DOS
+       menús (uno "esStaff" con DJ Tools/Cash Flow/etc., otro público) -- se
+       unifica en uno solo; "esStaff" ahora solo decide a dónde apunta MI
+       PERFIL (staff.html?vista=miperfil, el mismo destino ya corregido hoy
+       en toda la plataforma), igual que "esArtista"/cliente ya decidían el
+       suyo. */
+    var esArtista = (rol !== 'cliente' && rol !== 'client');
+    var config  = sinSesion ? './login.html'
+                : (esArtista ? './account-settings.html' : './client-account.html');
+    var miPerfil = sinSesion ? './login.html'
+                : esStaff ? './staff.html?vista=miperfil'
+                : (esArtista ? './dj-profile.html' : './client-portal.html');
+    m.innerHTML =
+      '<a href="./index.html">' + T('Inicio','Home') + '</a>' +
+      '<a href="./rentals.html">' + T('Servicios','Services') + '</a>' +
+      '<a href="./events.html">' + T('Eventos','Events') + '</a>' +
+      '<a href="./shop.html">Shop</a>' +
+      '<a href="' + config + '">⚙️ Config</a>' +
+      '<a href="./jobs.html">' + T('Trabajos','Jobs') + '</a>' +
+      '<a href="./contact.html">' + T('Contacto','Contact') + '</a>' +
+      '<a href="' + miPerfil + '">Mi Perfil</a>';
     /* El sol NO va aqui dentro. El menu solo existe para staff, asi que un
        artista o un cliente se quedaba sin poder cambiar el tema. Dia y noche
        no es estructura interna: es una preferencia de pantalla y la tiene
