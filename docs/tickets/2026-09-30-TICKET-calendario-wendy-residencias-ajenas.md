@@ -2,51 +2,76 @@
 
 **Fecha:** 2026-09-30
 **Reportado por:** PO, en vivo, probando la cuenta de Wendy.
-**Estado:** Pendiente de investigación — no resuelto todavía, solo documentado.
+**Estado:** ✅ RESUELTO — confirmado en vivo con la sesión real de Wendy.
 
-## Síntoma reportado
+## Síntoma original
 
-El calendario de Wendy (`staff-agenda.html` o la vista de Agenda que corresponda
-a su cuenta) muestra las **residencias de DJMago305** — un DJ que no es ella —
-y, al mismo tiempo, **le faltan algunos eventos propios**. Ambos síntomas a la
-vez: ve datos que no son suyos Y no ve todos los que sí debería.
+El calendario de Wendy mostraba las residencias de DJMago305 mezcladas, y a la
+vez le faltaban algunos eventos propios.
 
-## Comportamiento correcto esperado (según el PO)
+## Decisión final del PO (reemplaza el diagnóstico inicial)
 
-Wendy debe ver en su calendario únicamente:
-1. **Su propio calendario** (eventos/residencias que son directamente de ella).
-2. **Los eventos de los DJs que ELLA asigna** como manager/vendedora — porque
-   esos son sus clientes y los DJs que ella reserva, y por eso le interesan.
-   Cuando Wendy asigna un DJ a un evento, ese evento debe quedar registrado
-   también en SU calendario.
+A mitad de la investigación el PO corrigió el enfoque: **las residencias y
+fiestas deben verse por TODO el staff**, sin importar quién las asignó — es
+información operativa necesaria para no asignar un DJ que ya está trabajando
+ese mismo horario. Lo único privado por vendedor/manager es su **calendario
+personal** (cumpleaños, notas, Google Calendar sincronizado).
 
-Nunca debe ver residencias o eventos de un DJ con el que ella no tiene relación
-de asignación (como las residencias propias de DJMago305, que no fueron
-asignadas por ella).
+> "las tablas en los calendarios deberían dejar ver a los staff quien esta
+> trabajando en residencia y en fiestas porque es un dato importante para no
+> asignar un dj que ya esta trabajando ahora en el caso de los clientes de
+> cumpleaños que vienen desde su agenda son solo de cada vendedor esto si es
+> privado"
 
-## Por qué importa
+## Solución construida (`web/calendario-operacional-inteligente.html`)
 
-Esto es un problema de **alcance de datos** (quién ve qué), no solo una
-molestia visual — mezcla datos de cuentas distintas sin que medie una relación
-real (asignación hecha por Wendy). Mismo tipo de preocupación que la fuga de
-sesión reportada en paralelo hoy (ver `docs/ESTADO_MAESTRO.md` / ticket de
-sesión Owner↔Wendy del mismo día), aunque técnicamente son dos causas distintas
-(esto parece ser una consulta/filtro de agenda mal acotado, no una mezcla de
-sesión de autenticación).
+Se reemplazó el botón único "Owner · Matrix" por un sistema de pestañas según
+rol:
 
-## Qué falta investigar (próxima sesión)
+- **Owner/Admin:** 3 pestañas — **Owner · Matrix** (todo: leads, residencias,
+  reservas privadas con detalle completo), **Performance** (quién está
+  trabajando: residencias + reservas en modo "Ocupado", sin venue/notas/pago),
+  **Personal** (su propio calendario de Google sincronizado).
+- **Manager/Seller:** 2 pestañas — **Performance**, **Personal** (sin acceso a
+  Matrix).
 
-- Encontrar la consulta real que carga el calendario de Wendy (probablemente
-  en `staff-agenda.html`) y confirmar el filtro actual: ¿filtra por
-  `assigned_dj_id`, por `created_by`, por algún otro campo, o no filtra lo
-  suficiente?
-- Confirmar qué campo de la base de datos representa "Wendy asignó este DJ a
-  este evento" (relación manager↔DJ↔evento) y si ese campo existe ya o hay que
-  crearlo.
-- Explicar por qué aparecen residencias de DJMago305 específicamente — ¿hay un
-  filtro roto, un valor por defecto incorrecto, o una consulta sin `WHERE`
-  completo?
-- Explicar también la otra mitad del síntoma: por qué le faltan eventos
-  propios — ¿mismo filtro roto excluyendo de más, o es un problema distinto?
+Performance muestra **únicamente** DJs asignados a un evento de trabajo real
+(residencia o reserva privada/boda) — nunca cumpleaños ni aniversarios de
+clientes (esos solo aparecen en Owner · Matrix). Personal muestra el
+calendario de Google de cada cuenta, una vez emparejado y autorizado por esa
+persona — mecanismo que ya existía (`elixis_agenda_eventos` con
+`tipo IN ('cumpleanos','nota')`, RLS por `user_id = auth.uid()`), reusado sin
+cambios.
 
-No se toca el código todavía — el PO pidió solo dejarlo anotado como ticket.
+Columna de atribución agregada a `residency_schedule`
+(`assigned_staff_id`/`assigned_staff_name`, FK a `auth.users(id)`): registra
+quién creó/reasignó cada residencia — no se usa para filtrar visibilidad, sino
+como base para el futuro aviso cuando un vendedor mueve el DJ asignado por
+otro (ver "Pendiente" abajo).
+
+## Verificación realizada
+
+- RLS simulado con el UUID real de Wendy (`seller`) y pruebas en vivo en el
+  navegador con su sesión real activa.
+- Performance: confirmado que muestra solo "Residencia · ..." (sin cliente,
+  sin cumpleaños, sin venue/pago) — incluyendo el caso puntual "Mildrey
+  Sotelo — cumpleaños" que inicialmente se colaba y fue corregido.
+- Personal: vacío y correctamente aislado (Wendy aún no tiene Google
+  sincronizado).
+- Botones Artista/Cliente estables (sin colapso "acordeón") al cambiar entre
+  Performance y Personal.
+- Consola limpia, sin errores.
+- **Confirmado por el PO**, 2026-09-30: "en performan solo los dij que estan
+  trabajando asignados aun evento o a una recidencia en personal los de cada
+  persona sea quien sea su calendario de gogles que tienen que emparegar y
+  autorizar ya eso esta creado y trabajando."
+
+## Pendiente (fuera de este ticket, anotado aparte)
+
+- Notificación al dueño original de un DJ cuando otro staff reasigna su
+  residencia (ej. Wendy mueve un DJ que Gerardo había asignado) — groundwork
+  de datos ya existe (`assigned_staff_id`/`assigned_staff_name`), falta
+  construir la notificación en sí.
+- Extender el patrón Performance/Personal a **Artista** (sus eventos
+  asignados + Personal) y **Cliente** (fecha de su evento + Personal) —
+  confirmado en alcance por el PO, no iniciado todavía.

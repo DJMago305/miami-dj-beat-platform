@@ -3169,3 +3169,24 @@ El PO confirmó visualmente en vivo todo el bloque de arriba ("ya lo probé, se 
 **Dirección futura confirmada por el PO para SEO·IA** (no ejecutar todavía): sacarlo de claude.ai e integrarlo como herramienta propia, con su propio motor, dentro de Miami DJ Beat — coincide exactamente con la solución ya documentada en [`docs/tickets/2026-09-30-TICKET-seoia-panel-nativo-en-portal.md`](tickets/2026-09-30-TICKET-seoia-panel-nativo-en-portal.md).
 
 Incidente de Supabase ("Intermittent latency in Eastern US") seguía activo al cierre de esta sesión, sin ETA — el monitoreo automático cada ~25 min continúa.
+
+## [2026-09-30] Calendario operacional — pestañas Owner · Matrix / Performance / Personal, confirmado por el PO
+
+Ticket original: [`docs/tickets/2026-09-30-TICKET-calendario-wendy-residencias-ajenas.md`](tickets/2026-09-30-TICKET-calendario-wendy-residencias-ajenas.md). Diagnóstico inicial (Wendy debía ver solo lo suyo) fue corregido por el PO a mitad de camino: residencias y fiestas deben verse por TODO el staff (evitar doble-reserva de un DJ); solo el calendario personal (cumpleaños/Google) es privado por cuenta.
+
+Construido en `web/calendario-operacional-inteligente.html` (única página que lo necesitaba — se descartó `staff-agenda.html`, `dj-dashboard.html`, `staff-admin.html`, `business-financial-intelligence.html`, `client-portal.html`, `weather-lab.html` tras revisarlas):
+
+- **Owner/Admin:** 3 pestañas — Owner · Matrix (todo, detalle completo), Performance (solo quién trabaja: residencias + reservas privadas en modo "Ocupado", sin venue/pago), Personal (Google propio).
+- **Manager/Seller:** 2 pestañas — Performance, Personal (sin Matrix).
+- Columna de atribución en `residency_schedule` (`assigned_staff_id`/`assigned_staff_name`, FK a `auth.users(id)`) — registra quién creó/reasignó cada residencia, groundwork para el futuro aviso cuando un vendedor mueve el DJ de otro (pendiente aparte, no construido).
+- Vista nueva `elixis_agenda_eventos_ocupado` (security-definer, filtra por `is_staff(auth.uid())`) alimenta Performance sin exponer detalle financiero.
+
+Verificado en vivo con la sesión real de Wendy (RLS simulado + navegador): Performance muestra solo residencias reales, sin cumpleaños de clientes (se corrigió un caso que sí se colaba — "Mildrey Sotelo"); Personal vacío y aislado; botones Artista/Cliente estables sin colapso entre pestañas; consola limpia.
+
+**Confirmado por el PO, textual:** "en performan solo los dij que estan trabajando asignados aun evento o a una recidencia en personal los de cada persona sea quien sea su calendario de gogles que tienen que emparegar y autorizar ya eso esta creado y trabajando."
+
+**Estado del repo:** sigue sin commit, en el mismo working tree de la rama `fix/seoia-nav-is-staff-recursion-login-timeout` (PR #610, todavía abierto) — no se abrió rama nueva porque es trabajo del mismo día, mismo criterio de "no micro-commits, agrupar". Falta instrucción explícita del PO para comitear este bloque.
+
+**Pendiente, confirmado en alcance pero no iniciado:** extender el mismo patrón Performance/Personal a Artista (eventos asignados + Personal) y Cliente (fecha de su evento + Personal).
+
+Incidente de Supabase ("Intermittent latency in Eastern US") seguía activo al momento de este cierre — el monitoreo automático cada ~25 min continúa.
