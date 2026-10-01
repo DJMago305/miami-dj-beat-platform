@@ -1576,13 +1576,18 @@
                     var ctx = await getClientAndSession();
                     if (!ctx) return;
                     try {
+                        // 2026-10-01: igual que account-settings.html (fix 2026-09-17) --
+                        // un usuario puede tener hasta 2 filas (calendario normal + el
+                        // especial de cumpleaños de Google, calendar_id distinto en cada
+                        // una). .maybeSingle() revienta con "multiple rows returned" en
+                        // cuanto exista más de una, dejando el switch apagado aunque SÍ
+                        // esté conectado -- este archivo nunca recibió ese arreglo.
                         var q = await ctx.sb
                             .from('user_calendar_integrations')
                             .select('status')
                             .eq('user_id', ctx.session.user.id)
-                            .eq('provider', 'google')
-                            .maybeSingle();
-                        cb.checked = !!(q && q.data && q.data.status === 'active');
+                            .eq('provider', 'google');
+                        cb.checked = !!(q && q.data && q.data.some(function (r) { return r.status === 'active'; }));
                     } catch (e) { /* si falla la lectura, se queda apagado por defecto */ }
                 }
                 cb.addEventListener('change', async function () {
@@ -1602,8 +1607,8 @@
                     cb.disabled = true;
                     try {
                         var q = await ctx.sb.from('user_calendar_integrations').select('status')
-                            .eq('user_id', ctx.session.user.id).eq('provider', 'google').maybeSingle();
-                        if (q && q.data) {
+                            .eq('user_id', ctx.session.user.id).eq('provider', 'google');
+                        if (q && q.data && q.data.length) {
                             await ctx.sb.from('user_calendar_integrations')
                                 .update({ status: 'active', updated_at: new Date().toISOString() })
                                 .eq('user_id', ctx.session.user.id).eq('provider', 'google');
