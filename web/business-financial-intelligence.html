@@ -400,6 +400,17 @@
 <div class="target-state-banner" role="note">
   ⚠ <b>Maqueta / demo</b> · datos de ejemplo · no autorizado para implementación (North Star §39)
 </div>
+<!-- 2026-09-30, pedido directo del PO: el motor real (financial-engine) y sus 3 KPIs
+     (getNetCash/getAccountsReceivable/getAccountsPayable) ya existen y ya están
+     cableados (ver mdjBfiLoadReal abajo) -- lo único que faltaba era arrancarlo con
+     datos reales. import_residencies (ya construido) trae los turnos reales de
+     residency_schedule al motor. Exige sesión real de Owner (el candado de la
+     función lo pide por diseño), así que se agrega un botón en vez de dispararlo
+     por script sin sesión. -->
+<div id="mdjBfiImportBar" role="note" style="display:none;background:rgba(197,160,89,.08);border:1px solid rgba(197,160,89,.35);border-radius:10px;padding:10px 14px;margin:0 0 10px;align-items:center;gap:12px;flex-wrap:wrap;">
+  <button id="mdjBfiImportBtn" type="button" style="background:linear-gradient(135deg,#c5a059,#e8c987);border:none;color:#0b0f18;font-weight:800;font-size:12px;letter-spacing:.03em;border-radius:8px;padding:8px 14px;cursor:pointer;">▶ Arrancar motor con datos reales</button>
+  <span id="mdjBfiImportStatus" style="font-size:12px;color:rgba(255,255,255,.7);"></span>
+</div>
 <script>try{if(window.self!==window.top)document.documentElement.classList.add('mdj-embedded');}catch(e){document.documentElement.classList.add('mdj-embedded');}</script>
 <style>
   html.mdj-embedded .brand{display:none;} html.mdj-embedded .sidebar{padding-top:16px;}
@@ -1440,7 +1451,7 @@
       if(!sess){ location.replace('./login.html?next=business-financial-intelligence.html'); return; }
       var res=await sb.from('dj_profiles').select('role').eq('user_id', sess.user.id).maybeSingle();
       var role=String(res.data&&res.data.role?res.data.role:'').toLowerCase().trim();
-      if(role==='owner'){ openUp(); mdjBfiLoadReal(sb); } // OWNER -> abierto + datos reales (Fase 4)
+      if(role==='owner'){ openUp(); mdjBfiLoadReal(sb); mdjBfiWireImportBtn(sb); } // OWNER -> abierto + datos reales (Fase 4)
       else { set('Acceso restringido', 'Esta seccion financiera es exclusiva del Owner. Managers y vendedores necesitan autorizacion explicita del Owner.'); }
     }catch(e){ set('Error de acceso', (e&&e.message)||''); }
   });
@@ -1466,6 +1477,45 @@
       if(typeof window.__mdjBfiApplyReal==='function') window.__mdjBfiApplyReal(real);
       else window.__mdjRealKpis = real;
     }catch(e){ /* silencioso: se queda con demo, no rompe el dashboard */ }
+  }
+
+  /* 2026-09-30: el motor (financial-engine) hidrata su store desde las 13 tablas
+     financial_ -- todas vacias hasta hoy, por eso getNetCash/etc. nunca tenian
+     nada real que devolver (no es que el motor este roto, nunca se le dio dato).
+     import_residencies (ya construido en el motor) trae los turnos reales de
+     residency_schedule -- se expone aqui como boton visible en vez de dispararlo
+     solo, porque exige sesion real de Owner (el candado de la funcion la pide) y
+     porque escribir en las 13 tablas canonicas es una accion real, no algo para
+     hacer en silencio sin que el Owner la vea y la confirme. */
+  function mdjBfiWireImportBtn(sb){
+    var bar = document.getElementById('mdjBfiImportBar');
+    var btn = document.getElementById('mdjBfiImportBtn');
+    var status = document.getElementById('mdjBfiImportStatus');
+    if (!bar || !btn || !status) return;
+    bar.style.display = 'flex';
+    btn.addEventListener('click', async function () {
+      btn.disabled = true;
+      var original = btn.textContent;
+      btn.textContent = 'Importando…';
+      status.textContent = '';
+      try {
+        var r = await sb.functions.invoke('financial-engine', { body: { action: 'import_residencies' } });
+        if (r.error || !r.data || !r.data.ok) {
+          status.textContent = 'Error: ' + ((r.data && r.data.error) || (r.error && r.error.message) || 'sin respuesta del motor');
+          status.style.color = '#ff8a8a';
+        } else {
+          var imp = r.data.imported || {};
+          status.textContent = 'Importado: ' + (imp.venuesCreated || 0) + ' venues, ' + (imp.agreementsCreated || 0) + ' acuerdos, de ' + (imp.residencies || 0) + ' turnos reales revisados.';
+          status.style.color = '#7fdca0';
+          await mdjBfiLoadReal(sb);
+        }
+      } catch (e) {
+        status.textContent = 'Error: ' + ((e && e.message) || String(e));
+        status.style.color = '#ff8a8a';
+      }
+      btn.disabled = false;
+      btn.textContent = original;
+    });
   }
 })();
 </script>

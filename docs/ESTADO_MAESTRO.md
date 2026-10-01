@@ -3383,3 +3383,12 @@ Hasta ahora solo se podía agregar o eliminar una fecha importante -- para corre
 **Incidente de deploy durante la prueba**: la primera prueba de PATCH dio `already:true` en vez de intentar el PATCH -- la función nunca se había desplegado con el código nuevo (solo se había guardado localmente). Redesplegada antes de repetir la prueba; a partir de ahí el comportamiento fue el esperado.
 
 Incidente de Supabase seguía activo (misma actualización 21:26 UTC) — monitoreo automático continúa.
+
+## [2026-10-01] Confirmación visual del PO: `staff-agenda.html` y `business-financial-intelligence.html` (cambios de 2026-09-30)
+
+El incidente de Supabase se marcó resuelto (actualización 2026-10-01 20:23 UTC: "networking partners have implemented a mitigation... significant improvement"), se detuvo el monitoreo automático. Al avisarle, el PO dio su confirmación visual directa (Regla 7) para estos dos archivos, pendientes desde el 2026-09-30:
+
+- **`staff-agenda.html`**: bug real corregido (FIX-VIS-PLAN-TIMEOUT) -- si la consulta de `dj_profiles.plan` fallaba (Supabase lento), el código asumía plan `LITE` por defecto, mostrándole el aviso de "Upgrade a PRO" a un DJ que de verdad ya es PRO, solo porque la consulta no respondió a tiempo. Ahora, si no se puede confirmar el plan real, no se muestra ni el badge ni el aviso (nunca se asume el peor caso). De paso: quitada la flecha "→" del botón de upgrade, y cache-bust de `auth.js`/`mdjb-shared-header.js`.
+- **`business-financial-intelligence.html`**: botón nuevo, visible solo para Owner, "▶ Arrancar motor con datos reales" -- dispara `financial-engine` con `action:'import_residencies'`, que trae los turnos reales de `residency_schedule` para hidratar las 13 tablas `financial_` (hasta hoy vacías, por eso los KPIs del motor nunca tenían nada real que mostrar -- el motor en sí nunca estuvo roto). Es un botón, no algo que se dispare solo, porque escribir en esas tablas es una acción real que el Owner debe ver y confirmar él mismo, no algo en silencio.
+
+Incidente de Supabase ya resuelto -- este hilo deja de monitorearlo.

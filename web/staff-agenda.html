@@ -96,7 +96,7 @@
     <script src="https://www.youtube.com/iframe_api"></script>
 
     <!-- mdjResolveEffectiveUserRole debe existir antes del guard (sesión talent/dj vs JWT app_metadata). -->
-    <script src="./auth.js?v=20260921-idiomas"></script>
+    <script src="./auth.js?v=20260930-login-timeout-guard"></script>
     <script src="./role-guard.js?v=20260921-rol-servidor" data-role="dj"></script>
     <script>try{ if (window.self !== window.top) document.documentElement.classList.add('mdj-embedded'); }catch(_e){ document.documentElement.classList.add('mdj-embedded'); }</script>
     <style>
@@ -3076,7 +3076,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                                 prioridad en ranking + perfil destacado para clientes.</div>
                             <a href="./jobs.html#selection-screen"
                                 style="display:inline-block;background:#c5a059;color:#000;font-weight:900;font-size:12px;padding:8px 18px;border-radius:8px;text-decoration:none;">Upgrade
-                                a PRO →</a>
+                                a PRO</a>
                         </div>
                         <div id="vis-loading"
                             style="text-align:center;color:rgba(255,255,255,0.3);font-size:12px;padding:8px;">
@@ -5254,13 +5254,28 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
             visWeek.textContent = String(stats.visits_week != null ? stats.visits_week : 0);
             visTotal.textContent = String(stats.visits_total != null ? stats.visits_total : 0);
 
-            const { data: profile } = await sb
-                .from('dj_profiles').select('plan, role').eq('user_id', user.id).single();
-            const isOwner = (profile && profile.role) === 'owner';
-            const plan = ((profile && profile.plan) || 'LITE').toUpperCase();
             const badge = document.getElementById('vis-plan-badge');
             const visTeaser = document.getElementById('vis-upgrade-teaser');
+            const { data: profile, error: profileErr } = await sb
+                .from('dj_profiles').select('plan, role').eq('user_id', user.id).single();
+            /* FIX-VIS-PLAN-TIMEOUT (2026-09-30): antes, si esta consulta fallaba
+               (Supabase lento/caído), `profile` quedaba null y el código asumía
+               plan='LITE' por defecto -- un DJ PRO real (ej. DJMago305, ya
+               confirmado plan='PRO' en la base) veía el aviso de "Upgrade a PRO"
+               solo porque la consulta no respondió a tiempo, no porque su plan
+               fuera LITE de verdad. Mismo patrón de hoy (staff.html/dj-profile.html):
+               no asumir el peor caso solo porque la consulta falló -- si no se pudo
+               confirmar el plan real, no se muestra ni el badge ni el aviso. */
+            if (profileErr || !profile) {
+                if (badge) badge.style.display = 'none';
+                if (visTeaser) visTeaser.style.display = 'none';
+                if (profileErr) console.warn('[Vis] no se pudo confirmar el plan real:', profileErr.message || profileErr);
+                return;
+            }
+            const isOwner = profile.role === 'owner';
+            const plan = String(profile.plan || 'LITE').toUpperCase();
             if (badge) {
+                badge.style.display = '';
                 badge.classList.remove('vis-plan-badge--pro', 'vis-plan-badge--lite');
                 if (isOwner) {
                     badge.textContent = '✦ OWNER';
@@ -7501,7 +7516,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
     </script>
 
     <script src="./header-smart-search.js?v=20260927-bilingue-hint"></script>
-    <script src="./mdjb-shared-header.js?v=20260922-hero-below-header"></script>
+    <script src="./mdjb-shared-header.js?v=20260930-seoia-slot10"></script>
     <script src="./js/mdj-profile-owner-link.js?v=20260516-perf-ab-1"></script>
   <script src="./mdj-owner-tabs-marquee.js?v=20260818-nav-canonico"></script>
   <script src="./mdj-social-bar.js?v=20260819-social-contact-only"></script>
