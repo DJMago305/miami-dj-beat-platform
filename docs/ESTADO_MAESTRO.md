@@ -3356,3 +3356,13 @@ Probando el quitado del poster del loader (mismo cambio que `Hero_Cliente_Home`)
 **Commit parcial**: `dj-profile.html` tiene OTROS dos cambios sin comitear, de una fecha anterior (2026-09-30: un fix de timeout en la verificación de rol del visitante, y un cache-bust de `mdjb-shared-header.js`) que el PO nunca confirmó visualmente -- se comiteó SOLO el guardia nuevo y el quitado del poster (los dos que el PO vio en vivo hoy), vía `git add -p`, dejando esos dos cambios viejos todavía pendientes de su confirmación aparte.
 
 Incidente de Supabase seguía activo (misma actualización 21:26 UTC) — monitoreo automático continúa.
+
+## [2026-10-01] `client-account.html` — botón de guardar duplicado y switch de Google Calendar que nunca reflejaba la conexión real
+
+Probando con la cuenta real de Cliente ya conectada a Google (Wendy), el PO notó dos "Guardar" en la misma pantalla (Notificaciones y Perfil) y preguntó por qué. Revisado en el código: ambos botones (`ca-save-notify-btn` y `ca-save-btn`) llaman a la MISMA función `saveProfile()`, que guarda todo el formulario completo cada vez -- redundancia real, no solo de apariencia. Se quita `ca-save-notify-btn` (vivía en el mismo panel que "Guardar perfil"); se deja `ca-save-billing-btn` porque ese vive en la pestaña de Pagos, aparte, y es el único guardado visible ahí.
+
+**Bug real encontrado de paso, más serio**: el switch de "Sincronizar Calendario de Google" se mostraba apagado aunque la base de datos confirmaba la conexión real y activa. Causa: `supabase-config.js` (define `window.getSupabaseClient`) carga casi al final de `client-account.html` (línea ~2043), pero el script del switch corre mucho antes (línea ~1560) -- la primera vez que `loadState()` llamaba a `getClientAndSession()`, `window.getSupabaseClient` todavía no existía, la función devolvía `null` de inmediato, y el switch se quedaba apagado para siempre (sin reintento). En `account-settings.html` el orden de esos dos scripts es al revés, por eso ahí nunca pasó. Corregido con el mismo patrón de espera por sondeo (hasta 80 intentos de 40ms) que ya usa `dj-profile.html` (`djProfileAuthGuard`) para este mismo tipo de carrera -- mismo precedente real, no uno inventado.
+
+**Verificado en el navegador**, contenedor real, sesión real de Wendy ya conectada: tras el fix, `cb.checked === true` y el texto "Última sincronización hace 1 hora." aparece correctamente -- confirmado contra la fila real de `user_calendar_integrations` (`status: active`).
+
+Incidente de Supabase seguía activo (misma actualización 21:26 UTC) — monitoreo automático continúa.

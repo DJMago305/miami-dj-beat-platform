@@ -464,13 +464,6 @@
       gap: 10px;
     }
 
-    body.mdj-client-account-page #ca-panel-notifications #ca-notify-status {
-      flex: 1 1 100%;
-      width: auto;
-      text-align: right;
-      margin: 0;
-    }
-
     /* Evaluación del cliente: pill de calificación + filas de eventos pendientes/ya evaluados. */
     body.mdj-client-account-page .ca-eval-chip {
       padding: 10px 18px;
@@ -1626,7 +1619,20 @@
                 }
                 async function getClientAndSession() {
                     try {
-                        var sb = window.getSupabaseClient && window.getSupabaseClient();
+                        // 2026-10-01: bug real encontrado probando con la cuenta de
+                        // Wendy -- este script corre mucho antes que supabase-config.js
+                        // (ese carga casi al final de la página), así que
+                        // window.getSupabaseClient todavía no existía la primera vez
+                        // que loadState() llamaba aquí -- el switch se quedaba apagado
+                        // para siempre aunque la conexión SÍ estuviera activa de
+                        // verdad. Mismo patrón de espera que ya usa dj-profile.html
+                        // (djProfileAuthGuard) para este mismo caso.
+                        var t = 0;
+                        while (t < 80 && typeof window.getSupabaseClient !== 'function') {
+                            await new Promise(function (r) { setTimeout(r, 40); });
+                            t++;
+                        }
+                        var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
                         if (!sb) return null;
                         var res = await sb.auth.getSession();
                         var session = res && res.data && res.data.session;
@@ -1752,12 +1758,15 @@
             </div>
             <p id="ca-push-hint" class="fineprint" style="margin:8px 0 0;line-height:1.5;" aria-live="polite"></p>
           </div>
-          <div class="system-card-footer">
-            <p id="ca-notify-status" class="fineprint" style="display:none;" aria-live="polite"></p>
-            <button type="button" class="sys-btn primary" id="ca-save-notify-btn" data-i18n="client-account-save-notify">Save notification preferences</button>
-          </div>
         </div>
 
+        <!-- 2026-10-01 (PO): "solamente se necesita Save" -- este botón vivía
+             en el MISMO panel que "Guardar perfil" de abajo, y los dos
+             llamaban a la misma función saveProfile() (guarda TODO el
+             formulario, no solo notificaciones) -- redundancia real,
+             confirmada en el código, no solo apariencia. Se quita. El botón
+             de Facturación (otra pestaña, ca-panel-payments) sí se queda:
+             es el único guardado visible en esa pestaña. -->
         <div class="ca-profile-panel-footer">
           <p id="ca-save-status" class="fineprint" style="display:none;" aria-live="polite"></p>
           <div class="ca-panel-footer-actions">
