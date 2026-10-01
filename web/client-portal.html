@@ -80,6 +80,49 @@
             margin-top: -80px;
         }
 
+        /* Hero_Cliente_Home: envuelve a .portal-header sin reemplazarlo -- el
+           JS sigue tocando solo el innerHTML de .portal-header, nunca este
+           contenedor, así el video/efecto nunca se borra al re-renderizar
+           (showMyEventsHub, showLoggedInNoEvents, etc.). Mismas esquinas y
+           mismo tamaño que el header de siempre, NUNCA pantalla completa. */
+        .hero-cliente-home {
+            position: relative;
+            overflow: hidden;
+            border-radius: 0 0 40px 40px;
+            margin-top: -80px;
+            /* Difuminado de "asiento" (PO, 2026-10-01): una vez el video de
+               entrada termina y se apaga, queda ESTO de fondo -- oro
+               degradando al mismo azul oscuro de siempre de este header
+               (--gold / #1a2b56), nunca un corte seco. */
+            /* El video barre de izquierda a derecha -- el oro termina
+               concentrado a la DERECHA (PO, 2026-10-01), nunca a la
+               izquierda como quedó al principio. */
+            background: linear-gradient(to left, #c5a059 0%, #8a6a3a 28%, #1a2b56 62%, #000 100%);
+        }
+        .hero-cliente-home .portal-header {
+            position: relative;
+            z-index: 1;
+            margin-top: 0;
+            /* Más liviano que antes: mientras el video de entrada corre da
+               contraste al texto, y una vez se apaga deja ver el difuminado
+               oro/azul de .hero-cliente-home en vez de taparlo. */
+            background: linear-gradient(135deg, rgba(26,43,86,0.30) 0%, rgba(0,0,0,0.45) 100%);
+        }
+        /* 2026-10-01: el pulso de CSS rápido ("se ve como efecto chicle", PO)
+           se quita -- el PO pidió usar el video real de bienvenida de la marca
+           (el mismo "polvo dorado" del intro-loader de dj-profile.html) SOLO
+           para la entrada. Al terminar (onended, inline más abajo) se apaga
+           con un fundo lento, dejando ver el difuminado oro/azul de
+           .hero-cliente-home -- nunca se queda trabado en su último cuadro. */
+        .hero-cliente-home-video {
+            position: absolute; inset: 0; width: 100%; height: 100%;
+            object-fit: cover; z-index: 0; pointer-events: none;
+            transition: opacity 2.2s ease;
+        }
+        .hero-cliente-home-video--asentado {
+            opacity: 0;
+        }
+
         .countdown-box {
             display: inline-flex;
             gap: 20px;
@@ -808,7 +851,7 @@
            dos), y quitar el sol/luna: ya vive real en la barra principal del
            sitio (mdjb-shared-header.js), este botón era un duplicado innecesario. */
         .portal-coi .coi-toolbar {
-            display: flex; align-items: center; justify-content: space-between; gap: 12px;
+            display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 12px;
             margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--line);
         }
         .portal-coi .coi-brand {
@@ -965,7 +1008,15 @@
         .portal-coi .nowline { position: absolute; left: 0; right: 0; height: 2px; background: var(--today); z-index: 5; }
         .portal-coi .nowline::before { content: ""; position: absolute; left: -4px; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--today); }
         .portal-coi .day-cards { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
-        .portal-coi .day-card { border: 1px solid var(--line); border-radius: 11px; padding: 12px 14px; background: var(--panel-2); }
+        .portal-coi .day-card { position: relative; border: 1px solid var(--line); border-radius: 11px; padding: 12px 14px; background: var(--panel-2); }
+        /* Mismo patrón que .furndj-qty-btn (rentals): círculo, borde fino,
+           glifo de texto plano -- nunca un emoji dentro de un círculo. */
+        .portal-coi .day-card .dc-del {
+            position: absolute; top: 10px; right: 10px; width: 22px; height: 22px; border-radius: 50%;
+            border: 1px solid var(--line); background: transparent; color: var(--ink-soft);
+            font-size: 14px; line-height: 1; cursor: pointer; display: grid; place-items: center;
+        }
+        .portal-coi .day-card .dc-del:hover { background: rgba(255,90,90,0.12); border-color: rgba(255,90,90,0.5); color: #ff5a5a; }
         .portal-coi .day-card .dc-cat { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--set); }
         .portal-coi .day-card.cliente .dc-cat { color: var(--cliente); }
         .portal-coi .day-card.personal .dc-cat { color: var(--personal); }
@@ -987,7 +1038,6 @@
         .portal-coi .coi-legend-item .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--set); }
         .portal-coi .coi-legend-item.cliente .dot { background: var(--cliente); }
         .portal-coi .coi-legend-item.personal .dot { background: var(--personal); }
-        .portal-coi .coi-tabrow { margin-bottom: 10px; }
 
         /* Modal "Agregar fecha importante" -- para cumpleaños de un hijo, aniversario,
            un amigo, etc. Recurrente por mes/día (no un evento de un solo año). */
@@ -1129,6 +1179,25 @@
         </div>
     </div>
 
+    <!-- Hero_Cliente_Home (2026-10-01, pedido del PO): contenedor de video/efecto
+         detrás de la foto del cliente -- NO pantalla completa, del mismo tamaño
+         que el header ya existente. Envuelve a .portal-header sin tocarlo: el JS
+         de abajo (showMyEventsHub, etc.) sigue reemplazando SOLO el innerHTML de
+         .portal-header, nunca de este contenedor, así el video nunca se borra al
+         re-renderizar. Hoy no hay un clip corto hecho para esto -- mientras tanto
+         lleva un efecto de energía animado por CSS (ligero, corre una vez y se
+         asienta, no un loop infinito); el <video> real solo necesita un src
+         cuando exista el clip, sin tocar nada más de esta estructura. -->
+    <div id="Hero_Cliente_Home" class="hero-cliente-home">
+        <!-- 2026-10-01 (PO): el poster (foto fija antes de que arranque el
+             video) no combinaba con el primer cuadro real -- se veía un
+             "pestañazo" feo al cambiar de la foto al video. Se quita del
+             todo; sin poster, el navegador no muestra nada hasta que el
+             video mismo tiene su primer cuadro listo. -->
+        <video class="hero-cliente-home-video" muted playsinline autoplay preload="auto" aria-hidden="true"
+            src="https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/assets/branding/intro-loader/miami-dj-beat-intro-enganche.mp4"
+            onended="this.classList.add('hero-cliente-home-video--asentado')"
+            onerror="this.classList.add('hero-cliente-home-video--asentado')"></video>
     <section class="portal-header">
         <div class="container">
             <div id="loyalty-tier-container"></div>
@@ -1156,6 +1225,7 @@
             </div>
         </div>
     </section>
+    </div><!-- /Hero_Cliente_Home -->
 
     <main class="container">
         <div id="portal-calendar-widget-single" class="portal-coi" style="margin-bottom:32px;"></div>

@@ -28,6 +28,14 @@
 // mdj-yearly-recall / calendar-channel-renew (Authorization: Bearer
 // $CRON_EDGE_AUTH_SECRET) -- corre 30 min despues de dispatch_yearly_recall_cron
 // (que llena la cola), para darle tiempo a terminar de insertar antes de barrer.
+//
+// 2026-10-01 (pedido del PO, "si el cliente va a introducir su calendario de
+// fechas, debe usarlo también"): mdj-yearly-recall ahora también encola las
+// fechas que el propio cliente guarda en su portal (client_profiles.
+// important_dates -- cumpleaños/aniversario de cualquier persona, no solo la
+// suya). kind "important_date" se resuelve aquí mismo: el nombre mostrado es
+// el de la PERSONA de la fecha, el contacto (teléfono/correo/foto) es del
+// CLIENTE dueño de la cuenta -- son casi siempre personas distintas.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
@@ -90,11 +98,13 @@ const KIND_LABEL_ES: Record<string, string> = {
   birthday: "Cumpleaños",
   anniversary: "Aniversario de boda",
   event_anniversary: "Aniversario de evento",
+  other_date: "Fecha especial",
 };
 const KIND_LABEL_EN: Record<string, string> = {
   birthday: "Birthday",
   anniversary: "Wedding anniversary",
   event_anniversary: "Event anniversary",
+  other_date: "Special date",
 };
 
 // Mismos emoji que ya usa calendario-operacional-inteligente.html para estos
@@ -104,6 +114,7 @@ const KIND_ICON: Record<string, string> = {
   birthday: "🎂",
   anniversary: "🎉",
   event_anniversary: "📅",
+  other_date: "📌",
 };
 
 type ReminderItem = {
@@ -140,6 +151,7 @@ function buildLang(lang: "es" | "en") {
       birthday: (n: string) => `Happy birthday, ${n}! 🎉🎂 From the whole Miami DJ Beat team.`,
       anniversary: (n: string) => `Happy anniversary, ${n}! 💍🥂 From the whole Miami DJ Beat team.`,
       event_anniversary: (n: string) => `Hi ${n}! 🎉 Today marks one more year since your event with us — from the whole Miami DJ Beat team.`,
+      other_date: (n: string) => `Thinking of you today, ${n}! 📌 From the whole Miami DJ Beat team.`,
       default: (n: string) => `Hi ${n}! 👋 From the whole Miami DJ Beat team.`,
     },
   } : {
@@ -157,6 +169,7 @@ function buildLang(lang: "es" | "en") {
       birthday: (n: string) => `¡Feliz cumpleaños, ${n}! 🎉🎂 De parte de todo el equipo Miami DJ Beat.`,
       anniversary: (n: string) => `¡Feliz aniversario, ${n}! 💍🥂 De parte de todo el equipo Miami DJ Beat.`,
       event_anniversary: (n: string) => `¡Hola ${n}! 🎉 Hoy se cumple un año más de tu evento con nosotros — de parte de todo el equipo Miami DJ Beat.`,
+      other_date: (n: string) => `¡Pensando en ti hoy, ${n}! 📌 De parte de todo el equipo Miami DJ Beat.`,
       default: (n: string) => `¡Hola ${n}! 👋 De parte de todo el equipo Miami DJ Beat.`,
     },
   };
@@ -316,19 +329,47 @@ serve(async (req: Request) => {
   const items: ReminderItem[] = [];
 
   for (const row of pending) {
-    const kind = String(row.dedup_key ?? "").split(":")[0] || "yearly_recall";
+    const dedupParts = String(row.dedup_key ?? "").split(":");
+    const kindRaw = dedupParts[0] || "yearly_recall";
 
+    let kind = kindRaw;
     let nombre = "Cliente";
     let referencia = "";
     let email = "";
     let telefono = "";
     let photoUrl = "";
+    let contextoFecha = "";
     let ownerDjIds: string[] = [];
-    // "birthday"/"anniversary" (cliente propio): client_user_id = master_clients.id.
-    // "event_anniversary" (evento pasado): client_user_id sigue siendo un
-    // client_profiles.user_id real, tal cual lo guarda leads -- no se tocó esa
-    // parte de mdj-yearly-recall, así que no se busca en master_clients aquí.
-    if (row.client_user_id && kind !== "event_anniversary") {
+
+    // "important_date" (2026-10-01): fecha guardada por el propio cliente en su
+    // portal (Personal) -- puede ser de CUALQUIER persona (su hijo, su pareja,
+    // un amigo), no necesariamente la del cliente. El nombre que se muestra es
+    // el de esa persona (entry.name), nunca el del cliente; el contacto
+    // (teléfono/correo/foto) sí es del cliente dueño de la cuenta, porque es a
+    // quien de verdad se puede escribir. El id de la fecha vive en el propio
+    // dedup_key (un cliente puede tener varias) -- se vuelve a buscar en
+    // client_profiles.important_dates en vez de duplicar el dato en la cola.
+    if (kindRaw === "important_date" && row.client_user_id) {
+      const entryId = dedupParts[2] || "";
+      const { data: cp } = await ADMIN
+        .from("client_profiles")
+        .select("full_name, photo_url, phone, email, important_dates")
+        .eq("user_id", row.client_user_id)
+        .maybeSingle();
+      const entradas: Array<{ id?: string; name?: string; date_type?: string }> =
+        Array.isArray(cp?.important_dates) ? cp.important_dates : [];
+      const entrada = entradas.find((e) => e && e.id === entryId);
+      nombre = entrada?.name || nombre;
+      kind = entrada?.date_type === "birthday" ? "birthday" : entrada?.date_type === "anniversary" ? "anniversary" : "other_date";
+      photoUrl = cp?.photo_url || "";
+      telefono = cp?.phone || "";
+      email = cp?.email || "";
+      if (cp?.full_name) contextoFecha = `Fecha guardada por ${cp.full_name} -- contactar a ${cp.full_name}, no a ${nombre}`;
+    } else if (row.client_user_id && kindRaw !== "event_anniversary") {
+      // "birthday"/"anniversary" (cliente propio): client_user_id = master_clients.id.
+      // "event_anniversary" (evento pasado): client_user_id sigue siendo un
+      // client_profiles.user_id real, tal cual lo guarda leads -- no se tocó esa
+      // parte de mdj-yearly-recall, así que no se busca en master_clients aquí.
       const { data: mc } = await ADMIN
         .from("master_clients")
         .select("name, normalized_phone, normalized_email")
@@ -387,7 +428,7 @@ serve(async (req: Request) => {
       photoUrl = cp?.photo_url || "";
     }
 
-    let contexto = "";
+    let contexto = contextoFecha;
     if (row.event_id) {
       const { data: ev } = await ADMIN
         .from("leads")

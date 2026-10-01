@@ -65,8 +65,21 @@ async function verificarState(state: string, secret: string): Promise<{ uid: str
     }
 }
 
-function redirectAPerfil(estado: "success" | "error" | "cancelled", detalle?: string): Response {
-    const u = new URL(`${SITE_URL}/dj-profile.html`);
+// 2026-10-01, encontrado probando el Paso 9 con una cuenta de Cliente: esta
+// funcion mandaba a TODO el mundo de vuelta a dj-profile.html, sin importar el
+// tipo de cuenta -- nunca se habia notado porque las unicas 3 cuentas que
+// habian conectado Google hasta ahora eran de Artista (ahi si es la pagina
+// correcta). Un Cliente real terminaba viendo su propio perfil pintado como
+// pagina de DJ. Se agrega esta consulta minima para elegir el destino real.
+// deno-lint-ignore no-explicit-any
+async function destinoParaUsuario(admin: any, userId: string): Promise<string> {
+    const { data: cliente } = await admin.from("client_profiles").select("user_id").eq("user_id", userId).maybeSingle();
+    if (cliente) return "/client-account.html";
+    return "/dj-profile.html"; // artista/staff -- comportamiento ya existente, sin cambios
+}
+
+function redirectAPerfil(destino: string, estado: "success" | "error" | "cancelled", detalle?: string): Response {
+    const u = new URL(`${SITE_URL}${destino}`);
     u.searchParams.set("calendar_connect", estado);
     if (detalle) u.searchParams.set("calendar_connect_detail", detalle);
     // "*": esto es una navegacion real del navegador siguiendo la
@@ -84,38 +97,50 @@ serve(async (req: Request) => {
 
     const params = new URL(req.url).searchParams;
 
-    // El DJ nego el consentimiento en la pantalla de Google -- no es un error
-    // real del sistema, es una decision legitima del usuario.
+    // Google siempre devuelve el mismo `state` que se le mando en
+    // calendar-oauth-init, tanto si el usuario aprueba como si cancela -- se
+    // verifica UNA vez aqui arriba para saber a que pagina real pertenece esta
+    // cuenta (Cliente vs Artista/Staff) antes de decidir cualquier redireccion,
+    // incluida la de cancelacion/error. Si no hay state o no es valido, se usa
+    // el destino por defecto (dj-profile.html, el comportamiento de siempre)
+    // porque no hay forma segura de saber de quien es esta conexion.
+    const state = params.get("state") ?? "";
+    const STATE_SECRET = Deno.env.get("CALENDAR_OAUTH_STATE_SECRET") ?? "";
+    let userId: string | null = null;
+    let destino = "/dj-profile.html";
+    if (STATE_SECRET && state) {
+        const verificadoTemprano = await verificarState(state, STATE_SECRET);
+        if (verificadoTemprano && verificadoTemprano.provider === "google") {
+            userId = verificadoTemprano.uid;
+            destino = await destinoParaUsuario(ADMIN, userId);
+        }
+    }
+
+    // El DJ/cliente nego el consentimiento en la pantalla de Google -- no es
+    // un error real del sistema, es una decision legitima del usuario.
     if (params.get("error")) {
-        return redirectAPerfil("cancelled", params.get("error") ?? undefined);
+        return redirectAPerfil(destino, "cancelled", params.get("error") ?? undefined);
     }
 
     const code = params.get("code") ?? "";
-    const state = params.get("state") ?? "";
-    if (!code || !state) return redirectAPerfil("error", "missing_code_or_state");
+    if (!code || !state) return redirectAPerfil(destino, "error", "missing_code_or_state");
 
-    const STATE_SECRET = Deno.env.get("CALENDAR_OAUTH_STATE_SECRET") ?? "";
     if (!STATE_SECRET) {
         console.error("[calendar-oauth-callback] falta CALENDAR_OAUTH_STATE_SECRET");
-        return redirectAPerfil("error", "not_configured");
+        return redirectAPerfil(destino, "error", "not_configured");
     }
-
-    const verificado = await verificarState(state, STATE_SECRET);
-    if (!verificado) {
+    if (!userId) {
         // Firma invalida, vencida (10 min) o corrupta -- nunca se asume un
         // usuario a partir de un state que no calza con su propia firma.
         console.error("[calendar-oauth-callback] state invalido o vencido");
-        return redirectAPerfil("error", "invalid_state");
+        return redirectAPerfil(destino, "error", "invalid_state");
     }
-    const { uid: userId, provider } = verificado;
-
-    if (provider !== "google") return redirectAPerfil("error", "provider_invalido");
 
     const CLIENT_ID = Deno.env.get("GOOGLE_CALENDAR_CLIENT_ID") ?? "";
     const CLIENT_SECRET = Deno.env.get("GOOGLE_CALENDAR_CLIENT_SECRET") ?? "";
     if (!CLIENT_ID || !CLIENT_SECRET) {
         console.error("[calendar-oauth-callback] faltan GOOGLE_CALENDAR_CLIENT_ID / GOOGLE_CALENDAR_CLIENT_SECRET");
-        return redirectAPerfil("error", "not_configured");
+        return redirectAPerfil(destino, "error", "not_configured");
     }
 
     const redirectUri = `${SUPABASE_URL}/functions/v1/calendar-oauth-callback`;
@@ -135,14 +160,14 @@ serve(async (req: Request) => {
         const tokenBody = await tokenRes.json().catch(() => ({}));
         if (!tokenRes.ok) {
             console.error("[calendar-oauth-callback] Google token exchange error:", tokenRes.status, JSON.stringify(tokenBody).slice(0, 400));
-            return redirectAPerfil("error", "token_exchange_failed");
+            return redirectAPerfil(destino, "error", "token_exchange_failed");
         }
 
         const accessToken = String(tokenBody.access_token ?? "");
         const refreshToken = String(tokenBody.refresh_token ?? "");
         if (!accessToken) {
             console.error("[calendar-oauth-callback] Google no devolvio access_token");
-            return redirectAPerfil("error", "no_access_token");
+            return redirectAPerfil(destino, "error", "no_access_token");
         }
         // Se conectan DOS calendarios de Google por usuario: "primary" (sus
         // eventos normales) y el calendario especial de cumpleaños/
@@ -181,7 +206,7 @@ serve(async (req: Request) => {
             if (vaultErr) {
                 console.error(`[calendar-oauth-callback] Vault error (${cal.id}):`, vaultErr);
                 // Nunca se cae a texto plano: si no se pudo cifrar, no se conecta.
-                if (cal.id === "primary") return redirectAPerfil("error", "save_failed");
+                if (cal.id === "primary") return redirectAPerfil(destino, "error", "save_failed");
                 continue;
             }
 
@@ -203,7 +228,7 @@ serve(async (req: Request) => {
                 console.error(`[calendar-oauth-callback] upsert error (${cal.id}):`, upsertErr.message);
                 // El calendario "primary" es el que importa para no romper el
                 // flujo existente; si falla el de cumpleaños se sigue igual.
-                if (cal.id === "primary") return redirectAPerfil("error", "save_failed");
+                if (cal.id === "primary") return redirectAPerfil(destino, "error", "save_failed");
                 continue;
             }
 
@@ -253,9 +278,9 @@ serve(async (req: Request) => {
         }
 
         console.log(`[calendar-oauth-callback] conectado · user=${userId} · provider=google`);
-        return redirectAPerfil("success");
+        return redirectAPerfil(destino, "success");
     } catch (err) {
         console.error("[calendar-oauth-callback] red:", err);
-        return redirectAPerfil("error", "network");
+        return redirectAPerfil(destino, "error", "network");
     }
 });
