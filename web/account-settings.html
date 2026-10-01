@@ -1952,8 +1952,22 @@
                 var d = Math.floor(h / 24);
                 return 'hace ' + d + (d === 1 ? ' día' : ' días');
             }
+            // Paso 8: si Google revocó el acceso desde el lado del usuario (o el
+            // token caducó), calendar-reconcile marca la fila 'revoked'/'expired' --
+            // esto se nota ANTES que nada más, nunca se mezcla con el aviso neutro
+            // de "última sincronización" (el token ya no sirve para nada, no es un
+            // simple retraso de sincronización).
+            function hayRevocado(filas) {
+                return (filas || []).some(function (r) { return r.status === 'revoked' || r.status === 'expired'; });
+            }
             function pintarEstadoSync(filas) {
                 if (!syncStatus) return;
+                if (hayRevocado(filas)) {
+                    syncStatus.textContent = 'Se desconectó desde Google Calendar -- vuelve a conectar.';
+                    syncStatus.style.color = 'rgba(255,150,130,0.95)';
+                    syncStatus.style.display = 'block';
+                    return;
+                }
                 var activas = (filas || []).filter(function (r) { return r.status === 'active'; });
                 if (!activas.length) { syncStatus.style.display = 'none'; return; }
                 var fechas = activas.map(function (r) { return r.last_synced_at ? new Date(r.last_synced_at) : null; }).filter(Boolean);
@@ -1998,9 +2012,10 @@
                         .select('status, last_synced_at')
                         .eq('user_id', ctx.session.user.id)
                         .eq('provider', 'google');
-                    cb.checked = !!(q && q.data && q.data.some(function (r) { return r.status === 'active'; }));
-                    if (disconnectLink) disconnectLink.style.display = (q && q.data && q.data.length) ? '' : 'none';
-                    pintarEstadoSync(q && q.data);
+                    var filas = (q && q.data) || [];
+                    cb.checked = filas.some(function (r) { return r.status === 'active'; }) && !hayRevocado(filas);
+                    if (disconnectLink) disconnectLink.style.display = filas.length ? '' : 'none';
+                    pintarEstadoSync(filas);
                 } catch (e) { /* si falla la lectura, se queda apagado por defecto */ }
             }
             // Paso 6: desconectar de verdad -- revoca con Google y borra el refresh_token
@@ -2064,7 +2079,11 @@
                 try {
                     var q = await ctx.sb.from('user_calendar_integrations').select('status')
                         .eq('user_id', ctx.session.user.id).eq('provider', 'google');
-                    if (q && q.data && q.data.length) {
+                    var filasQ = (q && q.data) || [];
+                    // Paso 8: si Google ya revocó el token guardado, reactivar la fila
+                    // ('active') no sirve de nada -- el token sigue muerto. Hay que
+                    // pasar de cero por calendar-oauth-init, igual que una cuenta nueva.
+                    if (filasQ.length && !hayRevocado(filasQ)) {
                         await ctx.sb.from('user_calendar_integrations')
                             .update({ status: 'active', updated_at: new Date().toISOString() })
                             .eq('user_id', ctx.session.user.id).eq('provider', 'google');
