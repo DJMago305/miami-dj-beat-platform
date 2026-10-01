@@ -1826,6 +1826,21 @@
     });
     return { evs:evs, artists:Object.keys(amap).map(function(k){return amap[k];}), clients:Object.keys(cmap).map(function(k){return cmap[k];}) };
   }
+  // Versión enmascarada de los mismos leads, para Performance -- SOLO "Ocupado"
+  // con horario, nunca cliente/venue/pago. Un lead sin DJ asignado no avisa nada
+  // (no hay a quién no-doble-reservar todavía); uno cancelado tampoco (ya no hay
+  // conflicto real).
+  function mapLeadsBusy(rows){
+    var out=[];
+    rows.forEach(function(L){
+      if(!L.assigned_dj_id) return;
+      if(String(L.status||"").toUpperCase()==="CANCELLED") return;
+      var s=_t2h(L.event_start_time), e=_t2h(L.event_end_time);
+      out.push({ d:L.event_date, cal:"reserva", artist:L.assigned_dj_id, ad:(s===null),
+                 s:(s===null?0:s), e:(e!==null?e:(s!==null?s+2:0)), t:"Ocupado", venue:"" });
+    });
+    return out;
+  }
   async function loadRealLeads(){
     try{
       var sb=(window.getSupabaseClient? window.getSupabaseClient() : window.supabase);
@@ -1834,8 +1849,10 @@
       if(!sess){ return setTimeout(loadRealLeads, 300); }                          // sin sesión aún → reintenta (si no, RLS = anon = 0 filas)
       var r=await sb.from("leads").select("id,event_date,event_start_time,event_end_time,event_type,name,venue,location,event_location,city,status,payment_status,total_amount,budget,assigned_dj_id,assigned_dj_name,assigned_staff_name,client_user_id,contact_person,email");
       if(r.error) throw r.error;
-      var m=mapLeads((r.data||[]).filter(function(x){ return x.event_date; }));
+      var validRows=(r.data||[]).filter(function(x){ return x.event_date; });
+      var m=mapLeads(validRows);
       _leadsEv=m.evs; ARTISTS=m.artists; CLIENT_ACCOUNTS=m.clients;
+      _leadsEvBusy=mapLeadsBusy(validRows);
       addResidencyArtists(); // re-agrega los DJ de residencias reales (ver loadResidencies) -- ARTISTS se acaba de reconstruir desde cero arriba
       recomputeBaseEv();
       rebuild(); render();
@@ -1885,20 +1902,29 @@
     }catch(err){ console.warn("[Matrix] fechas de clientes:", err.message||err); }
   }
   // ═══ Residencias recurrentes reales (tabla residency_schedule) ═══
-  var _leadsEv=[], _resEv=[], _syncEv=[], _bookEv=[], _bookEvBusy=[];
+  var _leadsEv=[], _resEv=[], _syncEv=[], _bookEv=[], _bookEvBusy=[], _leadsEvBusy=[];
   /* 2026-09-30, orden del PO: 3 pestañas de detalle, separadas de state.role
      (que sigue gobernando la vista Artista/Cliente/Owner sin tocarla, para
      no arriesgar los +15 chequeos existentes de ese valor en este archivo).
      state.detailLevel decide SOLO qué entra a BASE_EV:
        "full"     → Owner·Matrix: leads + residencias + bookings completos.
        "busy"     → Performance (Owner/Admin/Manager/Vendedor, misma vista):
-                    SOLO residencias + "quién está ocupado", nunca leads
-                    (datos financieros de clientes) ni el calendario personal.
+                    SOLO residencias + bookings de ELIXIS + leads con DJ
+                    asignado, todos enmascarados a "Ocupado" (sin venue,
+                    cliente ni dato financiero) -- nunca el detalle
+                    financiero/cliente que sí trae "full". 2026-10-01,
+                    hallazgo real del PO probando con una orden suya
+                    (Ebenezer Family Farm, lead normal de Ventas con DJ
+                    asignado): esta pestaña excluía TODOS los leads, incluso
+                    los que sí son trabajo real asignado -- justo el caso que
+                    Performance existe para avisar. _leadsEvBusy (abajo, en
+                    loadRealLeads) es la versión enmascarada de esos mismos
+                    leads, nunca una consulta nueva.
        "personal" → SOLO el calendario personal sincronizado (Google) de
                     quien esté viendo -- aislado, sin nada de lo anterior. */
   function recomputeBaseEv(){
     if(state.detailLevel==="personal"){ BASE_EV=_syncEv.slice(); }
-    else if(state.detailLevel==="busy"){ BASE_EV=_resEv.concat(_bookEvBusy); }
+    else if(state.detailLevel==="busy"){ BASE_EV=_resEv.concat(_bookEvBusy).concat(_leadsEvBusy); }
     else { BASE_EV=_leadsEv.concat(_resEv).concat(_bookEv); }
   }
   // Un chip de ARTISTS por cada DJ real de residencia sin dj_id (ver nota en

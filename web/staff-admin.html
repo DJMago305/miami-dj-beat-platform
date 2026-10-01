@@ -3826,12 +3826,18 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
 
                 // Load Leads (explicit columns — no stripe_customer_id / payment tokens in staff UI)
                 const MDJ_ADMIN_LEADS_COLUMNS =
-                    'id,email,name,phone,event_date,location,contact_person,budget,status,notes,lead_outcome,lead_outcome_reason,event_type,assigned_dj_id,assigned_dj_name,created_at,payment_status,balance_paid,total_amount,client_user_id,dj_agreed_payout_usd,dj_payout_released_at';
-                const { data: leads, error: leadError } = await supabase
+                    'id,email,name,phone,event_date,location,contact_person,budget,status,notes,lead_outcome,lead_outcome_reason,event_type,assigned_dj_id,assigned_dj_name,created_at,payment_status,balance_paid,total_amount,client_user_id,dj_agreed_payout_usd,dj_payout_released_at,source';
+                const { data: leadsRaw, error: leadError } = await supabase
                     .from('leads')
                     .select(MDJ_ADMIN_LEADS_COLUMNS)
                     .order('created_at', { ascending: false });
                 if (leadError) console.error('[Leads query error]', leadError);
+                // 2026-10-01: filas source='staff_production' son notas internas de
+                // cobertura/swap de DJ (ver internal_note en notes), no solicitudes de
+                // un cliente real -- el PO las encontró mezcladas aquí mostrando el
+                // propio correo de la empresa como "cliente". Nunca pertenecen a esta
+                // tabla; el lugar real para verlas es el calendario (Performance).
+                const leads = (leadsRaw || []).filter(l => (l.source || '') !== 'staff_production');
 
                 // Fetch client names from client_profiles by client_user_id
                 let clientNameMap = {};

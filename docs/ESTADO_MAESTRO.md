@@ -3190,3 +3190,32 @@ Verificado en vivo con la sesión real de Wendy (RLS simulado + navegador): Perf
 **Pendiente, confirmado en alcance pero no iniciado:** extender el mismo patrón Performance/Personal a Artista (eventos asignados + Personal) y Cliente (fecha de su evento + Personal).
 
 Incidente de Supabase ("Intermittent latency in Eastern US") seguía activo al momento de este cierre — el monitoreo automático cada ~25 min continúa.
+
+## [2026-09-30] Calendario — Paso 2: pestañas para Artista (Mis Eventos/Personal) y Cliente (Mi Evento/Personal), comiteado
+
+Extiende el mismo patrón del bloque anterior a los dos roles que faltaban, confirmado por el PO: "los artistas solo veran uno de sus fechas asignadas y el de ellos personal igual a el de los clientes" / "los clientes el de ellos personal y el de la fecha de su evento".
+
+- **`web/calendario-operacional-inteligente.html`** (rol Artista, mismo archivo que Owner/Staff): el botón suelto "Artista" (sin función real) se reemplazó por 2 pestañas — **Mis Eventos** (sus fechas asignadas, comportamiento de siempre vía `inScope()`) y **Personal** (su Google sincronizado, mismo `_syncEv`/RLS por `user_id` ya usado por Owner/Staff, sin cambios de datos). Aplica a un artista real logeado y a un staff inspeccionando a un artista vía `requestArtist()`.
+- **`web/client-portal.html` + `web/client-portal.js`**: el widget `.portal-coi` mezclaba en una sola vista "Sets/Reservas" (su evento) y "fechas importantes" agregadas a mano. Se separó en 2 pestañas — **Mi Evento** (solo su reserva real) y **Personal** (fechas importantes + su Google sincronizado, pieza nueva: misma tabla `elixis_agenda_eventos` tipo `cumpleanos`/`nota`, aislada por RLS, carga perezosa al abrir la pestaña). Color propio (`--personal`, verde) para distinguir del azul de "cliente".
+
+**Verificación:** Artista probado en vivo (DJMago305, desde una sesión real de staff inspeccionándolo) — alterna correctamente, sin errores de consola. Cliente probado con datos de prueba en un arnés HTML aislado (`client-portal.js` cargado solo, datos simulados, nunca tocó ninguna cuenta real) — ambas pestañas aíslan correctamente, colores distintos confirmados por captura. **No se probó con una sesión de cliente real** (sin credenciales disponibles, y no corresponde manejarlas) — pendiente la confirmación visual directa del PO con una cuenta de cliente real antes de darlo por cerrado del todo.
+
+**Commit:** `f797f71d`, mismos 3 archivos exactos (`calendario-operacional-inteligente.html`, `client-portal.html`, `client-portal.js`), misma rama `fix/seoia-nav-is-staff-recursion-login-timeout` (PR #610 abierto) — sin PR nuevo, el PO pidió "arma el commit", no aprobación de merge.
+
+Incidente de Supabase ("Intermittent latency in Eastern US") seguía activo al momento de este cierre (última actualización 21:26 UTC, "signs of improvement", sin ETA) — el monitoreo automático cada ~25 min continúa.
+
+## [2026-10-01] Dos huecos reales encontrados por el PO probando con su propia orden del día — ambos corregidos
+
+El PO tomó una orden real hoy (Ebenezer Family Farm, DJMago305, 3 oct 11am-3pm, cobertura puntual de un venue esporádico) y, al probarla contra lo construido ayer, encontró dos problemas reales:
+
+1. **Performance no avisaba de leads normales con DJ asignado.** Solo mostraba residencias + reservas privadas de ELIXIS; el flujo diario normal de Ventas (leads con `assigned_dj_id`, el 99% de las órdenes reales) quedaba fuera — justo el caso que Performance existe para prevenir (doble-reservar un DJ ya ocupado). Corregido en `web/calendario-operacional-inteligente.html`: nuevo `_leadsEvBusy`, calculado de los mismos leads que ya carga `loadRealLeads()` (sin consulta nueva), enmascarado a "Ocupado" + horario, nunca cliente/venue/pago. Un lead sin DJ asignado o cancelado no entra (no hay conflicto real que avisar).
+
+2. **Esa misma orden mostraba "cliente: miamidjbeat@gmail.com"** en "Solicitudes de Clientes" (`staff-admin.html`). Investigado: no es un lead de un cliente real, es una nota interna de cobertura/swap de DJ (`source: 'staff_production'`, con `internal_note` explicando el swap DJMago305↔DJYuyo ese día) que vivía en la misma tabla `leads`. Corregido: esas filas se excluyen de la tabla de Solicitudes (que es para leads de clientes reales) con un filtro por `source` antes de separar pendientes/completadas.
+
+**Verificado:** #1 en vivo por el PO (captura: "Ocupado · 11am-3pm · Artista: DJMago305" en Performance, 3 de octubre) y por mí mismo en el navegador. #2 verificado en vivo por el PO directamente ("ya no esta en pendiente tienes razon").
+
+**Nota aparte, no corregida (no era lo pedido):** esa misma orden quedó con `venue`/`venue_id` vacíos porque quien la tomó escribió el nombre del venue en el campo libre `location` en vez de buscarlo en Network — causa raíz de datos, no un bug de código. El PO lo confirmó como "mal tomada esa orden, nada que ver con lo que hicimos hoy".
+
+Commit pendiente de la palabra exacta del PO en el momento de escribir esto.
+
+Incidente de Supabase seguía activo (misma actualización 21:26 UTC) — monitoreo automático continúa.
