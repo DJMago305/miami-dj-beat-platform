@@ -1549,6 +1549,9 @@
                      miedo"), menos pasos y más convencional. Mismo texto que
                      account-settings.html. -->
                 <p data-i18n="account-pref-calendar-desc">Sincroniza tu calendario de Google y los cumpleaños/aniversarios de tus contactos. Solo leemos título y horario -- nunca descripción, invitados ni ubicación. Puedes desconectar cuando quieras.</p>
+                <!-- 2026-10-01, paso 7: estado real de la conexión -- mismo patrón que
+                     account-settings.html (ver ese archivo para la nota completa). -->
+                <p id="ca-calendar-sync-status" style="display:none;margin-top:4px;font-size:12px;color:rgba(255,255,255,0.45);"></p>
                 <p id="ca-calendar-sync-hint" style="display:none;margin:2px 0 0;font-size:12px;"></p>
                 <!-- 2026-10-01, paso 6: "apagar" (arriba) solo PAUSA -- el refresh_token
                      sigue guardado y el permiso sigue vivo del lado de Google. Este link
@@ -1566,7 +1569,40 @@
                 var cb = document.getElementById('ca-notify-calendar-sync');
                 var hint = document.getElementById('ca-calendar-sync-hint');
                 var disconnectLink = document.getElementById('ca-calendar-disconnect-link');
+                var syncStatus = document.getElementById('ca-calendar-sync-status');
                 if (!cb) return;
+                function tiempoRelativo(fecha) {
+                    var ms = Date.now() - fecha.getTime();
+                    var min = Math.floor(ms / 60000);
+                    if (min < 1) return 'hace un momento';
+                    if (min < 60) return 'hace ' + min + (min === 1 ? ' minuto' : ' minutos');
+                    var h = Math.floor(min / 60);
+                    if (h < 24) return 'hace ' + h + (h === 1 ? ' hora' : ' horas');
+                    var d = Math.floor(h / 24);
+                    return 'hace ' + d + (d === 1 ? ' día' : ' días');
+                }
+                function pintarEstadoSync(filas) {
+                    if (!syncStatus) return;
+                    var activas = (filas || []).filter(function (r) { return r.status === 'active'; });
+                    if (!activas.length) { syncStatus.style.display = 'none'; return; }
+                    var fechas = activas.map(function (r) { return r.last_synced_at ? new Date(r.last_synced_at) : null; }).filter(Boolean);
+                    if (!fechas.length) {
+                        syncStatus.textContent = 'Conectado -- esperando la primera sincronización.';
+                        syncStatus.style.color = 'rgba(255,255,255,0.45)';
+                        syncStatus.style.display = 'block';
+                        return;
+                    }
+                    var masReciente = new Date(Math.max.apply(null, fechas.map(function (f) { return f.getTime(); })));
+                    var horasDesde = (Date.now() - masReciente.getTime()) / 3600000;
+                    if (horasDesde > 48) {
+                        syncStatus.textContent = 'Última sincronización ' + tiempoRelativo(masReciente) + ' -- si no ves eventos nuevos, intenta desconectar y volver a conectar.';
+                        syncStatus.style.color = 'rgba(255,150,130,0.85)';
+                    } else {
+                        syncStatus.textContent = 'Última sincronización ' + tiempoRelativo(masReciente) + '.';
+                        syncStatus.style.color = 'rgba(255,255,255,0.45)';
+                    }
+                    syncStatus.style.display = 'block';
+                }
                 function setHint(msg, isError) {
                     if (!hint) return;
                     if (!msg) { hint.style.display = 'none'; hint.textContent = ''; return; }
@@ -1596,11 +1632,12 @@
                         // esté conectado -- este archivo nunca recibió ese arreglo.
                         var q = await ctx.sb
                             .from('user_calendar_integrations')
-                            .select('status')
+                            .select('status, last_synced_at')
                             .eq('user_id', ctx.session.user.id)
                             .eq('provider', 'google');
                         cb.checked = !!(q && q.data && q.data.some(function (r) { return r.status === 'active'; }));
                         if (disconnectLink) disconnectLink.style.display = (q && q.data && q.data.length) ? '' : 'none';
+                        pintarEstadoSync(q && q.data);
                     } catch (e) { /* si falla la lectura, se queda apagado por defecto */ }
                 }
                 // Paso 6: desconectar de verdad -- revoca con Google y borra el refresh_token
@@ -1618,6 +1655,7 @@
                         if (body && body.ok) {
                             cb.checked = false;
                             disconnectLink.style.display = 'none';
+                            if (syncStatus) syncStatus.style.display = 'none';
                             setHint('Desconectado. Ya no tenemos acceso a tu Google Calendar.');
                         } else {
                             setHint('No se pudo desconectar. Intenta de nuevo.', true);
@@ -1647,6 +1685,7 @@
                                 .update({ status: 'paused', updated_at: new Date().toISOString() })
                                 .eq('user_id', ctx.session.user.id).eq('provider', 'google');
                             setHint('');
+                            if (syncStatus) syncStatus.style.display = 'none';
                         } catch (e) { /* silencioso: si no habia fila, no hay nada que pausar */ }
                         cb.disabled = false;
                         return;
@@ -1660,6 +1699,7 @@
                                 .update({ status: 'active', updated_at: new Date().toISOString() })
                                 .eq('user_id', ctx.session.user.id).eq('provider', 'google');
                             setHint('');
+                            loadState();
                             cb.disabled = false;
                             return;
                         }

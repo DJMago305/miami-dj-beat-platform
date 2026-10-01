@@ -3282,6 +3282,16 @@ Incidente de Supabase seguía activo (misma actualización 21:26 UTC) — monito
 
 Incidente de Supabase seguía activo (misma actualización 21:26 UTC) — monitoreo automático continúa.
 
+## [2026-10-01] Paso 7 — estado real de la sincronización (Artista/Cliente)
+
+El interruptor de Google Calendar solo decía encendido/apagado, sin avisar si la sincronización empezaba a fallar en silencio (webhook de Google caído, cron de reconciliación sin correr, etc.).
+
+**Construido** en `account-settings.html` y `client-account.html`: línea "Última sincronización hace X" bajo la descripción, calculada del `last_synced_at` más reciente entre las filas activas del usuario (hasta 2, calendario normal + cumpleaños). Si pasan más de 48h sin actualizarse mientras el interruptor sigue encendido, el texto cambia a tono de aviso ("...si no ves eventos nuevos, intenta desconectar y volver a conectar") en vez de dato neutro. Se oculta al pausar o desconectar, se actualiza al reactivar.
+
+**Verificado en vivo** con la sesión real de DJMago305 (recién reconectado en el Paso 6): "Última sincronización hace 14 minutos." — coincide con la hora real de conexión, bien ubicado junto al interruptor y el link de desconectar.
+
+Incidente de Supabase seguía activo (misma actualización 21:26 UTC) — monitoreo automático continúa.
+
 ## [2026-10-01] Paso 6 — "desconectar" de verdad revoca con Google y borra el token (no solo pausa)
 
 El PO probó con una sesión real (DJMago305, su propio Google) y pidió que "apagar" el interruptor deje de ser un simple PAUSE -- hasta hoy el refresh_token seguía guardado y el permiso seguía vivo del lado de Google indefinidamente.
