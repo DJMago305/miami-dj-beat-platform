@@ -1894,11 +1894,26 @@
              escondido en lo que el JS decide un estado. Apagado = no conectado
              o pausado; encenderlo por primera vez dispara el flujo real de
              Google (calendar-oauth-init); si ya esta conectado, solo pausa o
-             reanuda -- nunca borra el token guardado. -->
+             reanuda -- nunca borra el token guardado.
+             2026-10-01: el modal propio de consentimiento (checkbox "Entiendo
+             y autorizo" antes de saltar a Google) se QUITA por pedido directo
+             del PO tras probarlo en vivo -- "el proceso de la vez anterior
+             dava hasta miedo", pidió menos pasos y que fuera convencional. La
+             descripción corta de abajo (mismo patrón que Avisos por correo/
+             SMS, SIEMPRE visible, sin bloquear nada) reemplaza el modal; el
+             consentimiento real de qué se comparte lo sigue dando la propia
+             pantalla de Google al conectar, como en cualquier app normal. -->
         <div class="toggle-row">
           <div class="toggle-label">
             <span id="pref-notify-calendar-title" data-i18n="account-pref-calendar-title">Sync Google Calendar</span>
+            <p data-i18n="account-pref-calendar-desc">Sincroniza tu calendario de Google y los cumpleaños/aniversarios de tus contactos. Solo leemos título y horario -- nunca descripción, invitados ni ubicación. Puedes desconectar cuando quieras.</p>
             <p id="pref-calendar-sync-hint" style="display:none;"></p>
+            <!-- 2026-10-01, paso 6: "apagar" (arriba) solo PAUSA -- el refresh_token
+                 sigue guardado y el permiso sigue vivo del lado de Google. Este link
+                 aparte SÍ desconecta de verdad (revoca con Google + borra el token).
+                 Oculto por defecto; visible solo si hay una conexión real (activa o
+                 pausada) que desconectar. -->
+            <button type="button" id="pref-calendar-disconnect-link" style="display:none;margin-top:6px;padding:0;border:none;background:none;color:rgba(255,150,130,0.85);font-size:12px;text-decoration:underline;cursor:pointer;">Desconectar completamente</button>
           </div>
           <label class="apple-switch">
             <input type="checkbox" id="pref-notify-calendar-sync" aria-labelledby="pref-notify-calendar-title" />
@@ -1909,6 +1924,7 @@
         (function () {
             var cb = document.getElementById('pref-notify-calendar-sync');
             var hint = document.getElementById('pref-calendar-sync-hint');
+            var disconnectLink = document.getElementById('pref-calendar-disconnect-link');
             if (!cb) return;
             function setHint(msg, isError) {
                 if (!hint) return;
@@ -1942,47 +1958,45 @@
                         .eq('user_id', ctx.session.user.id)
                         .eq('provider', 'google');
                     cb.checked = !!(q && q.data && q.data.some(function (r) { return r.status === 'active'; }));
+                    if (disconnectLink) disconnectLink.style.display = (q && q.data && q.data.length) ? '' : 'none';
                 } catch (e) { /* si falla la lectura, se queda apagado por defecto */ }
             }
-            // 2026-10-01, orden del PO: antes de disparar el flujo real de Google en
-            // una conexión NUEVA, mostrar un consentimiento explícito propio -- qué se
-            // lee exactamente (confirmado leyendo _shared/google-calendar-sync.ts: solo
-            // título + fecha/hora de los eventos del calendario principal, y los
-            // cumpleaños/aniversarios de contactos -- nunca descripción, invitados ni
-            // ubicación) y para qué se usa. La pantalla de consentimiento de Google NO
-            // sustituye esto: esa es de Google, esta es la nuestra. Reactivar una
-            // conexión ya existente (pausada) NO vuelve a pedirlo -- ya se autorizó la
-            // primera vez.
-            function mdjShowCalendarConsentModal(onAccept, onCancel) {
-                if (document.getElementById('mdjCalConsentBackdrop')) return;
-                var wrap = document.createElement('div');
-                wrap.innerHTML =
-                    '<div id="mdjCalConsentBackdrop" style="position:fixed;inset:0;background:rgba(5,7,15,0.72);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:3000;padding:20px;">' +
-                    '<div style="width:min(440px,100%);background:#0e1226;border:1px solid rgba(197,160,89,0.35);border-radius:16px;padding:26px 26px 22px;color:#f3f5ff;font-family:inherit;">' +
-                    '<h3 style="margin:0 0 12px;font-size:18px;font-weight:800;">🗓️ Conectar tu Google Calendar</h3>' +
-                    '<p style="margin:0 0 14px;font-size:13.5px;line-height:1.6;color:rgba(243,245,255,0.75);">Vamos a leer el <b>título y la fecha/hora</b> de los eventos de tu calendario principal de Google, y los <b>cumpleaños/aniversarios</b> de tus contactos — para mostrarlos en tu calendario personal dentro de Miami DJ Beat.</p>' +
-                    '<p style="margin:0 0 18px;font-size:13.5px;line-height:1.6;color:rgba(243,245,255,0.75);">Nunca leemos la descripción, los invitados ni la ubicación de tus eventos, y nunca compartimos esta información con nadie más. Puedes desconectar cuando quieras desde este mismo interruptor.</p>' +
-                    '<label style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:rgba(243,245,255,0.85);margin-bottom:20px;cursor:pointer;">' +
-                    '<input type="checkbox" id="mdjCalConsentCheck" style="margin-top:2px;" />Entiendo y autorizo</label>' +
-                    '<div style="display:flex;gap:10px;justify-content:flex-end;">' +
-                    '<button type="button" id="mdjCalConsentCancel" style="padding:10px 18px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:rgba(255,255,255,0.7);font-weight:700;cursor:pointer;">Cancelar</button>' +
-                    '<button type="button" id="mdjCalConsentOk" disabled style="padding:10px 18px;border-radius:10px;border:none;background:#c5a059;color:#1a1300;font-weight:800;cursor:not-allowed;opacity:0.5;">Continuar a Google</button>' +
-                    '</div></div></div>';
-                var backdrop = wrap.firstElementChild;
-                document.body.appendChild(backdrop);
-                var chk = document.getElementById('mdjCalConsentCheck');
-                var okBtn = document.getElementById('mdjCalConsentOk');
-                var cancelBtn = document.getElementById('mdjCalConsentCancel');
-                function close() { backdrop.remove(); }
-                chk.addEventListener('change', function () {
-                    okBtn.disabled = !chk.checked;
-                    okBtn.style.opacity = chk.checked ? '1' : '0.5';
-                    okBtn.style.cursor = chk.checked ? 'pointer' : 'not-allowed';
-                });
-                cancelBtn.addEventListener('click', function () { close(); if (onCancel) onCancel(); });
-                backdrop.addEventListener('click', function (ev) { if (ev.target === backdrop) { close(); if (onCancel) onCancel(); } });
-                okBtn.addEventListener('click', function () { close(); onAccept(); });
+            // Paso 6: desconectar de verdad -- revoca con Google y borra el refresh_token
+            // (nunca solo pausa). Pide confirmación porque es distinto de apagar el
+            // interruptor: hay que volver a autorizar desde cero si se quiere reconectar.
+            async function desconectarDeVerdad() {
+                var ctx = await getClientAndSession();
+                if (!ctx) { window.location.href = './login.html?redirect=account-settings'; return; }
+                if (!window.confirm('¿Desconectar completamente tu Google Calendar? Esto revoca el permiso del lado de Google y borra el token guardado -- tendrás que autorizarlo de nuevo si quieres reconectarlo.')) return;
+                disconnectLink.disabled = true;
+                cb.disabled = true;
+                try {
+                    var base = window.mdbSupabaseFunctionUrl ? window.mdbSupabaseFunctionUrl('calendar-oauth-disconnect') : '';
+                    var res = await fetch(base, { method: 'POST', headers: { Authorization: 'Bearer ' + ctx.session.access_token } });
+                    var body = await res.json().catch(function () { return null; });
+                    if (body && body.ok) {
+                        cb.checked = false;
+                        disconnectLink.style.display = 'none';
+                        setHint('Desconectado. Ya no tenemos acceso a tu Google Calendar.');
+                    } else {
+                        setHint('No se pudo desconectar. Intenta de nuevo.', true);
+                    }
+                } catch (e) {
+                    setHint('No se pudo desconectar. Intenta de nuevo.', true);
+                } finally {
+                    disconnectLink.disabled = false;
+                    cb.disabled = false;
+                }
             }
+            if (disconnectLink) disconnectLink.addEventListener('click', desconectarDeVerdad);
+            // 2026-10-01: el modal propio de consentimiento que vivía aquí (checkbox
+            // "Entiendo y autorizo" antes de saltar a Google) se QUITA por pedido
+            // directo del PO tras probarlo en vivo con su propia cuenta -- "el proceso
+            // de la vez anterior dava hasta miedo", pidió menos pasos y que fuera
+            // convencional. La descripción corta ya agregada junto al interruptor
+            // (mismo patrón que Avisos por correo/SMS) cubre lo mismo sin bloquear
+            // nada; la pantalla real de permisos de Google (que de todos modos no se
+            // puede saltar) es la parte que el usuario ya reconoce y en la que confía.
             cb.addEventListener('change', async function () {
                 var ctx = await getClientAndSession();
                 if (!ctx) { cb.checked = false; window.location.href = './login.html?redirect=account-settings'; return; }
@@ -1999,27 +2013,10 @@
                     cb.disabled = false;
                     return;
                 }
-                // Encender: si ya hay al menos una fila (conectado antes), reactiva TODAS
-                // sin volver a pedir consentimiento; si no hay ninguna, es una conexión
-                // NUEVA -- pide el consentimiento propio antes de saltar a Google.
+                // Encender: si ya hay al menos una fila (conectado antes), reactiva TODAS;
+                // si no hay ninguna, es una conexión NUEVA -- va directo a Google, sin
+                // paso intermedio (ver nota arriba: menos procesos, pedido del PO).
                 cb.disabled = true;
-                async function conectarDeVerdad() {
-                    try {
-                        var base = window.mdbSupabaseFunctionUrl ? window.mdbSupabaseFunctionUrl('calendar-oauth-init') : '';
-                        var res = await fetch(base + '?provider=google', { headers: { Authorization: 'Bearer ' + ctx.session.access_token } });
-                        var body = await res.json().catch(function () { return null; });
-                        if (body && body.ok && body.url) { window.location.href = body.url; return; }
-                        cb.checked = false;
-                        setHint((body && body.error === 'calendar_oauth_not_configured')
-                            ? 'La conexión con Google Calendar todavía no está activada del lado del servidor.'
-                            : 'No se pudo conectar. Intenta de nuevo.', true);
-                    } catch (e) {
-                        cb.checked = false;
-                        setHint('No se pudo conectar. Intenta de nuevo.', true);
-                    } finally {
-                        cb.disabled = false;
-                    }
-                }
                 try {
                     var q = await ctx.sb.from('user_calendar_integrations').select('status')
                         .eq('user_id', ctx.session.user.id).eq('provider', 'google');
@@ -2031,10 +2028,15 @@
                         cb.disabled = false;
                         return;
                     }
-                    mdjShowCalendarConsentModal(conectarDeVerdad, function () {
-                        cb.checked = false;
-                        cb.disabled = false;
-                    });
+                    var base = window.mdbSupabaseFunctionUrl ? window.mdbSupabaseFunctionUrl('calendar-oauth-init') : '';
+                    var res = await fetch(base + '?provider=google', { headers: { Authorization: 'Bearer ' + ctx.session.access_token } });
+                    var body = await res.json().catch(function () { return null; });
+                    if (body && body.ok && body.url) { window.location.href = body.url; return; }
+                    cb.checked = false;
+                    setHint((body && body.error === 'calendar_oauth_not_configured')
+                        ? 'La conexión con Google Calendar todavía no está activada del lado del servidor.'
+                        : 'No se pudo conectar. Intenta de nuevo.', true);
+                    cb.disabled = false;
                 } catch (e) {
                     cb.checked = false;
                     setHint('No se pudo conectar. Intenta de nuevo.', true);

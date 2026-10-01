@@ -3258,6 +3258,40 @@ El PO pidió avisar cuando llega un evento nuevo al calendario personal sincroni
 
 **Verificado:** Cliente probado en vivo con un arnés HTML aislado y datos simulados -- badge aparece con el conteo correcto, desaparece al abrir la pestaña, sin errores de consola. Artista verificado a nivel de datos reales (RLS simulado + inserción de prueba temporal para DJMago305, confirmado el conteo, borrada después) -- no probado con su sesión real propia (sin credenciales disponibles).
 
+**Commit:** `c934efff`, 3 archivos (`calendario-operacional-inteligente.html`, `client-portal.js`, `docs/ESTADO_MAESTRO.md`), misma rama (PR #610 abierto).
+
+Incidente de Supabase seguía activo (misma actualización 21:26 UTC) — monitoreo automático continúa.
+
+## [2026-10-01] Paso 6 — desconectar de verdad, simplificado, y un bug real de producción encontrado y corregido en el camino
+
+**Construido:** link "Desconectar completamente" (revoca con Google + borra Vault + borra filas, mismo patrón ya documentado arriba) en `account-settings.html` y `client-account.html`.
+
+**Simplificado por pedido directo del PO**, tras probarlo en vivo con su propia cuenta y encontrarlo "que daba hasta miedo": se quitó el modal propio de consentimiento (checkbox "Entiendo y autorizo" antes de saltar a Google) — menos pasos, más convencional. Reemplazado por una descripción corta siempre visible junto al interruptor (mismo patrón que Avisos por correo/SMS). El switch ahora va directo a la pantalla real de Google sin ningún paso intermedio nuestro.
+
+**Bug real de producción encontrado durante la prueba en vivo**: al intentar reconectar a DJMago305 (después de probar el disconnect con su cuenta real), Google redirigía de vuelta y `calendar-oauth-callback` devolvía `{"code":"UNAUTHORIZED_NO_AUTH_HEADER"}` — un 401 real, en producción. Causa: esa función tiene `verify_jwt` en `true` a nivel de Supabase, pero la invoca GOOGLE directo (redirección de navegador, sin forma de mandar un JWT de sesión) — por diseño ya se autentica sola vía el parámetro `state` firmado con HMAC. **No fue algo roto en esta sesión**: el `updated_at` de la función es del 27-28 de septiembre, y `docs/ESTADO_MAESTRO.md` (entrada 2026-09-29, "rotación de la service_role key") documenta que esa auditoría corrigió el mismo problema en 4 funciones de cron hermanas (`calendar-reconcile`, `calendar-channel-renew`, `notify-yearly-recall`, `mdj-yearly-recall`) pero `calendar-oauth-callback` quedó fuera de ese barrido por error. Nadie lo notó porque nadie había intentado conectar una cuenta nueva desde esa fecha — las 3 conexiones reales que ya existían (DJMago305, DJYuyo, Owner) se hicieron antes de que esto se rompiera.
+
+**Corregido por el PO** (bloqueado para mí por el clasificador "Production Deploy", como siempre con cambios de infraestructura real): apagó "Verify JWT with legacy secret" para `calendar-oauth-callback` desde el dashboard de Supabase (sin redeploy de código, solo el ajuste). **Verificado de punta a punta con logs reales**: los 3 intentos previos (07:08, 07:12, 07:16 UTC) dieron 401; el intento inmediatamente después del apagado (07:29 UTC) dio 302 (éxito) — confirmado también en `user_calendar_integrations`, 2 filas nuevas `active` para DJMago305, creadas en ese mismo momento.
+
+**Nota aparte, aclarada con el PO**: la verificación OAuth de Google ante Google (la pantalla roja "Google no verificó esta app") ya fue enviada hace días (`docs/ESTADO_MAESTRO.md`, entrada 2026-09-26, proyecto `project-05e6197c-168d-4e22-bba`) y sigue en revisión — plazo de Google de 4-6 semanas desde mediados de septiembre, no completado todavía. Eso no es algo que este hilo pueda acelerar ni corregir con código; es independiente del bug de `verify_jwt` que sí se arregló.
+
+**De paso, mismo lote** (pedido explícito del PO, "corrígelo también en esta orden"): bug real en el reloj analógico del widget de clima (`web/weather-experience/index.html`) — las manecillas vivían dentro de `.dial`, que tiene `perspective()+rotateX(17deg)` (inclinación 3D decorativa para los números); una manecilla que ROTA dentro de ese espacio 3D se proyecta torcida. Se sacaron las manecillas a ser hermanas de `.dial` (mismo selector CSS, cero cambio de estilos) — ahora giran en plano. Verificado visualmente: a las 2:40am las manecillas apuntan correctamente.
+
+**Pendiente, mencionado por el PO al cerrar este bloque, sin investigar todavía**: una integración de "Messenger/SMS" que también pide autorización — queda para la próxima sesión, sin detalles aún de cuál es exactamente.
+
+Incidente de Supabase seguía activo (misma actualización 21:26 UTC) — monitoreo automático continúa.
+
+## [2026-10-01] Paso 6 — "desconectar" de verdad revoca con Google y borra el token (no solo pausa)
+
+El PO probó con una sesión real (DJMago305, su propio Google) y pidió que "apagar" el interruptor deje de ser un simple PAUSE -- hasta hoy el refresh_token seguía guardado y el permiso seguía vivo del lado de Google indefinidamente.
+
+- **SQL en PRODUCCIÓN:** nueva función `calendar_google_borrar_token(uuid)` (borra el secreto de Vault, mismo patrón `SECURITY DEFINER` que sus hermanas, solo `service_role`).
+- **Función nueva:** `supabase/functions/calendar-oauth-disconnect/index.ts` -- autentica al propio llamador (JWT), revoca el refresh_token con Google (`oauth2.googleapis.com/revoke`; las 2 filas por usuario comparten el mismo token, un solo revoke basta), borra los secretos de Vault y las filas de `user_calendar_integrations`. **Desplegada por el PO mismo** (el deploy quedó bloqueado para mí por el clasificador "Production Deploy", como siempre).
+- **Frontend:** link "Desconectar completamente" debajo del interruptor, en `account-settings.html` y `client-account.html` -- visible solo si hay una conexión real (activa o pausada), pide confirmación explícita antes de ejecutar (acción irreversible: hay que volver a autorizar desde cero para reconectar).
+
+**Verificado en vivo, de punta a punta, con la cuenta real de DJMago305** (autorizado explícitamente por el PO -- "pruébalo con DJMago305"): clic en "Desconectar completamente" → UI pasa a "Desconectado. Ya no tenemos acceso a tu Google Calendar" → confirmado en base de datos: 0 filas en `user_calendar_integrations`, 0 secretos en Vault → logs de la función: `POST 200` limpio. Su Google Calendar quedó real y completamente desconectado.
+
+**De paso, mismo lote:** corregido un bug real que el PO encontró en el widget de clima (`web/weather-experience/index.html`) -- las manecillas del reloj analógico vivían dentro de `.dial`, que tiene `perspective()+rotateX(17deg)` (inclinación 3D decorativa); un número estático se ve bien ahí, pero una manecilla que ROTA dentro de ese espacio 3D se proyecta torcida. Se sacaron las manecillas a ser hermanas de `.dial` (mismo selector CSS, sin tocar estilos) -- ahora giran en plano, sin distorsión. Verificado visualmente: a las 2:40am las manecillas apuntan correctamente.
+
 **Commit pendiente de la palabra exacta del PO** en el momento de escribir esto.
 
 Incidente de Supabase seguía activo (misma actualización 21:26 UTC) — monitoreo automático continúa.
