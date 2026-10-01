@@ -1590,6 +1590,45 @@
                         cb.checked = !!(q && q.data && q.data.some(function (r) { return r.status === 'active'; }));
                     } catch (e) { /* si falla la lectura, se queda apagado por defecto */ }
                 }
+                // 2026-10-01, orden del PO: antes de disparar el flujo real de Google en
+                // una conexión NUEVA, mostrar un consentimiento explícito propio -- qué se
+                // lee exactamente (confirmado leyendo _shared/google-calendar-sync.ts: solo
+                // título + fecha/hora de los eventos del calendario principal, y los
+                // cumpleaños/aniversarios de contactos -- nunca descripción, invitados ni
+                // ubicación) y para qué se usa. La pantalla de consentimiento de Google NO
+                // sustituye esto: esa es de Google, esta es la nuestra. Reactivar una
+                // conexión ya existente (pausada) NO vuelve a pedirlo -- ya se autorizó la
+                // primera vez. Mismo patrón exacto que account-settings.html.
+                function mdjShowCalendarConsentModal(onAccept, onCancel) {
+                    if (document.getElementById('mdjCalConsentBackdrop')) return;
+                    var wrap = document.createElement('div');
+                    wrap.innerHTML =
+                        '<div id="mdjCalConsentBackdrop" style="position:fixed;inset:0;background:rgba(5,7,15,0.72);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:3000;padding:20px;">' +
+                        '<div style="width:min(440px,100%);background:#0e1226;border:1px solid rgba(197,160,89,0.35);border-radius:16px;padding:26px 26px 22px;color:#f3f5ff;font-family:inherit;">' +
+                        '<h3 style="margin:0 0 12px;font-size:18px;font-weight:800;">🗓️ Conectar tu Google Calendar</h3>' +
+                        '<p style="margin:0 0 14px;font-size:13.5px;line-height:1.6;color:rgba(243,245,255,0.75);">Vamos a leer el <b>título y la fecha/hora</b> de los eventos de tu calendario principal de Google, y los <b>cumpleaños/aniversarios</b> de tus contactos — para mostrarlos en tu calendario personal dentro de Miami DJ Beat.</p>' +
+                        '<p style="margin:0 0 18px;font-size:13.5px;line-height:1.6;color:rgba(243,245,255,0.75);">Nunca leemos la descripción, los invitados ni la ubicación de tus eventos, y nunca compartimos esta información con nadie más. Puedes desconectar cuando quieras desde este mismo interruptor.</p>' +
+                        '<label style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:rgba(243,245,255,0.85);margin-bottom:20px;cursor:pointer;">' +
+                        '<input type="checkbox" id="mdjCalConsentCheck" style="margin-top:2px;" />Entiendo y autorizo</label>' +
+                        '<div style="display:flex;gap:10px;justify-content:flex-end;">' +
+                        '<button type="button" id="mdjCalConsentCancel" style="padding:10px 18px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:rgba(255,255,255,0.7);font-weight:700;cursor:pointer;">Cancelar</button>' +
+                        '<button type="button" id="mdjCalConsentOk" disabled style="padding:10px 18px;border-radius:10px;border:none;background:#c5a059;color:#1a1300;font-weight:800;cursor:not-allowed;opacity:0.5;">Continuar a Google</button>' +
+                        '</div></div></div>';
+                    var backdrop = wrap.firstElementChild;
+                    document.body.appendChild(backdrop);
+                    var chk = document.getElementById('mdjCalConsentCheck');
+                    var okBtn = document.getElementById('mdjCalConsentOk');
+                    var cancelBtn = document.getElementById('mdjCalConsentCancel');
+                    function close() { backdrop.remove(); }
+                    chk.addEventListener('change', function () {
+                        okBtn.disabled = !chk.checked;
+                        okBtn.style.opacity = chk.checked ? '1' : '0.5';
+                        okBtn.style.cursor = chk.checked ? 'pointer' : 'not-allowed';
+                    });
+                    cancelBtn.addEventListener('click', function () { close(); if (onCancel) onCancel(); });
+                    backdrop.addEventListener('click', function (ev) { if (ev.target === backdrop) { close(); if (onCancel) onCancel(); } });
+                    okBtn.addEventListener('click', function () { close(); onAccept(); });
+                }
                 cb.addEventListener('change', async function () {
                     var ctx = await getClientAndSession();
                     if (!ctx) { cb.checked = false; window.location.href = './login.html?redirect=client-account'; return; }
@@ -1605,6 +1644,23 @@
                         return;
                     }
                     cb.disabled = true;
+                    async function conectarDeVerdad() {
+                        try {
+                            var base = window.mdbSupabaseFunctionUrl ? window.mdbSupabaseFunctionUrl('calendar-oauth-init') : '';
+                            var res = await fetch(base + '?provider=google', { headers: { Authorization: 'Bearer ' + ctx.session.access_token } });
+                            var body = await res.json().catch(function () { return null; });
+                            if (body && body.ok && body.url) { window.location.href = body.url; return; }
+                            cb.checked = false;
+                            setHint((body && body.error === 'calendar_oauth_not_configured')
+                                ? 'La conexión con Google Calendar todavía no está activada del lado del servidor.'
+                                : 'No se pudo conectar. Intenta de nuevo.', true);
+                        } catch (e) {
+                            cb.checked = false;
+                            setHint('No se pudo conectar. Intenta de nuevo.', true);
+                        } finally {
+                            cb.disabled = false;
+                        }
+                    }
                     try {
                         var q = await ctx.sb.from('user_calendar_integrations').select('status')
                             .eq('user_id', ctx.session.user.id).eq('provider', 'google');
@@ -1616,18 +1672,13 @@
                             cb.disabled = false;
                             return;
                         }
-                        var base = window.mdbSupabaseFunctionUrl ? window.mdbSupabaseFunctionUrl('calendar-oauth-init') : '';
-                        var res = await fetch(base + '?provider=google', { headers: { Authorization: 'Bearer ' + ctx.session.access_token } });
-                        var body = await res.json().catch(function () { return null; });
-                        if (body && body.ok && body.url) { window.location.href = body.url; return; }
-                        cb.checked = false;
-                        setHint((body && body.error === 'calendar_oauth_not_configured')
-                            ? 'La conexión con Google Calendar todavía no está activada del lado del servidor.'
-                            : 'No se pudo conectar. Intenta de nuevo.', true);
+                        mdjShowCalendarConsentModal(conectarDeVerdad, function () {
+                            cb.checked = false;
+                            cb.disabled = false;
+                        });
                     } catch (e) {
                         cb.checked = false;
                         setHint('No se pudo conectar. Intenta de nuevo.', true);
-                    } finally {
                         cb.disabled = false;
                     }
                 });

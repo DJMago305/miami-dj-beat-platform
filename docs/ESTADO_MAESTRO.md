@@ -3216,6 +3216,32 @@ El PO tomó una orden real hoy (Ebenezer Family Farm, DJMago305, 3 oct 11am-3pm,
 
 **Nota aparte, no corregida (no era lo pedido):** esa misma orden quedó con `venue`/`venue_id` vacíos porque quien la tomó escribió el nombre del venue en el campo libre `location` en vez de buscarlo en Network — causa raíz de datos, no un bug de código. El PO lo confirmó como "mal tomada esa orden, nada que ver con lo que hicimos hoy".
 
-Commit pendiente de la palabra exacta del PO en el momento de escribir esto.
+**Commit:** `e3f253c4`, mismos 3 archivos (`calendario-operacional-inteligente.html`, `staff-admin.html`, `docs/ESTADO_MAESTRO.md`), misma rama (PR #610 abierto).
+
+Incidente de Supabase seguía activo (misma actualización 21:26 UTC) — monitoreo automático continúa.
+
+## [2026-10-01] Paso 3 — verificar que conectar Google Calendar funciona para Artista y Cliente: bug real encontrado y corregido
+
+El PO pidió verificar, no construir algo nuevo: que el flujo de emparejar Google Calendar (ya construido en sesiones previas) de verdad funciona para Artista y Cliente, no solo para Owner/Staff.
+
+**Hallazgo:** `calendar-oauth-init`/`calendar-oauth-callback` son agnósticos de rol (confirmado leyendo el código) — ya funcionan igual para cualquier tipo de cuenta, y siempre crean 2 filas por usuario en `user_calendar_integrations` (calendario normal + el especial de cumpleaños). `account-settings.html` (Artista/Owner/Staff) ya se había corregido para leer esas 2 filas el 2026-09-17, confirmado con datos reales: DJMago305, DJYuyo y la cuenta Owner tienen cada uno sus 2 filas activas. **Pero `client-account.html` tiene su propia copia duplicada del mismo interruptor y nunca recibió ese arreglo** — seguía con `.maybeSingle()`, que falla en cuanto existen 2 filas. Nunca se había disparado en producción porque ningún cliente real había conectado Google todavía.
+
+**Corregido** en `web/client-account.html` (`loadState()` y la rama de "encender" del listener), mismo patrón que `account-settings.html`.
+
+**No se probó el flujo real de Google de punta a punta** (requiere otorgar permiso real desde una cuenta de Google, no algo que se haga sin pedirlo explícitamente) — verificado por revisión de código + datos reales de las 3 cuentas ya conectadas.
+
+**Commit:** `1197f002`, un solo archivo (`client-account.html`), misma rama (PR #610 abierto).
+
+Incidente de Supabase seguía activo (misma actualización 21:26 UTC) — monitoreo automático continúa.
+
+## [2026-10-01] Paso 4 — consentimiento explícito antes de conectar Google Calendar (Artista/Cliente/Owner/Staff)
+
+El PO pidió que, antes de saltar a la pantalla de Google, la plataforma misma explique qué se va a leer y para qué — la pantalla de permisos de Google no sustituye eso, es la nuestra.
+
+Construido un modal propio (`mdjShowCalendarConsentModal`), mismo código en `web/account-settings.html` y `web/client-account.html` (duplicado a propósito, mismo patrón que ya tenía el interruptor): explica, con el texto exacto confirmado leyendo `supabase/functions/_shared/google-calendar-sync.ts`, que solo se lee título + fecha/hora del calendario principal y los cumpleaños/aniversarios de contactos — nunca descripción, invitados ni ubicación, y que nunca se comparte con nadie más. Checkbox "Entiendo y autorizo" obligatorio antes de habilitar "Continuar a Google". Solo aparece en una conexión NUEVA (sin filas todavía) — reactivar una conexión pausada no lo vuelve a pedir, ya se autorizó la primera vez.
+
+**Verificado en vivo** (sesión real de Wendy, sin conexión previa): el modal aparece con el texto correcto, el botón queda deshabilitado hasta marcar el checkbox, y "Cancelar" cierra todo sin tocar la base de datos (confirmado: 0 filas). **Incidente de prueba, reportado con transparencia al PO:** al verificar el botón "Continuar a Google" con clics automatizados, sin querer se completó la navegación hasta la pantalla real de Google ("Elige una cuenta", mostrando las 2 cuentas reales del PO) — detenido ahí mismo, se regresó sin elegir ninguna cuenta, confirmado en base de datos que no se guardó ni autorizó nada. El flujo de "Continuar a Google" en sí (una vez el PO decida probarlo con su propia cuenta) queda sin verificar por mí hasta el final, a propósito, para no repetir ese riesgo.
+
+**Commit pendiente de la palabra exacta del PO** en el momento de escribir esto.
 
 Incidente de Supabase seguía activo (misma actualización 21:26 UTC) — monitoreo automático continúa.
