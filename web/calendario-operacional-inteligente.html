@@ -39,6 +39,12 @@
     // Artistas (no-staff) AHORA SÍ entran, en su modo Artista aislado (RLS los limita a lo suyo). Solo se exige sesión.
     window.__COI_STAFF = !!(res.data && STAFF.indexOf(role) !== -1);
     window.__COI_UID = sess.user.id;
+    /* 2026-09-30, ticket "calendario de Wendy mezcla residencias ajenas":
+       Owner/Admin ven el calendario operativo COMPLETO (todas las residencias,
+       de cualquier DJ) -- es su trabajo. Manager/Vendedor (ej. Wendy) deben ver
+       solo lo suyo: su propio calendario y las residencias que ELLOS asignaron
+       -- nunca las de otro vendedor/owner, ver loadResidencies() más abajo. */
+    window.__COI_ROLE = role;
   }
   gate();
 })();
@@ -253,6 +259,23 @@
   .rec-item .rsend{border:none;border-radius:8px;padding:6px 10px;background:var(--cliente);color:#04211d;font-weight:700;font-size:11.5px;cursor:pointer;white-space:nowrap;}
   .rec-item .rsend:disabled{opacity:.4;cursor:not-allowed;}
   .rec-empty{font-size:12px;color:var(--ink-mute);padding:6px 2px;}
+
+  /* "Mis fechas importantes" del Artista (Paso 11, 2026-10-01) -- panel propio,
+     fuera del motor genérico de eventos (ver nota junto a #mdjFechasImportantes
+     en el HTML). Mismos tokens de color que el resto de la app, sin clases
+     nuevas de layout: reusa el patrón visual de .rec-item/.res-dj-form. */
+  .mdj-fip{margin:0 20px 14px;padding:12px 14px;border-radius:12px;background:var(--panel-2);border:1px solid var(--line);}
+  .mdj-fip-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+  .mdj-fip-hd strong{font-size:12.5px;color:var(--ink);}
+  .mdj-fip-add{border:none;cursor:pointer;background:var(--cliente);color:#04211d;font-weight:800;font-size:14px;width:24px;height:24px;border-radius:50%;line-height:1;}
+  .mdj-fip-list{display:flex;flex-direction:column;gap:6px;}
+  .mdj-fip-item{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:9px;background:var(--panel);border:1px solid var(--line);font-size:12.5px;color:var(--ink);}
+  .mdj-fip-item .mdj-fip-dot{width:8px;height:8px;border-radius:50%;background:var(--cliente);flex:none;}
+  .mdj-fip-item .mdj-fip-n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .mdj-fip-item .mdj-fip-d{color:var(--ink-mute);font-size:11.5px;white-space:nowrap;}
+  .mdj-fip-item button{border:none;background:transparent;color:var(--ink-soft);cursor:pointer;font-size:13px;padding:2px 4px;}
+  .mdj-fip-item button:hover{color:var(--ink);}
+  .mdj-fip-empty{font-size:12px;color:var(--ink-mute);padding:4px 2px;}
   /* Aviso "ofrecele primero al DJ dueño" (2026-09-24, Motor de Comisiones) --
      mismos colores que .context-note.note-amber de contracts-engine.html,
      copiados literal para no inventar un estilo nuevo. Aviso suave, nunca
@@ -447,6 +470,17 @@
 
     <div class="ctx" id="ctx"></div>
 
+    <!-- Paso 11 (2026-10-01): "Mis fechas importantes" del Artista -- cumpleaños/
+         aniversario/otra, igual a lo que ya tiene Cliente (client-portal.html,
+         Paso 9/10), pero en su propia columna dj_profiles.important_dates
+         (agregada hoy en producción). Vive FUERA de #view a propósito: el
+         motor genérico de eventos (evActKinds/btnEvDel/btnEvEdit) está
+         cableado a elixis_agenda_eventos vía calendar-evento-editar -- mezclar
+         esta fecha ahí intentaría borrar/editar contra la tabla equivocada.
+         Visible solo en Personal/artista real (ver fipDebeVerse), oculta el
+         resto del tiempo. -->
+    <div class="mdj-fip" id="mdjFechasImportantes" hidden></div>
+
     <div class="head">
       <div><h1 id="title">—</h1></div>
       <div class="nav" id="nav">
@@ -595,10 +629,18 @@
         if(c.anniv) gen.push({ d:y+"-"+c.anniv, cal:"cliente", ad:true, kind:"aniv",   t:"🎉 "+c.n+" — aniversario", client:c, artist:c.owner||"_none" });
       });
     });
-    EV=BASE_EV.concat(gen);updateBadge();
+    // Pestañas "Personal" y "Performance" (2026-09-30, el PO: "Mildrey es
+    // cliente, no puede estar en Artista... es un cumpleaños, no una
+    // residencia"): ninguna de las dos debe mezclar la capa de cumpleaños/
+    // aniversarios VIP de CLIENTS -- esa es la base CRM de clientes, no
+    // información de "quién está trabajando" (Performance) ni el calendario
+    // personal de quien lo mira (Personal). Solo "Owner · Matrix" (detailLevel
+    // "full") sigue mostrándola, como ya funcionaba antes de hoy.
+    EV=(state.detailLevel==="full") ? BASE_EV.concat(gen) : BASE_EV.slice();
+    updateBadge();
   }
 
-  var state={view:"mes",date:new Date(TODAY),sel:null,crmForm:false,role:"owner",artist:"mago",consent:{},pendingRole:null,notz:null,artistaMenuOpen:false,clienteMenuOpen:false,clientFilter:null};
+  var state={view:"mes",date:new Date(TODAY),sel:null,crmForm:false,role:"owner",detailLevel:"full",artist:"mago",consent:{},pendingRole:null,notz:null,artistaMenuOpen:false,clienteMenuOpen:false,clientFilter:null};
 
   function pad(n){return(n<10?"0":"")+n;}
   function key(dt){return dt.getFullYear()+"-"+pad(dt.getMonth()+1)+"-"+pad(dt.getDate());}
@@ -755,11 +797,11 @@
 
   tcCheck.addEventListener("change",function(){tcAccept.disabled=!tcCheck.checked;});
   tcCancel.addEventListener("click",function(){overlay.hidden=true;state.pendingRole=null;});
-  tcAccept.addEventListener("click",function(){state.consent[state.artist]=true;overlay.hidden=true;state.role="artista";state.view="mes";state.sel=null;render();});
+  tcAccept.addEventListener("click",function(){state.consent[state.artist]=true;overlay.hidden=true;state.role="artista";state.detailLevel="full";state.view="mes";state.sel=null;recomputeBaseEv();render();});
 
   function requestArtist(artistId){
     state.artist=artistId;
-    if(state.consent[artistId]){state.role="artista";state.view="mes";state.sel=null;render();}
+    if(state.consent[artistId]){state.role="artista";state.detailLevel="full";state.view="mes";state.sel=null;recomputeBaseEv();render();}
     else{tcTitle.textContent="Permiso de uso de datos · "+artName(artistId);tcCheck.checked=false;tcAccept.disabled=true;overlay.hidden=false;}
   }
 
@@ -798,6 +840,11 @@
     // ya se está DENTRO del modo artista (drill-down o artista real logeado),
     // el botón vuelve a ser la etiqueta simple de siempre -- desplegar un
     // menu en ese punto no tendria para que.
+    /* 2026-09-30, el PO reportó "efecto acordeón": al cambiar entre
+       Performance/Personal, Artista/Cliente se colapsaban de
+       dropdown-con-contador a botón simple y de vuelta -- salto de layout
+       innecesario. showArtTab vuelve a depender SOLO de state.role (igual
+       que antes de hoy), nunca de detailLevel. */
     var showArtTab=(state.role==="owner");
     var h='<div class="roleswitch">';
     if(showArtTab){
@@ -829,9 +876,43 @@
       }
       h+='</span>';
     } else {
-      h+='<button class="r-art" data-role="artista" aria-selected="'+(state.role==="artista")+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.4"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>Artista</button>';
+      /* 2026-09-30, paso 2 del mismo pedido ("los artistas solo veran uno de
+         sus fechas asignadas y el de ellos personal"): el botón único
+         "Artista" (solo una etiqueta fija, aria-selected siempre true, sin
+         función real) se reemplaza por el mismo patrón de 2 pestañas que ya
+         tiene Owner/Staff -- "Mis Eventos" (detailLevel "full", el
+         comportamiento de siempre: inScope() ya acota a sus propios eventos)
+         y "Personal" (detailLevel "personal", su propio Google
+         sincronizado -- mismo _syncEv, mismo RLS por user_id, sin cambios de
+         datos). Aplica igual a un artista real logeado y a un staff
+         inspeccionando a un artista vía requestArtist(). */
+      h+='<button class="r-art" data-role="artista" data-detail="full" aria-selected="'+(state.detailLevel==="full")+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.4"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>Mis Eventos</button>';
+      h+='<button class="r-art" data-role="artista" data-detail="personal" aria-selected="'+(state.detailLevel==="personal")+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.4"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>Personal'
+        +(personalSyncUnreadCount()>0?'<small class="tab-count">'+personalSyncUnreadCount()+'</small>':'')+'</button>';
     }
-    h+=(window.__COI_STAFF===false ? '' : '<button class="r-own" data-role="owner" aria-selected="'+(state.role==="owner")+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="5" rx="1.5"/><rect x="3" y="11" width="18" height="5" rx="1.5"/><path d="M7 18h10"/></svg>Owner · Matrix</button>');
+    /* 2026-09-30, orden del PO -- 3 niveles de detalle para Owner/Admin, 2
+       para Manager/Vendedor (nunca ven el detalle completo, ver RLS de
+       elixis_agenda_eventos: no tienen política de SELECT sobre esa tabla):
+         Owner · Matrix → detailLevel "full" (todo: leads + residencias +
+           bookings completos). SOLO Owner/Admin.
+         Performance → detailLevel "busy" (residencias + "quién está
+           ocupado", sin leads ni venue/notas/pago). Owner/Admin Y
+           Manager/Vendedor, mismo botón/mecanismo.
+         Personal → detailLevel "personal" (SOLO su propio calendario
+           sincronizado de Google, aislado de todo lo anterior). Todo staff.
+       Los tres comparten data-role="owner" (state.role no cambia, sigue
+       gobernando Artista/Cliente/Owner como ya funcionaba) -- lo único que
+       cambia entre ellos es data-detail (state.detailLevel), que decide
+       SOLO qué entra a BASE_EV (ver recomputeBaseEv). */
+    var _rolBotonMatrix=String(window.__COI_ROLE||'').toLowerCase();
+    var _esOwnerAdminBtn=(_rolBotonMatrix==='owner'||_rolBotonMatrix==='admin');
+    if(window.__COI_STAFF!==false){
+      if(_esOwnerAdminBtn){
+        h+='<button class="r-own" data-role="owner" data-detail="full" aria-selected="'+(state.role==="owner"&&state.detailLevel==="full")+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="5" rx="1.5"/><rect x="3" y="11" width="18" height="5" rx="1.5"/><path d="M7 18h10"/></svg>Owner · Matrix</button>';
+      }
+      h+='<button class="r-own" data-role="owner" data-detail="busy" aria-selected="'+(state.role==="owner"&&state.detailLevel==="busy")+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="5" rx="1.5"/><rect x="3" y="11" width="18" height="5" rx="1.5"/><path d="M7 18h10"/></svg>Performance</button>';
+      h+='<button class="r-own" data-role="owner" data-detail="personal" aria-selected="'+(state.detailLevel==="personal")+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.4"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>Personal</button>';
+    }
     h+='</div>';
     if(state.role==="artista"){
       if(window.__COI_STAFF===false){
@@ -853,8 +934,35 @@
     ctx.innerHTML=h;
     ctx.querySelectorAll(".roleswitch button").forEach(function(b){b.onclick=function(){
       var r=b.dataset.role;
-      if(r==="owner"){state.role="owner";state.view=(state.view==="clientes"||state.view==="recordatorios")?state.view:"mes";state.sel=null;render();}
-      else if(r==="artista")requestArtist(state.artist);
+      if(r==="owner"){
+        state.role="owner";state.view=(state.view==="clientes"||state.view==="recordatorios")?state.view:"mes";state.sel=null;
+        /* data-detail (2026-09-30): Owner·Matrix/Performance/Personal. Si no
+           trae data-detail (no debería pasar hoy, pero por si acaso), se
+           queda en el nivel que ya tenía -- nunca se asume "full" a ciegas. */
+        if(b.dataset.detail) state.detailLevel=b.dataset.detail;
+        /* Carga perezosa: Owner/Admin solo piden la vista "busy" (Performance)
+           la primera vez que la tocan -- su carga normal de arriba ya les
+           trae la vista "full" desde el inicio, sin necesidad de pedirla de
+           nuevo cada vez que cambian de pestaña. */
+        if(state.detailLevel==="busy" && !_bookEvBusy.length){
+          var _rolBtnClick=String(window.__COI_ROLE||'').toLowerCase();
+          var _esStaffLimitadoClick=(_rolBtnClick==='manager'||_rolBtnClick==='seller');
+          if(!_esStaffLimitadoClick) loadElixisBookings(true);
+        }
+        recomputeBaseEv(); rebuild(); render();
+      }
+      else if(r==="artista"){
+        /* data-detail (2026-09-30): "Mis Eventos"/"Personal" del propio
+           artista -- NO pasa por requestArtist() (eso es para ENTRAR al modo
+           artista inspeccionando a alguien, con su flujo de consentimiento);
+           aquí ya se está dentro, solo cambia qué datos entran a BASE_EV. */
+        if(b.dataset.detail){
+          state.detailLevel=b.dataset.detail;
+          if(state.detailLevel==="personal") marcarCalendarSyncVisto();
+          recomputeBaseEv(); rebuild(); render();
+        }
+        else requestArtist(state.artist);
+      }
     };});
     var artTabBtn=document.getElementById("artTabBtn");
     if(artTabBtn)artTabBtn.onclick=function(e){e.stopPropagation();state.artistaMenuOpen=!state.artistaMenuOpen;render();};
@@ -893,7 +1001,7 @@
     // recordatorios (inScope ya filtra), el owner ve el consolidado.
     if(state.role!=="owner" && state.view==="continuidad") state.view="mes";
     nav.className="nav"+((v==="recordatorios"||v==="clientes"||v==="continuidad"||v==="notarizacion")?" hidden":"");
-    updateBadge();renderCtx();renderLegend();
+    updateBadge();renderCtx();renderLegend();renderFechasPersonales();
     if(v==="ano")renderYear();
     else if(v==="mes")renderMonth();
     else if(v==="semana")renderWeek();
@@ -1751,6 +1859,21 @@
     });
     return { evs:evs, artists:Object.keys(amap).map(function(k){return amap[k];}), clients:Object.keys(cmap).map(function(k){return cmap[k];}) };
   }
+  // Versión enmascarada de los mismos leads, para Performance -- SOLO "Ocupado"
+  // con horario, nunca cliente/venue/pago. Un lead sin DJ asignado no avisa nada
+  // (no hay a quién no-doble-reservar todavía); uno cancelado tampoco (ya no hay
+  // conflicto real).
+  function mapLeadsBusy(rows){
+    var out=[];
+    rows.forEach(function(L){
+      if(!L.assigned_dj_id) return;
+      if(String(L.status||"").toUpperCase()==="CANCELLED") return;
+      var s=_t2h(L.event_start_time), e=_t2h(L.event_end_time);
+      out.push({ d:L.event_date, cal:"reserva", artist:L.assigned_dj_id, ad:(s===null),
+                 s:(s===null?0:s), e:(e!==null?e:(s!==null?s+2:0)), t:"Ocupado", venue:"" });
+    });
+    return out;
+  }
   async function loadRealLeads(){
     try{
       var sb=(window.getSupabaseClient? window.getSupabaseClient() : window.supabase);
@@ -1759,10 +1882,12 @@
       if(!sess){ return setTimeout(loadRealLeads, 300); }                          // sin sesión aún → reintenta (si no, RLS = anon = 0 filas)
       var r=await sb.from("leads").select("id,event_date,event_start_time,event_end_time,event_type,name,venue,location,event_location,city,status,payment_status,total_amount,budget,assigned_dj_id,assigned_dj_name,assigned_staff_name,client_user_id,contact_person,email");
       if(r.error) throw r.error;
-      var m=mapLeads((r.data||[]).filter(function(x){ return x.event_date; }));
+      var validRows=(r.data||[]).filter(function(x){ return x.event_date; });
+      var m=mapLeads(validRows);
       _leadsEv=m.evs; ARTISTS=m.artists; CLIENT_ACCOUNTS=m.clients;
+      _leadsEvBusy=mapLeadsBusy(validRows);
       addResidencyArtists(); // re-agrega los DJ de residencias reales (ver loadResidencies) -- ARTISTS se acaba de reconstruir desde cero arriba
-      BASE_EV=_leadsEv.concat(_resEv).concat(_syncEv).concat(_bookEv);
+      recomputeBaseEv();
       rebuild(); render();
     }catch(err){ console.warn("[Matrix] carga de leads falló:", err); }
   }
@@ -1810,7 +1935,57 @@
     }catch(err){ console.warn("[Matrix] fechas de clientes:", err.message||err); }
   }
   // ═══ Residencias recurrentes reales (tabla residency_schedule) ═══
-  var _leadsEv=[], _resEv=[], _syncEv=[], _bookEv=[];
+  var _leadsEv=[], _resEv=[], _syncEv=[], _bookEv=[], _bookEvBusy=[], _leadsEvBusy=[];
+  /* 2026-10-01, paso 5 del mismo pedido: avisar cuando llega un evento NUEVO
+     al calendario personal (Google sync) del artista -- hoy solo se veía si
+     uno entraba a mirar la pestaña Personal. "Visto por última vez" se
+     guarda en dj_profiles.calendar_sync_last_seen_at (self-update, RLS ya
+     lo permite). _syncEv necesita createdAt (abajo, loadPersonalCalendarSync)
+     para poder contar cuántos son nuevos desde esa fecha. Solo aplica al
+     ARTISTA real (window.__COI_STAFF===false) -- un staff inspeccionando a
+     un artista nunca marca "visto" por él. */
+  var _calendarSyncLastSeen = null;
+  function personalSyncUnreadCount(){
+    return _syncEv.filter(function(e){
+      return e.createdAt && (!_calendarSyncLastSeen || e.createdAt > _calendarSyncLastSeen);
+    }).length;
+  }
+  function marcarCalendarSyncVisto(){
+    _calendarSyncLastSeen = new Date();
+    if(window.__COI_STAFF!==false) return; // solo el artista real marca lo suyo
+    var sb=(window.getSupabaseClient? window.getSupabaseClient() : window.supabase);
+    if(!sb || !sb.from) return;
+    sb.auth.getSession().then(function(r){
+      var sess=r && r.data && r.data.session;
+      if(!sess) return;
+      sb.from('dj_profiles').update({calendar_sync_last_seen_at: _calendarSyncLastSeen.toISOString()}).eq('user_id', sess.user.id)
+        .then(function(){}, function(e){ console.warn('[Matrix] marcar calendario personal visto:', e&&e.message||e); });
+    });
+  }
+  /* 2026-09-30, orden del PO: 3 pestañas de detalle, separadas de state.role
+     (que sigue gobernando la vista Artista/Cliente/Owner sin tocarla, para
+     no arriesgar los +15 chequeos existentes de ese valor en este archivo).
+     state.detailLevel decide SOLO qué entra a BASE_EV:
+       "full"     → Owner·Matrix: leads + residencias + bookings completos.
+       "busy"     → Performance (Owner/Admin/Manager/Vendedor, misma vista):
+                    SOLO residencias + bookings de ELIXIS + leads con DJ
+                    asignado, todos enmascarados a "Ocupado" (sin venue,
+                    cliente ni dato financiero) -- nunca el detalle
+                    financiero/cliente que sí trae "full". 2026-10-01,
+                    hallazgo real del PO probando con una orden suya
+                    (Ebenezer Family Farm, lead normal de Ventas con DJ
+                    asignado): esta pestaña excluía TODOS los leads, incluso
+                    los que sí son trabajo real asignado -- justo el caso que
+                    Performance existe para avisar. _leadsEvBusy (abajo, en
+                    loadRealLeads) es la versión enmascarada de esos mismos
+                    leads, nunca una consulta nueva.
+       "personal" → SOLO el calendario personal sincronizado (Google) de
+                    quien esté viendo -- aislado, sin nada de lo anterior. */
+  function recomputeBaseEv(){
+    if(state.detailLevel==="personal"){ BASE_EV=_syncEv.slice(); }
+    else if(state.detailLevel==="busy"){ BASE_EV=_resEv.concat(_bookEvBusy).concat(_leadsEvBusy); }
+    else { BASE_EV=_leadsEv.concat(_resEv).concat(_bookEv); }
+  }
   // Un chip de ARTISTS por cada DJ real de residencia sin dj_id (ver nota en
   // loadResidencies) -- se llama tanto ahí como en loadRealLeads(), porque
   // esa función RECONSTRUYE ARTISTS desde cero y borraría estos chips si no
@@ -1840,7 +2015,7 @@
       // 20260918150000_residency_schedule_series_acotada.sql): NULL en las
       // residencias permanentes de siempre, con valor en una serie con fin
       // real (ej. "Haunting House: Halloween", 5 jueves).
-      var _base="id,day_of_week,shift,venue,dj_name,start_time,end_time,start_date,end_date,series_name";
+      var _base="id,day_of_week,shift,venue,dj_name,start_time,end_time,start_date,end_date,series_name,assigned_staff_id,assigned_staff_name";
       // Puerta SEGURA primero (la vista aplica el candado de venue_pay a nivel DB); si aún no existe, cae a la base.
       async function _resq(sel){
         var rr=await sb.from("residency_schedule_secure").select(sel+",dj_id").eq("active",true);
@@ -1853,6 +2028,19 @@
       if(r.error){ r=await _resq(_base+(_staff?",venue_pay_usd":"")); }   // dj_pay_usd aún no existe en la tabla → degradar sin romper
       if(r.error) throw r.error;
       var rules=r.data||[], evs=[];
+      /* 2026-09-30, ticket "calendario de Wendy mezcla residencias ajenas" --
+         CORREGIDO el mismo día: el filtro por dueño que vivía aquí (manager/
+         vendedor solo veía lo suyo) se QUITA por orden explícita del PO:
+         "las tablas en los calendarios deberían dejar ver a los staff quien
+         esta trabajando en residencia y en fiestas porque es un dato
+         importante para no asignar un dj que ya esta trabajando" -- TODO el
+         staff (owner/admin/manager/seller) debe ver TODAS las residencias,
+         para evitar chocar horarios al asignar un DJ. Lo único privado por
+         vendedor son los cumpleaños/agenda personal (loadPersonalCalendarSync,
+         más abajo), no esto. assigned_staff_id SIGUE existiendo y
+         guardándose (quién la creó/reasignó) -- sirve para el aviso al
+         dueño original cuando otro vendedor la mueve (pendiente aparte), NO
+         para ocultar nada aquí. */
       // Excepciones puntuales ("solo esta fecha, DJ distinto" -- tabla nueva
       // residency_schedule_exceptions, 2026-09-17). Un mapa id+fecha → excepción
       // para aplicarlas al vuelo mientras se expande cada regla abajo.
@@ -1917,7 +2105,7 @@
       }
       _resEv=evs;
       addResidencyArtists();
-      BASE_EV=_leadsEv.concat(_resEv).concat(_syncEv).concat(_bookEv); rebuild(); render();
+      recomputeBaseEv(); rebuild(); render();
     }catch(err){ console.warn("[Matrix] residencias:", err.message||err); }
   }
 
@@ -1934,12 +2122,12 @@
       if(!sb || !sb.from || !sb.auth){ return setTimeout(loadPersonalCalendarSync, 300); }
       if(!(await sb.auth.getSession()).data.session){ return setTimeout(loadPersonalCalendarSync, 300); }
       var r=await sb.from("elixis_agenda_eventos")
-        .select("id,user_id,dj_nombre,venue_nombre,fecha_inicio,tipo,notas")
+        .select("id,user_id,dj_nombre,venue_nombre,fecha_inicio,tipo,notas,created_at")
         .eq("estado","activo")
         .in("tipo",["cumpleanos","nota"]);
       if(r.error) throw r.error;
       var rows=r.data||[];
-      if(!rows.length){ _syncEv=[]; BASE_EV=_leadsEv.concat(_resEv).concat(_syncEv).concat(_bookEv); rebuild(); render(); return; }
+      if(!rows.length){ _syncEv=[]; recomputeBaseEv(); rebuild(); render(); return; }
 
       // dj_nombre ya viene guardado en cada fila (lo resolvió el sync al escribir),
       // pero el "artist id" que usa esta pantalla para color/pip es dj_profiles.id
@@ -1978,22 +2166,201 @@
           ? d0.getUTCFullYear()+"-"+pad(d0.getUTCMonth()+1)+"-"+pad(d0.getUTCDate())
           : d0.getFullYear()+"-"+pad(d0.getMonth()+1)+"-"+pad(d0.getDate());
         var titulo=row.notas||row.venue_nombre||(row.tipo==="cumpleanos"?"Cumpleaños":"Evento personal");
+        var creadoEn=row.created_at?new Date(row.created_at):null;
         if(prof){
           var artId=prof.id;
           var nm=prof.stage_name||prof.dj_name||prof.full_name||row.dj_nombre||"DJ";
           if(!ARTISTS.some(function(a){return a.id===artId;})) ARTISTS.push({id:artId, n:nm, c:DJ_PALETTE[pal++ % DJ_PALETTE.length]});
-          out.push({ d:iso, cal:"personal", ad:true, kind:(row.tipo==="cumpleanos"?"cumple":"nota"), t:titulo, artist:artId, rowId:row.id });
+          out.push({ d:iso, cal:"personal", ad:true, kind:(row.tipo==="cumpleanos"?"cumple":"nota"), t:titulo, artist:artId, rowId:row.id, createdAt:creadoEn });
         } else {
           var cliente=clientByUser[row.user_id], ckey="u:"+row.user_id;
           var cnm=(cliente&&cliente.full_name)||row.dj_nombre||"Cliente";
           if(!CLIENT_ACCOUNTS.some(function(c){return c.id===ckey;})) CLIENT_ACCOUNTS.push({id:ckey, n:cnm, c:DJ_PALETTE[cpal++ % DJ_PALETTE.length]});
-          out.push({ d:iso, cal:"personal", ad:true, kind:(row.tipo==="cumpleanos"?"cumple":"nota"), t:titulo, clientId:ckey, rowId:row.id });
+          out.push({ d:iso, cal:"personal", ad:true, kind:(row.tipo==="cumpleanos"?"cumple":"nota"), t:titulo, clientId:ckey, rowId:row.id, createdAt:creadoEn });
         }
       });
       _syncEv=out;
-      BASE_EV=_leadsEv.concat(_resEv).concat(_syncEv).concat(_bookEv);
+      recomputeBaseEv();
       rebuild(); render();
     }catch(err){ console.warn("[Matrix] sincronización de calendario personal:", err.message||err); }
+  }
+
+  // ═══ "Mis fechas importantes" del Artista (Paso 11, 2026-10-01) ═══
+  // Mismo mecanismo de Cliente (client-portal.js, portalCoi*) pero sobre
+  // dj_profiles.important_dates (columna jsonb agregada hoy en producción,
+  // misma forma que client_profiles.important_dates) -- recurrente por
+  // mes/día, empujada a Google vía calendar-push-important-date (misma
+  // función de Cliente, ahora resuelve client_profiles o dj_profiles por
+  // user_id, ver resolverTabla en ese archivo). Panel propio (#mdjFechasImportantes,
+  // fuera de #view) a propósito: el motor genérico de eventos de esta pantalla
+  // (evActKinds/btnEvDel/btnEvEdit) llama a calendar-evento-editar, que opera
+  // sobre elixis_agenda_eventos -- mezclar esta fecha ahí intentaría borrar o
+  // editar contra la tabla equivocada.
+  var _fipLista = [];
+  var _fipLoaded = false;
+  var _fipEditingId = null;
+  function fipDebeVerse(){
+    return state.role === "artista" && state.detailLevel === "personal" && window.__COI_STAFF === false;
+  }
+  function fipEsc(s){
+    return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+  function fipTipoLabel(t){ return t==="birthday"?"Cumpleaños":(t==="anniversary"?"Aniversario":"Fecha"); }
+  async function fipCargar(){
+    if(_fipLoaded) return;
+    try{
+      var sb=(window.getSupabaseClient? window.getSupabaseClient() : window.supabase);
+      if(!sb || !sb.from || !sb.auth) return setTimeout(fipCargar, 300);
+      var sess=(await sb.auth.getSession()).data.session;
+      if(!sess) return setTimeout(fipCargar, 300);
+      var r=await sb.from("dj_profiles").select("important_dates").eq("user_id", sess.user.id).maybeSingle();
+      if(r.error) throw r.error;
+      _fipLista=(r.data && Array.isArray(r.data.important_dates)) ? r.data.important_dates : [];
+      _fipLoaded=true;
+      renderFechasPersonales();
+    }catch(err){ console.warn("[Matrix] mis fechas importantes:", err.message||err); }
+  }
+  function renderFechasPersonales(){
+    var panel=document.getElementById("mdjFechasImportantes");
+    if(!panel) return;
+    if(!fipDebeVerse()){ panel.hidden=true; return; }
+    panel.hidden=false;
+    if(!_fipLoaded){ fipCargar(); panel.innerHTML='<div class="mdj-fip-hd"><strong>Mis fechas importantes</strong></div><div class="mdj-fip-empty">Cargando…</div>'; return; }
+    var MESES=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+    var itemsHtml = _fipLista.length
+      ? _fipLista.map(function(e){
+          return '<div class="mdj-fip-item" data-fip-id="'+e.id+'"><span class="mdj-fip-dot"></span>'+
+            '<span class="mdj-fip-n">'+fipEsc(e.name)+' · '+fipTipoLabel(e.date_type)+'</span>'+
+            '<span class="mdj-fip-d">'+e.day+' '+MESES[e.month-1]+'</span>'+
+            '<button type="button" class="fip-edit" title="Editar">✏️</button>'+
+            '<button type="button" class="fip-del" title="Eliminar">&times;</button>'+
+            '</div>';
+        }).join('')
+      : '<div class="mdj-fip-empty">Sin fechas guardadas todavía.</div>';
+    panel.innerHTML='<div class="mdj-fip-hd"><strong>Mis fechas importantes</strong><button type="button" class="mdj-fip-add" aria-label="Agregar fecha" title="Agregar fecha">+</button></div>'+
+      '<div class="mdj-fip-list">'+itemsHtml+'</div>';
+    // Wiring vía .onclick (mismo patrón ya usado en todo este archivo, p.ej.
+    // los botones de .mini/.mcell en renderYear/renderMonth) -- nunca
+    // onclick="" inline, porque todo este script corre dentro de un cierre
+    // propio (IIFE) y esas funciones nunca llegan a window.
+    var addBtn=panel.querySelector(".mdj-fip-add");
+    if(addBtn) addBtn.onclick=function(){ fipAbrirModal(); };
+    panel.querySelectorAll(".mdj-fip-item").forEach(function(row){
+      var id=row.dataset.fipId;
+      var eb=row.querySelector(".fip-edit"); if(eb) eb.onclick=function(){ fipAbrirModal(id); };
+      var db=row.querySelector(".fip-del"); if(db) db.onclick=function(){ fipEliminar(id); };
+    });
+  }
+  // Modal reusa las clases ya existentes .overlay/.modal (T&C, arriba) y
+  // .res-dj-form/.res-dj-input/.res-dj-msg (edición de residencia/evento) --
+  // sin inventar estilos nuevos de formulario.
+  function fipAbrirModal(editId){
+    if(document.getElementById("fipModalBackdrop")) return;
+    var entrada = editId ? _fipLista.find(function(e){ return e && e.id===editId; }) : null;
+    _fipEditingId = entrada ? editId : null;
+    var titulo = entrada ? "Editar fecha importante" : "Agregar fecha importante";
+    var botonTxt = entrada ? "Guardar cambios" : "Guardar";
+    var wrap=document.createElement("div");
+    wrap.innerHTML=
+      '<div class="overlay" id="fipModalBackdrop" style="z-index:9999;">'+
+      '<div class="modal" style="max-width:420px;">'+
+      '<h3>'+titulo+'</h3>'+
+      '<p class="mlead">Cumpleaños, aniversario o cualquier fecha que no quieras olvidar. Se repite cada año.</p>'+
+      '<div class="res-dj-form">'+
+      '<div><label>Nombre</label><input type="text" class="res-dj-input" id="fipName" maxlength="60" placeholder="Ej. Mi mamá"></div>'+
+      '<div><label>Tipo</label><select class="res-dj-input" id="fipType">'+
+      '<option value="birthday">Cumpleaños</option>'+
+      '<option value="anniversary">Aniversario</option>'+
+      '<option value="other">Otra fecha especial</option>'+
+      '</select></div>'+
+      '<div><label>Fecha</label><input type="date" class="res-dj-input" id="fipDate"></div>'+
+      '<div class="res-dj-msg" id="fipMsg" hidden></div>'+
+      '</div>'+
+      '<div class="mbtns" style="margin-top:14px;">'+
+      '<button type="button" class="cancel" id="fipCancelBtn">Cancelar</button>'+
+      '<button type="button" class="accept" id="fipSaveBtn">'+botonTxt+'</button>'+
+      '</div></div></div>';
+    var backdrop=wrap.firstElementChild;
+    backdrop.addEventListener("click", function(ev){ if(ev.target===backdrop) fipCerrarModal(); });
+    document.body.appendChild(backdrop);
+    document.getElementById("fipCancelBtn").onclick=function(){ fipCerrarModal(); };
+    document.getElementById("fipSaveBtn").onclick=function(){ fipGuardar(); };
+    if(entrada){
+      var n0=document.getElementById("fipName"), t0=document.getElementById("fipType"), d0=document.getElementById("fipDate");
+      if(n0) n0.value=entrada.name||"";
+      if(t0) t0.value=entrada.date_type||"other";
+      if(d0){ var yy0=entrada.year||new Date().getFullYear(); d0.value=yy0+"-"+String(entrada.month).padStart(2,"0")+"-"+String(entrada.day).padStart(2,"0"); }
+    }
+    setTimeout(function(){ var el=document.getElementById("fipName"); if(el) el.focus(); }, 30);
+  }
+  function fipCerrarModal(){
+    var el=document.getElementById("fipModalBackdrop");
+    if(el) el.remove();
+    _fipEditingId=null;
+  }
+  async function fipGuardar(){
+    var editingId=_fipEditingId;
+    var nameEl=document.getElementById("fipName"), typeEl=document.getElementById("fipType"), dateEl=document.getElementById("fipDate");
+    var msgEl=document.getElementById("fipMsg"), btn=document.getElementById("fipSaveBtn");
+    function mostrarErr(m){ if(msgEl){ msgEl.hidden=false; msgEl.className="res-dj-msg err"; msgEl.textContent=m; } }
+    var name=nameEl?nameEl.value.trim():"", type=typeEl?typeEl.value:"other", dateVal=dateEl?dateEl.value:"";
+    if(!name) return mostrarErr("Escribe un nombre.");
+    if(!dateVal) return mostrarErr("Elige una fecha.");
+    var parts=dateVal.split("-"), month=parseInt(parts[1],10), day=parseInt(parts[2],10);
+    if(!month||!day) return mostrarErr("Fecha inválida.");
+    if(btn){ btn.disabled=true; btn.textContent="Guardando…"; }
+    try{
+      var sb=(window.getSupabaseClient? window.getSupabaseClient() : window.supabase);
+      var sess=(await sb.auth.getSession()).data.session;
+      if(!sess) throw new Error("sin_sesion");
+      var current=await sb.from("dj_profiles").select("important_dates").eq("user_id", sess.user.id).maybeSingle();
+      var list=(current && current.data && Array.isArray(current.data.important_dates)) ? current.data.important_dates.slice() : [];
+      var entry;
+      if(editingId){
+        var idx=list.findIndex(function(e){ return e && e.id===editingId; });
+        if(idx===-1){ mostrarErr("No se encontró la fecha a editar."); if(btn){ btn.disabled=false; btn.textContent="Guardar cambios"; } return; }
+        entry=Object.assign({}, list[idx], { name:name, date_type:type, month:month, day:day, year: parseInt(parts[0],10)||null });
+        list[idx]=entry;
+      } else {
+        entry={ id: Date.now().toString(36)+Math.random().toString(36).slice(2,8), name:name, date_type:type, month:month, day:day, year: parseInt(parts[0],10)||null, created_at: new Date().toISOString() };
+        list.push(entry);
+      }
+      var upd=await sb.from("dj_profiles").update({ important_dates: list }).eq("user_id", sess.user.id);
+      if(upd.error) throw upd.error;
+
+      // Paso 9/10 (sync bidireccional, mismo patrón de Cliente): si el artista
+      // tiene Google Calendar conectado, se empuja también allá. Fuego y
+      // olvido -- la fecha ya quedó guardada local, que es lo que importa.
+      try{
+        var base=(window.MDB_SUPABASE_URL||"").replace(/\/$/,"");
+        var fnUrl = typeof window.mdbSupabaseFunctionUrl === "function" ? window.mdbSupabaseFunctionUrl("calendar-push-important-date") : (base+"/functions/v1/calendar-push-important-date");
+        var body={ entry_id: entry.id };
+        if(editingId) body.accion="editar";
+        fetch(fnUrl, { method:"POST", headers:{ "Content-Type":"application/json", Authorization:"Bearer "+sess.access_token, apikey:(window.MDB_SUPABASE_ANON_KEY||"") }, body: JSON.stringify(body) }).catch(function(){});
+      }catch(ePush){ /* silencioso: esto es un plus, no la acción principal */ }
+
+      _fipLista=list;
+      fipCerrarModal();
+      renderFechasPersonales();
+    }catch(eSave){ mostrarErr("No se pudo guardar. Intenta de nuevo."); }
+    finally{ if(btn){ btn.disabled=false; btn.textContent=editingId?"Guardar cambios":"Guardar"; } }
+  }
+  async function fipEliminar(id){
+    if(!window.confirm("¿Quitar esta fecha? Si ya estaba conectada a tu Google Calendar, también se borra allá.")) return;
+    try{
+      var sb=(window.getSupabaseClient? window.getSupabaseClient() : window.supabase);
+      var sess=(await sb.auth.getSession()).data.session;
+      if(!sess) return;
+      var base=(window.MDB_SUPABASE_URL||"").replace(/\/$/,"");
+      var fnUrl = typeof window.mdbSupabaseFunctionUrl === "function" ? window.mdbSupabaseFunctionUrl("calendar-push-important-date") : (base+"/functions/v1/calendar-push-important-date");
+      await fetch(fnUrl, { method:"POST", headers:{ "Content-Type":"application/json", Authorization:"Bearer "+sess.access_token, apikey:(window.MDB_SUPABASE_ANON_KEY||"") }, body: JSON.stringify({ entry_id:id, accion:"eliminar" }) }).catch(function(){});
+      var current=await sb.from("dj_profiles").select("important_dates").eq("user_id", sess.user.id).maybeSingle();
+      var list=(current && current.data && Array.isArray(current.data.important_dates)) ? current.data.important_dates.filter(function(e){ return e.id!==id; }) : [];
+      var upd=await sb.from("dj_profiles").update({ important_dates:list }).eq("user_id", sess.user.id);
+      if(upd.error) throw upd.error;
+      _fipLista=list;
+      renderFechasPersonales();
+    }catch(eDel){ /* silencioso, igual que portalCoiDeleteImportantDate en client-portal.js */ }
   }
 
   // ═══ Eventos reales creados por ELIXIS (modificar_agenda_evento) ═══
@@ -2011,23 +2378,45 @@
   // "residencia" queda fuera a propósito: esa recurrencia semanal ya vive en
   // residency_schedule (gestionar_residency_schedule/loadResidencies arriba)
   // -- mostrarla también desde aquí duplicaría la misma noche dos veces.
-  async function loadElixisBookings(){
+  /* forceBusy (2026-09-30, pestaña "Performance" para Owner/Admin): Owner ya
+     tiene su propia carga completa (ver abajo, sin forceBusy). Cuando Owner
+     pulsa "Performance", necesita la MISMA vista acotada que ve un vendedor
+     -- se pide aquí mismo, a demanda, con forceBusy=true, guardándose
+     APARTE en _bookEvBusy (nunca pisa _bookEv, que sigue siendo su vista
+     completa de "Owner · Matrix"). Para Manager/Vendedor, que nunca tienen
+     la opción completa, el comportamiento es idéntico a como ya estaba. */
+  async function loadElixisBookings(forceBusy){
     try{
       var sb=(window.getSupabaseClient? window.getSupabaseClient() : window.supabase);
-      if(!sb || !sb.from || !sb.auth){ return setTimeout(loadElixisBookings, 300); }
-      if(!(await sb.auth.getSession()).data.session){ return setTimeout(loadElixisBookings, 300); }
-      var r=await sb.from("elixis_agenda_eventos")
-        .select("id,user_id,dj_nombre,venue_nombre,fecha_inicio,fecha_fin,tipo,notas,tarifa_venue_cents,pago_dj_cents,estado")
-        .eq("estado","activo")
-        .in("tipo",["privado","boda"]);
+      if(!sb || !sb.from || !sb.auth){ return setTimeout(function(){loadElixisBookings(forceBusy);}, 300); }
+      if(!(await sb.auth.getSession()).data.session){ return setTimeout(function(){loadElixisBookings(forceBusy);}, 300); }
+      /* 2026-09-30, ticket "calendario de Wendy", punto 3 -- orden del PO:
+         "el de vendedores solo los dj residentes para que el vendedor sepa
+         quien esta trabajando el dia del evento y que horarios para no
+         usarlo". Manager/Vendedor (y Owner/Admin en su pestaña "Performance")
+         consultan elixis_agenda_eventos_ocupado (vista nueva, SOLO
+         dj_nombre+horario, sin venue/notas/pago -- esos siguen siendo
+         exclusivos de la pestaña "Owner · Matrix"). */
+      var _rolBookings=String(window.__COI_ROLE||'').toLowerCase();
+      var _esVendedorBookings=!!forceBusy || (_rolBookings==='manager'||_rolBookings==='seller');
+      var r = _esVendedorBookings
+        ? await sb.from("elixis_agenda_eventos_ocupado").select("id,dj_nombre,fecha_inicio,fecha_fin,tipo")
+        : await sb.from("elixis_agenda_eventos")
+            .select("id,user_id,dj_nombre,venue_nombre,fecha_inicio,fecha_fin,tipo,notas,tarifa_venue_cents,pago_dj_cents,estado")
+            .eq("estado","activo")
+            .in("tipo",["privado","boda"]);
       if(r.error) throw r.error;
       var rows=r.data||[];
-      if(!rows.length){ _bookEv=[]; BASE_EV=_leadsEv.concat(_resEv).concat(_syncEv).concat(_bookEv); rebuild(); render(); return; }
+      if(!rows.length){
+        if(_esVendedorBookings){ _bookEvBusy=[]; } else { _bookEv=[]; }
+        recomputeBaseEv(); rebuild(); render(); return;
+      }
 
       // Mismo lookup user_id → dj_profiles.id que loadPersonalCalendarSync():
       // esta pantalla siempre agrupa/colorea por dj_profiles.id, nunca por el
-      // user_id de auth.
-      var uids=[]; rows.forEach(function(x){ if(uids.indexOf(x.user_id)===-1) uids.push(x.user_id); });
+      // user_id de auth. La vista de vendedores no trae user_id a propósito
+      // (menos columnas expuestas) -- esas filas se agrupan por nombre.
+      var uids=[]; rows.forEach(function(x){ if(x.user_id && uids.indexOf(x.user_id)===-1) uids.push(x.user_id); });
       var profByUser={};
       if(uids.length){
         try{
@@ -2043,7 +2432,7 @@
         var iso=d0.getFullYear()+"-"+pad(d0.getMonth()+1)+"-"+pad(d0.getDate());
         var s=dt2h(d0), e=d1?dt2h(d1):s+2;
         if(d1 && d1.getFullYear()===d0.getFullYear() && d1.getMonth()===d0.getMonth() && d1.getDate()===d0.getDate() && e<s) e+=24;   // cruza medianoche, mismo día calendario
-        var prof=profByUser[row.user_id];
+        var prof=row.user_id?profByUser[row.user_id]:null;
         var artId=prof?prof.id:("name:"+(row.dj_nombre||"Sin asignar"));
         var artNm=(prof&&(prof.stage_name||prof.dj_name||prof.full_name))||row.dj_nombre||"Sin asignar";
         if(!ARTISTS.some(function(a){return a.id===artId;})) ARTISTS.push({id:artId, n:artNm, c:DJ_PALETTE[pal++ % DJ_PALETTE.length]});
@@ -2054,13 +2443,15 @@
             s:(row.tarifa_venue_cents!=null?"venue paga $"+(row.tarifa_venue_cents/100):"tu pago")
           } };
         }
+        // Vendedor: solo "ocupado", sin venue ni notas -- esa es la premisa
+        // del punto 3 (saber que el DJ ya tiene algo, no los detalles).
         out.push({ d:iso, cal:"reserva", artist:artId, ad:false, s:s, e:e,
-          t:(row.notas||row.venue_nombre||(row.tipo==="boda"?"Boda":"Evento privado")),
-          venue:(row.venue_nombre||""), meta:meta,
+          t:(_esVendedorBookings ? "Ocupado" : (row.notas||row.venue_nombre||(row.tipo==="boda"?"Boda":"Evento privado"))),
+          venue:(_esVendedorBookings ? "" : (row.venue_nombre||"")), meta:meta,
           bookingId:row.id, bookingTipo:row.tipo });
       });
-      _bookEv=out;
-      BASE_EV=_leadsEv.concat(_resEv).concat(_syncEv).concat(_bookEv);
+      if(_esVendedorBookings){ _bookEvBusy=out; } else { _bookEv=out; }
+      recomputeBaseEv();
       rebuild(); render();
     }catch(err){ console.warn("[Matrix] bookings reales de ELIXIS:", err.message||err); }
   }
@@ -2095,7 +2486,7 @@
     if(!sb || !sb.auth){ return setTimeout(setupRole, 300); }
     var sess=(await sb.auth.getSession()).data.session;
     if(!sess){ return setTimeout(setupRole, 300); }
-    var res=await sb.from('dj_profiles').select('id,role,stage_name,dj_name').eq('user_id', sess.user.id).maybeSingle();
+    var res=await sb.from('dj_profiles').select('id,role,stage_name,dj_name,calendar_sync_last_seen_at').eq('user_id', sess.user.id).maybeSingle();
     var role=String(res.data&&res.data.role?res.data.role:'').toLowerCase().trim();
     window.__COI_STAFF = ['admin','owner','manager','seller'].indexOf(role)!==-1;
     if(!window.__COI_STAFF){
@@ -2105,8 +2496,16 @@
       var nm=(res.data&&(res.data.stage_name||res.data.dj_name))||'Mi agenda';
       if(!ARTISTS.some(function(a){return a.id===djId;})) ARTISTS.push({id:djId,n:nm,c:'#3d8bff'});
       state.role='artista'; state.artist=djId; state.consent[djId]=true;
+      _calendarSyncLastSeen = (res.data && res.data.calendar_sync_last_seen_at) ? new Date(res.data.calendar_sync_last_seen_at) : null;
     } else {
       state.role='owner';
+      /* Manager/Vendedor arrancan en "Performance" (busy), nunca en el
+         detalle completo -- ellos no tienen pestaña "Owner · Matrix" en
+         absoluto (ver roleswitch más abajo). Owner/Admin arrancan en "full",
+         sin cambios respecto a como ya funcionaba. */
+      window.__COI_ROLE = role;
+      state.detailLevel = (role==='manager'||role==='seller') ? 'busy' : 'full';
+      recomputeBaseEv();
     }
     rebuild(); render();
   }

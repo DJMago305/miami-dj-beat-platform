@@ -18,19 +18,50 @@ const PREVIEW = false;   // app insertion: production behavior (no debug control
   document.getElementById('d-my').textContent=MON[n.getMonth()];
 })();
 // Floating Roman clock — build numerals + set hands to real time
+// 2026-10-01, pedido del PO ("que se auto ajuste, que no se ponga
+// desproporcionado aunque la pantalla se reduzca"): .clock usa clamp() en
+// CSS (fluido), así que su tamaño real cambia con cualquier ancho de
+// ventana -- no solo en los dos breakpoints cableados de antes. Los números
+// y las manecillas YA NO usan coordenadas/medidas fijas (asumían siempre
+// 250px); se recalculan en píxeles reales cada vez que .clock cambia de
+// tamaño (carga + resize, con debounce), proporcional al tamaño que SÍ
+// tenga en ese momento -- mismas proporciones de diseño (rad=104/250,
+// manecilla hora=62/250, manecilla minuto=92/250), aplicadas al tamaño real.
 (function(){
   const R=['XII','I','II','III','IV','V','VI','VII','VIII','IX','X','XI'];
-  const dial=document.getElementById('clockdial'); const cx=125,cy=125,rad=104;
-  for(let i=0;i<12;i++){
-    const a=i*30*Math.PI/180;
-    const s=document.createElement('span');
-    s.className='num'+((i%3===0)?' q':'');
-    s.textContent=R[i];
-    s.style.left=(cx+rad*Math.sin(a))+'px';
-    s.style.top=(cy-rad*Math.cos(a))+'px';
-    dial.appendChild(s);
+  const clockEl=document.querySelector('.clock');
+  const dial=document.getElementById('clockdial');
+  const hH=document.getElementById('handH'), hM=document.getElementById('handM'), cap=document.querySelector('.clock .cap');
+
+  function construirNumeros(size){
+    const cx=size/2, cy=size/2, rad=size*(104/250);
+    dial.querySelectorAll('.num').forEach(function(n){ n.remove(); });
+    for(let i=0;i<12;i++){
+      const a=i*30*Math.PI/180;
+      const s=document.createElement('span');
+      s.className='num'+((i%3===0)?' q':'');
+      s.textContent=R[i];
+      s.style.left=(cx+rad*Math.sin(a))+'px';
+      s.style.top=(cy-rad*Math.cos(a))+'px';
+      s.style.fontSize=(size*(19/250))+'px';
+      dial.appendChild(s);
+    }
   }
-  const hH=document.getElementById('handH'), hM=document.getElementById('handM');
+  function ajustarManecillas(size){
+    hH.style.height=(size*(62/250))+'px'; hH.style.width=(size*(3.5/250))+'px'; hH.style.marginLeft=(-size*(3.5/250)/2)+'px';
+    hM.style.height=(size*(92/250))+'px'; hM.style.width=(size*(2.5/250))+'px'; hM.style.marginLeft=(-size*(2.5/250)/2)+'px';
+    if(cap){ var capSize=size*(9/250); cap.style.width=capSize+'px'; cap.style.height=capSize+'px'; cap.style.margin=(-capSize/2)+'px 0 0 '+(-capSize/2)+'px'; }
+  }
+  function reajustarReloj(){
+    const size=clockEl.getBoundingClientRect().width;
+    if(!size) return; // oculto o aún sin layout -- nada que medir todavía
+    construirNumeros(size);
+    ajustarManecillas(size);
+  }
+  reajustarReloj();
+  let resizeT=null;
+  window.addEventListener('resize', function(){ clearTimeout(resizeT); resizeT=setTimeout(reajustarReloj, 120); });
+
   function tick(){ const t=new Date(), m=t.getMinutes(), h=t.getHours();
     hH.style.transform='rotate('+((h%12)*30+m*0.5)+'deg)';
     hM.style.transform='rotate('+(m*6)+'deg)'; }

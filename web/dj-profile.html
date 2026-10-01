@@ -268,6 +268,26 @@
                     }
                     var out = await client.auth.getSession();
                     var sess = out && out.data && out.data.session;
+                    /* 2026-10-01 (PO, "torpedo oculto"): una cuenta de Cliente que llega
+                       aquí -- por el link que sea, no solo la reconexión de Google ya
+                       corregida en calendar-oauth-callback -- se quedaba trabada en
+                       "Cargando..." para siempre, porque esta página pide datos de
+                       dj_profiles que un Cliente no tiene. Mismo chequeo real que ya
+                       usa calendar-oauth-callback (destinoParaUsuario): si hay sesión
+                       Y es de Cliente Y no es una vista pública (?view=public/?id=),
+                       se manda directo a su portal real en vez de dejarla ahí. Si la
+                       consulta falla, se sigue como Artista (comportamiento de
+                       siempre) -- nunca se bloquea a un Artista real por un error de red. */
+                    if (sess && !isPublicProfileView()) {
+                        try {
+                            var cpGuard = await client.from('client_profiles').select('user_id').eq('user_id', sess.user.id).maybeSingle();
+                            if (cpGuard && cpGuard.data) {
+                                clearAuthCheck();
+                                window.location.replace('./client-account.html');
+                                return;
+                            }
+                        } catch (eGuard) { try { console.warn('[dj-profile auth guard] tipo de cuenta', eGuard); } catch (e3) { void e3; } }
+                    }
                     clearAuthCheck();
                     if (sess) return;
                     if (isPublicProfileView()) {
@@ -3988,9 +4008,12 @@
          si falla la carga (ej. todavía no subido a Supabase Storage), o al
          tocar la pantalla -- nunca atrapa al visitante detrás del video. -->
     <div id="mdjIntroLoader" class="mdj-intro-loader" role="presentation" aria-hidden="true" title="Toca para saltar">
+        <!-- 2026-10-01 (PO): sin poster -- la foto fija no combinaba con el
+             primer cuadro real del video, se veía un "pestañazo" feo al
+             arrancar. Sin poster, no se muestra nada hasta que el video
+             mismo tiene su primer cuadro listo. -->
         <video id="mdjIntroLoaderVideo" class="mdj-intro-loader-video"
             src="https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/assets/branding/intro-loader/miami-dj-beat-intro-enganche.mp4"
-            poster="./assets/branding/intro-loader/miami-dj-beat-intro-poster.jpg"
             autoplay muted playsinline preload="auto"
             onerror="window.mdjHideIntroLoader && window.mdjHideIntroLoader()"
             onended="window.mdjHideIntroLoader && window.mdjHideIntroLoader()"></video>
@@ -5955,18 +5978,41 @@
                 const ownRes = await db.from('dj_profiles').select('*').eq('user_id', targetId).maybeSingle();
                 p = ownRes && ownRes.data ? ownRes.data : null;
             } else {
-                const pair = await Promise.all([
-                    db.from('dj_profiles').select('role').eq('user_id', session.user.id).maybeSingle(),
-                    db.from('public_dj_profiles').select('*').eq('user_id', targetId).maybeSingle()
-                ]);
-                const r = String(pair[0].data && pair[0].data.role != null ? pair[0].data.role : '').toLowerCase().trim();
-                isAdmin = r === 'admin';
-                isStaff = r === 'admin' || r === 'owner' || r === 'manager' || r === 'seller';
-                if (isStaff && !isPublicQrView) {
-                    const privRes = await db.from('dj_profiles').select('*').eq('user_id', targetId).single();
-                    p = privRes.data || null;
-                } else if (!pair[1].error && pair[1].data) {
-                    p = pair[1].data;
+                /* FIX-PROFILE-VIEWER-ROLE-TIMEOUT (2026-09-30): antes esto era un
+                   Promise.all — la vista pública (rápida) quedaba rehén de la
+                   consulta de "¿quién soy yo?" (dj_profiles por el user_id del
+                   VISITANTE, no del perfil visto), que bajo degradación de
+                   Supabase Auth puede tardar ~20s o más. Resultado real
+                   reproducido en producción: cualquier staff viendo el perfil de
+                   otro se quedaba en "Cargando…" ese tiempo entero, aunque el
+                   perfil en sí ya estaba listo. Ahora la vista pública se pinta
+                   con su propio tiempo, y la verificación de rol tiene un tope
+                   de 2.5s: si no llega a tiempo, se degrada en silencio a la
+                   vista pública (ya cargada) en vez de congelar la pantalla. */
+                const pubRes = await db.from('public_dj_profiles').select('*').eq('user_id', targetId).maybeSingle();
+                if (!pubRes.error && pubRes.data) p = pubRes.data;
+
+                const roleTimeoutMs = 2500;
+                /* supabase-js devuelve un "thenable" (PostgrestBuilder), no una
+                   Promise real -- no tiene .catch() propio (ver nota de proyecto:
+                   ".rpc().catch no existe"). Se envuelve en Promise.resolve()
+                   para poder engancharle el .catch() de seguridad. */
+                const roleLookup = Promise.resolve(
+                    db.from('dj_profiles').select('role').eq('user_id', session.user.id).maybeSingle()
+                ).catch(function (eRoleLookup) { return { data: null, error: eRoleLookup }; });
+                const roleTimeout = new Promise(function (resolve) { setTimeout(function () { resolve('timeout'); }, roleTimeoutMs); });
+                const roleRace = await Promise.race([roleLookup, roleTimeout]);
+
+                if (roleRace !== 'timeout') {
+                    const r = String(roleRace.data && roleRace.data.role != null ? roleRace.data.role : '').toLowerCase().trim();
+                    isAdmin = r === 'admin';
+                    isStaff = r === 'admin' || r === 'owner' || r === 'manager' || r === 'seller';
+                    if (isStaff && !isPublicQrView) {
+                        const privRes = await db.from('dj_profiles').select('*').eq('user_id', targetId).single();
+                        if (privRes.data) p = privRes.data;
+                    }
+                } else {
+                    try { console.warn('[dj-profile] Verificación de rol del visitante superó ' + roleTimeoutMs + 'ms; se muestra la vista pública sin privilegios de staff.'); } catch (eRoleTo) { void eRoleTo; }
                 }
             }
             if (session && session.user.id === targetId && p) {
@@ -16020,7 +16066,7 @@
     <script defer src="./monetization.js?v=20260422-sft-math"></script>
 
     <script defer src="./header-smart-search.js?v=20260927-bilingue-hint"></script>
-    <script defer src="./mdjb-shared-header.js?v=20260921-svc-activo4"></script>
+    <script defer src="./mdjb-shared-header.js?v=20260930-seoia-slot10"></script>
   <script defer src="./mdj-owner-tabs-marquee.js?v=20260818-nav-canonico"></script>
   <script defer src="./mdj-social-bar.js?v=20260819-social-contact-only"></script>
   <script src="./js/mdj-footer-legal.js?v=20260926-legal-franja5"></script>

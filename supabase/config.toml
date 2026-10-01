@@ -517,6 +517,17 @@ verify_jwt = false
 [functions.mdj-yearly-recall]
 verify_jwt = false
 
+# 2026-10-01: mismo patrón de fondo, encontrado de nuevo -- esta la arregló el
+# PO apagando "Verify JWT" a mano desde el Dashboard (Paso 6, incidente real:
+# Google redirige aquí SIN sesión de usuario, se autentica solo con su propio
+# `state` firmado). Ese apagado nunca quedó guardado aquí, así que un simple
+# `supabase functions deploy calendar-oauth-callback` (para subir el fix del
+# Paso 9) la devolvió sola a verify_jwt=true -- bloqueando TODA conexión nueva
+# de Google Calendar otra vez, para Artista y Cliente por igual, hasta que se
+# volvió a apagar a mano. Con esta entrada, un deploy normal ya no lo pierde.
+[functions.calendar-oauth-callback]
+verify_jwt = false
+
 # notify-new-lead NO entra aquí a propósito: se llama desde el navegador con
 # la clave anon normal (ver corsHeaders/comentario "may be called from the
 # browser" en su index.ts), sin secreto propio -- sus 2 fallos del

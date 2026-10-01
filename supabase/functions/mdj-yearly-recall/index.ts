@@ -134,6 +134,53 @@ serve(async (req: Request) => {
     }
   }
 
+  // ── 1b. Fechas importantes guardadas por el propio cliente en "Personal" ──
+  // client_profiles.important_dates (cumpleaños/aniversario/otra fecha de
+  // CUALQUIER persona que el cliente quiso recordar -- su hijo, su pareja,
+  // un amigo -- no solo la fecha propia del cliente, que ya cubre el bloque
+  // de arriba vía master_clients). PO, 2026-10-01: "si el cliente va a
+  // introducir su calendario de fechas, debe usarlo también, no solamente
+  // regalar la información" -- hasta hoy esta columna no alimentaba ningún
+  // aviso, solo se mostraba de vuelta al propio cliente en su portal.
+  // dedup_key lleva el id de la fecha (no solo el user_id) porque un mismo
+  // cliente puede guardar varias fechas de personas distintas.
+  const { data: perfilesConFechas, error: perfilesErr } = await ADMIN
+    .from("client_profiles")
+    .select("user_id, important_dates")
+    .not("important_dates", "is", null);
+
+  if (perfilesErr) {
+    console.error("[mdj-yearly-recall] client_profiles read failed:", perfilesErr);
+  } else {
+    for (const perfil of perfilesConFechas ?? []) {
+      const fechas: Array<{ id?: string; month?: number; day?: number }> =
+        Array.isArray(perfil.important_dates) ? perfil.important_dates : [];
+      for (const f of fechas) {
+        if (!f || !f.id || !f.month || !f.day) continue;
+        const md = `${String(f.month).padStart(2, "0")}-${String(f.day).padStart(2, "0")}`;
+        if (!wanted.has(md)) continue;
+
+        const yearTag = String(thisYear);
+        const dedupKey = `important_date:${perfil.user_id}:${f.id}:${yearTag}`;
+        if (await alreadyQueued(dedupKey)) continue;
+
+        const { error: insErr } = await ADMIN.from("event_reminders_queue").insert({
+          client_user_id: perfil.user_id,
+          dedup_key: dedupKey,
+          reminder_type: "yearly_recall",
+          status: "pending",
+          scheduled_for: new Date().toISOString(),
+        });
+        if (insErr) {
+          console.error(`[mdj-yearly-recall] insert failed (${dedupKey}):`, insErr);
+          continue;
+        }
+        console.log(`[mdj-yearly-recall] fecha importante próxima: cliente ${perfil.user_id}`);
+        queued++;
+      }
+    }
+  }
+
   // ── 2. Aniversario de un evento ya realizado (mismo mes/día, años atrás) ──
   const { data: pastEvents, error: leadsErr } = await ADMIN
     .from("leads")

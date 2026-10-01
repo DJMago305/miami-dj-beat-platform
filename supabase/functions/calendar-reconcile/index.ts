@@ -15,6 +15,20 @@
 //      más de 5 filas y más de la mitad, se omite y se reporta (evita un accidente).
 //
 // Disparador: pg_cron con CRON_EDGE_AUTH_SECRET (mismo patrón que calendar-channel-renew).
+//
+// 2026-10-01, paso 8 (detectar revocación desde Google): si el refresh_token
+// ya no sirve porque el USUARIO lo revocó directamente desde su cuenta de
+// Google (myaccount.google.com/permissions), Google responde el intercambio
+// de token con {error:"invalid_grant"}. Eso es la única señal confiable --
+// cualquier OTRO fallo (red, 500 transitorio de Google, credenciales mal
+// configuradas de nuestro lado) NO debe marcarse como revocado, sería un
+// falso positivo real que desconecta a alguien sin motivo. Cuando sí es
+// invalid_grant, la fila pasa a status='revoked' (ya permitido por el CHECK
+// constraint, agregado hoy junto con 'paused' -- ver docs/ESTADO_MAESTRO.md)
+// -- el frontend (account-settings.html/client-account.html) lo detecta y
+// muestra "Se desconectó desde Google -- vuelve a conectar" en vez del aviso
+// neutro de sincronización, y fuerza un reconexión completa en vez de solo
+// reactivar (el token guardado ya no sirve para nada).
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -27,10 +41,12 @@ const ADMIN = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSess
 
 const BIRTHDAYS_CALENDAR_ID = "addressbook#contacts@group.v.calendar.google.com";
 
-async function refrescarAccessToken(refreshToken: string): Promise<string | null> {
+type RefrescoResultado = { token: string | null; revocado: boolean };
+
+async function refrescarAccessToken(refreshToken: string): Promise<RefrescoResultado> {
     const CLIENT_ID = Deno.env.get("GOOGLE_CALENDAR_CLIENT_ID") ?? "";
     const CLIENT_SECRET = Deno.env.get("GOOGLE_CALENDAR_CLIENT_SECRET") ?? "";
-    if (!CLIENT_ID || !CLIENT_SECRET || !refreshToken) return null;
+    if (!CLIENT_ID || !CLIENT_SECRET || !refreshToken) return { token: null, revocado: false };
     try {
         const r = await fetch("https://oauth2.googleapis.com/token", {
             method: "POST",
@@ -38,17 +54,21 @@ async function refrescarAccessToken(refreshToken: string): Promise<string | null
             body: new URLSearchParams({ client_id: CLIENT_ID, client_secret: CLIENT_SECRET, refresh_token: refreshToken, grant_type: "refresh_token" }).toString(),
         });
         const d = await r.json().catch(() => ({}));
-        if (!r.ok || !d.access_token) { console.error("[calendar-reconcile] refresh_token fallo:", r.status); return null; }
-        return String(d.access_token);
-    } catch (e) { console.error("[calendar-reconcile] refresh_token red:", e); return null; }
+        if (!r.ok || !d.access_token) {
+            const revocado = d?.error === "invalid_grant";
+            console.error("[calendar-reconcile] refresh_token fallo:", r.status, d?.error, revocado ? "(revocado por el usuario)" : "");
+            return { token: null, revocado };
+        }
+        return { token: String(d.access_token), revocado: false };
+    } catch (e) { console.error("[calendar-reconcile] refresh_token red:", e); return { token: null, revocado: false }; }
 }
 
 // El refresh_token vive cifrado en Supabase Vault (user_calendar_integrations.google_refresh_token_secret_id).
 // deno-lint-ignore no-explicit-any
-async function refrescarDesdeVault(admin: any, secretId: string | null | undefined): Promise<string | null> {
-    if (!secretId) return null;
+async function refrescarDesdeVault(admin: any, secretId: string | null | undefined): Promise<RefrescoResultado> {
+    if (!secretId) return { token: null, revocado: false };
     const { data, error } = await admin.rpc("calendar_google_leer_token", { p_secret_id: secretId });
-    if (error || typeof data !== "string" || !data) { console.error("[calendar-reconcile] no se pudo leer el token de Vault:", error?.message); return null; }
+    if (error || typeof data !== "string" || !data) { console.error("[calendar-reconcile] no se pudo leer el token de Vault:", error?.message); return { token: null, revocado: false }; }
     return refrescarAccessToken(data);
 }
 
@@ -101,8 +121,18 @@ serve(async (req: Request) => {
         const clave = `${uid}:${calendarId}`;
         const tipo = calendarId === BIRTHDAYS_CALENDAR_ID ? "cumpleanos" : "nota";
         try {
-            const token = await refrescarDesdeVault(ADMIN, fila.google_refresh_token_secret_id);
-            if (!token) { resultados[clave] = "token_invalido"; continue; }
+            const { token, revocado } = await refrescarDesdeVault(ADMIN, fila.google_refresh_token_secret_id);
+            if (!token) {
+                if (revocado) {
+                    await ADMIN.from("user_calendar_integrations")
+                        .update({ status: "revoked", updated_at: new Date().toISOString() })
+                        .eq("user_id", uid).eq("provider", "google").eq("calendar_id", calendarId);
+                    resultados[clave] = "revocado_por_google";
+                } else {
+                    resultados[clave] = "token_invalido";
+                }
+                continue;
+            }
             const eventos = await listarTodo(token, calendarId, desde, hasta);
             if (!eventos) { resultados[clave] = "lectura_incompleta_sin_cambios"; continue; }
 

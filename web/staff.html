@@ -43,7 +43,7 @@
        (rol efectivo real vía JWT app_metadata, mismo patrón ya usado en login.html)
        hacía falta para que el gate de abajo pueda distinguir cliente de artista --
        antes cualquier no-staff caía siempre en dj-dashboard.html. -->
-  <script src="./auth.js?v=20260930-client-routing-gate"></script>
+  <script src="./auth.js?v=20260930-login-timeout-guard"></script>
   <script src="./subscription.js?v=20260422-find-dj-rank"></script>
   <script src="./js/smartcrate-harmonic-engine.js?v=20260830-camelot-engine"></script>
   <script src="./js/music-hunter-ring-buffer.js?v=20260830-ring-buffer"></script>
@@ -1667,10 +1667,86 @@
       </section>
 
       <!-- ═══ Vista CASH FLOW — misma copia del tronco nuevo abriendo el tab flow (?tab=flow). 1:1, sin modificar. ═══ -->
+      <!-- Panel "Adquisición real" (2026-09-30, pedido directo del PO): 3 números reales
+           (leads, cuentas nuevas, compras confirmadas), contados directo de leads/auth.users/
+           merch_orders vía mdj_metricas_adquisicion_reales() -- cero dato inventado. Se agrega
+           SEPARADO del switch "Owner Financial IA — Matrix" que vive dentro del iframe de abajo,
+           porque ese Matrix es una maqueta con datos DEMO (su propio código lo dice: "esta
+           maqueta no implementa nada de lo aquí descrito"), y no se debe mezclar dato real con
+           dato de maqueta en la misma tarjeta. -->
+      <style>
+        .mrm-panel{flex:0 0 auto;padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.02);}
+        .mrm-head{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
+        .mrm-head strong{font-size:13px;color:#fff;}
+        .mrm-badge{font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#7fdca0;border:1px solid rgba(127,220,160,.4);border-radius:999px;padding:3px 9px;}
+        .mrm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;}
+        .mrm-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px 14px;}
+        .mrm-label{font-size:10.5px;color:rgba(255,255,255,.55);margin-bottom:4px;}
+        .mrm-value{font-size:19px;font-weight:800;color:#e8c987;}
+        .mrm-sub{font-size:10px;color:rgba(255,255,255,.4);}
+        #view-cashflow.active{display:flex;flex-direction:column;}
+        #view-cashflow #cashflow-frame{flex:1 1 auto;height:auto;min-height:400px;}
+      </style>
       <section id="view-cashflow" class="staff-view">
+        <div class="mrm-panel" id="mrm-panel">
+          <div class="mrm-head"><strong>📊 Adquisición real</strong><span class="mrm-badge">Datos reales — no demo</span></div>
+          <div class="mrm-grid">
+            <div class="mrm-card"><div class="mrm-label">Leads</div><div class="mrm-value" id="mrm-leads">—</div><div class="mrm-sub">este mes / total</div></div>
+            <div class="mrm-card"><div class="mrm-label">Cuentas nuevas</div><div class="mrm-value" id="mrm-cuentas">—</div><div class="mrm-sub">este mes / total</div></div>
+            <div class="mrm-card"><div class="mrm-label">Compras confirmadas</div><div class="mrm-value" id="mrm-compras">—</div><div class="mrm-sub">este mes / total · <span id="mrm-monto">$0</span> este mes</div></div>
+            <div class="mrm-card"><div class="mrm-label">Suscriptores</div><div class="mrm-value" id="mrm-suscriptores">—</div><div class="mrm-sub">cuenta en vivo — clientes + artistas reales</div></div>
+            <div class="mrm-card"><div class="mrm-label">Ingresos Shop</div><div class="mrm-value" id="mrm-shop">—</div><div class="mrm-sub">total real · <span id="mrm-shop-mes">$0</span> este mes</div></div>
+          </div>
+        </div>
         <div id="cashflow-loading" class="agenda-loading">Cargando Cash Flow…</div>
         <iframe id="cashflow-frame" data-src="./staff-agenda.html?tab=flow" title="Cash Flow" referrerpolicy="same-origin"></iframe>
       </section>
+      <script>
+      (function(){
+        function mountAdquisicionReal(){
+          var panel = document.getElementById('mrm-panel');
+          if (!panel || panel.dataset.mounted) return;
+          panel.dataset.mounted = '1';
+          var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+          if (!sb) return;
+          sb.rpc('mdj_metricas_adquisicion_reales').then(function (r) {
+            if (r.error || !r.data || !r.data[0]) {
+              var els = ['mrm-leads', 'mrm-cuentas', 'mrm-compras', 'mrm-suscriptores', 'mrm-shop'];
+              els.forEach(function (id) { var e = document.getElementById(id); if (e) e.textContent = 'Error'; });
+              return;
+            }
+            var d = r.data[0];
+            var elLeads = document.getElementById('mrm-leads');
+            var elCuentas = document.getElementById('mrm-cuentas');
+            var elCompras = document.getElementById('mrm-compras');
+            var elMonto = document.getElementById('mrm-monto');
+            var elSuscriptores = document.getElementById('mrm-suscriptores');
+            var elShop = document.getElementById('mrm-shop');
+            var elShopMes = document.getElementById('mrm-shop-mes');
+            if (elLeads) elLeads.textContent = d.leads_periodo + ' / ' + d.leads_total;
+            if (elCuentas) elCuentas.textContent = d.cuentas_periodo + ' / ' + d.cuentas_total;
+            if (elCompras) elCompras.textContent = d.compras_periodo + ' / ' + d.compras_total;
+            if (elMonto) elMonto.textContent = '$' + (parseFloat(d.monto_compras_periodo_usd) || 0).toFixed(2);
+            if (elSuscriptores) elSuscriptores.textContent = String(d.suscriptores_total != null ? d.suscriptores_total : 0);
+            if (elShop) elShop.textContent = '$' + (parseFloat(d.ingresos_shop_total_usd) || 0).toFixed(2);
+            if (elShopMes) elShopMes.textContent = '$' + (parseFloat(d.ingresos_shop_periodo_usd) || 0).toFixed(2);
+          }).catch(function () {
+            var els = ['mrm-leads', 'mrm-cuentas', 'mrm-compras', 'mrm-suscriptores', 'mrm-shop'];
+            els.forEach(function (id) { var e = document.getElementById(id); if (e) e.textContent = 'Error'; });
+          });
+        }
+        var attempts = 0;
+        var timer = setInterval(function () {
+          attempts++;
+          if (document.getElementById('mrm-panel') && typeof window.getSupabaseClient === 'function') {
+            clearInterval(timer);
+            mountAdquisicionReal();
+          } else if (attempts > 60) {
+            clearInterval(timer);
+          }
+        }, 250);
+      })();
+      </script>
 
       <!-- ═══ Vista CONFIG — empotra account-settings.html, la hoja UNICA de ajustes.
            Antes empotraba staff-config.html, que era una copia de esa misma hoja con
@@ -2250,6 +2326,19 @@
              donde "Cash Flow" se veía como "Flujo de Caja": mismo puesto,
              mismo destino, dos rótulos distintos según de qué página venías. */
           '<button type="button" data-top="cashflow">Cash Flow</button>'+
+          /* SEO·IA (2026-09-30): panel de tráfico real (GA4 + Search Console).
+             INTENTO de embeber como iframe (como Cash Flow) DESCARTADO:
+             claude.ai manda CSP "frame-ancestors 'self' <extensiones>", así
+             que cualquier origen ajeno (incluido este sitio) lo bloquea --
+             confirmado en consola, no es arreglable desde nuestro lado. Vuelve
+             a <a target="_blank"> real, mismo criterio que ⚙️ CONFIG arriba
+             ("Se deja como <a>: paintStaffTopnav solo engancha clics a
+             <button>, y un ancla navega sola"). Si en el futuro se quiere
+             ver DENTRO del portal con la barra propia, la única vía real es
+             reconstruir este panel como página nativa del sitio (traer los
+             datos de Supermetrics a una tabla propia y pintarlos aquí) --
+             no embeber el Artifact. */
+          '<a href="https://claude.ai/artifact/Xq8DXWtmh9WMborSAZEdsT" target="_blank" rel="noopener noreferrer">SEO·IA</a>'+
           /* MI PERFIL abre la FICHA, que vive aqui dentro (#view-miperfil): banner,
              foto, identidad y valoracion. Antes era un <a> hacia account-settings.html
              — el MISMO destino que ⚙ Config, o sea dos botones distintos llevando a la
@@ -2341,6 +2430,9 @@
           '<button type="button" class="active" data-top="gobernanza" data-i18n="staff-nav-ventas">Ventas</button>'+
           '<button type="button" data-top="agenda" data-i18n="nav-agenda">Agenda</button>'+
           '<a href="./account-settings.html" data-top="config" data-i18n="staff-nav-config">⚙️ CONFIG</a>'+
+          /* SEO·IA (2026-09-30, orden del PO: "para todo el estaff... que se vea
+             desde todas las pestañas") -- mismo link que la barra del Owner. */
+          '<a href="https://claude.ai/artifact/Xq8DXWtmh9WMborSAZEdsT" target="_blank" rel="noopener noreferrer">SEO·IA</a>'+
           '<button type="button" data-top="miperfil">MI PERFIL</button>'+
           '<button type="button" data-top="gobernanza" data-i18n="staff-nav-staff">Staff</button>'+
           '<button type="button" data-top="elixis" data-i18n="staff-nav-fenix">Fénix AI</button>';
@@ -2348,6 +2440,8 @@
       return start+
         '<button type="button" data-href="./dj-tools.html" data-i18n="staff-nav-djtools">DJ Tools</button>'+
         '<button type="button" class="active" data-i18n="staff-nav-operaciones">Operaciones</button>'+
+        /* SEO·IA (2026-09-30, orden del PO): mismo link, misma paridad que Owner/Ventas. */
+        '<a href="https://claude.ai/artifact/Xq8DXWtmh9WMborSAZEdsT" target="_blank" rel="noopener noreferrer">SEO·IA</a>'+
         '<button type="button" data-top="miperfil">MI PERFIL</button>'+
         '<button type="button" data-top="gobernanza" data-i18n="staff-nav-staff">Staff</button>';
     }

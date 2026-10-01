@@ -1423,13 +1423,6 @@
       });
     }
 
-    var notifyBtn = document.getElementById('ca-save-notify-btn');
-    if (notifyBtn) {
-      notifyBtn.addEventListener('click', function () {
-        saveProfile(session, 'ca-notify-status');
-      });
-    }
-
     var emailBtn = document.getElementById('ca-email-btn');
     if (emailBtn) {
       emailBtn.addEventListener('click', function () {

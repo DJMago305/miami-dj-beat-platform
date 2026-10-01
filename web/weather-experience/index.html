@@ -49,7 +49,17 @@
     <div class="hilo" id="c-hilo"></div>
     <div class="divider"></div>
     <div class="loc"><span id="c-loc">📍 —</span><span class="sub">CONDICIONES ACTUALES</span></div>
-    <div class="clock" aria-hidden="true"><div class="dial" id="clockdial"><div class="hand h" id="handH"></div><div class="hand m" id="handM"></div><span class="cap"></span></div></div>
+    <!-- 2026-10-01: manecillas sacadas de .dial (reporte real del PO: "el reloj
+         no se debe distorsionar"). .dial tiene perspective()+rotateX(17deg) --
+         un número estático queda bien ahí (solo un punto tilteado), pero una
+         manecilla que ROTA dentro de ese espacio 3D se proyecta torcida, no
+         como una rotación de reloj normal. Las manecillas ahora son hermanas
+         de .dial, no hijas -- mismo selector CSS (".clock .hand"/".clock .cap"
+         son descendientes, no hijos directos, así que no cambia nada de
+         estilo), giran en plano dentro de .clock (misma caja que .dial por
+         "inset:0"), sin la distorsión 3D. Los números siguen dentro de .dial,
+         con su inclinación de siempre. -->
+    <div class="clock" aria-hidden="true"><div class="dial" id="clockdial"></div><div class="hand h" id="handH"></div><div class="hand m" id="handM"></div><span class="cap"></span></div>
     <!-- métricas para teléfono: el riel lateral se oculta <900px, esta tira lo reemplaza -->
     <div class="mstrip" id="mstrip"></div>
   </section>

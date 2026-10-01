@@ -1894,11 +1894,34 @@
              escondido en lo que el JS decide un estado. Apagado = no conectado
              o pausado; encenderlo por primera vez dispara el flujo real de
              Google (calendar-oauth-init); si ya esta conectado, solo pausa o
-             reanuda -- nunca borra el token guardado. -->
+             reanuda -- nunca borra el token guardado.
+             2026-10-01: el modal propio de consentimiento (checkbox "Entiendo
+             y autorizo" antes de saltar a Google) se QUITA por pedido directo
+             del PO tras probarlo en vivo -- "el proceso de la vez anterior
+             dava hasta miedo", pidió menos pasos y que fuera convencional. La
+             descripción corta de abajo (mismo patrón que Avisos por correo/
+             SMS, SIEMPRE visible, sin bloquear nada) reemplaza el modal; el
+             consentimiento real de qué se comparte lo sigue dando la propia
+             pantalla de Google al conectar, como en cualquier app normal. -->
         <div class="toggle-row">
           <div class="toggle-label">
             <span id="pref-notify-calendar-title" data-i18n="account-pref-calendar-title">Sync Google Calendar</span>
+            <p data-i18n="account-pref-calendar-desc">Sincroniza tu calendario de Google y los cumpleaños/aniversarios de tus contactos. Solo leemos título y horario -- nunca descripción, invitados ni ubicación. Puedes desconectar cuando quieras.</p>
+            <!-- 2026-10-01, paso 7: estado real de la conexión -- hoy el switch solo
+                 decía encendido/apagado, sin avisar si la sincronización empezaba a
+                 fallar en silencio (el webhook de Google se cae, el cron de
+                 reconciliación no corre, etc.). "Última sincronización" viene del
+                 last_synced_at más reciente de las filas del usuario; si pasan más de
+                 48h sin actualizarse mientras el switch sigue encendido, se muestra
+                 como aviso (mismo color que un error) en vez de dato neutro. -->
+            <p id="pref-calendar-sync-status" style="display:none;margin-top:4px;font-size:12px;color:rgba(255,255,255,0.45);"></p>
             <p id="pref-calendar-sync-hint" style="display:none;"></p>
+            <!-- 2026-10-01, paso 6: "apagar" (arriba) solo PAUSA -- el refresh_token
+                 sigue guardado y el permiso sigue vivo del lado de Google. Este link
+                 aparte SÍ desconecta de verdad (revoca con Google + borra el token).
+                 Oculto por defecto; visible solo si hay una conexión real (activa o
+                 pausada) que desconectar. -->
+            <button type="button" id="pref-calendar-disconnect-link" style="display:none;margin-top:6px;padding:0;border:none;background:none;color:rgba(255,150,130,0.85);font-size:12px;text-decoration:underline;cursor:pointer;">Desconectar completamente</button>
           </div>
           <label class="apple-switch">
             <input type="checkbox" id="pref-notify-calendar-sync" aria-labelledby="pref-notify-calendar-title" />
@@ -1909,6 +1932,8 @@
         (function () {
             var cb = document.getElementById('pref-notify-calendar-sync');
             var hint = document.getElementById('pref-calendar-sync-hint');
+            var disconnectLink = document.getElementById('pref-calendar-disconnect-link');
+            var syncStatus = document.getElementById('pref-calendar-sync-status');
             if (!cb) return;
             function setHint(msg, isError) {
                 if (!hint) return;
@@ -1916,6 +1941,52 @@
                 hint.textContent = msg;
                 hint.style.color = isError ? 'rgba(255,150,130,0.95)' : '';
                 hint.style.display = 'block';
+            }
+            function tiempoRelativo(fecha) {
+                var ms = Date.now() - fecha.getTime();
+                var min = Math.floor(ms / 60000);
+                if (min < 1) return 'hace un momento';
+                if (min < 60) return 'hace ' + min + (min === 1 ? ' minuto' : ' minutos');
+                var h = Math.floor(min / 60);
+                if (h < 24) return 'hace ' + h + (h === 1 ? ' hora' : ' horas');
+                var d = Math.floor(h / 24);
+                return 'hace ' + d + (d === 1 ? ' día' : ' días');
+            }
+            // Paso 8: si Google revocó el acceso desde el lado del usuario (o el
+            // token caducó), calendar-reconcile marca la fila 'revoked'/'expired' --
+            // esto se nota ANTES que nada más, nunca se mezcla con el aviso neutro
+            // de "última sincronización" (el token ya no sirve para nada, no es un
+            // simple retraso de sincronización).
+            function hayRevocado(filas) {
+                return (filas || []).some(function (r) { return r.status === 'revoked' || r.status === 'expired'; });
+            }
+            function pintarEstadoSync(filas) {
+                if (!syncStatus) return;
+                if (hayRevocado(filas)) {
+                    syncStatus.textContent = 'Se desconectó desde Google Calendar -- vuelve a conectar.';
+                    syncStatus.style.color = 'rgba(255,150,130,0.95)';
+                    syncStatus.style.display = 'block';
+                    return;
+                }
+                var activas = (filas || []).filter(function (r) { return r.status === 'active'; });
+                if (!activas.length) { syncStatus.style.display = 'none'; return; }
+                var fechas = activas.map(function (r) { return r.last_synced_at ? new Date(r.last_synced_at) : null; }).filter(Boolean);
+                if (!fechas.length) {
+                    syncStatus.textContent = 'Conectado -- esperando la primera sincronización.';
+                    syncStatus.style.color = 'rgba(255,255,255,0.45)';
+                    syncStatus.style.display = 'block';
+                    return;
+                }
+                var masReciente = new Date(Math.max.apply(null, fechas.map(function (f) { return f.getTime(); })));
+                var horasDesde = (Date.now() - masReciente.getTime()) / 3600000;
+                if (horasDesde > 48) {
+                    syncStatus.textContent = 'Última sincronización ' + tiempoRelativo(masReciente) + ' -- si no ves eventos nuevos, intenta desconectar y volver a conectar.';
+                    syncStatus.style.color = 'rgba(255,150,130,0.85)';
+                } else {
+                    syncStatus.textContent = 'Última sincronización ' + tiempoRelativo(masReciente) + '.';
+                    syncStatus.style.color = 'rgba(255,255,255,0.45)';
+                }
+                syncStatus.style.display = 'block';
             }
             async function getClientAndSession() {
                 try {
@@ -1938,12 +2009,52 @@
                     // el switch si CUALQUIERA de las filas está activa.
                     var q = await ctx.sb
                         .from('user_calendar_integrations')
-                        .select('status')
+                        .select('status, last_synced_at')
                         .eq('user_id', ctx.session.user.id)
                         .eq('provider', 'google');
-                    cb.checked = !!(q && q.data && q.data.some(function (r) { return r.status === 'active'; }));
+                    var filas = (q && q.data) || [];
+                    cb.checked = filas.some(function (r) { return r.status === 'active'; }) && !hayRevocado(filas);
+                    if (disconnectLink) disconnectLink.style.display = filas.length ? '' : 'none';
+                    pintarEstadoSync(filas);
                 } catch (e) { /* si falla la lectura, se queda apagado por defecto */ }
             }
+            // Paso 6: desconectar de verdad -- revoca con Google y borra el refresh_token
+            // (nunca solo pausa). Pide confirmación porque es distinto de apagar el
+            // interruptor: hay que volver a autorizar desde cero si se quiere reconectar.
+            async function desconectarDeVerdad() {
+                var ctx = await getClientAndSession();
+                if (!ctx) { window.location.href = './login.html?redirect=account-settings'; return; }
+                if (!window.confirm('¿Desconectar completamente tu Google Calendar? Esto revoca el permiso del lado de Google y borra el token guardado -- tendrás que autorizarlo de nuevo si quieres reconectarlo.')) return;
+                disconnectLink.disabled = true;
+                cb.disabled = true;
+                try {
+                    var base = window.mdbSupabaseFunctionUrl ? window.mdbSupabaseFunctionUrl('calendar-oauth-disconnect') : '';
+                    var res = await fetch(base, { method: 'POST', headers: { Authorization: 'Bearer ' + ctx.session.access_token } });
+                    var body = await res.json().catch(function () { return null; });
+                    if (body && body.ok) {
+                        cb.checked = false;
+                        disconnectLink.style.display = 'none';
+                        if (syncStatus) syncStatus.style.display = 'none';
+                        setHint('Desconectado. Ya no tenemos acceso a tu Google Calendar.');
+                    } else {
+                        setHint('No se pudo desconectar. Intenta de nuevo.', true);
+                    }
+                } catch (e) {
+                    setHint('No se pudo desconectar. Intenta de nuevo.', true);
+                } finally {
+                    disconnectLink.disabled = false;
+                    cb.disabled = false;
+                }
+            }
+            if (disconnectLink) disconnectLink.addEventListener('click', desconectarDeVerdad);
+            // 2026-10-01: el modal propio de consentimiento que vivía aquí (checkbox
+            // "Entiendo y autorizo" antes de saltar a Google) se QUITA por pedido
+            // directo del PO tras probarlo en vivo con su propia cuenta -- "el proceso
+            // de la vez anterior dava hasta miedo", pidió menos pasos y que fuera
+            // convencional. La descripción corta ya agregada junto al interruptor
+            // (mismo patrón que Avisos por correo/SMS) cubre lo mismo sin bloquear
+            // nada; la pantalla real de permisos de Google (que de todos modos no se
+            // puede saltar) es la parte que el usuario ya reconoce y en la que confía.
             cb.addEventListener('change', async function () {
                 var ctx = await getClientAndSession();
                 if (!ctx) { cb.checked = false; window.location.href = './login.html?redirect=account-settings'; return; }
@@ -1956,22 +2067,28 @@
                             .update({ status: 'paused', updated_at: new Date().toISOString() })
                             .eq('user_id', ctx.session.user.id).eq('provider', 'google');
                         setHint('');
+                        if (syncStatus) syncStatus.style.display = 'none';
                     } catch (e) { /* silencioso: si no habia fila, no hay nada que pausar */ }
                     cb.disabled = false;
                     return;
                 }
                 // Encender: si ya hay al menos una fila (conectado antes), reactiva TODAS;
-                // si no hay ninguna, dispara el flujo real de Google (conecta ambos
-                // calendarios desde cero -- ver calendar-oauth-callback).
+                // si no hay ninguna, es una conexión NUEVA -- va directo a Google, sin
+                // paso intermedio (ver nota arriba: menos procesos, pedido del PO).
                 cb.disabled = true;
                 try {
                     var q = await ctx.sb.from('user_calendar_integrations').select('status')
                         .eq('user_id', ctx.session.user.id).eq('provider', 'google');
-                    if (q && q.data && q.data.length) {
+                    var filasQ = (q && q.data) || [];
+                    // Paso 8: si Google ya revocó el token guardado, reactivar la fila
+                    // ('active') no sirve de nada -- el token sigue muerto. Hay que
+                    // pasar de cero por calendar-oauth-init, igual que una cuenta nueva.
+                    if (filasQ.length && !hayRevocado(filasQ)) {
                         await ctx.sb.from('user_calendar_integrations')
                             .update({ status: 'active', updated_at: new Date().toISOString() })
                             .eq('user_id', ctx.session.user.id).eq('provider', 'google');
                         setHint('');
+                        loadState();
                         cb.disabled = false;
                         return;
                     }
@@ -1983,10 +2100,10 @@
                     setHint((body && body.error === 'calendar_oauth_not_configured')
                         ? 'La conexión con Google Calendar todavía no está activada del lado del servidor.'
                         : 'No se pudo conectar. Intenta de nuevo.', true);
+                    cb.disabled = false;
                 } catch (e) {
                     cb.checked = false;
                     setHint('No se pudo conectar. Intenta de nuevo.', true);
-                } finally {
                     cb.disabled = false;
                 }
             });
@@ -3136,7 +3253,7 @@
   <!-- AUTH LOGIC & COMPATIBILITY -->
   <script src="./js/mdj-account-forms.js?v=20260421-account-forms"></script>
   <script src="./mdj-identity.js?v=20260921-rol-unico"></script>
-  <script src="./auth.js?v=20260921-idiomas"></script>
+  <script src="./auth.js?v=20260930-login-timeout-guard"></script>
   <script src="./role-guard.js?v=20260921-rol-servidor" data-role="dj" data-client-home="./client-account.html"></script>
   <script src="./js/mdj-categorias.js?v=20260927-sublabels"></script>
   <script src="./translations.js?v=20260927-bilingue-final"></script>
@@ -8355,7 +8472,7 @@
     </script>
     <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
     <script src="./header-smart-search.js?v=20260927-bilingue-hint"></script>
-      <script src="./mdjb-shared-header.js?v=20260922-hero-below-header"></script>
+      <script src="./mdjb-shared-header.js?v=20260930-seoia-slot10"></script>
   <script src="./mdj-profile-nav-context.js?v=20260818-nav-canonico"></script>
   <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
   <script src="./mdj-mainnav-infinite.js?v=20260818-nav-canonico"></script>

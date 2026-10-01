@@ -25,9 +25,40 @@ function portalEscapeHtml(s) {
  * herramientas operativas del artista, no aplican a lo que un cliente ve de
  * sí mismo.
  */
-var _portalCoiState = null; // { date: Date, view: 'dia'|'semana'|'mes'|'anio' }
+var _portalCoiState = null; // { date: Date, view: 'dia'|'semana'|'mes'|'anio', tab: 'evento'|'personal' }
 var _portalCoiLeads = [];
 var _portalCoiImportant = [];
+/* 2026-09-30, paso 2 del mismo pedido ("los clientes el de ellos personal y
+   el de la fecha de su evento"): "Mi Evento" (lo de siempre: Sets/Reservas)
+   y "Personal" (fechas importantes agregadas a mano + Google sincronizado,
+   mismo mecanismo ya usado en calendario-operacional-inteligente.html --
+   elixis_agenda_eventos tipo cumpleanos/nota, aislado por RLS a
+   user_id=auth.uid(), sin filtro extra en el cliente). Carga perezosa: solo
+   se pide la primera vez que el cliente abre la pestaña Personal. */
+var _portalCoiPersonalSync = [];
+var _portalCoiPersonalSyncLoaded = false;
+var _portalCoiPersonalSyncLoading = false;
+/* 2026-10-01, paso 5 del mismo pedido: avisar cuando llega un evento NUEVO al
+   calendario personal (Google sync) -- hoy solo se veía si el cliente entraba
+   a mirar la pestaña Personal. "Visto por última vez" se guarda en
+   client_profiles.calendar_sync_last_seen_at (self-update, RLS ya lo
+   permite); clientRow/this.clientProfile ya traen la columna porque ambos
+   fetch usan select('*'). */
+var _portalCoiLastSeen = null;
+function portalCoiPersonalUnreadCount() {
+    return _portalCoiPersonalSync.filter(function (p) {
+        return p.createdAt && (!_portalCoiLastSeen || p.createdAt > _portalCoiLastSeen);
+    }).length;
+}
+async function portalCoiMarcarCalendarSyncVisto() {
+    try {
+        var db = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+        if (!db || !db.from || !db.auth) return;
+        var sess = (await db.auth.getSession()).data.session;
+        if (!sess) return;
+        await db.from('client_profiles').update({ calendar_sync_last_seen_at: new Date().toISOString() }).eq('user_id', sess.user.id);
+    } catch (e) { console.warn('[Portal] marcar calendario personal visto:', e.message || e); }
+}
 
 var PORTAL_COI_MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 var PORTAL_COI_MONTHS_L = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
@@ -78,6 +109,23 @@ function portalCoiEventLabel(l) {
 function portalCoiEventsOn(dateObj) {
     var key = portalCoiKey(dateObj);
     var out = [];
+    var tab = (_portalCoiState && _portalCoiState.tab) || 'evento';
+    if (tab === 'personal') {
+        // Personal: SOLO lo personal del cliente -- fechas importantes agregadas
+        // a mano + su Google sincronizado. Nunca mezclado con "Mi Evento".
+        var mo = dateObj.getMonth() + 1, da = dateObj.getDate();
+        _portalCoiImportant.forEach(function (imp) {
+            if (imp.month !== mo || imp.day !== da) return;
+            var tLabel = PORTAL_COI_DATE_TYPES[imp.date_type] || '';
+            out.push({ _kind: 'important', id: imp.id, cal: 'cliente', t: imp.name + (tLabel ? ' · ' + tLabel : ''), ad: true, s: null, e: null });
+        });
+        _portalCoiPersonalSync.forEach(function (p) {
+            if (p.d !== key) return;
+            out.push({ _kind: 'personal', cal: 'personal', t: p.t, ad: true, s: null, e: null });
+        });
+        return out;
+    }
+    // Mi Evento: SOLO sus reservas reales (Sets/Reservas) -- la fecha de su evento.
     _portalCoiLeads.forEach(function (l) {
         if (l.event_date !== key) return;
         var s = portalCoiTimeDec(l.event_start_time);
@@ -86,22 +134,58 @@ function portalCoiEventsOn(dateObj) {
         if (s !== null && e !== null && e <= s) e += 24;
         out.push({ _kind: 'lead', cal: 'set', t: portalCoiEventLabel(l), ad: ad, s: s, e: e });
     });
-    var mo = dateObj.getMonth() + 1, da = dateObj.getDate();
-    _portalCoiImportant.forEach(function (imp) {
-        if (imp.month !== mo || imp.day !== da) return;
-        var tLabel = PORTAL_COI_DATE_TYPES[imp.date_type] || '';
-        out.push({ _kind: 'important', cal: 'cliente', t: imp.name + (tLabel ? ' · ' + tLabel : ''), ad: true, s: null, e: null });
-    });
     return out;
 }
 
-function renderPortalCalendar(leads, importantDates) {
+function portalCoiSetTab(t) {
+    if (!_portalCoiState) _portalCoiState = { date: new Date(), view: 'mes', tab: 'evento' };
+    _portalCoiState.tab = t;
+    if (t === 'personal') {
+        _portalCoiLastSeen = new Date();
+        portalCoiMarcarCalendarSyncVisto();
+        if (!_portalCoiPersonalSyncLoaded) { portalCoiLoadPersonalSync(); return; }
+    }
+    renderPortalCalendar();
+}
+
+async function portalCoiLoadPersonalSync() {
+    if (_portalCoiPersonalSyncLoaded || _portalCoiPersonalSyncLoading) return;
+    _portalCoiPersonalSyncLoading = true;
+    try {
+        var db = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
+        if (!db || !db.from || !db.auth) { _portalCoiPersonalSyncLoading = false; return setTimeout(portalCoiLoadPersonalSync, 300); }
+        if (!(await db.auth.getSession()).data.session) { _portalCoiPersonalSyncLoading = false; return setTimeout(portalCoiLoadPersonalSync, 300); }
+        var r = await db.from('elixis_agenda_eventos')
+            .select('id,fecha_inicio,tipo,notas,venue_nombre,created_at')
+            .eq('estado', 'activo')
+            .in('tipo', ['cumpleanos', 'nota']);
+        if (r.error) throw r.error;
+        _portalCoiPersonalSyncLoaded = true;
+        _portalCoiPersonalSync = (r.data || []).map(function (row) {
+            var d0 = new Date(row.fecha_inicio);
+            // Mismo ajuste que calendario-operacional-inteligente.html: eventos de
+            // "todo el día" de Google se guardan a medianoche UTC -- leerlos en hora
+            // local los pinta un día antes en Miami.
+            var todoElDia = (d0.getUTCHours() === 0 && d0.getUTCMinutes() === 0 && d0.getUTCSeconds() === 0);
+            var iso = todoElDia
+                ? d0.getUTCFullYear() + '-' + String(d0.getUTCMonth() + 1).padStart(2, '0') + '-' + String(d0.getUTCDate()).padStart(2, '0')
+                : d0.getFullYear() + '-' + String(d0.getMonth() + 1).padStart(2, '0') + '-' + String(d0.getDate()).padStart(2, '0');
+            return { d: iso, t: row.notas || row.venue_nombre || (row.tipo === 'cumpleanos' ? 'Cumpleaños' : 'Evento personal'), createdAt: row.created_at ? new Date(row.created_at) : null };
+        });
+        renderPortalCalendar();
+    } catch (err) { console.warn('[Portal] sincronización de calendario personal:', err.message || err); }
+    finally { _portalCoiPersonalSyncLoading = false; }
+}
+
+function renderPortalCalendar(leads, importantDates, lastSeenAt) {
     var host = document.getElementById('portal-calendar-widget') || document.getElementById('portal-calendar-widget-single');
     if (!host) return;
     if (Array.isArray(leads)) _portalCoiLeads = leads;
     if (Array.isArray(importantDates)) _portalCoiImportant = importantDates;
+    if (lastSeenAt !== undefined) _portalCoiLastSeen = lastSeenAt ? new Date(lastSeenAt) : null;
     if (!_portalCoiState) _portalCoiState = { date: new Date(), view: 'mes' };
 
+    var tab = _portalCoiState.tab || 'evento';
     var view = _portalCoiState.view;
     var built = (view === 'anio') ? portalCoiBuildYear()
         : (view === 'semana') ? portalCoiBuildTimeline(7)
@@ -113,13 +197,38 @@ function renderPortalCalendar(leads, importantDates) {
         return '<button type="button" data-view="' + v[0] + '"' + (v[0] === view ? ' aria-selected="true"' : '') + ' onclick="portalCoiSetView(\'' + v[0] + '\')">' + v[1] + '</button>';
     }).join('');
 
+    var TABS = [['evento', 'Mi Evento'], ['personal', 'Personal']];
+    var personalUnread = portalCoiPersonalUnreadCount();
+    var tabHtml = TABS.map(function (t) {
+        var badge = (t[0] === 'personal' && personalUnread > 0)
+            ? ' <span style="display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--set);color:#fff;font-size:10px;font-weight:800;line-height:16px;">' + personalUnread + '</span>'
+            : '';
+        return '<button type="button" data-tab="' + t[0] + '"' + (t[0] === tab ? ' aria-selected="true"' : '') + ' onclick="portalCoiSetTab(\'' + t[0] + '\')">' + t[1] + badge + '</button>';
+    }).join('');
+
+    var legendHtml = (tab === 'personal')
+        ? '<span class="coi-legend-item cliente"><span class="dot"></span>Clientes (cumple/aniv.)</span>' +
+          '<span class="coi-legend-item personal"><span class="dot"></span>Calendario personal (Google)</span>'
+        : '<span class="coi-legend-item"><span class="dot"></span>Sets / Reservas</span>';
+
+    // 2026-10-01: una sola barra -- mismo principio ya fijado el 2026-09-04
+    // ("fusionar marca + selector + '+' en UNA sola fila"), que se rompió al
+    // agregar la fila de pestañas Mi Evento/Personal aparte. Se integra aquí
+    // como un .seg más, dentro de la misma .coi-toolbar.
+    // Ícono de restaurar: el mismo SVG "refresh-cw" (Feather) ya usado en
+    // staff-admin.html/system-messages.html -- nunca un emoji suelto dentro
+    // de la burbuja redonda de cristal (PO, 2026-10-01: "o usas el cuadrado o
+    // el círculo", nunca mezclados).
+    var ICON_REFRESH = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>';
+
     host.innerHTML =
         '<div class="coi-toolbar">' +
         '<div class="coi-brand">🎧</div>' +
+        '<div class="seg-wrap" style="flex:none;"><div class="seg">' + tabHtml + '</div></div>' +
         '<div class="seg-wrap"><div class="seg">' + segHtml + '</div></div>' +
         '<div class="coi-tools">' +
-        (host.id === 'portal-calendar-widget' ? '<button type="button" class="coi-glass" onclick="portalCoiOpenRestoreModal()" aria-label="Restaurar órdenes borradas" title="Restaurar órdenes borradas">&#128260;</button>' : '') +
-        '<button type="button" class="coi-glass" onclick="portalCoiOpenAddModal()" aria-label="Agregar fecha importante" title="Agregar fecha importante">+</button>' +
+        (tab === 'personal' ? '<button type="button" class="coi-glass" onclick="portalCoiOpenAddModal()" aria-label="Agregar fecha importante" title="Agregar fecha importante">+</button>' : '') +
+        (host.id === 'portal-calendar-widget' ? '<button type="button" class="coi-glass" onclick="portalCoiOpenRestoreModal()" aria-label="Restaurar órdenes borradas" title="Restaurar órdenes borradas">' + ICON_REFRESH + '</button>' : '') +
         '</div>' +
         '</div>' +
         '<div class="head">' + built.title +
@@ -129,10 +238,7 @@ function renderPortalCalendar(leads, importantDates) {
         '<button type="button" class="arrow" onclick="portalCoiNext()" aria-label="Siguiente">&#8250;</button>' +
         '</div></div>' +
         built.body +
-        '<div class="coi-legend">' +
-        '<span class="coi-legend-item"><span class="dot"></span>Sets / Reservas</span>' +
-        '<span class="coi-legend-item cliente"><span class="dot"></span>Clientes (cumple/aniv.)</span>' +
-        '</div>';
+        '<div class="coi-legend">' + legendHtml + '</div>';
 
     if (built.afterRender) built.afterRender(host);
 }
@@ -158,8 +264,8 @@ function portalCoiBuildMonth() {
             html += '<div class="mcell' + (out ? ' out' : '') + (isToday ? ' today' : '') + '"><div class="dnum">' + cur.getDate() + '</div>';
             var list = portalCoiEventsOn(cur);
             list.slice(0, 3).forEach(function (ev) {
-                if (ev.cal === 'cliente') {
-                    html += '<div class="chip cliente"><span class="sq"></span><span>' + portalEscapeHtml(ev.t) + '</span></div>';
+                if (ev.cal !== 'set') {
+                    html += '<div class="chip ' + ev.cal + '"><span class="sq"></span><span>' + portalEscapeHtml(ev.t) + '</span></div>';
                 } else {
                     var tm = (ev.s !== null) ? '<span class="tm">' + portalCoiFmtT(ev.s).replace(':00', '') + '</span> ' : '';
                     html += '<div class="chip"><span class="sq"></span>' + tm + '<span>' + portalEscapeHtml(ev.t) + '</span></div>';
@@ -172,7 +278,7 @@ function portalCoiBuildMonth() {
         html += '</div>';
     }
     html += '</div></div>';
-    return { title: '<h1>' + PORTAL_COI_MONTHS[m] + ' de ' + y + '</h1>', body: html };
+    return { title: '<h1>' + PORTAL_COI_MONTHS[m] + ' ' + y + '</h1>', body: html };
 }
 
 function portalCoiBuildYear() {
@@ -190,7 +296,8 @@ function portalCoiBuildYear() {
             else { dnum = c - lead - dim + 1; cls = 'out'; dt = new Date(y, m + 1, dnum); }
             if (!cls && portalCoiSameDay(dt, today)) cls = 'today';
             var evs = (!cls || cls === 'today') ? portalCoiEventsOn(dt) : [];
-            var dotCls = evs.some(function (e) { return e.cal === 'cliente'; }) ? ' cliente' : '';
+            var dotCls = evs.some(function (e) { return e.cal === 'cliente'; }) ? ' cliente'
+                : evs.some(function (e) { return e.cal === 'personal'; }) ? ' personal' : '';
             var dot = evs.length ? '<span class="dot' + dotCls + '"></span>' : '';
             var tip = evs.length ? ' title="' + portalEscapeHtml(evs.map(function (e) { return e.t; }).join(' · ')) + '"' : '';
             html += '<button type="button" class="' + cls + '"' + tip + ' onclick="portalCoiGoToDay(\'' + portalCoiKey(dt) + '\')">' + dnum + dot + '</button>';
@@ -232,7 +339,7 @@ function portalCoiBuildTimeline(n) {
         var d = days[0];
         titleHtml = '<h1>' + d.getDate() + ' de ' + PORTAL_COI_MONTHS_L[d.getMonth()] + ', ' + d.getFullYear() + ' <span class="sub">' + PORTAL_COI_DOWL[d.getDay()] + '</span></h1>';
     } else {
-        titleHtml = '<h1>' + PORTAL_COI_MONTHS[days[0].getMonth()] + ' de ' + days[0].getFullYear() + '</h1>';
+        titleHtml = '<h1>' + PORTAL_COI_MONTHS[days[0].getMonth()] + ' ' + days[0].getFullYear() + '</h1>';
     }
 
     var html = '<div class="tl"><div class="allday"><div class="lbl">todo el día</div><div class="ad-cols colhead" style="grid-template-columns:repeat(' + n + ',1fr)">';
@@ -244,7 +351,7 @@ function portalCoiBuildTimeline(n) {
     days.forEach(function (dt) {
         html += '<div class="ad-col">';
         portalCoiEventsOn(dt).filter(function (e) { return e.ad; }).forEach(function (e) {
-            html += '<div class="chip' + (e.cal === 'cliente' ? ' cliente' : '') + '"><span class="sq"></span><span>' + portalEscapeHtml(e.t) + '</span></div>';
+            html += '<div class="chip' + (e.cal !== 'set' ? ' ' + e.cal : '') + '"><span class="sq"></span><span>' + portalEscapeHtml(e.t) + '</span></div>';
         });
         html += '</div>';
     });
@@ -267,10 +374,25 @@ function portalCoiBuildTimeline(n) {
     if (n === 1) {
         var dayEvents = portalCoiEventsOn(days[0]);
         if (dayEvents.length) {
+            var DC_LABEL = { cliente: 'Clientes cumple/aniv.', personal: 'Calendario personal (Google)' };
+            // Eliminar: solo para fechas importantes agregadas a mano (_kind
+            // 'important') -- un "Sets/Reservas" o lo sincronizado de Google
+            // ('personal') no se borra desde aquí, Google sigue siendo la
+            // fuente de verdad de eso (PO, 2026-10-01: "no veo los botones de
+            // agregar o eliminar cumpleaños").
             html += '<div class="day-cards">' + dayEvents.map(function (e) {
                 var when = e.ad ? 'Todo el día' : (portalCoiFmtT(e.s) + (e.e !== null ? ' – ' + portalCoiFmtT(e.e) : ''));
-                return '<div class="day-card' + (e.cal === 'cliente' ? ' cliente' : '') + '">' +
-                    '<span class="dc-cat"><span class="sq"></span>' + (e.cal === 'cliente' ? 'Clientes cumple/aniv.' : 'Sets / Reservas') + '</span>' +
+                // Paso 10: editar una fecha importante (antes solo se podía agregar o
+                // eliminar). Mismo glifo "✏️" ya usado en staff-admin.html para
+                // editar -- no se inventa un ícono nuevo.
+                var editBtn = (e._kind === 'important')
+                    ? '<button type="button" class="dc-edit" onclick="portalCoiOpenAddModal(\'' + e.id + '\')" aria-label="Editar fecha" title="Editar fecha">✏️</button>'
+                    : '';
+                var delBtn = (e._kind === 'important')
+                    ? '<button type="button" class="dc-del" onclick="portalCoiDeleteImportantDate(\'' + e.id + '\')" aria-label="Eliminar fecha" title="Eliminar fecha">&times;</button>'
+                    : '';
+                return '<div class="day-card' + (e.cal !== 'set' ? ' ' + e.cal : '') + '">' + editBtn + delBtn +
+                    '<span class="dc-cat"><span class="sq"></span>' + (DC_LABEL[e.cal] || 'Sets / Reservas') + '</span>' +
                     '<h4>' + portalEscapeHtml(e.t) + '</h4><div class="dc-when">' + when + '</div></div>';
             }).join('') + '</div>';
         } else {
@@ -314,14 +436,22 @@ function portalCoiToday() {
 /* Modal "Agregar fecha importante" -- cumpleaños de un hijo, aniversario, un
    amigo, cualquier fecha que el cliente no quiera olvidar. Recurrente por
    mes/día (no un evento de un solo año). Guarda en client_profiles.important_dates
-   (columna jsonb agregada 2026-09-04, aprobada por el PO). */
-function portalCoiOpenAddModal() {
+   (columna jsonb agregada 2026-09-04, aprobada por el PO).
+   Paso 10: el mismo modal sirve para EDITAR -- se le pasa el id de la fecha
+   ya guardada, se pre-llena con sus datos reales y el guardado actualiza esa
+   misma fila en vez de crear una nueva (ver portalCoiSaveImportantDate). */
+var _portalCoiEditingId = null;
+function portalCoiOpenAddModal(editId) {
     if (document.getElementById('portalCoiModalBackdrop')) return;
+    var entradaEdit = editId ? (_portalCoiImportant || []).find(function (e) { return e && e.id === editId; }) : null;
+    _portalCoiEditingId = entradaEdit ? editId : null;
+    var titulo = entradaEdit ? 'Editar fecha importante' : 'Agregar fecha importante';
+    var botonTxt = entradaEdit ? 'Guardar cambios' : 'Guardar';
     var wrap = document.createElement('div');
     wrap.innerHTML =
         '<div class="coi-modal-backdrop" id="portalCoiModalBackdrop">' +
         '<div class="coi-modal">' +
-        '<h3>Agregar fecha importante</h3>' +
+        '<h3>' + titulo + '</h3>' +
         '<p class="hint">Cumpleaños, aniversario o cualquier fecha que no quieras olvidar de alguien especial. Se repite cada año.</p>' +
         '<div class="coi-field"><label>Nombre</label><input type="text" id="coiDateName" placeholder="Ej. Mi hijo Mateo" maxlength="60" /></div>' +
         '<div class="coi-field"><label>Tipo</label><select id="coiDateType">' +
@@ -333,27 +463,41 @@ function portalCoiOpenAddModal() {
         '<p class="coi-error" id="coiDateError"></p>' +
         '<div class="coi-actions">' +
         '<button type="button" class="coi-btn cancel" onclick="portalCoiCloseModal()">Cancelar</button>' +
-        '<button type="button" class="coi-btn save" id="coiDateSaveBtn" onclick="portalCoiSaveImportantDate()">Guardar</button>' +
+        '<button type="button" class="coi-btn save" id="coiDateSaveBtn" onclick="portalCoiSaveImportantDate()">' + botonTxt + '</button>' +
         '</div></div></div>';
     var backdrop = wrap.firstElementChild;
     backdrop.addEventListener('click', function (ev) { if (ev.target === backdrop) portalCoiCloseModal(); });
     document.body.appendChild(backdrop);
-    // Vista Día: se está mirando UN día, así que ya viene ese día. En Semana/Mes/Año se elige día, mes y año.
-    try {
-        var dEl = document.getElementById('coiDateValue');
-        if (dEl && _portalCoiState && _portalCoiState.view === 'dia') {
-            dEl.value = portalCoiKey(_portalCoiState.date);
-            var hint = backdrop.querySelector('.hint');
-            if (hint) hint.textContent = 'Se agregará a ' + _portalCoiState.date.getDate() + ' de ' + PORTAL_COI_MONTHS_L[_portalCoiState.date.getMonth()] + ' de ' + _portalCoiState.date.getFullYear() + '. Se repite cada año.';
+    if (entradaEdit) {
+        var nameEl0 = document.getElementById('coiDateName');
+        var typeEl0 = document.getElementById('coiDateType');
+        var dateEl0 = document.getElementById('coiDateValue');
+        if (nameEl0) nameEl0.value = entradaEdit.name || '';
+        if (typeEl0) typeEl0.value = entradaEdit.date_type || 'other';
+        if (dateEl0) {
+            var yy0 = entradaEdit.year || new Date().getFullYear();
+            dateEl0.value = yy0 + '-' + String(entradaEdit.month).padStart(2, '0') + '-' + String(entradaEdit.day).padStart(2, '0');
         }
-    } catch (ePre) { /* sin prellenado: se elige la fecha a mano */ }
+    } else {
+        // Vista Día: se está mirando UN día, así que ya viene ese día. En Semana/Mes/Año se elige día, mes y año.
+        try {
+            var dEl = document.getElementById('coiDateValue');
+            if (dEl && _portalCoiState && _portalCoiState.view === 'dia') {
+                dEl.value = portalCoiKey(_portalCoiState.date);
+                var hint = backdrop.querySelector('.hint');
+                if (hint) hint.textContent = 'Se agregará a ' + _portalCoiState.date.getDate() + ' de ' + PORTAL_COI_MONTHS_L[_portalCoiState.date.getMonth()] + ' de ' + _portalCoiState.date.getFullYear() + '. Se repite cada año.';
+            }
+        } catch (ePre) { /* sin prellenado: se elige la fecha a mano */ }
+    }
     setTimeout(function () { var el = document.getElementById('coiDateName'); if (el) el.focus(); }, 30);
 }
 function portalCoiCloseModal() {
     var el = document.getElementById('portalCoiModalBackdrop');
     if (el) el.remove();
+    _portalCoiEditingId = null;
 }
 async function portalCoiSaveImportantDate() {
+    var editingId = _portalCoiEditingId; // capturado antes de cerrar el modal (eso lo limpia)
     var nameEl = document.getElementById('coiDateName');
     var typeEl = document.getElementById('coiDateType');
     var dateEl = document.getElementById('coiDateValue');
@@ -380,14 +524,47 @@ async function portalCoiSaveImportantDate() {
 
         var current = await db.from('client_profiles').select('important_dates').eq('user_id', sess.user.id).maybeSingle();
         var list = (current && current.data && Array.isArray(current.data.important_dates)) ? current.data.important_dates.slice() : [];
-        var entry = {
-            id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
-            name: name, date_type: type, month: month, day: day, year: parseInt(parts[0], 10) || null,
-            created_at: new Date().toISOString()
-        };
-        list.push(entry);
+        var entry;
+        // Paso 10: editar reusa el mismo modal -- si viene con un id ya existente,
+        // se actualiza esa fila en su lugar (mismo id, mismo created_at, mismo
+        // google_event_id si ya tenía uno) en vez de crear una fecha nueva.
+        if (editingId) {
+            var idxEdit = list.findIndex(function (e) { return e && e.id === editingId; });
+            if (idxEdit === -1) { showErr('No se encontró la fecha a editar.'); if (btn) { btn.disabled = false; btn.textContent = 'Guardar cambios'; } return; }
+            entry = Object.assign({}, list[idxEdit], { name: name, date_type: type, month: month, day: day, year: parseInt(parts[0], 10) || null });
+            list[idxEdit] = entry;
+        } else {
+            entry = {
+                id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
+                name: name, date_type: type, month: month, day: day, year: parseInt(parts[0], 10) || null,
+                created_at: new Date().toISOString()
+            };
+            list.push(entry);
+        }
         var upd = await db.from('client_profiles').update({ important_dates: list }).eq('user_id', sess.user.id);
         if (upd.error) throw upd.error;
+
+        // Paso 9 (sync bidireccional): si el cliente tiene Google Calendar conectado,
+        // esta fecha se manda también para allá (evento anual recurrente). Si no está
+        // conectado, la función no hace nada (skipped) -- nunca bloquea ni avisa de
+        // error aquí, la fecha ya quedó guardada en su cuenta, que es lo que importa.
+        // Paso 10: si es una edición, se manda accion:'editar' -- actualiza el evento
+        // ya existente en Google (o lo crea si nunca se había conectado), en vez de
+        // intentar crear uno nuevo y duplicarlo.
+        try {
+            var baseFn = (typeof window.MDB_SUPABASE_URL === 'string' && window.MDB_SUPABASE_URL) ? window.MDB_SUPABASE_URL.replace(/\/$/, '') : '';
+            var keyFn = typeof window.MDB_SUPABASE_ANON_KEY === 'string' ? window.MDB_SUPABASE_ANON_KEY : '';
+            var fnPush = typeof window.mdbSupabaseFunctionUrl === 'function'
+                ? window.mdbSupabaseFunctionUrl('calendar-push-important-date')
+                : (baseFn + '/functions/v1/calendar-push-important-date');
+            var pushBody = { entry_id: entry.id };
+            if (editingId) pushBody.accion = 'editar';
+            fetch(fnPush, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sess.access_token, apikey: keyFn },
+                body: JSON.stringify(pushBody)
+            }).catch(function () { /* silencioso */ });
+        } catch (ePush) { /* silencioso: esto es un plus, no la acción principal */ }
 
         _portalCoiImportant = list;
         portalCoiCloseModal();
@@ -402,11 +579,49 @@ async function portalCoiSaveImportantDate() {
         }
         if (_portalCoiState) _portalCoiState.date = destino;
         renderPortalCalendar();
-        portalToast('✓ Guardado: ' + name + ' · ' + day + ' de ' + PORTAL_COI_MONTHS_L[month - 1] + '. Se repite cada año.');
+        portalToast((editingId ? '✓ Actualizado: ' : '✓ Guardado: ') + name + ' · ' + day + ' de ' + PORTAL_COI_MONTHS_L[month - 1] + '. Se repite cada año.');
     } catch (eSave) {
         showErr('No se pudo guardar. Intenta de nuevo.');
     } finally {
-        if (btn) { btn.disabled = false; btn.textContent = 'Guardar'; }
+        if (btn) { btn.disabled = false; btn.textContent = editingId ? 'Guardar cambios' : 'Guardar'; }
+    }
+}
+
+// 2026-10-01: PO notó que no había forma de quitar una fecha importante ya
+// guardada ("no veo los botones de agregar o eliminar cumpleaños"). Borra la
+// entrada local y, si ya se había empujado a Google (Paso 9), también borra
+// el evento allá -- mismo patrón de "Google primero, local después" que
+// calendar-evento-editar usa para Sets/Reservas sincronizados.
+async function portalCoiDeleteImportantDate(id) {
+    if (!window.confirm('¿Quitar esta fecha? Si ya estaba conectada a tu Google Calendar, también se borra allá.')) return;
+    try {
+        var db = window.getSupabaseClient ? window.getSupabaseClient() : null;
+        if (!db) return;
+        var sessRes = await db.auth.getSession();
+        var sess = sessRes && sessRes.data && sessRes.data.session;
+        if (!sess) { window.location.href = './login.html?redirect=client-portal'; return; }
+
+        var baseFn = (typeof window.MDB_SUPABASE_URL === 'string' && window.MDB_SUPABASE_URL) ? window.MDB_SUPABASE_URL.replace(/\/$/, '') : '';
+        var keyFn = typeof window.MDB_SUPABASE_ANON_KEY === 'string' ? window.MDB_SUPABASE_ANON_KEY : '';
+        var fnPush = typeof window.mdbSupabaseFunctionUrl === 'function'
+            ? window.mdbSupabaseFunctionUrl('calendar-push-important-date')
+            : (baseFn + '/functions/v1/calendar-push-important-date');
+        await fetch(fnPush, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sess.access_token, apikey: keyFn },
+            body: JSON.stringify({ entry_id: id, accion: 'eliminar' })
+        }).catch(function () { /* si falla el lado de Google, igual se borra local abajo */ });
+
+        var current = await db.from('client_profiles').select('important_dates').eq('user_id', sess.user.id).maybeSingle();
+        var list = (current && current.data && Array.isArray(current.data.important_dates)) ? current.data.important_dates.filter(function (e) { return e.id !== id; }) : [];
+        var upd = await db.from('client_profiles').update({ important_dates: list }).eq('user_id', sess.user.id);
+        if (upd.error) throw upd.error;
+
+        _portalCoiImportant = list;
+        renderPortalCalendar();
+        portalToast('Fecha eliminada.');
+    } catch (eDel) {
+        portalToast('No se pudo eliminar. Intenta de nuevo.');
     }
 }
 
@@ -2065,7 +2280,8 @@ const PortalApp = {
                 // Se entra a UNA orden: el calendario abre en Día, en la fecha del evento (no en el mes de hoy). PO 2026-09-21.
                 var mEv = String(leadData.event_date || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
                 if (mEv) _portalCoiState = { date: new Date(+mEv[1], +mEv[2] - 1, +mEv[3]), view: 'dia' };
-                renderPortalCalendar([leadData], (this.clientProfile && this.clientProfile.important_dates) || []);
+                renderPortalCalendar([leadData], (this.clientProfile && this.clientProfile.important_dates) || [], this.clientProfile && this.clientProfile.calendar_sync_last_seen_at);
+                portalCoiLoadPersonalSync();
             } catch (eCalSingle) { /* no bloquea el resto del portal */ }
             try { void this.renderBackLink(); } catch (eBack) { /* no bloquea el resto del portal */ }
             if (this.isManager) {
@@ -4131,7 +4347,13 @@ const PortalApp = {
                 '</div></div>';
             this.portalInjectDupWeddingIfNeeded(leads, session, clientRow, main);
             setTimeout(portalMarcarCancelacionesAbiertas, 0);
-            try { renderPortalCalendar(leads || [], (clientRow && clientRow.important_dates) || []); } catch (eCal) { /* no bloquea el resto del portal */ }
+            try {
+                renderPortalCalendar(leads || [], (clientRow && clientRow.important_dates) || [], clientRow && clientRow.calendar_sync_last_seen_at);
+                // Paso 5: carga eager (no perezosa) del sync personal -- el badge de
+                // "nuevo" en la pestaña Personal necesita el dato ANTES de que el
+                // cliente la abra, si no, nunca cumple su propósito de avisar.
+                portalCoiLoadPersonalSync();
+            } catch (eCal) { /* no bloquea el resto del portal */ }
         }
         try {
             var cb = document.getElementById('countdown');
