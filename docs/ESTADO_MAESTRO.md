@@ -3344,3 +3344,15 @@ El PO pidió el sentido inverso del sync: no solo Google → nosotros, también 
 **No se probó el envío real a Google de punta a punta** (crear un evento y verlo aparecer en un Google Calendar real) -- ninguna de las 3 cuentas conectadas hoy es de tipo Cliente. Sí se verificó la lógica completa (auth, lectura de la fecha, manejo de "no conectado", manejo de rechazo de Google) con una cuenta de prueba desechable.
 
 Incidente de Supabase seguía activo (misma actualización 21:26 UTC) — monitoreo automático continúa.
+
+## [2026-10-01] `dj-profile.html` — "torpedo oculto": cuenta de Cliente trabada en "Cargando..." para siempre
+
+Probando el quitado del poster del loader (mismo cambio que `Hero_Cliente_Home`), el PO reprodujo en vivo -- sin querer, navegando directo a `dj-profile.html` con la sesión de la cuenta de prueba de Cliente ya activa -- un bug real y grave: la página se queda trabada en "Cargando..." para siempre, porque pide datos de `dj_profiles` que un Cliente no tiene. El PO lo marcó como "torpedo oculto, puede explotar en cualquier momento" -- con razón: puede pasarle a cualquier cliente real que llegue a esa URL por el link que sea, no solo por la reconexión de Google (ya corregida en `calendar-oauth-callback`, Paso 9).
+
+**Corregido con un guardia mínimo** en `djProfileAuthGuard` (el chequeo de sesión que ya corre al abrir la página): si hay sesión, no es vista pública (`?view=public`/`?id=`), y la cuenta tiene fila en `client_profiles`, se redirige de inmediato a `client-account.html` -- mismo chequeo real que ya usa `calendar-oauth-callback` (`destinoParaUsuario`). Si la consulta falla, se sigue como Artista (comportamiento de siempre) -- nunca se bloquea a un Artista real por un error de red.
+
+**No es la causa de fondo** (esa sigue siendo el ticket `2026-10-01-TICKET-plantilla-cliente-separada-de-artista.md`, sin ejecutar) -- es un parche puntual para cerrar el hueco más peligroso ya, sin esperar esa sesión dedicada.
+
+**Commit parcial**: `dj-profile.html` tiene OTROS dos cambios sin comitear, de una fecha anterior (2026-09-30: un fix de timeout en la verificación de rol del visitante, y un cache-bust de `mdjb-shared-header.js`) que el PO nunca confirmó visualmente -- se comiteó SOLO el guardia nuevo y el quitado del poster (los dos que el PO vio en vivo hoy), vía `git add -p`, dejando esos dos cambios viejos todavía pendientes de su confirmación aparte.
+
+Incidente de Supabase seguía activo (misma actualización 21:26 UTC) — monitoreo automático continúa.

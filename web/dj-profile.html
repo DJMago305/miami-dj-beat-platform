@@ -268,6 +268,26 @@
                     }
                     var out = await client.auth.getSession();
                     var sess = out && out.data && out.data.session;
+                    /* 2026-10-01 (PO, "torpedo oculto"): una cuenta de Cliente que llega
+                       aquí -- por el link que sea, no solo la reconexión de Google ya
+                       corregida en calendar-oauth-callback -- se quedaba trabada en
+                       "Cargando..." para siempre, porque esta página pide datos de
+                       dj_profiles que un Cliente no tiene. Mismo chequeo real que ya
+                       usa calendar-oauth-callback (destinoParaUsuario): si hay sesión
+                       Y es de Cliente Y no es una vista pública (?view=public/?id=),
+                       se manda directo a su portal real en vez de dejarla ahí. Si la
+                       consulta falla, se sigue como Artista (comportamiento de
+                       siempre) -- nunca se bloquea a un Artista real por un error de red. */
+                    if (sess && !isPublicProfileView()) {
+                        try {
+                            var cpGuard = await client.from('client_profiles').select('user_id').eq('user_id', sess.user.id).maybeSingle();
+                            if (cpGuard && cpGuard.data) {
+                                clearAuthCheck();
+                                window.location.replace('./client-account.html');
+                                return;
+                            }
+                        } catch (eGuard) { try { console.warn('[dj-profile auth guard] tipo de cuenta', eGuard); } catch (e3) { void e3; } }
+                    }
                     clearAuthCheck();
                     if (sess) return;
                     if (isPublicProfileView()) {
@@ -3988,9 +4008,12 @@
          si falla la carga (ej. todavía no subido a Supabase Storage), o al
          tocar la pantalla -- nunca atrapa al visitante detrás del video. -->
     <div id="mdjIntroLoader" class="mdj-intro-loader" role="presentation" aria-hidden="true" title="Toca para saltar">
+        <!-- 2026-10-01 (PO): sin poster -- la foto fija no combinaba con el
+             primer cuadro real del video, se veía un "pestañazo" feo al
+             arrancar. Sin poster, no se muestra nada hasta que el video
+             mismo tiene su primer cuadro listo. -->
         <video id="mdjIntroLoaderVideo" class="mdj-intro-loader-video"
             src="https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/assets/branding/intro-loader/miami-dj-beat-intro-enganche.mp4"
-            poster="./assets/branding/intro-loader/miami-dj-beat-intro-poster.jpg"
             autoplay muted playsinline preload="auto"
             onerror="window.mdjHideIntroLoader && window.mdjHideIntroLoader()"
             onended="window.mdjHideIntroLoader && window.mdjHideIntroLoader()"></video>
