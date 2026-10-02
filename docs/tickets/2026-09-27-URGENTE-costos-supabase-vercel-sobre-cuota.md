@@ -113,4 +113,10 @@ Cero bytes transferidos, header correcto. Esto es un ahorro real y verificado, n
 
 **Cambio propuesto (lo hace el PO en el panel, reversible, sin código):** Settings → Build and Deployment → *Build Machine* → **Standard (4 vCPU, 8 GB)** → Save. Costo estimado por despliegue: ≈ $0,014 (−87 %), con el mismo número de despliegues; a este volumen quedaría dentro de los $20 de crédito incluido. Revisar también el ajuste a nivel de *equipo* (`~/settings/build-and-deployment`, sección Build Machines) por si el Turbo viene de ahí.
 
-**Estado: PENDIENTE, decisión del PO de no hacerlo todavía (2026-10-02).** Costo de esperar: ≈ $1–2 por día al ritmo actual; el ciclo de facturación termina el 11/10. `ignoreCommand` queda descartado por ahora: un build cancelado igual arranca la máquina, así que ahorraría poco comparado con este cambio.
+~~**Estado: PENDIENTE, decisión del PO de no hacerlo todavía (2026-10-02).**~~ **APLICADO por el PO el 2026-10-02 (ver sección siguiente).** Costo de esperar: ≈ $1–2 por día al ritmo actual; el ciclo de facturación termina el 11/10. `ignoreCommand` queda descartado por ahora: un build cancelado igual arranca la máquina, así que ahorraría poco comparado con este cambio.
+
+## 2026-10-02 (tarde) — Máquina de build cambiada a Standard (aplicado por el PO)
+
+El PO cambió *Build Machine* del proyecto `web` de **Turbo (30 vCPU)** a **Standard (4 vCPU, 8 GB)** en Settings → Build and Deployment y guardó. Verificado recargando la página: sigue en Standard; Vercel indica que el próximo despliegue construirá con Standard. Lo aplica desde el siguiente despliegue.
+
+**Por comprobar (no medido todavía):** que los *CPU minutes* de un despliegue bajen de ≈ 30 a ≈ 4 (≈ $0,105 → ≈ $0,014 por despliegue, −87 % según la cuenta de arriba, que sigue siendo inferencia sobre el redondeo a minuto). Cómo verlo sin crear despliegues de prueba: abrir la página de un despliegue real posterior al cambio y leer sus CPU minutes, y mirar el consumo de *Build CPU Minutes* en Usage uno o dos días después. El ajuste a nivel de *equipo* (`~/settings/build-and-deployment`) no se revisó; si el proyecto vuelve a Turbo, mirar ahí. Reversible en el mismo lugar. El ciclo de facturación termina el 11/10.
