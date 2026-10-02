@@ -287,13 +287,26 @@
   .rem-col>h4{margin:0 0 2px;font-size:13px;display:flex;align-items:center;gap:8px;color:var(--ink);}
   .rem-col>h4 .cnt{font-family:var(--mono);font-size:11px;color:var(--ink-mute);margin-left:auto;}
   .rem-col.today>h4 b{color:var(--today);}
-  /* Próximos (izquierda) en verde, Pasados (derecha) en rojo: pedido del PO 2026-09-21 */
-  .rem-col.future{border-color:rgba(84,210,154,.5);} .rem-col.future>h4 b{color:var(--personal);}
+  /* Próximos (izquierda) en verde, Pasados (derecha) en rojo: pedido del PO 2026-09-21.
+     2026-10-02: el PO reportó con captura que "Próximos" se ve apagado al lado del
+     rojo vívido de "Hoy"/"Pasados" -- var(--personal) es un verde menta/teal (tono
+     compartido con el resto de la app, p.ej. la leyenda de "Calendario personal");
+     en este encabezado específico, al lado de un rojo saturado, ese tono no hace
+     el mismo contraste. Un verde propio (#22c55e, más puro) SOLO para este título
+     -- var(--personal) no se toca, sigue igual en todos los demás usos. */
+  .rem-col.future{border-color:rgba(84,210,154,.5);} .rem-col.future>h4 b{color:#22c55e;}
   .rem-col.past{border-color:rgba(255,45,85,.5);} .rem-col.past>h4 b{color:var(--today);}
   .rcard{border:1px solid var(--line);border-radius:11px;background:var(--panel);padding:11px 12px;display:flex;gap:10px;align-items:flex-start;cursor:pointer;position:relative;transition:border-color .15s,background .15s;}
   .rcard:hover{border-color:color-mix(in srgb,var(--set) 40%,var(--line));}
   .rcard.unread{border-color:color-mix(in srgb,var(--set) 45%,var(--line));background:color-mix(in srgb,var(--set) 5%,var(--panel));}
   .rcard .rdot{position:absolute;top:9px;right:9px;width:8px;height:8px;border-radius:50%;background:var(--today);box-shadow:0 0 0 2px var(--panel);}
+  /* 2026-10-02 (mismo pedido del PO, siguiente capa): el tinte "no leído" y el
+     puntito usan el rosa/rojo de marca (--set/--today) sin importar la columna
+     -- las tarjetas de "Próximos" se veían rojizas aunque el título ya fuera
+     verde. Verde solo aquí, scoped a .rem-col.future -- las de Hoy/Pasados
+     siguen igual (ya correctas en rojo). */
+  .rem-col.future .rcard.unread{border-color:color-mix(in srgb,#22c55e 45%,var(--line));background:color-mix(in srgb,#22c55e 5%,var(--panel));}
+  .rem-col.future .rcard .rdot{background:#22c55e;}
   .rcard .ricon{width:34px;height:34px;border-radius:10px;flex:none;display:grid;place-items:center;font-size:16px;background:color-mix(in srgb,var(--c) 16%,transparent);}
   .rcard .rb{flex:1;min-width:0;}
   .rcard .rt{font-size:13.5px;font-weight:650;line-height:1.25;}
@@ -415,6 +428,12 @@
   .evact-del{color:#ef4444 !important;} .evact-edit{color:#3b82f6 !important;}
   .evact:not(:disabled):hover{background:color-mix(in srgb,currentColor 14%,transparent) !important;}
   .evact:disabled{opacity:.28;cursor:not-allowed !important;}
+  /* Paso 18b (2026-10-01, reporte directo del PO con captura): en modo día
+     (fondo blanco) ese mismo .28 de opacidad sobre un círculo ya fino (solo
+     borde, sin relleno) dejaba los dos botones casi invisibles -- en modo
+     noche (fondo oscuro) el mismo valor sí se distinguía. Sube la opacidad
+     SOLO en claro; modo oscuro queda intacto. */
+  :root[data-theme="light"] .evact:disabled{opacity:.55;}
   /* Pantalla completa / full-width — la app llena toda la ventana */
   .wrap{padding:0 !important;min-height:0 !important;}
   /* Altura NATURAL del contenido (sin forzar 100vh): el iframe host se auto-ajusta
@@ -1605,16 +1624,22 @@
     // aparte usando coiFechasImportantesEv() directo. Si ya es esa pestaña,
     // EV ya las incluyó arriba (cal:"cliente") -- no se duplican.
     if(state.role==="artista" && state.detailLevel!=="personal" && window.__COI_STAFF===false){
-      coiFechasImportantesEv().forEach(function(e){
-        r.push({dt:parse(e.d),icon:"🎂",title:e.t,sub:"Tu fecha personal",chan:"Push",cal:"cliente",art:e.artist,auto:true,ev:e});
+      // Paso 18: fipProximaOcurrencia(), no coiFechasImportantesEv() -- esta
+      // última usa el año EN PANTALLA (correcto para el chip del Paso 12,
+      // mal para "qué viene pronto" si el usuario navegó a otro mes/año).
+      (_fipLista||[]).forEach(function(fe){
+        var d=fipProximaOcurrencia(fe.month, fe.day), iso=fipIsoDeFecha(d), titulo=fe.name+" · "+fipTipoLabel(fe.date_type);
+        r.push({dt:d,icon:"🎂",title:titulo,sub:"Tu fecha personal",chan:"Push",cal:"cliente",art:state.artist,auto:true,ev:{d:iso,t:titulo,cal:"cliente",artist:state.artist}});
       });
     }
     // Paso 16: Owner/Admin ve las fechas importantes de TODOS los artistas
     // consolidadas aquí (ver loadFechasImportantesTodosArtistas) -- Performance
     // (manager/vendedor) queda fuera a propósito, es dato personal.
     else if(state.role==="owner"){
-      fipTodosArtistasEv().forEach(function(e){
-        r.push({dt:parse(e.d),icon:"🎂",title:e.t,sub:"Fecha personal de "+artName(e.artist),chan:"Push",cal:"cliente",art:e.artist,auto:true,ev:e});
+      // Paso 18: mismo criterio -- próxima ocurrencia real, no el año en pantalla.
+      (_fipTodosArtistas||[]).forEach(function(fe){
+        var d=fipProximaOcurrencia(fe.month, fe.day), iso=fipIsoDeFecha(d), titulo=fe.name+" · "+fipTipoLabel(fe.date_type);
+        r.push({dt:d,icon:"🎂",title:titulo,sub:"Fecha personal de "+artName(fe.artist),chan:"Push",cal:"cliente",art:fe.artist,auto:true,ev:{d:iso,t:titulo,cal:"cliente",artist:fe.artist}});
       });
     }
     r.sort(function(a,b){return a.dt-b.dt;});return r;
@@ -2241,6 +2266,23 @@
     return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
   }
   function fipTipoLabel(t){ return t==="birthday"?"Cumpleaños":(t==="anniversary"?"Aniversario":"Fecha"); }
+  // Paso 18 (2026-10-01): "próxima ocurrencia real" de una fecha recurrente
+  // mes/día -- SIEMPRE calculada desde hoy de verdad (new Date()), nunca
+  // desde state.date (que cambia si el usuario navega el calendario a otro
+  // mes/año que no es el actual). coiFechasImportantesEv()/fipTodosArtistasEv()
+  // (abajo) usan el año EN PANTALLA a propósito -- es lo correcto para pintar
+  // el chip del mes que se está mirando (Paso 12) -- pero usar eso mismo para
+  // "qué viene pronto" (Recordatorios, Paso 14/16) tenía un hueco real: si hoy
+  // ya es diciembre y la fecha es de enero, el año actual ya pasó esa fecha y
+  // nunca rebota al año siguiente -- el aviso simplemente no aparecía nunca.
+  function fipProximaOcurrencia(mes, dia){
+    var hoy=new Date(); hoy.setHours(0,0,0,0);
+    var y=hoy.getFullYear();
+    var d=new Date(y, mes-1, dia);
+    if(d<hoy) d=new Date(y+1, mes-1, dia);
+    return d;
+  }
+  function fipIsoDeFecha(d){ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
   // Paso 12 (2026-10-01): expande _fipLista (mes/día recurrente) a fechas
   // concretas del año que se está mirando, para que entren al motor genérico
   // de chips/día-cards (BASE_EV/EV) -- mismo criterio de "cliente" (azul) que
