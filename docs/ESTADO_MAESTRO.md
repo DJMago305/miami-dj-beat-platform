@@ -3430,3 +3430,11 @@ El PO dio la aprobación explícita ("aprobado") para fusionar. [PR #610](https:
 Rama `fix/seoia-nav-is-staff-recursion-login-timeout` borrada (remoto y local) tras el merge, por estar ya fusionada (Regla 9). `main` local actualizado (`git pull`, fast-forward a `9cc4812b`).
 
 Pendiente de otros hilos, sin tocar (listado al PO, no borrado): `.claude-scratch/`, `supabase/functions/notify-new-purchase/`, `supabase/functions/notify-new-signup/`, `supabase/scripts/20260930_revoke_anon_write_security_definer_views.sql`.
+
+## [2026-10-01] Paso 12: "Mis fechas importantes" del Artista también como chip en el calendario
+
+Hasta el Paso 11, las fechas agregadas a mano por el Artista solo se veían en la lista del panel nuevo -- no aparecían como chip en los días del mes/semana/día, a diferencia de Cliente. El PO pidió emparejarlo (AskUserQuestion, opción elegida: "Fechas importantes del Artista como chips en el calendario").
+
+`calendario-operacional-inteligente.html`: nueva `coiFechasImportantesEv()` expande `_fipLista` (recurrente por mes/día) a fechas concretas del año en pantalla, con `cal:"cliente"` (azul, mismo criterio que ya usa Cliente para lo agregado a mano) y `artist:state.artist` (obligatorio -- `inScope()` descarta cualquier evento sin ese campo para el rol artista, sin esto quedaban guardadas pero invisibles). Se suman a `BASE_EV` solo en `detailLevel==="personal"`, junto al sync de Google ya existente (`_syncEv`), sin reemplazarlo. Los tres puntos que tocan `_fipLista` (cargar, guardar, eliminar) ahora llaman `recomputeBaseEv();rebuild();render();` en vez de solo refrescar el panel, para que el chip aparezca sin tener que cambiar de pestaña.
+
+Verificado en vivo con sesión real de DJMago305: la fecha de prueba apareció como chip en la vista Mes (junto a "Sahi"/"Aure", los cumpleaños sincronizados de Google) y como bloque de "todo el día" en la vista Día. Confirmado que seleccionar ese chip deja `btnEvDel`/`btnEvEdit` deshabilitados -- el motor genérico de eventos de esa pantalla no puede tocarlo (apunta a `elixis_agenda_eventos`, tabla equivocada); solo se edita/borra desde el panel "Mis fechas importantes". Dato de prueba limpiado en producción tras verificar.
