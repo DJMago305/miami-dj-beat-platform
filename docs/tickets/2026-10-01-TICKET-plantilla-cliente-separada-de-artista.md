@@ -67,7 +67,10 @@ Verificado con 9 casos de prueba aislados (Node, sin navegador, `new Function()`
 Cada capa casi seguro se agregó para arreglar un bug real puntual (hay comentarios citando tickets/commits específicos) -- no es descuido, es acumulación de parches independientes. Consolidar esto de verdad significa entender la intención original de cada una de las 7 condiciones de `mdjResolveBuyerSession()` antes de poder reemplazarlas con confianza. Se decidió NO tocar este archivo hoy -- queda como el punto de partida exacto para la sesión dedicada (no hace falta re-mapear).
 
 **Qué sigue, en orden, cuando se retome:**
-1. Publicar el enriquecimiento de `mdj-identity.js` (ya hecho, solo falta merge) -- es una mejora aislada y segura por sí sola, no depende de lo demás.
-2. Entender la intención de cada una de las 7 condiciones de `mdjResolveBuyerSession()` (probablemente cada una tiene un ticket/bug real detrás).
-3. Recién ahí, diseñar cómo las tres capas (`isClient`, `navTier`, `mdjResolveBuyerSession`) se reducen a UNA, delegando completamente en `mdjClassifyPlatformIdentity()`.
-4. Probar en vivo con las 4 combinaciones reales que ya se sabe que existen: Artista puro, Cliente puro, Staff puro, y el caso dual confirmado (alguien con fila real en ambas tablas).
+1. ~~Publicar el enriquecimiento de `mdj-identity.js`~~ -- hecho, fusionado (PR #620).
+2. ~~Conectar `djRowError` en la llamada real de `mdjb-shared-header.js`~~ -- hecho el 2026-10-02: el archivo ya calculaba `djProfileErr` para su propio guardia inline, pero nunca se lo pasaba a `mdjClassifyPlatformIdentity()` -- el enriquecimiento del paso 1 nunca se activaba de verdad desde aquí hasta este cambio. Verificado en vivo con sesión real de Wendy (Cliente): `window.__mdjLastPlatformIdentity.djRowError === false`, `principal === "buyer"`, sin ninguna regresión visual. Cambio puramente aditivo (un campo más en el objeto que ya se pasaba), cero riesgo para el caso normal.
+3. Entender la intención de cada una de las ~9 condiciones reales de `mdjResolveBuyerSession()` (recontadas con más cuidado -- son más de las 7 que se mencionaron antes; probablemente cada una tiene un ticket/bug real detrás, varias parecen redundantes entre sí pero no se puede confirmar sin más investigación).
+4. Recién ahí, diseñar cómo las tres capas (`isClient`, `navTier`, `mdjResolveBuyerSession`) se reducen a UNA, delegando completamente en `mdjClassifyPlatformIdentity()`.
+5. Probar en vivo con las 4 combinaciones reales que ya se sabe que existen: Artista puro, Cliente puro, Staff puro, y el caso dual confirmado (alguien con fila real en ambas tablas).
+
+**Pasos 1 y 2 cerrados hoy (2026-10-02). El trabajo grande (pasos 3-5) queda para la próxima sesión dedicada, decisión explícita del PO ("comitea este paso chico y lo dejamos aquí por hoy").**
