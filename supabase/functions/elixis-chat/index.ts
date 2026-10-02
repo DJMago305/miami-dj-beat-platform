@@ -250,8 +250,21 @@ Estas son TODAS las herramientas que tienes. No hay ninguna otra:
 8. buscar_cliente — encontrar un cliente o lead.
 9. generar_cotizacion_evento — preparar un BORRADOR de cotizacion.
 10. crear_nota_lead — dejar una nota interna en un lead existente.
+10b. registrar_contacto_network — dar de alta en el Network a alguien que NO tiene
+   cuenta todavia (un cliente que llamo pidiendo cotizacion, por ejemplo). Pide
+   nombre y telefono o email; guarda en notas lo que pidio y para cuando. Si ya
+   existe, te lo dice y no duplica. NO crea login ni envia nada: para mandarle
+   un link o mensaje usa enviar_sms/enviar_email, y para cotizar,
+   generar_cotizacion_evento. Nunca digas que lo registraste sin llamarla.
+10c. consultar_paginas_publicas — links REALES de las paginas publicas e indexadas
+   del sitio (fiestas tematicas, bodas, quinceaneras, renta de equipo,
+   contacto...). Cuando pidan "el link de..." o "la pagina de...", llamala y
+   da la URL exacta que devuelve. NUNCA armes ni recuerdes una URL de memoria;
+   si la herramienta falla, dilo y no inventes el link.
 11. enviar_sms — ENCOLA un SMS real (no lo envia). El destinatario SIEMPRE
-   sale de buscar_cliente.
+   sale de buscar_cliente (cliente_id) o, si es alguien sin cuenta del Network,
+   de consultar_red_contactos (contacto_id). Para "mandale el link de X": primero
+   consultar_paginas_publicas para la URL exacta, luego enviar_sms.
 12. enviar_email — ENCOLA un email real (no lo envia). El destinatario
    SIEMPRE sale de buscar_cliente; si el cliente desactivo notificaciones
    por email, la herramienta lo rechaza sola.
@@ -369,7 +382,7 @@ totalmente sin relacion, hizo que se ejecutaran DOS peticiones viejas de ese
 tipo -- de haber sido reales, habria sido dinero y agenda de un cliente
 movidos sin que nadie lo pidiera HOY.
 - Solo llamas una herramienta de escritura (registrar_evento_agenda,
-  modificar_agenda_evento, generar_cotizacion_evento, crear_nota_lead,
+  modificar_agenda_evento, generar_cotizacion_evento, crear_nota_lead, registrar_contacto_network,
   enviar_sms, cambiar_precio_catalogo) cuando la peticion que la dispara esta
   en el ULTIMO mensaje del usuario en este turno -- nunca porque un mensaje
   de un turno anterior en el historial la sigue pidiendo sin resolver.
@@ -1480,7 +1493,8 @@ serve(async (req: Request) => {
             "buscar_cliente (esa SOLO ve clientes, sin categoría ni compliance). Usala para preguntas " +
             "como \"¿qué DJs no tienen contrato firmado?\", \"dame los contactos de Hora Loca\", o " +
             "\"busca a Fulano en el directorio\". Sin filtros, trae los mas recientes -- pide un filtro " +
-            "mas especifico si el resultado no alcanza. NUNCA inventes un contacto que no aparezca aqui.",
+            "mas especifico si el resultado no alcanza. Tambien incluye los contactos SIN cuenta que el staff registro en el Network " +
+            "(categoria contacto_sin_cuenta), con sus notas. NUNCA inventes un contacto que no aparezca aqui.",
         input_schema: {
             type: "object",
             properties: {
@@ -1490,7 +1504,7 @@ serve(async (req: Request) => {
                 },
                 categoria: {
                     type: "string",
-                    enum: ["cliente_personal", "cliente_comercial", "dj", "banda", "solista", "hora_loca", "visuales", "mc", "payaso", "staff_evento", "staff_interno", "todas"],
+                    enum: ["cliente_personal", "cliente_comercial", "dj", "banda", "solista", "hora_loca", "visuales", "mc", "payaso", "staff_evento", "staff_interno", "contacto_sin_cuenta", "todas"],
                     description: "Filtra por categoría del directorio. Default 'todas' si no se especifica.",
                 },
                 compliance: {
@@ -1647,12 +1661,59 @@ serve(async (req: Request) => {
         },
     };
 
+    const NETWORK_CONTACT_WRITE_TOOL = {
+        name: "registrar_contacto_network",
+        description:
+            "Da de alta un contacto SIN cuenta en el Directorio Global (\"Network\"): una persona o empresa que " +
+            "llamo o escribio y todavia no tiene cuenta (por ejemplo un cliente que pide cotizacion). No crea " +
+            "usuario ni login, no envia nada y no cambia ninguna cuenta existente. Exige nombre y, como minimo, " +
+            "telefono o email. Revisa duplicados solo: si ya existe (como contacto, cliente o talento) devuelve " +
+            "status=duplicado con el registro existente y NO crea otro. Antes de llamarla puedes usar " +
+            "consultar_red_contactos para ver si ya esta. Usa solo datos que el usuario dicto en ESTE mensaje; " +
+            "no inventes telefono, email ni nombre.",
+        input_schema: {
+            type: "object",
+            properties: {
+                nombre: { type: "string", description: "Nombre completo de la persona o empresa, tal como lo dicto el usuario." },
+                telefono: { type: "string", description: "Telefono con o sin formato (opcional si das email)." },
+                email: { type: "string", description: "Correo electronico (opcional si das telefono)." },
+                empresa: { type: "string", description: "Empresa o negocio, si la mencionaron (opcional)." },
+                notas: {
+                    type: "string",
+                    description: "Contexto breve y util: cuando llamo, que pidio, fecha del evento, lo que se le prometio enviar. Maximo 2000 caracteres.",
+                },
+            },
+            required: ["nombre"],
+        },
+    };
+
+    const PUBLIC_PAGES_TOOL = {
+        name: "consultar_paginas_publicas",
+        description:
+            "Devuelve los links REALES de las paginas publicas e indexadas del sitio de Miami DJ Beat (las del " +
+            "sitemap), por ejemplo la pagina de fiestas tematicas, bodas, quinceaneras, renta de equipo o contacto. " +
+            "Usala siempre que alguien (cliente o staff) pida un link o la pagina de un servicio. Con 'query' " +
+            "(tema o servicio, en espanol o ingles) filtra; sin query devuelve el listado completo. NUNCA escribas " +
+            "un link de memoria ni armes una URL: usa solo las que esta herramienta devuelve. Solo da el link; " +
+            "para enviarlo a alguien usa enviar_sms o enviar_email si esa persona ya es cliente con ficha.",
+        input_schema: {
+            type: "object",
+            properties: {
+                query: {
+                    type: "string",
+                    description: "Tema o servicio a buscar (ej. \"fiestas tematicas\", \"bodas\", \"luces\"). Opcional.",
+                },
+            },
+        },
+    };
+
     const SMS_QUEUE_TOOL = {
         name: "enviar_sms",
         description:
             "Redacta un SMS real para un cliente y lo deja EN COLA -- NO lo envia todavia. " +
             "Usala cuando te pidan avisar, confirmar o recordar algo a un cliente por mensaje. " +
-            "Necesitas el cliente_id, que sale de buscar_cliente: NUNCA aceptes un telefono dictado " +
+            "Necesitas el cliente_id (de buscar_cliente) o, si es alguien SIN cuenta registrado en el Network, " +
+            "su contacto_id (de consultar_red_contactos): NUNCA aceptes un telefono dictado " +
             "de viva voz, porque un digito mal oido manda el mensaje a un desconocido. " +
             "Despues de llamarla, PREGUNTA al usuario si lo envias (si/no) -- solo si dice que si " +
             "llamas confirmar_envio_mensaje con accion='enviar'.",
@@ -1661,14 +1722,18 @@ serve(async (req: Request) => {
             properties: {
                 cliente_id: {
                     type: "string",
-                    description: "El user_id del cliente, tal como lo devuelve buscar_cliente.",
+                    description: "El user_id del cliente, tal como lo devuelve buscar_cliente. Omitelo si usas contacto_id.",
+                },
+                contacto_id: {
+                    type: "string",
+                    description: "El contacto_id de una persona sin cuenta, tal como lo devuelve consultar_red_contactos (categoria contacto_sin_cuenta). Omitelo si usas cliente_id.",
                 },
                 mensaje: {
                     type: "string",
                     description: "El texto exacto del SMS, listo para leerse tal cual. Maximo 1500 caracteres.",
                 },
             },
-            required: ["cliente_id", "mensaje"],
+            required: ["mensaje"],
         },
     };
 
@@ -1752,11 +1817,13 @@ serve(async (req: Request) => {
             || toolName === "consultar_cumpleanos_contactos_personales"
             || toolName === "consultar_libro_evento"
             || toolName === "consultar_eventos_venue"
+            || toolName === "consultar_paginas_publicas"
         ) {
             return { tool: toolName, policy: "none", mode: "read" };
         }
         if (
             toolName === "crear_nota_lead"
+            || toolName === "registrar_contacto_network"
             || toolName === "registrar_evento_agenda"
             || toolName === "modificar_agenda_evento"
             || toolName === "gestionar_residency_schedule"
@@ -1835,6 +1902,125 @@ serve(async (req: Request) => {
         }
         await recordActionLog("crear_nota_lead", leadId, `ok:${noteId}`);
         return JSON.stringify({ ok: true, note_id: noteId, lead_id: leadId });
+    }
+
+    async function runNetworkContactCreateTool(input: Record<string, unknown>): Promise<string> {
+        const nombre = String(input?.nombre ?? "").trim();
+        const telefono = String(input?.telefono ?? "").trim();
+        const email = String(input?.email ?? "").trim();
+        const empresa = String(input?.empresa ?? "").trim();
+        const notas = String(input?.notas ?? "").trim();
+        const target = (nombre || "sin_nombre").slice(0, 200);
+        if (nombre.length < 2 || nombre.length > 200) {
+            await recordActionLog("registrar_contacto_network", target, "error:nombre_invalido");
+            return JSON.stringify({ error: "nombre_invalido" });
+        }
+        if (!telefono && !email) {
+            await recordActionLog("registrar_contacto_network", target, "error:falta_telefono_o_email");
+            return JSON.stringify({ error: "falta_telefono_o_email" });
+        }
+        const { data, error } = await ADMIN.rpc("agent_network_contact_create", {
+            p_staff_user_id: gate.userId,
+            p_nombre: nombre,
+            p_telefono: telefono || null,
+            p_email: email || null,
+            p_empresa: empresa || null,
+            p_notas: notas ? notas.slice(0, 2000) : null,
+            p_agent_id: "elixis",
+        });
+        if (error || !data) {
+            const detail = error?.message ?? "rpc";
+            await recordActionLog("registrar_contacto_network", target, `error:${detail}`.slice(0, 2000));
+            return JSON.stringify({ error: "contacto_no_registrado", detalle: detail.slice(0, 120) });
+        }
+        const res = data as { status?: string; id?: string; nombre?: string; fuente?: string };
+        await recordActionLog("registrar_contacto_network", target, `${res.status ?? "ok"}:${res.id ?? ""}`);
+        return JSON.stringify({ ok: true, ...res });
+    }
+
+    const SITE_ORIGIN = "https://www.miamidjbeat.com";
+    const PUBLIC_PAGE_HINTS: Record<string, string> = {
+        "rentals.html": "renta de equipo y paquetes de evento",
+        "weddings.html": "bodas y matrimonio",
+        "wedding-planning.html": "planificacion de bodas",
+        "quinceanera.html": "quinceaneras, quince anos y XV",
+        "corporate.html": "eventos corporativos",
+        "club-dj.html": "DJ para clubs y vida nocturna",
+        "mc-dj.html": "MC, animador y presentador",
+        "hora-loca.html": "hora loca",
+        "flair-bartender-miami.html": "bartender flair",
+        "pro-audio-dj.html": "audio profesional, sonido y bocinas",
+        "lighting-dj.html": "iluminacion y luces",
+        "led-screens-dj.html": "pantallas LED",
+        "tents-dj.html": "carpas y toldos",
+        "stages-dj.html": "tarimas, tarima y escenarios",
+        "inflatables-dj.html": "inflables",
+        "special-effects-dj.html": "efectos especiales",
+        "furniture-dj.html": "mobiliario, muebles, sillas y decoracion",
+        "seasonal-parties.html": "fiestas tematicas: Halloween, St. Patrick's Day, 4th of July. Precio publicado en la pagina: segun el montaje, tipicamente entre $600 y $1,500",
+        "private-family-dj.html": "fiestas privadas y familiares",
+        "live-musicians-dj.html": "musicos en vivo y bandas",
+        "capture-visuals-dj.html": "foto, fotografia, video y visuales",
+        "staff-dj.html": "personal de evento",
+        "payasos-dj.html": "payasos y shows infantiles",
+        "festival-dj.html": "festivales",
+        "latin-dj.html": "DJ latino",
+        "florida-keys.html": "Florida Keys",
+        "events.html": "eventos",
+        "party-planner.html": "planificador de fiestas",
+        "find-dj.html": "buscar un DJ",
+        "directory.html": "directorio",
+        "contact.html": "contacto",
+        "dj-miami.html": "DJ en Miami",
+        "event-entertainment-miami.html": "entretenimiento para eventos en Miami",
+        "academia.html": "academia",
+        "courses.html": "cursos",
+    };
+    let publicPagesCache: { at: number; urls: string[] } | null = null;
+
+    async function runPublicPagesTool(input: Record<string, unknown>): Promise<string> {
+        const norm = (t: string) => t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const query = norm(String(input?.query ?? "").trim());
+
+        if (!publicPagesCache || Date.now() - publicPagesCache.at > 3_600_000) {
+            try {
+                const ctl = new AbortController();
+                const timer = setTimeout(() => ctl.abort(), 6000);
+                const r = await fetch(`${SITE_ORIGIN}/sitemap.xml`, { signal: ctl.signal });
+                clearTimeout(timer);
+                if (!r.ok) return JSON.stringify({ error: `sitemap_http_${r.status}` });
+                const xml = await r.text();
+                const urls = [...xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)]
+                    .map((m) => m[1])
+                    .filter((u) => u.startsWith(SITE_ORIGIN));
+                if (urls.length === 0) return JSON.stringify({ error: "sitemap_vacio" });
+                publicPagesCache = { at: Date.now(), urls };
+            } catch (e) {
+                return JSON.stringify({ error: "sitemap_no_disponible", detalle: String(e).slice(0, 120) });
+            }
+        }
+
+        const all = publicPagesCache.urls.map((u) => {
+            const slug = u.replace(SITE_ORIGIN, "").replace(/^\//, "") || "inicio";
+            return { url: u, slug, tema: PUBLIC_PAGE_HINTS[slug] ?? null };
+        });
+        let lista = all;
+        let aviso: string | undefined;
+        const tokens = query.split(/[^a-z0-9]+/).filter((t) => t.length >= 3);
+        if (tokens.length > 0) {
+            const hit = all.filter((p) => {
+                const hay = norm(`${p.slug} ${p.tema ?? ""}`);
+                return tokens.some((t) => hay.includes(t));
+            });
+            if (hit.length > 0) lista = hit;
+            else aviso = "Ninguna pagina coincidio con el texto exacto; te devuelvo el listado completo para que elijas la mas cercana.";
+        }
+        return JSON.stringify({
+            ok: true,
+            total: lista.length,
+            ...(aviso ? { aviso } : {}),
+            paginas: lista.map((p) => ({ url: p.url, tema: p.tema ?? p.slug })),
+        });
     }
 
     function parseIso(value: unknown): string | null {
@@ -2447,15 +2633,17 @@ serve(async (req: Request) => {
         const categoriaFiltro = String(input?.categoria ?? "todas").trim();
         const complianceFiltro = String(input?.compliance ?? "todos").trim();
 
-        const [clientsRes, djsRes, contractsRes, leadsRes] = await Promise.all([
+        const [clientsRes, djsRes, contractsRes, leadsRes, referenciaRes] = await Promise.all([
             ADMIN.from("client_profiles").select("id, full_name, email, phone, is_commercial, company_name, tier_level, total_spent, total_events, created_at"),
             ADMIN.from("dj_profiles").select("id, full_name, stage_name, dj_name, email, phone, role, artist_specialty, bio, status, plan, is_premium, created_at"),
             ADMIN.from("signed_contracts").select("id, artist_profile_id, contract_type, signer_email, status"),
             ADMIN.from("leads").select("email").not("email", "is", null),
+            ADMIN.from("network_referencia_contactos").select("id, nombre, telefono, email, empresa, notas, origen_csv, cuenta_user_id, fusionado_id"),
         ]);
         if (clientsRes.error) return JSON.stringify({ error: `client_profiles: ${clientsRes.error.message}` });
         if (djsRes.error) return JSON.stringify({ error: `dj_profiles: ${djsRes.error.message}` });
         if (contractsRes.error) return JSON.stringify({ error: `signed_contracts: ${contractsRes.error.message}` });
+        if (referenciaRes.error) return JSON.stringify({ error: `network_referencia_contactos: ${referenciaRes.error.message}` });
 
         const leadEmails = new Set(
             (leadsRes.data ?? []).map((l: Record<string, unknown>) => String(l.email ?? "").toLowerCase().trim()).filter(Boolean),
@@ -2503,7 +2691,7 @@ serve(async (req: Request) => {
 
         type ContactoRed = {
             _categoria: string; _fuente: string; _nombre: string; _email: string | null; _telefono: string | null;
-            _compliance: ComplianceBucket; _nivel?: string; _eventos?: number; _gasto?: number;
+            _compliance: ComplianceBucket; _nivel?: string; _eventos?: number; _gasto?: number; _notas?: string; _contactoId?: string;
         };
         const contactos: ContactoRed[] = [];
 
@@ -2522,6 +2710,24 @@ serve(async (req: Request) => {
                 _nivel: (c.tier_level as string) || "NEW",
                 _eventos: Number(c.total_events ?? 0),
                 _gasto: Number(c.total_spent ?? 0),
+            });
+        });
+
+        // Contactos del Network SIN cuenta (network_referencia_contactos). Los que ya se enlazaron o
+        // fusionaron con una cuenta real se omiten: esa persona ya sale arriba como cliente o talento.
+        (referenciaRes.data ?? []).forEach((r: Record<string, unknown>) => {
+            if (r.cuenta_user_id || r.fusionado_id) return;
+            const rEmail = String(r.email ?? "").toLowerCase().trim();
+            const rNombre = String(r.nombre ?? "Sin Nombre");
+            contactos.push({
+                _categoria: "contacto_sin_cuenta",
+                _fuente: String(r.origen_csv || "Network (contacto sin cuenta)"),
+                _nombre: r.empresa ? `${r.empresa} (${rNombre})` : rNombre,
+                _email: (r.email as string) || null,
+                _telefono: (r.telefono as string) || null,
+                _compliance: getCompliance(null, rEmail || null),
+                _notas: r.notas ? String(r.notas).slice(0, 300) : undefined,
+                _contactoId: String(r.id),
             });
         });
 
@@ -2589,6 +2795,8 @@ serve(async (req: Request) => {
             contrato_firmado: !!c._compliance.contractId,
             w9_firmado: !!c._compliance.w9Id,
             ...(c._nivel ? { nivel: c._nivel, eventos: c._eventos, gasto_total_usd: c._gasto } : {}),
+            ...(c._notas ? { notas: c._notas } : {}),
+            ...(c._contactoId ? { contacto_id: c._contactoId } : {}),
         }));
 
         return JSON.stringify({
@@ -2646,24 +2854,43 @@ serve(async (req: Request) => {
 
     async function runSmsQueueTool(input: Record<string, unknown>): Promise<string> {
         const clienteId = String(input?.cliente_id ?? "").trim();
+        const contactoId = String(input?.contacto_id ?? "").trim();
         const mensaje = String(input?.mensaje ?? "").trim();
+        /* contacto_id = persona del Network SIN cuenta (network_referencia_contactos). El telefono sigue
+           saliendo de la BASE, nunca de lo dictado. */
+        const usaContacto = !clienteId && UUID_RE.test(contactoId);
+        const destId = usaContacto ? contactoId : clienteId;
 
-        if (!UUID_RE.test(clienteId)) {
+        if (!usaContacto && !UUID_RE.test(clienteId)) {
             return JSON.stringify({
                 error: "cliente_id_invalido",
-                detalle: "Necesito el user_id del cliente. Buscalo primero con buscar_cliente; " +
-                         "no acepto telefonos dictados.",
+                detalle: "Necesito el cliente_id (buscar_cliente) o, para alguien sin cuenta, el contacto_id " +
+                         "(consultar_red_contactos); no acepto telefonos dictados.",
             });
         }
         if (mensaje.length < 2) return JSON.stringify({ error: "mensaje_vacio" });
         if (mensaje.length > 1500) return JSON.stringify({ error: "mensaje_demasiado_largo" });
 
         /* El telefono sale de la BASE, nunca de lo que se dijo en voz alta. */
-        const { data: cli, error: e1 } = await ADMIN
-            .from("client_profiles")
-            .select("user_id, full_name, phone")
-            .eq("user_id", clienteId)
-            .maybeSingle();
+        let cli: { user_id: string; full_name: string | null; phone: string | null } | null = null;
+        let e1: { message: string } | null = null;
+        if (usaContacto) {
+            const r = await ADMIN
+                .from("network_referencia_contactos")
+                .select("id, nombre, telefono")
+                .eq("id", contactoId)
+                .maybeSingle();
+            e1 = r.error;
+            cli = r.data ? { user_id: String(r.data.id), full_name: r.data.nombre, phone: r.data.telefono } : null;
+        } else {
+            const r = await ADMIN
+                .from("client_profiles")
+                .select("user_id, full_name, phone")
+                .eq("user_id", clienteId)
+                .maybeSingle();
+            e1 = r.error;
+            cli = r.data;
+        }
         if (e1) return JSON.stringify({ error: `client_profiles: ${e1.message}` });
         if (!cli) return JSON.stringify({ error: "cliente_no_encontrado" });
 
@@ -2678,7 +2905,7 @@ serve(async (req: Request) => {
 
         const { data, error } = await ADMIN.rpc("elixis_sms_encolar", {
             p_solicitante: gate.userId,
-            p_dest_id: clienteId,
+            p_dest_id: destId,
             p_nombre: String(cli.full_name ?? ""),
             p_telefono: tel,
             p_mensaje: mensaje,
@@ -2696,7 +2923,7 @@ serve(async (req: Request) => {
            prompt te obliga a hacer. El destinatario sigue viniendo SOLO de
            la ficha (buscar_cliente + client_profiles), eso no cambio. */
         smsPendiente = { id: smsId || null, destinatario: String(cli.full_name ?? ""), telefono: oculto, mensaje };
-        await recordActionLog("enviar_sms", clienteId, `encolado:${smsId}`);
+        await recordActionLog("enviar_sms", destId, `encolado:${smsId}`);
         return JSON.stringify({
             ok: true,
             estado: "pendiente_de_confirmacion",
@@ -3137,7 +3364,7 @@ serve(async (req: Request) => {
                     // extended thinking (abajo) tampoco lo acepta junto.
                     ...thinkingParam,
                     system: systemContent,
-                    tools: [FINANCIAL_TOOL, LEAD_NOTE_TOOL, AGENDA_READ_TOOL, AGENDA_WRITE_TOOL, AGENDA_EVENTOS_TOOL, RESIDENCY_TOOL, EFEMERIDES_TOOL, INCIDENT_WRITE_TOOL, INCIDENT_READ_TOOL, CATALOG_READ_TOOL, ARTIST_RATE_TOOL, CATALOG_PRICE_TOOL, QUOTE_WRITE_TOOL, CLIENT_SEARCH_TOOL, CONTACT_NETWORK_TOOL, SMS_QUEUE_TOOL, EMAIL_QUEUE_TOOL, CONFIRM_SEND_TOOL, MUSIC_TOOL, MEMORY_TOOL, SEGUIMIENTO_ANUAL_TOOL, CUMPLEANOS_CONTACTOS_TOOL, LIBRO_EVENTO_TOOL, VENUE_EVENTS_TOOL, VENUE_RESERVATION_TOOL],
+                    tools: [FINANCIAL_TOOL, LEAD_NOTE_TOOL, NETWORK_CONTACT_WRITE_TOOL, PUBLIC_PAGES_TOOL, AGENDA_READ_TOOL, AGENDA_WRITE_TOOL, AGENDA_EVENTOS_TOOL, RESIDENCY_TOOL, EFEMERIDES_TOOL, INCIDENT_WRITE_TOOL, INCIDENT_READ_TOOL, CATALOG_READ_TOOL, ARTIST_RATE_TOOL, CATALOG_PRICE_TOOL, QUOTE_WRITE_TOOL, CLIENT_SEARCH_TOOL, CONTACT_NETWORK_TOOL, SMS_QUEUE_TOOL, EMAIL_QUEUE_TOOL, CONFIRM_SEND_TOOL, MUSIC_TOOL, MEMORY_TOOL, SEGUIMIENTO_ANUAL_TOOL, CUMPLEANOS_CONTACTOS_TOOL, LIBRO_EVENTO_TOOL, VENUE_EVENTS_TOOL, VENUE_RESERVATION_TOOL],
                     messages: convo,
                 }),
             });
@@ -3184,6 +3411,26 @@ serve(async (req: Request) => {
                     try {
                         const parsed = JSON.parse(out) as { error?: unknown };
                         failed = parsed != null && parsed.error != null;
+                    } catch {
+                        failed = true;
+                    }
+                    await recordAiKpi(failed ? "tool_error" : "tool_ok");
+                } else if (toolName === "consultar_paginas_publicas") {
+                    out = await runPublicPagesTool((b.input as Record<string, unknown>) ?? {});
+                    let failed = true;
+                    try {
+                        const parsed = JSON.parse(out) as { error?: unknown; ok?: unknown };
+                        failed = parsed == null || parsed.error != null || parsed.ok !== true;
+                    } catch {
+                        failed = true;
+                    }
+                    await recordAiKpi(failed ? "tool_error" : "tool_ok");
+                } else if (toolName === "registrar_contacto_network") {
+                    out = await runNetworkContactCreateTool((b.input as Record<string, unknown>) ?? {});
+                    let failed = true;
+                    try {
+                        const parsed = JSON.parse(out) as { error?: unknown; ok?: unknown };
+                        failed = parsed == null || parsed.error != null || parsed.ok !== true;
                     } catch {
                         failed = true;
                     }

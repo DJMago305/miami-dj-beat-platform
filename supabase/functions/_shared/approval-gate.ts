@@ -2,6 +2,8 @@
 // R5: first registered write tool (crear_nota_lead) may pass with policy auto_staff.
 
 const REGISTERED_READ_TOOLS = new Set([
+    // consultar_paginas_publicas (2026-10-02): solo lee el sitemap publico del sitio para dar links reales.
+    "consultar_paginas_publicas",
     "consultar_finanzas",
     "consultar_agenda_artista",
     "consultar_catalogo_precios",
@@ -29,6 +31,9 @@ const REGISTERED_READ_TOOLS = new Set([
 ]);
 const REGISTERED_WRITE_TOOLS = new Set([
     "crear_nota_lead",
+    // registrar_contacto_network (2026-10-02): alta de un contacto SIN cuenta en network_referencia_contactos
+    // via agent_network_contact_create (solo service_role, exige staff, no duplica). No crea login ni envia nada.
+    "registrar_contacto_network",
     "registrar_evento_agenda",
     // modificar_agenda_evento (2026-08-31): agenda OPERATIVA de negocio
     // (elixis_agenda_eventos), separada de registrar_evento_agenda (hueco
