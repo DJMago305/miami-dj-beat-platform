@@ -1088,9 +1088,27 @@ async function mdjRentalsApproveAndPay(leadId, selectedServices, btn) {
             ? window.mdjSupabaseAnonInvokeHeaders()
             : { 'Content-Type': 'application/json' };
 
+        // submit-cart-checkout exige la SESIÓN del usuario (no la clave pública) y que el lead sea suyo.
+        var approveHeaders = Object.assign({}, invokeHeaders);
+        try {
+            var sbApprove = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+            var sessApprove = sbApprove ? await sbApprove.auth.getSession() : null;
+            var userToken = sessApprove && sessApprove.data && sessApprove.data.session
+                ? sessApprove.data.session.access_token : '';
+            if (!userToken) {
+                fallbackToPortal();
+                return;
+            }
+            approveHeaders.Authorization = 'Bearer ' + userToken;
+        } catch (eTok) {
+            void eTok;
+            fallbackToPortal();
+            return;
+        }
+
         var approveResp = await fetch(window.mdbSupabaseFunctionUrl('submit-cart-checkout'), {
             method: 'POST',
-            headers: invokeHeaders,
+            headers: approveHeaders,
             body: JSON.stringify({ lead_id: leadId, cart_lines: cartLines })
         });
         var approveData = await mdjRentalsFetchCheckoutJson(approveResp);
