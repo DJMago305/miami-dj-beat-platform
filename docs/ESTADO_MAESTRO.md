@@ -3524,3 +3524,9 @@ El PO, viendo Recordatorios en modo día, reportó dos rondas seguidas del mismo
 - Tarjetas: `.rcard.unread` (tinte de "no leída") y `.rcard .rdot` (puntito) usan `var(--set)`/`var(--today)` (rosa/rojo de marca) sin importar la columna -- por diseño general de "no leído", pero visualmente chocaba con "Próximos" ya en verde. Nuevas reglas scoped a `.rem-col.future .rcard.unread`/`.rem-col.future .rcard .rdot` con el mismo `#22c55e` -- Hoy/Pasados quedan exactamente igual que antes (ya estaban bien en rojo).
 
 Verificado en vivo con sesión real de DJMago305, modo día: columna "Próximos" completa (título + 8 tarjetas con borde y punto verdes) contra columna "Pasados" en rojo -- confirmado con captura final del propio PO.
+
+## [2026-10-02] Incidente operativo registrado: lluvia y baja asistencia en Haunting House
+
+El PO pidió dejar constancia de un reporte operativo (no técnico): el show de Haunting House de hoy tuvo el parque medio vacío por lluvia. Estuvieron Amanda (instructora de Baila Con Micho, cubriendo mientras sus dueños viajan a España) y DJ Yus compartiendo escenario. Registrado en `docs/incidentes/2026-10-02-lluvia-baja-asistencia-haunting-house.md`, mismo formato que el precedente de "tema 11 faltante, show Ruddy La Scala".
+
+Investigué la emisora que mencionó el PO ("la 95.4") -- no encontré ninguna de Cubatón en esa frecuencia en Miami; todo apunta a que es Ritmo 95.7 FM (WRMA), donde DJ Yus es Director de Programación. El PO confirmó: es 95.7, no 95.4 -- corregido en el reporte.
