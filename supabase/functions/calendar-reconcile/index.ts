@@ -29,6 +29,23 @@
 // muestra "Se desconectó desde Google -- vuelve a conectar" en vez del aviso
 // neutro de sincronización, y fuerza un reconexión completa en vez de solo
 // reactivar (el token guardado ya no sirve para nada).
+//
+// 2026-10-01, paso 15 (reconciliar fechas importantes borradas directo en
+// Google): calendar-push-important-date escribe cumpleaños/aniversarios
+// (client_profiles/dj_profiles.important_dates) como eventos recurrentes
+// (RRULE:FREQ=YEARLY) en el calendario "primary". Si el usuario borra ESE
+// evento directo desde su Google, el google_event_id guardado queda muerto
+// y nadie se entera hasta que alguien edite esa fecha a mano (ahí el Paso 10
+// ya lo detecta y recrea). Esta función ya refresca el token y recorre cada
+// integración activa -- se aprovecha ese mismo loop para revisar cada fecha
+// con google_event_id, por id exacto (events.get, NUNCA events.list): estos
+// eventos son recurrentes, y events.list con singleEvents=true expande cada
+// ocurrencia a un id distinto (masterId_fecha) que nunca calzaría contra el
+// id maestro guardado -- comparar por conjunto (como se hace abajo para
+// elixis_agenda_eventos, eventos sueltos sin recurrencia) daría falsos
+// huérfanos aquí. Solo se limpia en 404/410 o status "cancelled" explícito;
+// cualquier otro fallo se deja intacto, mismo criterio conservador que el
+// resto de este archivo.
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -193,9 +210,41 @@ serve(async (req: Request) => {
                     .in("id", huerfanas.map((h) => h.id));
                 cancelados += huerfanas.length;
             }
+            // Paso 15: fechas importantes con google_event_id muerto (ver nota de arriba).
+            // Solo aplica al calendario "primary" -- ahí es donde siempre escribe
+            // calendar-push-important-date, nunca al de cumpleaños de contactos.
+            let fechasRevisadas = 0, fechasLimpiadas = 0;
+            if (calendarId === "primary") {
+                for (const tablaFechas of ["client_profiles", "dj_profiles"] as const) {
+                    const { data: perfilFechas } = await ADMIN.from(tablaFechas).select("important_dates").eq("user_id", uid).maybeSingle();
+                    const listaFechas: Array<{ google_event_id?: string }> = Array.isArray(perfilFechas?.important_dates) ? perfilFechas.important_dates.slice() : [];
+                    if (!listaFechas.length) continue;
+                    let cambioFechas = false;
+                    for (const entrada of listaFechas) {
+                        if (!entrada.google_event_id) continue;
+                        fechasRevisadas++;
+                        try {
+                            const gRes = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${encodeURIComponent(entrada.google_event_id)}`, {
+                                headers: { Authorization: `Bearer ${token}` },
+                            });
+                            if (gRes.status === 404 || gRes.status === 410) {
+                                entrada.google_event_id = undefined; cambioFechas = true; fechasLimpiadas++;
+                            } else if (gRes.ok) {
+                                const gEv = await gRes.json().catch(() => null);
+                                if (gEv && gEv.status === "cancelled") { entrada.google_event_id = undefined; cambioFechas = true; fechasLimpiadas++; }
+                            }
+                            // Cualquier otro status (red, 401, 500 transitorio) se deja intacto.
+                        } catch (eGet) { console.error(`[calendar-reconcile] events.get fecha importante ${clave}:`, eGet); }
+                    }
+                    if (cambioFechas) {
+                        await ADMIN.from(tablaFechas).update({ important_dates: listaFechas }).eq("user_id", uid);
+                    }
+                }
+            }
+
             await ADMIN.from("user_calendar_integrations").update({ last_synced_at: new Date().toISOString() })
                 .eq("user_id", uid).eq("provider", "google").eq("calendar_id", calendarId);
-            resultados[clave] = { insertados, actualizados, cancelados, guardia };
+            resultados[clave] = { insertados, actualizados, cancelados, guardia, fechasRevisadas, fechasLimpiadas };
         } catch (e) {
             console.error(`[calendar-reconcile] error ${clave}:`, e);
             resultados[clave] = "error";

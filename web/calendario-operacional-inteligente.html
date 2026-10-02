@@ -1609,6 +1609,14 @@
         r.push({dt:parse(e.d),icon:"🎂",title:e.t,sub:"Tu fecha personal",chan:"Push",cal:"cliente",art:e.artist,auto:true,ev:e});
       });
     }
+    // Paso 16: Owner/Admin ve las fechas importantes de TODOS los artistas
+    // consolidadas aquí (ver loadFechasImportantesTodosArtistas) -- Performance
+    // (manager/vendedor) queda fuera a propósito, es dato personal.
+    else if(state.role==="owner"){
+      fipTodosArtistasEv().forEach(function(e){
+        r.push({dt:parse(e.d),icon:"🎂",title:e.t,sub:"Fecha personal de "+artName(e.artist),chan:"Push",cal:"cliente",art:e.artist,auto:true,ev:e});
+      });
+    }
     r.sort(function(a,b){return a.dt-b.dt;});return r;
   }
   function renderRem(){
@@ -2249,6 +2257,49 @@
         t:fe.name+" · "+fipTipoLabel(fe.date_type), artist:state.artist };
     });
   }
+
+  // Paso 16 (2026-10-01): el Owner/Admin ve en Recordatorios las fechas
+  // importantes de TODOS los artistas, no solo las propias -- mismo criterio
+  // que ya tiene Owner·Matrix con leads/residencias (todo el staff ve todo
+  // lo operativo). Manager/Vendedor (Performance) quedan fuera a propósito:
+  // esto es dato personal (cumpleaños/aniversarios), no operativo, y
+  // Performance ya enmascara justo ese tipo de detalle en otras capas. RLS
+  // de dj_profiles ya permite SELECT de todas las filas a is_staff()
+  // (dj_profiles_staff_select_all), sin cambios de permisos necesarios.
+  var _fipTodosArtistas = [];
+  var _fipTodosArtistasLoaded = false;
+  async function loadFechasImportantesTodosArtistas(){
+    if(_fipTodosArtistasLoaded) return;
+    try{
+      var sb=(window.getSupabaseClient? window.getSupabaseClient() : window.supabase);
+      if(!sb || !sb.from || !sb.auth) return setTimeout(loadFechasImportantesTodosArtistas, 300);
+      if(!(await sb.auth.getSession()).data.session) return setTimeout(loadFechasImportantesTodosArtistas, 300);
+      if(window.__COI_ROLE===undefined) return setTimeout(loadFechasImportantesTodosArtistas, 300);
+      var _rol=String(window.__COI_ROLE||"").toLowerCase();
+      if(_rol!=="owner" && _rol!=="admin"){ _fipTodosArtistasLoaded=true; return; }
+      var r=await sb.from("dj_profiles").select("id,stage_name,dj_name,full_name,important_dates");
+      if(r.error) throw r.error;
+      var out=[], pal=ARTISTS.length;
+      (r.data||[]).forEach(function(perfil){
+        var lista=Array.isArray(perfil.important_dates)?perfil.important_dates:[];
+        if(!lista.length) return;
+        var nm=perfil.stage_name||perfil.dj_name||perfil.full_name||"DJ";
+        if(!ARTISTS.some(function(a){return a.id===perfil.id;})) ARTISTS.push({id:perfil.id, n:nm, c:DJ_PALETTE[pal++ % DJ_PALETTE.length]});
+        lista.forEach(function(fe){ out.push({ artist:perfil.id, name:fe.name, date_type:fe.date_type, month:fe.month, day:fe.day }); });
+      });
+      _fipTodosArtistas=out;
+      _fipTodosArtistasLoaded=true;
+      if(state.role==="owner") render();
+    }catch(err){ console.warn("[Matrix] fechas importantes de todos los artistas:", err.message||err); }
+  }
+  function fipTodosArtistasEv(){
+    var y=(state.date&&state.date.getFullYear)?state.date.getFullYear():new Date().getFullYear();
+    function pad2o(n){return (n<10?"0":"")+n;}
+    return (_fipTodosArtistas||[]).map(function(fe){
+      return { d:y+"-"+pad2o(fe.month)+"-"+pad2o(fe.day), cal:"cliente", ad:true, s:null, e:null,
+        t:fe.name+" · "+fipTipoLabel(fe.date_type), artist:fe.artist };
+    });
+  }
   async function fipCargar(){
     if(_fipLoaded) return;
     try{
@@ -2562,6 +2613,11 @@
   // primer render -- mismo criterio que loadPersonalCalendarSync() ya usa
   // para el sync de Google. fipCargar() ya es idempotente (_fipLoaded).
   fipCargar();
+  // Paso 16: fechas importantes de todos los artistas, consolidadas para
+  // Owner/Admin (ver nota junto a loadFechasImportantesTodosArtistas). La
+  // función misma decide si el rol real aplica; se llama siempre, igual que
+  // el resto de estos loaders.
+  loadFechasImportantesTodosArtistas();
   loadElixisBookings();
   subscribeRemindersRealtime();
 })();
