@@ -50,7 +50,7 @@ No se toca nada de código en esta sesión -- el PO pidió solo documentar. Se e
 
 El PO autorizó empezar, incrementalmente, con el consentimiento de probar primero con una cuenta de Cliente real y limpia.
 
-**Verificado en vivo:** se recreó la fila de `client_profiles` de Wendy (`wendyeayala@hotmail.com` — cuenta de Auth DISTINTA a su cuenta de staff `wendy.miamidjbeat@gmail.com`, confirmado por `user_id` distinto. **CORRECCIÓN 2026-10-03:** la frase original decía "no hay sancocho en este caso específico" y eso estaba incompleto: la cuenta de STAFF de Wendy (`c07a065a…`, `role='seller'`) TAMBIÉN tiene una fila en `client_profiles` (creada 2026-09-30 04:37, nueve minutos después de su fila `dj_profiles`). Es un caso dual real; hoy no hace daño porque el rol `seller` la clasifica como staff antes de mirar `client_profiles`) con un respaldo completo guardado antes de tocar nada. Confirmado **0 filas en `dj_profiles`** para ese `user_id`, y login real aterrizó correcto en `client-portal.html`. Esto confirma que la CREACIÓN de cuenta (ya identificada como limpia en la auditoría) funciona de punta a punta.
+**Verificado en vivo:** se recreó la fila de `client_profiles` de Wendy (`wendyeayala@hotmail.com` — cuenta de Auth DISTINTA a su cuenta de staff `wendy.miamidjbeat@gmail.com`, confirmado por `user_id` distinto. **CORRECCIÓN 2026-10-02:** la frase original decía "no hay sancocho en este caso específico" y eso estaba incompleto: la cuenta de STAFF de Wendy (`c07a065a…`, `role='seller'`) TAMBIÉN tiene una fila en `client_profiles` (creada 2026-09-30 04:37, nueve minutos después de su fila `dj_profiles`). Es un caso dual real; hoy no hace daño porque el rol `seller` la clasifica como staff antes de mirar `client_profiles`) con un respaldo completo guardado antes de tocar nada. Confirmado **0 filas en `dj_profiles`** para ese `user_id`, y login real aterrizó correcto en `client-portal.html`. Esto confirma que la CREACIÓN de cuenta (ya identificada como limpia en la auditoría) funciona de punta a punta.
 
 **Paso 1 ejecutado: `web/mdj-identity.js` enriquecido** (único archivo tocado, sin publicar aún) — se consolidaron ahí los 2 arreglos que antes vivían SOLO duplicados dentro de `mdjb-shared-header.js`:
 1. Guardia de red (`djRowError`, nuevo parámetro opcional): si la consulta a `dj_profiles` FALLA (no "no tiene fila"), ya no se asume que la persona es cliente solo por tener `client_profiles` -- mismo criterio que ya existía en el header (`TICKET-ROLE-REDIRECT-002`), ahora centralizado.
@@ -69,7 +69,7 @@ Cada capa casi seguro se agregó para arreglar un bug real puntual (hay comentar
 **Qué sigue, en orden, cuando se retome:**
 1. ~~Publicar el enriquecimiento de `mdj-identity.js`~~ -- hecho, fusionado (PR #620).
 2. ~~Conectar `djRowError` en la llamada real de `mdjb-shared-header.js`~~ -- hecho el 2026-10-02: el archivo ya calculaba `djProfileErr` para su propio guardia inline, pero nunca se lo pasaba a `mdjClassifyPlatformIdentity()` -- el enriquecimiento del paso 1 nunca se activaba de verdad desde aquí hasta este cambio. Verificado en vivo con sesión real de Wendy (Cliente): `window.__mdjLastPlatformIdentity.djRowError === false`, `principal === "buyer"`, sin ninguna regresión visual. Cambio puramente aditivo (un campo más en el objeto que ya se pasaba), cero riesgo para el caso normal.
-3. ~~Entender la intención de cada una de las ~9 condiciones reales de `mdjResolveBuyerSession()`~~ -- hecho el 2026-10-03, ver sección "Paso 3 resuelto" más abajo.
+3. ~~Entender la intención de cada una de las ~9 condiciones reales de `mdjResolveBuyerSession()`~~ -- hecho el 2026-10-02, ver sección "Paso 3 resuelto" más abajo.
 4. Recién ahí, diseñar cómo las tres capas (`isClient`, `navTier`, `mdjResolveBuyerSession`) se reducen a UNA, delegando completamente en `mdjClassifyPlatformIdentity()`.
 5. Probar en vivo con las 4 combinaciones reales que ya se sabe que existen: Artista puro, Cliente puro, Staff puro, y el caso dual confirmado (alguien con fila real en ambas tablas).
 
@@ -89,7 +89,7 @@ Lo único que NO está separado es el almacenamiento físico: su fila vive dentr
 
 **Decisión del PO (2026-10-02): "déjalo documentado por ahora, no lo ejecutamos todavía".** No se toca código ni base de datos para este caso puntual -- el caso de Wendy queda como ejemplo concreto ya verificado para cuando se ejecute el ticket grande de separación física.
 
-## 2026-10-03 — Paso 3 resuelto: qué decide de verdad `mdjResolveBuyerSession()`
+## 2026-10-02 — Paso 3 resuelto: qué decide de verdad `mdjResolveBuyerSession()`
 
 Método: se extrajo el código real del header (`mdjResolveBuyerSession`, `mdjIsBuyerJourneyPage`), se transcribió la lógica inline de `isClient`/`jwtArtist` y se cargó el `mdj-identity.js` real, todo en un arnés de Node (solo lectura, nada del repo se modificó). Se evaluaron las **360 combinaciones** de (fila `dj_profiles`: ninguna/dj/owner/seller/client) × (`app_metadata.role`) × (`user_metadata.user_type`) × (fila `client_profiles`) × (error de red en la consulta a `dj_profiles`) × (página `index.html` / `dj-profile.html`). Luego se quitó cada condición, sola y en grupo, para ver cuántas combinaciones cambian de resultado.
 
@@ -127,7 +127,7 @@ Prueba en grupo: quitar c5+c6+c7+c8 a la vez cambia **0 de 360** combinaciones. 
 
 Arneses reproducibles de esta sesión (scratchpad de la sesión, no commiteados): `test-buyer-session.js` (matriz de casos con nombres) y `ablation.js` (ablación por condición y en grupo).
 
-### Corrección al "Paso 3" y decisiones del PO (2026-10-03)
+### Corrección al "Paso 3" y decisiones del PO (2026-10-02)
 
 **Corrección importante:** la conclusión "c5-c8 son código muerto" solo es cierta en las páginas que SÍ cargan `mdj-identity.js`. **7 páginas cargan `mdjb-shared-header.js` sin cargar `mdj-identity.js`** (`dj-profile.html`, `dj-dashboard.html`, `staff.html`, `staff-admin.html`, `staff-agenda.html`, `calendario-operacional-inteligente.html`, `road-map.html`; las otras 74 páginas con header sí lo cargan). En esas 7, `idn` es `null` y el header usa su respaldo inline: ahí `mdjResolveBuyerSession()` corre sin c2/c4/c5, y c3/c6/c7 son las que deciden. Consecuencia: el cambio de `djRowError` del PR #622 y el respaldo de JWT staff de `mdj-identity.js` (PR #620) no tenían ningún efecto en esas 7 páginas. Mientras `idn` no exista en todas, no se puede borrar el respaldo inline.
 
@@ -138,9 +138,9 @@ Dar el clasificador a esas 7 páginas cambia el resultado en 54 de 360 combinaci
 2. JWT `user_type='client'` vs fila `dj_profiles` no-cliente → **gana la base de datos**.
 3. Aron Rosso → **es cliente** (el PO primero dijo artista y se corrigió el mismo día; vale lo último). El clasificador ya lo da como comprador (fila client, sin fila dj), así que no hace falta regla extra. Queda pendiente, aparte y sin tocar sus datos, que su `app_metadata.role` sigue diciendo `artist` y debería corregirse en Auth.
 
-**Autorizado por el PO (2026-10-03):** opción 1, una línea `<script src="./mdj-identity.js…">` en cada página afectada. Corrección: eran **4**, no 7. `calendario-operacional-inteligente.html`, `staff.html` y `road-map.html` solo nombran el header en comentarios y no lo cargan; las que de verdad lo cargan sin clasificador eran `dj-profile.html`, `dj-dashboard.html`, `staff-agenda.html` y `staff-admin.html`.
+**Autorizado por el PO (2026-10-02):** opción 1, una línea `<script src="./mdj-identity.js…">` en cada página afectada. Corrección: eran **4**, no 7. `calendario-operacional-inteligente.html`, `staff.html` y `road-map.html` solo nombran el header en comentarios y no lo cargan; las que de verdad lo cargan sin clasificador eran `dj-profile.html`, `dj-dashboard.html`, `staff-agenda.html` y `staff-admin.html`.
 
-## 2026-10-03 — Pasos 4 y 5 ejecutados (rama `fix/identity-consolidar-isclient-en-canonico`, SIN comitear)
+## 2026-10-02 — Pasos 4 y 5 ejecutados (rama `fix/identity-consolidar-isclient-en-canonico`, SIN comitear)
 
 **Paso 4 — qué cambió:**
 - `web/mdjb-shared-header.js`: «¿es comprador?» ahora lo decide `idn.principal === 'buyer'` (el clasificador). Se eliminó el override de `dj-profile.html` y `mdjResolveBuyerSession()` ya no decide cuando hay clasificador (`isBuyerSession = idn ? isClient : …`). El cálculo inline antiguo y `mdjResolveBuyerSession()` quedan SOLO como red de seguridad si `mdj-identity.js` no cargara; borrarlos del todo es una limpieza posterior, ya que las 77 páginas con header cargan el clasificador.
@@ -153,7 +153,7 @@ Dar el clasificador a esas 7 páginas cambia el resultado en 54 de 360 combinaci
 - Por arnés (Node): las 10 clases de cuenta que importan (artista, cliente, owner, seller+fila client, Aron, guardia de red, JWT vs BD, owner degradado) dan el resultado esperado; las 9 pruebas previas de `mdj-identity.js` siguen en verde.
 - **NO verificado en vivo:** sesiones de owner, staff y artista (no hay sesión disponible y las credenciales no se ingresan). Ese caso lo cubre solo el arnés. Pendiente que el PO confirme con su propia sesión de Owner y con un artista antes de mergear.
 
-## 2026-10-03 (tarde) — Seguimiento del PR #625: Aron, respaldo inline borrado, artista verificado
+## 2026-10-02 (tarde) — Seguimiento del PR #625: Aron, respaldo inline borrado, artista verificado
 
 - **Aron Rosso:** `auth.users.raw_app_meta_data.role` pasó de `artist` a `client` (única fila, solo ese campo, con guarda `where role='artist'`, respaldo en el scratchpad de la sesión y comando para revertir). `auth.users` solo tiene un trigger de INSERT, así que el UPDATE no disparó nada. Su `user_metadata.user_type` sigue en `talent`; no influye porque con `app_metadata.role` presente el clasificador ignora `user_type`. Autorizado por el PO.
 - **Respaldo inline borrado de `mdjb-shared-header.js`:** se eliminaron `mdjResolveBuyerSession()` completa, la rama `else` del cálculo inline de `isClient` y la variable `metadataSaysClient` (quedó sin uso). Ahora `isClient = !!(idn && idn.principal === 'buyer')`. Si `mdj-identity.js` no cargara, nadie se clasifica como comprador; no se tocó el respaldo de `isDjStaff`/`isNavStaffSolo` (no era el cálculo pedido). `?v=` del header subido a `20261003-sin-respaldo-inline` en las 73 páginas que lo cargan.

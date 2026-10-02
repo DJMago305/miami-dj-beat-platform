@@ -3539,7 +3539,7 @@ Pasos 3-5 de la consolidación grande (entender las ~9 condiciones de `mdjResolv
 
 Investigué la emisora que mencionó el PO ("la 95.4") -- no encontré ninguna de Cubatón en esa frecuencia en Miami; todo apunta a que es Ritmo 95.7 FM (WRMA), donde DJ Yus es Director de Programación. El PO confirmó: es 95.7, no 95.4 -- corregido en el reporte.
 
-## [2026-10-03] Consolidación de identidad: pasos 3-5 cerrados (PR #625 mergeado) + cierre del Caso 1 del ticket de costos
+## [2026-10-02] Consolidación de identidad: pasos 3-5 cerrados (PR #625 mergeado) + cierre del Caso 1 del ticket de costos
 
 **Paso 3 (medido, no supuesto):** se extrajo el código real del header y se evaluaron 360 combinaciones de cuenta quitando cada condición de `mdjResolveBuyerSession()`. El header ya coincidía con el clasificador canónico en 348; las 12 restantes eran dos contradicciones de política (error de red + fila client; JWT `user_type=client` contra fila `dj_profiles`). Ninguna cuenta real caía en ellas. Detalle en `docs/tickets/2026-10-01-TICKET-plantilla-cliente-separada-de-artista.md`.
 
@@ -3554,3 +3554,19 @@ Investigué la emisora que mencionó el PO ("la 95.4") -- no encontré ninguna d
 **Correcciones de lo que yo había anotado:** (1) la cuenta de staff de Wendy (`seller`) también tiene fila en `client_profiles`; es un caso dual real, hoy inofensivo porque `seller` la clasifica como staff antes. (2) "7 páginas sin clasificador" eran 4. (3) Se empezó por el ticket de costos de Supabase sin comprobar que ya estaba resuelto; el PO había subido el plan y rotado la clave `service_role`. El Caso 1 quedó cerrado en el ticket; el Caso 2 (Vercel) sigue abierto, con datos medidos: 615 despliegues en el ciclo desde el 11/09, los de Production coinciden 1 a 1 con los PRs fusionados.
 
 **Pendiente:** corregir el rol de Aron en Auth; borrar el respaldo inline del header (limpieza posterior); probar en vivo vendedora y artista; separación física de `dj_profiles` staff/artista (ticket aparte, sin ejecutar).
+
+## [2026-10-02] Cierre de jornada: consola limpia, ELIXIS registra contactos y da links, hallazgo de costo en Vercel
+
+**Fecha:** una versión anterior de estas notas decía 2026-10-03 por error; la fecha real de la jornada es 2026-10-02 (corregido en este commit en ESTADO_MAESTRO y en los dos tickets). Queda un comentario con "2026-10-03" dentro de `web/mdjb-shared-header.js` (línea ~5247) y las etiquetas `?v=20261003-…`: son solo etiquetas, no se tocan para no pagar otra ronda de despliegues.
+
+**Identidad:** PRs #625 y #626 mergeados (una sola función decide si alguien es comprador; respaldo inline borrado). Verificado en vivo con Owner, artista, vendedora (Wendy staff, el caso dual con fila de cliente sigue siendo `staff`) y cliente; **falta reconfirmar la cuenta de cliente tras el último cambio del header**. Aron Rosso: `app_metadata.role` pasó de `artist` a `client` en producción (respaldo y reversión en el scratchpad de la sesión).
+
+**Errores de consola corregidos (esta rama):** (1) `role-guard.js` insertaba en `audit_log` columnas que la tabla no tiene y sin permiso de INSERT para el cliente: 400 en cada carga; se quitó el `page_view` (opción A del PO; auditar de verdad debe ir por una función del servidor, ticket aparte). (2) El header llamaba a `member-welcome`, función que nunca existió; se quitó la llamada, el aviso visual de bienvenida no se tocó (opción B).
+
+**ELIXIS (herramientas nuevas, ya desplegado `elixis-chat`):** el caso real fue una clienta que llamó pidiendo cotización de Halloween y ELIXIS dijo que no podía registrarla ni darle el link. Causas: su lectura del Network **no leía `network_referencia_contactos`** (los contactos sin cuenta), no existía herramienta de alta, y no conocía las páginas públicas. Ahora: `registrar_contacto_network` (alta con revisión de duplicados por teléfono/correo, función SQL `agent_network_contact_create` solo service_role, ya aplicada y probada en producción), `consultar_red_contactos` incluye `contacto_sin_cuenta` con `contacto_id`, `consultar_paginas_publicas` (lee el sitemap en vivo, 65 páginas) y `enviar_sms` acepta `contacto_id` (teléfono siempre de la base, en cola con confirmación). **Sin verificar de punta a punta:** el chat exige sesión de staff, lo prueba el PO en FÉNIX AI. El SMS sigue con la reserva de que "aceptado por Twilio" no es "entregado". Seasonal Parties tiene precio publicado en la página ($600–$1.500 según montaje) pero NO precio fijo en `service_catalog`; ELIXIS lo usa como pista, no como cotización.
+
+**Vercel (Caso 2 del ticket de costos):** la máquina de build del proyecto `web` es **Turbo (30 vCPU)**; con builds de 7-11 s y $0,0035 por minuto de CPU, cada despliegue cuesta ≈ $0,105 (619 despliegues, $64,68 en el ciclo). Cambiarla a Standard (4 vCPU) ahorraría ≈ 87 %. **PENDIENTE del PO** (2 minutos en el panel, reversible); el ciclo termina el 11/10. El Caso 1 (Supabase) quedó cerrado por confirmación del PO.
+
+**Lección de proceso (tercera recaída):** esta jornada salieron 15 PRs (#612–#626) y 31 despliegues, 5 de ellos sin tocar `web/`. "Junte y mande el PR" significa JUNTAR todo en un PR, no abrir uno por pieza. Regla vigente: una rama y un PR por jornada; la documentación nunca va sola.
+
+**Pendiente:** cambiar la máquina de Vercel; reconfirmar cuenta de cliente; probar ELIXIS (buscar a la clienta, pedir el link de fiestas temáticas, encolar el SMS); cotización de la clienta (necesita horas, venue, paquete y precio del PO); decidir si se quiere auditoría de accesos desde el servidor; separación física de `dj_profiles` staff/artista (ticket aparte, sin ejecutar).

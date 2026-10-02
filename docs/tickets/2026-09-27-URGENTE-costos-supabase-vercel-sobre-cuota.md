@@ -2,7 +2,7 @@
 
 **Fecha:** 2026-09-27 / actualizado 2026-09-28
 **Pedido por el PO:** "hay que revisar cómo bajamos esos costos de gastos extras por encima de lo que podemos, hay que hacer un análisis y vamos a ver los de vercel también, paso a paso, déjalo como tarea urgente los dos casos."
-**Estado (actualizado 2026-10-03):** CASO 1 (SUPABASE) CERRADO. El PO confirmó que el egress se resolvió subiendo el plan de Supabase, y que la clave `service_role` expuesta en la captura del 28/09 ya fue corregida (rotada). Ambas confirmaciones son del PO; no se verificaron contra el panel de Supabase (sin acceso desde la sesión). **CASO 2 (VERCEL): sin cambios, el PO no lo mencionó** — el diagnóstico de abajo sigue siendo el último dato.
+**Estado (actualizado 2026-10-02):** CASO 1 (SUPABASE) CERRADO. El PO confirmó que el egress se resolvió subiendo el plan de Supabase, y que la clave `service_role` expuesta en la captura del 28/09 ya fue corregida (rotada). Ambas confirmaciones son del PO; no se verificaron contra el panel de Supabase (sin acceso desde la sesión). **CASO 2 (VERCEL): sin cambios, el PO no lo mencionó** — el diagnóstico de abajo sigue siendo el último dato.
 ~~Estado anterior: DIAGNÓSTICO COMPLETO en los dos casos. Nada implementado todavía — quedan decisiones reales del PO antes de tocar código o borrar nada.~~
 
 ## Caso 1 — Supabase: egress por encima de cuota
@@ -81,7 +81,7 @@ Cero bytes transferidos, header correcto. Esto es un ahorro real y verificado, n
 
 **⚠️ Incidente de seguridad menor, ya resuelto por el PO**: durante esta corrida, la clave `service_role` (formato JWT legacy) quedó expuesta en texto plano en una captura de pantalla compartida en el chat de Claude Code (se pegó por accidente en un prompt vacío de la terminal, que la mostró completa al fallar como "command not found"). Se le indicó al PO regenerar esa clave de inmediato en el dashboard de Supabase — ningún código de producción la usa (solo scripts de administración como este), así que la rotación no debería romper nada. Confirmar con el PO que ya la rotó antes de cerrar este ticket del todo.
 
-## 2026-10-03 — Cierre del Caso 1 y datos medidos para el Caso 2
+## 2026-10-02 — Cierre del Caso 1 y datos medidos para el Caso 2
 
 **Caso 1 (Supabase): cerrado por el PO.** Egress resuelto subiendo el plan; clave `service_role` expuesta ya corregida. Los pendientes de la sección anterior ("revisar la tendencia el 2026-09-30" y "confirmar que ya la rotó") quedan resueltos con esta confirmación. Este ticket se leyó hoy como tarea pendiente por no estar actualizado; por eso se deja constancia.
 
@@ -91,7 +91,7 @@ Cero bytes transferidos, header correcto. Esto es un ahorro real y verificado, n
 - El build real es `exit 0` (`web/package.json`), así que el consumo no viene de compilar. El repo pesa 223 MB en GitHub, el clon no es el problema.
 - No se pudo medir la duración real de cada build: los tiempos de estado que expone GitHub dan 0 s y no sirven. Eso solo se ve en el panel de Vercel (sin sesión desde la herramienta). Sigue abierta la duda de por qué salen ~210 horas de "Build CPU" con un build vacío.
 
-## 2026-10-03 (tarde) — Caso 2 (Vercel): palanca concreta encontrada, sin aplicar
+## 2026-10-02 (tarde) — Caso 2 (Vercel): palanca concreta encontrada, sin aplicar
 
 **Medido en GitHub (266 PRs fusionados desde el 2026-09-11):** 104 (39 %) no tocaron NADA bajo `web/` (solo `docs/`, `supabase/`, scripts o workflows); desde el 2026-09-28 son 45 de 90 (50 %). Cada uno de esos PRs dispara igual un build de Preview y uno de Production que despliegan exactamente el mismo sitio.
 
