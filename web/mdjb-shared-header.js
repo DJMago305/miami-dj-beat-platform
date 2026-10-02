@@ -5296,7 +5296,14 @@
               ? window.mdjClassifyPlatformIdentity({
                   user: session.user,
                   djRow: p,
-                  clientRow: clientRow
+                  clientRow: clientRow,
+                  /* 2026-10-02: este archivo ya calculaba djProfileErr (línea
+                     de arriba) y tenía SU PROPIO guardia inline contra ese
+                     error -- nunca se lo pasaba a mdjClassifyPlatformIdentity(),
+                     así que el guardia consolidado hoy en mdj-identity.js
+                     nunca se activaba de verdad desde aquí. Primer paso real
+                     de la consolidación: conectar el dato que ya existía. */
+                  djRowError: djProfileErr
                 })
               : null;
           /* Staff: solo dj_profiles (mismo criterio que admin y RLS). Fallback sin mdj-identity.js puesto arriba en el HTML. */
