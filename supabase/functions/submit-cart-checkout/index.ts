@@ -20,7 +20,7 @@
 //   1. Exige sesión: valida el JWT con auth.getUser y rechaza la clave pública.
 //   2. Solo el dueño del lead (leads.client_user_id = usuario) puede aprobarlo; para cualquier
 //      otro caso responde igual que si el lead no existiera (no revela ids ajenos).
-//   3. Solo aprueba un lead que NUNCA fue aprobado, sin pagos, sin estado de pago avanzado y
+//   3. Solo aprueba un lead sin total aprobado (monto 0 o NULL), sin pagos, sin estado de pago avanzado y
 //      reciente (30 min): nunca sobrescribe un total aprobado ni pagado.
 //   4. La escritura es atómica y condicional (IS NULL + dueño): si el lead cambió entre la
 //      lectura y la escritura, no escribe y responde 409.
@@ -62,13 +62,13 @@ function decidirAcceso(lead: LeadRow | null, userId: string, nowMs: number): Dec
     if (status === "CANCELLED" || status === "COMPLETED") {
         return { ok: false, status: 409, error: "El evento ya no acepta cambios" };
     }
-    if (lead.total_aprobado_usd != null) {
+    if (Number(lead.total_aprobado_usd ?? 0) > 0) {
         return { ok: false, status: 409, error: "El total de este evento ya fue aprobado" };
     }
     if (Number(lead.balance_paid ?? 0) > 0) {
         return { ok: false, status: 409, error: "Este evento ya tiene pagos registrados" };
     }
-    const pago = String(lead.payment_status ?? "UNPAID").toUpperCase();
+    const pago = String(lead.payment_status ?? "").toUpperCase();
     if (pago !== "UNPAID" && pago !== "PENDING") {
         return { ok: false, status: 409, error: "Este evento ya tiene un pago en curso" };
     }
@@ -150,7 +150,9 @@ serve(async (req) => {
         const totalUsd = Math.round(subtotalCents * (1 + TAX_RATE)) / 100;
         if (totalUsd <= 0) return json({ ok: true, approved: false, reason: "total_vacio" });
 
-        // Escritura atómica y condicional: solo si sigue siendo del usuario y nunca fue aprobado.
+        // Escritura atómica y condicional: solo si sigue siendo del usuario, sin total aprobado (un lead nuevo trae
+        // 0 o NULL), sin pagos y con estado de pago UNPAID/PENDING; un pago que entre entre la lectura y esta
+        // escritura también la frena. Una sola .or(): varias encadenadas tienen semántica ambigua en PostgREST.
         const { data: updated, error: updErr } = await sb
             .from("leads")
             .update({
@@ -160,7 +162,9 @@ serve(async (req) => {
             })
             .eq("id", lead_id)
             .eq("client_user_id", user.id)
-            .is("total_aprobado_usd", null)
+            .or("total_aprobado_usd.is.null,total_aprobado_usd.eq.0")
+            .eq("balance_paid", 0)
+            .in("payment_status", ["UNPAID", "PENDING"])
             .select("id");
 
         if (updErr) {
