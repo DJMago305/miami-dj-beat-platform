@@ -2278,26 +2278,6 @@
     }
   }
 
-  function mdjResolveBuyerSession(opts) {
-    opts = opts || {};
-    if (opts.isDjStaff || opts.isNavStaffSolo) return false;
-    if (opts.isClient === true) return true;
-    var idn = opts.idn;
-    if (idn && idn.principal === 'buyer') return true;
-    /* DB wins: si existe dj_profiles con rol no-cliente, el JWT 'client' en app_metadata no fuerza buyer session. */
-    if ((opts.sessionIsExplicitClient || opts.metadataSaysClient) && !opts.hasDjProfile) return true;
-    if (idn && idn.hasClientRow && !opts.hasDjProfile) return true;
-    if (idn && idn.hasClientRow && (idn.dbRole === 'client' || idn.dbRole === 'cliente')) return true;
-    if (opts.clientRow && !opts.hasDjProfile) return true;
-    /* client_profiles en recorrido público comprador (p. ej. Wendy con dj_profiles paralelo). */
-    if (opts.hasClientRow && !opts.hasDjProfile && mdjIsBuyerJourneyPage()) return true;
-    try {
-      var su = String(opts.settingsUrl || '');
-      if (su.indexOf('client-account') !== -1 || su.indexOf('client-portal') !== -1) return true;
-    } catch (e) { /* ignore */ }
-    return false;
-  }
-
   function mdjHideMainNavSlot(el) {
     if (!el) return;
     if (el.id !== 'mainNav-config-link' && el.id !== 'mainNav-mi-portal-link') {
@@ -5261,7 +5241,6 @@
               (appRole && /^(owner|manager|admin|staff|seller)$/i.test(String(appRole))) ||
               (!!p && djRowRole !== 'client');
           var appRoleLower = appRole ? String(appRole).toLowerCase() : '';
-          var metadataSaysClient = metaUtLower === 'client' || appRoleLower === 'client';
           var isClient = false; /* se decide más abajo, una vez calculado idn */
           var hasDjProfile = !!(p && djRowRole !== 'client');
           var idn =
@@ -5285,18 +5264,7 @@
              dj_profiles + fila client (el guardia TICKET-ROLE-REDIRECT-002 quedaba anulado) y JWT
              user_type=client contra una fila dj_profiles real (ahora gana la base de datos).
              Ver docs/tickets/2026-10-01-TICKET-plantilla-cliente-separada-de-artista.md. */
-          if (idn) {
-            isClient = idn.principal === 'buyer';
-          } else {
-            /* Red de seguridad: solo corre si mdj-identity.js no cargó (todas las páginas con
-               header deben incluirlo antes). Misma lógica de antes, salvo el override propio de
-               dj-profile.html, que dejó de existir porque el clasificador ya cubre ese caso. */
-            isClient = sessionIsExplicitClient
-              ? true
-              : (p && djRowRole === 'client') ||
-                (!p && !djProfileErr && hasClientRow && !jwtArtist) ||
-                (!p && !djProfileErr && metadataSaysClient && !jwtArtist);
-          }
+          isClient = !!(idn && idn.principal === 'buyer');
           /* Staff: solo dj_profiles (mismo criterio que admin y RLS). Fallback sin mdj-identity.js puesto arriba en el HTML. */
           var isDjStaff = idn
             ? !!idn.staffInDb
@@ -5471,20 +5439,7 @@
             : (isNavStaffSolo ? './staff.html?vista=miperfil' : './client-portal.html');
           var miPortalNavOpts = null;
 
-          /* Con clasificador, isClient ya es la decisión final; mdjResolveBuyerSession() solo
-             queda para el caso de respaldo (idn nulo). */
-          var isBuyerSession = idn ? isClient : mdjResolveBuyerSession({
-            isClient: isClient,
-            settingsUrl: settingsUrl,
-            idn: idn,
-            hasClientRow: hasClientRow,
-            hasDjProfile: hasDjProfile,
-            clientRow: clientRow,
-            isDjStaff: isDjStaff,
-            isNavStaffSolo: isNavStaffSolo,
-            metadataSaysClient: metadataSaysClient,
-            sessionIsExplicitClient: sessionIsExplicitClient
-          });
+          var isBuyerSession = isClient;
           window.__mdjLastBuyerSession = isBuyerSession;
           if (isBuyerSession) {
             isClient = true;
