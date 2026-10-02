@@ -220,6 +220,91 @@ async function mdjproAutoIssueArtistProLicense(
     };
 }
 
+// ── Entradas de sala: confirmación al comprador + aviso al staff (Resend, mismo patrón que merch) ──
+function escHtml(v: unknown): string {
+    return String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string));
+}
+
+async function notifyVenueTicketOrder(
+    // deno-lint-ignore no-explicit-any
+    supabase: any,
+    o: {
+        orderId: string | null;
+        eventId: string;
+        items: { label: string; qty: number }[];
+        customerName: string | null;
+        customerEmail: string | null;
+        totalCents: number;
+    },
+): Promise<void> {
+    try {
+        const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
+        const MANAGER_EMAIL = Deno.env.get("MANAGER_EMAIL") ?? "";
+        const FROM_EMAIL = Deno.env.get("FROM_EMAIL") || "Miami DJ Beat <no-reply@miamidjbeat.com>";
+        if (!RESEND_API_KEY) return;
+
+        let title = "Evento";
+        let when = "";
+        let place = "";
+        if (o.eventId) {
+            const { data: ev } = await supabase
+                .from("venue_events")
+                .select("title, event_date, venue_rooms(name, venues(name, address))")
+                .eq("id", o.eventId)
+                .maybeSingle();
+            if (ev) {
+                title = ev.title || title;
+                if (ev.event_date) {
+                    when = new Date(`${ev.event_date}T12:00:00`).toLocaleDateString("es-US", { dateStyle: "full", timeZone: "America/New_York" });
+                }
+                const room = ev.venue_rooms;
+                const venue = room?.venues;
+                place = [venue?.name, room?.name, venue?.address].filter(Boolean).join(" · ");
+            }
+        }
+
+        const code = o.orderId ? o.orderId.slice(0, 8).toUpperCase() : "—";
+        const amount = `$${(o.totalCents / 100).toFixed(2)}`;
+        const lines = o.items.map((it) => `${escHtml(it.qty)}× ${escHtml(it.label)}`).join("<br>") || "—";
+        const buyer = o.customerName || "—";
+
+        const send = (to: string, subject: string, html: string) =>
+            fetch("https://api.resend.com/emails", {
+                method: "POST",
+                headers: { "Authorization": `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+                body: JSON.stringify({ from: FROM_EMAIL, to: [to], subject, html }),
+            });
+
+        if (o.customerEmail) {
+            await send(
+                o.customerEmail,
+                `🎟️ Tus entradas / Your tickets — ${title}`,
+                `<h2>¡Gracias por tu compra! / Thank you!</h2>
+<p><b>${escHtml(title)}</b>${when ? `<br>${escHtml(when)}` : ""}${place ? `<br>${escHtml(place)}` : ""}</p>
+<p><b>Entradas / Tickets:</b><br>${lines}</p>
+<p><b>Total:</b> ${escHtml(amount)}<br><b>Código / Code:</b> ${escHtml(code)}</p>
+<p>En la puerta, di tu nombre (<b>${escHtml(buyer)}</b>) o muestra este correo.<br>
+At the door, give your name (<b>${escHtml(buyer)}</b>) or show this email.</p>
+<p style="color:#888;font-size:12px">Miami DJ Beat LLC</p>`,
+            );
+        }
+        if (MANAGER_EMAIL) {
+            await send(
+                MANAGER_EMAIL,
+                `🎟️ Entradas vendidas — ${title} — ${amount}`,
+                `<h2>Nueva venta de entradas</h2>
+<p><b>Evento:</b> ${escHtml(title)}${when ? ` · ${escHtml(when)}` : ""}</p>
+<p><b>Comprador:</b> ${escHtml(buyer)} (${escHtml(o.customerEmail || "—")})</p>
+<p><b>Entradas:</b><br>${lines}</p>
+<p><b>Total:</b> ${escHtml(amount)} · <b>Código:</b> ${escHtml(code)}</p>
+<p><a href="https://miamidjbeat.com/staff.html">Abrir staff → Pedidos → Entradas</a></p>`,
+            );
+        }
+    } catch (e) {
+        console.error("[Webhook] venue ticket notify failed:", e);
+    }
+}
+
 serve(async (req) => {
     if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -681,7 +766,7 @@ serve(async (req) => {
                         (session.customer_email as string | undefined) ||
                         null;
 
-                    const { error: ticketOrderErr } = await supabase.from("venue_ticket_orders").upsert({
+                    const { data: ticketOrderRow, error: ticketOrderErr } = await supabase.from("venue_ticket_orders").upsert({
                         event_id: eventIdTicket || null,
                         stripe_session_id: session.id,
                         stripe_payment_intent_id: (session.payment_intent as string) ?? null,
@@ -692,7 +777,7 @@ serve(async (req) => {
                         subtotal_cents: Number(session.metadata?.subtotal_cents ?? 0),
                         total_cents: session.amount_total ?? 0,
                         currency: session.currency ?? "usd",
-                    }, { onConflict: "stripe_session_id" });
+                    }, { onConflict: "stripe_session_id" }).select("id").maybeSingle();
 
                     if (ticketOrderErr) {
                         console.error("[Webhook] venue_ticket_orders:", ticketOrderErr.message);
@@ -714,6 +799,16 @@ serve(async (req) => {
                                     .eq("id", line.id);
                             }
                         }
+                        // Confirmación al comprador y aviso al staff. Si el correo falla la orden ya quedó
+                        // registrada (no bloquea): el staff la ve igual en Pedidos → Entradas.
+                        await notifyVenueTicketOrder(supabase, {
+                            orderId: ticketOrderRow?.id ?? null,
+                            eventId: eventIdTicket,
+                            items,
+                            customerName: (session.customer_details?.name as string | undefined) || null,
+                            customerEmail: email,
+                            totalCents: session.amount_total ?? 0,
+                        });
                     }
                     break;
                 }

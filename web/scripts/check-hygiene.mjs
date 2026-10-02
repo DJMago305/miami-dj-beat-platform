@@ -21,6 +21,8 @@ const ALLOW = {
   'includes/site-header.html': 'fuente canónica del encabezado, se copia a cada página',
   'staff-config.html': 'se incrusta como iframe dentro de staff.html (nombre armado por código)',
   'documents/wedding-blueprint-iris-angel-2026.html': 'documento de un evento concreto, se comparte por enlace directo',
+  'venue-floor-builder.html': 'editor de planos de salas, EN DESARROLLO (fase 1, guarda solo en el navegador): sin enlace desde el sitio y noindex a propósito hasta tener guardado en la base y permisos del Cliente Comercial (docs/tickets/2026-10-02-TICKET-sala-de-mesas-fase-2-venta-sin-sobreventa.md)',
+  'venue-room.html': 'plantilla de las salas con QR: se llega por /venues/:venue/:sala (rewrite de vercel.json) y por el QR, nunca por un enlace del sitio. La limpieza del 2026-09-12 la tomó por huérfana y rompió la taquilla',
 };
 const ALLOW_PREFIX = {
   'manuals/MDJPRO_Manual_Print/': 'versiones de impresión del manual (se generan/abren fuera del sitio)',

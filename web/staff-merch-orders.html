@@ -202,6 +202,28 @@
         }
         .state .glyph { font-size: 26px; display: block; margin-bottom: 10px; opacity: .7; }
         .state.error { color: var(--bad); }
+
+        /* Vista Entradas (taquilla de salas): lista por nombre para la puerta */
+        .search { background: var(--card); border: 1px solid var(--card-line); color: var(--text); border-radius: 999px; padding: 8px 16px; font-size: 13px; min-width: 240px; font-family: inherit; }
+        .search:focus { outline: none; border-color: var(--gold); }
+        .ev-block { margin-bottom: 26px; }
+        .ev-head { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+        .ev-title { font-size: 16px; font-weight: 800; }
+        .ev-meta { color: var(--muted); font-size: 12.5px; }
+        .ev-meta b { color: var(--gold); }
+        .guest { display: grid; grid-template-columns: 1.4fr 1.6fr 1fr auto; align-items: center; gap: 14px; background: var(--card); border: 1px solid var(--card-line); border-radius: 10px; padding: 12px 16px; margin-bottom: 8px; }
+        .guest.in { border-color: rgba(70, 200, 120, .45); }
+        .guest-name { font-size: 14.5px; font-weight: 700; }
+        .guest-sub { color: var(--muted); font-size: 12px; margin-top: 2px; word-break: break-word; }
+        .guest-items { font-size: 13px; }
+        .guest-code { color: var(--muted); font-size: 11.5px; letter-spacing: .06em; margin-top: 2px; }
+        .gate { display: flex; align-items: center; gap: 8px; }
+        .gate button { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--card-line); background: transparent; color: var(--text); font-size: 18px; font-weight: 700; cursor: pointer; line-height: 1; }
+        .gate button:hover:not(:disabled) { border-color: var(--gold); color: var(--gold); }
+        .gate button:disabled { opacity: .35; cursor: default; }
+        .gate-n { min-width: 54px; text-align: center; font-weight: 800; font-size: 15px; }
+        .gate-n.full { color: var(--ok); }
+        @media (max-width: 760px) { .guest { grid-template-columns: 1fr auto; } .guest-items { grid-column: 1 / -1; } }
     </style>
 </head>
 
@@ -210,11 +232,11 @@
         <div class="page-head">
             <p class="eyebrow">Shopping Miami DJ Beat</p>
             <h1>Pedidos <span id="filter-label"></span></h1>
-            <p class="sub">Pedidos pagados vía Stripe Checkout · visible solo para staff (owner/admin/manager/seller)</p>
+            <p class="sub" id="sub-line">Pedidos pagados vía Stripe Checkout · visible solo para staff (owner/admin/manager/seller)</p>
         </div>
 
         <div class="toolbar">
-            <span></span>
+            <input type="search" id="guest-search" class="search" placeholder="Buscar por nombre…" aria-label="Buscar por nombre" style="display:none" />
             <span class="count" id="count"></span>
         </div>
 
@@ -308,7 +330,101 @@
             '</div>';
         }
 
+        // ── Vista Entradas: lista por nombre para la puerta (venue_ticket_orders) ──
+        var _guests = [];
+
+        function ticketQty(o) {
+            return (Array.isArray(o.items) ? o.items : []).reduce(function (n, it) { return n + (Number(it.qty) || 0); }, 0);
+        }
+
+        function guestRow(o) {
+            var total = ticketQty(o), inn = o.checked_in_qty || 0;
+            var items = (Array.isArray(o.items) ? o.items : []).map(function (it) { return esc(it.qty) + '× ' + esc(it.label); }).join(', ') || '—';
+            return '<div class="guest' + (inn >= total && total > 0 ? ' in' : '') + '" data-id="' + esc(o.id) + '">' +
+                '<div><div class="guest-name">' + esc(o.customer_name || 'Sin nombre') + '</div>' +
+                '<div class="guest-sub">' + esc(o.customer_email || '—') + (o.customer_phone ? ' · ' + esc(o.customer_phone) : '') + '</div></div>' +
+                '<div class="guest-items">' + items + '<div class="guest-code">Código ' + esc(String(o.id).slice(0, 8).toUpperCase()) + '</div></div>' +
+                '<div class="guest-sub">$' + ((o.total_cents || 0) / 100).toFixed(2) + '</div>' +
+                '<div class="gate"><button type="button" data-d="-1" aria-label="Quitar una entrada" ' + (inn <= 0 ? 'disabled' : '') + '>−</button>' +
+                '<span class="gate-n' + (inn >= total && total > 0 ? ' full' : '') + '">' + inn + ' / ' + total + '</span>' +
+                '<button type="button" data-d="1" aria-label="Marcar una entrada que entró" ' + (inn >= total ? 'disabled' : '') + '>+</button></div>' +
+                '</div>';
+        }
+
+        function renderGuests() {
+            var content = document.getElementById('content');
+            var term = (document.getElementById('guest-search').value || '').trim().toLowerCase();
+            var list = _guests.filter(function (o) {
+                return !term || String(o.customer_name || '').toLowerCase().indexOf(term) !== -1 ||
+                    String(o.customer_email || '').toLowerCase().indexOf(term) !== -1 ||
+                    String(o.id).slice(0, 8).toLowerCase().indexOf(term) !== -1;
+            });
+            var totalAll = 0, inAll = 0;
+            _guests.forEach(function (o) { totalAll += ticketQty(o); inAll += o.checked_in_qty || 0; });
+            document.getElementById('count').textContent = inAll + ' de ' + totalAll + ' entradas ya entraron · ' + _guests.length + (_guests.length === 1 ? ' orden' : ' órdenes');
+            if (!list.length) {
+                content.className = 'state';
+                content.innerHTML = '<span class="glyph">🎟️</span>' + (_guests.length ? 'Nadie coincide con la búsqueda.' : 'Todavía no hay entradas vendidas.');
+                return;
+            }
+            var byEvent = {}, order = [];
+            list.forEach(function (o) {
+                var k = o.event_id || 'sin-evento';
+                if (!byEvent[k]) { byEvent[k] = []; order.push(k); }
+                byEvent[k].push(o);
+            });
+            content.className = '';
+            content.innerHTML = order.map(function (k) {
+                var rows = byEvent[k], ev = rows[0].venue_events || {};
+                rows.sort(function (a, b) { return String(a.customer_name || '').localeCompare(String(b.customer_name || ''), 'es', { sensitivity: 'base' }); });
+                var t = 0, i = 0; rows.forEach(function (o) { t += ticketQty(o); i += o.checked_in_qty || 0; });
+                var when = ev.event_date ? new Date(ev.event_date + 'T12:00:00').toLocaleDateString('es-US', { dateStyle: 'medium' }) : 'fecha por anunciar';
+                return '<div class="ev-block"><div class="ev-head"><span class="ev-title">' + esc(ev.title || 'Evento') + '</span>' +
+                    '<span class="ev-meta">' + esc(when) + ' · <b>' + i + ' / ' + t + '</b> entraron</span></div>' +
+                    rows.map(guestRow).join('') + '</div>';
+            }).join('');
+        }
+
+        async function gate(sb, id, delta) {
+            var { data, error } = await sb.rpc('venue_ticket_checkin', { p_order_id: id, p_delta: delta });
+            if (error) { alert('No se pudo registrar: ' + error.message); return; }
+            var o = _guests.filter(function (g) { return g.id === id; })[0];
+            if (o && data) o.checked_in_qty = data.checked_in_qty;
+            renderGuests();
+        }
+
+        async function loadEntradas(sb) {
+            var content = document.getElementById('content');
+            content.className = 'state';
+            content.innerHTML = 'Cargando…';
+            document.getElementById('count').textContent = '';
+            var { data, error } = await sb.from('venue_ticket_orders')
+                .select('id,event_id,customer_name,customer_email,customer_phone,items,total_cents,created_at,checked_in_qty,venue_events(title,event_date)')
+                .order('created_at', { ascending: false }).limit(1000);
+            if (error) {
+                content.className = 'state error';
+                var falta = /checked_in_qty/.test(error.message || '');
+                content.innerHTML = '<span class="glyph">⚠</span>' + (falta
+                    ? 'Falta aplicar el SQL de la puerta (supabase/scripts/20261002_taquilla_puerta_y_sala_mesas.sql).'
+                    : esc(error.message));
+                return;
+            }
+            _guests = data || [];
+            renderGuests();
+        }
+
+        document.addEventListener('click', function (e) {
+            var b = e.target.closest ? e.target.closest('.gate button') : null;
+            if (!b || !_sbRef || b.disabled) return;
+            var row = b.closest('.guest');
+            if (row) gate(_sbRef, row.getAttribute('data-id'), Number(b.getAttribute('data-d')));
+        });
+        document.addEventListener('input', function (e) {
+            if (e.target && e.target.id === 'guest-search') renderGuests();
+        });
+
         async function load(sb) {
+            if (currentFilter === 'entradas') return loadEntradas(sb);
             var content = document.getElementById('content');
             var countEl = document.getElementById('count');
             content.className = 'state';
@@ -349,12 +465,20 @@
             }
         }
 
-        var FILTER_LABEL = { paid_pending_fulfillment: 'Pendientes', shipped: 'Enviados', all: 'Todos' };
+        var FILTER_LABEL = { paid_pending_fulfillment: 'Pendientes', shipped: 'Enviados', all: 'Todos', entradas: 'Entradas' };
         var _sbRef = null;
+        var _readMarked = false;
 
         function applyFilter(filter) {
             currentFilter = filter;
+            var ent = filter === 'entradas';
             document.getElementById('filter-label').textContent = FILTER_LABEL[filter] || '';
+            document.getElementById('guest-search').style.display = ent ? '' : 'none';
+            document.getElementById('sub-line').textContent = ent
+                ? 'Entradas de salas y eventos · lista por nombre para la puerta · visible solo para staff'
+                : 'Pedidos pagados vía Stripe Checkout · visible solo para staff (owner/admin/manager/seller)';
+            // Abrir Entradas no debe borrar el número de pedidos de merch sin leer.
+            if (!ent && !_readMarked && _sbRef) { _readMarked = true; markAllRead(_sbRef); }
             if (_sbRef) load(_sbRef);
         }
 
@@ -378,7 +502,11 @@
             _sbRef = sb;
             document.getElementById('filter-label').textContent = FILTER_LABEL[currentFilter] || '';
             load(sb);
-            markAllRead(sb);
+            // El padre manda el filtro justo después de cargar; si es Entradas no se marca merch como leído.
+            // Abierta sola (sin padre) nunca llega ese mensaje: se marca tras una espera corta.
+            setTimeout(function () {
+                if (!_readMarked && currentFilter !== 'entradas') { _readMarked = true; markAllRead(sb); }
+            }, 1200);
         });
     </script>
 </body>
