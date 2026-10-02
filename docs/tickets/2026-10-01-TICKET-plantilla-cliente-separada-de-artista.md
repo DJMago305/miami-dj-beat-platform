@@ -50,7 +50,7 @@ No se toca nada de código en esta sesión -- el PO pidió solo documentar. Se e
 
 El PO autorizó empezar, incrementalmente, con el consentimiento de probar primero con una cuenta de Cliente real y limpia.
 
-**Verificado en vivo:** se recreó la fila de `client_profiles` de Wendy (`wendyeayala@hotmail.com` — cuenta de Auth DISTINTA a su cuenta de staff `wendy.miamidjbeat@gmail.com`, confirmado por `user_id` distinto; no hay "sancocho" en este caso específico) con un respaldo completo guardado antes de tocar nada. Confirmado **0 filas en `dj_profiles`** para ese `user_id`, y login real aterrizó correcto en `client-portal.html`. Esto confirma que la CREACIÓN de cuenta (ya identificada como limpia en la auditoría) funciona de punta a punta.
+**Verificado en vivo:** se recreó la fila de `client_profiles` de Wendy (`wendyeayala@hotmail.com` — cuenta de Auth DISTINTA a su cuenta de staff `wendy.miamidjbeat@gmail.com`, confirmado por `user_id` distinto. **CORRECCIÓN 2026-10-03:** la frase original decía "no hay sancocho en este caso específico" y eso estaba incompleto: la cuenta de STAFF de Wendy (`c07a065a…`, `role='seller'`) TAMBIÉN tiene una fila en `client_profiles` (creada 2026-09-30 04:37, nueve minutos después de su fila `dj_profiles`). Es un caso dual real; hoy no hace daño porque el rol `seller` la clasifica como staff antes de mirar `client_profiles`) con un respaldo completo guardado antes de tocar nada. Confirmado **0 filas en `dj_profiles`** para ese `user_id`, y login real aterrizó correcto en `client-portal.html`. Esto confirma que la CREACIÓN de cuenta (ya identificada como limpia en la auditoría) funciona de punta a punta.
 
 **Paso 1 ejecutado: `web/mdj-identity.js` enriquecido** (único archivo tocado, sin publicar aún) — se consolidaron ahí los 2 arreglos que antes vivían SOLO duplicados dentro de `mdjb-shared-header.js`:
 1. Guardia de red (`djRowError`, nuevo parámetro opcional): si la consulta a `dj_profiles` FALLA (no "no tiene fila"), ya no se asume que la persona es cliente solo por tener `client_profiles` -- mismo criterio que ya existía en el header (`TICKET-ROLE-REDIRECT-002`), ahora centralizado.
@@ -69,7 +69,7 @@ Cada capa casi seguro se agregó para arreglar un bug real puntual (hay comentar
 **Qué sigue, en orden, cuando se retome:**
 1. ~~Publicar el enriquecimiento de `mdj-identity.js`~~ -- hecho, fusionado (PR #620).
 2. ~~Conectar `djRowError` en la llamada real de `mdjb-shared-header.js`~~ -- hecho el 2026-10-02: el archivo ya calculaba `djProfileErr` para su propio guardia inline, pero nunca se lo pasaba a `mdjClassifyPlatformIdentity()` -- el enriquecimiento del paso 1 nunca se activaba de verdad desde aquí hasta este cambio. Verificado en vivo con sesión real de Wendy (Cliente): `window.__mdjLastPlatformIdentity.djRowError === false`, `principal === "buyer"`, sin ninguna regresión visual. Cambio puramente aditivo (un campo más en el objeto que ya se pasaba), cero riesgo para el caso normal.
-3. Entender la intención de cada una de las ~9 condiciones reales de `mdjResolveBuyerSession()` (recontadas con más cuidado -- son más de las 7 que se mencionaron antes; probablemente cada una tiene un ticket/bug real detrás, varias parecen redundantes entre sí pero no se puede confirmar sin más investigación).
+3. ~~Entender la intención de cada una de las ~9 condiciones reales de `mdjResolveBuyerSession()`~~ -- hecho el 2026-10-03, ver sección "Paso 3 resuelto" más abajo.
 4. Recién ahí, diseñar cómo las tres capas (`isClient`, `navTier`, `mdjResolveBuyerSession`) se reducen a UNA, delegando completamente en `mdjClassifyPlatformIdentity()`.
 5. Probar en vivo con las 4 combinaciones reales que ya se sabe que existen: Artista puro, Cliente puro, Staff puro, y el caso dual confirmado (alguien con fila real en ambas tablas).
 
@@ -88,3 +88,67 @@ Verificado:
 Lo único que NO está separado es el almacenamiento físico: su fila vive dentro de `dj_profiles` (129 columnas, ~100 de ellas específicas de artista y `NULL` para ella) en vez de una tabla propia de staff. Eso es exactamente el alcance ya documentado y deliberadamente pospuesto en `docs/tickets/2026-09-30-TICKET-separar-dj-profiles-staff-de-artista.md` (61 funciones SQL de permisos + 46 páginas web + 36 Edge Functions dependen de la estructura actual -- proyecto de varias semanas).
 
 **Decisión del PO (2026-10-02): "déjalo documentado por ahora, no lo ejecutamos todavía".** No se toca código ni base de datos para este caso puntual -- el caso de Wendy queda como ejemplo concreto ya verificado para cuando se ejecute el ticket grande de separación física.
+
+## 2026-10-03 — Paso 3 resuelto: qué decide de verdad `mdjResolveBuyerSession()`
+
+Método: se extrajo el código real del header (`mdjResolveBuyerSession`, `mdjIsBuyerJourneyPage`), se transcribió la lógica inline de `isClient`/`jwtArtist` y se cargó el `mdj-identity.js` real, todo en un arnés de Node (solo lectura, nada del repo se modificó). Se evaluaron las **360 combinaciones** de (fila `dj_profiles`: ninguna/dj/owner/seller/client) × (`app_metadata.role`) × (`user_metadata.user_type`) × (fila `client_profiles`) × (error de red en la consulta a `dj_profiles`) × (página `index.html` / `dj-profile.html`). Luego se quitó cada condición, sola y en grupo, para ver cuántas combinaciones cambian de resultado.
+
+**Cuentas reales hoy (13, por combinación):** 7 artistas puros (`dj`, sin fila client), 2 clientes puros (JWT `client`, sin fila dj), 1 owner, 1 seller con fila client (la cuenta de staff de Wendy), 1 cuenta con JWT `artist` pero SIN fila `dj_profiles` y CON fila client (Aron Rosso, último login 2026-05-21, fila client creada 2026-09-27).
+
+**Resultado, condición por condición** (c0..c8, en el orden en que aparecen en el código):
+
+| Condición | Veredicto |
+|---|---|
+| c0 `isDjStaff \|\| isNavStaffSolo` → false | **Esencial.** Cambia 24 combinaciones. (`isNavStaffSolo` está incluido en `isDjStaff`: seller ⊂ staff.) |
+| c1 `isClient === true` | Redundante salvo para un caso de política (ver K abajo). |
+| c2 `idn.principal === 'buyer'` | **Esencial.** Cambia 6 combinaciones (rescata combinaciones raras como fila dj `client` + JWT owner). |
+| c3 JWT/metadata dice client y no hay fila dj | Efectiva solo bajo error de red + fila client (ver H). |
+| c4 `idn.hasClientRow && !hasDjProfile` | Efectiva solo bajo error de red + fila client (ver H). Es la que hace el trabajo real. |
+| c5 fila client + `dbRole` client | **Código muerto.** |
+| c6 `clientRow && !hasDjProfile` | **Código muerto** (duplicado exacto de c4). |
+| c7 `hasClientRow && !hasDjProfile && mdjIsBuyerJourneyPage()` | **Código muerto** (subconjunto de c4). |
+| c8 `settingsUrl` contiene `client-account`/`client-portal` | **Código muerto**: `settingsUrl` solo vale `client-account` cuando `isClient` ya era `true` (c1 ya devolvió true antes), y `client-portal` nunca aparece en ese valor. |
+
+Prueba en grupo: quitar c5+c6+c7+c8 a la vez cambia **0 de 360** combinaciones. Cuatro de las nueve condiciones se pueden borrar sin ningún efecto observable.
+
+**El header actual ya coincide con el clasificador canónico en 348 de 360 combinaciones.** Las 12 que difieren son exactamente DOS conflictos de política, no bugs de código sueltos:
+
+- **H — error de red + fila client:** si la consulta a `dj_profiles` falla (red lenta en móvil) y la cuenta tiene fila `client_profiles` y no trae JWT `client`, el canónico dice `performer` (guardia `TICKET-ROLE-REDIRECT-002`: no deducir "cliente" solo por tener fila client cuando la consulta falló) pero el header termina diciendo `buyer`, porque c3/c4 de `mdjResolveBuyerSession()` anulan ese mismo guardia que el bloque inline sí respeta. Es decir: el guardia está implementado dos veces y una de las dos lo contradice. Cuentas reales afectadas hoy: **ninguna** (los 2 clientes reales traen JWT `client`, que c2 resuelve bien aunque falle la consulta; Wendy-staff la protege c0).
+- **K — JWT `user_type='client'` sin `app_metadata.role` + fila dj no-cliente:** el bloque inline del header dice "el JWT explícito de cliente siempre gana" (comentario de línea ~5254); el canónico y el comentario de `mdjResolveBuyerSession` dicen "la base de datos gana". El mismo usuario sale `buyer` en `index.html` y `no-buyer` en `dj-profile.html` (por el override `viewingOwnDjProfile`). Cuentas reales afectadas hoy: **ninguna** (las cuentas con fila dj ya traen `app_metadata.role`, que desactiva la lectura de `user_type`).
+
+**Hallazgo extra (inconsistencia real, una cuenta):** `navTier` (el rail de artista/cliente del menú) se calcula con el valor de `isClient` ANTES de que `mdjResolveBuyerSession()` lo pueda voltear a `true`. Para Aron Rosso (JWT artista, sin fila dj, con fila client) el menú dibuja rail de artista (`artist_lite`) mientras el resto de la cabecera lo trata como comprador. Es la tercera capa del problema, no una cuarta fuente de verdad.
+
+**Decisiones de política que necesita el PO antes del paso 4** (recomendación en cursiva):
+1. Error de red + fila client sin JWT client: ¿gana el guardia conservador (no deducir cliente) o la fila client? *Recomendado: el guardia — el clasificador canónico ya lo implementa y los clientes reales traen JWT `client`, así que no pierden nada.*
+2. JWT `user_type='client'` vs fila `dj_profiles` no-cliente: ¿gana el JWT o la base de datos? *Recomendado: la base de datos — `user_metadata` lo escribe el propio usuario (así lo dice el comentario de `mdj-identity.js`), no debe poder pisar un rol real.*
+3. Aron Rosso: ¿es artista (le falta su fila `dj_profiles`) o es cliente (el JWT `artist` está de más)? Dato de negocio, no de código.
+
+**Qué sigue (paso 4, propuesto, no ejecutado):** borrar c5-c8 (cero efecto, ya probado), y reemplazar `isClient` inline + el resto de `mdjResolveBuyerSession()` por `idn.principal === 'buyer'` aplicando las decisiones 1 y 2, calculando `navTier` DESPUÉS de esa decisión. Con las dos decisiones tomadas el cambio de comportamiento queda acotado a las 12 combinaciones listadas arriba, ninguna con cuenta real hoy. El paso 5 (prueba en vivo con las combinaciones reales) sigue igual.
+
+Arneses reproducibles de esta sesión (scratchpad de la sesión, no commiteados): `test-buyer-session.js` (matriz de casos con nombres) y `ablation.js` (ablación por condición y en grupo).
+
+### Corrección al "Paso 3" y decisiones del PO (2026-10-03)
+
+**Corrección importante:** la conclusión "c5-c8 son código muerto" solo es cierta en las páginas que SÍ cargan `mdj-identity.js`. **7 páginas cargan `mdjb-shared-header.js` sin cargar `mdj-identity.js`** (`dj-profile.html`, `dj-dashboard.html`, `staff.html`, `staff-admin.html`, `staff-agenda.html`, `calendario-operacional-inteligente.html`, `road-map.html`; las otras 74 páginas con header sí lo cargan). En esas 7, `idn` es `null` y el header usa su respaldo inline: ahí `mdjResolveBuyerSession()` corre sin c2/c4/c5, y c3/c6/c7 son las que deciden. Consecuencia: el cambio de `djRowError` del PR #622 y el respaldo de JWT staff de `mdj-identity.js` (PR #620) no tenían ningún efecto en esas 7 páginas. Mientras `idn` no exista en todas, no se puede borrar el respaldo inline.
+
+Dar el clasificador a esas 7 páginas cambia el resultado en 54 de 360 combinaciones (arnés `legacy-vs-canon.js`), **todas** cuentas con JWT `owner`/`seller` SIN fila en `dj_profiles` (caso degradado): hoy en esas páginas pierden el estatus de staff y, si además tienen fila client, el header las trata como comprador. Ninguna cuenta real hoy (el owner y la vendedora sí tienen fila `dj_profiles`). Es decir: es una corrección, no un riesgo para cuentas reales.
+
+**Decisiones del PO:**
+1. Error de red + fila client sin JWT client → **gana el guardia conservador** (no deducir "cliente" solo por la fila).
+2. JWT `user_type='client'` vs fila `dj_profiles` no-cliente → **gana la base de datos**.
+3. Aron Rosso → **es cliente** (el PO primero dijo artista y se corrigió el mismo día; vale lo último). El clasificador ya lo da como comprador (fila client, sin fila dj), así que no hace falta regla extra. Queda pendiente, aparte y sin tocar sus datos, que su `app_metadata.role` sigue diciendo `artist` y debería corregirse en Auth.
+
+**Autorizado por el PO (2026-10-03):** opción 1, una línea `<script src="./mdj-identity.js…">` en cada página afectada. Corrección: eran **4**, no 7. `calendario-operacional-inteligente.html`, `staff.html` y `road-map.html` solo nombran el header en comentarios y no lo cargan; las que de verdad lo cargan sin clasificador eran `dj-profile.html`, `dj-dashboard.html`, `staff-agenda.html` y `staff-admin.html`.
+
+## 2026-10-03 — Pasos 4 y 5 ejecutados (rama `fix/identity-consolidar-isclient-en-canonico`, SIN comitear)
+
+**Paso 4 — qué cambió:**
+- `web/mdjb-shared-header.js`: «¿es comprador?» ahora lo decide `idn.principal === 'buyer'` (el clasificador). Se eliminó el override de `dj-profile.html` y `mdjResolveBuyerSession()` ya no decide cuando hay clasificador (`isBuyerSession = idn ? isClient : …`). El cálculo inline antiguo y `mdjResolveBuyerSession()` quedan SOLO como red de seguridad si `mdj-identity.js` no cargara; borrarlos del todo es una limpieza posterior, ya que las 77 páginas con header cargan el clasificador.
+- `mdj-identity.js`: sin cambios (las decisiones 1 y 2 ya eran su comportamiento).
+- Una línea `<script>` de `mdj-identity.js` antes del header en `dj-profile.html` (con `defer`), `dj-dashboard.html`, `staff-agenda.html` y `staff-admin.html`.
+- **Cache-bust:** `vercel.json` sirve los `.js` con `Cache-Control: public, max-age=31536000, immutable`, o sea que el `?v=` de la URL es el único mecanismo para que un navegador que ya visitó reciba código nuevo. Los PRs #620 (`mdj-identity.js`) y #622 (`mdjb-shared-header.js`) NO subieron el `?v=`, así que quien ya había visitado el sitio siguió con el código anterior. Se subió a `20261003-identidad-unica` en las 73 páginas con el header y las 71 (+4 nuevas) con el clasificador. Las 4 páginas `web/dj/*.html` siguen fijadas a propósito en versiones antiguas del header; no se tocaron.
+
+**Paso 5 — verificación:**
+- En vivo (servidor local, sesión real de cliente de Wendy, dentro de páginas completas con `#mainHeader` presente): `index.html` y `client-account.html` dan `principal: "buyer"`, `djRowError: false`, clases `mdj-is-client mdj-buyer-session`, cero errores de consola. Las 4 páginas modificadas sirven el script y lo cargan antes del header.
+- Por arnés (Node): las 10 clases de cuenta que importan (artista, cliente, owner, seller+fila client, Aron, guardia de red, JWT vs BD, owner degradado) dan el resultado esperado; las 9 pruebas previas de `mdj-identity.js` siguen en verde.
+- **NO verificado en vivo:** sesiones de owner, staff y artista (no hay sesión disponible y las credenciales no se ingresan). Ese caso lo cubre solo el arnés. Pendiente que el PO confirme con su propia sesión de Owner y con un artista antes de mergear.
