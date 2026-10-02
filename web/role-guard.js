@@ -146,26 +146,7 @@
     window.__mdjpro.user = session.user;
     window.__mdjpro.role = role;
 
-    // ── Audit log helper ───────────────────────────────────────
-    window.__mdjpro.logEvent = async function (event, metadata = {}) {
-        try {
-            await db.from('audit_log').insert({
-                user_id: session.user.id,
-                event,
-                metadata: { ...metadata, path: window.location.pathname },
-                user_agent: navigator.userAgent.substring(0, 200),
-            });
-        } catch (e) {
-            console.warn('[Audit] Log failed (non-critical):', e.message);
-        }
-    };
-
-    // Log page visit for sensitive pages. 'admin-dashboard' -> 'staff-admin'
-    // 2026-09-19 (panel viejo retirado, ver docs/ESTADO_MAESTRO.md) -- nunca
-    // se había agregado 'staff-admin' aquí, así que hoy se corrige de paso.
-    const AUDIT_PAGES = ['account-settings', 'staff-admin', 'dj-profile', 'client-portal'];
-    if (AUDIT_PAGES.some(p => path.includes(p))) {
-        window.__mdjpro.logEvent('page_view');
-    }
+    // page_view ya no se registra desde el navegador: audit_log no tiene permiso de
+    // INSERT para el cliente ni las columnas que se enviaban (daba 400 en cada carga).
 
 })();

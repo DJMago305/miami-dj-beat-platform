@@ -104,3 +104,13 @@ Cero bytes transferidos, header correcto. Esto es un ahorro real y verificado, n
 - Sigue sin explicarse por qué un build que es `exit 0` consume ~210 horas de "Build CPU". Si el costo no viene del build sino del clon/subida, `ignoreCommand` ahorraría poco.
 
 **Propuesta (requiere aprobación del PO, es cambio de pipeline de despliegue):** (1) el PO mira en el panel de Vercel el Root Directory y la duración de 3 builds recientes; (2) prueba aislada: agregar `ignoreCommand` en una rama, abrir un PR solo de documentación y comprobar cómo quedan el estado `CANCELED` y los checks de GitHub; (3) solo si el merge no se bloquea, comparar "Build CPU" 1-2 días después. Si la CPU no baja, se revierte.
+
+## 2026-10-02 (noche) — Caso 2 (Vercel): causa probable del costo encontrada, cambio PENDIENTE del PO
+
+**Hallazgo (capturas del panel de Vercel, proyecto `web`):** *Build Machine = Turbo, 30 vCPU, 60 GB de memoria*, el nivel más grande. Los despliegues recientes (Preview y Production) muestran *Ready* en **7–11 s**, coherente con el build vacío (`exit 0`).
+
+**Cuenta que lo explica:** la documentación de Vercel (`/docs/builds/managing-builds`, verificada hoy) dice que el build se cobra a **$0,0035 por minuto de CPU** (minutos de build × vCPU). Con Turbo, 30 vCPU × 1 min × $0,0035 = **$0,105 por despliegue**. Medido: ≈ $0,104 por despliegue (619 despliegues, Build CPU $64,68). Lo que la documentación NO dice y es inferencia: que cada build se facture como mínimo un minuto aunque dure 8 s; la coincidencia numérica es muy ajustada pero no está confirmada (hay una pantalla de detalle de cada despliegue con "billable duration y CPU minutes" que la confirmaría).
+
+**Cambio propuesto (lo hace el PO en el panel, reversible, sin código):** Settings → Build and Deployment → *Build Machine* → **Standard (4 vCPU, 8 GB)** → Save. Costo estimado por despliegue: ≈ $0,014 (−87 %), con el mismo número de despliegues; a este volumen quedaría dentro de los $20 de crédito incluido. Revisar también el ajuste a nivel de *equipo* (`~/settings/build-and-deployment`, sección Build Machines) por si el Turbo viene de ahí.
+
+**Estado: PENDIENTE, decisión del PO de no hacerlo todavía (2026-10-02).** Costo de esperar: ≈ $1–2 por día al ritmo actual; el ciclo de facturación termina el 11/10. `ignoreCommand` queda descartado por ahora: un build cancelado igual arranca la máquina, así que ahorraría poco comparado con este cambio.
