@@ -74,3 +74,17 @@ Cada capa casi seguro se agregó para arreglar un bug real puntual (hay comentar
 5. Probar en vivo con las 4 combinaciones reales que ya se sabe que existen: Artista puro, Cliente puro, Staff puro, y el caso dual confirmado (alguien con fila real en ambas tablas).
 
 **Pasos 1 y 2 cerrados hoy (2026-10-02). El trabajo grande (pasos 3-5) queda para la próxima sesión dedicada, decisión explícita del PO ("comitea este paso chico y lo dejamos aquí por hoy").**
+
+## 2026-10-02 — Caso puntual investigado: ¿Wendy (vendedora) se ve como artista en algún lado?
+
+El PO pidió investigar cómo separar el perfil de Wendy (`wendy.miamidjbeat@gmail.com`, cuenta de staff/vendedora, distinta de su cuenta de Cliente `wendyeayala@hotmail.com`) de artista a vendedora dentro de staff. Resultado de la investigación: **ya está correctamente separada en todo lo que es clasificación/visualización — no hay bug activo.**
+
+Verificado:
+1. Su fila en `dj_profiles` ya tiene `role='seller'` (no `'dj'`).
+2. `mdj-identity.js` → `mdjClassifyPlatformIdentity()` ya la resuelve como `principal: 'staff'` (vía `staffInDb`), no artista.
+3. `public_dj_profiles` (el roster público de DJs) la excluye por completo -- ese view filtra `WHERE role = 'dj'` en su definición.
+4. `web/staff-admin.html` (líneas 7089-7121) ya la etiqueta "MDJBStaff" / `_fuente: 'Equipo interno (asignado por Owner)'` / `_proStatus: 'STAFF'` en el CRM -- mismo mecanismo (`isRealStaffRole` por `role` en `admin|owner|manager|seller`) que ya se usó para corregir la cuenta de Owner el 2026-09-19.
+
+Lo único que NO está separado es el almacenamiento físico: su fila vive dentro de `dj_profiles` (129 columnas, ~100 de ellas específicas de artista y `NULL` para ella) en vez de una tabla propia de staff. Eso es exactamente el alcance ya documentado y deliberadamente pospuesto en `docs/tickets/2026-09-30-TICKET-separar-dj-profiles-staff-de-artista.md` (61 funciones SQL de permisos + 46 páginas web + 36 Edge Functions dependen de la estructura actual -- proyecto de varias semanas).
+
+**Decisión del PO (2026-10-02): "déjalo documentado por ahora, no lo ejecutamos todavía".** No se toca código ni base de datos para este caso puntual -- el caso de Wendy queda como ejemplo concreto ya verificado para cuando se ejecute el ticket grande de separación física.
