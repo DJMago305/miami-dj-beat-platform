@@ -1982,7 +1982,14 @@
        "personal" → SOLO el calendario personal sincronizado (Google) de
                     quien esté viendo -- aislado, sin nada de lo anterior. */
   function recomputeBaseEv(){
-    if(state.detailLevel==="personal"){ BASE_EV=_syncEv.slice(); }
+    // Paso 12 (2026-10-01): "Mis fechas importantes" del Artista también como
+    // chip en el calendario (mes/semana/día), no solo en la lista del panel
+    // -- mismo criterio que ya usa Cliente (client-portal.js, cal:"cliente"
+    // para lo agregado a mano vs. cal:"personal" para lo sincronizado de
+    // Google). coiFechasImportantesEv() vive más abajo, junto al resto del
+    // bloque "Mis fechas importantes"; las funciones declaradas con
+    // function NAME(){} quedan disponibles aquí arriba por hoisting.
+    if(state.detailLevel==="personal"){ BASE_EV=_syncEv.concat(coiFechasImportantesEv()); }
     else if(state.detailLevel==="busy"){ BASE_EV=_resEv.concat(_bookEvBusy).concat(_leadsEvBusy); }
     else { BASE_EV=_leadsEv.concat(_resEv).concat(_bookEv); }
   }
@@ -2206,6 +2213,22 @@
     return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
   }
   function fipTipoLabel(t){ return t==="birthday"?"Cumpleaños":(t==="anniversary"?"Aniversario":"Fecha"); }
+  // Paso 12 (2026-10-01): expande _fipLista (mes/día recurrente) a fechas
+  // concretas del año que se está mirando, para que entren al motor genérico
+  // de chips/día-cards (BASE_EV/EV) -- mismo criterio de "cliente" (azul) que
+  // ya usa Cliente para lo agregado a mano, nunca "personal" (verde, reservado
+  // para lo sincronizado de Google en _syncEv). artist:state.artist es
+  // obligatorio: inScope() descarta cualquier evento sin ese campo cuando el
+  // rol no es "owner" -- sin esto, las fechas quedarían guardadas pero
+  // invisibles en el calendario.
+  function coiFechasImportantesEv(){
+    var y=(state.date&&state.date.getFullYear)?state.date.getFullYear():new Date().getFullYear();
+    function pad2f(n){return (n<10?"0":"")+n;}
+    return (_fipLista||[]).map(function(fe){
+      return { d:y+"-"+pad2f(fe.month)+"-"+pad2f(fe.day), cal:"cliente", ad:true, s:null, e:null,
+        t:fe.name+" · "+fipTipoLabel(fe.date_type), artist:state.artist };
+    });
+  }
   async function fipCargar(){
     if(_fipLoaded) return;
     try{
@@ -2217,7 +2240,7 @@
       if(r.error) throw r.error;
       _fipLista=(r.data && Array.isArray(r.data.important_dates)) ? r.data.important_dates : [];
       _fipLoaded=true;
-      renderFechasPersonales();
+      recomputeBaseEv(); rebuild(); render();
     }catch(err){ console.warn("[Matrix] mis fechas importantes:", err.message||err); }
   }
   function renderFechasPersonales(){
@@ -2341,7 +2364,7 @@
 
       _fipLista=list;
       fipCerrarModal();
-      renderFechasPersonales();
+      recomputeBaseEv(); rebuild(); render();
     }catch(eSave){ mostrarErr("No se pudo guardar. Intenta de nuevo."); }
     finally{ if(btn){ btn.disabled=false; btn.textContent=editingId?"Guardar cambios":"Guardar"; } }
   }
@@ -2359,7 +2382,7 @@
       var upd=await sb.from("dj_profiles").update({ important_dates:list }).eq("user_id", sess.user.id);
       if(upd.error) throw upd.error;
       _fipLista=list;
-      renderFechasPersonales();
+      recomputeBaseEv(); rebuild(); render();
     }catch(eDel){ /* silencioso, igual que portalCoiDeleteImportantDate en client-portal.js */ }
   }
 
