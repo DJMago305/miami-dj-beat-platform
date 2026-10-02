@@ -22,7 +22,10 @@
   }
 
   /**
-   * @param {{ user: object, djRow: object|null, clientRow: object|null }} o
+   * @param {{ user: object, djRow: object|null, clientRow: object|null, djRowError: * }} o
+   *   djRowError: opcional -- pasar el error (si lo hay) de la consulta a
+   *   dj_profiles, NO solo `djRow == null`. Distingue "no tiene fila" (real)
+   *   de "la consulta falló" (degradado, p.ej. red lenta) -- ver nota 2026-10-02.
    * @returns {{
    *   dbRole: string,
    *   staffInDb: boolean,
@@ -38,17 +41,33 @@
     var u = o.user;
     var dj = o.djRow;
     var cr = o.clientRow;
+    var djErr = !!o.djRowError;
     var dr = dj && dj.role != null ? n(dj.role) : '';
     var hasClientRow = !!(cr && (cr.user_id != null));
     var appR = u && u.app_metadata ? n(u.app_metadata.role) : '';
     var ut = (!appR && u && u.user_metadata) ? n(u.user_metadata.user_type) : ''; /* user_type lo escribe el usuario: solo sin rol de servidor */
     var isExplicitClient = ut === 'client';
-    var staffInDb = !!dr && STAFF[dr] === 1;
-    var managementInDb = !!dr && MANAGEMENT[dr] === 1;
+    /* 2026-10-02: dos arreglos que vivían SOLO duplicados dentro de
+       mdjb-shared-header.js, consolidados aquí para que dejen de poder
+       desincronizarse entre los ~4 lugares que reimplementan esta misma
+       jerarquía (ver docs/tickets/2026-10-01-TICKET-plantilla-cliente-separada-de-artista.md):
+       1) Si la consulta a dj_profiles FALLÓ (djRowError, no solo "sin fila"),
+          no hay que asumir que la persona no tiene rol de staff/artista --
+          TICKET-ROLE-REDIRECT-002 (red lenta clasificaba mal). Guard abajo:
+          `!djErr` en la rama de "solo por client_profiles".
+       2) Si el JWT (app_metadata.role) YA dice owner/admin/manager/seller,
+          pero no llegó ninguna fila real de dj_profiles (ausente o la
+          consulta falló), igual se trata como staff -- NUNCA pisa una fila
+          dj_profiles real con otro rol: `dr` siempre manda primero si existe. */
+    var appRStaffLike = appR === 'owner' || appR === 'admin' || appR === 'manager' || appR === 'seller';
+    var staffDegradedFallback = !dr && appRStaffLike && !isExplicitClient;
+    var staffInDb = (!!dr && STAFF[dr] === 1) || staffDegradedFallback;
+    var managementInDb = (!!dr && MANAGEMENT[dr] === 1) || staffDegradedFallback;
     var navStaffSolo = dr === 'seller';
     var principal;
-    /* Orden: staff en DB; luego comprador SOLO por columna role en dj_profiles; luego cualquier otro dr = artista.
-       No dejar que user_type client en JWT pise a un dj_profiles con rol de artista (p. ej. dj) — “sancocho” típico. */
+    /* Orden: staff en DB (o JWT staff degradado); luego comprador SOLO por columna role en dj_profiles;
+       luego cualquier otro dr = artista. No dejar que user_type client en JWT pise a un dj_profiles con
+       rol de artista (p. ej. dj) — “sancocho” típico. */
     if (staffInDb) {
       principal = 'staff';
     } else if (dr === 'client' || dr === 'cliente') {
@@ -57,7 +76,7 @@
       principal = 'performer';
     } else if (isExplicitClient || (appR === 'client' && !dr)) {
       principal = 'buyer';
-    } else if (hasClientRow && !dj) {
+    } else if (hasClientRow && !dj && !djErr) {
       principal = 'buyer';
     } else {
       principal = 'performer';
@@ -72,6 +91,7 @@
       isExplicitClient: isExplicitClient,
       hasClientRow: hasClientRow,
       principal: principal,
+      djRowError: djErr,
       billing: {
         artist: 'dj_profiles',
         buyer: 'client_profiles',
