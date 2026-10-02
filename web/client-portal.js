@@ -193,23 +193,45 @@ async function portalCoiLoadPersonalSync() {
 // (calendario-operacional-inteligente.html, buildReminders/updateBadge).
 // Cliente no tiene ese panel completo (ver nota 2026-09-04 arriba: "sin capas
 // de inteligencia... esas son herramientas operativas del artista"), así que
-// aquí es solo un aviso simple en vez de un bell+página aparte.
-function portalCoiUpcomingReminder() {
+// aquí es un mini-panel de lista en vez de un bell+página aparte.
+//
+// Paso 17 (2026-10-01): antes solo mostraba LA MÁS próxima -- si había dos
+// fechas dentro de los 7 días, la segunda quedaba invisible. Ahora junta
+// todas las que caen en la ventana, más próxima primero, cada una en su
+// propia línea (mismo estilo .coi-reminder-banner, apiladas).
+function portalCoiUpcomingReminders() {
     var hoy = new Date(); hoy.setHours(0, 0, 0, 0);
-    var mejor = null, mejorDias = Infinity;
+    var out = [];
     (_portalCoiImportant || []).forEach(function (imp) {
         var y = hoy.getFullYear();
         var d = new Date(y, imp.month - 1, imp.day);
         if (d < hoy) d = new Date(y + 1, imp.month - 1, imp.day);
         var dias = Math.round((d - hoy) / 86400000);
-        if (dias >= 0 && dias <= 7 && dias < mejorDias) { mejorDias = dias; mejor = { imp: imp, dias: dias }; }
+        if (dias >= 0 && dias <= 7) out.push({ imp: imp, dias: dias });
     });
-    if (!mejor) return '';
-    var tLabel = PORTAL_COI_DATE_TYPES[mejor.imp.date_type] || '';
-    var icon = mejor.imp.date_type === 'birthday' ? '🎂' : (mejor.imp.date_type === 'anniversary' ? '🎉' : '📅');
-    var cuando = mejor.dias === 0 ? 'hoy' : (mejor.dias === 1 ? 'mañana' : 'en ' + mejor.dias + ' días');
-    return '<div class="coi-reminder-banner">' + icon + ' ' + portalEscapeHtml(mejor.imp.name) +
-        (tLabel ? ' · ' + tLabel : '') + ' ' + cuando + '</div>';
+    out.sort(function (a, b) { return a.dias - b.dias; });
+    return out;
+}
+// Paso 17b (2026-10-01, pedido directo del PO viendo la pantalla: "agrégale
+// la campana con su numerito... al lado del audífono"): el aviso pasa de
+// "siempre visible" a campana + badge (cerrado por defecto, mismo patrón que
+// la campana de Recordatorios del Artista) -- un clic la abre/cierra.
+var _portalCoiRemindersOpen = false;
+function portalCoiToggleReminders() {
+    _portalCoiRemindersOpen = !_portalCoiRemindersOpen;
+    renderPortalCalendar();
+}
+function portalCoiRemindersHtml() {
+    if (!_portalCoiRemindersOpen) return '';
+    var items = portalCoiUpcomingReminders();
+    if (!items.length) return '';
+    return items.map(function (x) {
+        var tLabel = PORTAL_COI_DATE_TYPES[x.imp.date_type] || '';
+        var icon = x.imp.date_type === 'birthday' ? '🎂' : (x.imp.date_type === 'anniversary' ? '🎉' : '📅');
+        var cuando = x.dias === 0 ? 'hoy' : (x.dias === 1 ? 'mañana' : 'en ' + x.dias + ' días');
+        return '<div class="coi-reminder-banner">' + icon + ' ' + portalEscapeHtml(x.imp.name) +
+            (tLabel ? ' · ' + tLabel : '') + ' ' + cuando + '</div>';
+    }).join('');
 }
 
 function renderPortalCalendar(leads, importantDates, lastSeenAt) {
@@ -255,10 +277,19 @@ function renderPortalCalendar(leads, importantDates, lastSeenAt) {
     // de la burbuja redonda de cristal (PO, 2026-10-01: "o usas el cuadrado o
     // el círculo", nunca mezclados).
     var ICON_REFRESH = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>';
+    // Campana de Recordatorios (Paso 17b) -- mismo SVG "bell" ya usado en
+    // calendario-operacional-inteligente.html (btnRem), reusado tal cual para
+    // no inventar un ícono nuevo.
+    var ICON_BELL = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>';
+    var remindersCount = portalCoiUpcomingReminders().length;
 
     host.innerHTML =
         '<div class="coi-toolbar">' +
         '<div class="coi-brand">🎧</div>' +
+        '<div class="coi-bell-wrap">' +
+        '<button type="button" class="coi-glass" onclick="portalCoiToggleReminders()" aria-label="Recordatorios" title="Recordatorios">' + ICON_BELL + '</button>' +
+        (remindersCount > 0 ? '<span class="coi-bell-badge">' + remindersCount + '</span>' : '') +
+        '</div>' +
         '<div class="seg-wrap" style="flex:none;"><div class="seg">' + tabHtml + '</div></div>' +
         '<div class="seg-wrap"><div class="seg">' + segHtml + '</div></div>' +
         '<div class="coi-tools">' +
@@ -266,7 +297,7 @@ function renderPortalCalendar(leads, importantDates, lastSeenAt) {
         (host.id === 'portal-calendar-widget' ? '<button type="button" class="coi-glass" onclick="portalCoiOpenRestoreModal()" aria-label="Restaurar órdenes borradas" title="Restaurar órdenes borradas">' + ICON_REFRESH + '</button>' : '') +
         '</div>' +
         '</div>' +
-        portalCoiUpcomingReminder() +
+        portalCoiRemindersHtml() +
         '<div class="head">' + built.title +
         '<div class="nav">' +
         '<button type="button" class="arrow" onclick="portalCoiPrev()" aria-label="Anterior">&#8249;</button>' +

@@ -1049,12 +1049,23 @@
 
         /* Paso 14 (2026-10-01): aviso de fecha importante guardada que llega
            pronto (0-7 días) -- mismo azul "cliente" que ya usa la categoría
-           de fechas agregadas a mano, para no inventar un color nuevo. */
+           de fechas agregadas a mano, para no inventar un color nuevo.
+           Paso 17: puede repetirse (una por cada fecha dentro de la ventana)
+           -- el margin-bottom ya las apila sin CSS extra. */
         .portal-coi .coi-reminder-banner {
             margin: 0 0 10px; padding: 9px 14px; border-radius: 11px; flex: none;
             background: color-mix(in srgb, var(--cliente) 14%, var(--panel));
             border: 1px solid color-mix(in srgb, var(--cliente) 40%, var(--line));
             color: var(--ink); font-size: 13px; font-weight: 650;
+        }
+        /* Paso 17b (2026-10-01, pedido directo del PO): campana con numerito
+           junto al audífono -- mismo badge redondo (var(--set), texto blanco)
+           que ya usa la pestaña "Personal" de este mismo archivo. */
+        .portal-coi .coi-bell-wrap { position: relative; flex: none; }
+        .portal-coi .coi-bell-badge {
+            position: absolute; top: -4px; right: -4px; min-width: 16px; height: 16px; padding: 0 4px;
+            border-radius: 999px; background: var(--set); color: #fff; font-size: 10px; font-weight: 800;
+            display: grid; place-items: center; line-height: 1;
         }
 
         /* Modal "Agregar fecha importante" -- para cumpleaños de un hijo, aniversario,
