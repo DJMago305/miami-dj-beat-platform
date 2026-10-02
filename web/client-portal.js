@@ -46,9 +46,19 @@ var _portalCoiPersonalSyncLoading = false;
    fetch usan select('*'). */
 var _portalCoiLastSeen = null;
 function portalCoiPersonalUnreadCount() {
-    return _portalCoiPersonalSync.filter(function (p) {
+    var nSync = _portalCoiPersonalSync.filter(function (p) {
         return p.createdAt && (!_portalCoiLastSeen || p.createdAt > _portalCoiLastSeen);
     }).length;
+    // Paso 13 (2026-10-01): el badge de "nuevo" avisaba solo lo sincronizado
+    // de Google -- agregar una fecha a mano en "Agregar fecha importante"
+    // (Paso 9/10) no contaba como novedad. _portalCoiImportant ya trae
+    // created_at por entrada (portalCoiSaveImportantDate); se suma al mismo
+    // corte de _portalCoiLastSeen.
+    var nImp = (_portalCoiImportant || []).filter(function (imp) {
+        var c = imp.created_at ? new Date(imp.created_at) : null;
+        return c && (!_portalCoiLastSeen || c > _portalCoiLastSeen);
+    }).length;
+    return nSync + nImp;
 }
 async function portalCoiMarcarCalendarSyncVisto() {
     try {
