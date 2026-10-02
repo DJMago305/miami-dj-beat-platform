@@ -90,3 +90,17 @@ Cero bytes transferidos, header correcto. Esto es un ahorro real y verificado, n
 - Desde el 09-28 el ritmo bajó: 104 despliegues ese día, luego 46, 16, 5 y 27.
 - El build real es `exit 0` (`web/package.json`), así que el consumo no viene de compilar. El repo pesa 223 MB en GitHub, el clon no es el problema.
 - No se pudo medir la duración real de cada build: los tiempos de estado que expone GitHub dan 0 s y no sirven. Eso solo se ve en el panel de Vercel (sin sesión desde la herramienta). Sigue abierta la duda de por qué salen ~210 horas de "Build CPU" con un build vacío.
+
+## 2026-10-03 (tarde) — Caso 2 (Vercel): palanca concreta encontrada, sin aplicar
+
+**Medido en GitHub (266 PRs fusionados desde el 2026-09-11):** 104 (39 %) no tocaron NADA bajo `web/` (solo `docs/`, `supabase/`, scripts o workflows); desde el 2026-09-28 son 45 de 90 (50 %). Cada uno de esos PRs dispara igual un build de Preview y uno de Production que despliegan exactamente el mismo sitio.
+
+**Mecanismo disponible (verificado en la documentación oficial de Vercel, no probado aquí):** `vercel.json` admite `ignoreCommand` (hoy no tiene ninguno). Si el comando sale con código 0, el build se aborta de inmediato y el despliegue queda en estado `CANCELED`; con código 1 el build sigue normal. Ejemplo de la propia documentación: `git diff --quiet HEAD^ HEAD ./`.
+
+**Lo que la documentación NO dice o contradice una expectativa fácil (por eso no se aplicó):**
+- Un build cancelado por el Ignored Build Step **sigue contando como despliegue completo** para las cuotas de despliegues y los slots de build concurrentes. La página no dice si cobra minutos de "Build CPU", que es la métrica que pasó la cuota. El ahorro real es una incógnita hasta medirlo.
+- No dice cómo queda el check de GitHub para un despliegue `CANCELED`. La protección de `main` exige los checks `check`, `financial-selftests`, `site-hygiene` y los de Vercel; si un cancelado dejara el check en rojo o pendiente, bloquearía el merge de todos los PRs de documentación.
+- El comando se ejecuta dentro del *Root Directory* del proyecto, que se ve solo en el panel de Vercel (sin sesión desde la herramienta); la forma correcta de filtrar `web/` depende de él. Además `vercel.json` vive en la raíz del repo mientras `web/package.json` tiene su propio `build`, así que el Root Directory real no es obvio.
+- Sigue sin explicarse por qué un build que es `exit 0` consume ~210 horas de "Build CPU". Si el costo no viene del build sino del clon/subida, `ignoreCommand` ahorraría poco.
+
+**Propuesta (requiere aprobación del PO, es cambio de pipeline de despliegue):** (1) el PO mira en el panel de Vercel el Root Directory y la duración de 3 builds recientes; (2) prueba aislada: agregar `ignoreCommand` en una rama, abrir un PR solo de documentación y comprobar cómo quedan el estado `CANCELED` y los checks de GitHub; (3) solo si el merge no se bloquea, comparar "Build CPU" 1-2 días después. Si la CPU no baja, se revierte.
