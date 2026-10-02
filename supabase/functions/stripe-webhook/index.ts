@@ -278,7 +278,7 @@ async function notifyVenueTicketOrder(
         if (o.customerEmail) {
             await send(
                 o.customerEmail,
-                `🎟️ Tus entradas / Your tickets — ${title}`,
+                `Tus entradas / Your tickets — ${title}`,
                 `<h2>¡Gracias por tu compra! / Thank you!</h2>
 <p><b>${escHtml(title)}</b>${when ? `<br>${escHtml(when)}` : ""}${place ? `<br>${escHtml(place)}` : ""}</p>
 <p><b>Entradas / Tickets:</b><br>${lines}</p>
@@ -291,7 +291,7 @@ At the door, give your name (<b>${escHtml(buyer)}</b>) or show this email.</p>
         if (MANAGER_EMAIL) {
             await send(
                 MANAGER_EMAIL,
-                `🎟️ Entradas vendidas — ${title} — ${amount}`,
+                `Entradas vendidas — ${title} — ${amount}`,
                 `<h2>Nueva venta de entradas</h2>
 <p><b>Evento:</b> ${escHtml(title)}${when ? ` · ${escHtml(when)}` : ""}</p>
 <p><b>Comprador:</b> ${escHtml(buyer)} (${escHtml(o.customerEmail || "—")})</p>

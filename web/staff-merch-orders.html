@@ -332,6 +332,9 @@
 
         // ── Vista Entradas: lista por nombre para la puerta (venue_ticket_orders) ──
         var _guests = [];
+        // Cada carga lleva un número; si llega otra mientras espera la base, la vieja NO dibuja (evita que la carga
+        // inicial de merch pise a la de Entradas cuando el padre manda el filtro justo después de abrir).
+        var _loadSeq = 0;
 
         function ticketQty(o) {
             return (Array.isArray(o.items) ? o.items : []).reduce(function (n, it) { return n + (Number(it.qty) || 0); }, 0);
@@ -398,9 +401,11 @@
             content.className = 'state';
             content.innerHTML = 'Cargando…';
             document.getElementById('count').textContent = '';
+            var mySeq = ++_loadSeq;
             var { data, error } = await sb.from('venue_ticket_orders')
                 .select('id,event_id,customer_name,customer_email,customer_phone,items,total_cents,created_at,checked_in_qty,venue_events(title,event_date)')
                 .order('created_at', { ascending: false }).limit(1000);
+            if (mySeq !== _loadSeq) return;
             if (error) {
                 content.className = 'state error';
                 var falta = /checked_in_qty/.test(error.message || '');
@@ -425,6 +430,7 @@
 
         async function load(sb) {
             if (currentFilter === 'entradas') return loadEntradas(sb);
+            var mySeq = ++_loadSeq;
             var content = document.getElementById('content');
             var countEl = document.getElementById('count');
             content.className = 'state';
@@ -434,6 +440,7 @@
             var q = sb.from('merch_orders').select('*').order('created_at', { ascending: false }).limit(200);
             if (currentFilter !== 'all') q = q.eq('status', currentFilter);
             var { data, error } = await q;
+            if (mySeq !== _loadSeq) return;
 
             if (error) {
                 content.className = 'state error';

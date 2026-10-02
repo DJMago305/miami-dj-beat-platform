@@ -41,3 +41,32 @@ Conversación del 2026-10-02: el PO confirmó que un Cliente Comercial necesita,
 ## 4. Explícitamente fuera de alcance ahora
 
 No se toca nada de código en esta sesión — el PO pidió documentarlo. Se ejecuta en su propia sesión dedicada: primero probar lo existente (paso 3.3), después decidir el modelo de facturación y multi-usuario (3.1 y 3.2), recién ahí construir.
+
+---
+
+## 5. Auditoría de solo lectura (2026-10-02, tarde) — antes de construir la plantilla propia
+
+**Regla del PO (firme):** cada categoría usa su PROPIA plantilla; nada se crea desde la plantilla de artista (solo se replican cuentas nuevas de artistas). Ver memoria `feedback_cada_categoria_su_propia_plantilla`.
+
+**Lo que se verificó (código y base de producción, sin escribir nada):**
+- `create-platform-account`, rama `commercial_client`: escribe SOLO a `client_profiles` (`is_commercial:true`, `company_name`, `venue_type`). **No toca `dj_profiles`.** ✔
+- El único disparador sobre `auth.users` (`trg_mdj_rol_al_registrarse`) solo fija el rol de la sesión (`artist` si `user_type` es talent/dj/artist; si no, `client`). **No crea ninguna fila en `dj_profiles` por su cuenta.** ✔
+- Producción: 4 clientes, **0 comerciales**, 10 `dj_profiles`; ningún cliente es además artista (`talent`). El camino nunca se ha ejercido con una cuenta real.
+- El Owner crea la cuenta desde `staff-admin.html` (tarjeta «Cuenta Cliente Comercial», pide nombre del negocio y tipo de local).
+
+**Los huecos reales (lo que impide que sea una categoría con plantilla propia):**
+1. **No hay plantilla/portal propio.** Después de la invitación → `reset-password.html` → `login.html`, el comercial cae en el MISMO `client-portal.html` que un cliente personal. `mdj-identity.js` no distingue comercial (lo clasifica `buyer` igual que a un cliente) y ningún JS de portal/login lee `is_commercial`.
+2. **La cuenta comercial vive en la tabla de clientes con una marca** (`is_commercial`), no tiene datos propios de empresa (EIN, dirección del negocio) ni vínculo con locales/salas/eventos.
+3. **No existe el vínculo cuenta ↔ local** (`venue_staff`, ver ticket de la sala de mesas fase 2): sin él, no hay a qué entrar con permisos.
+
+**Propuesta (por pasos mínimos, cada uno se confirma):**
+1. Portal propio `commercial-portal.html` (plantilla propia, con su propio encabezado y secciones: Mis locales/salas, Editor de salas, Eventos y mapas, Entradas/mesas, Equipo). Nada copiado de `dj-profile`/plantilla de artista; la base visual sale del portal de clientes y del editor de salas.
+2. Enrutar al comercial a ese portal tras iniciar sesión (cambio en la lógica compartida de identidad/ruteo → requiere autorización explícita del PO y verificación en pantalla).
+3. Tabla propia de datos de empresa y `venue_staff` (SQL a PRODUCCIÓN, lo corre el PO).
+4. Probar el camino completo con una cuenta comercial de prueba creada por el PO (yo no creo cuentas).
+
+### Avance (2026-10-02, noche)
+- **Paso 1 HECHO:** `web/commercial-portal.html` (EN DESARROLLO, `noindex`): sesión requerida, solo `is_commercial`; datos reales de la empresa, acceso al Portal del Cliente y al editor de salas.
+- **Paso 2 HECHO (autorizado por el PO):** ruteo del comercial a su portal con una guardia única, `web/js/commercial-redirect.js`, cargada en `client-portal.html` (a donde llegan los tres caminos: `auth.js`, su respaldo y MI PERFIL del header, que no se tocaron). Actúa solo en la entrada simple (sin parámetros); `?lead=`, `?mode=` y `?cuenta=cliente` se respetan para no dejar sin acceso a un comercial que también renta servicios. Lógica probada con un entorno simulado (6 casos); **el camino positivo real NO está probado: sigue sin existir ninguna cuenta comercial.**
+- **Pendiente:** paso 3 (datos de empresa propios + `venue_staff`, SQL a producción que corre el PO) y paso 4 (prueba completa con una cuenta comercial de prueba que cree el PO desde staff-admin).
+

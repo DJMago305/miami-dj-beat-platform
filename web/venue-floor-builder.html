@@ -20,7 +20,7 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
 .fb-wrap { max-width: 1600px; margin: 0 auto; padding: 100px 18px 50px; color: #f2f1ee; font-family: Inter, system-ui, sans-serif; }
 .fb-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
 .fb-top h1 { font-family: 'Playfair Display', serif; font-size: clamp(26px, 3.4vw, 38px); margin: 0 0 6px; }
-.fb-dev { display: inline-block; padding: 4px 12px; border-radius: 50px; background: rgba(255,170,40,0.14); border: 1px solid rgba(255,170,40,0.55); color: #ffb347; font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; vertical-align: middle; margin-left: 10px; font-family: Inter, sans-serif; }
+.fb-dev { display: inline-block; padding: 4px 14px; border-radius: 999px; border: 1px solid rgba(197,160,89,0.4); color: #c5a059; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; vertical-align: middle; margin-left: 10px; font-family: Inter, sans-serif; }
 .fb-sub { max-width: 820px; margin: 0; color: rgba(255,255,255,.65); font-size: 14px; line-height: 1.55; }
 .fb-actions, .fb-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .fb-bar { margin-bottom: 14px; padding: 10px 12px; border: 1px solid rgba(255,255,255,.1); border-radius: 14px; background: rgba(255,255,255,.03); font-size: 13px; }
@@ -37,6 +37,9 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
 .fb-palette, .fb-side { border: 1px solid rgba(255,255,255,.1); border-radius: 14px; background: rgba(255,255,255,.03); padding: 12px; }
 .fb-palette h3, .fb-side h3 { margin: 12px 0 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.5); }
 .fb-palette h3:first-child, .fb-side h3:first-child { margin-top: 0; }
+.fb-fast { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px; }
+.fb-fast label { display: block; font-size: 11px; font-weight: 700; color: rgba(255,255,255,.55); }
+.fb-fast input, #fb-gr-type { width: 100%; box-sizing: border-box; background: rgba(0,0,0,.4); border: 1px solid rgba(255,255,255,.18); border-radius: 8px; color: #fff; padding: 6px 8px; font: inherit; font-size: 13px; margin-bottom: 6px; }
 .fb-palette button { display: block; width: 100%; text-align: left; margin-bottom: 6px; border-radius: 10px; }
 .fb-canvas-wrap { border: 1px solid rgba(255,255,255,.1); border-radius: 14px; background: rgba(0,0,0,.45); padding: 10px; min-width: 0; }
 .fb-svg { display: block; width: 100%; height: auto; touch-action: none; user-select: none; background: #0b0b0e; border-radius: 8px; }
@@ -47,17 +50,17 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
 .fb-svg .it.sel > .body { stroke: #c5a059; stroke-width: 3; stroke-dasharray: none; }
 .fb-svg .it.sel .selbox { display: block; }
 .fb-svg .selbox { display: none; fill: none; stroke: #c5a059; stroke-width: 1.5; stroke-dasharray: 4 3; }
-.fb-svg .tb { fill: rgba(70,200,120,.28); stroke: #5fd68a; stroke-width: 2; }
+.fb-svg .tb { fill: rgba(0,200,120,.22); stroke: #00c878; stroke-width: 2; }
 .fb-svg .tb.vip { fill: rgba(197,160,89,.3); stroke: #c5a059; }
-.fb-svg .tb.reserved { fill: rgba(255,170,40,.3); stroke: #ffb347; }
-.fb-svg .tb.sold { fill: rgba(220,80,80,.28); stroke: #f08080; }
+.fb-svg .tb.reserved { fill: rgba(255,180,0,.22); stroke: #ffb400; }
+.fb-svg .tb.sold { fill: rgba(255,96,96,.22); stroke: #ff6060; }
 .fb-svg .seat { fill: rgba(255,255,255,.5); pointer-events: none; }
-.fb-svg .stg { fill: rgba(140,120,255,.22); stroke: #a99bff; stroke-width: 2; }
+.fb-svg .stg { fill: rgba(102,163,255,.2); stroke: #66a3ff; stroke-width: 2; }
 .fb-svg .zn { fill: rgba(255,255,255,.06); stroke: rgba(255,255,255,.35); stroke-dasharray: 5 4; stroke-width: 1.5; }
 .fb-svg .zn.fac { fill: rgba(197,160,89,.14); stroke: rgba(197,160,89,.85); stroke-dasharray: none; }
-.fb-svg .zn.exit { fill: rgba(70,200,120,.18); stroke: #5fd68a; stroke-dasharray: none; }
+.fb-svg .zn.exit { fill: rgba(0,200,120,.18); stroke: #00c878; stroke-dasharray: none; }
 .fb-svg .door { fill: #c5a059; }
-.fb-svg .door.exit { fill: #5fd68a; }
+.fb-svg .door.exit { fill: #00c878; }
 .fb-svg text { fill: #fff; font: 800 12px Inter, sans-serif; text-anchor: middle; pointer-events: none; }
 .fb-svg text.sm { font-size: 10px; font-weight: 700; fill: rgba(255,255,255,.8); }
 .fb-svg .ring { fill: none; stroke: rgba(197,160,89,.45); stroke-dasharray: 3 6; stroke-width: 1.5; pointer-events: none; }
@@ -67,10 +70,10 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
 .fb-side input[type=text], .fb-side input[type=number], .fb-side select { width: 100%; box-sizing: border-box; }
 .fb-side input[type=range] { width: 100%; padding: 0; }
 .fb-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.fb-msg { margin: 8px 0; padding: 8px 10px; border-radius: 8px; font-size: 12.5px; background: rgba(240,128,128,.14); border: 1px solid rgba(240,128,128,.5); color: #f5a3a3; display: none; }
-.fb-msg.ok { background: rgba(70,200,120,.12); border-color: rgba(70,200,120,.5); color: #7fe0a3; }
+.fb-msg { margin: 8px 0; padding: 8px 10px; border-radius: 8px; font-size: 12.5px; background: rgba(255,96,96,.14); border: 1px solid rgba(255,96,96,.5); color: #ff6060; display: none; }
+.fb-msg.ok { background: rgba(0,200,120,.12); border-color: rgba(0,200,120,.5); color: #00c878; }
 .fb-hint { font-size: 12px; color: rgba(255,255,255,.5); margin: 6px 0 0; line-height: 1.45; }
-.fb-narrow-note { display: none; color: #ffb347; font-size: 13px; text-align: center; margin-top: 14px; }
+.fb-narrow-note { display: none; color: #ffb400; font-size: 13px; text-align: center; margin-top: 14px; }
 @media (max-width: 1100px) { .fb-grid { grid-template-columns: 1fr; } .fb-palette { display: flex; flex-wrap: wrap; gap: 6px; } .fb-palette h3 { width: 100%; } .fb-palette button { width: auto; margin: 0; } .fb-narrow-note { display: block; } }
     </style>
 </head>
@@ -136,9 +139,9 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
       <p class="fb-sub">Diseña el plano de un local: mesas, sillas, escenarios y servicios. Arrastra, ajusta y fija precios. <b>Por ahora se guarda solo en este navegador</b> (exporta el archivo para no perderlo); el guardado en la base y los permisos del Cliente Comercial son la fase 2.</p>
     </div>
     <div class="fb-actions">
-      <button type="button" id="fb-undo" title="Deshacer (Ctrl+Z)">↶ Deshacer</button>
-      <button type="button" id="fb-export">⭳ Exportar</button>
-      <button type="button" id="fb-import">⭱ Importar</button>
+      <button type="button" id="fb-undo" title="Deshacer (Ctrl+Z)">Deshacer</button>
+      <button type="button" id="fb-export">Exportar</button>
+      <button type="button" id="fb-import">Importar</button>
       <input type="file" id="fb-import-file" accept="application/json,.json" hidden>
     </div>
   </div>
@@ -210,7 +213,7 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
         { g: 'Puertas', k: 'door', sub: 'artistas', t: 'Entrada de artistas', w: 70, label: 'ARTISTAS' },
         { g: 'Puertas', k: 'door', sub: 'exit', t: 'Salida de emergencia', w: 70, label: 'SALIDA' }
     ];
-    var ICON = { bano: '🚻 ', barra: '🍸 ', artistas: '🎤 ', exit: '🏃 ', entrada: '🚪 ' };
+    var ICON = {};
 
     // ───────── Estado ─────────
     var state, history = [], dragging = null, selId = null;
@@ -329,7 +332,7 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
             if (d) el('path', { class: 'body stg', d: d }, g);
             else if (it.shape === 'oval') el('ellipse', { class: 'body stg', rx: it.w / 2, ry: it.h / 2 }, g);
             else el('rect', { class: 'body stg', x: -it.w / 2, y: -it.h / 2, width: it.w, height: it.h, rx: 8 }, g);
-            var ts = el('text', { y: 4 }, g, '🎤 ' + (it.label || 'ESCENARIO'));
+            var ts = el('text', { y: 4 }, g, (it.label || 'ESCENARIO'));
             ts.setAttribute('transform', 'rotate(' + (-(it.rot || 0)) + ')');
         } else if (it.k === 'zone') {
             el('rect', { class: 'body zn' + (it.sub === 'barra' || it.sub === 'bano' ? ' fac' : ''), x: -it.w / 2, y: -it.h / 2, width: it.w, height: it.h, rx: 10 }, g);
@@ -399,6 +402,24 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
         if (def.k === 'stage') it.label = 'ESCENARIO';
         map.items.push(it); selId = it.id; commit();
     }
+    // Llenar rápido: pone una cuadrícula de mesas de un solo clic (lo más lento de armar una sala es ir mesa por mesa).
+    function fillGrid() {
+        var rows = Math.max(1, Math.min(12, parseInt($('fb-gr-rows').value, 10) || 0));
+        var cols = Math.max(1, Math.min(14, parseInt($('fb-gr-cols').value, 10) || 0));
+        var def = LIB.filter(function (d) { return d.k === 'table' && d.shape === $('fb-gr-type').value; })[0];
+        var map = cur(), W = map.room.w, H = map.room.h;
+        var left = 60, right = W - 60, top = 130, bottom = H - 50;
+        var stepX = (right - left) / cols, stepY = (bottom - top) / rows;
+        var needX = (def.w || 54) + 36, needY = (def.h || def.w) + 36;
+        if (stepX < needX || stepY < needY) return say('No caben ' + rows + '×' + cols + ' mesas en esta sala. Baja las filas o columnas, o agranda la sala.', false);
+        snapshot();
+        for (var r = 0; r < rows; r++) for (var c = 0; c < cols; c++) {
+            var it = { id: uid(), k: 'table', shape: def.shape, x: snapV(left + stepX * (c + 0.5)), y: snapV(top + stepY * (r + 0.5)), w: def.w, rot: 0, seats: def.seats, price: 0, status: 'available' };
+            if (def.h) it.h = def.h;
+            it.label = nextLabel(map); map.items.push(it);
+        }
+        selId = null; commit(); say(rows * cols + ' mesas agregadas. Muévelas o ajústalas si hace falta.', true);
+    }
     function removeSel() {
         var it = item(selId); if (!it) return;
         if (locked(it)) { say('No se puede eliminar la mesa ' + it.label + ': tiene una ' + (it.status === 'sold' ? 'venta' : 'reserva') + ' activa. Resuélvela primero.', false); return; }
@@ -439,8 +460,6 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
             if (it.k === 'table') {
                 h += '<div class="fb-row2">' + field(it.shape === 'rect' || it.shape === 'square' ? 'Ancho' : 'Diámetro', 'w', it.w, 'number') + (it.shape === 'rect' || it.shape === 'square' ? field('Alto', 'h', it.h, 'number') : '') + '</div>' + (it.shape === 'rect' ? '<p class="fb-hint">Medida estándar: dos mesas cuadradas juntas (ancho = 2 × alto). Otras medidas son casos especiales.</p>' : '');
                 h += field('Sillas', 'seats', it.seats, 'number') + field('Precio (USD)', 'price', it.price || 0, 'number');
-                h += '<label>Estado (simulación)</label><select data-f="status"><option value="available"' + (it.status === 'available' ? ' selected' : '') + '>Disponible</option><option value="reserved"' + (it.status === 'reserved' ? ' selected' : '') + '>Reservada</option><option value="sold"' + (it.status === 'sold' ? ' selected' : '') + '>Vendida</option></select>';
-                h += '<p class="fb-hint">Una mesa reservada o vendida no se puede eliminar ni bajarle las sillas. Aquí el estado es una simulación para probar la regla; en la venta real lo pondrá el sistema.</p>';
             } else if (it.k === 'stage') {
                 h += '<label>Forma</label><select data-f="shape">' + [['rect', 'Recto'], ['halfround', 'Frente redondeado'], ['corner', 'Esquina redonda'], ['oval', 'Ovalado'], ['trapezoid', 'Trapecio']].map(function (o) { return '<option value="' + o[0] + '"' + (it.shape === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select>';
                 h += '<div class="fb-row2">' + field('Ancho', 'w', it.w, 'number') + field('Alto', 'h', it.h, 'number') + '</div>';
@@ -631,6 +650,12 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
         if (!cur()) state.currentId = state.maps[0].id;
         $('fb-venue').value = state.venue || '';
         var pal = $('fb-palette'), group = '';
+        var fast = document.createElement('div');
+        fast.innerHTML = '<h3>Llenar rápido</h3><div class="fb-fast"><label>Filas <input type="number" id="fb-gr-rows" value="3" min="1" max="12"></label><label>Columnas <input type="number" id="fb-gr-cols" value="5" min="1" max="14"></label></div>' +
+            '<select id="fb-gr-type"><option value="round">Redondas</option><option value="square">Cuadradas</option><option value="rect">Rectangulares</option></select>' +
+            '<button type="button" id="fb-gr-go">Agregar mesas</button>';
+        pal.appendChild(fast);
+        $('fb-gr-go').addEventListener('click', fillGrid);
         LIB.forEach(function (d) {
             if (d.g !== group) { group = d.g; var h = document.createElement('h3'); h.textContent = group; pal.appendChild(h); }
             var b = document.createElement('button'); b.type = 'button'; b.textContent = '+ ' + d.t;
