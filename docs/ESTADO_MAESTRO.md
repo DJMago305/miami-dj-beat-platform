@@ -3538,3 +3538,19 @@ El PO preguntó además cómo separar el perfil de Wendy (cuenta de staff/vended
 Pasos 3-5 de la consolidación grande (entender las ~9 condiciones de `mdjResolveBuyerSession()`, diseñar las 3 capas en 1, probar las 4 combinaciones reales de cuenta) y la separación física de `dj_profiles` siguen pendientes para sesión(es) dedicada(s) -- no se tocan hoy.
 
 Investigué la emisora que mencionó el PO ("la 95.4") -- no encontré ninguna de Cubatón en esa frecuencia en Miami; todo apunta a que es Ritmo 95.7 FM (WRMA), donde DJ Yus es Director de Programación. El PO confirmó: es 95.7, no 95.4 -- corregido en el reporte.
+
+## [2026-10-03] Consolidación de identidad: pasos 3-5 cerrados (PR #625 mergeado) + cierre del Caso 1 del ticket de costos
+
+**Paso 3 (medido, no supuesto):** se extrajo el código real del header y se evaluaron 360 combinaciones de cuenta quitando cada condición de `mdjResolveBuyerSession()`. El header ya coincidía con el clasificador canónico en 348; las 12 restantes eran dos contradicciones de política (error de red + fila client; JWT `user_type=client` contra fila `dj_profiles`). Ninguna cuenta real caía en ellas. Detalle en `docs/tickets/2026-10-01-TICKET-plantilla-cliente-separada-de-artista.md`.
+
+**Decisiones del PO:** con error de red gana el guardia conservador; entre el JWT y la base de datos gana la base de datos; Aron Rosso es cliente (su `app_metadata.role` sigue en `artist` en Auth y está pendiente corregirlo, sin tocar sus datos todavía).
+
+**Paso 4 (PR #625, `7311de06`):** `mdjb-shared-header.js` decide "¿es comprador?" con `idn.principal === 'buyer'`; el cálculo inline antiguo queda solo como red de seguridad. `dj-profile`, `dj-dashboard`, `staff-agenda` y `staff-admin` cargaban el header sin `mdj-identity.js` (eran 4, no 7 como se creyó al principio) y ahora lo cargan.
+
+**Hallazgo de caché, corregido en el mismo PR:** `vercel.json` sirve los `.js` con `max-age=31536000, immutable`, por lo que el `?v=` de la URL es el único mecanismo de actualización. Los PRs #620 y #622 cambiaron `mdj-identity.js` y el header sin subir el `?v=`, y quien ya había visitado el sitio siguió con el código anterior. Ambos pasan a `?v=20261003-identidad-unica`. Regla a recordar: tocar un `.js` compartido implica subir su `?v=` en las páginas que lo cargan.
+
+**Paso 5 (verificación):** cliente real (Wendy) en `index` y `client-account`: comprador, header presente, 0 errores. Owner real (sesión del PO, servidor local con `main`): `dj-dashboard`, `dj-profile` de otro artista, `staff-agenda` (dentro de `staff.html?vista=agenda`) y `staff-admin` (dentro de `staff.html?vista=gobernanza`) dan `principal: staff`, `dbRole: owner`, `djRowError: false`, header presente, sin sesión de comprador y 0 errores de consola. **Sin verificar en vivo:** sesión de vendedora y sesión de artista (solo cubiertas por arnés).
+
+**Correcciones de lo que yo había anotado:** (1) la cuenta de staff de Wendy (`seller`) también tiene fila en `client_profiles`; es un caso dual real, hoy inofensivo porque `seller` la clasifica como staff antes. (2) "7 páginas sin clasificador" eran 4. (3) Se empezó por el ticket de costos de Supabase sin comprobar que ya estaba resuelto; el PO había subido el plan y rotado la clave `service_role`. El Caso 1 quedó cerrado en el ticket; el Caso 2 (Vercel) sigue abierto, con datos medidos: 615 despliegues en el ciclo desde el 11/09, los de Production coinciden 1 a 1 con los PRs fusionados.
+
+**Pendiente:** corregir el rol de Aron en Auth; borrar el respaldo inline del header (limpieza posterior); probar en vivo vendedora y artista; separación física de `dj_profiles` staff/artista (ticket aparte, sin ejecutar).
