@@ -1599,6 +1599,16 @@
       else if(e.cal==="reserva")r.push({dt:parse(e.d),icon:"🎧",title:e.t,sub:e.venue||"Evento confirmado",chan:"Push",cal:"reserva",art:e.artist,ev:e});
       else if(e.cal==="personal")r.push({dt:parse(e.d),icon:e.kind==="cumple"?"🎂":"📅",title:e.t,sub:"Sincronizado de "+(e.clientId?clientAccName(e.clientId):artName(e.artist)),chan:"Push",cal:"personal",art:e.artist,auto:true,ev:e});
     });
+    // Paso 14 (2026-10-01): "Mis fechas importantes" (Paso 11/12) debe avisar
+    // en Recordatorios sin importar qué pestaña esté abierta -- EV solo las
+    // trae cuando detailLevel==="personal" (Paso 12), así que aquí se agregan
+    // aparte usando coiFechasImportantesEv() directo. Si ya es esa pestaña,
+    // EV ya las incluyó arriba (cal:"cliente") -- no se duplican.
+    if(state.role==="artista" && state.detailLevel!=="personal" && window.__COI_STAFF===false){
+      coiFechasImportantesEv().forEach(function(e){
+        r.push({dt:parse(e.d),icon:"🎂",title:e.t,sub:"Tu fecha personal",chan:"Push",cal:"cliente",art:e.artist,auto:true,ev:e});
+      });
+    }
     r.sort(function(a,b){return a.dt-b.dt;});return r;
   }
   function renderRem(){
