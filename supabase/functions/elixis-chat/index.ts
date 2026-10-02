@@ -2778,11 +2778,25 @@ serve(async (req: Request) => {
             filtrados = filtrados.filter((c) => !c._compliance.w9Id);
         }
         if (query.length >= 2) {
-            filtrados = filtrados.filter((c) =>
-                (c._nombre || "").toLowerCase().includes(query) ||
-                (c._email || "").toLowerCase().includes(query) ||
-                (c._telefono || "").toLowerCase().includes(query)
-            );
+            // Busqueda tolerante (2026-10-02): antes exigia que el texto COMPLETO apareciera tal cual, asi que
+            // "Anexis Garcia Guzman" no encontraba a "Anexis Garcia Gusman". Ahora: sin tildes, por palabras
+            // sueltas (relevancia = cuantas coinciden), y por telefono con cualquier formato.
+            const fold = (t: string) => t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            const qFold = fold(query).trim();
+            const tokens = qFold.split(/[^a-z0-9]+/).filter((t) => t.length >= 3);
+            const qDigits = query.replace(/\D/g, "");
+            filtrados = filtrados
+                .map((c) => {
+                    const hay = fold(`${c._nombre || ""} ${c._email || ""}`);
+                    const dig = String(c._telefono || "").replace(/\D/g, "");
+                    let score = tokens.filter((t) => hay.includes(t)).length;
+                    if (qFold && hay.includes(qFold)) score += 2;
+                    if (qDigits.length >= 7 && dig.includes(qDigits.slice(-10))) score += 3;
+                    return { c, score };
+                })
+                .filter((x) => x.score > 0)
+                .sort((a, b) => b.score - a.score)
+                .map((x) => x.c);
         }
 
         const total = filtrados.length;
