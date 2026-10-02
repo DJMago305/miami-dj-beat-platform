@@ -1047,6 +1047,16 @@
         .portal-coi .coi-legend-item.cliente .dot { background: var(--cliente); }
         .portal-coi .coi-legend-item.personal .dot { background: var(--personal); }
 
+        /* Paso 14 (2026-10-01): aviso de fecha importante guardada que llega
+           pronto (0-7 días) -- mismo azul "cliente" que ya usa la categoría
+           de fechas agregadas a mano, para no inventar un color nuevo. */
+        .portal-coi .coi-reminder-banner {
+            margin: 0 0 10px; padding: 9px 14px; border-radius: 11px; flex: none;
+            background: color-mix(in srgb, var(--cliente) 14%, var(--panel));
+            border: 1px solid color-mix(in srgb, var(--cliente) 40%, var(--line));
+            color: var(--ink); font-size: 13px; font-weight: 650;
+        }
+
         /* Modal "Agregar fecha importante" -- para cumpleaños de un hijo, aniversario,
            un amigo, etc. Recurrente por mes/día (no un evento de un solo año). */
         .coi-modal-backdrop {

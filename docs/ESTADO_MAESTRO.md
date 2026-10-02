@@ -3450,3 +3450,16 @@ El badge de la pestaña Personal (Artista y Cliente) solo contaba lo que llegaba
 - DJMago305 (Artista): badge mostró "Personal 1" desde "Mis Eventos" sin haber entrado a la pestaña; al entrar y salir, el badge se limpió.
 - Wendy (Cliente, cuenta real): badge mostró "Personal 3" (2 de Google + 1 fecha de prueba) desde "Mi Evento"; al entrar a Personal se limpió. Se agregó la fecha de prueba con `||` sobre el array existente y se quitó por `id` al terminar -- su aniversario real ("Wendy & Gerardo") nunca se tocó, confirmado en la consulta final.
 - Nota de la propia prueba (no un bug real): dos veces el conteo no bajó a 0 después de "marcar visto" porque el `created_at` de prueba quedó por error en el futuro respecto al reloj real -- al corregir la fecha de prueba al pasado, el badge se limpió exactamente como se esperaba. Documentado para no repetir el mismo error de prueba en la próxima sesión.
+
+## [2026-10-01] Paso 14: recordatorio antes de la fecha (Artista y Cliente)
+
+El PO pidió un aviso dentro de la plataforma (no email/SMS) unos días antes de que llegue una fecha importante guardada (AskUserQuestion, opción elegida: "Recordatorio antes de la fecha").
+
+- **Artista** (`calendario-operacional-inteligente.html`): este lado YA tenía un sistema completo de Recordatorios (campana + página, ventana de 0-7 días, "leído" persistido en localStorage) que hoy solo cubría leads/residencias/clima/cumpleaños de clientes/sync de Google. `buildReminders()` ahora agrega también `coiFechasImportantesEv()` directo -- pero SOLO cuando `state.detailLevel!=="personal"`, para no duplicar: si ya es esa pestaña, esas fechas ya entraron a `EV` por el Paso 12 y se agregan arriba, en el bucle normal. Sin esto, el aviso solo habría contado mientras la pestaña Personal estuviera activa, en vez de siempre.
+- **Cliente** (`web/client-portal.js` + `.html`): no existía ningún sistema de recordatorios (el propio comentario del archivo dice "sin capas de inteligencia... esas son herramientas operativas del artista"), así que se construyó algo proporcional: un aviso simple (`portalCoiUpcomingReminder()`), una sola línea sobre el calendario, visible en cualquier pestaña, mismo azul "cliente" que ya usa la categoría de fechas agregadas a mano -- no un bell+página completo como el del Artista.
+
+Ambos reusan la misma ventana de 0-7 días y el mismo criterio de "próxima ocurrencia" (si el mes/día ya pasó este año, calculan el año siguiente).
+
+**Verificado en vivo, ambos lados, con datos de prueba temporales (`created_at` en el pasado para no disparar el badge del Paso 13 sin querer) y limpiados después**:
+- DJMago305 (Artista): "Prueba recordatorio Paso 14 · Cumpleaños" apareció en Recordatorios → Próximos, intercalada cronológicamente entre residencias reales ("en 4 días", etiqueta "auto"). Clic en la tarjeta la marcó como leída (confirmado en `localStorage.coi_rem_read_v1`), mismo mecanismo que el resto de recordatorios reales.
+- Wendy (Cliente, cuenta real): el aviso "🎂 Prueba recordatorio Paso 14 · Cumpleaños en 4 días" apareció sobre el calendario desde "Mi Evento", sin necesidad de entrar a Personal. Dato de prueba agregado con `||` sobre el array existente y quitado por `id` al terminar -- su aniversario real nunca se tocó.

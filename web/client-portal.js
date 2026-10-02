@@ -187,6 +187,31 @@ async function portalCoiLoadPersonalSync() {
     finally { _portalCoiPersonalSyncLoading = false; }
 }
 
+// Paso 14 (2026-10-01): aviso de una fecha importante guardada que llega
+// pronto (0-7 días), visible sin importar qué pestaña/vista esté abierta --
+// mismo criterio de ventana que ya usa el Recordatorios del Artista
+// (calendario-operacional-inteligente.html, buildReminders/updateBadge).
+// Cliente no tiene ese panel completo (ver nota 2026-09-04 arriba: "sin capas
+// de inteligencia... esas son herramientas operativas del artista"), así que
+// aquí es solo un aviso simple en vez de un bell+página aparte.
+function portalCoiUpcomingReminder() {
+    var hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+    var mejor = null, mejorDias = Infinity;
+    (_portalCoiImportant || []).forEach(function (imp) {
+        var y = hoy.getFullYear();
+        var d = new Date(y, imp.month - 1, imp.day);
+        if (d < hoy) d = new Date(y + 1, imp.month - 1, imp.day);
+        var dias = Math.round((d - hoy) / 86400000);
+        if (dias >= 0 && dias <= 7 && dias < mejorDias) { mejorDias = dias; mejor = { imp: imp, dias: dias }; }
+    });
+    if (!mejor) return '';
+    var tLabel = PORTAL_COI_DATE_TYPES[mejor.imp.date_type] || '';
+    var icon = mejor.imp.date_type === 'birthday' ? '🎂' : (mejor.imp.date_type === 'anniversary' ? '🎉' : '📅');
+    var cuando = mejor.dias === 0 ? 'hoy' : (mejor.dias === 1 ? 'mañana' : 'en ' + mejor.dias + ' días');
+    return '<div class="coi-reminder-banner">' + icon + ' ' + portalEscapeHtml(mejor.imp.name) +
+        (tLabel ? ' · ' + tLabel : '') + ' ' + cuando + '</div>';
+}
+
 function renderPortalCalendar(leads, importantDates, lastSeenAt) {
     var host = document.getElementById('portal-calendar-widget') || document.getElementById('portal-calendar-widget-single');
     if (!host) return;
@@ -241,6 +266,7 @@ function renderPortalCalendar(leads, importantDates, lastSeenAt) {
         (host.id === 'portal-calendar-widget' ? '<button type="button" class="coi-glass" onclick="portalCoiOpenRestoreModal()" aria-label="Restaurar órdenes borradas" title="Restaurar órdenes borradas">' + ICON_REFRESH + '</button>' : '') +
         '</div>' +
         '</div>' +
+        portalCoiUpcomingReminder() +
         '<div class="head">' + built.title +
         '<div class="nav">' +
         '<button type="button" class="arrow" onclick="portalCoiPrev()" aria-label="Anterior">&#8249;</button>' +
