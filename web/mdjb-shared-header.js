@@ -4355,25 +4355,11 @@
     }, 9000);
   }
 
-  /** Invitación por correo (Edge opcional; falla en silencio si no está desplegada). SMS no incluido aquí. */
-  function mdjTryMemberWelcomeNotify(user) {
-    try {
-      var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
-      if (!sb || !sb.functions || !user) return;
-      sb.functions
-        .invoke('member-welcome', {
-          body: { user_id: user.id, email: user.email || null }
-        })
-        .catch(function () { /* optional */ });
-    } catch (e) { /* ignore */ }
-  }
-
   function mdjMaybeRunVipWelcomeProtocol(session) {
     try {
       if (sessionStorage.getItem('mdj_vip_welcome_pending') !== '1' || !session || !session.user) return;
       sessionStorage.removeItem('mdj_vip_welcome_pending');
       mdjShowFamilyWelcomeToast();
-      mdjTryMemberWelcomeNotify(session.user);
     } catch (e) { /* ignore */ }
   }
 

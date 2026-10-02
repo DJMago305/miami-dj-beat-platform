@@ -2,7 +2,7 @@
 
 **Fecha:** 2026-09-27 / actualizado 2026-09-28
 **Pedido por el PO:** "hay que revisar cómo bajamos esos costos de gastos extras por encima de lo que podemos, hay que hacer un análisis y vamos a ver los de vercel también, paso a paso, déjalo como tarea urgente los dos casos."
-**Estado (actualizado 2026-10-03):** CASO 1 (SUPABASE) CERRADO. El PO confirmó que el egress se resolvió subiendo el plan de Supabase, y que la clave `service_role` expuesta en la captura del 28/09 ya fue corregida (rotada). Ambas confirmaciones son del PO; no se verificaron contra el panel de Supabase (sin acceso desde la sesión). **CASO 2 (VERCEL): sin cambios, el PO no lo mencionó** — el diagnóstico de abajo sigue siendo el último dato.
+**Estado (actualizado 2026-10-02):** CASO 1 (SUPABASE) CERRADO. El PO confirmó que el egress se resolvió subiendo el plan de Supabase, y que la clave `service_role` expuesta en la captura del 28/09 ya fue corregida (rotada). Ambas confirmaciones son del PO; no se verificaron contra el panel de Supabase (sin acceso desde la sesión). **CASO 2 (VERCEL): sin cambios, el PO no lo mencionó** — el diagnóstico de abajo sigue siendo el último dato.
 ~~Estado anterior: DIAGNÓSTICO COMPLETO en los dos casos. Nada implementado todavía — quedan decisiones reales del PO antes de tocar código o borrar nada.~~
 
 ## Caso 1 — Supabase: egress por encima de cuota
@@ -81,7 +81,7 @@ Cero bytes transferidos, header correcto. Esto es un ahorro real y verificado, n
 
 **⚠️ Incidente de seguridad menor, ya resuelto por el PO**: durante esta corrida, la clave `service_role` (formato JWT legacy) quedó expuesta en texto plano en una captura de pantalla compartida en el chat de Claude Code (se pegó por accidente en un prompt vacío de la terminal, que la mostró completa al fallar como "command not found"). Se le indicó al PO regenerar esa clave de inmediato en el dashboard de Supabase — ningún código de producción la usa (solo scripts de administración como este), así que la rotación no debería romper nada. Confirmar con el PO que ya la rotó antes de cerrar este ticket del todo.
 
-## 2026-10-03 — Cierre del Caso 1 y datos medidos para el Caso 2
+## 2026-10-02 — Cierre del Caso 1 y datos medidos para el Caso 2
 
 **Caso 1 (Supabase): cerrado por el PO.** Egress resuelto subiendo el plan; clave `service_role` expuesta ya corregida. Los pendientes de la sección anterior ("revisar la tendencia el 2026-09-30" y "confirmar que ya la rotó") quedan resueltos con esta confirmación. Este ticket se leyó hoy como tarea pendiente por no estar actualizado; por eso se deja constancia.
 
@@ -91,7 +91,7 @@ Cero bytes transferidos, header correcto. Esto es un ahorro real y verificado, n
 - El build real es `exit 0` (`web/package.json`), así que el consumo no viene de compilar. El repo pesa 223 MB en GitHub, el clon no es el problema.
 - No se pudo medir la duración real de cada build: los tiempos de estado que expone GitHub dan 0 s y no sirven. Eso solo se ve en el panel de Vercel (sin sesión desde la herramienta). Sigue abierta la duda de por qué salen ~210 horas de "Build CPU" con un build vacío.
 
-## 2026-10-03 (tarde) — Caso 2 (Vercel): palanca concreta encontrada, sin aplicar
+## 2026-10-02 (tarde) — Caso 2 (Vercel): palanca concreta encontrada, sin aplicar
 
 **Medido en GitHub (266 PRs fusionados desde el 2026-09-11):** 104 (39 %) no tocaron NADA bajo `web/` (solo `docs/`, `supabase/`, scripts o workflows); desde el 2026-09-28 son 45 de 90 (50 %). Cada uno de esos PRs dispara igual un build de Preview y uno de Production que despliegan exactamente el mismo sitio.
 
@@ -104,3 +104,13 @@ Cero bytes transferidos, header correcto. Esto es un ahorro real y verificado, n
 - Sigue sin explicarse por qué un build que es `exit 0` consume ~210 horas de "Build CPU". Si el costo no viene del build sino del clon/subida, `ignoreCommand` ahorraría poco.
 
 **Propuesta (requiere aprobación del PO, es cambio de pipeline de despliegue):** (1) el PO mira en el panel de Vercel el Root Directory y la duración de 3 builds recientes; (2) prueba aislada: agregar `ignoreCommand` en una rama, abrir un PR solo de documentación y comprobar cómo quedan el estado `CANCELED` y los checks de GitHub; (3) solo si el merge no se bloquea, comparar "Build CPU" 1-2 días después. Si la CPU no baja, se revierte.
+
+## 2026-10-02 (noche) — Caso 2 (Vercel): causa probable del costo encontrada, cambio PENDIENTE del PO
+
+**Hallazgo (capturas del panel de Vercel, proyecto `web`):** *Build Machine = Turbo, 30 vCPU, 60 GB de memoria*, el nivel más grande. Los despliegues recientes (Preview y Production) muestran *Ready* en **7–11 s**, coherente con el build vacío (`exit 0`).
+
+**Cuenta que lo explica:** la documentación de Vercel (`/docs/builds/managing-builds`, verificada hoy) dice que el build se cobra a **$0,0035 por minuto de CPU** (minutos de build × vCPU). Con Turbo, 30 vCPU × 1 min × $0,0035 = **$0,105 por despliegue**. Medido: ≈ $0,104 por despliegue (619 despliegues, Build CPU $64,68). Lo que la documentación NO dice y es inferencia: que cada build se facture como mínimo un minuto aunque dure 8 s; la coincidencia numérica es muy ajustada pero no está confirmada (hay una pantalla de detalle de cada despliegue con "billable duration y CPU minutes" que la confirmaría).
+
+**Cambio propuesto (lo hace el PO en el panel, reversible, sin código):** Settings → Build and Deployment → *Build Machine* → **Standard (4 vCPU, 8 GB)** → Save. Costo estimado por despliegue: ≈ $0,014 (−87 %), con el mismo número de despliegues; a este volumen quedaría dentro de los $20 de crédito incluido. Revisar también el ajuste a nivel de *equipo* (`~/settings/build-and-deployment`, sección Build Machines) por si el Turbo viene de ahí.
+
+**Estado: PENDIENTE, decisión del PO de no hacerlo todavía (2026-10-02).** Costo de esperar: ≈ $1–2 por día al ritmo actual; el ciclo de facturación termina el 11/10. `ignoreCommand` queda descartado por ahora: un build cancelado igual arranca la máquina, así que ahorraría poco comparado con este cambio.
