@@ -5262,34 +5262,7 @@
               (!!p && djRowRole !== 'client');
           var appRoleLower = appRole ? String(appRole).toLowerCase() : '';
           var metadataSaysClient = metaUtLower === 'client' || appRoleLower === 'client';
-          /* jwtArtist: no forzar «cliente» solo por tener client_profiles (muchos artistas tienen ambas filas).
-           * Guard djProfileErr: si la query de dj_profiles falló (red lenta en móvil), p=null por error, no por
-           * ausencia real de perfil — no clasificar como cliente en ese caso (TICKET-ROLE-REDIRECT-002). */
-          var isClient = sessionIsExplicitClient
-            ? true
-            : (p && djRowRole === 'client') ||
-              (!p && !djProfileErr && hasClientRow && !jwtArtist) ||
-              (!p && !djProfileErr && metadataSaysClient && !jwtArtist);
-
-          var viewingOwnDjProfile = false;
-          try {
-            var pathSeg = (window.location.pathname || '').split('/').pop() || '';
-            if (/^dj-profile\.html$/i.test(pathSeg) && session.user) {
-              var qidOwn = (new URLSearchParams(window.location.search || '').get('id') || '').trim();
-              var _sid = String(session.user.id);
-              /* Página: sin ?id= carga el propio user_id; con ?id= debe ser el tuyo. UUID case-insensitive. */
-              viewingOwnDjProfile = !qidOwn || qidOwn.toLowerCase() === _sid.toLowerCase();
-            }
-          } catch (eOwn) { /* ignore */ }
-          /*
-           * En **tu** dj-profile, la pastilla «Cliente» solo si la fila DJ es rol client;
-           * nunca mezclar caja de comprador (client_profiles) con artista/staff/owner.
-           */
-          if (viewingOwnDjProfile) {
-            isClient = !!(
-              p && String(p.role || '').toLowerCase().trim() === 'client'
-            );
-          }
+          var isClient = false; /* se decide más abajo, una vez calculado idn */
           var hasDjProfile = !!(p && djRowRole !== 'client');
           var idn =
             typeof window.mdjClassifyPlatformIdentity === 'function'
@@ -5306,6 +5279,24 @@
                   djRowError: djProfileErr
                 })
               : null;
+          /* 2026-10-03: «¿es comprador?» lo decide UNA sola función, mdjClassifyPlatformIdentity()
+             (mdj-identity.js). Antes se decidía tres veces (este bloque inline, el override de
+             dj-profile y mdjResolveBuyerSession) y se contradecían en dos casos: error de red en
+             dj_profiles + fila client (el guardia TICKET-ROLE-REDIRECT-002 quedaba anulado) y JWT
+             user_type=client contra una fila dj_profiles real (ahora gana la base de datos).
+             Ver docs/tickets/2026-10-01-TICKET-plantilla-cliente-separada-de-artista.md. */
+          if (idn) {
+            isClient = idn.principal === 'buyer';
+          } else {
+            /* Red de seguridad: solo corre si mdj-identity.js no cargó (todas las páginas con
+               header deben incluirlo antes). Misma lógica de antes, salvo el override propio de
+               dj-profile.html, que dejó de existir porque el clasificador ya cubre ese caso. */
+            isClient = sessionIsExplicitClient
+              ? true
+              : (p && djRowRole === 'client') ||
+                (!p && !djProfileErr && hasClientRow && !jwtArtist) ||
+                (!p && !djProfileErr && metadataSaysClient && !jwtArtist);
+          }
           /* Staff: solo dj_profiles (mismo criterio que admin y RLS). Fallback sin mdj-identity.js puesto arriba en el HTML. */
           var isDjStaff = idn
             ? !!idn.staffInDb
@@ -5480,7 +5471,9 @@
             : (isNavStaffSolo ? './staff.html?vista=miperfil' : './client-portal.html');
           var miPortalNavOpts = null;
 
-          var isBuyerSession = mdjResolveBuyerSession({
+          /* Con clasificador, isClient ya es la decisión final; mdjResolveBuyerSession() solo
+             queda para el caso de respaldo (idn nulo). */
+          var isBuyerSession = idn ? isClient : mdjResolveBuyerSession({
             isClient: isClient,
             settingsUrl: settingsUrl,
             idn: idn,
