@@ -1024,7 +1024,7 @@ window.checkoutSubmit = async function() {
                 try {
                     sessionStorage.removeItem('mdj_rentals_cart_backup');
                 } catch (eR) { /* ignore */ }
-                window.location.href = './client-portal.html?lead=' + encodeURIComponent(newLeadId);
+                await mdjRentalsApproveAndPay(newLeadId, selectedServices, btn);
                 return;
             }
             if (ins.error) {
@@ -1059,6 +1059,90 @@ window.checkoutSubmit = async function() {
         window.location.href = 'index.html#contact';
     }, 800);
 };
+
+// FASE 4 (checkout público, PO 2026-09-30): tras crear el lead, el servidor
+// recalcula el total SOLO desde service_catalog (submit-cart-checkout -- nunca
+// confía en el precio que mandó el navegador). Si todas las líneas tienen sku
+// real con precio fijo, el total queda aprobado solo y se manda derecho a pagar
+// el depósito del 50% por Stripe (create-event-payment, sin tocar, mismo patrón
+// que web/client-portal.js payDepositStripe). Si alguna línea no tiene precio
+// fijo (Call para cotización / paquete temático de rentals.html), el equipo la
+// revisa manualmente -- el cliente cae a su portal como ya pasaba antes de esta
+// fase.
+async function mdjRentalsApproveAndPay(leadId, selectedServices, btn) {
+    function fallbackToPortal() {
+        window.location.href = './client-portal.html?lead=' + encodeURIComponent(leadId);
+    }
+
+    try {
+        var cartLines = (selectedServices || [])
+            .filter(function (s) { return s && s.sku; })
+            .map(function (s) { return { sku: s.sku, quantity: s.qty || 1 }; });
+
+        if (!cartLines.length || typeof window.mdbSupabaseFunctionUrl !== 'function') {
+            fallbackToPortal();
+            return;
+        }
+
+        var invokeHeaders = typeof window.mdjSupabaseAnonInvokeHeaders === 'function'
+            ? window.mdjSupabaseAnonInvokeHeaders()
+            : { 'Content-Type': 'application/json' };
+
+        var approveResp = await fetch(window.mdbSupabaseFunctionUrl('submit-cart-checkout'), {
+            method: 'POST',
+            headers: invokeHeaders,
+            body: JSON.stringify({ lead_id: leadId, cart_lines: cartLines })
+        });
+        var approveData = await mdjRentalsFetchCheckoutJson(approveResp);
+
+        if (!approveData) {
+            fallbackToPortal();
+            return;
+        }
+        if (approveData.approved !== true) {
+            try {
+                window.alert('¡Gracias! Tu cotización será confirmada por nuestro equipo antes de procesar el pago.');
+            } catch (eAlert) { /* ignore */ }
+            fallbackToPortal();
+            return;
+        }
+
+        if (btn) btn.innerText = 'Redirecting to secure payment...';
+
+        var payResp = await fetch(window.mdbSupabaseFunctionUrl('create-event-payment'), {
+            method: 'POST',
+            headers: invokeHeaders,
+            body: JSON.stringify({ lead_id: leadId, kind: 'deposit', description: 'Depósito de Reserva — Miami DJ Beat' })
+        });
+        var payData = await mdjRentalsFetchCheckoutJson(payResp);
+
+        if (payData && payData.url) {
+            window.location.href = payData.url;
+            return;
+        }
+        fallbackToPortal();
+    } catch (eApprove) {
+        void eApprove;
+        fallbackToPortal();
+    }
+}
+
+async function mdjRentalsFetchCheckoutJson(resp) {
+    var text = '';
+    try {
+        text = await resp.text();
+    } catch (eText) {
+        return null;
+    }
+    var data;
+    try {
+        data = text ? JSON.parse(text) : {};
+    } catch (eParse) {
+        return null;
+    }
+    if (!resp.ok || data.ok === false) return null;
+    return data;
+}
 
 document.addEventListener('click', async (e) => {
     const packCard = e.target.closest('[data-action="select-hl-package"]');
