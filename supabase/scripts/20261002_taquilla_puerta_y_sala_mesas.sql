@@ -1,4 +1,6 @@
--- 🔴 PRODUCCIÓN (proyecto hkuvuqupbxwkiykxvqdr). Aditivo e idempotente. NO APLICADO todavía (lo corre el PO).
+-- 🔴 PRODUCCIÓN (proyecto hkuvuqupbxwkiykxvqdr). Aditivo e idempotente.
+-- YA APLICADO en producción el 2026-10-02 por el PO y verificado (3 columnas, función con permiso solo para authenticated,
+-- layout_mode='tickets' en todas las salas, botones +/- de la puerta probados con una orden real).
 -- Taquilla de salas: control de entrada en la puerta. Agrega a venue_ticket_orders cuántas
 -- entradas de la orden ya pasaron por la puerta y una función para sumar/restar de a una,
 -- que solo puede ejecutar el staff y nunca deja pasar más entradas de las compradas.

@@ -83,7 +83,7 @@
         #vr-plan-card.vr-plan-full .vr-plan { min-width: 0; width: 100%; height: calc(100vh - 230px); }
         .vr-hero-layer { position: fixed; inset: 0; z-index: 1; pointer-events: none; width: 100%; height: 100%; object-fit: cover; filter: brightness(0.65); }
         .vr-hero-shade { position: fixed; inset: 0; z-index: 3; pointer-events: none; background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.8) 100%); }
-        .vr-dev-badge { display: inline-block; padding: 4px 12px; border-radius: 50px; background: rgba(255,170,40,0.14); border: 1px solid rgba(255,170,40,0.55); color: #ffb347; font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; vertical-align: middle; margin-left: 10px; }
+        .vr-dev-badge { display: inline-block; padding: 4px 14px; border-radius: 999px; border: 1px solid rgba(197,160,89,0.4); color: #c5a059; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; vertical-align: middle; margin-left: 10px; }
         .vr-plan-wrap { overflow-x: auto; touch-action: pan-x pan-y pinch-zoom; border-radius: 14px; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.08); }
         .vr-plan { display: block; width: 100%; min-width: 560px; height: auto; }
         .vr-plan .zone { fill: rgba(255,255,255,0.05); stroke: rgba(255,255,255,0.28); stroke-dasharray: 5 4; }
@@ -94,10 +94,10 @@
         .vr-plan .door-label { fill: #e8c987; font: 800 11px Inter, sans-serif; letter-spacing: .1em; text-anchor: middle; }
         .vr-services { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 10px 0 0; font-size: 13px; color: rgba(255,255,255,0.8); }
         .vr-plan .tbl { cursor: pointer; outline: none; }
-        .vr-plan .tbl .shape { fill: rgba(70,200,120,0.28); stroke: #5fd68a; stroke-width: 2; transition: fill .15s; }
-        .vr-plan .tbl:hover .shape, .vr-plan .tbl:focus-visible .shape { fill: rgba(70,200,120,0.5); }
+        .vr-plan .tbl .shape { fill: rgba(0,200,120,0.22); stroke: #00c878; stroke-width: 2; transition: fill .15s; }
+        .vr-plan .tbl:hover .shape, .vr-plan .tbl:focus-visible .shape { fill: rgba(0,200,120,0.45); }
         .vr-plan .tbl.sold { cursor: not-allowed; }
-        .vr-plan .tbl.sold .shape { fill: rgba(220,80,80,0.28); stroke: #f08080; }
+        .vr-plan .tbl.sold .shape { fill: rgba(255,96,96,0.22); stroke: #ff6060; }
         .vr-plan .tbl.sel .shape { fill: rgba(197,160,89,0.55); stroke: #c5a059; stroke-width: 3; }
         .vr-plan .tbl text { fill: #fff; font: 800 13px Inter, sans-serif; text-anchor: middle; pointer-events: none; }
         .vr-plan .tbl text.px { font-size: 10.5px; font-weight: 700; fill: rgba(255,255,255,0.8); }
@@ -105,6 +105,28 @@
         .vr-plan .tbl .seat { fill: rgba(255,255,255,0.45); pointer-events: none; }
         .vr-legend { display: flex; flex-wrap: wrap; gap: 16px; margin: 14px 0 4px; font-size: 13px; color: rgba(255,255,255,0.75); }
         .vr-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+        /* Compra de entradas con la MISMA apariencia del carrito del header (valores copiados de css/mdj-event-builder.css). */
+        .vr-cart-list { display: flex; flex-direction: column; gap: 12px; }
+        .vr-cart-card { display: flex; gap: 16px; align-items: flex-start; padding: 14px; border: 1px solid rgba(255,255,255,0.10); border-radius: 10px; background: rgba(0,0,0,0.40); }
+        .vr-cart-body { flex: 1 1 auto; min-width: 0; }
+        .vr-cart-name { font-size: 15px; font-weight: 700; color: rgba(255,255,255,0.94); margin-bottom: 4px; }
+        .vr-cart-actions { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-top: 8px; }
+        .vr-cart-qty { display: inline-flex; align-items: center; gap: 8px; border: 1px solid rgba(255,255,255,0.10); border-radius: 6px; padding: 2px 4px; }
+        .vr-cart-qty button { width: 26px; height: 26px; border-radius: 4px; border: none; background: transparent; color: rgba(255,255,255,0.94); font-size: 16px; line-height: 1; cursor: pointer; }
+        .vr-cart-qty button:hover { background: rgba(212,175,55,0.14); color: #d4af37; }
+        .vr-cart-qty-val { min-width: 18px; text-align: center; font-weight: 600; color: rgba(255,255,255,0.94); font-size: 14px; }
+        .vr-cart-price { flex: none; text-align: right; min-width: 90px; }
+        .vr-cart-unit { font-size: 12px; color: rgba(255,255,255,0.45); }
+        .vr-cart-subtotal { font-size: 18px; font-weight: 700; color: #d4af37; margin-top: 4px; }
+        .vr-cart-summary { margin-top: 16px; padding: 16px 20px; border: 1px solid rgba(212,175,55,0.25); background: rgba(0,0,0,0.40); display: flex; flex-direction: column; gap: 8px; }
+        .vr-cart-row { display: flex; justify-content: space-between; align-items: center; font-family: Inter, sans-serif; font-size: 14px; color: rgba(255,255,255,0.65); }
+        .vr-cart-row b { color: rgba(255,255,255,0.94); font-weight: 600; }
+        .vr-cart-row.total { border-top: 1px solid rgba(212,175,55,0.35); padding-top: 10px; margin-top: 2px; }
+        .vr-cart-row.total span { font-size: 14px; font-weight: 700; color: #d4af37; letter-spacing: 0.06em; }
+        .vr-cart-row.total b { font-size: 20px; font-weight: 700; color: #d4af37; }
+        .vr-cart-cta { margin-top: 16px; width: 100%; padding: 13px 32px; border-radius: 6px; border: 1px solid rgba(212,175,55,0.75); background: rgba(212,175,55,0.12); color: #d4af37; font-size: 14px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; transition: all .18s ease; font-family: inherit; }
+        .vr-cart-cta:hover:not(:disabled) { background: rgba(212,175,55,0.22); border-color: rgba(212,175,55,1); }
+        .vr-cart-cta:disabled { opacity: .55; cursor: default; }
         .vr-form label { display:block; font-size:12px; font-weight:700; color:rgba(255,255,255,0.55); text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px; }
     </style>
 </head>
@@ -179,16 +201,17 @@
         <div class="vr-card" id="vr-plan-card" style="display:none;">
             <div class="vr-plan-head">
                 <h2>Elige tu mesa <span class="vr-dev-badge">En desarrollo</span></h2>
-                <button type="button" class="vr-full-btn" id="vr-full-btn">⛶ Pantalla completa</button>
+                <button type="button" class="vr-full-btn" id="vr-full-btn"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px"><path d="M4 9V5a1 1 0 0 1 1-1h4M20 9V5a1 1 0 0 0-1-1h-4M4 15v4a1 1 0 0 0 1 1h4M20 15v4a1 1 0 0 1-1 1h-4"/></svg><span>Pantalla completa</span></button>
             </div>
             <p style="margin:0 0 14px;">Mientras más cerca del escenario, más alto el precio. Maqueta para ver cómo quedará: todavía no se venden mesas desde aquí; la disposición y los <b>precios son de ejemplo</b>.</p>
             <div class="vr-layout-tabs" id="vr-layout-tabs" role="tablist" aria-label="Mapas de la sala"></div>
             <div class="vr-zones" id="vr-zones"></div>
             <div class="vr-plan-wrap"><svg class="vr-plan" id="vr-plan" viewBox="0 0 800 520" role="group" aria-label="Plano de la sala"></svg></div>
             <div class="vr-services" id="vr-services" aria-label="Servicios de la sala"></div>
-            <div class="vr-legend"><span><i style="background:#5fd68a"></i>Disponible</span><span><i style="background:#f08080"></i>Vendida</span><span><i style="background:#c5a059"></i>Elegida</span></div>
+            <div class="vr-legend"><span><i style="background:#00c878"></i>Disponible</span><span><i style="background:#ff6060"></i>Reservada</span><span><i style="background:#c5a059"></i>Elegida</span></div>
             <p id="vr-plan-summary" style="margin:12px 0 0;font-weight:700;">Toca una mesa disponible para elegirla.</p>
             <button class="btn primary" style="margin-top:12px;width:100%;" disabled>Reservar mesas — próximamente</button>
+            <button type="button" class="vr-share-btn" id="vr-plan-share" style="margin-top:10px;width:100%;justify-content:center;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Compartir</button>
         </div>
 
         <div class="vr-card">
@@ -212,8 +235,12 @@
 
         <div class="vr-card" id="vr-tickets-card" style="display:none;">
             <h2>Entradas</h2>
-            <div id="vr-tickets-list"></div>
-            <button class="btn primary" id="vr-btn-buy" style="margin-top:16px;width:100%;" disabled>Selecciona al menos 1 entrada</button>
+            <div id="vr-tickets-list" class="vr-cart-list"></div>
+            <div class="vr-cart-summary">
+                <div class="vr-cart-row"><span>Entradas</span><b id="vr-cart-count">0</b></div>
+                <div class="vr-cart-row total"><span>Total</span><b id="vr-cart-total">$0.00</b></div>
+            </div>
+            <button class="vr-cart-cta" id="vr-btn-buy" disabled><span aria-hidden="true" style="margin-right:8px">🛒</span>Selecciona al menos 1 entrada</button>
             <p style="font-size:12px;color:rgba(255,255,255,.4);margin-top:8px;">Pago seguro procesado por Stripe.</p>
         </div>
 
@@ -255,6 +282,11 @@
 </script>
 <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
 <script src="./mdj-identity.js?v=20261003-identidad-unica"></script>
+<script>
+/* En la venta de entradas el carrito del header ES el de las entradas: se apaga el Event Cart global (bandera oficial
+   de mdjb-shared-header.js; debe fijarse antes de cargarlo) y esta página pone el suyo en el mismo lugar. */
+window.MDJ_SKIP_GLOBAL_EVENT_CART = true;
+</script>
 <script src="./mdjb-shared-header.js?v=20261002-sin-member-welcome"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
 <script>
@@ -285,7 +317,21 @@
         tryRender();
     }
 
+    var _vrShareCtx = null, _vrPlanSel = '';
+    // Compartir la reserva: abre el menú de compartir del teléfono (o el SMS del propio teléfono) con el nombre de la sala y el enlace.
+    // No se envía nada desde el servidor.
+    function shareReservation(head, extra) {
+        var c = _vrShareCtx || { url: location.href.split('?')[0], roomName: 'esta sala', venueName: 'Miami DJ Beat' };
+        var text = head + ' ' + c.roomName + ' (' + c.venueName + ')' + (extra ? ' · ' + extra : '') + '. Detalles:';
+        if (navigator.share) {
+            navigator.share({ title: c.roomName, text: text, url: c.url }).catch(function () {});
+        } else {
+            window.location.href = 'sms:?body=' + encodeURIComponent(text + ' ' + c.url);
+        }
+    }
+
     function wireShare(url, roomName, venueName) {
+        _vrShareCtx = { url: url, roomName: roomName, venueName: venueName };
         var text = 'Mira ' + roomName + ' en ' + venueName + ' — Miami DJ Beat';
         document.getElementById('vr-canonical-link').textContent = url;
         document.getElementById('vr-canonical-link').href = url;
@@ -313,23 +359,55 @@
 
     var _vrCart = {};
 
+    // Carrito de entradas en el header: mismo lugar, forma, color e ícono que el del Event Cart (que aquí está apagado).
+    // Muestra cuántas entradas lleva y, al tocarlo, lleva a la tarjeta donde se compran.
+    function mountHeaderTicketCart() {
+        if (document.getElementById('vr-header-cart')) return;
+        var host = document.querySelector('#mainHeader .header-actions') || document.querySelector('#mainHeader .header-top') || document.getElementById('mainHeader');
+        if (!host) return;
+        var slot = document.createElement('span');
+        slot.setAttribute('style', 'display:inline-flex;align-items:center;vertical-align:middle;');
+        var btn = document.createElement('button');
+        btn.type = 'button'; btn.id = 'vr-header-cart';
+        btn.setAttribute('title', 'Entradas'); btn.setAttribute('aria-label', 'Ir a la compra de entradas');
+        btn.style.cssText = 'color:rgba(212,175,55,0.95);border:1px solid rgba(197,160,89,0.42);background:rgba(255,255,255,0.08);border-radius:50%;width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;position:relative;flex-shrink:0;';
+        btn.innerHTML = '<span aria-hidden="true">🛒</span><span id="vr-header-count" class="header-cart-count" hidden style="background:#c5a059;color:#0a0a0a;position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;font-size:11px;font-weight:800;line-height:18px;text-align:center;"></span>';
+        btn.addEventListener('click', function () {
+            var card = document.getElementById('vr-tickets-card');
+            if (!card) return;
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            card.style.transition = 'box-shadow .3s';
+            card.style.boxShadow = '0 0 0 2px rgba(212,175,55,0.75)';
+            setTimeout(function () { card.style.boxShadow = ''; }, 1400);
+        });
+        slot.appendChild(btn);
+        host.appendChild(slot);
+    }
+
     function renderTicketSelector(types, eventId) {
         document.getElementById('vr-tickets-card').style.display = 'block';
+        mountHeaderTicketCart();
         _vrCart = {};
         types.forEach(function (t) { _vrCart[t.id] = 0; });
+
+        function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+        function money(cents) { return '$' + (cents / 100).toFixed(2); }
 
         function redraw() {
             document.getElementById('vr-tickets-list').innerHTML = types.map(function (t) {
                 var remaining = t.quantity_available !== null ? (t.quantity_available - (t.quantity_sold || 0)) : null;
                 var soldOut = remaining !== null && remaining <= 0;
-                return '<div class="vr-ticket-row">' +
-                    '<span>' + t.label + (t.zone_label ? ' · ' + t.zone_label : '') + '<br><small style="color:rgba(255,255,255,.5);">$' + (t.price_cents / 100).toFixed(2) + (soldOut ? ' · Agotado' : '') + '</small></span>' +
-                    (soldOut ? '' :
-                        '<div class="vr-ticket-qty">' +
-                        '<button data-vr-dec="' + t.id + '">−</button>' +
-                        '<span id="vr-qty-' + t.id + '">' + (_vrCart[t.id] || 0) + '</span>' +
-                        '<button data-vr-inc="' + t.id + '">+</button>' +
-                        '</div>') +
+                return '<div class="vr-cart-card">' +
+                    '<div class="vr-cart-body">' +
+                        '<div class="vr-cart-name">' + esc(t.label) + (t.zone_label ? ' · ' + esc(t.zone_label) : '') + '</div>' +
+                        (soldOut ? '<div class="vr-cart-unit">Agotado</div>' :
+                        '<div class="vr-cart-actions"><div class="vr-cart-qty">' +
+                            '<button type="button" aria-label="Quitar una" data-vr-dec="' + esc(t.id) + '">−</button>' +
+                            '<span class="vr-cart-qty-val" id="vr-qty-' + esc(t.id) + '">' + (_vrCart[t.id] || 0) + '</span>' +
+                            '<button type="button" aria-label="Agregar una" data-vr-inc="' + esc(t.id) + '">+</button>' +
+                        '</div></div>') +
+                    '</div>' +
+                    '<div class="vr-cart-price"><div class="vr-cart-unit">' + money(t.price_cents) + ' c/u</div><div class="vr-cart-subtotal" id="vr-sub-' + esc(t.id) + '">' + money(t.price_cents * (_vrCart[t.id] || 0)) + '</div></div>' +
                     '</div>';
             }).join('');
 
@@ -342,14 +420,22 @@
         }
 
         function updateQtyAndTotal() {
+            var totalCents = 0;
             types.forEach(function (t) {
                 var el = document.getElementById('vr-qty-' + t.id);
                 if (el) el.textContent = _vrCart[t.id] || 0;
+                var sub = document.getElementById('vr-sub-' + t.id);
+                if (sub) sub.textContent = money(t.price_cents * (_vrCart[t.id] || 0));
+                totalCents += t.price_cents * (_vrCart[t.id] || 0);
             });
+            document.getElementById('vr-cart-total').textContent = money(totalCents);
             var totalQty = Object.values(_vrCart).reduce(function (a, b) { return a + b; }, 0);
+            document.getElementById('vr-cart-count').textContent = totalQty;
+            var hc = document.getElementById('vr-header-count');
+            if (hc) { hc.textContent = totalQty; hc.hidden = totalQty === 0; }
             var btn = document.getElementById('vr-btn-buy');
             btn.disabled = totalQty === 0;
-            btn.textContent = totalQty === 0 ? 'Selecciona al menos 1 entrada' : 'Comprar (' + totalQty + ')';
+            btn.innerHTML = '<span aria-hidden="true" style="margin-right:8px">🛒</span>' + (totalQty === 0 ? 'Selecciona al menos 1 entrada' : 'Comprar (' + totalQty + ')');
         }
 
         redraw();
@@ -419,8 +505,16 @@
         div.setAttribute('role', 'status');
         div.style.cssText = 'position:fixed;left:50%;bottom:28px;transform:translateX(-50%);max-width:min(520px,92vw);z-index:99999;padding:16px 22px;background:rgba(15,22,35,.97);border:1px solid rgba(197,160,89,.5);border-radius:16px;color:#e8eefc;font-size:14px;font-weight:600;box-shadow:0 14px 44px rgba(0,0,0,.55);text-align:center;line-height:1.45;';
         div.textContent = msg;
+        if (st === 'success') {
+            var sb = document.createElement('button');
+            sb.type = 'button';
+            sb.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Compartir';
+            sb.style.cssText = 'display:block;margin:12px auto 0;padding:8px 18px;border-radius:50px;border:1px solid rgba(197,160,89,0.55);background:rgba(197,160,89,0.12);color:#c5a059;font-weight:700;font-size:13px;cursor:pointer;';
+            sb.addEventListener('click', function () { shareReservation('Reservé en', ''); });
+            div.appendChild(sb);
+        }
         document.body.appendChild(div);
-        setTimeout(function () { if (div.parentNode) div.parentNode.removeChild(div); }, 15000);
+        setTimeout(function () { if (div.parentNode) div.parentNode.removeChild(div); }, st === 'success' ? 30000 : 15000);
     }
 
     // ── Sala de mesas: hero de publicidad + plano interactivo (EN DESARROLLO, datos de muestra) ──
@@ -536,7 +630,7 @@
             }
             return pts;
         }
-        var ICON = { bano: '🚻 ', barra: '🍸 ', artistas: '🎤 ' };
+        var ICON = {};
         function zoneBox(r, label, rot, kind) {
             var fac = kind === 'bano' || kind === 'barra';
             el('rect', { class: 'zone' + (fac ? ' fac' : ''), x: r[0], y: r[1], width: r[2], height: r[3], rx: 10 });
@@ -555,21 +649,21 @@
             layout.zones.slice(0, -1).forEach(function (z) { el('circle', { class: 'ring', cx: layout.focal.x, cy: layout.focal.y, r: z.maxD, 'clip-path': 'url(#vr-room-clip)' }); });
             el('path', { d: 'M 340 505 H 12 V 12 H 788 V 505 H 460', fill: 'none', stroke: 'rgba(255,255,255,0.55)', 'stroke-width': 5, 'stroke-linejoin': 'round' });
             el('rect', { class: 'door', x: 340, y: 502, width: 120, height: 7, rx: 2 });
-            el('text', { class: 'door-label', x: 400, y: 494 }, null, '🚪 ENTRADA');
+            el('text', { class: 'door-label', x: 400, y: 494 }, null, 'ENTRADA');
             if (layout.artistDoor) {
                 var ax = layout.artistDoor.x;
                 el('rect', { class: 'door', x: ax - 30, y: 9, width: 60, height: 7, rx: 2 });
-                el('text', { class: 'door-label', x: ax, y: 40 }, null, '🎤 ARTISTAS');
+                el('text', { class: 'door-label', x: ax, y: 40 }, null, 'ARTISTAS');
             }
             zoneBox(layout.focal.rect, layout.focal.label, layout.focal.rot, layout.focal.k);
             layout.fixed.forEach(function (f) { zoneBox(f.r, f.l, f.rot, f.k); });
             // Servicios presentes en ESTE mapa (para ubicarse antes de elegir mesa).
             var kinds = {};
             layout.fixed.concat([layout.focal]).forEach(function (f) { if (f.k) kinds[f.k] = true; });
-            var sv = ['<span>🚪 Entrada</span>'];
-            if (layout.artistDoor) sv.push('<span>🎤 Entrada de artistas</span>');
-            if (kinds.bano) sv.push('<span>🚻 Baños</span>');
-            if (kinds.barra) sv.push('<span>🍸 Barra</span>');
+            var sv = ['<span>Entrada</span>'];
+            if (layout.artistDoor) sv.push('<span>Entrada de artistas</span>');
+            if (kinds.bano) sv.push('<span>Baños</span>');
+            if (kinds.barra) sv.push('<span>Barra</span>');
             document.getElementById('vr-services').innerHTML = sv.join('');
 
             document.getElementById('vr-zones').innerHTML = layout.zones.map(function (z) {
@@ -581,6 +675,7 @@
             var selected = {};
             function refresh() {
                 var ids = Object.keys(selected), chairs = 0, total = 0;
+                _vrPlanSel = ids.length ? 'Mesas ' + ids.join(', ') : '';
                 ids.forEach(function (id) { chairs += selected[id].seats; total += selected[id].price; });
                 summary.textContent = ids.length
                     ? 'Mesas elegidas: ' + ids.join(', ') + ' · ' + chairs + ' sillas · Total $' + total + ' (ejemplo)'
@@ -589,7 +684,7 @@
             refresh();
             layout.tables.forEach(function (t) {
                 var g = el('g', { class: 'tbl' + (t.sold ? ' sold' : ''), role: 'button', tabindex: t.sold ? '-1' : '0',
-                    'aria-label': 'Mesa ' + t.id + ', ' + t.zone.name + ', ' + t.seats + ' sillas, $' + t.zone.price + ' de ejemplo, ' + (t.sold ? 'vendida' : 'disponible'), 'aria-pressed': 'false' });
+                    'aria-label': 'Mesa ' + t.id + ', ' + t.zone.name + ', ' + t.seats + ' sillas, $' + t.zone.price + ' de ejemplo, ' + (t.sold ? 'reservada' : 'disponible'), 'aria-pressed': 'false' });
                 chairsFor(t).forEach(function (c) { el('circle', { class: 'seat', cx: t.x + c[0], cy: t.y + c[1], r: 5 }, g); });
                 if (t.t === 'round') {
                     el('circle', { class: 'shape', cx: t.x, cy: t.y, r: t.seats <= 4 ? 22 : 26 }, g);
@@ -598,7 +693,7 @@
                     el('rect', { class: 'shape', x: t.x - w / 2, y: t.y - h / 2, width: w, height: h, rx: 6 }, g);
                 }
                 el('text', { x: t.x, y: t.y }, g, t.id);
-                el('text', { class: 'px', x: t.x, y: t.y + 12 }, g, t.sold ? 'vendida' : '$' + t.zone.price);
+                el('text', { class: 'px', x: t.x, y: t.y + 12 }, g, t.sold ? 'reservada' : '$' + t.zone.price);
                 function toggle() {
                     if (t.sold) return;
                     if (selected[t.id]) { delete selected[t.id]; g.classList.remove('sel'); g.setAttribute('aria-pressed', 'false'); }
@@ -627,13 +722,14 @@
         function setFull(on) {
             card.classList.toggle('vr-plan-full', on);
             document.documentElement.style.overflow = on ? 'hidden' : '';
-            fbtn.textContent = on ? '✕ Salir de pantalla completa' : '⛶ Pantalla completa';
+            fbtn.querySelector('span').textContent = on ? 'Salir de pantalla completa' : 'Pantalla completa';
             try {
                 if (on && card.requestFullscreen) card.requestFullscreen().catch(function () {});
                 if (!on && document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(function () {});
             } catch (e) { /* sin pantalla completa nativa: queda la superposición */ }
         }
         fbtn.addEventListener('click', function () { setFull(!card.classList.contains('vr-plan-full')); });
+        document.getElementById('vr-plan-share').addEventListener('click', function () { shareReservation('Estoy eligiendo mesa en', _vrPlanSel); });
         document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && card.classList.contains('vr-plan-full')) setFull(false); });
         document.addEventListener('fullscreenchange', function () {
             if (!document.fullscreenElement && card.classList.contains('vr-plan-full')) setFull(false);
