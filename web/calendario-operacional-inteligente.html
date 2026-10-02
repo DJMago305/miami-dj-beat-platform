@@ -1946,9 +1946,19 @@
      un artista nunca marca "visto" por él. */
   var _calendarSyncLastSeen = null;
   function personalSyncUnreadCount(){
-    return _syncEv.filter(function(e){
+    var nSync = _syncEv.filter(function(e){
       return e.createdAt && (!_calendarSyncLastSeen || e.createdAt > _calendarSyncLastSeen);
     }).length;
+    // Paso 13 (2026-10-01): el badge de "nuevo" en Personal avisaba solo lo
+    // sincronizado de Google -- agregar una fecha a mano en "Mis fechas
+    // importantes" (Paso 11/12) no contaba como novedad. _fipLista ya trae
+    // created_at por entrada (mismo campo que arma portalCoiSaveImportantDate
+    // en Cliente); se suma al mismo corte de _calendarSyncLastSeen.
+    var nFip = (_fipLista||[]).filter(function(fe){
+      var c = fe.created_at ? new Date(fe.created_at) : null;
+      return c && (!_calendarSyncLastSeen || c > _calendarSyncLastSeen);
+    }).length;
+    return nSync + nFip;
   }
   function marcarCalendarSyncVisto(){
     _calendarSyncLastSeen = new Date();
@@ -2537,6 +2547,11 @@
   loadClientDates();
   loadResidencies();
   loadPersonalCalendarSync();
+  // Paso 13: cargar _fipLista desde el inicio (no solo al entrar a Personal)
+  // para que el badge de "nuevo" cuente también lo agregado a mano desde el
+  // primer render -- mismo criterio que loadPersonalCalendarSync() ya usa
+  // para el sync de Google. fipCargar() ya es idempotente (_fipLoaded).
+  fipCargar();
   loadElixisBookings();
   subscribeRemindersRealtime();
 })();
