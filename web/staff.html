@@ -4826,7 +4826,7 @@
         showPanel('admin');
         enterFullPage();
         if(loading){ loading.classList.remove('hidden'); if(loadTx) loadTx.textContent = 'Cargando Network…'; }
-        var ADMIN_V = '20261002-link-activacion';
+        var ADMIN_V = '20261002-equipo-locales';
         iframe.onload = function(){ iframe.__loaded = true; if(loading) loading.classList.add('hidden'); };
         iframe.setAttribute('src', './staff-admin.html?v=' + ADMIN_V + '&msmPick=1#crm');
         setTimeout(function(){ if(loading) loading.classList.add('hidden'); }, 9000);
@@ -4864,7 +4864,7 @@
           // los iframes de este archivo (ver staff-merch-orders.html/contracts-engine.html
           // más arriba) -- el PO estuvo probando una copia vieja cacheada del panel de
           // Network sin darse cuenta. Bump este sufijo cada vez que se edite el archivo.
-          var ADMIN_V = '20261002-link-activacion';
+          var ADMIN_V = '20261002-equipo-locales';
           var url='./staff-admin.html?v='+ADMIN_V;
           if(opt.go) url='./staff-admin.html?v='+ADMIN_V+'&go='+opt.go+(opt.hash?('#'+opt.hash):'');
           else if(opt.hash) url='./staff-admin.html?v='+ADMIN_V+'#'+opt.hash;
