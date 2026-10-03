@@ -89,3 +89,6 @@ Cuenta `gerardoa4@hotmail.com` (perfil comercial y vínculo a Mojitos creados co
 - **Datos de prueba que hay que borrar cuando exista la cuenta oficial:** la cuenta `gerardoa4@hotmail.com` como comercial, su fila en `commercial_company` («PRUEBA Mojitos LLC (borrar)», EIN `00-0000000`) y su vínculo en `venue_staff`.
 - **Aún sin probar:** el flujo de una empresa NUEVA con link de activación (correo que nunca existió); la pantalla en staff-admin para vincular cuentas con locales; cómo el dueño del local agrega a su propio equipo.
 
+### Perfil propio del Cliente Comercial (2026-10-02, noche) — HECHO, sin mergear
+Antes: «MI PERFIL» devolvía al mismo portal y el avatar/CONFIG llevaban a `client-account.html`, la pantalla del cliente personal (contra la regla de una plantilla por categoría). Ahora la sección «Perfil» vive en `commercial-portal.html` (logo, contacto, seguridad) y `client-account.html` redirige a las cuentas comerciales a `#perfil`. Pendiente a futuro (decisión del PO: no por ahora): descripción pública del negocio y redes, para mostrarlo en la página de la sala.
+

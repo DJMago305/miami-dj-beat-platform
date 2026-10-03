@@ -57,6 +57,14 @@
         .cc-venue b { display: block; color: #fff; font-size: 16px; }
         .cc-venue small { color: rgba(255,255,255,0.55); font-size: 13px; }
         .cc-venue a { display: inline-block; margin: 8px 12px 0 0; color: var(--gold); text-decoration: underline; font-size: 14px; }
+        .cc-avatar-row { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-bottom: 6px; }
+        .cc-avatar { width: 88px; height: 88px; border-radius: 50%; border: 1px solid rgba(197,160,89,0.55); background: rgba(197,160,89,0.12) center / cover no-repeat; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 28px; color: var(--gold); flex: none; }
+        .cc-hint { font-size: 12px; color: rgba(255,255,255,0.5); margin: 6px 0 0 !important; }
+        .cc-sec { margin-top: 18px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.08); }
+        .cc-sec summary { cursor: pointer; font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,0.55); }
+        .cc-sec form { margin-top: 14px; }
+        .cc-btn2 { border: 1px solid rgba(197,160,89,0.45); background: rgba(197,160,89,0.1); color: var(--gold); border-radius: 50px; padding: 9px 18px; font-weight: 700; font-size: 13px; cursor: pointer; font-family: inherit; }
+        .cc-btn2:hover { background: rgba(197,160,89,0.24); }
         #cc-state { text-align: center; padding: 60px 0; color: rgba(255,255,255,.6); }
     </style>
 </head>
@@ -121,6 +129,43 @@
         <div class="cc-eyebrow">Cliente Comercial</div>
         <h1 id="cc-name" style="font-family:'Playfair Display',serif;color:#fff;font-size:clamp(28px,5vw,42px);margin:0 0 6px;"></h1>
         <p id="cc-type" style="color:rgba(255,255,255,.6);font-size:14px;margin:0 0 30px;"></p>
+
+        <div class="cc-card" id="perfil">
+            <h2>Perfil</h2>
+            <div class="cc-avatar-row">
+                <div class="cc-avatar" id="cc-avatar" role="img" aria-label="Logo del negocio"></div>
+                <div>
+                    <button type="button" class="cc-btn2" id="cc-logo-btn">Cambiar logo</button><span class="cc-msg" id="cc-logo-msg" role="status"></span>
+                    <input type="file" id="cc-logo-file" accept="image/jpeg,image/png,image/webp" hidden>
+                    <p class="cc-hint">Foto o logo del negocio. JPG, PNG o WebP, hasta 4 MB.</p>
+                </div>
+            </div>
+            <form class="cc-form" id="cc-contact-form" novalidate>
+                <div class="cc-sub">Contacto</div>
+                <label for="cc-in-name">Nombre del contacto</label>
+                <input type="text" id="cc-in-name" maxlength="120" autocomplete="name">
+                <label for="cc-in-phone">Teléfono</label>
+                <input type="tel" id="cc-in-phone" maxlength="40" autocomplete="tel">
+                <button type="submit" class="btn primary" id="cc-contact-save">Guardar</button><span class="cc-msg" id="cc-contact-msg" role="status"></span>
+            </form>
+            <details class="cc-sec">
+                <summary>Seguridad</summary>
+                <form class="cc-form" id="cc-email-form" novalidate>
+                    <label for="cc-in-email">Correo nuevo</label>
+                    <input type="email" id="cc-in-email" maxlength="160" autocomplete="email">
+                    <label for="cc-in-email2">Repite el correo</label>
+                    <input type="email" id="cc-in-email2" maxlength="160" autocomplete="email">
+                    <button type="submit" class="cc-btn2" id="cc-email-save">Cambiar correo</button><span class="cc-msg" id="cc-email-msg" role="status"></span>
+                </form>
+                <form class="cc-form" id="cc-pass-form" novalidate>
+                    <label for="cc-in-pass">Contraseña nueva</label>
+                    <input type="password" id="cc-in-pass" maxlength="72" autocomplete="new-password">
+                    <label for="cc-in-pass2">Repite la contraseña</label>
+                    <input type="password" id="cc-in-pass2" maxlength="72" autocomplete="new-password">
+                    <button type="submit" class="cc-btn2" id="cc-pass-save">Cambiar contraseña</button><span class="cc-msg" id="cc-pass-msg" role="status"></span>
+                </form>
+            </details>
+        </div>
 
         <div class="cc-card">
             <h2>Mi empresa</h2>
@@ -198,7 +243,7 @@
         if (!db) return say('No se pudo conectar. Recarga la página.');
         var sess = (await db.auth.getSession()).data.session;
         if (!sess) return say('Inicia sesión para ver tu portal.<br><br><a class="btn primary" href="./login.html?next=commercial-portal.html">Iniciar sesión</a>');
-        var res = await db.from('client_profiles').select('company_name,venue_type,full_name,email,phone,is_commercial').eq('user_id', sess.user.id).maybeSingle();
+        var res = await db.from('client_profiles').select('company_name,venue_type,full_name,email,phone,is_commercial,avatar_url').eq('user_id', sess.user.id).maybeSingle();
         var p = res.data;
         if (res.error || !p || !p.is_commercial) return say('Esta página es para cuentas de Cliente Comercial.');
         var type = VENUE_TYPE[p.venue_type] || p.venue_type || '—';
@@ -211,8 +256,83 @@
         $('cc-f-phone').textContent = p.phone || '—';
         $('cc-state').style.display = 'none';
         $('cc-content').style.display = 'block';
+        loadProfile(db, sess, p);
         loadCompany(db, sess.user.id);
         loadVenues(db, sess.user.id);
+    }
+
+    // ── Perfil: logo, contacto y seguridad (mismos mecanismos que la cuenta del cliente: bucket `avatars`, `auth.updateUser`) ──
+    function setMsg(id, text, ok) { var m = $(id); m.textContent = text || ''; m.className = 'cc-msg' + (text ? (ok ? ' ok' : ' err') : ''); }
+    function paintAvatar(url, name) {
+        var a = $('cc-avatar');
+        if (url) { a.style.backgroundImage = 'url("' + String(url).replace(/"/g, '') + '")'; a.textContent = ''; }
+        else { a.style.backgroundImage = ''; a.textContent = (name || '?').trim().slice(0, 2).toUpperCase(); }
+    }
+    function loadProfile(db, sess, p) {
+        var uid = sess.user.id;
+        paintAvatar(p.avatar_url, p.company_name);
+        $('cc-in-name').value = p.full_name || ''; $('cc-in-phone').value = p.phone || '';
+
+        $('cc-logo-btn').addEventListener('click', function () { $('cc-logo-file').click(); });
+        $('cc-logo-file').addEventListener('change', async function () {
+            var f = this.files && this.files[0]; this.value = '';
+            if (!f) return;
+            if (!/^image\/(jpeg|jpg|png|webp)$/i.test(f.type)) return setMsg('cc-logo-msg', 'Usa JPG, PNG o WebP.', false);
+            if (f.size > 4 * 1024 * 1024) return setMsg('cc-logo-msg', 'La imagen pesa más de 4 MB.', false);
+            setMsg('cc-logo-msg', 'Subiendo…', true);
+            try {
+                var ext = (f.name.split('.').pop() || 'jpg').toLowerCase(); if (!/^(jpe?g|png|webp)$/.test(ext)) ext = 'jpg';
+                var path = uid + '/avatar.' + ext;
+                var up = await db.storage.from('avatars').upload(path, f, { upsert: true, cacheControl: '3600' });
+                if (up.error) throw up.error;
+                var base = db.storage.from('avatars').getPublicUrl(path).data.publicUrl;
+                var u2 = await db.from('client_profiles').update({ avatar_url: base, photo_url: base }).eq('user_id', uid);
+                if (u2.error) throw u2.error;
+                await db.auth.updateUser({ data: Object.assign({}, sess.user.user_metadata || {}, { avatar_url: base + '?v=' + Date.now() }) });
+                paintAvatar(base + '?v=' + Date.now(), p.company_name);
+                if (typeof window.mdjHeaderVipApplyPhotoUrl === 'function') window.mdjHeaderVipApplyPhotoUrl(base);
+                setMsg('cc-logo-msg', 'Logo actualizado.', true);
+            } catch (e) { setMsg('cc-logo-msg', 'No se pudo subir el logo. Intenta de nuevo.', false); }
+        });
+
+        $('cc-contact-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            var name = $('cc-in-name').value.trim(), phone = $('cc-in-phone').value.trim();
+            if (!name) return setMsg('cc-contact-msg', 'El nombre del contacto es obligatorio.', false);
+            $('cc-contact-save').disabled = true; setMsg('cc-contact-msg', 'Guardando…', true);
+            var r = await db.from('client_profiles').update({ full_name: name, phone: phone || null }).eq('user_id', uid);
+            $('cc-contact-save').disabled = false;
+            if (r.error) return setMsg('cc-contact-msg', 'No se pudo guardar. Intenta de nuevo.', false);
+            $('cc-f-contact').textContent = name; $('cc-f-phone').textContent = phone || '—';
+            setMsg('cc-contact-msg', 'Guardado.', true);
+        });
+
+        $('cc-email-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            var a = $('cc-in-email').value.trim(), b = $('cc-in-email2').value.trim();
+            if (!a || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(a)) return setMsg('cc-email-msg', 'Escribe un correo válido.', false);
+            if (a !== b) return setMsg('cc-email-msg', 'Los correos no coinciden.', false);
+            if (a.toLowerCase() === String(sess.user.email || '').toLowerCase()) return setMsg('cc-email-msg', 'Ese ya es tu correo actual.', false);
+            $('cc-email-save').disabled = true; setMsg('cc-email-msg', 'Enviando confirmación…', true);
+            var r = await db.auth.updateUser({ email: a });
+            $('cc-email-save').disabled = false;
+            if (r.error) return setMsg('cc-email-msg', 'No se pudo cambiar el correo.', false);
+            $('cc-in-email').value = ''; $('cc-in-email2').value = '';
+            setMsg('cc-email-msg', 'Revisa tu bandeja nueva: te llegó un enlace de confirmación. Tu correo actual sigue activo hasta que lo confirmes.', true);
+        });
+
+        $('cc-pass-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            var a = $('cc-in-pass').value, b = $('cc-in-pass2').value;
+            if (a.length < 8) return setMsg('cc-pass-msg', 'La contraseña debe tener al menos 8 caracteres.', false);
+            if (a !== b) return setMsg('cc-pass-msg', 'Las contraseñas no coinciden.', false);
+            $('cc-pass-save').disabled = true;
+            var r = await db.auth.updateUser({ password: a });
+            $('cc-pass-save').disabled = false;
+            if (r.error) return setMsg('cc-pass-msg', 'No se pudo cambiar la contraseña.', false);
+            $('cc-in-pass').value = ''; $('cc-in-pass2').value = '';
+            setMsg('cc-pass-msg', 'Contraseña actualizada.', true);
+        });
     }
 
     // Si todavía no se aplicó el SQL del paso 3 (tablas inexistentes), esas dos secciones simplemente no se muestran.
