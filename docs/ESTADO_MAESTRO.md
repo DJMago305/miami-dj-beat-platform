@@ -3698,3 +3698,9 @@ Auditoría hecha contra `origin/main` y el historial de Git, no contra planes vi
 - NO verificado: compra real con tarjeta de prueba de Stripe, ni el webhook con una sesión `venue_table` real. Stripe de la sala usa `STRIPE_SECRET_KEY_VENUE` (clave de PRUEBA, mismo digest que MERCH).
 - Falta (PO): crear evento futuro anunciado, abrir venta desde la pantalla Mesas, endpoint del webhook debe tener el evento `checkout.session.expired`/`completed` activo en Stripe, probar con tarjeta 4242.
 - Aviso: `main` aún no tiene este código (commit 6a31aae6 solo en la rama); un redeploy de `stripe-webhook` desde `main` quitaría la rama venue_table.
+
+## [2026-10-03] Sala de mesas — prueba real de punta a punta + correo con «Cómo llegar»
+- Plano activado en producción: `venue_rooms.layout_mode = 'tables'` en Mojitos / sala-principal (SQL corrido por el PO). Mapa de ejemplo (36 mesas) y evento de PRUEBA «PRUEBA · Compra de mesas (borrar)» (2026-10-10) creados por el PO.
+- Verificado con Stripe de PRUEBA: apartar → pagar → webhook → mesa `sold` + orden `paid_pending_fulfillment` (M7, M8, M10); cancelar libera la mesa; comprar una mesa ya vendida → `mesa_no_disponible` 409 sin apartar las demás; correo de confirmación llega.
+- Correo de mesas (`stripe-webhook`, v125): dirección completa «8000 SW 8th St, Miami, FL 33144» + botones Google Maps / Apple Maps. Requiere `venues.postal_code` (`supabase/scripts/20261003_venues_codigo_postal.sql`, corrido por el PO; el código sigue funcionando si la columna no existe). El correo de entradas de puerta NO cambió.
+- Pendiente: el PO debe cancelar el evento de prueba al terminar (`update public.venue_events set status='cancelled', tables_open=false where title like 'PRUEBA%Compra de mesas (borrar)';` en el SQL Editor); reembolsar a mano en Stripe (modo prueba) las 3 órdenes; en modo `tables` la tarjeta de entradas de puerta queda oculta en esa sala.
