@@ -44,6 +44,19 @@
         .cc-row:last-child { border-bottom: none; }
         .cc-row span:first-child { color: rgba(255,255,255,0.55); font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; padding-top: 2px; }
         .cc-row span:last-child { text-align: right; word-break: break-word; }
+        .cc-sub { margin: 22px 0 10px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.08); font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,0.55); }
+        .cc-form label { display: block; font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.55); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 6px; }
+        .cc-form input { width: 100%; box-sizing: border-box; padding: 12px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.3); color: #fff; margin-bottom: 12px; font-size: 15px; font-family: inherit; }
+        .cc-form .cc-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; }
+        @media (max-width: 560px) { .cc-form .cc-grid { grid-template-columns: 1fr; } }
+        .cc-msg { margin-left: 12px; font-size: 13px; }
+        .cc-msg.ok { color: #00c878; }
+        .cc-msg.err { color: #ff6060; }
+        .cc-venue { padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .cc-venue:last-child { border-bottom: none; }
+        .cc-venue b { display: block; color: #fff; font-size: 16px; }
+        .cc-venue small { color: rgba(255,255,255,0.55); font-size: 13px; }
+        .cc-venue a { display: inline-block; margin: 8px 12px 0 0; color: var(--gold); text-decoration: underline; font-size: 14px; }
         #cc-state { text-align: center; padding: 60px 0; color: rgba(255,255,255,.6); }
     </style>
 </head>
@@ -116,6 +129,26 @@
             <div class="cc-row"><span>Contacto</span><span id="cc-f-contact"></span></div>
             <div class="cc-row"><span>Correo</span><span id="cc-f-email"></span></div>
             <div class="cc-row"><span>Teléfono</span><span id="cc-f-phone"></span></div>
+            <form class="cc-form" id="cc-form" style="display:none;" novalidate>
+                <div class="cc-sub">Datos fiscales y dirección del negocio</div>
+                <label for="cc-in-legal">Nombre legal</label>
+                <input type="text" id="cc-in-legal" maxlength="160" autocomplete="organization">
+                <label for="cc-in-tax">EIN (identificación fiscal)</label>
+                <input type="text" id="cc-in-tax" maxlength="20" placeholder="12-3456789" inputmode="numeric">
+                <label for="cc-in-addr">Dirección</label>
+                <input type="text" id="cc-in-addr" maxlength="200" autocomplete="street-address">
+                <div class="cc-grid">
+                    <div><label for="cc-in-city">Ciudad</label><input type="text" id="cc-in-city" maxlength="80"></div>
+                    <div><label for="cc-in-state">Estado</label><input type="text" id="cc-in-state" maxlength="40"></div>
+                    <div><label for="cc-in-zip">ZIP</label><input type="text" id="cc-in-zip" maxlength="12" inputmode="numeric"></div>
+                </div>
+                <button type="submit" class="btn primary" id="cc-save">Guardar</button><span class="cc-msg" id="cc-msg" role="status"></span>
+            </form>
+        </div>
+
+        <div class="cc-card" id="cc-venues-card" style="display:none;">
+            <h2>Mis locales</h2>
+            <div id="cc-venues"></div>
         </div>
 
         <div class="cc-card">
@@ -178,6 +211,56 @@
         $('cc-f-phone').textContent = p.phone || '—';
         $('cc-state').style.display = 'none';
         $('cc-content').style.display = 'block';
+        loadCompany(db, sess.user.id);
+        loadVenues(db, sess.user.id);
+    }
+
+    // Si todavía no se aplicó el SQL del paso 3 (tablas inexistentes), esas dos secciones simplemente no se muestran.
+    function tablaFalta(err) { return err && (err.code === '42P01' || err.code === 'PGRST205' || /does not exist|schema cache|Could not find the table/i.test(err.message || '')); }
+
+    async function loadCompany(db, uid) {
+        var res = await db.from('commercial_company').select('legal_name,tax_id,address_line1,address_city,address_state,address_zip').eq('user_id', uid).maybeSingle();
+        if (res.error) return;
+        var c = res.data || {};
+        $('cc-in-legal').value = c.legal_name || ''; $('cc-in-tax').value = c.tax_id || ''; $('cc-in-addr').value = c.address_line1 || '';
+        $('cc-in-city').value = c.address_city || ''; $('cc-in-state').value = c.address_state || ''; $('cc-in-zip').value = c.address_zip || '';
+        $('cc-form').style.display = 'block';
+        $('cc-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            var msg = $('cc-msg'), tax = $('cc-in-tax').value.trim();
+            msg.className = 'cc-msg';
+            if (tax && !/^\d{2}-?\d{7}$/.test(tax)) { msg.textContent = 'El EIN tiene 9 dígitos (ej. 12-3456789).'; msg.className = 'cc-msg err'; return; }
+            $('cc-save').disabled = true; msg.textContent = 'Guardando…';
+            var up = await db.from('commercial_company').upsert({
+                user_id: uid, legal_name: $('cc-in-legal').value.trim() || null, tax_id: tax || null, address_line1: $('cc-in-addr').value.trim() || null,
+                address_city: $('cc-in-city').value.trim() || null, address_state: $('cc-in-state').value.trim() || null, address_zip: $('cc-in-zip').value.trim() || null,
+                updated_at: new Date().toISOString()
+            }, { onConflict: 'user_id' });
+            $('cc-save').disabled = false;
+            if (up.error) { msg.textContent = 'No se pudo guardar. Intenta de nuevo.'; msg.className = 'cc-msg err'; return; }
+            msg.textContent = 'Guardado.'; msg.className = 'cc-msg ok';
+        });
+    }
+
+    async function loadVenues(db, uid) {
+        var res = await db.from('venue_staff').select('venues(name,slug,address,city,venue_rooms(name,slug,active))').eq('user_id', uid);
+        if (res.error) { if (!tablaFalta(res.error)) console.warn('[portal comercial] locales:', res.error.message); return; }
+        var box = $('cc-venues'); box.innerHTML = '';
+        var rows = (res.data || []).map(function (r) { return r.venues; }).filter(Boolean);
+        if (!rows.length) {
+            var p = document.createElement('p'); p.textContent = 'Todavía no tienes locales vinculados a tu cuenta. Miami DJ Beat los vincula contigo.'; box.appendChild(p);
+        }
+        rows.forEach(function (v) {
+            var d = document.createElement('div'); d.className = 'cc-venue';
+            var b = document.createElement('b'); b.textContent = v.name; d.appendChild(b);
+            var sm = document.createElement('small'); sm.textContent = [v.address, v.city].filter(Boolean).join(' · '); d.appendChild(sm);
+            d.appendChild(document.createElement('br'));
+            (v.venue_rooms || []).filter(function (r) { return r.active !== false; }).forEach(function (r) {
+                var a = document.createElement('a'); a.href = './venues/' + encodeURIComponent(v.slug) + '/' + encodeURIComponent(r.slug); a.textContent = r.name; d.appendChild(a);
+            });
+            box.appendChild(d);
+        });
+        $('cc-venues-card').style.display = 'block';
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();
