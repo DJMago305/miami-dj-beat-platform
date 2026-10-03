@@ -58,13 +58,41 @@
         .cc-venue small { color: rgba(255,255,255,0.55); font-size: 13px; }
         .cc-venue a { display: inline-block; margin: 8px 12px 0 0; color: var(--gold); text-decoration: underline; font-size: 14px; }
         .cc-avatar-row { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-bottom: 6px; }
-        .cc-avatar { width: 88px; height: 88px; border-radius: 50%; border: 1px solid rgba(197,160,89,0.55); background: rgba(197,160,89,0.12) center / cover no-repeat; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 28px; color: var(--gold); flex: none; }
+        /* Cabecera (héroe): misma receta que el perfil del artista (.dj-hero): degradado oscuro por defecto, foto a todo el ancho y degradado encima. */
+        .cc-hero { position: relative; aspect-ratio: 8 / 3; min-height: 190px; border-radius: 20px; overflow: hidden; border: 1px solid rgba(197,160,89,0.25); background: linear-gradient(135deg, #0a0a0a 0%, #141414 50%, #0d0d0d 100%); margin-bottom: 24px; }
+        .cc-hero-bg { position: absolute; inset: 0; background: center / cover no-repeat; will-change: transform; }
+        .cc-hero-mini { margin-bottom: 0; min-height: 0; max-width: 520px; border-radius: 14px; }
+        .cc-logo-mini { width: 64px; height: 64px; border-radius: 12px; font-size: 20px; }
+        .cc-hero-mini .cc-hero-body { padding: 12px; }
+        .b-adjust { margin-top: 12px; max-width: 520px; }
+        .b-adjust label span { color: var(--gold); margin-left: 6px; }
+        .b-adjust input[type=range] { width: 100%; padding: 0; background: transparent; border: none; margin-bottom: 14px; accent-color: #c5a059; }
+        .cc-hero-shade { position: absolute; inset: 0; background: linear-gradient(to right, rgba(0,0,0,0.4) 0%, transparent 40%, transparent 100%), linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 55%); }
+        .cc-hero-body { position: absolute; left: 0; right: 0; bottom: 0; padding: 22px; display: flex; align-items: flex-end; gap: 18px; }
+        .cc-hero-txt { min-width: 0; }
+        .cc-hero-txt .cc-eyebrow { margin-bottom: 8px; }
+        .cc-hero-txt h1 { margin: 0 0 4px; text-shadow: 0 2px 12px rgba(0,0,0,0.6); }
+        .cc-hero-txt p { margin: 0; text-shadow: 0 1px 8px rgba(0,0,0,0.6); }
+        /* El logo va sobre una pastilla clara: un logo oscuro o transparente se lee igual sobre cualquier cabecera. */
+        .cc-logo { width: 96px; height: 96px; border-radius: 18px; background: rgba(255,255,255,0.97); border: 1px solid rgba(197,160,89,0.55); display: flex; align-items: center; justify-content: center; overflow: hidden; flex: none; font-weight: 800; font-size: 30px; color: #1a1208; box-shadow: 0 6px 24px rgba(0,0,0,0.45); }
+        .cc-logo img { width: 86%; height: 86%; object-fit: contain; }
+        .cc-avatar { width: 88px; height: 88px; border-radius: 16px; background: rgba(255,255,255,0.97); border: 1px solid rgba(197,160,89,0.55); display: flex; align-items: center; justify-content: center; overflow: hidden; font-weight: 800; font-size: 28px; color: #1a1208; flex: none; }
+        .cc-avatar img { width: 86%; height: 86%; object-fit: contain; }
+        @media (max-width: 560px) { .cc-logo { width: 72px; height: 72px; font-size: 24px; } .cc-hero-body { padding: 16px; gap: 14px; } }
         .cc-hint { font-size: 12px; color: rgba(255,255,255,0.5); margin: 6px 0 0 !important; }
         .cc-sec { margin-top: 18px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.08); }
         .cc-sec summary { cursor: pointer; font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,0.55); }
         .cc-sec form { margin-top: 14px; }
         .cc-btn2 { border: 1px solid rgba(197,160,89,0.45); background: rgba(197,160,89,0.1); color: var(--gold); border-radius: 50px; padding: 9px 18px; font-weight: 700; font-size: 13px; cursor: pointer; font-family: inherit; }
         .cc-btn2:hover { background: rgba(197,160,89,0.24); }
+        .cc-role { display: inline-block; margin-left: 8px; padding: 2px 10px; border-radius: 999px; border: 1px solid rgba(197,160,89,0.4); color: #c5a059; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; vertical-align: middle; }
+        .cc-team { margin-top: 14px; padding-top: 4px; border-top: 1px solid rgba(255,255,255,0.08); }
+        .cc-member { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 14px; }
+        .cc-member:last-child { border-bottom: none; }
+        .cc-member small { display: block; color: rgba(255,255,255,0.55); font-size: 12px; }
+        .cc-form select { width: 100%; box-sizing: border-box; padding: 12px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.3); color: #fff; margin-bottom: 12px; font-size: 15px; font-family: inherit; }
+        .cc-linkbox { margin-top: 12px; padding: 12px 14px; border-radius: 8px; background: rgba(197,160,89,0.08); border: 1px solid rgba(197,160,89,0.25); font-size: 13px; color: rgba(255,255,255,0.8); }
+        .cc-linkbox a { color: #fcd34d; word-break: break-all; font-size: 12px; }
         #cc-state { text-align: center; padding: 60px 0; color: rgba(255,255,255,.6); }
     </style>
 </head>
@@ -126,18 +154,27 @@
 <main class="cc-wrap">
     <div id="cc-state">Cargando…</div>
     <div id="cc-content" style="display:none;">
-        <div class="cc-eyebrow">Cliente Comercial</div>
-        <h1 id="cc-name" style="font-family:'Playfair Display',serif;color:#fff;font-size:clamp(28px,5vw,42px);margin:0 0 6px;"></h1>
-        <p id="cc-type" style="color:rgba(255,255,255,.6);font-size:14px;margin:0 0 30px;"></p>
+        <section class="cc-hero" id="cc-hero">
+            <div class="cc-hero-bg" id="cc-hero-bg"></div>
+            <div class="cc-hero-shade"></div>
+            <div class="cc-hero-body">
+                <div class="cc-logo" id="cc-logo" role="img" aria-label="Logo del negocio"></div>
+                <div class="cc-hero-txt">
+                    <div class="cc-eyebrow">Cliente Comercial</div>
+                    <h1 id="cc-name" style="font-family:'Playfair Display',serif;color:#fff;font-size:clamp(26px,5vw,42px);"></h1>
+                    <p id="cc-type" style="color:rgba(255,255,255,.75);font-size:14px;"></p>
+                </div>
+            </div>
+        </section>
 
         <div class="cc-card" id="perfil">
             <h2>Perfil</h2>
             <div class="cc-avatar-row">
-                <div class="cc-avatar" id="cc-avatar" role="img" aria-label="Logo del negocio"></div>
+                <div class="cc-avatar" id="cc-avatar" role="img" aria-label="Tu foto de perfil"></div>
                 <div>
-                    <button type="button" class="cc-btn2" id="cc-logo-btn">Cambiar logo</button><span class="cc-msg" id="cc-logo-msg" role="status"></span>
+                    <button type="button" class="cc-btn2" id="cc-logo-btn">Cambiar foto</button><span class="cc-msg" id="cc-logo-msg" role="status"></span>
                     <input type="file" id="cc-logo-file" accept="image/jpeg,image/png,image/webp" hidden>
-                    <p class="cc-hint">Foto o logo del negocio. JPG, PNG o WebP, hasta 4 MB.</p>
+                    <p class="cc-hint">Tu foto de perfil (la del círculo de arriba a la derecha). JPG, PNG o WebP, hasta 4 MB. La marca del negocio la pone el dueño en «Mis locales».</p>
                 </div>
             </div>
             <form class="cc-form" id="cc-contact-form" novalidate>
@@ -263,10 +300,25 @@
 
     // ── Perfil: logo, contacto y seguridad (mismos mecanismos que la cuenta del cliente: bucket `avatars`, `auth.updateUser`) ──
     function setMsg(id, text, ok) { var m = $(id); m.textContent = text || ''; m.className = 'cc-msg' + (text ? (ok ? ' ok' : ' err') : ''); }
-    function paintAvatar(url, name) {
-        var a = $('cc-avatar');
-        if (url) { a.style.backgroundImage = 'url("' + String(url).replace(/"/g, '') + '")'; a.textContent = ''; }
-        else { a.style.backgroundImage = ''; a.textContent = (name || '?').trim().slice(0, 2).toUpperCase(); }
+    function paintLogo(el, url, name) {
+        el.innerHTML = '';
+        if (url) { var i = document.createElement('img'); i.alt = ''; i.src = url; el.appendChild(i); }
+        else el.textContent = (name || '?').trim().slice(0, 2).toUpperCase();
+    }
+    var _ownAvatar = null, _ownName = '';
+    function paintAvatar(url, name) { _ownAvatar = url; _ownName = name; paintLogo($('cc-avatar'), url, name); if (!_heroVenue) paintLogo($('cc-logo'), url, name); }
+    var _heroVenue = null;
+    // Aplica imagen + ajuste (posición y zoom) a cualquier cabecera (la de la página y la vista previa del editor).
+    function paintCoverEl(el, url, fx, fy, zoom) {
+        el.style.backgroundImage = url ? 'url("' + String(url).replace(/"/g, '') + '")' : '';
+        var x = (fx == null ? 50 : fx) + '% ' + (fy == null ? 50 : fy) + '%';
+        el.style.backgroundPosition = x; el.style.transformOrigin = x; el.style.transform = 'scale(' + ((zoom || 100) / 100) + ')';
+    }
+    // La cabecera y el logo de la página son los del LOCAL (los ve todo el equipo); sin marca del local, valen el degradado y la foto propia.
+    function paintHero(v) {
+        _heroVenue = v || null;
+        paintCoverEl($('cc-hero-bg'), v && v.cover_image_url, v && v.cover_focal_x, v && v.cover_focal_y, v && v.cover_zoom);
+        paintLogo($('cc-logo'), (v && v.brand_logo_url) || _ownAvatar, _ownName);
     }
     function loadProfile(db, sess, p) {
         var uid = sess.user.id;
@@ -291,8 +343,8 @@
                 await db.auth.updateUser({ data: Object.assign({}, sess.user.user_metadata || {}, { avatar_url: base + '?v=' + Date.now() }) });
                 paintAvatar(base + '?v=' + Date.now(), p.company_name);
                 if (typeof window.mdjHeaderVipApplyPhotoUrl === 'function') window.mdjHeaderVipApplyPhotoUrl(base);
-                setMsg('cc-logo-msg', 'Logo actualizado.', true);
-            } catch (e) { setMsg('cc-logo-msg', 'No se pudo subir el logo. Intenta de nuevo.', false); }
+                setMsg('cc-logo-msg', 'Foto actualizada.', true);
+            } catch (e) { setMsg('cc-logo-msg', 'No se pudo subir la foto. Intenta de nuevo.', false); }
         });
 
         $('cc-contact-form').addEventListener('submit', async function (e) {
@@ -362,26 +414,175 @@
         });
     }
 
+    var ROL = { owner: 'Dueño', manager: 'Manager', team: 'Equipo' };
+
     async function loadVenues(db, uid) {
-        var res = await db.from('venue_staff').select('venues(name,slug,address,city,venue_rooms(name,slug,active))').eq('user_id', uid);
+        var base = 'name,slug,address,city,venue_rooms(name,slug,active)', marca = ',cover_image_url,brand_logo_url,cover_focal_x,cover_focal_y,cover_zoom', conRol = true, conMarca = true;
+        var res = await db.from('venue_staff').select('venue_id, role, venues(' + base + marca + ')').eq('user_id', uid);
+        if (res.error && /cover_focal|cover_zoom|brand_logo/i.test(res.error.message || '')) {   // el SQL de la marca aún no está aplicado: sin cabecera del local
+            conMarca = false;
+            res = await db.from('venue_staff').select('venue_id, role, venues(' + base + ',cover_image_url)').eq('user_id', uid);
+        }
+        if (res.error && /role/i.test(res.error.message || '')) {          // el SQL de roles aún no está aplicado: se muestra sin rol
+            conRol = false; conMarca = false;
+            res = await db.from('venue_staff').select('venue_id, venues(' + base + ')').eq('user_id', uid);
+        }
         if (res.error) { if (!tablaFalta(res.error)) console.warn('[portal comercial] locales:', res.error.message); return; }
         var box = $('cc-venues'); box.innerHTML = '';
-        var rows = (res.data || []).map(function (r) { return r.venues; }).filter(Boolean);
+        var rows = (res.data || []).filter(function (r) { return r.venues; });
+        // Cabecera de la página: el local donde soy dueño; si no, el primero.
+        var heroRow = rows.filter(function (r) { return r.role === 'owner'; })[0] || rows[0];
+        paintHero(heroRow ? heroRow.venues : null);
         if (!rows.length) {
             var p = document.createElement('p'); p.textContent = 'Todavía no tienes locales vinculados a tu cuenta. Miami DJ Beat los vincula contigo.'; box.appendChild(p);
         }
-        rows.forEach(function (v) {
+        rows.forEach(function (r) {
+            var v = r.venues;
             var d = document.createElement('div'); d.className = 'cc-venue';
             var b = document.createElement('b'); b.textContent = v.name; d.appendChild(b);
+            if (conRol && ROL[r.role]) { var tag = document.createElement('span'); tag.className = 'cc-role'; tag.textContent = ROL[r.role]; b.appendChild(tag); }
             var sm = document.createElement('small'); sm.textContent = [v.address, v.city].filter(Boolean).join(' · '); d.appendChild(sm);
             d.appendChild(document.createElement('br'));
-            (v.venue_rooms || []).filter(function (r) { return r.active !== false; }).forEach(function (r) {
-                var a = document.createElement('a'); a.href = './venues/' + encodeURIComponent(v.slug) + '/' + encodeURIComponent(r.slug); a.textContent = r.name; d.appendChild(a);
+            (v.venue_rooms || []).filter(function (x) { return x.active !== false; }).forEach(function (x) {
+                var a = document.createElement('a'); a.href = './venues/' + encodeURIComponent(v.slug) + '/' + encodeURIComponent(x.slug); a.textContent = x.name; d.appendChild(a);
             });
+            if (conRol && r.role === 'owner') { if (conMarca) d.appendChild(brandPanel(db, uid, r.venue_id, v, heroRow && heroRow.venue_id === r.venue_id)); d.appendChild(teamPanel(db, r.venue_id)); }
             box.appendChild(d);
         });
         $('cc-venues-card').style.display = 'block';
     }
+
+    // ── Marca del local: cabecera, logo y ajuste. SOLO el DUEÑO (la función de la base lo exige); la ve todo el equipo ──
+    function brandPanel(db, uid, venueId, venue, esLaDeLaPagina) {
+        var st = { cover: venue.cover_image_url || null, logo: venue.brand_logo_url || null, fx: venue.cover_focal_x == null ? 50 : Number(venue.cover_focal_x), fy: venue.cover_focal_y == null ? 50 : Number(venue.cover_focal_y), zoom: venue.cover_zoom == null ? 100 : Number(venue.cover_zoom) };
+        var wrap = document.createElement('div'); wrap.className = 'cc-team';
+        wrap.innerHTML = '<div class="cc-sub" style="margin-top:14px;padding-top:0;border-top:none;">Marca del local</div>' +
+            '<p class="cc-hint" style="margin:0 0 10px !important;">Solo el dueño puede cambiarla. La ve todo tu equipo.</p>' +
+            '<div class="cc-hero cc-hero-mini"><div class="cc-hero-bg b-bg"></div><div class="cc-hero-shade"></div><div class="cc-hero-body"><div class="cc-logo cc-logo-mini b-logo"></div></div></div>' +
+            '<div style="margin-top:12px;"><button type="button" class="cc-btn2 b-cover">Cambiar cabecera</button> <button type="button" class="cc-btn2 b-cover-del" style="display:none;">Quitar cabecera</button> ' +
+            '<button type="button" class="cc-btn2 b-logo-btn">Cambiar logo</button> <button type="button" class="cc-btn2 b-logo-del" style="display:none;">Quitar logo</button>' +
+            '<input type="file" class="b-file-cover" accept="image/jpeg,image/png,image/webp" hidden><input type="file" class="b-file-logo" accept="image/jpeg,image/png,image/webp" hidden></div>' +
+            '<p class="cc-hint">Cabecera: imagen horizontal de <b>1600 × 600 px</b> (proporción 8:3). Deja libre la <b>esquina inferior izquierda</b>: ahí se ponen el logo y el nombre. Con los controles de abajo la encuadras. Logo: PNG con fondo transparente. JPG, PNG o WebP, hasta 4 MB.</p>' +
+            '<div class="b-adjust" style="display:none;"><div class="cc-form">' +
+            '<label>Posición horizontal <span class="b-vx"></span></label><input type="range" class="b-fx" min="0" max="100" step="1">' +
+            '<label>Posición vertical <span class="b-vy"></span></label><input type="range" class="b-fy" min="0" max="100" step="1">' +
+            '<label>Zoom <span class="b-vz"></span></label><input type="range" class="b-zoom" min="100" max="300" step="5">' +
+            '</div><button type="button" class="cc-btn2 b-save">Guardar ajuste</button></div><span class="cc-msg b-msg" role="status"></span>';
+        var q = function (c) { return wrap.querySelector('.' + c); };
+        function say(t, ok) { var m = q('b-msg'); m.textContent = t || ''; m.className = 'cc-msg b-msg' + (t ? (ok ? ' ok' : ' err') : ''); }
+        function paint() {
+            paintCoverEl(q('b-bg'), st.cover, st.fx, st.fy, st.zoom);
+            paintLogo(q('b-logo'), st.logo, venue.name);
+            q('b-logo').style.display = 'flex';
+            q('b-cover-del').style.display = st.cover ? 'inline-block' : 'none';
+            q('b-logo-del').style.display = st.logo ? 'inline-block' : 'none';
+            q('b-adjust').style.display = st.cover ? 'block' : 'none';
+            q('b-fx').value = st.fx; q('b-fy').value = st.fy; q('b-zoom').value = st.zoom;
+            q('b-vx').textContent = st.fx + '%'; q('b-vy').textContent = st.fy + '%'; q('b-vz').textContent = st.zoom + '%';
+            if (esLaDeLaPagina) paintHero({ cover_image_url: st.cover, brand_logo_url: st.logo, cover_focal_x: st.fx, cover_focal_y: st.fy, cover_zoom: st.zoom });
+        }
+        async function guardar(okMsg) {
+            var r = await db.rpc('venue_set_branding', { p_venue_id: venueId, p_logo_url: st.logo, p_cover_url: st.cover, p_focal_x: st.fx, p_focal_y: st.fy, p_zoom: st.zoom });
+            if (r.error) { say(/not_owner/.test(r.error.message || '') ? 'Solo el dueño del local puede cambiar la marca.' : 'No se pudo guardar. Intenta de nuevo.', false); return false; }
+            say(okMsg, true); return true;
+        }
+        async function subir(file, tipo) {
+            if (!file) return;
+            if (!/^image\/(jpeg|jpg|png|webp)$/i.test(file.type)) return say('Usa JPG, PNG o WebP.', false);
+            if (file.size > 4 * 1024 * 1024) return say('La imagen pesa más de 4 MB.', false);
+            say('Subiendo…', true);
+            try {
+                var ext = (file.name.split('.').pop() || 'jpg').toLowerCase(); if (!/^(jpe?g|png|webp)$/.test(ext)) ext = 'jpg';
+                var path = uid + '/venue-' + venueId + '-' + tipo + '.' + ext;
+                var up = await db.storage.from('avatars').upload(path, file, { upsert: true, cacheControl: '3600' });
+                if (up.error) throw up.error;
+                var url = db.storage.from('avatars').getPublicUrl(path).data.publicUrl + '?v=' + Date.now();
+                var prev = { cover: st.cover, logo: st.logo };
+                st[tipo] = url;
+                if (tipo === 'cover') { st.fx = 50; st.fy = 50; st.zoom = 100; }
+                if (!(await guardar(tipo === 'cover' ? 'Cabecera actualizada.' : 'Logo actualizado.'))) { st.cover = prev.cover; st.logo = prev.logo; }
+                paint();
+            } catch (e) { say('No se pudo subir la imagen. Intenta de nuevo.', false); }
+        }
+        q('b-cover').addEventListener('click', function () { q('b-file-cover').click(); });
+        q('b-logo-btn').addEventListener('click', function () { q('b-file-logo').click(); });
+        q('b-file-cover').addEventListener('change', function () { var f = this.files && this.files[0]; this.value = ''; subir(f, 'cover'); });
+        q('b-file-logo').addEventListener('change', function () { var f = this.files && this.files[0]; this.value = ''; subir(f, 'logo'); });
+        q('b-cover-del').addEventListener('click', async function () { if (!confirm('¿Quitar la cabecera?')) return; var p0 = st.cover; st.cover = null; st.fx = 50; st.fy = 50; st.zoom = 100; if (!(await guardar('Cabecera quitada.'))) st.cover = p0; paint(); });
+        q('b-logo-del').addEventListener('click', async function () { if (!confirm('¿Quitar el logo?')) return; var p0 = st.logo; st.logo = null; if (!(await guardar('Logo quitado.'))) st.logo = p0; paint(); });
+        ['b-fx', 'b-fy', 'b-zoom'].forEach(function (c) {
+            q(c).addEventListener('input', function () { st.fx = Number(q('b-fx').value); st.fy = Number(q('b-fy').value); st.zoom = Number(q('b-zoom').value); paint(); say('', true); });
+        });
+        q('b-save').addEventListener('click', function () { guardar('Ajuste guardado.'); });
+        paint();
+        return wrap;
+    }
+
+    // ── Mi equipo: solo el DUEÑO del local da de alta o quita a su manager y a su equipo ──
+    function teamPanel(db, venueId) {
+        var wrap = document.createElement('div'); wrap.className = 'cc-team';
+        wrap.innerHTML = '<div class="cc-sub" style="margin-top:14px;padding-top:0;border-top:none;">Mi equipo</div>' +
+            '<div class="cc-team-list"></div>' +
+            '<form class="cc-form" novalidate style="margin-top:14px;">' +
+            '<label>Nombre</label><input type="text" class="t-name" maxlength="120" autocomplete="off">' +
+            '<label>Correo</label><input type="email" class="t-email" maxlength="160" autocomplete="off">' +
+            '<label>Rol</label><select class="t-role"><option value="manager">Manager</option><option value="team">Equipo</option></select>' +
+            '<button type="submit" class="cc-btn2">Agregar</button><span class="cc-msg t-msg" role="status"></span>' +
+            '</form><div class="t-result"></div>';
+        var list = wrap.querySelector('.cc-team-list'), msg = wrap.querySelector('.t-msg'), result = wrap.querySelector('.t-result');
+        function say(t, ok) { msg.textContent = t || ''; msg.className = 'cc-msg t-msg' + (t ? (ok ? ' ok' : ' err') : ''); }
+        async function refresh() {
+            var r = await db.rpc('venue_team', { p_venue_id: venueId });
+            list.innerHTML = '';
+            if (r.error) { var e = document.createElement('p'); e.className = 'cc-hint'; e.textContent = 'No se pudo cargar el equipo.'; list.appendChild(e); return; }
+            (r.data || []).forEach(function (m) {
+                var row = document.createElement('div'); row.className = 'cc-member';
+                var who = document.createElement('div'); who.textContent = m.full_name || '—';
+                var sm = document.createElement('small'); sm.textContent = (m.email || '—') + ' · ' + (ROL[m.role] || m.role); who.appendChild(sm); row.appendChild(who);
+                if (m.role !== 'owner') {
+                    var q = document.createElement('button'); q.type = 'button'; q.className = 'cc-btn2'; q.textContent = 'Quitar';
+                    q.addEventListener('click', async function () {
+                        if (!confirm('¿Quitar a ' + (m.full_name || 'esta persona') + ' del equipo? Dejará de ver el local.')) return;
+                        var d = await db.from('venue_staff').delete().eq('venue_id', venueId).eq('user_id', m.user_id);
+                        if (d.error) return say('No se pudo quitar.', false);
+                        say('', true); result.innerHTML = ''; refresh();
+                    });
+                    row.appendChild(q);
+                }
+                list.appendChild(row);
+            });
+        }
+        wrap.querySelector('form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            var name = wrap.querySelector('.t-name').value.trim(), email = wrap.querySelector('.t-email').value.trim(), role = wrap.querySelector('.t-role').value;
+            if (!name) return say('Escribe el nombre.', false);
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return say('Escribe un correo válido.', false);
+            var btn = wrap.querySelector('button[type=submit]'); btn.disabled = true; say('Agregando…', true); result.innerHTML = '';
+            var r = await db.functions.invoke('venue-team-invite', { body: { venue_id: venueId, email: email, full_name: name, role: role } });
+            btn.disabled = false;
+            var data = r.data;
+            if (r.error) {                                   // el mensaje real viene en el cuerpo de la respuesta
+                try { data = await r.error.context.json(); } catch (x) { data = null; }
+                return say((data && data.error) || 'No se pudo agregar. Intenta de nuevo.', false);
+            }
+            wrap.querySelector('.t-name').value = ''; wrap.querySelector('.t-email').value = '';
+            say(data.cuenta_nueva ? 'Cuenta creada y vinculada.' : 'Esa cuenta ya existía: quedó vinculada a tu local.', true);
+            if (data.action_link) {
+                var box = document.createElement('div'); box.className = 'cc-linkbox';
+                box.appendChild(document.createTextNode('Link de activación para ' + data.email + '. Cópialo y envíaselo: al abrirlo define su contraseña.'));
+                box.appendChild(document.createElement('br'));
+                var a = document.createElement('a'); a.href = data.action_link; a.target = '_blank'; a.rel = 'noopener'; a.textContent = data.action_link; box.appendChild(a);
+                box.appendChild(document.createElement('br'));
+                var cp = document.createElement('button'); cp.type = 'button'; cp.className = 'cc-btn2'; cp.style.marginTop = '8px'; cp.textContent = 'Copiar link';
+                cp.addEventListener('click', function () { navigator.clipboard.writeText(data.action_link).then(function () { cp.textContent = 'Copiado'; }); });
+                box.appendChild(cp); result.appendChild(box);
+            }
+            refresh();
+        });
+        refresh();
+        return wrap;
+    }
+
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();
 </script>

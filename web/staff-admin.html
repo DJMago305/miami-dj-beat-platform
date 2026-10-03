@@ -9179,7 +9179,12 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
             async function mdjLoadTeam(venueId) {
                 const db = window.getSupabaseClient();
                 const el = document.getElementById('venue-team-' + venueId);
-                const { data: links, error } = await db.from('venue_staff').select('user_id, created_at').eq('venue_id', venueId).order('created_at');
+                let conRol = true;
+                let { data: links, error } = await db.from('venue_staff').select('user_id, role, created_at').eq('venue_id', venueId).order('created_at');
+                if (error && /role/i.test(error.message || '')) {   // el SQL de roles aún no está aplicado: se muestra sin rol
+                    conRol = false;
+                    ({ data: links, error } = await db.from('venue_staff').select('user_id, created_at').eq('venue_id', venueId).order('created_at'));
+                }
                 if (error) {
                     el.innerHTML = '<p class="fineprint" style="margin-top:14px;">' + (/venue_staff|schema cache|does not exist/i.test(error.message || '')
                         ? 'Falta aplicar el SQL del equipo del local (supabase/scripts/20261002_cliente_comercial_empresa_y_locales.sql).'
@@ -9193,10 +9198,13 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 ]);
                 const byId = {}; (members || []).forEach(m => { byId[m.user_id] = m; });
                 const disponibles = (commercial || []).filter(c => !linkedIds.includes(c.user_id));
+                const ROL = { owner: 'Dueño', manager: 'Manager', team: 'Equipo' };
+                const rolDe = {}; (links || []).forEach(l => { rolDe[l.user_id] = l.role; });
+                const hayDueno = conRol && (links || []).some(l => l.role === 'owner');
                 const rows = linkedIds.length ? linkedIds.map(id => {
                     const m = byId[id] || {};
                     return `<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);">
-                        <div><strong>${mdjTeamEsc(m.company_name || '—')}</strong>
+                        <div><strong>${mdjTeamEsc(m.company_name || '—')}</strong>${conRol && ROL[rolDe[id]] ? ` <span class="mdj-venue-badge">${ROL[rolDe[id]]}</span>` : ''}
                             <div class="fineprint">${mdjTeamEsc(m.full_name || '—')} · ${mdjTeamEsc(m.email || '—')}</div></div>
                         <button class="btn secondary small" onclick="mdjRemoveTeamMember('${venueId}','${id}')">Quitar</button>
                     </div>`;
@@ -9208,16 +9216,24 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         <strong style="display:block;margin-bottom:10px;font-size:13px;">+ Vincular cuenta comercial</strong>
                         ${disponibles.length ? `
                             <select id="team-add-${venueId}" style="width:100%;">${opciones}</select>
-                            <button class="btn primary" style="margin-top:10px;" onclick="mdjAddTeamMember('${venueId}')">Vincular</button>`
+                            ${conRol ? (hayDueno
+                                ? `<select id="team-role-${venueId}" style="width:100%;margin-top:8px;"><option value="manager">Manager</option><option value="team">Equipo</option></select>`
+                                : `<p class="fineprint" style="margin-top:8px;">Este local aún no tiene dueño: la primera cuenta que vincules será el <strong>Dueño</strong> y desde su portal podrá agregar a su equipo.</p>`) : ''}
+                            <button class="btn primary" style="margin-top:10px;" onclick="mdjAddTeamMember('${venueId}', ${hayDueno ? 'true' : 'false'}, ${conRol ? 'true' : 'false'})">Vincular</button>`
                             : '<p class="fineprint">No hay cuentas comerciales disponibles. Se crean en Team → Create Profiles → Cliente Comercial.</p>'}
                     </div>`;
             }
 
-            window.mdjAddTeamMember = async function(venueId) {
+            window.mdjAddTeamMember = async function(venueId, hayDueno, conRol) {
                 const db = window.getSupabaseClient();
                 const sel = document.getElementById('team-add-' + venueId);
                 if (!db || !sel || !sel.value) return;
-                const { error } = await db.from('venue_staff').insert({ venue_id: venueId, user_id: sel.value });
+                const fila = { venue_id: venueId, user_id: sel.value };
+                if (conRol) {   // la primera cuenta vinculada es el Dueño; después se elige Manager o Equipo
+                    const r = document.getElementById('team-role-' + venueId);
+                    fila.role = hayDueno ? ((r && r.value) || 'team') : 'owner';
+                }
+                const { error } = await db.from('venue_staff').insert(fila);
                 if (error) { alert('❌ No se pudo vincular: ' + error.message); return; }
                 await mdjLoadTeam(venueId);
             };
