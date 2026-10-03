@@ -49,6 +49,15 @@ Flujo funcional: **plantilla del local → mapa del evento → precios → dispo
 ## 3d. Cómo se ve una mesa tomada (PO, 2026-10-02)
 Toda mesa que ya no está disponible (vendida en línea, vendida por el staff o apartada por el staff) se ve en **otro color** (rojo del sitio, `#ff6060`) con el cartel **«reservada»**. El público no distingue entre vendida y apartada; el staff sí ve el detalle (quién la compró o la apartó).
 
+## 3e. Roles del local (PO, 2026-10-03) — decididos; las funciones de permiso ya existen en la base
+| Rol | Quién es | Edita plantilla de mesas y sillas | Ve disponibilidad, vende entradas y reserva | Agrega / quita equipo |
+|---|---|---|---|---|
+| **Dueño** | la PRIMERA cuenta vinculada al local (una sola por local) | sí | sí | **sí (el único)** |
+| **Manager** | lo agrega el dueño | sí | sí | no |
+| **Equipo** | lo agrega el dueño | no | sí | no |
+- El **equipo vende y reserva con el método de pago de la empresa** (la cuenta de Stripe del local, `venues.payout_stripe_account_id`, camino abierto descrito en el punto 1 de las decisiones); Stripe Connect NO existe todavía: va con la fase de dinero, con aprobación del PO.
+- En la base: `venue_staff.role` (`owner`/`manager`/`team`), `venue_role()`, `is_venue_owner()`, `can_manage_venue_layout()` (dueño y manager) y `can_sell_venue()` (los tres); las pantallas de la fase 2 deben usarlas. El alta del equipo la hace la función `venue-team-invite` (solo el dueño; tope de 20; nunca convierte cuentas de otra categoría).
+
 ## 4. Decisiones del PO antes de construir
 1. **¿De quién es el dinero de las mesas? — RESPONDIDA por el PO (2026-10-02):** por ahora entra a la cuenta de Stripe de **Miami DJ Beat**, pero **el camino debe quedar abierto** para poner una cuenta de Stripe del negocio (o una tarjeta/cuenta bancaria) donde se deposite lo vendido. Diseño: cada local lleva un destino de cobro opcional (`venues.payout_stripe_account_id`, vacío = cuenta de Miami DJ Beat). Cuando se llene, el checkout manda el cobro a esa cuenta con Stripe Connect (cobro con destino + comisión de Miami DJ Beat si la hay). Stripe Connect NO existe hoy y mover dinero es dominio financiero: se construye en su propia fase, con aprobación del PO; mientras tanto el campo no se usa.
 2. **Staff del local:** el PO pidió que cualquier miembro pueda operar; propongo la tabla `venue_staff` (varios usuarios por local, mismo permiso) sin esperar la multi-cuenta general del ticket del Cliente Comercial. ¿Quién agrega a los miembros: el Owner o el dueño del local?
