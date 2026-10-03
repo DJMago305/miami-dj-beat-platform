@@ -3534,7 +3534,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                   <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:6px;">
                     <div>
                       <h3 style="margin:0;">✦ Crear Perfiles</h3>
-                      <p class="fineprint" style="margin:4px 0 0;">Centraliza la creación de cuentas. El link de activación va directo al correo del nuevo usuario.</p>
+                      <p class="fineprint" style="margin:4px 0 0;">Centraliza la creación de cuentas. Al crear una, aparece un link de activación: cópialo y envíaselo a la persona para que defina su contraseña.</p>
                     </div>
                     <div style="padding:5px 14px;border-radius:99px;background:rgba(197,160,89,0.1);border:1px solid rgba(197,160,89,0.25);font-size:11px;font-weight:800;color:rgba(197,160,89,0.85);letter-spacing:.06em;">
                       🔑 Acceso exclusivo · Owner
@@ -3543,7 +3543,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
 
                   <!-- Alerta local dev -->
                   <div style="margin:14px 0;padding:10px 14px;border-radius:8px;background:rgba(59,130,246,0.07);border:1px solid rgba(59,130,246,0.2);font-size:11px;color:rgba(147,197,253,0.8);line-height:1.5;">
-                    ℹ En <strong>localhost</strong>: el link de activación aparece en pantalla para que puedas copiarlo y enviarlo por chat. En producción se envía por email automáticamente.
+                    ℹ El link de activación aparece en pantalla al crear la cuenta: cópialo y envíalo por WhatsApp o correo. El sistema <strong>no manda correo automático</strong>. Si ese correo ya tenía cuenta, no se genera un link nuevo.
                   </div>
 
                   <!-- Selector de tipo de cuenta -->
@@ -5467,12 +5467,14 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
 
                     if (successText) successText.textContent = meta.icon + ' ' + meta.label + ' creada para ' + email;
 
-                    var subHtml = 'Se generó el link de activación para <strong>' + email + '</strong>. El usuario hace clic, establece su contraseña y su cuenta queda activa.';
+                    var subHtml = resBody.action_link
+                        ? 'Link de activación listo para <strong>' + email + '</strong>. Cópialo y envíaselo: al abrirlo define su contraseña y su cuenta queda activa.'
+                        : 'Ese correo (<strong>' + email + '</strong>) ya tenía una cuenta, así que <strong>NO se generó un link nuevo</strong>. El perfil quedó configurado como <strong>' + meta.label + '</strong>; la persona entra con su contraseña actual o con «olvidé mi contraseña».';
 
                     if (resBody.action_link) {
                         subHtml += '<br><br>'
                             + '<div style="margin-top:8px;padding:12px 14px;border-radius:8px;background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.25);">'
-                            + '<div style="font-size:10px;font-weight:800;color:rgba(197,160,89,0.8);letter-spacing:.08em;margin-bottom:8px;">🔗 ACCESO RÁPIDO · SOPORTE / LOCALHOST</div>'
+                            + '<div style="font-size:10px;font-weight:800;color:rgba(197,160,89,0.8);letter-spacing:.08em;margin-bottom:8px;">🔗 LINK DE ACTIVACIÓN</div>'
                             + '<a href="' + resBody.action_link.replace(/"/g, '') + '" target="_blank" '
                             + 'style="font-size:11px;color:#fcd34d;word-break:break-all;line-height:1.5;text-decoration:underline;">'
                             + resBody.action_link.replace(/"/g, '') + '</a>'
@@ -5883,7 +5885,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 const STAFF_ROLES = ['owner', 'admin', 'manager', 'seller'];
                 const { data, error } = await supabase
                     .from('dj_profiles')
-                    .select('id, full_name, stage_name, role, email, avatar_url, created_at')
+                    .select('id, full_name, stage_name, role, email, created_at')
                     .in('role', STAFF_ROLES)
                     .order('role', { ascending: true });
                 if (error || !data) {
