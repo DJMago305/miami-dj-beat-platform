@@ -1,0 +1,25 @@
+Mojitos Calle 8 · media de la sala (hero de publicidad)
+=========================================================
+Videos del hero de la sala de mesas (venue-room.html): se reproducen TODOS, en secuencia continua, a pantalla completa y sin
+sonido; al terminar el ultimo vuelve a empezar el primero. Orden = el numero del nombre:
+
+  hero-sala-mojitos-calle-8.mp4      <- primero
+  hero-sala-mojitos-calle-8-2.mp4    <- segundo
+  hero-sala-mojitos-calle-8-3.mp4    <- tercero
+  ...                                (hasta -12; si falta un numero, se salta)
+
+  - El primero es una COPIA del reel de Mojitos (eventos-venues-patrocinadores/reels/Mojitos_calle_8.mp4), vertical 576x1024, 30 s.
+  - Para cambiar uno por otro actualizado: subir el nuevo archivo con EL MISMO NOMBRE. Para agregar: el siguiente numero libre.
+  - Con un solo video, se repite en bucle.
+Convencion (un contenedor por local):  assets/venues/<slug-del-local>/hero-sala-<slug-del-local>[-N].mp4
+Importante: los .mp4 NO se suben a Git (.gitignore). Cada archivo vive en Supabase Storage, bucket `assets`, ruta
+  venues/mojitos-calle-8/<nombre-del-archivo>
+Mientras no este en Storage, la sala muestra la cabecera del local (si la hay) o el fondo oscuro; nunca videos de otro servicio.
+
+BRANDING en PNG (primera vista del hero)
+-----------------------------------------
+  branding-mojitos-calle-8.png  -> se muestra SOBRE el nombre de la sala, en la primera vista, sin pastilla (conserva su transparencia).
+  - PNG con fondo transparente; se ajusta hasta 380 px de ancho y 190 px de alto. Tamano sugerido: 1200 px de ancho, bien recortado.
+  - A diferencia de los .mp4, los PNG SI viajan con el proyecto (Git): basta con ponerlo en esta carpeta con ese nombre.
+  - Si el archivo no existe, se usa el logo de «Marca del local» (cuenta comercial) si el dueno lo subio; si tampoco, solo el nombre.
+Convencion: assets/venues/<slug-del-local>/branding-<slug-del-local>.png

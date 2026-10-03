@@ -81,6 +81,64 @@
         #vr-plan-card.vr-plan-full { position: fixed; inset: 0; z-index: 9999; margin: 0; max-width: none !important; border-radius: 0; overflow: auto; background: #08080a; }
         #vr-plan-card.vr-plan-full .vr-plan-wrap { overflow: hidden; }
         #vr-plan-card.vr-plan-full .vr-plan { min-width: 0; width: 100%; height: calc(100vh - 230px); }
+        /* Cabecera de marca del local (la pone el dueño en su cuenta comercial: «Marca del local»): misma receta que su portal. */
+        .vr-brand { position: relative; width: 100%; box-sizing: border-box; aspect-ratio: 8 / 3; min-height: 190px; border-radius: 20px; overflow: hidden; border: 1px solid rgba(197,160,89,0.25); background: linear-gradient(135deg, #0a0a0a 0%, #141414 50%, #0d0d0d 100%); margin: 0 auto 24px; }
+        body.vr-tables .vr-brand { max-width: 1100px; }
+        .vr-brand-bg { position: absolute; inset: 0; background: center / cover no-repeat; will-change: transform; }
+        .vr-brand-shade { position: absolute; inset: 0; background: linear-gradient(to right, rgba(0,0,0,0.4) 0%, transparent 40%, transparent 100%), linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 55%); }
+        .vr-brand-body { position: absolute; left: 0; right: 0; bottom: 0; padding: 22px; display: flex; align-items: flex-end; gap: 18px; }
+        .vr-brand-logo { width: 96px; height: 96px; border-radius: 18px; background: rgba(255,255,255,0.97); border: 1px solid rgba(197,160,89,0.55); display: none; align-items: center; justify-content: center; overflow: hidden; flex: none; box-shadow: 0 6px 24px rgba(0,0,0,0.45); }
+        .vr-brand-logo img { width: 86%; height: 86%; object-fit: contain; }
+        .vr-brand-txt { min-width: 0; text-align: left; }
+        .vr-brand-txt .vr-eyebrow { margin-bottom: 8px; }
+        .vr-brand-txt h1 { margin: 0 0 4px; font-family: 'Playfair Display', serif; color: #fff; font-size: clamp(24px, 4.6vw, 40px); text-shadow: 0 2px 12px rgba(0,0,0,0.6); }
+        .vr-brand-txt p { margin: 0; color: rgba(255,255,255,.75); font-size: 14px; text-shadow: 0 1px 8px rgba(0,0,0,0.6); }
+        @media (max-width: 560px) { .vr-brand-logo { width: 72px; height: 72px; } .vr-brand-body { padding: 16px; gap: 14px; } }
+        /* Primera impresión = solo el hero (video fijo detrás + título), como furniture-dj.html y las demás páginas de categoría
+           (PO 2026-09-26: «vista limpia del hero»): el resto del contenido sigue en el flujo normal al deslizar. */
+        .vr-hero-copy { min-height: 100vh; min-height: 100dvh; display: none; flex-direction: column; justify-content: center; align-items: center; text-align: center; max-width: 720px; margin: 0 auto 40px; }
+        .vr-hero-copy .vr-eyebrow { font-size: 14px; padding: 8px 22px; margin-bottom: 18px; }
+        .vr-hero-copy h1 { font-family: 'Playfair Display', serif; text-transform: uppercase; text-wrap: balance; overflow-wrap: normal; word-break: keep-all; font-size: 2.9rem; font-size: clamp(2.1rem, 8vw, 4.6rem); font-weight: 600; color: #fff; margin: 0 0 20px; line-height: 1.06; text-shadow: 0 4px 18px rgba(0,0,0,0.85); }
+        .vr-hero-copy p { font-size: 1.2rem; line-height: 1.6; color: rgba(255,255,255,0.88); margin: 0 auto; max-width: 56ch; text-shadow: 0 2px 10px rgba(0,0,0,0.8); }
+        .vr-hero-copy .vr-brand-logo { width: 120px; height: 120px; margin: 0 auto 22px; }
+        /* Branding del local en PNG (assets/venues/<local>/branding-<local>.png): va sobre el nombre, sin pastilla, con su transparencia. */
+        .vr-first-brand { --ratio: 1.5; --empty: 0; --w: min(82vw, 440px, calc(290px * var(--ratio))); display: none; width: var(--w); height: auto; max-width: none; margin: 0 auto calc(var(--w) / var(--ratio) * var(--empty) * -1 - 4px); object-fit: contain; }
+        .vr-sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+        /* Tarjeta del local: la misma de «Residencias Semanales» de events.html (enlace a Google Maps con la dirección). */
+        .vr-loc { display: none; max-width: 640px; margin: 0 auto 8px; }
+        .vr-loc .residency-zone { font-size: 12px; color: rgba(255,255,255,0.55); margin-bottom: 10px; }
+        .vr-loc-more { display: none; max-width: 640px; margin: 0 auto 20px; text-align: center; font-size: 14px; }
+        .vr-loc-more a { color: var(--gold); text-decoration: underline; }
+        /* Programación por día: una tarjeta por noche (día, nombre, DJ y explicación), que sube sobre el video después del hero. */
+        .vr-program { display: none; flex-wrap: wrap; justify-content: center; gap: 18px; max-width: 1000px; margin: 0 auto 30px; }
+        .vr-night { flex: 1 1 300px; max-width: 480px; padding: 24px 26px; border-radius: 22px; border: 1px solid rgba(197,160,89,0.4); background: rgba(8,8,10,0.40); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); box-shadow: 0 10px 34px rgba(0,0,0,0.35); }   /* transparente: se ve el video del hero detrás */
+        .vr-night h2, .vr-night p, .vr-night-names, .vr-night-glabel, .vr-night-day, .vr-night-dj, .vr-night-freq { text-shadow: 0 1px 8px rgba(0,0,0,0.85), 0 0 2px rgba(0,0,0,0.6); }
+        .vr-night-day { display: inline-block; color: var(--gold); font-size: 13px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; margin-bottom: 8px; }
+        .vr-night h2 { font-family: 'Playfair Display', serif; color: #fff; font-size: clamp(1.7rem, 5vw, 2.3rem); font-weight: 600; margin: 0 0 10px; line-height: 1.1; }
+        .vr-night-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+        .vr-night-dj { display: inline-block; padding: 5px 16px; border-radius: 999px; border: 1px solid rgba(197,160,89,0.5); color: var(--gold); font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+        .vr-night-freq { display: inline-block; padding: 5px 16px; border-radius: 999px; background: rgba(197,160,89,0.2); border: 1px solid rgba(197,160,89,0.5); color: #fff; font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+        .vr-night-link { cursor: pointer; transition: border-color .2s, transform .2s, box-shadow .2s; }
+        .vr-night-link:hover, .vr-night-link:focus-visible { border-color: rgba(197,160,89,0.85); transform: translateY(-3px); outline: none; }
+        .vr-night-link.is-open { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold), 0 10px 34px rgba(0,0,0,0.4); }
+        .vr-night-open { display: block; margin-top: 16px; color: var(--gold); font-size: 13px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; text-align: right; }
+        #vr-tickets-card, #vr-plan-card, #vr-empty-card, #vr-waitlist-card { scroll-margin-top: 170px; }
+        .vr-night-guests { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+        .vr-night-glabel { display: block; color: var(--gold); font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; margin-bottom: 4px; }
+        .vr-night-names { display: flex; flex-direction: column; gap: 4px; color: #fff; font-size: 15px; font-weight: 600; line-height: 1.4; }
+        .vr-night-names span::before { content: '•'; color: var(--gold); margin-right: 10px; }
+        .vr-night-note { margin-top: 14px !important; font-size: 13px !important; color: rgba(255,255,255,0.6) !important; font-style: italic; }
+        .vr-night p { margin: 0; color: rgba(255,255,255,0.88); font-size: 16px; line-height: 1.7; }
+        /* Eventos programados: tarjetas flotantes (nombre + fecha) justo debajo del hero; la sala y los boletos salen del evento elegido. */
+        .vr-events { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; max-width: 900px; margin: 0 auto 26px; }
+        .vr-ev { flex: 1 1 220px; max-width: 320px; text-align: left; padding: 14px 18px; border-radius: 16px; border: 1px solid rgba(197,160,89,0.35); background: rgba(8,8,10,0.42); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); color: #fff; cursor: pointer; font: inherit; box-shadow: 0 8px 28px rgba(0,0,0,0.3); text-shadow: 0 1px 8px rgba(0,0,0,0.85); }
+        .vr-ev:hover { border-color: rgba(197,160,89,0.7); }
+        .vr-ev[aria-checked="true"] { border-color: var(--gold); background: rgba(197,160,89,0.2); }
+        .vr-ev-date { display: block; color: var(--gold); font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 4px; }
+        .vr-ev-title { display: block; font-size: 17px; font-weight: 700; }
+        .vr-ev-picked { margin: 0 0 12px; color: rgba(255,255,255,0.75); font-size: 14px; }
+        .vr-ev-picked b { color: #fff; }
+        .vr-plan-event { flex-basis: 100%; color: var(--gold); font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
         .vr-hero-layer { position: fixed; inset: 0; z-index: 1; pointer-events: none; width: 100%; height: 100%; object-fit: cover; filter: brightness(0.65); }
         .vr-hero-shade { position: fixed; inset: 0; z-index: 3; pointer-events: none; background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.8) 100%); }
         .vr-dev-badge { display: inline-block; padding: 4px 14px; border-radius: 999px; border: 1px solid rgba(197,160,89,0.4); color: #c5a059; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; vertical-align: middle; margin-left: 10px; }
@@ -192,49 +250,69 @@
         <p style="color:rgba(255,255,255,.6);">Verifica el enlace o escanea el QR de nuevo.</p>
     </div>
     <div id="vr-content" style="display:none;">
-        <div style="text-align:center;">
+        <div class="vr-hero-copy" id="vr-first">
+            <img class="vr-first-brand" id="vr-first-brand" alt="" decoding="async">
+            <div class="vr-brand-logo" id="vr-first-logo" role="img" aria-label="Logo del local"></div>
+            <div class="vr-eyebrow" id="vr-first-venue"></div>
+            <h1 id="vr-first-room"></h1>
+            <p id="vr-first-addr"></p>
+        </div>
+        <section class="vr-brand" id="vr-brand" style="display:none;">
+            <div class="vr-brand-bg" id="vr-brand-bg"></div>
+            <div class="vr-brand-shade"></div>
+            <div class="vr-brand-body">
+                <div class="vr-brand-logo" id="vr-brand-logo" role="img" aria-label="Logo del local"></div>
+                <div class="vr-brand-txt">
+                    <div class="vr-eyebrow" id="vr-brand-venue"></div>
+                    <h1 id="vr-brand-room"></h1>
+                    <p id="vr-brand-addr"></p>
+                </div>
+            </div>
+        </section>
+        <div id="vr-plain-head" style="text-align:center;">
             <div class="vr-eyebrow" id="vr-venue-name">Venue</div>
             <h1 id="vr-room-name" style="font-family:'Playfair Display',serif;color:#fff;font-size:clamp(28px,5vw,42px);margin:0 0 8px;">Sala</h1>
             <p id="vr-venue-address" style="color:rgba(255,255,255,.6);font-size:14px;margin:0 0 30px;"></p>
         </div>
 
+        <div id="vr-program" class="vr-program" aria-label="Programación semanal"></div>
+
+        <div id="vr-events" class="vr-events" role="radiogroup" aria-label="Eventos programados" style="display:none;"></div>
+
         <div class="vr-card" id="vr-plan-card" style="display:none;">
             <div class="vr-plan-head">
-                <h2>Elige tu mesa <span class="vr-dev-badge">En desarrollo</span></h2>
+                <h2>Elige tu mesa <span class="vr-dev-badge" id="vr-plan-badge">En desarrollo</span></h2>
+                <div class="vr-plan-event" id="vr-plan-event"></div>
                 <button type="button" class="vr-full-btn" id="vr-full-btn"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px"><path d="M4 9V5a1 1 0 0 1 1-1h4M20 9V5a1 1 0 0 0-1-1h-4M4 15v4a1 1 0 0 0 1 1h4M20 15v4a1 1 0 0 1-1 1h-4"/></svg><span>Pantalla completa</span></button>
             </div>
-            <p style="margin:0 0 14px;">Mientras más cerca del escenario, más alto el precio. Maqueta para ver cómo quedará: todavía no se venden mesas desde aquí; la disposición y los <b>precios son de ejemplo</b>.</p>
+            <p id="vr-plan-desc" style="margin:0 0 14px;">Mientras más cerca del escenario, más alto el precio. Maqueta para ver cómo quedará: todavía no se venden mesas desde aquí; la disposición y los <b>precios son de ejemplo</b>.</p>
             <div class="vr-layout-tabs" id="vr-layout-tabs" role="tablist" aria-label="Mapas de la sala"></div>
             <div class="vr-zones" id="vr-zones"></div>
             <div class="vr-plan-wrap"><svg class="vr-plan" id="vr-plan" viewBox="0 0 800 520" role="group" aria-label="Plano de la sala"></svg></div>
             <div class="vr-services" id="vr-services" aria-label="Servicios de la sala"></div>
             <div class="vr-legend"><span><i style="background:#00c878"></i>Disponible</span><span><i style="background:#ff6060"></i>Reservada</span><span><i style="background:#c5a059"></i>Elegida</span></div>
             <p id="vr-plan-summary" style="margin:12px 0 0;font-weight:700;">Toca una mesa disponible para elegirla.</p>
-            <button class="btn primary" style="margin-top:12px;width:100%;" disabled>Reservar mesas — próximamente</button>
+            <button class="btn primary" id="vr-plan-soon" style="margin-top:12px;width:100%;" disabled>Reservar mesas — próximamente</button>
+            <div id="vr-buy-panel" style="display:none;margin-top:14px;">
+                <div class="vr-form">
+                    <label for="vr-buy-name">Nombre de quien renta *</label>
+                    <input type="text" id="vr-buy-name" maxlength="80" autocomplete="name" placeholder="Tu nombre">
+                    <label for="vr-buy-res">Nombre de la reserva (opcional)</label>
+                    <input type="text" id="vr-buy-res" maxlength="80" autocomplete="off" placeholder="Ej. Team Alicia: así te identifican tus invitados en la puerta">
+                    <label for="vr-buy-email">Correo para tu confirmación (opcional)</label>
+                    <input type="email" id="vr-buy-email" maxlength="160" autocomplete="email" placeholder="tu@email.com">
+                </div>
+                <button type="button" class="vr-cart-cta" id="vr-buy-btn" disabled>Elige una mesa</button>
+                <p id="vr-buy-msg" role="status" style="font-size:13px;margin:8px 0 0;min-height:18px;"></p>
+                <p style="font-size:12px;color:rgba(255,255,255,.45);margin:4px 0 0;">Al pulsar «Comprar» tus mesas se apartan 35 minutos mientras pagas. Si no completas el pago, vuelven a estar disponibles. Pago seguro procesado por Stripe.</p>
+            </div>
             <button type="button" class="vr-share-btn" id="vr-plan-share" style="margin-top:10px;width:100%;justify-content:center;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Compartir</button>
         </div>
 
-        <div class="vr-card">
-            <h2>Comparte esta sala</h2>
-            <div class="vr-qr-box" id="vr-qr-box"></div>
-            <a id="vr-canonical-link" class="vr-link" href="#" target="_blank" rel="noopener"></a>
-            <div class="vr-share-row">
-                <button class="vr-tile" id="vr-btn-share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg><span>Compartir</span></button>
-                <a class="vr-tile" id="vr-btn-whatsapp" href="#" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg><span>WhatsApp</span></a>
-                <a class="vr-tile" id="vr-btn-sms" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>SMS</span></a>
-                <button class="vr-tile" id="vr-btn-copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span>Copiar enlace</span></button>
-                <button class="vr-tile" id="vr-btn-download"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Descargar QR</span></button>
-            </div>
-        </div>
-
-        <div class="vr-card" id="vr-whatsapp-card" style="display:none;">
-            <h2>Comunidad de WhatsApp</h2>
-            <p>Únete al canal exclusivo de esta sala para enterarte de próximos eventos.</p>
-            <a class="vr-share-btn" id="vr-whatsapp-join" href="#" target="_blank" rel="noopener" style="display:inline-flex;">💬 Unirme al canal</a>
-        </div>
 
         <div class="vr-card" id="vr-tickets-card" style="display:none;">
             <h2>Entradas</h2>
+            <p class="vr-ev-picked" id="vr-ev-picked" style="display:none;"></p>
             <div id="vr-tickets-list" class="vr-cart-list"></div>
             <div class="vr-cart-summary">
                 <div class="vr-cart-row"><span>Entradas</span><b id="vr-cart-count">0</b></div>
@@ -259,9 +337,37 @@
         </div>
 
         <div class="vr-card" id="vr-empty-card" style="display:none;">
-            <h2>Sin eventos programados</h2>
-            <p>Esta sala todavía no tiene una fecha activa. Vuelve pronto.</p>
+            <h2 id="vr-empty-title">Sin eventos programados</h2>
+            <p id="vr-empty-msg">Esta sala todavía no tiene una fecha activa. Vuelve pronto.</p>
         </div>
+
+        <a class="tile residency-card residency-card--map vr-loc" id="vr-loc" href="#" target="_blank" rel="noopener noreferrer">
+            <div class="residency-day" id="vr-loc-zone">Ubicación</div>
+            <div class="residency-venue" id="vr-loc-name"></div>
+            <div class="residency-zone" id="vr-loc-addr"></div>
+            <p>Abrir en Google Maps</p>
+        </a>
+        <div class="vr-loc-more" id="vr-loc-more"><a href="./events.html#residencies">Ver información del local</a></div>
+
+        <div class="vr-card">
+            <h2>Comparte esta sala</h2>
+            <div class="vr-qr-box" id="vr-qr-box"></div>
+            <a id="vr-canonical-link" class="vr-link" href="#" target="_blank" rel="noopener"></a>
+            <div class="vr-share-row">
+                <button class="vr-tile" id="vr-btn-share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg><span>Compartir</span></button>
+                <a class="vr-tile" id="vr-btn-whatsapp" href="#" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg><span>WhatsApp</span></a>
+                <a class="vr-tile" id="vr-btn-sms" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>SMS</span></a>
+                <button class="vr-tile" id="vr-btn-copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span>Copiar enlace</span></button>
+                <button class="vr-tile" id="vr-btn-download"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Descargar QR</span></button>
+            </div>
+        </div>
+
+        <div class="vr-card" id="vr-whatsapp-card" style="display:none;">
+            <h2>Comunidad de WhatsApp</h2>
+            <p>Únete al canal exclusivo de esta sala para enterarte de próximos eventos.</p>
+            <a class="vr-share-btn" id="vr-whatsapp-join" href="#" target="_blank" rel="noopener" style="display:inline-flex;">💬 Unirme al canal</a>
+        </div>
+
     </div>
 </main>
 
@@ -287,7 +393,7 @@
    de mdjb-shared-header.js; debe fijarse antes de cargarlo) y esta página pone el suyo en el mismo lugar. */
 window.MDJ_SKIP_GLOBAL_EVENT_CART = true;
 </script>
-<script src="./mdjb-shared-header.js?v=20261002-sin-member-welcome"></script>
+<script src="./mdjb-shared-header.js?v=20261003-mi-perfil-unico"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
 <script>
 (function () {
@@ -318,6 +424,9 @@ window.MDJ_SKIP_GLOBAL_EVENT_CART = true;
     }
 
     var _vrShareCtx = null, _vrPlanSel = '';
+    // Cada noche / evento tiene SU sala: la selección de mesas se guarda por clave («evento:<id>» o «noche:<día>-<nombre>») y por mapa,
+    // así lo que se elige un día no se marca en otro. (Maqueta: el inventario real por evento —venue_event_tables— es la fase 2.)
+    var _vrPlanKey = 'general', _vrPlanState = {}, _vrPlanApi = null, _vrUpcoming = [], _vrChooseEvent = null;
     // Compartir la reserva: abre el menú de compartir del teléfono (o el SMS del propio teléfono) con el nombre de la sala y el enlace.
     // No se envía nada desde el servidor.
     function shareReservation(head, extra) {
@@ -382,6 +491,170 @@ window.MDJ_SKIP_GLOBAL_EVENT_CART = true;
         });
         slot.appendChild(btn);
         host.appendChild(slot);
+    }
+
+    // ── Inventario real por evento (sala de mesas, fase 2) ──────────────────────────────────────────────────────────────
+    // Lectura pública SOLO de disponibilidad (venue_event_tables_public). Devuelve {mesa: fila} o null si no hay inventario real
+    // (evento sin ventas abiertas o el SQL todavía no está aplicado): entonces queda la maqueta, sin romper nada.
+    var _vrRealCache = {}, _vrPoll = null;
+    async function loadRealInventory(eventId) {
+        try {
+            var r = await window.getSupabaseClient().rpc('venue_event_tables_public', { p_event_id: eventId });
+            if (r.error || !Array.isArray(r.data) || !r.data.length) return null;
+            var map = {}; r.data.forEach(function (x) { map[x.table_key] = x; });
+            return map;
+        } catch (e) { return null; }
+    }
+    // Mapas con geometría guardada en el evento (venue_events.layout.maps, mismo formato que la maqueta); si no hay, los de muestra.
+    function layoutsFor(ev) {
+        if (ev && !ev.__maps && ev.layout && Array.isArray(ev.layout.maps) && ev.layout.maps.length) ev.__maps = ev.layout.maps;
+        return (ev && ev.__maps) || null;
+    }
+    function eventRoomOpts(ev) { return { real: _vrRealCache[ev.id] || null, layouts: layoutsFor(ev), eventId: ev.id }; }
+    function refreshReal() {
+        var ev = (_vrUpcoming || []).filter(function (e) { return _vrPlanKey === 'evento:' + e.id; })[0];
+        if (!ev || !_vrPlanApi) return;
+        loadRealInventory(ev.id).then(function (m) {
+            var antes = JSON.stringify(_vrRealCache[ev.id] || null); _vrRealCache[ev.id] = m;
+            if (_vrPlanKey === 'evento:' + ev.id && JSON.stringify(m) !== antes) _vrPlanApi.open('evento:' + ev.id, eventRoomOpts(ev));
+        });
+    }
+    function openEventRoom(ev) {
+        if (!_vrPlanApi) return;
+        _vrPlanApi.open('evento:' + ev.id, eventRoomOpts(ev));   // al instante, con lo que ya se sepa
+        refreshReal();
+        clearInterval(_vrPoll);                                  // la disponibilidad se actualiza sola cada ~15 s mientras se mira
+        _vrPoll = setInterval(function () { if (document.visibilityState === 'visible') refreshReal(); }, 15000);
+    }
+
+    // Días de la semana de una tarjeta («Miércoles», «Lunes y Martes»…) y de una fecha «YYYY-MM-DD» (0 = domingo).
+    function weekdaysOf(dia) {
+        var t = String(dia || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''), out = [];
+        [['domingo', 0], ['lunes', 1], ['martes', 2], ['miercoles', 3], ['jueves', 4], ['viernes', 5], ['sabado', 6]].forEach(function (p) { if (t.indexOf(p[0]) >= 0) out.push(p[1]); });
+        return out;
+    }
+    function weekdayOfDate(d) { var p = String(d || '').split('-'); return p.length < 3 ? -1 : new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2])).getDay(); }
+    function slugKey(t) { return String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
+
+    // Al tocar una tarjeta de una noche se entra a la sala de ESE día: si ya hay un evento con fecha ese día, su sala y sus boletos;
+    // si no, la sala del día (con su propia selección) y un aviso de que aún no hay fecha publicada.
+    function openNight(n, card) {
+        Array.prototype.forEach.call(document.querySelectorAll('.vr-night'), function (c) { c.classList.toggle('is-open', c === card); c.setAttribute('aria-pressed', c === card ? 'true' : 'false'); });
+        var wd = weekdaysOf(n.dia);
+        var ev = (_vrUpcoming || []).filter(function (e) { return e.event_date && wd.indexOf(weekdayOfDate(e.event_date)) >= 0; })[0];
+        var plan = document.getElementById('vr-plan-card'), tickets = document.getElementById('vr-tickets-card'), empty = document.getElementById('vr-empty-card');
+        if (ev && _vrChooseEvent) {
+            _vrChooseEvent(ev);
+        } else {
+            if (_vrPlanApi) {
+                document.getElementById('vr-plan-event').textContent = n.dia + ' · ' + n.nombre;
+                plan.style.display = 'block';
+                clearInterval(_vrPoll);
+                _vrPlanApi.open('noche:' + slugKey(n.dia + '-' + n.nombre), {});
+            }
+            tickets.style.display = 'none'; document.getElementById('vr-ev-picked').style.display = 'none';
+            document.getElementById('vr-empty-title').textContent = n.nombre;
+            document.getElementById('vr-empty-msg').textContent = 'Todavía no hay una fecha publicada para esta noche. Cuando se publique, aquí podrás comprar tus boletos y elegir tu mesa.';
+            empty.style.display = 'block';
+        }
+        var target = plan.style.display !== 'none' ? plan : (tickets.style.display !== 'none' ? tickets : empty);
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // Programación por día del local: assets/venues/<local>/programacion.json  { "noches": [ { dia, nombre, dj, descripcion } ] }.
+    // Una tarjeta por noche. Sin archivo, no se muestra nada. (Más adelante pasará a la base para que el dueño la edite.)
+    function renderProgram(venueSlug) {
+        fetch('./assets/venues/' + encodeURIComponent(venueSlug) + '/programacion.json', { cache: 'no-cache' })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (j) {
+                var noches = j && Array.isArray(j.noches) ? j.noches : [];
+                if (!noches.length) return;
+                var box = document.getElementById('vr-program');
+                noches.forEach(function (n) {
+                    var card = document.createElement('article'); card.className = 'vr-night';
+                    var conSala = n.sala !== false;   // «sala»: false en lo que no es un evento con mesas (p. ej. la happy hour)
+                    function add(tag, cls, text) { if (!text) return; var e = document.createElement(tag); if (cls) e.className = cls; e.textContent = text; card.appendChild(e); }
+                    add('span', 'vr-night-day', n.dia);
+                    add('h2', '', n.nombre);
+                    var tags = document.createElement('div'); tags.className = 'vr-night-tags';
+                    function tag(cls, text) { if (!text) return; var t = document.createElement('span'); t.className = cls; t.textContent = text; tags.appendChild(t); }
+                    tag('vr-night-dj', n.dj); tag('vr-night-freq', n.formato); tag('vr-night-freq', n.frecuencia); tag('vr-night-freq', n.horario);
+                    if (tags.children.length) card.appendChild(tags);
+                    add('p', '', n.descripcion);
+                    if (Array.isArray(n.invitados) && n.invitados.length) {
+                        var gw = document.createElement('div'); gw.className = 'vr-night-guests';
+                        n.invitados.forEach(function (g) {
+                            if (!g || !Array.isArray(g.nombres) || !g.nombres.length) return;
+                            var blk = document.createElement('div');
+                            var lb = document.createElement('span'); lb.className = 'vr-night-glabel'; lb.textContent = g.grupo || ''; blk.appendChild(lb);
+                            var nm = document.createElement('div'); nm.className = 'vr-night-names';
+                            g.nombres.forEach(function (x) { var sp = document.createElement('span'); sp.textContent = x; nm.appendChild(sp); });
+                            blk.appendChild(nm); gw.appendChild(blk);
+                        });
+                        card.appendChild(gw);
+                    }
+                    add('p', 'vr-night-note', n.nota);
+                    if (conSala) {
+                        add('span', 'vr-night-open', 'Ver la sala');
+                        card.setAttribute('role', 'button'); card.setAttribute('tabindex', '0'); card.setAttribute('aria-pressed', 'false');
+                        card.classList.add('vr-night-link');
+                        card.addEventListener('click', function () { openNight(n, card); });
+                        card.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openNight(n, card); } });
+                    }
+                    box.appendChild(card);
+                });
+                box.style.display = 'flex';
+            })
+            .catch(function () { /* sin programación: la página sigue igual */ });
+    }
+
+    // Fecha «YYYY-MM-DD» -> «vie 10 oct» sin desfase de zona horaria.
+    function fmtEventDate(d) {
+        if (!d) return 'Fecha por confirmar';
+        var p = String(d).split('-'); if (p.length < 3) return String(d);
+        var dt = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+        return dt.toLocaleDateString('es-US', { weekday: 'short', day: 'numeric', month: 'short' }).replace(/\./g, '');
+    }
+    // Varios eventos programados en la misma sala: se elige uno y se compran sus entradas (cada pago es por un evento).
+    function renderEventPicker(list, typesByEvent) {
+        var box = document.getElementById('vr-events'), picked = document.getElementById('vr-ev-picked');
+        var esMesasPage = document.body.classList.contains('vr-tables');
+        function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+        function choose(ev) {
+            Array.prototype.forEach.call(box.querySelectorAll('.vr-ev'), function (b) { b.setAttribute('aria-checked', b.dataset.ev === ev.id ? 'true' : 'false'); });
+            var etiqueta = (ev.title || 'Evento') + ' · ' + fmtEventDate(ev.event_date);
+            // La sala (plano de mesas) es la del evento elegido.
+            if (esMesasPage) {
+                document.getElementById('vr-plan-event').textContent = etiqueta;
+                document.getElementById('vr-plan-card').style.display = 'block';
+                openEventRoom(ev);   // cada evento con fecha tiene su propia sala (con inventario real si existe)
+            }
+            var types = typesByEvent[ev.id];
+            if (types && types.length) {
+                document.getElementById('vr-empty-card').style.display = 'none';
+                picked.innerHTML = 'Entradas para: <b>' + esc(ev.title || 'Evento') + '</b> · ' + esc(fmtEventDate(ev.event_date)) +
+                    (list.length > 1 ? ' <span style="opacity:.6">(cada pago es por un evento)</span>' : '');
+                picked.style.display = 'block';
+                renderTicketSelector(types, ev.id);
+            } else {
+                document.getElementById('vr-tickets-card').style.display = 'none';
+                picked.style.display = 'none';
+                document.getElementById('vr-empty-title').textContent = ev.title || 'Evento';
+                document.getElementById('vr-empty-msg').textContent = 'Las entradas de este evento todavía no están a la venta.';
+                document.getElementById('vr-empty-card').style.display = 'block';
+            }
+        }
+        box.innerHTML = '';
+        list.forEach(function (ev) {
+            var b = document.createElement('button');
+            b.type = 'button'; b.className = 'vr-ev'; b.dataset.ev = ev.id; b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', 'false');
+            b.innerHTML = '<span class="vr-ev-date">' + esc(fmtEventDate(ev.event_date)) + '</span><span class="vr-ev-title">' + esc(ev.title || 'Evento') + '</span>';
+            b.addEventListener('click', function () { choose(ev); });
+            box.appendChild(b);
+        });
+        box.style.display = 'flex';
+        _vrChooseEvent = choose;
+        choose(list[0]);
     }
 
     function renderTicketSelector(types, eventId) {
@@ -495,11 +768,20 @@ window.MDJ_SKIP_GLOBAL_EVENT_CART = true;
     }
 
     function showPaymentReturnNotice() {
-        var st = new URLSearchParams(location.search).get('ticket_payment');
+        var qs = new URLSearchParams(location.search);
+        var esMesa = qs.get('table_payment') !== null;
+        var st = qs.get('ticket_payment') || qs.get('table_payment');
         if (st !== 'success' && st !== 'cancelled') return;
+        if (esMesa) {   // pago de mesas: si se canceló, se liberan las mesas apartadas y se expira la sesión de Stripe; si se pagó, se olvida la reserva
+            try {
+                var h = JSON.parse(sessionStorage.getItem('mdj_table_hold') || 'null');
+                sessionStorage.removeItem('mdj_table_hold');
+                if (st === 'cancelled' && h && h.token) window.getSupabaseClient().functions.invoke('create-venue-table-checkout', { body: { action: 'release', hold_token: h.token, session_id: h.session_id } }).catch(function () {});
+            } catch (e) { /* sin almacenamiento */ }
+        }
         var msg = st === 'success'
-            ? 'Gracias por tu compra. Estamos confirmando tu pago.'
-            : 'El pago se canceló. No se te cobró.';
+            ? (esMesa ? 'Gracias por tu compra. Estamos confirmando el pago de tus mesas; quedan a nombre de quien rentó.' : 'Gracias por tu compra. Estamos confirmando tu pago.')
+            : (esMesa ? 'El pago se canceló. No se te cobró y tus mesas volvieron a estar disponibles.' : 'El pago se canceló. No se te cobró.');
         var div = document.createElement('div');
         div.id = 'vr-pay-notice';
         div.setAttribute('role', 'status');
@@ -518,42 +800,86 @@ window.MDJ_SKIP_GLOBAL_EVENT_CART = true;
     }
 
     // ── Sala de mesas: hero de publicidad + plano interactivo (EN DESARROLLO, datos de muestra) ──
-    var HERO_ADS = [
-        { src: './assets/furniture-decor/dining-tables.mp4', poster: './assets/furniture-decor/dining-tables.jpg' },
-        { src: './assets/furniture-decor/tables.jpg', secs: 6 },
-        { src: './assets/furniture-decor/cocktail-tables.mp4', poster: './assets/furniture-decor/cocktail-tables.jpg' }
-    ];
+    // Los PNG de branding suelen traer margen transparente alrededor: se mide el borde inferior real del dibujo y se compensa para que el
+    // nombre de la sala quede a ~10 px del branding (sin tocar ni recortar el archivo). Si el navegador no deja leer el PNG, queda el margen normal.
+    function tightenBrand(img, src) {
+        img.style.setProperty('--ratio', String(src.naturalWidth / src.naturalHeight));
+        try {
+            var w = 300, h = Math.max(1, Math.round(src.naturalHeight * w / src.naturalWidth)), c = document.createElement('canvas');
+            c.width = w; c.height = h;
+            var ctx = c.getContext('2d'); ctx.drawImage(src, 0, 0, w, h);
+            var d = ctx.getImageData(0, 0, w, h).data, last = -1;
+            for (var y = h - 1; y >= 0 && last < 0; y--) for (var x = 0; x < w; x++) if (d[(y * w + x) * 4 + 3] > 24) { last = y; break; }
+            if (last >= 0) img.style.setProperty('--empty', String((h - 1 - last) / h));   // fracción vacía debajo del dibujo
+        } catch (e) { /* sin lectura de píxeles: queda el margen normal */ }
+    }
 
-    function startHero(ads) {
-        var vid = document.createElement('video');
-        vid.className = 'vr-hero-layer'; vid.muted = true; vid.autoplay = true; vid.playsInline = true; vid.preload = 'metadata';
-        var img = document.createElement('img');
-        img.className = 'vr-hero-layer'; img.alt = ''; img.style.display = 'none';
+    // Hero propio del local: TODOS los videos de assets/venues/<local>/ en secuencia continua; al terminar el último vuelve al primero.
+    // Nombres: hero-sala-<local>.mp4 (el primero), hero-sala-<local>-2.mp4, hero-sala-<local>-3.mp4 … hasta -12 (se reproducen en ese orden;
+    // si falta un número se salta). Viven en Supabase Storage (los .mp4 no van a Git); en localhost también vale la copia del repo.
+    // Esta página es VENTA DE MESAS EN EVENTOS: no usa videos de mobiliario/fiestas privadas. Sin videos del local se usa la cabecera
+    // del local (si la hay) o queda el fondo oscuro.
+    var HERO_MAX = 12;
+    function heroRel(slug, n) { return './assets/venues/' + slug + '/hero-sala-' + slug + (n > 1 ? '-' + n : '') + '.mp4'; }
+    function probeVideo(url) {
+        return new Promise(function (resolveP) {
+            var probe = document.createElement('video'), done = false, t;
+            function end(ok) { if (done) return; done = true; clearTimeout(t); probe.removeAttribute('src'); probe.load(); resolveP(ok); }
+            probe.preload = 'metadata'; probe.muted = true;
+            probe.addEventListener('loadedmetadata', function () { end(true); });
+            probe.addEventListener('error', function () { end(false); });
+            t = setTimeout(function () { end(false); }, 4000);
+            probe.src = url;
+        });
+    }
+    function findOwnHeroes(slug) {
+        var local = /^(localhost|127\.0\.0\.1)$/.test(location.hostname), jobs = [];
+        for (var n = 1; n <= HERO_MAX; n++) (function (rel) {
+            var cands = [window.resolveMdAssetPublicUrl ? window.resolveMdAssetPublicUrl(rel) : rel];
+            if (local) cands.push('/' + rel.slice(2));
+            jobs.push(cands.reduce(function (p, url) {
+                return p.then(function (found) { return found || probeVideo(url).then(function (ok) { return ok ? url : null; }); });
+            }, Promise.resolve(null)));
+        })(heroRel(slug, n));
+        return Promise.all(jobs).then(function (urls) { return urls.filter(Boolean); });   // en orden numérico
+    }
+
+    function heroShade() {
         var shade = document.createElement('div'); shade.className = 'vr-hero-shade';
         document.body.insertBefore(shade, document.body.firstChild);
-        document.body.insertBefore(img, document.body.firstChild);
-        document.body.insertBefore(vid, document.body.firstChild);
-        var i = -1, timer = null;
-        function resolve(u) { return window.resolveMdAssetPublicUrl ? window.resolveMdAssetPublicUrl(u) : u; }
-        function next() {
-            clearTimeout(timer);
-            i = (i + 1) % ads.length;
-            var ad = ads[i];
-            if (/\.(jpe?g|png|webp)$/i.test(ad.src)) {
-                vid.pause(); vid.style.display = 'none';
-                img.src = resolve(ad.src); img.style.display = '';
-                timer = setTimeout(next, (ad.secs || 6) * 1000);
-            } else {
-                img.style.display = 'none'; vid.style.display = '';
-                if (ad.poster) vid.poster = resolve(ad.poster);
-                vid.src = resolve(ad.src);
-                var p = vid.play(); if (p && p.catch) p.catch(function () {});
-            }
+    }
+    // Una sola imagen fija (cabecera del local) cuando no hay videos.
+    function startHeroImage(url) {
+        var img = document.createElement('img');
+        img.className = 'vr-hero-layer'; img.alt = ''; img.src = url;
+        heroShade(); document.body.insertBefore(img, document.body.firstChild);
+    }
+    // Secuencia continua: dos capas de video que se alternan; mientras una suena, la otra ya tiene cargado el siguiente (sin cortes).
+    function startHeroVideos(urls) {
+        function layer() {
+            var v = document.createElement('video');
+            v.className = 'vr-hero-layer'; v.muted = true; v.playsInline = true; v.preload = 'auto'; v.setAttribute('playsinline', '');
+            v.style.opacity = '0'; v.style.transition = 'opacity .5s ease';
+            document.body.insertBefore(v, document.body.firstChild);
+            return v;
         }
-        vid.addEventListener('ended', next);
-        // Si el video no carga, se pasa al siguiente anuncio en vez de dejar el fondo congelado.
-        vid.addEventListener('error', function () { clearTimeout(timer); timer = setTimeout(next, 2500); });
-        next();
+        heroShade();
+        var A = layer(), B = layer(), cur = A, nxt = B, i = 0, n = urls.length;
+        function play(v) { var p = v.play(); if (p && p.catch) p.catch(function () {}); }
+        function prepare(v, idx) { v.loop = false; v.src = urls[idx % n]; v.load(); }
+        function advance() {
+            i = (i + 1) % n;
+            var old = cur; cur = nxt; nxt = old;
+            cur.currentTime = 0; play(cur); cur.style.opacity = '1'; old.style.opacity = '0';
+            setTimeout(function () { prepare(old, i + 1); }, 600);
+        }
+        function wire(v) {
+            v.addEventListener('ended', function () { if (v === cur && n > 1) advance(); });
+            v.addEventListener('error', function () { if (v === cur && n > 1) setTimeout(advance, 1500); });   // si uno falla, pasa al siguiente
+        }
+        wire(A); wire(B);
+        prepare(cur, 0); cur.style.opacity = '1'; play(cur);
+        if (n > 1) prepare(nxt, 1); else cur.loop = true;   // un solo video: en bucle
     }
 
     // Maqueta con VARIOS mapas por evento (sala principal, recepción, sala de estar, cena…). Cada mapa es un dato:
@@ -641,9 +967,57 @@ window.MDJ_SKIP_GLOBAL_EVENT_CART = true;
             el('text', a, null, label);
         }
 
+        // ── Modo real vs maqueta ──────────────────────────────────────────────────────────────────────────────────────────
+        // Con inventario real (venue_event_tables_public) el plano usa los precios, sillas y disponibilidad de la BASE y se puede comprar;
+        // sin él (evento sin ventas abiertas, SQL sin aplicar, o noche sin fecha) queda la maqueta de siempre. Elegir mesas NO las reserva
+        // (como en Ticketmaster): la reserva con reloj arranca al pulsar «Comprar».
+        var currentLayouts = LAYOUTS, currentLayout = LAYOUTS[0], currentReal = null, currentEventId = null, lastSel = { ids: [], total: 0 };
+        var buyPanel = document.getElementById('vr-buy-panel'), soonBtn = document.getElementById('vr-plan-soon'), buyBtn = document.getElementById('vr-buy-btn'),
+            buyMsg = document.getElementById('vr-buy-msg'), nameInp = document.getElementById('vr-buy-name'), resInp = document.getElementById('vr-buy-res'),
+            mailInp = document.getElementById('vr-buy-email'), descP = document.getElementById('vr-plan-desc'), badge = document.getElementById('vr-plan-badge');
+        var DESC_MAQUETA = descP.innerHTML;
+        var DESC_REAL = 'Mientras más cerca del escenario, más alto el precio. Elige tus mesas, pon el nombre de quien renta y paga: al pulsar «Comprar» tus mesas se apartan unos minutos mientras pagas.';
+        function fmt(v) { return Math.round(v * 100) % 100 === 0 ? String(Math.round(v)) : v.toFixed(2); }
+        function say(t, bad) { buyMsg.textContent = t || ''; buyMsg.style.color = bad ? '#ff6060' : 'rgba(255,255,255,.8)'; }
+
+        // Lo elegido en TODOS los mapas de esta sala/noche (la selección se guarda por clave y por mapa).
+        function summarize() {
+            var byKey = _vrPlanState[_vrPlanKey] || {}, ids = [], chairs = 0, total = 0;
+            Object.keys(byKey).forEach(function (lid) { Object.keys(byKey[lid]).forEach(function (id) { ids.push(id); chairs += byKey[lid][id].seats; total += byKey[lid][id].price; }); });
+            _vrPlanSel = ids.length ? 'Mesas ' + ids.join(', ') : '';
+            summary.textContent = ids.length
+                ? 'Mesas elegidas: ' + ids.join(', ') + ' · ' + chairs + ' sillas · Total $' + fmt(total) + (currentReal ? '' : ' (ejemplo)')
+                : 'Toca una mesa disponible para elegirla.';
+            lastSel = { ids: ids, total: total };
+            syncBuy();
+        }
+        function syncBuy() {
+            var real = !!currentReal;
+            buyPanel.style.display = real ? 'block' : 'none';
+            soonBtn.style.display = real ? 'none' : 'block';
+            if (!real) return;
+            var n = lastSel.ids.length;
+            buyBtn.disabled = n === 0;
+            buyBtn.textContent = n ? 'Comprar ' + n + (n === 1 ? ' mesa' : ' mesas') + ' · $' + fmt(lastSel.total) : 'Elige una mesa';
+        }
+        // En modo real, una mesa elegida que ya no está disponible (la compró otra persona) sale de la selección.
+        function pruneSelection() {
+            var byKey = _vrPlanState[_vrPlanKey]; if (!byKey || !currentReal) return false;
+            var quitadas = false;
+            Object.keys(byKey).forEach(function (lid) { Object.keys(byKey[lid]).forEach(function (id) { var r = currentReal[id]; if (!r || !r.available) { delete byKey[lid][id]; quitadas = true; } }); });
+            return quitadas;
+        }
+
         function draw(layout) {
             svg.innerHTML = '';
-            layout.tables.forEach(function (t) { t.zone = zoneOf(layout, t); });
+            var real = currentReal;
+            // Copias por dibujo (la maqueta compartida no se toca). En modo real solo se dibujan las mesas que existen en el inventario.
+            var tables = layout.tables.filter(function (t) { return !real || real[t.id]; }).map(function (t) {
+                var c = Object.assign({}, t), z = zoneOf(layout, t);
+                c.zone = z;
+                if (real) { var r = real[t.id]; c.seats = r.seats; c.sold = !r.available; c.zone = { name: r.zone_name || z.name, price: r.price_cents / 100 }; }
+                return c;
+            });
             var defs = el('defs', {});
             el('rect', { x: 12, y: 12, width: 776, height: 493 }, el('clipPath', { id: 'vr-room-clip' }, defs));
             layout.zones.slice(0, -1).forEach(function (z) { el('circle', { class: 'ring', cx: layout.focal.x, cy: layout.focal.y, r: z.maxD, 'clip-path': 'url(#vr-room-clip)' }); });
@@ -666,25 +1040,30 @@ window.MDJ_SKIP_GLOBAL_EVENT_CART = true;
             if (kinds.barra) sv.push('<span>Barra</span>');
             document.getElementById('vr-services').innerHTML = sv.join('');
 
-            document.getElementById('vr-zones').innerHTML = layout.zones.map(function (z) {
-                var all = layout.tables.filter(function (t) { return t.zone === z; });
-                var free = all.filter(function (t) { return !t.sold; }).length;
-                return '<div class="vr-zone-chip"><b>$' + z.price + ' <small style="font-weight:600;opacity:.7">por mesa (ejemplo)</small></b>' + z.name + ' · ' + free + ' de ' + all.length + ' libres</div>';
-            }).join('');
-
-            var selected = {};
-            function refresh() {
-                var ids = Object.keys(selected), chairs = 0, total = 0;
-                _vrPlanSel = ids.length ? 'Mesas ' + ids.join(', ') : '';
-                ids.forEach(function (id) { chairs += selected[id].seats; total += selected[id].price; });
-                summary.textContent = ids.length
-                    ? 'Mesas elegidas: ' + ids.join(', ') + ' · ' + chairs + ' sillas · Total $' + total + ' (ejemplo)'
-                    : 'Toca una mesa disponible para elegirla.';
+            if (real) {   // franjas de precio desde la base (por nombre de zona)
+                var grupos = {}, orden = [];
+                tables.forEach(function (t) {
+                    var g = grupos[t.zone.name] || (grupos[t.zone.name] = { name: t.zone.name, min: Infinity, max: 0, libres: 0, todas: 0 }); if (orden.indexOf(g) < 0) orden.push(g);
+                    g.min = Math.min(g.min, t.zone.price); g.max = Math.max(g.max, t.zone.price); g.todas++; if (!t.sold) g.libres++;
+                });
+                document.getElementById('vr-zones').innerHTML = orden.map(function (g) {
+                    return '<div class="vr-zone-chip"><b>$' + (g.min === g.max ? fmt(g.min) : fmt(g.min) + '–' + fmt(g.max)) + ' <small style="font-weight:600;opacity:.7">por mesa</small></b>' + g.name + ' · ' + g.libres + ' de ' + g.todas + ' libres</div>';
+                }).join('');
+            } else {
+                document.getElementById('vr-zones').innerHTML = layout.zones.map(function (z) {
+                    var all = tables.filter(function (t) { return t.zone === z; });
+                    var free = all.filter(function (t) { return !t.sold; }).length;
+                    return '<div class="vr-zone-chip"><b>$' + z.price + ' <small style="font-weight:600;opacity:.7">por mesa (ejemplo)</small></b>' + z.name + ' · ' + free + ' de ' + all.length + ' libres</div>';
+                }).join('');
             }
-            refresh();
-            layout.tables.forEach(function (t) {
+
+            var byNight = _vrPlanState[_vrPlanKey] || (_vrPlanState[_vrPlanKey] = {});
+            var selected = byNight[layout.id] || (byNight[layout.id] = {});
+            summarize();
+            tables.forEach(function (t) {
                 var g = el('g', { class: 'tbl' + (t.sold ? ' sold' : ''), role: 'button', tabindex: t.sold ? '-1' : '0',
-                    'aria-label': 'Mesa ' + t.id + ', ' + t.zone.name + ', ' + t.seats + ' sillas, $' + t.zone.price + ' de ejemplo, ' + (t.sold ? 'reservada' : 'disponible'), 'aria-pressed': 'false' });
+                    'aria-label': 'Mesa ' + t.id + ', ' + t.zone.name + ', ' + t.seats + ' sillas, $' + fmt(t.zone.price) + (real ? '' : ' de ejemplo') + ', ' + (t.sold ? 'reservada' : 'disponible'), 'aria-pressed': 'false' });
+                if (selected[t.id]) { g.classList.add('sel'); g.setAttribute('aria-pressed', 'true'); }   // la elección guardada de ESTA noche
                 chairsFor(t).forEach(function (c) { el('circle', { class: 'seat', cx: t.x + c[0], cy: t.y + c[1], r: 5 }, g); });
                 if (t.t === 'round') {
                     el('circle', { class: 'shape', cx: t.x, cy: t.y, r: t.seats <= 4 ? 22 : 26 }, g);
@@ -693,29 +1072,98 @@ window.MDJ_SKIP_GLOBAL_EVENT_CART = true;
                     el('rect', { class: 'shape', x: t.x - w / 2, y: t.y - h / 2, width: w, height: h, rx: 6 }, g);
                 }
                 el('text', { x: t.x, y: t.y }, g, t.id);
-                el('text', { class: 'px', x: t.x, y: t.y + 12 }, g, t.sold ? 'reservada' : '$' + t.zone.price);
+                el('text', { class: 'px', x: t.x, y: t.y + 12 }, g, t.sold ? 'reservada' : '$' + fmt(t.zone.price));
                 function toggle() {
                     if (t.sold) return;
                     if (selected[t.id]) { delete selected[t.id]; g.classList.remove('sel'); g.setAttribute('aria-pressed', 'false'); }
                     else { selected[t.id] = { seats: t.seats, price: t.zone.price }; g.classList.add('sel'); g.setAttribute('aria-pressed', 'true'); }
-                    refresh();
+                    say('');
+                    summarize();
                 }
                 g.addEventListener('click', toggle);
                 g.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
             });
         }
 
-        LAYOUTS.forEach(function (l, i) {
-            var b = document.createElement('button');
-            b.type = 'button'; b.setAttribute('role', 'tab'); b.textContent = l.label;
-            b.setAttribute('aria-selected', i === 0 ? 'true' : 'false');
-            b.addEventListener('click', function () {
-                [].forEach.call(tabs.children, function (x) { x.setAttribute('aria-selected', x === b ? 'true' : 'false'); });
-                draw(l);
+        function buildTabs() {
+            tabs.innerHTML = '';
+            currentLayouts.forEach(function (l) {
+                var b = document.createElement('button');
+                b.type = 'button'; b.setAttribute('role', 'tab'); b.textContent = l.label;
+                b.setAttribute('aria-selected', l === currentLayout ? 'true' : 'false');
+                b.addEventListener('click', function () {
+                    [].forEach.call(tabs.children, function (x) { x.setAttribute('aria-selected', x === b ? 'true' : 'false'); });
+                    currentLayout = l;
+                    draw(l);
+                });
+                tabs.appendChild(b);
             });
-            tabs.appendChild(b);
-        });
+        }
+        buildTabs();
         draw(LAYOUTS[0]);
+        // Cambia de noche/evento (y de modo): dibuja la sala de esa clave. opts = { real: {mesa: fila}|null, layouts: [...]|null, eventId }
+        _vrPlanApi = {
+            open: function (key, opts) {
+                opts = opts || {};
+                _vrPlanKey = key;
+                currentReal = opts.real || null; currentEventId = opts.eventId || null;
+                var lay = opts.layouts || LAYOUTS;
+                if (lay !== currentLayouts) { currentLayouts = lay; currentLayout = lay[0]; buildTabs(); }
+                else if (currentLayouts.indexOf(currentLayout) < 0) currentLayout = currentLayouts[0];
+                descP.innerHTML = currentReal ? DESC_REAL : DESC_MAQUETA;
+                badge.style.display = currentReal ? 'none' : '';
+                var quitadas = pruneSelection();
+                say(quitadas ? 'Alguien más tomó una de las mesas que habías elegido; la quitamos de tu selección.' : '', quitadas);
+                draw(currentLayout);
+            },
+            isReal: function () { return !!currentReal; }
+        };
+        [nameInp, resInp, mailInp].forEach(function (i) { i.addEventListener('input', function () { say(''); }); });
+
+        // ── Comprar: aquí empieza la reserva con reloj (la toma la Edge Function, todo o nada) y se pasa a Stripe ──────────
+        var ERRORES = {
+            mesa_no_disponible: 'Alguien acaba de tomar una de tus mesas. Elige otra y vuelve a intentar.',
+            evento_sin_venta_de_mesas: 'Este evento ya no tiene mesas a la venta.',
+            falta_nombre_de_quien_renta: 'Escribe el nombre de quien renta.',
+            nombre_demasiado_largo: 'El nombre es demasiado largo.',
+            correo_invalido: 'Revisa el correo: no parece válido.',
+            demasiadas_mesas: 'Máximo 12 mesas por compra.',
+            demasiadas_solicitudes: 'Demasiados intentos seguidos. Espera un minuto y vuelve a intentar.',
+            demasiados_apartados: 'Ya tienes muchas mesas apartadas. Completa el pago o espera a que se liberen.',
+            pagos_no_configurados: 'Los pagos de mesas todavía no están disponibles.'
+        };
+        function returnUrl(flag) {
+            var q = new URLSearchParams(location.search);
+            ['table_payment', 'ticket_payment', 'session_id'].forEach(function (k) { q.delete(k); });
+            q.set('table_payment', flag);
+            return location.origin + location.pathname + '?' + q.toString();
+        }
+        buyBtn.addEventListener('click', async function () {
+            if (!currentReal || !currentEventId || !lastSel.ids.length) return;
+            var renter = nameInp.value.trim();
+            if (renter.length < 2) { say('Escribe el nombre de quien renta.', true); nameInp.focus(); return; }
+            buyBtn.disabled = true; say('Apartando tus mesas…');
+            try {
+                var db = window.getSupabaseClient();
+                var r = await db.functions.invoke('create-venue-table-checkout', { body: {
+                    event_id: currentEventId, table_keys: lastSel.ids, renter_name: renter, reservation_name: resInp.value.trim(),
+                    customer_email: mailInp.value.trim(), success_url: returnUrl('success'), cancel_url: returnUrl('cancelled')
+                } });
+                var data = r.data;
+                if (r.error) { try { data = await r.error.context.json(); } catch (e) { data = null; } }
+                if (!data || !data.ok) {
+                    var code = data && data.error;
+                    say(ERRORES[code] || 'No se pudo iniciar el pago. Intenta de nuevo.', true);
+                    if (code === 'mesa_no_disponible') refreshReal();   // vuelves al plano con la disponibilidad al día
+                    syncBuy(); return;
+                }
+                try { sessionStorage.setItem('mdj_table_hold', JSON.stringify({ token: data.hold_token, session_id: data.session_id, event_id: currentEventId })); } catch (e) { /* sin almacenamiento */ }
+                say('Tus mesas están apartadas. Te llevamos a pagar…');
+                window.location.href = data.url;
+            } catch (e) {
+                say('Error de red. Intenta de nuevo.', true); syncBuy();
+            }
+        });
 
         // Pantalla completa: superposición CSS (funciona también en iPhone) + pantalla completa real donde exista.
         var card = document.getElementById('vr-plan-card'), fbtn = document.getElementById('vr-full-btn');
@@ -744,7 +1192,7 @@ window.MDJ_SKIP_GLOBAL_EVENT_CART = true;
             document.getElementById('vr-loading').style.display = 'none';
             // Quien vuelve de pagar por un enlace sin sala (por ejemplo el que genera ELIXIS por teléfono, que
             // no manda direcciones de retorno) ve una confirmación, no "Sala no encontrada".
-            var rp = new URLSearchParams(location.search).get('ticket_payment');
+            var rp = new URLSearchParams(location.search).get('ticket_payment') || new URLSearchParams(location.search).get('table_payment');
             var nf = document.getElementById('vr-not-found');
             if (rp === 'success' || rp === 'cancelled') {
                 nf.querySelector('h1').textContent = rp === 'success' ? 'Gracias por tu compra' : 'Pago cancelado';
@@ -770,17 +1218,78 @@ window.MDJ_SKIP_GLOBAL_EVENT_CART = true;
             return;
         }
 
+        var esMesas = false;
         // Sala de mesas: columna venue_rooms.layout_mode = 'tables' (SQL del PO) o ?vista=mesas para verla antes.
         if (room.layout_mode === 'tables' || new URLSearchParams(location.search).get('vista') === 'mesas') {
             document.body.classList.add('vr-tables');
-            document.getElementById('vr-plan-card').style.display = 'block';
-            initPlan();
-            startHero(HERO_ADS);
+            initPlan();   // el plano se construye, pero la tarjeta solo se muestra al elegir un evento (la sala depende del evento)
+            esMesas = true;
+            findOwnHeroes(slugs.venueSlug).then(function (urls) {
+                if (urls.length) startHeroVideos(urls);
+                else if (venue.cover_image_url) startHeroImage(venue.cover_image_url);
+            });
         }
 
         document.getElementById('vr-venue-name').textContent = venue.name;
         document.getElementById('vr-room-name').textContent = room.name;
         document.getElementById('vr-venue-address').textContent = [venue.address, venue.city].filter(Boolean).join(' · ');
+
+        renderProgram(slugs.venueSlug);
+
+        // Tarjeta del local → Google Maps con su dirección (igual que «Residencias Semanales» en events.html) + enlace a su información.
+        if (venue.address) {
+            var dir = [venue.address, venue.city].filter(Boolean).join(', ');
+            var loc = document.getElementById('vr-loc');
+            loc.href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(dir);
+            loc.setAttribute('aria-label', 'Abrir ' + venue.name + ' en Google Maps');
+            document.getElementById('vr-loc-zone').textContent = venue.zone || 'Ubicación';
+            document.getElementById('vr-loc-name').textContent = venue.name;
+            document.getElementById('vr-loc-addr').textContent = dir;
+            loc.style.display = 'block';
+            document.getElementById('vr-loc-more').style.display = 'block';
+        }
+
+        // Si el dueño puso cabecera o logo del local, esa cabecera sustituye al título simple (mismos textos dentro de ella).
+        if (esMesas) {
+            // Sala de mesas: la primera pantalla es el hero con video y encima el nombre del local y de la sala (y su dirección).
+            // Branding: si existe assets/venues/<local>/branding-<local>.png se muestra sobre el nombre; si no, el logo de «Marca del local» (si lo hay).
+            document.getElementById('vr-first-venue').textContent = venue.name;
+            document.getElementById('vr-first-room').textContent = room.name;
+            document.getElementById('vr-first-addr').textContent = [venue.address, venue.city].filter(Boolean).join(' · ');
+            (function () {
+                var bi = document.getElementById('vr-first-brand'), probe = new Image();
+                probe.onload = function () {
+                    bi.src = probe.src; bi.style.display = 'block';
+                    document.getElementById('vr-first-venue').style.display = 'none';   // el branding ya dice el nombre del local: el chip sería redundante
+                    tightenBrand(bi, probe);
+                };
+                probe.onerror = function () {
+                    if (venue.brand_logo_url) {
+                        var fl = document.createElement('img'); fl.alt = ''; fl.src = venue.brand_logo_url;
+                        var fg = document.getElementById('vr-first-logo'); fg.appendChild(fl); fg.style.display = 'flex';
+                    }
+                };
+                probe.src = './assets/venues/' + slugs.venueSlug + '/branding-' + slugs.venueSlug + '.png';
+            })();
+            document.getElementById('vr-first').style.display = 'flex';
+            document.getElementById('vr-plain-head').style.display = 'none';
+        } else if (venue.cover_image_url || venue.brand_logo_url) {
+            var fx = venue.cover_focal_x == null ? 50 : venue.cover_focal_x, fy = venue.cover_focal_y == null ? 50 : venue.cover_focal_y;
+            var bg = document.getElementById('vr-brand-bg');
+            bg.style.backgroundImage = venue.cover_image_url ? 'url("' + String(venue.cover_image_url).replace(/"/g, '') + '")' : '';
+            bg.style.backgroundPosition = fx + '% ' + fy + '%';
+            bg.style.transformOrigin = fx + '% ' + fy + '%';
+            bg.style.transform = 'scale(' + ((venue.cover_zoom || 100) / 100) + ')';
+            if (venue.brand_logo_url) {
+                var li = document.createElement('img'); li.alt = ''; li.src = venue.brand_logo_url;
+                var lg = document.getElementById('vr-brand-logo'); lg.appendChild(li); lg.style.display = 'flex';
+            }
+            document.getElementById('vr-brand-venue').textContent = venue.name;
+            document.getElementById('vr-brand-room').textContent = room.name;
+            document.getElementById('vr-brand-addr').textContent = [venue.address, venue.city].filter(Boolean).join(' · ');
+            document.getElementById('vr-brand').style.display = 'block';
+            document.getElementById('vr-plain-head').style.display = 'none';
+        }
 
         var url = canonicalUrl(slugs.venueSlug, slugs.roomSlug);
         renderQr(url);
@@ -792,18 +1301,19 @@ window.MDJ_SKIP_GLOBAL_EVENT_CART = true;
             document.getElementById('vr-whatsapp-join').href = whatsapp;
         }
 
-        var eventsRes = await db.from('venue_events').select('*').eq('room_id', room.id).order('event_date', { ascending: true, nullsFirst: true });
+        var eventsRes = await db.from('venue_events').select('*').eq('room_id', room.id).order('event_date', { ascending: true, nullsFirst: false });
         var events = eventsRes.data || [];
-        var activeEvent = events.find(function (e) { return e.status === 'announced'; }) || events.find(function (e) { return e.status === 'waitlist'; });
+        var hoy = new Date(), hoyStr = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0') + '-' + String(hoy.getDate()).padStart(2, '0');
+        // Eventos programados = anunciados de hoy en adelante (los ya pasados no se venden). Pueden ser varios.
+        var upcoming = events.filter(function (e) { return e.status === 'announced' && (!e.event_date || e.event_date >= hoyStr); });
+        _vrUpcoming = upcoming;
+        var activeEvent = upcoming[0] || events.find(function (e) { return e.status === 'waitlist'; });
 
-        if (activeEvent && activeEvent.status === 'announced') {
-            var ticketsRes = await db.from('venue_ticket_types').select('*').eq('event_id', activeEvent.id).eq('active', true).order('price_cents');
-            var types = ticketsRes.data || [];
-            if (types.length) {
-                renderTicketSelector(types, activeEvent.id);
-            } else {
-                document.getElementById('vr-empty-card').style.display = 'block';
-            }
+        if (upcoming.length) {
+            var ticketsRes = await db.from('venue_ticket_types').select('*').in('event_id', upcoming.map(function (e) { return e.id; })).eq('active', true).order('price_cents');
+            var typesByEvent = {};
+            (ticketsRes.data || []).forEach(function (t) { (typesByEvent[t.event_id] = typesByEvent[t.event_id] || []).push(t); });
+            renderEventPicker(upcoming, typesByEvent);
         } else if (activeEvent && activeEvent.status === 'waitlist') {
             document.getElementById('vr-waitlist-card').style.display = 'block';
             document.getElementById('vr-btn-waitlist').onclick = function () { submitWaitlist(activeEvent.id, venue.id, room.id); };

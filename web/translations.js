@@ -2466,7 +2466,7 @@ const translations = {
         "nav-resources": "Recursos",
         "nav-freetrial": "Prueba Gratis",
         "nav-logout": "Cerrar Sesión",
-        "header-mi-portal": "MI PORTAL",
+        "header-mi-portal": "MI PERFIL",
         "portal-welcome-recognized": "¡Hola, {name}!",
         "portal-welcome-recognized-sub":
             "Eres parte de la familia Miami DJ Beat. Desde aquí reservas, rentas o compras en el shop, y verás en un solo lugar fechas, pagos y el detalle de lo que tengas con nosotros — con el mismo cariño de siempre, paso a paso.",
@@ -7134,7 +7134,7 @@ const translations = {
         "nav-resources": "Resources",
         "nav-freetrial": "Free Trial",
         "nav-logout": "Log Out",
-        "header-mi-portal": "MY PORTAL",
+        "header-mi-portal": "MI PERFIL",
         "portal-welcome-recognized": "Hello, {name}!",
         "portal-welcome-recognized-sub":
             "You are part of the Miami DJ Beat family. From here you can book, rent, or shop — and your dates, payments, and details will stay in one place, with us beside you every step of the way.",
