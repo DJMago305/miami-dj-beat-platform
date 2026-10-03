@@ -249,12 +249,21 @@ async function notifyVenueTicketOrder(
         let title = "Evento";
         let when = "";
         let place = "";
+        let mapQuery = "";                        // dirección completa del local, para los botones «Cómo llegar»
         if (o.eventId) {
-            const { data: ev } = await supabase
+            // postal_code es una columna nueva (SQL 20261003_venues_codigo_postal.sql): si aún no existe, se repite la consulta sin ella para no perder el correo.
+            let { data: ev, error: evErr } = await supabase
                 .from("venue_events")
-                .select("title, event_date, venue_rooms(name, venues(name, address))")
+                .select("title, event_date, venue_rooms(name, venues(name, address, city, postal_code))")
                 .eq("id", o.eventId)
                 .maybeSingle();
+            if (evErr) {
+                ({ data: ev } = await supabase
+                    .from("venue_events")
+                    .select("title, event_date, venue_rooms(name, venues(name, address, city))")
+                    .eq("id", o.eventId)
+                    .maybeSingle());
+            }
             if (ev) {
                 title = ev.title || title;
                 if (ev.event_date) {
@@ -262,7 +271,12 @@ async function notifyVenueTicketOrder(
                 }
                 const room = ev.venue_rooms;
                 const venue = room?.venues;
-                place = [venue?.name, room?.name, venue?.address].filter(Boolean).join(" · ");
+                // Dirección completa: «8000 SW 8th St, Miami, FL 33144» (el código postal solo se agrega si la ciudad no lo trae ya)
+                const zip = String(venue?.postal_code ?? "").trim();
+                const city = String(venue?.city ?? "").trim();
+                const fullAddress = [venue?.address, zip && !city.includes(zip) ? `${city} ${zip}`.trim() : city].filter(Boolean).join(", ");
+                place = [venue?.name, room?.name, fullAddress].filter(Boolean).join(" · ");
+                mapQuery = [venue?.name, fullAddress].filter(Boolean).join(", ");
             }
         }
 
@@ -270,6 +284,16 @@ async function notifyVenueTicketOrder(
         const amount = `$${(o.totalCents / 100).toFixed(2)}`;
         const lines = o.items.map((it) => `${escHtml(it.qty)}× ${escHtml(it.label)}`).join("<br>") || "—";
         const buyer = o.customerName || "—";
+
+        // «Cómo llegar» (solo compra de mesas): un correo no puede incrustar un mapa interactivo, así que lleva botones que abren la dirección
+        // del local en Google Maps y en Apple Maps (mismo formato de enlace que la tarjeta del local en la sala).
+        const q = encodeURIComponent(mapQuery);
+        const btn = "display:inline-block;margin:4px 8px 4px 0;padding:10px 18px;border-radius:24px;background:#c5a059;color:#111;font-weight:700;text-decoration:none";
+        const comoLlegar = mesas && mapQuery
+            ? `\n<p><b>Cómo llegar / Get directions:</b><br>${escHtml(mapQuery)}<br>
+<a href="https://www.google.com/maps/search/?api=1&query=${q}" style="${btn}">Google Maps</a>
+<a href="https://maps.apple.com/?q=${q}" style="${btn}">Apple Maps</a></p>`
+            : "";
 
         const send = (to: string, subject: string, html: string) =>
             fetch("https://api.resend.com/emails", {
@@ -285,7 +309,7 @@ async function notifyVenueTicketOrder(
                 `<h2>¡Gracias por tu compra! / Thank you!</h2>
 <p><b>${escHtml(title)}</b>${when ? `<br>${escHtml(when)}` : ""}${place ? `<br>${escHtml(place)}` : ""}</p>
 <p><b>${mesas ? "Mesas / Tables" : "Entradas / Tickets"}:</b><br>${lines}</p>
-<p><b>Total:</b> ${escHtml(amount)}<br><b>Código / Code:</b> ${escHtml(code)}</p>
+<p><b>Total:</b> ${escHtml(amount)}<br><b>Código / Code:</b> ${escHtml(code)}</p>${comoLlegar}
 <p>En la puerta, di tu nombre (<b>${escHtml(buyer)}</b>)${mesas && o.reservationName ? ` o el de la reserva (<b>${escHtml(o.reservationName)}</b>)` : ""} o muestra este correo.<br>
 At the door, give your name (<b>${escHtml(buyer)}</b>)${mesas && o.reservationName ? ` or the reservation name (<b>${escHtml(o.reservationName)}</b>)` : ""} or show this email.</p>
 <p style="color:#888;font-size:12px">Miami DJ Beat LLC</p>`,
