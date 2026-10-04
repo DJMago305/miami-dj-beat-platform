@@ -953,13 +953,15 @@
             (function(){
               function heroFrame(){ return document.querySelector('#tab-dashboard #booth-hero-container > .weather-scene > iframe'); }
               var payload;   // undefined=aún no consultado · null=sin evento hoy · obj=gig de hoy
+              var perfilCiudad='';   // ciudad del perfil del DJ (dj_profiles.city): respaldo del clima cuando no hay GPS ni evento hoy
               async function fetchToday(){
                 try{
                   var sb = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
                   if(!sb || !sb.auth) return null;
                   var sess = (await sb.auth.getSession()).data.session; if(!sess) return null;
-                  var prof = (await sb.from('dj_profiles').select('id').eq('user_id', sess.user.id).single()).data;
+                  var prof = (await sb.from('dj_profiles').select('id,city').eq('user_id', sess.user.id).single()).data;
                   if(!prof) return null;
+                  perfilCiudad = String(prof.city||'').trim();
                   var d = new Date(); var iso = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
                   var dow = d.getDay();
                   function t12(t){ if(!t) return null; var p=String(t).split(':'); var h=+p[0], m=+p[1]||0; if(isNaN(h)) return null; var ap=h<12?'AM':'PM'; var hh=h%12; if(hh===0)hh=12; return hh+(m?':'+String(m).padStart(2,'0'):'')+' '+ap; }
@@ -1014,7 +1016,9 @@
                 if(sent) return;
                 var f = heroFrame(); if(!f || !f.contentWindow) return;
                 if(payload===undefined) payload = await fetchToday();
-                if(payload){ f.contentWindow.postMessage({ type:'mdjb:today-event', event:payload }, '*'); sent=true; }
+                /* ANTES: solo se avisaba al clima si habia evento hoy; en un dia sin evento no llegaba ninguna ubicacion
+                   y el DJ veia la base de la empresa. Ahora tambien se manda la ciudad de su perfil. */
+                if(payload || perfilCiudad){ f.contentWindow.postMessage({ type:'mdjb:today-event', event:payload, perfilCiudad:perfilCiudad }, '*'); sent=true; }
               }
               window.addEventListener('message', function(e){ if(e.data && e.data.type==='mdjb:hero-ready'){ sent=false; send(); } });
               window.addEventListener('load', function(){ send(); setTimeout(send,1500); setTimeout(send,4000); });
@@ -1039,7 +1043,7 @@
                             <div class="weather-scene"
                                 style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; border-radius: 24px; z-index: 0;">
                                 <!-- ── NUEVO HERO WebGL 3D (reemplaza el motor CSS .weather-scene) — paridad con weather-lab, reversible vía git ── -->
-                                <iframe src="./weather-experience/index.html?v=20261004-lugar-del-turno"
+                                <iframe src="./weather-experience/index.html?v=20261004-ciudad-perfil"
                                     title="Clima MDJB — HERO Atmosférico 3D"
                                     loading="lazy"
                                     style="position:absolute; inset:0; width:100%; height:100%; border:0; border-radius:20px;"></iframe>
