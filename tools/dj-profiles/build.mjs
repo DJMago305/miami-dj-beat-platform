@@ -463,15 +463,15 @@ const FOOTER_AND_SCRIPTS_HTML = `  <footer class="footer">
       }
   })();
   </script>
-  <script src="./supabase-config.js?v=20260904-dj-profiles"></script>
-  <script src="./translations.js?v=20260927-bilingue-final"></script>
-  <script src="./i18n.js?v=20260904-dj-profiles"></script>
+  <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
+  <script src="./translations.js?v=20261003-mi-perfil-unico"></script>
+  <script src="./i18n.js?v=20260420-index-experience-rutas"></script>
   <script src="./header-smart-search.js?v=20260927-bilingue-hint"></script>
-  <script src="./mdj-identity.js?v=20260921-rol-unico"></script>
-  <script src="./auth.js?v=20260921-idiomas"></script>
-  <script src="./mdjb-shared-header.js?v=20260921-jobs-menu"></script>
-  <script src="./mdj-mainnav-infinite.js?v=20260904-dj-profiles"></script>
-  <script src="./mdj-mobile-header-fix.js?v=20260904-dj-profiles"></script>
+  <script src="./mdj-identity.js?v=20261003-identidad-unica"></script>
+  <script src="./auth.js?v=20260930-login-timeout-guard"></script>
+  <script src="./mdjb-shared-header.js?v=20261003-mi-perfil-unico"></script>
+  <script src="./mdj-mainnav-infinite.js?v=20260818-nav-canonico"></script>
+  <script src="./mdj-mobile-header-fix.js?v=20260916-purga-a"></script>
 `;
 // ⚠️ Corrección 2026-09-28 (ticket docs/tickets/2026-09-28-build-mjs-plantilla-
 // desactualizada-y-proteccion-hand-curated.md): estos 3 cache-busts
@@ -606,7 +606,7 @@ ${socialMetaTags({ title, description: metaDesc, image: ogImage, url: canonical,
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Outfit:wght@300;400;500;600;700&display=optional" rel="stylesheet" />
   <link rel="stylesheet" href="./styles.css?v=20260904-dj-profiles" />
-  <link rel="stylesheet" href="./header-unified.css?v=20260902-cortinas" />
+  <link rel="stylesheet" href="./header-unified.css?v=20261004-riel-seguro" />
   <link rel="stylesheet" href="./mdj-assistant.css?v=20260306-1" />
   <style>
     .djp-hero{max-width:1100px;margin:40px auto;padding:0 20px;display:grid;grid-template-columns:260px 1fr;gap:36px;align-items:start;}
@@ -731,7 +731,7 @@ ${socialMetaTags({ title: INDEX_TITLE, description: INDEX_DESC, image: SITE_OG_I
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Outfit:wght@300;400;500;600;700&display=optional" rel="stylesheet" />
   <link rel="stylesheet" href="./styles.css?v=20260904-dj-profiles" />
-  <link rel="stylesheet" href="./header-unified.css?v=20260902-cortinas" />
+  <link rel="stylesheet" href="./header-unified.css?v=20261004-riel-seguro" />
   <link rel="stylesheet" href="./mdj-assistant.css?v=20260306-1" />
   <style>
     .djidx-wrap{max-width:1100px;margin:40px auto;padding:0 20px;}
@@ -849,7 +849,7 @@ ${socialMetaTags({ title: TEAM_TITLE, description: TEAM_DESC, image: staff[0]?.p
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Outfit:wght@300;400;500;600;700&display=optional" rel="stylesheet" />
   <link rel="stylesheet" href="./styles.css?v=20260904-dj-profiles" />
-  <link rel="stylesheet" href="./header-unified.css?v=20260902-cortinas" />
+  <link rel="stylesheet" href="./header-unified.css?v=20261004-riel-seguro" />
   <link rel="stylesheet" href="./mdj-assistant.css?v=20260306-1" />
   <style>
     .team-wrap{max-width:1000px;margin:40px auto;padding:0 20px;}
@@ -1071,7 +1071,7 @@ export function planGeneration({
 
   const desiredSlugs = new Set(desired.map((d) => d.dj_slug));
   const managedSet = new Set(managed);
-  const create = desired.filter((d) => !managedSet.has(d.dj_slug)).map((d) => d.dj_slug);
+  const createRaw = desired.filter((d) => !managedSet.has(d.dj_slug)).map((d) => d.dj_slug);
   const keep = desired.filter((d) => managedSet.has(d.dj_slug)).map((d) => d.dj_slug);
   const stale = managed.filter((s) => !desiredSlugs.has(s));
 
@@ -1096,6 +1096,18 @@ export function planGeneration({
     }
   }
 
+  /* — corrección 2026-10-04: un RENAME-CANDIDATE es un DJ que YA TIENE página
+       (con el slug viejo). Crear además la del slug nuevo dejaría dos páginas
+       públicas de la misma persona (duplicado para Google) y, peor, el manifiesto
+       olvidaría el slug viejo y un --reconcile posterior podría borrar la página
+       real. Se excluye de `create` y del sitemap, y el manifiesto conserva el
+       slug viejo (ver renamedTo en main()). Resolver el rename es decisión humana. */
+  const renamedTo = new Map(renameCandidates.map((r) => [r.new, r.old]));
+  const create = createRaw.filter((s) => !renamedTo.has(s));
+  for (const r of renameCandidates) {
+    notes.push(`[RENAME-PENDIENTE] ${r.old}.html ya existe para user_id=${r.user_id}; NO se crea ${r.new}.html (evita página duplicada)`);
+  }
+
   /* — corrección 11: ancla de identidad. Si djmago305 aparece como borrable
        por el motivo que sea, se aborta la corrida entera. */
   if (staleRemovable.includes(IDENTITY_ANCHOR_SLUG)) {
@@ -1109,7 +1121,7 @@ export function planGeneration({
   const sitemapAdd = [
     { path: "dj/directorio.html", priority: "0.8" },
     { path: "equipo.html", priority: "0.6" },
-    ...desired.map((d) => ({ path: `dj/${d.dj_slug}.html`, priority: "0.7" })),
+    ...desired.filter((d) => !renamedTo.has(d.dj_slug)).map((d) => ({ path: `dj/${d.dj_slug}.html`, priority: "0.7" })),
   ];
   // Solo se propone quitar del sitemap lo que de verdad se va a borrar.
   const sitemapRemove = (reconcile ? staleRemovable : []).map((s) => `${SITE_ORIGIN}/dj/${s}.html`);
@@ -1118,7 +1130,7 @@ export function planGeneration({
     ok: errors.length === 0,
     errors, notes,
     rows, desired, skipped, staff,
-    managed, unowned, create, keep, stale, staleRemovable, renameCandidates, collisions,
+    managed, unowned, create, keep, stale, staleRemovable, renameCandidates, renamedTo, collisions,
     rosterSafetyAbort, sitemapAdd, sitemapRemove,
   };
 }
@@ -1257,7 +1269,7 @@ export async function main() {
     console.log(`✓ ${OUTPUT_DIR_OVERRIDE ? SITEMAP : "web/sitemap.xml"} (+${sitemapPlan.added.length} / -${sitemapPlan.removed.length})`);
   }
 
-  writeFileSync(SLUG_MANIFEST, `${JSON.stringify(buildSlugManifest(plan.desired), null, 2)}\n`, "utf8");
+  writeFileSync(SLUG_MANIFEST, `${JSON.stringify(buildSlugManifest(plan.desired.map((d) => (plan.renamedTo.has(d.dj_slug) ? { ...d, dj_slug: plan.renamedTo.get(d.dj_slug) } : d))), null, 2)}\n`, "utf8");
   console.log(`✓ ${OUTPUT_DIR_OVERRIDE ? SLUG_MANIFEST : "tools/dj-profiles/.slug-manifest.json"} (${plan.desired.length} entradas)`);
 
   // Los borrados van AL FINAL, después de que todas las altas salieron bien, y
