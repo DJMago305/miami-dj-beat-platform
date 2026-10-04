@@ -114,6 +114,7 @@ ok(am.layout.areas[2].siempre === true && !('siempre' in am.layout.areas[0]), 'l
 const areaDe = (k) => am.layout.tables.find((x) => x.key === k).area;
 ok(areaDe('S1') === 'salon' && areaDe('V1') === 'vip' && areaDe('T1') === 'terraza', 'cada mesa lleva el área en cuyo contorno está');
 ok(am.avisos.length === 0, 'sin avisos si todas las mesas caen dentro de un área');
+ok(am.layout.tables.find((x) => x.key === 'V1').zone === 'VIP' && am.layout.tables.find((x) => x.key === 'T1').zone === 'Terraza', 'con áreas de venta, la «zona» que ve el cliente es el nombre del área (VIP, Terraza), no una franja por distancia');
 const fuera = PS.aLayout(estado([...itemsMojitos, mesaIt('X9', { x: 700, y: 250 })]));
 ok(fuera.ok && !('area' in fuera.layout.tables.find((x) => x.key === 'X9')) && fuera.avisos.length === 1 && /X9/.test(fuera.avisos[0]), 'una mesa fuera de toda área de venta se guarda sin área y avisa (se venderá siempre)');
 const solapadas = PS.aLayout(estado([area('a', 'A', rect4(0, 0, 400, 400)), area('b', 'B', rect4(100, 100, 300, 300)), mesaIt('M', { x: 200, y: 200 })]));
