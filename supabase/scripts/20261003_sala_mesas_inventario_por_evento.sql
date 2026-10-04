@@ -77,16 +77,42 @@ create policy venue_event_tables_staff_read on public.venue_event_tables
 revoke all on public.venue_event_tables from public, anon, authenticated;
 grant select on public.venue_event_tables to authenticated;
 
--- ── 5. Mapa de la sala (plantilla): lo fija el dueño o el manager ───────────
+-- ── 5. Mapa de la sala (plantilla): lo fija el dueño o el manager (valida todo o nada; devuelve cuántas mesas fijó) ───────────
+-- La version simple que ya existe en produccion (de 20261003_sala_mesas_inventario_por_evento.sql) devolvia void y solo revisaba que el mapa fuera un objeto:
+-- Postgres no deja cambiar el tipo de retorno con CREATE OR REPLACE, asi que se reemplaza (nada mas la usa: la pantalla Mesas es quien la va a llamar).
+drop function if exists public.venue_room_set_layout(uuid, jsonb);
 create or replace function public.venue_room_set_layout(p_room_id uuid, p_layout jsonb)
-returns void language plpgsql security definer set search_path to 'public' as $$
-declare v_venue uuid;
+returns integer language plpgsql security definer set search_path to 'public' as $$
+declare v_venue uuid; v_total integer; v_unicas integer; t jsonb;
 begin
-  select venue_id into v_venue from public.venue_rooms where id = p_room_id;
+  select r.venue_id into v_venue from public.venue_rooms r where r.id = p_room_id;
   if v_venue is null then raise exception 'sala_no_existe'; end if;
   if not (public.is_platform_admin(auth.uid()) or public.can_manage_venue_layout(v_venue)) then raise exception 'no_autorizado'; end if;
-  if p_layout is null or jsonb_typeof(p_layout) <> 'object' then raise exception 'mapa_invalido'; end if;
+
+  if p_layout is null or jsonb_typeof(p_layout) is distinct from 'object' or jsonb_typeof(p_layout -> 'tables') is distinct from 'array' then
+    raise exception 'mapa_invalido';
+  end if;
+  if p_layout ? 'maps' and jsonb_typeof(p_layout -> 'maps') is distinct from 'array' then raise exception 'mapa_invalido'; end if;   -- el dibujo del plano, si viene, debe ser una lista
+  v_total := jsonb_array_length(p_layout -> 'tables');
+  if v_total < 1 or v_total > 300 then raise exception 'mapa_invalido'; end if;
+
+  for t in select * from jsonb_array_elements(p_layout -> 'tables') loop
+    if jsonb_typeof(t) is distinct from 'object'
+       or jsonb_typeof(t -> 'key') is distinct from 'string' or length(btrim(t ->> 'key')) = 0 or length(t ->> 'key') > 20
+       or jsonb_typeof(t -> 'price_cents') is distinct from 'number'
+       or (t ->> 'price_cents')::numeric <> trunc((t ->> 'price_cents')::numeric)
+       or (t ->> 'price_cents')::numeric not between 0 and 1000000
+       or (t ? 'seats' and (jsonb_typeof(t -> 'seats') is distinct from 'number'
+                            or (t ->> 'seats')::numeric <> trunc((t ->> 'seats')::numeric)
+                            or (t ->> 'seats')::numeric not between 1 and 40)) then
+      raise exception 'mapa_invalido';
+    end if;
+  end loop;
+  select count(distinct x ->> 'key') into v_unicas from jsonb_array_elements(p_layout -> 'tables') x;
+  if v_unicas <> v_total then raise exception 'mapa_invalido'; end if;   -- llaves repetidas
+
   update public.venue_rooms set layout = p_layout, updated_at = now() where id = p_room_id;
+  return v_total;
 end $$;
 
 -- ── 6. Abrir la venta de mesas de un evento: copia el mapa y crea una fila por mesa ──────

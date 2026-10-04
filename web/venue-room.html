@@ -511,12 +511,21 @@ window.MDJ_SKIP_GLOBAL_EVENT_CART = true;
         return (ev && ev.__maps) || null;
     }
     function eventRoomOpts(ev) { return { real: _vrRealCache[ev.id] || null, layouts: layoutsFor(ev), eventId: ev.id }; }
+    // El staff puede juntar y mover mesas en el momento (la sala no cambia, solo dónde están las mesas ese día): el plano lee también la disposición
+    // del evento y se redibuja solo, junto con la disponibilidad (cada ~15 s, sin recargar).
+    async function loadEventLayout(eventId) {
+        try { var r = await window.getSupabaseClient().from('venue_events').select('layout').eq('id', eventId).maybeSingle(); return (r && r.data && r.data.layout) || null; } catch (e) { return null; }
+    }
     function refreshReal() {
         var ev = (_vrUpcoming || []).filter(function (e) { return _vrPlanKey === 'evento:' + e.id; })[0];
         if (!ev || !_vrPlanApi) return;
-        loadRealInventory(ev.id).then(function (m) {
-            var antes = JSON.stringify(_vrRealCache[ev.id] || null); _vrRealCache[ev.id] = m;
-            if (_vrPlanKey === 'evento:' + ev.id && JSON.stringify(m) !== antes) _vrPlanApi.open('evento:' + ev.id, eventRoomOpts(ev));
+        Promise.all([loadRealInventory(ev.id), loadEventLayout(ev.id)]).then(function (res) {
+            var m = res[0], lay = res[1];
+            var antes = JSON.stringify(_vrRealCache[ev.id] || null) + '|' + JSON.stringify((ev.layout && ev.layout.maps) || null);
+            _vrRealCache[ev.id] = m;
+            if (lay && Array.isArray(lay.maps) && lay.maps.length) { ev.layout = lay; ev.__maps = null; }          // layoutsFor() vuelve a leer los mapas nuevos
+            var despues = JSON.stringify(_vrRealCache[ev.id] || null) + '|' + JSON.stringify((ev.layout && ev.layout.maps) || null);
+            if (_vrPlanKey === 'evento:' + ev.id && despues !== antes) _vrPlanApi.open('evento:' + ev.id, eventRoomOpts(ev));
         });
     }
     function openEventRoom(ev) {
