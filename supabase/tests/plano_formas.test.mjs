@@ -79,6 +79,9 @@ for (const [n, items] of malos2) ok(PS.aLayout(estado(items)).ok === false, `no 
 ok(PS.aLayout({ maps: [plano([mesaIt('T01')], { scope: 'event' })] }).ok === false, 'los planos de evento no viajan a la sala (sin plantilla no hay qué guardar)');
 const dos = PS.aLayout({ maps: [plano([mesaIt('T01')], { id: 'a', name: 'A' }), plano([mesaIt('T01')], { id: 'b', name: 'B' })] });
 ok(dos.ok === false && /repetido/.test(dos.errores.join(' ')), 'el mismo identificador en dos planos de la sala se rechaza');
+const conSiempre = PS.aLayout(estado([mesaIt('T01')], { siempre: true }));
+ok(conSiempre.ok && conSiempre.layout.maps[0].siempre === true && !('siempre' in r1.layout.maps[0]), 'un plano marcado «siempre abierta» viaja marcado (y los demás no llevan la marca)');
+ok(PS.desdeLayout(conSiempre.layout).maps[0].siempre === true, 'al reabrirlo conserva la marca');
 const ida = PS.desdeLayout(r1.layout);
 ok(ida.venue === 'Local de prueba' && ida.maps.length === 1 && ida.maps[0].items.length === 4 && ida.maps[0].scope === 'template', 'abrir una sala con «builder» recupera el dibujo tal cual');
 const vuelta = PS.aLayout({ venue: ida.venue, maps: ida.maps });
@@ -157,6 +160,8 @@ r = await llama(U.owner, base([bueno], { room: { w: 100, h: 520 } })); ok(/mapa_
 r = await llama(U.owner, base([bueno], { room: { w: 1600, h: 1200 } })); ok(r.n === 1, 'acepta un plano grande (1600 × 1200)');
 r = await llama(U.owner, { ...base([bueno]), maps: Array.from({ length: 13 }, () => base([]).maps[0]) }); ok(/mapa_invalido/.test(r.err || ''), 'rechaza más de 12 planos');
 r = await llama(U.owner, { ...base([bueno]), pesado: 'x'.repeat(1600000) }); ok(/mapa_invalido/.test(r.err || ''), 'rechaza un archivo de más de 1.5 MB');
+r = await llama(U.owner, base([bueno], { siempre: true })); ok(r.n === 1, 'la base acepta «siempre»: true');
+r = await llama(U.owner, base([bueno], { siempre: 'si' })); ok(/mapa_invalido/.test(r.err || ''), 'y rechaza «siempre» que no sea sí/no');
 r = await llama(U.owner, { ...base([bueno]), maps: [{ id: 'sala', label: 'x' }] }); ok(r.n === 1, 'un plano sin figuras (formato anterior) sigue valiendo');
 await db.exec('reset role'); const [intacto] = await q(`select layout -> 'maps' -> 0 ->> 'id' as id from venue_rooms where id = $1`, [room.id]);
 ok(intacto.id === 'sala', 'tras los rechazos, lo guardado sigue igual');

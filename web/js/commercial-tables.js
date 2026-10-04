@@ -162,7 +162,9 @@
         sin_plano: 'Este evento no tiene dibujo del plano: no se pueden mover las mesas.',
         mesa_sin_dibujo: 'Una de las mesas no está dibujada en el plano.',
         movimiento_invalido: 'No se pudo mover: revisa las mesas elegidas.',
-        grupo_invalido: 'El grupo debe tener entre 1 y 40 mesas, sin repetir.'
+        grupo_invalido: 'El grupo debe tener entre 1 y 40 mesas, sin repetir.',
+        areas_invalidas: 'Elige al menos un área de la sala.',
+        area_con_ventas: 'Esa área ya tiene mesas vendidas, apartadas o en pago: no se puede cerrar. Libéralas primero.'
     };
     function msgError(e) { var t = String((e && e.message) || ''); var k = Object.keys(ERRORES).filter(function (c) { return t.indexOf(c) >= 0; })[0]; return k ? ERRORES[k] : 'No se pudo completar. Intenta de nuevo.'; }
     function sinSql(err) { return err && (err.code === '42P01' || err.code === 'PGRST205' || /venue_event_tables|schema cache|does not exist/i.test(err.message || '')); }
@@ -209,13 +211,13 @@
         document.head.appendChild(s);
     }
 
-    var S = { db: null, box: null, venues: [], venue: null, events: [], event: null, rows: [], mapIdx: 0, sel: null, q: '', timer: null, sinSql: false, req: 0, grupo: false, pick: {}, gname: '', gnote: '', gpeople: '', arrastrando: false };
+    var S = { db: null, box: null, venues: [], venue: null, events: [], event: null, rows: [], mapIdx: 0, sel: null, q: '', timer: null, sinSql: false, req: 0, grupo: false, pick: {}, gname: '', gnote: '', gpeople: '', arrastrando: false, areas: {} };
     var NS = 'http://www.w3.org/2000/svg';
 
     function init(o) {
         css();
         S.db = o.db; S.box = o.box; S.venues = o.venues || [];
-        S.venue = null; S.events = []; S.event = null; S.rows = []; S.mapIdx = 0; S.sel = null; S.q = ''; S.sinSql = false; S.req++; S.grupo = false; S.pick = {}; S.gname = ''; S.gnote = ''; S.gpeople = '';   // estado limpio en cada arranque
+        S.venue = null; S.events = []; S.event = null; S.rows = []; S.mapIdx = 0; S.sel = null; S.q = ''; S.sinSql = false; S.req++; S.grupo = false; S.pick = {}; S.gname = ''; S.gnote = ''; S.gpeople = ''; S.areas = {};   // estado limpio en cada arranque
         if (!S.venues.length) { S.box.innerHTML = '<p class="ct-empty">Tu cuenta todavía no tiene locales vinculados.</p>'; return; }
         S.venue = S.venues[0];
         S.box.innerHTML = '';
@@ -268,7 +270,16 @@
     }
     function fechaCorta(d) { var p = String(d).split('-'); if (p.length < 3) return d; var dt = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2])); return dt.toLocaleDateString('es-US', { weekday: 'short', day: 'numeric', month: 'short' }).replace(/\./g, ''); }
 
+    // Los planos (áreas) de la sala del evento: se leen una vez (la sala pública y la plantilla son datos públicos).
+    async function ensureAreas(roomId) {
+        if (!roomId || S.areas[roomId]) return;
+        var r = await S.db.from('venue_rooms').select('layout').eq('id', roomId).maybeSingle();
+        var maps = r && r.data && r.data.layout && Array.isArray(r.data.layout.maps) ? r.data.layout.maps : [];
+        S.areas[roomId] = maps.filter(function (m) { return m && m.id; }).map(function (m) { return { id: m.id, label: m.label || m.id, siempre: m.siempre === true }; });
+    }
     async function loadRows(silencioso) {
+        if (!S.event) return;
+        await ensureAreas(S.event.room_id);
         if (!S.event) return;
         var id = S.event.id, mia = ++S.req;                              // cada carga tiene su número: la respuesta vieja se descarta, ninguna se pierde
         var r = await S.db.from('venue_event_tables').select('*').eq('event_id', id).order('table_key');
@@ -343,7 +354,10 @@
         var openBtn = q$('#ct-open');
         if (!rows.length) {
             openBtn.hidden = !abre;
-            body(abre ? '<p class="ct-empty">La venta de mesas de este evento todavía no está abierta. Al abrirla se crea el inventario de mesas con el mapa de la sala, y los clientes pueden empezar a comprar.</p>'
+            var as = S.areas[S.event.room_id] || [];
+            body(abre ? '<p class="ct-empty">La venta de mesas de este evento todavía no está abierta. Al abrirla se crea el inventario de mesas con el mapa de la sala, y los clientes pueden empezar a comprar.</p>' +
+                        (as.length > 1 ? '<div class="ct-map-sum" id="ct-open-areas"><b>Áreas que se venden en este evento</b><br>' + as.map(function (a) { return '<label style="display:inline-flex;gap:6px;align-items:center;margin:6px 16px 0 0;"><input type="checkbox" value="' + esc(a.id) + '" checked' + (a.siempre ? ' disabled' : '') + '> ' + esc(a.label) + (a.siempre ? ' <small style="color:rgba(255,255,255,.55)">(siempre abierta)</small>' : '') + '</label>'; }).join('') +
+                          '<br><small style="color:rgba(255,255,255,.6);">Normalmente se venden todas juntas. Desmarca un área solo en una ocasión especial (por ejemplo, el VIP cuando se separa con una pared).</small></div>' : '')
                       : '<p class="ct-empty">La venta de mesas de este evento todavía no está abierta. Pídele al dueño o a un manager que la abra.</p>');
             return;
         }
@@ -360,6 +374,7 @@
             '<div class="ct-bar"><input type="search" id="ct-q" placeholder="Buscar por nombre de quien renta, reserva o mesa (ej. Alicia)" value="' + esc(keepQ) + '" aria-label="Buscar mesa">' +
             '<button type="button" class="cc-btn2' + (S.grupo ? ' ct-on' : '') + '" id="ct-grupo" aria-pressed="' + S.grupo + '">' + (S.grupo ? 'Salir de «Armar grupo»' : 'Armar grupo') + '</button></div>' +
             (maps.length > 1 ? '<div class="ct-tabs" role="tablist">' + maps.map(function (m, i) { return '<button type="button" role="tab" data-i="' + i + '" aria-selected="' + (i === S.mapIdx) + '">' + esc(m.label || 'Mapa') + '</button>'; }).join('') + '</div>' : '') +
+            areasHtml(maps) +
             '<div class="ct-grid"><div><div class="ct-wrap"><svg class="ct-plan" id="ct-plan" viewBox="0 0 800 520" role="group" aria-label="Plano de la sala"></svg></div>' +
             '<div class="ct-leg"><span><i style="background:#00c878"></i>Libre</span><span><i style="background:#ffb400"></i>En pago (el cliente está pagando)</span><span><i style="background:#ff6060"></i>Apartada / vendida</span></div></div>' +
             '<div class="ct-side" id="ct-side"></div></div><div class="ct-list" id="ct-list"></div>';
@@ -372,6 +387,7 @@
         var byKey = {}; rows.forEach(function (r) { byKey[r.table_key] = r; });
         drawPlan(q$('#ct-plan'), maps[S.mapIdx], byKey, ahora, norm(S.q).trim());
         [].forEach.call(S.box.querySelectorAll('.ct-tabs button'), function (b) { b.addEventListener('click', function () { S.mapIdx = Number(b.dataset.i); render(false); }); });
+        wireAreas();
         q$('#ct-grupo').addEventListener('click', function () { S.grupo = !S.grupo; S.pick = {}; S.sel = null; render(false); });
         var qi = q$('#ct-q');
         qi.addEventListener('input', function () { S.q = qi.value; var pos = qi.selectionStart; render(false); var n = q$('#ct-q'); n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) { /* ok */ } });
@@ -528,10 +544,41 @@
         avisoGrupo(accion === 'sell' ? res.data + ' mesas vendidas a nombre de «' + name + '».' : res.data + ' mesas apartadas.', false);
     }
 
+    // Áreas del evento (una sala puede tener varios planos): casi siempre se venden todas juntas; en una ocasión especial se cierra una.
+    function areasHtml(mapsEvento) {
+        var as = S.areas[S.event.room_id] || [];
+        if (!core.puedeAbrirVenta(S.venue.role) || as.length < 2) return '';
+        var activas = {}; (S.event.layout && Array.isArray(S.event.layout.maps) ? S.event.layout.maps : []).forEach(function (m) { activas[m.id] = true; });
+        return '<details class="ct-map" id="ct-areas"><summary>Áreas de este evento</summary><div class="ct-map-in"><div class="ct-map-sum" style="margin-top:6px;">' +
+            as.map(function (a) { return '<label style="display:inline-flex;gap:6px;align-items:center;margin:6px 16px 0 0;"><input type="checkbox" value="' + esc(a.id) + '"' + (activas[a.id] || a.siempre ? ' checked' : '') + (a.siempre ? ' disabled' : '') + '> ' + esc(a.label) + (a.siempre ? ' <small style="color:rgba(255,255,255,.55)">(siempre abierta)</small>' : '') + '</label>'; }).join('') +
+            '<br><small style="color:rgba(255,255,255,.6);">Desmarca un área para cerrarla en este evento. No se puede cerrar un área con mesas vendidas, apartadas o en pago.</small></div>' +
+            '<div class="ct-btns"><button type="button" class="cc-btn2" id="ct-areas-set">Aplicar áreas</button></div><p class="ct-msg" id="ct-areas-msg" role="status"></p></div></details>';
+    }
+    function wireAreas() {
+        var b = q$('#ct-areas-set'); if (!b) return;
+        b.addEventListener('click', async function () {
+            var msg = q$('#ct-areas-msg'), marcadas = [].map.call(S.box.querySelectorAll('#ct-areas input:checked'), function (i) { return i.value; }), total = (S.areas[S.event.room_id] || []).length;
+            if (!marcadas.length) { msg.style.color = '#ff6060'; msg.textContent = ERRORES.areas_invalidas; return; }
+            if (!window.confirm('¿Vender en este evento solo: ' + marcadas.join(', ') + '?')) return;
+            b.disabled = true; msg.style.color = ''; msg.textContent = 'Guardando…';
+            var res = await S.db.rpc('venue_event_open_tables', { p_event_id: S.event.id, p_maps: marcadas.length === total ? null : marcadas });
+            b.disabled = false;
+            if (res.error) {
+                var sinFn = res.error.code === 'PGRST202' || res.error.code === '42883' || /could not find the function|schema cache/i.test(res.error.message || '');
+                msg.style.color = '#ff6060'; msg.textContent = sinFn ? 'Elegir áreas todavía no está activado en la base de datos.' : msgError(res.error); return;
+            }
+            await loadEvents();
+            var m2 = q$('#ct-areas-msg'); if (m2) { m2.style.color = '#00c878'; m2.textContent = 'Áreas actualizadas.'; }
+        });
+    }
     async function openSales() {
         if (!S.event) return;
+        var as = S.areas[S.event.room_id] || [], marcadas = [].map.call(S.box.querySelectorAll('#ct-open-areas input:checked'), function (i) { return i.value; });
+        if (as.length > 1 && S.box.querySelector('#ct-open-areas') && !marcadas.length) { body('<p class="ct-empty" style="color:#ff6060;">' + esc(ERRORES.areas_invalidas) + '</p>'); render(false); return; }
+        var args = { p_event_id: S.event.id };
+        if (as.length > 1 && marcadas.length && marcadas.length < as.length) args.p_maps = marcadas;      // solo si se cerró alguna: lo habitual es abrir todas
         var btn = q$('#ct-open'); btn.disabled = true; btn.textContent = 'Abriendo…';
-        var res = await S.db.rpc('venue_event_open_tables', { p_event_id: S.event.id });
+        var res = await S.db.rpc('venue_event_open_tables', args);
         btn.disabled = false; btn.textContent = 'Abrir la venta de mesas';
         if (res.error) { body('<p class="ct-empty" style="color:#ff6060;">' + esc(msgError(res.error)) + '</p>'); btn.hidden = false; return; }
         // El evento ahora trae su mapa (copia de la sala) y tables_open: se recarga todo.
