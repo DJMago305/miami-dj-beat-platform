@@ -512,3 +512,25 @@ test("23 · una corrida REAL nunca reescribe un perfil existente ni toca directo
     rmSync(scratch, { recursive: true, force: true });
   }
 });
+
+test("24 · un DJ que ya tiene página con otro slug (RENAME) NO genera página duplicada", () => {
+  // Caso real 2026-10-04: DJSolitario tiene web/dj/djsolitario.html pero en la
+  // base su slug ahora es otro. Antes, el plan marcaba RENAME-CANDIDATE y ADEMÁS
+  // lo ponía en `create` y en el sitemap: dos páginas públicas de la misma persona.
+  const base = DJ();
+  const nuevo = { ...base, user_id: "00000000-0000-4000-8000-0000000000aa", dj_slug: "slug-nuevo", stage_name: "DJ Renombrado" };
+  const manifest = { ok: true, existed: true, slugs: { [nuevo.user_id]: "slug-viejo" } };
+  const plan = planGeneration({
+    rows: [base, nuevo],
+    existingFiles: [managedFile(base.dj_slug), managedFile("slug-viejo")],
+    manifest,
+  });
+  assert.equal(plan.renameCandidates.length, 1);
+  assert.equal(plan.create.includes("slug-nuevo"), false, "no se crea la página del slug nuevo");
+  assert.equal(plan.sitemapAdd.some((s) => s.path === "dj/slug-nuevo.html"), false, "el sitemap no suma el slug nuevo");
+  assert.equal(plan.renamedTo.get("slug-nuevo"), "slug-viejo", "se recuerda el slug viejo para el manifiesto");
+  // Y un DJ realmente nuevo (sin página previa) SÍ se crea.
+  const otro = { ...base, user_id: "00000000-0000-4000-8000-0000000000bb", dj_slug: "dj-realmente-nuevo", stage_name: "DJ Nuevo" };
+  const plan2 = planGeneration({ rows: [base, otro], existingFiles: [managedFile(base.dj_slug)], manifest: { ok: true, existed: true, slugs: {} } });
+  assert.deepEqual(plan2.create, ["dj-realmente-nuevo"]);
+});
