@@ -54,6 +54,12 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
 .fb-selbar button { border: 1px solid rgba(197,160,89,.45); background: rgba(197,160,89,.1); color: #e8c987; border-radius: 50px; padding: 6px 14px; font-weight: 700; font-size: 13px; cursor: pointer; font-family: inherit; }
 .fb-selbar button:disabled { opacity: .35; cursor: default; }
 #fb-del2:not(:disabled) { border-color: rgba(255,96,96,.6); color: #ff9a9a; background: rgba(255,96,96,.1); }
+.fb-objs { max-height: 220px; overflow: auto; border: 1px solid rgba(255,255,255,.1); border-radius: 10px; padding: 4px; margin-bottom: 8px; }
+.fb-obj { display: flex; gap: 6px; align-items: center; margin: 2px 0; }
+.fb-obj.sel { background: rgba(197,160,89,.18); border-radius: 8px; }
+.fb-side .fb-obj-pick { flex: 1; text-align: left; border: 0; background: transparent; color: rgba(255,255,255,.85); padding: 5px 8px; font-size: 12px; font-weight: 600; cursor: pointer; border-radius: 8px; font-family: inherit; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fb-side .fb-obj-pick:hover { background: rgba(255,255,255,.08); }
+.fb-side .fb-obj-del { border: 1px solid rgba(255,96,96,.5); background: rgba(255,96,96,.08); color: #ff9a9a; border-radius: 50px; padding: 3px 10px; font-size: 11px; font-weight: 700; cursor: pointer; font-family: inherit; }
 .fb-svg .hdl { fill: #fff; stroke: #c5a059; stroke-width: 1.5; }
 .fb-svg .hdl.add { fill: rgba(197,160,89,.35); stroke: #c5a059; stroke-width: 1.5; }
 .fb-svg .hdl.rot { fill: #c5a059; stroke: #fff; stroke-width: 2; }
@@ -414,6 +420,8 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
             g = PS.dibujarItem(parent, it);
             if (!g) return;
             g.classList.add('it'); if (sel) g.classList.add('sel');
+            if (it.k === 'wall') { var hw = el('line', { x1: it.x1, y1: it.y1, x2: it.x2, y2: it.y2, stroke: 'transparent', 'stroke-width': Math.max(18, (it.th || 6) + 12), 'stroke-linecap': 'round', 'pointer-events': 'stroke', 'class': 'hit' }); g.insertBefore(hw, g.firstChild); }          // zona de toque ancha: una pared delgada se agarra sin precisión
+            else if (it.k === 'door') { var pu = it.sub === 'puerta', hd = el('rect', { x: -it.w / 2 - 6, y: pu ? -it.w - 6 : -14, width: it.w + 12, height: pu ? it.w + 16 : 28, fill: 'transparent', 'pointer-events': 'all', 'class': 'hit' }); g.insertBefore(hd, g.firstChild); }
             if (it.k === 'poly' || it.k === 'shape' || it.k === 'zone' || it.k === 'stage') { var cuerpo = g.querySelector('.body'); if (cuerpo) cuerpo.setAttribute('pointer-events', 'all'); }   // sin relleno también se selecciona por dentro
             bb = bbox(it);
             if (it.k === 'poly') {
@@ -612,11 +620,25 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
     }
 
     // ───────── Panel de propiedades ─────────
+    // Todos los objetos del plano en una lista: tocar uno lo selecciona y «Quitar» lo borra (sirve para lo que es muy delgado o está tapado y no se alcanza con el mouse).
+    function nombreObj(it) {
+        var base = it.k === 'table' ? 'Mesa ' + (it.label || '') : it.k === 'text' ? 'Texto «' + (it.text || '') + '»' : libName(it) + (it.label ? ' «' + it.label + '»' : '');
+        var pos = it.k === 'wall' ? '(' + Math.round(it.x1) + ',' + Math.round(it.y1) + ')→(' + Math.round(it.x2) + ',' + Math.round(it.y2) + ')' : it.k === 'poly' ? '' : '(' + Math.round(it.x) + ',' + Math.round(it.y) + ')';
+        return base + (pos ? ' ' + pos : '');
+    }
+    function listaObjetosHtml(map) {
+        if (!map.items.length) return '';
+        var orden = { poly: 0, zone: 1, stage: 1, shape: 2, wall: 3, door: 4, table: 5, chair: 5, text: 6 };
+        var filas = map.items.map(function (it, i) { return { it: it, i: i }; }).sort(function (a, b) { return (orden[a.it.k] || 9) - (orden[b.it.k] || 9) || a.i - b.i; });
+        return '<h3>Objetos del plano (' + map.items.length + ')</h3><div class="fb-objs">' + filas.map(function (f) {
+            return '<div class="fb-obj' + (f.it.id === selId ? ' sel' : '') + '"><button type="button" class="fb-obj-pick" data-obj="' + escapeAttr(f.it.id) + '">' + escapeHtml(nombreObj(f.it)) + '</button><button type="button" class="fb-obj-del" data-objdel="' + escapeAttr(f.it.id) + '" aria-label="Quitar ' + escapeAttr(nombreObj(f.it)) + '">Quitar</button></div>';
+        }).join('') + '</div>';
+    }
     function renderSide() {
         var side = $('fb-side'), map = cur(), it = item(selId);
         var h = '<div class="fb-msg" id="fb-msg"></div>';
         if (!it) {
-            h += '<h3>Selecciona un objeto</h3><p class="fb-hint">Toca un objeto del plano para editarlo; doble clic para escribirle el nombre. Arrástralo para moverlo, las manijas blancas para agrandarlo y el círculo dorado de arriba para girarlo (Mayús: de 15° en 15°). Teclas: flechas para ajustar, R para girar 90°, Supr para borrar, Ctrl+Z para deshacer.</p>';
+            h += '<h3>Selecciona un objeto</h3><p class="fb-hint">Toca un objeto del plano para editarlo; doble clic para escribirle el nombre. Si algo es muy delgado o está tapado, búscalo en la lista «Objetos del plano» de abajo y pulsa «Quitar». Arrástralo para moverlo, las manijas blancas para agrandarlo y el círculo dorado de arriba para girarlo (Mayús: de 15° en 15°). Teclas: flechas para ajustar, R para girar 90°, Supr para borrar, Ctrl+Z para deshacer.</p>';
         } else {
             h += '<h3>' + escapeHtml(libName(it)) + '</h3>';
             if (it.k === 'table') h += field('Identificador', 'label', it.label, 'text') + '<p class="fb-hint">El número no depende de la posición: mover la mesa no cambia su ID.</p>';
@@ -658,6 +680,7 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
             h += '<div class="fb-row2" style="margin-top:10px"><button type="button" id="fb-front">Al frente</button><button type="button" id="fb-back">Al fondo</button></div>';
             h += '<div class="fb-row2" style="margin-top:10px"><button type="button" id="fb-dup">Duplicar</button><button type="button" id="fb-del">Eliminar</button></div>';
         }
+        h += listaObjetosHtml(map);
         // Precio por cercanía
         var zp = map.zonePrice || (map.zonePrice = { r1: 230, r2: 330, p1: 400, p2: 250, p3: 150 });
         h += '<h3>Precio por cercanía al escenario</h3>' +
@@ -695,6 +718,8 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
             inp.addEventListener('input', function () { applyRef(inp.getAttribute('data-r'), Number(inp.value)); });
         });
         var b = function (id, fn) { var x = $(id); if (x) x.addEventListener('click', fn); };
+        [].forEach.call(side.querySelectorAll('[data-obj]'), function (x) { x.addEventListener('click', function () { selId = x.getAttribute('data-obj'); render(); }); });
+        [].forEach.call(side.querySelectorAll('[data-objdel]'), function (x) { x.addEventListener('click', function () { selId = x.getAttribute('data-objdel'); removeSel(); }); });
         b('fb-del', removeSel); b('fb-dup', dupSel);
         b('fb-front', function () { var m = cur(); snapshot(); m.items = m.items.filter(function (i) { return i.id !== it.id; }); m.items.push(it); commit(); });
         b('fb-back', function () { var m = cur(); snapshot(); m.items = m.items.filter(function (i) { return i.id !== it.id; }); m.items.unshift(it); commit(); });
