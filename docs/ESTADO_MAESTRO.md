@@ -3804,3 +3804,8 @@ Informe Maestro SEO (artifact privado) + ejecución de las correcciones aprobada
 - **3 · Enlaces contextuales:** `quinceanera-waltz-lessons-miami.html` → `quinceanera.html` y `wedding-dance-lessons-miami.html` → `weddings.html`, con claves es/en en `translations.js`.
 - **4 · Home sin www: NO APLICADA.** Su primer paso es la Inspección de URL de Search Console y la extensión de Chrome no estaba conectada; el segundo (un solo salto 308 hacia www) se hace en la configuración de dominios de Vercel, no en el repo, y solo si Google eligió el dominio sin www.
 - Probado en navegador local (puerto 8000, esta rama): índice, artículo, slug inexistente (`noindex`), Latin (título/H1/JSON-LD), Corporate (JSON-LD) y los dos enlaces. Guardas `check-hygiene` y `check-i18n` pasan.
+
+## [2026-10-04] Página «DJ en Key Largo» (SEO local, residencia Sundowners) — PR abierto, aprobada por el PO
+- Nueva `web/dj-key-largo.html`: título «DJ in Key Largo, FL | Weddings, Events & Private Parties», Service + FAQPage (7 preguntas iguales al texto visible), canonical propio, foto y video reales de la residencia (video por URL absoluta de Storage). Enlazada desde la píldora «Key Largo» de `florida-keys.html`; en `sitemap.xml`; 29 claves `kl-*` es/en en `translations.js`. Ticket: `docs/tickets/2026-10-03-TICKET-pagina-dj-key-largo.md` (sección 9 con el estado).
+- Revisada en navegador en el contenedor real (escritorio y móvil, ES/EN). Guardas `check-hygiene` y `check-i18n` pasan.
+- **Pendiente (PO):** el letrero de la foto dice domingo 10 AM–2 PM y el texto 12–5 p. m. (regla del turno en BD). **Pendiente (Hilo Maestro):** agregar `dj-key-largo` a `MDJ_PAGINAS_SERVICIOS` en `mdjb-shared-header.js` (pausado). **Pendiente:** `florida-keys.html` con `.mp4` de ruta relativa.
