@@ -94,6 +94,7 @@ begin
     if jsonb_array_length(p_layout -> 'maps') > 12 then raise exception 'mapa_invalido'; end if;
     for m in select * from jsonb_array_elements(p_layout -> 'maps') loop
       if jsonb_typeof(m) is distinct from 'object' then raise exception 'mapa_invalido'; end if;
+      if m ? 'siempre' and jsonb_typeof(m -> 'siempre') is distinct from 'boolean' then raise exception 'mapa_invalido'; end if;
       if m ? 'room' and not (jsonb_typeof(m -> 'room') = 'object' and public.venue_plano_num(m -> 'room' -> 'w', 300, 2000) and public.venue_plano_num(m -> 'room' -> 'h', 300, 2000)) then raise exception 'mapa_invalido'; end if;
       if m ? 'shapes' then
         if jsonb_typeof(m -> 'shapes') is distinct from 'array' or jsonb_array_length(m -> 'shapes') > 400 then raise exception 'mapa_invalido'; end if;

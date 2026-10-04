@@ -156,6 +156,7 @@
             var room = m.room || { w: 800, h: 520 };
             maps.push({ id: m.id, label: m.name, custom: true, room: { w: Math.round(room.w), h: Math.round(room.h) }, focal: { x: Math.round(esc ? esc.x : room.w / 2), y: Math.round(esc ? esc.y : 52) },
                 fixed: [], zones: [{ name: 'Mesas', maxD: 9999, price: 0 }], shapes: formas, tables: geo });
+            if (m.siempre === true) maps[maps.length - 1].siempre = true;               // área pública siempre abierta (p. ej. una terraza): no se cierra en ningún evento
         });
         if (sinPrecio.length) out.errores.push('Falta el precio de: ' + sinPrecio.slice(0, 10).join(', ') + (sinPrecio.length > 10 ? '… (' + sinPrecio.length + ' mesas)' : '') + '.');
         if (!inventario.length && !out.errores.length) out.errores.push('El plano no tiene mesas.');
@@ -180,6 +181,7 @@
         var meta = {}; (Array.isArray(layout.tables) ? layout.tables : []).forEach(function (t) { meta[t.key] = t; });
         (Array.isArray(layout.maps) ? layout.maps : []).forEach(function (mp) {
             var m = { id: nuevoId(), scope: 'template', name: mp.label || 'Plano', room: mp.room || { w: 800, h: 520 }, items: [], ref: null };
+            if (mp.siempre === true) m.siempre = true;
             if (!mp.custom) {
                 [[340, 505, 12, 505], [12, 505, 12, 12], [12, 12, 788, 12], [788, 12, 788, 505], [788, 505, 460, 505]].forEach(function (s) { m.items.push({ id: nuevoId(), k: 'wall', x1: s[0], y1: s[1], x2: s[2], y2: s[3], th: 5, bloquea: true }); });
                 m.items.push({ id: nuevoId(), k: 'door', sub: 'entrada', x: 400, y: 505, w: 120, rot: 0, label: 'ENTRADA' });

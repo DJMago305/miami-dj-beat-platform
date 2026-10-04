@@ -49,7 +49,14 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
 .fb-svg .it:active { cursor: grabbing; }
 .fb-svg .it.sel > .body { stroke: #c5a059; stroke-width: 3; stroke-dasharray: none; }
 .fb-svg .it.sel .selbox { display: block; }
+.fb-selbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 8px; padding: 6px 8px; border-radius: 10px; background: rgba(255,255,255,.04); }
+.fb-selname { flex: 1 1 200px; font-size: 13px; font-weight: 700; color: rgba(255,255,255,.8); }
+.fb-selbar button { border: 1px solid rgba(197,160,89,.45); background: rgba(197,160,89,.1); color: #e8c987; border-radius: 50px; padding: 6px 14px; font-weight: 700; font-size: 13px; cursor: pointer; font-family: inherit; }
+.fb-selbar button:disabled { opacity: .35; cursor: default; }
+#fb-del2:not(:disabled) { border-color: rgba(255,96,96,.6); color: #ff9a9a; background: rgba(255,96,96,.1); }
 .fb-svg .hdl { fill: #fff; stroke: #c5a059; stroke-width: 1.5; }
+.fb-svg .hdl.rot { fill: #c5a059; stroke: #fff; stroke-width: 2; }
+.fb-svg .rotline { stroke: #c5a059; stroke-width: 1.5; pointer-events: none; }
 .fb-svg .selbox { display: none; fill: none; stroke: #c5a059; stroke-width: 1.5; stroke-dasharray: 4 3; }
 .fb-svg .tb { fill: rgba(0,200,120,.22); stroke: #00c878; stroke-width: 2; }
 .fb-svg .tb.vip { fill: rgba(197,160,89,.3); stroke: #c5a059; }
@@ -158,18 +165,26 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
     <label>Sala <input type="number" id="fb-rw" min="400" max="1600" step="10"> × <input type="number" id="fb-rh" min="300" max="1200" step="10"></label>
     <label class="fb-chk"><input type="checkbox" id="fb-snap" checked> Imán</label>
     <label class="fb-chk"><input type="checkbox" id="fb-rings"> Anillos de precio</label>
+    <label class="fb-chk" title="Un área pública que no se cierra nunca (p. ej. una terraza): entra en todos los eventos"><input type="checkbox" id="fb-always"> Área pública, siempre abierta</label>
     <span class="fb-scope" id="fb-scope"></span>
   </div>
   <div class="fb-bar" id="fb-roombar">
     <label>Sala en la base <select id="fb-room"><option value="">Inicia sesión para ver tus salas…</option></select></label>
     <button type="button" id="fb-open-room">Abrir de la sala</button>
     <button type="button" id="fb-save-room">Guardar en la sala</button>
+    <button type="button" id="fb-blank" title="Para dibujar otro salón desde cero">Plano en blanco</button>
     <span id="fb-room-msg" role="status" style="font-size:12.5px;color:rgba(255,255,255,.7)"></span>
   </div>
 
   <div class="fb-grid">
     <aside class="fb-palette" id="fb-palette" aria-label="Biblioteca de objetos"></aside>
     <section class="fb-canvas-wrap">
+      <div class="fb-selbar" id="fb-selbar">
+        <span class="fb-selname" id="fb-selname">Toca un objeto del plano para editarlo o borrarlo</span>
+        <button type="button" id="fb-del2" disabled>Eliminar</button>
+        <button type="button" id="fb-dup2" disabled>Duplicar</button>
+        <button type="button" id="fb-rot2" disabled>Girar 90°</button>
+      </div>
       <svg id="fb-svg" class="fb-svg" role="application" aria-label="Plano de la sala"></svg>
       <div class="fb-summary" id="fb-summary"></div>
     </section>
@@ -191,7 +206,7 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
 <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
 <script src="./mdj-identity.js?v=20261003-identidad-unica"></script>
 <script src="./mdjb-shared-header.js?v=20261003-mi-perfil-unico"></script>
-<script src="./js/mdj-plan-shapes.js?v=20261004-formas"></script>
+<script src="./js/mdj-plan-shapes.js?v=20261004-areas"></script>
 <script>
 (function () {
     'use strict';
@@ -307,7 +322,13 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
     }
 
     // ───────── Dibujo ─────────
-    function render() { drawCanvas(); renderSide(); summary(); }
+    function render() { drawCanvas(); renderSide(); summary(); updateSelBar(); }
+    function updateSelBar() {
+        var it = item(selId), n = $('fb-selname'); if (!n) return;
+        n.textContent = it ? 'Seleccionado: ' + (it.k === 'table' ? 'Mesa ' + (it.label || '') : it.k === 'text' ? 'Texto «' + (it.text || '') + '»' : libName(it) + (it.label ? ' «' + it.label + '»' : '')) : 'Toca un objeto del plano para editarlo o borrarlo';
+        ['fb-del2', 'fb-dup2'].forEach(function (id) { $(id).disabled = !it; });
+        $('fb-rot2').disabled = !it || it.k === 'wall';
+    }
     function drawCanvas() {
         var map = cur(); if (!map) return;
         var W = map.room.w, H = map.room.h;
@@ -334,7 +355,23 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
         var r = el('rect', { 'class': 'hdl', x: x - 5, y: y - 5, width: 10, height: 10, style: 'cursor:' + cursor }, parent);
         r.addEventListener('pointerdown', function (e) { startResize(e, it, h); });
     }
+    // El tirador de giro va arriba de la figura; si ahí no cabe (figura pegada al borde del plano), pasa abajo: así siempre se puede agarrar.
+    function rotHandle(parent, it) {
+        var bb = bbox(it), d = bb[1] / 2 + 32, a = (it.rot || 0) * Math.PI / 180, map = cur(), W = map.room.w, H = map.room.h;
+        function cabe(sg) { var gx = it.x + sg * d * Math.sin(a), gy = it.y - sg * d * Math.cos(a); return gx >= 12 && gx <= W - 12 && gy >= 12 && gy <= H - 12; }
+        var sg = cabe(1) || !cabe(-1) ? 1 : -1, y = sg * -d;
+        el('line', { 'class': 'rotline', x1: 0, y1: sg * -(bb[1] / 2 + 3), x2: 0, y2: y + sg * 7 }, parent);
+        var c = el('circle', { 'class': 'hdl rot', cx: 0, cy: y, r: 8, style: 'cursor:grab' }, parent);
+        c.addEventListener('pointerdown', function (e) { startRotate(e, it, sg); });
+    }
+    function startRotate(e, it, sg) {
+        e.preventDefault(); e.stopPropagation();
+        selId = it.id;
+        dragging = { mode: 'rotate', id: it.id, sg: sg || 1, moved: false };
+        try { svg.setPointerCapture(e.pointerId); } catch (x) { /* ok */ }
+    }
     function handlesFor(it, g) {
+        if (it.k !== 'wall' && it.k !== 'chair') rotHandle(g, it);                   // todo gira menos las paredes (se inclinan moviendo un extremo) y las sillas sueltas
         if (it.k === 'wall') { handle(g, it.x1, it.y1, 'move', it, { end: 1 }); handle(g, it.x2, it.y2, 'move', it, { end: 2 }); return; }
         if (it.k === 'door') { handle(g, it.w / 2, 0, 'ew-resize', it, { hx: 1, hy: 0 }); return; }
         if (!(it.k === 'stage' || it.k === 'zone' || it.k === 'shape')) return;
@@ -371,6 +408,7 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
             el('circle', { class: 'body seat', r: it.w / 2 }, g);
         }
         el('rect', { class: 'selbox', x: -bb[0] / 2 - 3, y: -bb[1] / 2 - 3, width: bb[0] + 6, height: bb[1] + 6 }, g);
+        if (sel && it.k === 'table') rotHandle(g, it);
         g.addEventListener('pointerdown', function (e) { startDrag(e, it); });
     }
     function stageFor(map) {
@@ -394,6 +432,7 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
     }
     function startDrag(e, it) {
         e.preventDefault();
+        if (document.activeElement && document.activeElement !== document.body && document.activeElement.blur) document.activeElement.blur();   // el teclado (Supr, flechas, R) vuelve al plano
         var p = toSvg(e);
         selId = it.id;
         var st = { x: it.x, y: it.y, x1: it.x1, y1: it.y1, x2: it.x2, y2: it.y2 };
@@ -422,6 +461,10 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
                 it.x = Math.max(0, Math.min(W, snapV(p.x + dragging.dx)));
                 it.y = Math.max(0, Math.min(H, snapV(p.y + dragging.dy)));
             }
+        } else if (dragging.mode === 'rotate') {
+            // el tirador está arriba (ángulo −90°) o, si arriba no cabe, abajo (+90°): girar = ángulo del puntero respecto al centro ∓ 90°. Con Mayús, de 15° en 15°; con «Imán», de 5° en 5°.
+            var ang = Math.atan2(p.y - it.y, p.x - it.x) * 180 / Math.PI + (dragging.sg === -1 ? -90 : 90), paso = e.shiftKey ? 15 : ($('fb-snap').checked ? 5 : 1);
+            it.rot = (((Math.round(ang / paso) * paso) % 360) + 360) % 360;
         } else if (dragging.mode === 'end') {
             var nx = Math.max(0, Math.min(W, snapV(p.x))), ny = Math.max(0, Math.min(H, snapV(p.y)));
             if (dragging.h.end === 1) { it.x1 = nx; it.y1 = ny; } else { it.x2 = nx; it.y2 = ny; }
@@ -512,7 +555,7 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
         var side = $('fb-side'), map = cur(), it = item(selId);
         var h = '<div class="fb-msg" id="fb-msg"></div>';
         if (!it) {
-            h += '<h3>Selecciona un objeto</h3><p class="fb-hint">Toca un objeto del plano para editarlo. Arrástralo para moverlo. Teclas: flechas para ajustar, Supr para borrar, Ctrl+Z para deshacer.</p>';
+            h += '<h3>Selecciona un objeto</h3><p class="fb-hint">Toca un objeto del plano para editarlo. Arrástralo para moverlo, las manijas blancas para agrandarlo y el círculo dorado de arriba para girarlo (Mayús: de 15° en 15°). Teclas: flechas para ajustar, R para girar 90°, Supr para borrar, Ctrl+Z para deshacer.</p>';
         } else {
             h += '<h3>' + escapeHtml(libName(it)) + '</h3>';
             if (it.k === 'table') h += field('Identificador', 'label', it.label, 'text') + '<p class="fb-hint">El número no depende de la posición: mover la mesa no cambia su ID.</p>';
@@ -674,7 +717,7 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
         sel.innerHTML = h; sel.value = state.currentId;
         var map = cur();
         $('fb-scope').textContent = map.scope === 'template' ? 'Editando la PLANTILLA del local' : 'Editando mapa de EVENTO: ' + map.eventName;
-        $('fb-rw').value = map.room.w; $('fb-rh').value = map.room.h;
+        $('fb-rw').value = map.room.w; $('fb-rh').value = map.room.h; $('fb-always').checked = !!map.siempre;
     }
     function fullRender() { renderMapSelect(); render(); }
     function newMap() {
@@ -737,7 +780,7 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
 
     // ───────── Guardar en la sala (base) ─────────
     // Las salas y su nombre son públicas (las ve la página del local); quién puede GUARDAR lo decide la base (dueño o manager del local, o admin de Miami DJ Beat).
-    var db = null, salas = [];
+    var db = null, salas = [], salaCargada = null;       // salaCargada: de qué sala viene lo que hay en pantalla (para no guardar el plano de un salón en otro por error)
     function roomMsg(t, ok) { var m = $('fb-room-msg'); if (!m) return; m.textContent = t || ''; m.style.color = ok === false ? '#ff6060' : ok ? '#00c878' : 'rgba(255,255,255,.7)'; }
     async function cargarSalas() {
         var sel = $('fb-room');
@@ -763,12 +806,15 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
         snapshot();
         state.maps = d.maps.concat(state.maps.filter(function (m) { return m.scope === 'event'; }));
         state.currentId = d.maps[0].id; if (d.venue) state.venue = d.venue; $('fb-venue').value = state.venue || ''; selId = null; save(); fullRender();
+        salaCargada = sala.id;
         roomMsg('Plano de «' + sala.nombre + '» abierto: ' + d.maps.length + (d.maps.length === 1 ? ' plano.' : ' planos.'), true);
     }
     async function guardarEnSala() {
         var sala = salaElegida(); if (!sala) return;
         var r = PS.aLayout(state);
         if (!r.ok) { roomMsg(r.errores.slice(0, 3).join(' ') + (r.errores.length > 3 ? ' (y ' + (r.errores.length - 3) + ' más)' : ''), false); return; }
+        var otra = salaCargada && salaCargada !== sala.id ? salas.filter(function (x) { return x.id === salaCargada; })[0] : null;
+        if (otra && !confirm('OJO: este plano viene de «' + otra.nombre + '» y lo vas a guardar en «' + sala.nombre + '», que es otro salón. ¿Seguro? (Para dibujar un salón nuevo usa «Plano en blanco».)')) return;
         if (!confirm('Vas a guardar este plano en «' + sala.nombre + '» (' + r.layout.tables.length + ' mesas). Reemplaza el plano que tenga la sala; las ventas ya abiertas conservan su mapa. ¿Continuar?')) return;
         roomMsg('Guardando…');
         var res = await db.rpc('venue_room_set_layout', { p_room_id: sala.id, p_layout: r.layout });
@@ -776,7 +822,20 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
             var t = String(res.error.message || ''), sinFn = res.error.code === 'PGRST202' || res.error.code === '42883' || /could not find the function|schema cache/i.test(t);
             return roomMsg(sinFn ? 'Guardar en la sala todavía no está activado en la base de datos.' : /no_autorizado/.test(t) ? 'Tu cuenta no puede guardar en esa sala (solo el dueño o un manager del local, o Miami DJ Beat).' : /mapa_invalido/.test(t) ? 'La base rechazó el plano: revisa figuras, mesas y precios.' : 'No se pudo guardar. Intenta de nuevo.', false);
         }
+        salaCargada = sala.id;
         roomMsg('Plano guardado en «' + sala.nombre + '»: ' + res.data + ' mesas. Ya lo ven el staff y los clientes.', true);
+    }
+
+    // Cada salón de un local es una SALA aparte (con su propio plano, eventos y dirección en la web). Para dibujar otro salón: se da de alta la sala en staff-admin
+    // (Locales → Salas), aquí se pulsa «Plano en blanco», se dibuja, se elige esa sala en «Sala en la base» y se guarda.
+    function planoEnBlanco() {
+        var hay = state.maps.some(function (m) { return m.scope === 'template' && m.items.length; });
+        if (hay && !confirm('Se borran los planos de plantilla que tienes en pantalla (los de evento se quedan). Si no los guardaste en su sala, se pierden (puedes usar Deshacer). ¿Empezar en blanco?')) return;
+        snapshot();
+        var m = { id: uid(), scope: 'template', name: 'Sala principal', room: { w: 800, h: 520 }, items: [], ref: null };
+        state.maps = [m].concat(state.maps.filter(function (x) { return x.scope === 'event'; }));
+        state.currentId = m.id; selId = null; salaCargada = null; save(); fullRender();
+        roomMsg('Plano en blanco. Dibuja el salón y luego elige su sala en «Sala en la base» para guardarlo.', true);
     }
 
     // ───────── Arranque ─────────
@@ -810,6 +869,7 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
         $('fb-rename').addEventListener('click', renameMap);
         $('fb-delmap').addEventListener('click', deleteMap);
         $('fb-rings').addEventListener('change', render);
+        $('fb-always').addEventListener('change', function () { var m = cur(); snapshot(); if (this.checked) m.siempre = true; else delete m.siempre; save(); });
         ['fb-rw', 'fb-rh'].forEach(function (id) {
             $(id).addEventListener('change', function () {
                 var map = cur(), w = Math.max(400, Math.min(1600, Number($('fb-rw').value) || map.room.w)), h = Math.max(300, Math.min(1200, Number($('fb-rh').value) || map.room.h));
@@ -824,6 +884,7 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); return e.shiftKey ? redo() : undo(); }
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') { e.preventDefault(); return redo(); }
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') { e.preventDefault(); return dupSel(); }
+            if (!e.ctrlKey && !e.metaKey && e.key.toLowerCase() === 'r') { var rr = item(selId); if (rr && rr.k !== 'wall') { e.preventDefault(); snapshot(); rr.rot = ((rr.rot || 0) + 90) % 360; return commit(); } }
             var it = item(selId); if (!it) return;
             if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); return removeSel(); }
             var step = $('fb-snap').checked ? 5 : 1, dx = 0, dy = 0;
@@ -832,7 +893,11 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
             if (it.k === 'wall') { it.x1 += dx; it.x2 += dx; it.y1 += dy; it.y2 += dy; } else { it.x = Math.max(0, Math.min(cur().room.w, it.x + dx)); it.y = Math.max(0, Math.min(cur().room.h, it.y + dy)); }
             commit();
         });
+        $('fb-del2').addEventListener('click', removeSel);
+        $('fb-dup2').addEventListener('click', dupSel);
+        $('fb-rot2').addEventListener('click', function () { var it = item(selId); if (!it || it.k === 'wall') return; snapshot(); it.rot = ((it.rot || 0) + 90) % 360; commit(); });
         $('fb-open-room').addEventListener('click', abrirDeSala);
+        $('fb-blank').addEventListener('click', planoEnBlanco);
         $('fb-save-room').addEventListener('click', guardarEnSala);
         fullRender();
         cargarSalas();
