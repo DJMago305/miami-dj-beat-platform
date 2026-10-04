@@ -213,7 +213,7 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
 <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
 <script src="./mdj-identity.js?v=20261003-identidad-unica"></script>
 <script src="./mdjb-shared-header.js?v=20261003-mi-perfil-unico"></script>
-<script src="./js/mdj-plan-shapes.js?v=20261004-areas-venta"></script>
+<script src="./js/mdj-plan-shapes.js?v=20261004-escala"></script>
 <script>
 (function () {
     'use strict';
@@ -417,7 +417,7 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
     function drawItem(it, parent) {
         var sel = it.id === selId, g, bb;
         if (it.k !== 'table' && it.k !== 'chair') {                     // escenario, áreas, puertas, figuras, paredes y texto: los dibuja el módulo compartido
-            g = PS.dibujarItem(parent, it);
+            g = PS.dibujarItem(parent, it, cur().room);
             if (!g) return;
             g.classList.add('it'); if (sel) g.classList.add('sel');
             if (it.k === 'wall') { var hw = el('line', { x1: it.x1, y1: it.y1, x2: it.x2, y2: it.y2, stroke: 'transparent', 'stroke-width': Math.max(18, (it.th || 6) + 12), 'stroke-linecap': 'round', 'pointer-events': 'stroke', 'class': 'hit' }); g.insertBefore(hw, g.firstChild); }          // zona de toque ancha: una pared delgada se agarra sin precisión

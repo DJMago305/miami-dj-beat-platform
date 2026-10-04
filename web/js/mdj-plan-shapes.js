@@ -173,6 +173,7 @@
             if (ventas.length) ventas.forEach(function (v) { nuevaArea(v.id, v.label || 'Área', v.siempre === true); });
             else if (mesas.length) nuevaArea(m.id, m.name, m.siempre === true);
             var areaDe = function (t) { if (!ventas.length) return m.id; var hit = null; ventas.forEach(function (v) { if (dentroPoly(v.pts, t.x, t.y)) hit = v.id; }); return hit; };
+            var etiquetaArea = {}; ventas.forEach(function (v) { etiquetaArea[v.id] = v.label || 'Área'; });
             mesas.forEach(function (t) {
                 var label = String(t.label || '').trim();
                 if (!label) { out.errores.push('Hay una mesa sin identificador en «' + m.name + '».'); return; }
@@ -182,7 +183,7 @@
                 var seats = Math.round(t.seats || 0);
                 if (seats < 1 || seats > 40) { out.errores.push('La mesa «' + label + '» debe tener entre 1 y 40 sillas.'); return; }
                 if (!(t.price > 0)) { sinPrecio.push(label); return; }
-                var fila = { key: label, label: label, seats: seats, zone: zonaDe(m, t, esc), price_cents: Math.round(t.price * 100) }, ar = areaDe(t);
+                var ar = areaDe(t), fila = { key: label, label: label, seats: seats, zone: (ar && etiquetaArea[ar]) || zonaDe(m, t, esc), price_cents: Math.round(t.price * 100) };   // con áreas de venta, la zona es el nombre del área
                 if (ar) fila.area = ar; else avisos.push('La mesa «' + label + '» no está dentro de ningún área de venta: se venderá siempre (no se podrá cerrar).');
                 inventario.push(fila);
                 var forma = FORMA_MESA[t.shape] || 'round', g = { id: label, t: forma, x: Math.round(t.x), y: Math.round(t.y), seats: seats };
@@ -266,20 +267,32 @@
         if (shape === 'trapezoid') return 'M ' + x0 + ' ' + y0 + ' H ' + x1 + ' L ' + (w * 0.35) + ' ' + y1 + ' H ' + (-w * 0.35) + ' Z';
         return null;
     }
-    function rotulo(parent, texto, rot, y, size) {
-        var t = el('text', { x: 0, y: y == null ? 4 : y, 'text-anchor': 'middle', fill: 'rgba(255,255,255,0.8)', 'font-size': size || 12, 'font-weight': 800, 'font-family': 'Inter, sans-serif', 'letter-spacing': '0.06em', 'pointer-events': 'none' }, parent, texto);
-        t.setAttribute('transform', 'rotate(' + (-(rot || 0)) + ')');       // el rótulo se queda derecho aunque la figura gire
+    // Cuánto hay que correr un rótulo (en el plano, horizontal) para que no se corte en el borde: centro global gx, ancho estimado del texto.
+    var _esc = 1;                                   // escala de las letras de los rótulos: crece con planos más grandes que 800 de ancho
+    function corrimiento(gx, texto, size, W) {
+        var w = String(texto).length * (size || 12) * _esc * 0.66 + 6;
+        if (gx - w / 2 < 4) return 4 - (gx - w / 2);
+        if (gx + w / 2 > W - 4) return (W - 4) - (gx + w / 2);
+        return 0;
+    }
+    function rotulo(parent, texto, rot, y, size, gx, W) {
+        var t = el('text', { x: 0, y: y == null ? 4 : y, 'text-anchor': 'middle', fill: 'rgba(255,255,255,0.8)', 'font-size': (size || 12) * _esc, 'font-weight': 800, 'font-family': 'Inter, sans-serif', 'letter-spacing': '0.06em', 'pointer-events': 'none' }, parent, texto);
+        var a = (rot || 0) * Math.PI / 180, sx = gx == null ? 0 : corrimiento(gx, texto, size, W || 800);
+        // el rótulo se queda derecho aunque la figura gire; el corrimiento es horizontal en el plano, así que se lleva al sistema de la figura
+        t.setAttribute('transform', 'translate(' + (sx * Math.cos(a)).toFixed(1) + ' ' + (-sx * Math.sin(a)).toFixed(1) + ') rotate(' + (-(rot || 0)) + ')');
         return t;
     }
     // Dibuja UNA figura dentro de `parent` y devuelve su grupo (con data-id). Lo usan el editor y el visor.
-    function dibujarItem(parent, it) {
+    function dibujarItem(parent, it, room) {
+        var W = (room && room.w) || 800;
+        _esc = Math.max(1, W / 800);
         if (validarItem(it)) return null;                                    // una figura mal formada no rompe el plano: se omite
         var g, fill, borde;
         if (it.k === 'poly') {
             g = el('g', { 'data-id': it.id, 'class': 'ps ps-poly' }, parent);
             fill = RELLENOS[it.relleno] || RELLENOS.ninguno;
             el('polygon', { 'class': 'body', points: it.pts.map(function (q) { return q[0] + ',' + q[1]; }).join(' '), fill: fill, stroke: COLOR, 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-dasharray': it.relleno ? 'none' : '6 4' }, g);
-            if (it.label) { var cb = cajaPoly(it.pts); el('text', { x: cb.cx, y: cb.cy + 4, 'text-anchor': 'middle', fill: 'rgba(255,255,255,0.8)', 'font-size': 12, 'font-weight': 800, 'font-family': 'Inter, sans-serif', 'letter-spacing': '0.06em', 'pointer-events': 'none' }, g, it.label); }
+            if (it.label) { var cb = cajaPoly(it.pts), grande = cb.w >= 160 && cb.h >= 60; el('text', { x: cb.cx, y: grande ? cb.y + 16 * _esc : cb.cy + 4 * _esc, 'text-anchor': 'middle', fill: 'rgba(255,255,255,0.8)', 'font-size': 12 * _esc, 'font-weight': 800, 'font-family': 'Inter, sans-serif', 'letter-spacing': '0.06em', 'pointer-events': 'none' }, g, it.label); }
             return g;
         }
         if (it.k === 'wall') {
@@ -293,11 +306,11 @@
             if (d) el('path', Object.assign({ d: d }, a), g);
             else if (it.shape === 'oval') el('ellipse', Object.assign({ rx: it.w / 2, ry: it.h / 2 }, a), g);
             else el('rect', Object.assign({ x: -it.w / 2, y: -it.h / 2, width: it.w, height: it.h, rx: 8 }, a), g);
-            rotulo(g, it.label || 'ESCENARIO', it.rot);
+            rotulo(g, it.label || 'ESCENARIO', it.rot, null, null, it.x, W);
         } else if (it.k === 'zone') {
             var fac = it.sub === 'barra' || it.sub === 'bano';
             el('rect', { 'class': 'body', x: -it.w / 2, y: -it.h / 2, width: it.w, height: it.h, rx: 10, fill: fac ? RELLENOS.dorado : RELLENOS.gris, stroke: fac ? DORADO : COLOR, 'stroke-width': 2, 'stroke-dasharray': fac ? 'none' : '6 4' }, g);
-            var tz = rotulo(g, it.label || '', it.rot);
+            var tz = rotulo(g, it.label || '', it.rot, null, null, it.x, W);
             if (it.h > it.w * 1.6) tz.setAttribute('transform', 'rotate(90)');
         } else if (it.k === 'door') {
             var ex = it.sub === 'exit', col = ex ? '#00c878' : '#c5a059';
@@ -306,14 +319,14 @@
                 el('line', { x1: -it.w / 2, y1: 0, x2: -it.w / 2, y2: -it.w, stroke: col, 'stroke-width': 4, 'stroke-linecap': 'round', 'class': 'body' }, g);
                 el('line', { x1: -it.w / 2, y1: 0, x2: it.w / 2, y2: 0, stroke: col, 'stroke-width': 3, 'stroke-linecap': 'round', 'class': 'body' }, g);
             } else el('rect', { 'class': 'body', x: -it.w / 2, y: -3.5, width: it.w, height: 7, rx: 2, fill: col }, g);
-            if (it.label) rotulo(g, it.label, it.rot, it.sub === 'puerta' ? 16 : -10, 10);
+            if (it.label) rotulo(g, it.label, it.rot, it.sub === 'puerta' ? 16 : -10, 10, it.x, W);
         } else if (it.k === 'shape') {
             fill = RELLENOS[it.relleno] || RELLENOS.ninguno; borde = COLOR;
             var at = { 'class': 'body', fill: fill, stroke: borde, 'stroke-width': 2, 'stroke-dasharray': it.relleno ? 'none' : '6 4' };
             if (it.sub === 'ellipse') el('ellipse', Object.assign({ rx: it.w / 2, ry: it.h / 2 }, at), g);
             else if (it.sub === 'triangle') el('path', Object.assign({ d: 'M 0 ' + (-it.h / 2) + ' L ' + (it.w / 2) + ' ' + (it.h / 2) + ' L ' + (-it.w / 2) + ' ' + (it.h / 2) + ' Z', 'stroke-linejoin': 'round' }, at), g);
             else el('rect', Object.assign({ x: -it.w / 2, y: -it.h / 2, width: it.w, height: it.h, rx: 6 }, at), g);
-            if (it.label) rotulo(g, it.label, it.rot);
+            if (it.label) rotulo(g, it.label, it.rot, null, null, it.x, W);
         } else if (it.k === 'text') {
             el('text', { 'class': 'body', x: 0, y: (it.size || 16) * 0.35, 'text-anchor': 'middle', fill: 'rgba(255,255,255,0.92)', 'font-size': it.size || 16, 'font-weight': 700, 'font-family': 'Inter, sans-serif' }, g, it.text);
         } else if (it.k === 'chair') {
@@ -322,6 +335,6 @@
         return g;
     }
     // Visor: dibuja la lista en orden (la última queda encima).
-    function dibujar(parent, items) { (Array.isArray(items) ? items : []).forEach(function (it) { dibujarItem(parent, it); }); }
+    function dibujar(parent, items, room) { (Array.isArray(items) ? items : []).forEach(function (it) { dibujarItem(parent, it, room); }); }
     core.dibujarItem = dibujarItem; core.dibujar = dibujar; core.stagePath = stagePath;
 })(typeof window !== 'undefined' ? window : globalThis);

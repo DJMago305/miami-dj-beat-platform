@@ -394,7 +394,7 @@
 window.MDJ_SKIP_GLOBAL_EVENT_CART = true;
 </script>
 <script src="./mdjb-shared-header.js?v=20261003-mi-perfil-unico"></script>
-<script src="./js/mdj-plan-shapes.js?v=20261004-areas-venta"></script>
+<script src="./js/mdj-plan-shapes.js?v=20261004-escala"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
 <script>
 (function () {
@@ -1036,7 +1036,7 @@ window.MDJ_SKIP_GLOBAL_EVENT_CART = true;
             var custom = !!layout.custom;
             svg.setAttribute('viewBox', '0 0 ' + ((layout.room && layout.room.w) || 800) + ' ' + ((layout.room && layout.room.h) || 520));
             if (custom) {
-                if (window.mdjPlanShapes) window.mdjPlanShapes.dibujar(svg, layout.shapes);
+                if (window.mdjPlanShapes) window.mdjPlanShapes.dibujar(svg, layout.shapes, layout.room);
             } else {
                 el('path', { d: 'M 340 505 H 12 V 12 H 788 V 505 H 460', fill: 'none', stroke: 'rgba(255,255,255,0.55)', 'stroke-width': 5, 'stroke-linejoin': 'round' });
                 el('rect', { class: 'door', x: 340, y: 502, width: 120, height: 7, rx: 2 });

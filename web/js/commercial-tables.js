@@ -256,7 +256,7 @@
     function drawPlan(svg, map, byKey, ahora, qn) {
         svg.innerHTML = '';
         svg.setAttribute('viewBox', '0 0 ' + ((map.room && map.room.w) || 800) + ' ' + ((map.room && map.room.h) || 520));
-        if (map.custom) { if (root.mdjPlanShapes) root.mdjPlanShapes.dibujar(svg, map.shapes); }          // arquitectura dibujada en el editor de salas
+        if (map.custom) { if (root.mdjPlanShapes) root.mdjPlanShapes.dibujar(svg, map.shapes, map.room); }          // arquitectura dibujada en el editor de salas
         else {
             el('path', { d: 'M 340 505 H 12 V 12 H 788 V 505 H 460', fill: 'none', stroke: 'rgba(255,255,255,0.4)', 'stroke-width': 4, 'stroke-linejoin': 'round' }, svg);
             if (map.focal && map.focal.rect) zoneBox(svg, map.focal.rect, map.focal.label || '', map.focal.rot, map.focal.k);
