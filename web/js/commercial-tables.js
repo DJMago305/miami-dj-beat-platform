@@ -57,42 +57,9 @@
     function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 
 
-    // ── Editor visual del plano (lógica pura: se prueba en Node) ──
-    var ED_W = 800, ED_H = 520, ED_MARGEN = 26, ED_PASO = 10;
-    function planoVacio() {
-        return { id: 'sala', label: 'Sala', focal: { x: 400, y: 52, rect: [280, 24, 240, 56], label: 'ESCENARIO / DJ' }, fixed: [], zones: [{ name: 'Mesas', maxD: 9999, price: 0 }], tables: [] };
-    }
-    function siguienteClave(usadas) {   // «M1», «M2»… la primera que no esté en uso
-        var n = 1; while (usadas['M' + n]) n++; return 'M' + n;
-    }
-    function ajustar(v, min, max) { return Math.min(max, Math.max(min, Math.round(v / ED_PASO) * ED_PASO)); }
-    function lugarLibre(mesas) {         // un punto libre del plano para una mesa nueva (no encima de otra)
-        var ocupado = function (x, y) { return mesas.some(function (m) { return Math.abs(m.x - x) < 56 && Math.abs(m.y - y) < 56; }); };
-        for (var y = 160; y <= ED_H - ED_MARGEN - 40; y += 70) for (var x = 100; x <= ED_W - 100; x += 70) if (!ocupado(x, y)) return { x: x, y: y };
-        return { x: 400, y: 300 };
-    }
-    var FORMAS = { round: { nombre: 'Redonda' }, square: { nombre: 'Cuadrada', w: 54 }, rect: { nombre: 'Larga', w: 108, h: 54 } };
-    // Une el dibujo (maps[].tables con x/y/forma) con los datos de venta (meta[clave]: etiqueta, sillas, zona, precio) y arma el layout que guarda la base:
-    // maps = geometría para dibujar (lo lee la página pública); tables = inventario (lo lee la base). La clave de la mesa es el id del dibujo.
-    function construirMapa(base, maps, meta) {
-        var out = {}, k; for (k in (base || {})) out[k] = base[k];
-        var tablas = [];
-        out.maps = (maps || []).map(function (m) {
-            var c = {}, kk; for (kk in m) c[kk] = m[kk];
-            if (!c.focal) c.focal = planoVacio().focal;
-            if (!Array.isArray(c.fixed)) c.fixed = [];
-            if (!Array.isArray(c.zones) || !c.zones.length) c.zones = [{ name: 'Mesas', maxD: 9999, price: 0 }];   // la página pública exige al menos una zona
-            c.tables = (m.tables || []).map(function (g) {
-                var d = meta[g.id] || {}, o = { id: g.id, t: g.t, x: g.x, y: g.y, seats: d.seats };
-                if (g.w) o.w = g.w; if (g.h) o.h = g.h;
-                tablas.push({ key: g.id, label: d.label || g.id, seats: d.seats, zone: d.zone || 'Mesas', price_cents: d.price_cents });
-                return o;
-            });
-            return c;
-        });
-        out.tables = tablas;
-        return out;
-    }
+    // Alinea a la cuadrícula de 10 px dentro de [min, max] (lo usa «Armar grupo» al arrastrar mesas).
+    var PASO = 10;
+    function ajustar(v, min, max) { return Math.min(max, Math.max(min, Math.round(v / PASO) * PASO)); }
 
 
     // ── «Armar grupo» (lógica pura) ──
@@ -108,41 +75,20 @@
     // Las reglas viven en mdj-plan-shapes.js (las mismas que exige la base en venue_plano_bloquea; se prueban contra ella).
     var PS = root.mdjPlanShapes || (typeof require === 'function' ? require('./mdj-plan-shapes.js') : null);
     function bloqueaEstructura(map, x, y) { return PS ? PS.bloquea(map, x, y) : null; }
-    // Revisa el archivo de mapa ANTES de mandarlo a la base (mismas reglas que venue_room_set_layout; la base vuelve a revisar, esto es para avisar bien).
-    // Acepta {tables:[...], maps?:[...]} o una lista de mesas sola. Devuelve { ok, errores[], avisos[], mesas, sillas, zonas[{nombre,mesas,min,max}], precioMin, precioMax, layout }.
-    function validarMapa(input) {
-        var out = { ok: false, errores: [], avisos: [], mesas: 0, sillas: 0, zonas: [], precioMin: null, precioMax: null, layout: null };
-        var obj = input;
-        if (typeof input === 'string') { try { obj = JSON.parse(input); } catch (e) { out.errores.push('El archivo no es un JSON válido.'); return out; } }
-        if (Array.isArray(obj)) obj = { tables: obj };
-        if (!obj || typeof obj !== 'object' || !Array.isArray(obj.tables)) { out.errores.push('Falta la lista «tables» con las mesas.'); return out; }
-        var t = obj.tables, claves = {}, zonas = {}, ent = function (n) { return typeof n === 'number' && isFinite(n) && Math.floor(n) === n; };
-        if (t.length < 1 || t.length > 300) out.errores.push('El mapa debe tener entre 1 y 300 mesas (tiene ' + t.length + ').');
-        if (obj.maps !== undefined && !Array.isArray(obj.maps)) out.errores.push('«maps» (el dibujo del plano) debe ser una lista.');
-        t.forEach(function (m, i) {
-            var n = 'Mesa #' + (i + 1), e = [];
-            if (!m || typeof m !== 'object' || Array.isArray(m)) { out.errores.push(n + ': no es una mesa válida.'); return; }
-            if (typeof m.key !== 'string' || !m.key.trim()) e.push('falta la clave («key»)');
-            else if (m.key.length > 20) e.push('la clave tiene más de 20 caracteres');
-            else if (claves[m.key]) e.push('la clave «' + m.key + '» está repetida');
-            else claves[m.key] = true;
-            if (!ent(m.price_cents) || m.price_cents < 0 || m.price_cents > 1000000) e.push('el precio («price_cents», en centavos) debe ser un entero de 0 a 1000000');
-            if (m.seats !== undefined && (!ent(m.seats) || m.seats < 1 || m.seats > 40)) e.push('las sillas («seats») deben ser un entero de 1 a 40');
-            if (e.length) { out.errores.push((typeof m.key === 'string' && m.key.trim() ? 'Mesa ' + m.key : n) + ': ' + e.join('; ') + '.'); return; }
-            out.mesas++; out.sillas += (m.seats === undefined ? 4 : m.seats);
-            var z = (typeof m.zone === 'string' && m.zone.trim()) ? m.zone.trim() : 'Sin zona', zz = zonas[z] || (zonas[z] = { nombre: z, mesas: 0, min: Infinity, max: -Infinity });
-            zz.mesas++; zz.min = Math.min(zz.min, m.price_cents); zz.max = Math.max(zz.max, m.price_cents);
-            out.precioMin = out.precioMin === null ? m.price_cents : Math.min(out.precioMin, m.price_cents);
-            out.precioMax = out.precioMax === null ? m.price_cents : Math.max(out.precioMax, m.price_cents);
-        });
-        out.zonas = Object.keys(zonas).map(function (k) { return zonas[k]; });
-        if (obj.maps === undefined || !obj.maps.length) out.avisos.push('El archivo no trae el dibujo del plano («maps»): la página pública usa el plano de muestra y solo dibuja las mesas M1 a M36.');
-        out.ok = out.errores.length === 0;
-        if (out.ok) out.layout = obj;
+    // A qué área de venta pertenece una mesa del layout: la que dice su campo «area» o, en planos anteriores, el plano que la dibuja (null = no pertenece a ninguna).
+    function areaDeMesa(layout, t) {
+        if (t && t.area) return t.area;
+        if (layout && Array.isArray(layout.areas)) return null;                 // con catálogo de áreas, una mesa sin área no pertenece a ninguna
+        var maps = layout && Array.isArray(layout.maps) ? layout.maps : [];
+        for (var i = 0; i < maps.length; i++) if ((maps[i].tables || []).some(function (g) { return g.id === t.key; })) return maps[i].id;
+        return null;
+    }
+    // Ids de las áreas que tienen mesas en el layout de un evento (las que hoy se están vendiendo).
+    function areasActivas(layout) {
+        var out = {}; ((layout && Array.isArray(layout.tables)) ? layout.tables : []).forEach(function (t) { var a = areaDeMesa(layout, t); if (a) out[a] = true; });
         return out;
     }
-
-    var core = { estadoDe: estadoDe, movible: movible, grupoResumen: grupoResumen, bloqueaEstructura: bloqueaEstructura, validarMapa: validarMapa, planoVacio: planoVacio, siguienteClave: siguienteClave, lugarLibre: lugarLibre, ajustar: ajustar, construirMapa: construirMapa, FORMAS: FORMAS, resumen: resumen, buscar: buscar, gridMaps: gridMaps, mapsDe: mapsDe, dinero: dinero, codigo: codigo, puedeAbrirVenta: function (role) { return !!ROLES_ABREN_VENTA[role]; } };
+    var core = { estadoDe: estadoDe, areaDeMesa: areaDeMesa, areasActivas: areasActivas, movible: movible, grupoResumen: grupoResumen, bloqueaEstructura: bloqueaEstructura, ajustar: ajustar, resumen: resumen, buscar: buscar, gridMaps: gridMaps, mapsDe: mapsDe, dinero: dinero, codigo: codigo, puedeAbrirVenta: function (role) { return !!ROLES_ABREN_VENTA[role]; } };
     if (typeof module !== 'undefined' && module.exports) { module.exports = core; }
     if (typeof document === 'undefined') return;
 
@@ -199,13 +145,8 @@
             '.ct-list { margin-top:16px; } .ct-row { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:10px 0; border-bottom:1px solid rgba(255,255,255,.08); font-size:14px; cursor:pointer; } .ct-row:last-child { border-bottom:none; } .ct-row b { color:#fff; } .ct-row small { display:block; color:rgba(255,255,255,.55); }',
             '.ct-plan .tbl.ct-mov { cursor:grab; touch-action:none; } .ct-plan .tbl.ct-fijo { cursor:not-allowed; opacity:.55; } .ct-plan .tbl.ct-pick .shape { stroke:#fcd34d; stroke-width:4; fill:rgba(252,211,77,.22); } .cc-btn2.ct-on { background:rgba(197,160,89,.32); }',
             '.ct-map { margin:0 0 14px; border:1px solid rgba(255,255,255,.12); border-radius:12px; background:rgba(255,255,255,.03); } .ct-map > summary { cursor:pointer; padding:12px 16px; font-weight:700; color:#fff; font-size:14px; } .ct-map-in { padding:2px 16px 16px; }',
-            '.ct-map-in input[type=file] { color:rgba(255,255,255,.8); font-size:13px; max-width:100%; } .ct-map-in select { padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,.18); background:rgba(0,0,0,.35); color:#fff; font:inherit; font-size:14px; }',
             '.ct-map-sum { margin:12px 0 0; padding:12px 14px; border-radius:10px; background:rgba(0,0,0,.3); border:1px solid rgba(255,255,255,.1); font-size:13px; color:rgba(255,255,255,.85); line-height:1.6; } .ct-map-sum b { color:#fff; }',
-            '.ct-ed-tools { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:12px 0 10px; } .ct-ed-tools .cc-btn2 { display:inline-flex; align-items:center; gap:6px; } .ct-ed-tools select { padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,.18); background:rgba(0,0,0,.35); color:#fff; font:inherit; font-size:13px; }',
-            '.ct-ed-hint { display:inline-flex; align-items:center; gap:6px; font-size:12px; color:rgba(255,255,255,.6); } .ct-ed-grid { display:grid; grid-template-columns:minmax(0,1.7fr) minmax(220px,1fr); gap:14px; align-items:start; } @media (max-width: 860px) { .ct-ed-grid { grid-template-columns:1fr; } }',
-            '.ct-step { display:flex; align-items:center; gap:8px; } .ct-step .cc-btn2 { padding:7px 12px; display:inline-flex; } #ed-svg { user-select:none; -webkit-user-select:none; } #ed-svg .tbl:focus { outline:none; } #ed-svg .tbl:focus-visible .shape { stroke:#fcd34d; stroke-width:4; }',
             '.ct-map-in button:disabled { opacity:.45; cursor:not-allowed; }',
-            '.ct-map-err { color:#ff9a9a; } .ct-map-warn { color:#ffd27a; } .ct-map-ok { color:#00c878; }',
             '.ct-empty { color:rgba(255,255,255,.65); line-height:1.6; padding:6px 0; } .ct-leg { display:flex; flex-wrap:wrap; gap:14px; font-size:12px; color:rgba(255,255,255,.65); margin:8px 0 0; } .ct-leg i { display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:6px; }'
         ].join('\n');
         document.head.appendChild(s);
@@ -235,15 +176,14 @@
             '<p class="ct-empty" style="margin:0 0 12px;">Ve en vivo qué mesas se vendieron en línea, quién rentó cada una, y aparta o vende a mano. <b style="color:#fff;">Cada evento tiene su propia sala</b>: lo que vendes un día no afecta al otro.</p>' +
             '<div class="ct-bar">' + (multi ? '<select id="ct-venue" aria-label="Local"></select>' : '') + '<select id="ct-event" aria-label="Evento"></select>' +
             '<button type="button" class="cc-btn2" id="ct-open" hidden>Abrir la venta de mesas</button></div>' +
-            '<div id="ct-mapbox"></div><div id="ct-body"></div>';
+            '<div id="ct-body"></div>';
         if (multi) {
             var sv = q$('#ct-venue');
             S.venues.forEach(function (v, i) { var op = document.createElement('option'); op.value = i; op.textContent = v.name; sv.appendChild(op); });
-            sv.addEventListener('change', function () { S.venue = S.venues[Number(sv.value)]; S.event = null; S.rows = []; S.sel = null; buildMapPanel(); loadEvents(); });
+            sv.addEventListener('change', function () { S.venue = S.venues[Number(sv.value)]; S.event = null; S.rows = []; S.sel = null; loadEvents(); });
         }
         q$('#ct-event').addEventListener('change', function () { S.event = S.events.filter(function (e) { return e.id === q$('#ct-event').value; })[0] || null; S.sel = null; S.pick = {}; S.mapIdx = 0; loadRows(false); });
         q$('#ct-open').addEventListener('click', openSales);
-        buildMapPanel();
     }
     function body(html) { q$('#ct-body').innerHTML = html; }
 
@@ -274,8 +214,10 @@
     async function ensureAreas(roomId) {
         if (!roomId || S.areas[roomId]) return;
         var r = await S.db.from('venue_rooms').select('layout').eq('id', roomId).maybeSingle();
-        var maps = r && r.data && r.data.layout && Array.isArray(r.data.layout.maps) ? r.data.layout.maps : [];
-        S.areas[roomId] = maps.filter(function (m) { return m && m.id; }).map(function (m) { return { id: m.id, label: m.label || m.id, siempre: m.siempre === true }; });
+        var lay = (r && r.data && r.data.layout) || {}, maps = Array.isArray(lay.maps) ? lay.maps : [];
+        // Áreas de venta: las del catálogo de la sala (áreas libres marcadas «venta»); si no trae, cada plano es un área (salas anteriores).
+        var fuente = Array.isArray(lay.areas) ? lay.areas : maps.filter(function (m) { return m && m.id; }).map(function (m) { return { id: m.id, label: m.label, siempre: m.siempre }; });
+        S.areas[roomId] = fuente.filter(function (a) { return a && a.id; }).map(function (a) { return { id: a.id, label: a.label || a.id, siempre: a.siempre === true }; });
     }
     async function loadRows(silencioso) {
         if (!S.event) return;
@@ -548,7 +490,7 @@
     function areasHtml(mapsEvento) {
         var as = S.areas[S.event.room_id] || [];
         if (!core.puedeAbrirVenta(S.venue.role) || as.length < 2) return '';
-        var activas = {}; (S.event.layout && Array.isArray(S.event.layout.maps) ? S.event.layout.maps : []).forEach(function (m) { activas[m.id] = true; });
+        var activas = core.areasActivas(S.event.layout);
         return '<details class="ct-map" id="ct-areas"><summary>Áreas de este evento</summary><div class="ct-map-in"><div class="ct-map-sum" style="margin-top:6px;">' +
             as.map(function (a) { return '<label style="display:inline-flex;gap:6px;align-items:center;margin:6px 16px 0 0;"><input type="checkbox" value="' + esc(a.id) + '"' + (activas[a.id] || a.siempre ? ' checked' : '') + (a.siempre ? ' disabled' : '') + '> ' + esc(a.label) + (a.siempre ? ' <small style="color:rgba(255,255,255,.55)">(siempre abierta)</small>' : '') + '</label>'; }).join('') +
             '<br><small style="color:rgba(255,255,255,.6);">Desmarca un área para cerrarla en este evento. No se puede cerrar un área con mesas vendidas, apartadas o en pago.</small></div>' +
@@ -583,217 +525,6 @@
         if (res.error) { body('<p class="ct-empty" style="color:#ff6060;">' + esc(msgError(res.error)) + '</p>'); btn.hidden = false; return; }
         // El evento ahora trae su mapa (copia de la sala) y tables_open: se recarga todo.
         await loadEvents();
-    }
-
-    // ── Mapa de la sala: fijar la plantilla de mesas desde un archivo (solo dueño y manager; la base lo vuelve a exigir) ──
-    var MAPA_EJEMPLO = { tables: [
-        { key: 'M1', label: 'M1', seats: 4, zone: 'Zona 1 · Frente al escenario', price_cents: 40000 },
-        { key: 'M2', label: 'M2', seats: 4, zone: 'Zona 1 · Frente al escenario', price_cents: 40000 },
-        { key: 'M3', label: 'M3', seats: 6, zone: 'Zona 2 · Centro', price_cents: 25000 } ] };
-    var _mapa = null;   // resultado de validarMapa del archivo elegido
-    function buildMapPanel() {
-        var box = q$('#ct-mapbox'); if (!box) return;
-        _mapa = null;
-        if (!core.puedeAbrirVenta(S.venue && S.venue.role) || !(S.venue.rooms || []).length) { box.innerHTML = ''; return; }
-        var rooms = S.venue.rooms;
-        box.innerHTML = '<details class="ct-map" id="ct-map"><summary>Mapa de la sala</summary><div class="ct-map-in">' +
-            (rooms.length > 1 ? '<label for="ct-map-room" style="display:block;font-size:12px;font-weight:700;color:rgba(255,255,255,.55);margin:6px 0;">SALA</label><select id="ct-map-room">' + rooms.map(function (r, i) { return '<option value="' + i + '">' + esc(r.name) + '</option>'; }).join('') + '</select>' : '') +
-            '<p class="ct-empty" id="ct-map-now" style="margin:8px 0 0;">Cargando el mapa actual…</p>' +
-            '<div class="ct-btns"><button type="button" class="cc-btn2" id="ct-ed-open">Editar el plano</button></div><div id="ct-ed"></div>' +
-            '<p class="ct-empty" style="margin:16px 0 0;">O sube un archivo con las mesas:</p>' +
-            '<div class="ct-btns" style="align-items:center;margin-top:6px;"><input type="file" id="ct-map-file" accept=".json,application/json" aria-label="Archivo del mapa (.json)">' +
-            '<button type="button" class="cc-btn2" id="ct-map-sample">Descargar archivo de ejemplo</button></div>' +
-            '<div id="ct-map-prev"></div>' +
-            '<div class="ct-btns"><button type="button" class="cc-btn2" id="ct-map-set" disabled>Fijar el mapa</button></div><p class="ct-msg" id="ct-map-msg"></p></div></details>';
-        var det = q$('#ct-map'), cargado = false;
-        det.addEventListener('toggle', function () { if (det.open && !cargado) { cargado = true; mapaActual(); } });
-        var sr = q$('#ct-map-room'); if (sr) sr.addEventListener('change', function () { mapaActual(); });
-        q$('#ct-ed-open').addEventListener('click', abrirEditor);
-        q$('#ct-map-file').addEventListener('change', onMapaArchivo);
-        q$('#ct-map-set').addEventListener('click', fijarMapa);
-        q$('#ct-map-sample').addEventListener('click', function () {
-            var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(MAPA_EJEMPLO, null, 2)], { type: 'application/json' }));
-            a.download = 'mapa-de-la-sala-ejemplo.json'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
-        });
-    }
-    function salaElegida() { var sr = q$('#ct-map-room'); return (S.venue.rooms || [])[sr ? Number(sr.value) : 0]; }
-    async function mapaActual() {
-        var now = q$('#ct-map-now'), room = salaElegida(); if (!now || !room) return;
-        var r = await S.db.from('venue_rooms').select('layout').eq('id', room.id).maybeSingle();
-        var n = r && r.data && r.data.layout && Array.isArray(r.data.layout.tables) ? r.data.layout.tables.length : 0;
-        now.innerHTML = r && r.error ? 'No se pudo leer el mapa actual.' : (n ? 'Mapa actual de <b style="color:#fff;">' + esc(room.name) + '</b>: ' + n + ' mesas.' : '<b style="color:#fff;">' + esc(room.name) + '</b> todavía no tiene un mapa guardado.');
-        now.dataset.n = String(n);
-    }
-    function onMapaArchivo(ev) {
-        var f = ev.target.files && ev.target.files[0], prev = q$('#ct-map-prev'), btn = q$('#ct-map-set'); btn.disabled = true; _mapa = null; q$('#ct-map-msg').textContent = '';
-        if (!f) { prev.innerHTML = ''; return; }
-        if (f.size > 1024 * 1024) { prev.innerHTML = '<p class="ct-map-sum ct-map-err">El archivo pesa más de 1 MB.</p>'; return; }
-        var rd = new FileReader();
-        rd.onload = function () {
-            var v = core.validarMapa(String(rd.result || ''));
-            var h = '<div class="ct-map-sum">';
-            if (v.errores.length) {
-                h += '<b class="ct-map-err">No se puede fijar este archivo:</b><br>' + v.errores.slice(0, 8).map(function (m) { return '· ' + esc(m); }).join('<br>') + (v.errores.length > 8 ? '<br>… y ' + (v.errores.length - 8) + ' más.' : '');
-            } else {
-                h += '<b class="ct-map-ok">Archivo válido:</b> <b>' + v.mesas + '</b> mesas · ' + v.sillas + ' sillas · de ' + dinero(v.precioMin) + ' a ' + dinero(v.precioMax) + '<br>' +
-                    v.zonas.map(function (z) { return '· ' + esc(z.nombre) + ': ' + z.mesas + ' mesas, ' + (z.min === z.max ? dinero(z.min) : dinero(z.min) + ' a ' + dinero(z.max)); }).join('<br>');
-                v.avisos.forEach(function (a) { h += '<br><span class="ct-map-warn">' + esc(a) + '</span>'; });
-                _mapa = v; btn.disabled = false;
-            }
-            prev.innerHTML = h + '</div>';
-        };
-        rd.onerror = function () { prev.innerHTML = '<p class="ct-map-sum ct-map-err">No se pudo leer el archivo.</p>'; };
-        rd.readAsText(f);
-    }
-    async function fijarMapa() {
-        if (!_mapa || !_mapa.layout) return;
-        var ok = await enviarMapa(salaElegida(), _mapa.layout, _mapa.mesas, q$('#ct-map-set'), q$('#ct-map-msg'));
-        if (ok) { _mapa = null; q$('#ct-map-file').value = ''; q$('#ct-map-prev').innerHTML = ''; }
-    }
-    // Manda el mapa a la base (la función vuelve a validar todo y exige dueño/manager). Devuelve true si quedó guardado.
-    async function enviarMapa(room, layout, mesas, btn, msg) {
-        if (!room) return false;
-        var antes = Number((q$('#ct-map-now') || {}).dataset ? q$('#ct-map-now').dataset.n : 0) || 0;
-        if (!window.confirm('Vas a reemplazar el mapa de «' + room.name + '»' + (antes ? ' (hoy tiene ' + antes + ' mesas)' : '') + ' por uno de ' + mesas + ' mesas. Las ventas ya abiertas conservan su mapa. ¿Continuar?')) return false;
-        btn.disabled = true; msg.style.color = ''; msg.textContent = 'Guardando…';
-        var res = await S.db.rpc('venue_room_set_layout', { p_room_id: room.id, p_layout: layout });
-        if (res.error) {
-            var sinFn = res.error.code === 'PGRST202' || res.error.code === '42883' || /could not find the function|schema cache/i.test(res.error.message || '');
-            msg.style.color = '#ff6060'; msg.textContent = sinFn ? 'Fijar el mapa todavía no está activado en la base de datos.' : msgError(res.error);
-            btn.disabled = false; return false;
-        }
-        msg.style.color = '#00c878'; msg.textContent = 'Mapa fijado: ' + res.data + ' mesas. Los eventos con la venta ya abierta conservan su mapa; los demás lo toman al abrir la venta.';
-        btn.disabled = false; mapaActual(); return true;
-    }
-
-    // ── Editor visual del plano: + agrega una mesa, − quita la elegida, y se arrastra con el mouse (o el dedo) para ubicarla ──
-    var ICONO = {
-        mas: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
-        menos: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/></svg>',
-        mover: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"/></svg>'
-    };
-    var E = null;   // { room, base, maps, meta, mapIdx, sel }
-    async function abrirEditor() {
-        var room = salaElegida(), box = q$('#ct-ed'); if (!room || !box) return;
-        box.innerHTML = '<p class="ct-empty">Cargando el plano…</p>';
-        var r = await S.db.from('venue_rooms').select('layout').eq('id', room.id).maybeSingle();
-        if (r.error) { box.innerHTML = '<p class="ct-empty" style="color:#ff6060;">No se pudo leer el plano actual.</p>'; return; }
-        var lay = (r.data && r.data.layout) || {}, base = {}, k; for (k in lay) if (k !== 'maps' && k !== 'tables') base[k] = lay[k];
-        var maps = (Array.isArray(lay.maps) && lay.maps.length ? JSON.parse(JSON.stringify(lay.maps)) : [core.planoVacio()]), meta = {};
-        (Array.isArray(lay.tables) ? lay.tables : []).forEach(function (t) { meta[t.key] = { label: t.label || t.key, seats: t.seats || 4, zone: t.zone || 'Mesas', price_cents: t.price_cents || 0 }; });
-        maps.forEach(function (m) { (m.tables || []).forEach(function (g) { if (!meta[g.id]) meta[g.id] = { label: g.id, seats: g.seats || 4, zone: 'Mesas', price_cents: 0 }; }); });
-        E = { room: room, base: base, maps: maps, meta: meta, mapIdx: 0, sel: null };
-        edFrame();
-    }
-    function edFrame() {
-        var box = q$('#ct-ed');
-        box.innerHTML =
-            '<div class="ct-ed-tools"><button type="button" class="cc-btn2" id="ed-add" aria-label="Agregar una mesa">' + ICONO.mas + ' Mesa</button>' +
-            '<button type="button" class="cc-btn2" id="ed-del" aria-label="Quitar la mesa elegida" disabled>' + ICONO.menos + ' Quitar</button>' +
-            '<select id="ed-shape" aria-label="Forma de la mesa nueva"><option value="round">Redonda</option><option value="square">Cuadrada</option><option value="rect">Larga</option></select>' +
-            '<span class="ct-ed-hint">' + ICONO.mover + ' Arrastra una mesa para moverla</span></div>' +
-            '<div class="ct-tabs" id="ed-tabs"></div>' +
-            '<div class="ct-ed-grid"><div class="ct-wrap"><svg id="ed-svg" class="ct-plan" viewBox="0 0 ' + 800 + ' ' + 520 + '" role="group" aria-label="Plano de la sala"></svg></div><div class="ct-side" id="ed-side"></div></div>' +
-            '<div class="ct-btns"><button type="button" class="cc-btn2" id="ed-save">Guardar y fijar el mapa</button><button type="button" class="cc-btn2" id="ed-cancel">Cancelar</button></div><p class="ct-msg" id="ed-msg"></p>';
-        q$('#ed-add').addEventListener('click', edAgregar);
-        q$('#ed-del').addEventListener('click', edQuitar);
-        q$('#ed-save').addEventListener('click', edGuardar);
-        q$('#ed-cancel').addEventListener('click', function () { E = null; q$('#ct-ed').innerHTML = ''; });
-        edTabs(); edDibujar(); edPanel();
-    }
-    function edMapa() { return E.maps[E.mapIdx]; }
-    function edTabs() {
-        var t = q$('#ed-tabs'); t.innerHTML = '';
-        if (E.maps.length < 2) return;
-        E.maps.forEach(function (m, i) { var b = document.createElement('button'); b.type = 'button'; b.textContent = m.label || ('Plano ' + (i + 1)); b.setAttribute('aria-selected', i === E.mapIdx ? 'true' : 'false'); b.addEventListener('click', function () { E.mapIdx = i; E.sel = null; edTabs(); edDibujar(); edPanel(); }); t.appendChild(b); });
-    }
-    function edDibujar() {
-        var svg = q$('#ed-svg'), m = edMapa(); svg.innerHTML = '';
-        el('path', { d: 'M 340 505 H 12 V 12 H 788 V 505 H 460', fill: 'none', stroke: 'rgba(255,255,255,0.4)', 'stroke-width': 4, 'stroke-linejoin': 'round' }, svg);
-        if (m.focal && m.focal.rect) zoneBox(svg, m.focal.rect, m.focal.label || '', m.focal.rot, m.focal.k);
-        (m.fixed || []).forEach(function (f) { zoneBox(svg, f.r, f.l, f.rot, f.k); });
-        (m.tables || []).forEach(function (g) {
-            var d = E.meta[g.id] || { seats: 4, label: g.id, price_cents: 0 };
-            var gr = el('g', { 'class': 'tbl st-available' + (E.sel === g.id ? ' ct-sel' : ''), transform: 'translate(' + g.x + ',' + g.y + ')', role: 'button', tabindex: '0', 'data-id': g.id,
-                'aria-label': 'Mesa ' + d.label + ', ' + d.seats + ' sillas. Arrástrala para moverla.', style: 'cursor:move;touch-action:none;' }, svg);
-            chairsFor({ t: g.t, w: g.w, h: g.h, seats: d.seats }).forEach(function (c) { el('circle', { 'class': 'seat', cx: c[0], cy: c[1], r: 5 }, gr); });
-            if (g.t === 'round') el('circle', { 'class': 'shape', cx: 0, cy: 0, r: d.seats <= 4 ? 22 : 26 }, gr);
-            else { var w = g.w || 54, h = g.h || w; el('rect', { 'class': 'shape', x: -w / 2, y: -h / 2, width: w, height: h, rx: 6 }, gr); }
-            el('text', { x: 0, y: 0 }, gr, d.label);
-            el('text', { 'class': 'px', x: 0, y: 12 }, gr, d.price_cents ? dinero(d.price_cents) : 'sin precio');
-            gr.addEventListener('pointerdown', function (ev) { edArrastrar(ev, g, gr); });
-            gr.addEventListener('keydown', function (ev) {
-                var dx = ev.key === 'ArrowRight' ? ED_PASO : ev.key === 'ArrowLeft' ? -ED_PASO : 0, dy = ev.key === 'ArrowDown' ? ED_PASO : ev.key === 'ArrowUp' ? -ED_PASO : 0;
-                if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); edElegir(g.id); }
-                if (dx || dy) { ev.preventDefault(); g.x = core.ajustar(g.x + dx, 26, 774); g.y = core.ajustar(g.y + dy, 26, 494); edElegir(g.id); }
-            });
-        });
-        q$('#ed-del').disabled = !E.sel;
-    }
-    function edElegir(id) { E.sel = id; edDibujar(); edPanel(); var n = q$('#ed-svg [data-id="' + id.replace(/"/g, '') + '"]'); if (n && n.focus) n.focus({ preventScroll: true }); }
-    function edArrastrar(ev, g, gr) {
-        ev.preventDefault();
-        var svg = q$('#ed-svg'), movido = false;
-        if (E.sel !== g.id) { E.sel = g.id; q$('#ed-del').disabled = false; Array.prototype.forEach.call(svg.querySelectorAll('.tbl'), function (n) { n.classList.toggle('ct-sel', n === gr); }); edPanel(); }
-        try { gr.setPointerCapture(ev.pointerId); } catch (e) { /* sin captura */ }
-        function pos(e) { var pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; var m = svg.getScreenCTM(); return m ? pt.matrixTransform(m.inverse()) : { x: g.x, y: g.y }; }
-        var ini = pos(ev), x0 = g.x, y0 = g.y;
-        function mover(e) {
-            var p = pos(e), nx = core.ajustar(x0 + p.x - ini.x, 26, 774), ny = core.ajustar(y0 + p.y - ini.y, 26, 494);
-            if (nx !== g.x || ny !== g.y) { g.x = nx; g.y = ny; movido = true; gr.setAttribute('transform', 'translate(' + nx + ',' + ny + ')'); }
-        }
-        function soltar() { gr.removeEventListener('pointermove', mover); gr.removeEventListener('pointerup', soltar); gr.removeEventListener('pointercancel', soltar); if (movido) edPanel(); }
-        gr.addEventListener('pointermove', mover); gr.addEventListener('pointerup', soltar); gr.addEventListener('pointercancel', soltar);
-    }
-    function edAgregar() {
-        var usadas = {}; Object.keys(E.meta).forEach(function (k) { usadas[k] = true; });
-        if (Object.keys(usadas).length >= 300) { q$('#ed-msg').style.color = '#ff6060'; q$('#ed-msg').textContent = 'Máximo 300 mesas.'; return; }
-        var key = core.siguienteClave(usadas), forma = q$('#ed-shape').value, f = core.FORMAS[forma] || core.FORMAS.round, m = edMapa(), p = core.lugarLibre(m.tables || []);
-        var ref = E.sel && E.meta[E.sel] ? E.meta[E.sel] : null;
-        var g = { id: key, t: forma, x: p.x, y: p.y, seats: forma === 'rect' ? 8 : 4 }; if (f.w) g.w = f.w; if (f.h) g.h = f.h;
-        (m.tables = m.tables || []).push(g);
-        E.meta[key] = { label: key, seats: g.seats, zone: ref ? ref.zone : 'Mesas', price_cents: ref ? ref.price_cents : 0 };   // hereda zona y precio de la elegida
-        q$('#ed-msg').textContent = '';
-        edElegir(key);
-    }
-    function edQuitar() {
-        if (!E.sel) return;
-        var m = edMapa(); m.tables = (m.tables || []).filter(function (g) { return g.id !== E.sel; }); delete E.meta[E.sel]; E.sel = null;
-        edDibujar(); edPanel();
-    }
-    function edPanel() {
-        var side = q$('#ed-side'), d = E.sel && E.meta[E.sel], m = edMapa(), n = (m.tables || []).length;
-        if (!d) { side.innerHTML = '<h3>Plano</h3><small>' + n + ' mesas en este plano.</small><p class="ct-empty" style="margin-top:12px;">Toca una mesa para editar sus sillas, zona y precio, o pulsa + para agregar una.</p>'; return; }
-        var zonas = {}; Object.keys(E.meta).forEach(function (k) { zonas[E.meta[k].zone] = true; });
-        side.innerHTML = '<h3>Mesa ' + esc(d.label) + '</h3><small>Los cambios se guardan al pulsar «Guardar y fijar el mapa».</small>' +
-            '<label for="ed-key">Clave</label><input id="ed-key" maxlength="20" value="' + esc(E.sel) + '">' +
-            '<label>Sillas</label><div class="ct-step"><button type="button" class="cc-btn2" id="ed-seat-menos" aria-label="Quitar una silla">' + ICONO.menos + '</button><b id="ed-seats" style="min-width:34px;text-align:center;color:#fff;font-size:17px;">' + d.seats + '</b><button type="button" class="cc-btn2" id="ed-seat-mas" aria-label="Agregar una silla">' + ICONO.mas + '</button></div>' +
-            '<label for="ed-zone">Zona</label><input id="ed-zone" list="ed-zonas" maxlength="60" value="' + esc(d.zone) + '"><datalist id="ed-zonas">' + Object.keys(zonas).map(function (z) { return '<option value="' + esc(z) + '">'; }).join('') + '</datalist>' +
-            '<label for="ed-price">Precio por mesa (USD)</label><input id="ed-price" type="number" min="0" max="10000" step="1" inputmode="decimal" value="' + (d.price_cents ? d.price_cents / 100 : '') + '" placeholder="0">' +
-            '<div class="ct-btns"><button type="button" class="cc-btn2" id="ed-zone-all">Mismo precio a toda la zona</button></div>';
-        q$('#ed-seat-menos').addEventListener('click', function () { cambiaSillas(-1); });
-        q$('#ed-seat-mas').addEventListener('click', function () { cambiaSillas(1); });
-        q$('#ed-zone').addEventListener('input', function () { d.zone = q$('#ed-zone').value.trim() || 'Mesas'; });
-        q$('#ed-price').addEventListener('input', function () { var v = Number(q$('#ed-price').value); d.price_cents = isFinite(v) && v > 0 ? Math.round(v * 100) : 0; edDibujar(); });
-        q$('#ed-zone-all').addEventListener('click', function () { Object.keys(E.meta).forEach(function (k) { if (E.meta[k].zone === d.zone) E.meta[k].price_cents = d.price_cents; }); edDibujar(); q$('#ed-msg').style.color = '#00c878'; q$('#ed-msg').textContent = 'Listo: todas las mesas de «' + d.zone + '» cuestan ' + dinero(d.price_cents) + '.'; });
-        q$('#ed-key').addEventListener('change', function () { renombrar(q$('#ed-key').value.trim()); });
-    }
-    function cambiaSillas(dx) { var d = E.meta[E.sel]; d.seats = Math.min(40, Math.max(1, d.seats + dx)); var g = (edMapa().tables || []).filter(function (x) { return x.id === E.sel; })[0]; if (g) g.seats = d.seats; edDibujar(); q$('#ed-seats').textContent = d.seats; }
-    function renombrar(nueva) {
-        var msg = q$('#ed-msg'), vieja = E.sel;
-        if (!nueva || nueva === vieja) { q$('#ed-key').value = vieja; return; }
-        if (nueva.length > 20 || E.meta[nueva]) { msg.style.color = '#ff6060'; msg.textContent = nueva.length > 20 ? 'La clave puede tener máximo 20 caracteres.' : 'Ya existe una mesa «' + nueva + '».'; q$('#ed-key').value = vieja; return; }
-        E.meta[nueva] = E.meta[vieja]; delete E.meta[vieja]; E.meta[nueva].label = (E.meta[nueva].label === vieja ? nueva : E.meta[nueva].label);
-        E.maps.forEach(function (mp) { (mp.tables || []).forEach(function (g) { if (g.id === vieja) g.id = nueva; }); });
-        msg.textContent = ''; E.sel = nueva; edDibujar(); edPanel();
-    }
-    async function edGuardar() {
-        var msg = q$('#ed-msg'), btn = q$('#ed-save'); msg.style.color = '#ff6060';
-        var sinPrecio = []; E.maps.forEach(function (mp) { (mp.tables || []).forEach(function (g) { if (!E.meta[g.id].price_cents) sinPrecio.push(E.meta[g.id].label); }); });
-        if (sinPrecio.length) { msg.textContent = 'Falta el precio de: ' + sinPrecio.slice(0, 8).join(', ') + (sinPrecio.length > 8 ? '…' : '') + '.'; return; }
-        var layout = core.construirMapa(E.base, E.maps, E.meta), v = core.validarMapa(layout);
-        if (!v.ok) { msg.textContent = v.errores.slice(0, 3).join(' '); return; }
-        if (await enviarMapa(E.room, layout, v.mesas, btn, msg)) { E = null; q$('#ct-ed').innerHTML = '<p class="ct-map-sum ct-map-ok">Plano fijado: ' + v.mesas + ' mesas (de ' + dinero(v.precioMin) + ' a ' + dinero(v.precioMax) + '). Los eventos con la venta ya abierta conservan su mapa; los demás lo toman al abrir la venta.</p>'; }
     }
 
     root.mdjStaffTables = { init: init, onShow: onShow, core: core };

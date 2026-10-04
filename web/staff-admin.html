@@ -8873,6 +8873,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
             // Action Tiles -- mismo patron visual que Cash Flow / Invoices, iconos SVG de trazo fino.
             const MDJ_TILE_ICONS = {
                 team: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+                plano: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/>',
                 door: '<path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/>',
                 calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
                 pencil: '<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
@@ -9312,6 +9313,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                             <div class="mdj-venue-actions">
                                 <div class="mdj-action-tile" data-room-toggle onclick="mdjToggleRoomEvents('${r.id}')"><svg viewBox="0 0 24 24">${MDJ_TILE_ICONS.calendar}</svg><span>Ver eventos</span></div>
                                 ${mdjTile('qr', 'Ver QR', `mdjShowRoomQR('${venueSlug}','${r.slug}','${r.name.replace(/'/g, "\\'")}')`)}
+                                ${mdjTile('plano', 'Dibujar plano', `window.open('./venue-floor-builder.html?sala=${r.id}','_blank')`)}
                                 ${mdjTile('pencil', 'Editar sala', `mdjEditRoom('${r.id}')`)}
                                 ${mdjTile('trash', 'Eliminar', `mdjDeleteRoom('${r.id}','${venueId}')`, true)}
                             </div>

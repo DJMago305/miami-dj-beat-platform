@@ -5,8 +5,9 @@
 -- ============================================================================
 -- EDITOR DE PLANOS (venue-floor-builder.html): el dueño dibuja la arquitectura de la sala con figuras (escenario, áreas, puertas, rectángulos, elipses,
 -- triángulos, paredes y texto). Se guardan en venue_rooms.layout -> maps[i].shapes (lista de figuras) y el dibujo completo de edición en layout.builder.
---   · venue_room_set_layout ahora también valida las figuras: tipos, medidas y posiciones dentro del plano, textos cortos, ids únicos, máx. 400 por plano y
+--   · venue_room_set_layout ahora también valida las figuras (incluida el AREA LIBRE: contorno de 3 a 40 puntos): tipos, medidas y posiciones dentro del plano, textos cortos, ids únicos, máx. 400 por plano y
 --     12 planos; el tamaño del plano (maps[i].room) entre 300 y 2000. Todo o nada, igual que antes.
+--   · ÁREAS DE VENTA: layout.areas ([{id, label, siempre}]) y tables[].area; en una área libre, «venta» y «siempre» son sí/no (las lee venue_event_open_tables).
 --   · venue_plano_bloquea ahora también cuenta las figuras que bloquean (escenario, barra, baños y paredes por defecto, o las marcadas «bloquea»): una mesa
 --     movida con «Armar grupo» no puede quedar encima de la arquitectura. Cuenta figuras giradas, elipses y paredes (margen de 22 px).
 -- Las mismas reglas están en web/js/mdj-plan-shapes.js (el navegador avisa antes; esta base es la que lo exige de verdad).
@@ -18,13 +19,19 @@ $$;
 
 create or replace function public.venue_plano_figura_valida(p_it jsonb)
 returns boolean language plpgsql immutable set search_path to 'public' as $$
-declare k text;
+declare k text; v_pt jsonb;
 begin
   if jsonb_typeof(p_it) is distinct from 'object' then return false; end if;
   if jsonb_typeof(p_it -> 'id') is distinct from 'string' or length(p_it ->> 'id') not between 1 and 24 then return false; end if;
   k := p_it ->> 'k';
-  if k is null or k not in ('stage', 'zone', 'door', 'shape', 'wall', 'text', 'chair') then return false; end if;
-  if k = 'wall' then
+  if k is null or k not in ('stage', 'zone', 'door', 'shape', 'wall', 'poly', 'text', 'chair') then return false; end if;
+  if k = 'poly' then                                    -- área libre: contorno de 3 a 40 puntos [x, y]; no gira (se reforma moviendo sus puntos)
+    if jsonb_typeof(p_it -> 'pts') is distinct from 'array' or jsonb_array_length(p_it -> 'pts') not between 3 and 40 or p_it ? 'rot' then return false; end if;
+    for v_pt in select * from jsonb_array_elements(p_it -> 'pts') loop
+      if jsonb_typeof(v_pt) is distinct from 'array' or jsonb_array_length(v_pt) <> 2
+         or not (public.venue_plano_num(v_pt -> 0, -100, 1700) and public.venue_plano_num(v_pt -> 1, -100, 1700)) then return false; end if;
+    end loop;
+  elsif k = 'wall' then
     if not (public.venue_plano_num(p_it -> 'x1', -100, 1700) and public.venue_plano_num(p_it -> 'y1', -100, 1700)
             and public.venue_plano_num(p_it -> 'x2', -100, 1700) and public.venue_plano_num(p_it -> 'y2', -100, 1700)) then return false; end if;
     if p_it ? 'th' and not public.venue_plano_num(p_it -> 'th', 1, 40) then return false; end if;
@@ -53,6 +60,7 @@ begin
   if k <> 'text' and p_it ? 'text' and (jsonb_typeof(p_it -> 'text') is distinct from 'string' or length(p_it ->> 'text') > 60) then return false; end if;
   if k = 'text' and length(p_it ->> 'text') > 60 then return false; end if;
   if p_it ? 'bloquea' and jsonb_typeof(p_it -> 'bloquea') is distinct from 'boolean' then return false; end if;
+  if (p_it ? 'venta' or p_it ? 'siempre') and (k <> 'poly' or jsonb_typeof(p_it -> 'venta') is distinct from 'boolean' and p_it ? 'venta' or jsonb_typeof(p_it -> 'siempre') is distinct from 'boolean' and p_it ? 'siempre') then return false; end if;   -- «venta» y «siempre»: solo en áreas libres, y sí/no
   if p_it ? 'relleno' and (jsonb_typeof(p_it -> 'relleno') is distinct from 'string' or (p_it ->> 'relleno') not in ('ninguno', 'gris', 'dorado', 'verde', 'rojo')) then return false; end if;
   return true;
 end $$;
@@ -60,7 +68,7 @@ end $$;
 -- Mapa de la sala (plantilla): lo fija el dueño o el manager (valida todo o nada; devuelve cuántas mesas fijó)
 create or replace function public.venue_room_set_layout(p_room_id uuid, p_layout jsonb)
 returns integer language plpgsql security definer set search_path to 'public' as $$
-declare v_venue uuid; v_total integer; v_unicas integer; t jsonb; m jsonb; s jsonb; v_ids text[];
+declare v_venue uuid; v_total integer; v_unicas integer; t jsonb; m jsonb; s jsonb; v_ids text[]; v_areas text[]; a jsonb;
 begin
   select r.venue_id into v_venue from public.venue_rooms r where r.id = p_room_id;
   if v_venue is null then raise exception 'sala_no_existe'; end if;
@@ -89,6 +97,21 @@ begin
   select count(distinct x ->> 'key') into v_unicas from jsonb_array_elements(p_layout -> 'tables') x;
   if v_unicas <> v_total then raise exception 'mapa_invalido'; end if;   -- llaves repetidas
 
+  -- Áreas de venta (opcional): catálogo [{id, label?, siempre?}] de hasta 24, ids únicos; cada mesa puede decir su área (debe existir en el catálogo)
+  v_areas := '{}';
+  if p_layout ? 'areas' then
+    if jsonb_typeof(p_layout -> 'areas') is distinct from 'array' or jsonb_array_length(p_layout -> 'areas') > 24 then raise exception 'mapa_invalido'; end if;
+    for a in select * from jsonb_array_elements(p_layout -> 'areas') loop
+      if jsonb_typeof(a) is distinct from 'object' or jsonb_typeof(a -> 'id') is distinct from 'string' or length(a ->> 'id') not between 1 and 24 or (a ->> 'id') = any (v_areas)
+         or (a ? 'label' and (jsonb_typeof(a -> 'label') is distinct from 'string' or length(a ->> 'label') > 60))
+         or (a ? 'siempre' and jsonb_typeof(a -> 'siempre') is distinct from 'boolean') then raise exception 'mapa_invalido'; end if;
+      v_areas := v_areas || (a ->> 'id');
+    end loop;
+  end if;
+  for t in select * from jsonb_array_elements(p_layout -> 'tables') loop
+    if t ? 'area' and (jsonb_typeof(t -> 'area') is distinct from 'string' or not ((t ->> 'area') = any (v_areas))) then raise exception 'mapa_invalido'; end if;
+  end loop;
+
   -- Planos: hasta 12; cada uno con su tamaño (300..2000) y sus figuras (hasta 400, ids únicos, todas válidas)
   if jsonb_typeof(p_layout -> 'maps') = 'array' then
     if jsonb_array_length(p_layout -> 'maps') > 12 then raise exception 'mapa_invalido'; end if;
@@ -116,7 +139,7 @@ end $$;
 -- «bloquea»: false lo anula). Margen de 22 px alrededor, por el tamaño de la mesa. La pista, el texto y las sillas sueltas no cuentan.
 create or replace function public.venue_plano_bloquea(p_map jsonb, p_x numeric, p_y numeric)
 returns boolean language plpgsql immutable set search_path to 'public' as $$
-declare r jsonb; f jsonb; it jsonb; k text; a numeric; dx numeric; dy numeric; lx numeric; ly numeric; ea numeric; eb numeric; l2 numeric; tt numeric; cx numeric; cy numeric; blk boolean; elip boolean;
+declare v_n integer; i integer; j integer; xi numeric; yi numeric; xj numeric; yj numeric; v_in boolean; v_near boolean; r jsonb; f jsonb; it jsonb; k text; a numeric; dx numeric; dy numeric; lx numeric; ly numeric; ea numeric; eb numeric; l2 numeric; tt numeric; cx numeric; cy numeric; blk boolean; elip boolean;
 begin
   r := p_map -> 'focal' -> 'rect';
   if jsonb_typeof(r) = 'array' and jsonb_array_length(r) = 4
@@ -137,6 +160,22 @@ begin
       blk := case when it ->> 'bloquea' = 'true' then true when it ->> 'bloquea' = 'false' then false
                   else (k in ('stage', 'wall') or (k = 'zone' and (it ->> 'sub') in ('barra', 'bano'))) end;
       continue when not blk or k in ('text', 'chair');
+      if k = 'poly' then                                -- dentro del contorno (regla par-impar, sirve con una L) o a menos de 22 px de su borde
+        v_n := jsonb_array_length(it -> 'pts'); v_in := false; v_near := false;
+        for i in 0 .. v_n - 1 loop
+          j := case when i = 0 then v_n - 1 else i - 1 end;
+          xi := (it -> 'pts' -> i ->> 0)::numeric; yi := (it -> 'pts' -> i ->> 1)::numeric; xj := (it -> 'pts' -> j ->> 0)::numeric; yj := (it -> 'pts' -> j ->> 1)::numeric;
+          if (yi > p_y) <> (yj > p_y) then
+            if p_x < (xj - xi) * (p_y - yi) / (yj - yi) + xi then v_in := not v_in; end if;
+          end if;
+          dx := xi - xj; dy := yi - yj; l2 := dx * dx + dy * dy;
+          tt := case when l2 = 0 then 0 else greatest(0, least(1, ((p_x - xj) * dx + (p_y - yj) * dy) / l2)) end;
+          cx := xj + tt * dx; cy := yj + tt * dy;
+          if sqrt((p_x - cx) * (p_x - cx) + (p_y - cy) * (p_y - cy)) <= 22 then v_near := true; end if;
+        end loop;
+        if v_in or v_near then return true; end if;
+        continue;
+      end if;
       if k = 'wall' then
         dx := (it ->> 'x2')::numeric - (it ->> 'x1')::numeric; dy := (it ->> 'y2')::numeric - (it ->> 'y1')::numeric; l2 := dx * dx + dy * dy;
         tt := case when l2 = 0 then 0 else greatest(0, least(1, ((p_x - (it ->> 'x1')::numeric) * dx + (p_y - (it ->> 'y1')::numeric) * dy) / l2)) end;
