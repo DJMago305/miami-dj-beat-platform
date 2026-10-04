@@ -3,6 +3,8 @@
 -- Quien lo aplica: el PO, en el SQL Editor de Supabase. Reemplaza UNA funcion (la version simple de venue_room_set_layout); no cambia ni borra datos.
 -- Requiere 20261003_equipo_del_local_roles.sql (can_manage_venue_layout) y 20261003_sala_mesas_inventario_por_evento.sql.
 -- ============================================================================
+-- ⚠️ ORDEN: la función venue_room_set_layout de este script fue ampliada por 20261004_plano_formas.sql (figuras del editor de planos). Si vuelves a correr este
+-- script, corre ese DESPUÉS para no volver a la versión anterior.
 -- BOTON «FIJAR EL MAPA DE LA SALA» (pantalla Mesas del portal comercial)
 -- public.venue_room_set_layout(p_room_id, p_layout) guarda la PLANTILLA de mesas de una sala (venue_rooms.layout).
 --   · Quien puede: dueno y manager del local (can_manage_venue_layout) y admin de la plataforma. El equipo NO.

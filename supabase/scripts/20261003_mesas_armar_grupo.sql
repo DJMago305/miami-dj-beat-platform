@@ -3,6 +3,8 @@
 -- Quién lo aplica: el PO, en el SQL Editor de Supabase. ADITIVO: crea DOS funciones nuevas; no cambia ni borra datos.
 -- Requiere 20261003_sala_mesas_inventario_por_evento.sql (venue_event_tables, venue_staff_set_table, venue_event_venue_id).
 -- ============================================================================
+-- ⚠️ ORDEN: la función venue_plano_bloquea de este script fue ampliada por 20261004_plano_formas.sql (figuras del editor de planos). Si vuelves a correr este
+-- script, corre ese DESPUÉS para no volver a la versión anterior.
 -- «ARMAR GRUPO»: un cliente llama con un grupo grande (p. ej. 20 personas) y el manager o el vendedor mueve y junta mesas EN EL MOMENTO,
 -- forma un diseño rápido y las vende todas con un solo nombre.
 --   · venue_event_move_tables(evento, [{key,x,y},…]) mueve mesas SOLO en el plano de ESE evento (venue_events.layout); la plantilla de la sala y los
@@ -54,7 +56,7 @@ begin
     if jsonb_typeof(mv) is distinct from 'object' or jsonb_typeof(mv -> 'key') is distinct from 'string'
        or jsonb_typeof(mv -> 'x') is distinct from 'number' or jsonb_typeof(mv -> 'y') is distinct from 'number' then raise exception 'movimiento_invalido'; end if;
     v_key := mv ->> 'key'; v_x := (mv ->> 'x')::numeric; v_y := (mv ->> 'y')::numeric;
-    if v_x < 0 or v_x > 800 or v_y < 0 or v_y > 520 or v_key = any (v_vistas) then raise exception 'movimiento_invalido'; end if;
+    if v_x < 0 or v_x > 2000 or v_y < 0 or v_y > 2000 or v_key = any (v_vistas) then raise exception 'movimiento_invalido'; end if;
     v_vistas := v_vistas || v_key;
 
     select * into r from public.venue_event_tables where event_id = p_event_id and table_key = v_key for update;
@@ -66,6 +68,8 @@ begin
       if jsonb_typeof(v_layout -> 'maps' -> i -> 'tables') = 'array' then
         for j in 0 .. jsonb_array_length(v_layout -> 'maps' -> i -> 'tables') - 1 loop
           if v_layout -> 'maps' -> i -> 'tables' -> j ->> 'id' = v_key then
+            -- el límite es el tamaño de ESE plano (maps[i].room; 800 x 520 si no trae)
+            if v_x > coalesce((v_layout -> 'maps' -> i -> 'room' ->> 'w')::numeric, 800) or v_y > coalesce((v_layout -> 'maps' -> i -> 'room' ->> 'h')::numeric, 520) then raise exception 'movimiento_invalido'; end if;
             if public.venue_plano_bloquea(v_layout -> 'maps' -> i, v_x, v_y) then raise exception 'mesa_sobre_estructura'; end if;
             v_layout := jsonb_set(v_layout, array['maps', i::text, 'tables', j::text, 'x'], to_jsonb(round(v_x)));
             v_layout := jsonb_set(v_layout, array['maps', i::text, 'tables', j::text, 'y'], to_jsonb(round(v_y)));

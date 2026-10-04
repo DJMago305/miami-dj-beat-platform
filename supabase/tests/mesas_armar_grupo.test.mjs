@@ -12,6 +12,7 @@ const { PGlite } = require_('@electric-sql/pglite');
 const here = dirname(fileURLToPath(import.meta.url));
 const MIGRACION = readFileSync(join(here, '..', 'scripts', '20261003_sala_mesas_inventario_por_evento.sql'), 'utf8');
 const GRUPO = readFileSync(join(here, '..', 'scripts', '20261003_mesas_armar_grupo.sql'), 'utf8');
+const FORMAS = readFileSync(join(here, '..', 'scripts', '20261004_plano_formas.sql'), 'utf8');
 
 process.on('unhandledRejection', (e) => { console.error('\n❌ Error inesperado:', e && e.message ? e.message : e); process.exit(2); });
 const db = new PGlite();
@@ -74,6 +75,7 @@ console.log('\n▶ Aplicando el inventario y el SQL de «armar grupo»…');
 await db.exec(MIGRACION);
 await db.exec(GRUPO); console.log('  ✔ corre sin errores');
 await db.exec(GRUPO); console.log('  ✔ y vuelve a correr (idempotente)');
+await db.exec(FORMAS); console.log('  ✔ y el de figuras del editor de planos encima (amplía venue_plano_bloquea)');
 
 // Plano con geometría (escenario, baños, barra, pista) y 6 mesas; la plantilla de la sala lleva el mismo.
 const PLANO = { maps: [{ id: 'sala', label: 'Sala', focal: { x: 400, y: 52, rect: [280, 24, 240, 56], label: 'ESCENARIO / DJ' },
@@ -157,6 +159,25 @@ r = await sets(evJue.id, Array.from({ length: 41 }, (_, i) => 'M' + i), 'sell', 
 r = await sets(evJue.id, ['M1', 'M2'], 'regalar', 'X', null); ok(/accion_invalida/.test(r.err || ''), 'acción desconocida');
 await como('authenticated', U.ajeno); r = await sets(evJue.id, ['M1'], 'sell', 'X', null); ok(/no_autorizado/.test(r.err || ''), 'el dueño de OTRO local no puede vender');
 await como('anon', ''); r = await sets(evJue.id, ['M1'], 'sell', 'X', null); ok(/permission denied/.test(r.err || ''), 'sin sesión: permiso denegado');
+
+console.log('\n▶ Planos dibujados en el editor (figuras y tamaño propio)');
+const PLANO2 = { maps: [{ id: 'sala', label: 'Sala grande', custom: true, room: { w: 1200, h: 800 }, focal: { x: 600, y: 60 }, fixed: [], zones: [{ name: 'Mesas', maxD: 9999, price: 0 }],
+  shapes: [{ id: 'esc', k: 'stage', shape: 'rect', x: 600, y: 60, w: 300, h: 80 }, { id: 'par', k: 'wall', x1: 300, y1: 300, x2: 300, y2: 700, th: 8 }, { id: 'col', k: 'shape', sub: 'ellipse', x: 800, y: 400, w: 80, h: 80, bloquea: true },
+    { id: 'dec', k: 'shape', sub: 'rect', x: 900, y: 600, w: 100, h: 100 }, { id: 'pis', k: 'zone', sub: 'pista', x: 600, y: 450, w: 200, h: 200 }],
+  tables: [1, 2, 3].map((n) => ({ id: 'G' + n, t: 'round', x: 400 + n * 80, y: 200, seats: 4 })) }],
+  tables: [1, 2, 3].map((n) => ({ key: 'G' + n, label: 'G' + n, seats: 4, zone: 'Mesas', price_cents: 10000 })) };
+const [evGrande] = await su(`insert into venue_events (room_id, title, event_date, status) values ($1, 'Sala grande', current_date + 9, 'announced') returning id`, [room.id]);
+await su(`update venue_rooms set layout = $2::jsonb where id = $1`, [room.id, JSON.stringify(PLANO2)]);
+await como('authenticated', U.owner); await db.query(`select public.venue_event_open_tables($1)`, [evGrande.id]); await como('authenticated', U.team);
+r = await mover(evGrande.id, [{ key: 'G1', x: 1100, y: 700 }]); ok(r.n === 1, 'un plano de 1200 × 800 admite mesas hasta su borde (1100, 700)');
+r = await mover(evGrande.id, [{ key: 'G2', x: 1201, y: 700 }]); ok(/movimiento_invalido/.test(r.err || ''), 'pero no más allá de SU tamaño (x = 1201)');
+r = await mover(evGrande.id, [{ key: 'G2', x: 1000, y: 801 }]); ok(/movimiento_invalido/.test(r.err || ''), 'ni más abajo (y = 801)');
+r = await mover(evGrande.id, [{ key: 'G2', x: 600, y: 60 }]); ok(/mesa_sobre_estructura/.test(r.err || ''), 'el escenario dibujado en el editor también bloquea');
+r = await mover(evGrande.id, [{ key: 'G2', x: 310, y: 500 }]); ok(/mesa_sobre_estructura/.test(r.err || ''), 'una pared dibujada bloquea (también por su grosor)');
+r = await mover(evGrande.id, [{ key: 'G2', x: 800, y: 440 }]); ok(/mesa_sobre_estructura/.test(r.err || ''), 'una figura marcada «bloquea» bloquea (elipse)');
+r = await mover(evGrande.id, [{ key: 'G2', x: 900, y: 600 }]); ok(r.n === 1, 'una figura sin «bloquea» no bloquea');
+r = await mover(evGrande.id, [{ key: 'G3', x: 600, y: 450 }]); ok(r.n === 1, 'la pista dibujada no bloquea');
+r = await mover(evGrande.id, [{ key: 'G3', x: 600, y: 110 }]); ok(/mesa_sobre_estructura/.test(r.err || ''), 'margen de 22 px alrededor del escenario dibujado');
 
 console.log(`\n${fallidas ? '❌' : '✅'} ${pasadas} pasaron, ${fallidas} fallaron`);
 process.exit(fallidas ? 1 : 0);
