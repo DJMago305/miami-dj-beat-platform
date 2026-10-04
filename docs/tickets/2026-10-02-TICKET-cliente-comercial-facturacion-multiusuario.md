@@ -41,3 +41,54 @@ Conversación del 2026-10-02: el PO confirmó que un Cliente Comercial necesita,
 ## 4. Explícitamente fuera de alcance ahora
 
 No se toca nada de código en esta sesión — el PO pidió documentarlo. Se ejecuta en su propia sesión dedicada: primero probar lo existente (paso 3.3), después decidir el modelo de facturación y multi-usuario (3.1 y 3.2), recién ahí construir.
+
+---
+
+## 5. Auditoría de solo lectura (2026-10-02, tarde) — antes de construir la plantilla propia
+
+**Regla del PO (firme):** cada categoría usa su PROPIA plantilla; nada se crea desde la plantilla de artista (solo se replican cuentas nuevas de artistas). Ver memoria `feedback_cada_categoria_su_propia_plantilla`.
+
+**Lo que se verificó (código y base de producción, sin escribir nada):**
+- `create-platform-account`, rama `commercial_client`: escribe SOLO a `client_profiles` (`is_commercial:true`, `company_name`, `venue_type`). **No toca `dj_profiles`.** ✔
+- El único disparador sobre `auth.users` (`trg_mdj_rol_al_registrarse`) solo fija el rol de la sesión (`artist` si `user_type` es talent/dj/artist; si no, `client`). **No crea ninguna fila en `dj_profiles` por su cuenta.** ✔
+- Producción: 4 clientes, **0 comerciales**, 10 `dj_profiles`; ningún cliente es además artista (`talent`). El camino nunca se ha ejercido con una cuenta real.
+- El Owner crea la cuenta desde `staff-admin.html` (tarjeta «Cuenta Cliente Comercial», pide nombre del negocio y tipo de local).
+
+**Los huecos reales (lo que impide que sea una categoría con plantilla propia):**
+1. **No hay plantilla/portal propio.** Después de la invitación → `reset-password.html` → `login.html`, el comercial cae en el MISMO `client-portal.html` que un cliente personal. `mdj-identity.js` no distingue comercial (lo clasifica `buyer` igual que a un cliente) y ningún JS de portal/login lee `is_commercial`.
+2. **La cuenta comercial vive en la tabla de clientes con una marca** (`is_commercial`), no tiene datos propios de empresa (EIN, dirección del negocio) ni vínculo con locales/salas/eventos.
+3. **No existe el vínculo cuenta ↔ local** (`venue_staff`, ver ticket de la sala de mesas fase 2): sin él, no hay a qué entrar con permisos.
+
+**Propuesta (por pasos mínimos, cada uno se confirma):**
+1. Portal propio `commercial-portal.html` (plantilla propia, con su propio encabezado y secciones: Mis locales/salas, Editor de salas, Eventos y mapas, Entradas/mesas, Equipo). Nada copiado de `dj-profile`/plantilla de artista; la base visual sale del portal de clientes y del editor de salas.
+2. Enrutar al comercial a ese portal tras iniciar sesión (cambio en la lógica compartida de identidad/ruteo → requiere autorización explícita del PO y verificación en pantalla).
+3. Tabla propia de datos de empresa y `venue_staff` (SQL a PRODUCCIÓN, lo corre el PO).
+4. Probar el camino completo con una cuenta comercial de prueba creada por el PO (yo no creo cuentas).
+
+### Avance (2026-10-02, noche)
+- **Paso 1 HECHO:** `web/commercial-portal.html` (EN DESARROLLO, `noindex`): sesión requerida, solo `is_commercial`; datos reales de la empresa, acceso al Portal del Cliente y al editor de salas.
+- **Paso 2 HECHO (autorizado por el PO):** ruteo del comercial a su portal con una guardia única, `web/js/commercial-redirect.js`, cargada en `client-portal.html` (a donde llegan los tres caminos: `auth.js`, su respaldo y MI PERFIL del header, que no se tocaron). Actúa solo en la entrada simple (sin parámetros); `?lead=`, `?mode=` y `?cuenta=cliente` se respetan para no dejar sin acceso a un comercial que también renta servicios. Lógica probada con un entorno simulado (6 casos); **el camino positivo real NO está probado: sigue sin existir ninguna cuenta comercial.**
+- **Pendiente:** paso 3 (datos de empresa propios + `venue_staff`, SQL a producción que corre el PO) y paso 4 (prueba completa con una cuenta comercial de prueba que cree el PO desde staff-admin).
+
+### Avance — Paso 3 (2026-10-02, noche): datos de empresa y equipo del local (rama `feature/cliente-comercial-empresa-y-locales`, sin mergear)
+- **SQL** `supabase/scripts/20261002_cliente_comercial_empresa_y_locales.sql` (PRODUCCIÓN, **APLICADO por el PO el 2026-10-02 y verificado**): `commercial_company` (nombre legal, EIN, dirección del negocio; una fila por cuenta comercial) y `venue_staff` + `is_venue_staff()` (equipo del local: todos los miembros con el mismo permiso). No toca `dj_profiles`.
+- **Probado en producción con rollback** (después se comprobó que no quedó nada): la cuenta comercial crea/lee/edita solo SU fila; otra cuenta no ve ni edita la ajena; una cuenta no comercial no puede crear datos de empresa; el staff de la plataforma lee todo; solo se vinculan cuentas comerciales a un local; el miembro ve su local y a sus compañeros pero no agrega ni borra; el anónimo no ve nada ni ejecuta la función.
+- **Portal comercial** (`commercial-portal.html`): «Mi empresa» con formulario de datos fiscales y dirección (EIN validado: 9 dígitos) y «Mis locales» (locales y salas vinculados, con enlace a cada sala). Si el SQL no está aplicado, esas dos secciones no se muestran (sin avisos de error). Probado con la base simulada (con local, sin local, EIN inválido, guardado, sin SQL) y con la sesión real del Owner (ve el aviso de «solo cuentas comerciales»).
+- **Quién vincula cuentas con locales:** por ahora el staff de la plataforma, con el SQL de ejemplo al final del archivo (pantalla en staff-admin: pendiente). Decisión abierta del ticket de la fase 2: ¿el dueño del local podrá agregar a su propio equipo?
+- **Pendiente:** crear la cuenta comercial de prueba (PO), vincularla a Mojitos y probar el camino real de punta a punta (paso 4).
+
+### Hallazgo en la prueba real (2026-10-02, noche): crear una cuenta comercial NUNCA funcionó
+`create-platform-account` guardaba `notes` en `client_profiles` (columna inexistente), no revisaba el error y respondía éxito: ninguna cuenta Cliente ni Cliente Comercial nacía con perfil. Por eso había 0 comerciales. Corregido en la función (ver `ESTADO_MAESTRO`); falta redesplegarla. La cuenta de prueba `gerardoa4@hotmail.com` ya existía en `auth.users` desde mayo (sin perfil): se le crea el perfil comercial con SQL y se vincula a Mojitos.
+
+### Paso 4 HECHO — prueba real con la cuenta de prueba (2026-10-02, noche)
+Cuenta `gerardoa4@hotmail.com` (perfil comercial y vínculo a Mojitos creados con SQL por el PO; sesión iniciada por el PO dentro del panel). Verificado con la base y los permisos reales:
+- `client-portal.html` (entrada simple) → lleva solo a `commercial-portal.html`; `client-portal.html?cuenta=cliente` se queda en el Portal del Cliente.
+- El portal muestra los datos reales (negocio, tipo, contacto, correo) y **Mis locales**: Mojitos Calle 8 → Sala Principal (enlace `./venues/mojitos-calle-8/sala-principal`).
+- Formulario de empresa: EIN inválido rechazado; guardado real en `commercial_company` (se conserva al recargar); la cuenta ve solo SU fila; no puede borrar su vínculo con el local (solo staff).
+- Sala de Mojitos con esa sesión: carrito de entradas en el header, Event Cart apagado, 0 recursos fallidos.
+- **Datos de prueba que hay que borrar cuando exista la cuenta oficial:** la cuenta `gerardoa4@hotmail.com` como comercial, su fila en `commercial_company` («PRUEBA Mojitos LLC (borrar)», EIN `00-0000000`) y su vínculo en `venue_staff`.
+- **Aún sin probar:** el flujo de una empresa NUEVA con link de activación (correo que nunca existió); la pantalla en staff-admin para vincular cuentas con locales; cómo el dueño del local agrega a su propio equipo.
+
+### Perfil propio del Cliente Comercial (2026-10-02, noche) — HECHO, sin mergear
+Antes: «MI PERFIL» devolvía al mismo portal y el avatar/CONFIG llevaban a `client-account.html`, la pantalla del cliente personal (contra la regla de una plantilla por categoría). Ahora la sección «Perfil» vive en `commercial-portal.html` (logo, contacto, seguridad) y `client-account.html` redirige a las cuentas comerciales a `#perfil`. Pendiente a futuro (decisión del PO: no por ahora): descripción pública del negocio y redes, para mostrarlo en la página de la sala.
+

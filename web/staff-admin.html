@@ -27,7 +27,7 @@
   <link rel="stylesheet" href="./header-unified.css?v=20260916-estacion-gap-fix" />
     <link rel="stylesheet" href="./mdj-assistant.css?v=20260306-1" />
     <!-- Idioma: mismos scripts que el resto del sitio (sin esto, ES/EN no reciben listeners). -->
-    <script src="./translations.js?v=20260927-bilingue-final"></script>
+    <script src="./translations.js?v=20261003-mi-perfil-unico"></script>
     <script src="./i18n.js?v=20260420-index-experience-rutas"></script>
     <style>
         :root {
@@ -3534,7 +3534,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                   <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:6px;">
                     <div>
                       <h3 style="margin:0;">✦ Crear Perfiles</h3>
-                      <p class="fineprint" style="margin:4px 0 0;">Centraliza la creación de cuentas. El link de activación va directo al correo del nuevo usuario.</p>
+                      <p class="fineprint" style="margin:4px 0 0;">Centraliza la creación de cuentas. Al crear una, aparece un link de activación: cópialo y envíaselo a la persona para que defina su contraseña.</p>
                     </div>
                     <div style="padding:5px 14px;border-radius:99px;background:rgba(197,160,89,0.1);border:1px solid rgba(197,160,89,0.25);font-size:11px;font-weight:800;color:rgba(197,160,89,0.85);letter-spacing:.06em;">
                       🔑 Acceso exclusivo · Owner
@@ -3543,7 +3543,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
 
                   <!-- Alerta local dev -->
                   <div style="margin:14px 0;padding:10px 14px;border-radius:8px;background:rgba(59,130,246,0.07);border:1px solid rgba(59,130,246,0.2);font-size:11px;color:rgba(147,197,253,0.8);line-height:1.5;">
-                    ℹ En <strong>localhost</strong>: el link de activación aparece en pantalla para que puedas copiarlo y enviarlo por chat. En producción se envía por email automáticamente.
+                    ℹ El link de activación aparece en pantalla al crear la cuenta: cópialo y envíalo por WhatsApp o correo. El sistema <strong>no manda correo automático</strong>. Si ese correo ya tenía cuenta, no se genera un link nuevo.
                   </div>
 
                   <!-- Selector de tipo de cuenta -->
@@ -5467,12 +5467,14 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
 
                     if (successText) successText.textContent = meta.icon + ' ' + meta.label + ' creada para ' + email;
 
-                    var subHtml = 'Se generó el link de activación para <strong>' + email + '</strong>. El usuario hace clic, establece su contraseña y su cuenta queda activa.';
+                    var subHtml = resBody.action_link
+                        ? 'Link de activación listo para <strong>' + email + '</strong>. Cópialo y envíaselo: al abrirlo define su contraseña y su cuenta queda activa.'
+                        : 'Ese correo (<strong>' + email + '</strong>) ya tenía una cuenta, así que <strong>NO se generó un link nuevo</strong>. El perfil quedó configurado como <strong>' + meta.label + '</strong>; la persona entra con su contraseña actual o con «olvidé mi contraseña».';
 
                     if (resBody.action_link) {
                         subHtml += '<br><br>'
                             + '<div style="margin-top:8px;padding:12px 14px;border-radius:8px;background:rgba(197,160,89,0.08);border:1px solid rgba(197,160,89,0.25);">'
-                            + '<div style="font-size:10px;font-weight:800;color:rgba(197,160,89,0.8);letter-spacing:.08em;margin-bottom:8px;">🔗 ACCESO RÁPIDO · SOPORTE / LOCALHOST</div>'
+                            + '<div style="font-size:10px;font-weight:800;color:rgba(197,160,89,0.8);letter-spacing:.08em;margin-bottom:8px;">🔗 LINK DE ACTIVACIÓN</div>'
                             + '<a href="' + resBody.action_link.replace(/"/g, '') + '" target="_blank" '
                             + 'style="font-size:11px;color:#fcd34d;word-break:break-all;line-height:1.5;text-decoration:underline;">'
                             + resBody.action_link.replace(/"/g, '') + '</a>'
@@ -5883,7 +5885,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 const STAFF_ROLES = ['owner', 'admin', 'manager', 'seller'];
                 const { data, error } = await supabase
                     .from('dj_profiles')
-                    .select('id, full_name, stage_name, role, email, avatar_url, created_at')
+                    .select('id, full_name, stage_name, role, email, created_at')
                     .in('role', STAFF_ROLES)
                     .order('role', { ascending: true });
                 if (error || !data) {
@@ -8870,6 +8872,8 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
 
             // Action Tiles -- mismo patron visual que Cash Flow / Invoices, iconos SVG de trazo fino.
             const MDJ_TILE_ICONS = {
+                team: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+                plano: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/>',
                 door: '<path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/>',
                 calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
                 pencil: '<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
@@ -8923,6 +8927,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                             </div>
                             <div class="mdj-venue-actions">
                                 ${mdjTile('door', 'Administrar salas', `mdjToggleVenueRooms('${v.id}')`)}
+                                ${mdjTile('team', 'Equipo', `mdjToggleVenueTeam('${v.id}')`)}
                                 ${mdjTile('calendar', 'Ver eventos', `mdjToggleVenueRooms('${v.id}', true)`)}
                                 ${mdjTile('pencil', 'Editar venue', `mdjEditVenue('${v.id}')`)}
                                 ${mdjTile('trash', 'Eliminar', `mdjDeleteVenue('${v.id}')`, true)}
@@ -8930,6 +8935,9 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         </div>
                         <div id="venue-rooms-${v.id}" data-venue-id="${v.id}" data-loaded="0" style="display:none;padding:0 18px 18px 18px;border-top:1px solid var(--line);">
                             <p class="fineprint" style="margin-top:14px;">Cargando salas…</p>
+                        </div>
+                        <div id="venue-team-${v.id}" data-loaded="0" style="display:none;padding:0 18px 18px 18px;border-top:1px solid var(--line);">
+                            <p class="fineprint" style="margin-top:14px;">Cargando equipo…</p>
                         </div>
                     </div>
                 `).join('');
@@ -9154,6 +9162,91 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 loadVenues();
             };
 
+            // ── Equipo del local: vincula cuentas de Cliente Comercial con un local (tabla venue_staff). ──
+            // Quien está vinculado ve ese local en su portal comercial. Solo el staff de la plataforma agrega o quita (RLS).
+            function mdjTeamEsc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+            window.mdjToggleVenueTeam = async function(venueId) {
+                const el = document.getElementById('venue-team-' + venueId);
+                if (!el) return;
+                if (el.style.display === 'none') {
+                    el.style.display = 'block';
+                    await mdjLoadTeam(venueId);
+                } else {
+                    el.style.display = 'none';
+                }
+            };
+
+            async function mdjLoadTeam(venueId) {
+                const db = window.getSupabaseClient();
+                const el = document.getElementById('venue-team-' + venueId);
+                let conRol = true;
+                let { data: links, error } = await db.from('venue_staff').select('user_id, role, created_at').eq('venue_id', venueId).order('created_at');
+                if (error && /role/i.test(error.message || '')) {   // el SQL de roles aún no está aplicado: se muestra sin rol
+                    conRol = false;
+                    ({ data: links, error } = await db.from('venue_staff').select('user_id, created_at').eq('venue_id', venueId).order('created_at'));
+                }
+                if (error) {
+                    el.innerHTML = '<p class="fineprint" style="margin-top:14px;">' + (/venue_staff|schema cache|does not exist/i.test(error.message || '')
+                        ? 'Falta aplicar el SQL del equipo del local (supabase/scripts/20261002_cliente_comercial_empresa_y_locales.sql).'
+                        : 'Error: ' + mdjTeamEsc(error.message)) + '</p>';
+                    return;
+                }
+                const linkedIds = (links || []).map(l => l.user_id);
+                const [{ data: members }, { data: commercial }] = await Promise.all([
+                    linkedIds.length ? db.from('client_profiles').select('user_id, full_name, email, company_name').in('user_id', linkedIds) : Promise.resolve({ data: [] }),
+                    db.from('client_profiles').select('user_id, full_name, email, company_name').eq('is_commercial', true).order('company_name'),
+                ]);
+                const byId = {}; (members || []).forEach(m => { byId[m.user_id] = m; });
+                const disponibles = (commercial || []).filter(c => !linkedIds.includes(c.user_id));
+                const ROL = { owner: 'Dueño', manager: 'Manager', team: 'Equipo' };
+                const rolDe = {}; (links || []).forEach(l => { rolDe[l.user_id] = l.role; });
+                const hayDueno = conRol && (links || []).some(l => l.role === 'owner');
+                const rows = linkedIds.length ? linkedIds.map(id => {
+                    const m = byId[id] || {};
+                    return `<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);">
+                        <div><strong>${mdjTeamEsc(m.company_name || '—')}</strong>${conRol && ROL[rolDe[id]] ? ` <span class="mdj-venue-badge">${ROL[rolDe[id]]}</span>` : ''}
+                            <div class="fineprint">${mdjTeamEsc(m.full_name || '—')} · ${mdjTeamEsc(m.email || '—')}</div></div>
+                        <button class="btn secondary small" onclick="mdjRemoveTeamMember('${venueId}','${id}')">Quitar</button>
+                    </div>`;
+                }).join('') : '<p class="fineprint" style="margin-top:14px;">Este local todavía no tiene cuentas vinculadas.</p>';
+                const opciones = disponibles.map(c => `<option value="${mdjTeamEsc(c.user_id)}">${mdjTeamEsc(c.company_name || '—')} · ${mdjTeamEsc(c.email || '—')}</option>`).join('');
+                el.innerHTML = `
+                    <div style="margin-top:14px;">${rows}</div>
+                    <div class="mdj-venue-form-card" style="margin-top:14px;">
+                        <strong style="display:block;margin-bottom:10px;font-size:13px;">+ Vincular cuenta comercial</strong>
+                        ${disponibles.length ? `
+                            <select id="team-add-${venueId}" style="width:100%;">${opciones}</select>
+                            ${conRol ? (hayDueno
+                                ? `<select id="team-role-${venueId}" style="width:100%;margin-top:8px;"><option value="manager">Manager</option><option value="team">Equipo</option></select>`
+                                : `<p class="fineprint" style="margin-top:8px;">Este local aún no tiene dueño: la primera cuenta que vincules será el <strong>Dueño</strong> y desde su portal podrá agregar a su equipo.</p>`) : ''}
+                            <button class="btn primary" style="margin-top:10px;" onclick="mdjAddTeamMember('${venueId}', ${hayDueno ? 'true' : 'false'}, ${conRol ? 'true' : 'false'})">Vincular</button>`
+                            : '<p class="fineprint">No hay cuentas comerciales disponibles. Se crean en Team → Create Profiles → Cliente Comercial.</p>'}
+                    </div>`;
+            }
+
+            window.mdjAddTeamMember = async function(venueId, hayDueno, conRol) {
+                const db = window.getSupabaseClient();
+                const sel = document.getElementById('team-add-' + venueId);
+                if (!db || !sel || !sel.value) return;
+                const fila = { venue_id: venueId, user_id: sel.value };
+                if (conRol) {   // la primera cuenta vinculada es el Dueño; después se elige Manager o Equipo
+                    const r = document.getElementById('team-role-' + venueId);
+                    fila.role = hayDueno ? ((r && r.value) || 'team') : 'owner';
+                }
+                const { error } = await db.from('venue_staff').insert(fila);
+                if (error) { alert('❌ No se pudo vincular: ' + error.message); return; }
+                await mdjLoadTeam(venueId);
+            };
+
+            window.mdjRemoveTeamMember = async function(venueId, userId) {
+                if (!confirm('¿Quitar esta cuenta del local? Dejará de verlo en su portal.')) return;
+                const db = window.getSupabaseClient();
+                const { error } = await db.from('venue_staff').delete().eq('venue_id', venueId).eq('user_id', userId);
+                if (error) { alert('❌ No se pudo quitar: ' + error.message); return; }
+                await mdjLoadTeam(venueId);
+            };
+
             window.mdjToggleVenueRooms = async function(venueId, focusEvents) {
                 const el = document.getElementById('venue-rooms-' + venueId);
                 if (!el) return;
@@ -9220,6 +9313,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                             <div class="mdj-venue-actions">
                                 <div class="mdj-action-tile" data-room-toggle onclick="mdjToggleRoomEvents('${r.id}')"><svg viewBox="0 0 24 24">${MDJ_TILE_ICONS.calendar}</svg><span>Ver eventos</span></div>
                                 ${mdjTile('qr', 'Ver QR', `mdjShowRoomQR('${venueSlug}','${r.slug}','${r.name.replace(/'/g, "\\'")}')`)}
+                                ${mdjTile('plano', 'Dibujar plano', `window.open('./venue-floor-builder.html?sala=${r.id}','_blank')`)}
                                 ${mdjTile('pencil', 'Editar sala', `mdjEditRoom('${r.id}')`)}
                                 ${mdjTile('trash', 'Eliminar', `mdjDeleteRoom('${r.id}','${venueId}')`, true)}
                             </div>
@@ -9695,7 +9789,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
     <script src="./header-smart-search.js?v=20260927-bilingue-hint"></script>
     <script src="./mdj-owner-tabs-marquee.js?v=20260818-nav-canonico"></script>
     <script src="./mdj-identity.js?v=20261003-identidad-unica"></script>
-    <script src="./mdjb-shared-header.js?v=20261002-sin-member-welcome"></script>
+    <script src="./mdjb-shared-header.js?v=20261003-mi-perfil-unico"></script>
   <script src="./mdj-social-bar.js?v=20260819-social-contact-only"></script>
 
 <!-- ══════════════════════════════════════════════════════════════════════

@@ -4127,7 +4127,7 @@
     } catch (err) { /* ignore */ }
     try {
       var es = document.documentElement && String(document.documentElement.lang || '').toLowerCase().indexOf('es') === 0;
-      el.setAttribute('aria-label', es ? 'Mi portal' : 'My portal');
+      el.setAttribute('aria-label', es ? 'Mi perfil' : 'My profile');
     } catch (e2) { /* ignore */ }
   }
 
@@ -4145,7 +4145,7 @@
       btn = document.createElement('a');
       btn.id = 'header-mi-portal-btn';
       btn.setAttribute('data-i18n', 'header-mi-portal');
-      btn.setAttribute('aria-label', 'My portal');
+      btn.setAttribute('aria-label', 'My profile');
       if (row && row.parentNode === actions) {
         actions.insertBefore(btn, row);
       } else {
@@ -4199,7 +4199,7 @@
         } catch (eMpLblM) { /* ignore */ }
       } else {
         btn.setAttribute('data-i18n', 'header-mi-portal');
-        btn.setAttribute('aria-label', 'My portal');
+        btn.setAttribute('aria-label', 'My profile');
         mdjApplyMiPortalLinkLabel(btn);
       }
     }
@@ -4462,7 +4462,7 @@
       }
     } catch (e1) { /* ignore */ }
     var lang = document.documentElement && String(document.documentElement.lang || '').toLowerCase();
-    return lang.indexOf('en') === 0 ? 'My portal' : 'Mi portal';
+    return lang.indexOf('en') === 0 ? 'My profile' : 'Mi perfil';
   }
 
   function mdjGetDjDashboardMenuLabel() {
@@ -4875,7 +4875,7 @@
       (document.head || document.documentElement).appendChild(lk);
     }
 
-    var fragUrl = './mdj-event-cart-root-fragment.html?v=20260927-bilingue-cart';
+    var fragUrl = './mdj-event-cart-root-fragment.html?v=20261003-mi-perfil-unico';
     fetch(fragUrl, { cache: 'no-store' })
       .then(function (res) {
         if (!res.ok) throw new Error('event cart fragment ' + res.status);

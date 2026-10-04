@@ -2074,6 +2074,7 @@
             <button type="button" class="side3-link" data-merch-filter="paid_pending_fulfillment" title="Pendientes"><span class="side3-ic">🟡</span><span class="side3-tx">Pendientes</span></button>
             <button type="button" class="side3-link" data-merch-filter="shipped" title="Enviados"><span class="side3-ic">🟢</span><span class="side3-tx">Enviados</span></button>
             <button type="button" class="side3-link" data-merch-filter="all" title="Todos"><span class="side3-ic">📦</span><span class="side3-tx">Todos</span></button>
+            <button type="button" class="side3-link" data-merch-filter="entradas" title="Entradas"><span class="side3-ic">🏠</span><span class="side3-tx">Entradas</span></button>
           </div>
         </aside>
 
@@ -2186,7 +2187,7 @@
           <!-- Pedidos (Shopping Miami DJ Beat): mismo patrón que Inbox — panel dedicado + iframe perezoso. -->
           <div class="sc3-panel" id="sc3-pedidos">
             <div class="sc3-loading" id="sc3-pedidos-loading"><span class="acc-spin"></span> Cargando Pedidos…</div>
-            <iframe id="sc3-pedidos-iframe" class="sc3-frame" data-src="./staff-merch-orders.html?v=20260828-full-width" aria-label="Pedidos" loading="lazy"></iframe>
+            <iframe id="sc3-pedidos-iframe" class="sc3-frame" data-src="./staff-merch-orders.html?v=20261002-entradas" aria-label="Pedidos" loading="lazy"></iframe>
           </div>
           <!-- Bóveda Legal: motor de contratos y W-9, mismo patrón que Inbox
                (panel dedicado + iframe perezoso) — vive DENTRO de Gobernanza
@@ -4825,7 +4826,7 @@
         showPanel('admin');
         enterFullPage();
         if(loading){ loading.classList.remove('hidden'); if(loadTx) loadTx.textContent = 'Cargando Network…'; }
-        var ADMIN_V = '20260923-back-btn-fix';
+        var ADMIN_V = '20261003-equipo-roles';
         iframe.onload = function(){ iframe.__loaded = true; if(loading) loading.classList.add('hidden'); };
         iframe.setAttribute('src', './staff-admin.html?v=' + ADMIN_V + '&msmPick=1#crm');
         setTimeout(function(){ if(loading) loading.classList.add('hidden'); }, 9000);
@@ -4863,7 +4864,7 @@
           // los iframes de este archivo (ver staff-merch-orders.html/contracts-engine.html
           // más arriba) -- el PO estuvo probando una copia vieja cacheada del panel de
           // Network sin darse cuenta. Bump este sufijo cada vez que se edite el archivo.
-          var ADMIN_V = '20260923-back-btn-fix';
+          var ADMIN_V = '20261003-equipo-roles';
           var url='./staff-admin.html?v='+ADMIN_V;
           if(opt.go) url='./staff-admin.html?v='+ADMIN_V+'&go='+opt.go+(opt.hash?('#'+opt.hash):'');
           else if(opt.hash) url='./staff-admin.html?v='+ADMIN_V+'#'+opt.hash;
@@ -5163,7 +5164,7 @@
        header-smart-search.js se deja: sigue enganchado al #header-smart-search
        de .staff-flota (oculto, no removido). -->
   <script src="./header-smart-search.js?v=20260927-bilingue-hint"></script>
-  <script src="./translations.js?v=20260927-bilingue-final"></script>
+  <script src="./translations.js?v=20261003-mi-perfil-unico"></script>
   <script src="./i18n.js?v=20260427-lang-default"></script>
 </body>
 </html>

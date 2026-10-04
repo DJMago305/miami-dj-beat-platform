@@ -220,6 +220,118 @@ async function mdjproAutoIssueArtistProLicense(
     };
 }
 
+// ── Entradas de sala: confirmación al comprador + aviso al staff (Resend, mismo patrón que merch) ──
+function escHtml(v: unknown): string {
+    return String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string));
+}
+
+async function notifyVenueTicketOrder(
+    // deno-lint-ignore no-explicit-any
+    supabase: any,
+    o: {
+        orderId: string | null;
+        eventId: string;
+        items: { label: string; qty: number }[];
+        customerName: string | null;
+        customerEmail: string | null;
+        totalCents: number;
+        kind?: "tickets" | "tables";          // «tables» = compra de mesas (sala de mesas, fase 2)
+        reservationName?: string | null;      // nombre de la reserva (los invitados lo dicen en la puerta)
+    },
+): Promise<void> {
+    try {
+        const mesas = o.kind === "tables";
+        const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
+        const MANAGER_EMAIL = Deno.env.get("MANAGER_EMAIL") ?? "";
+        const FROM_EMAIL = Deno.env.get("FROM_EMAIL") || "Miami DJ Beat <no-reply@miamidjbeat.com>";
+        if (!RESEND_API_KEY) return;
+
+        let title = "Evento";
+        let when = "";
+        let place = "";
+        let mapQuery = "";                        // dirección completa del local, para los botones «Cómo llegar»
+        if (o.eventId) {
+            // postal_code es una columna nueva (SQL 20261003_venues_codigo_postal.sql): si aún no existe, se repite la consulta sin ella para no perder el correo.
+            let { data: ev, error: evErr } = await supabase
+                .from("venue_events")
+                .select("title, event_date, venue_rooms(name, venues(name, address, city, postal_code))")
+                .eq("id", o.eventId)
+                .maybeSingle();
+            if (evErr) {
+                ({ data: ev } = await supabase
+                    .from("venue_events")
+                    .select("title, event_date, venue_rooms(name, venues(name, address, city))")
+                    .eq("id", o.eventId)
+                    .maybeSingle());
+            }
+            if (ev) {
+                title = ev.title || title;
+                if (ev.event_date) {
+                    when = new Date(`${ev.event_date}T12:00:00`).toLocaleDateString("es-US", { dateStyle: "full", timeZone: "America/New_York" });
+                }
+                const room = ev.venue_rooms;
+                const venue = room?.venues;
+                // Dirección completa: «8000 SW 8th St, Miami, FL 33144» (el código postal solo se agrega si la ciudad no lo trae ya)
+                const zip = String(venue?.postal_code ?? "").trim();
+                const city = String(venue?.city ?? "").trim();
+                const fullAddress = [venue?.address, zip && !city.includes(zip) ? `${city} ${zip}`.trim() : city].filter(Boolean).join(", ");
+                place = [venue?.name, room?.name, fullAddress].filter(Boolean).join(" · ");
+                mapQuery = [venue?.name, fullAddress].filter(Boolean).join(", ");
+            }
+        }
+
+        const code = o.orderId ? o.orderId.slice(0, 8).toUpperCase() : "—";
+        const amount = `$${(o.totalCents / 100).toFixed(2)}`;
+        const lines = o.items.map((it) => `${escHtml(it.qty)}× ${escHtml(it.label)}`).join("<br>") || "—";
+        const buyer = o.customerName || "—";
+
+        // «Cómo llegar» (solo compra de mesas): un correo no puede incrustar un mapa interactivo, así que lleva botones que abren la dirección
+        // del local en Google Maps y en Apple Maps (mismo formato de enlace que la tarjeta del local en la sala).
+        const q = encodeURIComponent(mapQuery);
+        const btn = "display:inline-block;margin:4px 8px 4px 0;padding:10px 18px;border-radius:24px;background:#c5a059;color:#111;font-weight:700;text-decoration:none";
+        const comoLlegar = mesas && mapQuery
+            ? `\n<p><b>Cómo llegar / Get directions:</b><br>${escHtml(mapQuery)}<br>
+<a href="https://www.google.com/maps/search/?api=1&query=${q}" style="${btn}">Google Maps</a>
+<a href="https://maps.apple.com/?q=${q}" style="${btn}">Apple Maps</a></p>`
+            : "";
+
+        const send = (to: string, subject: string, html: string) =>
+            fetch("https://api.resend.com/emails", {
+                method: "POST",
+                headers: { "Authorization": `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+                body: JSON.stringify({ from: FROM_EMAIL, to: [to], subject, html }),
+            });
+
+        if (o.customerEmail) {
+            await send(
+                o.customerEmail,
+                mesas ? `Tu mesa / Your table — ${title}` : `Tus entradas / Your tickets — ${title}`,
+                `<h2>¡Gracias por tu compra! / Thank you!</h2>
+<p><b>${escHtml(title)}</b>${when ? `<br>${escHtml(when)}` : ""}${place ? `<br>${escHtml(place)}` : ""}</p>
+<p><b>${mesas ? "Mesas / Tables" : "Entradas / Tickets"}:</b><br>${lines}</p>
+<p><b>Total:</b> ${escHtml(amount)}<br><b>Código / Code:</b> ${escHtml(code)}</p>${comoLlegar}
+<p>En la puerta, di tu nombre (<b>${escHtml(buyer)}</b>)${mesas && o.reservationName ? ` o el de la reserva (<b>${escHtml(o.reservationName)}</b>)` : ""} o muestra este correo.<br>
+At the door, give your name (<b>${escHtml(buyer)}</b>)${mesas && o.reservationName ? ` or the reservation name (<b>${escHtml(o.reservationName)}</b>)` : ""} or show this email.</p>
+<p style="color:#888;font-size:12px">Miami DJ Beat LLC</p>`,
+            );
+        }
+        if (MANAGER_EMAIL) {
+            await send(
+                MANAGER_EMAIL,
+                `${mesas ? "Mesas vendidas" : "Entradas vendidas"} — ${title} — ${amount}`,
+                `<h2>${mesas ? "Nueva venta de mesas" : "Nueva venta de entradas"}</h2>
+<p><b>Evento:</b> ${escHtml(title)}${when ? ` · ${escHtml(when)}` : ""}</p>
+<p><b>Comprador:</b> ${escHtml(buyer)} (${escHtml(o.customerEmail || "—")})</p>
+<p><b>${mesas ? "Mesas" : "Entradas"}:</b><br>${lines}</p>${mesas && o.reservationName ? `\n<p><b>Nombre de la reserva:</b> ${escHtml(o.reservationName)}</p>` : ""}
+<p><b>Total:</b> ${escHtml(amount)} · <b>Código:</b> ${escHtml(code)}</p>
+<p><a href="https://miamidjbeat.com/staff.html">Abrir staff → Pedidos → Entradas</a></p>`,
+            );
+        }
+    } catch (e) {
+        console.error("[Webhook] venue ticket notify failed:", e);
+    }
+}
+
 serve(async (req) => {
     if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -307,6 +419,12 @@ serve(async (req) => {
             // ── Pago de evento abandonado/vencido: devolver el cupo del cupón reservado ──
             case "checkout.session.expired": {
                 const expired = event.data.object;
+                // Mesas de una sala (fase 2): si el pago se abandona, las mesas vuelven a estar libres al instante.
+                if (expired.metadata?.product === "venue_table" && expired.metadata?.hold_token) {
+                    const { error: relTblErr } = await supabase.rpc("venue_event_release_tables", { p_hold_token: String(expired.metadata.hold_token) });
+                    if (relTblErr) console.error("[Webhook] venue_event_release_tables:", relTblErr.message);
+                    break;
+                }
                 if (expired.metadata?.lead_id && expired.metadata?.coupon_code) {
                     const { error: relErr } = await supabase.rpc("discount_release", { p_stripe_session_id: expired.id });
                     if (relErr) console.error("[Webhook] discount_release:", relErr.message);
@@ -656,6 +774,77 @@ serve(async (req) => {
                     break;
                 }
 
+                // ── Branch: MESAS de una sala (Checkout, create-venue-table-checkout) — sala de mesas, fase 2 ──
+                // El pedido se escribe SOLO aquí, con el pago ya confirmado, y solo entonces las mesas pasan de «en espera» a
+                // «vendida» (venue_event_confirm_tables). Si otra persona alcanzó a tomar una mesa tras vencer la espera, el
+                // pedido queda marcado para REEMBOLSO MANUAL (no se pierde ni se oculta el cobro).
+                if (session.metadata?.product === "venue_table") {
+                    const eventIdTable = String(session.metadata?.event_id ?? "");
+                    const holdToken = String(session.metadata?.hold_token ?? "");
+                    const tableKeys = String(session.metadata?.table_keys ?? "").split(",").filter((k: string) => k !== "");
+                    const renterName = String(session.metadata?.renter_name ?? "").trim() || String(session.customer_details?.name ?? "").trim();
+                    const reservationName = String(session.metadata?.reservation_name ?? "").trim() || renterName;
+                    const chunkCountT = Number(session.metadata?.ticket_items_chunks ?? 0);
+                    let itemsJsonT = "";
+                    for (let i = 0; i < chunkCountT; i++) itemsJsonT += String(session.metadata?.[`ticket_items_${i}`] ?? "");
+                    let itemsT: { id: string; label: string; qty: number; price_cents: number }[] = [];
+                    try {
+                        itemsT = itemsJsonT ? JSON.parse(itemsJsonT) : [];
+                    } catch (parseErr) {
+                        console.error("[Webhook] venue_table: items de metadata invalidos:", parseErr);
+                    }
+                    const emailT =
+                        (session.customer_details?.email as string | undefined) ||
+                        (session.customer_email as string | undefined) ||
+                        null;
+
+                    const { data: tableOrderRow, error: tableOrderErr } = await supabase.from("venue_ticket_orders").upsert({
+                        event_id: eventIdTable || null,
+                        stripe_session_id: session.id,
+                        stripe_payment_intent_id: (session.payment_intent as string) ?? null,
+                        kind: "tables",
+                        reservation_name: reservationName || null,
+                        items: itemsT,
+                        customer_name: renterName || null,
+                        customer_email: emailT,
+                        customer_phone: session.customer_details?.phone || null,
+                        subtotal_cents: Number(session.metadata?.subtotal_cents ?? 0),
+                        total_cents: session.amount_total ?? 0,
+                        currency: session.currency ?? "usd",
+                    }, { onConflict: "stripe_session_id" }).select("id").maybeSingle();
+
+                    if (tableOrderErr || !tableOrderRow) {
+                        console.error("[Webhook] venue_table order:", tableOrderErr?.message);
+                        break;
+                    }
+                    const { error: confirmErr } = await supabase.rpc("venue_event_confirm_tables", {
+                        p_hold_token: holdToken,
+                        p_order_id: tableOrderRow.id,
+                        p_buyer_name: renterName || "Cliente",
+                        p_reservation_name: reservationName || null,
+                    });
+                    if (confirmErr) console.error("[Webhook] venue_event_confirm_tables:", confirmErr.message);
+                    // Reintentos del webhook: confirmar dos veces devuelve 0, así que se cuenta lo vendido a ESTE pedido.
+                    const { count: vendidas } = await supabase.from("venue_event_tables").select("id", { count: "exact", head: true }).eq("order_id", tableOrderRow.id);
+                    if ((vendidas ?? 0) < tableKeys.length) {
+                        console.error(`🚨 [Webhook] venue_table: se pagaron ${tableKeys.length} mesa(s) pero solo ${vendidas ?? 0} quedaron vendidas (pedido ${tableOrderRow.id}, sesión ${session.id}). REEMBOLSO MANUAL.`);
+                        await supabase.from("venue_ticket_orders").update({ status: "tables_conflict_refund_needed" }).eq("id", tableOrderRow.id);
+                    } else {
+                        console.log(`✅ Venue table order: ${session.id} | ${emailT} | ${tableKeys.join(",")} | $${((session.amount_total ?? 0) / 100).toFixed(2)}`);
+                    }
+                    await notifyVenueTicketOrder(supabase, {
+                        orderId: tableOrderRow.id,
+                        eventId: eventIdTable,
+                        items: itemsT,
+                        customerName: renterName || null,
+                        customerEmail: emailT,
+                        totalCents: session.amount_total ?? 0,
+                        kind: "tables",
+                        reservationName: reservationName || null,
+                    });
+                    break;
+                }
+
                 // ── Branch: Entradas de sala (Checkout, create-venue-ticket-checkout) ──
                 // Modulo de Salas/QR/Taquilla (docs/ESTADO_MAESTRO.md ~1321). Misma
                 // disciplina que merch/quote: escribe venue_ticket_orders SOLO aqui,
@@ -681,7 +870,7 @@ serve(async (req) => {
                         (session.customer_email as string | undefined) ||
                         null;
 
-                    const { error: ticketOrderErr } = await supabase.from("venue_ticket_orders").upsert({
+                    const { data: ticketOrderRow, error: ticketOrderErr } = await supabase.from("venue_ticket_orders").upsert({
                         event_id: eventIdTicket || null,
                         stripe_session_id: session.id,
                         stripe_payment_intent_id: (session.payment_intent as string) ?? null,
@@ -692,7 +881,7 @@ serve(async (req) => {
                         subtotal_cents: Number(session.metadata?.subtotal_cents ?? 0),
                         total_cents: session.amount_total ?? 0,
                         currency: session.currency ?? "usd",
-                    }, { onConflict: "stripe_session_id" });
+                    }, { onConflict: "stripe_session_id" }).select("id").maybeSingle();
 
                     if (ticketOrderErr) {
                         console.error("[Webhook] venue_ticket_orders:", ticketOrderErr.message);
@@ -714,6 +903,16 @@ serve(async (req) => {
                                     .eq("id", line.id);
                             }
                         }
+                        // Confirmación al comprador y aviso al staff. Si el correo falla la orden ya quedó
+                        // registrada (no bloquea): el staff la ve igual en Pedidos → Entradas.
+                        await notifyVenueTicketOrder(supabase, {
+                            orderId: ticketOrderRow?.id ?? null,
+                            eventId: eventIdTicket,
+                            items,
+                            customerName: (session.customer_details?.name as string | undefined) || null,
+                            customerEmail: email,
+                            totalCents: session.amount_total ?? 0,
+                        });
                     }
                     break;
                 }

@@ -1,0 +1,1008 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <base href="/" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Editor de salas — Miami DJ Beat</title>
+    <meta name="description" content="Editor de planos de salas: mesas, sillas, escenarios y precios. En desarrollo." />
+    <meta name="robots" content="noindex" />
+    <!-- noindex y sin enlace desde el sitio a propósito: herramienta EN DESARROLLO (fase 1, guarda solo en el navegador). -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=optional" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&display=optional" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css?v=20260909-revealtext-blur-fix" />
+    <link rel="stylesheet" href="./header-unified.css?v=20260902-cortinas" />
+    <style>
+body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08) 0%, transparent 55%), #050505; min-height: 100vh; }
+.fb-wrap { max-width: 1600px; margin: 0 auto; padding: 100px 18px 50px; color: #f2f1ee; font-family: Inter, system-ui, sans-serif; }
+.fb-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+.fb-top h1 { font-family: 'Playfair Display', serif; font-size: clamp(26px, 3.4vw, 38px); margin: 0 0 6px; }
+.fb-dev { display: inline-block; padding: 4px 14px; border-radius: 999px; border: 1px solid rgba(197,160,89,0.4); color: #c5a059; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; vertical-align: middle; margin-left: 10px; font-family: Inter, sans-serif; }
+.fb-sub { max-width: 820px; margin: 0; color: rgba(255,255,255,.65); font-size: 14px; line-height: 1.55; }
+.fb-actions, .fb-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.fb-bar { margin-bottom: 14px; padding: 10px 12px; border: 1px solid rgba(255,255,255,.1); border-radius: 14px; background: rgba(255,255,255,.03); font-size: 13px; }
+.fb-bar label { display: inline-flex; align-items: center; gap: 6px; color: rgba(255,255,255,.7); font-weight: 600; }
+.fb-bar input[type=text], .fb-bar input[type=number], .fb-bar select, .fb-side input, .fb-side select { background: rgba(0,0,0,.4); border: 1px solid rgba(255,255,255,.18); border-radius: 8px; color: #fff; padding: 6px 8px; font: inherit; font-size: 13px; }
+.fb-bar input[type=number] { width: 72px; }
+.fb-bar input[type=text] { width: 150px; }
+.fb-chk { cursor: pointer; }
+.fb-scope { margin-left: auto; font-weight: 800; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #c5a059; }
+.fb-actions button, .fb-bar button, .fb-side button, .fb-palette button { border: 1px solid rgba(197,160,89,.45); background: rgba(197,160,89,.1); color: #e8c987; border-radius: 50px; padding: 7px 14px; font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+.fb-actions button:hover, .fb-bar button:hover, .fb-side button:hover, .fb-palette button:hover { background: rgba(197,160,89,.24); }
+.fb-actions button:disabled, .fb-side button:disabled { opacity: .35; cursor: default; }
+.fb-grid { display: grid; grid-template-columns: 190px minmax(0, 1fr) 290px; gap: 14px; align-items: start; }
+.fb-palette, .fb-side { border: 1px solid rgba(255,255,255,.1); border-radius: 14px; background: rgba(255,255,255,.03); padding: 12px; }
+.fb-palette h3, .fb-side h3 { margin: 12px 0 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.5); }
+.fb-palette h3:first-child, .fb-side h3:first-child { margin-top: 0; }
+.fb-fast { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px; }
+.fb-fast label { display: block; font-size: 11px; font-weight: 700; color: rgba(255,255,255,.55); }
+.fb-fast input, #fb-gr-type { width: 100%; box-sizing: border-box; background: rgba(0,0,0,.4); border: 1px solid rgba(255,255,255,.18); border-radius: 8px; color: #fff; padding: 6px 8px; font: inherit; font-size: 13px; margin-bottom: 6px; }
+.fb-palette button { display: block; width: 100%; text-align: left; margin-bottom: 6px; border-radius: 10px; }
+.fb-canvas-wrap { border: 1px solid rgba(255,255,255,.1); border-radius: 14px; background: rgba(0,0,0,.45); padding: 10px; min-width: 0; }
+.fb-svg { display: block; width: 100%; height: auto; touch-action: none; user-select: none; background: #0b0b0e; border-radius: 8px; }
+.fb-svg .grid { stroke: rgba(255,255,255,.05); stroke-width: 1; }
+.fb-svg .wall { fill: none; stroke: rgba(255,255,255,.55); stroke-width: 5; }
+.fb-svg .it { cursor: grab; }
+.fb-svg .it:active { cursor: grabbing; }
+.fb-svg .it.sel > .body { stroke: #c5a059; stroke-width: 3; stroke-dasharray: none; }
+.fb-svg .it.sel .selbox { display: block; }
+.fb-selbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 8px; padding: 6px 8px; border-radius: 10px; background: rgba(255,255,255,.04); }
+.fb-selname { flex: 1 1 200px; font-size: 13px; font-weight: 700; color: rgba(255,255,255,.8); }
+.fb-selbar button { border: 1px solid rgba(197,160,89,.45); background: rgba(197,160,89,.1); color: #e8c987; border-radius: 50px; padding: 6px 14px; font-weight: 700; font-size: 13px; cursor: pointer; font-family: inherit; }
+.fb-selbar button:disabled { opacity: .35; cursor: default; }
+#fb-del2:not(:disabled) { border-color: rgba(255,96,96,.6); color: #ff9a9a; background: rgba(255,96,96,.1); }
+.fb-objs { max-height: 220px; overflow: auto; border: 1px solid rgba(255,255,255,.1); border-radius: 10px; padding: 4px; margin-bottom: 8px; }
+.fb-obj { display: flex; gap: 6px; align-items: center; margin: 2px 0; }
+.fb-obj.sel { background: rgba(197,160,89,.18); border-radius: 8px; }
+.fb-side .fb-obj-pick { flex: 1; text-align: left; border: 0; background: transparent; color: rgba(255,255,255,.85); padding: 5px 8px; font-size: 12px; font-weight: 600; cursor: pointer; border-radius: 8px; font-family: inherit; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fb-side .fb-obj-pick:hover { background: rgba(255,255,255,.08); }
+.fb-side .fb-obj-del { border: 1px solid rgba(255,96,96,.5); background: rgba(255,96,96,.08); color: #ff9a9a; border-radius: 50px; padding: 3px 10px; font-size: 11px; font-weight: 700; cursor: pointer; font-family: inherit; }
+.fb-svg .hdl { fill: #fff; stroke: #c5a059; stroke-width: 1.5; }
+.fb-svg .hdl.add { fill: rgba(197,160,89,.35); stroke: #c5a059; stroke-width: 1.5; }
+.fb-svg .hdl.rot { fill: #c5a059; stroke: #fff; stroke-width: 2; }
+.fb-svg .rotline { stroke: #c5a059; stroke-width: 1.5; pointer-events: none; }
+.fb-svg .selbox { display: none; fill: none; stroke: #c5a059; stroke-width: 1.5; stroke-dasharray: 4 3; }
+.fb-svg .tb { fill: rgba(0,200,120,.22); stroke: #00c878; stroke-width: 2; }
+.fb-svg .tb.vip { fill: rgba(197,160,89,.3); stroke: #c5a059; }
+.fb-svg .tb.reserved { fill: rgba(255,180,0,.22); stroke: #ffb400; }
+.fb-svg .tb.sold { fill: rgba(255,96,96,.22); stroke: #ff6060; }
+.fb-svg .seat { fill: rgba(255,255,255,.5); pointer-events: none; }
+.fb-svg .stg { fill: rgba(102,163,255,.2); stroke: #66a3ff; stroke-width: 2; }
+.fb-svg .zn { fill: rgba(255,255,255,.06); stroke: rgba(255,255,255,.35); stroke-dasharray: 5 4; stroke-width: 1.5; }
+.fb-svg .zn.fac { fill: rgba(197,160,89,.14); stroke: rgba(197,160,89,.85); stroke-dasharray: none; }
+.fb-svg .zn.exit { fill: rgba(0,200,120,.18); stroke: #00c878; stroke-dasharray: none; }
+.fb-svg .door { fill: #c5a059; }
+.fb-svg .door.exit { fill: #00c878; }
+.fb-svg text { fill: #fff; font: 800 12px Inter, sans-serif; text-anchor: middle; pointer-events: none; }
+.fb-svg text.sm { font-size: 10px; font-weight: 700; fill: rgba(255,255,255,.8); }
+.fb-svg .ring { fill: none; stroke: rgba(197,160,89,.45); stroke-dasharray: 3 6; stroke-width: 1.5; pointer-events: none; }
+.fb-svg .refimg { pointer-events: none; }
+.fb-summary { margin-top: 8px; font-size: 12.5px; color: rgba(255,255,255,.65); }
+.fb-side label { display: block; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: rgba(255,255,255,.5); margin: 8px 0 3px; }
+.fb-side input[type=text], .fb-side input[type=number], .fb-side select { width: 100%; box-sizing: border-box; }
+.fb-side input[type=range] { width: 100%; padding: 0; }
+.fb-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.fb-msg { margin: 8px 0; padding: 8px 10px; border-radius: 8px; font-size: 12.5px; background: rgba(255,96,96,.14); border: 1px solid rgba(255,96,96,.5); color: #ff6060; display: none; }
+.fb-msg.ok { background: rgba(0,200,120,.12); border-color: rgba(0,200,120,.5); color: #00c878; }
+.fb-hint { font-size: 12px; color: rgba(255,255,255,.5); margin: 6px 0 0; line-height: 1.45; }
+.fb-narrow-note { display: none; color: #ffb400; font-size: 13px; text-align: center; margin-top: 14px; }
+@media (max-width: 1100px) { .fb-grid { grid-template-columns: 1fr; } .fb-palette { display: flex; flex-wrap: wrap; gap: 6px; } .fb-palette h3 { width: 100%; } .fb-palette button { width: auto; margin: 0; } .fb-narrow-note { display: block; } }
+    </style>
+</head>
+
+<body class="notranslate page-fb">
+<header class="header mdj-header-unified" id="mainHeader">
+  <div class="header-top">
+    <div class="container">
+      <div class="brand">
+        <picture>
+          <source srcset="./assets/branding/logo-transparent.webp" type="image/webp">
+          <img src="./assets/branding/logo-transparent-fallback.png" alt="Miami DJ Beat Logo" class="logo-img-eagle" width="256" height="256">
+        </picture>
+        <div class="brand-letters-wrapper">
+          <picture>
+            <source srcset="./assets/branding/logo-transparent-letras.webp" type="image/webp">
+            <img src="./assets/branding/logo-transparent-letras.png" alt="Miami DJ Beat Letters" class="brand-letters-img" width="384" height="384">
+          </picture>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="mdj-header-r1-auth-cluster">
+          <div class="lang-switcher">
+            <span class="lang-btn" data-lang="es">ES</span>
+            <span class="lang-pipe">|</span>
+            <span class="lang-btn" data-lang="en">EN</span>
+          </div>
+          <a href="./login.html" id="header-login-btn" class="btn-pill gold" data-auth-btn>Log in</a>
+          <div class="account session-pending" id="header-auth-zone" style="display: none;">
+            <a class="account-btn" id="accountBtn" href="./dj-profile.html" title="Mi perfil" aria-label="Mi perfil">
+              <img class="avatar" src="./assets/dj-avatar-placeholder.png" alt="" />
+            </a>
+          </div>
+        </div>
+      </div>
+      <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="mobile-overlay" id="mobileMenu">
+        <nav class="mobile-nav">
+          <a href="./index.html" data-mdj-nav="home">Home</a>
+          <a href="./events.html" data-mdj-nav="venues">Eventos</a>
+          <a href="./contact.html" data-mdj-nav="contact">Contacto</a>
+        </nav>
+      </div>
+    </div>
+  </div>
+  <div class="header-nav">
+    <div class="container">
+      <nav class="nav top-nav mdj-mainnav-flex" id="mainNav" aria-label="Navegación principal">
+        <a href="./index.html" data-mdj-nav="home" data-mdj-slot="1">Inicio</a>
+        <a href="./events.html" data-mdj-nav="venues" data-mdj-slot="2">Eventos</a>
+        <a href="./contact.html" data-mdj-nav="contact" data-mdj-slot="3">Contacto</a>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<main class="fb-wrap">
+  <div class="fb-top">
+    <div>
+      <h1>Editor de salas <span class="fb-dev">En desarrollo</span></h1>
+      <p class="fb-sub">Para locales que todavía no tienen plano: dibuja el local con figuras, paredes, puertas y texto, agranda arrastrando las manijas, pon las mesas y fija precios. Si el local ya tiene un plano (p. ej. el de incendios), cárgalo como referencia y calca encima. <b>Mientras trabajas se guarda en este navegador</b>; con «Guardar en la sala» el plano queda en la base y lo ven el staff y los clientes.</p>
+    </div>
+    <div class="fb-actions">
+      <button type="button" id="fb-undo" title="Deshacer (Ctrl+Z)">Deshacer</button>
+      <button type="button" id="fb-redo" title="Rehacer (Ctrl+Y)">Rehacer</button>
+      <button type="button" id="fb-export">Exportar</button>
+      <button type="button" id="fb-import">Importar</button>
+      <input type="file" id="fb-import-file" accept="application/json,.json" hidden>
+    </div>
+  </div>
+
+  <div class="fb-bar">
+    <label>Local <input type="text" id="fb-venue" maxlength="80" value="Mojitos Calle 8"></label>
+    <label>Mapa <select id="fb-map"></select></label>
+    <button type="button" id="fb-newmap">+ Mapa nuevo</button>
+    <button type="button" id="fb-copyevent">Copiar a evento…</button>
+    <button type="button" id="fb-rename">Renombrar</button>
+    <button type="button" id="fb-delmap">Eliminar mapa</button>
+    <label>Sala <input type="number" id="fb-rw" min="400" max="1600" step="10"> × <input type="number" id="fb-rh" min="300" max="1200" step="10"></label>
+    <label class="fb-chk"><input type="checkbox" id="fb-snap" checked> Imán</label>
+    <label class="fb-chk"><input type="checkbox" id="fb-rings"> Anillos de precio</label>
+    <label class="fb-chk" title="Un área pública que no se cierra nunca (p. ej. una terraza): entra en todos los eventos"><input type="checkbox" id="fb-always"> Área pública, siempre abierta</label>
+    <span class="fb-scope" id="fb-scope"></span>
+  </div>
+  <div class="fb-bar" id="fb-roombar">
+    <label>Sala en la base <select id="fb-room"><option value="">Inicia sesión para ver tus salas…</option></select></label>
+    <button type="button" id="fb-open-room">Abrir de la sala</button>
+    <button type="button" id="fb-save-room">Guardar en la sala</button>
+    <button type="button" id="fb-blank" title="Para dibujar otro salón desde cero">Plano en blanco</button>
+    <span id="fb-room-msg" role="status" style="font-size:12.5px;color:rgba(255,255,255,.7)"></span>
+  </div>
+
+  <div class="fb-grid">
+    <aside class="fb-palette" id="fb-palette" aria-label="Biblioteca de objetos"></aside>
+    <section class="fb-canvas-wrap">
+      <div class="fb-selbar" id="fb-selbar">
+        <span class="fb-selname" id="fb-selname">Toca un objeto del plano para editarlo o borrarlo</span>
+        <button type="button" id="fb-del2" disabled>Eliminar</button>
+        <button type="button" id="fb-dup2" disabled>Duplicar</button>
+        <button type="button" id="fb-rot2" disabled>Girar 90°</button>
+      </div>
+      <svg id="fb-svg" class="fb-svg" role="application" aria-label="Plano de la sala"></svg>
+      <div class="fb-summary" id="fb-summary"></div>
+    </section>
+    <aside class="fb-side" id="fb-side" aria-label="Propiedades"></aside>
+  </div>
+  <p class="fb-narrow-note">Este editor se usa mejor en pantalla grande.</p>
+</main>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
+<script>
+(function () {
+    var mdjLibAusente = !(window.supabase && typeof window.supabase.createClient === 'function');
+    if (mdjLibAusente) {
+        document.write('<script src="./vendor/supabase-js-2.112.3.legacy.js?v=20260818-safari-legacy"><\/script>');
+    }
+})();
+</script>
+<script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
+<script src="./mdj-identity.js?v=20261003-identidad-unica"></script>
+<script src="./mdjb-shared-header.js?v=20261003-mi-perfil-unico"></script>
+<script src="./js/mdj-plan-shapes.js?v=20261004-escala"></script>
+<script>
+(function () {
+    'use strict';
+    var PS = window.mdjPlanShapes;
+    var STORE_KEY = 'mdj_floor_builder_v1';
+    var NS = 'http://www.w3.org/2000/svg';
+    var svg = document.getElementById('fb-svg');
+    var $ = function (id) { return document.getElementById(id); };
+
+    // ───────── Biblioteca de objetos ─────────
+    var LIB = [
+        { g: 'Mesas', k: 'table', shape: 'round', t: 'Mesa redonda', w: 52, seats: 8 },
+        { g: 'Mesas', k: 'table', shape: 'square', t: 'Mesa cuadrada', w: 54, h: 54, seats: 4 },
+        // Medida estándar: dos mesas cuadradas (54×54) juntas = una mesa larga (108×54, 6 sillas). Las abstractas son caso especial.
+        { g: 'Mesas', k: 'table', shape: 'rect', t: 'Mesa rectangular', w: 108, h: 54, seats: 6 },
+        { g: 'Mesas', k: 'table', shape: 'vip', t: 'Mesa VIP', w: 64, seats: 8 },
+        { g: 'Mesas', k: 'table', shape: 'hightop', t: 'High-top', w: 30, seats: 2 },
+        { g: 'Mesas', k: 'chair', t: 'Silla suelta', w: 12 },
+        { g: 'Escenarios', k: 'stage', shape: 'rect', t: 'Escenario recto', w: 240, h: 56 },
+        { g: 'Escenarios', k: 'stage', shape: 'halfround', t: 'Frente redondeado', w: 240, h: 90 },
+        { g: 'Escenarios', k: 'stage', shape: 'corner', t: 'Esquina redonda', w: 150, h: 150 },
+        { g: 'Escenarios', k: 'stage', shape: 'oval', t: 'Ovalado', w: 200, h: 90 },
+        { g: 'Escenarios', k: 'stage', shape: 'trapezoid', t: 'Trapecio', w: 220, h: 80 },
+        { g: 'Áreas (no vendibles)', k: 'zone', sub: 'barra', t: 'Barra', w: 58, h: 220, label: 'BARRA' },
+        { g: 'Áreas (no vendibles)', k: 'zone', sub: 'bano', t: 'Baños', w: 90, h: 56, label: 'BAÑOS' },
+        { g: 'Áreas (no vendibles)', k: 'zone', sub: 'pista', t: 'Pista', w: 110, h: 110, label: 'PISTA' },
+        { g: 'Áreas (no vendibles)', k: 'zone', sub: 'otro', t: 'Área libre', w: 100, h: 60, label: 'ÁREA' },
+        { g: 'Formas y texto', k: 'shape', sub: 'rect', t: 'Rectángulo', w: 120, h: 70 },
+        { g: 'Formas y texto', k: 'shape', sub: 'ellipse', t: 'Elipse', w: 120, h: 80 },
+        { g: 'Formas y texto', k: 'shape', sub: 'triangle', t: 'Triángulo', w: 100, h: 90 },
+        { g: 'Formas y texto', k: 'poly', t: 'Área libre (con puntos)' },
+        { g: 'Formas y texto', k: 'wall', t: 'Pared', len: 160 },
+        { g: 'Formas y texto', k: 'text', t: 'Texto' },
+        { g: 'Puertas', k: 'door', sub: 'puerta', t: 'Puerta con arco', w: 44 },
+        { g: 'Puertas', k: 'door', sub: 'entrada', t: 'Entrada', w: 90, label: 'ENTRADA' },
+        { g: 'Puertas', k: 'door', sub: 'artistas', t: 'Entrada de artistas', w: 70, label: 'ARTISTAS' },
+        { g: 'Puertas', k: 'door', sub: 'exit', t: 'Salida de emergencia', w: 70, label: 'SALIDA' }
+    ];
+    var ICON = {};
+
+    // ───────── Estado ─────────
+    var state, history = [], redoStack = [], dragging = null, selId = null;
+    function uid() { return 'i' + Math.random().toString(36).slice(2, 9); }
+    function defaultState() {
+        var m = { id: uid(), scope: 'template', name: 'Sala principal', room: { w: 800, h: 520 }, items: [], ref: null };
+        return { venue: 'Mojitos Calle 8', maps: [m], currentId: m.id };
+    }
+    function load() {
+        try { var raw = localStorage.getItem(STORE_KEY); if (raw) { var s = JSON.parse(raw); if (s && s.maps && s.maps.length) return s; } } catch (e) { /* sin almacenamiento */ }
+        return defaultState();
+    }
+    var saveWarned = false;
+    function save() {
+        try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+        catch (e) { if (!saveWarned) { saveWarned = true; alert('No se pudo guardar en este navegador (¿imagen de referencia muy grande?). Exporta el archivo para no perder el trabajo.'); } }
+    }
+    function cur() { return state.maps.filter(function (m) { return m.id === state.currentId; })[0]; }
+    function snapshot() { history.push(JSON.stringify(state)); redoStack = []; if (history.length > 60) history.shift(); $('fb-undo').disabled = false; $('fb-redo').disabled = true; }
+    function commit() { save(); render(); }
+    function item(id) { return cur().items.filter(function (i) { return i.id === id; })[0]; }
+    function snapV(v) { return $('fb-snap').checked ? Math.round(v / 5) * 5 : v; }
+
+    // ───────── Reglas ─────────
+    function locked(it) { return it.k === 'table' && it.status && it.status !== 'available'; }
+    function nextLabel(map) {
+        var max = 0;
+        map.items.forEach(function (i) { var m = /^T(\d+)$/.exec(i.label || ''); if (m) max = Math.max(max, parseInt(m[1], 10)); });
+        return 'T' + (max + 1 < 10 ? '0' : '') + (max + 1);
+    }
+    function labelTaken(map, label, exceptId) {
+        return map.items.some(function (i) { return i.k === 'table' && i.id !== exceptId && i.label === label; });
+    }
+
+    // ───────── Geometría ─────────
+    function el(name, attrs, parent, text) {
+        var n = document.createElementNS(NS, name);
+        Object.keys(attrs || {}).forEach(function (k) { n.setAttribute(k, attrs[k]); });
+        if (text != null) n.textContent = text;
+        if (parent) parent.appendChild(n);
+        return n;
+    }
+    function chairPoints(it) {
+        var pts = [], n = Math.max(0, it.seats | 0), k;
+        if (!n) return pts;
+        if (it.shape === 'round' || it.shape === 'vip' || it.shape === 'hightop') {
+            var r = it.w / 2 + 10;
+            for (k = 0; k < n; k++) { var a = (Math.PI * 2 * k) / n; pts.push([Math.cos(a) * r, Math.sin(a) * r]); }
+        } else {
+            var W = it.w + 20, H = it.h + 20, P = 2 * (W + H);
+            for (k = 0; k < n; k++) {
+                var s = ((k + 0.5) * P) / n, x, y;
+                if (s < W) { x = -W / 2 + s; y = -H / 2; }
+                else if (s < W + H) { x = W / 2; y = -H / 2 + (s - W); }
+                else if (s < 2 * W + H) { x = W / 2 - (s - W - H); y = H / 2; }
+                else { x = -W / 2; y = H / 2 - (s - 2 * W - H); }
+                pts.push([x, y]);
+            }
+        }
+        return pts;
+    }
+    function stagePath(shape, w, h) {
+        var x0 = -w / 2, y0 = -h / 2, x1 = w / 2, y1 = h / 2;
+        if (shape === 'halfround') { var ry = Math.min(h * 0.65, h); return 'M ' + x0 + ' ' + y0 + ' H ' + x1 + ' V ' + (y1 - ry) + ' A ' + (w / 2) + ' ' + ry + ' 0 0 1 ' + x0 + ' ' + (y1 - ry) + ' Z'; }
+        if (shape === 'corner') return 'M ' + x0 + ' ' + y0 + ' H ' + x1 + ' A ' + w + ' ' + h + ' 0 0 1 ' + x0 + ' ' + y1 + ' Z';
+        if (shape === 'trapezoid') return 'M ' + x0 + ' ' + y0 + ' H ' + x1 + ' L ' + (w * 0.35) + ' ' + y1 + ' H ' + (-w * 0.35) + ' Z';
+        return null;
+    }
+    function bbox(it) {
+        if (it.k === 'table') return it.shape === 'rect' || it.shape === 'square' ? [it.w + 20, it.h + 20] : [it.w + 20, it.w + 20];
+        if (it.k === 'chair') return [it.w + 6, it.w + 6];
+        if (it.k === 'door') return [it.w, 14];
+        if (it.k === 'text' || it.k === 'wall' || it.k === 'poly') return PS.medida(it);
+        return [it.w, it.h];
+    }
+
+    // ───────── Dibujo ─────────
+    function render() { drawCanvas(); renderSide(); summary(); updateSelBar(); }
+    function updateSelBar() {
+        var it = item(selId), n = $('fb-selname'); if (!n) return;
+        n.textContent = it ? 'Seleccionado: ' + (it.k === 'table' ? 'Mesa ' + (it.label || '') : it.k === 'text' ? 'Texto «' + (it.text || '') + '»' : libName(it) + (it.label ? ' «' + it.label + '»' : '')) : 'Toca un objeto del plano para editarlo o borrarlo';
+        ['fb-del2', 'fb-dup2'].forEach(function (id) { $(id).disabled = !it; });
+        $('fb-rot2').disabled = !it || it.k === 'wall' || it.k === 'poly';
+    }
+    function drawCanvas() {
+        var map = cur(); if (!map) return;
+        var W = map.room.w, H = map.room.h;
+        svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+        svg.innerHTML = '';
+        // cuadrícula
+        var gy, gx;
+        for (gx = 0; gx <= W; gx += 50) el('line', { class: 'grid', x1: gx, y1: 0, x2: gx, y2: H }, svg);
+        for (gy = 0; gy <= H; gy += 50) el('line', { class: 'grid', x1: 0, y1: gy, x2: W, y2: gy }, svg);
+        // referencia (mapa de incendios, etc.)
+        if (map.ref && map.ref.url) {
+            var ri = el('image', { class: 'refimg', href: map.ref.url, x: map.ref.x, y: map.ref.y, width: map.ref.w, height: map.ref.h, opacity: map.ref.op, preserveAspectRatio: 'none' }, svg);
+            ri.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', map.ref.url);
+        }
+        el('rect', { class: 'wall', x: 2.5, y: 2.5, width: W - 5, height: H - 5 }, svg);
+        // anillos de precio alrededor del escenario seleccionado/primero
+        if ($('fb-rings').checked) {
+            var st = stageFor(map);
+            if (st && map.zonePrice) { [map.zonePrice.r1, map.zonePrice.r2].forEach(function (r) { el('circle', { class: 'ring', cx: st.x, cy: st.y, r: r }, svg); }); }
+        }
+        map.items.forEach(function (it) { drawItem(it, svg); });
+    }
+    function handle(parent, x, y, cursor, it, h) {
+        var r = el('rect', { 'class': 'hdl', x: x - 5, y: y - 5, width: 10, height: 10, style: 'cursor:' + cursor }, parent);
+        r.addEventListener('pointerdown', function (e) { startResize(e, it, h); });
+    }
+    // El tirador de giro va arriba de la figura; si ahí no cabe (figura pegada al borde del plano), pasa abajo: así siempre se puede agarrar.
+    function rotHandle(parent, it) {
+        var bb = bbox(it), d = bb[1] / 2 + 32, a = (it.rot || 0) * Math.PI / 180, map = cur(), W = map.room.w, H = map.room.h;
+        function cabe(sg) { var gx = it.x + sg * d * Math.sin(a), gy = it.y - sg * d * Math.cos(a); return gx >= 12 && gx <= W - 12 && gy >= 12 && gy <= H - 12; }
+        var sg = cabe(1) || !cabe(-1) ? 1 : -1, y = sg * -d;
+        el('line', { 'class': 'rotline', x1: 0, y1: sg * -(bb[1] / 2 + 3), x2: 0, y2: y + sg * 7 }, parent);
+        var c = el('circle', { 'class': 'hdl rot', cx: 0, cy: y, r: 8, style: 'cursor:grab' }, parent);
+        c.addEventListener('pointerdown', function (e) { startRotate(e, it, sg); });
+    }
+    function startRotate(e, it, sg) {
+        e.preventDefault(); e.stopPropagation();
+        selId = it.id;
+        dragging = { mode: 'rotate', id: it.id, sg: sg || 1, moved: false };
+        try { svg.setPointerCapture(e.pointerId); } catch (x) { /* ok */ }
+    }
+    function startVertex(e, it, idx, insertAt) {
+        e.preventDefault(); e.stopPropagation();
+        selId = it.id;
+        if (insertAt !== undefined) { snapshot(); var a = it.pts[(insertAt + it.pts.length - 1) % it.pts.length], b = it.pts[insertAt % it.pts.length]; it.pts.splice(insertAt, 0, [Math.round((a[0] + b[0]) / 2), Math.round((a[1] + b[1]) / 2)]); idx = insertAt; }
+        dragging = { mode: 'vertex', id: it.id, idx: idx, moved: insertAt !== undefined };
+        try { svg.setPointerCapture(e.pointerId); } catch (x) { /* ok */ }
+        if (insertAt !== undefined) drawCanvas();
+    }
+    function polyHandles(it, g) {
+        var P = it.pts, n = P.length;
+        for (var i = 0; i < n; i++) {                                              // en medio de cada lado: arrastrar agrega un punto
+            (function (i) {
+                var a = P[(i + n - 1) % n], b = P[i], mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+                var c = el('circle', { 'class': 'hdl add', cx: mx, cy: my, r: 5, style: 'cursor:copy' }, g);
+                c.addEventListener('pointerdown', function (e) { startVertex(e, it, 0, i); });
+            })(i);
+        }
+        P.forEach(function (q, i) {                                                // cada punto: arrastrar lo mueve; doble clic lo quita
+            var h = el('rect', { 'class': 'hdl', x: q[0] - 5, y: q[1] - 5, width: 10, height: 10, style: 'cursor:move' }, g);
+            h.addEventListener('pointerdown', function (e) { startVertex(e, it, i); });
+            h.addEventListener('dblclick', function (e) {
+                e.stopPropagation();
+                if (it.pts.length <= 3) return say('Un área necesita al menos 3 puntos.', false);
+                snapshot(); it.pts.splice(i, 1); commit();
+            });
+        });
+    }
+    function handlesFor(it, g) {
+        if (it.k === 'poly') { polyHandles(it, g); return; }
+        if (it.k !== 'wall' && it.k !== 'chair') rotHandle(g, it);                   // todo gira menos las paredes (se inclinan moviendo un extremo) y las sillas sueltas
+        if (it.k === 'wall') { handle(g, it.x1, it.y1, 'move', it, { end: 1 }); handle(g, it.x2, it.y2, 'move', it, { end: 2 }); return; }
+        if (it.k === 'door') { handle(g, it.w / 2, 0, 'ew-resize', it, { hx: 1, hy: 0 }); return; }
+        if (!(it.k === 'stage' || it.k === 'zone' || it.k === 'shape')) return;
+        var w = it.w / 2, h = it.h / 2;
+        [[-1, -1, 'nwse-resize'], [0, -1, 'ns-resize'], [1, -1, 'nesw-resize'], [1, 0, 'ew-resize'], [1, 1, 'nwse-resize'], [0, 1, 'ns-resize'], [-1, 1, 'nesw-resize'], [-1, 0, 'ew-resize']].forEach(function (c) { handle(g, c[0] * w, c[1] * h, c[2], it, { hx: c[0], hy: c[1] }); });
+    }
+    function drawItem(it, parent) {
+        var sel = it.id === selId, g, bb;
+        if (it.k !== 'table' && it.k !== 'chair') {                     // escenario, áreas, puertas, figuras, paredes y texto: los dibuja el módulo compartido
+            g = PS.dibujarItem(parent, it, cur().room);
+            if (!g) return;
+            g.classList.add('it'); if (sel) g.classList.add('sel');
+            if (it.k === 'wall') { var hw = el('line', { x1: it.x1, y1: it.y1, x2: it.x2, y2: it.y2, stroke: 'transparent', 'stroke-width': Math.max(18, (it.th || 6) + 12), 'stroke-linecap': 'round', 'pointer-events': 'stroke', 'class': 'hit' }); g.insertBefore(hw, g.firstChild); }          // zona de toque ancha: una pared delgada se agarra sin precisión
+            else if (it.k === 'door') { var pu = it.sub === 'puerta', hd = el('rect', { x: -it.w / 2 - 6, y: pu ? -it.w - 6 : -14, width: it.w + 12, height: pu ? it.w + 16 : 28, fill: 'transparent', 'pointer-events': 'all', 'class': 'hit' }); g.insertBefore(hd, g.firstChild); }
+            if (it.k === 'poly' || it.k === 'shape' || it.k === 'zone' || it.k === 'stage') { var cuerpo = g.querySelector('.body'); if (cuerpo) cuerpo.setAttribute('pointer-events', 'all'); }   // sin relleno también se selecciona por dentro
+            bb = bbox(it);
+            if (it.k === 'poly') {
+                var cb = PS.cajaPoly(it.pts);
+                el('rect', { 'class': 'selbox', x: cb.x - 6, y: cb.y - 6, width: cb.w + 12, height: cb.h + 12 }, g);
+            } else if (it.k === 'wall') {
+                el('rect', { 'class': 'selbox', x: Math.min(it.x1, it.x2) - 6, y: Math.min(it.y1, it.y2) - 6, width: Math.abs(it.x2 - it.x1) + 12, height: Math.abs(it.y2 - it.y1) + 12 }, g);
+                if (sel) { var ln = g.querySelector('.body'); if (ln) ln.setAttribute('style', 'stroke:#c5a059'); }
+            } else el('rect', { 'class': 'selbox', x: -bb[0] / 2 - 3, y: -bb[1] / 2 - 3, width: bb[0] + 6, height: bb[1] + 6 }, g);
+            if (sel) handlesFor(it, g);
+            g.addEventListener('pointerdown', function (e) { startDrag(e, it); });
+            g.addEventListener('dblclick', function (e) { e.preventDefault(); editarRotulo(it); });
+            return;
+        }
+        g = el('g', { 'class': 'it' + (sel ? ' sel' : ''), 'data-id': it.id, transform: 'translate(' + it.x + ' ' + it.y + ') rotate(' + (it.rot || 0) + ')' }, parent);
+        bb = bbox(it);
+        if (it.k === 'table') {
+            chairPoints(it).forEach(function (p) { el('circle', { class: 'seat', cx: p[0], cy: p[1], r: it.shape === 'hightop' ? 4 : 5 }, g); });
+            var cls = 'body tb' + (it.shape === 'vip' ? ' vip' : '') + (it.status === 'reserved' ? ' reserved' : it.status === 'sold' ? ' sold' : '');
+            if (it.shape === 'rect' || it.shape === 'square') el('rect', { class: cls, x: -it.w / 2, y: -it.h / 2, width: it.w, height: it.h, rx: 6 }, g);
+            else el('circle', { class: cls, r: it.w / 2 }, g);
+            var t1 = el('text', { y: it.price ? -1 : 4 }, g, it.label);
+            t1.setAttribute('transform', 'rotate(' + (-(it.rot || 0)) + ')');
+            if (it.price) { var t2 = el('text', { class: 'sm', y: 11 }, g, '$' + it.price); t2.setAttribute('transform', 'rotate(' + (-(it.rot || 0)) + ')'); }
+        } else if (it.k === 'chair') {
+            el('circle', { class: 'body seat', r: it.w / 2 }, g);
+        }
+        el('rect', { class: 'selbox', x: -bb[0] / 2 - 3, y: -bb[1] / 2 - 3, width: bb[0] + 6, height: bb[1] + 6 }, g);
+        if (sel && it.k === 'table') rotHandle(g, it);
+        g.addEventListener('pointerdown', function (e) { startDrag(e, it); });
+    }
+    // Escribir el nombre directamente sobre el objeto: doble clic → cuadro de texto encima → Enter (o tocar fuera) guarda, Esc cancela.
+    function editarRotulo(it) {
+        if (it.k === 'wall' || it.k === 'chair') return;
+        var campo = it.k === 'text' ? 'text' : 'label', c = it.k === 'poly' ? PS.cajaPoly(it.pts) : null, cx = c ? c.cx : it.x, cy = c ? c.cy : it.y;
+        var m = svg.getScreenCTM(); if (!m) return;
+        var pt = svg.createSVGPoint(); pt.x = cx; pt.y = cy; var q = pt.matrixTransform(m);
+        var viejo = document.getElementById('fb-rotulo'); if (viejo) viejo.remove();
+        var inp = document.createElement('input');
+        inp.id = 'fb-rotulo'; inp.type = 'text'; inp.maxLength = 60; inp.value = it[campo] || ''; inp.setAttribute('aria-label', 'Nombre del objeto');
+        inp.style.cssText = 'position:fixed;z-index:99999;width:200px;left:' + Math.round(q.x - 100) + 'px;top:' + Math.round(q.y - 18) + 'px;padding:8px 10px;border-radius:8px;border:2px solid #c5a059;background:#0b0b0e;color:#fff;font:700 14px Inter,sans-serif;text-align:center;box-shadow:0 6px 24px rgba(0,0,0,.6);';
+        var hecho = false;
+        function cerrar(guardar) { if (hecho) return; hecho = true; var v = inp.value; inp.remove(); if (guardar && v.trim() !== String(it[campo] || '')) applyField(it, campo, v); }
+        inp.addEventListener('keydown', function (e) { e.stopPropagation(); if (e.key === 'Enter') { e.preventDefault(); cerrar(true); } else if (e.key === 'Escape') { e.preventDefault(); cerrar(false); } });
+        inp.addEventListener('blur', function () { cerrar(true); });
+        document.body.appendChild(inp); inp.focus(); inp.select();
+    }
+    function stageFor(map) {
+        var s = item(selId); if (s && s.k === 'stage') return s;
+        return map.items.filter(function (i) { return i.k === 'stage'; })[0] || null;
+    }
+    function summary() {
+        var map = cur(), tb = map.items.filter(function (i) { return i.k === 'table'; });
+        var seats = tb.reduce(function (n, t) { return n + (t.seats | 0); }, 0);
+        var prices = tb.map(function (t) { return t.price || 0; }).filter(function (p) { return p > 0; });
+        var by = function (s) { return tb.filter(function (t) { return t.status === s; }).length; };
+        $('fb-summary').textContent = tb.length + ' mesas · ' + seats + ' sillas' +
+            (prices.length ? ' · precios $' + Math.min.apply(null, prices) + '–$' + Math.max.apply(null, prices) : ' · sin precios todavía') +
+            ' · reservadas ' + by('reserved') + ' · vendidas ' + by('sold');
+    }
+
+    // ───────── Arrastre ─────────
+    function toSvg(e) {
+        var pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+        return pt.matrixTransform(svg.getScreenCTM().inverse());
+    }
+    function startDrag(e, it) {
+        e.preventDefault();
+        if (document.activeElement && document.activeElement !== document.body && document.activeElement.blur) document.activeElement.blur();   // el teclado (Supr, flechas, R) vuelve al plano
+        var p = toSvg(e);
+        selId = it.id;
+        var st = { x: it.x, y: it.y, x1: it.x1, y1: it.y1, x2: it.x2, y2: it.y2, pts: it.pts ? it.pts.map(function (q) { return q.slice(); }) : undefined };
+        dragging = { mode: 'move', id: it.id, p0: p, dx: it.x - p.x, dy: it.y - p.y, start: st, moved: false };
+        try { svg.setPointerCapture(e.pointerId); } catch (x) { /* ok */ }
+        render();
+    }
+    // Manijas: arrastrar una esquina o un lado agranda (el lado opuesto queda fijo, aunque la figura esté girada); en una pared se mueve el extremo.
+    function startResize(e, it, h) {
+        e.preventDefault(); e.stopPropagation();
+        selId = it.id;
+        dragging = { mode: h.end ? 'end' : 'resize', id: it.id, h: h, start: { x: it.x, y: it.y, w: it.w, h: it.h, rot: it.rot || 0 }, moved: false };
+        try { svg.setPointerCapture(e.pointerId); } catch (x) { /* ok */ }
+    }
+    svg.addEventListener('pointermove', function (e) {
+        if (!dragging) return;
+        var it = item(dragging.id); if (!it) return;
+        var p = toSvg(e), map = cur(), W = map.room.w, H = map.room.h;
+        if (!dragging.moved) { snapshot(); dragging.moved = true; }
+        if (dragging.mode === 'vertex') {
+            it.pts[dragging.idx] = [Math.max(0, Math.min(W, snapV(p.x))), Math.max(0, Math.min(H, snapV(p.y)))];
+        } else if (dragging.mode === 'move') {
+            if (it.k === 'poly') {                                              // el área se mueve entera, sin salirse del plano
+                var sp = dragging.start.pts, bx = PS.cajaPoly(sp), ddx = snapV(p.x - dragging.p0.x), ddy = snapV(p.y - dragging.p0.y);
+                ddx = Math.max(-bx.x, Math.min(W - (bx.x + bx.w), ddx)); ddy = Math.max(-bx.y, Math.min(H - (bx.y + bx.h), ddy));
+                it.pts = sp.map(function (q) { return [q[0] + ddx, q[1] + ddy]; });
+            } else if (it.k === 'wall') {                                              // la pared se mueve entera, sin salirse del plano
+                var s0 = dragging.start, dx = snapV(p.x - dragging.p0.x), dy = snapV(p.y - dragging.p0.y);
+                dx = Math.max(-Math.min(s0.x1, s0.x2), Math.min(W - Math.max(s0.x1, s0.x2), dx)); dy = Math.max(-Math.min(s0.y1, s0.y2), Math.min(H - Math.max(s0.y1, s0.y2), dy));
+                it.x1 = s0.x1 + dx; it.x2 = s0.x2 + dx; it.y1 = s0.y1 + dy; it.y2 = s0.y2 + dy;
+            } else {
+                it.x = Math.max(0, Math.min(W, snapV(p.x + dragging.dx)));
+                it.y = Math.max(0, Math.min(H, snapV(p.y + dragging.dy)));
+            }
+        } else if (dragging.mode === 'rotate') {
+            // el tirador está arriba (ángulo −90°) o, si arriba no cabe, abajo (+90°): girar = ángulo del puntero respecto al centro ∓ 90°. Con Mayús, de 15° en 15°; con «Imán», de 5° en 5°.
+            var ang = Math.atan2(p.y - it.y, p.x - it.x) * 180 / Math.PI + (dragging.sg === -1 ? -90 : 90), paso = e.shiftKey ? 15 : ($('fb-snap').checked ? 5 : 1);
+            it.rot = (((Math.round(ang / paso) * paso) % 360) + 360) % 360;
+        } else if (dragging.mode === 'end') {
+            var nx = Math.max(0, Math.min(W, snapV(p.x))), ny = Math.max(0, Math.min(H, snapV(p.y)));
+            if (dragging.h.end === 1) { it.x1 = nx; it.y1 = ny; } else { it.x2 = nx; it.y2 = ny; }
+        } else {
+            var s1 = dragging.start, a = s1.rot * Math.PI / 180, ddx = p.x - s1.x, ddy = p.y - s1.y;
+            var lx = ddx * Math.cos(a) + ddy * Math.sin(a), ly = -ddx * Math.sin(a) + ddy * Math.cos(a), hx = dragging.h.hx, hy = dragging.h.hy, w = s1.w, h = s1.h, cxl = 0, cyl = 0;
+            if (hx !== 0) { w = Math.max(10, Math.min(1600, snapV(hx * lx + s1.w / 2))); cxl = hx * (w - s1.w) / 2; }
+            if (hy !== 0 && s1.h !== undefined) { h = Math.max(10, Math.min(1600, snapV(hy * ly + s1.h / 2))); cyl = hy * (h - s1.h) / 2; }
+            it.w = w; if (s1.h !== undefined) it.h = h;
+            it.x = Math.round((s1.x + cxl * Math.cos(a) - cyl * Math.sin(a)) * 10) / 10; it.y = Math.round((s1.y + cxl * Math.sin(a) + cyl * Math.cos(a)) * 10) / 10;
+        }
+        drawCanvas();
+    });
+    function endDrag() { if (dragging) { var mv = dragging.moved; dragging = null; if (mv) commit(); } }
+    svg.addEventListener('pointerup', endDrag);
+    svg.addEventListener('pointercancel', endDrag);
+    svg.addEventListener('pointerdown', function (e) { if (e.target === svg || e.target.classList.contains('grid') || e.target.classList.contains('wall')) { selId = null; render(); } });
+
+    // ───────── Acciones ─────────
+    function addFromLib(def) {
+        snapshot();
+        var map = cur();
+        if (def.k === 'wall') {                                                  // pared: línea horizontal en el centro, con dos manijas en los extremos
+            var cx = snapV(map.room.w / 2), cy = snapV(map.room.h / 2), L = def.len || 160, wl = { id: uid(), k: 'wall', x1: cx - L / 2, y1: cy, x2: cx + L / 2, y2: cy, th: 6, bloquea: true };
+            map.items.push(wl); selId = wl.id; return commit();
+        }
+        if (def.k === 'poly') {                                                  // área libre: un pentágono que se reforma moviendo sus puntos
+            var px = snapV(map.room.w / 2), py = snapV(map.room.h / 2);
+            var ar = { id: uid(), k: 'poly', pts: [[px - 80, py - 50], [px + 80, py - 50], [px + 100, py + 10], [px, py + 60], [px - 100, py + 10]], label: 'ÁREA', relleno: 'gris' };
+            map.items.unshift(ar); selId = ar.id; return commit();                  // al fondo: lo que se ponga encima (mesas, puertas) sigue seleccionable
+        }
+        if (def.k === 'text') {
+            var tx = { id: uid(), k: 'text', x: snapV(map.room.w / 2), y: snapV(map.room.h / 2), text: 'Texto', size: 18, rot: 0 };
+            map.items.push(tx); selId = tx.id; commit();
+            setTimeout(function () { var f = document.querySelector('#fb-side [data-f="text"]'); if (f) { f.focus(); f.select(); } }, 30);
+            return;
+        }
+        var it = { id: uid(), k: def.k, x: snapV(map.room.w / 2 + (Math.random() * 60 - 30)), y: snapV(map.room.h / 2 + (Math.random() * 60 - 30)), w: def.w, rot: 0 };
+        if (def.h) it.h = def.h;
+        if (def.shape) it.shape = def.shape;
+        if (def.sub) it.sub = def.sub;
+        if (def.label) it.label = def.label;
+        if (def.k === 'table') { it.label = nextLabel(map); it.seats = def.seats; it.price = 0; it.status = 'available'; }
+        if (def.k === 'stage') it.label = 'ESCENARIO';
+        map.items.push(it); selId = it.id; commit();
+    }
+    // Llenar rápido: pone una cuadrícula de mesas de un solo clic (lo más lento de armar una sala es ir mesa por mesa).
+    function fillGrid() {
+        var rows = Math.max(1, Math.min(12, parseInt($('fb-gr-rows').value, 10) || 0));
+        var cols = Math.max(1, Math.min(14, parseInt($('fb-gr-cols').value, 10) || 0));
+        var def = LIB.filter(function (d) { return d.k === 'table' && d.shape === $('fb-gr-type').value; })[0];
+        var map = cur(), W = map.room.w, H = map.room.h;
+        var left = 60, right = W - 60, top = 130, bottom = H - 50;
+        var stepX = (right - left) / cols, stepY = (bottom - top) / rows;
+        var needX = (def.w || 54) + 36, needY = (def.h || def.w) + 36;
+        if (stepX < needX || stepY < needY) return say('No caben ' + rows + '×' + cols + ' mesas en esta sala. Baja las filas o columnas, o agranda la sala.', false);
+        snapshot();
+        for (var r = 0; r < rows; r++) for (var c = 0; c < cols; c++) {
+            var it = { id: uid(), k: 'table', shape: def.shape, x: snapV(left + stepX * (c + 0.5)), y: snapV(top + stepY * (r + 0.5)), w: def.w, rot: 0, seats: def.seats, price: 0, status: 'available' };
+            if (def.h) it.h = def.h;
+            it.label = nextLabel(map); map.items.push(it);
+        }
+        selId = null; commit(); say(rows * cols + ' mesas agregadas. Muévelas o ajústalas si hace falta.', true);
+    }
+    function removeSel() {
+        var it = item(selId); if (!it) return;
+        if (locked(it)) { say('No se puede eliminar la mesa ' + it.label + ': tiene una ' + (it.status === 'sold' ? 'venta' : 'reserva') + ' activa. Resuélvela primero.', false); return; }
+        snapshot(); var map = cur(); map.items = map.items.filter(function (i) { return i.id !== it.id; }); selId = null; commit();
+    }
+    function dupSel() {
+        var it = item(selId); if (!it) return;
+        snapshot(); var map = cur(), c = JSON.parse(JSON.stringify(it));
+        c.id = uid();
+        if (c.k === 'wall') { c.x1 += 25; c.x2 += 25; c.y1 += 25; c.y2 += 25; } else if (c.k === 'poly') { c.pts = c.pts.map(function (q) { return [q[0] + 25, q[1] + 25]; }); } else { c.x += 25; c.y += 25; }
+        if (c.k === 'table') { c.label = nextLabel(map); c.status = 'available'; }
+        map.items.push(c); selId = c.id; commit();
+    }
+    var msgTimer = null, lastMsg = null;
+    function showMsg() {
+        var m = $('fb-msg'); if (!m) return;
+        if (!lastMsg || Date.now() > lastMsg.until) { m.style.display = 'none'; return; }
+        m.textContent = lastMsg.text; m.className = 'fb-msg' + (lastMsg.ok ? ' ok' : ''); m.style.display = 'block';
+    }
+    // El aviso sobrevive al redibujado del panel (cada cambio lo reconstruye) y se apaga solo a los 6 s.
+    function say(text, ok) {
+        lastMsg = { text: text, ok: ok, until: Date.now() + 6000 };
+        showMsg();
+        clearTimeout(msgTimer); msgTimer = setTimeout(showMsg, 6100);
+    }
+
+    // ───────── Panel de propiedades ─────────
+    // Todos los objetos del plano en una lista: tocar uno lo selecciona y «Quitar» lo borra (sirve para lo que es muy delgado o está tapado y no se alcanza con el mouse).
+    function nombreObj(it) {
+        var base = it.k === 'table' ? 'Mesa ' + (it.label || '') : it.k === 'text' ? 'Texto «' + (it.text || '') + '»' : libName(it) + (it.label ? ' «' + it.label + '»' : '');
+        var pos = it.k === 'wall' ? '(' + Math.round(it.x1) + ',' + Math.round(it.y1) + ')→(' + Math.round(it.x2) + ',' + Math.round(it.y2) + ')' : it.k === 'poly' ? '' : '(' + Math.round(it.x) + ',' + Math.round(it.y) + ')';
+        return base + (pos ? ' ' + pos : '');
+    }
+    function listaObjetosHtml(map) {
+        if (!map.items.length) return '';
+        var orden = { poly: 0, zone: 1, stage: 1, shape: 2, wall: 3, door: 4, table: 5, chair: 5, text: 6 };
+        var filas = map.items.map(function (it, i) { return { it: it, i: i }; }).sort(function (a, b) { return (orden[a.it.k] || 9) - (orden[b.it.k] || 9) || a.i - b.i; });
+        return '<h3>Objetos del plano (' + map.items.length + ')</h3><div class="fb-objs">' + filas.map(function (f) {
+            return '<div class="fb-obj' + (f.it.id === selId ? ' sel' : '') + '"><button type="button" class="fb-obj-pick" data-obj="' + escapeAttr(f.it.id) + '">' + escapeHtml(nombreObj(f.it)) + '</button><button type="button" class="fb-obj-del" data-objdel="' + escapeAttr(f.it.id) + '" aria-label="Quitar ' + escapeAttr(nombreObj(f.it)) + '">Quitar</button></div>';
+        }).join('') + '</div>';
+    }
+    function renderSide() {
+        var side = $('fb-side'), map = cur(), it = item(selId);
+        var h = '<div class="fb-msg" id="fb-msg"></div>';
+        if (!it) {
+            h += '<h3>Selecciona un objeto</h3><p class="fb-hint">Toca un objeto del plano para editarlo; doble clic para escribirle el nombre. Si algo es muy delgado o está tapado, búscalo en la lista «Objetos del plano» de abajo y pulsa «Quitar». Arrástralo para moverlo, las manijas blancas para agrandarlo y el círculo dorado de arriba para girarlo (Mayús: de 15° en 15°). Teclas: flechas para ajustar, R para girar 90°, Supr para borrar, Ctrl+Z para deshacer.</p>';
+        } else {
+            h += '<h3>' + escapeHtml(libName(it)) + '</h3>';
+            if (it.k === 'table') h += field('Identificador', 'label', it.label, 'text') + '<p class="fb-hint">El número no depende de la posición: mover la mesa no cambia su ID.</p>';
+            else if (it.k === 'text') h += field('Texto', 'text', it.text || '', 'text');
+            else if (it.k !== 'chair' && it.k !== 'wall') h += field('Rótulo', 'label', it.label || '', 'text');
+            if (it.k === 'poly') {
+                h += '<p class="fb-hint">Arrastra los cuadritos para reformar el área. El círculo del medio de cada lado agrega un punto (arrástralo). Doble clic en un punto lo quita (mínimo 3). Arrastra el área para moverla.</p>';
+            } else if (it.k === 'wall') {
+                h += '<div class="fb-row2">' + field('X1', 'x1', Math.round(it.x1), 'number') + field('Y1', 'y1', Math.round(it.y1), 'number') + field('X2', 'x2', Math.round(it.x2), 'number') + field('Y2', 'y2', Math.round(it.y2), 'number') + '</div>' + field('Grosor', 'th', it.th || 6, 'number');
+            } else {
+                h += '<div class="fb-row2">' + field('X', 'x', Math.round(it.x), 'number') + field('Y', 'y', Math.round(it.y), 'number') + '</div>';
+                h += field('Giro (grados)', 'rot', it.rot || 0, 'number') + '<button type="button" id="fb-rot90">Girar 90°</button>';
+            }
+            if (it.k === 'table') {
+                h += '<div class="fb-row2">' + field(it.shape === 'rect' || it.shape === 'square' ? 'Ancho' : 'Diámetro', 'w', it.w, 'number') + (it.shape === 'rect' || it.shape === 'square' ? field('Alto', 'h', it.h, 'number') : '') + '</div>' + (it.shape === 'rect' ? '<p class="fb-hint">Medida estándar: dos mesas cuadradas juntas (ancho = 2 × alto). Otras medidas son casos especiales.</p>' : '');
+                h += field('Sillas', 'seats', it.seats, 'number') + field('Precio (USD)', 'price', it.price || 0, 'number');
+            } else if (it.k === 'stage') {
+                h += '<label>Forma</label><select data-f="shape">' + [['rect', 'Recto'], ['halfround', 'Frente redondeado'], ['corner', 'Esquina redonda'], ['oval', 'Ovalado'], ['trapezoid', 'Trapecio']].map(function (o) { return '<option value="' + o[0] + '"' + (it.shape === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select>';
+                h += '<div class="fb-row2">' + field('Ancho', 'w', it.w, 'number') + field('Alto', 'h', it.h, 'number') + '</div>';
+                h += '<p class="fb-hint">Frente redondeado: el borde de abajo (frente) es curvo. Esquina redonda: ponlo en una esquina y gíralo de 90° en 90° para encajarlo.</p>';
+            } else if (it.k === 'zone') {
+                h += '<div class="fb-row2">' + field('Ancho', 'w', it.w, 'number') + field('Alto', 'h', it.h, 'number') + '</div>';
+            } else if (it.k === 'poly') {
+                h += '<label>Relleno</label><select data-f="relleno">' + [['', 'Sin relleno'], ['gris', 'Gris'], ['dorado', 'Dorado'], ['verde', 'Verde'], ['rojo', 'Rojo']].map(function (o) { return '<option value="' + o[0] + '"' + ((it.relleno || '') === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select>' +
+                    '<label class="fb-chk" style="display:flex;gap:8px;align-items:center;margin-top:10px;text-transform:none;letter-spacing:0;font-size:12.5px;color:rgba(255,255,255,.8)"><input type="checkbox" data-chk="venta"' + (it.venta ? ' checked' : '') + '> Área de venta (se puede cerrar en un evento)</label>' +
+                    '<label class="fb-chk" style="display:flex;gap:8px;align-items:center;margin-top:6px;text-transform:none;letter-spacing:0;font-size:12.5px;color:rgba(255,255,255,.8)"><input type="checkbox" data-chk="siempre"' + (it.siempre ? ' checked' : '') + '> Siempre abierta (no se cierra nunca)</label>' +
+                    '<p class="fb-hint">Las mesas que pongas dentro del contorno de un área de venta le pertenecen. Cocina, pasillo y baños no se marcan: ahí no se venden mesas.</p>';
+            } else if (it.k === 'shape') {
+                h += '<div class="fb-row2">' + field('Ancho', 'w', it.w, 'number') + field('Alto', 'h', it.h, 'number') + '</div>';
+                h += '<label>Relleno</label><select data-f="relleno">' + [['', 'Sin relleno'], ['gris', 'Gris'], ['dorado', 'Dorado'], ['verde', 'Verde'], ['rojo', 'Rojo']].map(function (o) { return '<option value="' + o[0] + '"' + ((it.relleno || '') === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select>';
+            } else if (it.k === 'door') {
+                h += field('Largo', 'w', it.w, 'number');
+            } else if (it.k === 'text') {
+                h += field('Tamaño de letra', 'size', it.size || 16, 'number');
+            } else if (it.k === 'chair') {
+                h += field('Tamaño', 'w', it.w, 'number');
+            }
+            if (it.k === 'stage' || it.k === 'zone' || it.k === 'shape' || it.k === 'wall' || it.k === 'poly') h += '<label class="fb-chk" style="display:flex;gap:8px;align-items:center;margin-top:10px;text-transform:none;letter-spacing:0;font-size:12.5px;color:rgba(255,255,255,.8)"><input type="checkbox" data-chk="bloquea"' + (PS.esEstructura(it) ? ' checked' : '') + '> Las mesas no pueden ir encima</label>';
+            h += '<div class="fb-row2" style="margin-top:10px"><button type="button" id="fb-front">Al frente</button><button type="button" id="fb-back">Al fondo</button></div>';
+            h += '<div class="fb-row2" style="margin-top:10px"><button type="button" id="fb-dup">Duplicar</button><button type="button" id="fb-del">Eliminar</button></div>';
+        }
+        h += listaObjetosHtml(map);
+        // Precio por cercanía
+        var zp = map.zonePrice || (map.zonePrice = { r1: 230, r2: 330, p1: 400, p2: 250, p3: 150 });
+        h += '<h3>Precio por cercanía al escenario</h3>' +
+            '<div class="fb-row2">' + zfield('Zona 1 hasta', 'r1', zp.r1) + zfield('Precio Z1', 'p1', zp.p1) + zfield('Zona 2 hasta', 'r2', zp.r2) + zfield('Precio Z2', 'p2', zp.p2) + '</div>' + zfield('Precio Z3 (resto)', 'p3', zp.p3) +
+            '<button type="button" id="fb-applyzone" style="margin-top:8px">Aplicar a mesas libres</button><p class="fb-hint">Mide desde el escenario seleccionado (o el primero). No toca mesas reservadas ni vendidas. Activa «Anillos de precio» arriba para verlo.</p>';
+        // Referencia
+        var rf = map.ref;
+        h += '<h3>Plano de referencia (ej. mapa de incendios)</h3><button type="button" id="fb-refpick">' + (rf ? 'Cambiar imagen' : 'Cargar imagen') + '</button><input type="file" id="fb-reffile" accept="image/*" hidden>';
+        if (rf) h += '<label>Opacidad</label><input type="range" min="5" max="100" value="' + Math.round(rf.op * 100) + '" data-r="op">' +
+            '<label>Escala</label><input type="range" min="20" max="300" value="' + Math.round(rf.scale * 100) + '" data-r="scale">' +
+            '<div class="fb-row2">' + rfield('Mover X', 'x', rf.x) + rfield('Mover Y', 'y', rf.y) + '</div><button type="button" id="fb-refdel">Quitar referencia</button>';
+        h += '<p class="fb-hint">Si el local tiene mapa de incendios, cárgalo (PNG/JPG; si es PDF, expórtalo a imagen) y calca encima. Se guarda en este navegador; no se publica.</p>';
+        side.innerHTML = h;
+        showMsg();
+        wireSide(it, map);
+    }
+    function field(lbl, f, v, type) { return '<label>' + lbl + '</label><input type="' + type + '" data-f="' + f + '" value="' + escapeAttr(v) + '"' + (type === 'text' ? ' maxlength="60"' : ' step="1"') + '>'; }
+    function zfield(lbl, f, v) { return '<div><label>' + lbl + '</label><input type="number" data-z="' + f + '" value="' + v + '" min="0" step="5"></div>'; }
+    function rfield(lbl, f, v) { return '<div><label>' + lbl + '</label><input type="number" data-r="' + f + '" value="' + Math.round(v) + '" step="5"></div>'; }
+    function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+    function escapeAttr(s) { return escapeHtml(s); }
+    function libName(it) {
+        var m = LIB.filter(function (d) { return d.k === it.k && (d.shape || null) === (it.shape || null) && (d.sub || null) === (it.sub || null); })[0];
+        return m ? m.t : it.k;
+    }
+    function wireSide(it, map) {
+        var side = $('fb-side');
+        [].forEach.call(side.querySelectorAll('[data-f]'), function (inp) {
+            inp.addEventListener('change', function () { applyField(it, inp.getAttribute('data-f'), inp.value); });
+        });
+        [].forEach.call(side.querySelectorAll('[data-z]'), function (inp) {
+            inp.addEventListener('change', function () { map.zonePrice[inp.getAttribute('data-z')] = Math.max(0, Number(inp.value) || 0); save(); if ($('fb-rings').checked) render(); });
+        });
+        [].forEach.call(side.querySelectorAll('[data-r]'), function (inp) {
+            inp.addEventListener('input', function () { applyRef(inp.getAttribute('data-r'), Number(inp.value)); });
+        });
+        var b = function (id, fn) { var x = $(id); if (x) x.addEventListener('click', fn); };
+        [].forEach.call(side.querySelectorAll('[data-obj]'), function (x) { x.addEventListener('click', function () { selId = x.getAttribute('data-obj'); render(); }); });
+        [].forEach.call(side.querySelectorAll('[data-objdel]'), function (x) { x.addEventListener('click', function () { selId = x.getAttribute('data-objdel'); removeSel(); }); });
+        b('fb-del', removeSel); b('fb-dup', dupSel);
+        b('fb-front', function () { var m = cur(); snapshot(); m.items = m.items.filter(function (i) { return i.id !== it.id; }); m.items.push(it); commit(); });
+        b('fb-back', function () { var m = cur(); snapshot(); m.items = m.items.filter(function (i) { return i.id !== it.id; }); m.items.unshift(it); commit(); });
+        [].forEach.call(side.querySelectorAll('[data-chk]'), function (inp) { inp.addEventListener('change', function () { applyField(it, inp.getAttribute('data-chk'), inp.checked ? 'true' : 'false'); }); });
+        b('fb-rot90', function () { if (!it) return; snapshot(); it.rot = ((it.rot || 0) + 90) % 360; commit(); });
+        b('fb-applyzone', applyZones);
+        b('fb-refpick', function () { $('fb-reffile').click(); });
+        b('fb-refdel', function () { snapshot(); map.ref = null; commit(); });
+        var rf = $('fb-reffile');
+        if (rf) rf.addEventListener('change', function () { loadRef(rf.files && rf.files[0]); });
+    }
+    function applyField(it, f, raw) {
+        var map = cur(), num = Number(raw);
+        if (f === 'label') {
+            var v = String(raw).trim().slice(0, 40);
+            if (it.k === 'table') {
+                if (!v) return say('El identificador no puede quedar vacío.', false);
+                if (labelTaken(map, v, it.id)) { say('Ya existe una mesa con el ID ' + v + ' en este mapa.', false); return render(); }
+            }
+            snapshot(); it.label = v; return commit();
+        }
+        if (f === 'text') { var tv = String(raw).trim().slice(0, 60); if (!tv) { say('El texto no puede quedar vacío.', false); return render(); } snapshot(); it.text = tv; return commit(); }
+        if (f === 'relleno') { snapshot(); if (raw === '') delete it.relleno; else it.relleno = raw; return commit(); }
+        if (f === 'bloquea') { snapshot(); it.bloquea = raw === 'true'; return commit(); }
+        if (f === 'venta' || f === 'siempre') {                                  // área de venta (se puede cerrar en un evento) / siempre abierta (no se cierra nunca)
+            snapshot();
+            if (raw === 'true') { it[f] = true; if (f === 'siempre') it.venta = true; } else { delete it[f]; if (f === 'venta') delete it.siempre; }
+            return commit();
+        }
+        if (f === 'status') { snapshot(); it.status = raw; return commit(); }
+        if (f === 'shape') { snapshot(); it.shape = raw; return commit(); }
+        if (!isFinite(num)) return render();
+        if (f === 'seats') {
+            num = Math.max(0, Math.min(40, Math.round(num)));
+            if (locked(it) && num < it.seats) { say('No se pueden reducir las sillas de ' + it.label + ': ya está ' + (it.status === 'sold' ? 'vendida' : 'reservada') + '.', false); return render(); }
+        }
+        if (f === 'w' || f === 'h') num = Math.max(10, Math.min(1600, Math.round(num)));
+        if (f === 'size') num = Math.max(8, Math.min(80, Math.round(num)));
+        if (f === 'th') num = Math.max(1, Math.min(40, Math.round(num)));
+        if (f === 'x1' || f === 'x2') num = Math.max(0, Math.min(map.room.w, Math.round(num)));
+        if (f === 'y1' || f === 'y2') num = Math.max(0, Math.min(map.room.h, Math.round(num)));
+        if (f === 'price') num = Math.max(0, Math.round(num * 100) / 100);
+        if (f === 'rot') num = ((Math.round(num) % 360) + 360) % 360;
+        if (f === 'x') num = Math.max(0, Math.min(map.room.w, num));
+        if (f === 'y') num = Math.max(0, Math.min(map.room.h, num));
+        snapshot(); it[f] = num; commit();
+    }
+    function applyZones() {
+        var map = cur(), st = stageFor(map), zp = map.zonePrice;
+        if (!st) return say('Agrega un escenario primero: los precios se miden desde él.', false);
+        snapshot(); var n = 0;
+        map.items.forEach(function (t) {
+            if (t.k !== 'table' || locked(t)) return;
+            var d = Math.sqrt(Math.pow(t.x - st.x, 2) + Math.pow(t.y - st.y, 2));
+            t.price = d < zp.r1 ? zp.p1 : d < zp.r2 ? zp.p2 : zp.p3; n++;
+        });
+        commit(); say('Precios aplicados a ' + n + ' mesas libres.', true);
+    }
+
+    // ───────── Referencia ─────────
+    function loadRef(file) {
+        if (!file) return;
+        if (!/^image\//.test(file.type)) return say('Carga una imagen (PNG o JPG). Si es PDF, expórtalo a imagen primero.', false);
+        if (file.size > 4 * 1024 * 1024) return say('La imagen pesa más de 4 MB; redúcela primero.', false);
+        var rd = new FileReader();
+        rd.onload = function () {
+            var img = new Image();
+            img.onload = function () {
+                var map = cur(), s = Math.min(map.room.w / img.width, map.room.h / img.height);
+                snapshot();
+                map.ref = { url: rd.result, nw: img.width, nh: img.height, scale: 1, op: 0.35, x: 0, y: 0, w: img.width * s, h: img.height * s, base: s };
+                commit(); say('Referencia cargada. Ajusta opacidad y escala, y calca encima.', true);
+            };
+            img.src = rd.result;
+        };
+        rd.readAsDataURL(file);
+    }
+    function applyRef(f, v) {
+        var rf = cur().ref; if (!rf) return;
+        if (f === 'op') rf.op = v / 100;
+        else if (f === 'scale') { rf.scale = v / 100; rf.w = rf.nw * rf.base * rf.scale; rf.h = rf.nh * rf.base * rf.scale; }
+        else rf[f] = v;
+        var im = svg.querySelector('.refimg');
+        if (im) { im.setAttribute('opacity', rf.op); im.setAttribute('x', rf.x); im.setAttribute('y', rf.y); im.setAttribute('width', rf.w); im.setAttribute('height', rf.h); }
+        save();
+    }
+
+    // ───────── Mapas (plantilla / evento) ─────────
+    function renderMapSelect() {
+        var sel = $('fb-map'), t = state.maps.filter(function (m) { return m.scope === 'template'; }), e = state.maps.filter(function (m) { return m.scope === 'event'; });
+        var h = '<optgroup label="Plantilla del local">' + t.map(function (m) { return '<option value="' + m.id + '">' + escapeHtml(m.name) + '</option>'; }).join('') + '</optgroup>';
+        if (e.length) h += '<optgroup label="Mapas de evento">' + e.map(function (m) { return '<option value="' + m.id + '">' + escapeHtml(m.eventName + ' · ' + m.name) + '</option>'; }).join('') + '</optgroup>';
+        sel.innerHTML = h; sel.value = state.currentId;
+        var map = cur();
+        $('fb-scope').textContent = map.scope === 'template' ? 'Editando la PLANTILLA del local' : 'Editando mapa de EVENTO: ' + map.eventName;
+        $('fb-rw').value = map.room.w; $('fb-rh').value = map.room.h; $('fb-always').checked = !!map.siempre;
+    }
+    function fullRender() { renderMapSelect(); render(); }
+    function newMap() {
+        var name = prompt('Nombre del mapa nuevo (ej. Recepción, Cena, Sala de estar):'); if (!name || !name.trim()) return;
+        snapshot(); var m = { id: uid(), scope: 'template', name: name.trim().slice(0, 40), room: { w: 800, h: 520 }, items: [], ref: null };
+        state.maps.push(m); state.currentId = m.id; selId = null; save(); fullRender();
+    }
+    function copyToEvent() {
+        var ev = prompt('Nombre del evento (ej. Noche Latina 7 nov):'); if (!ev || !ev.trim()) return;
+        snapshot();
+        var src = cur(), c = JSON.parse(JSON.stringify(src));
+        c.id = uid(); c.scope = 'event'; c.eventName = ev.trim().slice(0, 50); c.from = src.id;
+        c.items.forEach(function (i) { if (i.k === 'table') i.status = 'available'; });
+        state.maps.push(c); state.currentId = c.id; selId = null; save(); fullRender();
+        say('Copia creada. Editarla no cambia la plantilla original.', true);
+    }
+    function renameMap() {
+        var m = cur(), name = prompt('Nuevo nombre del mapa:', m.name); if (!name || !name.trim()) return;
+        snapshot(); m.name = name.trim().slice(0, 40); save(); fullRender();
+    }
+    function deleteMap() {
+        var m = cur();
+        if (state.maps.length === 1) return alert('Debe quedar al menos un mapa.');
+        if (m.items.some(locked)) return alert('Este mapa tiene mesas reservadas o vendidas. Resuélvelas antes de eliminarlo.');
+        if (!confirm('¿Eliminar el mapa «' + m.name + '»?')) return;
+        snapshot(); state.maps = state.maps.filter(function (x) { return x.id !== m.id; }); state.currentId = state.maps[0].id; selId = null; save(); fullRender();
+    }
+
+    // ───────── Exportar / importar / deshacer ─────────
+    function exportJson() {
+        var blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+        var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+        a.download = 'salas-' + (state.venue || 'local').toLowerCase().replace(/[^a-z0-9]+/g, '-') + '.json';
+        document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+    }
+    function importJson(file) {
+        if (!file) return;
+        var rd = new FileReader();
+        rd.onload = function () {
+            try {
+                var s = JSON.parse(rd.result);
+                if (!s || !Array.isArray(s.maps) || !s.maps.length || !s.maps.every(function (m) { return m && m.room && Array.isArray(m.items); })) throw new Error('formato');
+                snapshot(); state = s; if (!cur()) state.currentId = state.maps[0].id; selId = null; $('fb-venue').value = state.venue || ''; save(); fullRender();
+            } catch (e) { alert('El archivo no es un plano válido.'); }
+        };
+        rd.readAsText(file);
+    }
+    function undo() {
+        if (!history.length) return;
+        redoStack.push(JSON.stringify(state));
+        state = JSON.parse(history.pop()); if (!cur()) state.currentId = state.maps[0].id;
+        $('fb-undo').disabled = !history.length; $('fb-redo').disabled = false; $('fb-venue').value = state.venue || ''; save(); fullRender();
+    }
+    function redo() {
+        if (!redoStack.length) return;
+        history.push(JSON.stringify(state));
+        state = JSON.parse(redoStack.pop()); if (!cur()) state.currentId = state.maps[0].id;
+        $('fb-undo').disabled = false; $('fb-redo').disabled = !redoStack.length; $('fb-venue').value = state.venue || ''; save(); fullRender();
+    }
+
+    // ───────── Guardar en la sala (base) ─────────
+    // Las salas y su nombre son públicas (las ve la página del local); quién puede GUARDAR lo decide la base (dueño o manager del local, o admin de Miami DJ Beat).
+    var db = null, salas = [], salaCargada = null;       // salaCargada: de qué sala viene lo que hay en pantalla (para no guardar el plano de un salón en otro por error)
+    function roomMsg(t, ok) { var m = $('fb-room-msg'); if (!m) return; m.textContent = t || ''; m.style.color = ok === false ? '#ff6060' : ok ? '#00c878' : 'rgba(255,255,255,.7)'; }
+    async function cargarSalas() {
+        var sel = $('fb-room');
+        try { db = window.getSupabaseClient ? window.getSupabaseClient() : null; } catch (e) { db = null; }
+        if (!db) { sel.innerHTML = '<option value="">Sin conexión con la base</option>'; return; }
+        var ses = await db.auth.getSession(), u = ses && ses.data && ses.data.session && ses.data.session.user;
+        if (!u) { sel.innerHTML = '<option value="">Inicia sesión para guardar en una sala…</option>'; return; }
+        var r = await db.from('venue_rooms').select('id,name,active,venues(name)').order('name');
+        if (r.error) { sel.innerHTML = '<option value="">No se pudieron cargar las salas</option>'; return; }
+        salas = (r.data || []).filter(function (x) { return x.active !== false; }).map(function (x) { return { id: x.id, nombre: ((x.venues && x.venues.name) || 'Local') + ' · ' + x.name }; });
+        sel.innerHTML = salas.length ? '<option value="">Elige la sala…</option>' + salas.map(function (x) { return '<option value="' + escapeAttr(x.id) + '">' + escapeHtml(x.nombre) + '</option>'; }).join('') : '<option value="">No hay salas</option>';
+        var q = new URLSearchParams(location.search).get('sala'); if (q && salas.some(function (x) { return x.id === q; })) sel.value = q;
+    }
+    function salaElegida() { var id = $('fb-room').value; if (!id) { roomMsg('Elige primero la sala.', false); return null; } return salas.filter(function (x) { return x.id === id; })[0] || null; }
+    async function abrirDeSala() {
+        var sala = salaElegida(); if (!sala) return;
+        roomMsg('Abriendo…');
+        var r = await db.from('venue_rooms').select('layout').eq('id', sala.id).maybeSingle();
+        if (r.error) return roomMsg('No se pudo leer la sala.', false);
+        var d = PS.desdeLayout(r.data && r.data.layout);
+        if (!d.maps.length) return roomMsg('Esa sala todavía no tiene plano guardado: dibuja uno y pulsa «Guardar en la sala».', false);
+        if (state.maps.some(function (m) { return m.scope === 'template' && m.items.length; }) && !confirm('Vas a reemplazar los planos de plantilla que tienes en pantalla por los de «' + sala.nombre + '». ¿Continuar?')) return roomMsg('');
+        snapshot();
+        state.maps = d.maps.concat(state.maps.filter(function (m) { return m.scope === 'event'; }));
+        state.currentId = d.maps[0].id; if (d.venue) state.venue = d.venue; $('fb-venue').value = state.venue || ''; selId = null; save(); fullRender();
+        salaCargada = sala.id;
+        roomMsg('Plano de «' + sala.nombre + '» abierto: ' + d.maps.length + (d.maps.length === 1 ? ' plano.' : ' planos.'), true);
+    }
+    async function guardarEnSala() {
+        var sala = salaElegida(); if (!sala) return;
+        var r = PS.aLayout(state);
+        if (!r.ok) { roomMsg(r.errores.slice(0, 3).join(' ') + (r.errores.length > 3 ? ' (y ' + (r.errores.length - 3) + ' más)' : ''), false); return; }
+        var otra = salaCargada && salaCargada !== sala.id ? salas.filter(function (x) { return x.id === salaCargada; })[0] : null;
+        if (otra && !confirm('OJO: este plano viene de «' + otra.nombre + '» y lo vas a guardar en «' + sala.nombre + '», que es otro salón. ¿Seguro? (Para dibujar un salón nuevo usa «Plano en blanco».)')) return;
+        if (!confirm('Vas a guardar este plano en «' + sala.nombre + '» (' + r.layout.tables.length + ' mesas). Reemplaza el plano que tenga la sala; las ventas ya abiertas conservan su mapa. ¿Continuar?')) return;
+        roomMsg('Guardando…');
+        var res = await db.rpc('venue_room_set_layout', { p_room_id: sala.id, p_layout: r.layout });
+        if (res.error) {
+            var t = String(res.error.message || ''), sinFn = res.error.code === 'PGRST202' || res.error.code === '42883' || /could not find the function|schema cache/i.test(t);
+            return roomMsg(sinFn ? 'Guardar en la sala todavía no está activado en la base de datos.' : /no_autorizado/.test(t) ? 'Tu cuenta no puede guardar en esa sala (solo el dueño o un manager del local, o Miami DJ Beat).' : /mapa_invalido/.test(t) ? 'La base rechazó el plano: revisa figuras, mesas y precios.' : 'No se pudo guardar. Intenta de nuevo.', false);
+        }
+        salaCargada = sala.id;
+        roomMsg('Plano guardado en «' + sala.nombre + '»: ' + res.data + ' mesas' + (r.layout.areas ? ' en ' + r.layout.areas.length + ' áreas de venta' : '') + '. Ya lo ven el staff y los clientes.' + (r.avisos && r.avisos.length ? ' Ojo: ' + r.avisos.slice(0, 2).join(' ') + (r.avisos.length > 2 ? ' (y ' + (r.avisos.length - 2) + ' más)' : '') : ''), true);
+    }
+
+    // Cada salón de un local es una SALA aparte (con su propio plano, eventos y dirección en la web). Para dibujar otro salón: se da de alta la sala en staff-admin
+    // (Locales → Salas), aquí se pulsa «Plano en blanco», se dibuja, se elige esa sala en «Sala en la base» y se guarda.
+    function planoEnBlanco() {
+        var hay = state.maps.some(function (m) { return m.scope === 'template' && m.items.length; });
+        if (hay && !confirm('Se borran los planos de plantilla que tienes en pantalla (los de evento se quedan). Si no los guardaste en su sala, se pierden (puedes usar Deshacer). ¿Empezar en blanco?')) return;
+        snapshot();
+        var m = { id: uid(), scope: 'template', name: 'Sala principal', room: { w: 800, h: 520 }, items: [], ref: null };
+        state.maps = [m].concat(state.maps.filter(function (x) { return x.scope === 'event'; }));
+        state.currentId = m.id; selId = null; salaCargada = null; save(); fullRender();
+        roomMsg('Plano en blanco. Dibuja el salón y luego elige su sala en «Sala en la base» para guardarlo.', true);
+    }
+
+    // ───────── Arranque ─────────
+    function init() {
+        state = load();
+        if (!cur()) state.currentId = state.maps[0].id;
+        $('fb-venue').value = state.venue || '';
+        var pal = $('fb-palette'), group = '';
+        var fast = document.createElement('div');
+        fast.innerHTML = '<h3>Llenar rápido</h3><div class="fb-fast"><label>Filas <input type="number" id="fb-gr-rows" value="3" min="1" max="12"></label><label>Columnas <input type="number" id="fb-gr-cols" value="5" min="1" max="14"></label></div>' +
+            '<select id="fb-gr-type"><option value="round">Redondas</option><option value="square">Cuadradas</option><option value="rect">Rectangulares</option></select>' +
+            '<button type="button" id="fb-gr-go">Agregar mesas</button>';
+        pal.appendChild(fast);
+        $('fb-gr-go').addEventListener('click', fillGrid);
+        LIB.forEach(function (d) {
+            if (d.g !== group) { group = d.g; var h = document.createElement('h3'); h.textContent = group; pal.appendChild(h); }
+            var b = document.createElement('button'); b.type = 'button'; b.textContent = '+ ' + d.t;
+            b.addEventListener('click', function () { addFromLib(d); });
+            pal.appendChild(b);
+        });
+        $('fb-undo').disabled = true; $('fb-redo').disabled = true;
+        $('fb-undo').addEventListener('click', undo);
+        $('fb-redo').addEventListener('click', redo);
+        $('fb-export').addEventListener('click', exportJson);
+        $('fb-import').addEventListener('click', function () { $('fb-import-file').click(); });
+        $('fb-import-file').addEventListener('change', function (e) { importJson(e.target.files && e.target.files[0]); e.target.value = ''; });
+        $('fb-venue').addEventListener('change', function () { state.venue = this.value.trim().slice(0, 80); save(); });
+        $('fb-map').addEventListener('change', function () { state.currentId = this.value; selId = null; fullRender(); });
+        $('fb-newmap').addEventListener('click', newMap);
+        $('fb-copyevent').addEventListener('click', copyToEvent);
+        $('fb-rename').addEventListener('click', renameMap);
+        $('fb-delmap').addEventListener('click', deleteMap);
+        $('fb-rings').addEventListener('change', render);
+        $('fb-always').addEventListener('change', function () { var m = cur(); snapshot(); if (this.checked) m.siempre = true; else delete m.siempre; save(); });
+        ['fb-rw', 'fb-rh'].forEach(function (id) {
+            $(id).addEventListener('change', function () {
+                var map = cur(), w = Math.max(400, Math.min(1600, Number($('fb-rw').value) || map.room.w)), h = Math.max(300, Math.min(1200, Number($('fb-rh').value) || map.room.h));
+                snapshot(); map.room = { w: w, h: h };
+                map.items.forEach(function (i) { i.x = Math.min(i.x, w); i.y = Math.min(i.y, h); });
+                save(); fullRender();
+            });
+        });
+        document.addEventListener('keydown', function (e) {
+            var tag = (e.target && e.target.tagName) || '';
+            if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); return e.shiftKey ? redo() : undo(); }
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') { e.preventDefault(); return redo(); }
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') { e.preventDefault(); return dupSel(); }
+            if (!e.ctrlKey && !e.metaKey && e.key.toLowerCase() === 'r') { var rr = item(selId); if (rr && rr.k !== 'wall' && rr.k !== 'poly') { e.preventDefault(); snapshot(); rr.rot = ((rr.rot || 0) + 90) % 360; return commit(); } }
+            var it = item(selId); if (!it) return;
+            if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); return removeSel(); }
+            var step = $('fb-snap').checked ? 5 : 1, dx = 0, dy = 0;
+            if (e.key === 'ArrowLeft') dx = -step; else if (e.key === 'ArrowRight') dx = step; else if (e.key === 'ArrowUp') dy = -step; else if (e.key === 'ArrowDown') dy = step; else return;
+            e.preventDefault(); snapshot();
+            if (it.k === 'wall') { it.x1 += dx; it.x2 += dx; it.y1 += dy; it.y2 += dy; } else if (it.k === 'poly') { it.pts = it.pts.map(function (q) { return [q[0] + dx, q[1] + dy]; }); } else { it.x = Math.max(0, Math.min(cur().room.w, it.x + dx)); it.y = Math.max(0, Math.min(cur().room.h, it.y + dy)); }
+            commit();
+        });
+        $('fb-del2').addEventListener('click', removeSel);
+        $('fb-dup2').addEventListener('click', dupSel);
+        $('fb-rot2').addEventListener('click', function () { var it = item(selId); if (!it || it.k === 'wall' || it.k === 'poly') return; snapshot(); it.rot = ((it.rot || 0) + 90) % 360; commit(); });
+        $('fb-open-room').addEventListener('click', abrirDeSala);
+        $('fb-blank').addEventListener('click', planoEnBlanco);
+        $('fb-save-room').addEventListener('click', guardarEnSala);
+        fullRender();
+        cargarSalas();
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
+</script>
+</body>
+
+</html>

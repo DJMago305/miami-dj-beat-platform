@@ -52,6 +52,25 @@ const adminSb = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
 
+/** Fila de client_profiles de un Cliente / Cliente Comercial. Solo columnas que EXISTEN en la tabla.
+ *  `notes` NO existe en client_profiles (la función lo mandaba igual: el upsert fallaba sin avisar y la cuenta quedaba
+ *  sin perfil aunque la pantalla dijera «creada»); además esa tabla la lee el propio cliente, así que no es lugar
+ *  para notas internas del staff. Lo opcional (phone) solo se manda si viene, para no borrar el de una cuenta que ya existe;
+ *  `created_at` se deja al valor por defecto de la tabla. */
+function clientProfileRow(a: {
+  user_id: string; email: string; full_name: string; phone: string | null;
+  account_type: string; biz_name: string | null; venue_type: string | null;
+}): Record<string, unknown> {
+  const row: Record<string, unknown> = { user_id: a.user_id, email: a.email, full_name: a.full_name };
+  if (a.phone) row.phone = a.phone;
+  if (a.account_type === "commercial_client") {
+    row.company_name = a.biz_name;
+    row.venue_type   = a.venue_type;
+    row.is_commercial = true;
+  }
+  return row;
+}
+
 const VALID_TYPES = new Set(["manager", "seller", "client", "commercial_client", "artist"]);
 
 serve(async (req: Request) => {
@@ -156,23 +175,14 @@ serve(async (req: Request) => {
 
       if (account_type === "client" || account_type === "commercial_client") {
         /* ── Cliente / Cliente Comercial → client_profiles ── */
-        await adminSb.from("client_profiles").upsert(
-          {
-            user_id:             newUserId,
-            email,
-            full_name,
-            phone,
-            notes,
-            /* Campos exclusivos de cliente comercial (B2B) */
-            ...(account_type === "commercial_client" && {
-              company_name:      biz_name,
-              venue_type:        venue_type,
-              is_commercial:     true,
-            }),
-            created_at: now,
-          },
+        const { error: cpErr } = await adminSb.from("client_profiles").upsert(
+          clientProfileRow({ user_id: newUserId, email, full_name, phone, account_type, biz_name, venue_type }),
           { onConflict: "user_id" }
         );
+        if (cpErr) {
+          console.error("[create-platform-account] client_profiles:", cpErr.message);
+          return json({ error: "La invitación se generó pero NO se pudo crear el perfil de la cuenta: " + cpErr.message }, 500);
+        }
 
       } else {
         /* ── Staff / Artista → dj_profiles ── */
@@ -183,7 +193,7 @@ serve(async (req: Request) => {
           ? (tier === 0 ? "lite" : tier === 1 ? "pro" : "elite")
           : null;
 
-        await adminSb.from("dj_profiles").upsert(
+        const { error: djErr } = await adminSb.from("dj_profiles").upsert(
           {
             user_id:    newUserId,
             email,
@@ -208,6 +218,10 @@ serve(async (req: Request) => {
           },
           { onConflict: "user_id" }
         );
+        if (djErr) {
+          console.error("[create-platform-account] dj_profiles:", djErr.message);
+          return json({ error: "La invitación se generó pero NO se pudo crear el perfil de la cuenta: " + djErr.message }, 500);
+        }
       }
     }
 

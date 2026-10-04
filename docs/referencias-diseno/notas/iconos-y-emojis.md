@@ -46,3 +46,8 @@ Un mismo concepto = un mismo símbolo en toda la web. Si el concepto ya tiene s�
 
 ## Aprobado / corregido 2026-09-21 (a pedido del PO)
 - Cliente → Perfil → fichas de contacto: los glifos de texto `☎` y `✉` **no son los que usamos**; se reemplazaron por los íconos de línea del estándar (`piezas/iconos/icono--cuenta--numero-de-telefono.png` y `icono--cuenta--correo-electronico.png`), en SVG de trazo 2, con el color de cada ficha (dorado / azul). Archivo: `client-account.html`.
+
+## Aprobado 2026-10-02 (a pedido del PO)
+- **Entradas** (taquilla de salas, Pedidos → Entradas en `staff.html`): **🏠** («una casita con una puerta»). Sustituye al 🎟️ que había puesto yo sin precedente. Ojo: 🏠 ya aparece como «🏠 RESIDENCIA» en `js/agenda-engine.js` (DJ residente de un local); son conceptos cercanos (el local), pero distintos: no usar 🏠 para otra cosa más.
+- Mesas tomadas en el plano de salas: cartel «reservada» y rojo `#ff6060` (el del estado «Cancelado» del portal, aquí significa «ocupada»); disponible `#00c878`, elegida dorado `#c5a059`.
+- **Comprar entrada** (botón de la sala `venue-room.html`): **🛒**, el mismo del carrito del header y de `shop.html` (aprobado por el PO 2026-10-02).
