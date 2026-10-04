@@ -203,7 +203,30 @@
             border-top: 1px solid #111;
             margin-top: 100px;
         }
+
+        /* Índice de artículos (URL sin ?slug=) */
+        .article-index { padding-bottom: 60px; }
+        .article-index .article-header { padding-bottom: 20px; }
+        .article-index-intro { color: rgba(255,255,255,0.72); font-size: 17px; margin: 0; }
+        .article-index-list { max-width: 900px; margin: 0 auto; padding: 0 24px; display: grid; gap: 18px; }
+        .article-index-empty { text-align: center; opacity: 0.6; }
+        .article-index-card { display: block; text-decoration: none; color: inherit; border: 1px solid rgba(197,160,89,0.28); border-radius: 14px; padding: 22px 24px; background: rgba(255,255,255,0.03); }
+        .article-index-card:hover, .article-index-card:focus-visible { border-color: var(--gold); }
+        .article-index-card .article-category { font-size: 12px; margin-bottom: 8px; display: block; }
+        .article-index-card h2 { font-family: var(--magazine-font); font-size: 24px; margin: 0 0 8px; color: #fff; }
+        .article-index-card p { margin: 0; color: rgba(255,255,255,0.72); line-height: 1.6; }
+        .article-index-card time { display: block; margin-top: 10px; font-size: 13px; opacity: 0.55; }
     </style>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      "name": "Beats & Tips — Miami DJ Beat Magazine",
+      "description": "Historias, cultura y consejos del mundo DJ, por Miami DJ Beat.",
+      "url": "https://www.miamidjbeat.com/article.html",
+      "isPartOf": { "@type": "WebSite", "name": "Miami DJ Beat", "url": "https://www.miamidjbeat.com/" }
+    }
+    </script>
     <!-- GEO/SEO Fase 6 -- medicion: GA4 activo desde 2026-08-29 (ID real). -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-7XRWGTCQ5L"></script>
     <script>
@@ -303,24 +326,34 @@
 </header>
 
     <main id="article-viewer">
-        <!-- Contenido dinámico inyectado por JS -->
-        <article>
+        <!-- ÍNDICE (URL sin ?slug=): contenido propio y real, no una redirección a la Home.
+             La lista de artículos publicados se inyecta desde mdjpro_articles. -->
+        <section id="index-area" class="article-index">
+            <div class="article-header">
+                <span class="article-category">Magazine</span>
+                <h1 class="article-title">Beats &amp; Tips</h1>
+                <p class="article-index-intro">Historias, cultura y consejos del mundo DJ, por Miami DJ Beat.</p>
+            </div>
+            <div class="article-index-list" id="articles-list" aria-live="polite">
+                <p class="article-index-empty">Cargando artículos...</p>
+            </div>
+        </section>
+        <!-- ARTÍCULO (URL con ?slug=): se muestra solo cuando hay slug -->
+        <article id="article-area" hidden>
             <div class="article-hero" id="hero-area" style="display:none;">
                 <div class="hero-overlay-content">
                     <div class="article-header" id="header-area">
                         <span class="article-category" id="cat-label">Magazine</span>
-                        <h1 class="article-title" id="title-label">Cargando artículo...</h1>
+                        <h1 class="article-title" id="title-label"></h1>
                         <div class="article-meta" id="meta-label">Por Miami DJ Beat · 2026</div>
                     </div>
                 </div>
             </div>
-
             <div class="article-content" id="content-area">
                 <!-- Aquí entra el texto editado -->
             </div>
         </article>
     </main>
-
     <footer class="footer-simple">
         <p style="color:var(--gold); letter-spacing: 2px;">BEATS & TIPS MAGAZINE</p>
         <p style="font-size:12px; opacity:0.5;">© 2026 Miami DJ Beat. All rights reserved.</p>
@@ -330,14 +363,67 @@
         document.addEventListener('DOMContentLoaded', async () => {
             const urlParams = new URLSearchParams(window.location.search);
             const slug = urlParams.get('slug');
+            const sb = window.getSupabaseClient ? window.getSupabaseClient() : supabase;
 
+            // ── Sin ?slug= : ÍNDICE de artículos publicados (antes redirigía a la Home) ──
             if (!slug) {
-                window.location.href = './index.html';
+                const list = document.getElementById('articles-list');
+                try {
+                    const { data: rows, error } = await sb
+                        .from('mdjpro_articles')
+                        .select('slug,title,excerpt,category,created_at')
+                        .eq('is_published', true)
+                        .order('created_at', { ascending: false });
+                    if (error) throw error;
+                    list.textContent = '';
+                    if (!rows || !rows.length) {
+                        const p = document.createElement('p');
+                        p.className = 'article-index-empty';
+                        p.textContent = 'Pronto publicaremos nuevos artículos.';
+                        list.appendChild(p);
+                        return;
+                    }
+                    rows.forEach((r) => {
+                        const a = document.createElement('a');
+                        a.className = 'article-index-card';
+                        a.href = './article.html?slug=' + encodeURIComponent(r.slug);
+                        const cat = document.createElement('span');
+                        cat.className = 'article-category';
+                        cat.textContent = r.category || 'Magazine';
+                        const h2 = document.createElement('h2');
+                        h2.textContent = r.title;
+                        a.appendChild(cat);
+                        a.appendChild(h2);
+                        if (r.excerpt) {
+                            const p = document.createElement('p');
+                            p.textContent = r.excerpt;
+                            a.appendChild(p);
+                        }
+                        const t = document.createElement('time');
+                        t.dateTime = r.created_at;
+                        t.textContent = new Date(r.created_at).toLocaleDateString('es-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                        a.appendChild(t);
+                        list.appendChild(a);
+                    });
+                } catch (err) {
+                    console.error('Error loading article index:', err);
+                    list.textContent = '';
+                    const p = document.createElement('p');
+                    p.className = 'article-index-empty';
+                    p.textContent = 'No pudimos cargar los artículos ahora. Intenta de nuevo en unos minutos.';
+                    list.appendChild(p);
+                }
                 return;
             }
 
+            // ── Con ?slug= : ARTÍCULO ──
+            document.getElementById('index-area').hidden = true;
+            document.getElementById('article-area').hidden = false;
+            document.getElementById('title-label').innerText = 'Cargando artículo...';
+            // El canonical del artículo se fija ya, antes de la consulta (el HTML crudo declara el del índice).
+            document.getElementById('article-canonical').href = `https://www.miamidjbeat.com/article.html?slug=${encodeURIComponent(slug)}`;
+
             try {
-                const sb = window.getSupabaseClient ? window.getSupabaseClient() : supabase;
                 const { data: article, error } = await sb
                     .from('mdjpro_articles')
                     .select('*')
@@ -382,6 +468,11 @@
             } catch (err) {
                 console.error('Error loading article:', err);
                 document.getElementById('title-label').innerText = 'Artículo no encontrado';
+                // Un slug que no existe no debe indexarse.
+                const robots = document.createElement('meta');
+                robots.setAttribute('name', 'robots');
+                robots.setAttribute('content', 'noindex');
+                document.head.appendChild(robots);
             }
         });
     </script>
