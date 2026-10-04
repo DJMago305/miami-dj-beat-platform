@@ -326,7 +326,7 @@ async function doFetch(coords) {
     const s = normalize(await r.json());               // OWM/WeatherKit crudo → AtmosphericState
     s.location.source = coords.src || 'gps';           // 'gps' | 'turno' | 'ultima' | 'base' -- para avisar cuando la ubicación es aproximada
     // El nombre ya no se queda fijo en «Miami Lakes, FL»: se rotula con el lugar de donde SÍ salió el dato.
-    if (s.location.source === 'turno' && coords.nombre) { s.location.name = coords.nombre + ', FL'; s.location.short = coords.nombre; }
+    if ((s.location.source === 'turno' || s.location.source === 'perfil') && coords.nombre) { s.location.name = coords.nombre + ', FL'; s.location.short = coords.nombre; }
     else if (s.location.source === 'gps' || s.location.source === 'ultima') {
       const nom = await nombreDeCoordenadas(coords.lat, coords.lon);
       if (nom) { s.location.name = nom + ', FL'; s.location.short = nom; }
@@ -354,7 +354,8 @@ function notify(reason) {
 // resuelve con el geocodificador que ya existe en el puente mdj-weather (recurso=geo).
 const LS_LUGAR = 'mdjb:weather:lugares:v1';
 const LUGAR_MAX_AGE_MS = 30 * 24 * 3600 * 1000;
-let _lugar = null;   // { key, lat, lon, name }
+let _lugar = null;         // lugar del turno/evento de hoy: { key, lat, lon, name }
+let _lugarPerfil = null;   // ciudad del perfil del DJ (respaldo cuando no hay GPS, ni evento, ni ultima ubicacion real)
 
 function puenteClima(params) {
   const ep = ENDPOINT();
@@ -435,11 +436,13 @@ function readLastGps() {
 function saveLastGps(lat, lon) { try { localStorage.setItem(LS_GPS, JSON.stringify({ lat, lon, at: Date.now() })); } catch (_e) {} }
 function getCoords() {
   const tz = -new Date().getTimezoneOffset() / 60;
-  // Sin GPS ahora: 1º el lugar del turno de hoy; 2º la última ubicación REAL guardada; 3º la base corporativa (Miami Lakes).
+  // Sin GPS ahora: 1º el lugar del turno de hoy; 2º la última ubicación REAL guardada; 3º la ciudad del perfil; 4º la base corporativa (Miami Lakes).
   const sinGps = () => {
     if (_lugar) return { lat: _lugar.lat, lon: _lugar.lon, tz, src: 'turno', nombre: _lugar.name };
     const last = readLastGps();
-    return last ? { lat: last.lat, lon: last.lon, tz, src: 'ultima' } : { lat: LOC.lat, lon: LOC.lon, tz, src: 'base' };
+    if (last) return { lat: last.lat, lon: last.lon, tz, src: 'ultima' };
+    if (_lugarPerfil) return { lat: _lugarPerfil.lat, lon: _lugarPerfil.lon, tz, src: 'perfil', nombre: _lugarPerfil.name };
+    return { lat: LOC.lat, lon: LOC.lon, tz, src: 'base' };
   };
   // reutiliza la ubicación 10 min si fue GPS real; si fue reserva, solo 45 s (para notar pronto un permiso nuevo)
   const ttlCoords = (_coordsCache && _coordsCache.src === 'gps') ? 600000 : 45000;
@@ -457,6 +460,28 @@ function getCoords() {
       );
     } catch (_e) { finish(sinGps()); }
   });
+}
+
+async function resolverYGuardarLugar(texto, slot) {
+  const key = String(texto || '').toLowerCase().replace(/\s+/g, ' ').trim();
+  if (!key) return false;
+  const actual = slot === 'perfil' ? _lugarPerfil : _lugar;
+  if (actual && actual.key === key) return true;
+  if (_inflight) { try { await _inflight; } catch (_e) {} }   // no pisar un fetch en vuelo con la base
+  let hit = leerLugares()['t:' + key];
+  if (!hit || (Date.now() - hit.at) > LUGAR_MAX_AGE_MS || typeof hit.lat !== 'number') {
+    const g = await geocodificarLugar(texto);
+    if (!g) return false;
+    guardarLugar('t:' + key, g); hit = g;
+  }
+  const lugar = { key, lat: hit.lat, lon: hit.lon, name: hit.name };
+  if (slot === 'perfil') _lugarPerfil = lugar; else _lugar = lugar;
+  _coordsCache = null;
+  // Si lo que se muestra NO es GPS real, el dato mostrado quedó viejo para este lugar.
+  if (!_state || !_state.location || _state.location.source !== 'gps') {
+    _fetchedAt = 0; try { localStorage.removeItem(LS_KEY); } catch (_e) {}
+  }
+  return true;
 }
 
 // ── API pública ──
@@ -482,25 +507,9 @@ const MDJ_WeatherHub = {
   getCoords,                                        // GPS dinámico → fallback base corporativa
 
   // Lugar del turno/evento de hoy (texto libre del venue). true si se resolvió y se usará como respaldo del GPS.
-  async setLugar(texto) {
-    const key = String(texto || '').toLowerCase().replace(/\s+/g, ' ').trim();
-    if (!key) return false;
-    if (_lugar && _lugar.key === key) return true;
-    if (_inflight) { try { await _inflight; } catch (_e) {} }   // no pisar un fetch en vuelo con la base
-    let hit = leerLugares()['t:' + key];
-    if (!hit || (Date.now() - hit.at) > LUGAR_MAX_AGE_MS || typeof hit.lat !== 'number') {
-      const g = await geocodificarLugar(texto);
-      if (!g) return false;
-      guardarLugar('t:' + key, g); hit = g;
-    }
-    _lugar = { key, lat: hit.lat, lon: hit.lon, name: hit.name };
-    _coordsCache = null;
-    // Si lo que se está mostrando NO es GPS real, el dato mostrado quedó viejo para este lugar.
-    if (!_state || !_state.location || _state.location.source !== 'gps') {
-      _fetchedAt = 0; try { localStorage.removeItem(LS_KEY); } catch (_e) {}
-    }
-    return true;
-  },
+  async setLugar(texto) { return resolverYGuardarLugar(texto, 'turno'); },
+  // Ciudad del perfil del DJ (dj_profiles.city): mismo mecanismo, prioridad menor.
+  async setLugarPerfil(texto) { return resolverYGuardarLugar(texto, 'perfil'); },
 
   async ensureFresh(coords) {
     // 1. hidratar de la caché compartida (otra vista pudo haber fetcheado ya)
