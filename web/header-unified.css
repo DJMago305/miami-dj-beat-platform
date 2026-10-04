@@ -2497,6 +2497,35 @@ body.mdj-artist-header-mode #mainHeader.header.mdj-header-unified .header-action
     }
   }
 
+  /*
+   * CENTRADO SEGURO del riel del artista (2026-10-04, captura de DJSolitario en un MacBook Air:
+   * «INICIO» salía como «ICIO»). Con justify-content:center, cuando los puestos NO caben el
+   * desborde se reparte por AMBOS lados y lo de la izquierda queda fuera de la ventana, sin
+   * forma de verlo. Los separadores ::before/::after con margen automático hacen lo mismo que
+   * centrar cuando sobra espacio, pero cuando falta se colapsan a 0 y el desborde se va solo
+   * hacia la derecha: el inicio del menú nunca se pierde. Solo toca el eje de alineación.
+   */
+  #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav-artist.mdj-artist-mainnav.nav.top-nav {
+    justify-content: flex-start !important;
+  }
+  #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav-artist.mdj-artist-mainnav.nav.top-nav::before,
+  #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav-artist.mdj-artist-mainnav.nav.top-nav::after {
+    content: "" !important;
+    display: block !important;
+    flex: 0 0 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+  }
+  #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav-artist.mdj-artist-mainnav.nav.top-nav::before {
+    margin-right: auto !important;
+  }
+  #mainHeader.header.mdj-header-unified .header-nav .container > #mainNav-artist.mdj-artist-mainnav.nav.top-nav::after {
+    margin-left: auto !important;
+  }
+
   body.mdj-artist-header-mode
     #mainHeader.header.mdj-header-unified
     .header-nav
