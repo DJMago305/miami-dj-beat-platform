@@ -104,15 +104,10 @@
         claves.forEach(function (k) { var r = por[k]; if (!r || !movible(r, ahora)) { out.ocupadas.push(k); return; } out.mesas++; out.sillas += r.seats || 0; out.cents += r.price_cents || 0; });
         return out;
     }
-    // La arquitectura de la sala no cambia: una mesa no puede quedar encima del escenario ni de los elementos fijos «bano» / «barra» (la pista no cuenta).
-    // Mismo cálculo (margen de 22 px) que venue_plano_bloquea en la base, que es quien lo exige de verdad.
-    function bloqueaEstructura(map, x, y) {
-        function dentro(r) { return Array.isArray(r) && r.length === 4 && x >= r[0] - 22 && x <= r[0] + r[2] + 22 && y >= r[1] - 22 && y <= r[1] + r[3] + 22; }
-        if (map && map.focal && dentro(map.focal.rect)) return map.focal.label || 'el escenario';
-        var hit = ((map && map.fixed) || []).filter(function (f) { return (f.k === 'bano' || f.k === 'barra') && dentro(f.r); })[0];
-        return hit ? (hit.l || 'una estructura de la sala') : null;
-    }
-
+    // La arquitectura de la sala no cambia: una mesa no puede quedar encima del escenario, la barra, los baños ni las paredes/figuras que bloquean.
+    // Las reglas viven en mdj-plan-shapes.js (las mismas que exige la base en venue_plano_bloquea; se prueban contra ella).
+    var PS = root.mdjPlanShapes || (typeof require === 'function' ? require('./mdj-plan-shapes.js') : null);
+    function bloqueaEstructura(map, x, y) { return PS ? PS.bloquea(map, x, y) : null; }
     // Revisa el archivo de mapa ANTES de mandarlo a la base (mismas reglas que venue_room_set_layout; la base vuelve a revisar, esto es para avisar bien).
     // Acepta {tables:[...], maps?:[...]} o una lista de mesas sola. Devuelve { ok, errores[], avisos[], mesas, sillas, zonas[{nombre,mesas,min,max}], precioMin, precioMax, layout }.
     function validarMapa(input) {
@@ -307,9 +302,13 @@
     }
     function drawPlan(svg, map, byKey, ahora, qn) {
         svg.innerHTML = '';
-        el('path', { d: 'M 340 505 H 12 V 12 H 788 V 505 H 460', fill: 'none', stroke: 'rgba(255,255,255,0.4)', 'stroke-width': 4, 'stroke-linejoin': 'round' }, svg);
-        if (map.focal && map.focal.rect) zoneBox(svg, map.focal.rect, map.focal.label || '', map.focal.rot, map.focal.k);
-        (map.fixed || []).forEach(function (f) { zoneBox(svg, f.r, f.l, f.rot, f.k); });
+        svg.setAttribute('viewBox', '0 0 ' + ((map.room && map.room.w) || 800) + ' ' + ((map.room && map.room.h) || 520));
+        if (map.custom) { if (root.mdjPlanShapes) root.mdjPlanShapes.dibujar(svg, map.shapes); }          // arquitectura dibujada en el editor de salas
+        else {
+            el('path', { d: 'M 340 505 H 12 V 12 H 788 V 505 H 460', fill: 'none', stroke: 'rgba(255,255,255,0.4)', 'stroke-width': 4, 'stroke-linejoin': 'round' }, svg);
+            if (map.focal && map.focal.rect) zoneBox(svg, map.focal.rect, map.focal.label || '', map.focal.rot, map.focal.k);
+            (map.fixed || []).forEach(function (f) { zoneBox(svg, f.r, f.l, f.rot, f.k); });
+        }
         (map.tables || []).forEach(function (t) {
             var row = byKey[t.id]; if (!row) return;                         // solo mesas que existen en el inventario
             var est = estadoDe(row, ahora), libre = movible(row, ahora), pick = S.grupo && S.pick[t.id];
@@ -450,7 +449,7 @@
             if (!movido && Math.abs(e.clientX - cx) + Math.abs(e.clientY - cy) < 6) return;      // un toque corto no es arrastre
             movido = true; var p = pos(e);
             dx = core.ajustar(p.x - ini.x, -9999, 9999); dy = core.ajustar(p.y - ini.y, -9999, 9999);
-            geo.forEach(function (x) { dx = Math.min(774 - x.x, Math.max(26 - x.x, dx)); dy = Math.min(494 - x.y, Math.max(26 - x.y, dy)); });   // todo el grupo dentro del plano
+            geo.forEach(function (x) { dx = Math.min(((map.room && map.room.w) || 800) - 26 - x.x, Math.max(26 - x.x, dx)); dy = Math.min(((map.room && map.room.h) || 520) - 26 - x.y, Math.max(26 - x.y, dy)); });   // todo el grupo dentro del plano
             nodos.forEach(function (n) { n.setAttribute('transform', 'translate(' + dx + ',' + dy + ')'); });
         }
         function soltar() {

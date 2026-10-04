@@ -269,7 +269,6 @@
                 <li data-cc-sell hidden><button type="button" role="tab" data-cc-panel="mesas" aria-selected="false" title="Mesas"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg><span>Mesas</span></button></li>
                 <li data-cc-owner hidden><button type="button" role="tab" data-cc-panel="marca" aria-selected="false" title="Marca del local"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg><span>Marca del local</span></button></li>
                 <li data-cc-owner hidden><button type="button" role="tab" data-cc-panel="equipo" aria-selected="false" title="Mi equipo"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Mi equipo</span></button></li>
-                <li data-cc-layout hidden><button type="button" role="tab" data-cc-panel="salas" aria-selected="false" title="Editor de salas"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span class="cc-nav-txt">Editor de salas<em class="cc-nav-dev">En desarrollo</em></span></button></li>
                 <li><button type="button" role="tab" data-cc-panel="notificaciones" aria-selected="false" title="Notificaciones"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span>Notificaciones</span></button></li>
                 <li><button type="button" role="tab" data-cc-panel="seguridad" aria-selected="false" title="Seguridad"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span>Seguridad</span></button></li>
                 <li data-cc-view hidden><a id="cc-view-client" href="#" title="Vista del cliente"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg><span>Vista del cliente</span></a></li>
@@ -349,15 +348,8 @@
             <section class="cc-panel" id="cc-p-equipo" data-cc-body="equipo" hidden>
         <div class="cc-card">
             <h2>Mi equipo</h2>
-            <p>El dueño da de alta a su manager y a su equipo. El manager y el dueño arman el plano del local; el equipo ve disponibilidad y vende entradas y reservas.</p>
+            <p>El dueño da de alta a su manager y a su equipo. El manager y el dueño fijan el mapa de mesas del local; el equipo ve disponibilidad, vende y arma grupos de mesas.</p>
             <div id="cc-team-box"></div>
-        </div>
-            </section>
-            <section class="cc-panel" id="cc-p-salas" data-cc-body="salas" hidden>
-        <div class="cc-card">
-            <h2>Editor de salas <span class="cc-dev">En desarrollo</span></h2>
-            <p>Arma el plano de tu local: mesas, sillas, escenarios y servicios, con el precio de cada mesa según su cercanía al escenario.</p>
-            <a class="btn primary" href="./venue-floor-builder.html">Abrir el editor</a>
         </div>
             </section>
             <section class="cc-panel" id="cc-p-notificaciones" data-cc-body="notificaciones" hidden>
@@ -413,7 +405,8 @@
 <script src="./translations.js?v=20261003-mi-perfil-unico"></script>
 <script src="./i18n.js?v=20260415-CORE-CONNECTIONS"></script>
 <script src="./header-smart-search.js?v=20260927-bilingue-hint"></script>
-<script src="./js/commercial-tables.js?v=20261003-armar-grupo"></script>
+<script src="./js/mdj-plan-shapes.js?v=20261004-formas"></script>
+<script src="./js/commercial-tables.js?v=20261004-formas"></script>
 <script src="./mdj-identity.js?v=20261003-identidad-unica"></script>
 <script src="./mdjb-shared-header.js?v=20261003-mi-perfil-unico"></script>
 <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
@@ -485,9 +478,9 @@
         paintLogo($('cc-logo'), (v && v.brand_logo_url) || _ownAvatar, _ownName);
     }
     // Menú lateral: un panel a la vez, por #hash («MI PERFIL» del encabezado llega a #perfil, «CONFIG» a #notificaciones).
-    var PANELS = ['perfil', 'empresa', 'locales', 'mesas', 'marca', 'equipo', 'salas', 'notificaciones', 'seguridad'];
+    var PANELS = ['perfil', 'empresa', 'locales', 'mesas', 'marca', 'equipo', 'notificaciones', 'seguridad'];
     var OWNER_ONLY = { marca: true, equipo: true };     // solo el dueño del local
-    var LAYOUT_ONLY = { salas: true };                  // dueño y manager (el equipo no edita el plano)
+    var LAYOUT_ONLY = {};                               // (hoy ningún panel es solo de dueño y manager; el editor de planos es herramienta interna de Miami DJ Beat)
     var SELL_ONLY = { mesas: true };                    // cualquier rol del local (dueño, manager y equipo ven y venden mesas)
     var _isOwner = false, _canLayout = false, _canSell = false, _fiscalOk = false, _companyLoaded = false, _accessKnown = false;
     function showPanel(name) {
@@ -508,7 +501,7 @@
         Array.prototype.forEach.call(document.querySelectorAll('.cc-nav [data-cc-sell]'), function (li) { li.hidden = !_canSell; });
         $('cc-hero-edit').hidden = !(_isOwner && a.brand);                      // atajo a «Marca del local», solo dueño
         syncFiscal();
-        showPanel(hashPanel());                                                // #marca / #equipo / #salas ya pueden abrirse
+        showPanel(hashPanel());                                                // #marca / #equipo ya pueden abrirse
     }
     function syncFiscal() {
         $('cc-form').style.display = (_companyLoaded && _fiscalOk) ? 'block' : 'none';

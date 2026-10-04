@@ -49,6 +49,7 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
 .fb-svg .it:active { cursor: grabbing; }
 .fb-svg .it.sel > .body { stroke: #c5a059; stroke-width: 3; stroke-dasharray: none; }
 .fb-svg .it.sel .selbox { display: block; }
+.fb-svg .hdl { fill: #fff; stroke: #c5a059; stroke-width: 1.5; }
 .fb-svg .selbox { display: none; fill: none; stroke: #c5a059; stroke-width: 1.5; stroke-dasharray: 4 3; }
 .fb-svg .tb { fill: rgba(0,200,120,.22); stroke: #00c878; stroke-width: 2; }
 .fb-svg .tb.vip { fill: rgba(197,160,89,.3); stroke: #c5a059; }
@@ -136,10 +137,11 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
   <div class="fb-top">
     <div>
       <h1>Editor de salas <span class="fb-dev">En desarrollo</span></h1>
-      <p class="fb-sub">Diseña el plano de un local: mesas, sillas, escenarios y servicios. Arrastra, ajusta y fija precios. <b>Por ahora se guarda solo en este navegador</b> (exporta el archivo para no perderlo); el guardado en la base y los permisos del Cliente Comercial son la fase 2.</p>
+      <p class="fb-sub">Para locales que todavía no tienen plano: dibuja el local con figuras, paredes, puertas y texto, agranda arrastrando las manijas, pon las mesas y fija precios. Si el local ya tiene un plano (p. ej. el de incendios), cárgalo como referencia y calca encima. <b>Mientras trabajas se guarda en este navegador</b>; con «Guardar en la sala» el plano queda en la base y lo ven el staff y los clientes.</p>
     </div>
     <div class="fb-actions">
       <button type="button" id="fb-undo" title="Deshacer (Ctrl+Z)">Deshacer</button>
+      <button type="button" id="fb-redo" title="Rehacer (Ctrl+Y)">Rehacer</button>
       <button type="button" id="fb-export">Exportar</button>
       <button type="button" id="fb-import">Importar</button>
       <input type="file" id="fb-import-file" accept="application/json,.json" hidden>
@@ -157,6 +159,12 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
     <label class="fb-chk"><input type="checkbox" id="fb-snap" checked> Imán</label>
     <label class="fb-chk"><input type="checkbox" id="fb-rings"> Anillos de precio</label>
     <span class="fb-scope" id="fb-scope"></span>
+  </div>
+  <div class="fb-bar" id="fb-roombar">
+    <label>Sala en la base <select id="fb-room"><option value="">Inicia sesión para ver tus salas…</option></select></label>
+    <button type="button" id="fb-open-room">Abrir de la sala</button>
+    <button type="button" id="fb-save-room">Guardar en la sala</button>
+    <span id="fb-room-msg" role="status" style="font-size:12.5px;color:rgba(255,255,255,.7)"></span>
   </div>
 
   <div class="fb-grid">
@@ -183,9 +191,11 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
 <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
 <script src="./mdj-identity.js?v=20261003-identidad-unica"></script>
 <script src="./mdjb-shared-header.js?v=20261003-mi-perfil-unico"></script>
+<script src="./js/mdj-plan-shapes.js?v=20261004-formas"></script>
 <script>
 (function () {
     'use strict';
+    var PS = window.mdjPlanShapes;
     var STORE_KEY = 'mdj_floor_builder_v1';
     var NS = 'http://www.w3.org/2000/svg';
     var svg = document.getElementById('fb-svg');
@@ -209,6 +219,12 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
         { g: 'Áreas (no vendibles)', k: 'zone', sub: 'bano', t: 'Baños', w: 90, h: 56, label: 'BAÑOS' },
         { g: 'Áreas (no vendibles)', k: 'zone', sub: 'pista', t: 'Pista', w: 110, h: 110, label: 'PISTA' },
         { g: 'Áreas (no vendibles)', k: 'zone', sub: 'otro', t: 'Área libre', w: 100, h: 60, label: 'ÁREA' },
+        { g: 'Formas y texto', k: 'shape', sub: 'rect', t: 'Rectángulo', w: 120, h: 70 },
+        { g: 'Formas y texto', k: 'shape', sub: 'ellipse', t: 'Elipse', w: 120, h: 80 },
+        { g: 'Formas y texto', k: 'shape', sub: 'triangle', t: 'Triángulo', w: 100, h: 90 },
+        { g: 'Formas y texto', k: 'wall', t: 'Pared', len: 160 },
+        { g: 'Formas y texto', k: 'text', t: 'Texto' },
+        { g: 'Puertas', k: 'door', sub: 'puerta', t: 'Puerta con arco', w: 44 },
         { g: 'Puertas', k: 'door', sub: 'entrada', t: 'Entrada', w: 90, label: 'ENTRADA' },
         { g: 'Puertas', k: 'door', sub: 'artistas', t: 'Entrada de artistas', w: 70, label: 'ARTISTAS' },
         { g: 'Puertas', k: 'door', sub: 'exit', t: 'Salida de emergencia', w: 70, label: 'SALIDA' }
@@ -216,7 +232,7 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
     var ICON = {};
 
     // ───────── Estado ─────────
-    var state, history = [], dragging = null, selId = null;
+    var state, history = [], redoStack = [], dragging = null, selId = null;
     function uid() { return 'i' + Math.random().toString(36).slice(2, 9); }
     function defaultState() {
         var m = { id: uid(), scope: 'template', name: 'Sala principal', room: { w: 800, h: 520 }, items: [], ref: null };
@@ -232,7 +248,7 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
         catch (e) { if (!saveWarned) { saveWarned = true; alert('No se pudo guardar en este navegador (¿imagen de referencia muy grande?). Exporta el archivo para no perder el trabajo.'); } }
     }
     function cur() { return state.maps.filter(function (m) { return m.id === state.currentId; })[0]; }
-    function snapshot() { history.push(JSON.stringify(state)); if (history.length > 60) history.shift(); $('fb-undo').disabled = false; }
+    function snapshot() { history.push(JSON.stringify(state)); redoStack = []; if (history.length > 60) history.shift(); $('fb-undo').disabled = false; $('fb-redo').disabled = true; }
     function commit() { save(); render(); }
     function item(id) { return cur().items.filter(function (i) { return i.id === id; })[0]; }
     function snapV(v) { return $('fb-snap').checked ? Math.round(v / 5) * 5 : v; }
@@ -286,11 +302,13 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
         if (it.k === 'table') return it.shape === 'rect' || it.shape === 'square' ? [it.w + 20, it.h + 20] : [it.w + 20, it.w + 20];
         if (it.k === 'chair') return [it.w + 6, it.w + 6];
         if (it.k === 'door') return [it.w, 14];
+        if (it.k === 'text' || it.k === 'wall') return PS.medida(it);
         return [it.w, it.h];
     }
 
     // ───────── Dibujo ─────────
-    function render() {
+    function render() { drawCanvas(); renderSide(); summary(); }
+    function drawCanvas() {
         var map = cur(); if (!map) return;
         var W = map.room.w, H = map.room.h;
         svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
@@ -311,12 +329,36 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
             if (st && map.zonePrice) { [map.zonePrice.r1, map.zonePrice.r2].forEach(function (r) { el('circle', { class: 'ring', cx: st.x, cy: st.y, r: r }, svg); }); }
         }
         map.items.forEach(function (it) { drawItem(it, svg); });
-        renderSide();
-        summary();
+    }
+    function handle(parent, x, y, cursor, it, h) {
+        var r = el('rect', { 'class': 'hdl', x: x - 5, y: y - 5, width: 10, height: 10, style: 'cursor:' + cursor }, parent);
+        r.addEventListener('pointerdown', function (e) { startResize(e, it, h); });
+    }
+    function handlesFor(it, g) {
+        if (it.k === 'wall') { handle(g, it.x1, it.y1, 'move', it, { end: 1 }); handle(g, it.x2, it.y2, 'move', it, { end: 2 }); return; }
+        if (it.k === 'door') { handle(g, it.w / 2, 0, 'ew-resize', it, { hx: 1, hy: 0 }); return; }
+        if (!(it.k === 'stage' || it.k === 'zone' || it.k === 'shape')) return;
+        var w = it.w / 2, h = it.h / 2;
+        [[-1, -1, 'nwse-resize'], [0, -1, 'ns-resize'], [1, -1, 'nesw-resize'], [1, 0, 'ew-resize'], [1, 1, 'nwse-resize'], [0, 1, 'ns-resize'], [-1, 1, 'nesw-resize'], [-1, 0, 'ew-resize']].forEach(function (c) { handle(g, c[0] * w, c[1] * h, c[2], it, { hx: c[0], hy: c[1] }); });
     }
     function drawItem(it, parent) {
-        var g = el('g', { class: 'it' + (it.id === selId ? ' sel' : ''), 'data-id': it.id, transform: 'translate(' + it.x + ' ' + it.y + ') rotate(' + (it.rot || 0) + ')' }, parent);
-        var bb = bbox(it);
+        var sel = it.id === selId, g, bb;
+        if (it.k !== 'table' && it.k !== 'chair') {                     // escenario, áreas, puertas, figuras, paredes y texto: los dibuja el módulo compartido
+            g = PS.dibujarItem(parent, it);
+            if (!g) return;
+            g.classList.add('it'); if (sel) g.classList.add('sel');
+            bb = bbox(it);
+            if (it.k === 'wall') {
+                el('rect', { 'class': 'selbox', x: Math.min(it.x1, it.x2) - 6, y: Math.min(it.y1, it.y2) - 6, width: Math.abs(it.x2 - it.x1) + 12, height: Math.abs(it.y2 - it.y1) + 12 }, g);
+                if (sel) { var ln = g.querySelector('.body'); if (ln) ln.setAttribute('style', 'stroke:#c5a059'); }
+            } else el('rect', { 'class': 'selbox', x: -bb[0] / 2 - 3, y: -bb[1] / 2 - 3, width: bb[0] + 6, height: bb[1] + 6 }, g);
+            if (sel) handlesFor(it, g);
+            g.addEventListener('pointerdown', function (e) { startDrag(e, it); });
+            g.addEventListener('dblclick', function () { var f = document.querySelector('#fb-side [data-f="text"], #fb-side [data-f="label"]'); if (f) { f.focus(); f.select(); } });
+            return;
+        }
+        g = el('g', { 'class': 'it' + (sel ? ' sel' : ''), 'data-id': it.id, transform: 'translate(' + it.x + ' ' + it.y + ') rotate(' + (it.rot || 0) + ')' }, parent);
+        bb = bbox(it);
         if (it.k === 'table') {
             chairPoints(it).forEach(function (p) { el('circle', { class: 'seat', cx: p[0], cy: p[1], r: it.shape === 'hightop' ? 4 : 5 }, g); });
             var cls = 'body tb' + (it.shape === 'vip' ? ' vip' : '') + (it.status === 'reserved' ? ' reserved' : it.status === 'sold' ? ' sold' : '');
@@ -327,22 +369,6 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
             if (it.price) { var t2 = el('text', { class: 'sm', y: 11 }, g, '$' + it.price); t2.setAttribute('transform', 'rotate(' + (-(it.rot || 0)) + ')'); }
         } else if (it.k === 'chair') {
             el('circle', { class: 'body seat', r: it.w / 2 }, g);
-        } else if (it.k === 'stage') {
-            var d = stagePath(it.shape, it.w, it.h);
-            if (d) el('path', { class: 'body stg', d: d }, g);
-            else if (it.shape === 'oval') el('ellipse', { class: 'body stg', rx: it.w / 2, ry: it.h / 2 }, g);
-            else el('rect', { class: 'body stg', x: -it.w / 2, y: -it.h / 2, width: it.w, height: it.h, rx: 8 }, g);
-            var ts = el('text', { y: 4 }, g, (it.label || 'ESCENARIO'));
-            ts.setAttribute('transform', 'rotate(' + (-(it.rot || 0)) + ')');
-        } else if (it.k === 'zone') {
-            el('rect', { class: 'body zn' + (it.sub === 'barra' || it.sub === 'bano' ? ' fac' : ''), x: -it.w / 2, y: -it.h / 2, width: it.w, height: it.h, rx: 10 }, g);
-            var tz = el('text', { y: 4 }, g, (ICON[it.sub] || '') + (it.label || ''));
-            if (it.h > it.w * 1.6) tz.setAttribute('transform', 'rotate(90)');
-            else tz.setAttribute('transform', 'rotate(' + (-(it.rot || 0)) + ')');
-        } else if (it.k === 'door') {
-            el('rect', { class: 'body door' + (it.sub === 'exit' ? ' exit' : ''), x: -it.w / 2, y: -3.5, width: it.w, height: 7, rx: 2 }, g);
-            var td = el('text', { class: 'sm', y: -10 }, g, (ICON[it.sub] || '') + (it.label || ''));
-            td.setAttribute('transform', 'rotate(' + (-(it.rot || 0)) + ')');
         }
         el('rect', { class: 'selbox', x: -bb[0] / 2 - 3, y: -bb[1] / 2 - 3, width: bb[0] + 6, height: bb[1] + 6 }, g);
         g.addEventListener('pointerdown', function (e) { startDrag(e, it); });
@@ -370,19 +396,44 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
         e.preventDefault();
         var p = toSvg(e);
         selId = it.id;
-        dragging = { id: it.id, dx: it.x - p.x, dy: it.y - p.y, moved: false };
+        var st = { x: it.x, y: it.y, x1: it.x1, y1: it.y1, x2: it.x2, y2: it.y2 };
+        dragging = { mode: 'move', id: it.id, p0: p, dx: it.x - p.x, dy: it.y - p.y, start: st, moved: false };
         try { svg.setPointerCapture(e.pointerId); } catch (x) { /* ok */ }
         render();
+    }
+    // Manijas: arrastrar una esquina o un lado agranda (el lado opuesto queda fijo, aunque la figura esté girada); en una pared se mueve el extremo.
+    function startResize(e, it, h) {
+        e.preventDefault(); e.stopPropagation();
+        selId = it.id;
+        dragging = { mode: h.end ? 'end' : 'resize', id: it.id, h: h, start: { x: it.x, y: it.y, w: it.w, h: it.h, rot: it.rot || 0 }, moved: false };
+        try { svg.setPointerCapture(e.pointerId); } catch (x) { /* ok */ }
     }
     svg.addEventListener('pointermove', function (e) {
         if (!dragging) return;
         var it = item(dragging.id); if (!it) return;
-        var p = toSvg(e), map = cur();
+        var p = toSvg(e), map = cur(), W = map.room.w, H = map.room.h;
         if (!dragging.moved) { snapshot(); dragging.moved = true; }
-        it.x = Math.max(0, Math.min(map.room.w, snapV(p.x + dragging.dx)));
-        it.y = Math.max(0, Math.min(map.room.h, snapV(p.y + dragging.dy)));
-        var gEl = svg.querySelector('g[data-id="' + it.id + '"]');
-        if (gEl) gEl.setAttribute('transform', 'translate(' + it.x + ' ' + it.y + ') rotate(' + (it.rot || 0) + ')');
+        if (dragging.mode === 'move') {
+            if (it.k === 'wall') {                                              // la pared se mueve entera, sin salirse del plano
+                var s0 = dragging.start, dx = snapV(p.x - dragging.p0.x), dy = snapV(p.y - dragging.p0.y);
+                dx = Math.max(-Math.min(s0.x1, s0.x2), Math.min(W - Math.max(s0.x1, s0.x2), dx)); dy = Math.max(-Math.min(s0.y1, s0.y2), Math.min(H - Math.max(s0.y1, s0.y2), dy));
+                it.x1 = s0.x1 + dx; it.x2 = s0.x2 + dx; it.y1 = s0.y1 + dy; it.y2 = s0.y2 + dy;
+            } else {
+                it.x = Math.max(0, Math.min(W, snapV(p.x + dragging.dx)));
+                it.y = Math.max(0, Math.min(H, snapV(p.y + dragging.dy)));
+            }
+        } else if (dragging.mode === 'end') {
+            var nx = Math.max(0, Math.min(W, snapV(p.x))), ny = Math.max(0, Math.min(H, snapV(p.y)));
+            if (dragging.h.end === 1) { it.x1 = nx; it.y1 = ny; } else { it.x2 = nx; it.y2 = ny; }
+        } else {
+            var s1 = dragging.start, a = s1.rot * Math.PI / 180, ddx = p.x - s1.x, ddy = p.y - s1.y;
+            var lx = ddx * Math.cos(a) + ddy * Math.sin(a), ly = -ddx * Math.sin(a) + ddy * Math.cos(a), hx = dragging.h.hx, hy = dragging.h.hy, w = s1.w, h = s1.h, cxl = 0, cyl = 0;
+            if (hx !== 0) { w = Math.max(10, Math.min(1600, snapV(hx * lx + s1.w / 2))); cxl = hx * (w - s1.w) / 2; }
+            if (hy !== 0 && s1.h !== undefined) { h = Math.max(10, Math.min(1600, snapV(hy * ly + s1.h / 2))); cyl = hy * (h - s1.h) / 2; }
+            it.w = w; if (s1.h !== undefined) it.h = h;
+            it.x = Math.round((s1.x + cxl * Math.cos(a) - cyl * Math.sin(a)) * 10) / 10; it.y = Math.round((s1.y + cxl * Math.sin(a) + cyl * Math.cos(a)) * 10) / 10;
+        }
+        drawCanvas();
     });
     function endDrag() { if (dragging) { var mv = dragging.moved; dragging = null; if (mv) commit(); } }
     svg.addEventListener('pointerup', endDrag);
@@ -393,6 +444,16 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
     function addFromLib(def) {
         snapshot();
         var map = cur();
+        if (def.k === 'wall') {                                                  // pared: línea horizontal en el centro, con dos manijas en los extremos
+            var cx = snapV(map.room.w / 2), cy = snapV(map.room.h / 2), L = def.len || 160, wl = { id: uid(), k: 'wall', x1: cx - L / 2, y1: cy, x2: cx + L / 2, y2: cy, th: 6, bloquea: true };
+            map.items.push(wl); selId = wl.id; return commit();
+        }
+        if (def.k === 'text') {
+            var tx = { id: uid(), k: 'text', x: snapV(map.room.w / 2), y: snapV(map.room.h / 2), text: 'Texto', size: 18, rot: 0 };
+            map.items.push(tx); selId = tx.id; commit();
+            setTimeout(function () { var f = document.querySelector('#fb-side [data-f="text"]'); if (f) { f.focus(); f.select(); } }, 30);
+            return;
+        }
         var it = { id: uid(), k: def.k, x: snapV(map.room.w / 2 + (Math.random() * 60 - 30)), y: snapV(map.room.h / 2 + (Math.random() * 60 - 30)), w: def.w, rot: 0 };
         if (def.h) it.h = def.h;
         if (def.shape) it.shape = def.shape;
@@ -428,7 +489,8 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
     function dupSel() {
         var it = item(selId); if (!it) return;
         snapshot(); var map = cur(), c = JSON.parse(JSON.stringify(it));
-        c.id = uid(); c.x += 25; c.y += 25;
+        c.id = uid();
+        if (c.k === 'wall') { c.x1 += 25; c.x2 += 25; c.y1 += 25; c.y2 += 25; } else { c.x += 25; c.y += 25; }
         if (c.k === 'table') { c.label = nextLabel(map); c.status = 'available'; }
         map.items.push(c); selId = c.id; commit();
     }
@@ -454,9 +516,14 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
         } else {
             h += '<h3>' + escapeHtml(libName(it)) + '</h3>';
             if (it.k === 'table') h += field('Identificador', 'label', it.label, 'text') + '<p class="fb-hint">El número no depende de la posición: mover la mesa no cambia su ID.</p>';
-            else if (it.k !== 'chair') h += field('Rótulo', 'label', it.label || '', 'text');
-            h += '<div class="fb-row2">' + field('X', 'x', Math.round(it.x), 'number') + field('Y', 'y', Math.round(it.y), 'number') + '</div>';
-            h += field('Giro (grados)', 'rot', it.rot || 0, 'number') + '<button type="button" id="fb-rot90">Girar 90°</button>';
+            else if (it.k === 'text') h += field('Texto', 'text', it.text || '', 'text');
+            else if (it.k !== 'chair' && it.k !== 'wall') h += field('Rótulo', 'label', it.label || '', 'text');
+            if (it.k === 'wall') {
+                h += '<div class="fb-row2">' + field('X1', 'x1', Math.round(it.x1), 'number') + field('Y1', 'y1', Math.round(it.y1), 'number') + field('X2', 'x2', Math.round(it.x2), 'number') + field('Y2', 'y2', Math.round(it.y2), 'number') + '</div>' + field('Grosor', 'th', it.th || 6, 'number');
+            } else {
+                h += '<div class="fb-row2">' + field('X', 'x', Math.round(it.x), 'number') + field('Y', 'y', Math.round(it.y), 'number') + '</div>';
+                h += field('Giro (grados)', 'rot', it.rot || 0, 'number') + '<button type="button" id="fb-rot90">Girar 90°</button>';
+            }
             if (it.k === 'table') {
                 h += '<div class="fb-row2">' + field(it.shape === 'rect' || it.shape === 'square' ? 'Ancho' : 'Diámetro', 'w', it.w, 'number') + (it.shape === 'rect' || it.shape === 'square' ? field('Alto', 'h', it.h, 'number') : '') + '</div>' + (it.shape === 'rect' ? '<p class="fb-hint">Medida estándar: dos mesas cuadradas juntas (ancho = 2 × alto). Otras medidas son casos especiales.</p>' : '');
                 h += field('Sillas', 'seats', it.seats, 'number') + field('Precio (USD)', 'price', it.price || 0, 'number');
@@ -466,11 +533,18 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
                 h += '<p class="fb-hint">Frente redondeado: el borde de abajo (frente) es curvo. Esquina redonda: ponlo en una esquina y gíralo de 90° en 90° para encajarlo.</p>';
             } else if (it.k === 'zone') {
                 h += '<div class="fb-row2">' + field('Ancho', 'w', it.w, 'number') + field('Alto', 'h', it.h, 'number') + '</div>';
+            } else if (it.k === 'shape') {
+                h += '<div class="fb-row2">' + field('Ancho', 'w', it.w, 'number') + field('Alto', 'h', it.h, 'number') + '</div>';
+                h += '<label>Relleno</label><select data-f="relleno">' + [['', 'Sin relleno'], ['gris', 'Gris'], ['dorado', 'Dorado'], ['verde', 'Verde'], ['rojo', 'Rojo']].map(function (o) { return '<option value="' + o[0] + '"' + ((it.relleno || '') === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select>';
             } else if (it.k === 'door') {
                 h += field('Largo', 'w', it.w, 'number');
+            } else if (it.k === 'text') {
+                h += field('Tamaño de letra', 'size', it.size || 16, 'number');
             } else if (it.k === 'chair') {
                 h += field('Tamaño', 'w', it.w, 'number');
             }
+            if (it.k === 'stage' || it.k === 'zone' || it.k === 'shape' || it.k === 'wall') h += '<label class="fb-chk" style="display:flex;gap:8px;align-items:center;margin-top:10px;text-transform:none;letter-spacing:0;font-size:12.5px;color:rgba(255,255,255,.8)"><input type="checkbox" data-chk="bloquea"' + (PS.esEstructura(it) ? ' checked' : '') + '> Las mesas no pueden ir encima</label>';
+            h += '<div class="fb-row2" style="margin-top:10px"><button type="button" id="fb-front">Al frente</button><button type="button" id="fb-back">Al fondo</button></div>';
             h += '<div class="fb-row2" style="margin-top:10px"><button type="button" id="fb-dup">Duplicar</button><button type="button" id="fb-del">Eliminar</button></div>';
         }
         // Precio por cercanía
@@ -489,7 +563,7 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
         showMsg();
         wireSide(it, map);
     }
-    function field(lbl, f, v, type) { return '<label>' + lbl + '</label><input type="' + type + '" data-f="' + f + '" value="' + escapeAttr(v) + '"' + (type === 'text' ? ' maxlength="40"' : ' step="1"') + '>'; }
+    function field(lbl, f, v, type) { return '<label>' + lbl + '</label><input type="' + type + '" data-f="' + f + '" value="' + escapeAttr(v) + '"' + (type === 'text' ? ' maxlength="60"' : ' step="1"') + '>'; }
     function zfield(lbl, f, v) { return '<div><label>' + lbl + '</label><input type="number" data-z="' + f + '" value="' + v + '" min="0" step="5"></div>'; }
     function rfield(lbl, f, v) { return '<div><label>' + lbl + '</label><input type="number" data-r="' + f + '" value="' + Math.round(v) + '" step="5"></div>'; }
     function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -511,6 +585,9 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
         });
         var b = function (id, fn) { var x = $(id); if (x) x.addEventListener('click', fn); };
         b('fb-del', removeSel); b('fb-dup', dupSel);
+        b('fb-front', function () { var m = cur(); snapshot(); m.items = m.items.filter(function (i) { return i.id !== it.id; }); m.items.push(it); commit(); });
+        b('fb-back', function () { var m = cur(); snapshot(); m.items = m.items.filter(function (i) { return i.id !== it.id; }); m.items.unshift(it); commit(); });
+        [].forEach.call(side.querySelectorAll('[data-chk]'), function (inp) { inp.addEventListener('change', function () { applyField(it, inp.getAttribute('data-chk'), inp.checked ? 'true' : 'false'); }); });
         b('fb-rot90', function () { if (!it) return; snapshot(); it.rot = ((it.rot || 0) + 90) % 360; commit(); });
         b('fb-applyzone', applyZones);
         b('fb-refpick', function () { $('fb-reffile').click(); });
@@ -528,6 +605,9 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
             }
             snapshot(); it.label = v; return commit();
         }
+        if (f === 'text') { var tv = String(raw).trim().slice(0, 60); if (!tv) { say('El texto no puede quedar vacío.', false); return render(); } snapshot(); it.text = tv; return commit(); }
+        if (f === 'relleno') { snapshot(); if (raw === '') delete it.relleno; else it.relleno = raw; return commit(); }
+        if (f === 'bloquea') { snapshot(); it.bloquea = raw === 'true'; return commit(); }
         if (f === 'status') { snapshot(); it.status = raw; return commit(); }
         if (f === 'shape') { snapshot(); it.shape = raw; return commit(); }
         if (!isFinite(num)) return render();
@@ -535,7 +615,11 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
             num = Math.max(0, Math.min(40, Math.round(num)));
             if (locked(it) && num < it.seats) { say('No se pueden reducir las sillas de ' + it.label + ': ya está ' + (it.status === 'sold' ? 'vendida' : 'reservada') + '.', false); return render(); }
         }
-        if (f === 'w' || f === 'h') num = Math.max(10, Math.min(900, Math.round(num)));
+        if (f === 'w' || f === 'h') num = Math.max(10, Math.min(1600, Math.round(num)));
+        if (f === 'size') num = Math.max(8, Math.min(80, Math.round(num)));
+        if (f === 'th') num = Math.max(1, Math.min(40, Math.round(num)));
+        if (f === 'x1' || f === 'x2') num = Math.max(0, Math.min(map.room.w, Math.round(num)));
+        if (f === 'y1' || f === 'y2') num = Math.max(0, Math.min(map.room.h, Math.round(num)));
         if (f === 'price') num = Math.max(0, Math.round(num * 100) / 100);
         if (f === 'rot') num = ((Math.round(num) % 360) + 360) % 360;
         if (f === 'x') num = Math.max(0, Math.min(map.room.w, num));
@@ -640,8 +724,59 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
     }
     function undo() {
         if (!history.length) return;
+        redoStack.push(JSON.stringify(state));
         state = JSON.parse(history.pop()); if (!cur()) state.currentId = state.maps[0].id;
-        $('fb-undo').disabled = !history.length; $('fb-venue').value = state.venue || ''; save(); fullRender();
+        $('fb-undo').disabled = !history.length; $('fb-redo').disabled = false; $('fb-venue').value = state.venue || ''; save(); fullRender();
+    }
+    function redo() {
+        if (!redoStack.length) return;
+        history.push(JSON.stringify(state));
+        state = JSON.parse(redoStack.pop()); if (!cur()) state.currentId = state.maps[0].id;
+        $('fb-undo').disabled = false; $('fb-redo').disabled = !redoStack.length; $('fb-venue').value = state.venue || ''; save(); fullRender();
+    }
+
+    // ───────── Guardar en la sala (base) ─────────
+    // Las salas y su nombre son públicas (las ve la página del local); quién puede GUARDAR lo decide la base (dueño o manager del local, o admin de Miami DJ Beat).
+    var db = null, salas = [];
+    function roomMsg(t, ok) { var m = $('fb-room-msg'); if (!m) return; m.textContent = t || ''; m.style.color = ok === false ? '#ff6060' : ok ? '#00c878' : 'rgba(255,255,255,.7)'; }
+    async function cargarSalas() {
+        var sel = $('fb-room');
+        try { db = window.getSupabaseClient ? window.getSupabaseClient() : null; } catch (e) { db = null; }
+        if (!db) { sel.innerHTML = '<option value="">Sin conexión con la base</option>'; return; }
+        var ses = await db.auth.getSession(), u = ses && ses.data && ses.data.session && ses.data.session.user;
+        if (!u) { sel.innerHTML = '<option value="">Inicia sesión para guardar en una sala…</option>'; return; }
+        var r = await db.from('venue_rooms').select('id,name,active,venues(name)').order('name');
+        if (r.error) { sel.innerHTML = '<option value="">No se pudieron cargar las salas</option>'; return; }
+        salas = (r.data || []).filter(function (x) { return x.active !== false; }).map(function (x) { return { id: x.id, nombre: ((x.venues && x.venues.name) || 'Local') + ' · ' + x.name }; });
+        sel.innerHTML = salas.length ? '<option value="">Elige la sala…</option>' + salas.map(function (x) { return '<option value="' + escapeAttr(x.id) + '">' + escapeHtml(x.nombre) + '</option>'; }).join('') : '<option value="">No hay salas</option>';
+        var q = new URLSearchParams(location.search).get('sala'); if (q && salas.some(function (x) { return x.id === q; })) sel.value = q;
+    }
+    function salaElegida() { var id = $('fb-room').value; if (!id) { roomMsg('Elige primero la sala.', false); return null; } return salas.filter(function (x) { return x.id === id; })[0] || null; }
+    async function abrirDeSala() {
+        var sala = salaElegida(); if (!sala) return;
+        roomMsg('Abriendo…');
+        var r = await db.from('venue_rooms').select('layout').eq('id', sala.id).maybeSingle();
+        if (r.error) return roomMsg('No se pudo leer la sala.', false);
+        var d = PS.desdeLayout(r.data && r.data.layout);
+        if (!d.maps.length) return roomMsg('Esa sala todavía no tiene plano guardado: dibuja uno y pulsa «Guardar en la sala».', false);
+        if (state.maps.some(function (m) { return m.scope === 'template' && m.items.length; }) && !confirm('Vas a reemplazar los planos de plantilla que tienes en pantalla por los de «' + sala.nombre + '». ¿Continuar?')) return roomMsg('');
+        snapshot();
+        state.maps = d.maps.concat(state.maps.filter(function (m) { return m.scope === 'event'; }));
+        state.currentId = d.maps[0].id; if (d.venue) state.venue = d.venue; $('fb-venue').value = state.venue || ''; selId = null; save(); fullRender();
+        roomMsg('Plano de «' + sala.nombre + '» abierto: ' + d.maps.length + (d.maps.length === 1 ? ' plano.' : ' planos.'), true);
+    }
+    async function guardarEnSala() {
+        var sala = salaElegida(); if (!sala) return;
+        var r = PS.aLayout(state);
+        if (!r.ok) { roomMsg(r.errores.slice(0, 3).join(' ') + (r.errores.length > 3 ? ' (y ' + (r.errores.length - 3) + ' más)' : ''), false); return; }
+        if (!confirm('Vas a guardar este plano en «' + sala.nombre + '» (' + r.layout.tables.length + ' mesas). Reemplaza el plano que tenga la sala; las ventas ya abiertas conservan su mapa. ¿Continuar?')) return;
+        roomMsg('Guardando…');
+        var res = await db.rpc('venue_room_set_layout', { p_room_id: sala.id, p_layout: r.layout });
+        if (res.error) {
+            var t = String(res.error.message || ''), sinFn = res.error.code === 'PGRST202' || res.error.code === '42883' || /could not find the function|schema cache/i.test(t);
+            return roomMsg(sinFn ? 'Guardar en la sala todavía no está activado en la base de datos.' : /no_autorizado/.test(t) ? 'Tu cuenta no puede guardar en esa sala (solo el dueño o un manager del local, o Miami DJ Beat).' : /mapa_invalido/.test(t) ? 'La base rechazó el plano: revisa figuras, mesas y precios.' : 'No se pudo guardar. Intenta de nuevo.', false);
+        }
+        roomMsg('Plano guardado en «' + sala.nombre + '»: ' + res.data + ' mesas. Ya lo ven el staff y los clientes.', true);
     }
 
     // ───────── Arranque ─────────
@@ -662,8 +797,9 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
             b.addEventListener('click', function () { addFromLib(d); });
             pal.appendChild(b);
         });
-        $('fb-undo').disabled = true;
+        $('fb-undo').disabled = true; $('fb-redo').disabled = true;
         $('fb-undo').addEventListener('click', undo);
+        $('fb-redo').addEventListener('click', redo);
         $('fb-export').addEventListener('click', exportJson);
         $('fb-import').addEventListener('click', function () { $('fb-import-file').click(); });
         $('fb-import-file').addEventListener('change', function (e) { importJson(e.target.files && e.target.files[0]); e.target.value = ''; });
@@ -685,14 +821,21 @@ body.page-fb { background: radial-gradient(ellipse at top, rgba(197,160,89,0.08)
         document.addEventListener('keydown', function (e) {
             var tag = (e.target && e.target.tagName) || '';
             if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
-            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); return undo(); }
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); return e.shiftKey ? redo() : undo(); }
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') { e.preventDefault(); return redo(); }
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') { e.preventDefault(); return dupSel(); }
             var it = item(selId); if (!it) return;
             if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); return removeSel(); }
             var step = $('fb-snap').checked ? 5 : 1, dx = 0, dy = 0;
             if (e.key === 'ArrowLeft') dx = -step; else if (e.key === 'ArrowRight') dx = step; else if (e.key === 'ArrowUp') dy = -step; else if (e.key === 'ArrowDown') dy = step; else return;
-            e.preventDefault(); snapshot(); it.x = Math.max(0, Math.min(cur().room.w, it.x + dx)); it.y = Math.max(0, Math.min(cur().room.h, it.y + dy)); commit();
+            e.preventDefault(); snapshot();
+            if (it.k === 'wall') { it.x1 += dx; it.x2 += dx; it.y1 += dy; it.y2 += dy; } else { it.x = Math.max(0, Math.min(cur().room.w, it.x + dx)); it.y = Math.max(0, Math.min(cur().room.h, it.y + dy)); }
+            commit();
         });
+        $('fb-open-room').addEventListener('click', abrirDeSala);
+        $('fb-save-room').addEventListener('click', guardarEnSala);
         fullRender();
+        cargarSalas();
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();

@@ -394,6 +394,7 @@
 window.MDJ_SKIP_GLOBAL_EVENT_CART = true;
 </script>
 <script src="./mdjb-shared-header.js?v=20261003-mi-perfil-unico"></script>
+<script src="./js/mdj-plan-shapes.js?v=20261004-formas"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
 <script>
 (function () {
@@ -1030,23 +1031,42 @@ window.MDJ_SKIP_GLOBAL_EVENT_CART = true;
             var defs = el('defs', {});
             el('rect', { x: 12, y: 12, width: 776, height: 493 }, el('clipPath', { id: 'vr-room-clip' }, defs));
             layout.zones.slice(0, -1).forEach(function (z) { el('circle', { class: 'ring', cx: layout.focal.x, cy: layout.focal.y, r: z.maxD, 'clip-path': 'url(#vr-room-clip)' }); });
-            el('path', { d: 'M 340 505 H 12 V 12 H 788 V 505 H 460', fill: 'none', stroke: 'rgba(255,255,255,0.55)', 'stroke-width': 5, 'stroke-linejoin': 'round' });
-            el('rect', { class: 'door', x: 340, y: 502, width: 120, height: 7, rx: 2 });
-            el('text', { class: 'door-label', x: 400, y: 494 }, null, 'ENTRADA');
-            if (layout.artistDoor) {
-                var ax = layout.artistDoor.x;
-                el('rect', { class: 'door', x: ax - 30, y: 9, width: 60, height: 7, rx: 2 });
-                el('text', { class: 'door-label', x: ax, y: 40 }, null, 'ARTISTAS');
+            // Plano con arquitectura dibujada en el editor de salas (layout.custom): trae SU contorno, puertas y figuras (layout.shapes) y su propio tamaño.
+            // Los planos anteriores siguen con el contorno y la entrada fijos de siempre.
+            var custom = !!layout.custom;
+            svg.setAttribute('viewBox', '0 0 ' + ((layout.room && layout.room.w) || 800) + ' ' + ((layout.room && layout.room.h) || 520));
+            if (custom) {
+                if (window.mdjPlanShapes) window.mdjPlanShapes.dibujar(svg, layout.shapes);
+            } else {
+                el('path', { d: 'M 340 505 H 12 V 12 H 788 V 505 H 460', fill: 'none', stroke: 'rgba(255,255,255,0.55)', 'stroke-width': 5, 'stroke-linejoin': 'round' });
+                el('rect', { class: 'door', x: 340, y: 502, width: 120, height: 7, rx: 2 });
+                el('text', { class: 'door-label', x: 400, y: 494 }, null, 'ENTRADA');
+                if (layout.artistDoor) {
+                    var ax = layout.artistDoor.x;
+                    el('rect', { class: 'door', x: ax - 30, y: 9, width: 60, height: 7, rx: 2 });
+                    el('text', { class: 'door-label', x: ax, y: 40 }, null, 'ARTISTAS');
+                }
+                if (layout.focal && layout.focal.rect) zoneBox(layout.focal.rect, layout.focal.label, layout.focal.rot, layout.focal.k);
+                layout.fixed.forEach(function (f) { zoneBox(f.r, f.l, f.rot, f.k); });
             }
-            zoneBox(layout.focal.rect, layout.focal.label, layout.focal.rot, layout.focal.k);
-            layout.fixed.forEach(function (f) { zoneBox(f.r, f.l, f.rot, f.k); });
             // Servicios presentes en ESTE mapa (para ubicarse antes de elegir mesa).
-            var kinds = {};
-            layout.fixed.concat([layout.focal]).forEach(function (f) { if (f.k) kinds[f.k] = true; });
-            var sv = ['<span>Entrada</span>'];
-            if (layout.artistDoor) sv.push('<span>Entrada de artistas</span>');
-            if (kinds.bano) sv.push('<span>Baños</span>');
-            if (kinds.barra) sv.push('<span>Barra</span>');
+            var sv = [];
+            if (custom) {
+                var tipos = {};
+                (layout.shapes || []).forEach(function (f) { if (f.k === 'door') tipos[f.sub || 'puerta'] = true; if (f.k === 'zone') tipos[f.sub] = true; });
+                if (tipos.entrada) sv.push('<span>Entrada</span>');
+                if (tipos.artistas) sv.push('<span>Entrada de artistas</span>');
+                if (tipos.exit) sv.push('<span>Salida de emergencia</span>');
+                if (tipos.bano) sv.push('<span>Baños</span>');
+                if (tipos.barra) sv.push('<span>Barra</span>');
+            } else {
+                var kinds = {};
+                (layout.fixed || []).concat([layout.focal]).forEach(function (f) { if (f && f.k) kinds[f.k] = true; });
+                sv.push('<span>Entrada</span>');
+                if (layout.artistDoor) sv.push('<span>Entrada de artistas</span>');
+                if (kinds.bano) sv.push('<span>Baños</span>');
+                if (kinds.barra) sv.push('<span>Barra</span>');
+            }
             document.getElementById('vr-services').innerHTML = sv.join('');
 
             if (real) {   // franjas de precio desde la base (por nombre de zona)
