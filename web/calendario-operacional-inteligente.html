@@ -2088,6 +2088,17 @@
       if(r.error){ r=await _resq(_base+(_staff?",venue_pay_usd":"")); }   // dj_pay_usd aún no existe en la tabla → degradar sin romper
       if(r.error) throw r.error;
       var rules=r.data||[], evs=[];
+      // ARTISTA: la vista/excepciones le entregan también las reglas donde solo cubre
+      // algunas fechas (ej. viernes alternado con DJYuyo). Hay que dibujar SOLO las
+      // fechas que le tocan a él -- ver 20261004_residencias_artista_ve_sus_coberturas.sql.
+      var _myProfId=null, _myStage="";
+      if(!_staff){
+        try{
+          var _ses=(await sb.auth.getSession()).data.session;
+          var _pr=await sb.from("dj_profiles").select("id,stage_name").eq("user_id",_ses.user.id).maybeSingle();
+          _myProfId=(_pr.data&&_pr.data.id)||null; _myStage=String((_pr.data&&_pr.data.stage_name)||"").toLowerCase();
+        }catch(_pe){ console.warn("[Matrix] perfil propio:", _pe.message||_pe); }
+      }
       /* 2026-09-30, ticket "calendario de Wendy mezcla residencias ajenas" --
          CORREGIDO el mismo día: el filtro por dueño que vivía aquí (manager/
          vendedor solo veía lo suyo) se QUITA por orden explícita del PO:
@@ -2138,6 +2149,11 @@
           if(s!==null && e!==null && e<s) e=e+24;   // cruza medianoche
           var _exc=_excByKey[rule.id+"|"+iso];
           if(_exc && _exc.skip) return;   // eliminado SOLO esta fecha -- la regla sigue viva las demás semanas
+          if(!_staff && _myProfId){   // artista: dibujar solo las fechas que le tocan a él (por id; sin id, por nombre artístico)
+            var _effId=_exc?_exc.dj_id:rule.dj_id;
+            var _esMia=_effId ? (_effId===_myProfId) : (String((_exc?_exc.dj_name:rule.dj_name)||"").toLowerCase()===_myStage);
+            if(!_esMia) return;
+          }
           var _djName=(_exc?_exc.dj_name:rule.dj_name)||"";
           var _serie=_seriesInfo(rule, iso);
           var _titulo=rule.series_name

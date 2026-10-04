@@ -2,7 +2,7 @@
 // shared modules the backend Edge Function uses — no duplicated math.
 import { moonPhase as moonPhaseAt } from './astro.js';
 import { constellations, moonAltAz as moonAltAzRaw } from './celestial.js';
-import { MDJ_WeatherHub } from '../../js/mdjb-weather-core.js?v=20260920-ubicacion-honesta';   // SSOT: un solo fetch/caché compartido (Fase 2, TICKET-WEATHER-01)
+import { MDJ_WeatherHub } from '../../js/mdjb-weather-core.js?v=20261004-lugar-del-turno';   // SSOT: un solo fetch/caché compartido (Fase 2, TICKET-WEATHER-01)
 
 // PREVIEW = true shows the dev controls (weather/time/date/scene/live). In the
 // real app set to false to hide them (users must not fake the weather).
@@ -576,7 +576,7 @@ function renderUI(s){
   $('c-loc').textContent='📍 '+s.location.name;
   // Aviso honesto de dónde salió la ubicación (2026-09-20): antes, sin GPS, mostraba Miami Lakes en silencio.
   const _sub=document.querySelector('.loc .sub');
-  if(_sub){ const src=s.location&&s.location.source; _sub.textContent = src==='base' ? 'UBICACIÓN APROXIMADA · BASE (SIN GPS)' : src==='ultima' ? 'ÚLTIMA UBICACIÓN CONOCIDA' : 'CONDICIONES ACTUALES'; }
+  if(_sub){ const src=s.location&&s.location.source; _sub.textContent = src==='base' ? 'UBICACIÓN APROXIMADA · BASE (SIN GPS)' : src==='turno' ? 'UBICACIÓN DEL TURNO DE HOY' : src==='ultima' ? 'ÚLTIMA UBICACIÓN CONOCIDA' : 'CONDICIONES ACTUALES'; }
   const m=s.metrics;
   $('metrics').innerHTML=
     mrow('HUMEDAD',m.humidity,'color:var(--cool)')+
@@ -879,7 +879,14 @@ if(typeof window!=='undefined'){ window.__mdjbHero=function(){
 // over EVENTO DE HOY. Weather/astronomy remain fully independent.
 window.addEventListener('message', function(e){
   const d = e.data;
-  if (d && d.type === 'mdjb:today-event') { hostEvent = d.event || null; renderUI(state); }
+  if (d && d.type === 'mdjb:today-event') {
+    hostEvent = d.event || null; renderUI(state);
+    // Sin GPS, el clima sale del lugar del turno/evento de hoy (no de la base de la empresa).
+    const lugar = hostEvent && typeof hostEvent.loc === 'string' ? hostEvent.loc : '';
+    if (lugar && lugar !== '—') {
+      MDJ_WeatherHub.setLugar(lugar).then(function(ok){ if (ok) return MDJ_WeatherHub.ensureFresh(); }).catch(function(){});
+    }
+  }
 });
 // tell the host we're ready so it can (re)send even if it loaded first
 try { if (window.parent && window.parent !== window) window.parent.postMessage({ type:'mdjb:hero-ready' }, '*'); } catch(_e){}

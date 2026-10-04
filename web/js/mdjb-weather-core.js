@@ -324,7 +324,14 @@ async function doFetch(coords) {
     const r = await fetch(url, { cache: 'no-store', signal: ctrl.signal });
     if (!r.ok) throw new Error('http ' + r.status);
     const s = normalize(await r.json());               // OWM/WeatherKit crudo → AtmosphericState
-    s.location.source = coords.src || 'gps';           // 'gps' | 'ultima' | 'base' -- para avisar cuando la ubicación es aproximada
+    s.location.source = coords.src || 'gps';           // 'gps' | 'turno' | 'ultima' | 'base' -- para avisar cuando la ubicación es aproximada
+    // El nombre ya no se queda fijo en «Miami Lakes, FL»: se rotula con el lugar de donde SÍ salió el dato.
+    if (s.location.source === 'turno' && coords.nombre) { s.location.name = coords.nombre + ', FL'; s.location.short = coords.nombre; }
+    else if (s.location.source === 'gps' || s.location.source === 'ultima') {
+      const nom = await nombreDeCoordenadas(coords.lat, coords.lon);
+      if (nom) { s.location.name = nom + ', FL'; s.location.short = nom; }
+      else { s.location.name = 'Tu ubicación'; s.location.short = 'Tu ubicación'; }
+    }
     if (!isValidState(s)) throw new Error('malformed AtmosphericState');
     // Apple (weatherKitToState) ya aplicó su propio "adelanto" (weatherAlerts +
     // forecastNextHour) desde la MISMA respuesta -- s.lookAhead ya viene puesto,
@@ -338,6 +345,80 @@ async function doFetch(coords) {
 
 function notify(reason) {
   for (const cb of _subs) { try { cb(_state, reason); } catch (_e) {} }
+}
+
+// ── Lugar del turno de hoy (2026-10-04, ticket «clima de Solitario») ───────────
+// Un DJ que trabaja en un local fijo (ej. Sundowner Key Largo) debe ver el clima de ESE
+// lugar aunque el aparato no dé GPS. Orden: GPS real → LUGAR DEL TURNO → última ubicación
+// real → base corporativa. El lugar lo manda la página anfitriona (turno/evento de hoy) y se
+// resuelve con el geocodificador que ya existe en el puente mdj-weather (recurso=geo).
+const LS_LUGAR = 'mdjb:weather:lugares:v1';
+const LUGAR_MAX_AGE_MS = 30 * 24 * 3600 * 1000;
+let _lugar = null;   // { key, lat, lon, name }
+
+function puenteClima(params) {
+  const ep = ENDPOINT();
+  if (!ep) return '';
+  try {
+    const u = new URL(ep, (typeof location !== 'undefined' ? location.href : undefined));
+    u.pathname = u.pathname.replace(/[^/]+$/, 'mdj-weather');
+    u.search = '';
+    Object.keys(params).forEach((k) => u.searchParams.set(k, params[k]));
+    return u.toString();
+  } catch (_e) { return ''; }
+}
+function leerLugares() { try { return JSON.parse(localStorage.getItem(LS_LUGAR) || '{}') || {}; } catch (_e) { return {}; } }
+function guardarLugar(key, val) { try { const m = leerLugares(); m[key] = Object.assign({ at: Date.now() }, val); localStorage.setItem(LS_LUGAR, JSON.stringify(m)); } catch (_e) {} }
+// «Sundowner Key Largo» no se geocodifica, «Key Largo» sí; «Largo» a secas sería OTRA ciudad (Pinellas):
+// por eso los sufijos de palabras solo se prueban con 2 o más palabras. Con coma («..., Hialeah, FL») manda la ciudad.
+function candidatosLugar(texto) {
+  const limpio = String(texto || '').replace(/^residencia\s*[·\-–]\s*/i, '').replace(/\b\d{5}(-\d{4})?\b/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!limpio || limpio.length > 120) return [];
+  const esEstado = (p) => /^(fl|florida|usa?|united states)\.?$/i.test(p.trim());
+  const partes = limpio.split(',').map((p) => p.trim()).filter((p) => p && !esEstado(p));
+  const out = [];
+  const add = (c) => { c = c.replace(/[,\s]+(fl|florida|usa?)\.?$/i, '').trim(); if (c && !out.includes(c)) out.push(c); };
+  if (partes.length > 1) { add(partes[partes.length - 1]); }
+  const base = partes.join(' ').split(' ').filter(Boolean);
+  if (partes.length <= 1) {
+    add(base.join(' '));
+    for (let i = 1; i <= base.length - 2; i++) add(base.slice(i).join(' '));
+  }
+  return out;
+}
+async function geocodificarLugar(texto) {
+  for (const cand of candidatosLugar(texto)) {
+    const url = puenteClima({ recurso: 'geo', q: cand + ',FL,US' });
+    if (!url) return null;
+    const ctrl = new AbortController(); const to = setTimeout(() => ctrl.abort(), 5000);
+    try {
+      const r = await fetch(url, { signal: ctrl.signal });
+      if (!r.ok) continue;
+      const arr = await r.json();
+      const g = Array.isArray(arr) ? arr[0] : null;
+      if (g && typeof g.lat === 'number' && typeof g.lon === 'number' && g.country === 'US' && /florida/i.test(g.state || '')) {
+        return { lat: g.lat, lon: g.lon, name: g.name || cand };
+      }
+    } catch (_e) { /* siguiente candidato */ } finally { clearTimeout(to); }
+  }
+  return null;
+}
+// Nombre del lugar para GPS / última ubicación: antes SIEMPRE decía «Miami Lakes, FL» aunque el dato fuera de otro sitio.
+async function nombreDeCoordenadas(lat, lon) {
+  const key = 'xy:' + lat.toFixed(2) + ',' + lon.toFixed(2);
+  const hit = leerLugares()[key];
+  if (hit && (Date.now() - hit.at) < LUGAR_MAX_AGE_MS && hit.name) return hit.name;
+  const url = puenteClima({ lat: lat.toFixed(4), lon: lon.toFixed(4) });
+  if (!url) return null;
+  const ctrl = new AbortController(); const to = setTimeout(() => ctrl.abort(), 4000);
+  try {
+    const r = await fetch(url, { signal: ctrl.signal });
+    if (!r.ok) return null;
+    const o = await r.json();
+    const n = o && typeof o.name === 'string' ? o.name.trim() : '';
+    if (n) guardarLugar(key, { name: n });
+    return n || null;
+  } catch (_e) { return null; } finally { clearTimeout(to); }
 }
 
 // ── Geolocalización dinámica: GPS real del usuario → fallback a la base corporativa ──
@@ -354,8 +435,9 @@ function readLastGps() {
 function saveLastGps(lat, lon) { try { localStorage.setItem(LS_GPS, JSON.stringify({ lat, lon, at: Date.now() })); } catch (_e) {} }
 function getCoords() {
   const tz = -new Date().getTimezoneOffset() / 60;
-  // Sin GPS ahora: 1º la última ubicación REAL guardada; 2º la base corporativa (Miami Lakes).
+  // Sin GPS ahora: 1º el lugar del turno de hoy; 2º la última ubicación REAL guardada; 3º la base corporativa (Miami Lakes).
   const sinGps = () => {
+    if (_lugar) return { lat: _lugar.lat, lon: _lugar.lon, tz, src: 'turno', nombre: _lugar.name };
     const last = readLastGps();
     return last ? { lat: last.lat, lon: last.lon, tz, src: 'ultima' } : { lat: LOC.lat, lon: LOC.lon, tz, src: 'base' };
   };
@@ -398,6 +480,27 @@ const MDJ_WeatherHub = {
   // Devuelve estado fresco-o-cacheado. Dedup dentro del documento; cross-view por caché.
   // NUNCA lanza a los consumidores y NUNCA deja el cielo en blanco (resiliencia offline).
   getCoords,                                        // GPS dinámico → fallback base corporativa
+
+  // Lugar del turno/evento de hoy (texto libre del venue). true si se resolvió y se usará como respaldo del GPS.
+  async setLugar(texto) {
+    const key = String(texto || '').toLowerCase().replace(/\s+/g, ' ').trim();
+    if (!key) return false;
+    if (_lugar && _lugar.key === key) return true;
+    if (_inflight) { try { await _inflight; } catch (_e) {} }   // no pisar un fetch en vuelo con la base
+    let hit = leerLugares()['t:' + key];
+    if (!hit || (Date.now() - hit.at) > LUGAR_MAX_AGE_MS || typeof hit.lat !== 'number') {
+      const g = await geocodificarLugar(texto);
+      if (!g) return false;
+      guardarLugar('t:' + key, g); hit = g;
+    }
+    _lugar = { key, lat: hit.lat, lon: hit.lon, name: hit.name };
+    _coordsCache = null;
+    // Si lo que se está mostrando NO es GPS real, el dato mostrado quedó viejo para este lugar.
+    if (!_state || !_state.location || _state.location.source !== 'gps') {
+      _fetchedAt = 0; try { localStorage.removeItem(LS_KEY); } catch (_e) {}
+    }
+    return true;
+  },
 
   async ensureFresh(coords) {
     // 1. hidratar de la caché compartida (otra vista pudo haber fetcheado ya)
