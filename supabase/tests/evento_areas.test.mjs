@@ -161,6 +161,44 @@ await como('authenticated', U.owner);
 r = await abrir(e1, ['sala', 'vip']); await como(null);
 ok(r.n === 0 && (await claves(e1)) === 'M1,M2,M3,M4,T1,T2,V1,V2', 'intentar cerrar la terraza no la cierra, aunque tenga una venta (no hay forma de quitarla)');
 
+console.log('\n▶ Áreas DIBUJADAS en un solo plano (como Mojitos: salón, VIP, terraza siempre abierta, mesas fuera de área)');
+const tab = (k, x, y, area) => ({ id: k, t: 'round', x, y, seats: 4, ...(area ? { area } : {}) });
+const planoUnico = { id: 'mojitos', label: 'Mojitos', focal: { x: 400, y: 52 }, fixed: [], zones: [{ name: 'Mesas', maxD: 9999, price: 0 }], shapes: [],
+  tables: [tab('S1', 100, 100), tab('S2', 200, 100), tab('V1', 100, 300), tab('V2', 200, 300), tab('T1', 100, 450), tab('T2', 200, 450), tab('F1', 700, 250)] };
+const metaA = (k, area, price) => ({ key: k, label: k, seats: 4, zone: 'Z', price_cents: price, ...(area ? { area } : {}) });
+const LAYOUT3 = { maps: [planoUnico], areas: [{ id: 'salon', label: 'Salón principal' }, { id: 'vip', label: 'VIP' }, { id: 'terraza', label: 'Terraza', siempre: true }],
+  tables: [metaA('S1', 'salon', 10000), metaA('S2', 'salon', 10000), metaA('V1', 'vip', 30000), metaA('V2', 'vip', 30000), metaA('T1', 'terraza', 8000), metaA('T2', 'terraza', 8000), metaA('F1', null, 5000)] };
+const [mojitos3] = await su(`insert into venue_rooms (venue_id, slug, name, layout) values ($1, 'mojitos-3', 'Mojitos 3', $2::jsonb) returning id`, [venue.id, JSON.stringify(LAYOUT3)]);
+const nuevoEv3 = async (t) => (await su(`insert into venue_events (room_id, title, event_date, status) values ($1, $2, current_date + 10, 'announced') returning id`, [mojitos3.id, t]))[0].id;
+const geoDe = async (ev) => (await su(`select string_agg(t ->> 'id', ',' order by t ->> 'id') ids from venue_events e, jsonb_array_elements(e.layout -> 'maps' -> 0 -> 'tables') t where e.id = $1`, [ev]))[0].ids;
+await como('authenticated', U.owner);
+const a1 = await nuevoEv3('Normal'); r = await abrir(a1, null); await como(null);
+ok(r.n === 7 && (await claves(a1)) === 'F1,S1,S2,T1,T2,V1,V2', 'sin elegir áreas se venden las 7 mesas (también la que está fuera de toda área)');
+await como('authenticated', U.owner);
+const a2 = await nuevoEv3('VIP cerrado'); r = await abrir(a2, ['salon']); await como(null);
+ok(r.n === 5 && (await claves(a2)) === 'F1,S1,S2,T1,T2', 'solo el salón: el VIP se cierra; la terraza (siempre) y la mesa fuera de área se quedan');
+ok((await geoDe(a2)) === 'F1,S1,S2,T1,T2', 'y el dibujo del evento tampoco trae las mesas del VIP (el contorno del VIP sigue dibujado)');
+await como('authenticated', U.owner);
+const a3 = await nuevoEv3('Solo VIP'); r = await abrir(a3, ['vip']); await como(null);
+ok((await claves(a3)) === 'F1,T1,T2,V1,V2', 'un evento solo del VIP: sus mesas + la terraza + la mesa fuera de área; sin el salón');
+await como('authenticated', U.owner);
+r = await abrir(a2, ['salon', 'vip']); await como(null);
+ok(r.n === 2 && (await claves(a2)) === 'F1,S1,S2,T1,T2,V1,V2' && (await geoDe(a2)) === 'F1,S1,S2,T1,T2,V1,V2', 'volver a abrir el VIP: regresan sus mesas y su lugar en el dibujo (de la sala)');
+await su(`update venue_event_tables set status = 'sold', sold_via = 'manager', buyer_name = 'Carla' where event_id = $1 and table_key = 'V1'`, [a2]);
+await como('authenticated', U.owner); r = await abrir(a2, ['salon']); ok(/area_con_ventas/.test(r.err || ''), 'cerrar el VIP con una mesa vendida se rechaza');
+await su(`update venue_event_tables set status = 'available', sold_via = null, buyer_name = null where event_id = $1 and table_key = 'V1'`, [a2]);
+await como('authenticated', U.owner); r = await abrir(a2, ['salon']); await como(null);
+ok(r.n === 0 && (await claves(a2)) === 'F1,S1,S2,T1,T2', 'sin ventas se cierra bien');
+await como('authenticated', U.team);
+await db.query(`select public.venue_event_move_tables($1, $2::jsonb)`, [a2, JSON.stringify([{ key: 'S1', x: 410, y: 130 }])]);
+await como('authenticated', U.owner); await abrir(a2, ['salon', 'vip']); await como(null);
+const [mov3] = await su(`select (t ->> 'x')::int x from venue_events e, jsonb_array_elements(e.layout -> 'maps' -> 0 -> 'tables') t where e.id = $1 and t ->> 'id' = 'S1'`, [a2]);
+ok(mov3.x === 410, 'las mesas movidas con «Armar grupo» conservan su lugar al cambiar de áreas');
+await como('authenticated', U.owner);
+r = await abrir(a2, ['salon', 'cocina']); ok(/areas_invalidas/.test(r.err || ''), 'un área que no está en el catálogo (la cocina no es de venta) se rechaza');
+r = await abrir(a2, ['terraza']); ok(r.n === 0, 'elegir solo la terraza (siempre abierta) deja solo la terraza y la mesa fuera de área');
+await como(null); ok((await claves(a2)) === 'F1,T1,T2', 'y el evento queda con esas 3 mesas');
+
 console.log('\n▶ Validación y permisos');
 const evV = await nuevoEvento('Validación'); await como('authenticated', U.owner);
 for (const [n, mp] of [['un área que no existe', ['sala', 'azotea']], ['lista vacía', []], ['áreas repetidas', ['sala', 'sala']], ['más de 12', Array.from({ length: 13 }, (_, i) => 'a' + i)], ['un nulo en la lista', ['sala', null]]]) {

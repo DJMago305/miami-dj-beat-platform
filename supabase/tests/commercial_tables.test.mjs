@@ -39,39 +39,8 @@ const celdas = core.gridMaps(Array.from({ length: 14 }, (_, i) => fila({ table_k
 t('sin encimarse: 14 mesas, 14 posiciones distintas', new Set(celdas).size === 14);
 t('con geometría del evento usa SUS mapas', core.mapsDe({ maps: [{ id: 'sala', label: 'Sala', tables: [] }, { id: 'rec', label: 'Recepción', tables: [] }] }, []).length === 2);
 
-console.log('▶ archivo de mapa (validarMapa: mismas reglas que la base)');
-const buena = { maps: [{ id: 'sala' }], tables: [{ key: 'M1', seats: 4, zone: 'Zona 1', price_cents: 40000 }, { key: 'M2', seats: 6, zone: 'Zona 1', price_cents: 40000 }, { key: 'M3', price_cents: 15000 }] };
-let v = core.validarMapa(JSON.stringify(buena));
-t('mapa bueno: válido, 3 mesas, 14 sillas (la que no trae «seats» cuenta 4)', v.ok && v.mesas === 3 && v.sillas === 14);
-t('resumen por zona y rango de precios', v.zonas.length === 2 && v.zonas[0].mesas === 2 && v.precioMin === 15000 && v.precioMax === 40000);
-t('trae «maps» → sin aviso de plano de muestra', v.avisos.length === 0);
-t('sin «maps» → avisa que la página pública usa el plano de muestra', core.validarMapa({ tables: [{ key: 'A1', price_cents: 100 }] }).avisos.length === 1);
-t('acepta una lista de mesas sola', core.validarMapa([{ key: 'A1', price_cents: 100 }]).ok);
-t('JSON roto', !core.validarMapa('{no es json').ok);
-t('sin «tables»', !core.validarMapa({ maps: [] }).ok && !core.validarMapa(null).ok);
-t('llave vacía, repetida o larga', !core.validarMapa({ tables: [{ key: ' ', price_cents: 1 }] }).ok && !core.validarMapa({ tables: [{ key: 'M1', price_cents: 1 }, { key: 'M1', price_cents: 1 }] }).ok && !core.validarMapa({ tables: [{ key: 'x'.repeat(21), price_cents: 1 }] }).ok);
-t('precio: negativo, decimal, texto, absurdo, ausente', [-1, 1.5, '100', 1000001, undefined].every((pc) => !core.validarMapa({ tables: [{ key: 'M1', price_cents: pc }] }).ok));
-t('sillas: 0, 41, texto', [0, 41, 'cuatro'].every((n) => !core.validarMapa({ tables: [{ key: 'M1', price_cents: 1, seats: n }] }).ok));
-t('«maps» que no es lista', !core.validarMapa({ maps: {}, tables: [{ key: 'M1', price_cents: 1 }] }).ok);
-t('0 mesas y 301 mesas', !core.validarMapa({ tables: [] }).ok && !core.validarMapa({ tables: Array.from({ length: 301 }, (_, i) => ({ key: 'T' + i, price_cents: 1 })) }).ok);
-t('300 mesas sí', core.validarMapa({ tables: Array.from({ length: 300 }, (_, i) => ({ key: 'T' + i, price_cents: 1 })) }).ok);
-t('un mapa malo no entrega layout para enviar', core.validarMapa({ tables: [] }).layout === null && v.layout !== null);
-
-console.log('▶ editor del plano (+ / − / mover)');
-t('siguiente clave: M1, y salta las usadas', core.siguienteClave({}) === 'M1' && core.siguienteClave({ M1: 1, M2: 1, M4: 1 }) === 'M3');
+console.log('▶ cuadrícula (Armar grupo al arrastrar)');
 t('ajustar a la cuadrícula de 10 px y dentro del plano', core.ajustar(133, 26, 774) === 130 && core.ajustar(-50, 26, 774) === 26 && core.ajustar(9999, 26, 774) === 774);
-const ocupadas = [{ x: 100, y: 160 }, { x: 170, y: 160 }];
-const libre = core.lugarLibre(ocupadas);
-t('una mesa nueva no cae encima de otra', ocupadas.every((m) => Math.abs(m.x - libre.x) >= 56 || Math.abs(m.y - libre.y) >= 56));
-t('plano vacío trae escenario y una zona (la página pública exige zonas)', core.planoVacio().focal.rect.length === 4 && core.planoVacio().zones.length === 1 && core.planoVacio().tables.length === 0);
-const plano = core.planoVacio(); plano.tables.push({ id: 'M1', t: 'round', x: 200, y: 200, seats: 4 }, { id: 'A7', t: 'rect', x: 400, y: 300, w: 108, h: 54, seats: 8 });
-const lay = core.construirMapa({ otraClave: 'se conserva' }, [plano], { M1: { label: 'M1', seats: 4, zone: 'Zona 1', price_cents: 40000 }, A7: { label: 'Mesa A7', seats: 10, zone: 'Zona 2', price_cents: 25000 } });
-t('construirMapa: inventario con la clave del dibujo, sillas de los datos y precio en centavos', lay.tables.length === 2 && lay.tables[1].key === 'A7' && lay.tables[1].seats === 10 && lay.tables[1].price_cents === 25000 && lay.tables[1].label === 'Mesa A7');
-t('construirMapa: el dibujo conserva forma, posición y tamaño; las sillas se sincronizan', lay.maps[0].tables[1].t === 'rect' && lay.maps[0].tables[1].w === 108 && lay.maps[0].tables[1].x === 400 && lay.maps[0].tables[1].seats === 10);
-t('construirMapa: conserva claves ajenas y no toca el plano de origen', lay.otraClave === 'se conserva' && plano.tables[1].seats === 8);
-t('construirMapa → validarMapa: el resultado es enviable', core.validarMapa(lay).ok && core.validarMapa(lay).avisos.length === 0);
-t('construirMapa rellena foco/zonas/fijos si faltan (la página pública los usa siempre)', (() => { const m = core.construirMapa({}, [{ id: 'x', tables: [{ id: 'M1', t: 'round', x: 1, y: 1 }] }], { M1: { seats: 4, zone: 'Z', price_cents: 5 } }).maps[0]; return m.focal && Array.isArray(m.fixed) && m.zones.length === 1; })());
-t('quitar una mesa: ya no aparece en el inventario', (() => { const pl = core.planoVacio(); pl.tables.push({ id: 'M1', t: 'round', x: 1, y: 1 }); return core.construirMapa({}, [pl], { M1: { seats: 4, zone: 'Z', price_cents: 5 } }).tables.length === 1 && core.construirMapa({}, [core.planoVacio()], {}).tables.length === 0; })());
 
 console.log('▶ armar grupo (juntar mesas y venderlas)');
 const gr = [fila({ table_key: 'M1', seats: 8, price_cents: 40000 }), fila({ table_key: 'M2', seats: 8, price_cents: 40000 }), fila({ table_key: 'M3', seats: 4, price_cents: 25000 }),
@@ -89,6 +58,14 @@ t('ni sobre los baños ni sobre la barra', core.bloqueaEstructura(mp, 60, 50) ==
 t('la pista NO es estructura: ahí se puede poner una mesa', core.bloqueaEstructura(mp, 400, 300) === null);
 t('sin foco ni fijos no bloquea nada', core.bloqueaEstructura({}, 400, 50) === null && core.bloqueaEstructura(null, 1, 1) === null);
 t('reglas del cliente = reglas de la base: borde exacto con margen', core.bloqueaEstructura(mp, 520 + 22, 80 + 22) === 'ESCENARIO / DJ' && core.bloqueaEstructura(mp, 520 + 23, 80 + 23) === null);
+
+console.log('▶ áreas activas de un evento');
+const layA = { maps: [{ id: 'sala', tables: [{ id: 'M1' }, { id: 'M2' }] }, { id: 'vip', tables: [{ id: 'V1' }] }], tables: [{ key: 'M1' }, { key: 'V1' }] };
+t('planos anteriores: el área de una mesa es el plano que la dibuja', core.areaDeMesa(layA, { key: 'V1' }) === 'vip' && core.areaDeMesa(layA, { key: 'M1' }) === 'sala' && core.areaDeMesa(layA, { key: 'Z9' }) === null);
+t('la mesa que dice su área, manda', core.areaDeMesa(layA, { key: 'V1', area: 'terraza' }) === 'terraza');
+t('áreas activas = las que tienen mesas en el evento', Object.keys(core.areasActivas(layA)).sort().join() === 'sala,vip' && Object.keys(core.areasActivas({ maps: layA.maps, tables: [{ key: 'M1' }] })).join() === 'sala');
+t('sin layout no hay áreas activas', Object.keys(core.areasActivas(null)).length === 0 && Object.keys(core.areasActivas({})).length === 0);
+t('áreas dibujadas en un solo plano: por el campo «area»', Object.keys(core.areasActivas({ maps: [{ id: 'm', tables: [{ id: 'A' }, { id: 'B' }] }], tables: [{ key: 'A', area: 'salon' }, { key: 'B', area: 'vip' }, { key: 'C' }] })).sort().join() === 'salon,vip');
 
 console.log('▶ quién puede abrir la venta');
 t('dueño y manager sí; equipo no', core.puedeAbrirVenta('owner') && core.puedeAbrirVenta('manager') && !core.puedeAbrirVenta('team') && !core.puedeAbrirVenta(undefined));

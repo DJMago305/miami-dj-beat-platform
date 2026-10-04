@@ -8,6 +8,8 @@
  *   { id, k:'door',  sub:'entrada'|'artistas'|'exit'|'puerta', x, y, w, rot?, label? }                         puerta (la «puerta» dibuja el arco de apertura)
  *   { id, k:'shape', sub:'rect'|'ellipse'|'triangle', x, y, w, h, rot?, label?, relleno?, bloquea? }           figura geométrica libre
  *   { id, k:'wall',  x1, y1, x2, y2, th?, bloquea? }                                                           pared (línea con dos extremos)
+ *   { id, k:'poly',  pts:[[x,y],…], label?, relleno?, bloquea?, venta?, siempre? }                              área libre: contorno de 3 a 40 puntos (L, curva quebrada, lo que dibuje el dueño).
+ *       venta: es un ÁREA DE VENTA (las mesas dentro de su contorno le pertenecen y se puede cerrar en un evento); siempre: nunca se cierra (p. ej. una terraza pública)
  *   { id, k:'text',  x, y, text, size?, rot? }                                                                 texto libre
  *   { id, k:'chair', x, y, w }                                                                                 silla suelta
  * bloquea: las mesas no pueden quedar encima (lo exige la base). Por defecto lo son el escenario, la barra y los baños; también las paredes.
@@ -15,7 +17,7 @@
 (function (root) {
     'use strict';
 
-    var KINDS = { stage: 1, zone: 1, door: 1, shape: 1, wall: 1, text: 1, chair: 1 };
+    var KINDS = { stage: 1, zone: 1, door: 1, shape: 1, wall: 1, poly: 1, text: 1, chair: 1 };
     var SUBS = { zone: { barra: 1, bano: 1, pista: 1, otro: 1 }, door: { entrada: 1, artistas: 1, exit: 1, puerta: 1 }, shape: { rect: 1, ellipse: 1, triangle: 1 } };
     var STAGE_SHAPES = { rect: 1, halfround: 1, corner: 1, oval: 1, trapezoid: 1 };
     var RELLENOS = { ninguno: 'none', gris: 'rgba(255,255,255,0.10)', dorado: 'rgba(197,160,89,0.22)', verde: 'rgba(0,200,120,0.18)', rojo: 'rgba(255,96,96,0.18)' };
@@ -31,7 +33,10 @@
         if (!it || typeof it !== 'object' || Array.isArray(it)) return 'no es una figura';
         if (typeof it.id !== 'string' || !it.id || it.id.length > 24) return 'falta el id';
         if (!KINDS[it.k]) return 'tipo desconocido';
-        if (it.k === 'wall') {
+        if (it.k === 'poly') {
+            if (!Array.isArray(it.pts) || it.pts.length < 3 || it.pts.length > 40) return 'el área debe tener entre 3 y 40 puntos';
+            for (var i = 0; i < it.pts.length; i++) { var q = it.pts[i]; if (!Array.isArray(q) || q.length !== 2 || !pos(q[0]) || !pos(q[1])) return 'un punto del área está fuera del plano'; }
+        } else if (it.k === 'wall') {
             if (![it.x1, it.y1, it.x2, it.y2].every(pos)) return 'los extremos de la pared están fuera del plano';
             if (it.th !== undefined && (!num(it.th) || it.th < 1 || it.th > 40)) return 'el grosor de la pared no es válido';
         } else {
@@ -40,6 +45,7 @@
             else if (it.k !== 'text') { if (!num(it.w) || !num(it.h) || it.w < 4 || it.h < 4 || it.w > LIM.maxLado || it.h > LIM.maxLado) return 'el tamaño no es válido'; }
         }
         if (it.rot !== undefined && (!num(it.rot) || it.rot < -360 || it.rot > 720)) return 'el giro no es válido';
+        if (it.k === 'poly' && it.rot !== undefined) return 'un área libre no gira (se reforma moviendo sus puntos)';
         if (it.k === 'stage' && it.shape !== undefined && !STAGE_SHAPES[it.shape]) return 'forma de escenario desconocida';
         if (SUBS[it.k] && it.sub !== undefined && !SUBS[it.k][it.sub]) return 'subtipo desconocido';
         if (it.k === 'shape' && it.sub === undefined) return 'falta el tipo de figura';
@@ -50,6 +56,7 @@
         if (it.label !== undefined && (typeof it.label !== 'string' || it.label.length > LIM.maxTexto)) return 'el rótulo es demasiado largo';
         if (it.text !== undefined && (typeof it.text !== 'string' || it.text.length > LIM.maxTexto)) return 'el texto es demasiado largo';
         if (it.bloquea !== undefined && typeof it.bloquea !== 'boolean') return '«bloquea» debe ser sí o no';
+        if ((it.venta !== undefined || it.siempre !== undefined) && (it.k !== 'poly' || (it.venta !== undefined && typeof it.venta !== 'boolean') || (it.siempre !== undefined && typeof it.siempre !== 'boolean'))) return '«venta» y «siempre» son sí/no y solo van en áreas libres';
         if (it.relleno !== undefined && !RELLENOS[it.relleno]) return 'relleno desconocido';
         return null;
     }
@@ -70,6 +77,20 @@
         var t = l2 === 0 ? 0 : Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / l2));
         var cx = x1 + t * dx, cy = y1 + t * dy;
         return Math.sqrt((px - cx) * (px - cx) + (py - cy) * (py - cy));
+    }
+    function cajaPoly(pts) {
+        var x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+        pts.forEach(function (q) { x0 = Math.min(x0, q[0]); y0 = Math.min(y0, q[1]); x1 = Math.max(x1, q[0]); y1 = Math.max(y1, q[1]); });
+        return { x: x0, y: y0, w: x1 - x0, h: y1 - y0, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2 };
+    }
+    // ¿Está (x, y) dentro del polígono (regla par-impar, sirve con contornos cóncavos como una L)?
+    function dentroPoly(pts, x, y) {
+        var dentro = false;
+        for (var i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+            var xi = pts[i][0], yi = pts[i][1], xj = pts[j][0], yj = pts[j][1];
+            if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) dentro = !dentro;
+        }
+        return dentro;
     }
     // Por defecto bloquean el escenario, la barra, los baños y las paredes; «bloquea» explícito manda.
     function esEstructura(it) {
@@ -93,6 +114,12 @@
             if (hit || !esEstructura(it)) return;
             if (it.k === 'wall') { if (distSegmento(x, y, it.x1, it.y1, it.x2, it.y2) <= MARGEN + (it.th || 6) / 2) hit = nombreDe(it); return; }
             if (it.k === 'text' || it.k === 'chair') return;
+            if (it.k === 'poly') {                                                                         // dentro del contorno o a menos de 22 px de su borde
+                var P = it.pts, cerca = dentroPoly(P, x, y);
+                for (var i = 0, j = P.length - 1; i < P.length && !cerca; j = i++) if (distSegmento(x, y, P[j][0], P[j][1], P[i][0], P[i][1]) <= MARGEN) cerca = true;
+                if (cerca) hit = nombreDe(it);
+                return;
+            }
             var a = (it.rot || 0) * Math.PI / 180, dx = x - it.x, dy = y - it.y;
             var lx = dx * Math.cos(a) + dy * Math.sin(a), ly = -dx * Math.sin(a) + dy * Math.cos(a);        // el punto, en el sistema de la figura (sin giro)
             if (it.k === 'door') { var r = it.w; if (Math.abs(lx) <= r / 2 + MARGEN && Math.abs(ly) <= 3.5 + MARGEN) hit = nombreDe(it); return; }
@@ -109,6 +136,7 @@
         if (it.k === 'chair') return [it.w + 6, it.w + 6];
         if (it.k === 'text') { var s = it.size || 16; return [Math.max(24, (it.text || '').length * s * 0.62), s * 1.5]; }
         if (it.k === 'wall') return [Math.abs(it.x2 - it.x1) + (it.th || 6), Math.abs(it.y2 - it.y1) + (it.th || 6)];
+        if (it.k === 'poly') { var b = cajaPoly(it.pts); return [b.w, b.h]; }
         return [it.w, it.h];
     }
 
@@ -118,10 +146,11 @@
     //   builder → el dibujo de edición completo (para volver a abrirlo igual)         maps[i].shapes → la arquitectura (la dibujan el staff y la página pública)
     //   maps[i].tables → dónde está cada mesa (geometría)                              tables → el inventario que vende la base (clave, sillas, zona, precio)
     var FORMA_MESA = { round: 'round', vip: 'round', hightop: 'round', square: 'square', rect: 'rect' };
-    var CAMPOS = ['id', 'k', 'sub', 'shape', 'x', 'y', 'w', 'h', 'x1', 'y1', 'x2', 'y2', 'th', 'rot', 'label', 'text', 'size', 'relleno', 'bloquea'];
+    var CAMPOS = ['id', 'k', 'sub', 'shape', 'x', 'y', 'w', 'h', 'x1', 'y1', 'x2', 'y2', 'th', 'rot', 'label', 'text', 'size', 'relleno', 'bloquea', 'venta', 'siempre'];
     function limpia(it) {
         var o = {};
         CAMPOS.forEach(function (c) { if (it[c] !== undefined && it[c] !== null && it[c] !== '') o[c] = typeof it[c] === 'number' ? Math.round(it[c] * 10) / 10 : it[c]; });
+        if (Array.isArray(it.pts)) o.pts = it.pts.map(function (q) { return [Math.round(q[0] * 10) / 10, Math.round(q[1] * 10) / 10]; });
         if (!o.rot) delete o.rot;
         return o;
     }
@@ -132,11 +161,18 @@
     }
     // Devuelve { ok, errores[], layout }. Solo viajan los planos de PLANTILLA (los de evento se quedan en el editor).
     function aLayout(estado) {
-        var out = { ok: false, errores: [], layout: null }, planos = ((estado && estado.maps) || []).filter(function (m) { return m.scope === 'template'; });
+        var out = { ok: false, errores: [], avisos: [], layout: null }, planos = ((estado && estado.maps) || []).filter(function (m) { return m.scope === 'template'; });
         if (!planos.length) { out.errores.push('No hay planos de plantilla para guardar.'); return out; }
-        var vistas = {}, sinPrecio = [], inventario = [], maps = [];
+        var vistas = {}, sinPrecio = [], inventario = [], maps = [], areas = [], idsArea = {}, avisos = [];
+        function nuevaArea(id, label, siempre) { if (idsArea[id]) { out.errores.push('El área «' + (label || id) + '» está repetida.'); return; } idsArea[id] = true; var a = { id: id, label: label }; if (siempre) a.siempre = true; areas.push(a); }
         planos.forEach(function (m) {
             var mesas = m.items.filter(function (i) { return i.k === 'table'; }), esc = m.items.filter(function (i) { return i.k === 'stage'; })[0] || null, geo = [];
+            // Áreas de venta: las áreas libres marcadas «venta» (las mesas dentro de su contorno le pertenecen; si se solapan, gana la de más arriba). Un plano sin áreas
+            // de venta dibujadas es UN área completa (como antes). Una mesa fuera de toda área de venta se vende siempre.
+            var ventas = m.items.filter(function (i) { return i.k === 'poly' && i.venta === true; });
+            if (ventas.length) ventas.forEach(function (v) { nuevaArea(v.id, v.label || 'Área', v.siempre === true); });
+            else if (mesas.length) nuevaArea(m.id, m.name, m.siempre === true);
+            var areaDe = function (t) { if (!ventas.length) return m.id; var hit = null; ventas.forEach(function (v) { if (dentroPoly(v.pts, t.x, t.y)) hit = v.id; }); return hit; };
             mesas.forEach(function (t) {
                 var label = String(t.label || '').trim();
                 if (!label) { out.errores.push('Hay una mesa sin identificador en «' + m.name + '».'); return; }
@@ -146,7 +182,9 @@
                 var seats = Math.round(t.seats || 0);
                 if (seats < 1 || seats > 40) { out.errores.push('La mesa «' + label + '» debe tener entre 1 y 40 sillas.'); return; }
                 if (!(t.price > 0)) { sinPrecio.push(label); return; }
-                inventario.push({ key: label, label: label, seats: seats, zone: zonaDe(m, t, esc), price_cents: Math.round(t.price * 100) });
+                var fila = { key: label, label: label, seats: seats, zone: zonaDe(m, t, esc), price_cents: Math.round(t.price * 100) }, ar = areaDe(t);
+                if (ar) fila.area = ar; else avisos.push('La mesa «' + label + '» no está dentro de ningún área de venta: se venderá siempre (no se podrá cerrar).');
+                inventario.push(fila);
                 var forma = FORMA_MESA[t.shape] || 'round', g = { id: label, t: forma, x: Math.round(t.x), y: Math.round(t.y), seats: seats };
                 if (forma !== 'round') { var w = t.w || 54, h = t.h || (forma === 'square' ? w : 54), girada = ((t.rot || 0) % 180) === 90; g.w = Math.round(girada ? h : w); if (forma === 'rect') g.h = Math.round(girada ? w : h); }
                 geo.push(g);
@@ -163,7 +201,8 @@
         if (inventario.length > 300) out.errores.push('Máximo 300 mesas por sala.');
         if (out.errores.length) return out;
         var builder = { v: 1, venue: estado.venue || '', maps: planos.map(function (m) { var c = JSON.parse(JSON.stringify(m)); delete c.ref; return c; }) };
-        out.layout = { builder: builder, maps: maps, tables: inventario }; out.ok = true;
+        out.layout = { builder: builder, maps: maps, tables: inventario }; if (areas.length) out.layout.areas = areas;
+        out.avisos = avisos; out.ok = true;
         return out;
     }
     var _n = 0;
@@ -206,7 +245,7 @@
     }
 
     var core = { KINDS: KINDS, SUBS: SUBS, STAGE_SHAPES: STAGE_SHAPES, RELLENOS: RELLENOS, MARGEN: MARGEN, LIM: LIM, validarItem: validarItem, validarItems: validarItems,
-        distSegmento: distSegmento, esEstructura: esEstructura, bloquea: bloquea, medida: medida, aLayout: aLayout, desdeLayout: desdeLayout, limpia: limpia };
+        distSegmento: distSegmento, cajaPoly: cajaPoly, dentroPoly: dentroPoly, esEstructura: esEstructura, bloquea: bloquea, medida: medida, aLayout: aLayout, desdeLayout: desdeLayout, limpia: limpia };
     if (typeof module !== 'undefined' && module.exports) module.exports = core;
     root.mdjPlanShapes = core;
     if (typeof document === 'undefined') return;
@@ -236,6 +275,13 @@
     function dibujarItem(parent, it) {
         if (validarItem(it)) return null;                                    // una figura mal formada no rompe el plano: se omite
         var g, fill, borde;
+        if (it.k === 'poly') {
+            g = el('g', { 'data-id': it.id, 'class': 'ps ps-poly' }, parent);
+            fill = RELLENOS[it.relleno] || RELLENOS.ninguno;
+            el('polygon', { 'class': 'body', points: it.pts.map(function (q) { return q[0] + ',' + q[1]; }).join(' '), fill: fill, stroke: COLOR, 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-dasharray': it.relleno ? 'none' : '6 4' }, g);
+            if (it.label) { var cb = cajaPoly(it.pts); el('text', { x: cb.cx, y: cb.cy + 4, 'text-anchor': 'middle', fill: 'rgba(255,255,255,0.8)', 'font-size': 12, 'font-weight': 800, 'font-family': 'Inter, sans-serif', 'letter-spacing': '0.06em', 'pointer-events': 'none' }, g, it.label); }
+            return g;
+        }
         if (it.k === 'wall') {
             g = el('g', { 'data-id': it.id, 'class': 'ps ps-wall' }, parent);
             el('line', { x1: it.x1, y1: it.y1, x2: it.x2, y2: it.y2, stroke: COLOR, 'stroke-width': it.th || 6, 'stroke-linecap': 'round', 'class': 'body' }, g);

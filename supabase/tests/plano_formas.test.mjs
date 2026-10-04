@@ -26,12 +26,12 @@ const malos = [['sin id', { ...bueno, id: '' }], ['id largo', { ...bueno, id: 'x
   ['x como texto', { ...bueno, x: '100' }], ['giro absurdo', { ...bueno, rot: 9999 }], ['rótulo largo', { ...bueno, label: 'x'.repeat(61) }], ['bloquea como texto', { ...bueno, bloquea: 'si' }],
   ['relleno raro', { ...bueno, relleno: 'fucsia' }], ['pared sin extremo', { id: 'p', k: 'wall', x1: 1, y1: 1, x2: 2 }], ['pared gruesa', { id: 'p', k: 'wall', x1: 1, y1: 1, x2: 20, y2: 2, th: 99 }],
   ['texto vacío', { id: 't', k: 'text', x: 1, y: 1, text: '  ' }], ['texto largo', { id: 't', k: 'text', x: 1, y: 1, text: 'x'.repeat(61) }], ['texto diminuto', { id: 't', k: 'text', x: 1, y: 1, text: 'a', size: 2 }],
-  ['puerta enorme', { id: 'd', k: 'door', sub: 'puerta', x: 1, y: 1, w: 999 }], ['escenario de forma rara', { id: 's', k: 'stage', shape: 'cubo', x: 1, y: 1, w: 50, h: 50 }], ['null', null], ['lista', []]];
+  ['puerta enorme', { id: 'd', k: 'door', sub: 'puerta', x: 1, y: 1, w: 999 }], ['escenario de forma rara', { id: 's', k: 'stage', shape: 'cubo', x: 1, y: 1, w: 50, h: 50 }], ['null', null], ['lista', []], ['área con 2 puntos', { id: 'p', k: 'poly', pts: [[1, 1], [5, 5]] }], ['área con 41 puntos', { id: 'p', k: 'poly', pts: Array.from({ length: 41 }, (_, i) => [i * 10, 50 + (i % 2) * 20]) }], ['área con un punto fuera', { id: 'p', k: 'poly', pts: [[1, 1], [50, 1], [50, 9999]] }], ['área con un punto mal formado', { id: 'p', k: 'poly', pts: [[1, 1], [50, 1], [50]] }], ['área sin puntos', { id: 'p', k: 'poly' }], ['área que intenta girar', { id: 'p', k: 'poly', pts: [[1, 1], [50, 1], [50, 50]], rot: 30 }], ['venta como texto', { id: 'p', k: 'poly', pts: [[1, 1], [50, 1], [50, 50]], venta: 'si' }], ['siempre como número', { id: 'p', k: 'poly', pts: [[1, 1], [50, 1], [50, 50]], siempre: 1 }], ['venta en una mesa/figura que no es área libre', { id: 'p', k: 'shape', sub: 'rect', x: 1, y: 1, w: 9, h: 9, venta: true }]];
 for (const [n, f] of malos) ok(PS.validarItem(f) !== null, `rechaza: ${n}`);
 ok(PS.validarItems([bueno, { ...bueno }]) !== null, 'ids repetidos en un plano se rechazan');
 ok(PS.validarItems(Array.from({ length: 401 }, (_, i) => ({ ...bueno, id: 'f' + i }))) !== null, 'más de 400 figuras se rechaza');
 ok(PS.validarItems(Array.from({ length: 400 }, (_, i) => ({ ...bueno, id: 'f' + i }))) === null, '400 figuras sí');
-for (const f of [{ id: 's', k: 'stage', shape: 'halfround', x: 400, y: 50, w: 240, h: 90 }, { id: 'z', k: 'zone', sub: 'barra', x: 750, y: 300, w: 58, h: 220 }, { id: 'd', k: 'door', sub: 'puerta', x: 100, y: 500, w: 44 }, { id: 'c', k: 'chair', x: 5, y: 5, w: 12 }, { id: 'p', k: 'wall', x1: 0, y1: 0, x2: 800, y2: 0 }, { id: 't', k: 'text', x: 400, y: 260, text: 'PISTA' }])
+for (const f of [{ id: 'p', k: 'poly', pts: [[10, 10], [200, 10], [200, 120], [120, 120], [120, 300], [10, 300]], label: 'Terraza', relleno: 'verde', venta: true, siempre: true }, { id: 's', k: 'stage', shape: 'halfround', x: 400, y: 50, w: 240, h: 90 }, { id: 'z', k: 'zone', sub: 'barra', x: 750, y: 300, w: 58, h: 220 }, { id: 'd', k: 'door', sub: 'puerta', x: 100, y: 500, w: 44 }, { id: 'c', k: 'chair', x: 5, y: 5, w: 12 }, { id: 'p', k: 'wall', x1: 0, y1: 0, x2: 800, y2: 0 }, { id: 't', k: 'text', x: 400, y: 260, text: 'PISTA' }])
   ok(PS.validarItem(f) === null, `figura válida: ${f.k}`);
 
 console.log('\n▶ Qué bloquea a una mesa (navegador)');
@@ -45,7 +45,9 @@ const mapa = { shapes: [
   { id: 'par', k: 'wall', x1: 20, y1: 100, x2: 20, y2: 500 },
   { id: 'dia', k: 'wall', x1: 300, y1: 450, x2: 500, y2: 520, th: 10 },
   { id: 'txt', k: 'text', x: 400, y: 200, text: 'hola', bloquea: true },
-  { id: 'noesc', k: 'stage', shape: 'rect', x: 650, y: 150, w: 100, h: 60, bloquea: false }] };
+  { id: 'noesc', k: 'stage', shape: 'rect', x: 650, y: 150, w: 100, h: 60, bloquea: false },
+  { id: 'ele', k: 'poly', pts: [[100, 120], [180, 120], [180, 150], [130, 150], [130, 220], [100, 220]], label: 'VIP', relleno: 'gris', bloquea: true },
+  { id: 'lib', k: 'poly', pts: [[620, 110], [700, 110], [660, 170]], bloquea: false }] };
 ok(PS.bloquea(mapa, 400, 52) === 'el escenario', 'sobre el escenario');
 ok(PS.bloquea(mapa, 400, 95) === 'el escenario' && PS.bloquea(mapa, 400, 110) === null, 'margen de 22 px del escenario');
 ok(PS.bloquea(mapa, 750, 300) === 'la barra', 'sobre la barra');
@@ -56,6 +58,9 @@ ok(PS.bloquea(mapa, 20, 300) === 'una pared' && PS.bloquea(mapa, 60, 300) === nu
 ok(PS.bloquea(mapa, 400, 485) === 'una pared', 'pared en diagonal');
 ok(PS.bloquea(mapa, 400, 200) === null, 'el texto nunca bloquea');
 ok(PS.bloquea(mapa, 650, 150) === null, '«bloquea: false» anula el escenario');
+ok(PS.bloquea(mapa, 150, 135) === 'VIP' && PS.bloquea(mapa, 115, 190) === 'VIP', 'un área libre en L: dentro de cada brazo bloquea');
+ok(PS.bloquea(mapa, 160, 190) === null, 'el hueco de la L (lejos de su borde) no bloquea');
+ok(PS.bloquea(mapa, 660, 125) === null, 'un área libre sin «bloquea» no bloquea');
 ok(PS.bloquea(null, 1, 1) === null && PS.bloquea({}, 1, 1) === null, 'sin figuras no bloquea');
 ok(PS.bloquea({ focal: { rect: [280, 24, 240, 56], label: 'ESCENARIO / DJ' } }, 400, 50) === 'ESCENARIO / DJ', 'sigue entendiendo el formato anterior (escenario)');
 
@@ -96,6 +101,29 @@ ok(it.some((i) => i.k === 'stage' && i.x === 400 && i.y === 52) && it.filter((i)
 ok(it.filter((i) => i.k === 'table').map((t) => `${t.label}:${t.price}:${t.seats}`).sort().join() === 'M1:400:4,M2:250:6', 'y sus mesas con su precio y sillas');
 ok(PS.aLayout(rec).ok, 'un plano anterior abierto en el editor se puede volver a guardar');
 ok(PS.desdeLayout(null).maps.length === 0 && PS.desdeLayout({}).maps.length === 0, 'una sala sin plano devuelve lista vacía');
+
+console.log('\n▶ Áreas de venta (áreas libres marcadas «venta»)');
+const area = (id, label, pts, extra) => ({ id, k: 'poly', pts, label, relleno: 'gris', venta: true, ...extra });
+const rect4 = (x0, y0, x1, y1) => [[x0, y0], [x1, y0], [x1, y1], [x0, y1]];
+const itemsMojitos = [area('salon', 'Salón principal', rect4(5, 5, 550, 275)), area('vip', 'VIP', rect4(0, 275, 550, 400)), area('terraza', 'Terraza', rect4(0, 400, 800, 520), { siempre: true }),
+  { id: 'cocina', k: 'poly', pts: rect4(555, 155, 795, 400), label: 'COCINA', relleno: 'dorado' },
+  mesaIt('S1', { x: 200, y: 150 }), mesaIt('S2', { x: 300, y: 150 }), mesaIt('V1', { x: 200, y: 340 }), mesaIt('V2', { x: 300, y: 340 }), mesaIt('T1', { x: 200, y: 460 })];
+const am = PS.aLayout(estado(itemsMojitos));
+ok(am.ok && am.layout.areas.length === 3 && am.layout.areas.map((a) => a.id).join() === 'salon,vip,terraza', 'el catálogo trae solo las áreas MARCADAS «venta» (la cocina no es de venta)');
+ok(am.layout.areas[2].siempre === true && !('siempre' in am.layout.areas[0]), 'la terraza va «siempre»; las demás no llevan la marca');
+const areaDe = (k) => am.layout.tables.find((x) => x.key === k).area;
+ok(areaDe('S1') === 'salon' && areaDe('V1') === 'vip' && areaDe('T1') === 'terraza', 'cada mesa lleva el área en cuyo contorno está');
+ok(am.avisos.length === 0, 'sin avisos si todas las mesas caen dentro de un área');
+const fuera = PS.aLayout(estado([...itemsMojitos, mesaIt('X9', { x: 700, y: 250 })]));
+ok(fuera.ok && !('area' in fuera.layout.tables.find((x) => x.key === 'X9')) && fuera.avisos.length === 1 && /X9/.test(fuera.avisos[0]), 'una mesa fuera de toda área de venta se guarda sin área y avisa (se venderá siempre)');
+const solapadas = PS.aLayout(estado([area('a', 'A', rect4(0, 0, 400, 400)), area('b', 'B', rect4(100, 100, 300, 300)), mesaIt('M', { x: 200, y: 200 })]));
+ok(solapadas.layout.tables[0].area === 'b', 'si dos áreas se solapan, gana la que está más arriba (la última)');
+const sinAreas = PS.aLayout(estado([mesaIt('A1'), mesaIt('A2')]));
+ok(sinAreas.ok && sinAreas.layout.areas.length === 1 && sinAreas.layout.areas[0].id === 'p1' && sinAreas.layout.tables.every((x) => x.area === 'p1'), 'un plano sin áreas de venta es UN área completa (como antes)');
+const conSiempreMapa = PS.aLayout(estado([mesaIt('A1')], { siempre: true }));
+ok(conSiempreMapa.layout.areas[0].siempre === true, 'y si el plano es «siempre abierto», esa área también');
+const dosAreasIguales = PS.aLayout(estado([area('a', 'A', rect4(0, 0, 100, 100)), area('a', 'B', rect4(200, 0, 300, 100)), mesaIt('M', { x: 50, y: 50 })]));
+ok(dosAreasIguales.ok === false, 'ids de figura repetidos se rechazan');
 
 console.log('\n▶ La base (Postgres real)');
 const db = new PGlite();
@@ -160,6 +188,16 @@ r = await llama(U.owner, base([bueno], { room: { w: 100, h: 520 } })); ok(/mapa_
 r = await llama(U.owner, base([bueno], { room: { w: 1600, h: 1200 } })); ok(r.n === 1, 'acepta un plano grande (1600 × 1200)');
 r = await llama(U.owner, { ...base([bueno]), maps: Array.from({ length: 13 }, () => base([]).maps[0]) }); ok(/mapa_invalido/.test(r.err || ''), 'rechaza más de 12 planos');
 r = await llama(U.owner, { ...base([bueno]), pesado: 'x'.repeat(1600000) }); ok(/mapa_invalido/.test(r.err || ''), 'rechaza un archivo de más de 1.5 MB');
+
+const conAreas = (areas, tablas) => ({ maps: [{ id: 'sala', label: 'Sala', room: { w: 800, h: 520 }, focal: { x: 400, y: 52 }, fixed: [], zones: [{ name: 'Mesas', maxD: 9999, price: 0 }], shapes: [], tables: [{ id: 'M1', t: 'round', x: 200, y: 300, seats: 4 }] }], tables: tablas || [{ ...mesa('M1'), area: 'vip' }], ...(areas ? { areas } : {}) });
+r = await llama(U.owner, conAreas([{ id: 'vip', label: 'VIP' }, { id: 'terraza', label: 'Terraza', siempre: true }])); ok(r.n === 1, 'la base acepta un catálogo de áreas y la mesa con su área');
+for (const [n, lay] of [['mesa con un área que no existe en el catálogo', conAreas([{ id: 'terraza' }])], ['mesa con área pero sin catálogo', conAreas(null)], ['catálogo que no es lista', conAreas({ id: 'vip' })],
+  ['áreas repetidas', conAreas([{ id: 'vip' }, { id: 'vip' }])], ['área sin id', conAreas([{ label: 'VIP' }])], ['siempre como texto', conAreas([{ id: 'vip', siempre: 'si' }])],
+  ['más de 24 áreas', conAreas(Array.from({ length: 25 }, (_, i) => ({ id: 'a' + i })))], ['área de mesa que no es texto', conAreas([{ id: 'vip' }], [{ ...mesa('M1'), area: 5 }])]]) {
+  r = await llama(U.owner, lay); ok(/mapa_invalido/.test(r.err || ''), `rechaza: ${n}`);
+}
+r = await llama(U.owner, base([{ id: 'v1', k: 'poly', pts: [[1, 1], [50, 1], [50, 50]], venta: true, siempre: true, label: 'VIP' }])); ok(r.n === 1, 'la base acepta un área libre con «venta» y «siempre»');
+r = await llama(U.owner, base([{ id: 'v1', k: 'poly', pts: [[1, 1], [50, 1], [50, 50]], venta: 'si' }])); ok(/mapa_invalido/.test(r.err || ''), 'y rechaza «venta» que no sea sí/no');
 r = await llama(U.owner, base([bueno], { siempre: true })); ok(r.n === 1, 'la base acepta «siempre»: true');
 r = await llama(U.owner, base([bueno], { siempre: 'si' })); ok(/mapa_invalido/.test(r.err || ''), 'y rechaza «siempre» que no sea sí/no');
 r = await llama(U.owner, { ...base([bueno]), maps: [{ id: 'sala', label: 'x' }] }); ok(r.n === 1, 'un plano sin figuras (formato anterior) sigue valiendo');
