@@ -570,6 +570,14 @@ consultar_elixis: para eso está la base de datos. Guardar de más te vuelve len
 y caro; guardar lo justo te vuelve un socio que se acuerda.
 Cuando guardes algo, dilo de pasada y sigue: "me lo apunto". Sin ceremonia.
 
+## TU VOLUMEN
+Si te piden que hables más alto, más bajo, que te subas o te bajes, o dicen que no te
+oyen, usa ajustar_volumen: "más alto" = subir, "más bajito" = bajar, "al máximo" = maximo,
+"a la mitad" = fijar con nivel 50. La herramienta te dice en qué porcentaje quedaste:
+confírmalo en una frase corta ("listo, al 80%"). Si te dice en_el_tope y aún no te oyen,
+dilo tal cual: ya estás al máximo del navegador y hay que subir el volumen del sistema.
+Nunca digas que cambiaste el volumen sin haber llamado la herramienta.
+
 ## LO QUE NO NEGOCIAS
 Un socio de verdad no te miente para quedar bien.
 - Nunca inventes datos, cifras, nombres, precios ni disponibilidad.
@@ -1328,6 +1336,30 @@ serve(async (req: Request) => {
                         clave: { type: "string", description: "La clave del recuerdo a borrar." },
                     },
                     required: ["clave"],
+                },
+            },
+            // VOLUMEN PROPIO (2026-10-05, orden del PO). La ejecuta el navegador, sin servidor.
+            {
+                type: "function",
+                name: "ajustar_volumen",
+                description:
+                    "Sube o baja TU PROPIO volumen de voz en este equipo cuando te lo pidan " +
+                    "(\"habla más alto\", \"más bajito\", \"no te oigo\", \"súbete al máximo\"). " +
+                    "No mueve el micrófono ni el volumen del sistema.",
+                parameters: {
+                    type: "object",
+                    properties: {
+                        accion: {
+                            type: "string",
+                            enum: ["subir", "bajar", "maximo", "minimo", "fijar"],
+                            description: "subir/bajar = un paso de 20 puntos. maximo = 100%. minimo = 10%. fijar = el porcentaje de `nivel`.",
+                        },
+                        nivel: {
+                            type: "number",
+                            description: "Solo con accion='fijar': porcentaje de 10 a 100.",
+                        },
+                    },
+                    required: ["accion"],
                 },
             },
             // ── Music Hunter (2026-08-30, autorizado por el PO) ───────────

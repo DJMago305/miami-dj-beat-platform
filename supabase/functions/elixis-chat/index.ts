@@ -235,6 +235,9 @@ Estas son TODAS las herramientas que tienes. No hay ninguna otra:
 1. consultar_finanzas — leer cifras del negocio.
 2. consultar_agenda_artista — ver la agenda personal de un artista.
 3. registrar_evento_agenda — bloquear un hueco EN LA AGENDA INTERNA (artist_agenda).
+   SIN DINERO: si el evento lleva pago al DJ, factura o tarifa de venue NO uses
+   esta; usa modificar_agenda_evento (la 4). Lo que se anota aqui no llega al
+   Cash Flow del DJ; lo de la 4 si.
 4. modificar_agenda_evento — crear/actualizar/suspender/cancelar un evento en
    la agenda OPERATIVA (elixis_agenda_eventos: residencias, bodas, privados,
    cumpleanos, notas -- con tarifa de venue y pago al DJ). Distinta de
@@ -996,7 +999,9 @@ serve(async (req: Request) => {
         name: "registrar_evento_agenda",
         description:
             "Registra un bloque en la agenda personal de un artista (artist_agenda). " +
-            "No cambia leads ni asignaciones. Usa el UUID del roster. No inventes dj_user_id.",
+            "No cambia leads ni asignaciones. Usa el UUID del roster. No inventes dj_user_id. " +
+            "SIN DINERO: si el evento tiene pago al DJ, factura o tarifa de venue, NO uses esta " +
+            "herramienta -- usa modificar_agenda_evento, que es la unica que lleva el pago al Cash Flow del DJ.",
         input_schema: {
             type: "object",
             properties: {
@@ -1038,7 +1043,13 @@ serve(async (req: Request) => {
             "del DJ, sin dinero). Usa el nombre del DJ tal como aparece en el roster -- no inventes " +
             "un nombre que no este ahi. accion='actualizar'/'suspender'/'reactivar'/'cancelar' " +
             "busca el evento existente por dj+fecha_inicio+venue; si no lo encuentra, la herramienta " +
-            "devuelve error, no lo inventes.",
+            "devuelve error, no lo inventes. " +
+            "EVENTO CON PAGO AL DJ (2026-10-05): un evento suelto (privado, fiesta, flotante, un cover de " +
+            "un turno que no esta en el horario) se crea con accion='crear', tipo='privado' (o 'boda') y " +
+            "pago_dj en dolares; con eso el Cash Flow del DJ lo cuenta solo, en la fecha del evento y sin " +
+            "comision, y se retira si despues se cancela o suspende. tipo='residencia' NO crea pago porque " +
+            "las residencias ya salen del horario semanal (gestionar_residency_schedule). Un evento " +
+            "confidencial de staff tampoco lo ve el DJ ni le cuenta.",
         input_schema: {
             type: "object",
             properties: {
@@ -2101,6 +2112,15 @@ serve(async (req: Request) => {
         if (leadId && !UUID_RE.test(leadId)) {
             await recordActionLog("registrar_evento_agenda", djUserId, "error:lead_id_invalido");
             return JSON.stringify({ error: "lead_id_invalido" });
+        }
+        // Esta herramienta es "sin dinero": un monto en el titulo o la nota quedaria SOLO como texto y nunca
+        // llegaria al Cash Flow del DJ (caso real: Sundowner flotante 2026-08-20). Se rechaza y se redirige.
+        if (/\$\s*\d/.test(`${title} ${nota}`)) {
+            await recordActionLog("registrar_evento_agenda", djUserId, "error:tiene_dinero_usar_modificar_agenda_evento");
+            return JSON.stringify({
+                error: "tiene_dinero_usar_modificar_agenda_evento",
+                detalle: "Este evento menciona un monto. registrar_evento_agenda no lleva dinero al Cash Flow del DJ: usa modificar_agenda_evento con tipo='privado' y pago_dj en dolares.",
+            });
         }
         const { data: eventId, error } = await ADMIN.rpc("artist_agenda_record", {
             p_dj_user_id: djUserId,
