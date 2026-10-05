@@ -1691,6 +1691,14 @@
         .mrm-label{font-size:10.5px;color:rgba(255,255,255,.55);margin-bottom:4px;}
         .mrm-value{font-size:19px;font-weight:800;color:#e8c987;}
         .mrm-sub{font-size:10px;color:rgba(255,255,255,.4);}
+        /* Modo día de las tarjetas de adquisición (misma paleta que el resto del portal en día; solo colores). */
+        html[data-theme="day"] .mrm-panel{border-bottom-color:rgba(14,18,28,.12);background:rgba(14,18,28,.02);}
+        html[data-theme="day"] .mrm-head strong{color:#1b1f27;}
+        html[data-theme="day"] .mrm-badge{color:#15803d;border-color:rgba(21,128,61,.45);}
+        html[data-theme="day"] .mrm-card{background:#fff;border-color:rgba(14,18,28,.13);box-shadow:0 1px 3px rgba(14,18,28,.06);}
+        html[data-theme="day"] .mrm-label{color:rgba(27,31,39,.62);}
+        html[data-theme="day"] .mrm-value{color:#8a6d2e;}
+        html[data-theme="day"] .mrm-sub{color:rgba(27,31,39,.5);}
         #view-cashflow.active{display:flex;flex-direction:column;}
         #view-cashflow #cashflow-frame{flex:1 1 auto;height:auto;min-height:400px;}
       </style>
@@ -4361,7 +4369,13 @@
                 '#tab-flow #vis-stats{max-width:420px;gap:8px !important;margin-bottom:0 !important;}'+
                 '#tab-flow #vis-stats>div{padding:6px 8px !important;border-radius:8px !important;}'+
                 '#tab-flow #vis-stats>div>div:first-child{font-size:18px !important;line-height:1.1 !important;}'+
-                '#tab-flow #vis-stats>div>div:last-child{font-size:8.5px !important;margin-top:2px !important;}';
+                '#tab-flow #vis-stats>div>div:last-child{font-size:8.5px !important;margin-top:2px !important;}'+
+                /* Modo día dentro del marco: las tarjetas de adquisición y la etiqueta «Datos reales» (blanco/verde claro sobre fondo claro quedaban lavadas). El tema del marco lo pone
+                   artist-cashflow.js (html[data-theme="day"]) al seguir al portal. */
+                'html[data-theme="day"] .mrm-panel{border-bottom-color:rgba(14,18,28,.12);background:rgba(14,18,28,.02);}'+
+                'html[data-theme="day"] .mrm-card{background:#fff;border-color:rgba(14,18,28,.13);box-shadow:0 1px 3px rgba(14,18,28,.06);}'+
+                'html[data-theme="day"] .mrm-label{color:rgba(27,31,39,.62);}html[data-theme="day"] .mrm-value{color:#8a6d2e;}html[data-theme="day"] .mrm-sub{color:rgba(27,31,39,.5);}'+
+                'html[data-theme="day"] .ofm-real{color:#15803d;border-color:rgba(21,128,61,.45);}';
               d.head.appendChild(st); }
             if(!bar.querySelector('.ofm-real')){ var tx=bar.querySelector('.ofm-brand-tx'), real=d.createElement('span'); real.className='ofm-real'; real.textContent='Datos reales';
               if(tx&&tx.parentNode) tx.parentNode.insertBefore(real, tx.nextSibling); }
