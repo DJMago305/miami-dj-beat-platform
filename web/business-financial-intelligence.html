@@ -429,7 +429,9 @@
   @media (min-width:1025px){
     .sb-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 14px;padding:0 2px 12px;border-bottom:1px solid var(--line);}
     .sb-top .sb-top-lbl{font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);}
-    .sb-top .sb-collapse-btn{width:34px;height:30px;}
+    .sb-top .sb-collapse-btn{width:36px;height:34px;border-radius:8px;color:var(--gold);}
+    .sb-top .sb-collapse-btn svg{width:17px;height:17px;display:block;}
+    .sb-top .sb-collapse-btn:hover{background:color-mix(in srgb,var(--gold) 16%,transparent);}
     .sidebar{padding-top:18px;}
     html.mdj-embedded .sidebar{padding-top:18px;}
     .sidebar .sb-top + .brand,.sidebar .sb-top + .search{margin-top:16px;}
@@ -452,7 +454,7 @@
       if(sb && !document.getElementById('sbTop')){ var top=document.createElement('div'); top.id='sbTop'; top.className='sb-top';
         var lb=document.createElement('span'); lb.className='sb-top-lbl'; lb.textContent='Menú del Matrix';
         top.appendChild(lb); top.appendChild(btn); sb.insertBefore(top, sb.firstChild); }   /* el mismo botón (y su evento) sube a la barra lateral */
-      function paint(c){ app.classList.toggle('sb-collapsed', c); btn.innerHTML = c ? '»' : '«';
+      function paint(c){ app.classList.toggle('sb-collapsed', c); btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>';   /* mismo ícono de panel lateral que el menú de Staff (side3-collapse) */
         btn.title = c ? 'Mostrar panel lateral' : 'Recoger panel lateral'; }
       var saved=false; try{ saved=localStorage.getItem(KEY)==='1'; }catch(e){}
       paint(saved);
