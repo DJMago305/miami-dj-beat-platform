@@ -8,7 +8,15 @@
     'use strict';
     var AP = window.ArtistPanel = window.ArtistPanel || {};
     var USD = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
-    var DIAS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+    /* Idioma: el de <html lang> (lo fija i18n.js). Mismo patrón de diccionario local que el resto de módulos de artist-panel. */
+    function lang() { var l = String(document.documentElement.getAttribute('lang') || 'es').toLowerCase(); return l.indexOf('en') === 0 ? 'en' : 'es'; }
+    var T = {
+        es: { days: ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'], vsPrev: 'vs período anterior', noPrev: 'Sin datos previos', resWorked: 'Turnos de residencia trabajados en el período',
+              held: 'Eventos realizados', shifts: 'Turnos de residencia', weekEmpty: 'Todavía no hay eventos ni turnos en este período.', weekFail: 'No se pudo dibujar la gráfica semanal: ', chartMissing: 'Chart.js no cargó' },
+        en: { days: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], vsPrev: 'vs previous period', noPrev: 'No prior data', resWorked: 'Residency shifts worked in the period',
+              held: 'Events held', shifts: 'Residency shifts', weekEmpty: 'No events or shifts in this period yet.', weekFail: 'Could not draw the weekly chart: ', chartMissing: 'Chart.js did not load' }
+    };
+    function t(k) { return T[lang()][k]; }
 
     function rangeKey() { var s = document.getElementById('metrics-range'), v = s && s.value; return /^(7d|30d|90d|1y)$/.test(v) ? v : '30d'; }
     function bounds(r) {
@@ -53,8 +61,8 @@
     function txt(id, v) { var e = document.getElementById(id); if (e) e.textContent = v; }
     function trend(id, cur, prev) {
         var e = document.getElementById(id); if (!e) return;
-        if (prev > 0) { var pct = ((cur - prev) / prev * 100).toFixed(1), up = pct >= 0; e.className = 'flow-card-trend ' + (up ? 'up' : 'down'); e.textContent = (up ? '↑ ' : '↓ ') + Math.abs(pct) + '% vs período anterior'; }
-        else { e.className = 'flow-card-trend'; e.textContent = 'Sin datos previos'; }
+        if (prev > 0) { var pct = ((cur - prev) / prev * 100).toFixed(1), up = pct >= 0; e.className = 'flow-card-trend ' + (up ? 'up' : 'down'); e.textContent = (up ? '↑ ' : '↓ ') + Math.abs(pct) + '% ' + t('vsPrev'); }
+        else { e.className = 'flow-card-trend'; e.textContent = t('noPrev'); }
     }
 
     function paintCards(m, model) {
@@ -65,7 +73,7 @@
         txt('kpi-avg-ticket', USD.format(m.avg)); trend('trend-avg', m.avg, m.prevAvg);
         txt('kpi-residency-days', String(Object.keys(m.resWeekdays).length));
         txt('kpi-residency-slots', String(m.resDays));
-        var tr = document.getElementById('trend-residency'); if (tr) { tr.className = 'flow-card-trend'; tr.textContent = 'Turnos de residencia trabajados en el período'; }
+        var tr = document.getElementById('trend-residency'); if (tr) { tr.className = 'flow-card-trend'; tr.textContent = t('resWorked'); }
         if (model) txt('kpi-available', USD.format(model.disponible));
     }
 
@@ -95,26 +103,26 @@
         var orig = document.getElementById('chart-activity'); if (!orig || !orig.parentElement) return;
         var host = orig.parentElement;
         try {
-            if (typeof Chart === 'undefined') throw new Error('Chart.js no cargó');
+            if (typeof Chart === 'undefined') throw new Error(t('chartMissing'));
             var mine = document.getElementById('ap-act-canvas');
             if (!mine) { mine = document.createElement('canvas'); mine.id = 'ap-act-canvas'; host.insertBefore(mine, orig); }
             var old = Chart.getChart ? Chart.getChart(mine) : null; if (old) old.destroy();
             var chart = new Chart(mine.getContext('2d'), {
                 type: 'bar',
-                data: { labels: DIAS, datasets: [
-                    { label: 'Eventos realizados', data: m.evByWd, backgroundColor: m.evByWd.map(function (_, i) { return (i === 5 || i === 6) ? '#c5a059' : 'rgba(255,255,255,0.35)'; }), borderRadius: 8 },
-                    { label: 'Turnos de residencia', data: m.resByWd, backgroundColor: 'rgba(168, 85, 247, 0.72)', borderRadius: 6 } ] },
+                data: { labels: t('days'), datasets: [
+                    { label: t('held'), data: m.evByWd, backgroundColor: m.evByWd.map(function (_, i) { return (i === 5 || i === 6) ? '#c5a059' : 'rgba(255,255,255,0.35)'; }), borderRadius: 8 },
+                    { label: t('shifts'), data: m.resByWd, backgroundColor: 'rgba(168, 85, 247, 0.72)', borderRadius: 6 } ] },
                 options: { responsive: true, maintainAspectRatio: false,
                     scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(255,255,255,0.5)', precision: 0, stepSize: 1 } }, x: { grid: { display: false }, ticks: { color: '#fff' } } },
                     plugins: { legend: { display: true, position: 'top', labels: { color: 'rgba(255,255,255,0.75)', font: { size: 10 }, boxWidth: 8, usePointStyle: true, boxPadding: 8 } } } }
             });
             orig.style.display = 'none'; weekNote(host, '');
             var total = 0, i; for (i = 0; i < 7; i++) total += (m.evByWd[i] || 0) + (m.resByWd[i] || 0);
-            if (!total) weekNote(host, 'Todavía no hay eventos ni turnos en este período.');
+            if (!total) weekNote(host, t('weekEmpty'));
             kickResize(chart, host);
         } catch (e) {
             orig.style.display = '';
-            weekNote(host, 'No se pudo dibujar la gráfica semanal: ' + ((e && e.message) || 'error'));
+            weekNote(host, t('weekFail') + ((e && e.message) || 'error'));
             try { console.warn('[artist-panel] gráfica semanal', e); } catch (x) { /* sin consola */ }
         }
     }

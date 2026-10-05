@@ -43,6 +43,16 @@ function mdjFlowSetStatus(msg, tone) {
     else el.style.color = 'rgba(255,255,255,0.45)';
 }
 
+/** Texto en el idioma activo (translations.js vía i18n.t); si falta la clave o el motor, queda el español original. */
+function mdjCfT(key, es) {
+    var v = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t(key) : '';
+    return v || es;
+}
+/** Locale de fechas y nombres de día según <html lang> (lo fija i18n.js). */
+function mdjCfLocale() {
+    return String(document.documentElement.getAttribute('lang') || 'es').toLowerCase().indexOf('en') === 0 ? 'en-US' : 'es-ES';
+}
+
 /** Tras mostrar la pestaña Cash Flow o redimensionar ventana: Chart.js necesita `resize` si el canvas estuvo oculto. */
 function scheduleFlowChartsResize() {
     requestAnimationFrame(function () {
@@ -713,17 +723,17 @@ async function loadFlowData(range = '1y', targetUserId = null) {
     currentRange = range;
     const supabase = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
     if (!supabase) {
-        mdjFlowSetStatus('Supabase no disponible en esta página.', 'error');
+        mdjFlowSetStatus(mdjCfT('cf-st-nosb', 'Supabase no disponible en esta página.'), 'error');
         return;
     }
 
-    mdjFlowSetStatus('Cargando métricas…');
+    mdjFlowSetStatus(mdjCfT('cf-st-loading', 'Cargando métricas…'));
 
     try {
     const { data: { session } } = await supabase.auth.getSession();
     if (loadSeq !== _flowLoadSeq) return;
     if (!session) {
-        mdjFlowSetStatus('Inicia sesión para ver Flujo de caja.', 'error');
+        mdjFlowSetStatus(mdjCfT('cf-st-login', 'Inicia sesión para ver Flujo de caja.'), 'error');
         return;
     }
 
@@ -789,11 +799,11 @@ async function loadFlowData(range = '1y', targetUserId = null) {
         await mdjFlowTryRenderLedgerTable(supabase, currentLedger);
         if (loadSeq !== _flowLoadSeq) return;
         if (ledgerRes.error) {
-            mdjFlowSetStatus('No se pudo leer el libro mayor. Revisa sesión o permisos.', 'error');
+            mdjFlowSetStatus(mdjCfT('cf-st-ledger-err', 'No se pudo leer el libro mayor. Revisa sesión o permisos.'), 'error');
         } else if (currentLedger.length) {
             mdjFlowSetStatus(null);
         } else {
-            mdjFlowSetStatus('Perfil DJ incompleto y libro mayor vacío desde la app.', 'error');
+            mdjFlowSetStatus(mdjCfT('cf-st-incomplete', 'Perfil DJ incompleto y libro mayor vacío desde la app.'), 'error');
         }
         scheduleFlowChartsResize();
         await mdjFlowRefreshExportYears(supabase);
@@ -830,7 +840,7 @@ async function loadFlowData(range = '1y', targetUserId = null) {
             scheduleFlowChartsResize();
             return;
         }
-        mdjFlowSetStatus('No se pudo leer el libro mayor. Revisa sesión o permisos.', 'error');
+        mdjFlowSetStatus(mdjCfT('cf-st-ledger-err', 'No se pudo leer el libro mayor. Revisa sesión o permisos.'), 'error');
         var lb = document.getElementById('ledger-body');
         if (lb) {
             var lang = (typeof localStorage !== 'undefined' && localStorage.getItem('mdj_current_lang')) || 'es';
@@ -889,11 +899,11 @@ async function loadFlowData(range = '1y', targetUserId = null) {
     if (currentStatementLedger.length || currentLedger.length) {
         mdjFlowSetStatus(null);
     } else if (ledger.length) {
-        mdjFlowSetStatus('Sin movimientos en el rango seleccionado. Prueba Vista anual.', null);
+        mdjFlowSetStatus(mdjCfT('cf-st-norange', 'Sin movimientos en el rango seleccionado. Prueba Vista anual.'), null);
     } else {
         console.info('[Flow] ledger vacío desde API | userId:', userId);
         /* Estado normal de una cuenta sin ingresos todavía (p. ej. el dueño o un artista nuevo): aviso útil y neutro, no un error. El detalle técnico queda en la consola de arriba. */
-        mdjFlowSetStatus('Todavía no tienes movimientos registrados. Aquí aparecerán tus pagos por eventos, residencia y propinas.', null);
+        mdjFlowSetStatus(mdjCfT('cf-st-empty', 'Todavía no tienes movimientos registrados. Aquí aparecerán tus pagos por eventos, residencia y propinas.'), null);
     }
 
     scheduleFlowChartsResize();
@@ -902,7 +912,7 @@ async function loadFlowData(range = '1y', targetUserId = null) {
     } catch (flowErr) {
         console.error('[Flow] loadFlowData:', flowErr);
         if (loadSeq === _flowLoadSeq) {
-            mdjFlowSetStatus('Error al cargar Flujo de caja. Recarga la página.', 'error');
+            mdjFlowSetStatus(mdjCfT('cf-st-load-err', 'Error al cargar Flujo de caja. Recarga la página.'), 'error');
         }
     }
 }
@@ -981,9 +991,9 @@ async function processKPIs(ledger, leads, startDate, prevStartDate, commRate, pr
             const pct = ((currVal - prevVal) / prevVal * 100).toFixed(1);
             const isUp = pct >= 0;
             trendEl.className = `flow-card-trend ${isUp ? 'up' : 'down'}`;
-            trendEl.innerHTML = `<span>${isUp ? '↑' : '↓'}</span> ${Math.abs(pct)}% vs mes anterior`;
+            trendEl.innerHTML = `<span>${isUp ? '↑' : '↓'}</span> ${Math.abs(pct)}% ${mdjCfT('cf-js-vs-month', 'vs mes anterior')}`;
         } else if (trendEl) {
-            trendEl.innerHTML = `<span style="opacity:0.3">Sin datos previos</span>`;
+            trendEl.innerHTML = `<span style="opacity:0.3">${mdjCfT('cf-js-no-prev', 'Sin datos previos')}</span>`;
         }
     };
 
@@ -1021,8 +1031,8 @@ async function processKPIs(ledger, leads, startDate, prevStartDate, commRate, pr
         tr.className = 'flow-card-trend';
         tr.style.color = 'rgba(255,255,255,0.38)';
         tr.innerHTML = resM.isResidentFlag
-            ? '<span>Perfil + agenda</span> · residente activo'
-            : '<span>Según agenda</span> · turnos marcados residente';
+            ? '<span>' + mdjCfT('cf-js-res-profile', 'Perfil + agenda') + '</span> · ' + mdjCfT('cf-js-res-profile-tail', 'residente activo')
+            : '<span>' + mdjCfT('cf-js-res-agenda', 'Según agenda') + '</span> · ' + mdjCfT('cf-js-res-agenda-tail', 'turnos marcados residente');
     }
 
     // Índice salud artística = reseñas + ecosistema (eventos, ledger, tips, refs, residencia)
@@ -1036,7 +1046,7 @@ async function processKPIs(ledger, leads, startDate, prevStartDate, commRate, pr
                 trendRt.style.cssText = 'color:rgba(255,255,255,0.38);font-size:11px;line-height:1.45;';
                 trendRt.innerHTML =
                     '<span id="kpi-review-count">' + String(health.reviews) +
-                    '</span> reseñas · + eventos, ledger, tips, referidos, residencia (cheque/local si lo registras)';
+                    '</span> ' + mdjCfT('cf-js-rating-sub', 'reseñas · + eventos, ledger, tips, referidos, residencia (cheque/local si lo registras)');
             }
         } else {
             if (ratEl) ratEl.textContent = health.score >= 2.75 ? `${health.score.toFixed(1)} ★` : '—';
@@ -1044,7 +1054,7 @@ async function processKPIs(ledger, leads, startDate, prevStartDate, commRate, pr
                 trendRt.className = 'flow-card-trend';
                 trendRt.style.cssText = 'color:rgba(255,255,255,0.35);font-size:11px;line-height:1.45;';
                 trendRt.innerHTML =
-                    '<span id="kpi-review-count">0</span> reseñas · índice solo por actividad en este rango';
+                    '<span id="kpi-review-count">0</span> ' + mdjCfT('cf-js-rating-sub-0', 'reseñas · índice solo por actividad en este rango');
             }
         }
         // Mismo índice en el hero del perfil (solo tú lo ves: _flowTabAllowed = dueño de esta página).
@@ -1144,13 +1154,13 @@ function renderTimelineChart(ledger, leads, range, startDate, residencyMetrics) 
                 if (bucketByMonth) {
                     var parts = l.split('-');
                     var dt = new Date(Number(parts[0]), Number(parts[1]) - 1, 1);
-                    return dt.toLocaleDateString('es-ES', { month: 'short', year: '2-digit' });
+                    return dt.toLocaleDateString(mdjCfLocale(), { month: 'short', year: '2-digit' });
                 }
-                return new Date(l).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+                return new Date(l).toLocaleDateString(mdjCfLocale(), { day: 'numeric', month: 'short' });
             }),
             datasets: [
                 {
-                    label: 'Salud Económica ($)',
+                    label: mdjCfT('cf-js-ds-health', 'Salud Económica ($)'),
                     data: incomeData,
                     borderColor: '#c5a059',
                     backgroundColor: 'rgba(197, 160, 89, 0.1)',
@@ -1159,7 +1169,7 @@ function renderTimelineChart(ledger, leads, range, startDate, residencyMetrics) 
                     yAxisID: 'y'
                 },
                 {
-                    label: 'Nuevos Eventos',
+                    label: mdjCfT('cf-js-ds-new', 'Nuevos Eventos'),
                     data: newData,
                     borderColor: '#3b82f6',
                     borderDash: [5, 5],
@@ -1167,14 +1177,14 @@ function renderTimelineChart(ledger, leads, range, startDate, residencyMetrics) 
                     yAxisID: 'y1'
                 },
                 {
-                    label: 'Eventos Completados',
+                    label: mdjCfT('cf-js-ds-done', 'Eventos Completados'),
                     data: doneData,
                     backgroundColor: 'rgba(0, 255, 136, 0.4)',
                     type: 'bar',
                     yAxisID: 'y1'
                 },
                 {
-                    label: 'Residencia · comunidad (perfil)',
+                    label: mdjCfT('cf-js-ds-res', 'Residencia · comunidad (perfil)'),
                     data: residencySeries,
                     type: 'line',
                     borderColor: 'rgba(168, 85, 247, 0.95)',
@@ -1219,7 +1229,7 @@ function renderActivityChart(leads, range, startDate, residencyMetrics) {
     if (!ctx) return;
 
     const rm = residencyMetrics || computeResidencyMetrics(null);
-    const weekdayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+    const weekdayNames = mdjCfLocale() === 'en-US' ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] : ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
     const activity = [0, 0, 0, 0, 0, 0, 0];
 
     leads.filter(ev => ev.event_date && new Date(ev.event_date) >= startDate).forEach(ev => {
@@ -1237,13 +1247,13 @@ function renderActivityChart(leads, range, startDate, residencyMetrics) {
             labels: weekdayNames,
             datasets: [
                 {
-                    label: 'Eventos (día de evento)',
+                    label: mdjCfT('cf-js-ds-event-day', 'Eventos (día de evento)'),
                     data: activity,
                     backgroundColor: activity.map((v, i) => (i === 5 || i === 6) ? '#c5a059' : 'rgba(255,255,255,0.12)'),
                     borderRadius: 8
                 },
                 {
-                    label: 'Turnos residencia declarados',
+                    label: mdjCfT('cf-js-ds-res-declared', 'Turnos residencia declarados'),
                     data: resBars,
                     backgroundColor: 'rgba(168, 85, 247, 0.72)',
                     borderRadius: 6
@@ -1266,6 +1276,13 @@ function renderActivityChart(leads, range, startDate, residencyMetrics) {
             }
         }
     });
+}
+
+/** Rótulo mostrado de cada tramo de la dona de distribución (la clave interna no cambia). */
+function mdjCfDistLabel(key) {
+    var map = { 'Privado': ['cf-js-dist-private', 'Privado'], 'Corporativo': ['cf-js-dist-corp', 'Corporativo'], 'Festivales': ['cf-js-dist-fest', 'Festivales'],
+                'Otros': ['cf-js-dist-other', 'Otros'], 'Comunidad / residencia': ['cf-js-dist-community', 'Comunidad / residencia'] };
+    return map[key] ? mdjCfT(map[key][0], map[key][1]) : key;
 }
 
 function renderDistributionChart(ledger, leads, range, startDate, residencyMetrics) {
@@ -1304,7 +1321,7 @@ function renderDistributionChart(ledger, leads, range, startDate, residencyMetri
         flowCharts.distribution = new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: ['Sin datos en este rango'],
+                labels: [mdjCfT('cf-js-no-data-range', 'Sin datos en este rango')],
                 datasets: [{
                     data: [1],
                     backgroundColor: ['rgba(255,255,255,0.08)'],
@@ -1327,7 +1344,7 @@ function renderDistributionChart(ledger, leads, range, startDate, residencyMetri
     flowCharts.distribution = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: filtered.map(function (r) { return r.key; }),
+            labels: filtered.map(function (r) { return mdjCfDistLabel(r.key); }),
             datasets: [{
                 data: filtered.map(function (r) { return r.val; }),
                 backgroundColor: filtered.map(function (r) { return r.color; }),
@@ -1588,7 +1605,7 @@ async function mdjFlowRefreshExportYears(supabase) {
     if (res.error || !res.data || !res.data.length) {
         var ph = document.createElement('option');
         ph.value = '';
-        ph.textContent = (typeof window.t === 'function' && window.t('flow-export-empty')) || 'Sin años con datos (7 años)';
+        ph.textContent = mdjCfT('flow-export-empty', 'Sin años con datos (7 años)');
         sel.appendChild(ph);
         return;
     }
@@ -1609,17 +1626,17 @@ async function mdjFlowExportCsvForYear(taxYear) {
     if (!y) return;
     var supabase = window.getSupabaseClient ? window.getSupabaseClient() : window.supabase;
     if (!supabase) {
-        mdjFlowSetExportStatus('Supabase no disponible.', 'error');
+        mdjFlowSetExportStatus(mdjCfT('cf-st-export-nosb', 'Supabase no disponible.'), 'error');
         return;
     }
     var btn = document.getElementById('flow-export-csv-btn');
-    var loadingMsg = (typeof window.t === 'function' && window.t('flow-export-loading')) || 'Generando CSV…';
+    var loadingMsg = mdjCfT('cf-st-export-gen', 'Generando CSV…');
     mdjFlowSetExportStatus(loadingMsg);
     if (btn) btn.disabled = true;
     try {
         var sessionRes = await supabase.auth.getSession();
         if (!sessionRes.data || !sessionRes.data.session) {
-            mdjFlowSetExportStatus('Inicia sesión para exportar.', 'error');
+            mdjFlowSetExportStatus(mdjCfT('cf-st-export-login', 'Inicia sesión para exportar.'), 'error');
             return;
         }
         var userId = sessionRes.data.session.user.id;
@@ -1661,7 +1678,7 @@ async function mdjFlowExportCsvForYear(taxYear) {
         });
 
         if (!merged.length) {
-            mdjFlowSetExportStatus((typeof window.t === 'function' && window.t('flow-export-empty-year')) || 'Sin líneas en ese año fiscal.', 'error');
+            mdjFlowSetExportStatus(mdjCfT('flow-export-empty-year', 'Sin líneas en ese año fiscal.'), 'error');
             return;
         }
 
@@ -1686,11 +1703,11 @@ async function mdjFlowExportCsvForYear(taxYear) {
 
         var fname = 'MDJB-Flow-' + y + '.csv';
         mdjFlowDownloadCsv(fname, lines.join('\r\n'));
-        var doneMsg = (typeof window.t === 'function' && window.t('flow-export-done')) || 'CSV descargado.';
-        mdjFlowSetExportStatus(doneMsg + ' (' + exportRows.length + ' líneas)', 'ok');
+        var doneMsg = mdjCfT('flow-export-done', 'CSV descargado.');
+        mdjFlowSetExportStatus(doneMsg + ' (' + exportRows.length + ' ' + mdjCfT('cf-st-export-lines', 'líneas') + ')', 'ok');
     } catch (exportErr) {
         console.warn('[Flow] export CSV:', exportErr);
-        mdjFlowSetExportStatus((typeof window.t === 'function' && window.t('flow-export-err')) || 'No se pudo exportar. Reintenta.', 'error');
+        mdjFlowSetExportStatus(mdjCfT('flow-export-err', 'No se pudo exportar. Reintenta.'), 'error');
     } finally {
         if (btn) btn.disabled = false;
     }
