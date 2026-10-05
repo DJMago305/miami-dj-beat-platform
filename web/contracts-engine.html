@@ -377,6 +377,16 @@ a{color:var(--accent-strong);}
 .paper .kv div{display:flex;justify-content:flex-start;gap:8px;border-bottom:1px dotted var(--paper-border);padding:3px 0;}
 .paper .kv div b{font-weight:600;}
 .paper .placeholder{color:var(--paper-text-faint);font-style:italic;}
+.paper .vp-blank{display:inline-block;min-width:9em;height:1em;border-bottom:1px solid var(--paper-text);vertical-align:baseline;}
+.paper .atty-flag{background:rgba(255,196,0,.28);border:1px dashed rgba(255,170,0,.8);border-radius:3px;padding:0 3px;font-size:.92em;font-style:italic;}
+.paper .vp-annex{margin-top:30px;padding-top:6px;}
+.paper .vp-note{font-size:11px;font-style:italic;color:var(--paper-text-muted);}
+.paper .vp-table{width:100%;border-collapse:collapse;font-family:"IBM Plex Sans",sans-serif;font-size:11px;margin:6px 0 10px;}
+.paper .vp-table th,.paper .vp-table td{border:1px solid var(--paper-border);padding:5px 7px;text-align:left;vertical-align:top;}
+.paper .vp-table th{font-weight:700;background:rgba(127,127,127,.12);}
+.paper .vp-list{margin:6px 0 10px 20px;padding:0;font-size:12.5px;}
+.paper .vp-list li{margin:3px 0;}
+@media print{.paper .vp-annex{break-before:page;}.paper .vp-table tr,.paper .vp-list li{break-inside:avoid;}}
 .paper .sign-block{margin-top:34px;padding-top:18px;border-top:1px solid var(--paper-border);display:flex;gap:26px;align-items:flex-end;flex-wrap:wrap;}
 .paper .sign-slot{flex:1;min-width:200px;}
 .paper .sign-img{height:46px;display:flex;align-items:flex-end;margin-bottom:4px;}
@@ -1527,6 +1537,161 @@ function letterheadBlock(){
   </div>`;
 }
 
+/* ============================================================
+   vendor_production — Contrato de Proveedor Adicional (Servicios de
+   Producción): 15 secciones + Anexos A-D. Plantilla NUEVA (2026-10-05, orden
+   del PO); no reutiliza ni modifica subcontractor_show.
+   Texto: .claude-scratch/contrato-proveedor-adicional-borrador.md (EN, rige)
+   y -ES.md (traducción de cortesía). El texto de las secciones de abajo se
+   generó desde esos dos archivos sin reescribirlo; los valores por defecto
+   (pago 30 días, no elusión 12 meses, cancelación 14/7 días al 25%/50%,
+   seguros) son parámetros editables ({{pay}}, {{nc}}...) que se rellenan
+   en vpFill(). Lo marcado [ATTORNEY]/[ABOGADO] queda tal cual para el
+   abogado — NO se resuelve aquí (ver .atty-flag). Borrador pendiente de
+   revisión legal: no enviar a terceros antes de esa revisión.
+   ============================================================ */
+const VENDOR_PRODUCTION_CLAUSES = {
+ "en": [
+  {
+   "title": "Purpose and Relationship",
+   "body": "1.1 MDJB sells event services to its own clients, including DJs, sound and LED screens. Vendor will supply supplemental production services (the \"Services\") to MDJB for specific events, as MDJB requests.<br><br>1.2 <b>Independent contractor.</b> Vendor is an independent contractor. Nothing in this Agreement creates a partnership, joint venture, employment, agency or franchise relationship. Vendor controls the means and methods of its work and is solely responsible for its personnel, taxes, wages and benefits.<br><br>1.3 <b>No exclusivity and no minimum.</b> MDJB may use other vendors at any time. MDJB makes no commitment to any minimum volume of work. Vendor may serve other customers, subject to Sections 5 and 6.<br><br>1.4 <b>Not a referral arrangement.</b> Vendor is engaged by MDJB. Vendor is not engaged by MDJB's clients, and no referral fee or finder's fee is owed to either Party."
+  },
+  {
+   "title": "Statements of Work",
+   "body": "2.1 Each engagement will be documented in a written statement of work or purchase order (an \"SOW\") substantially in the form of <b>Exhibit C</b>, issued by MDJB. An SOW states: event name, date, venue and address, load-in and load-out times, equipment and crew, price, and any special requirements.<br><br>2.2 No Services are authorized, and nothing is payable, without an SOW accepted by both Parties in writing (email is sufficient).<br><br>2.3 If this Agreement and an SOW conflict, the SOW controls only for the event, price and schedule; this Agreement controls on all other matters."
+  },
+  {
+   "title": "Pricing and Payment",
+   "body": "3.1 Vendor's rates are those in <b>Exhibit A</b> (the \"Rate Card\"). Rates may be changed only by written amendment, with at least 30 days' notice, and never for an SOW already accepted.<br><br>3.2 Vendor invoices MDJB, not the client. MDJB will pay each undisputed invoice within {{pay}} days after the later of the event date and receipt of a correct invoice. Payment is not conditioned on whether MDJB has been paid by its client.<br><br>3.3 MDJB sets the price charged to its clients. Vendor will not state or learn the client's price, and MDJB's margin is confidential.<br><br>3.4 Late undisputed amounts do not accrue interest unless the Parties agree otherwise in writing. <span class=\"atty-flag\">[ATTORNEY: confirm.]</span><br><br>3.5 Vendor is responsible for its own costs, including transport, fuel, permits, parking, crew meals and equipment maintenance, unless the SOW says otherwise."
+  },
+  {
+   "title": "Client Communication and Event Control",
+   "body": "4.1 <b>All clients are MDJB's clients.</b> Vendor will not market to, quote, contract with, or invoice an MDJB client or the client's venue, planner or representatives for services connected to an MDJB event, except through MDJB.<br><br>4.2 All client communication goes through MDJB. Vendor will direct any client question about price, scope, changes, refunds or complaints to MDJB. Vendor may speak with the venue and the client's on-site contact only for logistics (load-in, power, access, schedule).<br><br>4.3 Vendor will represent itself on site as part of the MDJB team when MDJB so requests, and will follow MDJB's reasonable on-site direction, dress and conduct standards.<br><br>4.4 Vendor will not offer discounts, upgrades or additional services to the client without MDJB's written approval."
+  },
+  {
+   "title": "Non-Circumvention",
+   "body": "5.1 During the term and for {{nc}} months after the last SOW (the \"Restricted Period\"), Vendor will not, directly or indirectly, (a) provide services for the same client, event or venue contact that Vendor met or learned of through MDJB, outside of MDJB, or (b) accept any engagement from such a client that replaces or reduces work MDJB would otherwise have sold.<br><br>5.2 This Section applies to a client or event that Vendor first learned of through MDJB, and it does not restrict Vendor from serving clients that Vendor already served, or contracted with, before the Effective Date, provided Vendor lists those in <b>Exhibit D</b> (\"Pre-Existing Clients\") within 30 days after signing.<br><br>5.3 If Vendor is approached directly by an MDJB client during the Restricted Period, Vendor will decline to contract directly and will refer the client back to MDJB within 2 business days.<br><br>5.4 Vendor acknowledges that MDJB's client relationships, event pipeline and pricing are legitimate business interests, and that this Section is reasonable in time, area and scope. <span class=\"atty-flag\">[ATTORNEY: confirm the restriction is enforceable under Fla. Stat. § 542.335 and adjust the period, any liquidated damages or fee-shifting clause, and the injunctive-relief language.]</span>"
+  },
+  {
+   "title": "Non-Solicitation",
+   "body": "6.1 During the term and the Restricted Period, Vendor will not solicit, hire or engage any MDJB DJ, artist, employee or independent contractor with whom Vendor worked through MDJB, for the same services they provide to MDJB, without MDJB's written consent.<br><br>6.2 General advertising that is not targeted at those persons does not violate this Section."
+  },
+  {
+   "title": "Confidentiality and Data Privacy",
+   "body": "7.1 \"Confidential Information\" means non-public information disclosed by MDJB, including client names and contact information, event details, pricing, margins, contracts, platform data and these terms.<br><br>7.2 Vendor will use Confidential Information only to perform the Services, will protect it with at least reasonable care, and will not disclose it except to personnel who need it and are bound by equivalent duties.<br><br>7.3 <b>Data minimization.</b> MDJB will share only the event details Vendor needs. Vendor will not copy, store, sell, market with, or build a mailing list from client or guest personal information. Vendor will comply with MDJB's Privacy Policy at <a href=\"https://www.miamidjbeat.com/legal.html?doc=PRIVACY_POLICY.md\" target=\"_blank\" rel=\"noopener\">https://www.miamidjbeat.com/legal.html?doc=PRIVACY_POLICY.md</a> and with applicable privacy law.<br><br>7.4 Vendor will notify MDJB within 48 hours after learning of any unauthorized access to Confidential Information and will cooperate with MDJB's response.<br><br>7.5 These duties survive for 3 years after termination, and for trade secrets and client personal data for as long as they remain protected."
+  },
+  {
+   "title": "Insurance and Safety",
+   "body": "8.1 Vendor will maintain, at its own cost, during the term and for 1 year after the last SOW: (a) commercial general liability of at least {{glOcc}} per occurrence / {{glAgg}} aggregate; (b) workers' compensation as required by Florida law; (c) commercial auto, if Vendor transports equipment or crew; (d) equipment / inland marine coverage for the full replacement value of the equipment supplied; and (e) umbrella coverage of at least {{umb}} for events involving LED walls, truss or rigging. See <b>Exhibit B</b>.<br><br>8.2 Vendor will name MDJB, and any venue MDJB identifies, as additional insureds on the general liability policy, and will deliver certificates before the first SOW and on each renewal.<br><br>8.3 Vendor is responsible for the safe design, rigging, installation, operation and removal of its equipment, including weight and wind loading, power distribution, cabling, trip hazards and crowd-safety clearances, and for engineering sign-off, permits and inspections required by law, the venue or the fire marshal for its work.<br><br>8.4 Vendor will use qualified, trained personnel, and will stop work and tell MDJB immediately if a condition on site is unsafe."
+  },
+  {
+   "title": "Performance Standards",
+   "body": "9.1 Vendor will deliver the equipment and crew in the SOW, in good working order, on time (on site and ready by the load-in and soundcheck times in the SOW), and will provide at least one qualified technician on site for the full event.<br><br>9.2 Vendor will keep a spare or backup plan for critical equipment, and will tell MDJB at once about any failure or delay.<br><br>9.3 If Vendor cannot perform an accepted SOW, Vendor will notify MDJB as early as possible, and at least 72 hours before the event unless the cause is outside Vendor's control. MDJB may then source a replacement. Vendor will reimburse MDJB's reasonable, documented extra cost of the replacement above the SOW price, up to the SOW price.<br><br>9.4 MDJB may withhold or reduce payment for Services not delivered or materially deficient, in proportion to the failure, after giving Vendor a chance to respond."
+  },
+  {
+   "title": "Cancellation and Changes",
+   "body": "10.1 <b>By MDJB or the client.</b> MDJB may cancel an accepted SOW as follows: more than {{cFree}} days before the event, no charge; {{cFree}} to {{cMid}} days before, {{cMidPct}}% of the SOW price; fewer than {{cMid}} days before, {{cLatePct}}% of the SOW price, plus any non-refundable third-party costs Vendor documents.<br><br>10.2 <b>By Vendor.</b> See Section 9.3.<br><br>10.3 Changes to date, venue, scope or schedule require a written change to the SOW before they take effect.<br><br>10.4 <b>Weather and force majeure.</b> Neither Party is liable for delay or failure caused by events outside its reasonable control (severe weather, government order, venue closure, utility failure, act of God). For outdoor events, the SOW states the weather-call procedure."
+  },
+  {
+   "title": "Indemnification and Liability",
+   "body": "11.1 Vendor will defend, indemnify and hold harmless MDJB, its members, officers, contractors and clients from third-party claims, losses and reasonable attorneys' fees arising from (a) Vendor's negligence or willful misconduct, (b) bodily injury or property damage caused by Vendor's equipment, crew or work, (c) Vendor's breach of this Agreement, or (d) infringement caused by content or equipment Vendor supplies.<br><br>11.2 MDJB will indemnify Vendor from third-party claims arising from content MDJB or its client supplies for playback that infringes a third party's rights. <span class=\"atty-flag\">[ATTORNEY: confirm and consider limiting to content MDJB directly supplies.]</span><br><br>11.3 Neither Party is liable to the other for indirect, special or consequential damages, except for indemnity, confidentiality, non-circumvention and non-solicitation breaches, and gross negligence or willful misconduct. Except for indemnity for bodily injury or property damage (which is covered up to the required insurance limits), each Party's total liability under an SOW is capped at the fees paid or payable under that SOW. <span class=\"atty-flag\">[ATTORNEY: confirm.]</span>"
+  },
+  {
+   "title": "Intellectual Property and Marketing",
+   "body": "12.1 Each Party keeps its own intellectual property. MDJB's name, logos and platform belong to MDJB, and Vendor receives no license beyond what is needed to perform an SOW.<br><br>12.2 Client-supplied content is used only for the SOW and is not Vendor's to keep or reuse.<br><br>12.3 Vendor will not publish photos, video, case studies or references naming MDJB or its clients without MDJB's prior written approval for each use.<br><br>12.4 Vendor will not present itself as MDJB's affiliate, owner or partner to the public or to clients."
+  },
+  {
+   "title": "Term and Termination",
+   "body": "13.1 This Agreement starts on the Effective Date and continues for 12 months, renewing for successive 12-month periods unless either Party gives 30 days' written notice of non-renewal.<br><br>13.2 Either Party may terminate on 30 days' written notice. MDJB may terminate immediately on written notice if Vendor breaches Sections 4, 5, 6, 7 or 8, or fails to perform two or more accepted SOWs in any 6-month period.<br><br>13.3 Termination does not affect accepted SOWs, unless MDJB cancels them, or payment owed for Services already delivered. Sections 4 through 7, 11, 12, 14 and 15 survive termination."
+  },
+  {
+   "title": "Dispute Resolution",
+   "body": "14.1 This Agreement is governed by Florida law, without regard to conflict-of-laws rules.<br><br>14.2 The Parties will first try to resolve a dispute by good-faith discussion between senior representatives for 15 days.<br><br>14.3 Exclusive venue is the state or federal courts located in Miami-Dade County, Florida. <span class=\"atty-flag\">[ATTORNEY: consider mediation or arbitration first.]</span> The prevailing Party in any action to enforce this Agreement is entitled to reasonable attorneys' fees and costs. <span class=\"atty-flag\">[ATTORNEY: confirm.]</span><br><br>14.4 Each Party may seek injunctive relief for a breach or threatened breach of Sections 5, 6 or 7 without posting bond, to the extent the law allows."
+  },
+  {
+   "title": "General",
+   "body": "15.1 <b>Entire agreement.</b> This Agreement, its Exhibits and each SOW are the entire agreement on their subject and replace earlier proposals and communications, including the introductory emails exchanged on {{introDate}}.<br><br>15.2 <b>Amendments</b> must be in writing and signed (or accepted by email) by both Parties.<br><br>15.3 <b>Assignment and subcontracting.</b> Vendor may not assign this Agreement or subcontract any Services to a third party without MDJB's prior written consent. Vendor remains responsible for any approved subcontractor.<br><br>15.4 <b>Notices</b> go to the addresses above and to the email addresses in the signature block, and are effective on delivery.<br><br>15.5 <b>Compliance.</b> Vendor will comply with all laws that apply to its work, including licensing, labor, tax, immigration, safety and accessibility laws, and will hold the licenses its work requires.<br><br>15.6 <b>Severability and waiver.</b> If a provision is unenforceable, it will be modified to the minimum extent needed, and the rest remains in effect. A failure to enforce a right is not a waiver.<br><br>15.7 <b>Counterparts and e-signature.</b> This Agreement may be signed in counterparts and electronically."
+  }
+ ],
+ "es": [
+  {
+   "title": "Propósito y relación",
+   "body": "1.1 MDJB vende servicios para eventos a sus propios clientes, incluidos DJs, sonido y pantallas LED. El Proveedor suministrará a MDJB servicios complementarios de producción (los \"Servicios\") para eventos específicos, según MDJB los solicite.<br><br>1.2 <b>Contratista independiente.</b> El Proveedor es un contratista independiente. Nada en este Contrato crea una sociedad, empresa conjunta, relación laboral, agencia o franquicia. El Proveedor controla los medios y métodos de su trabajo y es el único responsable de su personal, impuestos, salarios y beneficios.<br><br>1.3 <b>Sin exclusividad y sin mínimo.</b> MDJB puede usar otros proveedores en cualquier momento. MDJB no se compromete a ningún volumen mínimo de trabajo. El Proveedor puede atender a otros clientes, sujeto a las Secciones 5 y 6.<br><br>1.4 <b>No es un acuerdo de referidos.</b> El Proveedor es contratado por MDJB. El Proveedor no es contratado por los clientes de MDJB, y ninguna Parte debe comisión de referido ni comisión de intermediación a la otra."
+  },
+  {
+   "title": "Órdenes de trabajo",
+   "body": "2.1 Cada trabajo se documentará en una orden de trabajo o de compra escrita (una \"SOW\") sustancialmente en la forma del <b>Anexo C</b>, emitida por MDJB. La SOW indica: nombre del evento, fecha, lugar y dirección, horas de carga y descarga, equipo y personal, precio y requisitos especiales.<br><br>2.2 No se autoriza ningún Servicio, ni se debe pago alguno, sin una SOW aceptada por ambas Partes por escrito (basta un correo electrónico).<br><br>2.3 Si este Contrato y una SOW entran en conflicto, la SOW rige solo para el evento, el precio y el horario; este Contrato rige en todo lo demás."
+  },
+  {
+   "title": "Precios y pago",
+   "body": "3.1 Las tarifas del Proveedor son las del <b>Anexo A</b> (la \"Lista de Tarifas\"). Solo pueden cambiarse mediante una enmienda escrita, con al menos 30 días de aviso, y nunca para una SOW ya aceptada.<br><br>3.2 El Proveedor factura a MDJB, no al cliente. MDJB pagará cada factura no disputada dentro de {{pay}} días después de lo que ocurra más tarde entre la fecha del evento y la recepción de una factura correcta. El pago no depende de que el cliente haya pagado a MDJB.<br><br>3.3 MDJB fija el precio que cobra a sus clientes. El Proveedor no declarará ni procurará conocer el precio al cliente, y el margen de MDJB es confidencial.<br><br>3.4 Los montos no disputados vencidos no generan intereses salvo que las Partes lo acuerden por escrito. <span class=\"atty-flag\">[ABOGADO: confirmar.]</span><br><br>3.5 El Proveedor asume sus propios costos, incluidos transporte, combustible, permisos, estacionamiento, comidas de su personal y mantenimiento de equipo, salvo que la SOW diga otra cosa."
+  },
+  {
+   "title": "Comunicación con el cliente y control del evento",
+   "body": "4.1 <b>Todos los clientes son clientes de MDJB.</b> El Proveedor no promoverá, cotizará, contratará ni facturará a un cliente de MDJB, ni a su lugar, planificador o representantes, por servicios vinculados a un evento de MDJB, salvo a través de MDJB.<br><br>4.2 Toda comunicación con el cliente pasa por MDJB. El Proveedor dirigirá a MDJB cualquier pregunta del cliente sobre precio, alcance, cambios, reembolsos o quejas. El Proveedor solo puede hablar con el lugar y con el contacto del cliente en sitio sobre logística (carga, energía, acceso, horario).<br><br>4.3 En el lugar, el Proveedor se presentará como parte del equipo de MDJB cuando MDJB así lo pida, y seguirá las instrucciones razonables, de vestimenta y de conducta de MDJB.<br><br>4.4 El Proveedor no ofrecerá descuentos, mejoras ni servicios adicionales al cliente sin la aprobación escrita de MDJB."
+  },
+  {
+   "title": "No elusión",
+   "body": "5.1 Durante la vigencia y por {{nc}} meses después de la última SOW (el \"Período Restringido\"), el Proveedor no podrá, directa o indirectamente, (a) prestar servicios al mismo cliente, evento o contacto del lugar que el Proveedor conoció o supo a través de MDJB, fuera de MDJB, ni (b) aceptar un encargo de ese cliente que reemplace o reduzca trabajo que MDJB habría vendido.<br><br>5.2 Esta Sección se aplica a un cliente o evento que el Proveedor conoció por primera vez a través de MDJB, y no restringe al Proveedor de atender a clientes que ya atendía, o con los que ya había contratado, antes de la Fecha de Vigencia, siempre que los enumere en el <b>Anexo D</b> (\"Clientes Preexistentes\") dentro de 30 días después de la firma.<br><br>5.3 Si un cliente de MDJB se acerca directamente al Proveedor durante el Período Restringido, el Proveedor se negará a contratar directamente y devolverá al cliente a MDJB dentro de 2 días hábiles.<br><br>5.4 El Proveedor reconoce que las relaciones con clientes, la cartera de eventos y los precios de MDJB son intereses comerciales legítimos, y que esta Sección es razonable en tiempo, área y alcance. <span class=\"atty-flag\">[ABOGADO: confirmar que la restricción es exigible bajo Fla. Stat. § 542.335 y ajustar el plazo, cualquier cláusula de daños liquidados o de pago de honorarios, y el lenguaje de medidas cautelares.]</span>"
+  },
+  {
+   "title": "No solicitación",
+   "body": "6.1 Durante la vigencia y el Período Restringido, el Proveedor no solicitará, contratará ni empleará a ningún DJ, artista, empleado o contratista independiente de MDJB con quien el Proveedor haya trabajado a través de MDJB, para los mismos servicios que prestan a MDJB, sin el consentimiento escrito de MDJB.<br><br>6.2 La publicidad general no dirigida a esas personas no viola esta Sección."
+  },
+  {
+   "title": "Confidencialidad y privacidad de datos",
+   "body": "7.1 \"Información Confidencial\" significa la información no pública divulgada por MDJB, incluidos nombres e información de contacto de clientes, detalles de eventos, precios, márgenes, contratos, datos de la plataforma y estos términos.<br><br>7.2 El Proveedor usará la Información Confidencial solo para prestar los Servicios, la protegerá con al menos cuidado razonable y no la divulgará, salvo a personal que la necesite y esté obligado por deberes equivalentes.<br><br>7.3 <b>Minimización de datos.</b> MDJB compartirá solo los detalles del evento que el Proveedor necesite. El Proveedor no copiará, almacenará, venderá, usará para mercadeo ni creará una lista de correo con información personal de clientes o invitados. El Proveedor cumplirá con la Política de Privacidad de MDJB en <a href=\"https://www.miamidjbeat.com/legal.html?doc=PRIVACY_POLICY.md\" target=\"_blank\" rel=\"noopener\">https://www.miamidjbeat.com/legal.html?doc=PRIVACY_POLICY.md</a> y con la ley de privacidad aplicable.<br><br>7.4 El Proveedor avisará a MDJB dentro de 48 horas después de conocer cualquier acceso no autorizado a Información Confidencial y cooperará con la respuesta de MDJB.<br><br>7.5 Estos deberes sobreviven 3 años después de la terminación, y para secretos comerciales y datos personales de clientes mientras sigan protegidos."
+  },
+  {
+   "title": "Seguros y seguridad",
+   "body": "8.1 El Proveedor mantendrá, a su costo, durante la vigencia y por 1 año después de la última SOW: (a) responsabilidad civil general de al menos {{glOcc}} por evento / {{glAgg}} agregado; (b) compensación laboral según lo exige la ley de Florida; (c) seguro de auto comercial, si el Proveedor transporta equipo o personal; (d) cobertura de equipo / transporte por el valor total de reposición del equipo suministrado; y (e) cobertura paraguas de al menos {{umb}} para eventos con paredes LED, truss o estructuras. Ver <b>Anexo B</b>.<br><br>8.2 El Proveedor nombrará a MDJB, y a cualquier lugar que MDJB indique, como asegurados adicionales en la póliza de responsabilidad civil general, y entregará certificados antes de la primera SOW y en cada renovación.<br><br>8.3 El Proveedor es responsable del diseño, montaje, instalación, operación y retiro seguros de su equipo, incluidas las cargas de peso y viento, la distribución de energía, los cables, los riesgos de tropiezo y las distancias de seguridad para el público, y de la aprobación de ingeniería, permisos e inspecciones que la ley, el lugar o el cuerpo de bomberos exijan para su trabajo.<br><br>8.4 El Proveedor usará personal calificado y capacitado, y detendrá el trabajo y avisará de inmediato a MDJB si una condición en el lugar es insegura."
+  },
+  {
+   "title": "Estándares de desempeño",
+   "body": "9.1 El Proveedor entregará el equipo y el personal de la SOW, en buen estado de funcionamiento y a tiempo (en el lugar y listo para las horas de carga y prueba de sonido de la SOW), y tendrá al menos un técnico calificado en el lugar durante todo el evento.<br><br>9.2 El Proveedor tendrá un repuesto o plan de respaldo para el equipo crítico y avisará de inmediato a MDJB sobre cualquier falla o retraso.<br><br>9.3 Si el Proveedor no puede cumplir una SOW aceptada, avisará a MDJB lo antes posible, y al menos 72 horas antes del evento salvo que la causa esté fuera de su control. MDJB podrá entonces buscar un reemplazo. El Proveedor reembolsará el costo adicional razonable y documentado del reemplazo por encima del precio de la SOW, hasta el precio de la SOW.<br><br>9.4 MDJB puede retener o reducir el pago por Servicios no entregados o materialmente deficientes, en proporción al incumplimiento, después de dar al Proveedor la oportunidad de responder."
+  },
+  {
+   "title": "Cancelación y cambios",
+   "body": "10.1 <b>Por MDJB o el cliente.</b> MDJB puede cancelar una SOW aceptada así: más de {{cFree}} días antes del evento, sin cargo; de {{cFree}} a {{cMid}} días antes, {{cMidPct}}% del precio de la SOW; menos de {{cMid}} días antes, {{cLatePct}}% del precio de la SOW, más los costos de terceros no reembolsables que el Proveedor documente.<br><br>10.2 <b>Por el Proveedor.</b> Ver Sección 9.3.<br><br>10.3 Los cambios de fecha, lugar, alcance u horario requieren un cambio escrito de la SOW antes de tener efecto.<br><br>10.4 <b>Clima y fuerza mayor.</b> Ninguna Parte es responsable por retrasos o incumplimientos causados por hechos fuera de su control razonable (clima severo, orden gubernamental, cierre del lugar, falla de servicios públicos, fuerza de la naturaleza). Para eventos al aire libre, la SOW indica el procedimiento de decisión por clima."
+  },
+  {
+   "title": "Indemnización y responsabilidad",
+   "body": "11.1 El Proveedor defenderá, indemnizará y mantendrá indemne a MDJB, sus miembros, directivos, contratistas y clientes frente a reclamaciones, pérdidas y honorarios razonables de abogados de terceros que surjan de (a) negligencia o conducta dolosa del Proveedor, (b) lesiones corporales o daños a la propiedad causados por el equipo, el personal o el trabajo del Proveedor, (c) incumplimiento de este Contrato por el Proveedor, o (d) infracción causada por contenido o equipo que el Proveedor suministre.<br><br>11.2 MDJB indemnizará al Proveedor frente a reclamaciones de terceros que surjan de contenido que MDJB o su cliente suministre para reproducción y que infrinja derechos de un tercero. <span class=\"atty-flag\">[ABOGADO: confirmar y considerar limitarlo al contenido que MDJB suministre directamente.]</span><br><br>11.3 Ninguna Parte es responsable ante la otra por daños indirectos, especiales o consecuentes, salvo por indemnización, confidencialidad, incumplimiento de no elusión y no solicitación, y negligencia grave o conducta dolosa. Salvo por la indemnización de lesiones corporales o daños a la propiedad (que se cubre hasta los límites de seguro exigidos), la responsabilidad total de cada Parte bajo una SOW tiene como tope los honorarios pagados o pagaderos bajo esa SOW. <span class=\"atty-flag\">[ABOGADO: confirmar.]</span>"
+  },
+  {
+   "title": "Propiedad intelectual y mercadeo",
+   "body": "12.1 Cada Parte conserva su propiedad intelectual. El nombre, los logotipos y la plataforma de MDJB pertenecen a MDJB, y el Proveedor no recibe licencia más allá de lo necesario para ejecutar una SOW.<br><br>12.2 El contenido suministrado por el cliente se usa solo para la SOW y el Proveedor no puede conservarlo ni reutilizarlo.<br><br>12.3 El Proveedor no publicará fotos, video, casos de estudio ni referencias que nombren a MDJB o a sus clientes sin la aprobación escrita previa de MDJB para cada uso.<br><br>12.4 El Proveedor no se presentará como afiliado, dueño o socio de MDJB ante el público ni ante los clientes."
+  },
+  {
+   "title": "Vigencia y terminación",
+   "body": "13.1 Este Contrato comienza en la Fecha de Vigencia y continúa por 12 meses, renovándose por períodos sucesivos de 12 meses, salvo que una Parte avise por escrito 30 días antes su no renovación.<br><br>13.2 Cualquiera de las Partes puede terminar con 30 días de aviso escrito. MDJB puede terminar de inmediato con aviso escrito si el Proveedor incumple las Secciones 4, 5, 6, 7 u 8, o no cumple dos o más SOW aceptadas en cualquier período de 6 meses.<br><br>13.3 La terminación no afecta las SOW aceptadas, salvo que MDJB las cancele, ni el pago debido por Servicios ya entregados. Las Secciones 4 a 7, 11, 12, 14 y 15 sobreviven a la terminación."
+  },
+  {
+   "title": "Resolución de disputas",
+   "body": "14.1 Este Contrato se rige por la ley de Florida, sin considerar sus reglas de conflicto de leyes.<br><br>14.2 Las Partes primero intentarán resolver una disputa mediante conversación de buena fe entre representantes de alto nivel durante 15 días.<br><br>14.3 La jurisdicción exclusiva son los tribunales estatales o federales ubicados en el condado de Miami-Dade, Florida. <span class=\"atty-flag\">[ABOGADO: considerar mediación o arbitraje primero.]</span> La Parte que prevalezca en cualquier acción para hacer cumplir este Contrato tiene derecho a honorarios razonables de abogados y costos. <span class=\"atty-flag\">[ABOGADO: confirmar.]</span><br><br>14.4 Cada Parte puede pedir medidas cautelares por un incumplimiento o amenaza de incumplimiento de las Secciones 5, 6 o 7 sin prestar fianza, en la medida que la ley lo permita."
+  },
+  {
+   "title": "Disposiciones generales",
+   "body": "15.1 <b>Acuerdo completo.</b> Este Contrato, sus Anexos y cada SOW son el acuerdo completo sobre su materia y reemplazan propuestas y comunicaciones anteriores, incluidos los correos introductorios intercambiados el {{introDate}}.<br><br>15.2 <b>Enmiendas</b> deben ser escritas y firmadas (o aceptadas por correo) por ambas Partes.<br><br>15.3 <b>Cesión y subcontratación.</b> El Proveedor no puede ceder este Contrato ni subcontratar ningún Servicio a un tercero sin el consentimiento escrito previo de MDJB. El Proveedor sigue siendo responsable de cualquier subcontratista aprobado.<br><br>15.4 <b>Avisos</b> se envían a las direcciones indicadas arriba y a los correos del bloque de firmas, y son efectivos al entregarse.<br><br>15.5 <b>Cumplimiento.</b> El Proveedor cumplirá con todas las leyes aplicables a su trabajo, incluidas las de licencias, trabajo, impuestos, inmigración, seguridad y accesibilidad, y tendrá las licencias que su trabajo requiera.<br><br>15.6 <b>Divisibilidad y renuncia.</b> Si una disposición no es exigible, se modificará lo mínimo necesario y el resto sigue vigente. No exigir un derecho no es una renuncia.<br><br>15.7 <b>Copias y firma electrónica.</b> Este Contrato puede firmarse en copias y electrónicamente."
+  }
+ ]
+};
+
+function vpUsd(n){ return "$" + Number(n).toLocaleString("en-US"); }
+function vpNum(v, dflt){ var n = parseFloat(v); return (isNaN(n) || n <= 0) ? dflt : n; }
+function vpV(v){ var s = String(v == null ? "" : v).trim(); return s ? esc(s) : '<span class="vp-blank"></span>'; }
+function vpFill(str, d, lang){
+  var map = {
+    pay: vpNum(d.paymentDays, 30), nc: vpNum(d.nonCircMonths, 12),
+    cFree: vpNum(d.cancelFreeDays, 14), cMid: vpNum(d.cancelMidDays, 7),
+    cMidPct: vpNum(d.cancelMidPct, 25), cLatePct: vpNum(d.cancelLatePct, 50),
+    glOcc: vpUsd(vpNum(d.glPerOccurrence, 1000000)), glAgg: vpUsd(vpNum(d.glAggregate, 2000000)),
+    umb: vpUsd(vpNum(d.umbrellaLimit, 1000000)),
+    introDate: d.introEmailsDate ? fmtDate(d.introEmailsDate, lang) : '<span class="vp-blank"></span>'
+  };
+  return str.replace(/\{\{(\w+)\}\}/g, function(m, k){ return Object.prototype.hasOwnProperty.call(map, k) ? String(map[k]) : m; });
+}
+
 const TEMPLATES = [
   {
     id:"dj", icon:"🎧",
@@ -1950,6 +2115,143 @@ const TEMPLATES = [
         </div>
         ${renderClauses(withCustomClauses(clauses,d,lang),lang,1)}
         <h2>${clauses.length+1}. ${GENERAL_CLAUSE[lang].title}</h2><p>${GENERAL_CLAUSE[lang].body}</p>`;
+    }
+  },
+  {
+    id:"vendor_production", icon:"🏗️",
+    name:{es:"Proveedor de Producción (LED / Estructuras)", en:"Production Vendor (LED / Structures)"},
+    desc:{es:"Borrador — pendiente de revisión legal. Marco + SOW", en:"Draft — pending legal review. Master + SOW"},
+    /* El lado de MDJB va ya con su firmante; todo lo del proveedor queda en
+       blanco para rellenar al emitir el contrato. */
+    agencyIsFirstParty:true,
+    defaultStaffSigner: MDJB_LEGAL.rep,
+    fields:[
+      {key:"effectiveDate", type:"date", req:true, label:{es:"Fecha de vigencia", en:"Effective Date"}, row:"vpd"},
+      {key:"introEmailsDate", type:"date", label:{es:"Fecha de los correos introductorios (15.1)", en:"Date of introductory emails (15.1)"}, row:"vpd"},
+      {key:"mdjbAddress", type:"text", label:{es:"MDJB — dirección (en blanco)", en:"MDJB — address (blank)"}},
+      {key:"mdjbSignerTitle", type:"text", label:{es:"MDJB — cargo del firmante (Gerardo A. Valle)", en:"MDJB — signer title (Gerardo A. Valle)"}, row:"vpm"},
+      {key:"mdjbEmail", type:"text", label:{es:"MDJB — correo del firmante", en:"MDJB — signer email"}, row:"vpm"},
+      {key:"vendorLegalName", type:"text", req:true, label:{es:"Proveedor — nombre legal", en:"Vendor — legal name"}},
+      {key:"vendorEntityType", type:"text", label:{es:"Proveedor — tipo de entidad", en:"Vendor — entity type"}, placeholder:{es:"Ej. sociedad de responsabilidad limitada", en:"E.g. limited liability company"}, row:"vpe"},
+      {key:"vendorEntityState", type:"text", label:{es:"Proveedor — estado de constitución", en:"Vendor — state of organization"}, placeholder:{es:"Ej. Florida", en:"E.g. Florida"}, row:"vpe"},
+      {key:"vendorAddress", type:"text", label:{es:"Proveedor — dirección", en:"Vendor — address"}},
+      {key:"vendorSignerName", type:"text", label:{es:"Proveedor — nombre del firmante", en:"Vendor — signer name"}, row:"vps"},
+      {key:"vendorSignerTitle", type:"text", label:{es:"Proveedor — cargo del firmante", en:"Vendor — signer title"}, row:"vps"},
+      {key:"vendorEmail", type:"text", label:{es:"Proveedor — correo del firmante", en:"Vendor — signer email"}},
+      {key:"paymentDays", type:"number", label:{es:"Pago: días tras evento / factura correcta (3.2)", en:"Payment: days after event / correct invoice (3.2)"}, placeholder:{es:"30 (por defecto)", en:"30 (default)"}, row:"vpp1"},
+      {key:"nonCircMonths", type:"number", label:{es:"No elusión: meses (5.1)", en:"Non-circumvention: months (5.1)"}, placeholder:{es:"12 (por defecto)", en:"12 (default)"}, row:"vpp1"},
+      {key:"cancelFreeDays", type:"number", label:{es:"Cancelación gratis: más de X días (10.1)", en:"Free cancellation: more than X days (10.1)"}, placeholder:{es:"14 (por defecto)", en:"14 (default)"}, row:"vpp2"},
+      {key:"cancelMidDays", type:"number", label:{es:"Cancelación media: hasta X días (10.1)", en:"Mid cancellation: down to X days (10.1)"}, placeholder:{es:"7 (por defecto)", en:"7 (default)"}, row:"vpp2"},
+      {key:"cancelMidPct", type:"number", label:{es:"Cargo cancelación media (%)", en:"Mid cancellation charge (%)"}, placeholder:{es:"25 (por defecto)", en:"25 (default)"}, row:"vpp3"},
+      {key:"cancelLatePct", type:"number", label:{es:"Cargo cancelación tardía (%)", en:"Late cancellation charge (%)"}, placeholder:{es:"50 (por defecto)", en:"50 (default)"}, row:"vpp3"},
+      {key:"glPerOccurrence", type:"number", label:{es:"RC general por evento (USD, 8.1)", en:"General liability per occurrence (USD, 8.1)"}, placeholder:{es:"1000000 (por defecto)", en:"1000000 (default)"}, row:"vpi1"},
+      {key:"glAggregate", type:"number", label:{es:"RC general agregado (USD, 8.1)", en:"General liability aggregate (USD, 8.1)"}, placeholder:{es:"2000000 (por defecto)", en:"2000000 (default)"}, row:"vpi1"},
+      {key:"autoLimit", type:"number", label:{es:"Auto: límite único combinado (USD, Anexo B)", en:"Auto: combined single limit (USD, Exhibit B)"}, placeholder:{es:"1000000 (por defecto)", en:"1000000 (default)"}, row:"vpi2"},
+      {key:"umbrellaLimit", type:"number", label:{es:"Paraguas (USD, 8.1(e))", en:"Umbrella (USD, 8.1(e))"}, placeholder:{es:"1000000 (por defecto)", en:"1000000 (default)"}, row:"vpi2"},
+      {key:"ratesValidUntil", type:"text", label:{es:"Anexo A — tarifas válidas hasta", en:"Exhibit A — rates valid until"}, row:"vpa"},
+      {key:"minimumOrder", type:"text", label:{es:"Anexo A — pedido mínimo", en:"Exhibit A — minimum order"}, row:"vpa"},
+      {key:"vendorDeposits", type:"text", label:{es:"Anexo A — depósitos que exige el Proveedor", en:"Exhibit A — deposits required by Vendor"}},
+      {key:"preExistingClients", type:"textarea", label:{es:"Anexo D — clientes preexistentes (uno por línea)", en:"Exhibit D — pre-existing clients (one per line)"}},
+    ],
+    partyNames(d,lang){
+      var blank = "________";
+      var mT = String(d.mdjbSignerTitle||"").trim(), mE = String(d.mdjbEmail||"").trim();
+      var vN = String(d.vendorSignerName||"").trim(), vT = String(d.vendorSignerTitle||"").trim(), vE = String(d.vendorEmail||"").trim();
+      return [
+        {label:{
+          es:"Por: "+esc(MDJB_LEGAL.rep)+" · Cargo: "+(mT?esc(mT):blank)+(mE?" · Correo: "+esc(mE):""),
+          en:"By: "+esc(MDJB_LEGAL.rep)+" · Title: "+(mT?esc(mT):blank)+(mE?" · Email: "+esc(mE):"")},
+         name:MDJB_LEGAL.name},
+        {label:{
+          es:"Por: "+(vN?esc(vN):blank)+" · Cargo: "+(vT?esc(vT):blank)+(vE?" · Correo: "+esc(vE):""),
+          en:"By: "+(vN?esc(vN):blank)+" · Title: "+(vT?esc(vT):blank)+(vE?" · Email: "+esc(vE):"")},
+         name:d.vendorLegalName||""},
+      ];
+    },
+    render(d,lang){
+      var es = (lang==='es');
+      var clauses = VENDOR_PRODUCTION_CLAUSES.en.map(function(c,i){
+        var ce = VENDOR_PRODUCTION_CLAUSES.es[i];
+        return {en:{title:c.title, body:vpFill(c.body,d,'en')}, es:{title:ce.title, body:vpFill(ce.body,d,'es')}};
+      });
+      var effDate = d.effectiveDate ? fmtDate(d.effectiveDate, lang) : '<span class="vp-blank"></span>';
+      var intro = es
+        ? `Este Contrato de Proveedor Adicional (el "Contrato") se celebra el ${effDate} (la "Fecha de Vigencia") entre: <b>MIAMI DJ BEAT LLC</b>, una sociedad de responsabilidad limitada de Florida, ${vpV(d.mdjbAddress)} ("MDJB"), y <b>${vpV(d.vendorLegalName)}</b>, una ${vpV(d.vendorEntityType)} de ${vpV(d.vendorEntityState)}, ${vpV(d.vendorAddress)} (el "Proveedor"). MDJB y el Proveedor son cada uno una "Parte" y juntos las "Partes".`
+        : `This Additional Vendor Agreement (the "Agreement") is entered into as of ${effDate} (the "Effective Date") between: <b>MIAMI DJ BEAT LLC</b>, a Florida limited liability company, ${vpV(d.mdjbAddress)} ("MDJB"), and <b>${vpV(d.vendorLegalName)}</b>, a ${vpV(d.vendorEntityState)} ${vpV(d.vendorEntityType)}, ${vpV(d.vendorAddress)} ("Vendor"). MDJB and Vendor are each a "Party" and together the "Parties."`;
+      var langNote = es
+        ? 'Traducción de cortesía. En caso de conflicto, rige la versión en inglés.'
+        : 'English version governs. A Spanish courtesy translation is available.';
+      return `
+        ${letterheadBlock()}
+        <div class="paper-eyebrow">${es?'Servicios de Producción':'Production Services'}</div>
+        <h1>${es?'Contrato de Proveedor Adicional':'Additional Vendor Agreement'}</h1>
+        <div class="paper-sub">${es?'Preparado':'Prepared'} ${fmtDate(todayIso(),lang)} · Miami DJ Beat LLC<br><i>${langNote}</i></div>
+        <div class="kv">
+          <div><span>${es?'Proveedor':'Vendor'}</span><b>${d.vendorLegalName?esc(d.vendorLegalName):'<span class="placeholder">—</span>'}</b></div>
+          <div><span>${es?'Fecha de vigencia':'Effective Date'}</span><b>${d.effectiveDate?fmtDate(d.effectiveDate,lang):'<span class="placeholder">—</span>'}</b></div>
+          <div><span>${es?'Ley aplicable':'Governing law'}</span><b>Florida · Miami-Dade</b></div>
+        </div>
+        <p>${intro}</p>
+        ${renderClauses(withCustomClauses(clauses,d,lang),lang,1)}`;
+    },
+    /* Anexos A-D: van DESPUÉS del bloque de firma (ver updateDocumentPreview). */
+    renderAnnex(d,lang){
+      var es = (lang==='es');
+      var rows = [
+        ['Pared LED (indicar paso de píxel y tamaño)','LED wall (specify pixel pitch and size)','por día','per day',''],
+        ['Técnico / operador','Technician / operator','por día u hora','per day or per hour','Horas mínimas:|Minimum hours:'],
+        ['Sistema de reproducción de contenido','Media playback system','por día','per day',''],
+        ['Entrega, montaje y desmontaje','Delivery, setup, teardown','por evento','per event','Bandas de distancia:|Distance bands:'],
+        ['Truss, estructura o cabina de DJ','Truss, structure or DJ booth','por pieza o por evento','per piece or per event',''],
+        ['Iluminación','Lighting','por equipo o paquete','per fixture or package',''],
+        ['Horas extra','Overtime','por hora','per hour','Se activan después de:|Triggered after:'],
+        ['Reserva de noche / varios días','Overnight / multi-day hold','por noche','per night',''],
+      ];
+      var rateRows = rows.map(function(r){
+        var note = r[4] ? r[4].split('|')[es?0:1] : '';
+        return `<tr><td>${es?r[0]:r[1]}</td><td>${es?r[2]:r[3]}</td><td>$</td><td>$</td><td>${note}</td></tr>`;
+      }).join('');
+      var lines = String(d.preExistingClients||'').split(/\r?\n/).map(function(s){ return s.trim(); }).filter(Boolean);
+      while(lines.length < 3) lines.push('');
+      var preList = lines.map(function(s,i){ return `<li>${s?esc(s):'<span class="vp-blank"></span>'}</li>`; }).join('');
+      var gl = vpUsd(vpNum(d.glPerOccurrence,1000000)) + (es?' por evento / ':' per occurrence / ') + vpUsd(vpNum(d.glAggregate,2000000)) + (es?' agregado':' aggregate');
+      var auto = vpUsd(vpNum(d.autoLimit,1000000));
+      var umb = vpUsd(vpNum(d.umbrellaLimit,1000000));
+      var B = (k)=>`<span class="vp-blank"></span>`;
+      var sow = es ? [
+        ['Nombre del evento / referencia de MDJB'],['Fecha'],['Lugar y dirección'],
+        ['Horas de carga / prueba de sonido / apertura de puertas / fin / descarga'],['Equipo y personal'],
+        ['Requisitos especiales (energía, puntos de anclaje, permisos, plan de clima)'],['Precio (según Lista de Tarifas)'],
+        ['Momento del pago'],['Términos de cancelación (si difieren de la Sección 10)'],['Contacto de MDJB en sitio'],
+        ['Responsable del Proveedor en sitio'],['Aceptado por el Proveedor (nombre, fecha)']
+      ] : [
+        ['Event name / MDJB reference'],['Date'],['Venue and address'],
+        ['Load-in / soundcheck / doors / end / load-out times'],['Equipment and crew'],
+        ['Special requirements (power, rigging points, permits, weather plan)'],['Price (per Rate Card)'],
+        ['Payment timing'],['Cancellation terms (if different from Section 10)'],['MDJB on-site contact'],
+        ['Vendor on-site lead'],['Accepted by Vendor (name, date)']
+      ];
+      var sowList = sow.map(function(s){ return `<li><b>${s[0]}:</b> ${B()}</li>`; }).join('');
+      return `<div class="vp-annex">
+        <h2>${es?'ANEXO A — Lista de tarifas':'EXHIBIT A — Rate Card'}</h2>
+        <p class="vp-note">${es?'(La completa el Proveedor; MDJB la revisa antes de firmar.)':'(Vendor completes; MDJB reviews before signing.)'}</p>
+        <table class="vp-table"><thead><tr><th>${es?'Concepto':'Item'}</th><th>${es?'Unidad':'Unit'}</th><th>${es?'Tarifa interior':'Indoor rate'}</th><th>${es?'Tarifa exterior':'Outdoor rate'}</th><th>${es?'Notas':'Notes'}</th></tr></thead><tbody>${rateRows}</tbody></table>
+        <p>${es?'Tarifas válidas hasta':'Rates valid until'}: ${vpV(d.ratesValidUntil)}. ${es?'Pedido mínimo':'Minimum order'}: ${vpV(d.minimumOrder)}. ${es?'Depósitos que exige el Proveedor, si hay':'Deposits required by Vendor, if any'}: ${vpV(d.vendorDeposits)}.</p>
+        <h2>${es?'ANEXO B — Requisitos de seguro':'EXHIBIT B — Insurance Requirements'}</h2>
+        <ul class="vp-list">
+          <li>${es?'Responsabilidad civil general':'General liability'}: ${gl}</li>
+          <li>${es?'Compensación laboral: estatutaria de Florida':"Workers' compensation: Florida statutory"}</li>
+          <li>${es?'Auto':'Auto'}: ${auto} ${es?'límite único combinado (si se usan vehículos)':'combined single limit (if vehicles are used)'}</li>
+          <li>${es?'Equipo: valor total de reposición':'Equipment: full replacement value'}</li>
+          <li>${es?'Paraguas':'Umbrella'}: ${umb}</li>
+        </ul>
+        <p>${es?'Asegurado adicional: Miami DJ Beat LLC y el lugar nombrado en la SOW. Certificados antes de la primera SOW.':'Additional insured: Miami DJ Beat LLC and the venue named in the SOW. Certificates due before the first SOW.'}</p>
+        <h2>${es?'ANEXO C — Orden de trabajo (plantilla)':'EXHIBIT C — Statement of Work (template)'}</h2>
+        <ul class="vp-list">${sowList}</ul>
+        <h2>${es?'ANEXO D — Clientes preexistentes':'EXHIBIT D — Pre-Existing Clients'}</h2>
+        <p>${es?'El Proveedor enumera los clientes que atendió o con los que contrató antes de la Fecha de Vigencia y que quiere excluir de la Sección 5:':'Vendor lists clients it served or contracted with before the Effective Date and wants excluded from Section 5:'}</p>
+        <ol class="vp-list">${preList}</ol>
+      </div>`;
     }
   },
   {
@@ -2967,7 +3269,8 @@ function updateDocumentPreview(paperSelector, tpl, data, lang, tail){
     return;
   }
   const body = tpl.render(data, lang);
-  paper.innerHTML = body + `<div data-tail-root>${tailHtml}</div>`;
+  const annex = (typeof tpl.renderAnnex === "function") ? tpl.renderAnnex(data, lang) : "";
+  paper.innerHTML = body + `<div data-tail-root>${tailHtml}</div>` + annex;
   paper.classList.toggle("w9-strict", tpl.id==="w9");
   if(tpl.id==="w9") paper.dataset.w9DataRef = String(w9DataRefId(data));
 }
@@ -3130,7 +3433,7 @@ function buildPartySlotsHtml(tpl, data, lang, signerName, signerRole, sigDataUrl
   const parties = tpl.partyNames(data, lang) || [];
   const dateStr = fmtDate((signedDateIso||todayIso()).slice(0,10), lang);
   const repLabel = esc(signerRole) || (lang==='es'?'Representante Legal · Miami DJ Beat LLC':'Legal Representative · Miami DJ Beat LLC');
-  const mergeIntoFirstParty = isAgencyRep!==false && tpl.id === 'dj' && data.engagementMode === 'roster';
+  const mergeIntoFirstParty = isAgencyRep!==false && ((tpl.id === 'dj' && data.engagementMode === 'roster') || tpl.agencyIsFirstParty === true);
   const partySlots = parties.map((p,i)=>{
     if(mergeIntoFirstParty && i===0){
       /* Fusión real: se conserva el nombre de LA PARTE (Miami DJ Beat LLC)
@@ -3673,6 +3976,10 @@ const LOCAL_TO_DB_CONTRACT_TYPE = {
   corporate: "CORPORATE_AGREEMENT", staff: "STAFF_AGREEMENT",
   live_band: "LIVE_BAND_AGREEMENT", solo_artist: "SOLO_ARTIST_AGREEMENT",
   subcontractor_show: "SUBCONTRACTOR_SHOW_AGREEMENT", private_event: "PRIVATE_EVENT_AGREEMENT",
+  /* 2026-10-05: el valor VENDOR_PRODUCTION_AGREEMENT NO existe todavía en el CHECK de
+     PRODUCCIÓN — guardar un contrato firmado de este tipo falla (23514) hasta que el PO
+     corra supabase/scripts/20261005_ampliar_tipo_vendor_production_signed_contracts.sql. */
+  vendor_production: "VENDOR_PRODUCTION_AGREEMENT",
 };
 /* Inverso — obtener_mi_contrato_detalle() devuelve el enum real de la DB
    ("W9", "DJ_AGREEMENT"...); TEMPLATES usa los ids locales en minúscula
@@ -3740,7 +4047,7 @@ function renderStaffActionArea(){
       <div class="action-row">
         <button class="btn btn-ghost" id="genLinkBtn">📨 ${t.generateLinkBtn}</button>
       </div>
-      <div class="field"><label data-i18n="signerNameLabel">${t.signerNameLabel}</label><input type="text" id="staffSignerName" placeholder="${t.signerNamePh}" autocomplete="off"></div>
+      <div class="field"><label data-i18n="signerNameLabel">${t.signerNameLabel}</label><input type="text" id="staffSignerName" placeholder="${t.signerNamePh}" value="${esc(currentTemplate().defaultStaffSigner||'')}" autocomplete="off"></div>
       <div class="field"><label data-i18n="signerRoleLabel">${t.signerRoleLabel}</label><input type="text" id="staffSignerRole" placeholder="${t.signerRolePh}" autocomplete="off"></div>
       <div class="sig-box">
         <div class="sig-thumb" id="sigThumbWrap"><span id="sigThumbEmpty" style="color:#999;font-size:10px;">—</span><img id="sigThumbImg" hidden></div>

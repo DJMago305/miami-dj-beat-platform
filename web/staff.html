@@ -2043,7 +2043,7 @@
           </div>
 
           <!-- Grupo BÓVEDA LEGAL — acordeón propio (no un link dentro de Operaciones):
-               sus 5 sub-items muestran el panel #sc3-legal (mismo patrón que
+               sus sub-items (uno por plantilla del motor) muestran el panel #sc3-legal (mismo patrón que
                Inbox, sidebar visible) y le dicen a contracts-engine.html qué
                plantilla abrir por postMessage — ver data-legal-tpl abajo. -->
           <button type="button" class="side3-group" data-group="legal" aria-label="Bóveda Legal" data-i18n-aria="side3-boveda-legal">
@@ -2054,6 +2054,7 @@
             <button type="button" class="side3-link" data-legal-tpl="live_band" title="Orquesta / Banda en Vivo" data-i18n-title="side3-legal-band"><span class="side3-ic">🎷</span><span class="side3-tx" data-i18n="side3-legal-band">Orquesta / Banda en Vivo</span></button>
             <button type="button" class="side3-link" data-legal-tpl="solo_artist" title="Cantante / Solista" data-i18n-title="side3-legal-solista"><span class="side3-ic">🎤</span><span class="side3-tx" data-i18n="side3-legal-solista">Cantante / Solista</span></button>
             <button type="button" class="side3-link" data-legal-tpl="subcontractor_show" title="Show / Hora Loca (Subcontratista)" data-i18n-title="side3-legal-show-title"><span class="side3-ic">🎪</span><span class="side3-tx" data-i18n="side3-legal-show">Show / Hora Loca</span></button>
+            <button type="button" class="side3-link" data-legal-tpl="vendor_production" title="Proveedor de Producción (LED / Estructuras)" data-i18n-title="side3-legal-vendor-title"><span class="side3-ic">🏗️</span><span class="side3-tx" data-i18n="side3-legal-vendor">Proveedor de Producción</span></button>
             <button type="button" class="side3-link" data-legal-tpl="venue" title="Venue / Residencia" data-i18n-title="side3-legal-venue"><span class="side3-ic">🏛️</span><span class="side3-tx" data-i18n="side3-legal-venue">Venue / Residencia</span></button>
             <button type="button" class="side3-link" data-legal-tpl="private_event" title="Cliente Particular / Boda / 15 Años" data-i18n-title="side3-legal-particular-title"><span class="side3-ic">💍</span><span class="side3-tx" data-i18n="side3-legal-particular">Cliente Particular / Boda</span></button>
             <button type="button" class="side3-link" data-legal-tpl="corporate" title="Eventos Corporativos" data-i18n-title="side3-legal-corporate"><span class="side3-ic">🏢</span><span class="side3-tx" data-i18n="side3-legal-corporate">Eventos Corporativos</span></button>
@@ -2202,7 +2203,7 @@
                para que el sidebar siga visible, no como vista aparte. -->
           <div class="sc3-panel" id="sc3-legal">
             <div class="sc3-loading" id="legal-loading"><span class="acc-spin"></span> <span data-i18n="staff-cargando-legal">Cargando Bóveda Legal…</span></div>
-            <iframe id="legal-frame" class="sc3-frame" data-src="./contracts-engine.html?v=20260826-docdock" aria-label="Bóveda Legal" loading="lazy" allow="fullscreen" allowfullscreen></iframe>
+            <iframe id="legal-frame" class="sc3-frame" data-src="./contracts-engine.html?v=20261005-vendor-production" aria-label="Bóveda Legal" loading="lazy" allow="fullscreen" allowfullscreen></iframe>
           </div>
           <!-- Mensajes del Sistema (2026-09-23): SMS reales entrantes+salientes con
                clientes y artistas, mismo patrón de panel dedicado + iframe perezoso. -->
@@ -5202,7 +5203,7 @@
        header-smart-search.js se deja: sigue enganchado al #header-smart-search
        de .staff-flota (oculto, no removido). -->
   <script src="./header-smart-search.js?v=20260927-bilingue-hint"></script>
-  <script src="./translations.js?v=20261003-mi-perfil-unico"></script>
+  <script src="./translations.js?v=20261005-vendor-boveda"></script>
   <script src="./i18n.js?v=20260427-lang-default"></script>
 </body>
 </html>

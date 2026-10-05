@@ -1,5 +1,5 @@
 # ESTADO MAESTRO — MIAMI DJ BEAT LLC (SSOT)
-Última actualización: 2026-09-30
+Última actualización: 2026-10-05
 Estado general: Operativo / En consolidación
 
 ## 1. Módulos y Estado Técnico
@@ -71,6 +71,49 @@ Estado general: Operativo / En consolidación
       Trabajo en rama `feature/contracts-w9-engine-integration` (misma rama,
       reutilizada tras el merge — commits nuevos siguen ahí, sin PR nuevo
       abierto todavía).
+      — 2026-10-05 PLANTILLA NUEVA `vendor_production` (orden del PO, vía hilo
+      GEO·SEO·IA): contrato de proveedor adicional de producción (LED /
+      estructuras; primer destinatario previsto: FUZED Productions). 15
+      secciones + Anexos A-D (tarifas, seguros, SOW, clientes preexistentes),
+      bilingüe con el inglés rigiendo. Texto generado desde los borradores
+      `.claude-scratch/contrato-proveedor-adicional-borrador.md` / `-ES.md`
+      sin reescribirlo; defaults editables (pago 30 días, no elusión 12 meses,
+      cancelación 14/7 días al 25%/50%, seguros) como campos numéricos. Lado
+      MDJB ya con firmante Gerardo A. Valle (cargo, dirección y fecha en
+      blanco); todo lo del proveedor en blanco. Los 6 puntos [ATTORNEY]/
+      [ABOGADO] quedan resaltados y SIN resolver — los cierra el abogado.
+      `subcontractor_show` y las demás plantillas intactas (3 cambios de una
+      línea en código compartido, todos opt-in por plantilla: hook
+      `renderAnnex`, `agencyIsFirstParty`, `defaultStaffSigner`).
+      Rama local `feature/contratos-vendor-production` (worktree
+      `.worktrees/vendor-production`), sin commit y sin PR hasta el
+      «aprobado» del PO. ⚠️ Dos pendientes que NO se hicieron por no estar en
+      la orden: (1) el selector de plantillas vive en el sidebar «Bóveda
+      Legal» de `staff.html` (`data-legal-tpl`) — sin un botón nuevo ahí la
+      plantilla no es alcanzable desde la pantalla real; tocar ese menú
+      requiere autorización explícita. (2) El `CHECK` de
+      `signed_contracts.contract_type` aún no acepta
+      `VENDOR_PRODUCTION_AGREEMENT`: escrito, NO ejecutado,
+      `supabase/scripts/20261005_ampliar_tipo_vendor_production_signed_contracts.sql`
+      (lo corre el PO). Sin eso, previsualizar y enviar funcionan; guardar el
+      contrato firmado falla con 23514. Verificado solo en el motor aislado
+      (postMessage `mdjb:open-template`), NO dentro de `staff.html` con sesión
+      real (Regla 4). NADA se ha enviado a FUZED ni a nadie: no se manda hasta
+      que el abogado revise y el proveedor responda con precios y prueba de
+      seguro.
+      ✅ Pendiente (1) AUTORIZADO por el PO y hecho 2026-10-05: ítem «Proveedor
+      de Producción» (🏗️, `data-legal-tpl="vendor_production"`) en el sidebar
+      «Bóveda Legal» de `staff.html`, rótulo copiado del nombre de la plantilla;
+      claves `side3-legal-vendor(-title)` ES/EN en `translations.js`; `?v=` del
+      iframe del motor y de `translations.js` actualizados. Ya hay 10 ítems = 10
+      plantillas, ninguna sin botón. ✅ Pendiente (2) EJECUTADO por el PO en
+      PRODUCCIÓN el 2026-10-05: `signed_contracts_contract_type_check` ahora
+      acepta `VENDOR_PRODUCTION_AGREEMENT` (una sola fila antes, éxito sin
+      errores, verificación posterior encontró el valor). Inventario real de
+      `signed_contracts` en prod ese día: 7 `DJ_AGREEMENT` + 2 `W9`, todos
+      SIGNED, entre 2026-08-24 y 2026-08-26; ningún contrato firmado de otro
+      tipo ni posterior. Queda pendiente la verificación visual del PO en
+      `staff.html` real.
 - [x] Motor de Voz Realtime ELIXIS (PR #202 desplegado en producción)
 - [x] Políticas de Cuota y RBAC (3h Full / 5h Mini / Fallback a texto)
 - [x] Despacho SMS Seguro (`elixis_sms_pending` + validación E.164 + Twilio, verificado con envío real)
