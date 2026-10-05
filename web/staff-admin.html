@@ -7454,6 +7454,100 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 return '#a1a1aa'; // NEW
             };
 
+            /* Campañas (2026-10-05, pedido del PO: «las plantillas de las campañas deberías
+               dejármelas en algún lugar en Network para copiar y pegar a mano, como
+               Campañas»). Son las MISMAS plantillas de «Mensajes del Sistema → Tools»
+               (tabla system_messages_templates, ocasion «Campaña …»): aquí solo se leen y
+               se copian, no hay una segunda copia que se desincronice. RLS: solo staff. */
+            window._networkCampanas = null;           // null = aún sin cargar
+            window._networkCampanasError = null;
+            const _netEsc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            window.loadNetworkCampanas = async function() {
+                const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
+                if (!db) return;
+                try {
+                    const r = await db.from('system_messages_templates')
+                        .select('id, nombre, cuerpo, ocasion, link_url')
+                        .ilike('ocasion', 'Campaña%')
+                        .order('ocasion', { ascending: true })
+                        .order('nombre', { ascending: true });
+                    if (r.error) throw r.error;
+                    window._networkCampanas = r.data || [];
+                    window._networkCampanasError = null;
+                } catch (e) {
+                    window._networkCampanas = [];
+                    window._networkCampanasError = (e && e.message) || String(e);
+                }
+                if (window._networkLastProfiles) window.renderCRM(window._networkLastProfiles);
+            };
+            window.networkCopyCampana = async function(btn) {
+                const id = btn.getAttribute('data-id');
+                const modo = btn.getAttribute('data-modo') || 'todo';
+                const t = (window._networkCampanas || []).find(x => String(x.id) === id);
+                if (!t) return;
+                let texto = t.cuerpo || '';
+                // Los correos traen «Asunto: …» en la primera línea: se puede copiar aparte.
+                const m = /^Asunto:\s*(.*?)\r?\n+([\s\S]*)$/.exec(texto);
+                if (m && modo === 'asunto') texto = m[1].trim();
+                else if (m && modo === 'cuerpo') texto = m[2].trim();
+                let ok = false;
+                try { await navigator.clipboard.writeText(texto); ok = true; } catch (e) { void e; }
+                if (!ok) {
+                    try {
+                        const ta = document.createElement('textarea');
+                        ta.value = texto; ta.style.position = 'fixed'; ta.style.opacity = '0';
+                        document.body.appendChild(ta); ta.select();
+                        ok = document.execCommand('copy');
+                        document.body.removeChild(ta);
+                    } catch (e) { void e; }
+                }
+                const prev = btn.getAttribute('data-label') || btn.textContent;
+                btn.setAttribute('data-label', prev);
+                btn.textContent = ok ? '✓ Copiado' : 'No se pudo copiar';
+                setTimeout(() => { btn.textContent = prev; }, 1800);
+            };
+            window.renderNetworkCampanasPanel = function() {
+                const rows = window._networkCampanas;
+                let body;
+                if (rows === null) {
+                    body = '<div class="fineprint" style="padding:12px 0;">Cargando plantillas…</div>';
+                } else if (window._networkCampanasError) {
+                    body = '<div class="fineprint" style="padding:12px 0; color:#f87171;">No se pudieron cargar las plantillas (' + _netEsc(window._networkCampanasError) + ').</div>';
+                } else if (!rows.length) {
+                    body = '<div class="fineprint" style="padding:12px 0;">Todavía no hay plantillas de campaña. Se crean en Mensajes del Sistema → Tools con la etiqueta «Campaña …».</div>';
+                } else {
+                    const porGrupo = {};
+                    rows.forEach(t => { (porGrupo[t.ocasion || 'Campaña'] = porGrupo[t.ocasion || 'Campaña'] || []).push(t); });
+                    body = Object.keys(porGrupo).map(g => {
+                        const cards = porGrupo[g].map(t => {
+                            const esCorreo = /\(CORREO\)/i.test(t.nombre || '');
+                            const btnStyle = 'background:var(--net-surface-2); border:1px solid var(--net-line-soft); border-radius:6px; color:var(--net-text); font:inherit; font-size:12px; font-weight:700; padding:6px 12px; cursor:pointer;';
+                            const botones = esCorreo
+                                ? '<button type="button" data-id="' + _netEsc(t.id) + '" data-modo="asunto" onclick="window.networkCopyCampana(this)" style="' + btnStyle + '">Copiar asunto</button>'
+                                  + '<button type="button" data-id="' + _netEsc(t.id) + '" data-modo="cuerpo" onclick="window.networkCopyCampana(this)" style="' + btnStyle + '">Copiar cuerpo</button>'
+                                : '<button type="button" data-id="' + _netEsc(t.id) + '" data-modo="todo" onclick="window.networkCopyCampana(this)" style="' + btnStyle + '">Copiar texto</button>';
+                            const enlace = t.link_url
+                                ? '<a href="' + _netEsc(t.link_url) + '" target="_blank" rel="noopener" style="' + btnStyle + ' text-decoration:none; display:inline-block;">Abrir enlace</a>'
+                                : '';
+                            return '<div style="border:1px solid var(--net-line-soft); border-radius:10px; padding:14px 16px; display:flex; flex-direction:column; gap:10px; background:var(--net-surface-2);">'
+                                + '<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">'
+                                + '<span style="font-size:10px; font-weight:800; letter-spacing:.08em; padding:3px 8px; border-radius:999px; background:var(--net-tab-active-bg); color:var(--gold);">' + (esCorreo ? 'CORREO' : 'SMS') + '</span>'
+                                + '<strong style="font-size:14px;">' + _netEsc(String(t.nombre || '').replace(/\s*\((SMS|CORREO)\)\s*$/i, '')) + '</strong></div>'
+                                + '<div style="white-space:pre-wrap; font-size:13px; line-height:1.5; color:var(--net-text-dim); user-select:text;">' + _netEsc(t.cuerpo) + '</div>'
+                                + '<div style="display:flex; gap:8px; flex-wrap:wrap;">' + botones + enlace + '</div></div>';
+                        }).join('');
+                        return '<div style="margin-top:18px;"><div style="font-size:11px; font-weight:800; letter-spacing:.08em; color:var(--muted); text-transform:uppercase; margin-bottom:8px;">' + _netEsc(g) + '</div>'
+                            + '<div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:12px;">' + cards + '</div></div>';
+                    }).join('');
+                }
+                return '<div style="padding:18px 22px;">'
+                    + '<div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">'
+                    + '<h2 style="margin:0; font-size:18px;">📣 Campañas</h2>'
+                    + '<a href="./system-messages.html" target="_blank" rel="noopener" style="background:var(--net-surface-2); border:1px solid var(--net-line-soft); border-radius:6px; color:var(--net-text); font-size:12px; font-weight:700; padding:6px 12px; text-decoration:none;">Abrir Mensajes del Sistema</a></div>'
+                    + '<div class="fineprint" style="margin-top:6px;">Los SMS se mandan desde Mensajes del Sistema (lleva «MIAMI DJ BEAT LLC:» sola y el mismo texto para todos). Los correos, desde tu correo: en el texto cambia {nombre}.</div>'
+                    + body + '</div>';
+            };
+
             window.renderCRM = function(profiles) {
                 window._networkLastProfiles = profiles;
                 window._networkRowData = [];
@@ -7550,6 +7644,27 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                                 </span>
                             </button>`;
                         }).join('') +
+                        // Campañas: plantillas para copiar y pegar (pedido del PO 2026-10-05).
+                        // Mismo estilo fijo que Todos/Artistas; no es una lista de contactos.
+                        (function() {
+                            const active = window._networkActiveTab === 'campanas';
+                            const activeBg = 'var(--net-tab-active-bg)';
+                            const n = Array.isArray(window._networkCampanas) ? window._networkCampanas.length : '';
+                            return `<button type="button" class="net-tab-btn" onclick="window.switchNetworkTab('campanas')" title="Campañas" style="
+                                display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%;
+                                padding:8px 10px; border:none; border-radius:6px; text-align:left;
+                                background:${active ? activeBg : 'transparent'};
+                                color:${active ? 'var(--gold)' : 'var(--net-text-dim)'};
+                                font-weight:${active ? '800' : '600'}; font-size:13px; cursor:pointer; white-space:nowrap;
+                                transition:background 0.15s, color 0.15s;
+                            " onmouseover="if(this.style.background==='transparent')this.style.background='var(--net-hover)'" onmouseout="this.style.background='${active ? activeBg : 'transparent'}'">
+                                <span style="flex:none; color:var(--gold);">📣</span>
+                                <span class="net-tab-label" style="flex:1; display:flex; align-items:center; justify-content:space-between; gap:8px; overflow:hidden;">
+                                    <span style="overflow:hidden; text-overflow:ellipsis;">Campañas</span>
+                                    <span style="font-size:11px; color:var(--muted); flex:none;">${n}</span>
+                                </span>
+                            </button>`;
+                        })() +
                         // Categorías personalizadas ancladas (ver NETWORK_PINNED_CUSTOM_NAMES)
                         // -- mismo estilo fijo que Todos/Artistas, sin menú "⋯" (no se
                         // eliminan). Siguen siendo network_lists reales por debajo.
@@ -7784,6 +7899,9 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     // ninguna se marcan con un punto amarillo (flagUncategorized=true),
                     // nunca rojo (rojo = error, no ausencia de categoría).
                     html = renderTable('Todos', NETWORK_ALL_ICON, _networkDedupeByContact(visibleProfiles), false, 1, true);
+                } else if (activeTab === 'campanas') {
+                    html = window.renderNetworkCampanasPanel();
+                    if (window._networkCampanas === null) window.loadNetworkCampanas();
                 } else if (activeTab.indexOf('custom:') === 0) {
                     // Categoría personalizada -- una sola tabla mezclando client_profiles
                     // y dj_profiles (por eso no puede reusar ALL_TABLES/groups, que
