@@ -30,6 +30,7 @@
 <style>
   #mdjBfiGate{position:fixed;inset:0;z-index:99999;background:#07090e;color:#e8eefc;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.1/chart.umd.min.js"></script>
 </head>
 <body>
 <div id="mdjBfiGate">
@@ -205,6 +206,7 @@
   .range-chip { border: none; background: transparent; color: var(--text-2); font-size: 12px; padding: 6px 10px; border-radius: 7px; cursor: pointer; font-family: var(--font-display); }
   .range-chip.active { background: var(--gold); color: #1b1204; font-weight: 700; }
   .custom-range { display:flex; gap:6px; align-items:center; background: var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:5px 8px; }
+  .custom-range[hidden] { display: none; }
   .custom-range input[type="date"] { background: transparent; border: none; color: var(--text); font-size: 12px; font-family: var(--font-mono); }
 
   .compare-toggle { display:flex; align-items:center; gap:6px; font-size: 12.5px; color: var(--text-2); cursor:pointer; user-select:none; }
@@ -404,6 +406,8 @@
 <script>try{if(window.self!==window.top)document.documentElement.classList.add('mdj-embedded');}catch(e){document.documentElement.classList.add('mdj-embedded');}</script>
 <style>
   html.mdj-embedded .brand{display:none;} html.mdj-embedded .sidebar{padding-top:16px;}
+  /* Dentro de Staff el botón CENTRAL día/noche del portal es el ÚNICO control (PO 2026-08-15): el botón interno del Matrix no se muestra. */
+  html.mdj-embedded #themeToggleBtn{display:none;}
   .sb-collapse-btn{display:none;}
   @media (min-width:1025px){
     .sb-collapse-btn{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;
@@ -513,7 +517,7 @@
           <input type="date" id="customFrom"> <span style="color:var(--text-muted)">→</span> <input type="date" id="customTo">
         </div>
         <label class="compare-toggle">
-          <span class="switch"><input type="checkbox" id="compareToggle"><span class="track"><span class="thumb"></span></span></span>
+          <span class="switch"><input type="checkbox" id="compareToggle" checked><span class="track"><span class="thumb"></span></span></span>
           vs período anterior
         </label>
         <button class="icon-btn primary" id="exportBtn">↓ Exportar (demo)</button>
@@ -715,7 +719,7 @@
     buScreen: "detail",
     artistId: null,
     range: "month",
-    compare: false,
+    compare: true,
     chartMode: "line",
     incomeMetric: "reconocido",
     scenarioPct: 0,
@@ -754,15 +758,30 @@
   customBtn.dataset.range = "custom";
   rangeChips.appendChild(customBtn);
 
+  /* Rango activo para los bloques con datos REALES (web/js/business-cash-real.js): presets por días terminando hoy, o las dos fechas del rango personalizado. */
+  function isoDay(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+  window.mdjBfiRangeInfo = function(){
+    var rm = rangeMeta(state.range);
+    if(state.range === "custom"){
+      var f = $("customFrom").value, t = $("customTo").value;
+      if(f && t && f <= t) return { id:"custom", label:"Personalizado", from:f, to:t, custom:true, compare:state.compare };
+      return { id:"custom", label:"Personalizado", incomplete:true, compare:state.compare };
+    }
+    var now = new Date(), from = new Date(now.getTime() - (rm.days-1)*864e5);
+    return { id:state.range, label:rm.label, days:rm.days, from:isoDay(from), to:isoDay(now), compare:state.compare };
+  };
+  function emitRange(){ try{ window.dispatchEvent(new Event("mdjbfi:range")); }catch(e){} }
+
   rangeChips.addEventListener("click", function(e){
     var b = e.target.closest(".range-chip"); if(!b) return;
     state.range = b.dataset.range;
     customRangeBox.hidden = state.range !== "custom";
     Array.prototype.forEach.call(rangeChips.children, function(c){ c.classList.toggle("active", c===b); });
-    render();
+    render(); emitRange();
   });
+  ["customFrom","customTo"].forEach(function(id){ $(id).addEventListener("change", function(){ if(state.range === "custom"){ render(); emitRange(); } }); });
 
-  $("compareToggle").addEventListener("change", function(e){ state.compare = e.target.checked; render(); });
+  $("compareToggle").addEventListener("change", function(e){ state.compare = e.target.checked; render(); emitRange(); });
 
   /* ============ level switch ============ */
   document.querySelectorAll(".level-btn").forEach(function(btn){
@@ -862,8 +881,86 @@
   }
   function cssVar(name){ return getComputedStyle(document.body).getPropertyValue(name).trim(); }
 
+  /* ---- Gráficas de línea/barras grandes con Chart.js (mismo modelo que las gráficas del panel SEO·IA y del Cash Flow): curva suave, degradado, cuadrícula tenue, ejes con
+     valores, tooltip. Las miniaturas (height < 100) siguen en SVG. Se redibujan solas al cambiar día/noche (render()). ---- */
+  var chartInstances = [];
+  function colorOf(c){ var m = /var\((--[\w-]+)\)/.exec(c || ""); var v = m ? cssVar(m[1]) : c; return v || "#c5a059"; }
+  function rgbaOf(c, a){
+    var h = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(c);
+    if(h){ var x = h[1]; if(x.length===3) x = x.charAt(0)+x.charAt(0)+x.charAt(1)+x.charAt(1)+x.charAt(2)+x.charAt(2);
+      return "rgba("+parseInt(x.substr(0,2),16)+","+parseInt(x.substr(2,2),16)+","+parseInt(x.substr(4,2),16)+","+a+")"; }
+    var r = /^rgba?\(([^)]+)\)/.exec(c); if(r){ var p = r[1].split(","); return "rgba("+p[0]+","+p[1]+","+p[2]+","+a+")"; }
+    return c;
+  }
+  var MES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+  function periodLabels(n){
+    var out = [], now = new Date(), id = state.range;
+    for(var i=0;i<n;i++){
+      var k = n-1-i, d = new Date(now.getTime());
+      if(id==="today"){ d.setDate(d.getDate()-k); out.push(d.getDate()+" "+MES[d.getMonth()]); }
+      else if(id==="week"){ d.setDate(d.getDate()-7*k); out.push(d.getDate()+" "+MES[d.getMonth()]); }
+      else if(id==="quarter"){ d.setMonth(d.getMonth()-3*k); out.push("T"+(Math.floor(d.getMonth()/3)+1)+" "+String(d.getFullYear()).slice(2)); }
+      else if(id==="year"){ out.push(String(now.getFullYear()-k)); }
+      else if(id==="y5"){ out.push(String(now.getFullYear()-5*k)); }
+      else { d.setMonth(d.getMonth()-k); out.push(MES[d.getMonth()]+" "+String(d.getFullYear()).slice(2)); }
+    }
+    return out;
+  }
+  /* Modelo del Cash Flow personal (flow-handler.js · renderTimelineChart): varias líneas en una sola gráfica, dinero a la izquierda (y) y conteos a la derecha (y1), leyenda
+     arriba con puntos, serie principal dorada con relleno, comparativa punteada y barras para eventos. opts.prev = «Período anterior» (punteada); opts.lines = otras mediciones
+     [{label, data, color, dash, axis:"y"|"y1", bar:true}]. */
+  function buildChartJsLine(container, points, opts){
+    chartInstances = chartInstances.filter(function(c){ if(c.canvas && c.canvas.isConnected) return true; try{ c.destroy(); }catch(e){} return false; });
+    var wrap = document.createElement("div"); wrap.className = "chart-wrap"; wrap.style.height = ((opts.height||200)+90)+"px";
+    var cv = document.createElement("canvas"); wrap.appendChild(cv); container.appendChild(wrap);
+    var color = colorOf(opts.color), text = cssVar("--text-muted") || "#7c88a6", line = cssVar("--line") || "rgba(255,255,255,.08)", surface = cssVar("--surface") || "#0b0f18";
+    var labels = opts.pointLabels || periodLabels(points.length), bar = opts.mode === "bar", usesY1 = false;
+    var cnt = opts.unit === "count";   /* conteos (sesiones, clics) en vez de dinero */
+    var ds = [{ label: opts.label || "Período actual", data: points, borderColor: color, borderWidth: bar ? 0 : 2.5, tension: 0.4, fill: !bar, yAxisID: "y",
+      backgroundColor: bar ? rgbaOf(color,0.85) : function(ctx){ var a = ctx.chart.chartArea; if(!a) return rgbaOf(color,0.12);
+        var g = ctx.chart.ctx.createLinearGradient(0,a.top,0,a.bottom); g.addColorStop(0,rgbaOf(color,0.32)); g.addColorStop(1,rgbaOf(color,0.02)); return g; },
+      borderRadius: bar ? 6 : 0, maxBarThickness: 28, pointRadius: bar ? 0 : (points.length<=14 ? 3 : 0), pointHoverRadius: 6, pointBackgroundColor: color, pointBorderColor: surface, pointBorderWidth: 2, order: 3 }];
+    if(opts.prev){
+      ds.push({ type:"line", label:"Período anterior", data: opts.prev, borderColor: rgbaOf(cssVar("--text-2") || "#b7c2dc", 0.85), borderWidth: 2, borderDash:[6,4], tension: 0.4, fill:false,
+        pointRadius:0, pointHoverRadius:5, yAxisID:"y", order: 4 });
+    }
+    (opts.lines || []).forEach(function(l){
+      var c = colorOf(l.color), onY1 = l.axis === "y1"; if(onY1) usesY1 = true;
+      ds.push(l.bar ? { type:"bar", label:l.label, data:l.data, backgroundColor: rgbaOf(c,0.4), borderRadius:5, maxBarThickness:22, clip:false, yAxisID: onY1?"y1":"y", order: 6 }
+                    : { type:"line", label:l.label, data:l.data, borderColor:c, borderWidth:2, borderDash: l.dash||[], tension:0.4, fill:false, pointRadius:0, pointHoverRadius:5, yAxisID: onY1?"y1":"y", order: 5 });
+    });
+    if(opts.threshold != null){
+      ds.push({ type:"line", label: opts.thresholdLabel || "umbral", data: points.map(function(){ return opts.threshold; }), borderColor: cssVar("--warning") || "#e0a030",
+        borderWidth: 1.4, borderDash:[5,5], pointRadius: 0, pointHoverRadius: 0, fill: false, yAxisID:"y", order: 2 });
+    }
+    var hasBars = (opts.lines || []).some(function(l){ return l.bar; });   /* con barras en una gráfica de líneas: sin margen en los lados; la mitad de la barra de los extremos sale al margen (clip:false) */
+    var multi = ds.length > 1, tipBg = cssVar("--surface-raised") || "#1a2236", tipTx = cssVar("--text") || "#e8eefc";
+    var scales = {
+      x: { offset: bar, grid:{ display:false }, border:{ display:false }, ticks:{ color:text, font:{ size:10 }, maxTicksLimit:8, maxRotation:0, align: bar ? "center" : "inner" } },
+      y: { type:"linear", position:"left", beginAtZero:true, grid:{ color:line }, border:{ display:false }, ticks:{ color:text, font:{ size:10 }, maxTicksLimit:5, precision:0, padding: hasBars && !bar ? 14 : 6, callback:function(v){ return cnt ? v : money(v, true); } } }
+    };
+    if(usesY1) scales.y1 = { type:"linear", position:"right", beginAtZero:true, grid:{ drawOnChartArea:false }, border:{ display:false }, ticks:{ color:text, font:{ size:10 }, maxTicksLimit:5, precision:0, padding: hasBars && !bar ? 14 : 6 } };
+    chartInstances.push(new Chart(cv.getContext("2d"), {
+      type: bar ? "bar" : "line",
+      data: { labels: labels, datasets: ds },
+      options: {
+        responsive: true, maintainAspectRatio: false, interaction: { mode:"index", intersect:false },
+        plugins: {
+          legend: { display: multi, position:"top", labels:{ color: cssVar("--text-2") || text, usePointStyle:true, boxWidth:6, boxHeight:6, font:{ size:11 } } },
+          tooltip: { backgroundColor: tipBg, titleColor: text, bodyColor: tipTx, borderColor: line, borderWidth:1, padding:10, displayColors: multi, usePointStyle:true,
+            callbacks:{ label:function(c){ var v = c.parsed.y, isCount = c.dataset.yAxisID === "y1"; return (multi ? c.dataset.label+": " : "") + ((isCount || cnt) ? Math.round(v) : money(v, true)); } } }
+        },
+        scales: scales
+      }
+    }));
+  }
+  window.mdjBfiChart = buildChartJsLine;   /* lo usa web/js/business-cash-real.js para el tráfico del sitio */
+  /* Si cambia día/noche (el botón central del portal solo cambia data-mode), se redibuja para que los colores sigan al tema. */
+  (function(){ var t = null; try{ new MutationObserver(function(){ clearTimeout(t); t = setTimeout(function(){ if(typeof render === "function") render(); }, 60); }).observe(document.body, { attributes:true, attributeFilter:["data-mode"] }); }catch(e){} })();
+
   function buildAreaLineChart(container, points, opts){
     opts = opts || {};
+    if((opts.height||200) >= 100 && typeof Chart !== "undefined"){ try{ return buildChartJsLine(container, points, opts); }catch(e){ /* si Chart.js falla, queda el dibujo SVG */ } }
     var w = 640, h = opts.height || 200, pad = {t:14,r:14,b:22,l:0};
     var max = Math.max.apply(null, points) * 1.12, min = Math.min(0, Math.min.apply(null, points));
     var innerW = w - pad.l - pad.r, innerH = h - pad.t - pad.b;
@@ -1165,7 +1262,8 @@
       cashChartHost.innerHTML = "";
       var base = series("cash", state.range, 12);
       var adj = base.map(function(v){ return v * (1 + state.scenarioPct/100); });
-      buildAreaLineChart(cashChartHost, adj, {height:190, color:"var(--gold)", mode: state.chartMode, threshold: base[0]*0.55, thresholdLabel:"reserva mínima"});
+      var prevCash = state.compare ? base.map(function(v,i){ return kpi("cash", state.range, 12-i) * (1 + state.scenarioPct/100); }) : null;
+      buildAreaLineChart(cashChartHost, adj, {height:190, color:"var(--gold)", mode: state.chartMode, threshold: base[0]*0.55, thresholdLabel:"reserva mínima", label:"Cash proyectado", prev: prevCash});
     }
     drawCashChart();
     chToolbar.querySelector("#chartModeSeg").addEventListener("click", function(e){
@@ -1302,9 +1400,18 @@
   function screenHistory(){
     var frag = document.createDocumentFragment();
     var years = ["2022","2023","2024","2025","2026"];
-    var revByYear = years.map(function(y,i){ return kpi("revenue","year", years.length-1-i)*1; });
-    var histPanel = panel("Ingreso — comparativo a 5 años", "Serie inmutable por año fiscal, base de crecimiento y auditoría.", [9,8]);
-    buildAreaLineChart(histPanel, revByYear, {height:200, color:"var(--azure)", pointLabels: years});
+    var n = years.length;
+    function byYear(key, extra){ return years.map(function(y,i){ return kpi(key,"year", n-1-i+(extra||0)); }); }
+    var revByYear = byYear("revenue");
+    var prevByYear = byYear("revenue", 1);                       /* período anterior = el año inmediatamente previo a cada punto */
+    var costByYear = byYear("cost");
+    var marginByYear = revByYear.map(function(v,i){ return v - costByYear[i]; });
+    var bookByYear = byYear("bookings").map(function(v){ return Math.round(v); });
+    var histPanel = panel("Ingreso — comparativo a 5 años", "Período actual vs período anterior, con gasto, margen y eventos por año fiscal.", [9,8]);
+    buildAreaLineChart(histPanel, revByYear, {height:230, color:"var(--azure)", pointLabels: years, label:"Ingreso (período actual)", prev: prevByYear,
+      lines:[ {label:"Gasto", data:costByYear, color:"var(--critical)", dash:[6,4], axis:"y"},
+              {label:"Margen neto ($)", data:marginByYear, color:"var(--good)", axis:"y"},
+              {label:"Eventos", data:bookByYear, color:"var(--gold)", bar:true, axis:"y1"} ]});
     frag.appendChild(histPanel);
 
     var tablePanel = panel("Detalle por año fiscal", null, [9,33,34]);
@@ -1477,7 +1584,7 @@
 })();
 </script>
 
-<script src="./js/business-cash-real.js?v=20261005-negocio3"></script>
+<script src="./js/business-cash-real.js?v=20261005-negocio6"></script>
 <script>
 /* ── Candado OWNER-ONLY del BFI (vive dentro de CASH FLOW) ──
    Solo el Owner entra; managers y vendedores necesitan autorizacion explicita
