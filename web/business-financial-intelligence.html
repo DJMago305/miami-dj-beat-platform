@@ -238,7 +238,8 @@
 
   .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; box-shadow: var(--shadow); }
   .panel-head { display:flex; align-items:center; justify-content: space-between; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
-  .panel-head h3 { font-size: 14.5px; }
+  /* Misma tipografía de título que el resto de los Cash Flow (PO 2026-10-05): mayúsculas espaciadas, negrita, sin opacidad. */
+  .panel-head h3 { font-size: 15px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
   .panel-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
   .row-2 { display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; }
   .row-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
@@ -1172,20 +1173,21 @@
   function scoped(rows, field, val){ return (rows || []).filter(function(r){ return r[field] === val; }); }
 
   /* COBRADO (cobros reales de financial_payments) aparte de lo devengado. «Por cobrar» solo se calcula cuando el rango empieza después del primer cobro registrado: si no, faltarían los cobros anteriores y el número engañaría. */
-  function cobroSub(cb){ var parts = []; if(cb.acreditado_cents) parts.push(money(C(cb.acreditado_cents)) + " acreditado"); if(cb.por_acreditar_cents) parts.push(money(C(cb.por_acreditar_cents)) + " por acreditar"); return cb.cobros ? cb.cobros + (cb.cobros === 1 ? " cobro" : " cobros") + (parts.length ? " · " + parts.join(" · ") : "") : "Sin cobros registrados en el rango"; }
+  function cobroSub(cb){ var parts = []; if(cb.acreditado_cents) parts.push(money(C(cb.acreditado_cents)) + " acreditado"); if(cb.por_acreditar_cents) parts.push(money(C(cb.por_acreditar_cents)) + " por acreditar"); if(cb.extra_cents) parts.push(money(C(cb.extra_cents)) + " son trabajos extra"); return cb.cobros ? cb.cobros + (cb.cobros === 1 ? " cobro" : " cobros") + (parts.length ? " · " + parts.join(" · ") : "") : "Sin cobros registrados en el rango"; }
   function porCobrar(c, r){
     var cb = c.cobros;
     if(!cb || !cb.first_day) return { v:"—", sub:"Sin cobros registrados todavía" };
     if(r.from < cb.first_day) return { v:"—", sub:"Los cobros registrados empiezan el " + dayText(cb.first_day) + "; faltan los anteriores para calcularlo" };
-    var v = c.ganamos_cents - cb.total_cents;
-    return v >= 0 ? { v:money(C(v)), sub:"Devengado − cobrado del rango" } : { v:money(0), sub:"Cobrado supera lo devengado en " + money(C(-v)) + " (incluye turnos de fechas anteriores)" };
+    /* Lo devengado de locales (residencias y eventos) menos lo cobrado de locales; los trabajos extra y Stripe no cuentan: su ingreso es el propio cobro. */
+    var dev = c.residencias.ingreso_cents + c.eventos.ingreso_cents, cobLoc = cb.venue_cents != null ? cb.venue_cents : cb.total_cents, v = dev - cobLoc;
+    return v >= 0 ? { v:money(C(v)), sub:"Devengado de locales − cobrado de locales" } : { v:money(0), sub:"Cobrado de locales supera lo devengado en " + money(C(-v)) + " (incluye turnos de fechas anteriores)" };
   }
 
   /* ============ pantallas ============ */
   function screenCorporateOverview(){
     var c = D.c, p = D.p, frag = document.createDocumentFragment(), grid = document.createElement("div"); grid.className = "grid-kpi";
     var margin = safePct(c.neto_cents, c.ganamos_cents), pm = p ? safePct(p.neto_cents, p.ganamos_cents) : 0;
-    grid.appendChild(kpiCard("Ingreso reconocido", money(C(c.ganamos_cents)), "Devengado · residencias + eventos + Stripe", dl(c.ganamos_cents, p && p.ganamos_cents)));
+    grid.appendChild(kpiCard("Ingreso reconocido", money(C(c.ganamos_cents)), "Devengado · residencias + eventos + Stripe + trabajos extra", dl(c.ganamos_cents, p && p.ganamos_cents)));
     var mc = kpiCard("Margen neto operativo", (margin * 100).toFixed(1) + "%", "Ingreso − pagos a DJs (devengado)", null);
     if(state.compare && p){ var dd = D.pcomplete ? (margin - pm) : null; if(dd == null) mc.insertAdjacentHTML("beforeend", '<span class="delta flat">Período anterior incompleto</span>'); else mc.insertAdjacentHTML("beforeend", '<span class="delta ' + (dd > 0.0005 ? "up" : dd < -0.0005 ? "down" : "flat") + '">' + (dd > 0.0005 ? "▲" : dd < -0.0005 ? "▼" : "■") + ' ' + (dd * 100).toFixed(1) + ' pts vs anterior</span>'); }
     grid.appendChild(mc);
@@ -1201,8 +1203,8 @@
     frag.appendChild(row2);
 
     var row3 = document.createElement("div"); row3.className = "row-2";
-    var recPanel = panel("Recurrente vs ocasional", "Residencias (recurrente) contra eventos y cobros de Stripe (ocasional).");
-    buildStackedShare(recPanel, "Recurrente · residencias", C(c.residencias.ingreso_cents), "Ocasional · eventos y Stripe", C(c.eventos.ingreso_cents + c.stripe.cobrado_cents));
+    var recPanel = panel("Recurrente vs ocasional", "Residencias (recurrente) contra eventos, Stripe y trabajos extra (ocasional).");
+    buildStackedShare(recPanel, "Recurrente · residencias", C(c.residencias.ingreso_cents), "Ocasional · eventos, Stripe y trabajos extra", C(c.eventos.ingreso_cents + c.stripe.cobrado_cents + (c.extra ? c.extra.cents : 0)));
     row3.appendChild(recPanel);
     var mvPanel = panel("Movimientos", "Residencias, eventos, libro de los DJ, Stripe y banco del rango (hasta 300).");
     mvPanel.appendChild(movementsTable(D.m.movimientos)); row3.appendChild(mvPanel);
@@ -1371,7 +1373,7 @@
 })();
 </script>
 
-<script src="./js/business-cash-real.js?v=20261005-cobrado"></script>
+<script src="./js/business-cash-real.js?v=20261005-titulo"></script>
 <script>
 /* ── Candado OWNER-ONLY del BFI (vive dentro de CASH FLOW) ──
    Solo el Owner entra; managers y vendedores necesitan autorizacion explicita

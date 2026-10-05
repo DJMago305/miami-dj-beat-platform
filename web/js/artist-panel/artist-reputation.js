@@ -22,7 +22,7 @@
         var s = document.createElement('style'); s.id = 'ap-reputation-style';
         s.textContent =
             '#ap-reviews{margin:28px 0 28px;}' +
-            '#ap-reviews .ap-h{font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.55);margin:0 0 12px;}' +
+            '#ap-reviews .ap-h{font-size:15px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#fff;margin:0 0 12px;}' +   /* mismo título que el resto del panel: sin opacidad */
             '#ap-reviews .ap-list{display:flex;flex-direction:column;gap:10px;}' +
             '#ap-reviews .ap-rev{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:12px 16px;}' +
             '#ap-reviews .ap-top{display:flex;align-items:center;flex-wrap:wrap;gap:10px;font-size:12px;color:rgba(255,255,255,.62);}' +
@@ -33,7 +33,8 @@
             '#ap-reviews .ap-empty{font-size:12px;line-height:1.5;color:rgba(255,255,255,.5);}' +
             'html[data-theme="day"] #ap-reviews .ap-rev{background:#fff;border-color:rgba(0,0,0,.12);}' +
             'html[data-theme="day"] #ap-reviews .ap-txt,html[data-theme="day"] #ap-reviews .ap-who{color:#111;}' +
-            'html[data-theme="day"] #ap-reviews .ap-h,html[data-theme="day"] #ap-reviews .ap-top,html[data-theme="day"] #ap-reviews .ap-empty{color:rgba(0,0,0,.6);}';
+            'html[data-theme="day"] #ap-reviews .ap-h{color:#1b1f27;}' +
+            'html[data-theme="day"] #ap-reviews .ap-top,html[data-theme="day"] #ap-reviews .ap-empty{color:rgba(0,0,0,.6);}';
         document.head.appendChild(s);
     }
 

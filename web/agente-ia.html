@@ -25,6 +25,7 @@
     <link rel="stylesheet" href="./styles.css?v=20260921-hub-scrollbar-fuera" />
     <link rel="stylesheet" href="./header-unified.css?v=20261004-riel-seguro" />
     <link rel="stylesheet" href="./profile.css?v=20260820-ancho-total" />
+    <link rel="stylesheet" href="./css/mdj-dia-base.css?v=20261005-dia-base1" />
     <style>
         .agente-ia-hero {
             min-height: calc(100dvh - var(--header-height, 84px));
@@ -60,6 +61,12 @@
             margin: 0 auto 12px;
             max-width: 46em;
         }
+        /* Modo día (base común css/mdj-dia-base.css; esta página declara body[data-mdj-dia]). */
+        html[data-theme="day"] body[data-mdj-dia] .agente-ia-hero { background: #eef1f5; }
+        html[data-theme="day"] body[data-mdj-dia] .agente-ia-eyebrow { color: #8a6d2e; }
+        html[data-theme="day"] body[data-mdj-dia] .agente-ia-inner h1 { color: #1b1f27; }
+        html[data-theme="day"] body[data-mdj-dia] .agente-ia-inner p { color: rgba(27, 31, 39, .72); }
+        html[data-theme="day"] body[data-mdj-dia] .agente-ia-badge { color: #6b5420; border-color: rgba(138, 109, 46, .55); background: #fff; }
         .agente-ia-badge {
             display: inline-flex;
             align-items: center;
@@ -77,7 +84,7 @@
     </style>
 </head>
 
-<body class="notranslate mdj-artist-academy" style="background:#000;color:#fff;font-family:Inter,sans-serif;">
+<body class="notranslate mdj-artist-academy" data-mdj-dia="1" style="background:#000;color:#fff;font-family:Inter,sans-serif;">
     <header class="header mdj-header-unified" id="mainHeader">
         <div class="header-top">
             <div class="container">

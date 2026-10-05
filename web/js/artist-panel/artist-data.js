@@ -170,5 +170,25 @@
         }).catch(function () { return { daily: [], events: [], leads: [] }; });
     }
 
-    AP.data = { loadActivity: loadActivity, load: load, loadVisits: loadVisits, loadReviews: loadReviews, loadContribution: loadContribution, loadContributionDaily: loadContributionDaily, buildModel: buildModel };
+    /* Fuentes del ESTADO DE CUENTA de movimientos (artist-movements.js). Mismas reglas de esta capa: solo lo del usuario autenticado (cada consulta lleva su
+       propio dj_user_id además de la RLS: el staff puede leer filas ajenas por política, así que NUNCA se confía solo en la RLS), columnas nombradas y nada de
+       tarifas de local. Devuelve filas CRUDAS del libro, las residencias por día (solo días con residencia) y las propinas aceptadas; el modelo lo arma el módulo. */
+    var MOV_LEDGER_COLS = 'id,type,status,amount_cents,created_at,event_id,src:metadata->>source,ename:metadata->>event_name,evento:metadata->>evento,fecha:metadata->>fecha,rate:metadata->>commission_rate,classification:metadata->>classification';
+    function loadMovementSources() {
+        var demo = demoModel();
+        if (demo) return demo.then(function (m) { return (m && m.movimientos) || { ledger: [], daily: [], tips: [] }; }, function () { return { ledger: [], daily: [], tips: [] }; });
+        var db = client();
+        if (!db) return Promise.reject(new Error('sin cliente de datos'));
+        return ownUserId(db).then(function (uid) {
+            if (!uid) throw new Error('sin sesión');
+            function ok(res, what) { if (res && res.error) throw new Error(what + ': ' + res.error.message); return (res && res.data) || []; }
+            return Promise.all([
+                db.from('dj_ledger').select(MOV_LEDGER_COLS).eq('dj_user_id', uid).order('created_at', { ascending: false }).limit(2000),
+                db.from('dj_flow_daily').select('bucket_date,residency_gross_cents').eq('dj_user_id', uid).gt('residency_gross_cents', 0).order('bucket_date', { ascending: false }).limit(2000),
+                db.rpc('get_my_soundfortips_accepted_for_flow', { p_since: '2020-01-01T00:00:00Z' })
+            ]).then(function (r) { return { ledger: ok(r[0], 'dj_ledger'), daily: ok(r[1], 'dj_flow_daily'), tips: ok(r[2], 'propinas') }; });
+        });
+    }
+
+    AP.data = { loadMovementSources: loadMovementSources, loadActivity: loadActivity, load: load, loadVisits: loadVisits, loadReviews: loadReviews, loadContribution: loadContribution, loadContributionDaily: loadContributionDaily, buildModel: buildModel };
 })();
