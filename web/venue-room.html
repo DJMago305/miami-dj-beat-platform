@@ -144,6 +144,9 @@
         .vr-dev-badge { display: inline-block; padding: 4px 14px; border-radius: 999px; border: 1px solid rgba(197,160,89,0.4); color: #c5a059; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; vertical-align: middle; margin-left: 10px; }
         .vr-plan-wrap { overflow-x: auto; touch-action: pan-x pan-y pinch-zoom; border-radius: 14px; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.08); }
         .vr-plan { display: block; width: 100%; min-width: 560px; height: auto; }
+        .vr-plan.vr-plan-custom { min-width: 0; }   /* plano dibujado en el editor: se ve ENTERO en el ancho disponible; para mesas más grandes, «Pantalla completa» o pellizcar */
+        .vr-plan .area-off .body { fill: rgba(130,130,130,0.22); stroke-dasharray: 6 4; }
+        .vr-plan .area-off-txt { fill: rgba(255,255,255,0.62); font-family: Inter, sans-serif; font-weight: 700; letter-spacing: .08em; text-anchor: middle; pointer-events: none; }
         .vr-plan .zone { fill: rgba(255,255,255,0.05); stroke: rgba(255,255,255,0.28); stroke-dasharray: 5 4; }
         .vr-plan .zone-label { fill: rgba(255,255,255,0.55); font: 700 12px Inter, sans-serif; letter-spacing: .12em; text-anchor: middle; }
         .vr-plan .zone.fac { fill: rgba(197,160,89,0.14); stroke: rgba(197,160,89,0.85); stroke-dasharray: none; stroke-width: 1.5; }
@@ -394,7 +397,7 @@
 window.MDJ_SKIP_GLOBAL_EVENT_CART = true;
 </script>
 <script src="./mdjb-shared-header.js?v=20261003-mi-perfil-unico"></script>
-<script src="./js/mdj-plan-shapes.js?v=20261004-escala"></script>
+<script src="./js/mdj-plan-shapes.js?v=20261005-rotulos"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
 <script>
 (function () {
@@ -986,7 +989,14 @@ window.MDJ_SKIP_GLOBAL_EVENT_CART = true;
             buyMsg = document.getElementById('vr-buy-msg'), nameInp = document.getElementById('vr-buy-name'), resInp = document.getElementById('vr-buy-res'),
             mailInp = document.getElementById('vr-buy-email'), descP = document.getElementById('vr-plan-desc'), badge = document.getElementById('vr-plan-badge');
         var DESC_MAQUETA = descP.innerHTML;
-        var DESC_REAL = 'Mientras más cerca del escenario, más alto el precio. Elige tus mesas, pon el nombre de quien renta y paga: al pulsar «Comprar» tus mesas se apartan unos minutos mientras pagas.';
+        var DESC_COMPRA = 'Elige tus mesas, pon el nombre de quien renta y paga: al pulsar «Comprar» tus mesas se apartan unos minutos mientras pagas.';
+        // Frase de precio según cómo se cobra de verdad: la cercanía al escenario solo vale en los planos con zonas por distancia; con tarifa plana no se dice nada de precios.
+        function descReal(custom, tables) {
+            var precios = {}; tables.forEach(function (t) { precios[t.zone.price] = true; });
+            var varios = Object.keys(precios).length > 1;
+            if (!varios) return DESC_COMPRA;
+            return (custom ? 'El precio depende del área de la sala. ' : 'Mientras más cerca del escenario, más alto el precio. ') + DESC_COMPRA;
+        }
         function fmt(v) { return Math.round(v * 100) % 100 === 0 ? String(Math.round(v)) : v.toFixed(2); }
         function say(t, bad) { buyMsg.textContent = t || ''; buyMsg.style.color = bad ? '#ff6060' : 'rgba(255,255,255,.8)'; }
 
@@ -1018,6 +1028,30 @@ window.MDJ_SKIP_GLOBAL_EVENT_CART = true;
             return quitadas;
         }
 
+        // Áreas de venta del plano dibujado que NO tienen ninguna mesa en este evento (p. ej. el VIP cerrado, o la recepción): se ven en gris con «NO DISPONIBLE».
+        function dentroPoly(pts, x, y) {
+            var c = false;
+            for (var i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+                var xi = pts[i][0], yi = pts[i][1], xj = pts[j][0], yj = pts[j][1];
+                if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) c = !c;
+            }
+            return c;
+        }
+        function marcarAreasSinMesas(layout, tables) {
+            var room = layout.room || {}, esc = Math.max(1, ((room.w) || 800) / 800);
+            (layout.shapes || []).forEach(function (f) {
+                if (f.k !== 'poly' || f.venta !== true || !f.pts) return;
+                if (tables.some(function (t) { return dentroPoly(f.pts, t.x, t.y); })) return;
+                var g = svg.querySelector('g[data-id="' + f.id + '"]'); if (!g) return;
+                var xs = f.pts.map(function (q) { return q[0]; }), ys = f.pts.map(function (q) { return q[1]; });
+                var cx = (Math.min.apply(null, xs) + Math.max.apply(null, xs)) / 2, cy = (Math.min.apply(null, ys) + Math.max.apply(null, ys)) / 2;
+                g.classList.add('area-off');
+                var t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                t.setAttribute('class', 'area-off-txt'); t.setAttribute('x', cx); t.setAttribute('y', cy + 6 * esc); t.setAttribute('font-size', 11 * esc);
+                t.textContent = 'NO DISPONIBLE'; g.appendChild(t);
+            });
+        }
+
         function draw(layout) {
             svg.innerHTML = '';
             var real = currentReal;
@@ -1035,8 +1069,11 @@ window.MDJ_SKIP_GLOBAL_EVENT_CART = true;
             // Los planos anteriores siguen con el contorno y la entrada fijos de siempre.
             var custom = !!layout.custom;
             svg.setAttribute('viewBox', '0 0 ' + ((layout.room && layout.room.w) || 800) + ' ' + ((layout.room && layout.room.h) || 520));
+            svg.classList.toggle('vr-plan-custom', custom);
+            if (real) descP.innerHTML = descReal(custom, tables);
             if (custom) {
                 if (window.mdjPlanShapes) window.mdjPlanShapes.dibujar(svg, layout.shapes, layout.room);
+                marcarAreasSinMesas(layout, tables);
             } else {
                 el('path', { d: 'M 340 505 H 12 V 12 H 788 V 505 H 460', fill: 'none', stroke: 'rgba(255,255,255,0.55)', 'stroke-width': 5, 'stroke-linejoin': 'round' });
                 el('rect', { class: 'door', x: 340, y: 502, width: 120, height: 7, rx: 2 });
@@ -1139,7 +1176,7 @@ window.MDJ_SKIP_GLOBAL_EVENT_CART = true;
                 var lay = opts.layouts || LAYOUTS;
                 if (lay !== currentLayouts) { currentLayouts = lay; currentLayout = lay[0]; buildTabs(); }
                 else if (currentLayouts.indexOf(currentLayout) < 0) currentLayout = currentLayouts[0];
-                descP.innerHTML = currentReal ? DESC_REAL : DESC_MAQUETA;
+                descP.innerHTML = currentReal ? DESC_COMPRA : DESC_MAQUETA;   // draw() la afina según los precios del plano
                 badge.style.display = currentReal ? 'none' : '';
                 var quitadas = pruneSelection();
                 say(quitadas ? 'Alguien más tomó una de las mesas que habías elegido; la quitamos de tu selección.' : '', quitadas);

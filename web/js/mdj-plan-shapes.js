@@ -292,7 +292,7 @@
             g = el('g', { 'data-id': it.id, 'class': 'ps ps-poly' }, parent);
             fill = RELLENOS[it.relleno] || RELLENOS.ninguno;
             el('polygon', { 'class': 'body', points: it.pts.map(function (q) { return q[0] + ',' + q[1]; }).join(' '), fill: fill, stroke: COLOR, 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-dasharray': it.relleno ? 'none' : '6 4' }, g);
-            if (it.label) { var cb = cajaPoly(it.pts), grande = cb.w >= 160 && cb.h >= 60; el('text', { x: cb.cx, y: grande ? cb.y + 16 * _esc : cb.cy + 4 * _esc, 'text-anchor': 'middle', fill: 'rgba(255,255,255,0.8)', 'font-size': 12 * _esc, 'font-weight': 800, 'font-family': 'Inter, sans-serif', 'letter-spacing': '0.06em', 'pointer-events': 'none' }, g, it.label); }
+            if (it.label) { var cb = cajaPoly(it.pts), grande = cb.w >= 160 && cb.h >= 60; el('text', { x: cb.cx, y: grande ? cb.y + 22 * _esc : cb.cy + 4 * _esc, 'text-anchor': 'middle', fill: 'rgba(255,255,255,0.8)', 'font-size': 12 * _esc, 'font-weight': 800, 'font-family': 'Inter, sans-serif', 'letter-spacing': '0.06em', 'pointer-events': 'none' }, g, it.label); }
             return g;
         }
         if (it.k === 'wall') {
