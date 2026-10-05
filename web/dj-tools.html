@@ -22,6 +22,7 @@
     <link rel="stylesheet" href="./styles.css?v=20260921-hub-scrollbar-fuera" />
   <link rel="stylesheet" href="./header-unified.css?v=20261004-riel-seguro" />
     <link rel="stylesheet" href="./profile.css?v=20260820-ancho-total" />
+    <link rel="stylesheet" href="./css/mdj-dia-base.css?v=20261005-dia-base4" />
     <style>
         /* Pro Features — equal-height tiles; CTAs aligned on bottom row with breathing room */
         body.page-dj-tools .grid4 {
@@ -164,10 +165,34 @@
             stroke-linecap: round;
             stroke-linejoin: round;
         }
+
+        /* TÍTULOS: la tipografía de los títulos del Cash Flow (css/mdj-cashflow-panel.css), valores copiados: 15px, 800, MAYÚSCULAS con .14em, color pleno.
+           El subtítulo, el de «Salud Profesional»: 11px, 700, .1em, mayúsculas, atenuado. (Deuda: extraer a tokens compartidos.) */
+        body.page-dj-tools .djt-title { font-size: 15px !important; font-weight: 800 !important; letter-spacing: .14em !important; text-transform: uppercase; line-height: 1.3 !important; color: #fff; }
+        body.page-dj-tools h1.djt-title { margin: 0 0 20px !important; padding-top: 0 !important; }
+        body.page-dj-tools .djt-sub { font-size: 11px !important; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; line-height: 1.7; color: rgba(255, 255, 255, .6); }
+
+        /* MODO DÍA (base común css/mdj-dia-base.css + variables de día; aquí solo lo escrito con colores fijos en esta página) */
+        html[data-theme="day"] body[data-mdj-dia].page-dj-tools .djt-title { color: #1b1f27; }
+        html[data-theme="day"] body[data-mdj-dia].page-dj-tools .djt-sub { color: rgba(27, 31, 39, .62); }
+        html[data-theme="day"] body[data-mdj-dia] main [style*="rgba(255,255,255"],
+        html[data-theme="day"] body[data-mdj-dia] main [style*="rgba(255, 255, 255"] { color: rgba(27, 31, 39, .66) !important; }
+        html[data-theme="day"] body[data-mdj-dia] .dj-tools-app-badge { color: rgba(27, 31, 39, .6); }
+        html[data-theme="day"] body[data-mdj-dia] main h3[style*="#ff9f43"] { color: #b45309 !important; }
+        html[data-theme="day"] body[data-mdj-dia] main h3[style*="#d99aff"] { color: #7e22ce !important; }
+        html[data-theme="day"] body[data-mdj-dia] .mdjpro-feat-icon--orange svg { stroke: #b45309; }
+        html[data-theme="day"] body[data-mdj-dia] .mdjpro-feat-icon--purple svg { stroke: #7e22ce; }
+        html[data-theme="day"] body[data-mdj-dia] .form label span { color: #1b1f27; }
+        html[data-theme="day"] body[data-mdj-dia] .form input { background: #fff; color: #1b1f27; border-color: rgba(14, 18, 28, .2); }
+        html[data-theme="day"] body[data-mdj-dia] #djt-plan-section .djt-bill-card { background: rgba(14, 18, 28, .03); border-color: rgba(138, 109, 46, .35); color: rgba(27, 31, 39, .6); }
+        html[data-theme="day"] body[data-mdj-dia] #djt-plan-section .djt-bill-card.djt-bill-selected { background: rgba(197, 160, 89, .2); border-color: #8a6d2e; color: #1b1f27; }
+        html[data-theme="day"] body[data-mdj-dia] #djt-plan-section .djt-bill-card .djt-bill-badge.save-green { background: rgba(21, 128, 61, .12); color: #15803d; }
+        html[data-theme="day"] body[data-mdj-dia] #djt-plan-section .djt-bill-card .djt-bill-badge.save-gold { color: #6b5420; }
+        html[data-theme="day"] body[data-mdj-dia] #dj-tools-gate-loader { color: rgba(27, 31, 39, .5); }
     </style>
 </head>
 
-<body class="notranslate page-dj-tools mdj-from-profile mdj-nav-booting">
+<body class="notranslate page-dj-tools mdj-from-profile mdj-nav-booting" data-mdj-dia="1">
     <!-- MDJ canonical site header — keep in sync with index #mainHeader; use ./index.html# anchors for subpages -->
 <header class="header mdj-header-unified" id="mainHeader">
   <div class="header-top">
@@ -302,13 +327,12 @@
                     <div
                         style="font-size: 13px; font-weight: 700; letter-spacing: 4px; color: var(--gold); text-transform: uppercase; margin-bottom: 24px; opacity: 0.85;">
                         MDJPRO SUITE</div>
-                    <h1 style="font-size: 56px; font-weight: 900; line-height: 1.1; margin-bottom: 32px; letter-spacing: -1px;"
-                        data-i18n="tools-hero-title">
+                    <h1 class="djt-title" data-i18n="tools-hero-title">
                         El espacio de trabajo definitivo<br>para DJs modernos.
                     </h1>
                     <div style="width: 60px; height: 2px; background: var(--gold); margin: 0 auto 32px; opacity: 0.7;">
                     </div>
-                    <p style="font-size: 22px; font-weight: 600; color: rgba(255,255,255,0.75); letter-spacing: 0.5px; line-height: 1.6; margin: 0 auto; max-width: 680px;"
+                    <p class="djt-sub" style="margin: 0 auto; max-width: 680px;"
                         data-i18n="tools-hero-sub">
                         Organiza tu librería. Protege tu trabajo.<br>Actúa con <span
                             style="color: var(--gold); font-weight: 700;">absoluta certeza.</span>
@@ -328,7 +352,7 @@
                     </div>
                 </div>
 
-                <h2 style="text-align: center; margin-bottom: 40px;" data-i18n="tools-features-title">Pro Features</h2>
+                <h2 class="djt-title" style="text-align: center; margin-bottom: 40px;" data-i18n="tools-features-title">Pro Features</h2>
                 <div class="grid4">
                     <div class="tile" style="border: 1px solid rgba(255,159,67,0.45); background: rgba(255,120,40,0.06);">
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
@@ -454,7 +478,7 @@
 
         <section class="section alt">
             <div class="container">
-                <h2 style="text-align: center; margin-bottom: 40px;" data-i18n="tools-pricing-title">Choose Your Power
+                <h2 class="djt-title" style="text-align: center; margin-bottom: 40px;" data-i18n="tools-pricing-title">Choose Your Power
                 </h2>
                 <div style="max-width: 800px; margin: 0 auto;">
                     <div class="table-row table-head">
@@ -490,7 +514,7 @@
             <div class="container">
                 <div class="grid2" style="align-items: center;">
                     <div>
-                        <h2 data-i18n="tools-early-access-title">Lead the Network</h2>
+                        <h2 class="djt-title" data-i18n="tools-early-access-title">Lead the Network</h2>
                         <p class="sub" data-i18n="tools-early-access-sub">MDJPRO is more than an app. It's the technical
                             foundation of the Miami DJ Beat
                             network. Get in early.</p>
@@ -564,7 +588,7 @@
 
             <div class="container" style="max-width:640px;text-align:center;">
                 <div style="font-size:10px;font-weight:800;letter-spacing:4px;color:var(--gold);margin-bottom:14px;opacity:0.7;text-transform:uppercase;">PRO Artist Plan</div>
-                <h2 style="font-size:1.8rem;font-weight:900;margin:0 0 12px;line-height:1.2;">Activa Miami DJ Beat PRO Artist</h2>
+                <h2 class="djt-title" style="margin:0 0 12px;">Activa Miami DJ Beat PRO Artist</h2>
                 <p style="font-size:14px;color:rgba(255,255,255,0.5);line-height:1.7;margin:0 0 10px;">Perfil PRO · MDJPRO App incluida · Jobs · SoundForTips™ · visibilidad premium.</p>
                 <div id="djt-plan-divider"></div>
 

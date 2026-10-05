@@ -12,6 +12,15 @@
 
 html[data-theme="day"] body[data-mdj-dia] { background: #eef1f5 !important; color: #1b1f27; }
 
+/* Causa raíz, no parche: las páginas del sitio pintan con las variables de styles.css (--bg, --panel, --text, --muted, --line, --gold…). En día se
+   redefinen AQUÍ, a nivel de body, con la paleta de día de staff.html, y todo lo que ya usa esas variables se adapta solo. Solo cuentan las páginas
+   que declaran body[data-mdj-dia]; lo que esté escrito con colores fijos (blanco/negro) se corrige en el <style> de cada página. */
+html[data-theme="day"] body[data-mdj-dia] {
+  --bg: #eef1f5; --panel: #ffffff; --panel2: #f4f6f9; --text: #1b1f27; --muted: rgba(27, 31, 39, .62); --line: rgba(14, 18, 28, .13);
+  --accent: #8a6d2e; --gold: #8a6d2e; --gold-glow: rgba(138, 109, 46, .22); --shadow: 0 10px 30px rgba(14, 18, 28, .10);
+  --glass: rgba(255, 255, 255, .72); --glass-border: rgba(14, 18, 28, .13);
+}
+
 /* Pie de página en día */
 html[data-theme="day"] body[data-mdj-dia] footer.footer { background: #e4e8ee; color: #1b1f27; border-top-color: rgba(14, 18, 28, .13); }
 html[data-theme="day"] body[data-mdj-dia] footer.footer .container { border-top-color: rgba(14, 18, 28, .13); }
@@ -40,3 +49,9 @@ html[data-theme="day"] body[data-mdj-dia] #mainHeader.header.mdj-header-unified 
 /* Botón luna/sol: era transparente con borde dorado al 35 % y se perdía sobre la barra blanca. Relleno dorado suave, borde sólido, luna oscura. */
 html[data-theme="day"] body[data-mdj-dia] #mainHeader.header.mdj-header-unified .mdj-daynight { background: #efd9a0 !important; border: 1.5px solid #8a6d2e !important; color: #3d2f0c !important; box-shadow: 0 1px 3px rgba(14, 18, 28, .18); }
 html[data-theme="day"] body[data-mdj-dia] #mainHeader.header.mdj-header-unified .mdj-daynight:hover { background: #e4c97a !important; border-color: #6b5420 !important; }
+/* Buscador del encabezado (vive en #mainHeader o en la franja flotante #mdj-flotante-visitante): en noche es texto casi blanco con brillo oscuro; en día se lee oscuro, sin brillo,
+   sobre blanco translúcido y con el borde dorado oscuro. */
+html[data-theme="day"] body[data-mdj-dia] #mainHeader .header-smart-search,
+html[data-theme="day"] body[data-mdj-dia] #mdj-flotante-visitante .header-smart-search { color: #1b1f27 !important; text-shadow: none !important; background: rgba(255, 255, 255, .72) !important; border-color: rgba(138, 109, 46, .55) !important; }
+html[data-theme="day"] body[data-mdj-dia] #mainHeader .header-smart-search::placeholder,
+html[data-theme="day"] body[data-mdj-dia] #mdj-flotante-visitante .header-smart-search::placeholder { color: rgba(27, 31, 39, .55) !important; text-shadow: none !important; }
