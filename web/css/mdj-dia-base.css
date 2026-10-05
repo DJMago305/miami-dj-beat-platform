@@ -1,0 +1,42 @@
+/* ══ MODO DÍA — BASE COMÚN DE LAS PÁGINAS DEL MENÚ ════════════════════════════════════════════════════
+   UNA sola fuente para lo que TODA página en día comparte: fondo de la página, barra de menú (colores, línea divisoria, rayita de la
+   pestaña activa, botón luna/sol) y pie. Se activa SOLO en las páginas que declaran <body data-mdj-dia> — es decir, cuando el
+   contenido de esa página ya fue adaptado a día. Así nunca queda una página a medias (menú claro con contenido oscuro). El interruptor
+   (mdjb-shared-header.js) pone data-theme="day" en <html> en todas las páginas, pero sin este atributo la página sigue oscura.
+
+   Cómo sumar una página: 1) enlazar este archivo; 2) adaptar el contenido propio de la página en su <style> (acotado a
+   html[data-theme="day"] body[data-mdj-dia]); 3) poner data-mdj-dia en <body>. Cash Flow lo activa solo mientras #tab-flow está
+   visible (artist-cashflow.js), porque las otras pestañas de esas páginas aún no tienen día.
+   Paleta = la de día de staff.html: #eef1f5 / #fff / #1b1f27, dorado oscuro #8a6d2e. Solo colores: no se toca tamaño, orden ni
+   estructura de la barra (constitución de la barra) ni header-unified.css / mdjb-shared-header.js. */
+
+html[data-theme="day"] body[data-mdj-dia] { background: #eef1f5 !important; color: #1b1f27; }
+
+/* Pie de página en día */
+html[data-theme="day"] body[data-mdj-dia] footer.footer { background: #e4e8ee; color: #1b1f27; border-top-color: rgba(14, 18, 28, .13); }
+html[data-theme="day"] body[data-mdj-dia] footer.footer .container { border-top-color: rgba(14, 18, 28, .13); }
+
+/* ── BARRA DE MENÚ EN DÍA ───────────────────────────────────────────────────────────────────────────
+   Antes: gris turbio (capas oscuras al 50-60 % con desenfoque sobre fondo claro). Precedente: modo día de staff.html
+   (.staff-topbar degradado #fff -> #e9edf3, letras oscuras, dorado oscuro). SOLO colores y fondo: no se toca tamaño, orden ni
+   estructura del menú (constitución de la barra) ni header-unified.css / mdjb-shared-header.js. */
+html[data-theme="day"] body[data-mdj-dia] #mainHeader.header.mdj-header-unified {
+  background: linear-gradient(180deg, #ffffff, #e9edf3) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  border-bottom: 2px solid rgba(138, 109, 46, .75) !important;   /* divisoria bien marcada */
+  box-shadow: 0 4px 16px rgba(14, 18, 28, .12) !important;
+}
+html[data-theme="day"] body[data-mdj-dia] #mainHeader.header.mdj-header-unified .header-nav { background-image: none !important; background-color: transparent !important; }
+html[data-theme="day"] body[data-mdj-dia] #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a,
+html[data-theme="day"] body[data-mdj-dia] #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a:not(.active) { color: rgba(20, 25, 35, .62) !important; text-shadow: none !important; }
+html[data-theme="day"] body[data-mdj-dia] #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a:hover { color: rgba(20, 25, 35, .95) !important; }
+/* Rayita de la pestaña activa («estamos dentro de esta página»): el dorado claro #c5a059 casi no se ve sobre la barra blanca. */
+html[data-theme="day"] body[data-mdj-dia] #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a.active::after { background: #8a6d2e !important; height: 3px !important; box-shadow: none !important; }
+html[data-theme="day"] body[data-mdj-dia] #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a.active,
+html[data-theme="day"] body[data-mdj-dia] #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a#mainNav-mi-portal-link.mdj-mi-portal-gold,
+html[data-theme="day"] body[data-mdj-dia] #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a.mdj-staff-mainnav,
+html[data-theme="day"] body[data-mdj-dia] #mainHeader.header.mdj-header-unified #mainNav.mdj-mainnav-flex.nav.top-nav > a[data-mdj-nav='shop'] { color: #8a6d2e !important; }
+/* Botón luna/sol: era transparente con borde dorado al 35 % y se perdía sobre la barra blanca. Relleno dorado suave, borde sólido, luna oscura. */
+html[data-theme="day"] body[data-mdj-dia] #mainHeader.header.mdj-header-unified .mdj-daynight { background: #efd9a0 !important; border: 1.5px solid #8a6d2e !important; color: #3d2f0c !important; box-shadow: 0 1px 3px rgba(14, 18, 28, .18); }
+html[data-theme="day"] body[data-mdj-dia] #mainHeader.header.mdj-header-unified .mdj-daynight:hover { background: #e4c97a !important; border-color: #6b5420 !important; }

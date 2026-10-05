@@ -173,6 +173,8 @@
     <link rel="stylesheet" href="./styles.css?v=20260921-hub-scrollbar-fuera" />
     <link rel="stylesheet" href="./header-unified.css?v=20261004-riel-seguro" />
     <link rel="stylesheet" href="./profile.css?v=20260927-web-btn-unlock" />
+    <link rel="stylesheet" href="./css/mdj-dia-base.css?v=20261005-dia-base1" />
+    <link rel="stylesheet" href="./css/mdj-cashflow-panel.css?v=20261005-flow-dia17" />
     <style id="mdj-qr-view-header-shield">
         /* Blindaje definitivo: especificidad mayor que #mainHeader.header.mdj-header-unified { display:flex !important } en header-unified.css */
         html.dj-profile-qr-view #mainHeader.header.mdj-header-unified,
@@ -316,11 +318,13 @@
     <script defer src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script defer src="./flow-handler.js?v=20261005-artist-flow2"></script>
-    <script defer src="./js/artist-panel/artist-data.js?v=20261005-artist-flow2"></script>
+    <script defer src="./js/artist-panel/artist-data.js?v=20261005-rev1"></script>
+    <script defer src="./js/artist-panel/artist-ui.js?v=20261005-ui2"></script>
     <script defer src="./js/artist-panel/artist-charts.js?v=20261005-artist-flow2"></script>
     <script defer src="./js/artist-panel/artist-kpis.js?v=20261005-artist-flow2"></script>
-    <script defer src="./js/artist-panel/artist-reputation.js?v=20261005-artist-flow2"></script>
-    <script defer src="./js/artist-panel/artist-cashflow.js?v=20261005-artist-flow2"></script>
+    <script defer src="./js/artist-panel/artist-reputation.js?v=20261005-rev2"></script>
+    <script defer src="./js/artist-panel/artist-movements.js?v=20261005-mov7"></script>
+    <script defer src="./js/artist-panel/artist-cashflow.js?v=20261005-flow-dia8"></script>
 
     <!-- Open Graph / Meta sharing -->
     <meta property="og:type" content="website">
@@ -4934,16 +4938,9 @@
 
     </div> <!-- closes tab-public -->
 
-    <!-- Footer -->
-    <footer class="footer">
-        <!-- LOCKED SECTION: DO NOT MODIFY -->
-        <div class="container" style="text-align:center;">
-            <div data-i18n="footer-rights-llc">© 2026 Miami DJ Beat LLC. Pro Division Access.</div>
-        </div>
-    </footer>
 
     <!-- Translations & Base Logic -->
-    <script defer src="./translations.js?v=20261003-mi-perfil-unico"></script>
+    <script defer src="./translations.js?v=20261005-flow-intro"></script>
     <script defer src="./i18n.js?v=20260427-lang-default"></script>
     <script>
         // 🔧 Motor Principal de Logout (A prueba de fallos)
@@ -8193,10 +8190,10 @@
             <!-- HEADER & RANGE SELECTOR -->
             <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:40px;">
                 <div>
-                    <h1 style="font-size:32px; font-weight:900; color:#fff; margin:0; letter-spacing:-1px;" data-i18n="cf-mock-title">
+                    <h1 class="cf-sec-title" data-i18n="cf-mock-title">
                         Salud Profesional</h1>
-                    <p style="color:rgba(255,255,255,0.4); margin-top:6px; font-size:14px;" data-i18n="profile-flow-intro">Análisis de tu
-                        posicionamiento, ingresos y engagement en MDJPRO.</p>
+                    <p class="cf-sec-sub" data-i18n="profile-flow-intro">Análisis de tu
+                        posicionamiento, ingresos y engagement.</p>
                 </div>
                 <div style="display:flex; gap:10px;">
                     <select id="metrics-range" onchange="loadFlowData(this.value)"
@@ -8317,39 +8314,8 @@
 
             <!-- Registro nocturno SFT: vive en cabina SoundForTips™ (pestaña Live), no en Flujo de caja. -->
 
-            <!-- 🔹 BLOQUE 5 — LEDGER PROFESIONAL -->
-            <div class="flow-table-card" style="margin-bottom:80px;">
-                <div
-                    style="padding:24px; border-bottom:1px solid rgba(255,255,255,0.03); display:flex; justify-content:space-between; align-items:center;">
-                    <h3 class="chart-title">Libro de Transacciones (Ledger)</h3>
-                    <div style="display:flex; gap:8px;">
-                        <button type="button" class="ledger-filter-btn active" onclick="filterLedger('all', this)">Todo</button>
-                        <button type="button" class="ledger-filter-btn" onclick="filterLedger('income', this)">Ingresos</button>
-                        <button type="button" class="ledger-filter-btn" onclick="filterLedger('payout', this)">Pagos</button>
-                    </div>
-                </div>
-                <div style="overflow-x:auto;">
-                    <table class="flow-table">
-                        <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Concepto / Evento</th>
-                                <th>Bruto</th>
-                                <th>Comisión</th>
-                                <th>Neto DJ</th>
-                                <th>Estado</th>
-                                <th>Liquidación</th>
-                            </tr>
-                        </thead>
-                        <tbody id="ledger-body">
-                            <tr>
-                                <td colspan="7" style="padding:60px; text-align:center; color:rgba(255,255,255,0.2);">
-                                    Cargando transacciones profesionales...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            <!-- 🔹 BLOQUE 5 — MOVIMIENTOS (estado de cuenta: js/artist-panel/artist-movements.js; reemplaza al libro de transacciones viejo) -->
+            <div id="ap-movements" style="margin-bottom:20px;"></div>
             <p class="flow-privacy-notice" style="font-size:11px;line-height:1.55;color:rgba(255,255,255,0.42);max-width:720px;margin:28px auto 8px;padding:0 20px;text-align:center;">
                 <span data-i18n="flow-privacy-notice">Datos confidenciales solo para tu cuenta. No compartas capturas ni accesos con terceros.</span>
                 <a href="./legal.html" style="color:rgba(197,160,89,0.88);font-weight:600;margin-left:6px;" data-i18n="flow-privacy-legal">Aviso legal y privacidad</a>
@@ -8727,6 +8693,15 @@
             </div>
         </section>
     </div>
+
+    <!-- El pie va DESPUÉS de todos los paneles de pestaña: antes quedaba entre #tab-public y las pestañas Serato (Cash Flow, SFT, Software, Documentos) y aparecía arriba de ellas. -->
+    <!-- Footer -->
+    <footer class="footer">
+        <!-- LOCKED SECTION: DO NOT MODIFY -->
+        <div class="container" style="text-align:center;">
+            <div data-i18n="footer-rights-llc">© 2026 Miami DJ Beat LLC. Pro Division Access.</div>
+        </div>
+    </footer>
 
     <script>
         // Global constants for DJ availability

@@ -1,0 +1,212 @@
+/* ══ CASH FLOW DEL ARTISTA — ESTILO ÚNICO COMPARTIDO ═══════════════════════════════════════════════
+   UNA sola fuente para la tipografía de títulos y el modo día del panel #tab-flow. La enlazan las tres páginas que llevan ese
+   panel: dj-profile.html, dj-dashboard.html y staff-agenda.html (Cash Flow personal del staff). El marcado del panel es el mismo en
+   las tres; antes cada página tenía su copia inline y los arreglos no se propagaban. Si se cambia algo AQUÍ, cambia en las tres.
+   Los módulos js/artist-panel/* (Tus números, Opiniones, gráficas) ya eran compartidos y llevan su propio CSS por JS.
+
+   Reglas del sitio que se respetan:
+   · día = html[data-theme="day"] (interruptor del header; en staff-agenda lo refleja artist-cashflow.js desde body[data-mode]);
+   · el MENÚ, el fondo de la página y el pie en día ya NO están aquí: viven en css/mdj-dia-base.css (base común de todas las páginas
+     con modo día; artist-cashflow.js le pone body[data-mdj-dia] mientras Cash Flow está visible);
+   · todo el día de este panel va acotado a html.ap-flow-active (marca que artist-cashflow.js pone SOLO mientras #tab-flow es la pestaña visible),
+     para no tocar las demás pestañas de cada página;
+   · paleta de día = la de staff.html (#eef1f5 / #fff / #1b1f27, dorado #8a6d2e);
+   · las inline-style del panel obligan a !important. */
+
+/* ── TÍTULOS DE LAS PARTES (PO 2026-10-05): 15 px, negrita, MAYÚSCULAS espaciadas, sin opacidad ─────────── */
+#tab-flow .chart-title,
+#tab-flow .cf-sec-title {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: #fff;
+  margin: 0;
+}
+/* Título de página («Flujo de Caja» en dj-dashboard): conserva el aire hasta el bloque que sigue. */
+#tab-flow h1.cf-sec-title { margin: 0 0 12px; }
+/* Subtítulo de «Salud Profesional». El !important de tamaño gana a la regla global `h1 + p { font-size: .9em !important }` de styles.css. */
+#tab-flow .cf-sec-sub {
+  margin: 8px 0 0;
+  font-size: 11px !important;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, .6);
+}
+
+/* ── MODO DÍA ───────────────────────────────────────────────────────────────────────────────────── */
+html[data-theme="day"].ap-flow-active #tab-flow { background: #eef1f5 !important; color: #1b1f27; }
+
+html[data-theme="day"].ap-flow-active #tab-flow .chart-title,
+html[data-theme="day"].ap-flow-active #tab-flow .cf-sec-title,
+html[data-theme="day"].ap-flow-active #tab-flow .flow-card-value { color: #1b1f27 !important; }
+html[data-theme="day"].ap-flow-active #tab-flow .cf-sec-title.cf-sec-title--gold { color: #8a6d2e !important; }
+
+html[data-theme="day"].ap-flow-active #tab-flow [style*="rgba(255,255,255"],
+html[data-theme="day"].ap-flow-active #tab-flow [style*="rgba(255, 255, 255"],   /* el navegador reescribe el color inline con espacios */
+html[data-theme="day"].ap-flow-active #tab-flow .cf-sec-sub,
+html[data-theme="day"].ap-flow-active #tab-flow .flow-card-label,
+html[data-theme="day"].ap-flow-active #tab-flow .flow-table th { color: rgba(27, 31, 39, .62) !important; }
+
+html[data-theme="day"].ap-flow-active #tab-flow .flow-card-value[style*="#f0cc80"],
+html[data-theme="day"].ap-flow-active #tab-flow .flow-card-value[style*="#c5a059"] { color: #9a7a33 !important; }
+html[data-theme="day"].ap-flow-active #tab-flow .flow-card-value[style*="#00ff88"],
+html[data-theme="day"].ap-flow-active #tab-flow .flow-card-trend.up,
+html[data-theme="day"].ap-flow-active #tab-flow .status-pill.available,
+html[data-theme="day"].ap-flow-active #tab-flow .status-pill.income { color: #0a7d45 !important; }
+html[data-theme="day"].ap-flow-active #tab-flow .flow-card-trend.down { color: #c62828 !important; }
+html[data-theme="day"].ap-flow-active #tab-flow .status-pill.pending { color: #8a6500 !important; }
+
+html[data-theme="day"].ap-flow-active #tab-flow .flow-card,
+html[data-theme="day"].ap-flow-active #tab-flow .chart-container-large,
+html[data-theme="day"].ap-flow-active #tab-flow .flow-table-card {
+  background: #fff !important;
+  border: 1px solid rgba(14, 18, 28, .13) !important;
+}
+html[data-theme="day"].ap-flow-active #tab-flow .flow-table-card > div:first-child { border-bottom-color: rgba(14, 18, 28, .1) !important; }
+html[data-theme="day"].ap-flow-active #tab-flow .flow-table thead th {
+  background: #f4f6f9 !important;
+  border-bottom: 1px solid rgba(14, 18, 28, .13) !important;
+}
+html[data-theme="day"].ap-flow-active #tab-flow .flow-table tbody td {
+  color: rgba(27, 31, 39, .86) !important;
+  border-bottom: 1px solid rgba(14, 18, 28, .08) !important;
+}
+html[data-theme="day"].ap-flow-active #tab-flow .flow-table tbody tr:nth-child(odd) td { background: rgba(14, 18, 28, .025) !important; }
+html[data-theme="day"].ap-flow-active #tab-flow select#metrics-range {
+  background: #fff !important;
+  color: #1b1f27 !important;
+  border-color: rgba(14, 18, 28, .13) !important;
+  box-shadow: none !important;
+}
+html[data-theme="day"].ap-flow-active #tab-flow .ledger-filter-btn:not(.active) {
+  background: rgba(14, 18, 28, .04);
+  border-color: rgba(14, 18, 28, .1);
+  color: rgba(27, 31, 39, .7);
+}
+
+/* Contenedor del panel: en dj-dashboard / staff-agenda trae su propio fondo oscuro (#0a0a0b); en dj-profile lo anula profile.css. */
+html[data-theme="day"].ap-flow-active #tab-flow .flow-dashboard { background: transparent !important; color: #1b1f27; }
+html[data-theme="day"].ap-flow-active #tab-flow .flow-card-trend:not(.up):not(.down) { color: rgba(27, 31, 39, .62); }
+
+/* Tarjeta VISIBILIDAD (dj-dashboard / staff-agenda) */
+html[data-theme="day"].ap-flow-active #tab-flow #vis-stats > div { background: #fff !important; border-color: rgba(14, 18, 28, .13) !important; }
+html[data-theme="day"].ap-flow-active #tab-flow .vis-plan-badge-float.vis-plan-badge--pro { background: rgba(197, 160, 89, .25); border-color: rgba(138, 109, 46, .7); color: #5a4515; }
+html[data-theme="day"].ap-flow-active #tab-flow .vis-plan-badge-float.vis-plan-badge--lite { background: rgba(14, 18, 28, .06); border-color: rgba(14, 18, 28, .16); color: rgba(27, 31, 39, .65); }
+
+/* Exportación fiscal (IRS) */
+html[data-theme="day"].ap-flow-active #tab-flow .flow-export-panel { background: #fff !important; border-color: rgba(138, 109, 46, .35) !important; }
+html[data-theme="day"].ap-flow-active #tab-flow .flow-export-panel h4 { color: #8a6d2e !important; }
+html[data-theme="day"].ap-flow-active #tab-flow #flow-export-year { background: #fff !important; color: #1b1f27 !important; border-color: rgba(14, 18, 28, .16) !important; }
+
+/* ── MOVIMIENTOS (estado de cuenta al final del Cash Flow · js/artist-panel/artist-movements.js) ────────────────────────────────
+   Modelo de estado de cuenta de banco: pendiente vs disponible, monto con signo, saldo corriente solo de lo disponible, agrupado por día. */
+#tab-flow .apm-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+#tab-flow .apm-select { width: auto; min-width: 190px; background: rgba(255, 255, 255, .04); color: #fff; border: 1px solid rgba(255, 255, 255, .12); border-radius: 8px; padding: 8px 12px; font-size: 12px; font-weight: 700; cursor: pointer; }
+#tab-flow .apm-sum { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+#tab-flow .apm-stat { border: 1px solid rgba(255, 255, 255, .07); border-radius: 12px; padding: 12px 14px; background: rgba(255, 255, 255, .02); }
+#tab-flow .apm-stat-l { font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: rgba(255, 255, 255, .55); }
+#tab-flow .apm-stat-v { font-size: 20px; font-weight: 900; margin-top: 4px; color: #fff; font-variant-numeric: tabular-nums; }
+#tab-flow .apm-stat--avail .apm-stat-v { color: #00ff88; }
+#tab-flow .apm-stat--pend .apm-stat-v { color: #f0cc80; }
+#tab-flow .apm-scroll { overflow-x: auto; }
+#tab-flow .apm-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+#tab-flow .apm-table th { text-align: left; padding: 10px 12px; font-size: 10px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: rgba(255, 255, 255, .5); border-bottom: 1px solid rgba(255, 255, 255, .1); }
+#tab-flow .apm-table th.apm-r, #tab-flow .apm-table td.apm-r { text-align: right; }
+#tab-flow .apm-day td { padding: 14px 12px 6px; font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: rgba(255, 255, 255, .55); background: rgba(255, 255, 255, .025); }
+#tab-flow .apm-row td { padding: 12px; border-bottom: 1px solid rgba(255, 255, 255, .06); vertical-align: top; }
+#tab-flow .apm-row--off { opacity: .6; }
+#tab-flow .apm-concept { font-weight: 700; color: #fff; }
+#tab-flow .apm-meta { margin-top: 4px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+#tab-flow .apm-tag { font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; border: 1px solid rgba(255, 255, 255, .22); border-radius: 999px; padding: 2px 8px; color: rgba(255, 255, 255, .75); }
+#tab-flow .apm-tag--evento { color: #e0c27a; border-color: rgba(197, 160, 89, .6); }
+#tab-flow .apm-tag--propina { color: #c4b5fd; border-color: rgba(167, 139, 250, .55); }
+#tab-flow .apm-tag--residencia { color: #d8b4fe; border-color: rgba(192, 132, 252, .55); }
+#tab-flow .apm-tag--comision { color: #7dd3fc; border-color: rgba(56, 189, 248, .55); }
+#tab-flow .apm-tag--pago { color: #ff9b9b; border-color: rgba(255, 107, 107, .55); }
+#tab-flow .apm-ref { font-size: 10.5px; font-family: ui-monospace, Menlo, Consolas, monospace; color: rgba(255, 255, 255, .5); }
+#tab-flow .apm-pill { display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; border-radius: 999px; padding: 3px 10px; }
+#tab-flow .apm-pill--avail { color: #00ff88; background: rgba(0, 255, 136, .1); border: 1px solid rgba(0, 255, 136, .25); }
+#tab-flow .apm-pill--pend { color: #ffcc00; background: rgba(255, 204, 0, .1); border: 1px solid rgba(255, 204, 0, .25); }
+#tab-flow .apm-pill--other { color: rgba(255, 255, 255, .6); border: 1px solid rgba(255, 255, 255, .2); }
+#tab-flow .apm-amt { font-weight: 900; font-size: 15px; font-variant-numeric: tabular-nums; }
+#tab-flow .apm-amt--pos { color: #00ff88; }
+#tab-flow .apm-amt--neg { color: #ff6b6b; }
+#tab-flow .apm-sub { font-size: 10.5px; color: rgba(255, 255, 255, .5); margin-top: 2px; }
+#tab-flow .apm-bal { font-variant-numeric: tabular-nums; font-weight: 700; color: rgba(255, 255, 255, .85); white-space: nowrap; }
+#tab-flow .apm-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px; }
+#tab-flow .apm-note { font-size: 11px; color: rgba(255, 255, 255, .5); }
+#tab-flow .apm-msg { padding: 36px 12px; text-align: center; color: rgba(255, 255, 255, .55); font-size: 13px; }
+@media (max-width: 760px) { #tab-flow .ap-acc { padding: 16px 14px; } #tab-flow .apm-sum { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Movimientos en día */
+html[data-theme="day"].ap-flow-active #tab-flow .apm-select { background: #fff; color: #1b1f27; border-color: rgba(14, 18, 28, .16); }
+html[data-theme="day"].ap-flow-active #tab-flow .apm-stat { background: #f7f8fa; border-color: rgba(14, 18, 28, .1); }
+html[data-theme="day"].ap-flow-active #tab-flow .apm-stat-l, html[data-theme="day"].ap-flow-active #tab-flow .apm-table th,
+html[data-theme="day"].ap-flow-active #tab-flow .apm-day td, html[data-theme="day"].ap-flow-active #tab-flow .apm-note,
+html[data-theme="day"].ap-flow-active #tab-flow .apm-msg, html[data-theme="day"].ap-flow-active #tab-flow .apm-sub, html[data-theme="day"].ap-flow-active #tab-flow .apm-ref { color: rgba(27, 31, 39, .62); }
+html[data-theme="day"].ap-flow-active #tab-flow .apm-stat-v, html[data-theme="day"].ap-flow-active #tab-flow .apm-concept, html[data-theme="day"].ap-flow-active #tab-flow .apm-bal { color: #1b1f27; }
+html[data-theme="day"].ap-flow-active #tab-flow .apm-stat--avail .apm-stat-v, html[data-theme="day"].ap-flow-active #tab-flow .apm-amt--pos { color: #0a7d45; }
+html[data-theme="day"].ap-flow-active #tab-flow .apm-stat--pend .apm-stat-v { color: #8a6500; }
+html[data-theme="day"].ap-flow-active #tab-flow .apm-amt--neg { color: #c62828; }
+html[data-theme="day"].ap-flow-active #tab-flow .apm-table th { border-bottom-color: rgba(14, 18, 28, .13); }
+html[data-theme="day"].ap-flow-active #tab-flow .apm-day td { background: rgba(14, 18, 28, .035); }
+html[data-theme="day"].ap-flow-active #tab-flow .apm-row td { border-bottom-color: rgba(14, 18, 28, .08); }
+html[data-theme="day"].ap-flow-active #tab-flow .apm-tag { color: rgba(27, 31, 39, .75); border-color: rgba(14, 18, 28, .25); }
+html[data-theme="day"].ap-flow-active #tab-flow .apm-tag--evento { color: #6b5420; border-color: rgba(138, 109, 46, .7); }
+html[data-theme="day"].ap-flow-active #tab-flow .apm-tag--propina { color: #5b3fb5; border-color: rgba(91, 63, 181, .55); }
+html[data-theme="day"].ap-flow-active #tab-flow .apm-tag--residencia { color: #7e22ce; border-color: rgba(126, 34, 206, .5); }
+html[data-theme="day"].ap-flow-active #tab-flow .apm-tag--comision { color: #0369a1; border-color: rgba(3, 105, 161, .55); }
+html[data-theme="day"].ap-flow-active #tab-flow .apm-tag--pago { color: #b91c1c; border-color: rgba(185, 28, 28, .5); }
+html[data-theme="day"].ap-flow-active #tab-flow .apm-pill--avail { color: #0a7d45; background: rgba(10, 125, 69, .1); border-color: rgba(10, 125, 69, .35); }
+html[data-theme="day"].ap-flow-active #tab-flow .apm-pill--pend { color: #8a6500; background: rgba(138, 101, 0, .1); border-color: rgba(138, 101, 0, .35); }
+html[data-theme="day"].ap-flow-active #tab-flow .apm-pill--other { color: rgba(27, 31, 39, .6); border-color: rgba(14, 18, 28, .25); }
+
+/* Movimientos: acordeón (cerrado por defecto), Día · Semana · Mes · Año y columna Origen */
+#tab-flow .apm-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin-bottom: 16px; }
+#tab-flow .apm-grains, #tab-flow .apm-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+#tab-flow .apm-origin { white-space: nowrap; }
+#tab-flow .apm-from { margin-top: 4px; font-size: 11px; color: rgba(255, 255, 255, .55); }
+#tab-flow .apm-g-n { font-weight: 700; color: rgba(255, 255, 255, .55); text-transform: none; letter-spacing: 0; }
+html[data-theme="day"].ap-flow-active #tab-flow .apm-from, html[data-theme="day"].ap-flow-active #tab-flow .apm-g-n { color: rgba(27, 31, 39, .62); }
+
+/* Movimientos: fila de cierre de cada periodo — «Total ingresos» y de dónde vienen */
+#tab-flow .apm-gtotal td { padding: 14px 12px; border-top: 1px solid rgba(197, 160, 89, .35); border-bottom: 1px solid rgba(255, 255, 255, .1); background: rgba(197, 160, 89, .06); vertical-align: middle; }
+#tab-flow .apm-gt-label { font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: rgba(255, 255, 255, .75); }
+#tab-flow .apm-gt-by { display: flex; flex-wrap: wrap; gap: 6px 8px; margin-top: 8px; }
+#tab-flow .apm-gt-chip { font-size: 12px; font-weight: 700; border: 1px solid rgba(255, 255, 255, .22); border-radius: 999px; padding: 3px 10px; color: rgba(255, 255, 255, .8); white-space: nowrap; }
+#tab-flow .apm-gt-chip b { font-variant-numeric: tabular-nums; color: #fff; }
+#tab-flow .apm-gt-amt { font-size: 18px; font-weight: 900; font-variant-numeric: tabular-nums; color: #fff; }
+html[data-theme="day"].ap-flow-active #tab-flow .apm-gtotal td { border-top-color: rgba(138, 109, 46, .5); border-bottom-color: rgba(14, 18, 28, .13); background: rgba(197, 160, 89, .12); }
+html[data-theme="day"].ap-flow-active #tab-flow .apm-gt-label { color: rgba(27, 31, 39, .75); }
+html[data-theme="day"].ap-flow-active #tab-flow .apm-gt-chip { color: rgba(27, 31, 39, .8); border-color: rgba(14, 18, 28, .25); }
+html[data-theme="day"].ap-flow-active #tab-flow .apm-gt-chip b, html[data-theme="day"].ap-flow-active #tab-flow .apm-gt-amt { color: #1b1f27; }
+
+/* Movimientos: botón abrir/cerrar a la derecha del nombre, en un círculo de cristal esmerilado */
+
+/* ── ACORDEÓN COMPARTIDO (js/artist-panel/artist-ui.js): «Movimientos» y «Opiniones de clientes» ───────────────────────────────────────────────
+   Un solo encabezado: título a la izquierda y, SIEMPRE a su derecha, el botón «+» / «−» en un círculo de cristal; cerrado, un resumen corto.
+   Valores copiados de componentes que YA existen (no inventados): círculo de cristal = .ew-orbe de staff.html (fondo rgba(20,24,30,.45), blur 6px,
+   borde 1px rgba(255,255,255,.10), hover rgba(20,24,30,.72)); «+» dorado a la derecha del título = acordeones de dj-profile (.acc-icon: 24px, color --gold). */
+#tab-flow .ap-acc { background: linear-gradient(180deg, rgba(255, 255, 255, .03), rgba(255, 255, 255, .015)); border: 1px solid rgba(255, 255, 255, .07); border-radius: 16px; padding: 22px 24px; }
+#tab-flow .ap-acc-head { display: flex; flex-wrap: nowrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 0; }
+#tab-flow .ap-acc--open > .ap-acc-head { margin-bottom: 16px; }
+#tab-flow .ap-acc-title { margin: 0; cursor: pointer; }
+#tab-flow .ap-acc-right { display: flex; align-items: center; gap: 14px; flex: 0 0 auto; }
+#tab-flow .ap-acc-toggle { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; padding: 0; margin: 0; border-radius: 50%; cursor: pointer; color: var(--gold, #c5a059); font: inherit; line-height: 1;
+  background: rgba(20, 24, 30, .45); border: 1px solid rgba(255, 255, 255, .10); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); transition: background .15s linear; }
+#tab-flow .ap-acc-toggle:hover { background: rgba(20, 24, 30, .72); }
+#tab-flow .ap-acc-icon { font-size: 24px; line-height: 1; letter-spacing: 0; }
+#tab-flow .ap-acc-mini { font-size: 12px; font-weight: 700; color: rgba(255, 255, 255, .6); }
+#tab-flow .ap-acc-mini-v { font-variant-numeric: tabular-nums; }
+#tab-flow .ap-acc-mini-v--avail { color: #00ff88; }
+#tab-flow .ap-acc-mini-v--pend { color: #f0cc80; }
+#tab-flow .ap-acc-mini-sep { margin: 0 8px; opacity: .6; }
+#tab-flow #ap-reviews .ap-foot { display: flex; justify-content: flex-start; margin-top: 12px; }
+html[data-theme="day"].ap-flow-active #tab-flow .ap-acc { background: #fff; border-color: rgba(14, 18, 28, .13); }
+html[data-theme="day"].ap-flow-active #tab-flow .ap-acc-toggle { color: #6b5420; background: rgba(197, 160, 89, .14); border-color: rgba(138, 109, 46, .45); }
+html[data-theme="day"].ap-flow-active #tab-flow .ap-acc-toggle:hover { background: rgba(197, 160, 89, .3); border-color: rgba(138, 109, 46, .7); }
+html[data-theme="day"].ap-flow-active #tab-flow .ap-acc-mini { color: rgba(27, 31, 39, .62); }
+html[data-theme="day"].ap-flow-active #tab-flow .ap-acc-mini-v--avail { color: #0a7d45; }
+html[data-theme="day"].ap-flow-active #tab-flow .ap-acc-mini-v--pend { color: #8a6500; }

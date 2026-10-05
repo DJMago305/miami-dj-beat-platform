@@ -29,7 +29,7 @@
         s.textContent =
             '#bcr-root{margin:0;padding:12px 16px 14px;border-bottom:1px solid var(--line);background:var(--surface);}' +
             '#bcr-root .bcr-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px;}' +
-            '#bcr-root .bcr-title{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--gold-strong);display:flex;align-items:center;gap:8px;}' +
+            '#bcr-root .bcr-title{font-size:15px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-strong);display:flex;align-items:center;gap:8px;}' +
             '#bcr-root .bcr-pill{font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#2fa866;border:1px solid rgba(47,168,102,.5);border-radius:999px;padding:2px 8px;}' +
             '#bcr-root .bcr-ranges{display:flex;gap:4px;}' +
             '#bcr-root .bcr-ranges button{background:transparent;border:1px solid var(--line);color:var(--text-2);font-size:11px;border-radius:7px;padding:3px 10px;cursor:pointer;}' +
@@ -64,18 +64,18 @@
         var body = root.querySelector('.bcr-body'); while (body.firstChild) body.removeChild(body.firstChild);
         var r = d.residencias, e = d.eventos, l = d.libro_djs, st = d.stripe, b = d.banco, grid = el('div', 'bcr-grid');
         function dm(cur, prev) { return pv ? delta(cur / 100, prev / 100, pvComplete, false, true) : null; }
-        grid.appendChild(card('Ganamos', money(d.ganamos_cents), 'Residencias ' + money(r.ingreso_cents) + ' · Eventos ' + money(e.ingreso_cents) + ' · Stripe ' + money(st.cobrado_cents), 'pos', pv ? dm(d.ganamos_cents, pv.ganamos_cents) : null));
+        grid.appendChild(card('Ganamos', money(d.ganamos_cents), 'Residencias ' + money(r.ingreso_cents) + ' · Eventos ' + money(e.ingreso_cents) + ' · Stripe ' + money(st.cobrado_cents) + (d.extra ? ' · Extra ' + money(d.extra.cents) : ''), 'pos', pv ? dm(d.ganamos_cents, pv.ganamos_cents) : null));
         grid.appendChild(card('Pagamos', money(d.pagamos_cents), 'DJs en residencia ' + money(r.pago_djs_cents) + ' · Eventos ' + money(e.pago_djs_cents) + ' · Libro ' + money(l.pago_cents), '', pv ? dm(d.pagamos_cents, pv.pagamos_cents) : null));
         grid.appendChild(card('Neto', money(d.neto_cents), 'Ganamos − Pagamos (devengado)', d.neto_cents >= 0 ? 'pos' : 'neg', pv ? dm(d.neto_cents, pv.neto_cents) : null));
         grid.appendChild(card('Por liberar a DJs', money(l.pendiente_cents), 'Pagos pendientes del libro de los DJ'));
         var cb = d.cobros;
         if (cb) {
-            var parts = []; if (cb.acreditado_cents) parts.push(money(cb.acreditado_cents) + ' acreditado'); if (cb.por_acreditar_cents) parts.push(money(cb.por_acreditar_cents) + ' por acreditar');
+            var parts = []; if (cb.acreditado_cents) parts.push(money(cb.acreditado_cents) + ' acreditado'); if (cb.por_acreditar_cents) parts.push(money(cb.por_acreditar_cents) + ' por acreditar'); if (cb.extra_cents) parts.push(money(cb.extra_cents) + ' son trabajos extra');
             grid.appendChild(card('Cobrado', money(cb.total_cents), cb.cobros ? cb.cobros + (cb.cobros === 1 ? ' cobro' : ' cobros') + (parts.length ? ' · ' + parts.join(' · ') : '') : 'Sin cobros registrados en el rango', '', pv && pv.cobros ? delta(cb.total_cents / 100, pv.cobros.total_cents / 100, pvComplete, false, true) : null));
             var rr = rng(), pc;
             if (!cb.first_day) pc = ['—', 'Sin cobros registrados todavía'];
             else if (rr.from < cb.first_day) pc = ['—', 'Los cobros registrados empiezan el ' + dayLabel(cb.first_day) + '; faltan los anteriores para calcularlo'];
-            else { var pcv = d.ganamos_cents - cb.total_cents; pc = pcv >= 0 ? [money(pcv), 'Devengado − cobrado del rango'] : [money(0), 'Cobrado supera lo devengado en ' + money(-pcv) + ' (incluye turnos de fechas anteriores)']; }
+            else { var devL = r.ingreso_cents + e.ingreso_cents, cobL = cb.venue_cents != null ? cb.venue_cents : cb.total_cents, pcv = devL - cobL; pc = pcv >= 0 ? [money(pcv), 'Devengado de locales − cobrado de locales'] : [money(0), 'Cobrado de locales supera lo devengado en ' + money(-pcv) + ' (incluye turnos de fechas anteriores)']; }
             grid.appendChild(card('Por cobrar', pc[0], pc[1]));
         }
         grid.appendChild(card('Eventos', e.hechos + (e.hechos === 1 ? ' hecho · ' : ' hechos · ') + e.pendientes + (e.pendientes === 1 ? ' pendiente' : ' pendientes'), e.sin_ingreso_registrado > 0 ? e.sin_ingreso_registrado + (e.sin_ingreso_registrado === 1 ? ' evento hecho sin ingreso registrado' : ' eventos hechos sin ingreso registrado') + ': falta la tarifa del local' : 'Todos con ingreso registrado'));
