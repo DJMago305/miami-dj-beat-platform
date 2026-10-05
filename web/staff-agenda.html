@@ -3367,6 +3367,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
               #ofm-business-view{max-width:none;margin:0;padding:0;}
               #ofm-matrix-frame{width:100%;height:calc(100vh - 100px);min-height:640px;border:none;
                 border-radius:0;background:#0b0b0f;display:block;}
+              #ofm-business-view.ofm-docked #ofm-matrix-frame{height:100vh;min-height:0;}
               .ofm-expand{background:rgba(197,160,89,.10);border:1px solid rgba(197,160,89,.4);color:#e8c987;
                 font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;
                 border-radius:8px;padding:6px 11px;white-space:nowrap;transition:background .2s;}
@@ -3445,6 +3446,43 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                 bar.appendChild(brand); bar.appendChild(ctrls);
                 flow.insertBefore(bar, flow.firstChild);
 
+                /* Matrix a pantalla completa bajo el menú: la columna lateral del Matrix sube hasta el menú y la barra del switch + las tarjetas pasan a su columna derecha (se mueven los
+                   mismos nodos, con sus eventos; al volver a «PFS» regresan arriba de la vista personal). Los estilos propios se copian al marco. */
+                var dockTimer=null;
+                function moveStrips(on){
+                  if(dockTimer){ clearInterval(dockTimer); dockTimer=null; }
+                  if(!on){
+                    biz.classList.remove('ofm-docked');
+                    var fd=null; try{ fd=frame&&frame.contentDocument; }catch(e){}
+                    var panel0=(fd&&fd.getElementById('mrm-panel'))||document.getElementById('mrm-panel');
+                    if(bar.ownerDocument!==document){ try{ document.adoptNode(bar); }catch(e){} }
+                    flow.insertBefore(bar, flow.firstChild);
+                    if(panel0){ if(panel0.ownerDocument!==document){ try{ document.adoptNode(panel0); }catch(e){} } flow.insertBefore(panel0, bar.nextSibling); }
+                    return;
+                  }
+                  var tries=0;
+                  dockTimer=setInterval(function(){ tries++;
+                    try{
+                      var d=frame&&frame.contentDocument, main=d&&d.querySelector('.main');
+                      if(!main||!d.head){ if(tries>80){ clearInterval(dockTimer); dockTimer=null; } return; }
+                      var panel=document.getElementById('mrm-panel')||d.getElementById('mrm-panel');
+                      if(!panel && tries<32) return;      /* espera hasta ~8 s a que las tarjetas estén acopladas */
+                      clearInterval(dockTimer); dockTimer=null;
+                      if(!d.getElementById('ofm-moved-css')){
+                        var css='';
+                        [].slice.call(document.querySelectorAll('style')).forEach(function(st){ if(st.textContent.indexOf('.ofm-bar{')>-1) css+=st.textContent.split('#ofm-business-view')[0]; });
+                        var dock=document.getElementById('mrm-dock-css'); if(dock) css+=dock.textContent.split('#tab-flow')[0];
+                        css+='.main>.ofm-bar{margin:0;}.main>.mrm-panel{margin:0;}'+
+                          'body[data-mode="light"] .ofm-brand-tx{color:#14181f;}body[data-mode="light"] .ofm-bar .ofm-lbl{color:#565b68;}body[data-mode="light"] .ofm-bar.on .ofm-lbl{color:#8c6a2f;}'+
+                          'body[data-mode="light"] .mrm-card{background:#fff;border-color:rgba(0,0,0,.1);}body[data-mode="light"] .mrm-label,body[data-mode="light"] .mrm-sub{color:#565b68;}body[data-mode="light"] .mrm-value{color:#8c6a2f;}';
+                        var ns=d.createElement('style'); ns.id='ofm-moved-css'; ns.textContent=css; d.head.appendChild(ns);
+                      }
+                      d.adoptNode(bar); main.insertBefore(bar, main.firstChild);
+                      if(panel){ if(panel.ownerDocument!==d) d.adoptNode(panel); main.insertBefore(panel, bar.nextSibling); }
+                      biz.classList.add('ofm-docked');
+                    }catch(e){ if(tries>80){ clearInterval(dockTimer); dockTimer=null; } }
+                  }, 250);
+                }
                 function apply(mode, persist){
                   var on = (mode==='business');
                   bar.classList.toggle('on', on);
@@ -3461,6 +3499,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                     frame.setAttribute('src', frame.getAttribute('data-src'));
                   }
                   if(persist){ try{ localStorage.setItem(MODE_KEY, mode); }catch(e){} }
+                  moveStrips(on);
                 }
 
                 tog.addEventListener('click', function(){
@@ -3484,7 +3523,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                 /* ═══ UNIFICACIÓN día/noche (PO 2026-08-15): el botón CENTRAL del portal es el ÚNICO control. Ocultamos el botón interno del Matrix y sincronizamos por mensaje del parent + al cargar el Matrix. No toca zonas LOCKED. ═══ */
                 dtog.style.display='none';
                 window.addEventListener('message', function(ev){ try{ var m=ev&&ev.data&&ev.data.mdjTheme; if(m==='light'||m==='dark'){ applyTheme(m==='light'?'day':'night', false); } }catch(e){} });
-                if(frame) frame.addEventListener('load', function(){ applyTheme(curTheme, false); });
+                if(frame) frame.addEventListener('load', function(){ applyTheme(curTheme, false); if(bar.classList.contains('on')) moveStrips(true); });
 
                 // --- pantalla completa del Matrix: fullscreen NATIVO (todo el monitor,
                 //     oculta barra/pestañas del navegador); fallback a modo CSS si no hay API ---
@@ -7274,7 +7313,12 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
     <script>window.MDJ_DASHBOARD_DEFER_AGENDA = true;</script>
     <script src="./js/agenda-engine.js?v=20260921-sin-cancelados"></script>
     <script src="./js/mdj-dashboard-hub.js?v=20260513-fase2-flow"></script>
-    <script src="./flow-handler.js?v=202605132300-ledger-filters"></script>
+    <script src="./flow-handler.js?v=20261005-artist-flow"></script>
+    <script src="./js/artist-panel/artist-data.js?v=20261005-artist-flow"></script>
+    <script src="./js/artist-panel/artist-charts.js?v=20261005-artist-flow"></script>
+    <script src="./js/artist-panel/artist-kpis.js?v=20261005-artist-flow"></script>
+    <script src="./js/artist-panel/artist-reputation.js?v=20261005-artist-flow"></script>
+    <script src="./js/artist-panel/artist-cashflow.js?v=20261005-artist-flow"></script>
 
     <!-- Support for External Tab Routing (?tab=settings) -->
     <script>

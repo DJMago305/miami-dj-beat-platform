@@ -98,7 +98,18 @@
         var b = box(); if (!b) return Promise.resolve();
         var mine = ++seq;
         if (!b.firstChild) paint(b, shell(el('div', 'ap-note', t('loading'))));
-        return AP.data.load().then(function (m) { if (mine === seq) render(m); }, function (e) {
+        return AP.data.load().then(function (m) {
+            if (mine !== seq) return;
+            render(m);
+            if (AP.kpis) AP.kpis.refresh(m);                                       /* tarjetas y gráfica semanal con datos reales */
+            if (AP.reputation) AP.reputation.refresh();                            /* reseñas reales: tarjeta, estrellas del perfil y lista */
+            if (AP.charts) {                                                       /* dona de origen del dinero + visitas en la gráfica de crecimiento */
+                try { AP.charts.renderDonut(m); } catch (x1) { try { console.warn('[artist-panel] dona', x1 && x1.message); } catch (x2) { /* sin consola */ } }
+                Promise.all([AP.data.loadVisits(800), AP.data.loadContribution(), AP.data.loadContributionDaily(800)]).then(function (r) {   /* series reales de la gráfica (solo lectura) */
+                    if (mine === seq) { try { AP.charts.addSeries(r[0], r[1], r[2]); } catch (x3) { /* sin gráfica aún */ } }
+                });
+            }
+        }, function (e) {
             if (mine !== seq) return;
             try { console.warn('[artist-panel] cashflow', e && e.message); } catch (x) { /* sin consola */ }
             paint(b, shell(el('div', 'ap-note', t('error'))));
@@ -108,7 +119,11 @@
     /* Envuelve (sin reescribir) las funciones probadas de flow-handler.js: tras cada carga de la pestaña, refresca esta vista. */
     function wrap(name) {
         var f = window[name]; if (typeof f !== 'function' || f.__apWrapped) return;
-        var w = function () { var r = f.apply(this, arguments); setTimeout(refresh, 0); return r; };
+        var w = function () {
+            var r = f.apply(this, arguments), go = function () { setTimeout(refresh, 0); };
+            if (r && typeof r.then === 'function') r.then(go, go); else go();      /* espera a que flow-handler termine de dibujar y entonces actúa */
+            return r;
+        };
         w.__apWrapped = true; window[name] = w;
     }
     /* Marca <html> con .ap-flow-active mientras #tab-flow es la pestaña visible (y solo entonces), para que el CSS de arriba quite buscador y marca. */
