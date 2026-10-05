@@ -68,6 +68,19 @@
 
     /* La dona va en SU PROPIO lienzo (#ap-dist-canvas). El lienzo original (#chart-distribution) sigue siendo de flow-handler.js, que lo redibuja en cada carga; si yo dibujara encima,
        su siguiente carga fallaba con «Canvas is already in use». El original se oculta (flow-handler sigue pintando ahí, sin conflicto). */
+    /* Si la dona se crea con el contenedor oculto, Chart.js la deja en 0x0; se vigila el CONTENEDOR y, en cuanto tiene ancho, se vuelve a medir. */
+    function kick(chart, host) {
+        var tries = 0, iv = setInterval(function () {
+            tries++;
+            try {
+                if (!chart.canvas || !chart.canvas.parentNode) { clearInterval(iv); return; }
+                var w = host.clientWidth;
+                if (w > 0 && (!chart.chartArea || chart.chartArea.width <= 0 || Math.abs(chart.width - w) > 2)) { chart.stop(); chart.resize(); chart.update('none'); }
+                else if (w > 0 && chart.chartArea && chart.chartArea.width > 0 && tries > 3) clearInterval(iv);
+            } catch (e) { clearInterval(iv); }
+            if (tries > 120) clearInterval(iv);
+        }, 400);
+    }
     function renderDonut(m) {
         if (typeof Chart === 'undefined') return;
         var orig = document.getElementById('chart-distribution'); if (!orig || !orig.parentElement) return;
@@ -77,11 +90,11 @@
         var old = Chart.getChart ? Chart.getChart(mine) : null; if (old) old.destroy();
         var rows = slices(m), total = rows.reduce(function (a, r) { return a + r.val; }, 0), ctx = mine.getContext('2d');
         if (!rows.length) {
-            new Chart(ctx, { type: 'doughnut', data: { labels: [t('none')], datasets: [{ data: [1], backgroundColor: ['rgba(255,255,255,0.08)'], borderWidth: 0 }] },
-                options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false }, tooltip: { enabled: false } } } });
+            kick(new Chart(ctx, { type: 'doughnut', data: { labels: [t('none')], datasets: [{ data: [1], backgroundColor: ['rgba(255,255,255,0.08)'], borderWidth: 0 }] },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false }, tooltip: { enabled: false } } } }), mine.parentElement);
             bars(mine, rows, 1); return;
         }
-        new Chart(ctx, {
+        var donut = new Chart(ctx, {
             type: 'doughnut',
             data: { labels: rows.map(function (r) { return r.name; }), datasets: [{ data: rows.map(function (r) { return r.val; }), backgroundColor: rows.map(function (r) { return r.color; }), borderWidth: 0, hoverOffset: 6 }] },
             options: {
@@ -92,6 +105,7 @@
                 }
             }
         });
+        kick(donut, mine.parentElement);
         bars(mine, rows, total);
     }
 

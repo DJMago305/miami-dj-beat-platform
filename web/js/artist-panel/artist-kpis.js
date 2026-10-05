@@ -69,26 +69,62 @@
         if (model) txt('kpi-available', USD.format(model.disponible));
     }
 
+    /* La gráfica semanal va en SU PROPIO lienzo. Si algo falla (Chart.js ausente, error al dibujar, contenedor oculto al crear), el lienzo original de flow-handler NO se oculta hasta que la
+       nueva dibujó bien, y se muestra un aviso con el motivo en vez de un recuadro en blanco. Si se creó con la pestaña oculta, se re-mide al hacerse visible (también sin ResizeObserver). */
+    function weekNote(host, text) {
+        var n = host.querySelector('.ap-act-msg');
+        if (!text) { if (n && n.parentNode) n.parentNode.removeChild(n); return; }
+        if (!n) { n = document.createElement('div'); n.className = 'ap-act-msg'; n.style.cssText = 'position:absolute;left:0;right:0;top:40%;text-align:center;font-size:12px;color:rgba(255,255,255,.55);padding:0 16px;'; host.appendChild(n); }
+        n.textContent = text;
+    }
+    /* Chart.js fija el tamaño del lienzo en 0 si se crea con el contenedor oculto y a veces no se entera de que luego se muestra. Se vigila el CONTENEDOR (no el lienzo, que ya mide 0):
+       en cuanto tiene ancho, se vuelve a medir y a dibujar. */
+    function kickResize(chart, host) {
+        var tries = 0, iv = setInterval(function () {
+            tries++;
+            try {
+                if (!chart.canvas || !chart.canvas.parentNode) { clearInterval(iv); return; }
+                var w = host.clientWidth;
+                if (w > 0 && (!chart.chartArea || chart.chartArea.width <= 0 || Math.abs(chart.width - w) > 2)) { chart.stop(); chart.resize(); chart.update('none'); }
+                else if (w > 0 && chart.chartArea && chart.chartArea.width > 0 && tries > 3) clearInterval(iv);
+            } catch (e) { clearInterval(iv); }
+            if (tries > 120) clearInterval(iv);
+        }, 400);
+    }
     function paintWeek(m) {
-        if (typeof Chart === 'undefined') return;
         var orig = document.getElementById('chart-activity'); if (!orig || !orig.parentElement) return;
-        var mine = document.getElementById('ap-act-canvas');
-        if (!mine) { mine = document.createElement('canvas'); mine.id = 'ap-act-canvas'; orig.parentElement.insertBefore(mine, orig); }
-        orig.style.display = 'none';
-        var old = Chart.getChart ? Chart.getChart(mine) : null; if (old) old.destroy();
-        new Chart(mine.getContext('2d'), {
-            type: 'bar',
-            data: { labels: DIAS, datasets: [
-                { label: 'Eventos realizados', data: m.evByWd, backgroundColor: m.evByWd.map(function (_, i) { return (i === 5 || i === 6) ? '#c5a059' : 'rgba(255,255,255,0.18)'; }), borderRadius: 8 },
-                { label: 'Turnos de residencia', data: m.resByWd, backgroundColor: 'rgba(168, 85, 247, 0.72)', borderRadius: 6 } ] },
-            options: { responsive: true, maintainAspectRatio: false,
-                scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(255,255,255,0.5)', precision: 0, stepSize: 1 } }, x: { grid: { display: false }, ticks: { color: '#fff' } } },
-                plugins: { legend: { display: true, position: 'top', labels: { color: 'rgba(255,255,255,0.75)', font: { size: 10 }, boxWidth: 8, usePointStyle: true, boxPadding: 8 } } } }
-        });
+        var host = orig.parentElement;
+        try {
+            if (typeof Chart === 'undefined') throw new Error('Chart.js no cargó');
+            var mine = document.getElementById('ap-act-canvas');
+            if (!mine) { mine = document.createElement('canvas'); mine.id = 'ap-act-canvas'; host.insertBefore(mine, orig); }
+            var old = Chart.getChart ? Chart.getChart(mine) : null; if (old) old.destroy();
+            var chart = new Chart(mine.getContext('2d'), {
+                type: 'bar',
+                data: { labels: DIAS, datasets: [
+                    { label: 'Eventos realizados', data: m.evByWd, backgroundColor: m.evByWd.map(function (_, i) { return (i === 5 || i === 6) ? '#c5a059' : 'rgba(255,255,255,0.35)'; }), borderRadius: 8 },
+                    { label: 'Turnos de residencia', data: m.resByWd, backgroundColor: 'rgba(168, 85, 247, 0.72)', borderRadius: 6 } ] },
+                options: { responsive: true, maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(255,255,255,0.5)', precision: 0, stepSize: 1 } }, x: { grid: { display: false }, ticks: { color: '#fff' } } },
+                    plugins: { legend: { display: true, position: 'top', labels: { color: 'rgba(255,255,255,0.75)', font: { size: 10 }, boxWidth: 8, usePointStyle: true, boxPadding: 8 } } } }
+            });
+            orig.style.display = 'none'; weekNote(host, '');
+            var total = 0, i; for (i = 0; i < 7; i++) total += (m.evByWd[i] || 0) + (m.resByWd[i] || 0);
+            if (!total) weekNote(host, 'Todavía no hay eventos ni turnos en este período.');
+            kickResize(chart, host);
+        } catch (e) {
+            orig.style.display = '';
+            weekNote(host, 'No se pudo dibujar la gráfica semanal: ' + ((e && e.message) || 'error'));
+            try { console.warn('[artist-panel] gráfica semanal', e); } catch (x) { /* sin consola */ }
+        }
     }
 
     function refresh(model) {
-        return AP.data.loadActivity().then(function (raw) { var m = compute(raw, rangeKey()); paintCards(m, model); paintWeek(m); return m; }, function (e) {
+        return AP.data.loadActivity().then(function (raw) {
+            var m = compute(raw, rangeKey());
+            try { paintCards(m, model); } catch (e1) { try { console.warn('[artist-panel] tarjetas', e1); } catch (x) { /* sin consola */ } }
+            paintWeek(m); return m;
+        }, function (e) {
             try { console.warn('[artist-panel] tarjetas', e && e.message); } catch (x) { /* sin consola */ }
         });
     }
