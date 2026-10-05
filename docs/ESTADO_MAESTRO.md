@@ -3869,3 +3869,8 @@ Reclamo del PO: «el clima no funciona para Solitario, su Cash Flow no está cab
 - Pendiente derivado: el módulo compartido cambió pero SOLO `venue-room.html` subió su `?v=` (20261005-rotulos). `venue-floor-builder.html` y `commercial-portal.html` siguen con `?v=20261004-escala` (no estaban en el alcance del ticket): ven los rótulos viejos hasta que se les suba la versión. En móvil se verificaron las MEDIDAS, no el dibujo en una captura.
 - Video del hero: el reel de Mojitos se subió a Supabase Storage (`assets/venues/mojitos-calle-8/hero-sala-mojitos-calle-8.mp4`, 8,4 MB, idéntico byte a byte al local, público 200 `video/mp4`) y la página real lo reproduce desde ahí (576×1024). Convención por local: `venues/<slug>/hero-sala-<slug>[-N].mp4`.
 - Evento de prueba «PRUEBA - Plano corregido (borrar)» abierto en producción para esta revisión; se cancela con un SQL aparte (entregado en el chat).
+
+## [2026-10-04] Versionado de caché: módulo de dibujo en editor/portal y header-unified.css en dj-profile (rama fix/plan-shapes-version-editor-portal, SIN commit ni PR)
+- `web/venue-floor-builder.html` y `web/commercial-portal.html`: `mdj-plan-shapes.js?v=20261004-escala` → `20261005-rotulos` (misma versión que `venue-room.html`; los rótulos de las áreas ya no chocan con las puertas en las tres páginas).
+- `web/dj-profile.html` (línea 174): `header-unified.css?v=20260916-estacion-gap-fix` → `20261004-riel-seguro` (recibe el arreglo del riel del menú que ya está en main para el resto de páginas).
+- Alcance: solo estas tres líneas de versión. Sin lógica, sin backend. El candado PRO de SoundForTips/Cash Flow quedó CANCELADO por el PO.
