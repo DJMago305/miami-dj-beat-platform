@@ -174,7 +174,7 @@
     <link rel="stylesheet" href="./header-unified.css?v=20261004-riel-seguro" />
     <link rel="stylesheet" href="./profile.css?v=20260927-web-btn-unlock" />
     <link rel="stylesheet" href="./css/mdj-dia-base.css?v=20261005-dia-base1" />
-    <link rel="stylesheet" href="./css/mdj-cashflow-panel.css?v=20261005-flow-dia12" />
+    <link rel="stylesheet" href="./css/mdj-cashflow-panel.css?v=20261005-flow-dia17" />
     <style id="mdj-qr-view-header-shield">
         /* Blindaje definitivo: especificidad mayor que #mainHeader.header.mdj-header-unified { display:flex !important } en header-unified.css */
         html.dj-profile-qr-view #mainHeader.header.mdj-header-unified,
@@ -318,11 +318,12 @@
     <script defer src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script defer src="./flow-handler.js?v=20261005-artist-flow2"></script>
-    <script defer src="./js/artist-panel/artist-data.js?v=20261005-mov1"></script>
+    <script defer src="./js/artist-panel/artist-data.js?v=20261005-rev1"></script>
+    <script defer src="./js/artist-panel/artist-ui.js?v=20261005-ui2"></script>
     <script defer src="./js/artist-panel/artist-charts.js?v=20261005-artist-flow2"></script>
     <script defer src="./js/artist-panel/artist-kpis.js?v=20261005-artist-flow2"></script>
-    <script defer src="./js/artist-panel/artist-reputation.js?v=20261005-flow-dia5"></script>
-    <script defer src="./js/artist-panel/artist-movements.js?v=20261005-mov2"></script>
+    <script defer src="./js/artist-panel/artist-reputation.js?v=20261005-rev2"></script>
+    <script defer src="./js/artist-panel/artist-movements.js?v=20261005-mov7"></script>
     <script defer src="./js/artist-panel/artist-cashflow.js?v=20261005-flow-dia8"></script>
 
     <!-- Open Graph / Meta sharing -->
@@ -8314,7 +8315,7 @@
             <!-- Registro nocturno SFT: vive en cabina SoundForTips™ (pestaña Live), no en Flujo de caja. -->
 
             <!-- 🔹 BLOQUE 5 — MOVIMIENTOS (estado de cuenta: js/artist-panel/artist-movements.js; reemplaza al libro de transacciones viejo) -->
-            <div id="ap-movements" style="margin-bottom:56px;"></div>
+            <div id="ap-movements" style="margin-bottom:20px;"></div>
             <p class="flow-privacy-notice" style="font-size:11px;line-height:1.55;color:rgba(255,255,255,0.42);max-width:720px;margin:28px auto 8px;padding:0 20px;text-align:center;">
                 <span data-i18n="flow-privacy-notice">Datos confidenciales solo para tu cuenta. No compartas capturas ni accesos con terceros.</span>
                 <a href="./legal.html" style="color:rgba(197,160,89,0.88);font-weight:600;margin-left:6px;" data-i18n="flow-privacy-legal">Aviso legal y privacidad</a>

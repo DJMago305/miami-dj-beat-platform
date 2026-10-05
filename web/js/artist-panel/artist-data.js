@@ -127,6 +127,15 @@
         }, function () { return fromProfile(); });
     }
 
+    /* Página de reseñas propias con orden: get_my_reviews_page(p_order 'recent'|'oldest', p_limit, p_offset) (SECURITY DEFINER, filtra por auth.uid() dentro de la base).
+       get_my_review_summary solo trae las 12 más recientes; esta pide el resto cuando hay más. Devuelve el arreglo, o null si la función aún no existe / falla (el módulo cae a lo ya cargado). */
+    function loadReviewsPage(order, limit, offset) {
+        var db = client(); if (!db) return Promise.resolve(null);
+        return db.rpc('get_my_reviews_page', { p_order: order === 'oldest' ? 'oldest' : 'recent', p_limit: limit || 6, p_offset: offset || 0 }).then(function (r) {
+            return (r && !r.error && Array.isArray(r.data)) ? r.data : null;
+        }, function () { return null; });
+    }
+
     /* Modo CONTRIBUYENTE (owner y DJMago305: aportan sin salario por ahora). SOLO LECTURA: el Cash Flow mide, no se edita aquí. Las horas las registra únicamente el Staff de gestión
        desde su sección «Contribuciones». Funciones del propio usuario (auth.uid() dentro de la base): get_my_contribution_summary y get_my_contribution_daily. Una cuenta sin la
        marca recibe mode null y no ve nada; si las funciones aún no existen, también (sin romper la pantalla). */
@@ -190,5 +199,5 @@
         });
     }
 
-    AP.data = { loadMovementSources: loadMovementSources, loadActivity: loadActivity, load: load, loadVisits: loadVisits, loadReviews: loadReviews, loadContribution: loadContribution, loadContributionDaily: loadContributionDaily, buildModel: buildModel };
+    AP.data = { loadReviewsPage: loadReviewsPage, loadMovementSources: loadMovementSources, loadActivity: loadActivity, load: load, loadVisits: loadVisits, loadReviews: loadReviews, loadContribution: loadContribution, loadContributionDaily: loadContributionDaily, buildModel: buildModel };
 })();

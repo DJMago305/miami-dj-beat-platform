@@ -8,9 +8,9 @@
     var AP = window.ArtistPanel = window.ArtistPanel || {};
     var T = {
         es: { card: 'Reseñas de clientes', none: 'Sin reseñas', noneHint: 'Aparecerán cuando un cliente que contrató contigo te califique.', one: 'reseña', many: 'reseñas',
-              ver1: 'verificada', verN: 'verificadas', title: 'Opiniones de clientes', verified: 'Verificada', empty: 'Aún no tienes opiniones. Cuando un cliente que contrató contigo te califique, aparecerá aquí con la marca «Verificada».', client: 'Cliente' },
+              ver1: 'verificada', verN: 'verificadas', title: 'Opiniones de clientes', open: 'Abrir opiniones', close: 'Cerrar opiniones', more: 'Mostrar más', newest: 'Más recientes', oldest: 'Más antiguas', sortLabel: 'Ordenar opiniones', sortTo: 'Cambiar el orden: ver las ', verified: 'Verificada', empty: 'Aún no tienes opiniones. Cuando un cliente que contrató contigo te califique, aparecerá aquí con la marca «Verificada».', client: 'Cliente' },
         en: { card: 'Client reviews', none: 'No reviews', noneHint: 'They will appear once a client who hired you rates you.', one: 'review', many: 'reviews',
-              ver1: 'verified', verN: 'verified', title: 'Client reviews', verified: 'Verified', empty: 'You have no reviews yet. Once a client who hired you rates you, it will show here with the “Verified” badge.', client: 'Client' }
+              ver1: 'verified', verN: 'verified', title: 'Client reviews', open: 'Open reviews', close: 'Close reviews', more: 'Show more', newest: 'Newest', oldest: 'Oldest', sortLabel: 'Sort reviews', sortTo: 'Change order: show ', verified: 'Verified', empty: 'You have no reviews yet. Once a client who hired you rates you, it will show here with the “Verified” badge.', client: 'Client' }
     };
     function lang() { var l = String(document.documentElement.getAttribute('lang') || 'es').toLowerCase(); return l.indexOf('en') === 0 ? 'en' : 'es'; }
     function t(k) { return T[lang()][k]; }
@@ -21,8 +21,7 @@
         if (document.getElementById('ap-reputation-style')) return;
         var s = document.createElement('style'); s.id = 'ap-reputation-style';
         s.textContent =
-            '#ap-reviews{margin:28px 0 28px;}' +
-            '#ap-reviews .ap-h{font-size:15px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#fff;margin:0 0 12px;}' +   /* mismo título que el resto del panel: sin opacidad */
+            '#ap-reviews{margin:0 0 28px;}' +
             '#ap-reviews .ap-list{display:flex;flex-direction:column;gap:10px;}' +
             '#ap-reviews .ap-rev{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:12px 16px;}' +
             '#ap-reviews .ap-top{display:flex;align-items:center;flex-wrap:wrap;gap:10px;font-size:12px;color:rgba(255,255,255,.62);}' +
@@ -33,7 +32,6 @@
             '#ap-reviews .ap-empty{font-size:12px;line-height:1.5;color:rgba(255,255,255,.5);}' +
             'html[data-theme="day"] #ap-reviews .ap-rev{background:#fff;border-color:rgba(0,0,0,.12);}' +
             'html[data-theme="day"] #ap-reviews .ap-txt,html[data-theme="day"] #ap-reviews .ap-who{color:#111;}' +
-            'html[data-theme="day"] #ap-reviews .ap-h{color:#1b1f27;}' +
             'html[data-theme="day"] #ap-reviews .ap-top,html[data-theme="day"] #ap-reviews .ap-empty{color:rgba(0,0,0,.6);}';
         document.head.appendChild(s);
     }
@@ -59,25 +57,76 @@
         window.mdjPaintProfileHeroStarsFromHealth(n > 0 && sum.avg_rating != null ? Number(sum.avg_rating) : 0, { reviewAvg: n > 0 ? sum.avg_rating : null, reviewCount: n });
     }
 
+    /* «Opiniones de clientes» usa el MISMO acordeón que «Movimientos» (artist-ui.js): cerrado por defecto con un resumen corto, «Mostrar más» y, en la misma línea del encabezado, el orden
+       «↓ Más recientes / ↑ Más antiguas» (el patrón de las reseñas de Google). Con ≤ 12 opiniones (todas cargadas) el orden se hace aquí mismo; con más, «más antiguas» y «mostrar más» las
+       piden al servidor (get_my_reviews_page) para que el orden sea verdadero y no solo el de las 12 últimas. Si esa función aún no existe, con más de 12 el control de orden se oculta. */
+    var PAGE = 6, state = { open: AP.ui.getOpen('reviews'), shown: PAGE, last: null, order: 'recent', rows: [], rowsOrder: 'recent', total: 0, api: null, busy: false };
+    function complete() { return state.rows.length >= state.total; }
+    function absorb(sum) {                                                  /* una carga nueva del resumen reinicia la lista (siempre llega de la más reciente a la más antigua) */
+        if (state.sumRef === sum) return; state.sumRef = sum;
+        state.rows = (sum.reviews || []).slice(); state.rowsOrder = 'recent'; state.total = Math.max(Number(sum.review_count) || 0, state.rows.length); state.shown = PAGE;
+        if (state.order === 'oldest' && !complete()) state.order = 'recent';
+    }
+    function view() {
+        var r = state.rows.slice();
+        if (state.rowsOrder !== state.order) r.sort(function (a, b) { var d = new Date(a.created_at) - new Date(b.created_at); return state.order === 'oldest' ? d : -d; });   /* solo ocurre con la lista completa */
+        return r;
+    }
+    function canSort() { return state.rows.length > 1 && (complete() || state.api !== false); }
+    function again() { if (state.last) renderList(state.last); }
+    function fetchPage(order, offset, replace) {
+        if (state.busy) return; state.busy = true;
+        AP.data.loadReviewsPage(order, replace ? 12 : PAGE, offset).then(function (arr) {
+            state.busy = false;
+            if (!arr) { state.api = false; if (replace) state.order = state.rowsOrder; again(); return; }
+            state.api = true;
+            if (replace) { state.rows = arr; state.rowsOrder = order; state.order = order; state.shown = PAGE; }
+            else { state.rows = state.rows.concat(arr); state.shown = state.rows.length; }
+            again();
+        });
+    }
+    function onClick(ev) {
+        var b = ev.target && ev.target.closest ? ev.target.closest('[data-act]') : null; if (!b) return;
+        var act = b.getAttribute('data-act');
+        if (act === 'toggle') { state.open = !state.open; AP.ui.setOpen('reviews', state.open); }
+        else if (act === 'more') {
+            if (view().length > state.shown) state.shown += PAGE;
+            else if (!complete() && state.api !== false) { fetchPage(state.rowsOrder, state.rows.length, false); return; }
+        } else if (act === 'sort') {
+            var next = state.order === 'recent' ? 'oldest' : 'recent';
+            if (complete()) { state.order = next; state.shown = PAGE; }
+            else { fetchPage(next, 0, true); return; }
+        } else return;
+        again();
+    }
+
     function renderList(sum) {
         var host = document.getElementById('tab-flow'); if (!host) return;
         css();
+        state.last = sum; absorb(sum);
         var box = document.getElementById('ap-reviews');
-        if (!box) { box = document.createElement('div'); box.id = 'ap-reviews'; }
+        if (!box) { box = document.createElement('div'); box.id = 'ap-reviews'; box.addEventListener('click', onClick); }
+        box.className = 'ap-acc' + (state.open ? ' ap-acc--open' : '');
         /* Al final de la pestaña Cash Flow, justo ANTES de «Exportación fiscal (IRS)», que es siempre lo último. Si esa franja no existe en la página, queda al final de todo. */
         var exp = document.getElementById('flow-export-panel');
         if (exp && exp.parentNode) { if (box.nextSibling !== exp || box.parentNode !== exp.parentNode) exp.parentNode.insertBefore(box, exp); }
         else host.appendChild(box);
         while (box.firstChild) box.removeChild(box.firstChild);
-        box.appendChild(el('div', 'ap-h', t('title')));
-        var rows = sum.reviews || [];
+        var rows = view(), n = Number(sum.review_count) || 0, mini = null, tools = null;
+        if (!state.open) mini = AP.ui.mini(n > 0 && sum.avg_rating != null ? [['', Number(sum.avg_rating).toFixed(1) + ' ★', ''], ['', n + ' ' + (n === 1 ? t('one') : t('many')), '']] : [['', t('none'), '']]);
+        else if (canSort()) {                                               /* orden en la misma línea del encabezado: ↓ más recientes primero, ↑ más antiguas primero */
+            var recent = state.order === 'recent';
+            tools = el('button', 'ledger-filter-btn ap-sort', (recent ? '\u2193 ' : '\u2191 ') + t(recent ? 'newest' : 'oldest')); tools.type = 'button'; tools.setAttribute('data-act', 'sort');
+            tools.setAttribute('aria-label', t('sortLabel')); tools.setAttribute('title', t('sortTo') + t(recent ? 'oldest' : 'newest').toLowerCase());
+        }
+        box.appendChild(AP.ui.accHead({ title: t('title'), open: state.open, mini: mini, tools: tools, openLabel: t('open'), closeLabel: t('close') }));
+        if (!state.open) return;
         if (!rows.length) {                                                 /* la sección SIEMPRE está, con o sin opiniones */
-            var n = Number(sum.review_count) || 0;
             box.appendChild(el('div', 'ap-empty', n > 0 ? (n + ' ' + (n === 1 ? t('one') : t('many')) + ' · ' + (lang() === 'en' ? 'published' : 'publicadas') + '.') : t('empty')));
             return;
         }
         var list = el('div', 'ap-list'), loc = lang() === 'en' ? 'en-US' : 'es-ES';
-        rows.slice(0, 6).forEach(function (r) {
+        rows.slice(0, state.shown).forEach(function (r) {
             var card = el('div', 'ap-rev'), top = el('div', 'ap-top');
             top.appendChild(el('span', 'ap-stars', stars(r.rating)));
             top.appendChild(el('span', 'ap-who', r.reviewer || t('client')));
@@ -89,6 +138,11 @@
             list.appendChild(card);
         });
         box.appendChild(list);
+        var left = Math.max(0, state.total - Math.min(state.shown, rows.length));                /* las que aún no se ven (en pantalla o por pedir al servidor) */
+        if (left > 0 && (rows.length > state.shown || state.api !== false)) {
+            var more = el('button', 'ledger-filter-btn ap-more', t('more') + ' (' + left + ')'); more.type = 'button'; more.setAttribute('data-act', 'more');
+            var foot = el('div', 'ap-foot'); foot.appendChild(more); box.appendChild(foot);
+        }
     }
 
     function refresh() {
@@ -97,5 +151,6 @@
         });
     }
 
+    document.addEventListener('languageChanged', function () { if (state.last) { paintCard(state.last); renderList(state.last); } });
     AP.reputation = { refresh: refresh };
 })();
