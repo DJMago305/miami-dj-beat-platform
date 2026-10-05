@@ -1689,7 +1689,6 @@
       </style>
       <section id="view-cashflow" class="staff-view">
         <div class="mrm-panel" id="mrm-panel">
-          <div class="mrm-head"><strong>📊 Adquisición real</strong><span class="mrm-badge">Datos reales — no demo</span></div>
           <div class="mrm-grid">
             <div class="mrm-card"><div class="mrm-label">Leads</div><div class="mrm-value" id="mrm-leads">—</div><div class="mrm-sub">este mes / total</div></div>
             <div class="mrm-card"><div class="mrm-label">Cuentas nuevas</div><div class="mrm-value" id="mrm-cuentas">—</div><div class="mrm-sub">este mes / total</div></div>
@@ -1703,8 +1702,9 @@
       </section>
       <script>
       (function(){
+        function gel(id){ var e = document.getElementById(id); if (e) return e; try { var f = document.getElementById('cashflow-frame'); return f && f.contentDocument ? f.contentDocument.getElementById(id) : null; } catch (x) { return null; } }
         function mountAdquisicionReal(){
-          var panel = document.getElementById('mrm-panel');
+          var panel = gel('mrm-panel');
           if (!panel || panel.dataset.mounted) return;
           panel.dataset.mounted = '1';
           var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
@@ -1712,17 +1712,17 @@
           sb.rpc('mdj_metricas_adquisicion_reales').then(function (r) {
             if (r.error || !r.data || !r.data[0]) {
               var els = ['mrm-leads', 'mrm-cuentas', 'mrm-compras', 'mrm-suscriptores', 'mrm-shop'];
-              els.forEach(function (id) { var e = document.getElementById(id); if (e) e.textContent = 'Error'; });
+              els.forEach(function (id) { var e = gel(id); if (e) e.textContent = 'Error'; });
               return;
             }
             var d = r.data[0];
-            var elLeads = document.getElementById('mrm-leads');
-            var elCuentas = document.getElementById('mrm-cuentas');
-            var elCompras = document.getElementById('mrm-compras');
-            var elMonto = document.getElementById('mrm-monto');
-            var elSuscriptores = document.getElementById('mrm-suscriptores');
-            var elShop = document.getElementById('mrm-shop');
-            var elShopMes = document.getElementById('mrm-shop-mes');
+            var elLeads = gel('mrm-leads');
+            var elCuentas = gel('mrm-cuentas');
+            var elCompras = gel('mrm-compras');
+            var elMonto = gel('mrm-monto');
+            var elSuscriptores = gel('mrm-suscriptores');
+            var elShop = gel('mrm-shop');
+            var elShopMes = gel('mrm-shop-mes');
             if (elLeads) elLeads.textContent = d.leads_periodo + ' / ' + d.leads_total;
             if (elCuentas) elCuentas.textContent = d.cuentas_periodo + ' / ' + d.cuentas_total;
             if (elCompras) elCompras.textContent = d.compras_periodo + ' / ' + d.compras_total;
@@ -1732,7 +1732,7 @@
             if (elShopMes) elShopMes.textContent = '$' + (parseFloat(d.ingresos_shop_periodo_usd) || 0).toFixed(2);
           }).catch(function () {
             var els = ['mrm-leads', 'mrm-cuentas', 'mrm-compras', 'mrm-suscriptores', 'mrm-shop'];
-            els.forEach(function (id) { var e = document.getElementById(id); if (e) e.textContent = 'Error'; });
+            els.forEach(function (id) { var e = gel(id); if (e) e.textContent = 'Error'; });
           });
         }
         var attempts = 0;
@@ -2026,6 +2026,7 @@
           <div class="side3-items" data-items="operaciones">
             <button type="button" class="side3-link" data-sec="admin" data-nav="content" title="Contenido y Precios" data-i18n-title="side3-content"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></span><span class="side3-tx" data-i18n="side3-content">Contenido y Precios</span></button>
             <button type="button" class="side3-link" data-sec="admin" data-nav="commission-rules" title="Tarifas de Comisiones"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span><span class="side3-tx">Tarifas de Comisiones</span><span class="side3-lock" title="Owner-only" data-i18n-title="side3-owner-only">🔑</span></button>
+            <button type="button" class="side3-link" data-sec="admin" data-nav="contribuciones" title="Contribuciones"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg></span><span class="side3-tx">Contribuciones</span></button>
             <button type="button" class="side3-link" data-sec="admin" data-go="mdjpro" title="MDJPRO" data-i18n-title="side3-mdjpro"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span><span class="side3-tx" data-i18n="side3-mdjpro">MDJPRO</span><span class="side3-lock" title="Owner-only" data-i18n-title="side3-owner-only">🔑</span></button>
             <button type="button" class="side3-link" data-sec="admin" data-nav="site-media" title="Marca y Medios" data-i18n-title="side3-site-media"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></span><span class="side3-tx" data-i18n="side3-site-media">Marca y Medios</span></button>
             <button type="button" class="side3-link" data-sec="admin" data-nav="apps" title="Hosting de Apps" data-i18n-title="side3-apps"><span class="side3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="9" height="9" rx="1"/><rect x="13" y="2" width="9" height="9" rx="1"/><rect x="2" y="13" width="9" height="9" rx="1"/><rect x="13" y="13" width="9" height="9" rx="1"/></svg></span><span class="side3-tx" data-i18n="side3-apps">Hosting de Apps</span></button>
@@ -4329,7 +4330,36 @@
           setTimeout(function(){ af.setAttribute('src', af.getAttribute('data-src')); }, 30);
           setTimeout(function(){ if(ld) ld.classList.add('hidden'); }, 8000); } }
         if(v==='cashflow'){ var cf=el('cashflow-frame'); if(cf&&!cf.getAttribute('src')){ var cld=el('cashflow-loading');
-          if(cf.addEventListener) cf.addEventListener('load', function(){ if(cld) cld.classList.add('hidden'); });
+          /* Solo en esta pestaña (Staff · Cash Flow): la barra Financial Intelligence queda PRIMERA, con un rótulo pequeño «Datos reales» junto a la marca, y las tarjetas de
+             adquisición real se acoplan dentro del marco, justo debajo de la barra (sin el título «Adquisición real»). Así barra y tarjetas hacen UN solo scroll. */
+          window.mdjCfDock = window.mdjCfDock || function(f){ var tries=0, iv=setInterval(function(){ tries++; try{
+            var d=f.contentDocument, bar=d&&d.getElementById('ofm-bar'), panel=document.getElementById('mrm-panel')||(d&&d.getElementById('mrm-panel'));
+            if(!d||!bar||!panel){ if(tries>60) clearInterval(iv); return; }
+            clearInterval(iv);
+            if(!d.getElementById('mrm-dock-css')){ var st=d.createElement('style'); st.id='mrm-dock-css';
+              st.textContent='.mrm-panel{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.02);}'+
+                '.mrm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;}'+
+                '.mrm-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px 14px;}'+
+                '.mrm-label{font-size:10.5px;color:rgba(255,255,255,.55);margin-bottom:4px;}.mrm-value{font-size:19px;font-weight:800;color:#e8c987;}.mrm-sub{font-size:10px;color:rgba(255,255,255,.4);}'+
+                '.ofm-real{font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#7fdca0;border:1px solid rgba(127,220,160,.4);border-radius:999px;padding:3px 9px;white-space:nowrap;}'+
+                /* Sin el título «Flujo de Caja» y con la tarjeta VISIBILIDAD compacta (mide visitas al perfil público y escaneos del QR SoundForTips™). Los estilos en línea de la
+                   tarjeta pesan más: por eso van con !important. Solo dentro de este marco (Staff · Cash Flow). */
+                '#tab-flow h1[data-i18n="dash-flow-title"]{display:none !important;}'+
+                '#tab-flow #visibility-card{padding:10px 16px !important;margin-top:8px !important;margin-bottom:10px !important;}'+
+                '#tab-flow #visibility-card>div:first-of-type{margin-bottom:8px !important;}'+
+                '#tab-flow #visibility-card h2{font-size:11px !important;}'+
+                '#tab-flow #visibility-card p{margin-top:3px !important;font-size:10px !important;}'+
+                '#tab-flow #vis-stats{max-width:420px;gap:8px !important;margin-bottom:0 !important;}'+
+                '#tab-flow #vis-stats>div{padding:6px 8px !important;border-radius:8px !important;}'+
+                '#tab-flow #vis-stats>div>div:first-child{font-size:18px !important;line-height:1.1 !important;}'+
+                '#tab-flow #vis-stats>div>div:last-child{font-size:8.5px !important;margin-top:2px !important;}';
+              d.head.appendChild(st); }
+            if(!bar.querySelector('.ofm-real')){ var tx=bar.querySelector('.ofm-brand-tx'), real=d.createElement('span'); real.className='ofm-real'; real.textContent='Datos reales';
+              if(tx&&tx.parentNode) tx.parentNode.insertBefore(real, tx.nextSibling); }
+            if(panel.ownerDocument!==d){ d.adoptNode(panel); }
+            bar.parentNode.insertBefore(panel, bar.nextSibling);
+          }catch(e){ if(tries>60) clearInterval(iv); } }, 250); };
+          if(cf.addEventListener) cf.addEventListener('load', function(){ if(cld) cld.classList.add('hidden'); window.mdjCfDock(cf); });
           setTimeout(function(){ cf.setAttribute('src', cf.getAttribute('data-src')); }, 30);
           setTimeout(function(){ if(cld) cld.classList.add('hidden'); }, 8000); } }
         if(v==='config'){ var xf=el('config-frame'); if(xf&&!xf.getAttribute('src')){ var xld=el('config-loading');
@@ -4721,7 +4751,7 @@
          Manager: mismo trato que Owner por ahora (no existe una cuenta real
          de manager para probar distinto; no se inventa una restricción sin
          poder verificarla en vivo — ver matriz en ESTADO_MAESTRO). */
-      var SELLER_LOCKED_NAVS = ['content','analytics','apps','staff','registry-section','site-media','commission-rules','create-profiles'];
+      var SELLER_LOCKED_NAVS = ['content','analytics','apps','staff','registry-section','site-media','commission-rules','create-profiles','contribuciones'];
       (function applySide3RoleGate(){
         if (role === 'owner' || role === 'manager') return;
         if (role === 'seller') {

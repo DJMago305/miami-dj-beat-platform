@@ -106,8 +106,9 @@
   .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 
   /* ---------- Target-state governance banner (persistent, non-dismissible) ---------- */
+  /* En flujo normal (no fijo): sube con el resto de la página, como las tarjetas del Cash Flow personal, y ya no tapa el botón «Arrancar motor con datos reales». */
   .target-state-banner {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 60; height: var(--banner-h);
+    position: relative; z-index: 60; height: var(--banner-h);
     display: flex; align-items: center; justify-content: center; gap: 8px;
     background: color-mix(in srgb, var(--warning) 12%, var(--bg));
     color: var(--text-muted); font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: .2px;
@@ -116,7 +117,7 @@
   }
   .target-state-banner b { color: var(--warning); text-decoration: none; }
 
-  .app { display: grid; grid-template-columns: 272px 1fr; min-height: calc(100vh - var(--banner-h)); }
+  .app { display: grid; grid-template-columns: 272px 1fr; min-height: 100vh; }
 
   /* ---------- Sidebar ---------- */
   .sidebar {
@@ -125,7 +126,7 @@
     display: flex; flex-direction: column;
     padding: 20px 16px;
     gap: 18px;
-    position: sticky; top: var(--banner-h); height: calc(100vh - var(--banner-h)); overflow-y: auto;
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
   }
   .brand { display:flex; flex-direction:column; gap:6px; }
   .brand-row { display:flex; align-items:center; gap:10px; }
@@ -184,7 +185,7 @@
   /* ---------- Main ---------- */
   .main { display: flex; flex-direction: column; min-width: 0; }
   .topbar {
-    position: sticky; top: var(--banner-h); z-index: 5;
+    position: sticky; top: 0; z-index: 5;
     background: color-mix(in srgb, var(--bg) 88%, transparent);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--line);
@@ -384,7 +385,7 @@
   @media (max-width: 1024px) {
     .app { grid-template-columns: 1fr; }
     .sidebar {
-      position: fixed; inset: var(--banner-h) 30% 0 0; height: auto; z-index: 30; transform: translateX(-100%); transition: transform .2s; width: auto;
+      position: fixed; inset: 0 30% 0 0; height: auto; z-index: 30; transform: translateX(-100%); transition: transform .2s; width: auto;
     }
     .sidebar.show { transform: translateX(0); }
     .menu-btn {
@@ -397,20 +398,9 @@
   }
 </style>
 
-<div class="target-state-banner" role="note">
-  ⚠ <b>Maqueta / demo</b> · datos de ejemplo · no autorizado para implementación (North Star §39)
-</div>
-<!-- 2026-09-30, pedido directo del PO: el motor real (financial-engine) y sus 3 KPIs
-     (getNetCash/getAccountsReceivable/getAccountsPayable) ya existen y ya están
-     cableados (ver mdjBfiLoadReal abajo) -- lo único que faltaba era arrancarlo con
-     datos reales. import_residencies (ya construido) trae los turnos reales de
-     residency_schedule al motor. Exige sesión real de Owner (el candado de la
-     función lo pide por diseño), así que se agrega un botón en vez de dispararlo
-     por script sin sesión. -->
-<div id="mdjBfiImportBar" role="note" style="display:none;background:rgba(197,160,89,.08);border:1px solid rgba(197,160,89,.35);border-radius:10px;padding:10px 14px;margin:0 0 10px;align-items:center;gap:12px;flex-wrap:wrap;">
-  <button id="mdjBfiImportBtn" type="button" style="background:linear-gradient(135deg,#c5a059,#e8c987);border:none;color:#0b0f18;font-weight:800;font-size:12px;letter-spacing:.03em;border-radius:8px;padding:8px 14px;cursor:pointer;">▶ Arrancar motor con datos reales</button>
-  <span id="mdjBfiImportStatus" style="font-size:12px;color:rgba(255,255,255,.7);"></span>
-</div>
+<!-- 2026-10-05, pedido del PO: se eliminó la tira «Maqueta / demo» con el botón «Arrancar motor con datos reales». El motor (import_residencies) sigue en la Edge Function financial-engine; mdjBfiWireImportBtn queda sin efecto si la barra no existe. La etiqueta «DEMO DATA» de la barra superior se mantiene. -->
+<!-- Ganamos y pagamos: datos REALES de la empresa (función de solo lectura get_business_cash_summary). Lo pinta web/js/business-cash-real.js solo para el Owner. -->
+<div id="bcr-root" style="display:none;"></div>
 <script>try{if(window.self!==window.top)document.documentElement.classList.add('mdj-embedded');}catch(e){document.documentElement.classList.add('mdj-embedded');}</script>
 <style>
   html.mdj-embedded .brand{display:none;} html.mdj-embedded .sidebar{padding-top:16px;}
@@ -420,9 +410,37 @@
       background:var(--surface-2);border:1px solid var(--line);color:var(--text-2);border-radius:9px;cursor:pointer;
       font-size:16px;line-height:1;flex:0 0 auto;transition:background .15s;}
     .sb-collapse-btn:hover{background:var(--surface-1);}
-    .app.sb-collapsed{grid-template-columns:1fr;}
-    .app.sb-collapsed .sidebar{display:none;}
+    /* Recogida: franja pequeña a la izquierda con solo los íconos (mismo modelo de acordeón que la barra lateral de Staff); el texto reaparece al desplegar. */
+    .app.sb-collapsed{grid-template-columns:60px 1fr;}
+    .app.sb-collapsed .sidebar{padding:14px 8px;gap:12px;overflow-x:hidden;}
+    .app.sb-collapsed .sidebar .brand-word,.app.sb-collapsed .sidebar .demo-pill,.app.sb-collapsed .sidebar .nav-section-label,.app.sb-collapsed .sidebar .nsref,
+    .app.sb-collapsed .sidebar .tx,.app.sb-collapsed .sidebar .foot-note,.app.sb-collapsed .sidebar .search input{display:none;}
+    .app.sb-collapsed .sidebar .brand-row{justify-content:center;}
+    .app.sb-collapsed .sidebar .search{display:flex;justify-content:center;align-items:center;height:36px;cursor:pointer;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);}
+    .app.sb-collapsed .sidebar .search svg{position:static;transform:none;opacity:.8;}
+    .app.sb-collapsed .sidebar .level-switch{flex-direction:column;}
+    .app.sb-collapsed .sidebar .level-btn{padding:8px 0;display:flex;justify-content:center;}
+    .app.sb-collapsed .sidebar .nav-item{justify-content:center;padding:10px 0;}
+    .app.sb-collapsed .sidebar .nav-item .lbl{gap:0;}
+    .app.sb-collapsed .sidebar .foot-btn{justify-content:center;padding:9px 0;}
   }
+  /* Fila superior de la barra lateral: abrir / cerrar la pestaña (acordeón). El resto del contenido baja debajo de ella. */
+  .sb-top{display:none;}
+  @media (min-width:1025px){
+    .sb-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 14px;padding:0 2px 12px;border-bottom:1px solid var(--line);}
+    .sb-top .sb-top-lbl{font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);}
+    .sb-top .sb-collapse-btn{width:34px;height:30px;}
+    .sidebar{padding-top:18px;}
+    html.mdj-embedded .sidebar{padding-top:18px;}
+    .sidebar .sb-top + .brand,.sidebar .sb-top + .search{margin-top:16px;}
+    .app.sb-collapsed .sidebar .sb-top{justify-content:center;padding-bottom:12px;}
+    .app.sb-collapsed .sidebar .sb-top .sb-top-lbl{display:none;}
+  }
+  .ico{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;}
+  .ico svg{width:18px;height:18px;display:block;}
+  .nav-item .lbl{display:flex;align-items:center;gap:10px;min-width:0;}
+  .nav-item .tx{min-width:0;}
+  .level-btn{display:flex;align-items:center;justify-content:center;gap:6px;}
 </style>
 <script>
   (function(){
@@ -430,12 +448,18 @@
     function wire(){
       var btn=document.getElementById('sbCollapse'), app=document.getElementById('app');
       if(!btn||!app){ return setTimeout(wire,150); }
+      var sb=document.getElementById('sidebar');
+      if(sb && !document.getElementById('sbTop')){ var top=document.createElement('div'); top.id='sbTop'; top.className='sb-top';
+        var lb=document.createElement('span'); lb.className='sb-top-lbl'; lb.textContent='Menú del Matrix';
+        top.appendChild(lb); top.appendChild(btn); sb.insertBefore(top, sb.firstChild); }   /* el mismo botón (y su evento) sube a la barra lateral */
       function paint(c){ app.classList.toggle('sb-collapsed', c); btn.innerHTML = c ? '»' : '«';
         btn.title = c ? 'Mostrar panel lateral' : 'Recoger panel lateral'; }
       var saved=false; try{ saved=localStorage.getItem(KEY)==='1'; }catch(e){}
       paint(saved);
       btn.addEventListener('click', function(){ var c=!app.classList.contains('sb-collapsed'); paint(c);
         try{ localStorage.setItem(KEY, c?'1':'0'); }catch(e){} });
+      var sr=document.querySelector('.sidebar .search');
+      if(sr) sr.addEventListener('click', function(){ if(app.classList.contains('sb-collapsed')){ paint(false); try{ localStorage.setItem(KEY,'0'); }catch(e){} var i=document.getElementById('globalSearch'); if(i) i.focus(); } });
     }
     wire();
   })();
@@ -458,17 +482,17 @@
     </div>
 
     <nav class="level-switch" role="tablist" aria-label="Nivel de la matriz">
-      <button class="level-btn active" data-level="corporate" role="tab" aria-selected="true">Corporate</button>
-      <button class="level-btn" data-level="bu" role="tab" aria-selected="false">Business Units</button>
-      <button class="level-btn" data-level="artist" role="tab" aria-selected="false">Artist Matrix</button>
+      <button class="level-btn active" data-level="corporate" role="tab" aria-selected="true" title="Corporate"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/></svg></span><span class="tx">Corporate</span></button>
+      <button class="level-btn" data-level="bu" role="tab" aria-selected="false" title="Business Units"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg></span><span class="tx">Business Units</span></button>
+      <button class="level-btn" data-level="artist" role="tab" aria-selected="false" title="Artist Matrix"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></span><span class="tx">Artist Matrix</span></button>
     </nav>
 
     <div class="nav-section-label" id="navLabel">Corporate Financial Intelligence Matrix</div>
     <div class="nav-list" id="navList"></div>
 
     <div class="sidebar-foot">
-      <button class="foot-btn" id="architectureBtn">📐 Arquitectura, roadmap y riesgos</button>
-      <button class="foot-btn" id="themeToggleBtn">🌓 Cambiar a modo claro</button>
+      <button class="foot-btn" id="architectureBtn" title="Arquitectura, roadmap y riesgos"><span class="ico">📐</span><span class="tx">Arquitectura, roadmap y riesgos</span></button>
+      <button class="foot-btn" id="themeToggleBtn" title="Cambiar modo claro / oscuro"><span class="ico">🌓</span><span class="tx">Cambiar a modo claro</span></button>
       <div class="foot-note" style="padding:0;">North Star v1.0 · TICKET-002 · dual deliverable</div>
     </div>
   </aside>
@@ -751,6 +775,20 @@
   });
 
   /* ============ nav rendering ============ */
+  var NAV_ICONS = {
+    overview: '<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',
+    liquidity: '<path d="M12 2.7s6 6.3 6 10.8a6 6 0 0 1-12 0C6 9 12 2.7 12 2.7z"/>',
+    profitability: '<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
+    risk: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z"/><path d="M12 8v5"/><path d="M12 16.5v.01"/>',
+    taxes: '<path d="M3 21h18"/><path d="M5 21V10M10 21V10M14 21V10M19 21V10"/><path d="M2 10l10-6 10 6"/>',
+    history: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    bu: '<path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/>',
+    artist: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>'
+  };
+  function navIcon(it){
+    var k = NAV_ICONS[it.id] ? it.id : (state.level==="bu" ? "bu" : "artist");
+    return '<span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+NAV_ICONS[k]+'</svg></span>';
+  }
   function renderNav(){
     navList.innerHTML = "";
     var items = [];
@@ -767,7 +805,8 @@
     items.forEach(function(it){
       var b = document.createElement("button");
       b.className = "nav-item" + (it.active ? " active":"");
-      b.innerHTML = '<span>'+ it.label + (it.sub ? '<span class="sub">'+it.sub+'</span>' : '') +'</span><span class="nsref">§'+it.ns[0]+'</span>';
+      b.title = it.label;
+      b.innerHTML = '<span class="lbl">'+ navIcon(it) +'<span class="tx">'+ it.label + (it.sub ? '<span class="sub">'+it.sub+'</span>' : '') +'</span></span><span class="nsref">§'+it.ns[0]+'</span>';
       b.addEventListener("click", function(){
         if(state.level==="corporate") state.corporateScreen = it.id;
         else if(state.level==="bu") state.buId = it.id;
@@ -785,7 +824,7 @@
   $("themeToggleBtn").addEventListener("click", function(){
     var light = document.body.getAttribute("data-mode") === "light";
     document.body.setAttribute("data-mode", light ? "dark" : "light");
-    this.textContent = light ? "🌓 Cambiar a modo claro" : "🌓 Cambiar a modo oscuro";
+    this.querySelector(".tx").textContent = light ? "Cambiar a modo claro" : "Cambiar a modo oscuro";
     render();
   });
 
@@ -1436,6 +1475,7 @@
 })();
 </script>
 
+<script src="./js/business-cash-real.js?v=20261005-negocio3"></script>
 <script>
 /* ── Candado OWNER-ONLY del BFI (vive dentro de CASH FLOW) ──
    Solo el Owner entra; managers y vendedores necesitan autorizacion explicita
@@ -1451,7 +1491,7 @@
       if(!sess){ location.replace('./login.html?next=business-financial-intelligence.html'); return; }
       var res=await sb.from('dj_profiles').select('role').eq('user_id', sess.user.id).maybeSingle();
       var role=String(res.data&&res.data.role?res.data.role:'').toLowerCase().trim();
-      if(role==='owner'){ openUp(); mdjBfiLoadReal(sb); mdjBfiWireImportBtn(sb); } // OWNER -> abierto + datos reales (Fase 4)
+      if(role==='owner'){ openUp(); mdjBfiLoadReal(sb); mdjBfiWireImportBtn(sb); if(window.mdjBcrMount) window.mdjBcrMount(sb); } // OWNER -> abierto + datos reales (Fase 4)
       else { set('Acceso restringido', 'Esta seccion financiera es exclusiva del Owner. Managers y vendedores necesitan autorizacion explicita del Owner.'); }
     }catch(e){ set('Error de acceso', (e&&e.message)||''); }
   });

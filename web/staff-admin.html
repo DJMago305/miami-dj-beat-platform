@@ -2187,6 +2187,11 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                   Venues
                 </a>
                 <!-- Visible a todo staff (no solo owner) -- cada quien ve solo sus propias filas (vendedor_id = su usuario) -->
+                <!-- Solo Staff de gestión (owner, admin, manager): la base lo exige; a un vendedor le sale un aviso, no datos -->
+                <a href="#contribuciones" class="side-link" onclick="loadContribuciones()" style="display:flex;align-items:center;gap:9px;">
+                  <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
+                  Contribuciones
+                </a>
                 <a href="#mis-comisiones" class="side-link" onclick="loadMisComisiones()" style="display:flex;align-items:center;gap:9px;">
                   <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                   Mis Comisiones
@@ -2869,6 +2874,22 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                         </div>
                     </div>
                     <div id="mis-comisiones-list">Cargando…</div>
+                </div>
+
+                <!-- Contribuciones (solo Staff de gestión): aquí SE REGISTRAN las horas que aportan el owner y DJMago305 (contribuyentes sin salario por ahora). El Cash Flow solo las MIDE: ahí nadie escribe. -->
+                <div class="admin-card" id="contribuciones" style="display:none;">
+                    <h3 style="margin-top:0;">🕒 Contribuciones</h3>
+                    <p class="fineprint">Horas que aporta cada contribuyente. Las registra el Staff de gestión (owner, admin o manager); el Cash Flow del contribuyente las muestra en su gráfica, sin poder editarlas.</p>
+                    <div id="contrib-msg" class="fineprint" style="min-height:18px;"></div>
+                    <div id="contrib-resumen" style="display:flex;gap:14px;flex-wrap:wrap;margin:10px 0 18px;"></div>
+                    <form id="contrib-form" style="display:grid;grid-template-columns:minmax(180px,1.2fr) 150px 110px minmax(180px,2fr) auto;gap:10px;align-items:end;margin-bottom:18px;">
+                        <label class="fineprint" style="display:flex;flex-direction:column;gap:4px;">Contribuyente<select id="contrib-quien" required></select></label>
+                        <label class="fineprint" style="display:flex;flex-direction:column;gap:4px;">Fecha<input type="date" id="contrib-fecha" required></label>
+                        <label class="fineprint" style="display:flex;flex-direction:column;gap:4px;">Horas<input type="number" id="contrib-horas" min="0.25" max="24" step="0.25" inputmode="decimal" required></label>
+                        <label class="fineprint" style="display:flex;flex-direction:column;gap:4px;">En qué trabajó (opcional)<input type="text" id="contrib-nota" maxlength="300"></label>
+                        <button type="submit" id="contrib-guardar" class="btn-action">Registrar</button>
+                    </form>
+                    <div id="contrib-lista">Cargando…</div>
                 </div>
 
                 <!-- Owner-only: Tarifas del Motor de Comisiones (commission_rules) -->
@@ -5290,7 +5311,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     const target = hrefRaw.replace('#', '');
                     if (!target) return;
                     // Show target section, hide others — with anti-CLS fade
-                    const sections = ['leads', 'actividad', 'eb-orders', 'crm', 'djs', 'staff', 'registry-section', 'analytics', 'content', 'mdjpro-downloads-panel', 'site-media', 'apps', 'production', 'venues', 'wedding-plan', 'create-profiles', 'event-blueprint', 'fashion-show-panel', 'commission-rules', 'mis-comisiones'];
+                    const sections = ['leads', 'actividad', 'eb-orders', 'crm', 'djs', 'staff', 'registry-section', 'analytics', 'content', 'mdjpro-downloads-panel', 'site-media', 'apps', 'production', 'venues', 'wedding-plan', 'create-profiles', 'event-blueprint', 'fashion-show-panel', 'commission-rules', 'mis-comisiones', 'contribuciones'];
                     const eventPanels = ['event-blueprint', 'fashion-show-panel'];
                     sections.forEach(id => {
                         const el = document.getElementById(id);
@@ -9221,6 +9242,65 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 var v = Number(n) || 0;
                 return '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             }
+
+            /* Contribuciones (Staff de gestión): todo por funciones de la base que exigen owner/admin/manager; el texto va con textContent. */
+            window.loadContribuciones = async function() {
+                const db = window.getSupabaseClient();
+                const msg = document.getElementById('contrib-msg'), lista = document.getElementById('contrib-lista'), resumen = document.getElementById('contrib-resumen');
+                const quien = document.getElementById('contrib-quien'), fecha = document.getElementById('contrib-fecha'), form = document.getElementById('contrib-form');
+                if (!db || !msg) return;
+                const hoy = (function () { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); })();
+                if (fecha && !fecha.value) { fecha.value = hoy; fecha.max = hoy; }
+                const traducir = function (m) {
+                    m = String(m || '');
+                    if (m.indexOf('forbidden') >= 0) return 'Esta sección es solo para el Staff de gestión (owner, admin o manager).';
+                    if (m.indexOf('mas_de_24') >= 0) return 'Ese día ya suma más de 24 horas para esa persona.';
+                    if (m.indexOf('fecha_invalida') >= 0) return 'Esa fecha no es válida.';
+                    if (m.indexOf('horas_invalidas') >= 0) return 'Escribe las horas (entre 0.25 y 24).';
+                    if (m.indexOf('not_contributor') >= 0) return 'Esa persona no está marcada como contribuyente.';
+                    return 'No se pudo completar. Vuelve a intentarlo.';
+                };
+                const pintar = async function () {
+                    const [c, h] = await Promise.all([db.rpc('staff_list_contributors'), db.rpc('staff_list_contribution_hours', { p_artist_user_id: null, p_limit: 40 })]);
+                    if (c.error || h.error) { msg.textContent = traducir((c.error || h.error).message); if (form) form.style.display = 'none'; lista.textContent = ''; resumen.textContent = ''; return; }
+                    if (form) form.style.display = '';
+                    quien.textContent = '';
+                    (c.data || []).forEach(function (r) { const o = document.createElement('option'); o.value = r.user_id; o.textContent = r.name; quien.appendChild(o); });
+                    resumen.textContent = '';
+                    (c.data || []).forEach(function (r) {
+                        const box = document.createElement('div'); box.className = 'mdj-venue-card'; box.style.cssText = 'min-width:200px;padding:12px 16px;';
+                        const t = document.createElement('div'); t.className = 'fineprint'; t.style.margin = '0 0 4px'; t.textContent = r.name + ' · ' + (r.mode === 'salaried' ? 'con salario' : 'contribuyente');
+                        const v = document.createElement('div'); v.style.cssText = 'font-size:18px;font-weight:800;color:#c5a059;'; v.textContent = (Math.round(Number(r.hours_month) * 100) / 100) + ' h este mes';
+                        const s = document.createElement('div'); s.className = 'fineprint'; s.style.margin = '2px 0 0'; s.textContent = (Math.round(Number(r.hours_total) * 100) / 100) + ' h en total';
+                        box.appendChild(t); box.appendChild(v); box.appendChild(s); resumen.appendChild(box);
+                    });
+                    lista.textContent = '';
+                    if (!(h.data || []).length) { const p = document.createElement('p'); p.className = 'fineprint'; p.textContent = 'Todavía no hay horas registradas.'; lista.appendChild(p); return; }
+                    const tbl = document.createElement('table'); const hd = document.createElement('thead'); const hr = document.createElement('tr');
+                    ['Fecha', 'Contribuyente', 'Horas', 'Nota', ''].forEach(function (x) { const th = document.createElement('th'); th.textContent = x; hr.appendChild(th); }); hd.appendChild(hr); tbl.appendChild(hd);
+                    const tb = document.createElement('tbody');
+                    h.data.forEach(function (r) {
+                        const tr = document.createElement('tr');
+                        [String(r.worked_on).slice(0, 10), r.name, String(Math.round(Number(r.hours) * 100) / 100), r.note || ''].forEach(function (x) { const td = document.createElement('td'); td.textContent = x; tr.appendChild(td); });
+                        const td = document.createElement('td'); const b = document.createElement('button'); b.type = 'button'; b.className = 'btn-action'; b.textContent = 'Borrar';
+                        b.addEventListener('click', async function () { b.disabled = true; const d = await db.rpc('staff_delete_contribution_hours', { p_id: r.id }); if (d.error) { msg.textContent = traducir(d.error.message); b.disabled = false; return; } msg.textContent = ''; pintar(); });
+                        td.appendChild(b); tr.appendChild(td); tb.appendChild(tr);
+                    });
+                    tbl.appendChild(tb); const wrap = document.createElement('div'); wrap.style.overflowX = 'auto'; wrap.appendChild(tbl); lista.appendChild(wrap);
+                };
+                if (form && !form.dataset.wired) {
+                    form.dataset.wired = '1';
+                    form.addEventListener('submit', async function (ev) {
+                        ev.preventDefault(); msg.textContent = '';
+                        const btn = document.getElementById('contrib-guardar'); btn.disabled = true;
+                        const r = await db.rpc('staff_log_contribution_hours', { p_artist_user_id: quien.value, p_worked_on: fecha.value, p_hours: Number(document.getElementById('contrib-horas').value), p_note: document.getElementById('contrib-nota').value || null });
+                        btn.disabled = false;
+                        if (r.error) { msg.textContent = traducir(r.error.message); return; }
+                        document.getElementById('contrib-horas').value = ''; document.getElementById('contrib-nota').value = ''; msg.textContent = 'Registrado.'; pintar();
+                    });
+                }
+                await pintar();
+            };
 
             window.loadMisComisiones = async function() {
                 const db = window.getSupabaseClient();
