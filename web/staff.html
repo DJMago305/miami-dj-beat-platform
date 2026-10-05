@@ -1111,6 +1111,13 @@
     :root[data-theme="day"] .staff-topnav button{ color:rgba(20,25,35,.55); }
     :root[data-theme="day"] .staff-topnav button:hover{ color:rgba(20,25,35,.9); }
     :root[data-theme="day"] .staff-topnav button.tab-sealed,:root[data-theme="day"] .staff-topnav button.tab-sealed:hover{ color:rgba(20,25,35,.32); }
+    /* Barra de menú en día (reporte PO 2026-10-05): los enlaces <a> (INICIO, CONFIG, SEO·IA) seguían blancos sobre fondo claro, los separadores «/» eran casi
+       invisibles y no había línea bajo la barra. Mismo tono y grosor que las páginas del artista (mdj-dia-base.css: 2px dorado oscuro). Solo toca el menú; el clima
+       de la vista Agenda (escena nocturna) NO migra a día. */
+    :root[data-theme="day"] .staff-topnav{ border-bottom:2px solid rgba(138,109,46,.75); }
+    :root[data-theme="day"] .staff-topnav a{ color:rgba(20,25,35,.55); }
+    :root[data-theme="day"] .staff-topnav a:hover{ color:rgba(20,25,35,.9); }
+    :root[data-theme="day"] .staff-topnav button + button::before,:root[data-theme="day"] .staff-topnav a + button::before,:root[data-theme="day"] .staff-topnav button + a::before,:root[data-theme="day"] .staff-topnav a + a::before{ color:rgba(138,109,46,.6); }
     :root[data-theme="day"] .ofm-daynight{ border-color:rgba(14,18,28,.2); }
     :root[data-theme="day"] .ofm-daynight:hover{ background:rgba(14,18,28,.05); }
     :root[data-theme="day"] .staff-side3{ background:#f4f6f9; }
@@ -4347,7 +4354,8 @@
                 '#tab-flow h1[data-i18n="dash-flow-title"]{display:none !important;}'+
                 '#tab-flow #visibility-card{padding:10px 16px !important;margin-top:8px !important;margin-bottom:10px !important;}'+
                 '#tab-flow #visibility-card>div:first-of-type{margin-bottom:8px !important;}'+
-                '#tab-flow #visibility-card h2{font-size:11px !important;}'+
+                '#tab-flow #visibility-card h2{font-size:15px !important;}'+   /* misma tipografía de títulos que el resto del Cash Flow (PO 2026-10-05; antes 11px) */
+
                 '#tab-flow #visibility-card p{margin-top:3px !important;font-size:10px !important;}'+
                 '#tab-flow #vis-stats{max-width:420px;gap:8px !important;margin-bottom:0 !important;}'+
                 '#tab-flow #vis-stats>div{padding:6px 8px !important;border-radius:8px !important;}'+
