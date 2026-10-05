@@ -269,6 +269,8 @@
     background: var(--surface-2); border: 1px solid var(--line); color: var(--text); border-radius: 8px;
     padding: 7px 10px; font-size: 12.5px; min-width: 220px;
   }
+  .mv-scroll { max-height: 560px; overflow-y: auto; }
+  .mv-scroll thead th { position: sticky; top: 0; z-index: 2; background: var(--surface-2); }
   .table-scroll { overflow-x: auto; border-radius: 10px; border: 1px solid var(--line); }
   table { width: 100%; border-collapse: collapse; font-size: 12.5px; min-width: 560px; }
   thead th {
@@ -1019,36 +1021,110 @@
     return out;
   }
 
-  /* Tabla de movimientos REALES (residencias, eventos, libro de los DJ, Stripe, banco). Sin códigos inventados. */
+  /* Tabla de MOVIMIENTOS con la lógica de un estado de cuenta bancario (Chase / Teller / Plaid):
+       - dos estados: PENDIENTES (por acreditar o por liberar: aún no son definitivos) arriba y aparte, y REGISTRADOS debajo;
+       - montos con signo en dos columnas: Entrada (verde) y Salida (rojo);
+       - agrupado por día, de más nuevo a más viejo, con el neto del día;
+       - «Acumulado» (entradas − salidas) SOLO sobre lo registrado y de más antiguo a más nuevo: lo pendiente no suma, porque puede cambiar;
+       - base: Devengado (lo que dicen las tarifas de turnos y eventos) o Caja (cobros y pagos reales: por acreditar, cobrado, por liberar, disponible, banco);
+       - filtros de tipo y búsqueda, totales al pie de lo que se está viendo y exportación CSV de lo filtrado. */
+  var DAYS_SHORT = ["dom","lun","mar","mié","jue","vie","sáb"];
+  var PEND_EST = {"Por acreditar":1, "Pendiente":1};
+  var CAJA_EST = {"Por acreditar":1, "Cobrado":1, "Pendiente":1, "Disponible":1, "Banco":1};
+  var EST_CLS = {"Devengado":"open", "Pendiente":"late", "Disponible":"paid", "Cobrado":"paid", "Por acreditar":"open", "Banco":"paid"};
+  var EST_EXP = {"Devengado":"Según la tarifa del turno o evento; todavía sin confirmar en el banco.", "Pendiente":"Pago registrado en el libro del DJ, aún por liberar.", "Disponible":"Pago liberado en el libro del DJ.", "Cobrado":"Cobro confirmado (Stripe o banco).", "Por acreditar":"Cobro recibido (por ejemplo, un cheque depositado) todavía sin acreditar en el banco.", "Banco":"Movimiento real del banco (Teller)."};
+  var MV_EXPORT = null;
+  function dayHead(s){ var d = dayParts(s); return DAYS_SHORT[d.getDay()] + " " + d.getDate() + " " + MES_C[d.getMonth()] + " " + d.getFullYear(); }
+  function signed(r){ return (r.tipo === "Pago" ? -1 : 1) * (Number(r.amount_cents) || 0); }
+  function money2(c){ var n = C(c); return (n < 0 ? "−" : "") + money(Math.abs(n)); }
+
   function movementsTable(rows){
-    var wrap = document.createElement("div");
-    var tools = document.createElement("div"); tools.className = "table-tools";
-    tools.innerHTML = '<input type="text" placeholder="Filtrar por concepto, contraparte o artista…" id="mvFilter">';
+    var wrap = document.createElement("div"), st = { base:"devengado", tipo:"todos", q:"", n:25 };
+    var tools = document.createElement("div"); tools.className = "table-tools"; tools.style.cssText = "display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px;";
+    function seg(opts, key){
+      var box = document.createElement("div"); box.className = "range-chips";
+      opts.forEach(function(o){ var b = document.createElement("button"); b.type = "button"; b.className = "range-chip" + (st[key] === o[0] ? " active" : ""); b.textContent = o[1];
+        b.addEventListener("click", function(){ st[key] = o[0]; Array.prototype.forEach.call(box.children, function(c){ c.classList.toggle("active", c === b); }); draw(); }); box.appendChild(b); });
+      return box;
+    }
+    tools.appendChild(seg([["devengado","Devengado"],["caja","Caja"]], "base"));
+    tools.appendChild(seg([["todos","Entradas y salidas"],["in","Entradas"],["out","Salidas"]], "tipo"));
+    var inp = document.createElement("input"); inp.type = "text"; inp.placeholder = "Buscar concepto, contraparte o artista…"; inp.id = "mvFilter"; inp.style.minWidth = "220px";
+    inp.addEventListener("input", function(){ st.q = inp.value.trim().toLowerCase(); draw(); }); tools.appendChild(inp);
     wrap.appendChild(tools);
-    if(!rows.length){ var em = document.createElement("div"); em.style.cssText = "font-size:12px;color:var(--text-muted);padding:6px 2px;"; em.textContent = "Sin movimientos en este rango."; wrap.appendChild(em); return wrap; }
-    var scroll = document.createElement("div"); scroll.className = "table-scroll";
-    var table = document.createElement("table");
-    table.innerHTML = '<thead><tr><th>Fecha</th><th>Concepto</th><th>Contraparte</th><th>Tipo</th><th class="num">Monto</th><th>Estado</th></tr></thead>';
-    var tbody = document.createElement("tbody");
-    var EST = {"Devengado":"open", "Pendiente":"late", "Disponible":"paid", "Cobrado":"paid", "Por acreditar":"open", "Banco":"paid"};
-    var EXP = {"Devengado":"Según la tarifa del turno o evento; todavía sin confirmar en el banco.", "Pendiente":"Pago registrado en el libro del DJ, aún por liberar.", "Disponible":"Pago liberado en el libro del DJ.", "Cobrado":"Cobro confirmado (Stripe o banco).", "Por acreditar":"Cobro recibido (por ejemplo, un cheque depositado) todavía sin acreditar en el banco.", "Banco":"Movimiento real del banco (Teller)."};
-    rows.forEach(function(r){
-      var tr = document.createElement("tr"); tr.className = "row-main";
-      tr.innerHTML = '<td><span class="caret">▸</span>' + esc(dayText(r.date, true)) + '</td><td>' + esc(r.concept) + '</td><td>' + esc(r.counterparty || "—") + '</td><td>' + esc(r.tipo) + '</td>' +
-        '<td class="num">' + (r.tipo === "Pago" ? "−" : "+") + money(C(r.amount_cents)) + '</td><td><span class="status-chip ' + (EST[r.estado] || "open") + '">' + esc(r.estado) + '</span></td>';
-      var trD = document.createElement("tr"); trD.className = "row-detail"; var td = document.createElement("td"); td.colSpan = 6;
+    var basis = document.createElement("div"); basis.style.cssText = "font-size:11.5px;color:var(--text-muted);margin:0 0 6px;";
+    function paintBasis(){ basis.textContent = st.base === "devengado" ? "Devengado: lo que dicen las tarifas de turnos y eventos. Es lo que suma «Ingreso reconocido»." : "Caja: dinero real (cobros por acreditar o cobrados, pagos por liberar o disponibles, y banco). No se mezcla con lo devengado para no contar dos veces el mismo dinero."; }
+    wrap.appendChild(basis);
+    var sum = document.createElement("div"); sum.style.cssText = "font-size:12px;color:var(--text-muted);margin:0 0 8px;"; wrap.appendChild(sum);
+    var scroll = document.createElement("div"); scroll.className = "table-scroll"; wrap.appendChild(scroll);
+
+    function visible(){
+      return rows.filter(function(r){
+        if(st.base === "devengado" && r.estado !== "Devengado") return false;
+        if(st.base === "caja" && !CAJA_EST[r.estado]) return false;
+        if(st.tipo === "in" && r.tipo !== "Ingreso") return false;
+        if(st.tipo === "out" && r.tipo !== "Pago") return false;
+        if(st.q && (r.concept + " " + (r.counterparty || "") + " " + (r.who || "") + " " + (r.scope || "")).toLowerCase().indexOf(st.q) === -1) return false;
+        return true;
+      });
+    }
+    function rowEl(r, acum, colspan){
+      var amt = signed(r), tr = document.createElement("tr"); tr.className = "row-main";
+      tr.innerHTML = '<td><span class="caret">▸</span>' + esc(r.concept) + '<div style="font-size:11px;color:var(--text-muted);margin:2px 0 0 14px;">' + esc(r.counterparty && r.counterparty !== r.scope ? r.counterparty : (r.who ? "con " + r.who : "—")) + '</div></td><td>' + esc(r.scope || "—") + '</td>' +
+        '<td class="num" style="color:var(--good)">' + (amt > 0 ? "+" + money(C(amt)) : "") + '</td><td class="num" style="color:var(--critical)">' + (amt < 0 ? "−" + money(C(-amt)) : "") + '</td>' +
+        '<td><span class="status-chip ' + (EST_CLS[r.estado] || "open") + '">' + esc(r.estado) + '</span></td><td class="num">' + (acum == null ? '<span style="color:var(--text-muted)">—</span>' : money2(acum)) + '</td>';
+      var trD = document.createElement("tr"); trD.className = "row-detail"; var td = document.createElement("td"); td.colSpan = colspan;
       var inner = document.createElement("div"); inner.className = "row-detail-inner";
-      inner.innerHTML = '<div class="detail-line"><span>Origen</span><span>' + esc(r.scope || "—") + '</span></div>' + (r.who ? '<div class="detail-line"><span>Artista</span><span>' + esc(r.who) + '</span></div>' : '') +
-        '<div class="detail-line"><span>Estado</span><span>' + esc(EXP[r.estado] || r.estado) + '</span></div>';
+      inner.innerHTML = '<div class="detail-line"><span>Fecha</span><span>' + esc(dayHead(r.date)) + '</span></div><div class="detail-line"><span>Origen</span><span>' + esc(r.scope || "—") + '</span></div>' + (r.who ? '<div class="detail-line"><span>Artista</span><span>' + esc(r.who) + '</span></div>' : '') +
+        '<div class="detail-line"><span>Estado</span><span>' + esc(EST_EXP[r.estado] || r.estado) + '</span></div>';
       td.appendChild(inner); trD.appendChild(td);
       tr.addEventListener("click", function(){ var open = tr.classList.toggle("open"); inner.classList.toggle("show", open); });
-      tbody.appendChild(tr); tbody.appendChild(trD);
-    });
-    table.appendChild(tbody); scroll.appendChild(table); wrap.appendChild(scroll);
-    tools.querySelector("#mvFilter").addEventListener("input", function(e){
-      var q = e.target.value.toLowerCase();
-      Array.prototype.forEach.call(tbody.querySelectorAll("tr.row-main"), function(tr){ var show = tr.textContent.toLowerCase().indexOf(q) !== -1; tr.style.display = show ? "" : "none"; tr.nextElementSibling.style.display = show ? "" : "none"; });
-    });
+      return [tr, trD];
+    }
+    function headRow(html, cls){ var tr = document.createElement("tr"); tr.className = cls; var td = document.createElement("td"); td.colSpan = 6; td.innerHTML = html; tr.appendChild(td); return tr; }
+
+    function draw(keepRows){
+      if(!keepRows) st.n = 25;
+      paintBasis(); var vis = visible(); MV_EXPORT = vis; scroll.innerHTML = "";
+      var tin = 0, tout = 0; vis.forEach(function(r){ var a = signed(r); if(a > 0) tin += a; else tout += -a; });
+      sum.textContent = vis.length + " de " + rows.length + " movimientos" + (rows.length >= 300 ? " (el rango trae hasta 300)" : "") + " · Entradas " + money(C(tin)) + " · Salidas " + money(C(tout)) + " · Neto " + money2(tin - tout);
+      if(!vis.length){ scroll.innerHTML = '<div style="padding:14px;font-size:12px;color:var(--text-muted);">Sin movimientos con este filtro.</div>'; return; }
+      var pend = vis.filter(function(r){ return PEND_EST[r.estado]; }), posted = vis.filter(function(r){ return !PEND_EST[r.estado]; });
+      var acum = {}, run = 0; posted.slice().reverse().forEach(function(r, i){ run += signed(r); acum[posted.length - 1 - i] = run; });
+      var table = document.createElement("table"), tb = document.createElement("tbody");
+      table.innerHTML = '<thead><tr><th>Movimiento</th><th>Origen</th><th class="num">Entrada</th><th class="num">Salida</th><th>Estado</th><th class="num" title="Entradas − salidas acumuladas de lo registrado que se muestra, de más antiguo a más nuevo. Lo pendiente no suma.">Acumulado</th></tr></thead>';
+      var HEAD = "background:var(--surface-2);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);padding:7px 12px;";
+      /* Como en un banco: se dibuja solo un tramo (st.n filas) y se carga más al desplazarse o con el botón; los totales y el acumulado cubren TODO el filtro. */
+      var shown = 0, limit = st.n;
+      function room(){ return shown < limit; }
+      if(pend.length){
+        var pnet = pend.reduce(function(a, r){ return a + signed(r); }, 0);
+        var h = headRow('Pendientes · aún sin acreditar o liberar (' + pend.length + ') <span class="mono" style="float:right;font-weight:600">neto ' + money2(pnet) + '</span>', "mv-head"); h.firstChild.style.cssText = HEAD + "color:var(--warning);"; tb.appendChild(h);
+        for(var k = 0; k < pend.length && room(); k++){ var e = rowEl(pend[k], null, 6); tb.appendChild(e[0]); tb.appendChild(e[1]); shown++; }
+      }
+      if(posted.length && room()){
+        var h2 = headRow('Registrados (' + posted.length + ')', "mv-head"); h2.firstChild.style.cssText = HEAD; tb.appendChild(h2);
+        var lastDay = null, i2, dayNet = {};
+        posted.forEach(function(r){ dayNet[r.date] = (dayNet[r.date] || 0) + signed(r); });
+        for(i2 = 0; i2 < posted.length && room(); i2++){
+          var r = posted[i2];
+          if(r.date !== lastDay){ lastDay = r.date; var dh = headRow(esc(dayHead(r.date)) + ' <span class="mono" style="float:right;color:var(--text-muted)">neto del día ' + money2(dayNet[r.date]) + '</span>', "mv-day"); dh.firstChild.style.cssText = "font-size:11.5px;font-weight:700;color:var(--text-2);padding:8px 12px;border-top:1px solid var(--line);"; tb.appendChild(dh); }
+          var e2 = rowEl(r, acum[i2], 6); tb.appendChild(e2[0]); tb.appendChild(e2[1]); shown++;
+        }
+      }
+      table.appendChild(tb);
+      var tf = document.createElement("tfoot"); tf.innerHTML = '<tr><td colspan="2" style="font-weight:700;padding:10px 12px;">Totales del filtro (' + vis.length + ')</td><td class="num" style="color:var(--good);font-weight:700">+' + money(C(tin)) + '</td><td class="num" style="color:var(--critical);font-weight:700">−' + money(C(tout)) + '</td><td></td><td class="num" style="font-weight:700">' + money2(tin - tout) + '</td></tr>'; table.appendChild(tf);
+      var keepTop = scroll.scrollTop; scroll.innerHTML = ""; scroll.classList.add("mv-scroll");
+      scroll.appendChild(table);
+      var more = document.createElement("div"); more.style.cssText = "display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;font-size:12px;color:var(--text-muted);border-top:1px solid var(--line);";
+      more.innerHTML = '<span>Mostrando ' + shown + ' de ' + vis.length + ' movimientos' + (shown < vis.length ? ' · desplázate para cargar más' : '') + '</span>';
+      if(shown < vis.length){ var mb = document.createElement("button"); mb.type = "button"; mb.className = "range-chip active"; mb.textContent = "Mostrar 25 más"; mb.addEventListener("click", function(){ st.n += 25; draw(true); }); more.appendChild(mb); }
+      scroll.appendChild(more);
+      scroll.scrollTop = keepTop;
+      return;
+    }
+    scroll.addEventListener("scroll", function(){ if(scroll.scrollTop + scroll.clientHeight >= scroll.scrollHeight - 60 && scroll.querySelector("button.range-chip")){ st.n += 25; draw(true); } });
+    draw();
     return wrap;
   }
 
@@ -1242,13 +1318,13 @@
   function csvCell(v){ var s = String(v == null ? "" : v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
   function exportCsv(){
     if(!D.m){ toast("Todavía no hay datos cargados."); return; }
-    var rows = D.m.movimientos, lines = ["Fecha,Concepto,Contraparte,Tipo,Monto USD,Estado,Origen,Artista"];
+    var rows = MV_EXPORT || D.m.movimientos, lines = ["Fecha,Concepto,Contraparte,Tipo,Monto USD,Estado,Origen,Artista"];
     rows.forEach(function(r){ lines.push([r.date, r.concept, r.counterparty, r.tipo, (r.tipo === "Pago" ? "-" : "") + C(r.amount_cents).toFixed(2), r.estado, r.scope, r.who].map(csvCell).join(",")); });
     lines.push(""); lines.push(["", "TOTAL INGRESO (devengado)", "", "", C(D.c.ganamos_cents).toFixed(2), "", "", ""].map(csvCell).join(",")); lines.push(["", "TOTAL PAGOS A DJS (devengado)", "", "", C(D.c.pagamos_cents).toFixed(2), "", "", ""].map(csvCell).join(","));
     var blob = new Blob(["﻿" + lines.join("\n")], { type:"text/csv;charset=utf-8" }), a = document.createElement("a");
     a.href = URL.createObjectURL(blob); a.download = "matrix-" + D.r.from + "_" + D.r.to + ".csv"; document.body.appendChild(a); a.click();
     setTimeout(function(){ URL.revokeObjectURL(a.href); document.body.removeChild(a); }, 500);
-    toast("CSV exportado: " + rows.length + " movimientos" + (rows.length >= 300 ? " (límite de 300; los totales cubren todo el rango)" : "") + ".");
+    toast("CSV exportado: " + rows.length + " movimientos" + (MV_EXPORT ? " (lo que está filtrado en la tabla)" : "") + (rows.length >= 300 ? " (límite de 300; los totales cubren todo el rango)" : "") + ".");
   }
 
   var TITLES = { overview:"Resumen corporativo", liquidity:"Liquidez", profitability:"Rentabilidad", risk:"Riesgo y concentración", taxes:"Taxes y reserva fiscal", history:"Historial" };
@@ -1256,7 +1332,7 @@
   var renderSeq = 0, started = false;
   function render(){
     if(!started) return;
-    var my = ++renderSeq;
+    var my = ++renderSeq; MV_EXPORT = null;
     canvas.innerHTML = ""; canvas.appendChild(noteBox("Cargando datos reales…"));
     if(state.level === "corporate"){ crumbs.textContent = "Corporate Financial Intelligence Matrix"; screenTitle.textContent = TITLES[state.corporateScreen]; }
     loadData().then(function(d){
