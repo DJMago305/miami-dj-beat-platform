@@ -46,15 +46,17 @@
         <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=optional" rel="stylesheet">
+    <!-- Documentos legales en serif (Playfair Display, la misma del sitio); display=swap para que el texto legal no caiga a otra fuente en la primera carga. -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./mdj-assistant.css?v=20260306-1" />
     <style>
         /* Documentos legales — modelo estándar de la industria (Apple / Airbnb, PO 2026-09-26):
            portada con lista de documentos → cada documento en UNA columna centrada, título grande, «Actualizado…» en negrita,
            introducción y secciones en acordeón (+ / ×). Barra fina fija bajo el menú con los 5 documentos; migas de pan al pie.
            Sin íconos ni columna lateral.
-           TIPOGRAFÍA (PO 2026-09-26): la misma pila del sitio de Apple (San Francisco en dispositivos Apple; Helvetica Neue / Arial
-           en el resto) para TODO el contenido de esta página: barra, títulos, acordeón, texto y migas. El menú global del sitio
-           (header) no se toca.
+           TIPOGRAFÍA (PO 2026-10-05, reemplaza la de 2026-09-26): serif — Playfair Display, la del sitio — para TODO el contenido
+           de esta página (barra, títulos, acordeón, texto y migas), porque la sans de Cash Flow y Calendario (San Francisco /
+           Helvetica) no se leía como documento legal. El menú global del sitio (header) no se toca.
            DÍA / NOCHE: el interruptor del header pone data-theme="day" en <html>; aquí solo cambian las variables --lg-* del
            contenido (el header fijo se queda oscuro, como en el resto del sitio). */
         .legal-page {
@@ -70,7 +72,7 @@
             min-height: 100vh;
             background: var(--lg-bg);
             color: var(--lg-text);
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-family: "Playfair Display", Georgia, "Times New Roman", serif;
             font-size: 17px;
             line-height: 1.47;
             letter-spacing: -0.005em;
