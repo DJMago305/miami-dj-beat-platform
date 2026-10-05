@@ -11,13 +11,17 @@
         return '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
+    /* Texto en el idioma activo (translations.js); si falta la clave o el motor, queda el español original. */
+    function tx(key, es) { var v = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t(key) : ''; return v || es; }
+    function isEn() { return String(document.documentElement.getAttribute('lang') || 'es').toLowerCase().indexOf('en') === 0; }
+
     function statusLabel(status) {
         var map = {
-            pending: 'Pendiente',
-            pending_tier_review: 'En revisión',
-            paid: 'Pagada',
+            pending: tx('cf-ref-st-pending', 'Pendiente'),
+            pending_tier_review: tx('cf-ref-st-review', 'En revisión'),
+            paid: tx('cf-ref-st-paid', 'Pagada'),
         };
-        return map[status] || status || 'Pendiente';
+        return map[status] || status || tx('cf-ref-st-pending', 'Pendiente');
     }
 
     window.mdjLoadReferralOwnerCommissions = async function () {
@@ -56,9 +60,9 @@
             totalEl.textContent = money(total);
 
             body.innerHTML = rows.map(function (r) {
-                var d = r.calculado_en ? new Date(r.calculado_en).toLocaleDateString('es-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
-                var tier = r.tier_key || 'evento';
-                var evTag = r.is_first_event ? '1er evento del cliente' : 'evento recurrente';
+                var d = r.calculado_en ? new Date(r.calculado_en).toLocaleDateString(isEn() ? 'en-US' : 'es-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
+                var tier = r.tier_key || tx('cf-ref-event', 'evento');
+                var evTag = r.is_first_event ? tx('cf-ref-first', '1er evento del cliente') : tx('cf-ref-recurring', 'evento recurrente');
                 return '<tr>' +
                     '<td style="font-weight:700; color:#fff;">' + d + '</td>' +
                     '<td><div style="font-weight:700;">' + tier + '</div><div style="font-size:10px; opacity:0.4;">' + evTag + '</div></td>' +
@@ -72,6 +76,12 @@
             console.warn('[dj-referral-commissions]', e && e.message ? e.message : e);
         }
     };
+
+    /* Al cambiar de idioma se vuelve a pintar la tabla (estados y notas se arman en JS). */
+    document.addEventListener('languageChanged', function () {
+        var card = document.getElementById('referral-owner-commissions-card');
+        if (card && card.style.display !== 'none' && typeof window.mdjLoadReferralOwnerCommissions === 'function') window.mdjLoadReferralOwnerCommissions();
+    });
 
     document.addEventListener('DOMContentLoaded', function () {
         // Se dispara junto con la pestaña Flujo -- mismo momento que mdjLoadFlowTab().

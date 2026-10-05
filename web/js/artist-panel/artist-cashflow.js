@@ -246,6 +246,12 @@
     function mount() {
         ['loadFlowData', 'mdjLoadFlowTab', 'mdjFlowReloadIfAllowed'].forEach(wrap);
         registerTint(); watchFrameTheme(); watchChrome(); watchTheme();
+        /* Cambio de idioma con el Cash Flow a la vista: se vuelve a cargar la pestaña (gráficas, tendencias y estados que arma flow-handler.js); wrap() de arriba repinta después este panel. */
+        document.addEventListener('languageChanged', function () {
+            var h = document.querySelector(HOST_SEL);
+            if (!h || !(h.classList.contains('active') || h.offsetParent !== null)) return;
+            if (typeof window.mdjLoadFlowTab === 'function') window.mdjLoadFlowTab(); else refresh();
+        });
         var host = document.querySelector(HOST_SEL);
         if (host && (host.classList.contains('active') || host.offsetParent !== null)) refresh();
     }
