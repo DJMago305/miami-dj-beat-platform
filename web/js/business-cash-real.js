@@ -68,6 +68,16 @@
         grid.appendChild(card('Pagamos', money(d.pagamos_cents), 'DJs en residencia ' + money(r.pago_djs_cents) + ' · Eventos ' + money(e.pago_djs_cents) + ' · Libro ' + money(l.pago_cents), '', pv ? dm(d.pagamos_cents, pv.pagamos_cents) : null));
         grid.appendChild(card('Neto', money(d.neto_cents), 'Ganamos − Pagamos (devengado)', d.neto_cents >= 0 ? 'pos' : 'neg', pv ? dm(d.neto_cents, pv.neto_cents) : null));
         grid.appendChild(card('Por liberar a DJs', money(l.pendiente_cents), 'Pagos pendientes del libro de los DJ'));
+        var cb = d.cobros;
+        if (cb) {
+            var parts = []; if (cb.acreditado_cents) parts.push(money(cb.acreditado_cents) + ' acreditado'); if (cb.por_acreditar_cents) parts.push(money(cb.por_acreditar_cents) + ' por acreditar');
+            grid.appendChild(card('Cobrado', money(cb.total_cents), cb.cobros ? cb.cobros + (cb.cobros === 1 ? ' cobro' : ' cobros') + (parts.length ? ' · ' + parts.join(' · ') : '') : 'Sin cobros registrados en el rango', '', pv && pv.cobros ? delta(cb.total_cents / 100, pv.cobros.total_cents / 100, pvComplete, false, true) : null));
+            var rr = rng(), pc;
+            if (!cb.first_day) pc = ['—', 'Sin cobros registrados todavía'];
+            else if (rr.from < cb.first_day) pc = ['—', 'Los cobros registrados empiezan el ' + dayLabel(cb.first_day) + '; faltan los anteriores para calcularlo'];
+            else { var pcv = d.ganamos_cents - cb.total_cents; pc = pcv >= 0 ? [money(pcv), 'Devengado − cobrado del rango'] : [money(0), 'Cobrado supera lo devengado en ' + money(-pcv) + ' (incluye turnos de fechas anteriores)']; }
+            grid.appendChild(card('Por cobrar', pc[0], pc[1]));
+        }
         grid.appendChild(card('Eventos', e.hechos + (e.hechos === 1 ? ' hecho · ' : ' hechos · ') + e.pendientes + (e.pendientes === 1 ? ' pendiente' : ' pendientes'), e.sin_ingreso_registrado > 0 ? e.sin_ingreso_registrado + (e.sin_ingreso_registrado === 1 ? ' evento hecho sin ingreso registrado' : ' eventos hechos sin ingreso registrado') + ': falta la tarifa del local' : 'Todos con ingreso registrado'));
         grid.appendChild(card('Turnos de residencia', String(r.turnos), 'Margen ' + money(r.margen_cents) + ' · turnos de DJMago305 = ingreso de la empresa', '', pv ? delta(r.turnos, pv.residencias.turnos, pvComplete) : null));
         grid.appendChild(card('Banco (Teller)', b.conectado ? money(b.entradas_cents - b.salidas_cents) : 'Sin conectar', b.conectado ? 'Entradas ' + money(b.entradas_cents) + ' · Salidas ' + money(b.salidas_cents) : 'Esperando credenciales de Teller: cuando lleguen, aquí aparece lo realmente cobrado y pagado'));
