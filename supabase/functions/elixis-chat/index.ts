@@ -245,6 +245,11 @@ Estas son TODAS las herramientas que tienes. No hay ninguna otra:
    Largo, Mojitos Calle 8, El Valle Restaurante...). Distinta de las dos de
    arriba: esas son eventos de una fecha, esta es el horario que se repite
    cada semana. Ya ves esa agenda en tu contexto (mas abajo) sin llamar nada.
+   Tambien cambia UNA sola fecha de una residencia sin tocar la regla semanal:
+   accion='reasignar_dj_una_vez' (otro DJ cubre esa fecha: es la ROTACION),
+   'saltar_fecha' (esa fecha no se trabaja) o 'quitar_excepcion' (esa fecha
+   vuelve al DJ de la regla). Cada fecha es una llamada; el aviso al DJ, su
+   agenda y su Cash Flow salen solos de la base de datos.
 6. consultar_catalogo_precios — precios oficiales. Nunca inventes un precio.
 7. cambiar_precio_catalogo — cambiar el precio de un sku del catalogo. SOLO
    owner/admin; si te lo pide otro rol, dilo con franqueza y no lo intentes.
@@ -1104,17 +1109,20 @@ serve(async (req: Request) => {
             "-- '5 jueves seguidos', 'todos los viernes de octubre', 'hasta el 31 de diciembre' -- usa " +
             "accion='crear' con fecha_inicio/fecha_fin/nombre_serie en vez de crear eventos sueltos con " +
             "modificar_agenda_evento uno por uno. Sin fecha_fin, la fila queda como residencia PERMANENTE " +
-            "(el comportamiento normal). La rotacion de DJ entre fechas de la serie es MANUAL: crea la serie " +
-            "con el DJ base, y si piden un DJ distinto para una fecha puntual dentro del rango, usa " +
-            "accion='actualizar' recien despues de que exista, o dile al staff que lo reasigne desde el " +
-            "calendario (\"Reemplazar DJ -> solo esta fecha\") -- no hay automatismo de turnos.",
+            "(el comportamiento normal). ROTACION DE DJ (2026-10-05): para que otro DJ cubra UNA fecha de una " +
+            "residencia que ya existe usa accion='reasignar_dj_una_vez' con dia_semana+turno+venue de la " +
+            "regla, fecha (YYYY-MM-DD) y dj_nombre; una llamada por fecha. accion='saltar_fecha' deja esa " +
+            "fecha sin turno y accion='quitar_excepcion' la devuelve al DJ de la regla. La regla semanal " +
+            "no cambia. El dia de la semana de la fecha debe coincidir con dia_semana; si el nombre del DJ " +
+            "no existe o es ambiguo la herramienta lo rechaza -- no inventes. Para turnos que se alternan " +
+            "(ej. viernes de por medio) pide al usuario las fechas exactas y haz una llamada por fecha.",
         input_schema: {
             type: "object",
             properties: {
                 accion: {
                     type: "string",
-                    enum: ["crear", "actualizar", "desactivar", "reactivar"],
-                    description: "crear=fila nueva. Las demas requieren dia_semana+turno+venue de una fila existente.",
+                    enum: ["crear", "actualizar", "desactivar", "reactivar", "reasignar_dj_una_vez", "saltar_fecha", "quitar_excepcion"],
+                    description: "crear=fila nueva. Las demas requieren dia_semana+turno+venue de una fila existente. reasignar_dj_una_vez/saltar_fecha/quitar_excepcion cambian SOLO la `fecha` indicada.",
                 },
                 dia_semana: {
                     type: "number",
@@ -1160,6 +1168,10 @@ serve(async (req: Request) => {
                 fecha_fin: {
                     type: "string",
                     description: "Solo para serie acotada, formato YYYY-MM-DD: ultima fecha real de la serie (ej. el 5to jueves). Sin esto, la residencia es PERMANENTE -- no pongas una fecha de fin a una residencia que no la tiene de verdad.",
+                },
+                fecha: {
+                    type: "string",
+                    description: "Solo para reasignar_dj_una_vez / saltar_fecha / quitar_excepcion, formato YYYY-MM-DD: la fecha concreta que cambia. Debe caer en el dia_semana de la regla.",
                 },
                 nombre_serie: {
                     type: "string",
@@ -2171,7 +2183,13 @@ serve(async (req: Request) => {
         return JSON.stringify({ ok: true, event_id: eventId, dj_nombre: djNombre, accion });
     }
 
-    const ACCIONES_RESIDENCY = new Set(["crear", "actualizar", "desactivar", "reactivar"]);
+    const ACCIONES_RESIDENCY = new Set(["crear", "actualizar", "desactivar", "reactivar", "reasignar_dj_una_vez", "saltar_fecha", "quitar_excepcion"]);
+    // Cambios de UNA sola fecha (la regla semanal no se toca). accion de la herramienta -> accion de residency_exception_modificar().
+    const ACCIONES_RESIDENCY_UNA_FECHA: Record<string, string> = {
+        reasignar_dj_una_vez: "reasignar_una_vez",
+        saltar_fecha: "saltar_una_vez",
+        quitar_excepcion: "quitar_excepcion",
+    };
     const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 
     function parseHoraSimple(value: unknown): string | null {
@@ -2208,6 +2226,44 @@ serve(async (req: Request) => {
         }
         if (!venue) {
             return JSON.stringify({ error: "venue_requerido" });
+        }
+
+        if (ACCIONES_RESIDENCY_UNA_FECHA[accion]) {
+            const fechaUna = parseFechaSimple(input?.fecha);
+            if (!fechaUna) {
+                await recordActionLog("gestionar_residency_schedule", target, "error:fecha_requerida");
+                return JSON.stringify({ error: "fecha_requerida", detalle: "Formato esperado YYYY-MM-DD." });
+            }
+            if (accion === "reasignar_dj_una_vez" && !djNombre) {
+                await recordActionLog("gestionar_residency_schedule", target, "error:dj_nombre_requerido");
+                return JSON.stringify({ error: "dj_nombre_requerido" });
+            }
+            const { data: excId, error: excErr } = await ADMIN.rpc("residency_exception_modificar", {
+                p_accion: ACCIONES_RESIDENCY_UNA_FECHA[accion],
+                p_dia_semana: diaSemana,
+                p_turno: turno,
+                p_venue: venue,
+                p_fecha: fechaUna,
+                p_dj_nombre: djNombre || null,
+                p_notas: notas || null,
+                p_staff_user_id: gate.userId,
+            });
+            if (excErr || !excId) {
+                const detail = excErr?.message ?? "rpc";
+                await recordActionLog("gestionar_residency_schedule", target, `error:${accion}:${fechaUna}:${detail}`.slice(0, 2000));
+                const CODIGOS = [
+                    "residencia_no_encontrada", "residencia_ambigua", "fecha_no_coincide_con_el_dia",
+                    "fecha_fuera_de_la_serie", "dj_no_encontrado", "dj_ambiguo", "dj_nombre_requerido",
+                    "excepcion_no_encontrada", "fecha_requerida",
+                ];
+                const code = CODIGOS.find((c) => detail.includes(c)) ?? "excepcion_no_procesada";
+                return JSON.stringify({ error: code });
+            }
+            await recordActionLog("gestionar_residency_schedule", target, `ok:${accion}:${fechaUna}:${excId}`);
+            return JSON.stringify({
+                ok: true, id: excId, accion, venue, turno, dia_semana: diaSemana, fecha: fechaUna,
+                dj_nombre: accion === "reasignar_dj_una_vez" ? djNombre : null,
+            });
         }
 
         const horaInicio = input?.hora_inicio != null ? parseHoraSimple(input.hora_inicio) : null;
