@@ -467,6 +467,7 @@
         <button class="iconbtn" id="btnNotz" title="Notarización (solo manager)" data-i18n-title="coi-tt-notarizacion">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9.3 12l1.9 1.9L15 10"/></svg>
         </button>
+        <button class="iconbtn" id="btnEvPago" type="button" title="Registrar evento con pago al DJ" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M14.5 9.2c-.4-.8-1.4-1.2-2.5-1.2-1.5 0-2.5.8-2.5 1.9 0 1.1 1 1.6 2.5 2 1.5.4 2.5.9 2.5 2 0 1.1-1 1.9-2.5 1.9-1.1 0-2.1-.4-2.5-1.2M12 6.5V8M12 16v1.5"/></svg></button>
         <button class="iconbtn evact evact-del" id="btnEvDel" type="button" title="Eliminar el evento seleccionado (vista Día)" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M8 8l8 8M16 8l-8 8"/></svg></button>
         <button class="iconbtn evact evact-edit" id="btnEvEdit" type="button" title="Editar el evento seleccionado (vista Día)" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 12.5l3.5 3.5 7.5-8"/></svg></button>
       </div>
@@ -1013,6 +1014,8 @@
     btnCon.setAttribute("aria-selected",v==="continuidad");
     btnNotz.setAttribute("aria-selected",v==="notarizacion");
     btnNotz.style.display=(state.role==="owner")?"":"none";  // solo manager/owner
+    var _btnEvPago=document.getElementById("btnEvPago");
+    if(_btnEvPago){ var _rc=String(window.__COI_ROLE||"").toLowerCase(); _btnEvPago.style.display=(state.role==="owner" && (_rc==="owner"||_rc==="admin"))?"":"none"; }  // registrar evento con pago: solo owner/admin
     btnCon.style.display=(state.role==="owner")?"":"none";   // Continuidad: solo staff (gestión de DJs)
     // Recordatorios: reactivado 2026-09-17 a pedido del PO ("no veo las alertas
     // activadas") — antes vivía oculto en espera de un módulo dedicado que
@@ -2403,6 +2406,86 @@
       var db=row.querySelector(".fip-del"); if(db) db.onclick=function(){ fipEliminar(id); };
     });
   }
+  /* Registrar evento con pago (2026-10-05, orden del PO: poder registrar un evento -- tambien uno que ya
+     paso -- sin pedirle SQL a nadie). Solo owner/admin; el candado real es la funcion de la base
+     staff_registrar_evento_con_pago(). El evento queda en elixis_agenda_eventos y el disparador de la base lo
+     lleva solo al Cash Flow del DJ (fecha del evento, sin comision). Reusa .overlay/.modal/.res-dj-form. */
+  function evPagoCerrar(){ var el=document.getElementById("evPagoBackdrop"); if(el) el.remove(); }
+  async function evPagoAbrir(){
+    if(document.getElementById("evPagoBackdrop")) return;
+    var sb=(window.getSupabaseClient? window.getSupabaseClient() : window.supabase);
+    var djs=[];
+    try{
+      var r=await sb.from("dj_profiles").select("user_id,stage_name,dj_name,full_name").eq("role","dj").not("user_id","is",null).order("stage_name");
+      djs=(r&&r.data)||[];
+    }catch(_){ }
+    var hoy=new Date(), iso=hoy.getFullYear()+"-"+String(hoy.getMonth()+1).padStart(2,"0")+"-"+String(hoy.getDate()).padStart(2,"0");
+    var opts='<option value="">Elige el DJ…</option>'+djs.map(function(d){
+      var nom=d.stage_name||d.dj_name||d.full_name||"DJ";
+      return '<option value="'+d.user_id+'">'+String(nom).replace(/[<>&"]/g,"")+'</option>';
+    }).join("");
+    var wrap=document.createElement("div");
+    wrap.innerHTML=
+      '<div class="overlay" id="evPagoBackdrop" style="z-index:9999;">'+
+      '<div class="modal" style="max-width:440px;">'+
+      '<h3>Registrar evento con pago</h3>'+
+      '<p class="mlead">Se cuenta en el Cash Flow del DJ en la fecha del evento, sin comisi\u00f3n. Puede ser una fecha pasada.</p>'+
+      '<div class="res-dj-form">'+
+      '<div><label>DJ</label><select class="res-dj-input" id="evpDj">'+opts+'</select></div>'+
+      '<div><label>Lugar</label><input type="text" class="res-dj-input" id="evpVenue" maxlength="80" placeholder="Ej. Sundowner Key Largo"></div>'+
+      '<div><label>Fecha</label><input type="date" class="res-dj-input" id="evpFecha" value="'+iso+'"></div>'+
+      '<div style="display:flex;gap:8px;"><div style="flex:1"><label>Inicio</label><input type="time" class="res-dj-input" id="evpIni" value="18:00"></div>'+
+      '<div style="flex:1"><label>Fin</label><input type="time" class="res-dj-input" id="evpFin" value="23:00"></div></div>'+
+      '<div style="display:flex;gap:8px;"><div style="flex:1"><label>Pago al DJ (USD)</label><input type="number" class="res-dj-input" id="evpPago" min="1" step="0.01" inputmode="decimal"></div>'+
+      '<div style="flex:1"><label>Cobro al venue (opcional)</label><input type="number" class="res-dj-input" id="evpTarifa" min="0" step="0.01" inputmode="decimal"></div></div>'+
+      '<div><label>Tipo</label><select class="res-dj-input" id="evpTipo"><option value="privado">Privado / suelto</option><option value="boda">Boda</option></select></div>'+
+      '<div><label>Nota (opcional)</label><input type="text" class="res-dj-input" id="evpNotas" maxlength="300"></div>'+
+      '<div class="res-dj-msg" id="evpMsg" hidden></div>'+
+      '</div>'+
+      '<div class="mbtns" style="margin-top:14px;">'+
+      '<button type="button" class="cancel" id="evpCancel">Cancelar</button>'+
+      '<button type="button" class="accept" id="evpSave">Registrar</button>'+
+      '</div></div></div>';
+    var backdrop=wrap.firstElementChild;
+    backdrop.addEventListener("click",function(ev){ if(ev.target===backdrop) evPagoCerrar(); });
+    document.body.appendChild(backdrop);
+    document.getElementById("evpCancel").onclick=evPagoCerrar;
+    document.getElementById("evpSave").onclick=evPagoGuardar;
+  }
+  async function evPagoGuardar(){
+    var g=function(id){ var e=document.getElementById(id); return e?e.value.trim():""; };
+    var msg=document.getElementById("evpMsg"), btn=document.getElementById("evpSave");
+    function err(m){ msg.hidden=false; msg.className="res-dj-msg err"; msg.textContent=m; if(btn){ btn.disabled=false; btn.textContent="Registrar"; } }
+    var dj=g("evpDj"), venue=g("evpVenue"), fecha=g("evpFecha"), ini=g("evpIni"), fin=g("evpFin");
+    var pago=parseFloat(g("evpPago")), tarifaTxt=g("evpTarifa"), tarifa=tarifaTxt===""?null:parseFloat(tarifaTxt);
+    if(!dj) return err("Elige el DJ.");
+    if(!venue) return err("Escribe el lugar.");
+    if(!fecha) return err("Elige la fecha.");
+    if(!ini||!fin) return err("Falta la hora de inicio o de fin.");
+    if(!isFinite(pago)||pago<=0) return err("Escribe cu\u00e1nto se le paga al DJ.");
+    if(tarifa!==null && (!isFinite(tarifa)||tarifa<0)) return err("El cobro al venue no es v\u00e1lido.");
+    btn.disabled=true; btn.textContent="Guardando\u2026"; msg.hidden=false; msg.className="res-dj-msg"; msg.textContent="Guardando\u2026";
+    try{
+      var sb=(window.getSupabaseClient? window.getSupabaseClient() : window.supabase);
+      var r=await sb.rpc("staff_registrar_evento_con_pago",{
+        p_dj_user_id:dj, p_venue:venue, p_fecha:fecha, p_hora_inicio:ini, p_hora_fin:fin,
+        p_pago_dj_usd:pago, p_tarifa_venue_usd:tarifa, p_tipo:g("evpTipo")||"privado", p_notas:g("evpNotas")||null
+      });
+      if(r.error){
+        var m=String(r.error.message||"");
+        var MAP={forbidden:"Solo el owner o un admin puede registrar eventos con pago.", evento_duplicado:"Ya existe un evento igual (mismo DJ, lugar y hora).",
+          pago_invalido:"El pago al DJ no es v\u00e1lido.", tarifa_invalida:"El cobro al venue no es v\u00e1lido.", dj_no_encontrado:"No encontr\u00e9 a ese DJ.",
+          venue_requerido:"Escribe el lugar.", tipo_invalido:"Tipo de evento no v\u00e1lido.", fecha_y_horas_requeridas:"Falta la fecha o las horas."};
+        var k=Object.keys(MAP).filter(function(x){ return m.indexOf(x)!==-1; })[0];
+        return err(k?MAP[k]:"No se pudo registrar. Intenta de nuevo.");
+      }
+      msg.className="res-dj-msg ok"; msg.textContent="Listo \u2014 se cuenta en el Cash Flow del DJ.";
+      try{ loadElixisBookings(); render(); }catch(_){ }
+      setTimeout(evPagoCerrar, 900);
+    }catch(e){ err("No se pudo registrar. Intenta de nuevo."); }
+  }
+  (function(){ var b=document.getElementById("btnEvPago"); if(b) b.addEventListener("click",evPagoAbrir); })();
+
   // Modal reusa las clases ya existentes .overlay/.modal (T&C, arriba) y
   // .res-dj-form/.res-dj-input/.res-dj-msg (edición de residencia/evento) --
   // sin inventar estilos nuevos de formulario.

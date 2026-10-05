@@ -243,6 +243,45 @@
       return jsPdfListo;
     }
 
+    /* Volumen de la voz de ELIXIS (2026-10-05, orden del PO: "necesito que elixis
+       pueda bajar su propio volumen y subirlo con comando de voz"; reporte previo:
+       "se escucha muy bajo"). Es una herramienta SOLO del navegador, como
+       entregar_pdf: no hay nada que mandar al servidor. Mueve el volumen del
+       <audio> que reproduce la voz (0.1 a 1.0) y lo recuerda en este equipo.
+       El piso es 10%, nunca silencio total: sin voz no hay forma de pedirle que
+       vuelva a subir. 1.0 es el tope del elemento; si aun asi se oye bajo, el
+       resto es el volumen del sistema (se lo dice al usuario, no lo disimula).
+       No toca el micro ni los filtros anti-eco: solo la salida. */
+    var VOL_KEY = 'mdj_elixis_volumen', VOL_MIN = 0.1, VOL_PASO = 0.2, volumenVoz = 1;
+    try{
+      var _vg = parseFloat(localStorage.getItem(VOL_KEY));
+      if(isFinite(_vg)) volumenVoz = Math.min(1, Math.max(VOL_MIN, _vg));
+    }catch(_){ }
+    function aplicarVolumen(){
+      if(spk){ try{ spk.volume = volumenVoz; }catch(_){ } }
+    }
+    function ajustarVolumen(args){
+      var accion = String((args && args.accion) || '').toLowerCase();
+      var antes = volumenVoz, nuevo = antes;
+      if(accion === 'subir')        nuevo = antes + VOL_PASO;
+      else if(accion === 'bajar')   nuevo = antes - VOL_PASO;
+      else if(accion === 'maximo')  nuevo = 1;
+      else if(accion === 'minimo')  nuevo = VOL_MIN;
+      else if(accion === 'fijar'){
+        var n = Number(args && args.nivel);
+        if(!isFinite(n)) return { ok:false, motivo:'nivel_invalido' };
+        nuevo = n / 100;
+      } else return { ok:false, motivo:'accion_invalida' };
+      nuevo = Math.round(Math.min(1, Math.max(VOL_MIN, nuevo)) * 100) / 100;
+      volumenVoz = nuevo;
+      try{ localStorage.setItem(VOL_KEY, String(volumenVoz)); }catch(_){ }
+      aplicarVolumen();
+      var out = { ok:true, nivel_porcentaje: Math.round(volumenVoz * 100) };
+      if(accion === 'subir' && antes >= 1)       { out.en_el_tope = true; out.nota = 'Ya estoy al maximo que permite el navegador; si aun se oye bajo, hay que subir el volumen del sistema.'; }
+      if(accion === 'bajar' && antes <= VOL_MIN) { out.en_el_piso = true; }
+      return out;
+    }
+
     async function entregarPdf(args){
       var titulo = String((args && args.titulo) || 'Documento').trim().slice(0, 90);
       var lineas = Array.isArray(args && args.lineas) ? args.lineas : [];
@@ -499,6 +538,7 @@
         q: String(args.q || ''),
       });
       else if(item.name==='entregar_pdf')      out = await entregarPdf(args);
+      else if(item.name==='ajustar_volumen')   out = ajustarVolumen(args);
       else if(item.name==='buscar_cliente')   out = await accion('buscar_cliente', { query:String(args.query||'') });
       else if(item.name==='enviar_sms')       out = await accion('enviar_sms', { cliente_id:String(args.cliente_id||''), mensaje:String(args.mensaje||'') });
       else if(item.name==='confirmar_envio_mensaje') out = await accion('confirmar_envio_mensaje', { id:String(args.id||''), accion:String(args.accion||'') });
@@ -940,6 +980,7 @@
 
       pc = new RTCPeerConnection();
       spk = handlers.getAudioEl ? handlers.getAudioEl() : null;
+      aplicarVolumen();
       pc.ontrack = function(ev){
         /* .play() devuelve una Promise -- si Safari bloquea el autoplay
            (NotAllowedError), rechaza SIN tirar una excepcion sincronica, asi
@@ -1379,6 +1420,7 @@
       fijarModo:fijarModo, fijarIdentidad:fijarIdentidad, obtenerMuestraMusicHunter:obtenerMuestraMusicHunter,
       iniciarCazadorMusical:iniciarCazadorMusical, detenerCazadorMusical:detenerCazadorMusical,
       enviarTexto:enviarTexto, cargarHistorialTexto:cargarHistorialTexto,
+        ajustarVolumen:ajustarVolumen, volumen:function(){ return Math.round(volumenVoz * 100); },
         interrumpir:interrumpir };
   }
 
