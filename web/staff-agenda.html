@@ -3335,6 +3335,21 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                 cursor:pointer;padding:0;flex:0 0 auto;transition:background .2s,border-color .2s;}
               .ofm-daynight:hover{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.30);}
               .ofm-daynight svg{width:16px;height:16px;display:block;}
+              /* MODO DÍA de la barra (reporte PO 2026-10-05, «tira lavada»): todo lo de arriba está escrito con blanco/dorado claro para fondo negro y en día quedaba casi invisible.
+                 Misma paleta de día del portal (#1b1f27 texto, #8a6d2e dorado oscuro, bordes rgba(14,18,28,.x)). Solo colores. */
+              html[data-theme="day"] .ofm-bar{background:linear-gradient(180deg,rgba(14,18,28,.04),rgba(14,18,28,0));border-bottom-color:rgba(14,18,28,.12);}
+              html[data-theme="day"] .ofm-brand-mk{color:#8a6d2e;}
+              html[data-theme="day"] .ofm-brand-tx{color:#1b1f27;}
+              html[data-theme="day"] .ofm-brand-tx small{color:rgba(138,109,46,.95);}
+              html[data-theme="day"] .ofm-bar .ofm-tag{color:#8a6d2e;border-color:rgba(138,109,46,.55);}
+              html[data-theme="day"] .ofm-bar .ofm-lbl{color:rgba(27,31,39,.6);}
+              html[data-theme="day"] .ofm-bar.on .ofm-lbl{color:#8a6d2e;}
+              html[data-theme="day"] .ofm-toggle{border-color:rgba(14,18,28,.28);background:rgba(14,18,28,.14);}
+              html[data-theme="day"] .ofm-toggle .ofm-knob{box-shadow:0 1px 4px rgba(14,18,28,.35);}
+              html[data-theme="day"] .ofm-toggle.on{border-color:rgba(138,109,46,.85);}
+              html[data-theme="day"] .ofm-sep{background:rgba(14,18,28,.18);}
+              html[data-theme="day"] .ofm-daynight{color:#8a6d2e;border-color:rgba(14,18,28,.22);}
+              html[data-theme="day"] .ofm-daynight:hover{background:rgba(14,18,28,.05);border-color:rgba(14,18,28,.34);}
             </style>
 
             <div id="ofm-business-view" style="display:none;">
