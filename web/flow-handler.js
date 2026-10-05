@@ -892,7 +892,8 @@ async function loadFlowData(range = '1y', targetUserId = null) {
         mdjFlowSetStatus('Sin movimientos en el rango seleccionado. Prueba Vista anual.', null);
     } else {
         console.info('[Flow] ledger vacío desde API | userId:', userId);
-        mdjFlowSetStatus('No hay filas en tu libro mayor desde la app (0). Si en Supabase SQL sí ves $500, el RLS o la sesión no coinciden — recarga o vuelve a entrar.', 'error');
+        /* Estado normal de una cuenta sin ingresos todavía (p. ej. el dueño o un artista nuevo): aviso útil y neutro, no un error. El detalle técnico queda en la consola de arriba. */
+        mdjFlowSetStatus('Todavía no tienes movimientos registrados. Aquí aparecerán tus pagos por eventos, residencia y propinas.', null);
     }
 
     scheduleFlowChartsResize();
