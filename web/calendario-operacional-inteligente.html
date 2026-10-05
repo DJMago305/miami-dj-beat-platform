@@ -1287,7 +1287,91 @@
       h+='<button class="act" data-mcid="'+(c.masterClientId||'')+'" data-edate="'+e.d+'">Ofrecer evento — ver DJs recomendados</button>';
       h+='<div class="rec-list" hidden></div>';
     }
+    // Cumpleaños del calendario personal (2026-10-05, orden del PO: «al abrir la especificación del cumpleaños
+    // debería mostrar los detalles del contacto que estén disponibles: mail, teléfono y, si hay nota, lo que esté
+    // disponible»). El evento de Google solo trae el nombre; el detalle se busca en el Network/clientes por nombre.
+    // Solo staff: el Network es de staff (el RLS de la base lo exige igual).
+    if(e.cal==="personal" && e.kind==="cumple" && !e.clientId && window.__COI_STAFF===true){
+      var _nc=nombreDeCumple(e.t);
+      h+='<div class="layers-lbl">Contacto</div>';
+      h+=_nc
+        ? '<div class="cumple-contacto" data-nombre="'+escCont(_nc)+'" data-d="'+escCont(e.d)+'"><div class="res-dj-msg">Buscando en el Network…</div></div>'
+        : '<div class="res-dj-msg">Este evento no trae el nombre del contacto, así que no se puede buscar.</div>';
+    }
     return h;
+  }
+
+  function escCont(v){ return String(v==null?"":v).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  // «🎂 Sahily Guzman» / «Cumpleaños de Sahily Guzman» -> «Sahily Guzman». «¡Feliz cumpleaños!» no trae nombre.
+  function nombreDeCumple(t){
+    var n=String(t||"").replace(/^[\s\uD83C\uDF82\uD83C\uDF89]+/,"").replace(/^cumplea(?:ñ|n)os\s+de\s+/i,"").replace(/\s+—\s+cumplea.*$/i,"").trim();
+    if(!n || /feliz\s+cumplea/i.test(n)) return "";
+    return n;
+  }
+  // phones_extra / emails_extra / redes / dirección vienen como JSON de forma libre: se toma el texto que haya.
+  function textosDe(v){
+    var out=[];
+    (function rec(x){
+      if(x==null) return;
+      if(typeof x==="string"){ var t=x.trim(); if(t) out.push(t); }
+      else if(typeof x==="number"){ out.push(String(x)); }
+      else if(Array.isArray(x)){ x.forEach(rec); }
+      else if(typeof x==="object"){ Object.keys(x).forEach(function(k){ rec(x[k]); }); }
+    })(v);
+    return out;
+  }
+  var MESES_ES=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+  function fechaCumpleTxt(bd, anioConocido){
+    var m=/^(\d{4})-(\d{2})-(\d{2})/.exec(String(bd||"")); if(!m) return "";
+    var base=parseInt(m[3],10)+" de "+MESES_ES[parseInt(m[2],10)-1];
+    // Google guarda 1604 cuando el año no se conoce: nunca se muestra como si fuera real
+    return (anioConocido!==false && parseInt(m[1],10)>=1900) ? base+" de "+m[1] : base;
+  }
+  function contactoHTML(rows){
+    if(!rows || !rows.length) return '<div class="res-dj-msg">No hay un contacto con ese nombre en el Network ni entre los clientes.</div>';
+    var h="";
+    rows.forEach(function(c,i){
+      var tels=[], mails=[];
+      if(c.telefono && String(c.telefono).trim()) tels.push(String(c.telefono).trim());
+      textosDe(c.phones_extra).forEach(function(t){ if(tels.indexOf(t)===-1) tels.push(t); });
+      if(c.email && String(c.email).trim()) mails.push(String(c.email).trim());
+      textosDe(c.emails_extra).forEach(function(t){ if(mails.indexOf(t)===-1) mails.push(t); });
+      var nota=c.notas&&String(c.notas).trim() ? String(c.notas).trim() : "";
+      var redes=textosDe(c.redes_sociales), dir=textosDe(c.direccion);
+      var empresa=c.empresa&&String(c.empresa).trim() ? String(c.empresa).trim() : "";
+      var cumple=fechaCumpleTxt(c.birth_date, c.anio_conocido);
+      var hayDatos=tels.length||mails.length||nota||redes.length||dir.length||empresa;
+      h+='<div style="'+(i?'margin-top:10px;padding-top:10px;border-top:1px solid var(--line);':'')+'">';
+      h+='<div class="artline"><b>'+escCont(c.nombre||"")+'</b>&nbsp;·&nbsp;<span class="res-dj-msg">'+(c.fuente==="cliente"?"Cliente":"Network")+(i?' · otra coincidencia con el mismo nombre':'')+'</span></div>';
+      if(cumple) h+='<div class="artline">Cumpleaños: '+escCont(cumple)+'</div>';
+      if(empresa) h+='<div class="artline">Empresa: '+escCont(empresa)+'</div>';
+      tels.forEach(function(t){
+        var dig=t.replace(/[^\d+]/g,"").replace(/^\+/,"");
+        h+='<div class="artline">Teléfono: <a href="tel:'+escCont(t.replace(/[^\d+]/g,""))+'" style="color:inherit;">'+escCont(t)+'</a>'
+          +(dig.length>=10?' &nbsp;·&nbsp; <a href="https://wa.me/'+escCont(dig)+'" target="_blank" rel="noopener" style="color:inherit;">WhatsApp</a>':'')+'</div>';
+      });
+      mails.forEach(function(m){ h+='<div class="artline">Correo: <a href="mailto:'+escCont(m)+'" style="color:inherit;">'+escCont(m)+'</a></div>'; });
+      if(redes.length) h+='<div class="artline">Redes: '+redes.map(escCont).join(" · ")+'</div>';
+      if(dir.length) h+='<div class="artline">Dirección: '+dir.map(escCont).join(", ")+'</div>';
+      if(nota) h+='<div class="artline" style="align-items:flex-start;">Nota: <span style="white-space:pre-wrap;">'+escCont(nota)+'</span></div>';
+      if(!hayDatos) h+='<div class="res-dj-msg">Está en el Network, pero no tiene teléfono, correo ni notas guardados.</div>';
+      h+='</div>';
+    });
+    return h;
+  }
+  async function hidratarContactoCumple(root){
+    var box=root.querySelector(".cumple-contacto"); if(!box) return;
+    var nombre=box.getAttribute("data-nombre"), d=box.getAttribute("data-d")||"";
+    var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(d);
+    try{
+      var sb=(window.getSupabaseClient? window.getSupabaseClient() : window.supabase);
+      var r=await sb.rpc("staff_contacto_de_cumpleanos",{ p_nombre:nombre, p_mes:m?parseInt(m[2],10):null, p_dia:m?parseInt(m[3],10):null });
+      if(r.error) throw r.error;
+      if(!document.body.contains(box)) return;   // el usuario ya eligió otro evento
+      box.innerHTML=contactoHTML(r.data||[]);
+    }catch(err){
+      if(document.body.contains(box)) box.innerHTML='<div class="res-dj-msg err">No se pudo buscar el contacto.</div>';
+    }
   }
 
   // Botón de acción real de la tarjeta de cliente: pide a get_recommended_djs()
@@ -1587,6 +1671,7 @@
     state.sel=sel;
     var hint=(list.length>1)?'<div class="detail-hint">Elige otro evento en la línea de tiempo de la izquierda para verlo aquí.</div>':'';
     el.innerHTML=hd+hint+'<div class="ev-cards" id="evCards"><div class="ev-card sel" data-detid="'+eid(sel)+'">'+eventCardHTML(sel)+'</div></div>';
+    hidratarContactoCumple(el);
     el.querySelectorAll(".ev-card").forEach(function(card){
       // .act[data-mcid] = "Ofrecer evento" (cliente). El botón de Residencia
       // también usa .act por el estilo, pero no lleva data-mcid -- selectores
