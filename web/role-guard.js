@@ -26,7 +26,7 @@
         return new Promise(function (resolve) {
             try {
                 var sc = document.createElement('script');
-                sc.src = './mdj-identity.js?v=20261006-edificio';
+                sc.src = './mdj-identity.js?v=20261006-edificio2';
                 sc.onload = function () { resolve(true); };
                 sc.onerror = function () { resolve(false); };
                 document.head.appendChild(sc);
