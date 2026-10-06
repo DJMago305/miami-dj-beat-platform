@@ -2045,12 +2045,6 @@
                mismo patrón que Network/Mensajes del Sistema arriba. -->
           <button type="button" class="side3-link side3-link-standalone" data-sec="admin" data-nav="mis-comisiones" title="Mis Comisiones"><span class="side3-ic">💰</span><span class="side3-tx">Mis Comisiones</span></button>
 
-          <!-- Cash Flow embebido -- solo vendedora (ver comentario junto al
-               panel #sc3-cashflow más abajo). Oculto por defecto en el HTML;
-               applySide3RoleGate() lo revela SOLO para role==='seller' --
-               owner/admin/manager siguen usando su Cash Flow real (barra
-               superior, #view-cashflow), sin tocar nada de lo suyo. -->
-          <button type="button" class="side3-link side3-link-standalone" data-sec="cashflow" title="Cash Flow" style="display:none;" id="side3-cashflow-link"><span class="side3-ic">📊</span><span class="side3-tx">Cash Flow</span></button>
 
           <!-- Grupo EQUIPO -->
           <button type="button" class="side3-group" data-group="equipo" aria-label="Equipo" data-i18n-aria="side3-equipo">
@@ -2249,21 +2243,6 @@
             <div class="sc3-loading" id="sc3-msg-loading"><span class="acc-spin"></span> Cargando Mensajes del Sistema…</div>
             <iframe id="sc3-msg-iframe" class="sc3-frame" data-src="./system-messages.html?v=20260924-tarjetas" aria-label="Mensajes del Sistema" loading="lazy"></iframe>
           </div>
-          <!-- Cash Flow embebido (2026-09-30, orden explícita del PO: "no una
-               pantalla que aparece detrás" -- #view-cashflow del Owner es una
-               sección hermana SIN sidebar; cambiar a ella desde aquí apagaba
-               el menú entero y encendía un layout distinto, la causa real de
-               "siento que hay otra pantalla detrás" que reportó el PO. Mismo
-               contenido (staff-agenda.html?tab=flow, el mismo loadFlowData()
-               ya verificado como aislado por sesión), pero cargado DENTRO de
-               este mismo contenedor -- iframe propio (sc3-cashflow-iframe,
-               NO el mismo id que #cashflow-frame del Owner) para no pelear
-               por el mismo nodo del DOM entre las dos vistas. Solo vendedora
-               ve el link de sidebar que abre este panel (ver applySide3RoleGate). -->
-          <div class="sc3-panel" id="sc3-cashflow">
-            <div class="sc3-loading" id="sc3-cashflow-loading"><span class="acc-spin"></span> Cargando Cash Flow…</div>
-            <iframe id="sc3-cashflow-iframe" class="sc3-frame" data-src="./staff-agenda.html?tab=flow" aria-label="Cash Flow" loading="lazy"></iframe>
-          </div>
           <!-- Candado funcional (2026-09-30): el link SÍ se ve en el menú
                (el PO fue explícito: "no es que no lo tengan, solo que para
                entrar se necesita permiso especial") -- clic en un ítem
@@ -2451,14 +2430,11 @@
            <a> a account-profile.html, una página totalmente distinta.
            CASH FLOW (2026-09-30, orden explícita del PO: "los vendedores
            deben tener su pestaña de cash flow, ahí es donde se reflejan las
-           comisiones") — SIN botón propio aquí a propósito, segunda vuelta
-           del mismo pedido: un botón de tope llevaba a #view-cashflow, la
-           sección del Owner sin sidebar, y ESO era "otra pantalla detrás".
-           Cash Flow vive ahora como un link más dentro del sidebar de
-           Ventas (#sc3-cashflow, ver wireStaffSidebar) -- un solo menú, no
-           dos. Verificado antes de darlo: loadFlowData() (flow-handler.js)
-           filtra siempre por el uid de la sesión activa, nunca un agregado
-           de toda la empresa.
+           comisiones"). 2026-10-06, orden del PO: la pestaña va en la barra de
+           arriba, igual que el Owner (no en dos lugares); el link duplicado que
+           vivía en el menú lateral se retiró. Verificado: loadFlowData()
+           (flow-handler.js) filtra siempre por el uid de la sesión activa, nunca
+           un agregado de toda la empresa.
            AGENDA + FÉNIX AI + CONFIG + STAFF (2026-09-30, corrección de
            rumbo -- el PO aclaró que nunca pidió ocultar/quitar nada de
            esto, y que la barra de seller debe tener paridad real con la
@@ -2478,6 +2454,9 @@
           '<button type="button" class="active" data-top="gobernanza" data-i18n="staff-nav-ventas">Ventas</button>'+
           '<button type="button" data-top="agenda" data-i18n="nav-agenda">Agenda</button>'+
           '<a href="./account-settings.html" data-top="config" data-i18n="staff-nav-config">⚙️ CONFIG</a>'+
+          /* CASH FLOW arriba, igual que el Owner (orden del PO 2026-10-06: «la pestaña está en la barra de menú, no en dos lugares; la plantilla de Wendy debe ser igual a la de Staff»).
+             Mismo botón y mismo data-top que la barra del Owner. Se retiró el link duplicado que vivía dentro del menú lateral de STAFF. */
+          '<button type="button" data-top="cashflow">Cash Flow</button>'+
           /* SEO·IA (2026-09-30, orden del PO: "para todo el estaff... que se vea
              desde todas las pestañas") -- mismo link que la barra del Owner. */
           '<a href="https://claude.ai/artifact/Xq8DXWtmh9WMborSAZEdsT" target="_blank" rel="noopener noreferrer">SEO·IA</a>'+
@@ -3088,6 +3067,8 @@
     /* ── Módulo OWNER: Matrix (BFI + Caja Real Fase 4) + ELIXIS + Gobernanza ── */
     function mountOwner(sb, role){
       role = role || 'owner';
+      /* Cash Flow ya es el MISMO para todos los roles (barra superior); pero el panel «Adquisición real» (leads, cuentas y compras de TODO el negocio) es del Owner: para otros roles no se monta. */
+      if(role!=='owner'){ var _mrmP=document.getElementById('mrm-panel'); if(_mrmP && _mrmP.parentNode) _mrmP.parentNode.removeChild(_mrmP); }
       var _brandSubKey = role==='owner' ? 'staff-owner-command-center'
                         : role==='seller' ? 'staff-nav-ventas'
                         : 'staff-nav-operaciones';
@@ -4704,8 +4685,8 @@
          'cashflow' a MDJ_VISTAS_POR_ROL.seller a propósito: #view-cashflow
          es la sección del Owner (sin sidebar) -- ir ahí apagaba el menú
          entero, la causa real de "otra pantalla detrás" que reportó el PO.
-         Para seller, Cash Flow vive DENTRO de 'gobernanza' como un panel más
-         del sidebar (#sc3-cashflow, ver wireStaffSidebar), un solo shell.
+         2026-10-06 (orden del PO): 'cashflow' SÍ se agrega para seller, para que
+         su barra sea igual a la del Owner (Cash Flow arriba, no en dos lugares).
          2026-09-30, corrección de rumbo (el PO aclaró: "nunca te dije que
          quitaras esas cosas... solo lo del owner secretos tendría candado,
          no es que no lo tengan"): 'agenda' y 'elixis' (Fénix AI) se agregan
@@ -4717,7 +4698,7 @@
         owner:   { financiero:1, elixis:1, gobernanza:1, miperfil:1, agenda:1, cashflow:1, config:1, smartcrate:1 },
         admin:   { gobernanza:1, miperfil:1 },
         manager: { gobernanza:1, miperfil:1 },
-        seller:  { gobernanza:1, miperfil:1, agenda:1, elixis:1, config:1 }
+        seller:  { gobernanza:1, miperfil:1, agenda:1, elixis:1, config:1, cashflow:1 }
       };
       var mdjVistasRol = MDJ_VISTAS_POR_ROL[role] || { gobernanza: 1 };
       var mdjVistaPedida = '';
@@ -4891,15 +4872,10 @@
             lockGob.textContent = '🔑';
             permisosLink.appendChild(lockGob);
           }
-          // Cash Flow embebido (ver #sc3-cashflow): oculto por defecto en el
-          // HTML para todos, se revela SOLO aquí -- owner/admin/manager
-          // siguen sin verlo, usan el suyo real en la barra superior.
-          var cfLink = side.querySelector('#side3-cashflow-link');
-          if (cfLink) cfLink.style.display = '';
         }
       })();
       var iframe=el('sc3-iframe'), loading=el('sc3-loading'), loadTx=el('sc3-load-tx');
-      var panels={ gob:el('sc3-gob'), admin:el('sc3-admin'), inbox:el('sc3-inbox'), legal:el('sc3-legal'), pedidos:el('sc3-pedidos'), msg:el('sc3-msg'), cashflow:el('sc3-cashflow'), locked:el('sc3-locked') };
+      var panels={ gob:el('sc3-gob'), admin:el('sc3-admin'), inbox:el('sc3-inbox'), legal:el('sc3-legal'), pedidos:el('sc3-pedidos'), msg:el('sc3-msg'), locked:el('sc3-locked') };
       function showPanel(k){ for(var p in panels){ if(panels[p]) panels[p].classList.toggle('active', p===k); } }
       /* botón: contrae/expande toda la barra a solo iconos */
       var col=el('side3-collapse'); if(col) col.addEventListener('click', function(){ side.classList.toggle('collapsed'); });
@@ -5064,12 +5040,6 @@
           var fm=el('sc3-msg-iframe'), ilm=el('sc3-msg-loading');
           if(fm && !fm.getAttribute('src')){ if(fm.addEventListener) fm.addEventListener('load', function(){ if(ilm) ilm.classList.add('hidden'); });
             fm.setAttribute('src', fm.getAttribute('data-src')); setTimeout(function(){ if(ilm) ilm.classList.add('hidden'); }, 9000); }
-          return;
-        }
-        if(sec==='cashflow'){ showPanel('cashflow');
-          var fcf=el('sc3-cashflow-iframe'), ilcf=el('sc3-cashflow-loading');
-          if(fcf && !fcf.getAttribute('src')){ if(fcf.addEventListener) fcf.addEventListener('load', function(){ if(ilcf) ilcf.classList.add('hidden'); });
-            fcf.setAttribute('src', fcf.getAttribute('data-src')); setTimeout(function(){ if(ilcf) ilcf.classList.add('hidden'); }, 9000); }
           return;
         }
         var merchFilter=a.getAttribute('data-merch-filter');
