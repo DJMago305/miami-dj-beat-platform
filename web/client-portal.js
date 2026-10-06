@@ -1446,6 +1446,12 @@ function portalTicketsQrBlock(o, review) {
     box.appendChild(btn); box.appendChild(panel);
     return box;
 }
+var _portalTicketsRows = null;
+/* Un solo oyente de idioma para toda la página (antes se sumaba uno por cada llamada a portalTicketsMount). Repinta la tarjeta que esté en el DOM en ese momento. */
+document.addEventListener('languageChanged', function () {
+    var h = document.getElementById('portal-tickets-card');
+    if (h && _portalTicketsRows) portalTicketsRender(h, _portalTicketsRows);
+});
 async function portalTicketsMount() {
     var host = document.getElementById('portal-tickets-card'); if (!host) return;
     try {
@@ -1454,10 +1460,26 @@ async function portalTicketsMount() {
         var sm = await db.auth.getSession(), sess = sm && sm.data && sm.data.session;
         if (!sess || !sess.user) { host.hidden = true; return; }
         var res = await db.rpc('get_my_ticket_orders');
+        host = document.getElementById('portal-tickets-card');                  /* el portal pudo repintar <main> mientras llegaba la respuesta */
+        if (!host) return;
         if (!res || res.error || !Array.isArray(res.data)) { host.hidden = true; return; }
-        portalTicketsRender(host, res.data);
-        document.addEventListener('languageChanged', function () { portalTicketsRender(host, res.data); });
-    } catch (e) { host.hidden = true; }
+        _portalTicketsRows = res.data;
+        portalTicketsRender(host, res.data);                                      /* sin pedidos: «Sin reservas activas»; el resto de la vista no se toca */
+    } catch (e) { var h2 = document.getElementById('portal-tickets-card'); if (h2) h2.hidden = true; }
+}
+/* showLoggedInNoEvents (0 contrataciones) y showMyEventsHub (más de 1) reescriben <main> por completo y se llevaban la tarjeta: aquí se vuelve a poner y se llena.
+   parent = contenedor donde va; before = nodo ANTES del cual va (opcional; si no, al final). Cualquier fallo se traga: nunca debe romper la vista del portal. */
+function portalTicketsInject(parent, before) {
+    try {
+        if (!parent) return;
+        var old = document.getElementById('portal-tickets-card');
+        if (old && old.parentNode) old.parentNode.removeChild(old);
+        var card = document.createElement('section');
+        card.id = 'portal-tickets-card'; card.className = 'pt-card'; card.hidden = true; card.setAttribute('aria-live', 'polite');
+        card.style.maxWidth = '1100px'; card.style.margin = '24px auto 28px';
+        if (before && before.parentNode === parent) parent.insertBefore(card, before); else parent.appendChild(card);
+        portalTicketsMount();
+    } catch (e) { /* sin tarjeta, el resto del portal sigue */ }
 }
 
 function portalTAmount(key, amountUsd) {
@@ -4539,6 +4561,7 @@ const PortalApp = {
                 sectionUp +
                 sectionPast +
                 '</div></div>';
+            portalTicketsInject(main.firstElementChild, document.getElementById('events-list'));
             this.portalInjectDupWeddingIfNeeded(leads, session, clientRow, main);
             setTimeout(portalMarcarCancelacionesAbiertas, 0);
             try {
@@ -4721,6 +4744,7 @@ const PortalApp = {
                 '<p class="fineprint" style="margin-bottom: 22px; line-height: 1.5;">' + portalEscapeHtml(portalT('portal-no-events-body')) + '</p>' +
                 '<a href="./rentals.html" class="btn primary" style="display: inline-block;">' + portalEscapeHtml(portalT('portal-no-events-cta')) + '</a>' +
                 '</div></div>';
+            portalTicketsInject(main.firstElementChild);
         }
     },
 
