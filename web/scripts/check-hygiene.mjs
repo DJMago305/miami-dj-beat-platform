@@ -23,6 +23,7 @@ const ALLOW = {
   'documents/wedding-blueprint-iris-angel-2026.html': 'documento de un evento concreto, se comparte por enlace directo',
   'venue-floor-builder.html': 'editor de planos de salas, EN DESARROLLO (herramienta de Miami DJ Beat para locales que no tienen plano: se guarda en el navegador y, con «Guardar en la sala», en la base): noindex a propósito, sin enlace público (docs/tickets/2026-10-02-TICKET-sala-de-mesas-fase-2-venta-sin-sobreventa.md)',
   'commercial-portal.html': 'portal propio del Cliente Comercial, EN DESARROLLO: plantilla separada de artista/cliente/staff; no se enruta aquí al iniciar sesión hasta que el PO autorice el cambio de ruteo compartido (docs/tickets/2026-10-02-TICKET-cliente-comercial-facturacion-multiusuario.md)',
+  't.html': 'ficha y validación de un ticket: se llega por el QR (/t/:id, rewrite de vercel.json), nunca por un enlace del sitio',
   'venue-room.html': 'plantilla de las salas con QR: se llega por /venues/:venue/:sala (rewrite de vercel.json) y por el QR, nunca por un enlace del sitio. La limpieza del 2026-09-12 la tomó por huérfana y rompió la taquilla',
 };
 const ALLOW_PREFIX = {

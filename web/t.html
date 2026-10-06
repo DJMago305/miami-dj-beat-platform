@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <!-- Se sirve en /t/<uuid> (rewrite de vercel.json → /t.html?id=<uuid>): sin <base>, ./supabase-config.js se pediría a /t/supabase-config.js. -->
+    <base href="/" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Ticket — Miami DJ Beat</title>
+    <meta name="description" content="Ficha de un ticket o mesa de Miami DJ Beat." />
+    <meta name="robots" content="noindex" />
+    <style>
+        :root { --bg: #0b0d14; --card: #12151f; --line: rgba(255, 255, 255, .14); --ink: #f3f5ff; --dim: rgba(243, 245, 255, .62); --gold: #d4af37; --ok: #14803c; --bad: #b3261e; }
+        @media (prefers-color-scheme: light) {
+            :root { --bg: #eef1f5; --card: #ffffff; --line: rgba(0, 0, 0, .14); --ink: #161a22; --dim: rgba(0, 0, 0, .6); --gold: #8a6d2e; }
+        }
+        * { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px 16px; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        .card { width: 100%; max-width: 440px; background: var(--card); border: 1px solid var(--line); border-top: 3px solid var(--gold); border-radius: 20px; padding: 24px 22px; }
+        .brand { font-size: 11px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--gold); margin: 0 0 14px; }
+        h1 { margin: 0 0 4px; font-size: 22px; line-height: 1.25; }
+        .kind { font-size: 12px; color: var(--dim); margin: 0 0 16px; }
+        dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 8px 14px; font-size: 14px; }
+        dt { color: var(--dim); } dd { margin: 0; font-weight: 600; word-break: break-word; }
+        .ref { margin-top: 16px; font-size: 12px; letter-spacing: .14em; color: var(--dim); }
+        .tag { display: inline-block; margin: 0 0 14px; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; border: 1px solid currentColor; border-radius: 999px; padding: 4px 12px; }
+        .tag--bad { color: var(--bad); }
+        .staff { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--line); }
+        .staff h2 { margin: 0 0 10px; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; }
+        button, .link { cursor: pointer; font: inherit; font-size: 14px; font-weight: 800; border-radius: 12px; padding: 13px 18px; border: 0; width: 100%; background: var(--gold); color: #fff; text-align: center; text-decoration: none; display: block; }
+        button[disabled] { opacity: .55; cursor: default; }
+        .link--soft { background: transparent; color: var(--gold); border: 1px solid var(--gold); margin-top: 10px; font-weight: 700; }
+        .res { margin-top: 14px; border-radius: 14px; padding: 16px 16px; color: #fff; }
+        .res--ok { background: var(--ok); } .res--bad { background: var(--bad); }
+        .res b { display: block; font-size: 18px; margin-bottom: 4px; }
+        .res small { display: block; opacity: .92; font-size: 13px; line-height: 1.5; }
+        .note { margin: 14px 0 0; font-size: 12px; color: var(--dim); line-height: 1.5; }
+        [hidden] { display: none !important; }
+    </style>
+</head>
+
+<body>
+    <main class="card" id="card" aria-live="polite">
+        <p class="brand">Miami DJ Beat</p>
+        <p id="loading" class="note" style="margin:0">…</p>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
+    <script>
+        (function () {
+            var mdjLibAusente = !(window.supabase && typeof window.supabase.createClient === 'function');
+            if (mdjLibAusente) {
+                document.write('<script src="./vendor/supabase-js-2.112.3.legacy.js?v=20260818-safari-legacy"><\/script>');
+            }
+        })();
+    </script>
+    <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
+    <script>
+        /* Landing del QR de un ticket (https://www.miamidjbeat.com/t/<uuid>).
+           · Cualquiera que escanee con la cámara del teléfono ve SOLO la ficha informativa (evento, fecha, sala, titular enmascarado): lo devuelve
+             venue_ticket_public_info (solo lectura; no revela datos de administración ni cantidades). Abrir esta página NUNCA registra un ingreso.
+           · Personal con permiso (is_staff o venue_staff) ve además el botón «Validar ingreso», que llama venue_ticket_scan(order, evento, 1). */
+        (function () {
+            var UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+            var EN = String(navigator.language || 'es').toLowerCase().indexOf('en') === 0;
+            var T = {
+                es: { ticket: 'Entradas', table: 'Reserva de mesa', event: 'Evento', date: 'Fecha', room: 'Sala', holder: 'Titular', ref: 'Ref',
+                      void: 'Cancelado / Reembolsado', notFound: 'Ticket no encontrado', notFoundSub: 'Revisa el enlace o escanea el código de nuevo.',
+                      noInfo: 'Ficha no disponible por ahora.', bad: 'Enlace no válido', staff: 'Equipo', validate: 'Validar ingreso (1)', validating: 'Validando…',
+                      login: 'Soy del equipo: iniciar sesión', ok: 'Ingreso registrado', in: 'Ingresaron', of: 'de', who: 'A nombre de',
+                      note: 'Esta página solo muestra la ficha del ticket. El ingreso se registra en la puerta.',
+                      c_already_used: 'Ya ingresaron todas las entradas de este ticket.', c_invalid_event: 'Este ticket es de otro evento o de otra fecha.',
+                      c_cancelled: 'Este ticket está cancelado, reembolsado o en revisión.', c_order_not_found: 'Ticket no encontrado.',
+                      denied: 'Tu cuenta no tiene permiso para validar en este local.', fail: 'No se pudo validar. Intenta de nuevo.', noSql: 'Falta aplicar el SQL de escaneo.' },
+                en: { ticket: 'Tickets', table: 'Table reservation', event: 'Event', date: 'Date', room: 'Room', holder: 'Holder', ref: 'Ref',
+                      void: 'Cancelled / Refunded', notFound: 'Ticket not found', notFoundSub: 'Check the link or scan the code again.',
+                      noInfo: 'Ticket details are not available right now.', bad: 'Invalid link', staff: 'Staff', validate: 'Validate entry (1)', validating: 'Validating…',
+                      login: 'I am staff: sign in', ok: 'Entry recorded', in: 'Checked in', of: 'of', who: 'Name',
+                      note: 'This page only shows the ticket details. Entry is recorded at the door.',
+                      c_already_used: 'All the tickets in this order have already been used.', c_invalid_event: 'This ticket is for another event or date.',
+                      c_cancelled: 'This ticket is cancelled, refunded or under review.', c_order_not_found: 'Ticket not found.',
+                      denied: 'Your account is not allowed to validate at this venue.', fail: 'Could not validate. Try again.', noSql: 'The scan SQL has not been applied yet.' }
+            }[EN ? 'en' : 'es'];
+            if (EN) document.documentElement.lang = 'en';
+
+            var card = document.getElementById('card');
+            function el(tag, cls, txt) { var n = document.createElement(tag); if (cls) n.className = cls; if (txt != null) n.textContent = txt; return n; }
+            function fmtDate(d) { try { return new Date(String(d).slice(0, 10) + 'T12:00:00').toLocaleDateString(EN ? 'en-US' : 'es-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); } catch (e) { return String(d || ''); } }
+            function clear() { while (card.firstChild) card.removeChild(card.firstChild); card.appendChild(el('p', 'brand', 'Miami DJ Beat')); }
+            function idFromUrl() {
+                var q = new URLSearchParams(location.search).get('id') || '';
+                var m = UUID.exec(q) || UUID.exec(location.pathname);
+                return m ? m[0].toLowerCase() : '';
+            }
+
+            function row(dl, k, v) { if (!v) return; dl.appendChild(el('dt', null, k)); dl.appendChild(el('dd', null, v)); }
+
+            function renderInfo(id, info) {
+                clear();
+                if (!info) { card.appendChild(el('h1', null, T.noInfo)); card.appendChild(el('div', 'ref', T.ref + ': ' + id.slice(0, 8).toUpperCase())); return; }
+                if (info.found === false) { card.appendChild(el('h1', null, T.notFound)); card.appendChild(el('p', 'note', T.notFoundSub)); return; }
+                if (info.void) card.appendChild(el('span', 'tag tag--bad', T.void));
+                card.appendChild(el('h1', null, info.event_title || (info.kind === 'tables' ? T.table : T.ticket)));
+                card.appendChild(el('p', 'kind', info.kind === 'tables' ? T.table : T.ticket));
+                var dl = el('dl');
+                row(dl, T.date, info.event_date ? fmtDate(info.event_date) : '');
+                row(dl, T.room, info.room_name);
+                row(dl, T.holder, info.holder);
+                card.appendChild(dl);
+                card.appendChild(el('div', 'ref', T.ref + ': ' + id.slice(0, 8).toUpperCase()));
+                card.appendChild(el('p', 'note', T.note));
+            }
+
+            function renderStaff(sb, id, info) {
+                var box = el('section', 'staff'); box.appendChild(el('h2', null, T.staff));
+                var btn = el('button', null, T.validate); btn.type = 'button';
+                var out = el('div');
+                btn.addEventListener('click', async function () {
+                    btn.disabled = true; btn.textContent = T.validating; out.textContent = '';
+                    var res = null, err = null;
+                    try { var r = await sb.rpc('venue_ticket_scan', { p_order_id: id, p_event_id: info.event_id, p_qty: 1 }); res = r.data; err = r.error; } catch (e) { err = e; }
+                    btn.disabled = false; btn.textContent = T.validate;
+                    var d = el('div', 'res');
+                    if (err || !res) {
+                        var msg = String((err && err.message) || '');
+                        d.className = 'res res--bad';
+                        d.appendChild(el('b', null, msg.indexOf('not_allowed') >= 0 ? T.denied : (/venue_ticket_scan/.test(msg) && /exist|find/i.test(msg) ? T.noSql : T.fail)));
+                    } else if (res.ok) {
+                        d.className = 'res res--ok';
+                        d.appendChild(el('b', null, '✔ ' + T.ok));
+                        if (res.reservation_name) d.appendChild(el('small', null, T.who + ': ' + res.reservation_name));
+                        d.appendChild(el('small', null, T.in + ': ' + res.checked_in_qty + ' ' + T.of + ' ' + res.total_qty));
+                        var its = Array.isArray(res.items) ? res.items.map(function (it) { return (Number(it.qty) > 1 ? it.qty + ' × ' : '') + String(it.label || ''); }).join(' · ') : '';
+                        if (its) d.appendChild(el('small', null, its));
+                    } else {
+                        d.className = 'res res--bad';
+                        d.appendChild(el('b', null, '✖ ' + (T['c_' + res.code] || T.fail)));
+                        if (res.total_qty != null) d.appendChild(el('small', null, T.in + ': ' + res.checked_in_qty + ' ' + T.of + ' ' + res.total_qty));
+                    }
+                    out.appendChild(d);
+                });
+                box.appendChild(btn); box.appendChild(out); card.appendChild(box);
+            }
+
+            async function isTeam(sb, uid) {
+                try {
+                    var p = await sb.from('dj_profiles').select('role').eq('user_id', uid).maybeSingle();
+                    var role = String((p && p.data && p.data.role) || '').toLowerCase().trim();
+                    if (['admin', 'owner', 'manager', 'seller'].indexOf(role) !== -1) return true;
+                } catch (e) { /* sin perfil: se revisa el local */ }
+                try {
+                    var v = await sb.from('venue_staff').select('venue_id').eq('user_id', uid).limit(1);
+                    return !!(v && v.data && v.data.length);
+                } catch (e2) { return false; }
+            }
+
+            async function init() {
+                var id = idFromUrl();
+                if (!id) { clear(); card.appendChild(el('h1', null, T.bad)); return; }
+                var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+                if (!sb) { renderInfo(id, null); return; }
+                var info = null;
+                try { var r = await sb.rpc('venue_ticket_public_info', { p_order_id: id }); if (!r.error && r.data) info = r.data; } catch (e) { info = null; }
+                renderInfo(id, info);
+                if (!info || info.found === false) return;
+                var uid = null;
+                try { var s = await sb.auth.getSession(); uid = s && s.data && s.data.session && s.data.session.user && s.data.session.user.id; } catch (e3) { uid = null; }
+                if (!uid) {
+                    var a = el('a', 'link link--soft', T.login); a.href = './login.html?next=' + encodeURIComponent('/t/' + id);
+                    card.appendChild(a);
+                    return;
+                }
+                if (info.event_id && await isTeam(sb, uid)) renderStaff(sb, id, info);
+            }
+            init();
+        })();
+    </script>
+</body>
+
+</html>

@@ -216,6 +216,29 @@
         .guest-name { font-size: 14.5px; font-weight: 700; }
         .guest-sub { color: var(--muted); font-size: 12px; margin-top: 2px; word-break: break-word; }
         .guest-items { font-size: 13px; }
+
+        /* Escáner de puerta (cámara + QR): botón de la cabecera y visor a pantalla completa */
+        .btn-scan { cursor: pointer; font: inherit; font-size: 13px; font-weight: 800; letter-spacing: .04em; color: #fff; background: #1f7a45; border: 0; border-radius: 10px; padding: 10px 16px; }
+        .btn-scan:hover { background: #17633a; }
+        #scan-modal { position: fixed; inset: 0; z-index: 10000; background: #05070c; color: #fff; display: none; flex-direction: column; }
+        #scan-modal.open { display: flex; }
+        .scan-top { display: flex; gap: 10px; align-items: center; padding: 12px 14px; background: #0c111b; border-bottom: 1px solid rgba(255,255,255,.14); flex-wrap: wrap; }
+        .scan-top select { flex: 1 1 220px; min-width: 0; font: inherit; font-size: 14px; padding: 9px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,.25); background: #151b28; color: #fff; }
+        .scan-close { cursor: pointer; font: inherit; font-size: 14px; font-weight: 800; color: #fff; background: #3a4150; border: 0; border-radius: 8px; padding: 10px 16px; }
+        .scan-stage { position: relative; flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; background: #000; }
+        .scan-stage video { width: 100%; height: 100%; object-fit: cover; }
+        .scan-frame { position: absolute; width: min(70vw, 320px); aspect-ratio: 1; border: 3px solid rgba(255,255,255,.85); border-radius: 18px; box-shadow: 0 0 0 9999px rgba(0,0,0,.35); pointer-events: none; }
+        .scan-msg { position: absolute; left: 12px; right: 12px; bottom: 12px; text-align: center; font-size: 13px; line-height: 1.5; background: rgba(0,0,0,.65); border-radius: 10px; padding: 10px 12px; }
+        .scan-manual { display: flex; gap: 8px; padding: 10px 14px; background: #0c111b; border-top: 1px solid rgba(255,255,255,.14); }
+        .scan-manual input { flex: 1 1 auto; min-width: 0; font: inherit; font-size: 14px; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,.25); background: #151b28; color: #fff; }
+        .scan-manual button { cursor: pointer; font: inherit; font-size: 14px; font-weight: 800; color: #fff; background: #1f7a45; border: 0; border-radius: 8px; padding: 10px 16px; }
+        #scan-result { position: fixed; inset: 0; z-index: 10001; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 28px; color: #fff; cursor: pointer; }
+        #scan-result.show { display: flex; }
+        #scan-result.ok { background: #12803c; } #scan-result.bad { background: #b3261e; }
+        #scan-result .big { font-size: 64px; line-height: 1; margin-bottom: 14px; }
+        #scan-result h2 { margin: 0 0 8px; font-size: 28px; }
+        #scan-result p { margin: 4px 0; font-size: 17px; line-height: 1.45; max-width: 30em; }
+        #scan-result .tap { margin-top: 22px; font-size: 12px; opacity: .8; letter-spacing: .08em; text-transform: uppercase; }
         .guest-code { color: var(--muted); font-size: 11.5px; letter-spacing: .06em; margin-top: 2px; }
         .gate { display: flex; align-items: center; gap: 8px; }
         .gate button { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--card-line); background: transparent; color: var(--text); font-size: 18px; font-weight: 700; cursor: pointer; line-height: 1; }
@@ -237,11 +260,30 @@
 
         <div class="toolbar">
             <input type="search" id="guest-search" class="search" placeholder="Buscar por nombre…" aria-label="Buscar por nombre" style="display:none" />
+            <button type="button" id="scan-open" class="btn-scan" style="display:none">📷 Escanear QR con Cámara</button>
             <span class="count" id="count"></span>
         </div>
 
         <div id="content" class="state">Cargando…</div>
     </div>
+
+
+    <div id="scan-modal" role="dialog" aria-modal="true" aria-label="Escáner de puerta">
+        <div class="scan-top">
+            <select id="scan-event" aria-label="Evento de esta puerta"></select>
+            <button type="button" class="scan-close" id="scan-close">Cerrar</button>
+        </div>
+        <div class="scan-stage">
+            <video id="scan-video" playsinline muted></video>
+            <div class="scan-frame"></div>
+            <div class="scan-msg" id="scan-msg"></div>
+        </div>
+        <div class="scan-manual">
+            <input type="text" id="scan-manual-input" placeholder="Pegar enlace o código (UUID) del ticket" autocomplete="off" autocapitalize="off" spellcheck="false" />
+            <button type="button" id="scan-manual-go">Validar</button>
+        </div>
+    </div>
+    <div id="scan-result" role="alert"></div>
 
     <script>
         var currentFilter = 'paid_pending_fulfillment';
@@ -481,6 +523,7 @@
             var ent = filter === 'entradas';
             document.getElementById('filter-label').textContent = FILTER_LABEL[filter] || '';
             document.getElementById('guest-search').style.display = ent ? '' : 'none';
+            document.getElementById('scan-open').style.display = ent ? '' : 'none';
             document.getElementById('sub-line').textContent = ent
                 ? 'Entradas de salas y eventos · lista por nombre para la puerta · visible solo para staff'
                 : 'Pedidos pagados vía Stripe Checkout · visible solo para staff (owner/admin/manager/seller)';
@@ -494,6 +537,145 @@
         window.addEventListener('message', function (e) {
             if (e.data && e.data.type === 'mdjb:merch-filter') applyFilter(e.data.filter);
         });
+
+
+        // ── Escáner de puerta: cámara + BarcodeDetector → venue_ticket_scan(order, evento, 1) ──
+        var UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+        var SCAN_REASON = {
+            already_used: 'Ya ingresaron todas las entradas de este ticket.',
+            invalid_event: 'Este ticket es de OTRO evento o de otra fecha.',
+            cancelled: 'Ticket cancelado, reembolsado o en revisión.',
+            order_not_found: 'Ticket no encontrado.'
+        };
+        var _scan = { stream: null, det: null, timer: 0, busy: false, last: '', lastAt: 0, events: [], hideTimer: 0 };
+
+        function ymdNY(d) { return d.toLocaleDateString('en-CA', { timeZone: 'America/New_York' }); }
+        function scanMsg(t) { document.getElementById('scan-msg').textContent = t || ''; document.getElementById('scan-msg').style.display = t ? '' : 'none'; }
+
+        // Eventos de la puerta: los de HOY (hora de Miami); si hoy no hay, los próximos 14 días. Si hay uno solo de hoy, queda elegido.
+        async function scanLoadEvents(sb) {
+            var today = new Date(), to = new Date(today.getTime() + 14 * 86400000);
+            var r = await sb.from('venue_events').select('id,title,event_date,status,venue_rooms(name)')
+                .gte('event_date', ymdNY(new Date(today.getTime() - 86400000))).lte('event_date', ymdNY(to)).neq('status', 'cancelled').order('event_date', { ascending: true });
+            var rows = (r && r.data) || [], hoy = ymdNY(today);
+            var delDia = rows.filter(function (e) { return e.event_date === hoy; });
+            _scan.events = delDia.length ? delDia : rows;
+            var sel = document.getElementById('scan-event');
+            sel.innerHTML = _scan.events.length ? _scan.events.map(function (e) {
+                var room = e.venue_rooms && e.venue_rooms.name ? ' · ' + e.venue_rooms.name : '';
+                return '<option value="' + esc(e.id) + '">' + esc((e.event_date === hoy ? 'HOY · ' : e.event_date + ' · ') + (e.title || 'Evento') + room) + '</option>';
+            }).join('') : '<option value="">Sin eventos en los próximos días</option>';
+            var saved = ''; try { saved = sessionStorage.getItem('mdj_scan_event') || ''; } catch (e) { }
+            if (saved && _scan.events.some(function (e) { return e.id === saved; })) sel.value = saved;
+            return _scan.events.length > 0;
+        }
+
+        function beep(ok) {
+            try {
+                var AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+                var ctx = _scan.ctx || (_scan.ctx = new AC()), t0 = ctx.currentTime;
+                (ok ? [[880, 0, .16]] : [[220, 0, .18], [220, .26, .18]]).forEach(function (n) {
+                    var o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.value = n[0]; o.type = ok ? 'sine' : 'square';
+                    g.gain.value = .18; o.connect(g); g.connect(ctx.destination); o.start(t0 + n[1]); o.stop(t0 + n[1] + n[2]);
+                });
+            } catch (e) { }
+            try { if (navigator.vibrate) navigator.vibrate(ok ? [120] : [220, 90, 220]); } catch (e2) { }
+        }
+
+        function showResult(ok, title, lines) {
+            var box = document.getElementById('scan-result');
+            box.className = 'show ' + (ok ? 'ok' : 'bad');
+            box.innerHTML = '<div class="big">' + (ok ? '✔' : '✖') + '</div><h2>' + esc(title) + '</h2>' +
+                (lines || []).filter(Boolean).map(function (l) { return '<p>' + esc(l) + '</p>'; }).join('') + '<div class="tap">Toca para continuar</div>';
+            beep(ok);
+            clearTimeout(_scan.hideTimer);
+            _scan.hideTimer = setTimeout(hideResult, ok ? 2200 : 3200);
+        }
+        function hideResult() { clearTimeout(_scan.hideTimer); document.getElementById('scan-result').className = ''; _scan.busy = false; }
+
+        async function scanHandle(raw) {
+            if (_scan.busy || !_sbRef) return;
+            var m = UUID_RE.exec(String(raw || ''));                       // acepta la URL completa https://…/t/<uuid> o el UUID plano
+            var now = Date.now();
+            if (!m) { if (raw !== _scan.last || now - _scan.lastAt > 3000) { _scan.last = raw; _scan.lastAt = now; _scan.busy = true; showResult(false, 'QR no reconocido', ['No es un ticket de Miami DJ Beat.']); } return; }
+            var id = m[0].toLowerCase();
+            if (id === _scan.last && now - _scan.lastAt < 4000) return;    // la cámara lee el mismo QR muchas veces: una sola vez
+            _scan.last = id; _scan.lastAt = now;
+            var eventId = document.getElementById('scan-event').value;
+            if (!eventId) { _scan.busy = true; showResult(false, 'Elige el evento', ['Selecciona el evento de esta puerta arriba.']); return; }
+            _scan.busy = true;
+            var res = null, err = null;
+            try { var r = await _sbRef.rpc('venue_ticket_scan', { p_order_id: id, p_event_id: eventId, p_qty: 1 }); res = r.data; err = r.error; } catch (e) { err = e; }
+            if (err || !res) {
+                var em = String((err && err.message) || '');
+                var txt = em.indexOf('not_allowed') >= 0 ? 'Tu cuenta no tiene permiso para validar en este local.'
+                    : (/venue_ticket_scan/.test(em) && /exist|find/i.test(em) ? 'Falta aplicar el SQL de escaneo (20261007_venue_ticket_scan_and_logs.sql).' : 'No se pudo validar. Intenta de nuevo.');
+                showResult(false, 'Sin validar', [txt]); return;
+            }
+            var guest = _guests.filter(function (g) { return g.id === id; })[0];
+            if (res.ok) {
+                if (guest) { guest.checked_in_qty = res.checked_in_qty; if (currentFilter === 'entradas') renderGuests(); }
+                var nombre = res.reservation_name || (guest && guest.customer_name) || '';
+                var arts = Array.isArray(res.items) ? res.items.map(function (it) { return (Number(it.qty) > 1 ? it.qty + '× ' : '') + String(it.label || ''); }).join(' · ') : '';
+                showResult(true, 'Ingreso registrado', [nombre, 'Ingresaron: ' + res.checked_in_qty + ' de ' + res.total_qty, arts]);
+            } else {
+                var det = res.total_qty != null ? 'Ingresaron: ' + res.checked_in_qty + ' de ' + res.total_qty : '';
+                showResult(false, SCAN_REASON[res.code] || 'Rechazado', [(res.reservation_name || (guest && guest.customer_name) || ''), det]);
+            }
+        }
+
+        async function scanTick() {
+            var v = document.getElementById('scan-video');
+            if (_scan.busy || !_scan.det || v.readyState < 2) return;
+            try { var found = await _scan.det.detect(v); if (found && found.length) scanHandle(found[0].rawValue); } catch (e) { }
+        }
+
+        async function scanStartCamera() {
+            var v = document.getElementById('scan-video');
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { scanMsg('Este navegador no permite usar la cámara. Usa el campo de abajo para pegar el código, o la lista por nombre.'); return; }
+            if (!('BarcodeDetector' in window)) { scanMsg('Este navegador no lee códigos QR con la cámara (falta BarcodeDetector). Usa Chrome en Android, o pega el código abajo, o la lista por nombre.'); return; }
+            try {
+                var formats = await window.BarcodeDetector.getSupportedFormats();
+                if (formats && formats.indexOf('qr_code') === -1) { scanMsg('Este dispositivo no lee códigos QR. Pega el código abajo o usa la lista por nombre.'); return; }
+                _scan.det = new window.BarcodeDetector({ formats: ['qr_code'] });
+                _scan.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
+                v.srcObject = _scan.stream; await v.play();
+                scanMsg('Apunta la cámara al QR del ticket.');
+                clearInterval(_scan.timer); _scan.timer = setInterval(scanTick, 250);
+            } catch (e) {
+                var n = e && e.name;
+                scanMsg(n === 'NotAllowedError' ? 'Permiso de cámara denegado. Actívalo en los ajustes del navegador para este sitio, o pega el código abajo.'
+                    : n === 'NotFoundError' ? 'No se encontró ninguna cámara en este dispositivo. Pega el código abajo.'
+                    : 'No se pudo abrir la cámara. Pega el código abajo.');
+            }
+        }
+        function scanStopCamera() {
+            clearInterval(_scan.timer); _scan.timer = 0;
+            if (_scan.stream) { _scan.stream.getTracks().forEach(function (t) { t.stop(); }); _scan.stream = null; }
+            var v = document.getElementById('scan-video'); try { v.pause(); } catch (e) { } v.srcObject = null;
+        }
+        async function scanOpen() {
+            if (!_sbRef) return;
+            var modal = document.getElementById('scan-modal');
+            modal.classList.add('open'); _scan.busy = false; _scan.last = ''; _scan.lastAt = 0;
+            // el sonido solo se puede crear tras un toque del usuario: se prepara aquí
+            try { var AC = window.AudioContext || window.webkitAudioContext; if (AC && !_scan.ctx) _scan.ctx = new AC(); if (_scan.ctx && _scan.ctx.state === 'suspended') _scan.ctx.resume(); } catch (e) { }
+            scanMsg('Cargando eventos…');
+            var hay = false; try { hay = await scanLoadEvents(_sbRef); } catch (e) { hay = false; }
+            if (!hay) { scanMsg('No hay eventos hoy ni en los próximos 14 días: no se puede validar. La lista por nombre sigue disponible.'); return; }
+            scanStartCamera();
+        }
+        function scanClose() { scanStopCamera(); hideResult(); document.getElementById('scan-modal').classList.remove('open'); }
+
+        document.getElementById('scan-open').addEventListener('click', scanOpen);
+        document.getElementById('scan-close').addEventListener('click', scanClose);
+        document.getElementById('scan-result').addEventListener('click', hideResult);
+        document.getElementById('scan-event').addEventListener('change', function (e) { try { sessionStorage.setItem('mdj_scan_event', e.target.value); } catch (x) { } });
+        document.getElementById('scan-manual-go').addEventListener('click', function () {
+            var i = document.getElementById('scan-manual-input'); var val = i.value; i.value = ''; _scan.last = ''; scanHandle(val);
+        });
+        document.getElementById('scan-manual-input').addEventListener('keydown', function (e) { if (e.key === 'Enter') document.getElementById('scan-manual-go').click(); });
+        window.addEventListener('pagehide', scanStopCamera);
 
         document.addEventListener('DOMContentLoaded', async function () {
             var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
