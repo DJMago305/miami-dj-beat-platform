@@ -398,6 +398,20 @@ function mdjSafeNextRaw(raw) {
     }
 }
 
+/** mdj-identity.js (resolvedor de edificio + tabla de destinos) puede cargar DESPUÉS de este archivo en algunas páginas: si falta cuando hace falta, se carga aquí. */
+function mdjEnsureIdentityScript() {
+    if (typeof window === 'undefined' || typeof window.mdjResolveAccessKind === 'function') return Promise.resolve(true);
+    return new Promise(function (resolve) {
+        try {
+            const s = document.createElement('script');
+            s.src = './mdj-identity.js?v=20261006-edificio';
+            s.onload = function () { resolve(true); };
+            s.onerror = function () { resolve(false); };
+            document.head.appendChild(s);
+        } catch (e) { resolve(false); }
+    });
+}
+
 function mdjPerformPostAuthRedirect(db, user) {
     if (!db || !user) {
         return Promise.resolve(false);
@@ -437,47 +451,16 @@ function mdjPerformPostAuthRedirect(db, user) {
         }
         const role = rawRole === 'talent' || rawRole === 'dj' ? 'artist' : rawRole;
         const dr0 = djRow && djRow.role != null ? String(djRow.role).toLowerCase().trim() : '';
-        /*
-         * Post-login (Hito 1 — portal STAFF): owner → /staff (Matrix Principal).
-         * admin / manager / seller → back-office (admin-dashboard) por defecto, hasta que
-         * sus módulos vivan en /staff. El owner sigue con is_staff en RLS; dj-profile/dj-dashboard
-         * quedan alcanzables desde el nav del portal (Mi Agenda).
-         */
-        const LANDING_STAFF_ROLES = ['admin', 'manager', 'seller'];
-        const ownerRoleForRedirect = idn
-            ? String(idn.dbRole || '').toLowerCase().trim() === 'owner'
-            : (dr0 === 'owner' || role === 'owner');
-        const isStaffForRedirect = idn
-            ? LANDING_STAFF_ROLES.indexOf(String(idn.dbRole || '').toLowerCase().trim()) >= 0
-            : LANDING_STAFF_ROLES.indexOf(dr0) >= 0;
-
-        let targetUrl = './dj-profile.html';
-        if (ownerRoleForRedirect) {
-            /* Con ?vista=miperfil: el owner aterriza en SU FICHA, no en la pestana por
-               defecto del portal (Equipo/Gobernanza). auth.js decide el destino al enviar
-               el formulario y corre antes que el header, asi que si aqui falta el
-               parametro da igual que el enlace MI PERFIL si lo lleve. Este es uno de los
-               TRES caminos que resuelven el mismo destino; los tres van igualados. */
-            targetUrl = './staff.html?vista=miperfil';
-        } else if (isStaffForRedirect) {
-            // 2026-09-19: admin-dashboard.html es el panel viejo, congelado desde
-            // el 16-sep -- todo el desarrollo real vive en staff-admin.html
-            // (dentro del iframe de staff.html). Repuntado como parte del retiro
-            // gradual del panel viejo (ver docs/ESTADO_MAESTRO.md).
-            targetUrl = './staff.html?vista=gobernanza';
-        } else if (role === 'client') {
-            targetUrl = './client-portal.html';
-            try {
-                const utNav = mdjUserTypeLegacy(user);
-                if (utNav !== 'client' && djRow && djRow.role !== 'client') {
-                    targetUrl = './dj-profile.html?id=' + encodeURIComponent(user.id);
-                }
-            } catch (roleFallbackErr) {
-                console.warn('[AUTH] Role fallback check failed:', roleFallbackErr);
-            }
-        } else {
-            targetUrl = './dj-profile.html?id=' + encodeURIComponent(user.id);
+        /* Destino por defecto del login: UNA sola decisión (resolvedor de edificio de mdj-identity.js) y UNA tabla de destinos (mdjBuildingHome).
+           Staff → su ficha (?vista=miperfil), artista → su estación, cliente → su portal, cuenta sin perfil → account-profile. */
+        await mdjEnsureIdentityScript();
+        let accKind = { kind: 'unknown', role: '', source: 'none' };
+        try {
+            if (typeof window.mdjResolveAccessKind === 'function') accKind = await window.mdjResolveAccessKind(db, user);
+        } catch (eAcc) {
+            console.warn('[AUTH] mdjResolveAccessKind:', eAcc);
         }
+        const targetUrl = typeof window.mdjBuildingHome === 'function' ? window.mdjBuildingHome(accKind.kind) : './account-profile.html';
 
         const postAuthFromRedirect = mdjBuildPostAuthReturnUrlFromQuery(window.location.search, user);
         if (postAuthFromRedirect) {
@@ -543,6 +526,7 @@ function mdjPerformPostAuthRedirect(db, user) {
 }
 
 if (typeof window !== 'undefined') {
+    window.mdjSafeNextRaw = mdjSafeNextRaw;
     window.mdjPerformPostAuthRedirect = mdjPerformPostAuthRedirect;
 }
 

@@ -10,26 +10,36 @@
     if (PAGE_ROLE === 'dj' || PAGE_ROLE === 'talent') PAGE_ROLE = 'artist'; // Homologar proteccion
 
     const LOGIN_URL = './login.html';
-    const DENIED_URL = './index.html';
     /* Destino del CLIENTE cuando la página no es suya: cada página declara su contenedor con data-client-home
-       (p. ej. account-settings.html → ./client-account.html). Sin él, se usa ROLE_HOME[client]. */
+       (p. ej. account-settings.html → ./client-account.html). Sin él, va a su portal (tabla canónica de mdj-identity.js). */
     const CLIENT_HOME_OVERRIDE = (document.currentScript && document.currentScript.dataset && document.currentScript.dataset.clientHome) || '';
     /* Las páginas protegidas nacen ocultas (data-mdj-guard="pending" en <html>) hasta que la guarda decide:
        así un rol equivocado nunca ve, ni por un instante, el contenedor de otro. */
     function _revelar() { try { document.documentElement.removeAttribute('data-mdj-guard'); } catch (e) { /* noop */ } }
 
-    // ── Route map: which role lands where after login ───────────
-    const ROLE_HOME = {
-        artist: './dj-profile.html',
-        owner: './dj-dashboard.html',
-        // 2026-09-19: repuntado a staff.html (panel viejo admin-dashboard.html
-        // congelado desde el 16-sep, todo el desarrollo real vive en
-        // staff-admin.html dentro de su iframe). Ver docs/ESTADO_MAESTRO.md.
-        admin: './staff.html?vista=gobernanza',
-        manager: './staff.html?vista=gobernanza',
-        seller: './staff.html?vista=gobernanza',
-        client: './client-portal.html',
-    };
+    // ── A dónde va cada edificio (login / página que no es suya) ──────────────────────────────────────────────
+    // UNA sola tabla (mdj-identity.js → mdjBuildingHome, decisión del PO 2026-10-06): staff → su ficha de Staff, artista → su estación,
+    // cliente → su portal (o el contenedor que la página declare con data-client-home), cuenta sin perfil → account-profile.
+    // mdj-identity.js puede cargar DESPUÉS de esta guarda en algunas páginas: si falta cuando hace falta, se carga aquí.
+    function _ensureIdentity() {
+        if (typeof window.mdjResolveAccessKind === 'function') return Promise.resolve(true);
+        return new Promise(function (resolve) {
+            try {
+                var sc = document.createElement('script');
+                sc.src = './mdj-identity.js?v=20261006-edificio';
+                sc.onload = function () { resolve(true); };
+                sc.onerror = function () { resolve(false); };
+                document.head.appendChild(sc);
+            } catch (e) { resolve(false); }
+        });
+    }
+    async function _homeFor(db, user) {
+        await _ensureIdentity();
+        var acc = { kind: 'unknown' };
+        try { if (typeof window.mdjResolveAccessKind === 'function') acc = await window.mdjResolveAccessKind(db, user); } catch (e) { /* cae al destino general */ }
+        if (acc.kind === 'buyer' && CLIENT_HOME_OVERRIDE) return CLIENT_HOME_OVERRIDE;
+        return typeof window.mdjBuildingHome === 'function' ? window.mdjBuildingHome(acc.kind) : './account-profile.html';
+    }
 
     // ── Wait for Supabase ───────────────────────────────────────
     let db = null;
@@ -110,8 +120,9 @@
     // Already logged in and on login page → redirect to role home
     if (path.includes('login.html')) {
         const params = new URLSearchParams(window.location.search);
-        const next = params.get('next');
-        window.location.assign(next || ROLE_HOME[role] || './dj-profile.html');
+        /* ?next= solo a rutas del propio sitio (mdjSafeNextRaw, auth.js): antes se asignaba tal cual (redirección abierta). Sin esa función, se ignora. */
+        const next = typeof window.mdjSafeNextRaw === 'function' ? window.mdjSafeNextRaw(params.get('next')) : '';
+        window.location.assign(next || await _homeFor(db, session.user));
         return;
     }
 
@@ -132,7 +143,7 @@
 
         if (!allowed) {
             console.warn(`[RoleGuard] Access denied. Required: ${PAGE_ROLE}, Got: ${role}`);
-            window.location.replace((role === 'client' && CLIENT_HOME_OVERRIDE) ? CLIENT_HOME_OVERRIDE : (ROLE_HOME[role] || DENIED_URL));
+            window.location.replace(await _homeFor(db, session.user));
             return;
         }
     }
