@@ -110,4 +110,56 @@
   }
 
   g.mdjClassifyPlatformIdentity = mdjClassifyPlatformIdentity;
+
+  /* ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   * RESOLVEDOR ÚNICO DE «EDIFICIO» (H3): a qué esqueleto pertenece una sesión → { kind, role, source }.
+   *   kind: 'staff_full' (owner/admin/manager) | 'staff_seller' | 'artist' | 'buyer' (cliente) | 'unknown'   (mismo vocabulario que public.mdj_access_snapshot().profile_kind)
+   *   source: 'jwt' | 'snapshot' | 'none'
+   * Orden de decisión:
+   *   1) app_metadata.role (el JWT lo fija el SERVIDOR; el usuario no puede editarlo) cuando es de staff o de artista: decisión SIN red.
+   *   2) Si el JWT no lo decide (cliente o sin rol): RPC mdj_access_snapshot() con tiempo límite — la base manda (fila de dj_profiles / client_profiles).
+   *      Un cliente de JWT al que la base reconoce como staff o artista deja de pasar por cliente.
+   *   3) Sin respuesta (red lenta, error, perfil aún sin crear): rol de servidor 'client' → buyer; si no, unknown (la guarda de cada página decide; NUNCA se asume staff).
+   * La RPC tiene un efecto (genera el código MDJB una vez por cuenta): por eso no se llama cuando el JWT ya decide.
+   * Compatible con Safari 13 (sin ?. ni ??).
+   * ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── */
+  function accessKindFromJwt(user) {
+    var appR = user && user.app_metadata ? n(user.app_metadata.role) : '';
+    if (appR === 'owner' || appR === 'admin' || appR === 'manager') return { kind: 'staff_full', role: appR, source: 'jwt' };
+    if (appR === 'seller') return { kind: 'staff_seller', role: 'seller', source: 'jwt' };
+    if (appR === 'artist' || appR === 'dj' || appR === 'talent') return { kind: 'artist', role: 'artist', source: 'jwt' };
+    return null;
+  }
+  function accessKindFromSnapshot(snap) {
+    if (!snap || snap.ok !== true) return null;
+    var pk = n(snap.profile_kind), role = n(snap.role);
+    if (pk === 'staff_full') return { kind: 'staff_full', role: role || 'admin', source: 'snapshot' };
+    if (pk === 'staff_seller') return { kind: 'staff_seller', role: 'seller', source: 'snapshot' };
+    if (pk === 'artist') return { kind: 'artist', role: 'artist', source: 'snapshot' };
+    if (pk === 'buyer') return { kind: 'buyer', role: 'client', source: 'snapshot' };
+    return null;                                              /* 'unknown' (sin filas todavía): no decide */
+  }
+  function mdjResolveAccessKind(db, user, opts) {
+    var ms = (opts && opts.timeoutMs) || 2500;
+    var viaJwt = accessKindFromJwt(user);
+    if (viaJwt) return Promise.resolve(viaJwt);
+    function fallback() {
+      var appR = user && user.app_metadata ? n(user.app_metadata.role) : '';
+      return appR === 'client' ? { kind: 'buyer', role: 'client', source: 'jwt' } : { kind: 'unknown', role: '', source: 'none' };
+    }
+    if (!db || typeof db.rpc !== 'function') return Promise.resolve(fallback());
+    return new Promise(function (resolve) {
+      var done = false;
+      var timer = setTimeout(function () { if (!done) { done = true; resolve(fallback()); } }, ms);
+      try {
+        Promise.resolve(db.rpc('mdj_access_snapshot')).then(function (r) {
+          if (done) return; done = true; clearTimeout(timer);
+          resolve(accessKindFromSnapshot(r && !r.error ? r.data : null) || fallback());
+        }, function () { if (done) return; done = true; clearTimeout(timer); resolve(fallback()); });
+      } catch (e) { if (!done) { done = true; clearTimeout(timer); resolve(fallback()); } }
+    });
+  }
+  g.mdjResolveAccessKind = mdjResolveAccessKind;
+  g.mdjAccessKindFromSnapshot = accessKindFromSnapshot;
+  g.mdjAccessKindFromJwt = accessKindFromJwt;
 })(typeof window !== 'undefined' ? window : global);
