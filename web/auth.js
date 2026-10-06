@@ -380,6 +380,24 @@ if (typeof window !== 'undefined') {
  */
 let _mdjPostAuthRedirectPromise = null;
 
+/**
+ * ?next= (volver a donde estaba el usuario tras iniciar sesión): SOLO rutas del propio sitio.
+ * Se resuelve contra el origen actual y se exige el MISMO origen: así se rechazan https://otro.sitio, //otro.sitio, /\otro.sitio (el navegador trata \ como /),
+ * javascript:, data: y cualquier cosa con caracteres de control. Devuelve la cadena original (misma conducta de siempre) o '' si no es segura (entonces se ignora el next).
+ */
+function mdjSafeNextRaw(raw) {
+    try {
+        const s = String(raw || '').trim();
+        if (!s || /[\u0000-\u001f\u007f]/.test(s)) return '';
+        const base = (typeof window !== 'undefined' && window.location && window.location.origin && window.location.origin !== 'null') ? window.location.origin : 'https://www.miamidjbeat.com';
+        const u = new URL(s, base + '/login.html');
+        if (u.origin !== base) return '';
+        return s;
+    } catch (e) {
+        return '';
+    }
+}
+
 function mdjPerformPostAuthRedirect(db, user) {
     if (!db || !user) {
         return Promise.resolve(false);
@@ -467,7 +485,7 @@ function mdjPerformPostAuthRedirect(db, user) {
             return true;
         }
 
-        const nextRaw = (params.get('next') || '').trim();
+        const nextRaw = mdjSafeNextRaw(params.get('next'));
         if (nextRaw) {
             let nextUrl = nextRaw.startsWith('./') || nextRaw.startsWith('/') ? nextRaw : `./${nextRaw.replace(/^\//, '')}`;
             const isArtistSession =
