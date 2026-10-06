@@ -289,6 +289,7 @@
      index.html queda FUERA a proposito (orden del PO): Inicio es la salida a la
      vitrina publica y conserva su cabecera completa. */
   var MDJ_VISTAS_ARTISTA = {
+    'legal.html': 1,   /* documentos legales: puerta desde Config / Mi Perfil (PO 2026-10-05); visitantes y clientes siguen con la barra pública */
     'dj-profile.html': 1,
     'academia.html': 1,
     'dj-dashboard.html': 1,
@@ -543,6 +544,7 @@
      comentario de mdjEsStaffEnVivo()— y se mantiene hasta que el PO decida el
      punto 1 (que ve el invitado en las paginas de estacion). */
   var MDJ_VISTAS_INTERNAS = {
+    'legal.html': 1,   /* ídem para staff: la puerta de estos documentos nace en Mi Perfil / Config del staff */
     'academia.html': 1,
     'dj-tools.html': 1,
     // 'admin-dashboard.html' retirado 2026-09-19 (parte 2 del retiro, ver

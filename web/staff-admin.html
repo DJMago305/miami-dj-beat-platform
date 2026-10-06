@@ -773,6 +773,180 @@
             margin: 0 0 8px 2px;
         }
 
+        /* ── Solicitudes de clientes (#leads) en MODO DÍA (orden del PO 2026-10-05) ───────────────────────────────────────────────────────────
+           El shell de staff.html difunde data-mode="light"; esta página solo lo escuchaba para #crm (Network), así que el resto del admin seguía
+           oscuro fijo y, dentro del cascarón claro, «Solicitudes» se veía como un bloque negro. Mismo criterio que #crm: micro-tema acotado a ESTA
+           vista (la clase adm-leads-view la pone el click de la barra lateral solo cuando la sección activa es «leads»); las demás secciones del
+           admin no se tocan. Los colores de las celdas vienen en línea desde el JS, por eso los selectores por atributo con !important. */
+        body[data-mode="light"].adm-leads-view,
+        body[data-mode="light"].adm-actividad-view { background: #eef1f5 !important; color: #1b1f27; }
+        body[data-mode="light"].adm-leads-view main.container,
+        body[data-mode="light"].adm-actividad-view main.container { background: transparent !important; }
+        body[data-mode="light"].adm-leads-view #leads { --gold: #8a6d2e; --muted: #5b6478; --line: rgba(14,18,28,0.13); color: #1b1f27; }
+        body[data-mode="light"].adm-leads-view #leads .fineprint { color: rgba(27,31,39,0.6); }
+        body[data-mode="light"].adm-leads-view #leads-container .leads-table-wrap { border-color: rgba(14,18,28,0.14); background: #ffffff; box-shadow: 0 1px 3px rgba(14,18,28,0.06); }
+        body[data-mode="light"].adm-leads-view #leads-container table { color: #1b1f27; }
+        body[data-mode="light"].adm-leads-view #leads-container thead th { background: rgba(197,160,89,0.42); border-bottom-color: rgba(138,109,46,0.45); border-right-color: rgba(138,109,46,0.30); color: #2b2210; }
+        body[data-mode="light"].adm-leads-view #leads-container td { border-bottom-color: rgba(14,18,28,0.08); border-right-color: rgba(14,18,28,0.06); color: #1b1f27; }
+        body[data-mode="light"].adm-leads-view #leads-container td strong { color: #1b1f27; }
+        body[data-mode="light"].adm-leads-view #leads-container tr:hover td { background: rgba(14,18,28,0.035); }
+        body[data-mode="light"].adm-leads-view #leads-container td[style*="rgba(255,255,255,0.4)"] { color: rgba(27,31,39,0.55) !important; }
+        body[data-mode="light"].adm-leads-view #leads-container td[style*="rgba(255,255,255,0.6)"] { color: rgba(27,31,39,0.72) !important; }
+        body[data-mode="light"].adm-leads-view #leads-container td[style*="rgba(255,255,255,0.3)"] { color: rgba(27,31,39,0.5) !important; }
+        body[data-mode="light"].adm-leads-view #leads-container .leads-link { color: #8a6d2e; }
+        body[data-mode="light"].adm-leads-view #leads-container .leads-table-label { color: rgba(27,31,39,0.62); }
+        body[data-mode="light"].adm-leads-view #leads-container .leads-status--new { background: rgba(79,70,229,0.12); color: #4338ca; }
+        body[data-mode="light"].adm-leads-view #leads-container .leads-status--matched { background: rgba(217,119,6,0.14); color: #b45309; }
+        body[data-mode="light"].adm-leads-view #leads-container .leads-status--confirmed { background: rgba(22,163,74,0.14); color: #15803d; }
+        body[data-mode="light"].adm-leads-view #leads-container .leads-status--done { background: rgba(14,18,28,0.07); color: rgba(27,31,39,0.55); }
+
+        /* ── Actividad operativa (#actividad) en MODO DÍA (orden del PO 2026-10-05, mismo método que «Solicitudes») ──────────────────────────────
+           La tarjeta usa var(--panel)/--line (oscuras de styles.css): se redefinen SOLO dentro de #actividad. Los demás colores están fijos en las reglas
+           de arriba (blanco translúcido para fondo negro), de ahí que cada uno tenga su contraparte de día. Solo colores; ninguna medida cambia. */
+        body[data-mode="light"].adm-actividad-view #actividad { --panel: #ffffff; --line: rgba(14,18,28,0.13); --gold: #8a6d2e; --muted: #5b6478; color: #1b1f27; box-shadow: 0 1px 3px rgba(14,18,28,0.06); }
+        body[data-mode="light"].adm-actividad-view #actividad h3 { color: #8a6d2e; }
+        body[data-mode="light"].adm-actividad-view #actividad .owner-ops-feed-meta { color: rgba(27,31,39,0.6); }
+        body[data-mode="light"].adm-actividad-view #actividad .btn { background: #ffffff; border-color: rgba(14,18,28,0.2); color: #1b1f27; }
+        body[data-mode="light"].adm-actividad-view #actividad .btn:hover { background: rgba(14,18,28,0.05); }
+        body[data-mode="light"].adm-actividad-view #actividad .owner-ops-feed-filter-btn { background: #ffffff; border-color: rgba(14,18,28,0.18); color: rgba(27,31,39,0.75); }
+        body[data-mode="light"].adm-actividad-view #actividad .owner-ops-feed-filter-btn:hover { border-color: rgba(138,109,46,0.6); color: #1b1f27; }
+        body[data-mode="light"].adm-actividad-view #actividad .owner-ops-feed-filter-btn.active { border-color: rgba(138,109,46,0.85); color: #8a6d2e; background: rgba(138,109,46,0.12); }
+        body[data-mode="light"].adm-actividad-view #actividad .owner-ops-search-icon { color: rgba(27,31,39,0.45); }
+        body[data-mode="light"].adm-actividad-view #actividad .owner-ops-search-input { background: #ffffff; border-color: rgba(14,18,28,0.18); color: #1b1f27; }
+        body[data-mode="light"].adm-actividad-view #actividad .owner-ops-search-input::placeholder { color: rgba(27,31,39,0.45); }
+        body[data-mode="light"].adm-actividad-view #actividad .owner-ops-secondary-filters select { background: #ffffff; border-color: rgba(14,18,28,0.18); color: #1b1f27; }
+        body[data-mode="light"].adm-actividad-view #actividad .owner-ops-grid-wrap { border-color: rgba(14,18,28,0.14); background: #ffffff; }
+        body[data-mode="light"].adm-actividad-view #actividad .owner-ops-grid tbody td { border-bottom-color: rgba(14,18,28,0.08); border-right-color: rgba(14,18,28,0.06); color: #1b1f27; }
+        body[data-mode="light"].adm-actividad-view #actividad .owner-ops-grid tbody tr:hover td { background: rgba(197,160,89,0.12); }
+        body[data-mode="light"].adm-actividad-view #actividad .owner-ops-grid tbody tr.owner-ops-row--selected td { background: rgba(197,160,89,0.22); }
+        body[data-mode="light"].adm-actividad-view #actividad .owner-ops-type-pill--lead { background: rgba(79,70,229,0.12); color: #4338ca; }
+        body[data-mode="light"].adm-actividad-view #actividad .owner-ops-type-pill--registro { background: rgba(22,163,74,0.14); color: #15803d; }
+        body[data-mode="light"].adm-actividad-view #actividad .owner-ops-type-pill--mensaje { background: rgba(2,132,199,0.13); color: #0369a1; }
+        body[data-mode="light"].adm-actividad-view #actividad .owner-ops-type-pill--ticket { background: rgba(217,119,6,0.14); color: #b45309; }
+        body[data-mode="light"].adm-actividad-view #actividad .owner-ops-type-pill--pago { background: rgba(138,109,46,0.16); color: #8a6d2e; }
+        body[data-mode="light"].adm-actividad-view #actividad .owner-ops-ref-cell { color: #8a6d2e; }
+        body[data-mode="light"].adm-actividad-view #actividad .owner-ops-source-warn { color: #b45309; background: rgba(217,119,6,0.09); border-color: rgba(217,119,6,0.3); }
+        body[data-mode="light"] .owner-ops-drawer-backdrop { background: rgba(20,24,34,0.45); }
+        body[data-mode="light"] .owner-ops-drawer-panel { background: #ffffff; border-left-color: rgba(138,109,46,0.45); box-shadow: -12px 0 40px rgba(14,18,28,0.18); color: #1b1f27; }
+        body[data-mode="light"] .owner-ops-drawer-panel h3 { color: #8a6d2e; }
+        body[data-mode="light"] .owner-ops-drawer-close { color: #1b1f27; }
+        body[data-mode="light"] .owner-ops-drawer-kv dt { color: rgba(27,31,39,0.55); }
+        body[data-mode="light"] .owner-ops-drawer-kv dd { color: #1b1f27; }
+        body[data-mode="light"] .owner-ops-drawer-timeline { border-top-color: rgba(14,18,28,0.12); }
+
+        /* ══ MODO DÍA DEL ADMIN COMPLETO (orden del PO 2026-10-05: «que no se vea el chapapote negro en el medio») ══════════════════════════════════
+           El shell de staff.html difunde data-mode="light" a este iframe. Antes solo #crm, #leads y #actividad lo escuchaban; el resto de las secciones seguían negras dentro del
+           cascarón claro. Misma paleta que mdj-dia-base.css: se redefinen las variables de styles.css a nivel de body (todo lo que usa var(--panel)/--text/--line/--gold se adapta
+           solo) y, para lo que el JS escribe con colores fijos en línea (blanco, negro, borde blanco translúcido), selectores por atributo con !important. Solo colores: ninguna
+           medida, orden ni estructura cambia. Sin data-mode="light" (noche, o la página abierta suelta) nada de esto aplica. */
+        body[data-mode="light"] {
+            --bg: #eef1f5; --panel: #ffffff; --panel2: #f4f6f9; --text: #1b1f27; --muted: rgba(27,31,39,0.62); --line: rgba(14,18,28,0.13);
+            --accent: #8a6d2e; --gold: #8a6d2e; --gold-glow: rgba(138,109,46,0.22); --shadow: 0 10px 30px rgba(14,18,28,0.10);
+            --glass: rgba(255,255,255,0.72); --glass-border: rgba(14,18,28,0.13);
+            background: #eef1f5 !important; color: #1b1f27;
+        }
+        body[data-mode="light"] main.container { background: transparent !important; }
+        body[data-mode="light"] .admin-card { box-shadow: 0 1px 3px rgba(14,18,28,0.06); color: #1b1f27; }
+        body[data-mode="light"] .admin-card h3, body[data-mode="light"] .admin-card h4 { color: #8a6d2e; }
+        body[data-mode="light"] .admin-card label { color: rgba(27,31,39,0.75); }
+        body[data-mode="light"] .admin-card p, body[data-mode="light"] .admin-card .fineprint { color: rgba(27,31,39,0.65); }
+        body[data-mode="light"] .admin-card input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+        body[data-mode="light"] .admin-card select,
+        body[data-mode="light"] .admin-card textarea { background: #ffffff !important; color: #1b1f27 !important; border: 1px solid rgba(14,18,28,0.2) !important; }
+        body[data-mode="light"] .admin-card input::placeholder, body[data-mode="light"] .admin-card textarea::placeholder { color: rgba(27,31,39,0.45); }
+        body[data-mode="light"] .admin-card table th { color: #1b1f27; border-bottom-color: rgba(14,18,28,0.18); }
+        body[data-mode="light"] .admin-card table td { color: #1b1f27; border-bottom-color: rgba(14,18,28,0.08); }
+        body[data-mode="light"] .admin-card .btn { background: #ffffff; border-color: rgba(14,18,28,0.2); color: #1b1f27; }
+        body[data-mode="light"] .admin-card .btn:hover { background: rgba(14,18,28,0.05); }
+        body[data-mode="light"] .loading-spinner { color: rgba(27,31,39,0.6); }
+        /* Botones del admin: sus reglas (main.container .admin-grid button.btn.*) pesan más que las genéricas, por eso se repite la cadena completa */
+        body[data-mode="light"] main.container .admin-grid button.btn.secondary { color: #1b1f27; border-color: rgba(14,18,28,0.22); background: #ffffff; }
+        body[data-mode="light"] main.container .admin-grid button.btn.secondary:hover { color: #8a6d2e; border-color: rgba(138,109,46,0.6); }
+        body[data-mode="light"] main.container .admin-grid button.btn.primary { color: #8a6d2e; background: rgba(197,160,89,0.16); border-color: rgba(138,109,46,0.5); }
+        body[data-mode="light"] main.container .admin-grid button.btn.primary:hover, body[data-mode="light"] main.container .admin-grid button.btn.primary:active { background: rgba(197,160,89,0.32); border-color: #8a6d2e; filter: none; box-shadow: none; }
+        body[data-mode="light"] button.btn[style*="background:#d9534f"], body[data-mode="light"] main.container .admin-grid button.btn.primary[style*="background:#d9534f"] { color: #ffffff !important; }
+        body[data-mode="light"] .mdj-switch-label-off, body[data-mode="light"] .mdj-switch-label-on { color: rgba(27,31,39,0.5); }
+        /* Colores fijos que el JS escribe en línea (texto claro y fondos oscuros) */
+        body[data-mode="light"] [style*="color:#fff"],
+          body[data-mode="light"] [style*="color: #fff"],
+          body[data-mode="light"] [style*="color:#ffffff"],
+          body[data-mode="light"] [style*="color: #ffffff"],
+          body[data-mode="light"] [style*="color:white"],
+          body[data-mode="light"] [style*="color: white"],
+          body[data-mode="light"] [style*="color:rgba(255,255,255"],
+          body[data-mode="light"] [style*="color: rgba(255,255,255"],
+          body[data-mode="light"] [style*="color:rgba(255, 255, 255"],
+          body[data-mode="light"] [style*="color: rgba(255, 255, 255"],
+          body[data-mode="light"] [style*="color:#e8eefc"],
+          body[data-mode="light"] [style*="color: #e8eefc"],
+          body[data-mode="light"] [style*="color:#ddd"],
+          body[data-mode="light"] [style*="color: #ddd"],
+          body[data-mode="light"] [style*="color:#eee"],
+          body[data-mode="light"] [style*="color: #eee"],
+          body[data-mode="light"] [style*="color:#ccc"],
+          body[data-mode="light"] [style*="color: #ccc"] { color: #1b1f27 !important; }
+        body[data-mode="light"] [style*="background:#0a"],
+          body[data-mode="light"] [style*="background: #0a"],
+          body[data-mode="light"] [style*="background:#0b"],
+          body[data-mode="light"] [style*="background: #0b"],
+          body[data-mode="light"] [style*="background:#0c"],
+          body[data-mode="light"] [style*="background: #0c"],
+          body[data-mode="light"] [style*="background:#0d"],
+          body[data-mode="light"] [style*="background: #0d"],
+          body[data-mode="light"] [style*="background:#0e"],
+          body[data-mode="light"] [style*="background: #0e"],
+          body[data-mode="light"] [style*="background:#0f"],
+          body[data-mode="light"] [style*="background: #0f"],
+          body[data-mode="light"] [style*="background:#10"],
+          body[data-mode="light"] [style*="background: #10"],
+          body[data-mode="light"] [style*="background:#11"],
+          body[data-mode="light"] [style*="background: #11"],
+          body[data-mode="light"] [style*="background:#12"],
+          body[data-mode="light"] [style*="background: #12"],
+          body[data-mode="light"] [style*="background:#13"],
+          body[data-mode="light"] [style*="background: #13"],
+          body[data-mode="light"] [style*="background:#14"],
+          body[data-mode="light"] [style*="background: #14"],
+          body[data-mode="light"] [style*="background:#15"],
+          body[data-mode="light"] [style*="background: #15"],
+          body[data-mode="light"] [style*="background:#16"],
+          body[data-mode="light"] [style*="background: #16"],
+          body[data-mode="light"] [style*="background:#17"],
+          body[data-mode="light"] [style*="background: #17"],
+          body[data-mode="light"] [style*="background:#18"],
+          body[data-mode="light"] [style*="background: #18"],
+          body[data-mode="light"] [style*="background:#19"],
+          body[data-mode="light"] [style*="background: #19"],
+          body[data-mode="light"] [style*="background:#1a"],
+          body[data-mode="light"] [style*="background: #1a"],
+          body[data-mode="light"] [style*="background:#1b"],
+          body[data-mode="light"] [style*="background: #1b"],
+          body[data-mode="light"] [style*="background:#1c"],
+          body[data-mode="light"] [style*="background: #1c"],
+          body[data-mode="light"] [style*="background:#1d"],
+          body[data-mode="light"] [style*="background: #1d"],
+          body[data-mode="light"] [style*="background:#1e"],
+          body[data-mode="light"] [style*="background: #1e"],
+          body[data-mode="light"] [style*="background:#1f"],
+          body[data-mode="light"] [style*="background: #1f"],
+          body[data-mode="light"] [style*="background:rgba(0,0,0"],
+          body[data-mode="light"] [style*="background: rgba(0,0,0"],
+          body[data-mode="light"] [style*="background:rgba(0, 0, 0"],
+          body[data-mode="light"] [style*="background: rgba(0, 0, 0"],
+          body[data-mode="light"] [style*="background:rgba(10,10"],
+          body[data-mode="light"] [style*="background: rgba(10,10"],
+          body[data-mode="light"] [style*="background:rgba(10, 10"],
+          body[data-mode="light"] [style*="background: rgba(10, 10"],
+          body[data-mode="light"] [style*="background:rgba(15,"],
+          body[data-mode="light"] [style*="background: rgba(15,"],
+          body[data-mode="light"] [style*="background:rgba(15, "],
+          body[data-mode="light"] [style*="background: rgba(15, "],
+          body[data-mode="light"] [style*="background:rgba(20,"],
+          body[data-mode="light"] [style*="background: rgba(20,"],
+          body[data-mode="light"] [style*="background:rgba(20, "],
+          body[data-mode="light"] [style*="background: rgba(20, "] { background: #ffffff !important; }
+        body[data-mode="light"] [style*="border"][style*="rgba(255,255,255"], body[data-mode="light"] [style*="border"][style*="rgba(255, 255, 255"] { border-color: rgba(14,18,28,0.16) !important; }
+
         /* Activity Feed Styles */
         .activity-item {
             display: flex;
@@ -5310,6 +5484,8 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     this.classList.add('active');
                     const target = hrefRaw.replace('#', '');
                     if (!target) return;
+                    document.body.classList.toggle('adm-leads-view', target === 'leads');   /* modo día acotado a «Solicitudes» (ver CSS .adm-leads-view) */
+                    document.body.classList.toggle('adm-actividad-view', target === 'actividad');   /* ídem «Actividad operativa» */
                     // Show target section, hide others — with anti-CLS fade
                     const sections = ['leads', 'actividad', 'eb-orders', 'crm', 'djs', 'staff', 'registry-section', 'analytics', 'content', 'mdjpro-downloads-panel', 'site-media', 'apps', 'production', 'venues', 'wedding-plan', 'create-profiles', 'event-blueprint', 'fashion-show-panel', 'commission-rules', 'mis-comisiones', 'contribuciones'];
                     const eventPanels = ['event-blueprint', 'fashion-show-panel'];
@@ -5891,6 +6067,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 // Activate Leads as fallback and mark it active
                 const leads = document.getElementById('leads');
                 if (leads) leads.style.display = 'block';
+                document.body.classList.add('adm-leads-view');
                 document.querySelectorAll('.side-link').forEach(l => l.classList.remove('active'));
                 const leadsLink = document.querySelector('.side-link[href="#leads"]');
                 if (leadsLink) leadsLink.classList.add('active');
@@ -7326,6 +7503,9 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 const mode = window._networkNameDisplayMode || { primary: 'real', order: 'normal' };
                 let primary = p._displayName;
                 let secondary = p._displayStageName || null;
+                /* Contactos de referencia (sin cuenta): el lugar donde trabajan vive en «empresa» y no se veía en la tabla, así que una lista como «Venues» parecía llena de personas sin
+                   explicación (reporte PO 2026-10-05). Se muestra junto al nombre, como el nombre artístico en las cuentas. Solo lectura: no cambia ningún dato ni categoría. */
+                if (!secondary && p._source === 'referencia' && p.empresa && String(p.empresa).trim().toLowerCase() !== String(p._displayName || '').trim().toLowerCase()) secondary = String(p.empresa).trim();
                 if (mode.primary === 'artistico' && p._displayStageName) {
                     primary = p._displayStageName;
                     secondary = p._displayName;
@@ -7550,6 +7730,29 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
 
             window.renderCRM = function(profiles) {
                 window._networkLastProfiles = profiles;
+                /* PERTENENCIA POR ROL, NO POR FOTO (reporte PO 2026-10-05: «wendy.miamidjbeat@gmail.com no aparece como staff… esperaba esto cableado de manera genética, no tener
+                   que pedírtelo, porque esta cuenta fue creada desde Owner»). Causa: la categoría «Staff» es una lista libre (network_lists) que se llenó UNA sola vez, al crearla
+                   (19-sep), con _networkAutoLinkCategory; la cuenta de Wendy nació el 30-sep y nunca entró. Ahora, cuando el nombre de una lista coincide con una categoría automática
+                   (DJ, Staff, Band…), sus miembros se DERIVAN en cada pintado: «Staff» = equipo interno por rol (owner/admin/manager/seller); el personal de eventos (bartender, mesero…) NO entra. Toda cuenta
+                   nueva de ese tipo aparece sola; los miembros agregados a mano se conservan. No escribe en la base. */
+                try {
+                    const _n = (x) => String(x || '').trim().toLowerCase();
+                    const _alias = { staff: ['MDJBStaff'] };
+                    const _real = (window._networkCustomMembers || []).filter(m => !m._virtual);
+                    const _have = new Set(_real.map(m => m.list_id + '|' + m.fuente + '|' + m.contacto_id));
+                    const _extra = [];
+                    (window._networkCustomLists || []).forEach(l => {
+                        const t = _n(l.name);
+                        const keys = _alias[t] || Object.keys(NETWORK_CATEGORY_LABEL).filter(k => _n(k) === t || _n(NETWORK_CATEGORY_LABEL[k]) === t);
+                        if (!keys.length) return;
+                        (profiles || []).filter(p => keys.indexOf(p._category) > -1).forEach(p => {
+                            const fu = _networkFuenteDe(p), k = l.id + '|' + fu + '|' + p.id;
+                            if (_have.has(k)) return;
+                            _have.add(k); _extra.push({ list_id: l.id, fuente: fu, contacto_id: p.id, _virtual: true });
+                        });
+                    });
+                    window._networkCustomMembers = _real.concat(_extra);
+                } catch (eDer) { /* si algo falla, queda la pertenencia guardada tal cual */ }
                 window._networkRowData = [];
                 if (!window._networkActiveTab) window._networkActiveTab = 'artistas';
                 const container = document.getElementById('crm-container');
@@ -10196,6 +10399,8 @@ window.fsConfirmAssign = async function () {
 })();
 </script>
   <script src="./js/mdj-tema-portal.js?v=20260819-tema"></script>
+  <!-- Modo día: oscurece solo el texto claro que quedaría ilegible sobre fondo claro (ver cabecera del archivo); solo actúa con data-mode="light". -->
+  <script src="./js/mdj-day-contrast-guard.js?v=20261005-guard5"></script>
   <script src="./mdj-mobile-header-fix.js?v=20260916-purga-a"></script>
 </body>
 

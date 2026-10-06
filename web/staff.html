@@ -385,8 +385,15 @@
        tracking del menu, y por eso salia como glifo monocromo en vez del emoji
        a color. Se le da la familia de emoji del sistema y se le quita el
        tracking y el uppercase, que a un emoji no le aplican. */
-    .staff-topnav #ofm-daynight{font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;
-      letter-spacing:0;text-transform:none;font-size:clamp(15px,1.25vw,19px);line-height:1;}
+    /* Sol/luna idéntico al del header compartido (header-unified.css .mdj-daynight): círculo de 30px, mismo SVG, borde dorado, último puesto de la tira con 8px de aire.
+       Antes era un cuadrado de 30x28 con el emoji desbordado y la barra «/» del separador metida dentro (reporte PO 2026-10-05: «debe ser redondo y está movido de lugar»). */
+    .staff-topnav #ofm-daynight{width:30px;height:30px;min-width:30px;padding:5px;margin-left:8px;flex:0 0 auto;
+      display:inline-flex;align-items:center;justify-content:center;line-height:0;letter-spacing:0;text-transform:none;
+      background:transparent;border:1px solid rgba(197,160,89,.35);border-radius:50%;color:#c5a059;cursor:pointer;
+      transition:border-color .15s,color .15s,background .15s;}
+    .staff-topnav #ofm-daynight::before{content:none !important;display:none !important;}   /* sin la barra «/» de los demás puestos */
+    .staff-topnav #ofm-daynight svg{width:100%;height:100%;display:block;}
+    .staff-topnav #ofm-daynight:hover{border-color:#c5a059;background:rgba(197,160,89,.12);color:#c5a059;}
     .staff-topnav button.tab-sealed,.staff-topnav button.tab-sealed:hover{color:rgba(255,255,255,.3);cursor:default;}
     .staff-topnav .tab-lock{font-size:13px;margin-left:6px;line-height:1;}
     .staff-topnav button:hover,.staff-topnav a:hover{color:rgba(255,255,255,.92);}
@@ -1118,8 +1125,31 @@
     :root[data-theme="day"] .staff-topnav a{ color:rgba(20,25,35,.55); }
     :root[data-theme="day"] .staff-topnav a:hover{ color:rgba(20,25,35,.9); }
     :root[data-theme="day"] .staff-topnav button + button::before,:root[data-theme="day"] .staff-topnav a + button::before,:root[data-theme="day"] .staff-topnav button + a::before,:root[data-theme="day"] .staff-topnav a + a::before{ color:rgba(138,109,46,.6); }
+    /* Botón sol/luna en día: mismo relleno dorado y borde sólido que las páginas del artista (mdj-dia-base.css), para que el redondel se note sobre la barra blanca. */
     :root[data-theme="day"] .ofm-daynight{ border-color:rgba(14,18,28,.2); }
     :root[data-theme="day"] .ofm-daynight:hover{ background:rgba(14,18,28,.05); }
+    :root[data-theme="day"] .staff-topnav #ofm-daynight{ background:#efd9a0; border:1.5px solid #8a6d2e; color:#3d2f0c; box-shadow:0 1px 3px rgba(14,18,28,.18); }
+    :root[data-theme="day"] .staff-topnav #ofm-daynight:hover{ background:#e4c97a; border-color:#6b5420; color:#3d2f0c; }
+    /* MI PERFIL (ficha .pf-*) en MODO DÍA — reporte PO 2026-10-05 «no se ve nada»: la ficha estaba escrita solo para fondo negro (bio, opiniones y leyendas en blanco translúcido
+       sobre tarjetas que en día son blancas). Se queda el banner cinematográfico OSCURO (el nombre y los datos del encabezado son blancos, como el hero de Academia) y el resto del
+       texto pasa a la tinta del portal. Solo colores. */
+    :root[data-theme="day"] .pf-hero{ background:linear-gradient(135deg,#252c3a,#0d1118); }
+    :root[data-theme="day"] .pf-bio{ color:#1b1f27; }
+    :root[data-theme="day"] .pf-soon{ color:rgba(27,31,39,.6); }
+    :root[data-theme="day"] .pf-review{ background:#f4f6f9; }
+    :root[data-theme="day"] .pf-review .txt,:root[data-theme="day"] .pf-rev-slide .txt{ color:#1b1f27; }
+    :root[data-theme="day"] .pf-review .who,:root[data-theme="day"] .pf-rev-slide .who{ color:rgba(27,31,39,.58); }
+    :root[data-theme="day"] .pf-empty-rev{ color:rgba(27,31,39,.55); }
+    :root[data-theme="day"] .pf-rev-count{ color:rgba(27,31,39,.5); }
+    :root[data-theme="day"] .pf-qr-cap{ color:rgba(27,31,39,.62); }
+    :root[data-theme="day"] .pf-share-btn{ color:#8a6d2e; border-color:rgba(138,109,46,.6); background:#fff; }
+    :root[data-theme="day"] .pf-share-btn:hover{ background:rgba(138,109,46,.12); }
+    :root[data-theme="day"] .pf-rate-lead{ color:rgba(27,31,39,.78); }
+    :root[data-theme="day"] .pf-star{ color:rgba(27,31,39,.35); }
+    :root[data-theme="day"] .pf-star.on{ color:#8a6d2e; }
+    :root[data-theme="day"] .pf-rate-dialog{ background:#f4f6f9; }
+    :root[data-theme="day"] .pf-rate-cancel{ color:rgba(27,31,39,.7); }
+    :root[data-theme="day"] .pf-rate-msg{ color:rgba(27,31,39,.65); }
     :root[data-theme="day"] .staff-side3{ background:#f4f6f9; }
     :root[data-theme="day"] .side3-group,:root[data-theme="day"] .side3-link{ color:rgba(20,25,35,.78); }
     :root[data-theme="day"] .side3-link:hover{ background:rgba(14,18,28,.05); color:#000; }
@@ -2453,7 +2483,10 @@
           '<a href="https://claude.ai/artifact/Xq8DXWtmh9WMborSAZEdsT" target="_blank" rel="noopener noreferrer">SEO·IA</a>'+
           '<button type="button" data-top="miperfil">MI PERFIL</button>'+
           '<button type="button" data-top="gobernanza" data-i18n="staff-nav-staff">Staff</button>'+
-          '<button type="button" data-top="elixis" data-i18n="staff-nav-fenix">Fénix AI</button>';
+          '<button type="button" data-top="elixis" data-i18n="staff-nav-fenix">Fénix AI</button>'+
+          /* DÍA/NOCHE (reporte PO 2026-10-05, «faltaría la luna»): el tema es global y se recuerda (mdjStaffTheme), pero solo la barra del Owner traía el botón; Ventas lo
+             heredaba y no podía volver a noche. Mismo botón y mismo id que el Owner: lo cablea el bloque «DÍA/NOCHE GLOBAL» de más abajo, que busca #ofm-daynight por id. */
+          '<button type="button" id="ofm-daynight" class="ofm-daynight" title="Modo día / noche" aria-label="Modo día / noche (global)"></button>';
       }
       return start+
         '<button type="button" data-href="./dj-tools.html" data-i18n="staff-nav-djtools">DJ Tools</button>'+
@@ -2461,7 +2494,8 @@
         /* SEO·IA (2026-09-30, orden del PO): mismo link, misma paridad que Owner/Ventas. */
         '<a href="https://claude.ai/artifact/Xq8DXWtmh9WMborSAZEdsT" target="_blank" rel="noopener noreferrer">SEO·IA</a>'+
         '<button type="button" data-top="miperfil">MI PERFIL</button>'+
-        '<button type="button" data-top="gobernanza" data-i18n="staff-nav-staff">Staff</button>';
+        '<button type="button" data-top="gobernanza" data-i18n="staff-nav-staff">Staff</button>'+
+        '<button type="button" id="ofm-daynight" class="ofm-daynight" title="Modo día / noche" aria-label="Modo día / noche (global)"></button>';   /* mismo botón día/noche que el Owner y Ventas */
     }
 
     /* ── Gate STAFF (solo fila dj_profiles.role, nunca JWT solo — patrón admin-dashboard) ── */
@@ -4702,14 +4736,15 @@
 
       // ── DÍA/NOCHE GLOBAL del portal (botón central ÚNICO). Alterna data-theme en <html> + DIFUNDE a los marcos (base lista para adaptar los secundarios). ──
       var dtog=el('ofm-daynight');
-      /* EMOJI, no SVG: es el modelo que ya usan admin-dashboard.html,
+      /* (Comentario histórico — desde 2026-10-05 el botón usa los SVG del header compartido, ver SUN/MOON más abajo.) Antes: EMOJI, no SVG: es el modelo que ya usan admin-dashboard.html,
          account-settings.html y dj-dashboard.html, y el que alterna
          mdj-tema-portal.js (linea 27: sol -> '☀️', luna -> '🌙').
          Se conserva #ofm-daynight como motor porque es el unico que DIFUNDE el
          tema a los cuatro marcos y comparte clave con mdjb-shared-header.js.
          Asi: el aspecto de siempre, con el motor bueno detras. */
-      var SUN='☀️';
-      var MOON='🌙';
+      /* SVG idénticos a MDJ_SUN / MDJ_MOON de mdjb-shared-header.js: una sola luna en todo el sitio (el emoji se desbordaba del botón). */
+      var SUN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+      var MOON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
       var THEME_KEY='mdjStaffTheme';
       /* P1.3 Fase A: mdjStaffTheme es compartida con mdjb-shared-header.js — normaliza
          cualquier valor heredado ('day'/'night', pre-unificación) al estándar light/dark. */
@@ -4717,9 +4752,65 @@
         var v=String(raw||'').toLowerCase().trim();
         return (v==='day'||v==='light') ? 'light' : 'dark';
       }
+      /* BÓVEDA LEGAL (contracts-engine.html) EN MODO DÍA — orden del PO 2026-10-05 «termina el trabajo del día y noche». La página es de otro hilo (Contratos/W-9) y ya se
+         pinta con variables (--bg, --surface, --text, --accent…), así que el día se le da DESDE AQUÍ, sin editar su archivo: se inyecta una hoja al marco que redefine esas
+         variables cuando el cascarón difunde data-mode="light". La hoja de papel del contrato (--paper*) no se toca: el documento sigue siendo papel claro. */
+      window.mdjLegalDayCss = function(fr){
+        try{
+          var d = fr && fr.contentDocument; if(!d || !d.head || !d.body) return;
+          d.body.setAttribute('data-mode', (document.documentElement.getAttribute('data-theme')==='day') ? 'light' : 'dark');
+          if(d.getElementById('mdj-legal-day-css')) return;
+          var st = d.createElement('style'); st.id = 'mdj-legal-day-css';
+          st.textContent =
+            'body[data-mode="light"]{color-scheme:light;--bg:#eef1f5;--surface:#ffffff;--surface-2:#f4f6f9;--surface-3:rgba(14,18,28,.08);--border:rgba(14,18,28,.14);--border-strong:rgba(138,109,46,.5);'+
+            '--text:#1b1f27;--text-muted:rgba(27,31,39,.68);--text-faint:rgba(27,31,39,.5);--accent:#8a6d2e;--accent-strong:#6b5420;--accent-soft:rgba(138,109,46,.14);--accent-contrast:#ffffff;'+
+            '--success:#15803d;--success-soft:rgba(21,128,61,.12);--warning:#b45309;--warning-soft:rgba(180,83,9,.12);--danger:#b42318;--danger-soft:rgba(180,35,24,.1);--shadow:0 10px 28px -14px rgba(14,18,28,.28);}'+
+            'body[data-mode="light"]{background:#eef1f5;color:#1b1f27;}'+
+            'body[data-mode="light"] input,body[data-mode="light"] select,body[data-mode="light"] textarea{color-scheme:light;}';
+          d.head.appendChild(st);
+        }catch(eLd){}
+      };
+      /* Marcos del portal que se pintan con las variables de styles.css (Mensajes del sistema, Pedidos, Clientes/Config): mismo método que la bóveda — se les inyecta la paleta de
+         día de mdj-dia-base.css (variables a nivel de body) y la guarda de contraste (js/mdj-day-contrast-guard.js) para el texto que el JS escribe con colores de noche. Solo actúan con
+         data-mode="light"; en noche se quitan solos. No se edita ninguna de esas páginas. */
+      window.mdjSiteFrameDay = function(fr){
+        try{
+          var d = fr && fr.contentDocument; if(!d || !d.head || !d.body) return;
+          d.body.setAttribute('data-mode', (document.documentElement.getAttribute('data-theme')==='day') ? 'light' : 'dark');
+          if(d.getElementById('mdj-frame-day-css')) return;
+          var st = d.createElement('style'); st.id = 'mdj-frame-day-css';
+          st.textContent =
+            'body[data-mode="light"]{color-scheme:light;--bg:#eef1f5;--panel:#ffffff;--panel2:#f4f6f9;--text:#1b1f27;--muted:rgba(27,31,39,.62);--line:rgba(14,18,28,.13);--accent:#8a6d2e;--gold:#8a6d2e;--gold-lt:#6b5420;'+
+            '--gold-glow:rgba(138,109,46,.22);--glass:rgba(255,255,255,.72);--glass-border:rgba(14,18,28,.13);--shadow:0 10px 30px rgba(14,18,28,.10);background:#eef1f5 !important;color:#1b1f27;}'+
+            'body[data-mode="light"] input:not([type=checkbox]):not([type=radio]),body[data-mode="light"] select,body[data-mode="light"] textarea{color-scheme:light;}';
+          /* Mensajes del sistema (system-messages.html): barra, panel del hilo y burbujas traen colores fijos de noche. Mismo degradado dorado claro que el Network en día. */
+          if(fr.id==='sc3-msg-iframe'){
+            st.textContent +=
+              'body[data-mode="light"] .toolbar{background:#ffffff !important;border-bottom:1px solid rgba(14,18,28,.14);}'+
+              'body[data-mode="light"] #hilo-detail{background:radial-gradient(140% 70% at 50% -20%,rgba(255,255,255,.75),transparent 65%),linear-gradient(180deg,#fdf8ee 0%,#f2dfb8 35%,#e2c48c 70%,#cfab68 100%) !important;}'+
+              'body[data-mode="light"] .bubble.in{background:rgba(255,255,255,.88) !important;color:#1b1f27 !important;}'+
+              'body[data-mode="light"] .hilo-compose{background:rgba(255,255,255,.7) !important;border-top:1px solid rgba(14,18,28,.12);}'+
+              'body[data-mode="light"] .hilo-hero-name{color:#1b1f27 !important;}body[data-mode="light"] .hilo-hero-tel{color:rgba(27,31,39,.7) !important;}body[data-mode="light"] .hilo-hero-avatar{color:#6b5420 !important;}';
+          }
+          /* Inbox · Tickets y Config (account-settings.html embebida): el cuerpo del panel trae fondo negro fijo. */
+          if(fr.id==='sc3-inbox-iframe' || fr.id==='config-frame'){
+            st.textContent += 'body[data-mode="light"] .acct-body{background:transparent !important;}';
+          }
+          /* Pedidos (staff-merch-orders.html): la tarjeta de cada pedido trae fondo fijo de noche. */
+          if(fr.id==='sc3-pedidos-iframe'){
+            st.textContent +=
+              'body[data-mode="light"] .order-card{background:#ffffff !important;border-color:rgba(14,18,28,.14) !important;box-shadow:0 1px 3px rgba(14,18,28,.06);}'+
+              'body[data-mode="light"] .order-card .block,body[data-mode="light"] .order-card .order-foot,body[data-mode="light"] .order-card .order-total{border-color:rgba(14,18,28,.1) !important;}';
+          }
+          d.head.appendChild(st);
+          if(!d.getElementById('mdj-frame-day-guard')){ var sc = d.createElement('script'); sc.id = 'mdj-frame-day-guard'; sc.src = './js/mdj-day-contrast-guard.js?v=20261005-guard5'; d.head.appendChild(sc); }
+        }catch(eSf){}
+      };
       function broadcastTheme(mode){   /* mode: 'light' | 'dark' — difunde a los marcos que soporten día/noche (ej. Matrix BFI). Base para ir adaptando los demás. */
         try{ document.querySelectorAll('iframe').forEach(function(f){
           try{ var d=f.contentDocument; if(d&&d.body) d.body.setAttribute('data-mode', mode); }catch(e){}
+          if(f.id==='legal-frame' && window.mdjLegalDayCss) window.mdjLegalDayCss(f);
+          if((f.id==='sc3-inbox-iframe' || f.id==='sc3-pedidos-iframe' || f.id==='sc3-msg-iframe' || f.id==='config-frame') && window.mdjSiteFrameDay) window.mdjSiteFrameDay(f);
           try{ if(f.contentWindow) f.contentWindow.postMessage({mdjTheme:mode}, '*'); }catch(e){}
         }); }catch(e){}
       }
@@ -4955,7 +5046,7 @@
           var lf=el('legal-frame'), ll=el('legal-loading');
           function sendTpl(){ try{ lf.contentWindow.postMessage({type:'mdjb:open-template', template:legalTpl}, '*'); }catch(eMsg){} }
           if(lf && !lf.getAttribute('src')){
-            if(lf.addEventListener) lf.addEventListener('load', function(){ if(ll) ll.classList.add('hidden'); sendTpl(); });
+            if(lf.addEventListener) lf.addEventListener('load', function(){ if(ll) ll.classList.add('hidden'); if(window.mdjLegalDayCss) window.mdjLegalDayCss(lf); sendTpl(); });
             lf.setAttribute('src', lf.getAttribute('data-src'));
             setTimeout(function(){ if(ll) ll.classList.add('hidden'); }, 9000);
           } else if(lf) { sendTpl(); }

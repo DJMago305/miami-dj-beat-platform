@@ -3,6 +3,8 @@
 
 <head>
     <script src="/js/mdj-lang-boot.js?v=20260927-boot"></script>
+    <!-- Barra de la estación para quien trabaja aquí (staff / artista) y barra pública para visitantes y clientes (misma pieza que academia.html). Reporte PO 2026-10-05: los documentos legales se abrían desde Staff/Mi Perfil con la barra de Inicio. -->
+    <script src="./mdj-estacion-preflight.js?v=20260919-staff-vista-fix"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
     <script>
     /* FIX-LEGACY-SUPABASE-01 (2026-08-19) · el respaldo entra cuando falta la
@@ -43,6 +45,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&display=optional" rel="stylesheet" />
     <link rel="stylesheet" href="./styles.css?v=20260921-hub-scrollbar-fuera">
   <link rel="stylesheet" href="./header-unified.css?v=20261004-riel-seguro" />
+  <link rel="stylesheet" href="./css/mdj-dia-base.css?v=20261005-dia-base5" />
         <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=optional" rel="stylesheet">
@@ -90,7 +93,7 @@
             --lg-accent: #8a6d2e;
             --lg-accent-line: #9a7a33;
             --lg-subnav-bg: rgba(255, 255, 255, 0.88);
-            --lg-subnav-link: #6e6e73;
+            --lg-subnav-link: #3d3d43;
         }
 
         .legal-page a,
@@ -105,6 +108,11 @@
             backdrop-filter: saturate(180%) blur(20px);
             border-bottom: 1px solid var(--lg-line);
         }
+        /* Estación de trabajo (staff/artista) — orden del PO 2026-10-05: «retirar el search y el logo de la compañía con el png y dejar la barra arriba pegada al menú».
+           En modo estación se retira la franja flotante de marca+buscador SOLO en esta página y la barra fina de documentos (volver · Legal · los 5 documentos) queda pegada
+           justo bajo el menú de 84px. Visitantes y clientes no llevan la clase `mdj-artist-academy` y conservan su cabecera pública completa (marca y buscador incluidos). */
+        body.mdj-artist-academy #mdj-flotante-visitante { display: none !important; }
+        body.mdj-artist-academy .legal-subnav { top: 84px; }
 
         .legal-subnav__in {
             max-width: 1100px;
@@ -159,10 +167,14 @@
 
         .legal-subnav__links a {
             flex: none;
-            font-size: 12px;
-            font-weight: 400;
+            /* Orden del PO 2026-10-05: «un poco más grande y negritas, que casi no se ven», luego «una tipografía adecuada y en mayúsculas todo». Misma tipografía institucional que el
+               menú de arriba (Inter, 800, mayúsculas con tracking); antes Playfair 12px peso 400. */
+            font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+            font-size: 13px;
+            font-weight: 800;
+            text-transform: uppercase;
             line-height: 1.33;
-            letter-spacing: 0;
+            letter-spacing: .1em;
             color: var(--lg-subnav-link);
             text-decoration: none;
             padding: 6px 0;
@@ -329,7 +341,7 @@
     </style>
 </head>
 
-<body>
+<body data-mdj-dia="1">
     <!-- MDJ canonical site header — keep in sync with index #mainHeader; use ./index.html# anchors for subpages -->
 <header class="header mdj-header-unified" id="mainHeader">
   <div class="header-top">
@@ -412,6 +424,9 @@
     <a href="./contact.html" data-i18n="nav-contact" data-mdj-nav="contact" data-mdj-slot="7">Contacto</a>
     <a id="mainNav-mi-portal-link" class="mdj-mi-portal-mainnav mdj-mi-portal-gold mdj-mi-portal--guest" href="./client-portal.html" data-mdj-nav="mi-portal" data-mdj-slot="8" aria-hidden="true" tabindex="-1">MI PERFIL</a>
   </nav>
+  <script>/* Decide la barra antes de pintarla. Ver mdj-estacion-preflight.js. La clase de estación (alturas de la barra de una fila) solo se pone si el prevuelo reconoció a staff o artista: visitantes y clientes conservan la cabecera pública tal cual. */
+    try { window.mdjPrevueloEstacion && window.mdjPrevueloEstacion(); if (document.body && document.body.getAttribute('data-mdj-estacion')) document.body.classList.add('mdj-artist-academy'); } catch (e) {}
+  </script>
     </div>
   </div>
 </header>
@@ -704,7 +719,7 @@
     <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
     <script src="./header-smart-search.js?v=20260927-bilingue-hint"></script>
   <script src="./mdj-identity.js?v=20261003-identidad-unica"></script>
-      <script src="./mdjb-shared-header.js?v=20261003-mi-perfil-unico"></script>
+      <script src="./mdjb-shared-header.js?v=20261005-legal-estacion"></script>
       <script defer src="./translations.js?v=20261003-mi-perfil-unico"></script>
       <script defer src="./i18n.js?v=20260420-index-experience-rutas"></script>
   <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
