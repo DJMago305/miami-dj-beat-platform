@@ -159,6 +159,25 @@
       } catch (e) { if (!done) { done = true; clearTimeout(timer); resolve(fallback()); } }
     });
   }
+  /* TABLA CANÓNICA DE DESTINOS (decisión del PO, 2026-10-06): a dónde va cada edificio tras iniciar sesión o cuando una página no es suya.
+     La usan el login (auth.js → mdjPerformPostAuthRedirect) y role-guard.js; ya no hay otra tabla de «hogares» en esos dos lugares.
+       staff (owner, admin, manager, seller) → su ficha dentro de Staff        artista (artist, dj, talent) → su estación
+       cliente                                → su portal                      cuenta sin perfil / incompleta → account-profile (que redirige a Configuración) */
+  var BUILDING_HOME = Object.freeze({
+    staff:    './staff.html?vista=miperfil',
+    artist:   './dj-dashboard.html',
+    buyer:    './client-portal.html',
+    fallback: './account-profile.html'
+  });
+  function mdjBuildingHome(kind) {
+    var k = n(kind);
+    if (k === 'staff_full' || k === 'staff_seller' || k === 'staff') return BUILDING_HOME.staff;
+    if (k === 'artist') return BUILDING_HOME.artist;
+    if (k === 'buyer') return BUILDING_HOME.buyer;
+    return BUILDING_HOME.fallback;
+  }
+  g.MDJ_BUILDING_HOME = BUILDING_HOME;
+  g.mdjBuildingHome = mdjBuildingHome;
   g.mdjResolveAccessKind = mdjResolveAccessKind;
   g.mdjAccessKindFromSnapshot = accessKindFromSnapshot;
   g.mdjAccessKindFromJwt = accessKindFromJwt;
