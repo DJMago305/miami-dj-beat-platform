@@ -2,6 +2,7 @@
 -- Perfil publico: cada resena sale con is_verified = (source_lead_id IS NOT NULL), es decir, hay un contrato detras.
 -- Cambia SOLO get_dj_public_review_bundle: agrega UN campo (is_verified) a cada resena. Mismos parametros, mismo retorno (jsonb),
 -- mismo filtro (status = 'published'), mismo orden y limite (24). No cambia promedio ni conteo. Volver a correrlo es seguro.
+-- El nombre por defecto (cuando el cliente no dejo nombre) es 'Cliente', no 'Verified client': eso rotulaba como verificado a quien quiza no lo es.
 -- El front (dj-profile.html) pinta la insignia «Verificada» solo si is_verified es true; sin este SQL no pinta nada.
 CREATE OR REPLACE FUNCTION public.get_dj_public_review_bundle(p_dj_user_id uuid)
  RETURNS jsonb
@@ -34,7 +35,7 @@ BEGIN
       COALESCE(
         NULLIF(btrim(r.reviewer_display_name), ''),
         NULLIF(btrim(cp.full_name), ''),
-        'Verified client'
+        'Cliente'
       ) AS reviewer_display_name,
       r.created_at,
       (r.source_lead_id IS NOT NULL) AS is_verified
