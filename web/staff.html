@@ -2309,8 +2309,7 @@
        elemento declara los roles que lo muestran (roles:[…]); el pintor arma el marcado solo con los elementos del rol que abre la página (los demás NO entran al DOM: un botón oculto
        seguiría ahí para quien lo quiera ver). Para un rol, el resultado es idéntico al de antes: mismo marcado, mismo orden, mismo espaciado.
        Roles: «owner»; «seller» (Vendedor); cualquier otro rol de staff (manager, admin) cae en «manager», igual que antes.
-       Un elemento nuevo se agrega UNA vez, aquí, con sus roles. `before:{rol:'id'}` mueve el elemento justo antes de otro SOLO para ese rol (hoy: MI PERFIL va antes de Staff en
-       Vendedor y Manager, como estaba; el Owner lo trae después, según MDJ_NAV_SLOTS_INTERNO. Quitar esa línea alinea los tres roles).
+       Un elemento nuevo se agrega UNA vez, aquí, con sus roles. El orden es el MISMO para todos los roles (el del Owner: Staff antes de MI PERFIL, según MDJ_NAV_SLOTS_INTERNO).
        Notas históricas que seguían a cada botón:
          · INICIO es un <a> (navega fuera) y paintStaffTopnav solo engancha clics a <button>. ⚙️ CONFIG y SEO·IA también son <a> reales por el mismo criterio.
          · «⚙️ CONFIG» va en mayúsculas porque #mainNav lo renderiza así de verdad (medido 2026-09-03).
@@ -2332,20 +2331,13 @@
       { k:'cashflow',    roles:['owner','seller'],           html:'<button type="button" data-top="cashflow">Cash Flow</button>' },
       { k:'seoia',       roles:['owner','seller','manager'], html:'<a href="https://claude.ai/artifact/Xq8DXWtmh9WMborSAZEdsT" target="_blank" rel="noopener noreferrer">SEO·IA</a>' },
       { k:'staff',       roles:['owner','seller','manager'], html:'<button type="button" data-top="gobernanza" data-i18n="staff-nav-staff">Staff</button>' },
-      { k:'miperfil',    roles:['owner','seller','manager'], before:{ seller:'staff', manager:'staff' }, html:'<button type="button" data-top="miperfil">MI PERFIL</button>' },
+      { k:'miperfil',    roles:['owner','seller','manager'], html:'<button type="button" data-top="miperfil">MI PERFIL</button>' },
       { k:'fenix',       roles:['owner','seller'],           html:'<button type="button" data-top="elixis" data-i18n="staff-nav-fenix">Fénix AI</button>' },
       { k:'daynight',    roles:['owner','seller','manager'], html:'<button type="button" id="ofm-daynight" class="ofm-daynight" title="Modo día / noche" aria-label="Modo día / noche (global)"></button>' }
     ];
     function staffTopnavHtml(role){
       var group = role === 'owner' ? 'owner' : (role === 'seller' ? 'seller' : 'manager');
       var list = STAFF_NAV_ITEMS.filter(function(it){ return it.roles.indexOf(group) !== -1; });
-      list.slice().forEach(function(it){
-        var anchor = it.before && it.before[group];
-        if(!anchor) return;
-        var from = list.indexOf(it); list.splice(from, 1);
-        var to = -1; list.forEach(function(x, i){ if(x.k === anchor) to = i; });
-        list.splice(to === -1 ? from : to, 0, it);
-      });
       return list.map(function(it){ return it.html; }).join('');
     }
 
