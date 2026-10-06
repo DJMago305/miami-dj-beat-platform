@@ -2304,177 +2304,49 @@
       return topBtns;
     }
 
+    /* BARRA SUPERIOR DE STAFF — UNA SOLA PLANTILLA (2026-10-06, orden del PO: «la plantilla de Wendy debe ser igual a la de Staff; no estar editando perfiles por separado»).
+       Antes había tres ramas HTML duplicadas (Owner / Vendedor / Manager-Admin) que se desalineaban entre sí. Ahora hay UNA tabla en el orden canónico de la barra del Owner y cada
+       elemento declara los roles que lo muestran (roles:[…]); el pintor arma el marcado solo con los elementos del rol que abre la página (los demás NO entran al DOM: un botón oculto
+       seguiría ahí para quien lo quiera ver). Para un rol, el resultado es idéntico al de antes: mismo marcado, mismo orden, mismo espaciado.
+       Roles: «owner»; «seller» (Vendedor); cualquier otro rol de staff (manager, admin) cae en «manager», igual que antes.
+       Un elemento nuevo se agrega UNA vez, aquí, con sus roles. `before:{rol:'id'}` mueve el elemento justo antes de otro SOLO para ese rol (hoy: MI PERFIL va antes de Staff en
+       Vendedor y Manager, como estaba; el Owner lo trae después, según MDJ_NAV_SLOTS_INTERNO. Quitar esa línea alinea los tres roles).
+       Notas históricas que seguían a cada botón:
+         · INICIO es un <a> (navega fuera) y paintStaffTopnav solo engancha clics a <button>. ⚙️ CONFIG y SEO·IA también son <a> reales por el mismo criterio.
+         · «⚙️ CONFIG» va en mayúsculas porque #mainNav lo renderiza así de verdad (medido 2026-09-03).
+         · «Cash Flow» SIN data-i18n a propósito: la clave compartida nav-cashflow terminaba mostrando «Flujo de Caja» solo aquí (#mainNav pinta el texto crudo).
+         · SEO·IA es un <a target=_blank>: claude.ai manda frame-ancestors 'self', así que no se puede embeber como iframe (confirmado en consola, 2026-09-30).
+         · MI PERFIL: etiqueta ÚNICA e INVARIABLE en todo el ecosistema (PO 2026-08-16), sin data-i18n; abre la ficha interna (#view-miperfil) con data-top.
+         · MRM IA se retiró de esta barra (PO 2026-09-02): vive solo en Inicio.
+         · DÍA/NOCHE al final, con id #ofm-daynight: mountOwner lo cablea por id DESPUÉS de pintar la tira y difunde el tema a los marcos (clave mdjStaffTheme, compartida con el encabezado).
+         · «Ventas» (Vendedor) y «Operaciones» (Manager/Admin) son la entrada a Gobernanza/Staff de cada rol (Ventas navega con data-top; Operaciones es la etiqueta activa del Manager).
+         · Cash Flow del Vendedor: la pestaña va en la barra (no en el menú lateral), orden del PO 2026-10-06. */
+    var STAFF_NAV_ITEMS = [
+      { k:'inicio',      roles:['owner','seller','manager'], html:'<a href="./index.html" data-top="inicio" data-i18n="staff-nav-inicio">Inicio</a>' },
+      { k:'academia',    roles:['owner','seller','manager'], html:'<button type="button" data-href="./academia.html" data-i18n="staff-nav-academia">Academia</button>' },
+      { k:'ventas',      roles:['seller'],                   html:'<button type="button" class="active" data-top="gobernanza" data-i18n="staff-nav-ventas">Ventas</button>' },
+      { k:'agenda',      roles:['owner','seller'],           html:'<button type="button" data-top="agenda" data-i18n="nav-agenda">Agenda</button>' },
+      { k:'config',      roles:['owner','seller'],           html:'<a href="./account-settings.html" data-top="config" data-i18n="staff-nav-config">⚙️ CONFIG</a>' },
+      { k:'djtools',     roles:['owner','manager'],          html:'<button type="button" data-href="./dj-tools.html" data-i18n="staff-nav-djtools">DJ Tools</button>' },
+      { k:'operaciones', roles:['manager'],                  html:'<button type="button" class="active" data-i18n="staff-nav-operaciones">Operaciones</button>' },
+      { k:'cashflow',    roles:['owner','seller'],           html:'<button type="button" data-top="cashflow">Cash Flow</button>' },
+      { k:'seoia',       roles:['owner','seller','manager'], html:'<a href="https://claude.ai/artifact/Xq8DXWtmh9WMborSAZEdsT" target="_blank" rel="noopener noreferrer">SEO·IA</a>' },
+      { k:'staff',       roles:['owner','seller','manager'], html:'<button type="button" data-top="gobernanza" data-i18n="staff-nav-staff">Staff</button>' },
+      { k:'miperfil',    roles:['owner','seller','manager'], before:{ seller:'staff', manager:'staff' }, html:'<button type="button" data-top="miperfil">MI PERFIL</button>' },
+      { k:'fenix',       roles:['owner','seller'],           html:'<button type="button" data-top="elixis" data-i18n="staff-nav-fenix">Fénix AI</button>' },
+      { k:'daynight',    roles:['owner','seller','manager'], html:'<button type="button" id="ofm-daynight" class="ofm-daynight" title="Modo día / noche" aria-label="Modo día / noche (global)"></button>' }
+    ];
     function staffTopnavHtml(role){
-      /* INICIO abre la tira, igual que en el resto del portal: sin él no hay
-         vuelta a la vitrina desde dentro. Va como <a> y no como <button>
-         porque navega fuera; paintStaffTopnav solo engancha clics a <button>,
-         así que un ancla se basta sola y no necesita el pintor. */
-      var start=
-        '<a href="./index.html" data-top="inicio" data-i18n="staff-nav-inicio">Inicio</a>'+
-        '<button type="button" data-href="./academia.html" data-i18n="staff-nav-academia">Academia</button>';
-      /* langSwitcher RETIRADO de esta tira (2026-09-02, orden directa del
-         PO: "esta pestaña de idioma debe estar configurándose solamente en
-         dos lugares, menú de inicio... y configuraciones de los perfiles,
-         no hay necesidad de agregar más pestañas de idioma"). Vivía
-         repetido en las 3 ramas de rol de abajo (owner/seller/manager) --
-         un tercer switch redundante, propio de staff.html porque esta
-         página no monta #mainHeader (ver nota arriba) y por lo tanto nunca
-         tuvo el switch global de la cabecera compartida. Quien esté en
-         staff.html y quiera cambiar de idioma ya puede hacerlo desde Inicio
-         o desde ⚙ Config (account-settings.html, que tiene el suyo propio)
-         -- no hace falta un tercero aquí. */
-      if(role==='owner'){
-        return start+
-          '<button type="button" data-top="agenda" data-i18n="nav-agenda">Agenda</button>'+
-          /* ⚙ CONFIG pasa de botón interno a ENLACE REAL. Antes era data-top,
-             o sea un conmutador de vista dentro de esta misma página: NO tenía
-             href, así que era imposible que llevara a la hoja de config por
-             mucho que se arreglara el renderizado — fallaba el criterio (c) por
-             diseño, no por un fallo visual. La fuente de verdad de
-             configuración y pasarelas es account-settings.html, la hoja unica
-             paneles nuevos; mantener aquí un botón que abría otra cosa partía
-             el flujo en dos.
-             Se deja como <a>: paintStaffTopnav solo engancha clics a <button>,
-             y un ancla navega sola, así que el pintor no necesita cambios. */
-          /* "⚙️ CONFIG" en mayúsculas, no "⚙️ Config" -- medido en vivo
-             (2026-09-03, pulido final del PO): #mainNav renderiza el nodo
-             de Config en mayúsculas de verdad (no es solo text-transform
-             CSS, el propio textContent ya llega así), y la diferencia de
-             ancho contra la versión en minúsculas de aquí era la ÚNICA
-             pestaña con más de 0.2px de diferencia entre las dos barras. */
-          '<a href="./account-settings.html" data-top="config" data-i18n="staff-nav-config">⚙️ CONFIG</a>'+
-          '<button type="button" data-href="./dj-tools.html" data-i18n="staff-nav-djtools">DJ Tools</button>'+
-          /* SIN data-i18n a propósito (2026-09-03, mismo criterio que ya se
-             documentó para este puesto: "para que i18n no le vacíe el
-             rótulo"). Tenía data-i18n="nav-cashflow", una clave COMPARTIDA
-             con #mainNav -- pero #mainNav nunca la traduce (su tabla en
-             mdjb-shared-header.js pinta el texto crudo "Cash Flow" sin pasar
-             por i18n), así que este botón terminaba siendo el ÚNICO lugar
-             donde "Cash Flow" se veía como "Flujo de Caja": mismo puesto,
-             mismo destino, dos rótulos distintos según de qué página venías. */
-          '<button type="button" data-top="cashflow">Cash Flow</button>'+
-          /* SEO·IA (2026-09-30): panel de tráfico real (GA4 + Search Console).
-             INTENTO de embeber como iframe (como Cash Flow) DESCARTADO:
-             claude.ai manda CSP "frame-ancestors 'self' <extensiones>", así
-             que cualquier origen ajeno (incluido este sitio) lo bloquea --
-             confirmado en consola, no es arreglable desde nuestro lado. Vuelve
-             a <a target="_blank"> real, mismo criterio que ⚙️ CONFIG arriba
-             ("Se deja como <a>: paintStaffTopnav solo engancha clics a
-             <button>, y un ancla navega sola"). Si en el futuro se quiere
-             ver DENTRO del portal con la barra propia, la única vía real es
-             reconstruir este panel como página nativa del sitio (traer los
-             datos de Supermetrics a una tabla propia y pintarlos aquí) --
-             no embeber el Artifact. */
-          '<a href="https://claude.ai/artifact/Xq8DXWtmh9WMborSAZEdsT" target="_blank" rel="noopener noreferrer">SEO·IA</a>'+
-          /* MI PERFIL abre la FICHA, que vive aqui dentro (#view-miperfil): banner,
-             foto, identidad y valoracion. Antes era un <a> hacia account-settings.html
-             — el MISMO destino que ⚙ Config, o sea dos botones distintos llevando a la
-             misma pagina y ninguno llevando al perfil. Ese es el sintoma que reporto el
-             PO: pulsar MI PERFIL y aterrizar en configuraciones.
-             Como <button> con data-top engancha con paintStaffTopnav y con
-             sincronizarTira, igual que Agenda, Cash Flow y Fenix AI. */
-          /* ORDEN 2026-09-03: Staff antes de MI PERFIL, para calzar con el
-             swap que ya se hizo en MDJ_NAV_SLOTS_INTERNO (mdjb-shared-
-             header.js, "chequeo de posiciones" del 2026-09-02) -- ese
-             cambio actualizó la tabla canónica pero no esta tira propia de
-             staff.html, así que quedaron en orden CONTRARIO entre las dos
-             barras: medido en vivo a 1440px, "Staff" caía en x=933 en
-             #mainNav pero en x=1091 aquí, y "MI PERFIL" al revés (1045 vs
-             938) -- el salto de posición más grande de toda esta ronda. */
-          '<button type="button" data-top="gobernanza" data-i18n="staff-nav-staff">Staff</button>'+
-          /* MI PERFIL es la etiqueta ÚNICA e INVARIABLE del puesto en TODO el
-             ecosistema, decisión PO 2026-08-16 ("el texto nunca cambia") --
-             MDJ_NAV_SLOTS_INTERNO la escribe literal, sin key de i18n, para
-             que ningún idioma se la toque. Aquí sí llevaba data-i18n propio
-             (traducía a "Mi Perfil"/"My Profile") -- mismo puesto, mismo
-             destino, tercer rótulo distinto según la página. */
-          '<button type="button" data-top="miperfil">MI PERFIL</button>'+
-          '<button type="button" data-top="elixis" data-i18n="staff-nav-fenix">Fénix AI</button>'+
-          /* MRM IA RETIRADO de este menu (2026-09-02, orden directa del PO:
-             "sacala y dejala solo en menu de inicio... borra todo lo que
-             tenga que ver con la posicion vieja"). Vive ahora unicamente en
-             index.html (Inicio), fuera de la barra compartida -- el PO
-             considero que un manual/tour por rol no pertenece dentro de un
-             portal especifico como este. Ver docs/ESTADO_MAESTRO.md para el
-             historial completo del cambio. */
-          /* DIA/NOCHE al final de la tira, como pidio el PO.
-             Se muda el boton DE ARRIBA (#ofm-daynight), no el ☀️ que habia aqui.
-             Los dos funcionaban, pero NO son equivalentes:
-               #ofm-daynight  -> clave `mdjStaffTheme`, COMPARTIDA con
-                                 mdjb-shared-header.js, y DIFUNDE el tema a los
-                                 cuatro marcos (ELIXIS, Agenda, Cash Flow, Config).
-               .dj-tab-btn--tema -> clave `mdj-theme`, y NO difunde.
-             Quedarse con el segundo habria dejado los iframes en el tema
-             equivocado. Se conserva el id: mountOwner lo cablea en el('ofm-daynight')
-             DESPUES de pintar la tira (844 pinta, 859 cablea), asi que lo encuentra. */
-          '<button type="button" id="ofm-daynight" class="ofm-daynight" title="Modo día / noche" aria-label="Modo día / noche (global)"></button>';
-      }
-      /* 2026-09-19, parte 2 del retiro de admin-dashboard.html: "Mi Panel"
-         (que bounceaba a admin-dashboard.html) se reemplaza por un botón
-         "Staff" real -- data-top="gobernanza" es el MISMO mecanismo que ya
-         usa el Owner, engancha con paintStaffTopnav/showView y entra al
-         edificio real (Network/Clientes/Equipo/etc, restringido por rol
-         dentro de staff-admin.html). Ya no hace falta ningún link al panel
-         viejo para estos 2 roles. */
-      if(role==='seller'){
-        /* "Ventas" (2026-09-30, TICKET-STAFF-ROLE-VIEWS): antes no tenía
-           data-top ni data-href — un botón "activo" sin destino, que dejaba
-           ver debajo lo que hubiera cargado por defecto (Gobernanza estática,
-           Owner-only). Ahora navega de verdad a Gobernanza, y el aterrizaje
-           dentro de ese contenedor (Leads, su cola real de prospectos) se
-           resuelve con una llamada directa en wireStaffSidebar/exitFullPage
-           -- no con un click() simulado sobre el menú (ver esa función para
-           el porqué).
-           MI PERFIL: mismo mecanismo real que usa el Owner (data-top="miperfil",
-           ficha con su propio nombre/foto/rol vía mountPerfil) — antes era un
-           <a> a account-profile.html, una página totalmente distinta.
-           CASH FLOW (2026-09-30, orden explícita del PO: "los vendedores
-           deben tener su pestaña de cash flow, ahí es donde se reflejan las
-           comisiones"). 2026-10-06, orden del PO: la pestaña va en la barra de
-           arriba, igual que el Owner (no en dos lugares); el link duplicado que
-           vivía en el menú lateral se retiró. Verificado: loadFlowData()
-           (flow-handler.js) filtra siempre por el uid de la sesión activa, nunca
-           un agregado de toda la empresa.
-           AGENDA + FÉNIX AI + CONFIG + STAFF (2026-09-30, corrección de
-           rumbo -- el PO aclaró que nunca pidió ocultar/quitar nada de
-           esto, y que la barra de seller debe tener paridad real con la
-           del Owner: "como puedes preguntar y ni siquiera veo config de
-           la cuenta ni la pestaña staff". Mismo botón/mecanismo que usa
-           Owner en los 4 casos, sin inventar uno nuevo:
-             - Agenda: verificada antes de darla, staff-agenda.html filtra
-               siempre por .eq('assigned_dj_id', prof.id) -- su propio
-               calendario, no el de toda la empresa.
-             - ⚙️ CONFIG: mismo destino que el Owner, account-settings.html
-               -- es la cuenta PROPIA de quien la abre, no hay dato ajeno
-               que proteger aquí.
-             - Staff: mismo mecanismo que Ventas (data-top="gobernanza"),
-               igual que en la barra del Owner donde Staff y el resto
-               conviven como entradas distintas al mismo edificio. */
-        return start+
-          '<button type="button" class="active" data-top="gobernanza" data-i18n="staff-nav-ventas">Ventas</button>'+
-          '<button type="button" data-top="agenda" data-i18n="nav-agenda">Agenda</button>'+
-          '<a href="./account-settings.html" data-top="config" data-i18n="staff-nav-config">⚙️ CONFIG</a>'+
-          /* CASH FLOW arriba, igual que el Owner (orden del PO 2026-10-06: «la pestaña está en la barra de menú, no en dos lugares; la plantilla de Wendy debe ser igual a la de Staff»).
-             Mismo botón y mismo data-top que la barra del Owner. Se retiró el link duplicado que vivía dentro del menú lateral de STAFF. */
-          '<button type="button" data-top="cashflow">Cash Flow</button>'+
-          /* SEO·IA (2026-09-30, orden del PO: "para todo el estaff... que se vea
-             desde todas las pestañas") -- mismo link que la barra del Owner. */
-          '<a href="https://claude.ai/artifact/Xq8DXWtmh9WMborSAZEdsT" target="_blank" rel="noopener noreferrer">SEO·IA</a>'+
-          '<button type="button" data-top="miperfil">MI PERFIL</button>'+
-          '<button type="button" data-top="gobernanza" data-i18n="staff-nav-staff">Staff</button>'+
-          '<button type="button" data-top="elixis" data-i18n="staff-nav-fenix">Fénix AI</button>'+
-          /* DÍA/NOCHE (reporte PO 2026-10-05, «faltaría la luna»): el tema es global y se recuerda (mdjStaffTheme), pero solo la barra del Owner traía el botón; Ventas lo
-             heredaba y no podía volver a noche. Mismo botón y mismo id que el Owner: lo cablea el bloque «DÍA/NOCHE GLOBAL» de más abajo, que busca #ofm-daynight por id. */
-          '<button type="button" id="ofm-daynight" class="ofm-daynight" title="Modo día / noche" aria-label="Modo día / noche (global)"></button>';
-      }
-      return start+
-        '<button type="button" data-href="./dj-tools.html" data-i18n="staff-nav-djtools">DJ Tools</button>'+
-        '<button type="button" class="active" data-i18n="staff-nav-operaciones">Operaciones</button>'+
-        /* SEO·IA (2026-09-30, orden del PO): mismo link, misma paridad que Owner/Ventas. */
-        '<a href="https://claude.ai/artifact/Xq8DXWtmh9WMborSAZEdsT" target="_blank" rel="noopener noreferrer">SEO·IA</a>'+
-        '<button type="button" data-top="miperfil">MI PERFIL</button>'+
-        '<button type="button" data-top="gobernanza" data-i18n="staff-nav-staff">Staff</button>'+
-        '<button type="button" id="ofm-daynight" class="ofm-daynight" title="Modo día / noche" aria-label="Modo día / noche (global)"></button>';   /* mismo botón día/noche que el Owner y Ventas */
+      var group = role === 'owner' ? 'owner' : (role === 'seller' ? 'seller' : 'manager');
+      var list = STAFF_NAV_ITEMS.filter(function(it){ return it.roles.indexOf(group) !== -1; });
+      list.slice().forEach(function(it){
+        var anchor = it.before && it.before[group];
+        if(!anchor) return;
+        var from = list.indexOf(it); list.splice(from, 1);
+        var to = -1; list.forEach(function(x, i){ if(x.k === anchor) to = i; });
+        list.splice(to === -1 ? from : to, 0, it);
+      });
+      return list.map(function(it){ return it.html; }).join('');
     }
 
     /* ── Gate STAFF (solo fila dj_profiles.role, nunca JWT solo — patrón admin-dashboard) ── */
