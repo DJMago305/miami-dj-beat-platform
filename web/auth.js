@@ -719,7 +719,8 @@ async function mdjEnsureAuthProfileRows(db, user) {
                 source_ref: refCode || null,
                 discount_eligible: true
             };
-            const { error: insErr } = await db.from('client_profiles').insert([clientPayload]);
+            /* upsert + ignoreDuplicates: si el servidor (trigger/reconciliación de H2) ya creó la fila, no es un error y no se pisa nada. */
+            const { error: insErr } = await db.from('client_profiles').upsert([clientPayload], { onConflict: 'user_id', ignoreDuplicates: true });
             if (insErr) console.warn('[AUTH] mdjEnsureAuthProfileRows client_profiles insert:', insErr);
         }
     } catch (e) {
@@ -1351,7 +1352,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         source_ref: refCode || null,
                         discount_eligible: true
                     };
-                    const { error: clientProfileErr } = await db.from('client_profiles').insert([clientPayload]);
+                    /* upsert por user_id (H2b): si el servidor ya creó la fila mínima (nombre y correo) al registrarse, este insert ya NO falla con «duplicate key» y,
+                       en vez de perderse, COMPLETA la fila con teléfono, dirección y source_ref (la atribución del referido). La fila nueva sigue pasando por los mismos triggers. */
+                    const { error: clientProfileErr } = await db.from('client_profiles').upsert([clientPayload], { onConflict: 'user_id' });
                     if (clientProfileErr) throw new Error(`No se pudo crear tu cuenta de cliente: ${clientProfileErr.message || 'error desconocido'}`);
                 }
 
