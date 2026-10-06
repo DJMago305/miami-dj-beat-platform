@@ -4374,7 +4374,7 @@
                         <div class="acct-card">
                             <div class="acct-row">
                                 <div class="acct-row-info">
-                                    <div class="acct-lbl">Display &amp; DJ Name</div>
+                                    <div class="acct-lbl">Display &amp; Artist Name</div>
                                     <div class="acct-val" id="acct-show-djname">—</div>
                                 </div>
                                 <button class="acct-edit" onclick="openModal('m-djname')">Editar</button>
@@ -4537,7 +4537,7 @@
                                     style="font-size:12px;font-weight:800;color:rgba(255,255,255,0.4);letter-spacing:2px;">
                                     EVENTO REFERIDO</div>
                                 <h3>$50<br>por reserva</h3>
-                                <p>Cada cliente que reserva un DJ a través de tu link te genera una comisión directa.
+                                <p>Cada cliente que reserva un artista a través de tu link te genera una comisión directa.
                                 </p>
                                 <button class="reward-redeem" onclick="copyReferral()">Compartir link</button>
                             </div>
@@ -4996,9 +4996,9 @@
                         <label class="m-label">Stage / artist name</label>
                         <input type="text" id="cfg-dj-alias" class="m-input" placeholder="DJMago305" autocomplete="nickname">
                         <p style="font-size:11px;color:rgba(255,255,255,0.35);margin:6px 0 0;">Public profile, promos, and
-                            bookings — your DJ brand.</p>
+                            bookings — your artist brand.</p>
                         <label class="m-label">Category / Specialty</label>
-                        <input type="text" id="cfg-category" class="m-input" placeholder="DJ &amp; Producer">
+                        <input type="text" id="cfg-category" class="m-input" placeholder="Artist &amp; Producer">
                         <p id="m-djname-err" class="m-err"></p>
                         <button type="submit" class="m-btn m-btn-gold">Save changes</button>
                         <span class="m-cancel" onclick="closeModal('m-djname')">Cancel</span>
@@ -5099,7 +5099,7 @@
             var navLabel;
             /* Pastilla #accountBtn: panel CONFIG (mismo criterio que mdjb-shared-header), no perfil público. */
             var accountHubHref = './account-settings.html?mdj_nav=profile';
-            var accountTitle = 'Panel DJ — CONFIG';
+            var accountTitle = 'Panel de Artista — CONFIG';
             try {
                 const { data: p } = await sb.from('dj_profiles').select('photo_url, role').eq('user_id', uid).maybeSingle();
                 var rNav = p && p.role != null ? String(p.role).toLowerCase().trim() : '';
@@ -6909,7 +6909,7 @@
                     .single();
 
                 if (!profile) {
-                    container.innerHTML = '<div class="fineprint" style="text-align:center;padding:20px;opacity:0.5;">No se encontró tu perfil de DJ.</div>';
+                    container.innerHTML = '<div class="fineprint" style="text-align:center;padding:20px;opacity:0.5;">No se encontró tu perfil de artista.</div>';
                     return;
                 }
 

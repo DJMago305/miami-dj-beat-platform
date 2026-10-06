@@ -4417,7 +4417,7 @@
                          las 24 especialidades marcadas desbordaba en varias lineas sobre la zona alta
                          de la foto y tapaba la cara. Mismo div y mismo id: el JS que lo rellena no
                          cambia. Orden final: Nombre - Rating - Redes - Especialidades - Badges. -->
-                    <div class="dj-hero-role" id="pub-role-label">DJ · PRODUCER</div>
+                    <div class="dj-hero-role" id="pub-role-label">ARTIST · PRODUCER</div>
 
                     <!-- Founder badge -->
                     <div id="pub-founder-badge" style="display:none; margin-top: 15px;">
@@ -4538,7 +4538,7 @@
                                 Tu comentario (opcional)
                             </label>
                             <textarea id="pub-review-comment" maxlength="300" rows="2"
-                                placeholder="Cuéntanos tu experiencia con este DJ…"></textarea>
+                                placeholder="Cuéntanos tu experiencia con este artista…"></textarea>
                             <button type="button" class="pub-leave-review-btn" id="pub-leave-review-btn" style="display:none;">—</button>
                             <p id="pub-leave-review-hint" data-i18n="profile-review-cta-hint-guest"
                                 style="font-size:10px;color:rgba(255,255,255,0.42);margin:10px 0 0;line-height:1.4;"></p>
@@ -4695,7 +4695,7 @@
                     style="display:none; text-align:center; justify-content:center; letter-spacing:4px; margin-bottom: 8px;">
                     INTERACTUAR</div>
                 <p id="sft-public-interact-hint" class="sft-public-interact-hint" data-i18n="sft-public-interact-hint" aria-hidden="true"
-                    style="display:none;">Fans: el botón dorado grande es para pedir canción y propina (no hace falta ir a las pestañas del DJ).</p>
+                    style="display:none;">Fans: el botón dorado grande es para pedir canción y propina (no hace falta ir a las pestañas del artista).</p>
                 <div style="display:flex; flex-direction:column; gap:10px;">
 
                     <p id="soundfortips-smart-heading" class="soundfortips-smart-heading" style="display:none;"
@@ -6360,8 +6360,8 @@
                     const bodyEs = (p.bio || p.bio_long || p.bio_short || '').trim();
                     const bodyEn = (p.bio_en || p.bio || p.bio_long || p.bio_short || '').trim();
                     const localizedBio = currentLang === 'en'
-                        ? (bodyEn || bodyEs || 'Professional DJ from the Miami DJ Beat network.')
-                        : (bodyEs || 'DJ profesional de la red Miami DJ Beat.');
+                        ? (bodyEn || bodyEs || 'Professional artist from the Miami DJ Beat network.')
+                        : (bodyEs || 'Artista profesional de la red Miami DJ Beat.');
                     bioEl.textContent = localizedBio;
                 };
 
@@ -6932,7 +6932,7 @@
                 : window.location.href;
             window.currentDJData = {
                 name: djName,
-                bio: p.bio || p.bio_long || p.bio_short || 'DJ profesional de la red Miami DJ Beat.',
+                bio: p.bio || p.bio_long || p.bio_short || 'Artista profesional de la red Miami DJ Beat.',
                 availability: avail ? 'Disponible' : 'No disponible',
                 currentWork: currentWork,
                 photo: p.photo_url || '',
@@ -6948,7 +6948,7 @@
             const metaTitle = document.getElementById('meta-og-title');
             const metaDesc = document.getElementById('meta-og-desc');
             const metaImg = document.getElementById('meta-og-image');
-            if (metaTitle) metaTitle.setAttribute('content', `${djName} — Perfil DJ Miami DJ Beat`);
+            if (metaTitle) metaTitle.setAttribute('content', `${djName} — Perfil de Artista Miami DJ Beat`);
             if (metaDesc) metaDesc.setAttribute('content', `🎵 Conoce a ${djName}. ${window.currentDJData.bio.substring(0, 100)}... Reserva a este artista a través de Miami DJ Beat.`);
             if (metaImg && p.photo_url) metaImg.setAttribute('content', mdjProfileBustImgUrl(String(p.photo_url).trim()));
 
@@ -7354,7 +7354,7 @@
                sin tocar el share normal del perfil de reserva. */
             const isKiosk = window._mdjSftLiveKioskView === true;
             const shareUrl = isKiosk && window._mdjSftCabQrUrl ? window._mdjSftCabQrUrl : data.url;
-            const shareTitle = isKiosk ? `SoundForTips — ${data.name}` : `${data.name} — Perfil DJ`;
+            const shareTitle = isKiosk ? `SoundForTips — ${data.name}` : `${data.name} — Perfil de Artista`;
 
             let shareText;
             if (isKiosk) {
@@ -7482,7 +7482,7 @@
             const reserveBtn = document.createElement('a');
             reserveBtn.id = 'dj-avail-reserve-btn';
             reserveBtn.href = bookingUrl;
-            reserveBtn.textContent = status === 'AVAILABLE' ? '📋 RESERVAR ESTE DJ' : '📋 CONSULTAR ESTA FECHA';
+            reserveBtn.textContent = status === 'AVAILABLE' ? '📋 RESERVAR ESTE ARTISTA' : '📋 CONSULTAR ESTA FECHA';
             const activeGradient = status === 'AVAILABLE' ? 'linear-gradient(135deg,#22c55e,#16a34a)' : 'linear-gradient(135deg,#c5a059,#e8b96a)';
             const activeColor = status === 'AVAILABLE' ? '#fff' : '#000';
             const activeShadow = status === 'AVAILABLE' ? '0 6px 18px rgba(34,197,94,0.4)' : '0 6px 18px rgba(197,160,89,0.45)';
@@ -7882,7 +7882,7 @@
             btn.textContent = t('profile-review-cta-btn-user') || 'Publicar opinión';
             if (hint) {
                 hint.setAttribute('data-i18n', 'profile-review-cta-hint-user');
-                hint.textContent = t('profile-review-cta-hint-user') || 'Tu valoración y comentario se publican en el perfil del DJ.';
+                hint.textContent = t('profile-review-cta-hint-user') || 'Tu valoración y comentario se publican en el perfil del artista.';
             }
             void mdjPubReviewLoadMine(session, djKey, btn, hint, commentEl);
             btn.onclick = async function () {
@@ -7892,7 +7892,7 @@
                     return;
                 }
                 if (!djKey) {
-                    try { alert('Perfil DJ no cargado. Recarga la página e inténtalo de nuevo.'); } catch (eK) { void eK; }
+                    try { alert('Perfil de artista no cargado. Recarga la página e inténtalo de nuevo.'); } catch (eK) { void eK; }
                     return;
                 }
                 var db = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
@@ -13684,7 +13684,7 @@
         window.handleSoundForTipsLaunchClick = function handleSoundForTipsLaunchClick() {
             if (!window.currentDJData) {
                 try {
-                    alert('Espera a que cargue el perfil del DJ e inténtalo de nuevo.');
+                    alert('Espera a que cargue el perfil del artista e inténtalo de nuevo.');
                 } catch (e0) { void e0; }
                 return;
             }
