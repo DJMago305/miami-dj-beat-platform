@@ -12,9 +12,13 @@
 
     if (session && isLoginPage) {
         const params = new URLSearchParams(window.location.search);
-        let next = params.get('next') || 'dj-dashboard.html';
+        /* H3c: ?next= solo a rutas del propio sitio (mdjSafeNextRaw de auth.js; antes se asignaba tal cual) y destino por defecto = su edificio (tabla canónica de mdj-identity.js). */
+        const home = typeof window.mdjBuildingHomeForRole === 'function'
+            ? window.mdjBuildingHomeForRole(String((session.user.app_metadata && session.user.app_metadata.role) || ''))
+            : 'dj-dashboard.html';
+        let next = (typeof window.mdjSafeNextRaw === 'function' ? window.mdjSafeNextRaw(params.get('next')) : '') || home;
         if (next.includes('login.html') || next.includes('index.html')) {
-            next = 'dj-dashboard.html';
+            next = home;
         }
         window.location.replace(next);
     }

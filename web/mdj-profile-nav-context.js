@@ -81,10 +81,12 @@
         var idn = window.__mdjLastPlatformIdentity;
         var isStaffCtx = !!(idn && idn.managementInDb);
 
+        /* H3c: «Mi Perfil» sale de la tabla canónica de mdj-identity.js (staff → su ficha, artista con sesión → su estación); sin sesión o sin esa tabla, queda lo anterior. */
+        var _bh = typeof window.mdjBuildingHomeForRole === 'function' ? window.mdjBuildingHomeForRole : null;
         var hrefProfile = isStaffCtx
-            ? './staff.html#miperfil'
+            ? (_bh ? _bh('staff') : './staff.html#miperfil')
             : (uid
-                ? './dj-profile.html?id=' + encodeURIComponent(uid) + '&' + PARAM + '=' + VALUE
+                ? (_bh ? withProfileNav(_bh('artist')) : './dj-profile.html?id=' + encodeURIComponent(uid) + '&' + PARAM + '=' + VALUE)
                 : './dj-profile.html?' + PARAM + '=' + VALUE);
         var hrefAgenda = isStaffCtx ? './staff.html#agenda' : withProfileNav('./dj-dashboard.html');
         var hrefFlow = isStaffCtx ? './staff.html#cashflow' : withProfileNav('./dj-dashboard.html?tab=flow');
