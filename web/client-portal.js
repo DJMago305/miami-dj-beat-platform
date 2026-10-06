@@ -1727,6 +1727,27 @@ async function portalSessionOwnsLead(db, leadId, sessionUserId, sessionEmail) {
     });
 }
 
+/** CARAPACHO FIJO DEL CLIENTE (orden del PO, 2026-10-06): <main> lleva SIEMPRE la misma estructura y nada la destruye al cambiar de estado:
+      #portal-calendar-widget  → calendario nativo del cliente (siempre montado, con o sin órdenes)
+      #portal-tickets-card     → «Mis tickets y mesas» (lo inserta portalTicketsInject; lista o estado neutro)
+      #portal-status-slot      → lo único que cambia: la lista de eventos, o el aviso «Aún no hay eventos vinculados»
+    Si el carapacho ya está en <main>, se REUSA (no se reescribe); solo se vacía y se llena el slot de estado. */
+function portalMountClientShell(main) {
+    if (!main) return null;
+    var shell = document.getElementById('portal-client-shell');
+    if (!shell || shell.parentNode !== main) {
+        main.innerHTML =
+            '<div id="portal-client-shell" style="width:100%;max-width:none;padding:20px 32px 60px;box-sizing:border-box;">' +
+            '<div id="portal-calendar-widget" class="portal-coi"></div>' +
+            '<div id="portal-status-slot"></div>' +
+            '</div>';
+        shell = document.getElementById('portal-client-shell');
+    }
+    var slot = document.getElementById('portal-status-slot');
+    if (slot) slot.innerHTML = '';
+    return { shell: shell, slot: slot };
+}
+
 /** ¿Hay una sesión de Supabase guardada en este navegador? Lee el almacenamiento (sin red): distingue al visitante anónimo de quien tiene sesión que aún se restaura. */
 function portalHasStoredSession() {
     try {
@@ -4580,14 +4601,13 @@ const PortalApp = {
 
         var main = document.querySelector('main');
         if (main) {
-            main.innerHTML =
-                '<div style="width:100%;max-width:none;padding:20px 32px 60px;box-sizing:border-box;">' +
-                '<div id="portal-calendar-widget" class="portal-coi"></div>' +
+            var shellEv = portalMountClientShell(main);
+            shellEv.slot.innerHTML =
                 '<div id="events-list" class="portal-events-list">' +
                 sectionUp +
                 sectionPast +
-                '</div></div>';
-            portalTicketsInject(main.firstElementChild, document.getElementById('events-list'));
+                '</div>';
+            portalTicketsInject(shellEv.shell, shellEv.slot);
             this.portalInjectDupWeddingIfNeeded(leads, session, clientRow, main);
             setTimeout(portalMarcarCancelacionesAbiertas, 0);
             try {
@@ -4763,14 +4783,18 @@ const PortalApp = {
         this.renderPortalWelcomeAvatar();
         var main = document.querySelector('main');
         if (main) {
-            main.innerHTML =
-                '<div class="container" style="padding: 20px 0 60px;">' +
-                '<div class="info-card" style="max-width: 560px; margin: 0 auto; text-align: center;">' +
+            var shellNo = portalMountClientShell(main);
+            shellNo.slot.innerHTML =
+                '<div class="info-card" style="max-width: 560px; margin: 24px auto 0; text-align: center;">' +
                 '<h3 style="margin-bottom: 12px;">' + portalEscapeHtml(portalT('portal-no-events-title')) + '</h3>' +
                 '<p class="fineprint" style="margin-bottom: 22px; line-height: 1.5;">' + portalEscapeHtml(portalT('portal-no-events-body')) + '</p>' +
                 '<a href="./rentals.html" class="btn primary" style="display: inline-block;">' + portalEscapeHtml(portalT('portal-no-events-cta')) + '</a>' +
-                '</div></div>';
-            portalTicketsInject(main.firstElementChild);
+                '</div>';
+            portalTicketsInject(shellNo.shell, shellNo.slot);
+            try {
+                renderPortalCalendar([], (clientRow && clientRow.important_dates) || [], clientRow && clientRow.calendar_sync_last_seen_at);
+                portalCoiLoadPersonalSync();
+            } catch (eCalNo) { /* no bloquea el resto del portal */ }
         }
     },
 
