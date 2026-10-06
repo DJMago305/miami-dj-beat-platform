@@ -4092,3 +4092,8 @@ Solo lectura: no mueve datos ni categorías.
 - **Network · categoría «Seguridad» (pedido del PO):** hay 9 contactos de referencia de seguridad (Alain Security, Charlie Segurida, Jimagua Seguridad, Lazaro Seguridad, Maikel security flavour, Pichon Seguridad, Richard, Segurida, Yandel Seguridad) repartidos en «Venues» o sin lista; no existía categoría. Script `supabase/scripts/20261006_network_categoria_seguridad.sql` (crea la lista, los agrega y los MUEVE: los saca de Venues, solo esas 9 fichas; excluye «Jesus Seguro»). Búsqueda ampliada a clientes y cuentas de DJ: no hay más seguridad. Para que el PO lo corra.
 - **`wedding-planning.html`:** opt-in a `mdj-dia-base.css` (la barra sigue al día; el contenido no cambia).
 - **Pendiente / sin tocar:** Matrix BFI y `contracts-engine.html` (iframes de otros hilos, solo medidos); páginas públicas night-only (el botón no hace nada ahí: decisión del PO si se adaptan una a una); deuda de tokenizar `staff-admin.html`.
+
+## [2026-10-06] Esqueleto de Talento: cero simulaciones por usuario
+- Retirado el gancho `?ap_demo=` (`demoModel`) de `web/js/artist-panel/artist-data.js` y borrado `web/js/artist-panel/artist-demo.local.js` (archivo ignorado por Git con cifras reales de personas simuladas por nombre). `artist-data.js?v=20261006-sin-demo` en `dj-dashboard.html` y `dj-profile.html`.
+- Revisado: `dj-dashboard.html` y `dj-profile.html` no tienen lógica por nombre ni por uid; solo comentarios y placeholders. Todo sale de `auth.uid()` o de `?dj=`.
+- Pendiente de este paquete: `staff-agenda.html` también carga `artist-data.js` y conserva `?v=20261005-rev1` (es del esqueleto de Staff; solo afectaría a navegadores con la versión vieja en caché, donde el gancho solo corre en localhost).
