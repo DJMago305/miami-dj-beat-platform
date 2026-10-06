@@ -4098,3 +4098,8 @@ Solo lectura: no mueve datos ni categorías.
 - `#mrm-panel` («Adquisición real»: leads, cuentas y compras de todo el negocio) solo se monta para el Owner: la RPC `mdj_metricas_adquisicion_reales` admite `is_staff`, así que se evita en el cliente. `get_business_cash_summary` ya es Owner/Admin en la base.
 - **NO incluido: arreglo de doble scroll / `ResizeObserver` (`mdjCfFit`).** No existe en este repositorio (ni en el historial ni en los docs) y no se reproduce con sesión de vendedora: medido en local, el documento exterior no hace scroll (969/969) y el marco de Cash Flow scrollea una sola vez; la barra `#ofm-bar` solo aparece para el Owner. Hace falta reproducirlo con sesión de Owner antes de escribir el arreglo.
 - Pendiente sin ticket: una sola plantilla de barra para todo el personal (`staffTopnavHtml` tiene 3 ramas duplicadas).
+
+## [2026-10-06] Esqueleto de Talento: cero simulaciones por usuario
+- Retirado el gancho `?ap_demo=` (`demoModel`) de `web/js/artist-panel/artist-data.js` y borrado `web/js/artist-panel/artist-demo.local.js` (archivo ignorado por Git con cifras reales de personas simuladas por nombre). `artist-data.js?v=20261006-sin-demo` en `dj-dashboard.html` y `dj-profile.html`.
+- Revisado: `dj-dashboard.html` y `dj-profile.html` no tienen lógica por nombre ni por uid; solo comentarios y placeholders. Todo sale de `auth.uid()` o de `?dj=`.
+- Pendiente de este paquete: `staff-agenda.html` también carga `artist-data.js` y conserva `?v=20261005-rev1` (es del esqueleto de Staff; solo afectaría a navegadores con la versión vieja en caché, donde el gancho solo corre en localhost).
