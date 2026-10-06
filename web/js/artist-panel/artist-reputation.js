@@ -7,9 +7,9 @@
     'use strict';
     var AP = window.ArtistPanel = window.ArtistPanel || {};
     var T = {
-        es: { card: 'Reseñas de clientes', none: 'Sin reseñas', noneHint: 'Aparecerán cuando un cliente que contrató contigo te califique.', one: 'reseña', many: 'reseñas',
+        es: { card: 'Reseñas de clientes', none: 'Sin reseñas aún', noneHint: 'Aparecerán cuando un cliente que contrató contigo te califique.', one: 'reseña', many: 'reseñas',
               ver1: 'verificada', verN: 'verificadas', title: 'Opiniones de clientes', open: 'Abrir opiniones', close: 'Cerrar opiniones', more: 'Mostrar más', newest: 'Más recientes', oldest: 'Más antiguas', sortLabel: 'Ordenar opiniones', sortTo: 'Cambiar el orden: ver las ', verified: 'Verificada', empty: 'Aún no tienes opiniones. Cuando un cliente que contrató contigo te califique, aparecerá aquí con la marca «Verificada».', client: 'Cliente' },
-        en: { card: 'Client reviews', none: 'No reviews', noneHint: 'They will appear once a client who hired you rates you.', one: 'review', many: 'reviews',
+        en: { card: 'Client reviews', none: 'No reviews yet', noneHint: 'They will appear once a client who hired you rates you.', one: 'review', many: 'reviews',
               ver1: 'verified', verN: 'verified', title: 'Client reviews', open: 'Open reviews', close: 'Close reviews', more: 'Show more', newest: 'Newest', oldest: 'Oldest', sortLabel: 'Sort reviews', sortTo: 'Change order: show ', verified: 'Verified', empty: 'You have no reviews yet. Once a client who hired you rates you, it will show here with the “Verified” badge.', client: 'Client' }
     };
     function lang() { var l = String(document.documentElement.getAttribute('lang') || 'es').toLowerCase(); return l.indexOf('en') === 0 ? 'en' : 'es'; }
@@ -108,8 +108,10 @@
         if (!box) { box = document.createElement('div'); box.id = 'ap-reviews'; box.addEventListener('click', onClick); }
         box.className = 'ap-acc' + (state.open ? ' ap-acc--open' : '');
         /* Al final de la pestaña Cash Flow, justo ANTES de «Exportación fiscal (IRS)», que es siempre lo último. Si esa franja no existe en la página, queda al final de todo. */
+        var mount = document.getElementById('ap-reputation');                /* punto de montaje propio de la página: si existe, la sección vive DENTRO de él */
         var exp = document.getElementById('flow-export-panel');
-        if (exp && exp.parentNode) { if (box.nextSibling !== exp || box.parentNode !== exp.parentNode) exp.parentNode.insertBefore(box, exp); }
+        if (mount) { if (box.parentNode !== mount) mount.appendChild(box); }
+        else if (exp && exp.parentNode) { if (box.nextSibling !== exp || box.parentNode !== exp.parentNode) exp.parentNode.insertBefore(box, exp); }
         else host.appendChild(box);
         while (box.firstChild) box.removeChild(box.firstChild);
         var rows = view(), n = Number(sum.review_count) || 0, mini = null, tools = null;
