@@ -8010,7 +8010,7 @@
             var r = Math.min(5, Math.max(0, Number(rv && rv.rating != null ? rv.rating : 0)));
             var stars = '\u2605'.repeat(Math.round(r)) + '\u2606'.repeat(Math.max(0, 5 - Math.round(r)));
             var comment = rv && rv.comment ? String(rv.comment).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
-            var name = (rv && rv.reviewer_display_name) ? String(rv.reviewer_display_name).replace(/&/g, '&amp;') : 'Verified client';
+            var name = (rv && rv.reviewer_display_name) ? String(rv.reviewer_display_name).replace(/&/g, '&amp;') : 'Cliente';
             return '<article class="pub-review-card pub-review-hero"><div class="pub-review-card-stars" aria-hidden="true">' + stars + '</div>' +
                 (comment ? '<p class="pub-review-card-comment">\u201c' + comment + '\u201d</p>' : '') +
                 '<div class="pub-review-card-meta">' + name + mdjPubReviewVerifiedChip(rv) + '</div></article>';
