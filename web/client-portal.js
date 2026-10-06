@@ -1727,19 +1727,34 @@ async function portalSessionOwnsLead(db, leadId, sessionUserId, sessionEmail) {
     });
 }
 
-/** Admin / manager / seller: JWT + fila dj_profiles (roles en minúsculas). */
+/** Edificio de la sesión: UNA sola decisión para el portal (mdj-identity.js → mdjResolveAccessKind: JWT del servidor, luego mdj_access_snapshot()).
+    Si mdj-identity.js no cargó, queda solo el rol de servidor del JWT (mismo criterio de siempre). */
+async function mdjPortalAccessKind(db, user) {
+    if (!user) return { kind: 'unknown', role: '', source: 'none' };
+    if (typeof window.mdjResolveAccessKind === 'function') {
+        try { return await window.mdjResolveAccessKind(db, user); } catch (e) { /* cae al JWT */ }
+    }
+    var appR = String((user.app_metadata && user.app_metadata.role) || '').toLowerCase();
+    if (appR === 'owner' || appR === 'admin' || appR === 'manager') return { kind: 'staff_full', role: appR, source: 'jwt' };
+    if (appR === 'seller') return { kind: 'staff_seller', role: 'seller', source: 'jwt' };
+    if (appR === 'artist' || appR === 'dj' || appR === 'talent') return { kind: 'artist', role: 'artist', source: 'jwt' };
+    return { kind: appR === 'client' ? 'buyer' : 'unknown', role: appR === 'client' ? 'client' : '', source: 'jwt' };
+}
+
+/** Admin / manager / seller (NO owner: el owner no supervisa el portal del cliente): decidido por el resolvedor de edificio. */
 async function mdjPortalResolveStaff(db, user) {
     if (!db || !user) return false;
-    var appR = String((user.app_metadata && user.app_metadata.role) || '').toLowerCase();
-    if (appR === 'admin' || appR === 'manager' || appR === 'seller') return true;
-    // (user_type ya no otorga permisos de staff: lo escribe el propio usuario)
-    try {
-        var pr = await db.from('dj_profiles').select('role').eq('user_id', user.id).maybeSingle();
-        var dr = String((pr && pr.data && pr.data.role) || '').toLowerCase();
-        return dr === 'admin' || dr === 'manager' || dr === 'seller';
-    } catch (e) {
-        return false;
-    }
+    var acc = await mdjPortalAccessKind(db, user);
+    return (acc.kind === 'staff_full' && acc.role !== 'owner') || acc.kind === 'staff_seller';
+}
+
+/** A dónde se expulsa de ESTE edificio (cliente) a quien no es cliente; '' si puede quedarse. Mismos destinos de siempre. */
+function mdjPortalBuildingExit(acc) {
+    if (!acc) return '';
+    if (acc.kind === 'staff_full') return acc.role === 'owner' ? './account-profile.html?from_client_portal=1' : './staff.html?vista=gobernanza&from_client_portal=1';
+    if (acc.kind === 'staff_seller') return './staff.html?vista=gobernanza&from_client_portal=1';
+    if (acc.kind === 'artist') return './dj-dashboard.html?from_client_portal=1';   /* el artista tiene su propia estación; el portal del cliente no es suyo */
+    return '';
 }
 
 /** ?mode=manager | staff | supervision — hub de supervisión sin ?lead */
@@ -4312,19 +4327,11 @@ const PortalApp = {
                 attempt++;
             }
             if (!session || !session.user) return false;
-            /* 3-BUILDING GUARD: eject staff/owner from client building immediately (JWT-only, no DB). */
-            var _cpRole = String((session.user.app_metadata && session.user.app_metadata.role) || '').toLowerCase();
-            if (_cpRole === 'owner') {
-                window.location.href = './account-profile.html?from_client_portal=1';
-                return true;
-            }
-            if (_cpRole === 'admin' || _cpRole === 'manager' || _cpRole === 'seller') {
-                window.location.href = './staff.html?vista=gobernanza&from_client_portal=1';
-                return true;
-            }
-            if (_cpRole === 'artist' || _cpRole === 'dj' || _cpRole === 'talent') {
-                /* Contenedores: el artista tiene su propia estación; el portal del cliente no es suyo. */
-                window.location.href = './dj-dashboard.html?from_client_portal=1';
+            /* 3-BUILDING GUARD: staff / owner / artista salen de este edificio. La decisión es la del resolvedor único (JWT del servidor; para cuentas de
+               cliente o sin rol, además, mdj_access_snapshot(): un «cliente» al que la base reconoce como staff o artista tampoco entra). */
+            var _cpExit = mdjPortalBuildingExit(await mdjPortalAccessKind(db, session.user));
+            if (_cpExit) {
+                window.location.href = _cpExit;
                 return true;
             }
             var email = String(session.user.email || '').trim().toLowerCase();
