@@ -1107,6 +1107,15 @@ function portalFormatShortName(fullName) {
 
 var PORTAL_I18N_FB = {
     en: {
+        'portal-tickets-title': 'My tickets & reserved tables',
+        'portal-tickets-empty': 'No active reservations.',
+        'portal-tickets-kind-tickets': 'Tickets',
+        'portal-tickets-kind-tables': 'Table reservation',
+        'portal-tickets-code': 'Booking code',
+        'portal-tickets-st-paid': 'Confirmed',
+        'portal-tickets-st-review': 'Under review',
+        'portal-tickets-st-used': 'Checked in',
+        'portal-tickets-guest': 'Guest name',
         'portal-welcome-recognized': 'Hello, {name}!',
         'portal-welcome-recognized-sub':
             'You are part of the Miami DJ Beat family. From here you can book, rent, or shop — and your dates, payments, and details will stay in one place, with us beside you every step of the way.',
@@ -1203,6 +1212,15 @@ var PORTAL_I18N_FB = {
         'portal-staff-hub-open': 'Open portal'
     },
     es: {
+        'portal-tickets-title': 'Mis tickets y mesas reservadas',
+        'portal-tickets-empty': 'Sin reservas activas.',
+        'portal-tickets-kind-tickets': 'Entradas',
+        'portal-tickets-kind-tables': 'Reserva de mesa',
+        'portal-tickets-code': 'Código de reserva',
+        'portal-tickets-st-paid': 'Confirmada',
+        'portal-tickets-st-review': 'En revisión',
+        'portal-tickets-st-used': 'Ya ingresó',
+        'portal-tickets-guest': 'A nombre de',
         'portal-welcome-recognized': '¡Hola, {name}!',
         'portal-welcome-recognized-sub':
             'Eres parte de la familia Miami DJ Beat. Desde aquí reservas, rentas o compras en el shop, y verás en un solo lugar fechas, pagos y el detalle de lo que tengas con nosotros — con el mismo cariño de siempre, paso a paso.',
@@ -1332,6 +1350,54 @@ function portalT(key, name) {
     if (name != null && name !== '') tpl = tpl.replace(/\{name\}/g, String(name));
     else tpl = tpl.replace(/\{name\}/g, '');
     return tpl;
+}
+
+/* ── Mis Tickets / Mesas Reservadas ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   Lee SOLO los pedidos del propio cliente con la función de la base get_my_ticket_orders() (SECURITY DEFINER: cruza el correo CONFIRMADO de la sesión con
+   venue_ticket_orders.customer_email; la tabla no la puede leer un cliente directamente). No devuelve ids de Stripe, teléfono ni correo.
+   Estados: sin pedidos → «Sin reservas activas»; si la función aún no existe en la base o la lectura falla → la sección se oculta (jamás un «sin reservas» falso). */
+function portalTicketsMoney(cents, cur) {
+    var v = (Number(cents) || 0) / 100, c = String(cur || 'usd').toUpperCase();
+    try { return new Intl.NumberFormat(portalLang() === 'es' ? 'es-US' : 'en-US', { style: 'currency', currency: c }).format(v); } catch (e) { return '$' + v.toFixed(2); }
+}
+function portalTicketsRender(host, rows) {
+    while (host.firstChild) host.removeChild(host.firstChild);
+    function el(tag, cls, txt) { var n = document.createElement(tag); if (cls) n.className = cls; if (txt != null) n.textContent = txt; return n; }
+    host.appendChild(el('h3', 'pt-title', portalT('portal-tickets-title')));
+    if (!rows.length) { host.appendChild(el('p', 'pt-empty', portalT('portal-tickets-empty'))); host.hidden = false; return; }
+    var list = el('div', 'pt-list'), loc = portalLang() === 'es' ? 'es-US' : 'en-US';
+    rows.forEach(function (o) {
+        var row = el('div', 'pt-row'), main = el('div', 'pt-main'), side = el('div', 'pt-side');
+        var evName = o.event_title || (o.room_name || '');
+        main.appendChild(el('div', 'pt-ev', (o.kind === 'tables' ? '🪑 ' : '🎟 ') + (evName || portalT('portal-tickets-kind-' + (o.kind === 'tables' ? 'tables' : 'tickets')))));
+        var bits = [];
+        if (o.event_date) { var d = new Date(String(o.event_date).slice(0, 10) + 'T12:00:00'); if (!isNaN(d.getTime())) bits.push(d.toLocaleDateString(loc, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })); }
+        if (o.room_name && o.event_title) bits.push(o.room_name);
+        bits.push(portalT('portal-tickets-kind-' + (o.kind === 'tables' ? 'tables' : 'tickets')));
+        main.appendChild(el('div', 'pt-meta', bits.join(' · ')));
+        var items = Array.isArray(o.items) ? o.items : [];
+        if (items.length) main.appendChild(el('div', 'pt-meta', items.map(function (it) { return (Number(it.qty) > 1 ? it.qty + ' × ' : '') + String(it.label || ''); }).join(' · ')));
+        if (o.reservation_name) main.appendChild(el('div', 'pt-meta', portalT('portal-tickets-guest') + ': ' + o.reservation_name));
+        side.appendChild(el('div', 'pt-total', portalTicketsMoney(o.total_cents, o.currency)));
+        var used = Number(o.checked_in_qty) > 0, review = String(o.status || '').indexOf('refund') >= 0 || String(o.status || '').indexOf('conflict') >= 0;
+        side.appendChild(el('span', 'pt-badge' + (review ? ' pt-badge--warn' : ''), portalT(used ? 'portal-tickets-st-used' : (review ? 'portal-tickets-st-review' : 'portal-tickets-st-paid'))));
+        if (o.id) side.appendChild(el('div', 'pt-code', portalT('portal-tickets-code') + ' ' + String(o.id).slice(0, 8).toUpperCase()));
+        row.appendChild(main); row.appendChild(side); list.appendChild(row);
+    });
+    host.appendChild(list); host.hidden = false;
+}
+async function portalTicketsMount() {
+    var host = document.getElementById('portal-tickets-card'); if (!host) return;
+    try {
+        var db = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+        if (!db) { host.hidden = true; return; }
+        var sm = await db.auth.getSession(), sess = sm && sm.data && sm.data.session;
+        if (!sess || !sess.user) { host.hidden = true; return; }
+        var res = await db.rpc('get_my_ticket_orders');
+        if (!res || res.error || !Array.isArray(res.data)) { host.hidden = true; return; }
+        portalTicketsRender(host, res.data);
+        document.addEventListener('languageChanged', function () { portalTicketsRender(host, res.data); });
+    } catch (e) { host.hidden = true; }
 }
 
 function portalTAmount(key, amountUsd) {
@@ -1985,6 +2051,7 @@ const PortalApp = {
 
         await this.loadLeadData(leadId);
         this.setupEventListeners();
+        if (!this.isManager) { portalTicketsMount(); }
 
         // Handle Stripe payment return
         await this.handlePaymentReturn();
@@ -4622,7 +4689,8 @@ const PortalApp = {
                 </div>
             </div>
         `;
-        document.querySelector('main').innerHTML = '';
+        document.querySelector('main').innerHTML = '<section id="portal-tickets-card" class="pt-card" hidden aria-live="polite"></section>';
+        portalTicketsMount();
     },
 
     renderGuestManagerEmergencyScreen() {
