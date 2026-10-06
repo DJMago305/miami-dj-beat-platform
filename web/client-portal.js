@@ -1727,6 +1727,19 @@ async function portalSessionOwnsLead(db, leadId, sessionUserId, sessionEmail) {
     });
 }
 
+/** ¿Hay una sesión de Supabase guardada en este navegador? Lee el almacenamiento (sin red): distingue al visitante anónimo de quien tiene sesión que aún se restaura. */
+function portalHasStoredSession() {
+    try {
+        for (var i = 0; i < localStorage.length; i++) {
+            if (/^sb-.*-auth-token$/.test(localStorage.key(i) || '')) {
+                var j = JSON.parse(localStorage.getItem(localStorage.key(i)));
+                if (j && (j.access_token || j.refresh_token || j.user || j.currentSession)) return true;
+            }
+        }
+    } catch (e) { return true; /* sin almacenamiento legible: no se presume anónimo, sigue la comprobación con reintentos */ }
+    return false;
+}
+
 /** Edificio de la sesión: UNA sola decisión para el portal (mdj-identity.js → mdjResolveAccessKind: JWT del servidor, luego mdj_access_snapshot()).
     Si mdj-identity.js no cargó, queda solo el rol de servidor del JWT (mismo criterio de siempre). */
 async function mdjPortalAccessKind(db, user) {
@@ -2109,6 +2122,12 @@ const PortalApp = {
                 document.body.classList.add('portal-resolving-session');
             } catch (e0) { /* ignore */ }
             await this.waitForSupabaseClient(10000);
+            /* Visitante anónimo (ninguna sesión guardada en el navegador): al login de inmediato, con vuelta a esta página.
+               Sin esto el portal quedaba oculto (portal-resolving-session) mientras se agotaban ~12 reintentos pensados para una sesión que tarda en restaurarse. */
+            if (!portalHasStoredSession()) {
+                window.location.replace('./login.html?next=' + encodeURIComponent(window.location.pathname + window.location.search));
+                return;
+            }
             var resolved = false;
             var ar;
             for (ar = 0; ar < 12; ar++) {
