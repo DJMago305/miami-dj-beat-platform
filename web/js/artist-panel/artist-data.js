@@ -13,7 +13,6 @@
     var DAILY_COLS = 'bucket_date,gross_cents,residency_gross_cents,sft_gross_cents,tx_count';
     var PROFILE_COLS = 'plan_type,plan_status';
 
-    function isLocal() { return /^(localhost|127\.0\.0\.1)$/.test(location.hostname); }
     function client() { return typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : window.supabase; }
     function usd(cents) { return (Number(cents) || 0) / 100; }
     function num(v) { var n = Number(v); return isFinite(n) ? n : 0; }
@@ -57,24 +56,7 @@
     }
 
     /* Carga todo en paralelo. Devuelve una promesa del modelo; si algo falla, rechaza (la vista muestra un aviso, no una pantalla en blanco). */
-    /* SOLO en localhost: ?ap_demo=<nombre> simula a un artista para revisar la vista antes de publicar. Los datos de las simulaciones viven en
-       artist-demo.local.js, un archivo que NO se sube a Git (son cifras reales de personas); en producción esta rama no se ejecuta. */
-    function demoModel() {
-        if (!isLocal()) return null;
-        if (window.__AP_DEMO__) return Promise.resolve(window.__AP_DEMO__);
-        var m = /[?&]ap_demo=([a-z0-9_-]+)/i.exec(location.search); if (!m) return null;
-        var name = m[1].toLowerCase();
-        function pick() { var set = window.__AP_DEMO_SETS__ || {}; return set[name] ? Promise.resolve(set[name]) : Promise.reject(new Error('simulación «' + name + '» no definida')); }
-        if (window.__AP_DEMO_SETS__) return pick();
-        return new Promise(function (resolve, reject) {
-            var sc = document.createElement('script'); sc.src = './js/artist-panel/artist-demo.local.js';
-            sc.onload = function () { pick().then(resolve, reject); }; sc.onerror = function () { reject(new Error('falta artist-demo.local.js')); };
-            document.head.appendChild(sc);
-        });
-    }
-
     function load() {
-        var demo = demoModel(); if (demo) return demo;
         var db = client();
         if (!db) return Promise.reject(new Error('sin cliente de datos'));
         return ownUserId(db).then(function (uid) {
@@ -96,8 +78,6 @@
        filtra por auth.uid() dentro de la base). Si la función no existe todavía o falla, devuelve [] sin romper la pantalla. */
     var visitsWarned = false;
     function loadVisits(days) {
-        var demo = demoModel();
-        if (demo) return demo.then(function (m) { return (m && m.visitas) || []; }, function () { return []; });
         var db = client(); if (!db) return Promise.resolve([]);
         return db.rpc('get_my_profile_visits_daily', { p_days: days || 800 }).then(function (r) {
             if (r && r.error) { if (!visitsWarned) { visitsWarned = true; try { console.warn('[artist-panel] visitas:', r.error.message); } catch (x) { /* sin consola */ } } return []; }
@@ -109,8 +89,6 @@
        aún no existe, cae al promedio y total que ya guarda su propia fila de dj_profiles (columnas nombradas) y sin lista. Con 0 reseñas devuelve avg null: jamás «1.0». */
     function emptyReviews() { return { review_count: 0, verified_count: 0, avg_rating: null, reviews: [] }; }
     function loadReviews() {
-        var demo = demoModel();
-        if (demo) return demo.then(function (m) { return (m && m.resenas) || emptyReviews(); }, function () { return emptyReviews(); });
         var db = client(); if (!db) return Promise.resolve(emptyReviews());
         function fromProfile() {
             return ownUserId(db).then(function (uid) {
@@ -141,14 +119,10 @@
        marca recibe mode null y no ve nada; si las funciones aún no existen, también (sin romper la pantalla). */
     var NO_CONTRIB = { mode: null };
     function loadContribution() {
-        var demo = demoModel();
-        if (demo) return demo.then(function (m) { return (m && m.contribucion) || NO_CONTRIB; }, function () { return NO_CONTRIB; });
         var db = client(); if (!db) return Promise.resolve(NO_CONTRIB);
         return db.rpc('get_my_contribution_summary').then(function (r) { return (r && !r.error && r.data) ? r.data : NO_CONTRIB; }, function () { return NO_CONTRIB; });
     }
     function loadContributionDaily(days) {
-        var demo = demoModel();
-        if (demo) return demo.then(function (m) { return (m && m.horasDiarias) || []; }, function () { return []; });
         var db = client(); if (!db) return Promise.resolve([]);
         return db.rpc('get_my_contribution_daily', { p_days: days || 800 }).then(function (r) { return (r && !r.error && r.data) ? r.data : []; }, function () { return []; });
     }
@@ -157,8 +131,6 @@
        contratos (leads). Todo con columnas nombradas (jamás las tarifas del local) y solo lo suyo: las tablas lo filtran por su usuario. Últimos 400 días. */
     function nyDay(iso) { try { return new Date(iso).toLocaleDateString('en-CA', { timeZone: 'America/New_York' }); } catch (e) { return String(iso).slice(0, 10); } }
     function loadActivity() {
-        var demo = demoModel();
-        if (demo) return demo.then(function (m) { return (m && m.actividad) || { daily: [], events: [], leads: [] }; }, function () { return { daily: [], events: [], leads: [] }; });
         var db = client(); if (!db) return Promise.resolve({ daily: [], events: [], leads: [] });
         var since = new Date(); since.setDate(since.getDate() - 400);
         var sinceDay = since.getFullYear() + '-' + String(since.getMonth() + 1).padStart(2, '0') + '-' + String(since.getDate()).padStart(2, '0');
@@ -184,8 +156,6 @@
        tarifas de local. Devuelve filas CRUDAS del libro, las residencias por día (solo días con residencia) y las propinas aceptadas; el modelo lo arma el módulo. */
     var MOV_LEDGER_COLS = 'id,type,status,amount_cents,created_at,event_id,src:metadata->>source,ename:metadata->>event_name,evento:metadata->>evento,fecha:metadata->>fecha,rate:metadata->>commission_rate,classification:metadata->>classification';
     function loadMovementSources() {
-        var demo = demoModel();
-        if (demo) return demo.then(function (m) { return (m && m.movimientos) || { ledger: [], daily: [], tips: [] }; }, function () { return { ledger: [], daily: [], tips: [] }; });
         var db = client();
         if (!db) return Promise.reject(new Error('sin cliente de datos'));
         return ownUserId(db).then(function (uid) {
