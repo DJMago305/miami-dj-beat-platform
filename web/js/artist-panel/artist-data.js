@@ -169,5 +169,18 @@
         });
     }
 
-    AP.data = { loadReviewsPage: loadReviewsPage, loadMovementSources: loadMovementSources, loadActivity: loadActivity, load: load, loadVisits: loadVisits, loadReviews: loadReviews, loadContribution: loadContribution, loadContributionDaily: loadContributionDaily, buildModel: buildModel };
+    /* Completitud del perfil (artist-health.js): SOLO la propia fila de dj_profiles, con columnas nombradas y filtrada por auth.uid() (además del RLS). Sin sesión o sin fila devuelve {} (0 %, sin error). */
+    var HEALTH_COLS = 'photo_url,photo_status,bio,bio_long,bio_short,soundcloud_url,social_soundcloud,social_mixcloud,spotify_url,social_spotify,apple_music_url,social_apple,beatport_url,social_beatport,youtube_url,social_youtube,hourly_rate_usd,availability,availability_schedule';
+    function loadProfileHealth() {
+        var db = client(); if (!db) return Promise.resolve({});
+        return ownUserId(db).then(function (uid) {
+            if (!uid) return {};
+            return db.from('dj_profiles').select(HEALTH_COLS).eq('user_id', uid).maybeSingle().then(function (r) {
+                if (r && r.error) throw new Error(r.error.message || 'perfil');
+                return (r && r.data) || {};
+            });
+        });
+    }
+
+    AP.data = { loadProfileHealth: loadProfileHealth, loadReviewsPage: loadReviewsPage, loadMovementSources: loadMovementSources, loadActivity: loadActivity, load: load, loadVisits: loadVisits, loadReviews: loadReviews, loadContribution: loadContribution, loadContributionDaily: loadContributionDaily, buildModel: buildModel };
 })();
