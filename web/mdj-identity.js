@@ -119,7 +119,7 @@
    *   1) app_metadata.role (el JWT lo fija el SERVIDOR; el usuario no puede editarlo) cuando es de staff o de artista: decisión SIN red.
    *   2) Si el JWT no lo decide (cliente o sin rol): RPC mdj_access_snapshot() con tiempo límite — la base manda (fila de dj_profiles / client_profiles).
    *      Un cliente de JWT al que la base reconoce como staff o artista deja de pasar por cliente.
-   *   3) Sin respuesta (red lenta, error, perfil aún sin crear): rol de servidor 'client' → buyer; si no, unknown (la guarda de cada página decide; NUNCA se asume staff).
+   *   3) Sin respuesta (red lenta, error): rol de servidor 'client' → buyer; si no, unknown. Si la base RESPONDE 'unknown' (sin perfiles), manda la base: unknown → account-profile (la guarda de cada página decide; NUNCA se asume staff).
    * La RPC tiene un efecto (genera el código MDJB una vez por cuenta): por eso no se llama cuando el JWT ya decide.
    * Compatible con Safari 13 (sin ?. ni ??).
    * ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── */
@@ -137,7 +137,8 @@
     if (pk === 'staff_seller') return { kind: 'staff_seller', role: 'seller', source: 'snapshot' };
     if (pk === 'artist') return { kind: 'artist', role: 'artist', source: 'snapshot' };
     if (pk === 'buyer') return { kind: 'buyer', role: 'client', source: 'snapshot' };
-    return null;                                              /* 'unknown' (sin filas todavía): no decide */
+    if (pk === 'unknown') return { kind: 'unknown', role: '', source: 'snapshot' };   /* la BASE confirma que la cuenta aún no tiene perfil: va a account-profile (no se presume cliente por el JWT) */
+    return null;
   }
   function mdjResolveAccessKind(db, user, opts) {
     var ms = (opts && opts.timeoutMs) || 2500;

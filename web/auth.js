@@ -404,7 +404,7 @@ function mdjEnsureIdentityScript() {
     return new Promise(function (resolve) {
         try {
             const s = document.createElement('script');
-            s.src = './mdj-identity.js?v=20261006-edificio';
+            s.src = './mdj-identity.js?v=20261006-edificio2';
             s.onload = function () { resolve(true); };
             s.onerror = function () { resolve(false); };
             document.head.appendChild(s);
