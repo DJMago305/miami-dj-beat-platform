@@ -330,6 +330,11 @@
             try { jwtRole = (typeof window.mdjResolveEffectiveUserRole === 'function') ? String(window.mdjResolveEffectiveUserRole(session.user) || '').toLowerCase() : ''; } catch (eJ) { jwtRole = ''; }
             var esRolCliente = function (x) { return x === 'client' || x === 'cliente'; };
             var isClient = rl ? esRolCliente(rl) : (jwtRole ? esRolCliente(jwtRole) : true);
+            /* H3c: «mi panel» y «mi perfil» van a la tabla canónica de mdj-identity.js (staff → su ficha, artista → su estación, cliente → su portal);
+               antes un staff caía en las páginas del artista. «Configuración» sigue como estaba. Sin mdj-identity.js queda la tabla anterior. */
+            if ((kind === 'dash' || kind === 'profile') && typeof window.mdjBuildingHomeForRole === 'function') {
+              return window.mdjBuildingHomeForRole(isClient ? 'client' : (rl || jwtRole || 'artist'));
+            }
             if (kind === 'dash') return isClient ? './client-portal.html' : './dj-dashboard.html';
             if (kind === 'profile') return isClient ? './client-portal.html' : './dj-profile.html';
             if (kind === 'settings') return isClient ? './client-account.html' : './dj-dashboard.html';

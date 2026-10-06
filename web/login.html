@@ -1750,7 +1750,9 @@
         // ── Auto-open signup tab (Crear cuenta / nueva cuenta) ────
         const params = new URLSearchParams(window.location.search);
         const mode = (params.get('mode') || '').toLowerCase();
-        const redirect = params.get('redirect');  // e.g. dj-profile → go back after auth
+        /* ?redirect= (nombre de página, p. ej. dj-profile): primero mdjSafeNextRaw (solo el propio sitio, igual que ?next=) y, además, la lista blanca de nombres
+           [a-z][a-z0-9_-]* que ya aplican más abajo y auth.js. Un valor que no pasa se ignora. */
+        const redirect = (typeof window.mdjSafeNextRaw === 'function') ? window.mdjSafeNextRaw(params.get('redirect')) : params.get('redirect');  // e.g. dj-profile → go back after auth
         const signupParam = (params.get('signup') || '').toLowerCase();
         const wantsSignup =
             mode === 'signup' ||

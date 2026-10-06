@@ -2375,6 +2375,14 @@
       d.querySelector('button').addEventListener('click', function(){ location.reload(); });
       m.appendChild(d);
     }
+    /* mdj-identity.js no va en staff.html (su cabecera funcionaba sin él): se carga bajo demanda, y solo en la rama de quien NO es staff. */
+    function mdjGateEnsureIdentity(){
+      if(typeof window.mdjResolveAccessKind==='function') return Promise.resolve(true);
+      return new Promise(function(resolve){
+        try{ var sc=document.createElement('script'); sc.src='./mdj-identity.js?v=20261006-edificio'; sc.onload=function(){resolve(true);}; sc.onerror=function(){resolve(false);}; document.head.appendChild(sc); }
+        catch(e){ resolve(false); }
+      });
+    }
     wait(async function(sb){
       try{
         var sess=(await sb.auth.getSession()).data.session;
@@ -2391,12 +2399,26 @@
         if(STAFF_ROLES.indexOf(jwtRole)!==-1){
           res = { data:{ role: jwtRole, dj_name:'' }, error:null };
         } else {
-          res = await fetchStaffRole(sb, sess.user.id, 2500);
-          if(res==='timeout' || (res && res.error)){
-            res = await fetchStaffRole(sb, sess.user.id, 5000); // segundo intento, más tiempo
-          }
-          if(res==='timeout' || (res && res.error)){
-            showStaffGateRetry(); return; // inconcluso de verdad: no se saca a nadie de staff.html a ciegas
+          /* H3c: el JWT no es de staff → se pregunta al resolvedor único de edificio (mdj-identity.js; se carga aquí SOLO para quien no es staff, así el staff no
+             cambia nada). Solo una respuesta CONFIRMADA POR LA BASE (source 'snapshot') decide al instante: staff entra, cliente/artista salen a su hogar canónico.
+             Cualquier otra cosa (sin respuesta, rol del JWT) sigue por la comprobación de siempre con reintentos: nunca se saca a un staff por una red lenta. */
+          var acc = null;
+          try {
+            await mdjGateEnsureIdentity();
+            if(typeof window.mdjResolveAccessKind==='function') acc = await window.mdjResolveAccessKind(sb, sess.user);
+          }catch(eAcc){ acc = null; }
+          if(acc && acc.source==='snapshot' && (acc.kind==='staff_full' || acc.kind==='staff_seller')){
+            res = { data:{ role: String(acc.role||'').toLowerCase() || (acc.kind==='staff_seller' ? 'seller' : 'admin'), dj_name:'' }, error:null };
+          } else if(acc && acc.source==='snapshot' && (acc.kind==='buyer' || acc.kind==='artist')){
+            location.replace(window.mdjBuildingHome(acc.kind)); return;
+          } else {
+            res = await fetchStaffRole(sb, sess.user.id, 2500);
+            if(res==='timeout' || (res && res.error)){
+              res = await fetchStaffRole(sb, sess.user.id, 5000); // segundo intento, más tiempo
+            }
+            if(res==='timeout' || (res && res.error)){
+              showStaffGateRetry(); return; // inconcluso de verdad: no se saca a nadie de staff.html a ciegas
+            }
           }
         }
 
@@ -2409,8 +2431,10 @@
              leyendo el JWT (app_metadata.role, con fallback a user_metadata.user_type)
              -- mismo patrón, no uno nuevo. */
           var effRole = (typeof window.mdjResolveEffectiveUserRole==='function') ? window.mdjResolveEffectiveUserRole(sess.user) : 'client';
+          /* H3c: cada uno a su hogar canónico (tabla de mdj-identity.js): cliente → su portal, artista/talento → su estación, cuenta sin perfil → account-profile. */
+          if(typeof window.mdjBuildingHomeForRole==='function'){ location.replace(window.mdjBuildingHomeForRole(effRole)); return; }
           if(effRole==='client'){ location.replace('./client-portal.html'); return; }
-          location.replace('./dj-dashboard.html'); return; // artista/talento → su edificio real
+          location.replace('./dj-dashboard.html'); return; // artista/talento → su edificio real (respaldo si mdj-identity.js no cargó)
         }
         reveal();
         initStaff(sb, role, res.data||{});

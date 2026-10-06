@@ -176,8 +176,17 @@
     if (k === 'buyer') return BUILDING_HOME.buyer;
     return BUILDING_HOME.fallback;
   }
+  /* Igual que mdjBuildingHome pero a partir de un ROL suelto (JWT / dj_profiles.role / data-mdj-nav-role): para las cabeceras, que muchas veces saben el rol y no la sesión. */
+  function mdjBuildingHomeForRole(role) {
+    var r = n(role);
+    if (r === 'owner' || r === 'admin' || r === 'manager' || r === 'management' || r === 'seller' || r === 'staff') return BUILDING_HOME.staff;
+    if (r === 'artist' || r === 'dj' || r === 'talent') return BUILDING_HOME.artist;
+    if (r === 'client' || r === 'cliente' || r === 'buyer') return BUILDING_HOME.buyer;
+    return BUILDING_HOME.fallback;
+  }
   g.MDJ_BUILDING_HOME = BUILDING_HOME;
   g.mdjBuildingHome = mdjBuildingHome;
+  g.mdjBuildingHomeForRole = mdjBuildingHomeForRole;
   g.mdjResolveAccessKind = mdjResolveAccessKind;
   g.mdjAccessKindFromSnapshot = accessKindFromSnapshot;
   g.mdjAccessKindFromJwt = accessKindFromJwt;

@@ -696,9 +696,12 @@
     /* Aterriza en la vista de perfil del portal, no en su portada. Antes caia en
        'gobernanza' y el owner no veia su ficha por ningun lado, aunque estuviera
        cargada y oculta ahi mismo. */
-    if (esStaff) return './staff.html?vista=miperfil';
-    if (esArtista) return uid ? './dj-profile.html?id=' + encodeURIComponent(uid) : './dj-profile.html';
-    if (uid) return './client-portal.html';
+    /* 2026-10-06 (H3c): los destinos salen de la tabla canónica de mdj-identity.js (staff → su ficha, artista → su estación, cliente → su portal);
+       invitado sigue yendo a login. Sin mdj-identity.js (3 páginas), queda la tabla anterior. */
+    var _bh = typeof window.mdjBuildingHomeForRole === 'function' ? window.mdjBuildingHomeForRole : null;
+    if (esStaff) return _bh ? _bh('staff') : './staff.html?vista=miperfil';
+    if (esArtista) return _bh ? _bh('artist') : (uid ? './dj-profile.html?id=' + encodeURIComponent(uid) : './dj-profile.html');
+    if (uid) return _bh ? _bh('client') : './client-portal.html';
     /* CORTINA REAL 2026-09-02 (mismo pedido del PO que Config: "si se entro
        por mi perfil, esa entrada es dentro de mi perfil despues de login").
        './login.html?redirect=dj-profile' reusa el guardia YA existente
@@ -771,6 +774,11 @@
       var pr = await supa.from('dj_profiles').select('role').eq('user_id', uid).maybeSingle();
       rol = String(((pr && pr.data) || {}).role || '').toLowerCase().trim();
     } catch (e) {}
+    /* H3c: misma tabla canónica que el slot (mdjBuildingHomeForRole). Staff → su ficha; cualquier otro rol con perfil = artista → su estación; sin fila = cliente. */
+    if (typeof window.mdjBuildingHomeForRole === 'function') {
+      if (!uid) return './login.html';
+      return window.mdjBuildingHomeForRole(rol ? (/^(owner|admin|manager|management|seller)$/.test(rol) ? 'staff' : 'artist') : 'client');
+    }
     if (rol === 'owner' || rol === 'admin' || rol === 'manager' || rol === 'management' || rol === 'seller') {
       return './staff.html?vista=miperfil';
     }
@@ -2664,7 +2672,10 @@
     if (!role && window.__mdjpro && window.__mdjpro.role) {
       role = String(window.__mdjpro.role).toLowerCase();
     }
-    if (role === 'owner' && uid) {
+    /* H3c: en el edificio Staff, MI PERFIL = su ficha (tabla canónica); antes: owner → perfil público, resto → account-profile. */
+    if (typeof window.mdjBuildingHomeForRole === 'function' && role) {
+      el.href = window.mdjBuildingHomeForRole('staff');
+    } else if (role === 'owner' && uid) {
       el.href = './dj-profile.html?id=' + encodeURIComponent(uid);
     } else {
       el.href = './account-profile.html';
@@ -5422,9 +5433,12 @@
              staff.html (?vista=miperfil), mismo destino que ya usa el botón "MI PERFIL" propio
              de staff.html (ver staffTopnavHtml) -- consistente en todo el sitio, ya no choca
              con Config. */
-          var miPortalHref = appRoleLower === 'owner'
-            ? publicProfileUrl /* owner → public manager profile (dj-profile.html?id=uid) */
-            : (isNavStaffSolo ? './staff.html?vista=miperfil' : './client-portal.html');
+          /* H3c: el owner y el staff van a su ficha (tabla canónica de mdj-identity.js); antes el owner iba al perfil público y dj-profile.html lo devolvía a Staff. */
+          var miPortalHref = (typeof window.mdjBuildingHomeForRole === 'function' && (appRoleLower === 'owner' || isNavStaffSolo))
+            ? window.mdjBuildingHomeForRole('staff')
+            : (appRoleLower === 'owner'
+              ? publicProfileUrl /* respaldo sin mdj-identity.js */
+              : (isNavStaffSolo ? './staff.html?vista=miperfil' : './client-portal.html'));
           var miPortalNavOpts = null;
 
           var isBuyerSession = isClient;
