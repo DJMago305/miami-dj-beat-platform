@@ -4521,12 +4521,6 @@ const PortalApp = {
                 ? (ORDER_COLORS[rawSt] || '#d4af37')
                 : (rawLeadSt ? (LEAD_STATUS_COLORS[rawLeadSt] || '#d4af37') : '#d4af37');
             var st = '<span style="color:' + stColor + ';font-weight:700;">' + stLabel + '</span>';
-            // Canceladas en Historial: cuántos días faltan para que se borren solas (30 desde la cancelación).
-            if (rawLeadSt === 'CANCELLED' && l.cancelada_en) {
-                var diasVan = Math.floor((Date.now() - new Date(l.cancelada_en).getTime()) / 86400000);
-                var diasFalta = Math.max(0, 30 - diasVan);
-                st += '<div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.5);margin-top:3px;">Se borra sola en ' + diasFalta + ' día' + (diasFalta === 1 ? '' : 's') + '</div>';
-            }
             var lid  = l.id ? String(l.id).slice(0,8).toUpperCase() : '—';
             var href      = './client-portal.html?lead=' + encodeURIComponent(l.id);
             var hrefOrder = './client-portal.html?lead=' + encodeURIComponent(l.id);
@@ -4536,17 +4530,16 @@ const PortalApp = {
                 '<a href="' + hrefOrder + '" style="display:inline-block;padding:6px 10px;border-radius:6px;border:1px solid rgba(197,160,89,0.6);background:rgba(197,160,89,0.45);color:#fff;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;vertical-align:middle;">Ver Orden</a>' +
                 (function () {
                     var rawSt = String(l.status || '').toUpperCase();
-                    var BTN_DEL = '&nbsp;<button onclick="portalOcultarOrden(\'' + l.id + '\',this)" style="display:inline-block;padding:6px 12px;border-radius:6px;border:1px solid rgba(220,60,60,0.6);background:rgba(220,60,60,0.45);color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;box-sizing:border-box;vertical-align:middle;min-width:64px;text-align:center;overflow:hidden;flex-shrink:0;">Delete</button>';
-                    // Historial: cancelada → Restaurar (mismo estilo que «Ver Orden») + Delete; completada/pasada → solo Delete
+                    // El cliente NO borra órdenes (la purga es del Staff): cancelada → Restaurar; completada/pasada → solo «Ver Orden»
                     if (rawSt === 'CANCELLED') {
-                        return '&nbsp;<button onclick="portalRestaurarOrden(\'' + l.id + '\',this)" style="display:inline-block;padding:6px 10px;border-radius:6px;border:1px solid rgba(197,160,89,0.6);background:rgba(197,160,89,0.45);color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;vertical-align:middle;min-width:36px;text-align:center;" title="Restaurar" aria-label="Restaurar">&#128260;</button>' + BTN_DEL;
+                        return '&nbsp;<button onclick="portalRestaurarOrden(\'' + l.id + '\',this)" style="display:inline-block;padding:6px 10px;border-radius:6px;border:1px solid rgba(197,160,89,0.6);background:rgba(197,160,89,0.45);color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;vertical-align:middle;min-width:36px;text-align:center;" title="Restaurar" aria-label="Restaurar">&#128260;</button>';
                     }
-                    if (rawSt === 'COMPLETED' || portalLeadIsPast(l)) return BTN_DEL;
+                    if (rawSt === 'COMPLETED' || portalLeadIsPast(l)) return '';
                     if (portalOrdenNecesitaSolicitud(l)) {
                         var tituloCancel = encodeURIComponent((l.event_type || 'Evento') + (l.event_date ? ' — ' + l.event_date : '')).replace(/'/g, '%27');
                         return '&nbsp;<button data-cancel-lead="' + l.id + '" onclick="portalSolicitarCancelacion(\'' + l.id + '\', decodeURIComponent(\'' + tituloCancel + '\'), this)" style="display:inline-block;padding:6px 12px;border-radius:6px;border:1px solid rgba(220,60,60,0.6);background:rgba(220,60,60,0.45);color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;box-sizing:border-box;vertical-align:middle;min-width:64px;text-align:center;overflow:hidden;flex-shrink:0;">Cancelar</button>';
                     }
-                    return '&nbsp;<button onclick="portalDeleteLead(\'' + l.id + '\',this)" style="display:inline-block;padding:6px 12px;border-radius:6px;border:1px solid rgba(220,60,60,0.6);background:rgba(220,60,60,0.45);color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;box-sizing:border-box;vertical-align:middle;min-width:64px;text-align:center;overflow:hidden;flex-shrink:0;">Delete</button>';
+                    return '';
                 })();
             return '<tr>' +
                 '<td style="' + TD + '">' + leadPill + '</td>' +
@@ -4577,13 +4570,13 @@ const PortalApp = {
                 '<col style="width:185px;">' +
                 '</colgroup>' +
                 '<thead><tr>' +
-                '<th style="' + TH + '">Lead</th>' +
+                '<th style="' + TH + '">Código / Referencia</th>' +
                 '<th style="' + TH + '">Tipo de Evento</th>' +
                 '<th style="' + TH + '">Fecha</th>' +
                 '<th style="' + TH + '">Time In</th>' +
                 '<th style="' + TH + '">Time Out</th>' +
                 '<th style="' + TH + '">Ubicación</th>' +
-                '<th style="' + TH + '">Estado Lead</th>' +
+                '<th style="' + TH + '">Estado</th>' +
                 '<th style="' + TH + '">Acciones</th>' +
                 '</tr></thead>' +
                 '<tbody>' + (rows.length ? rows.map(rowHtml).join('') : emptyRow) + '</tbody>' +
