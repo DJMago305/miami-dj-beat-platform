@@ -246,6 +246,17 @@
         .gate button:disabled { opacity: .35; cursor: default; }
         .gate-n { min-width: 54px; text-align: center; font-weight: 800; font-size: 15px; }
         .gate-n.full { color: var(--ok); }
+        /* Pases individuales de una orden (lista de invitados): una fila por persona o asiento con su botón de ingreso */
+        .passes { grid-column: 1 / -1; display: grid; gap: 6px; border-top: 1px dashed var(--card-line); padding-top: 10px; margin-top: 2px; }
+        .pass-row { display: grid; grid-template-columns: 1.3fr 1.2fr 1fr auto; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--card-line); border-radius: 8px; font-size: 13px; }
+        .pass-row.in { border-color: rgba(70, 200, 120, .45); background: rgba(70, 200, 120, .06); }
+        .pass-row.void { opacity: .55; }
+        .pr-seat { font-weight: 700; } .pr-name { word-break: break-word; } .pr-meta { color: var(--muted); font-size: 12px; word-break: break-word; }
+        .pr-st { font-size: 11.5px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; } .pr-st.ok { color: var(--ok); } .pr-st.void { color: #e2554b; }
+        .pass-row button { cursor: pointer; font: inherit; font-size: 12.5px; font-weight: 800; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--gold); background: transparent; color: var(--gold); white-space: nowrap; }
+        .pass-row button.undo { border-color: var(--card-line); color: var(--muted); } .pass-row button:disabled { opacity: .5; cursor: default; }
+        .gate-note { font-size: 11px; color: var(--muted); text-align: center; max-width: 9em; line-height: 1.3; }
+        @media (max-width: 760px) { .pass-row { grid-template-columns: 1fr auto; } .pr-meta { grid-column: 1 / -1; } }
         @media (max-width: 760px) { .guest { grid-template-columns: 1fr auto; } .guest-items { grid-column: 1 / -1; } }
     </style>
 </head>
@@ -382,17 +393,38 @@
             return (Array.isArray(o.items) ? o.items : []).reduce(function (n, it) { return n + (Number(it.qty) || 0); }, 0);
         }
 
+        // Pases individuales (una fila por persona/asiento). Si la tabla aún no existe, _passes queda vacío y todo funciona como antes (contador por orden).
+        var _passes = [];
+        function passesOf(orderId) { return _passes.filter(function (p) { return p.order_id === orderId; }).sort(function (a, b) { return a.seq - b.seq; }); }
+        function orderTotals(o) {
+            var ps = passesOf(o.id);
+            if (ps.length) { return { total: ps.filter(function (p) { return p.status !== 'void'; }).length, inn: ps.filter(function (p) { return p.status === 'checked_in'; }).length, passes: ps }; }
+            return { total: ticketQty(o), inn: o.checked_in_qty || 0, passes: [] };
+        }
+        function fmtHora(ts) { try { return new Date(ts).toLocaleTimeString('es-US', { hour: 'numeric', minute: '2-digit' }); } catch (e) { return ''; } }
+        function passRow(p) {
+            var inn = p.status === 'checked_in', vd = p.status === 'void';
+            var st = vd ? '<span class="pr-st void">Anulado</span>' : (inn ? '<span class="pr-st ok">Ingresó' + (p.checked_in_at ? ' ' + esc(fmtHora(p.checked_in_at)) : '') + '</span>' : '<span class="pr-st">Pendiente</span>');
+            var btn = vd ? '' : '<button type="button" class="' + (inn ? 'undo' : '') + '" data-pass="' + esc(p.id) + '" data-in="' + (inn ? '0' : '1') + '">' + (inn ? 'Deshacer ingreso' : 'Marcar ingreso') + '</button>';
+            return '<div class="pass-row' + (inn ? ' in' : '') + (vd ? ' void' : '') + '"><span class="pr-seat">' + esc(p.label) + '</span>' +
+                '<span class="pr-name">' + esc(p.guest_name || 'Sin nombre') + '</span>' +
+                '<span class="pr-meta">' + esc([p.guest_phone, p.guest_email].filter(Boolean).join(' · ') || '—') + ' · ' + st + '</span>' + btn + '</div>';
+        }
+
         function guestRow(o) {
-            var total = ticketQty(o), inn = o.checked_in_qty || 0;
+            var tt = orderTotals(o), total = tt.total, inn = tt.inn;
             var items = (Array.isArray(o.items) ? o.items : []).map(function (it) { return esc(it.qty) + '× ' + esc(it.label); }).join(', ') || '—';
+            var gate = tt.passes.length
+                ? '<div class="gate"><span class="gate-n' + (inn >= total && total > 0 ? ' full' : '') + '">' + inn + ' / ' + total + '</span><span class="gate-note">se marca por pase</span></div>'
+                : '<div class="gate"><button type="button" data-d="-1" aria-label="Quitar una entrada" ' + (inn <= 0 ? 'disabled' : '') + '>−</button>' +
+                  '<span class="gate-n' + (inn >= total && total > 0 ? ' full' : '') + '">' + inn + ' / ' + total + '</span>' +
+                  '<button type="button" data-d="1" aria-label="Marcar una entrada que entró" ' + (inn >= total ? 'disabled' : '') + '>+</button></div>';
             return '<div class="guest' + (inn >= total && total > 0 ? ' in' : '') + '" data-id="' + esc(o.id) + '">' +
                 '<div><div class="guest-name">' + esc(o.customer_name || 'Sin nombre') + '</div>' +
                 '<div class="guest-sub">' + esc(o.customer_email || '—') + (o.customer_phone ? ' · ' + esc(o.customer_phone) : '') + '</div></div>' +
                 '<div class="guest-items">' + items + '<div class="guest-code">Código ' + esc(String(o.id).slice(0, 8).toUpperCase()) + '</div></div>' +
-                '<div class="guest-sub">$' + ((o.total_cents || 0) / 100).toFixed(2) + '</div>' +
-                '<div class="gate"><button type="button" data-d="-1" aria-label="Quitar una entrada" ' + (inn <= 0 ? 'disabled' : '') + '>−</button>' +
-                '<span class="gate-n' + (inn >= total && total > 0 ? ' full' : '') + '">' + inn + ' / ' + total + '</span>' +
-                '<button type="button" data-d="1" aria-label="Marcar una entrada que entró" ' + (inn >= total ? 'disabled' : '') + '>+</button></div>' +
+                '<div class="guest-sub">$' + ((o.total_cents || 0) / 100).toFixed(2) + '</div>' + gate +
+                (tt.passes.length ? '<div class="passes">' + tt.passes.map(passRow).join('') + '</div>' : '') +
                 '</div>';
         }
 
@@ -402,11 +434,15 @@
             var list = _guests.filter(function (o) {
                 return !term || String(o.customer_name || '').toLowerCase().indexOf(term) !== -1 ||
                     String(o.customer_email || '').toLowerCase().indexOf(term) !== -1 ||
-                    String(o.id).slice(0, 8).toLowerCase().indexOf(term) !== -1;
+                    String(o.customer_phone || '').toLowerCase().indexOf(term) !== -1 ||
+                    String(o.id).slice(0, 8).toLowerCase().indexOf(term) !== -1 ||
+                    passesOf(o.id).some(function (p) {
+                        return [p.guest_name, p.guest_phone, p.guest_email, p.label, String(p.id).slice(0, 8)].some(function (v) { return String(v || '').toLowerCase().indexOf(term) !== -1; });
+                    });
             });
             var totalAll = 0, inAll = 0;
-            _guests.forEach(function (o) { totalAll += ticketQty(o); inAll += o.checked_in_qty || 0; });
-            document.getElementById('count').textContent = inAll + ' de ' + totalAll + ' entradas ya entraron · ' + _guests.length + (_guests.length === 1 ? ' orden' : ' órdenes');
+            _guests.forEach(function (o) { var tt = orderTotals(o); totalAll += tt.total; inAll += tt.inn; });
+            document.getElementById('count').textContent = inAll + ' de ' + totalAll + ' personas ya entraron · ' + _guests.length + (_guests.length === 1 ? ' orden' : ' órdenes');
             if (!list.length) {
                 content.className = 'state';
                 content.innerHTML = '<span class="glyph">🎟️</span>' + (_guests.length ? 'Nadie coincide con la búsqueda.' : 'Todavía no hay entradas vendidas.');
@@ -422,7 +458,7 @@
             content.innerHTML = order.map(function (k) {
                 var rows = byEvent[k], ev = rows[0].venue_events || {};
                 rows.sort(function (a, b) { return String(a.customer_name || '').localeCompare(String(b.customer_name || ''), 'es', { sensitivity: 'base' }); });
-                var t = 0, i = 0; rows.forEach(function (o) { t += ticketQty(o); i += o.checked_in_qty || 0; });
+                var t = 0, i = 0; rows.forEach(function (o) { var tt = orderTotals(o); t += tt.total; i += tt.inn; });
                 var when = ev.event_date ? new Date(ev.event_date + 'T12:00:00').toLocaleDateString('es-US', { dateStyle: 'medium' }) : 'fecha por anunciar';
                 return '<div class="ev-block"><div class="ev-head"><span class="ev-title">' + esc(ev.title || 'Evento') + '</span>' +
                     '<span class="ev-meta">' + esc(when) + ' · <b>' + i + ' / ' + t + '</b> entraron</span></div>' +
@@ -432,7 +468,7 @@
 
         async function gate(sb, id, delta) {
             var { data, error } = await sb.rpc('venue_ticket_checkin', { p_order_id: id, p_delta: delta });
-            if (error) { alert('No se pudo registrar: ' + error.message); return; }
+            if (error) { alert(/use_passes/.test(error.message || '') ? 'Esta orden ya tiene pases individuales: marca el ingreso en cada pase.' : 'No se pudo registrar: ' + error.message); return; }
             var o = _guests.filter(function (g) { return g.id === id; })[0];
             if (o && data) o.checked_in_qty = data.checked_in_qty;
             renderGuests();
@@ -457,10 +493,30 @@
                 return;
             }
             _guests = data || [];
+            try {
+                var gr = await sb.from('venue_ticket_guests').select('id,order_id,event_id,seq,label,guest_name,guest_phone,guest_email,status,checked_in_at').order('seq', { ascending: true }).limit(5000);
+                if (mySeq !== _loadSeq) return;
+                _passes = (gr && !gr.error && gr.data) ? gr.data : [];
+            } catch (eP) { _passes = []; }
+            renderGuests();
+        }
+
+        // Marcar o deshacer el ingreso de UN pase desde la lista (error de puerta, persona que entró sin escanear…).
+        async function passCheckin(sb, passId, mark) {
+            var r = await sb.rpc('venue_guest_set_checkin', { p_guest_id: passId, p_checked_in: mark });
+            if (r.error) { alert(/not_allowed/.test(r.error.message || '') ? 'Tu cuenta no tiene permiso para esto en este local.' : 'No se pudo registrar: ' + r.error.message); return; }
+            var res = r.data || {};
+            if (!res.ok) {
+                alert(res.code === 'already_used' ? 'Ese pase ya había ingresado.' : res.code === 'not_checked_in' ? 'Ese pase todavía no había ingresado.' : res.code === 'cancelled' ? 'Ese pase está anulado.' : 'No se pudo registrar.');
+            }
+            var p = _passes.filter(function (x) { return x.id === passId; })[0];
+            if (p && res.status) { p.status = res.status; p.checked_in_at = res.status === 'checked_in' ? new Date().toISOString() : null; }
             renderGuests();
         }
 
         document.addEventListener('click', function (e) {
+            var pb = e.target.closest ? e.target.closest('.pass-row button[data-pass]') : null;
+            if (pb && _sbRef && !pb.disabled) { pb.disabled = true; passCheckin(_sbRef, pb.getAttribute('data-pass'), pb.getAttribute('data-in') === '1'); return; }
             var b = e.target.closest ? e.target.closest('.gate button') : null;
             if (!b || !_sbRef || b.disabled) return;
             var row = b.closest('.guest');
@@ -613,6 +669,19 @@
                 showResult(false, 'Sin validar', [txt]); return;
             }
             var guest = _guests.filter(function (g) { return g.id === id; })[0];
+            if (res.pass) {                                  // PASE individual: nombre del titular, mesa/asiento (o admisión) y estado, en verde o en rojo
+                var pl = (Array.isArray(res.items) && res.items[0] && res.items[0].label) ? String(res.items[0].label) : '';
+                var pname = res.reservation_name || 'Invitado';
+                var pp = _passes.filter(function (x) { return x.id === res.guest_id; })[0];
+                if (res.ok) {
+                    if (pp) { pp.status = 'checked_in'; pp.checked_in_at = res.checked_in_at; var po = _guests.filter(function (g) { return g.id === pp.order_id; })[0]; if (po) po.checked_in_qty = res.checked_in_qty; if (currentFilter === 'entradas') renderGuests(); }
+                    showResult(true, 'Ingreso registrado', [pname, pl, 'Ingresaron: ' + res.checked_in_qty + ' de ' + res.total_qty]);
+                } else {
+                    var hora = res.checked_in_at ? 'Ya ingresó a las ' + fmtHora(res.checked_in_at) : '';
+                    showResult(false, res.code === 'already_used' ? 'Este pase ya fue utilizado' : res.code === 'cancelled' ? 'Pase anulado' : (SCAN_REASON[res.code] || 'Rechazado'), [pname, pl, res.code === 'already_used' ? hora : '']);
+                }
+                return;
+            }
             if (res.ok) {
                 if (guest) { guest.checked_in_qty = res.checked_in_qty; if (currentFilter === 'entradas') renderGuests(); }
                 var nombre = res.reservation_name || (guest && guest.customer_name) || '';
