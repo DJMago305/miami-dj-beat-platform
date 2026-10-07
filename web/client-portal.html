@@ -850,9 +850,17 @@
            marca + selector Día/Semana/Mes/Año + "+" en UNA sola fila (antes eran
            dos), y quitar el sol/luna: ya vive real en la barra principal del
            sitio (mdjb-shared-header.js), este botón era un duplicado innecesario. */
+        /* Barra de tres zonas FIJAS (PO 2026-10-06): izquierda (marca, campana, pestañas) | centro (Día/Semana/Mes/Año) | derecha (+, restaurar).
+           El centro queda siempre en el mismo sitio: que aparezca el «+» o un contador en la campana ya no lo corre. */
         .portal-coi .coi-toolbar {
-            display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 12px;
+            display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 10px 12px;
             margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--line);
+        }
+        .portal-coi .coi-left { display: flex; align-items: center; gap: 12px; justify-self: start; min-width: 0; }
+        .portal-coi .coi-toolbar > .coi-tools { justify-self: end; }
+        @media (max-width: 820px) {
+            .portal-coi .coi-toolbar { grid-template-columns: minmax(0, 1fr) auto; }
+            .portal-coi .coi-toolbar > .seg-wrap { grid-column: 1 / -1; grid-row: 2; }
         }
         .portal-coi .coi-brand {
             flex: none; width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center;
@@ -1506,7 +1514,7 @@
     <script src="./invoice-print-bridge.js?v=20260420"></script>
     <script src="./js/mdj-cancelar.js?v=20260921-cancelar-3"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha512-CNgIRecGo7nphbeZ04Sc13ka07paqdeTu0WR1IM4kNcpmBAUSHSQX0FslNhTDadL4O5SAGapGt4FodqL8My0mA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="./client-portal.js?v=20261006-tabla-cliente"></script>
+    <script src="./client-portal.js?v=20261006-calendar-toolbar-fixed"></script>
     <!-- MDJ Assistant Booth (AI Sales Agent) -->
     <div id="mdj-assistant-booth">
         <!-- Chat Window & Trigger defined in mdj-assistant.css/js -->
