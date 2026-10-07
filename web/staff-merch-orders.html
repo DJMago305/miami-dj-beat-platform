@@ -631,23 +631,32 @@
         }
 
         async function scanStartCamera() {
+            if (_scan.starting || _scan.stream) return;                    // doble toque / cámara ya activa: no se abre un segundo flujo
+            _scan.starting = true;
             var v = document.getElementById('scan-video');
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { scanMsg('Este navegador no permite usar la cámara. Usa el campo de abajo para pegar el código, o la lista por nombre.'); return; }
-            if (!('BarcodeDetector' in window)) { scanMsg('Este navegador no lee códigos QR con la cámara (falta BarcodeDetector). Usa Chrome en Android, o pega el código abajo, o la lista por nombre.'); return; }
             try {
+                if (!window.isSecureContext) { scanMsg('La cámara solo funciona con HTTPS. Abre esta página desde la dirección segura (https://) o pega el código abajo.'); return; }
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { scanMsg('Este navegador no permite usar la cámara. Usa el campo de abajo para pegar el código, o la lista por nombre.'); return; }
+                if (!('BarcodeDetector' in window)) { scanMsg('Este navegador no lee códigos QR con la cámara (falta BarcodeDetector). Usa Chrome en Android, o pega el código abajo, o la lista por nombre.'); return; }
                 var formats = await window.BarcodeDetector.getSupportedFormats();
                 if (formats && formats.indexOf('qr_code') === -1) { scanMsg('Este dispositivo no lee códigos QR. Pega el código abajo o usa la lista por nombre.'); return; }
                 _scan.det = new window.BarcodeDetector({ formats: ['qr_code'] });
-                _scan.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
-                v.srcObject = _scan.stream; await v.play();
+                var stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+                if (!document.getElementById('scan-modal').classList.contains('open') || document.hidden) {   // se cerró el modal o la pestaña pasó a segundo plano mientras se negociaba
+                    stream.getTracks().forEach(function (t) { t.stop(); }); return;
+                }
+                _scan.stream = stream;
+                v.srcObject = stream; await v.play();
                 scanMsg('Apunta la cámara al QR del ticket.');
                 clearInterval(_scan.timer); _scan.timer = setInterval(scanTick, 250);
             } catch (e) {
                 var n = e && e.name;
-                scanMsg(n === 'NotAllowedError' ? 'Permiso de cámara denegado. Actívalo en los ajustes del navegador para este sitio, o pega el código abajo.'
-                    : n === 'NotFoundError' ? 'No se encontró ninguna cámara en este dispositivo. Pega el código abajo.'
-                    : 'No se pudo abrir la cámara. Pega el código abajo.');
-            }
+                if (_scan.stream) { _scan.stream.getTracks().forEach(function (t) { t.stop(); }); _scan.stream = null; }
+                scanMsg(n === 'NotAllowedError' ? 'Permiso de cámara denegado en el navegador. Actívalo en los ajustes del sitio, o pega el código abajo.'
+                    : n === 'NotReadableError' ? 'La cámara está ocupada por otra aplicación o pestaña de Android. Ciérrala y vuelve a abrir el escáner.'
+                    : n === 'NotFoundError' ? 'No se detectó cámara trasera en este dispositivo. Pega el código abajo.'
+                    : 'No se pudo abrir la cámara (' + (n || 'error') + (e && e.message ? ': ' + e.message : '') + '). Pega el código abajo.');
+            } finally { _scan.starting = false; }
         }
         function scanStopCamera() {
             clearInterval(_scan.timer); _scan.timer = 0;
@@ -655,8 +664,13 @@
             var v = document.getElementById('scan-video'); try { v.pause(); } catch (e) { } v.srcObject = null;
         }
         async function scanOpen() {
-            if (!_sbRef) return;
+            if (!_sbRef || _scan.opening) return;                           // doble toque mientras carga: se ignora
             var modal = document.getElementById('scan-modal');
+            if (modal.classList.contains('open')) return;
+            _scan.opening = true;
+            try { await scanOpenInner(modal); } finally { _scan.opening = false; }
+        }
+        async function scanOpenInner(modal) {
             modal.classList.add('open'); _scan.busy = false; _scan.last = ''; _scan.lastAt = 0;
             // el sonido solo se puede crear tras un toque del usuario: se prepara aquí
             try { var AC = window.AudioContext || window.webkitAudioContext; if (AC && !_scan.ctx) _scan.ctx = new AC(); if (_scan.ctx && _scan.ctx.state === 'suspended') _scan.ctx.resume(); } catch (e) { }
@@ -676,6 +690,12 @@
         });
         document.getElementById('scan-manual-input').addEventListener('keydown', function (e) { if (e.key === 'Enter') document.getElementById('scan-manual-go').click(); });
         window.addEventListener('pagehide', scanStopCamera);
+        // Android suspende o corta la cámara al pasar a segundo plano: se suelta al salir y se reabre al volver (si el escáner sigue abierto), para no dejar el video congelado.
+        document.addEventListener('visibilitychange', function () {
+            if (!document.getElementById('scan-modal').classList.contains('open')) return;
+            if (document.hidden) { scanStopCamera(); }
+            else if (!_scan.stream && !_scan.starting) { scanStartCamera(); }
+        });
 
         document.addEventListener('DOMContentLoaded', async function () {
             var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
