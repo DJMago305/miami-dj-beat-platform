@@ -26,7 +26,8 @@
     })();
     </script>
     <script src="./js/mdj-safe-storage.js?v=20260616-1"></script>
-    <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
+    <script src="./vendor/jsQR-1.4.0.min.js"></script>
+<script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=optional" rel="stylesheet" />
@@ -290,7 +291,7 @@
             <div class="scan-msg" id="scan-msg"></div>
         </div>
         <div class="scan-manual">
-            <input type="text" id="scan-manual-input" placeholder="Pegar enlace o código (UUID) del ticket" autocomplete="off" autocapitalize="off" spellcheck="false" />
+            <input type="text" id="scan-manual-input" placeholder="Lector USB: dispara aquí · o pega el enlace/código del ticket" autocomplete="off" autocapitalize="off" spellcheck="false" />
             <button type="button" id="scan-manual-go">Validar</button>
         </div>
     </div>
@@ -647,7 +648,12 @@
             clearTimeout(_scan.hideTimer);
             _scan.hideTimer = setTimeout(hideResult, ok ? 2200 : 3200);
         }
-        function hideResult() { clearTimeout(_scan.hideTimer); document.getElementById('scan-result').className = ''; _scan.busy = false; }
+        // Lector USB/Bluetooth (se comporta como teclado): en una computadora el campo manual toma el foco solo, y de nuevo tras cada resultado.
+        // En teléfonos y tabletas NO se enfoca (abriría el teclado encima de la cámara).
+        function scanFocusInput() {
+            try { if (window.matchMedia && window.matchMedia('(pointer: fine)').matches) { var i = document.getElementById('scan-manual-input'); if (i && document.getElementById('scan-modal').classList.contains('open')) i.focus(); } } catch (e) { }
+        }
+        function hideResult() { clearTimeout(_scan.hideTimer); document.getElementById('scan-result').className = ''; _scan.busy = false; scanFocusInput(); }
 
         async function scanHandle(raw) {
             if (_scan.busy || !_sbRef) return;
@@ -693,9 +699,27 @@
             }
         }
 
+        // Lector de respaldo (jsQR): para navegadores SIN BarcodeDetector (Safari de iPhone, Firefox…). Reduce el cuadro a ≤640 px y lo descifra en JS.
+        var _scanCv = null;
+        function scanDecodeJs(src) {
+            if (typeof window.jsQR !== 'function') return '';
+            var w0 = src.videoWidth || src.width, h0 = src.videoHeight || src.height;
+            if (!w0 || !h0) return '';
+            var sc = Math.min(1, 640 / w0), w = Math.round(w0 * sc), h = Math.round(h0 * sc);
+            if (!_scanCv) _scanCv = document.createElement('canvas');
+            if (_scanCv.width !== w) _scanCv.width = w;
+            if (_scanCv.height !== h) _scanCv.height = h;
+            var ctx = _scanCv.getContext('2d');
+            ctx.drawImage(src, 0, 0, w, h);
+            var r = window.jsQR(ctx.getImageData(0, 0, w, h).data, w, h, { inversionAttempts: 'dontInvert' });
+            return r && r.data ? String(r.data) : '';
+        }
+
         async function scanTick() {
             var v = document.getElementById('scan-video');
-            if (_scan.busy || !_scan.det || v.readyState < 2) return;
+            if (_scan.busy || v.readyState < 2) return;
+            if (_scan.mode === 'js') { try { var code = scanDecodeJs(v); if (code) scanHandle(code); } catch (e) { } return; }
+            if (!_scan.det) return;
             try { var found = await _scan.det.detect(v); if (found && found.length) scanHandle(found[0].rawValue); } catch (e) { }
         }
 
@@ -706,10 +730,14 @@
             try {
                 if (!window.isSecureContext) { scanMsg('La cámara solo funciona con HTTPS. Abre esta página desde la dirección segura (https://) o pega el código abajo.'); return; }
                 if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { scanMsg('Este navegador no permite usar la cámara. Usa el campo de abajo para pegar el código, o la lista por nombre.'); return; }
-                if (!('BarcodeDetector' in window)) { scanMsg('Este navegador no lee códigos QR con la cámara (falta BarcodeDetector). Usa Chrome en Android, o pega el código abajo, o la lista por nombre.'); return; }
-                var formats = await window.BarcodeDetector.getSupportedFormats();
-                if (formats && formats.indexOf('qr_code') === -1) { scanMsg('Este dispositivo no lee códigos QR. Pega el código abajo o usa la lista por nombre.'); return; }
-                _scan.det = new window.BarcodeDetector({ formats: ['qr_code'] });
+                // Lector nativo (BarcodeDetector) si existe y lee QR; si no, lector de respaldo en JS (jsQR): así funciona también en Safari de iPhone.
+                var nativeOk = false;
+                if ('BarcodeDetector' in window) {
+                    try { var formats = await window.BarcodeDetector.getSupportedFormats(); nativeOk = !formats || formats.indexOf('qr_code') !== -1; } catch (eBd) { nativeOk = false; }
+                }
+                if (nativeOk) { _scan.det = new window.BarcodeDetector({ formats: ['qr_code'] }); _scan.mode = 'native'; }
+                else if (typeof window.jsQR === 'function') { _scan.det = null; _scan.mode = 'js'; }
+                else { scanMsg('Este navegador no puede leer códigos QR con la cámara. Pega el código abajo o usa la lista por nombre.'); return; }
                 var stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
                 if (!document.getElementById('scan-modal').classList.contains('open') || document.hidden) {   // se cerró el modal o la pestaña pasó a segundo plano mientras se negociaba
                     stream.getTracks().forEach(function (t) { t.stop(); }); return;
@@ -740,7 +768,7 @@
             try { await scanOpenInner(modal); } finally { _scan.opening = false; }
         }
         async function scanOpenInner(modal) {
-            modal.classList.add('open'); _scan.busy = false; _scan.last = ''; _scan.lastAt = 0;
+            modal.classList.add('open'); _scan.busy = false; _scan.last = ''; _scan.lastAt = 0; scanFocusInput();
             // el sonido solo se puede crear tras un toque del usuario: se prepara aquí
             try { var AC = window.AudioContext || window.webkitAudioContext; if (AC && !_scan.ctx) _scan.ctx = new AC(); if (_scan.ctx && _scan.ctx.state === 'suspended') _scan.ctx.resume(); } catch (e) { }
             scanMsg('Cargando eventos…');
@@ -753,11 +781,21 @@
         document.getElementById('scan-open').addEventListener('click', scanOpen);
         document.getElementById('scan-close').addEventListener('click', scanClose);
         document.getElementById('scan-result').addEventListener('click', hideResult);
-        document.getElementById('scan-event').addEventListener('change', function (e) { try { sessionStorage.setItem('mdj_scan_event', e.target.value); } catch (x) { } });
+        document.getElementById('scan-event').addEventListener('change', function (e) { try { sessionStorage.setItem('mdj_scan_event', e.target.value); } catch (x) { } scanFocusInput(); });
         document.getElementById('scan-manual-go').addEventListener('click', function () {
-            var i = document.getElementById('scan-manual-input'); var val = i.value; i.value = ''; _scan.last = ''; scanHandle(val);
+            var i = document.getElementById('scan-manual-input'); var val = i.value; i.value = ''; _scan.last = '';
+            if (!String(val).trim()) { scanFocusInput(); return; }
+            clearTimeout(_scan.hideTimer); document.getElementById('scan-result').className = ''; _scan.busy = false;   // un disparo del lector manda sobre el resultado que siga en pantalla
+            scanHandle(val);
         });
         document.getElementById('scan-manual-input').addEventListener('keydown', function (e) { if (e.key === 'Enter') document.getElementById('scan-manual-go').click(); });
+        document.addEventListener('keydown', function (e) {
+            if (!document.getElementById('scan-modal').classList.contains('open')) return;
+            if (e.ctrlKey || e.metaKey || e.altKey || e.key.length !== 1) return;
+            var t = e.target && e.target.tagName;
+            if (t === 'INPUT' || t === 'TEXTAREA') return;                        // (en SELECT y botones también: un disparo del lector nunca debe cambiar el evento elegido)
+            var i = document.getElementById('scan-manual-input'); if (i) i.focus();     // el carácter que se está tecleando cae ya en el campo
+        }, true);
         window.addEventListener('pagehide', scanStopCamera);
         // Android suspende o corta la cámara al pasar a segundo plano: se suelta al salir y se reabre al volver (si el escáner sigue abierto), para no dejar el video congelado.
         document.addEventListener('visibilitychange', function () {
