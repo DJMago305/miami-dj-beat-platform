@@ -285,12 +285,14 @@ function renderPortalCalendar(leads, importantDates, lastSeenAt) {
 
     host.innerHTML =
         '<div class="coi-toolbar">' +
+        '<div class="coi-left">' +
         '<div class="coi-brand">🎧</div>' +
         '<div class="coi-bell-wrap">' +
         '<button type="button" class="coi-glass" onclick="portalCoiToggleReminders()" aria-label="Recordatorios" title="Recordatorios">' + ICON_BELL + '</button>' +
         (remindersCount > 0 ? '<span class="coi-bell-badge">' + remindersCount + '</span>' : '') +
         '</div>' +
         '<div class="seg-wrap" style="flex:none;"><div class="seg">' + tabHtml + '</div></div>' +
+        '</div>' +
         '<div class="seg-wrap"><div class="seg">' + segHtml + '</div></div>' +
         '<div class="coi-tools">' +
         (tab === 'personal' ? '<button type="button" class="coi-glass" onclick="portalCoiOpenAddModal()" aria-label="Agregar fecha importante" title="Agregar fecha importante">+</button>' : '') +
@@ -1144,6 +1146,11 @@ var PORTAL_I18N_FB = {
         'portal-event-datetime-pending': 'Date / time pending',
         'portal-events-title': 'My events',
         'portal-events-upcoming': 'Upcoming',
+        'portal-evtype-wedding': 'Wedding',
+        'portal-evtype-corporate': 'Corporate',
+        'portal-evtype-quinceanera': 'Quinceañera',
+        'portal-evtype-private': 'Private Party',
+        'portal-evtype-club': 'Club / Nightclub',
         'portal-events-past': 'History',
         'portal-events-open': 'Open',
         'portal-events-status': 'Status',
@@ -1258,6 +1265,11 @@ var PORTAL_I18N_FB = {
         'portal-event-datetime-pending': 'Fecha y hora pendientes',
         'portal-events-title': 'Mis eventos',
         'portal-events-upcoming': 'Próximos',
+        'portal-evtype-wedding': 'Boda',
+        'portal-evtype-corporate': 'Corporativo',
+        'portal-evtype-quinceanera': 'Quinceañera',
+        'portal-evtype-private': 'Fiesta Privada',
+        'portal-evtype-club': 'Club / Discoteca',
         'portal-events-past': 'Historial',
         'portal-events-open': 'Abrir',
         'portal-events-status': 'Estado',
@@ -1725,6 +1737,23 @@ async function portalSessionOwnsLead(db, leadId, sessionUserId, sessionEmail) {
     return leads.some(function (L) {
         return L && String(L.id) === String(leadId);
     });
+}
+
+/** Tipo de evento que ve el cliente: el valor crudo de la base («Wedding», «Corporate»…) se traduce con el diccionario canónico del portal
+    (ES/EN según la perilla); lo que no esté en el diccionario se muestra tal cual, sin HTML. */
+var PORTAL_EVENT_TYPE_KEY = {
+    wedding: 'wedding',
+    corporate: 'corporate',
+    quinceanera: 'quinceanera', sweet16: 'quinceanera', quinceanera_sweet_16: 'quinceanera',
+    'private': 'private', private_party: 'private',
+    club: 'club', nightclub: 'club'
+};
+function portalEventTypeLabel(raw) {
+    var txt = String(raw == null ? '' : raw).trim();
+    if (!txt) return '';
+    var norm = txt.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+    var k = PORTAL_EVENT_TYPE_KEY[norm];
+    return k ? portalT('portal-evtype-' + k) : txt;
 }
 
 /** CARAPACHO FIJO DEL CLIENTE (orden del PO, 2026-10-06): <main> lleva SIEMPRE la misma estructura y nada la destruye al cambiar de estado:
@@ -4503,7 +4532,7 @@ const PortalApp = {
             var dt   = l.event_date ? portalEscapeHtml(String(l.event_date).replace(/-/g, ' / ')) : '—';
             var EVENT_TYPE_DISPLAY = { 'After-Party': 'After Party' };
             var rawTy = l.event_type ? String(l.event_type) : 'Event';
-            var ty = portalEscapeHtml(EVENT_TYPE_DISPLAY[rawTy] || rawTy);
+            var ty = portalEscapeHtml(portalEventTypeLabel(rawTy) === rawTy ? (EVENT_TYPE_DISPLAY[rawTy] || rawTy) : portalEventTypeLabel(rawTy));
             var loc  = l.location        ? portalEscapeHtml(String(l.location))             : '—';
             var tin  = l.event_start_time ? portalEscapeHtml(String(l.event_start_time))    : '—';
             var tout = l.event_end_time   ? portalEscapeHtml(String(l.event_end_time))      : '—';
