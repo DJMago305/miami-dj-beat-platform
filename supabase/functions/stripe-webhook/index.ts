@@ -1,3 +1,4 @@
+import { passCardsHtml, type EmailPass } from "../_shared/venue-ticket-email.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getServiceRoleKey } from "../_shared/service-key.ts";
@@ -262,6 +263,7 @@ async function notifyVenueTicketOrder(
         let title = "Evento";
         let when = "";
         let place = "";
+        let roomName = "";                        // solo el nombre de la sala (va en la tarjeta del boleto)
         let mapQuery = "";                        // dirección completa del local, para los botones «Cómo llegar»
         if (o.eventId) {
             // postal_code es una columna nueva (SQL 20261003_venues_codigo_postal.sql): si aún no existe, se repite la consulta sin ella para no perder el correo.
@@ -284,6 +286,7 @@ async function notifyVenueTicketOrder(
                 }
                 const room = ev.venue_rooms;
                 const venue = room?.venues;
+                roomName = String(room?.name ?? "");
                 // Dirección completa: «8000 SW 8th St, Miami, FL 33144» (el código postal solo se agrega si la ciudad no lo trae ya)
                 const zip = String(venue?.postal_code ?? "").trim();
                 const city = String(venue?.city ?? "").trim();
@@ -308,33 +311,77 @@ async function notifyVenueTicketOrder(
 <a href="https://maps.apple.com/?q=${q}" style="${btn}">Apple Maps</a></p>`
             : "";
 
-        // Enlace y QR del ticket (el QR codifica el mismo enlace que abre /t/<id>; el escáner de la puerta lee el UUID de ahí). El QR se genera aquí mismo
-        // y viaja incrustado (cid) y como adjunto; si la generación falla, el correo sale igual con el botón del enlace (nunca bloquea el aviso de la compra).
+        // Boletos del correo = los MISMOS de la página del ticket (t.html): una tarjeta por persona o asiento, cada una con SU QR (…/t/<id del pase>).
+        // Cada QR se genera aquí mismo (GIF base64, lo muestran todos los clientes de correo) y viaja incrustado (cid); si algo falla, el correo sale igual
+        // con los enlaces (nunca bloquea el aviso de la compra). Si la compra aún no tiene pases (no debería), cae al QR de la orden como antes.
         const ticketBase = (Deno.env.get("TICKET_SITE_URL") || "https://www.miamidjbeat.com").replace(/\/$/, "");
-        const ticketUrl = o.orderId ? `${ticketBase}/t/${o.orderId}` : "";
+        const ticketUrl = o.orderId ? `${ticketBase}/t/${o.orderId}` : "";           // cartera de la compra: todos los pases
         let qrAttachments: { filename: string; content: string; content_type: string; content_id: string }[] = [];
+        // deno-lint-ignore no-explicit-any
+        let qrcode: any = null;
         if (ticketUrl) {
             try {
                 const mod = await import("npm:qrcode-generator@1.4.4");
                 // deno-lint-ignore no-explicit-any
-                const qrcode: any = (mod as any).default ?? mod;
-                const qr = qrcode(0, "M");
-                qr.addData(ticketUrl);
-                qr.make();
-                const dataUrl: string = qr.createDataURL(8, 4);   // GIF base64: lo muestran todos los clientes de correo
-                qrAttachments = [{ filename: `ticket-${code}.gif`, content: dataUrl.split(",")[1], content_type: "image/gif", content_id: "ticketqr" }];
+                qrcode = (mod as any).default ?? mod;
             } catch (qrErr) {
-                console.error("[Webhook] QR del correo no generado (el correo sale con el enlace):", qrErr);
+                console.error("[Webhook] qrcode-generator no cargó (el correo sale con los enlaces):", qrErr);
             }
         }
-        const ticketBlock = ticketUrl
-            ? `\n<p style="margin:20px 0 8px"><a href="${ticketUrl}" style="${btn}">Ver mi ticket y código QR / View my ticket &amp; QR code</a></p>${
+        const qrGif = (url: string): string | null => {
+            if (!qrcode) return null;
+            try {
+                const qr = qrcode(0, "M");
+                qr.addData(url);
+                qr.make();
+                return String(qr.createDataURL(8, 4)).split(",")[1] ?? null;
+            } catch (e) {
+                console.error("[Webhook] QR no generado:", e);
+                return null;
+            }
+        };
+        let passes: EmailPass[] = [];
+        if (o.orderId) {
+            try {
+                const { data: gs } = await supabase.from("venue_ticket_guests").select("id, seq, label, guest_name, status").eq("order_id", o.orderId).order("seq", { ascending: true });
+                // deno-lint-ignore no-explicit-any
+                passes = ((gs ?? []) as any[]).filter((g) => g.status !== "void").map((g) => ({ id: String(g.id), seq: Number(g.seq) || 0, label: String(g.label ?? ""), guestName: g.guest_name ?? null }));
+            } catch (e) {
+                console.error("[Webhook] pases del correo no leídos:", e);
+            }
+        }
+        const MAX_INLINE = 12;                                                        // tope de QR incrustados por correo; el resto va como enlace
+        const cidOf = new Map<string, string>();
+        let ticketBlock = "";
+        if (ticketUrl && passes.length) {
+            passes.slice(0, MAX_INLINE).forEach((p, i) => {
+                const gif = qrGif(`${ticketBase}/t/${p.id}`);
+                if (gif) {
+                    const cid = `passqr${i + 1}`;
+                    cidOf.set(p.id, cid);
+                    qrAttachments.push({ filename: `pase-${p.id.slice(0, 8).toUpperCase()}.gif`, content: gif, content_type: "image/gif", content_id: cid });
+                }
+            });
+            const cards = passCardsHtml(
+                { title, when, room: roomName, kind: mesas ? "tables" : "tickets" },
+                passes,
+                (p) => cidOf.get(p.id) ?? null,
+                (p) => `${ticketBase}/t/${p.id}`,
+                MAX_INLINE,
+            );
+            ticketBlock = `\n<p style="margin:20px 0 8px"><a href="${ticketUrl}" style="${btn}">Ver mis pases / View my passes</a></p>
+<p style="font-size:13px">Cada persona tiene su propio boleto con su QR y entra una sola vez. Puedes reenviarle a cada invitado el suyo (enlace en cada boleto). / Everyone has their own ticket and QR and gets in once. You can forward each guest their own (link on each ticket).</p>
+${cards}`;
+        } else if (ticketUrl) {
+            const gif = qrGif(ticketUrl);
+            if (gif) qrAttachments = [{ filename: `ticket-${code}.gif`, content: gif, content_type: "image/gif", content_id: "ticketqr" }];
+            ticketBlock = `\n<p style="margin:20px 0 8px"><a href="${ticketUrl}" style="${btn}">Ver mi ticket y código QR / View my ticket &amp; QR code</a></p>${
                 qrAttachments.length
                     ? `\n<p><img src="cid:ticketqr" alt="QR" width="200" height="200" style="display:block;width:200px;height:200px;border:1px solid #ddd;padding:6px;background:#fff"><span style="font-size:12px;color:#666">Preséntalo en la puerta, desde este correo o desde la página de tu ticket. / Show it at the door.</span></p>`
                     : ""
             }
-<p style="font-size:12px;color:#666">Enlace para compartir con tus acompañantes / Link to share with your guests:<br><a href="${ticketUrl}">${ticketUrl}</a></p>`
-            : "";
+<p style="font-size:12px;color:#666">Enlace para compartir con tus acompañantes / Link to share with your guests:<br><a href="${ticketUrl}">${ticketUrl}</a></p>`;
+        }
 
         const send = (to: string, subject: string, html: string, attachments?: unknown[]) =>
             fetch("https://api.resend.com/emails", {

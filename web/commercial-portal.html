@@ -94,6 +94,13 @@
         .cc-vname { margin: 0 0 10px; color: #fff; font-size: 16px; font-weight: 800; }
         .cc-member { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 14px; }
         .cc-member:last-child { border-bottom: none; }
+        /* Mesas: sin párrafos ni banners, una sola fila de herramientas y menos aire arriba para que el plano gane altura (pedido del PO 2026-10-07). */
+        #cc-p-mesas .cc-card { padding: 14px 18px; margin-bottom: 12px; }
+        #cc-p-mesas .cc-card h2 { margin: 0 0 8px; font-size: 17px; }
+        .cc-member { flex-wrap: wrap; }
+        .cc-member-sw { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 10px 28px; margin-top: 10px; }
+        .cc-tsw { display: flex; align-items: center; gap: 12px; font-size: 14px; }
+        .cc-tsw .cc-switch { margin: 0; }
         .cc-member small { display: block; color: rgba(255,255,255,0.55); font-size: 12px; }
         .cc-form select { width: 100%; box-sizing: border-box; padding: 12px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.3); color: #fff; margin-bottom: 12px; font-size: 15px; font-family: inherit; }
         .cc-linkbox { margin-top: 12px; padding: 12px 14px; border-radius: 8px; background: rgba(197,160,89,0.08); border: 1px solid rgba(197,160,89,0.25); font-size: 13px; color: rgba(255,255,255,0.8); }
@@ -111,6 +118,28 @@
         .cc-side-email { font-size: 12px; color: rgba(255,255,255,0.55); margin: 0; word-break: break-word; }
         .cc-nav { list-style: none; margin: 0; padding: 0; }
         .cc-nav li[hidden] { display: none; }
+        /* Vista SALAS (?vista=salas): el mismo menú lateral, solo con las secciones del local. «Resumen» solo existe en esta vista. */
+        .cc-nav li[data-cc-salas] { display: none; }
+        body.cc-modo-salas .cc-nav li[data-cc-salas]:not([hidden]) { display: block; }
+        body.cc-modo-salas .cc-nav > li:not([data-cc-keep]) { display: none; }
+        /* SALAS es una HERRAMIENTA de trabajo (puerta, boletos, mesas): usa todo el ancho de la pantalla, no la columna de 1120 px del resto del portal (pedido del PO 2026-10-07). */
+        body.cc-modo-salas .cc-wrap { max-width: none; padding-left: clamp(16px, 2.2vw, 44px); padding-right: clamp(16px, 2.2vw, 44px); }
+        @media (min-width: 821px) {
+            body.cc-modo-salas .cc-shell { grid-template-columns: minmax(230px, 270px) minmax(0, 1fr); }
+            body.cc-modo-salas .cc-shell.cc-collapsed { grid-template-columns: 64px minmax(0, 1fr); }
+        }
+        body.cc-modo-salas .cc-hero { aspect-ratio: auto; height: clamp(170px, 16vw, 250px); min-height: 0; }
+        body.cc-modo-salas .cc-sec form { max-width: 620px; }
+        body.cc-modo-salas #cc-res-box { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: 0 16px; align-items: start; }
+        body.cc-modo-salas #cc-res-box > .cc-res-h, body.cc-modo-salas #cc-res-box > .cc-sec, body.cc-modo-salas #cc-res-box > .cc-hint, body.cc-modo-salas #cc-res-box > .cc-res-links { grid-column: 1 / -1; }
+        .cc-res-meta { margin: 0 0 14px; color: rgba(255,255,255,0.7); font-size: 14px; }
+        .cc-res-h { margin: 18px 0 8px; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,0.55); }
+        .cc-ev { padding: 12px 14px; margin: 8px 0; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; background: rgba(255,255,255,0.03); }
+        .cc-ev b { display: block; color: #fff; font-size: 15px; }
+        .cc-ev small { color: rgba(255,255,255,0.6); font-size: 12.5px; }
+        .cc-ev-st { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 8px; font-size: 12.5px; color: rgba(255,255,255,0.85); }
+        .cc-ev-st span b { display: inline; font-size: inherit; color: #c5a059; }
+        .cc-res-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
         .cc-nav button, .cc-nav a { width: 100%; box-sizing: border-box; display: flex; align-items: center; gap: 10px; padding: 11px 12px; margin-bottom: 6px; border: 1px solid transparent; border-radius: 10px; background: transparent; color: rgba(255,255,255,0.72); font: inherit; font-size: 14px; font-weight: 600; text-align: left; text-decoration: none; cursor: pointer; transition: background .18s, box-shadow .18s, border-color .18s, color .18s; }
         .cc-nav button:hover, .cc-nav a:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1); color: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.06); }
         .cc-nav button[aria-selected="true"] { background: rgba(197,160,89,0.16); border-color: rgba(197,160,89,0.34); color: #fff; box-shadow: 0 3px 12px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.1); }
@@ -263,18 +292,28 @@
                     <p class="cc-side-email" id="cc-side-email">—</p>
                 </div>
                 <ul class="cc-nav" role="tablist" aria-orientation="vertical">
+                <li data-cc-salas data-cc-keep hidden><button type="button" role="tab" data-cc-panel="resumen" aria-selected="false" title="Resumen"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg><span class="cc-nav-txt">Resumen</span></button></li>
                 <li><button type="button" role="tab" data-cc-panel="perfil" aria-selected="false" title="Perfil"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg><span>Perfil</span></button></li>
                 <li><button type="button" role="tab" data-cc-panel="empresa" aria-selected="false" title="Mi empresa"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4M10 10h4M10 14h4M10 18h4"/></svg><span>Mi empresa</span></button></li>
                 <li><button type="button" role="tab" data-cc-panel="locales" aria-selected="false" title="Mis locales"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg><span>Mis locales</span></button></li>
-                <li data-cc-sell hidden><button type="button" role="tab" data-cc-panel="mesas" aria-selected="false" title="Mesas"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg><span>Mesas</span></button></li>
-                <li data-cc-owner hidden><button type="button" role="tab" data-cc-panel="marca" aria-selected="false" title="Marca del local"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg><span>Marca del local</span></button></li>
-                <li data-cc-owner hidden><button type="button" role="tab" data-cc-panel="equipo" aria-selected="false" title="Mi equipo"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Mi equipo</span></button></li>
+                <li data-cc-sell data-cc-keep hidden><button type="button" role="tab" data-cc-panel="mesas" aria-selected="false" title="Mesas"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg><span>Mesas</span></button></li>
+                <li data-cc-salas data-cc-keep hidden><button type="button" role="tab" data-cc-panel="boletos" aria-selected="false" title="Boletos"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2M13 17v2M13 11v2"/></svg><span>Boletos</span></button></li>
+                <li data-cc-salas data-cc-keep hidden><button type="button" role="tab" data-cc-panel="escaner" aria-selected="false" title="Escáner"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/></svg><span>Escáner</span></button></li>
+                <li data-cc-owner data-cc-keep hidden><button type="button" role="tab" data-cc-panel="marca" aria-selected="false" title="Marca del local"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg><span>Marca del local</span></button></li>
+                <li data-cc-owner data-cc-keep hidden><button type="button" role="tab" data-cc-panel="equipo" aria-selected="false" title="Mi equipo"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Mi equipo</span></button></li>
                 <li><button type="button" role="tab" data-cc-panel="notificaciones" aria-selected="false" title="Notificaciones"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span>Notificaciones</span></button></li>
                 <li><button type="button" role="tab" data-cc-panel="seguridad" aria-selected="false" title="Seguridad"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span>Seguridad</span></button></li>
                 <li data-cc-view hidden><a id="cc-view-client" href="#" title="Vista del cliente"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg><span>Vista del cliente</span></a></li>
                 </ul>
             </aside>
             <div class="cc-main">
+            <section class="cc-panel" id="cc-p-resumen" data-cc-body="resumen" hidden>
+        <div class="cc-card">
+            <h2>Salas · Resumen</h2>
+            <p class="cc-res-meta" id="cc-res-meta">Cargando…</p>
+            <div id="cc-res-box"></div>
+        </div>
+            </section>
             <section class="cc-panel" id="cc-p-perfil" data-cc-body="perfil" hidden>
         <div class="cc-card">
             <h2>Perfil</h2>
@@ -326,8 +365,21 @@
             </section>
             <section class="cc-panel" id="cc-p-mesas" data-cc-body="mesas" hidden>
         <div class="cc-card">
-            <h2>Mesas</h2>
+            <h2>Mapa maestro</h2>
             <div id="cc-tables-box"><p class="cc-hint">Cargando…</p></div>
+        </div>
+            </section>
+
+            <section class="cc-panel" id="cc-p-boletos" data-cc-body="boletos" hidden>
+        <div class="cc-card">
+            <h2>Boletos</h2>
+            <div id="cc-door-list"><p class="cc-hint">Cargando…</p></div>
+        </div>
+            </section>
+            <section class="cc-panel" id="cc-p-escaner" data-cc-body="escaner" hidden>
+        <div class="cc-card">
+            <h2>Escáner</h2>
+            <div id="cc-door-scan"><p class="cc-hint">Cargando…</p></div>
         </div>
             </section>
 
@@ -402,13 +454,15 @@
 </script>
 <script src="./js/mdj-safe-storage.js?v=20260616-1"></script>
 <script src="./supabase-config.js?v=20260602-auth-gate-1"></script>
-<script src="./translations.js?v=20261003-mi-perfil-unico"></script>
+<script src="./translations.js?v=20261007-salas-escaner"></script>
 <script src="./i18n.js?v=20260415-CORE-CONNECTIONS"></script>
 <script src="./header-smart-search.js?v=20260927-bilingue-hint"></script>
 <script src="./js/mdj-plan-shapes.js?v=20261005-rotulos"></script>
-<script src="./js/commercial-tables.js?v=20261004-areas-venta"></script>
+<script src="./js/commercial-tables.js?v=20261007-taburetes12"></script>
+<script src="./vendor/jsQR-1.4.0.min.js"></script>
+<script src="./js/mdj-venue-door.js?v=20261007-puerta4"></script>
 <script src="./mdj-identity.js?v=20261003-identidad-unica"></script>
-<script src="./mdjb-shared-header.js?v=20261003-mi-perfil-unico"></script>
+<script src="./mdjb-shared-header.js?v=20261007-salas-activo"></script>
 <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
 <script src="./mdj-mainnav-infinite.js?v=20260818-nav-canonico"></script>
 <script src="./mdj-social-bar.js?v=20260819-social-contact-only"></script>
@@ -478,27 +532,37 @@
         paintLogo($('cc-logo'), (v && v.brand_logo_url) || _ownAvatar, _ownName);
     }
     // Menú lateral: un panel a la vez, por #hash («MI PERFIL» del encabezado llega a #perfil, «CONFIG» a #notificaciones).
-    var PANELS = ['perfil', 'empresa', 'locales', 'mesas', 'marca', 'equipo', 'notificaciones', 'seguridad'];
+    var PANELS = ['resumen', 'perfil', 'empresa', 'locales', 'mesas', 'boletos', 'escaner', 'marca', 'equipo', 'notificaciones', 'seguridad'];
+    // Vista SALAS (pestaña SALAS de la barra → ?vista=salas): solo las secciones del local, empezando por «Resumen».
+    var SALAS_MODE = false, SALAS_PANELS = ['resumen', 'mesas', 'boletos', 'escaner', 'marca', 'equipo'];
+    try { SALAS_MODE = new URLSearchParams(location.search).get('vista') === 'salas'; } catch (eSm) { SALAS_MODE = false; }
+    if (SALAS_MODE) { document.body.classList.add('cc-modo-salas'); try { document.title = 'Salas — Miami DJ Beat'; } catch (eT) { } }
     var OWNER_ONLY = { marca: true, equipo: true };     // solo el dueño del local
     var LAYOUT_ONLY = {};                               // (hoy ningún panel es solo de dueño y manager; el editor de planos es herramienta interna de Miami DJ Beat)
     var SELL_ONLY = { mesas: true };                    // cualquier rol del local (dueño, manager y equipo ven y venden mesas)
-    var _isOwner = false, _canLayout = false, _canSell = false, _fiscalOk = false, _companyLoaded = false, _accessKnown = false;
+    var _isOwner = false, _canLayout = false, _canSell = false, _isMember = false, _fiscalOk = false, _companyLoaded = false, _accessKnown = false;
     function showPanel(name) {
         if (name === 'config') name = 'notificaciones';                       // enlaces viejos
-        if (PANELS.indexOf(name) < 0 || (OWNER_ONLY[name] && !_isOwner) || (LAYOUT_ONLY[name] && !_canLayout) || (SELL_ONLY[name] && !_canSell)) name = 'perfil';
+        var ini = SALAS_MODE ? 'resumen' : 'perfil';
+        if (!SALAS_MODE && (name === 'resumen' || name === 'boletos' || name === 'escaner')) name = ini;
+        if (SALAS_MODE && SALAS_PANELS.indexOf(name) < 0) name = ini;
+        if (PANELS.indexOf(name) < 0 || (OWNER_ONLY[name] && !_isOwner) || (LAYOUT_ONLY[name] && !_canLayout) || (SELL_ONLY[name] && !_canSell)) name = ini;
         PANELS.forEach(function (k) {
             $('cc-p-' + k).hidden = k !== name;
             document.querySelector('.cc-nav [data-cc-panel="' + k + '"]').setAttribute('aria-selected', k === name ? 'true' : 'false');
         });
         if (name === 'mesas' && window.mdjStaffTables) window.mdjStaffTables.onShow();   // inventario al día al abrir la pantalla
+        if (SALAS_MODE && window.mdjMarcarSalasActivo) window.mdjMarcarSalasActivo(name);   // la raya de la barra: SALAS, o ESCÁNER si es el escáner
+        if ((name === 'boletos' || name === 'escaner') && window.mdjVenueDoor) window.mdjVenueDoor.onShow(name);   // lista de la puerta en vivo / evento del día
     }
     function hashPanel() { return location.hash.replace('#', ''); }
     // Qué ve cada rol (dueño / manager / equipo). Una cuenta sin local vinculado conserva todo lo suyo: es la cuenta de la empresa.
     function setAccess(a) {
-        _isOwner = !!a.owner; _canLayout = !!a.layout; _canSell = !!a.sell; _fiscalOk = !!a.fiscal; _accessKnown = true;
+        _isOwner = !!a.owner; _canLayout = !!a.layout; _canSell = !!a.sell; _isMember = !!a.member; _fiscalOk = !!a.fiscal; _accessKnown = true;
         Array.prototype.forEach.call(document.querySelectorAll('.cc-nav [data-cc-owner]'), function (li) { li.hidden = !_isOwner; });
         Array.prototype.forEach.call(document.querySelectorAll('.cc-nav [data-cc-layout]'), function (li) { li.hidden = !_canLayout; });
         Array.prototype.forEach.call(document.querySelectorAll('.cc-nav [data-cc-sell]'), function (li) { li.hidden = !_canSell; });
+        Array.prototype.forEach.call(document.querySelectorAll('.cc-nav [data-cc-salas]'), function (li) { li.hidden = !(SALAS_MODE && _isMember); });   // Resumen, Boletos y Escáner: en la vista SALAS, para cualquier miembro del local (los porteros escanean sin más permisos)
         $('cc-hero-edit').hidden = !(_isOwner && a.brand);                      // atajo a «Marca del local», solo dueño
         syncFiscal();
         showPanel(hashPanel());                                                // #marca / #equipo ya pueden abrirse
@@ -517,6 +581,7 @@
         function goPanel(k) {
             history.replaceState(null, '', location.pathname + location.search + '#' + k);   // <base href="/">: nunca '#x' a secas
             showPanel(k);
+            if (k === 'escaner' && SALAS_MODE && window.mdjVenueDoor) window.mdjVenueDoor.openScanner(null);   // «Escáner» abre el visor de una vez
             var top = shell.getBoundingClientRect().top;                                      // el encabezado es fijo: que el panel nuevo no quede tapado
             if (top < 150) window.scrollTo({ top: window.scrollY + top - 160 });
         }
@@ -531,7 +596,10 @@
             e.preventDefault(); e.stopPropagation();
             goPanel('notificaciones');
         }, true);
-        window.addEventListener('hashchange', function () { showPanel(hashPanel()); });
+        window.addEventListener('hashchange', function () {
+            showPanel(hashPanel());
+            if (hashPanel() === 'escaner' && SALAS_MODE && window.mdjVenueDoor) window.mdjVenueDoor.openScanner(null);   // botón ESCÁNER de la barra estando ya en esta página
+        });
         showPanel(hashPanel());
     }
     // Notificaciones: mismas tres preferencias y mismas columnas que la cuenta del cliente; se guardan al mover el interruptor.
@@ -655,20 +723,99 @@
         return mesas ? u + (local ? '&' : '?') + 'vista=mesas' : u;
     }
 
+
+    // ── SALAS · Resumen. ÁMBITO DE SALA: un solo local (el de la cabecera: el del dueño o el primero) y TODA consulta se filtra por su venue_id. ──
+    function hoyMiami() { try { return new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' }); } catch (e) { return new Date().toISOString().slice(0, 10); } }
+    // «Nuevo evento»: ahora es UN solo formulario («Crear nuevo evento», botón + de Mesas); aquí solo hay un botón que lo abre.
+    function formEventoNuevo(db, scopeRow, box) {
+        var sec = document.createElement('div'); sec.className = 'cc-sec';
+        var h = document.createElement('div'); h.className = 'cc-res-h'; h.style.marginTop = '0'; h.textContent = 'Eventos nuevos'; sec.appendChild(h);
+        var bt = document.createElement('button'); bt.type = 'button'; bt.className = 'btn primary'; bt.textContent = '+ Crear nuevo evento';
+        bt.addEventListener('click', function () { if (window.mdjStaffTables && window.mdjStaffTables.crearEvento) window.mdjStaffTables.crearEvento(); });
+        sec.appendChild(bt); box.appendChild(sec);
+    }
+    async function paintResumen(db, scopeRow) {
+        var meta = $('cc-res-meta'), box = $('cc-res-box'); box.innerHTML = '';
+        if (!scopeRow || !scopeRow.venue_id) { meta.textContent = 'Todavía no tienes una sala vinculada a tu cuenta. Miami DJ Beat la vincula contigo.'; return; }
+        var VID = scopeRow.venue_id, role = scopeRow.role, v = scopeRow.venues || {}, hoy = (window.mdjVenueDoor && window.mdjVenueDoor.diaDeNegocio) ? window.mdjVenueDoor.diaDeNegocio() : hoyMiami();
+        meta.textContent = '';
+        var nm = document.createElement('b'); nm.textContent = v.name || 'Mi sala'; meta.appendChild(nm);
+        if (ROL[role]) { var tag = document.createElement('span'); tag.className = 'cc-role'; tag.textContent = ROL[role]; meta.appendChild(tag); }
+        var ev = await db.from('venue_events').select('id,title,event_date,event_time,status,tables_open,venue_rooms!inner(venue_id,name)')
+            .eq('venue_rooms.venue_id', VID).neq('status', 'cancelled').gte('event_date', hoy).order('event_date', { ascending: true }).limit(60);
+        if (ev && ev.error && /event_time/.test(ev.error.message || '')) ev = await db.from('venue_events').select('id,title,event_date,status,tables_open,venue_rooms!inner(venue_id,name)')   // el SQL de la hora aún no está aplicado
+            .eq('venue_rooms.venue_id', VID).neq('status', 'cancelled').gte('event_date', hoy).order('event_date', { ascending: true }).limit(60);
+        var eventos = ((ev && ev.data) || []).filter(function (e) { return e.venue_rooms && e.venue_rooms.venue_id === VID; });   // cinturón: jamás pintar algo de otra sala
+        var h = document.createElement('div'); h.className = 'cc-res-h'; h.textContent = 'Eventos'; box.appendChild(h);
+        if (ev && ev.error) { var er = document.createElement('p'); er.className = 'cc-hint'; er.textContent = 'No se pudieron cargar los eventos. Recarga la página.'; box.appendChild(er); }
+        else if (!eventos.length) { var em = document.createElement('p'); em.className = 'cc-hint'; em.textContent = 'No hay eventos próximos en tu sala.' + (scopeRow.permE ? ' Crea el primero abajo.' : ''); box.appendChild(em); }
+        var ids = eventos.map(function (e) { return e.id; }), mesas = {}, pases = {};
+        if (ids.length) {
+            var mt = await db.from('venue_event_tables').select('event_id,status').in('event_id', ids);                    // RLS: solo roles de ESTA sala
+            ((mt && mt.data) || []).forEach(function (m) { var o = mesas[m.event_id] || (mesas[m.event_id] = { available: 0, held: 0, reserved: 0, sold: 0 }); if (o[m.status] != null) o[m.status]++; });
+            var pg = await db.from('venue_ticket_guests').select('event_id,status').in('event_id', ids);                    // solo estado: SIN nombre, teléfono ni correo (y solo dueño/manager por RLS)
+            ((pg && pg.data) || []).forEach(function (g) { var o = pases[g.event_id] || (pases[g.event_id] = { total: 0, in: 0 }); if (g.status !== 'void') { o.total++; if (g.status === 'checked_in') o.in++; } });
+        }
+        function irA(panel, fn) { var li = document.querySelector('.cc-nav [data-cc-panel="' + panel + '"]'); if (!li) return; if (fn) fn(); li.click(); }
+        eventos.forEach(function (e) {
+            var d = document.createElement('div'); d.className = 'cc-ev';
+            var esHoy = e.event_date === hoy;
+            var b = document.createElement('b'); b.textContent = (esHoy ? 'HOY · ' : '') + (e.title || 'Evento'); d.appendChild(b);
+            var sm = document.createElement('small');
+            var fecha = e.event_date ? new Date(e.event_date + 'T12:00:00').toLocaleDateString('es-US', { weekday: 'long', day: 'numeric', month: 'long' }) : 'fecha por anunciar';
+            var horaTxt = ''; if (e.event_time) { var mh = /^(\d{1,2}):(\d{2})/.exec(e.event_time); if (mh) { var hh = Number(mh[1]); horaTxt = ' · ' + ((hh % 12) || 12) + ':' + mh[2] + (hh >= 12 ? ' p. m.' : ' a. m.'); } }
+            sm.textContent = fecha + horaTxt + ((e.venue_rooms && e.venue_rooms.name) ? ' · ' + e.venue_rooms.name : '') + (e.tables_open ? '' : ' · venta de mesas cerrada'); d.appendChild(sm);
+            var st = document.createElement('div'); st.className = 'cc-ev-st'; var m = mesas[e.id], p = pases[e.id];
+            function dato(t, n) { var s = document.createElement('span'); s.appendChild(document.createTextNode(t + ' ')); var bb = document.createElement('b'); bb.textContent = String(n); s.appendChild(bb); st.appendChild(s); }
+            if (m) { dato('Mesas libres', m.available); dato('Apartadas', m.held + m.reserved); dato('Vendidas', m.sold); }
+            if (p) { dato('Pases emitidos', p.total); dato('Ingresaron', p.in); }
+            if (!m && !p) { var s0 = document.createElement('span'); s0.textContent = 'Sin mesas ni pases todavía.'; st.appendChild(s0); }
+            d.appendChild(st);
+            var ac = document.createElement('div'); ac.className = 'cc-res-links'; ac.style.marginTop = '10px';
+            function boton(t, fn) { var bt = document.createElement('button'); bt.type = 'button'; bt.className = 'cc-btn2'; bt.textContent = t; bt.addEventListener('click', fn); ac.appendChild(bt); }
+            if (scopeRow.permS || scopeRow.permE) boton('Mapa y mesas', function () { irA('mesas', function () { if (window.mdjStaffTables) window.mdjStaffTables.selectEvent(e.id); }); });
+            boton('Boletos', function () { irA('boletos', function () { if (window.mdjVenueDoor) window.mdjVenueDoor.showEvent(e.id); }); });
+            if (esHoy) boton('Escáner', function () { irA('escaner'); });
+            d.appendChild(ac); box.appendChild(d);
+        });
+        if (scopeRow.permE) formEventoNuevo(db, scopeRow, box);                                // crear eventos: el owner y quien el owner autorizó a diseñar la sala
+        if (role === 'owner') {
+            var tm = await db.rpc('venue_team', { p_venue_id: VID });
+            if (tm && !tm.error && Array.isArray(tm.data)) { var h2 = document.createElement('div'); h2.className = 'cc-res-h'; h2.textContent = 'Equipo'; box.appendChild(h2); var pt = document.createElement('p'); pt.className = 'cc-hint'; pt.textContent = tm.data.length + (tm.data.length === 1 ? ' persona' : ' personas') + ' en el equipo de tu sala.'; box.appendChild(pt); }
+        }
+        var lk = document.createElement('div'); lk.className = 'cc-res-links';
+        [['equipo', 'Mi equipo'], ['marca', 'Imagen de la sala']].forEach(function (x) {
+            var li = document.querySelector('.cc-nav [data-cc-panel="' + x[0] + '"]'); if (!li || li.parentNode.hidden) return;
+            var bt = document.createElement('button'); bt.type = 'button'; bt.className = 'cc-btn2'; bt.textContent = x[1];
+            bt.addEventListener('click', function () { li.click(); }); lk.appendChild(bt);
+        });
+        box.appendChild(lk);
+    }
+
     async function loadVenues(db, uid) {
-        var base = 'name,slug,address,city,venue_rooms(id,name,slug,active,layout_mode)', marca = ',cover_image_url,brand_logo_url,cover_focal_x,cover_focal_y,cover_zoom', conRol = true, conMarca = true;
-        var res = await db.from('venue_staff').select('venue_id, role, venues(' + base + marca + ')').eq('user_id', uid);
+        var base = 'name,slug,address,city,venue_rooms(id,name,slug,active,layout_mode)', marca = ',cover_image_url,brand_logo_url,cover_focal_x,cover_focal_y,cover_zoom', perm = ', can_sell_tickets, can_edit_room', conRol = true, conMarca = true;
+        var res = await db.from('venue_staff').select('venue_id, role' + perm + ', venues(' + base + marca + ')').eq('user_id', uid);
+        if (res.error && /can_sell_tickets|can_edit_room/i.test(res.error.message || '')) {          // el SQL de autorizaciones del owner aún no está aplicado: permisos por rol, como antes
+            perm = '';
+            res = await db.from('venue_staff').select('venue_id, role, venues(' + base + marca + ')').eq('user_id', uid);
+        }
         if (res.error && /cover_focal|cover_zoom|brand_logo/i.test(res.error.message || '')) {   // el SQL de la marca aún no está aplicado: sin cabecera del local
             conMarca = false;
-            res = await db.from('venue_staff').select('venue_id, role, venues(' + base + ',cover_image_url)').eq('user_id', uid);
+            res = await db.from('venue_staff').select('venue_id, role' + perm + ', venues(' + base + ',cover_image_url)').eq('user_id', uid);
         }
         if (res.error && /role/i.test(res.error.message || '')) {          // el SQL de roles aún no está aplicado: se muestra sin rol
             conRol = false; conMarca = false;
             res = await db.from('venue_staff').select('venue_id, venues(' + base + ')').eq('user_id', uid);
         }
-        if (res.error) { if (!tablaFalta(res.error)) console.warn('[portal comercial] locales:', res.error.message); $('cc-venues').textContent = 'No se pudieron cargar tus locales. Recarga la página.'; setAccess({ owner: false, layout: true, fiscal: true, brand: false, sell: false }); return; }
+        if (res.error) { if (!tablaFalta(res.error)) console.warn('[portal comercial] locales:', res.error.message); $('cc-venues').textContent = 'No se pudieron cargar tus locales. Recarga la página.'; setAccess({ owner: false, layout: true, fiscal: true, brand: false, sell: false, member: false }); return; }
         var box = $('cc-venues'), owner = false; box.innerHTML = '';
         var rows = (res.data || []).filter(function (r) { return r.venues; });
+        // AUTORIZACIONES DEL OWNER: el dueño siempre puede todo; el resto, solo lo que el dueño les encendió (interruptores en «Mi equipo»). Sin el SQL nuevo, se conserva el permiso por rol de antes.
+        rows.forEach(function (r) {
+            var viejo = r.can_sell_tickets === undefined;
+            r.permS = r.role === 'owner' || (viejo ? (r.role === 'manager' || r.role === 'team') : r.can_sell_tickets === true);
+            r.permE = r.role === 'owner' || (viejo ? r.role === 'manager' : r.can_edit_room === true);
+        });
         // Cabecera de la página: el local donde soy dueño; si no, el primero.
         var heroRow = rows.filter(function (r) { return r.role === 'owner'; })[0] || rows[0];
         paintHero(heroRow ? heroRow.venues : null);
@@ -704,11 +851,20 @@
         var sinRol = !conRol || !rows.length;
         function tiene(roles) { return rows.some(function (r) { return roles.indexOf(r.role) >= 0; }); }
         // «Mesas»: cualquier rol del local (dueño, manager y equipo) ve el inventario y aparta / vende a mano; la base lo exige igual.
-        var conMesas = conRol && rows.length > 0;
-        setAccess({ owner: owner, layout: sinRol || tiene(['owner', 'manager']), fiscal: sinRol || tiene(['owner']), brand: conMarca, sell: conMesas });
+        var conMesas = conRol && rows.some(function (r) { return r.permS || r.permE; });      // «Mesas»: quien vende o quien diseña la sala
+        setAccess({ owner: owner, layout: sinRol || tiene(['owner', 'manager']), fiscal: sinRol || tiene(['owner']), brand: conMarca, sell: conMesas, member: conRol && rows.length > 0 });
+        if (SALAS_MODE) paintResumen(db, conRol && heroRow ? heroRow : null);
+        if (SALAS_MODE && conRol && heroRow) document.addEventListener('mdj:eventos-cambiaron', function () { paintResumen(db, heroRow); });   // evento creado o quitado desde Mesas
+        // Puerta (Boletos + Escáner): mismo ámbito que Resumen (el local de la cabecera); la base valida el local en cada llamada.
+        if (SALAS_MODE && conRol && heroRow && window.mdjVenueDoor) {
+            window.mdjVenueDoor.init({ db: db, venueId: heroRow.venue_id, role: heroRow.role, listBox: $('cc-door-list'), scanBox: $('cc-door-scan') });
+            var cur = hashPanel();
+            if (cur === 'boletos') window.mdjVenueDoor.onShow('boletos');
+            else if (cur === 'escaner') { window.mdjVenueDoor.onShow('escaner'); window.mdjVenueDoor.openScanner(null); }   // llegó por el botón ESCÁNER de la barra
+        }
         if (conMesas && window.mdjStaffTables) {
             window.mdjStaffTables.init({ db: db, box: $('cc-tables-box'), venues: rows.map(function (r) {
-                return { id: r.venue_id, name: r.venues.name, role: r.role, rooms: (r.venues.venue_rooms || []).filter(function (x) { return x.active !== false; }).map(function (x) { return { id: x.id, name: x.name }; }) };
+                return { id: r.venue_id, name: r.venues.name, role: r.role, canSell: r.permS, canEdit: r.permE, rooms: (r.venues.venue_rooms || []).filter(function (x) { return x.active !== false; }).map(function (x) { return { id: x.id, name: x.name }; }) };
             }) });
         }
     }
@@ -783,11 +939,12 @@
     function teamPanel(db, venueId, venueName) {
         var wrap = document.createElement('div'); wrap.className = 'cc-vp';
         wrap.innerHTML = '<p class="cc-vname"></p>' +
+            '<p class="cc-hint" style="margin:0 0 10px">Tú, como dueño, decides qué puede hacer cada persona: enciende «Venta de boletos / teléfono» para que pueda vender y apartar mesas, y «Diseñar y mover la sala» para que pueda crear eventos y cambiar mesas y sillas. Quien entra nuevo empieza con los dos apagados. Escanear boletos en la puerta no necesita autorización.</p>' +
             '<div class="cc-team-list"></div>' +
             '<form class="cc-form" novalidate style="margin-top:14px;">' +
             '<label>Nombre</label><input type="text" class="t-name" maxlength="120" autocomplete="off">' +
             '<label>Correo</label><input type="email" class="t-email" maxlength="160" autocomplete="off">' +
-            '<label>Rol</label><select class="t-role"><option value="manager">Manager</option><option value="team">Equipo</option></select>' +
+            '<label>Rol (las autorizaciones se encienden después, en la lista)</label><select class="t-role"><option value="manager">Manager</option><option value="team">Equipo</option></select>' +
             '<button type="submit" class="cc-btn2">Agregar</button><span class="cc-msg t-msg" role="status"></span>' +
             '</form><div class="t-result"></div>';
         wrap.querySelector('.cc-vname').textContent = venueName || '';
@@ -802,6 +959,29 @@
                 var who = document.createElement('div'); who.textContent = m.full_name || '—';
                 var sm = document.createElement('small'); sm.textContent = (m.email || '—') + ' · ' + (ROL[m.role] || m.role); who.appendChild(sm); row.appendChild(who);
                 if (m.role !== 'owner') {
+                    // Autorizaciones del owner: un interruptor por permiso (mismo componente que el de Notificaciones). Se guarda al mover el interruptor.
+                    var sw = document.createElement('div'); sw.className = 'cc-member-sw';
+                    [['can_sell_tickets', 'Venta de boletos / teléfono', 'can_sell_tickets'], ['can_edit_room', 'Diseñar y mover la sala', 'can_edit_room']].forEach(function (def) {
+                        var wr = document.createElement('div'); wr.className = 'cc-tsw';
+                        var lb = document.createElement('label'); lb.className = 'cc-switch';
+                        var inp = document.createElement('input'); inp.type = 'checkbox'; inp.checked = m[def[0]] === true; inp.setAttribute('aria-label', def[1] + ' — ' + (m.full_name || m.email || 'persona'));
+                        var sl = document.createElement('span'); sl.className = 'cc-slider'; lb.appendChild(inp); lb.appendChild(sl);
+                        var tx = document.createElement('span'); tx.textContent = def[1];
+                        wr.appendChild(lb); wr.appendChild(tx); sw.appendChild(wr);
+                        inp.addEventListener('change', async function () {
+                            var quiere = inp.checked; inp.disabled = true;
+                            var args = { p_venue_id: venueId, p_user_id: m.user_id, p_can_sell_tickets: null, p_can_edit_room: null }; args['p_' + def[2]] = quiere;
+                            var rr = await db.rpc('venue_team_set_permissions', args);
+                            inp.disabled = false;
+                            if (rr.error || !rr.data || !rr.data.ok) {
+                                inp.checked = !quiere;
+                                var em = String((rr.error && rr.error.message) || '');
+                                return say(/no_autorizado/.test(em) ? 'Solo el dueño puede cambiar estas autorizaciones.' : (/venue_team_set_permissions/.test(em) && /exist|find|schema/i.test(em) ? 'Falta aplicar el SQL de autorizaciones del dueño.' : 'No se pudo guardar. Intenta de nuevo.'), false);
+                            }
+                            m[def[0]] = rr.data[def[0]] === true;
+                            say((m.full_name || 'La persona') + ': ' + def[1].toLowerCase() + (quiere ? ' AUTORIZADO.' : ' desactivado.'), true);
+                        });
+                    });
                     var q = document.createElement('button'); q.type = 'button'; q.className = 'cc-btn2'; q.textContent = 'Quitar';
                     q.addEventListener('click', async function () {
                         if (!confirm('¿Quitar a ' + (m.full_name || 'esta persona') + ' del equipo? Dejará de ver el local.')) return;
@@ -810,6 +990,7 @@
                         say('', true); result.innerHTML = ''; refresh();
                     });
                     row.appendChild(q);
+                    row.appendChild(sw);
                 }
                 list.appendChild(row);
             });

@@ -66,6 +66,41 @@
        para el historial completo. */
   ];
 
+  /* ══ PESTAÑA SALAS / VENUES (autorizada por el PO 2026-10-07) ═════════════════
+     Para las cuentas comerciales con un registro ACTIVO en venue_staff (dueño, manager o equipo de un local). Va INMEDIATAMENTE antes de MI PERFIL.
+     Para todas las demás cuentas la pestaña no existe (ni en el DOM): usan MDJ_NAV_SLOTS tal cual.
+     Es la tabla pública de 8 puestos MÁS uno: el orden del arreglo manda la posición visual. El puesto lleva el número 9 (libre en esta tabla) para no tocar
+     las reglas de ancho de los puestos 4 y 8 (CONFIG y MI PERFIL).
+     ÁMBITO DE SALA (multi-tenant): mdjSalasScope() devuelve {uid, venue_id, role, venue_name} congelado, o null. Sale de la tabla venue_staff de la cuenta
+     logueada (resuelto por mdjResolverSalas); hay una copia en localStorage SOLO para pintar la barra sin esperar a la red (evita el «chicle»): la verdad
+     la reconfirma la base en cada sesión, y la copia solo vale para el mismo usuario. Nunca da permisos: los permisos son RLS en la base. */
+  var MDJ_NAV_SLOT_SALAS = { s: 9, key: 'nav-salas', nav: 'salas', href: './commercial-portal.html?vista=salas', txt: 'Salas',
+    id: 'mainNav-salas-link', cls: 'mdj-salas-mainnav' };
+  /* ESCÁNER (autorizado por el PO 2026-10-07): el segundo botón del local, justo después de SALAS y antes de MI PERFIL. Abre el escáner de QR de la puerta
+     (portal comercial, vista SALAS, panel Escáner). Mismo criterio de visibilidad que SALAS: cuenta con un registro activo en venue_staff. */
+  var MDJ_NAV_SLOT_ESCANER = { s: 10, key: 'nav-escaner', nav: 'escaner', href: './commercial-portal.html?vista=salas#escaner', txt: 'Escáner',
+    id: 'mainNav-escaner-link', cls: 'mdj-salas-mainnav' };
+  var MDJ_NAV_SLOTS_SALAS = (function () {
+    var t = MDJ_NAV_SLOTS.slice(), i = -1;
+    for (var k = 0; k < t.length; k++) { if (t[k].nav === 'mi-portal') { i = k; break; } }
+    if (i < 0) { t.push(MDJ_NAV_SLOT_SALAS); t.push(MDJ_NAV_SLOT_ESCANER); } else t.splice(i, 0, MDJ_NAV_SLOT_SALAS, MDJ_NAV_SLOT_ESCANER);
+    return t;
+  })();
+  var MDJ_SALAS_CACHE_KEY = 'mdj-salas-scope', MDJ_SALAS_TTL_MS = 10 * 60 * 1000;
+  function mdjSalasUidActual() {
+    try { return String(window.__mdjNavOwnUserId || localStorage.getItem('sb-current-user-id') || '').trim(); } catch (e) { return ''; }
+  }
+  function mdjSalasScope() {
+    try {
+      if (window.__mdjSalasScope !== undefined) return window.__mdjSalasScope;          // ya resuelto en esta página (null = sin sala)
+      var uid = mdjSalasUidActual(), raw = localStorage.getItem(MDJ_SALAS_CACHE_KEY);
+      if (!uid || !raw) return null;
+      var o = JSON.parse(raw);
+      if (o && o.uid === uid && o.venue_id) return Object.freeze({ uid: o.uid, venue_id: o.venue_id, role: o.role, venue_name: o.venue_name || '' });
+    } catch (e) { /* sin almacenamiento: se resuelve con la red */ }
+    return null;
+  }
+
   /* ══ JUEGO INTERNO DEL SISTEMA (decisión PO 2026-08-19) ══════════════════════
      Las vistas internas no son la vitrina: no deben ofrecer Servicios, Eventos,
      Shop, Trabajos ni Contacto, sino las herramientas del sistema.
@@ -647,7 +682,7 @@
           document.body.getAttribute('data-mdj-estacion') === 'oficina') {
         return MDJ_NAV_SLOTS_INTERNO;
       }
-      if (!mdjEsStaffEnVivo()) return MDJ_NAV_SLOTS;
+      if (!mdjEsStaffEnVivo()) return mdjSalasScope() ? MDJ_NAV_SLOTS_SALAS : MDJ_NAV_SLOTS;
       var pagina = String(window.location.pathname || '').split('/').pop().toLowerCase();
       if (MDJ_VISTAS_INTERNAS[pagina]) return MDJ_NAV_SLOTS_INTERNO;
       if (document.body && document.body.getAttribute('data-mdj-contexto') === 'interno') {
@@ -1885,6 +1920,7 @@
     if (_mdjSlotRuns++ > MDJ_SLOT_MAX) { mdjStopWatch(); return; }
     _mdjSlotLock = true;
     try { MDJ_RIELES.forEach(function (id) { mdjNormalizeMainNavSlots(id); }); } catch (e) {}
+    try { if (typeof mdjMarcarSalasActivo === 'function') mdjMarcarSalasActivo(); } catch (eSa) {}
     /* ANTI-TEMBLOR: revelar el riel solo cuando la tabla ya es la definitiva. Se
        exige sesion RESUELTA porque la tabla cambia con ella —publica o de
        estacion—, y revelar antes mostraria la publica y acto seguido la otra:
@@ -1895,6 +1931,63 @@
     } catch (eRev) { void eRev; }
     setTimeout(function () { _mdjSlotLock = false; }, 0);   // clave: liberar en la siguiente vuelta
   }
+
+  /* Resuelve el ÁMBITO DE SALA de la cuenta contra venue_staff (RLS: cada cuenta lee su propia fila) y, si cambia, vuelve a normalizar la barra.
+     venue_staff + venues, la fila más antigua (un local por cuenta en esta fase). Con una consulta por usuario cada 10 min como máximo (también se
+     recuerda el «no tiene sala»), no una por página. Sin sesión o sin fila: se borra la copia y la pestaña desaparece. */
+  var _mdjSalasBusy = false;
+  function mdjResolverSalas() {
+    if (_mdjSalasBusy) return;
+    var sb = null;
+    try { sb = (typeof window.getSupabaseClient === 'function') ? window.getSupabaseClient() : null; } catch (eS) { sb = null; }
+    if (!sb) return;
+    var uid = mdjSalasUidActual();
+    try {
+      var rawC = localStorage.getItem(MDJ_SALAS_CACHE_KEY), c = rawC ? JSON.parse(rawC) : null;
+      if (uid && c && c.uid === uid && c.ts && (Date.now() - c.ts) < MDJ_SALAS_TTL_MS) {
+        window.__mdjSalasScope = c.venue_id ? Object.freeze({ uid: c.uid, venue_id: c.venue_id, role: c.role, venue_name: c.venue_name || '' }) : null;
+        return;                                                                             // cache fresca (con sala o sin ella)
+      }
+    } catch (eC) { /* sigue a la red */ }
+    _mdjSalasBusy = true;
+    Promise.resolve(sb.auth.getSession()).then(function (r) {
+      var u = r && r.data && r.data.session && r.data.session.user;
+      if (!u) return null;
+      return Promise.resolve(sb.from('venue_staff').select('venue_id, role, created_at, venues(name)').eq('user_id', u.id).order('created_at', { ascending: true }).limit(1))
+        .then(function (q) { return { uid: u.id, rows: (q && !q.error && q.data) ? q.data : [] }; });
+    }).then(function (res) {
+      var prev = mdjSalasScope() ? mdjSalasScope().venue_id : null, cur = null, rec;
+      if (!res) { window.__mdjSalasScope = null; try { localStorage.removeItem(MDJ_SALAS_CACHE_KEY); } catch (e1) { } }
+      else {
+        var row = res.rows[0];
+        cur = row ? Object.freeze({ uid: res.uid, venue_id: row.venue_id, role: row.role, venue_name: (row.venues && row.venues.name) || '' }) : null;
+        window.__mdjSalasScope = cur;
+        rec = cur ? { uid: cur.uid, venue_id: cur.venue_id, role: cur.role, venue_name: cur.venue_name, ts: Date.now() } : { uid: res.uid, venue_id: null, ts: Date.now() };
+        try { localStorage.setItem(MDJ_SALAS_CACHE_KEY, JSON.stringify(rec)); } catch (e2) { }
+      }
+      if ((cur ? cur.venue_id : null) !== prev) { try { mdjAssertNavSlots(); } catch (e3) { } }
+    }).catch(function () { /* sin red: se queda lo que haya */ }).then(function () { _mdjSalasBusy = false; });
+  }
+  window.mdjSalasScope = mdjSalasScope;                       // lectura para las páginas (la pestaña SALAS lee el ámbito de aquí)
+  window.mdjResolverSalas = mdjResolverSalas;
+
+  /* Marca del puesto activo en la vista SALAS (la raya de abajo, igual que en las demás pestañas): SALAS mientras se trabaja en Resumen/Mesas/Boletos/…,
+     ESCÁNER cuando el panel abierto es el escáner. La página del portal comercial la llama al cambiar de panel; aquí se usa el # como respaldo. */
+  function mdjMarcarSalasActivo(panel) {
+    try {
+      var pagina = String(window.location.pathname || '').split('/').pop().toLowerCase();
+      if (pagina !== 'commercial-portal.html' || new URLSearchParams(window.location.search).get('vista') !== 'salas') return;
+      var nav = document.getElementById('mainNav'); if (!nav) return;
+      var esc = (panel || String(window.location.hash || '').replace('#', '')) === 'escaner';
+      var a = nav.querySelector('#mainNav-salas-link'), b = nav.querySelector('#mainNav-escaner-link');
+      if (a) a.classList.toggle('active', !esc);
+      if (b) b.classList.toggle('active', esc);
+    } catch (eAct) { /* sin marca */ }
+  }
+  window.mdjMarcarSalasActivo = mdjMarcarSalasActivo;
+  window.addEventListener('hashchange', function () { mdjMarcarSalasActivo(); });
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(mdjResolverSalas, 350); });
+  else setTimeout(mdjResolverSalas, 350);
 
   function mdjStopWatch() {
     if (_mdjSlotObs) { try { _mdjSlotObs.disconnect(); } catch (e) {} _mdjSlotObs = null; }

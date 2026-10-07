@@ -51,3 +51,17 @@ Un mismo concepto = un mismo símbolo en toda la web. Si el concepto ya tiene s�
 - **Entradas** (taquilla de salas, Pedidos → Entradas en `staff.html`): **🏠** («una casita con una puerta»). Sustituye al 🎟️ que había puesto yo sin precedente. Ojo: 🏠 ya aparece como «🏠 RESIDENCIA» en `js/agenda-engine.js` (DJ residente de un local); son conceptos cercanos (el local), pero distintos: no usar 🏠 para otra cosa más.
 - Mesas tomadas en el plano de salas: cartel «reservada» y rojo `#ff6060` (el del estado «Cancelado» del portal, aquí significa «ocupada»); disponible `#00c878`, elegida dorado `#c5a059`.
 - **Comprar entrada** (botón de la sala `venue-room.html`): **🛒**, el mismo del carrito del header y de `shop.html` (aprobado por el PO 2026-10-02).
+
+
+## Salas → Mesas (2026-10-07, a pedido del PO: «botones de solo emoji, ubicados donde todo el mundo los busca»)
+Botonera de solo emoji en la esquina superior derecha del plano (el nombre solo aparece al pasar el cursor, `title`):
+| Acción | Emoji | Origen | Estado |
+|---|---|---|---|
+| Mover mobiliario / diseñar mesas | **🗺️** | lo escribió el PO en sus órdenes («🗺️ Diseñar / Mover mesas») | en uso |
+| Pantalla completa | **⛶** | lo escribió el PO en sus órdenes («⛶ Pantalla Completa») | en uso |
+| Abrir la operación de hoy | **▶** | lo escribió el PO en sus órdenes («▶ Abrir operación de hoy») | en uso |
+| Mapa maestro / plantilla de la sala | **🏛️** | el PO lo escribió en el selector («🏛️ Plantilla maestra») | en uso |
+| Agregar mesa | **🪑** | **sin precedente en el banco**: elegido por equivalencia (silla = mesa/sillas) porque el PO dijo «si no existe, uno equivalente» | **APROBADO por el PO (2026-10-07, vía bloque pegado)** |
+| Taburete de barra | **🍸** | lo escribió el PO en su orden («🍸 Taburete de Barra») | en uso (en el selector «Agregar» y en el aviso del botón); falta su confirmación visual |
+| Eliminar el mueble seleccionado | **🗑️** | lo escribió el PO en su orden («🗑️ Eliminar mesa seleccionada») | en uso (botón rojo del panel de la mesa); falta su confirmación visual |
+Se retiraron los íconos SVG dibujados por iniciativa propia (teléfono, mover, mesa, pantalla completa, etc.) y la lupa del buscador: no tenían precedente.
