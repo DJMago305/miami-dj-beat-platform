@@ -35,6 +35,11 @@
         .res b { display: block; font-size: 18px; margin-bottom: 4px; }
         .res small { display: block; opacity: .92; font-size: 13px; line-height: 1.5; }
         .note { margin: 14px 0 0; font-size: 12px; color: var(--dim); line-height: 1.5; }
+        .qr { margin: 18px 0 4px; text-align: center; }
+        .qr-box { display: inline-block; background: #fff; padding: 12px; border-radius: 14px; line-height: 0; min-width: 120px; min-height: 120px; border: 1px solid var(--line); }
+        .qr-actions { margin-top: 12px; }
+        .qr-actions button { margin-top: 10px; }
+        .qr-actions .btn--soft { background: transparent; color: var(--gold); border: 1px solid var(--gold); }
         [hidden] { display: none !important; }
     </style>
 </head>
@@ -55,6 +60,8 @@
         })();
     </script>
     <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha512-CNgIRecGo7nphbeZ04Sc13ka07paqdeTu0WR1IM4kNcpmBAUSHSQX0FslNhTDadL4O5SAGapGt4FodqL8My0mA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="./js/mdj-ticket-qr.js?v=20261006-qr-entrega"></script>
     <script>
         /* Landing del QR de un ticket (https://www.miamidjbeat.com/t/<uuid>).
            · Cualquiera que escanee con la cámara del teléfono ve SOLO la ficha informativa (evento, fecha, sala, titular enmascarado): lo devuelve
@@ -66,7 +73,7 @@
             var T = {
                 es: { ticket: 'Entradas', table: 'Reserva de mesa', event: 'Evento', date: 'Fecha', room: 'Sala', holder: 'Titular', ref: 'Ref',
                       void: 'Cancelado / Reembolsado', notFound: 'Ticket no encontrado', notFoundSub: 'Revisa el enlace o escanea el código de nuevo.',
-                      noInfo: 'Ficha no disponible por ahora.', bad: 'Enlace no válido', staff: 'Equipo', validate: 'Validar ingreso (1)', validating: 'Validando…',
+                      noInfo: 'Ficha no disponible por ahora.', qrHint: 'Muestra este código en la puerta.', dl: 'Descargar / Guardar QR', dlOk: '✓ Guardado en tus descargas', dlFail: 'Haz una captura de pantalla del código', cp: 'Copiar enlace para acompañantes', cpOk: '✓ Enlace copiado', bad: 'Enlace no válido', staff: 'Equipo', validate: 'Validar ingreso (1)', validating: 'Validando…',
                       login: 'Soy del equipo: iniciar sesión', ok: 'Ingreso registrado', in: 'Ingresaron', of: 'de', who: 'A nombre de',
                       note: 'Esta página solo muestra la ficha del ticket. El ingreso se registra en la puerta.',
                       c_already_used: 'Ya ingresaron todas las entradas de este ticket.', c_invalid_event: 'Este ticket es de otro evento o de otra fecha.',
@@ -74,7 +81,7 @@
                       denied: 'Tu cuenta no tiene permiso para validar en este local.', fail: 'No se pudo validar. Intenta de nuevo.', noSql: 'Falta aplicar el SQL de escaneo.' },
                 en: { ticket: 'Tickets', table: 'Table reservation', event: 'Event', date: 'Date', room: 'Room', holder: 'Holder', ref: 'Ref',
                       void: 'Cancelled / Refunded', notFound: 'Ticket not found', notFoundSub: 'Check the link or scan the code again.',
-                      noInfo: 'Ticket details are not available right now.', bad: 'Invalid link', staff: 'Staff', validate: 'Validate entry (1)', validating: 'Validating…',
+                      noInfo: 'Ticket details are not available right now.', qrHint: 'Show this code at the door.', dl: 'Download / Save QR', dlOk: '✓ Saved to your downloads', dlFail: 'Take a screenshot of the code', cp: 'Copy link for your guests', cpOk: '✓ Link copied', bad: 'Invalid link', staff: 'Staff', validate: 'Validate entry (1)', validating: 'Validating…',
                       login: 'I am staff: sign in', ok: 'Entry recorded', in: 'Checked in', of: 'of', who: 'Name',
                       note: 'This page only shows the ticket details. Entry is recorded at the door.',
                       c_already_used: 'All the tickets in this order have already been used.', c_invalid_event: 'This ticket is for another event or date.',
@@ -107,6 +114,16 @@
                 row(dl, T.room, info.room_name);
                 row(dl, T.holder, info.holder);
                 card.appendChild(dl);
+                if (!info.void && window.mdjTicketQr) {          // el QR y sus botones los ve cualquiera que tenga el enlace (compradores y acompañantes)
+                    var qr = el('div', 'qr'), box = el('div', 'qr-box'), acts = el('div', 'qr-actions');
+                    qr.appendChild(box); qr.appendChild(el('p', 'note', T.qrHint));
+                    var dlb = el('button', null, T.dl); dlb.type = 'button';
+                    var cpb = el('button', 'btn--soft', T.cp); cpb.type = 'button';
+                    dlb.addEventListener('click', function () { var ok = window.mdjTicketQr.download(box, id); dlb.textContent = ok ? T.dlOk : T.dlFail; setTimeout(function () { dlb.textContent = T.dl; }, 2600); });
+                    cpb.addEventListener('click', function () { window.mdjTicketQr.copyLink(id).then(function (ok) { cpb.textContent = ok ? T.cpOk : window.mdjTicketQr.url(id); setTimeout(function () { cpb.textContent = T.cp; }, ok ? 2200 : 8000); }); });
+                    acts.appendChild(dlb); acts.appendChild(cpb); qr.appendChild(acts); card.appendChild(qr);
+                    window.mdjTicketQr.render(box, id, 208);
+                }
                 card.appendChild(el('div', 'ref', T.ref + ': ' + id.slice(0, 8).toUpperCase()));
                 card.appendChild(el('p', 'note', T.note));
             }

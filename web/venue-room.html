@@ -399,6 +399,7 @@ window.MDJ_SKIP_GLOBAL_EVENT_CART = true;
 <script src="./mdjb-shared-header.js?v=20261003-mi-perfil-unico"></script>
 <script src="./js/mdj-plan-shapes.js?v=20261005-rotulos"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha512-CNgIRecGo7nphbeZ04Sc13ka07paqdeTu0WR1IM4kNcpmBAUSHSQX0FslNhTDadL4O5SAGapGt4FodqL8My0mA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="./js/mdj-ticket-qr.js?v=20261006-qr-entrega"></script>
 <script>
 (function () {
     function getVenueRoomSlugs() {
@@ -780,6 +781,87 @@ window.MDJ_SKIP_GLOBAL_EVENT_CART = true;
         }
     }
 
+    /* Pantalla de «gracias» con el ticket: tras pagar, Stripe devuelve aquí con ?session_id=cs_…; el webhook crea la orden unos segundos después.
+       Se pregunta cada 2 s (hasta ~90 s) a venue_ticket_order_by_session (pública, sin sesión) y, en cuanto existe, se muestra la tarjeta con el QR
+       (descargable) y el enlace para los acompañantes. Si la orden tarda más, o la función aún no está en la base, se dice la verdad: el ticket también
+       llega por correo. */
+    function showTicketDelivery(sessionId, esMesa) {
+        var old = document.getElementById('vr-tk'); if (old && old.parentNode) old.parentNode.removeChild(old);
+        var ov = document.createElement('div'); ov.id = 'vr-tk'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-live', 'polite');
+        ov.style.cssText = 'position:fixed;top:0;right:0;bottom:0;left:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(5,8,14,.82);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);overflow:auto';
+        var card = document.createElement('div');
+        card.style.cssText = 'width:100%;max-width:400px;background:#0f1623;color:#f3f5ff;border:1px solid rgba(197,160,89,.55);border-top:3px solid #c5a059;border-radius:20px;padding:24px 22px;text-align:center;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;box-shadow:0 20px 60px rgba(0,0,0,.6)';
+        ov.appendChild(card); document.body.appendChild(ov);
+        function el(tag, css, txt) { var n = document.createElement(tag); if (css) n.style.cssText = css; if (txt != null) n.textContent = txt; return n; }
+        function btn(label, solid) {
+            var b = el('button', 'display:block;width:100%;margin-top:10px;padding:13px 16px;border-radius:12px;font:inherit;font-size:14px;font-weight:800;cursor:pointer;' +
+                (solid ? 'background:#c5a059;color:#111;border:0' : 'background:transparent;color:#c5a059;border:1px solid rgba(197,160,89,.7)'), label);
+            b.type = 'button'; return b;
+        }
+        function close() { if (ov.parentNode) ov.parentNode.removeChild(ov); try { clearTimeout(timer); } catch (e) { } }
+        function head(t) { card.appendChild(el('div', 'font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#c5a059;margin-bottom:12px', t)); }
+        var timer = 0, tries = 0, MAX = 45;
+
+        function waiting() {
+            card.innerHTML = ''; head('Miami DJ Beat');
+            card.appendChild(el('div', 'width:34px;height:34px;margin:6px auto 14px;border-radius:50%;border:3px solid rgba(197,160,89,.25);border-top-color:#c5a059;animation:vrtkspin 1s linear infinite'));
+            card.appendChild(el('div', 'font-size:17px;font-weight:700;margin-bottom:6px', 'Confirmando tu pago…'));
+            card.appendChild(el('div', 'font-size:13px;opacity:.7;line-height:1.5', 'En unos segundos aparece aquí tu ticket con su código QR.'));
+        }
+        function fallback(msg) {
+            card.innerHTML = ''; head('Miami DJ Beat');
+            card.appendChild(el('div', 'font-size:18px;font-weight:700;margin-bottom:8px', '¡Gracias por tu compra!'));
+            card.appendChild(el('div', 'font-size:13.5px;opacity:.85;line-height:1.55', msg));
+            var c = btn('Cerrar', true); c.addEventListener('click', close); card.appendChild(c);
+        }
+        function fmtDate(d) { try { return new Date(String(d).slice(0, 10) + 'T12:00:00').toLocaleDateString('es-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); } catch (e) { return String(d || ''); } }
+
+        function ticket(info) {
+            card.innerHTML = '';
+            head(esMesa || info.kind === 'tables' ? 'Tu mesa' : 'Tus entradas');
+            if (info.void) {
+                card.appendChild(el('div', 'font-size:18px;font-weight:700;margin-bottom:8px', 'Esta compra está en revisión'));
+                card.appendChild(el('div', 'font-size:13.5px;opacity:.85;line-height:1.55', 'Tu pago se recibió, pero la compra necesita revisión del equipo (por ejemplo, una mesa que ya no estaba libre). Te escribiremos al correo de la compra.'));
+                var cv = btn('Cerrar', true); cv.addEventListener('click', close); card.appendChild(cv); return;
+            }
+            card.appendChild(el('div', 'font-size:22px;font-weight:800;line-height:1.25;margin-bottom:4px', info.event_title || 'Evento'));
+            if (info.event_date) card.appendChild(el('div', 'font-size:14px;opacity:.8;margin-bottom:2px', fmtDate(info.event_date)));
+            if (info.room_name) card.appendChild(el('div', 'font-size:13px;opacity:.65;margin-bottom:10px', info.room_name));
+            var items = Array.isArray(info.items) ? info.items : [];
+            if (items.length) card.appendChild(el('div', 'font-size:14px;font-weight:700;margin:6px 0 14px;line-height:1.5', items.map(function (it) { return (Number(it.qty) > 1 ? it.qty + ' × ' : '') + String(it.label || ''); }).join(' · ')));
+            var qrBox = el('div', 'display:inline-block;background:#fff;padding:12px;border-radius:14px;line-height:0;min-width:120px;min-height:120px');
+            card.appendChild(qrBox);
+            card.appendChild(el('div', 'margin-top:8px;font-size:12px;letter-spacing:.14em;opacity:.7', 'REF: ' + window.mdjTicketQr.ref(info.order_id)));
+            if (info.holder) card.appendChild(el('div', 'font-size:13px;opacity:.85;margin-top:2px', 'A nombre de ' + info.holder));
+            window.mdjTicketQr.render(qrBox, info.order_id, 208, function (ok) { if (!ok) { qrBox.style.cssText = 'padding:14px;color:#111;line-height:1.4;font-size:13px;background:#fff;border-radius:14px'; qrBox.textContent = 'No se pudo dibujar el código aquí. Abre «Ver mi ticket».'; } });
+            var dl = btn('Descargar / Guardar QR', true), cp = btn('Copiar enlace para acompañantes', false);
+            var open = el('a', 'display:block;margin-top:12px;font-size:13px;color:#c5a059;text-decoration:underline', 'Ver mi ticket'); open.href = window.mdjTicketQr.url(info.order_id);
+            dl.addEventListener('click', function () { var ok = window.mdjTicketQr.download(qrBox, info.order_id); dl.textContent = ok ? '✓ Guardado en tus descargas' : 'Haz una captura de pantalla del código'; setTimeout(function () { dl.textContent = 'Descargar / Guardar QR'; }, 2600); });
+            cp.addEventListener('click', function () { window.mdjTicketQr.copyLink(info.order_id).then(function (ok) { cp.textContent = ok ? '✓ Enlace copiado' : window.mdjTicketQr.url(info.order_id); setTimeout(function () { cp.textContent = 'Copiar enlace para acompañantes'; }, ok ? 2200 : 8000); }); });
+            card.appendChild(dl); card.appendChild(cp); card.appendChild(open);
+            card.appendChild(el('div', 'font-size:12px;opacity:.6;margin-top:14px;line-height:1.5', 'También te lo enviamos por correo. Cada persona del grupo puede usar este mismo enlace para entrar.'));
+            var c = btn('Cerrar', false); c.addEventListener('click', close); card.appendChild(c);
+        }
+
+        function poll() {
+            var db = null; try { db = window.getSupabaseClient(); } catch (e) { db = null; }
+            if (!db) { fallback('Tu pago se recibió. Tu ticket con el código QR llegará a tu correo en unos minutos.'); return; }
+            tries++;
+            Promise.resolve(db.rpc('venue_ticket_order_by_session', { p_session_id: sessionId })).then(function (r) {
+                if (r && r.error) { fallback('Tu pago se recibió. Tu ticket con el código QR llegará a tu correo en unos minutos.'); return; }
+                var d = r && r.data;
+                if (d && d.found && d.order_id) { ticket(d); return; }
+                if (tries >= MAX) { fallback('Tu pago se recibió, pero la confirmación está tardando más de lo normal. Tu ticket con el código QR llegará a tu correo en unos minutos.'); return; }
+                timer = setTimeout(poll, 2000);
+            }, function () {
+                if (tries >= MAX) { fallback('Tu pago se recibió. Tu ticket con el código QR llegará a tu correo en unos minutos.'); return; }
+                timer = setTimeout(poll, 3000);
+            });
+        }
+        if (!document.getElementById('vr-tk-style')) { var st = document.createElement('style'); st.id = 'vr-tk-style'; st.textContent = '@keyframes vrtkspin{to{transform:rotate(360deg)}}'; document.head.appendChild(st); }
+        waiting(); poll();
+    }
+
     function showPaymentReturnNotice() {
         var qs = new URLSearchParams(location.search);
         var esMesa = qs.get('table_payment') !== null;
@@ -792,6 +874,7 @@ window.MDJ_SKIP_GLOBAL_EVENT_CART = true;
                 if (st === 'cancelled' && h && h.token) window.getSupabaseClient().functions.invoke('create-venue-table-checkout', { body: { action: 'release', hold_token: h.token, session_id: h.session_id } }).catch(function () {});
             } catch (e) { /* sin almacenamiento */ }
         }
+        if (st === 'success' && /^cs_[A-Za-z0-9_]+$/.test(qs.get('session_id') || '')) { showTicketDelivery(qs.get('session_id'), esMesa); return; }   // con el id de la sesión de pago: se entrega el QR aquí mismo
         var msg = st === 'success'
             ? (esMesa ? 'Gracias por tu compra. Estamos confirmando el pago de tus mesas; quedan a nombre de quien rentó.' : 'Gracias por tu compra. Estamos confirmando tu pago.')
             : (esMesa ? 'El pago se canceló. No se te cobró y tus mesas volvieron a estar disponibles.' : 'El pago se canceló. No se te cobró.');
