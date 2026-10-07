@@ -1118,15 +1118,12 @@ var PORTAL_I18N_FB = {
         'portal-tickets-st-review': 'Under review',
         'portal-tickets-st-used': 'Checked in',
         'portal-tickets-guest': 'Guest name',
-        'portal-tickets-qr-open': 'Show access code / QR',
-        'portal-tickets-qr-close': 'Hide access code',
-        'portal-tickets-ref': 'Ref',
+        'portal-tickets-open-passes': 'Open my passes',
+        'portal-tickets-passes-hint': 'Each person has their own QR code. Open your passes to download them or share them with your guests.',
         'portal-tickets-in-of': 'Checked in: {x} of {y} {unit}',
         'portal-tickets-unit-tickets': 'people',
         'portal-tickets-unit-tables': 'tables',
         'portal-tickets-void': 'Cancelled / Refunded',
-        'portal-tickets-qr-hint': 'Show this code at the door. Do not share it: it works only for what you bought.',
-        'portal-tickets-qr-fail': 'The code could not be drawn. Reload the page, or give your name and the Ref at the door.',
         'portal-welcome-recognized': 'Hello, {name}!',
         'portal-welcome-recognized-sub':
             'You are part of the Miami DJ Beat family. From here you can book, rent, or shop — and your dates, payments, and details will stay in one place, with us beside you every step of the way.',
@@ -1237,15 +1234,12 @@ var PORTAL_I18N_FB = {
         'portal-tickets-st-review': 'En revisión',
         'portal-tickets-st-used': 'Ya ingresó',
         'portal-tickets-guest': 'A nombre de',
-        'portal-tickets-qr-open': 'Ver código de acceso / QR',
-        'portal-tickets-qr-close': 'Ocultar código',
-        'portal-tickets-ref': 'Ref',
+        'portal-tickets-open-passes': 'Abrir mis pases',
+        'portal-tickets-passes-hint': 'Cada persona tiene su propio código QR. Abre tus pases para descargarlos o compartirlos con tus invitados.',
         'portal-tickets-in-of': 'Ingresaron: {x} de {y} {unit}',
         'portal-tickets-unit-tickets': 'personas',
         'portal-tickets-unit-tables': 'mesas',
         'portal-tickets-void': 'Cancelado / Reembolsado',
-        'portal-tickets-qr-hint': 'Muestra este código en la puerta. No lo compartas: solo vale por lo que compraste.',
-        'portal-tickets-qr-fail': 'No se pudo dibujar el código. Recarga la página, o di tu nombre y la Ref en la puerta.',
         'portal-welcome-recognized': '¡Hola, {name}!',
         'portal-welcome-recognized-sub':
             'Eres parte de la familia Miami DJ Beat. Desde aquí reservas, rentas o compras en el shop, y verás en un solo lugar fechas, pagos y el detalle de lo que tengas con nosotros — con el mismo cariño de siempre, paso a paso.',
@@ -1420,8 +1414,9 @@ function portalTicketsRender(host, rows) {
     });
     host.appendChild(list); host.hidden = false;
 }
-/* Código de acceso: QR con el UUID COMPLETO de la orden (https://www.miamidjbeat.com/t/<uuid>) + la Ref de 8 caracteres. Se dibuja al abrir (no antes). Pedido cancelado,
-   reembolsado o en conflicto → no hay QR: solo la etiqueta «Cancelado / Reembolsado». La validación real (evento, estado, cantidad) la hace venue_ticket_scan en la base. */
+/* «Abrir mis pases»: cada ticket o asiento tiene su PROPIO QR (una compra de varios tickets da varios pases); se ven, se descargan y se reparten en la cartera
+   de la compra (t.html?id=<orden>). Aquí ya NO se dibuja un QR de la orden: se confundía con los de cada pase. Pedido cancelado, reembolsado o en conflicto → solo la
+   etiqueta «Cancelado / Reembolsado». La validación real (evento, estado, uso) la hace venue_ticket_scan en la base. */
 function portalTicketsQrBlock(o, review) {
     function el(tag, cls, txt) { var n = document.createElement(tag); if (cls) n.className = cls; if (txt != null) n.textContent = txt; return n; }
     var box = el('div', 'pt-qr'), st = String(o.status || '');
@@ -1429,33 +1424,10 @@ function portalTicketsQrBlock(o, review) {
     if (voided) { box.appendChild(el('span', 'pt-void', portalT('portal-tickets-void'))); return box; }
     var id = String(o.id || '');
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return box;
-    var btn = el('button', 'pt-qr-btn', portalT('portal-tickets-qr-open')); btn.type = 'button'; btn.setAttribute('aria-expanded', 'false');
-    var panel = el('div', 'pt-qr-panel'); panel.hidden = true;
-    var drawn = false;
-    function draw() {
-        if (drawn) return;
-        var tries = 0;
-        (function go() {
-            if (typeof window.QRCode === 'function') {
-                var qr = el('div', 'pt-qr-img');
-                panel.insertBefore(qr, panel.firstChild);
-                try { new window.QRCode(qr, { text: 'https://www.miamidjbeat.com/t/' + id, width: 192, height: 192, colorDark: '#000000', colorLight: '#ffffff', correctLevel: window.QRCode.CorrectLevel.M }); drawn = true; }
-                catch (e) { panel.insertBefore(el('p', 'pt-empty', portalT('portal-tickets-qr-fail')), panel.firstChild); }
-                return;
-            }
-            if (++tries > 20) { panel.insertBefore(el('p', 'pt-empty', portalT('portal-tickets-qr-fail')), panel.firstChild); return; }
-            setTimeout(go, 250);
-        })();
-    }
-    panel.appendChild(el('div', 'pt-qr-ref', portalT('portal-tickets-ref') + ': ' + id.slice(0, 8).toUpperCase()));
-    panel.appendChild(el('p', 'pt-qr-hint', portalT('portal-tickets-qr-hint')));
-    btn.addEventListener('click', function () {
-        var open = panel.hidden; panel.hidden = !open;
-        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-        btn.textContent = portalT(open ? 'portal-tickets-qr-close' : 'portal-tickets-qr-open');
-        if (open) draw();
-    });
-    box.appendChild(btn); box.appendChild(panel);
+    var a = el('a', 'pt-qr-btn', portalT('portal-tickets-open-passes'));
+    a.href = './t.html?id=' + encodeURIComponent(id.toLowerCase());
+    box.appendChild(a);
+    box.appendChild(el('p', 'pt-qr-hint', portalT('portal-tickets-passes-hint')));
     return box;
 }
 var _portalTicketsRows = null;
