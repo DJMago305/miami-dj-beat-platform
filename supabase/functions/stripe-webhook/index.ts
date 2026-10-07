@@ -295,11 +295,39 @@ async function notifyVenueTicketOrder(
 <a href="https://maps.apple.com/?q=${q}" style="${btn}">Apple Maps</a></p>`
             : "";
 
-        const send = (to: string, subject: string, html: string) =>
+        // Enlace y QR del ticket (el QR codifica el mismo enlace que abre /t/<id>; el escáner de la puerta lee el UUID de ahí). El QR se genera aquí mismo
+        // y viaja incrustado (cid) y como adjunto; si la generación falla, el correo sale igual con el botón del enlace (nunca bloquea el aviso de la compra).
+        const ticketBase = (Deno.env.get("TICKET_SITE_URL") || "https://www.miamidjbeat.com").replace(/\/$/, "");
+        const ticketUrl = o.orderId ? `${ticketBase}/t/${o.orderId}` : "";
+        let qrAttachments: { filename: string; content: string; content_type: string; content_id: string }[] = [];
+        if (ticketUrl) {
+            try {
+                const mod = await import("npm:qrcode-generator@1.4.4");
+                // deno-lint-ignore no-explicit-any
+                const qrcode: any = (mod as any).default ?? mod;
+                const qr = qrcode(0, "M");
+                qr.addData(ticketUrl);
+                qr.make();
+                const dataUrl: string = qr.createDataURL(8, 4);   // GIF base64: lo muestran todos los clientes de correo
+                qrAttachments = [{ filename: `ticket-${code}.gif`, content: dataUrl.split(",")[1], content_type: "image/gif", content_id: "ticketqr" }];
+            } catch (qrErr) {
+                console.error("[Webhook] QR del correo no generado (el correo sale con el enlace):", qrErr);
+            }
+        }
+        const ticketBlock = ticketUrl
+            ? `\n<p style="margin:20px 0 8px"><a href="${ticketUrl}" style="${btn}">Ver mi ticket y código QR / View my ticket &amp; QR code</a></p>${
+                qrAttachments.length
+                    ? `\n<p><img src="cid:ticketqr" alt="QR" width="200" height="200" style="display:block;width:200px;height:200px;border:1px solid #ddd;padding:6px;background:#fff"><span style="font-size:12px;color:#666">Preséntalo en la puerta, desde este correo o desde la página de tu ticket. / Show it at the door.</span></p>`
+                    : ""
+            }
+<p style="font-size:12px;color:#666">Enlace para compartir con tus acompañantes / Link to share with your guests:<br><a href="${ticketUrl}">${ticketUrl}</a></p>`
+            : "";
+
+        const send = (to: string, subject: string, html: string, attachments?: unknown[]) =>
             fetch("https://api.resend.com/emails", {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
-                body: JSON.stringify({ from: FROM_EMAIL, to: [to], subject, html }),
+                body: JSON.stringify({ from: FROM_EMAIL, to: [to], subject, html, ...(attachments && attachments.length ? { attachments } : {}) }),
             });
 
         if (o.customerEmail) {
@@ -309,10 +337,11 @@ async function notifyVenueTicketOrder(
                 `<h2>¡Gracias por tu compra! / Thank you!</h2>
 <p><b>${escHtml(title)}</b>${when ? `<br>${escHtml(when)}` : ""}${place ? `<br>${escHtml(place)}` : ""}</p>
 <p><b>${mesas ? "Mesas / Tables" : "Entradas / Tickets"}:</b><br>${lines}</p>
-<p><b>Total:</b> ${escHtml(amount)}<br><b>Código / Code:</b> ${escHtml(code)}</p>${comoLlegar}
-<p>En la puerta, di tu nombre (<b>${escHtml(buyer)}</b>)${mesas && o.reservationName ? ` o el de la reserva (<b>${escHtml(o.reservationName)}</b>)` : ""} o muestra este correo.<br>
-At the door, give your name (<b>${escHtml(buyer)}</b>)${mesas && o.reservationName ? ` or the reservation name (<b>${escHtml(o.reservationName)}</b>)` : ""} or show this email.</p>
+<p><b>Total:</b> ${escHtml(amount)}<br><b>Código / Code:</b> ${escHtml(code)}</p>${ticketBlock}${comoLlegar}
+<p>En la puerta, muestra tu código QR o di tu nombre (<b>${escHtml(buyer)}</b>)${mesas && o.reservationName ? ` o el de la reserva (<b>${escHtml(o.reservationName)}</b>)` : ""}.<br>
+At the door, show your QR code or give your name (<b>${escHtml(buyer)}</b>)${mesas && o.reservationName ? ` or the reservation name (<b>${escHtml(o.reservationName)}</b>)` : ""}.</p>
 <p style="color:#888;font-size:12px">Miami DJ Beat LLC</p>`,
+                qrAttachments,
             );
         }
         if (MANAGER_EMAIL) {
