@@ -71,5 +71,41 @@
         return Promise.resolve(fallback());
     }
 
-    g.mdjTicketQr = { url: ticketUrl, ref: refOf, valid: validId, render: render, download: download, copyLink: copyLink };
+    /* Compartir un pase: hoja nativa del teléfono (WhatsApp, etc.) si existe; si no, copia el enlace. Promesa → 'shared' | 'copied' | 'cancel' | 'fail'. */
+    function share(id, title, text) {
+        var url = ticketUrl(id);
+        if (navigator.share) {
+            return navigator.share({ title: title || 'Miami DJ Beat', text: text || '', url: url }).then(
+                function () { return 'shared'; },
+                function (e) { return (e && e.name === 'AbortError') ? 'cancel' : 'fail'; });
+        }
+        return copyLink(id).then(function (ok) { return ok ? 'copied' : 'fail'; });
+    }
+
+    /* ¿Qué es este id? Pregunta, en orden: pase individual → cartera de una compra → ficha antigua de orden (sin pases).
+       Devuelve {type: 'pass' | 'wallet' | 'legacy' | 'none', data}. Si las funciones nuevas aún no están en la base, cae a la ficha antigua. */
+    function rpc(sb, name, args) {
+        return Promise.resolve(sb.rpc(name, args)).then(function (r) { return (r && !r.error) ? r.data : null; }, function () { return null; });
+    }
+    function resolve(sb, id) {
+        if (!sb || !validId(id)) return Promise.resolve({ type: 'none', data: null });
+        return rpc(sb, 'venue_guest_pass', { p_pass_id: id }).then(function (p) {
+            if (p && p.found) return { type: 'pass', data: p };
+            return rpc(sb, 'venue_order_wallet', { p_order_id: id }).then(function (w) {
+                if (w && w.found) return { type: 'wallet', data: w };
+                return rpc(sb, 'venue_ticket_public_info', { p_order_id: id }).then(function (i) {
+                    return i ? { type: 'legacy', data: i } : { type: 'none', data: null };
+                });
+            });
+        });
+    }
+
+    /* Asignar nombre/teléfono/correo. Comprador: key = id de la orden y guestId = el pase. Portador de un pase: key = id del pase y guestId = null. Promesa → {ok, error?}. */
+    function setInfo(sb, key, guestId, name, phone, email) {
+        return Promise.resolve(sb.rpc('venue_guest_set_info', { p_key: key, p_guest_id: guestId || null, p_name: name, p_phone: phone || null, p_email: email || null })).then(
+            function (r) { return (r && !r.error && r.data) ? r.data : { ok: false, error: 'fail' }; },
+            function () { return { ok: false, error: 'fail' }; });
+    }
+
+    g.mdjTicketQr = { url: ticketUrl, ref: refOf, valid: validId, render: render, download: download, copyLink: copyLink, share: share, resolve: resolve, setInfo: setInfo };
 })(typeof window !== 'undefined' ? window : this);

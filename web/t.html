@@ -40,6 +40,19 @@
         .qr-actions { margin-top: 12px; }
         .qr-actions button { margin-top: 10px; }
         .qr-actions .btn--soft { background: transparent; color: var(--gold); border: 1px solid var(--gold); }
+        .passes-h { margin: 22px 0 4px; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; }
+        .pass { margin-top: 14px; padding: 16px 14px; border: 1px solid var(--line); border-radius: 16px; }
+        .pass-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+        .pass-head b { font-size: 14px; }
+        .badge { flex: none; font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; border-radius: 999px; padding: 3px 10px; border: 1px solid currentColor; }
+        .badge--ok { color: var(--ok); } .badge--used { color: var(--dim); } .badge--void { color: var(--bad); }
+        .pass .qr { margin: 8px 0 0; }
+        .pass .qr-box { min-width: 0; min-height: 0; padding: 10px; }
+        .pass-used { margin: 8px 0 0; text-align: center; font-size: 13px; color: var(--dim); }
+        .pass input { width: 100%; font: inherit; font-size: 14px; padding: 11px 12px; margin-top: 8px; border-radius: 10px; border: 1px solid var(--line); background: transparent; color: var(--ink); }
+        .pass details { margin-top: 6px; font-size: 12px; color: var(--dim); } .pass summary { cursor: pointer; padding: 4px 0; }
+        .pass .msg { margin-top: 6px; font-size: 12px; min-height: 16px; color: var(--dim); } .pass .msg--bad { color: var(--bad); } .pass .msg--ok { color: var(--ok); }
+        .pass .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; } .pass .row2 button { margin-top: 8px; padding: 11px 8px; font-size: 13px; }
         [hidden] { display: none !important; }
     </style>
 </head>
@@ -61,7 +74,7 @@
     </script>
     <script src="./supabase-config.js?v=20260422-supabase-kxvqdr-host"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha512-CNgIRecGo7nphbeZ04Sc13ka07paqdeTu0WR1IM4kNcpmBAUSHSQX0FslNhTDadL4O5SAGapGt4FodqL8My0mA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="./js/mdj-ticket-qr.js?v=20261006-qr-entrega"></script>
+    <script src="./js/mdj-ticket-qr.js?v=20261006-pases"></script>
     <script>
         /* Landing del QR de un ticket (https://www.miamidjbeat.com/t/<uuid>).
            · Cualquiera que escanee con la cámara del teléfono ve SOLO la ficha informativa (evento, fecha, sala, titular enmascarado): lo devuelve
@@ -73,7 +86,7 @@
             var T = {
                 es: { ticket: 'Entradas', table: 'Reserva de mesa', event: 'Evento', date: 'Fecha', room: 'Sala', holder: 'Titular', ref: 'Ref',
                       void: 'Cancelado / Reembolsado', notFound: 'Ticket no encontrado', notFoundSub: 'Revisa el enlace o escanea el código de nuevo.',
-                      noInfo: 'Ficha no disponible por ahora.', qrHint: 'Muestra este código en la puerta.', dl: 'Descargar / Guardar QR', dlOk: '✓ Guardado en tus descargas', dlFail: 'Haz una captura de pantalla del código', cp: 'Copiar enlace para acompañantes', cpOk: '✓ Enlace copiado', bad: 'Enlace no válido', staff: 'Equipo', validate: 'Validar ingreso (1)', validating: 'Validando…',
+                      noInfo: 'Ficha no disponible por ahora.', passes: 'Tus pases', passesHint: 'Cada persona tiene su propio código QR y entra una sola vez. Escribe su nombre y comparte su pase.', passLbl: 'Pase', ready: 'Listo para entrar', used: 'Ya ingresó', voidB: 'Anulado', usedNote: 'Este pase ya fue usado en la puerta.', namePh: 'Nombre de quien entra', phonePh: 'Teléfono (opcional)', emailPh: 'Correo (opcional)', more: 'Más datos (opcional)', save: 'Guardar nombre', saving: 'Guardando…', saved: '✓ Guardado', shareP: 'Compartir pase', sharedOk: '✓ Compartido', copiedOk: '✓ Enlace copiado', e_nombre_invalido: 'Escribe un nombre (máximo 80 letras).', e_telefono_invalido: 'El teléfono no es válido.', e_correo_invalido: 'El correo no es válido.', e_pase_ya_usado: 'Este pase ya ingresó: no se puede cambiar.', e_pase_anulado: 'Este pase está anulado.', e_no_encontrado: 'No se encontró el pase.', e_fail: 'No se pudo guardar. Intenta de nuevo.', yourPass: 'Tu pase', guest: 'Invitado', qrHint: 'Muestra este código en la puerta.', dl: 'Descargar / Guardar QR', dlOk: '✓ Guardado en tus descargas', dlFail: 'Haz una captura de pantalla del código', cp: 'Copiar enlace para acompañantes', cpOk: '✓ Enlace copiado', bad: 'Enlace no válido', staff: 'Equipo', validate: 'Validar ingreso (1)', validating: 'Validando…',
                       login: 'Soy del equipo: iniciar sesión', ok: 'Ingreso registrado', in: 'Ingresaron', of: 'de', who: 'A nombre de',
                       note: 'Esta página solo muestra la ficha del ticket. El ingreso se registra en la puerta.',
                       c_already_used: 'Ya ingresaron todas las entradas de este ticket.', c_invalid_event: 'Este ticket es de otro evento o de otra fecha.',
@@ -81,7 +94,7 @@
                       denied: 'Tu cuenta no tiene permiso para validar en este local.', fail: 'No se pudo validar. Intenta de nuevo.', noSql: 'Falta aplicar el SQL de escaneo.' },
                 en: { ticket: 'Tickets', table: 'Table reservation', event: 'Event', date: 'Date', room: 'Room', holder: 'Holder', ref: 'Ref',
                       void: 'Cancelled / Refunded', notFound: 'Ticket not found', notFoundSub: 'Check the link or scan the code again.',
-                      noInfo: 'Ticket details are not available right now.', qrHint: 'Show this code at the door.', dl: 'Download / Save QR', dlOk: '✓ Saved to your downloads', dlFail: 'Take a screenshot of the code', cp: 'Copy link for your guests', cpOk: '✓ Link copied', bad: 'Invalid link', staff: 'Staff', validate: 'Validate entry (1)', validating: 'Validating…',
+                      noInfo: 'Ticket details are not available right now.', passes: 'Your passes', passesHint: 'Everyone has their own QR code and gets in once. Add their name and share their pass.', passLbl: 'Pass', ready: 'Ready to enter', used: 'Checked in', voidB: 'Cancelled', usedNote: 'This pass was already used at the door.', namePh: 'Name of the person entering', phonePh: 'Phone (optional)', emailPh: 'Email (optional)', more: 'More details (optional)', save: 'Save name', saving: 'Saving…', saved: '✓ Saved', shareP: 'Share pass', sharedOk: '✓ Shared', copiedOk: '✓ Link copied', e_nombre_invalido: 'Enter a name (80 characters max).', e_telefono_invalido: 'The phone number is not valid.', e_correo_invalido: 'The email is not valid.', e_pase_ya_usado: 'This pass was already used: it cannot be changed.', e_pase_anulado: 'This pass is cancelled.', e_no_encontrado: 'Pass not found.', e_fail: 'Could not save. Try again.', yourPass: 'Your pass', guest: 'Guest', qrHint: 'Show this code at the door.', dl: 'Download / Save QR', dlOk: '✓ Saved to your downloads', dlFail: 'Take a screenshot of the code', cp: 'Copy link for your guests', cpOk: '✓ Link copied', bad: 'Invalid link', staff: 'Staff', validate: 'Validate entry (1)', validating: 'Validating…',
                       login: 'I am staff: sign in', ok: 'Entry recorded', in: 'Checked in', of: 'of', who: 'Name',
                       note: 'This page only shows the ticket details. Entry is recorded at the door.',
                       c_already_used: 'All the tickets in this order have already been used.', c_invalid_event: 'This ticket is for another event or date.',
@@ -124,6 +137,81 @@
                     acts.appendChild(dlb); acts.appendChild(cpb); qr.appendChild(acts); card.appendChild(qr);
                     window.mdjTicketQr.render(box, id, 208);
                 }
+                card.appendChild(el('div', 'ref', T.ref + ': ' + id.slice(0, 8).toUpperCase()));
+                card.appendChild(el('p', 'note', T.note));
+            }
+
+
+            /* ── Pase individual y cartera (Fase 2): cada persona o asiento tiene su QR; el comprador reparte los pases. ── */
+            function badge(st) { var k = st === 'checked_in' ? 'used' : (st === 'void' ? 'void' : 'ok'); return el('span', 'badge badge--' + k, st === 'checked_in' ? T.used : (st === 'void' ? T.voidB : T.ready)); }
+            function dlMsg(msg, bad) { msg.className = 'msg ' + (bad ? 'msg--bad' : 'msg--ok'); }
+
+            /* Tarjeta de UN pase. mode 'wallet': key = id de la orden, el comprador asigna cada pase. mode 'pass': key = id del pase, el portador edita el suyo. */
+            function passCard(sb, key, p, mode) {
+                var id = mode === 'wallet' ? p.id : key;
+                var card1 = el('div', 'pass');
+                var head = el('div', 'pass-head');
+                head.appendChild(el('b', null, p.label || T.passLbl)); head.appendChild(badge(p.status));
+                card1.appendChild(head);
+                if (p.status === 'issued') {
+                    var qr = el('div', 'qr'), box = el('div', 'qr-box'); qr.appendChild(box); card1.appendChild(qr);
+                    window.mdjTicketQr.render(box, id, 176);
+                    var nm = el('input'); nm.type = 'text'; nm.maxLength = 80; nm.placeholder = T.namePh; nm.autocomplete = 'off';
+                    if (mode === 'wallet' && p.name) nm.value = p.name;
+                    var det = el('details'); det.appendChild(el('summary', null, T.more));
+                    var ph = el('input'); ph.type = 'tel'; ph.maxLength = 30; ph.placeholder = T.phonePh;
+                    var em = el('input'); em.type = 'email'; em.maxLength = 120; em.placeholder = T.emailPh;
+                    det.appendChild(ph); det.appendChild(em);
+                    var msg = el('div', 'msg'), sv = el('button', 'btn--soft', T.save); sv.type = 'button';
+                    sv.addEventListener('click', async function () {
+                        sv.disabled = true; sv.textContent = T.saving; msg.textContent = '';
+                        var r = mode === 'wallet' ? await window.mdjTicketQr.setInfo(sb, key, p.id, nm.value, ph.value, em.value) : await window.mdjTicketQr.setInfo(sb, key, null, nm.value, ph.value, em.value);
+                        sv.disabled = false; sv.textContent = T.save;
+                        if (r && r.ok) { dlMsg(msg, false); msg.textContent = T.saved; } else { dlMsg(msg, true); msg.textContent = T['e_' + ((r && r.error) || 'fail')] || T.e_fail; }
+                    });
+                    var row = el('div', 'row2');
+                    var dl = el('button', null, T.dl); dl.type = 'button';
+                    var sh = el('button', 'btn--soft', T.shareP); sh.type = 'button';
+                    dl.addEventListener('click', function () { var ok = window.mdjTicketQr.download(box, id); dl.textContent = ok ? T.dlOk : T.dlFail; setTimeout(function () { dl.textContent = T.dl; }, 2600); });
+                    sh.addEventListener('click', function () { window.mdjTicketQr.share(id, 'Miami DJ Beat', '').then(function (r) { if (r === 'shared' || r === 'copied') { sh.textContent = r === 'shared' ? T.sharedOk : T.copiedOk; setTimeout(function () { sh.textContent = T.shareP; }, 2200); } else if (r === 'fail') { sh.textContent = window.mdjTicketQr.url(id); setTimeout(function () { sh.textContent = T.shareP; }, 9000); } }); });
+                    row.appendChild(dl); row.appendChild(sh);
+                    card1.appendChild(nm); card1.appendChild(det); card1.appendChild(sv); card1.appendChild(msg); card1.appendChild(row);
+                } else if (p.status === 'checked_in') {
+                    card1.appendChild(el('p', 'pass-used', T.usedNote));
+                    if (mode === 'wallet' && p.name) card1.appendChild(el('p', 'pass-used', p.name));
+                }
+                return card1;
+            }
+
+            function renderWallet(sb, id, w) {
+                clear();
+                if (w.void) card.appendChild(el('span', 'tag tag--bad', T.void));
+                card.appendChild(el('h1', null, w.event_title || (w.kind === 'tables' ? T.table : T.ticket)));
+                card.appendChild(el('p', 'kind', w.kind === 'tables' ? T.table : T.ticket));
+                var dl0 = el('dl');
+                row(dl0, T.date, w.event_date ? fmtDate(w.event_date) : '');
+                row(dl0, T.room, w.room_name);
+                card.appendChild(dl0);
+                if (!w.void && w.passes && w.passes.length) {
+                    card.appendChild(el('h2', 'passes-h', T.passes + ' (' + w.passes.length + ')'));
+                    card.appendChild(el('p', 'note', T.passesHint));
+                    w.passes.forEach(function (p) { card.appendChild(passCard(sb, id, p, 'wallet')); });
+                }
+                card.appendChild(el('div', 'ref', T.ref + ': ' + id.slice(0, 8).toUpperCase()));
+                card.appendChild(el('p', 'note', T.note));
+            }
+
+            function renderPassView(sb, id, p) {
+                clear();
+                if (p.void) card.appendChild(el('span', 'tag tag--bad', T.void));
+                card.appendChild(el('h1', null, p.event_title || (p.kind === 'tables' ? T.table : T.ticket)));
+                card.appendChild(el('p', 'kind', T.yourPass));
+                var dl1 = el('dl');
+                row(dl1, T.date, p.event_date ? fmtDate(p.event_date) : '');
+                row(dl1, T.room, p.room_name);
+                row(dl1, T.holder, p.holder === 'Invitado' ? T.guest : p.holder);
+                card.appendChild(dl1);
+                card.appendChild(passCard(sb, id, { id: id, label: p.label, status: p.status, name: null }, 'pass'));
                 card.appendChild(el('div', 'ref', T.ref + ': ' + id.slice(0, 8).toUpperCase()));
                 card.appendChild(el('p', 'note', T.note));
             }
@@ -176,9 +264,10 @@
                 if (!id) { clear(); card.appendChild(el('h1', null, T.bad)); return; }
                 var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
                 if (!sb) { renderInfo(id, null); return; }
-                var info = null;
-                try { var r = await sb.rpc('venue_ticket_public_info', { p_order_id: id }); if (!r.error && r.data) info = r.data; } catch (e) { info = null; }
-                renderInfo(id, info);
+                var res = await window.mdjTicketQr.resolve(sb, id), info = res.data;       // pase individual → cartera de la compra → ficha antigua
+                if (res.type === 'wallet') renderWallet(sb, id, info);
+                else if (res.type === 'pass') renderPassView(sb, id, info);
+                else renderInfo(id, info);
                 if (!info || info.found === false) return;
                 var uid = null;
                 try { var s = await sb.auth.getSession(); uid = s && s.data && s.data.session && s.data.session.user && s.data.session.user.id; } catch (e3) { uid = null; }
