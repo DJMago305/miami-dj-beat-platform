@@ -2527,8 +2527,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                     <div style="margin-top: 40px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                             <div>
-                                <h4 style="margin:0; color: var(--gold);">📡 Actividad Reciente de la Plataforma</h4>
-                                <p class="fineprint">Nuevos usuarios, suscripciones y eventos del sistema</p>
+                                <h4 style="margin:0; color: var(--gold);">📡 Actividad Reciente de la Plataforma<span class="mdj-help" tabindex="0"><span class="mdj-help-icon">?</span><span class="mdj-help-tip">Nuevos usuarios, suscripciones y eventos del sistema</span></span></h4>
                             </div>
                             <button class="btn secondary small" onclick="loadStaffActivity()"><svg width="13" height="13" fill="none" stroke="#3b82f6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="vertical-align:-2px; margin-right:4px;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Actualizar</button>
                         </div>
@@ -3052,8 +3051,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
 
                 <!-- Contribuciones (solo Staff de gestión): aquí SE REGISTRAN las horas que aportan el owner y DJMago305 (contribuyentes sin salario por ahora). El Cash Flow solo las MIDE: ahí nadie escribe. -->
                 <div class="admin-card" id="contribuciones" style="display:none;">
-                    <h3 style="margin-top:0;">🕒 Contribuciones</h3>
-                    <p class="fineprint">Horas que aporta cada contribuyente. Las registra el Staff de gestión (owner, admin o manager); el Cash Flow del contribuyente las muestra en su gráfica, sin poder editarlas.</p>
+                    <h3 style="margin-top:0;">🕒 Contribuciones<span class="mdj-help" tabindex="0"><span class="mdj-help-icon">?</span><span class="mdj-help-tip">Horas que aporta cada contribuyente. Las registra el Staff de gestión (owner, admin o manager); el Cash Flow del contribuyente las muestra en su gráfica, sin poder editarlas.</span></span></h3>
                     <div id="contrib-msg" class="fineprint" style="min-height:18px;"></div>
                     <div id="contrib-resumen" style="display:flex;gap:14px;flex-wrap:wrap;margin:10px 0 18px;"></div>
                     <form id="contrib-form" style="display:grid;grid-template-columns:minmax(180px,1.2fr) 150px 110px minmax(180px,2fr) auto;gap:10px;align-items:end;margin-bottom:18px;">
@@ -3068,8 +3066,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
 
                 <!-- Owner-only: Tarifas del Motor de Comisiones (commission_rules) -->
                 <div class="admin-card" id="commission-rules" style="display:none;">
-                    <h3 style="margin-top:0;">💰 Tarifas del Motor de Comisiones</h3>
-                    <p class="fineprint">Precio de lista, pago al DJ y reparto vendedor/empresa por tier. Guardar un cambio crea una versión nueva y cierra la anterior -- nunca se sobreescribe una tarifa que ya se usó en una venta real.</p>
+                    <h3 style="margin-top:0;">💰 Tarifas del Motor de Comisiones<span class="mdj-help" tabindex="0"><span class="mdj-help-icon">?</span><span class="mdj-help-tip">Precio de lista, pago al DJ y reparto vendedor/empresa por tier. Guardar un cambio crea una versión nueva y cierra la anterior -- nunca se sobreescribe una tarifa que ya se usó en una venta real.</span></span></h3>
 
                     <div class="mdj-venue-form-card">
                         <strong style="display:block;margin-bottom:14px;font-size:15px;">+ Nuevo tier</strong>
@@ -3515,8 +3512,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                     <div id="venues-list" style="margin-top:20px;">Cargando venues…</div>
 
                     <div class="mdj-venue-form-card" style="margin-top:28px;background:rgba(197,160,89,0.04);border-color:rgba(197,160,89,0.25);">
-                        <h3 style="margin:0 0 4px;">🎪 Eventos itinerantes / Marcas</h3>
-                        <p class="fineprint" style="margin-top:0;">Marcas como "One Hit Wonder" que aún no tienen sala asignada -- se identifican por marca (brand), no por venue.</p>
+                        <h3 style="margin:0 0 4px;">🎪 Eventos itinerantes / Marcas<span class="mdj-help" tabindex="0"><span class="mdj-help-icon">?</span><span class="mdj-help-tip">Marcas como "One Hit Wonder" que aún no tienen sala asignada -- se identifican por marca (brand), no por venue.</span></span></h3>
                         <div class="mdj-venue-form-grid" style="margin-top:14px;">
                             <div>
                                 <label for="ohw-new-title">Título del evento</label>
@@ -3560,8 +3556,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                   <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid var(--line);">
                     <div>
                       <div style="font-size:11px;font-weight:800;color:var(--gold);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;">Producción · Eventos</div>
-                      <h3 style="font-size:20px;font-weight:800;color:#fff;margin:0 0 4px;">👗 Fashion Show — Run Sheet</h3>
-                      <p style="font-size:13px;color:rgba(255,255,255,.45);margin:0;">Guion técnico minutado (Show Caller Script). Edita en línea y guarda en la base de datos.</p>
+                      <h3 style="font-size:20px;font-weight:800;color:#fff;margin:0 0 4px;">👗 Fashion Show — Run Sheet<span class="mdj-help" tabindex="0"><span class="mdj-help-icon">?</span><span class="mdj-help-tip">Guion técnico minutado (Show Caller Script). Edita en línea y guarda en la base de datos.</span></span></h3>
                       <!-- Badge de cliente asignado -->
                       <div id="fs-assign-badge" style="display:none;margin-top:8px;display:inline-flex;align-items:center;gap:6px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25);border-radius:99px;padding:4px 12px;font-size:11px;font-weight:700;color:#86efac;"></div>
                     </div>
