@@ -225,6 +225,19 @@ function escHtml(v: unknown): string {
     return String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string));
 }
 
+// Pases individuales (un QR por persona/asiento): se emiten al crear la orden. Idempotente en la base; si falla, la cartera del comprador los emite al abrirla,
+// así que un error aquí NUNCA bloquea el correo ni el resto del webhook.
+// deno-lint-ignore no-explicit-any
+async function issueVenueGuests(supabase: any, orderId: string | null | undefined): Promise<void> {
+    if (!orderId) return;
+    try {
+        const { error } = await supabase.rpc("venue_ticket_issue_guests", { p_order_id: orderId });
+        if (error) console.error("[Webhook] venue_ticket_issue_guests:", error.message);
+    } catch (e) {
+        console.error("[Webhook] venue_ticket_issue_guests:", e);
+    }
+}
+
 async function notifyVenueTicketOrder(
     // deno-lint-ignore no-explicit-any
     supabase: any,
@@ -861,6 +874,7 @@ serve(async (req) => {
                     } else {
                         console.log(`✅ Venue table order: ${session.id} | ${emailT} | ${tableKeys.join(",")} | $${((session.amount_total ?? 0) / 100).toFixed(2)}`);
                     }
+                    await issueVenueGuests(supabase, tableOrderRow.id);
                     await notifyVenueTicketOrder(supabase, {
                         orderId: tableOrderRow.id,
                         eventId: eventIdTable,
@@ -934,6 +948,7 @@ serve(async (req) => {
                         }
                         // Confirmación al comprador y aviso al staff. Si el correo falla la orden ya quedó
                         // registrada (no bloquea): el staff la ve igual en Pedidos → Entradas.
+                        await issueVenueGuests(supabase, ticketOrderRow?.id);
                         await notifyVenueTicketOrder(supabase, {
                             orderId: ticketOrderRow?.id ?? null,
                             eventId: eventIdTicket,
