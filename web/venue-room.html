@@ -158,7 +158,8 @@
         .vr-plan .tbl .shape { fill: rgba(0,200,120,0.22); stroke: #00c878; stroke-width: 2; transition: fill .15s; }
         .vr-plan .tbl:hover .shape, .vr-plan .tbl:focus-visible .shape { fill: rgba(0,200,120,0.45); }
         .vr-plan .tbl.sold { cursor: not-allowed; }
-        .vr-plan .tbl.sold .shape { fill: rgba(255,96,96,0.22); stroke: #ff6060; }
+        .vr-plan .tbl.sold .shape { fill: rgba(255,96,96,0.42); stroke: #ff6060; stroke-width: 3; }
+        .vr-plan .tbl.sold .px { fill: #ffd1cc; font-weight: 800; font-size: 7.5px; letter-spacing: .03em; }
         .vr-plan .tbl.sel .shape { fill: rgba(197,160,89,0.55); stroke: #c5a059; stroke-width: 3; }
         .vr-plan .tbl text { fill: #fff; font: 800 13px Inter, sans-serif; text-anchor: middle; pointer-events: none; }
         .vr-plan .tbl text.px { font-size: 10.5px; font-weight: 700; fill: rgba(255,255,255,0.8); }
@@ -537,8 +538,8 @@ window.MDJ_SKIP_GLOBAL_EVENT_CART = true;
         if (!_vrPlanApi) return;
         _vrPlanApi.open('evento:' + ev.id, eventRoomOpts(ev));   // al instante, con lo que ya se sepa
         refreshReal();
-        clearInterval(_vrPoll);                                  // la disponibilidad se actualiza sola cada ~15 s mientras se mira
-        _vrPoll = setInterval(function () { if (document.visibilityState === 'visible') refreshReal(); }, 15000);
+        clearInterval(_vrPoll);                                  // la disponibilidad y el plano del evento se actualizan solos cada ~5 s mientras se mira (mesa vendida, movida, agregada o quitada)
+        _vrPoll = setInterval(function () { if (document.visibilityState === 'visible') refreshReal(); }, 5000);
     }
 
     // Días de la semana de una tarjeta («Miércoles», «Lunes y Martes»…) y de una fecha «YYYY-MM-DD» (0 = domingo).
@@ -1221,7 +1222,7 @@ window.MDJ_SKIP_GLOBAL_EVENT_CART = true;
                     el('rect', { class: 'shape', x: t.x - w / 2, y: t.y - h / 2, width: w, height: h, rx: 6 }, g);
                 }
                 el('text', { x: t.x, y: t.y }, g, t.id);
-                el('text', { class: 'px', x: t.x, y: t.y + 12 }, g, t.sold ? 'reservada' : '$' + fmt(t.zone.price));
+                el('text', { class: 'px', x: t.x, y: t.y + 12 }, g, t.sold ? 'RESERVADA' : '$' + fmt(t.zone.price));
                 function toggle() {
                     if (t.sold) return;
                     if (selected[t.id]) { delete selected[t.id]; g.classList.remove('sel'); g.setAttribute('aria-pressed', 'false'); }

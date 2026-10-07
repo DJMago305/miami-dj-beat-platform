@@ -213,7 +213,7 @@
         .ev-meta { color: var(--muted); font-size: 12.5px; }
         .ev-meta b { color: var(--gold); }
         .guest { display: grid; grid-template-columns: 1.4fr 1.6fr 1fr auto; align-items: center; gap: 14px; background: var(--card); border: 1px solid var(--card-line); border-radius: 10px; padding: 12px 16px; margin-bottom: 8px; }
-        .guest.in { border-color: rgba(70, 200, 120, .45); }
+        .guest.in { border-color: rgba(226, 85, 75, .55); }
         .guest-name { font-size: 14.5px; font-weight: 700; }
         .guest-sub { color: var(--muted); font-size: 12px; margin-top: 2px; word-break: break-word; }
         .guest-items { font-size: 13px; }
@@ -246,14 +246,14 @@
         .gate button:hover:not(:disabled) { border-color: var(--gold); color: var(--gold); }
         .gate button:disabled { opacity: .35; cursor: default; }
         .gate-n { min-width: 54px; text-align: center; font-weight: 800; font-size: 15px; }
-        .gate-n.full { color: var(--ok); }
+        .gate-n.full { color: #e2554b; }
         /* Pases individuales de una orden (lista de invitados): una fila por persona o asiento con su botón de ingreso */
         .passes { grid-column: 1 / -1; display: grid; gap: 6px; border-top: 1px dashed var(--card-line); padding-top: 10px; margin-top: 2px; }
         .pass-row { display: grid; grid-template-columns: 1.3fr 1.2fr 1fr auto; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--card-line); border-radius: 8px; font-size: 13px; }
-        .pass-row.in { border-color: rgba(70, 200, 120, .45); background: rgba(70, 200, 120, .06); }
+        .pass-row.in { border-color: rgba(226, 85, 75, .55); background: rgba(226, 85, 75, .10); }   /* ROJO = ya pasó / está adentro (pedido del PO) */
         .pass-row.void { opacity: .55; }
         .pr-seat { font-weight: 700; } .pr-name { word-break: break-word; } .pr-meta { color: var(--muted); font-size: 12px; word-break: break-word; }
-        .pr-st { font-size: 11.5px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; } .pr-st.ok { color: var(--ok); } .pr-st.void { color: #e2554b; }
+        .pr-st { font-size: 11.5px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; } .pr-st.ok { color: #e2554b; } .pr-st.void { color: #e2554b; }
         .pass-row button { cursor: pointer; font: inherit; font-size: 12.5px; font-weight: 800; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--gold); background: transparent; color: var(--gold); white-space: nowrap; }
         .pass-row button.undo { border-color: var(--card-line); color: var(--muted); } .pass-row button:disabled { opacity: .5; cursor: default; }
         .gate-note { font-size: 11px; color: var(--muted); text-align: center; max-width: 9em; line-height: 1.3; }
@@ -405,7 +405,7 @@
         function fmtHora(ts) { try { return new Date(ts).toLocaleTimeString('es-US', { hour: 'numeric', minute: '2-digit' }); } catch (e) { return ''; } }
         function passRow(p) {
             var inn = p.status === 'checked_in', vd = p.status === 'void';
-            var st = vd ? '<span class="pr-st void">Anulado</span>' : (inn ? '<span class="pr-st ok">Ingresó' + (p.checked_in_at ? ' ' + esc(fmtHora(p.checked_in_at)) : '') + '</span>' : '<span class="pr-st">Pendiente</span>');
+            var st = vd ? '<span class="pr-st void">Anulado</span>' : (inn ? '<span class="pr-st ok">Adentro' + (p.checked_in_at ? ' · ' + esc(fmtHora(p.checked_in_at)) : '') + '</span>' : '<span class="pr-st">Pendiente</span>');
             var btn = vd ? '' : '<button type="button" class="' + (inn ? 'undo' : '') + '" data-pass="' + esc(p.id) + '" data-in="' + (inn ? '0' : '1') + '">' + (inn ? 'Deshacer ingreso' : 'Marcar ingreso') + '</button>';
             return '<div class="pass-row' + (inn ? ' in' : '') + (vd ? ' void' : '') + '"><span class="pr-seat">' + esc(p.label) + '</span>' +
                 '<span class="pr-name">' + esc(p.guest_name || 'Sin nombre') + '</span>' +
@@ -601,6 +601,8 @@
         var SCAN_REASON = {
             already_used: 'Ya ingresaron todas las entradas de este ticket.',
             invalid_event: 'Este ticket es de OTRO evento o de otra fecha.',
+            wrong_date: 'El escáner solo valida el evento del día. Este evento no es de hoy.',
+            doors_closed: 'Las entradas de este evento están cerradas (el dueño o el manager puede reabrirlas).',
             cancelled: 'Ticket cancelado, reembolsado o en revisión.',
             order_not_found: 'Ticket no encontrado.'
         };
@@ -609,19 +611,20 @@
         function ymdNY(d) { return d.toLocaleDateString('en-CA', { timeZone: 'America/New_York' }); }
         function scanMsg(t) { document.getElementById('scan-msg').textContent = t || ''; document.getElementById('scan-msg').style.display = t ? '' : 'none'; }
 
-        // Eventos de la puerta: los de HOY (hora de Miami); si hoy no hay, los próximos 14 días. Si hay uno solo de hoy, queda elegido.
+        // EL ESCÁNER SOLO VALIDA EL EVENTO DEL DÍA (regla del PO): el día de negocio en Miami va de las 6:00 a las 6:00 (mismo criterio que venue_business_day() en la base).
+        // La base lo impone de todos modos ('wrong_date'); aquí solo se ofrecen los eventos de ese día. Si hay uno solo, queda elegido.
+        function diaDeNegocio() { return ymdNY(new Date(Date.now() - 6 * 3600 * 1000)); }
+        function fechaLarga(ymd) { try { return new Date(String(ymd).slice(0, 10) + 'T12:00:00').toLocaleDateString('es-US', { weekday: 'long', day: 'numeric', month: 'long' }); } catch (e) { return String(ymd || ''); } }
         async function scanLoadEvents(sb) {
-            var today = new Date(), to = new Date(today.getTime() + 14 * 86400000);
+            var hoy = diaDeNegocio();
             var r = await sb.from('venue_events').select('id,title,event_date,status,venue_rooms(name)')
-                .gte('event_date', ymdNY(new Date(today.getTime() - 86400000))).lte('event_date', ymdNY(to)).neq('status', 'cancelled').order('event_date', { ascending: true });
-            var rows = (r && r.data) || [], hoy = ymdNY(today);
-            var delDia = rows.filter(function (e) { return e.event_date === hoy; });
-            _scan.events = delDia.length ? delDia : rows;
+                .eq('event_date', hoy).neq('status', 'cancelled').order('title', { ascending: true });
+            _scan.events = ((r && r.data) || []).filter(function (e) { return e.event_date === hoy; });
             var sel = document.getElementById('scan-event');
             sel.innerHTML = _scan.events.length ? _scan.events.map(function (e) {
                 var room = e.venue_rooms && e.venue_rooms.name ? ' · ' + e.venue_rooms.name : '';
-                return '<option value="' + esc(e.id) + '">' + esc((e.event_date === hoy ? 'HOY · ' : e.event_date + ' · ') + (e.title || 'Evento') + room) + '</option>';
-            }).join('') : '<option value="">Sin eventos en los próximos días</option>';
+                return '<option value="' + esc(e.id) + '">' + esc('HOY · ' + (e.title || 'Evento') + room) + '</option>';
+            }).join('') : '<option value="">Sin evento hoy</option>';
             var saved = ''; try { saved = sessionStorage.getItem('mdj_scan_event') || ''; } catch (e) { }
             if (saved && _scan.events.some(function (e) { return e.id === saved; })) sel.value = saved;
             return _scan.events.length > 0;
@@ -684,6 +687,8 @@
                     showResult(true, 'Ingreso registrado', [pname, pl, 'Ingresaron: ' + res.checked_in_qty + ' de ' + res.total_qty]);
                 } else {
                     var hora = res.checked_in_at ? 'Ya ingresó a las ' + fmtHora(res.checked_in_at) : '';
+                    if (res.code === 'wrong_date') { showResult(false, 'Evento fuera de fecha', ['El escáner solo valida el evento del día.', res.event_date ? 'Este evento es del ' + fechaLarga(res.event_date) + '.' : 'Este evento no tiene fecha.']); return; }
+                    if (res.code === 'invalid_event' && res.ticket_event_date) { showResult(false, 'Ticket de otra fecha', [pname, (res.ticket_event_title || 'Otro evento') + ' · ' + fechaLarga(res.ticket_event_date), 'No es el evento de hoy.']); return; }
                     showResult(false, res.code === 'already_used' ? 'Este pase ya fue utilizado' : res.code === 'cancelled' ? 'Pase anulado' : (SCAN_REASON[res.code] || 'Rechazado'), [pname, pl, res.code === 'already_used' ? hora : '']);
                 }
                 return;
@@ -694,6 +699,8 @@
                 var arts = Array.isArray(res.items) ? res.items.map(function (it) { return (Number(it.qty) > 1 ? it.qty + '× ' : '') + String(it.label || ''); }).join(' · ') : '';
                 showResult(true, 'Ingreso registrado', [nombre, 'Ingresaron: ' + res.checked_in_qty + ' de ' + res.total_qty, arts]);
             } else {
+                if (res.code === 'wrong_date') { showResult(false, 'Evento fuera de fecha', ['El escáner solo valida el evento del día.', res.event_date ? 'Este evento es del ' + fechaLarga(res.event_date) + '.' : 'Este evento no tiene fecha.']); return; }
+                if (res.code === 'invalid_event' && res.ticket_event_date) { showResult(false, 'Ticket de otra fecha', [(res.ticket_event_title || 'Otro evento') + ' · ' + fechaLarga(res.ticket_event_date), 'No es el evento de hoy.']); return; }
                 var det = res.total_qty != null ? 'Ingresaron: ' + res.checked_in_qty + ' de ' + res.total_qty : '';
                 showResult(false, SCAN_REASON[res.code] || 'Rechazado', [(res.reservation_name || (guest && guest.customer_name) || ''), det]);
             }
@@ -773,7 +780,7 @@
             try { var AC = window.AudioContext || window.webkitAudioContext; if (AC && !_scan.ctx) _scan.ctx = new AC(); if (_scan.ctx && _scan.ctx.state === 'suspended') _scan.ctx.resume(); } catch (e) { }
             scanMsg('Cargando eventos…');
             var hay = false; try { hay = await scanLoadEvents(_sbRef); } catch (e) { hay = false; }
-            if (!hay) { scanMsg('No hay eventos hoy ni en los próximos 14 días: no se puede validar. La lista por nombre sigue disponible.'); return; }
+            if (!hay) { scanMsg('No hay ningún evento hoy: el escáner solo valida el evento del día. La lista por nombre sigue disponible.'); return; }
             scanStartCamera();
         }
         function scanClose() { scanStopCamera(); hideResult(); document.getElementById('scan-modal').classList.remove('open'); }
