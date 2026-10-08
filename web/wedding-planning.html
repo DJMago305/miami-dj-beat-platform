@@ -31,317 +31,66 @@
   <link rel="stylesheet" href="./css/mdj-dia-base.css?v=20261005-dia-base5" />
   <link rel="stylesheet" href="./mdj-assistant.css?v=20260306-1" />
   <style>
-    /* Editorial “papel” — inspiración layout boda + collage lateral */
-    body.page-wedding-planning {
-      background: linear-gradient(175deg, #c9c4bc 0%, #a8a298 18%, #8f8a82 55%, #6e6a63 100%);
-      min-height: 100vh;
+    /* PO 2026-10-08: sin «papel» blanco. Misma arquitectura que las demás páginas de servicio: video real detrás, hero limpio a pantalla completa y vidrio oscuro. */
+    .wp-hero-copy { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; justify-content: center; text-align: center; max-width: 720px; margin: 0 auto 50px; }
+    .wp-hero-copy h1 { font-family: 'Playfair Display', serif; text-transform: uppercase; text-wrap: balance; overflow-wrap: normal; word-break: keep-all; font-size: clamp(1.7rem, 6.5vw, 3.6rem); font-weight: 600; color: #fff; margin: 0 0 18px; line-height: 1.08; text-shadow: 0 4px 15px rgba(0, 0, 0, 0.8); }
+    .wp-hero-copy .wp-lead { font-size: 1.05rem; line-height: 1.65; color: rgba(255, 255, 255, 0.8); margin: 0 auto; max-width: 56ch; font-weight: 400; }
+    /* Dos secciones de bodas (PO 2026-10-08): «DJ para bodas» y «Planificación de bodas» son dos páginas, porque se buscan de dos maneras. */
+    .wd-tabs { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin: 30px auto 0; }
+    .wd-tab { display: inline-block; text-decoration: none; cursor: pointer; font-weight: 800; font-size: 14px; letter-spacing: .08em; text-transform: uppercase; padding: 12px 26px; border-radius: 999px;
+      color: var(--gold); background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(197, 160, 89, 0.5); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); transition: background .15s, border-color .15s, color .15s; }
+    .wd-tab:hover, .wd-tab:focus-visible { background: rgba(197, 160, 89, 0.16); border-color: rgba(197, 160, 89, 0.9); outline: none; }
+    .wd-tab[aria-current="page"] { background: rgba(197, 160, 89, 0.9); color: #14110c; border-color: rgba(197, 160, 89, 1); }
+    .wp-hook { max-width: 1100px; margin: 0 auto; }
+    .wp-hook__mosaic { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin: 0 0 28px; }
+    .wp-hook__mosaic img { width: 100%; height: 230px; object-fit: cover; border-radius: 16px; box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4); display: block; }
+    .wp-hook__tiers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .wp-hook__tier { padding: 24px 22px; border-radius: 18px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(197, 160, 89, 0.28); }
+    .wp-hook__num { display: block; margin: 0 0 8px; font-size: 12px; font-weight: 800; letter-spacing: .2em; color: var(--gold); }
+    .wp-hook__tier h2 { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 600; color: #fff; margin: 0 0 10px; line-height: 1.2; }
+    .wp-hook__tier p { margin: 0; font-size: 14.5px; line-height: 1.65; color: rgba(255, 255, 255, 0.76); }
+    .wp-hook__addons { margin: 18px 0 0; padding: 22px 24px; border-radius: 18px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(197, 160, 89, 0.28); }
+    .wp-hook__addons h2 { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 600; color: #fff; margin: 0 0 10px; }
+    .wp-hook__addons ul { margin: 0; padding-left: 20px; color: rgba(255, 255, 255, 0.78); line-height: 1.8; }
+    .wp-hook__cta { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 30px; }
+    @media (max-width: 860px) {
+      .wp-hook__tiers { grid-template-columns: 1fr; }
+      .wp-hook__mosaic { grid-template-columns: repeat(2, 1fr); }
+      .wp-hook__mosaic img { height: 170px; }
     }
-
-    .mdj-wp-shell {
-      /* body ya reserva altura del header en styles.css */
-      padding: 24px clamp(14px, 3vw, 28px) 88px;
-      box-sizing: border-box;
-    }
-
-    .mdj-wp-editorial {
-      max-width: 1100px;
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: minmax(0, 1.12fr) minmax(260px, 0.88fr);
-      gap: clamp(28px, 4vw, 52px);
-      align-items: start;
-      padding: clamp(28px, 4vw, 48px) clamp(22px, 3.5vw, 44px) clamp(32px, 4vw, 52px);
-      background: linear-gradient(180deg, #fffefb 0%, #faf7f2 48%, #f3efe8 100%);
-      border-radius: 28px;
-      box-shadow:
-        0 4px 0 rgba(255, 255, 255, 0.65) inset,
-        0 32px 64px rgba(20, 18, 14, 0.22),
-        0 1px 0 rgba(0, 0, 0, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.85);
-    }
-
-    .mdj-wp-copy {
-      min-width: 0;
-      font-family: 'Outfit', system-ui, sans-serif;
-      color: #2c2833;
-    }
-
-
-
-
-    .mdj-wp-copy h1 {
-      font-family: 'Cormorant Garamond', 'Times New Roman', serif;
-      font-size: clamp(2.1rem, 4.2vw, 2.85rem);
-      font-weight: 600;
-      color: #1a1614;
-      margin: 0 0 16px;
-      line-height: 1.08;
-      letter-spacing: 0.02em;
-    }
-
-    .mdj-wp-lead {
-      font-size: 1.02rem;
-      line-height: 1.65;
-      color: rgba(44, 40, 51, 0.78);
-      margin: 0 0 36px;
-      max-width: 52ch;
-      font-weight: 400;
-    }
-
-    .mdj-wp-tier {
-      margin-bottom: 32px;
-      padding: 0 0 4px;
-      border: none;
-      background: transparent;
-    }
-
-    .mdj-wp-tier h2 {
-      font-family: 'Cormorant Garamond', 'Times New Roman', serif;
-      font-size: clamp(1.35rem, 2.4vw, 1.65rem);
-      font-weight: 700;
-      color: #141210;
-      margin: 0 0 12px;
-      line-height: 1.2;
-      padding-bottom: 8px;
-      border-bottom: 1px solid rgba(197, 160, 89, 0.45);
-      display: inline-block;
-      min-width: 0;
-    }
-
-    .mdj-wp-tier p {
-      margin: 0;
-      font-size: 0.98rem;
-      line-height: 1.78;
-      color: rgba(35, 32, 38, 0.88);
-      max-width: 54ch;
-    }
-
-    .mdj-wp-addons {
-      margin-top: 8px;
-      margin-bottom: 8px;
-      padding-top: 8px;
-    }
-
-    .mdj-wp-addons h3 {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.35rem;
-      font-weight: 700;
-      color: #141210;
-      margin: 0 0 14px;
-      letter-spacing: 0.03em;
-    }
-
-    .mdj-wp-addons ul {
-      margin: 0;
-      padding: 0 0 0 1.15rem;
-      color: rgba(35, 32, 38, 0.88);
-      font-size: 0.98rem;
-      line-height: 1.75;
-    }
-
-    .mdj-wp-addons li {
-      margin-bottom: 8px;
-    }
-
-    .mdj-wp-cta-wrap {
-      margin-top: 32px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      align-items: center;
-    }
-
-    body.page-wedding-planning .mdj-wp-copy .btn.primary {
-      background: linear-gradient(135deg, #2a241c, #1a1612);
-      color: #faf6ef;
-      border: 1px solid rgba(197, 160, 89, 0.55);
-      font-weight: 700;
-    }
-
+    /* FIX-FOOTER-STACKING: el footer queda fuera del <main z-index:10>; sin esto el video fijo lo pinta encima. */
+    body.page-wedding-planning .footer { position: relative; z-index: 10; }
     body.page-wedding-planning .mdj-wp-copy .btn.primary:hover {
-      filter: brightness(1.08);
+    filter: brightness(1.08);
     }
-
     body.page-wedding-planning .mdj-wp-copy .btn.outline {
-      border-color: rgba(44, 40, 51, 0.25);
-      color: #2c2833;
-      background: rgba(255, 255, 255, 0.55);
+    border-color: rgba(44, 40, 51, 0.25);
+    color: #2c2833;
+    background: rgba(255, 255, 255, 0.55);
     }
-
     body.page-wedding-planning .mdj-wp-copy .btn.outline:hover {
-      border-color: rgba(197, 160, 89, 0.65);
-      color: #5c4a32;
+    border-color: rgba(197, 160, 89, 0.65);
+    color: #5c4a32;
     }
-
-    /* Columna derecha: sello + collage escalonado */
-    .mdj-wp-mosaicWrap {
-      position: relative;
-      min-height: 200px;
-      padding-top: 8px;
-    }
-
-    .mdj-wp-seal {
-      position: absolute;
-      top: -6px;
-      right: 8px;
-      width: 112px;
-      height: 112px;
-      border-radius: 50%;
-      background: radial-gradient(circle at 35% 30%, #fffef8, #e8dcc4 55%, #c5a059 120%);
-      border: 3px double rgba(90, 72, 48, 0.55);
-      box-shadow: 0 12px 28px rgba(40, 32, 20, 0.2);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 10px;
-      z-index: 6;
-      font-family: 'Outfit', sans-serif;
-      line-height: 1.15;
-    }
-
-    .mdj-wp-seal .mdj-wp-seal-k {
-      display: block;
-      font-size: 8px;
-      font-weight: 800;
-      letter-spacing: 0.12em;
-      color: #3d3226;
-    }
-
-    .mdj-wp-seal .mdj-wp-seal-m {
-      display: block;
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 15px;
-      font-weight: 700;
-      color: #1a1410;
-      margin: 4px 0;
-      line-height: 1.1;
-    }
-
-    .mdj-wp-mosaic {
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-      padding-top: 52px;
-      position: relative;
-    }
-
-    .mdj-wp-mosaic figure {
-      margin: 0;
-      border-radius: 14px;
-      overflow: hidden;
-      border: 4px solid #fff;
-      box-shadow: 0 22px 48px rgba(25, 22, 18, 0.18);
-      background: #e8e4dc;
-      position: relative;
-      z-index: 1;
-    }
-
-    .mdj-wp-mosaic figure img {
-      width: 100%;
-      height: auto;
-      display: block;
-      object-fit: cover;
-      aspect-ratio: 4 / 3;
-      vertical-align: middle;
-    }
-
-    .mdj-wp-mosaic__piece--1 {
-      width: 92%;
-      align-self: flex-start;
-      transform: rotate(-1.2deg);
-      z-index: 1;
-    }
-
-    .mdj-wp-mosaic__piece--2 {
-      width: 88%;
-      align-self: flex-end;
-      margin-top: -18px;
-      margin-right: 4%;
-      transform: translateX(-6%) rotate(1.4deg);
-      z-index: 2;
-    }
-
-    .mdj-wp-mosaic__piece--3 {
-      width: 86%;
-      align-self: flex-start;
-      margin-top: -14px;
-      margin-left: 6%;
-      transform: translateX(4%) rotate(-0.8deg);
-      z-index: 3;
-    }
-
-    .mdj-wp-mosaic__piece--4 {
-      width: 90%;
-      align-self: center;
-      margin-top: -12px;
-      transform: rotate(0.6deg);
-      z-index: 4;
-    }
-
-    @media (max-width: 920px) {
-      .mdj-wp-editorial {
-        grid-template-columns: 1fr;
-        padding: 28px 22px 36px;
-      }
-
-      .mdj-wp-mosaicWrap {
-        max-width: 420px;
-        margin: 0 auto;
-      }
-
-      .mdj-wp-seal {
-        position: relative;
-        top: 0;
-        right: auto;
-        margin: 0 auto 20px;
-      }
-
-      .mdj-wp-mosaic {
-        padding-top: 0;
-      }
-
-      .mdj-wp-mosaic__piece--2,
-      .mdj-wp-mosaic__piece--3 {
-        transform: none;
-        margin-left: 0;
-        margin-right: 0;
-      }
-
-      .mdj-wp-mosaic figure {
-        width: 100% !important;
-        align-self: stretch !important;
-        margin-top: 12px !important;
-        transform: none !important;
-      }
-
-      .mdj-wp-mosaic__piece--1 {
-        margin-top: 0;
-      }
-    }
-
     body.page-wedding-planning .footer {
-      background: rgba(12, 11, 10, 0.55);
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(12, 11, 10, 0.55);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
     }
-
     body.page-wedding-planning .footer [data-i18n="footer-rights-llc"] {
-      color: rgba(255, 250, 240, 0.82);
+    color: rgba(255, 250, 240, 0.82);
     }
-
     /* Nav overflow fix: rompe la restricción MDN overflow-y:hidden→overflow-x:auto en todos los ancestros */
     body.page-wedding-planning #mainHeader.header.mdj-header-unified,
     body.page-wedding-planning #mainHeader.header.mdj-header-unified .header-nav,
     body.page-wedding-planning #mainHeader.header.mdj-header-unified .header-nav .container {
-      overflow: visible !important;
-      overflow-x: visible !important;
-      overflow-y: visible !important;
+    overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
     }
     /* Reducción mínima de font como seguro si el viewport es muy estrecho */
     body.page-wedding-planning #mainHeader #mainNav.mdj-mainnav-flex.nav.top-nav > a,
     body.page-wedding-planning #mainHeader #mainNav.mdj-mainnav-flex.nav.top-nav > a.active {
-      font-size: 15px !important;
+    font-size: 15px !important;
     }
   </style>
   <script type="application/ld+json">
@@ -366,7 +115,7 @@
   </script>
 </head>
 
-<body class="notranslate page-wedding-planning" data-mdj-back="./index.html" data-mdj-dia="1">
+<body class="notranslate page-wedding-planning" data-mdj-back="./weddings.html" data-mdj-dia="1">
 
   <header class="header mdj-header-unified" id="mainHeader">
     <div class="header-top">
@@ -453,63 +202,50 @@
     </div>
   </header>
 
-  <div class="mdj-wp-shell">
-    <div class="mdj-wp-editorial">
-      <div class="mdj-wp-copy">
-        <h1 data-i18n="wedding-plan-h1"></h1>
-        <p class="mdj-wp-lead" data-i18n="wedding-plan-lead"></p>
+  <video id="wp-hero-kb-bg" class="hero-shell-video hero-kb-bg" autoplay muted loop playsinline preload="metadata"
+        poster="./assets/weddings/fotos/weddings-hero-poster.webp"
+        style="position: fixed; inset: 0; z-index: 1; pointer-events: none; width: 100%; height: 100%; object-fit: cover; opacity: 1; filter: brightness(0.65);">
+        <source data-src="./assets/weddings/videos/weddings-hero.mp4" type="video/mp4">
+    </video>
+    <div class="hero-video-overlay"
+        style="position: fixed; inset: 0; z-index: 3; pointer-events: none; background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.8) 100%);"></div>
 
-        <article class="mdj-wp-tier">
-          <h2 data-i18n="wedding-plan-tier1-h2"></h2>
-          <p data-i18n="wedding-plan-tier1-p"></p>
-        </article>
-        <article class="mdj-wp-tier">
-          <h2 data-i18n="wedding-plan-tier2-h2"></h2>
-          <p data-i18n="wedding-plan-tier2-p"></p>
-        </article>
-        <article class="mdj-wp-tier">
-          <h2 data-i18n="wedding-plan-tier3-h2"></h2>
-          <p data-i18n="wedding-plan-tier3-p"></p>
-        </article>
-
-        <section class="mdj-wp-addons">
-          <h3 data-i18n="wedding-plan-addons-h2"></h3>
-          <ul>
-            <li data-i18n="wedding-plan-addons-li1"></li>
-            <li data-i18n="wedding-plan-addons-li2"></li>
-            <li data-i18n="wedding-plan-addons-li3"></li>
-          </ul>
-        </section>
-
-        <div class="mdj-wp-cta-wrap">
-          <a href="./index.html#contact" class="btn primary" data-i18n="wedding-plan-cta"></a>
-          <a href="./rentals.html" class="btn outline" data-i18n="wedding-plan-cta-services"></a>
-        </div>
-      </div>
-
-      <div class="mdj-wp-mosaicWrap">
-        <div class="mdj-wp-seal" data-i18n="wedding-plan-seal-html"></div>
-        <div class="mdj-wp-mosaic" aria-label="Wedding gallery">
-          <figure class="mdj-wp-mosaic__piece--1">
-            <img src="./assets/weddings/fotos/sheilin-grand-entrance-wedding-card.jpg"
-              alt="Entrada de los novios en una boda real de Miami" width="720" height="540" loading="eager" decoding="async" />
-          </figure>
-          <figure class="mdj-wp-mosaic__piece--2">
-            <img src="./assets/weddings/fotos/sheilin-reception-toast-card.jpg"
-              alt="Recepción de una boda real de Miami" width="720" height="540" loading="eager" decoding="async" />
-          </figure>
-          <figure class="mdj-wp-mosaic__piece--3">
-            <img src="./assets/weddings/fotos/sheilin-dj-booth-wedding-card.jpg"
-              alt="DJ en boda real de Miami DJ Beat" width="900" height="600" loading="eager" decoding="async" />
-          </figure>
-          <figure class="mdj-wp-mosaic__piece--4">
-            <img src="./assets/weddings/fotos/sheilin-reception-dance-wedding-card.jpg"
-              alt="Boda real de Miami DJ Beat" width="800" height="600" loading="eager" decoding="async" />
-          </figure>
-        </div>
-      </div>
+  <main class="container" style="padding: 100px 18px; position: relative; z-index: 10;">
+    <div class="wp-hero-copy">
+      <h1 data-i18n="wedding-plan-h1">Planificación de bodas</h1>
+      <p class="wp-lead" data-i18n="wedding-plan-lead">Paquetes para parejas que eligen fecha en Miami y el Sur de Florida: apoyo de principio a fin, solo en la recta final, o coordinación el día B.</p>
+      <nav class="wd-tabs" id="wd-tabs" data-i18n-aria="wedding-tab-aria" aria-label="Servicios para bodas">
+        <a class="wd-tab" href="./weddings.html" data-i18n="wedding-tab-dj">DJ para bodas</a>
+        <a class="wd-tab" href="./wedding-planning.html" aria-current="page" data-i18n="wedding-tab-plan">Planificación de bodas</a>
+      </nav>
     </div>
-  </div>
+
+    <section class="wp-hook" aria-label="Paquetes de planificación de bodas">
+      <div class="wp-hook__mosaic">
+        <picture><source srcset="./assets/weddings/fotos/sheilin-grand-entrance-wedding-card.webp" type="image/webp"><img src="./assets/weddings/fotos/sheilin-grand-entrance-wedding-card.jpg" alt="Entrada de los novios en una boda real de Miami" width="720" height="540" loading="lazy" decoding="async" /></picture>
+        <picture><source srcset="./assets/weddings/fotos/sheilin-reception-toast-card.webp" type="image/webp"><img src="./assets/weddings/fotos/sheilin-reception-toast-card.jpg" alt="Novios en una boda real de Miami" width="900" height="600" loading="lazy" decoding="async" /></picture>
+        <picture><source srcset="./assets/weddings/fotos/sheilin-dj-booth-wedding-card.webp" type="image/webp"><img src="./assets/weddings/fotos/sheilin-dj-booth-wedding-card.jpg" alt="DJ en boda real de Miami DJ Beat" width="900" height="600" loading="lazy" decoding="async" /></picture>
+        <picture><source srcset="./assets/weddings/fotos/sheilin-reception-dance-wedding-card.webp" type="image/webp"><img src="./assets/weddings/fotos/sheilin-reception-dance-wedding-card.jpg" alt="Recepción y pista de baile en una boda real de Miami" width="900" height="600" loading="lazy" decoding="async" /></picture>
+      </div>
+      <div class="wp-hook__tiers">
+        <article class="wp-hook__tier"><span class="wp-hook__num">01</span><h2 data-i18n="wedding-plan-tier1-h2">Planificación Integral (Full Planning)</h2><p data-i18n="wedding-plan-tier1-p">¿Comprometidos y no saben por dónde empezar o no tienen tiempo para organizar su boda? Deleguen todo el estrés en un Organizador de Bodas Certificado y vean cómo su visión se convierte en realidad. Nuestro Paquete de Planificación Integral les brinda apoyo total de principio a fin; incluye visitas a locaciones, selección de proveedores, revisión de contratos, gestión de presupuesto, planos de distribución, diseño de la boda y creación del cronograma. ¡También estaremos presentes en su ensayo y, por supuesto, en su gran día para cubrir todas las necesidades de coordinación!</p></article>
+        <article class="wp-hook__tier"><span class="wp-hook__num">02</span><h2 data-i18n="wedding-plan-tier2-h2">Planificación Parcial (Partial Planning)</h2><p data-i18n="wedding-plan-tier2-p">¿Ya comenzaron el camino pero necesitan algo de dirección? ¡Nosotros nos encargamos! Nuestro Paquete de Planificación Parcial se adapta a sus necesidades específicas y ofrece asistencia personalizada en los detalles finales. Ya sea que aún estén decidiendo la distribución del salón o el diseño visual, estamos listos para ofrecerles nuestra guía profesional. ¡Este paquete también incluye la creación del cronograma, la coordinación del ensayo y la coordinación total el día del evento!</p></article>
+        <article class="wp-hook__tier"><span class="wp-hook__num">03</span><h2 data-i18n="wedding-plan-tier3-h2">Coordinación (Coordination)</h2><p data-i18n="wedding-plan-tier3-p">¿Ya planearon el día perfecto pero necesitan a alguien que asegure que todo fluya sin problemas? Relájense y disfruten cada momento de su día especial con nuestro Paquete de Coordinación. Desde la coordinación del ensayo, la supervisión del montaje y desmontaje, la gestión de proveedores y la curación del cronograma perfecto; nosotros haremos todo el trabajo para que ustedes puedan enfocarse en celebrar su amor con familiares y amigos.</p></article>
+      </div>
+      <div class="wp-hook__addons">
+        <h2 data-i18n="wedding-plan-addons-h2">Complementos (add-ons)</h2>
+        <ul>
+          <li data-i18n="wedding-plan-addons-li1">Visitas y recorridos de locación</li>
+          <li data-i18n="wedding-plan-addons-li2">Reuniones de planificación y diseño</li>
+          <li data-i18n="wedding-plan-addons-li3">Coordinador asistente</li>
+        </ul>
+      </div>
+      <div class="wp-hook__cta">
+        <a href="./index.html#contact" class="btn primary" data-i18n="wedding-plan-cta">Consultar disponibilidad y paquetes</a>
+        <a href="./rentals.html" class="btn outline" data-i18n="wedding-plan-cta-services">Ver servicios y DJs</a>
+      </div>
+    </section>
+  </main>
 
   <footer class="footer">
     <div class="container" style="text-align:center;padding:24px 16px;">
@@ -573,7 +309,22 @@
   <!-- Cart pill: badge + redirect to rentals -->
   <script defer src="./js/mdj-cart-pill.js?v=20260616-pill-5"></script>
   <script src="./mdj-mobile-header-fix.js?v=20260916-purga-a"></script>
-  <script defer src="./js/mdj-back-button.js?v=20260921-2"></script>
+  <script defer src="./js/mdj-back-button.js?v=20261008-flotante"></script>
+  <script>
+  (function () {
+    function kick() {
+      var v = document.getElementById('wp-hero-kb-bg');
+      if (!v) return;
+      function attemptPlay() { var p = v.play(); if (p && p.catch) { p.catch(function () { setTimeout(function () { v.play().catch(function () {}); }, 250); }); } }
+      try { v.load(); attemptPlay(); } catch (e) { /* noop */ }
+      var retries = 0;
+      v.addEventListener('pause', function () { if (!document.hidden && document.hasFocus() && retries < 3) { retries++; attemptPlay(); } });
+      document.addEventListener('visibilitychange', function () { if (!document.hidden) { retries = 0; attemptPlay(); } });
+      window.addEventListener('focus', function () { retries = 0; attemptPlay(); });
+    }
+    if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', kick); } else { kick(); }
+  })();
+  </script>
 </body>
 
 </html>
