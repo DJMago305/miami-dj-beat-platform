@@ -4378,3 +4378,14 @@ Tabla canónica en `web/mdj-identity.js` (`MDJ_BUILDING_HOME`): staff → `staff
 - **Boleto del correo = boleto de la página (webhook, SIN desplegar):** el correo traía UN QR de la orden en caja blanca; ahora trae una tarjeta por persona/asiento con el mismo diseño de `t.html` y SU QR (`/t/<id del pase>`), tope 12 QR incrustados (el resto va como enlace); si no hay pases cae al QR de la orden. Código: `supabase/functions/_shared/venue-ticket-email.ts` + `stripe-webhook/index.ts`. No hay workflow que despliegue funciones: hay que desplegar `stripe-webhook` a mano tras el «aprobado». Verificado con una vista previa de las tarjetas (sin enviar correo real).
 - **Pendiente:** confirmar con cámara real / lector USB / iPhone, «Marcar ingreso» manual no limitado al día
 
+
+---
+
+## [2026-10-08] GEO·SEO·IA · medición de conversiones, plantillas «Campaña reseñas» y botón de copiar en Campañas
+
+- **PR #713 (mergeado y desplegado por el PO):** nuevo `web/js/mdj-conversions.js` (eventos GA4 `click_to_call`, `click_whatsapp`, `click_email`, `generate_lead`, `sign_up`; antes las conversiones salían en 0) conectado en Home, rentals, contact y 30 páginas de servicio; Open Graph en Home y rentals; meta descriptions en 6 páginas. Verificado en vivo: Analytics en tiempo real registró `click_to_call`. Pendiente del PO: marcar `click_to_call`, `generate_lead` y `click_whatsapp` como eventos clave en GA4.
+- **WeddingWire:** el teléfono de la ficha era +1 205-607-1780 (error); corregido a +13056071780 en el panel de vendedor (plan Lite: teléfono y web no se muestran). Revisar la página pública en unas horas (caché).
+- **Plantillas «Campaña reseñas» (SQL de PRODUCCIÓN APLICADO por el PO el 2026-10-08, 5 filas verificadas; `supabase/scripts/20261008_plantillas_campana_resenas_google.sql`):** SMS y correo en español e inglés + recordatorio. **Todas traen el marcador `[PEGAR ENLACE DE RESEÑAS DE GOOGLE]`: NO enviar hasta poner el enlace real** (el PO lo copiará de su Perfil de Google; entonces un UPDATE).
+- **Network → Campañas (`web/staff-admin.html`):** ícono de copiar en todas las tarjetas; el panel reconoce `(CORREO, English)`/`(SMS, español)` y `Subject:` además de `Asunto:`; `ADMIN_V` en `staff.html` → `20261008-campanas-copiar`. Probado con simulador, NO visto en la pantalla real (requiere sesión de staff).
+- **ELIXIS ↔ plantillas (propuesta, sin construir):** ELIXIS ya tiene `enviar_sms`/`enviar_email` (encolan + confirmación), pero no puede leer `system_messages_templates`; se pasó al hilo principal una herramienta de solo lectura propuesta, con la condición de rechazar envíos que aún lleven el marcador del enlace.
+- **Hallazgos sin tocar:** `find-dj.html` agrega `utm_source=find-dj` a enlaces internos (tapa el origen en GA4); la ficha de Google tiene 5.0 con 23 reseñas y la dirección residencial visible. Plan: `.claude-scratch/plan-autoridad-externa-y-gbp-2026-10-08.md` (local).
