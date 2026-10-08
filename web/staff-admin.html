@@ -7770,7 +7770,8 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 const visibleProfiles = searchQ.length < 1 ? profiles : profiles.filter(p => {
                     return (p._displayName || '').toLowerCase().includes(searchQ)
                         || (p._displayEmail || '').toLowerCase().includes(searchQ)
-                        || (p._displayPhone || '').toLowerCase().includes(searchQ);
+                        || (p._displayPhone || '').toLowerCase().includes(searchQ)
+                        || (p._source === 'referencia' && String(p.empresa || '').toLowerCase().includes(searchQ));   // 2026-10-08, pedido del PO: buscar «audio» debe encontrar al proveedor de audio (su especialidad vive en «empresa»)
                 });
 
                 // Group profiles by category
@@ -7977,6 +7978,11 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     // (Todos / categoría fija / categoría personalizada).
                     const sortMode = window._networkSortMode || 'alpha';
                     groupData = groupData.slice().sort((a, b) => {
+                        // 2026-10-08, pedido del PO: el «Proveedor principal» (empresa que empieza con esas palabras, p. ej. «Proveedor principal de audio para eventos») sale PRIMERO en cualquier orden,
+                        // para que al buscar o abrir la lista de proveedores aparezca como el principal.
+                        const _pa = (a._source === 'referencia' && /^\s*proveedor principal/i.test(String(a.empresa || ''))) ? 1 : 0;
+                        const _pb = (b._source === 'referencia' && /^\s*proveedor principal/i.test(String(b.empresa || ''))) ? 1 : 0;
+                        if (_pa !== _pb) return _pb - _pa;
                         if (sortMode === 'alpha') {
                             return String(a._displayName || '').localeCompare(String(b._displayName || ''), 'es', { sensitivity: 'base' });
                         }
