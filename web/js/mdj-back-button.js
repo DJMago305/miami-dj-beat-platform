@@ -17,6 +17,10 @@
         'background:rgba(0,0,0,.35);color:var(--gold,#c5a059);font:700 13px/1 inherit;letter-spacing:.04em;text-decoration:none;cursor:pointer;' +
         '-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);transition:background .15s,border-color .15s;}' +
         '.mdj-back-btn:hover,.mdj-back-btn:focus-visible{background:rgba(197,160,89,.18);border-color:rgba(197,160,89,.9);outline:none;}' +
+        // PO 2026-10-08: en TODAS las páginas de servicio los dos botones FLOTAN (no suben con el scroll). La fila sigue en el flujo para reservar el espacio
+        // (el diseño no se mueve); los botones van en una caja fija que queda donde estaba al entrar y se detiene justo debajo del header al hacer scroll.
+        '#mdj-back-row{min-height:34px;}' +
+        '#mdj-back-box{position:fixed;left:16px;top:170px;display:flex;gap:8px;align-items:center;z-index:90;}' +
         '@media (prefers-reduced-motion:reduce){.mdj-back-btn{transition:none;}}';
       document.head.appendChild(st);
     }
@@ -34,8 +38,27 @@
       try { venimosDelSitio = !!document.referrer && new URL(document.referrer).origin === location.origin && history.length > 1; } catch (x) { void x; }
       if (venimosDelSitio) { e.preventDefault(); history.back(); }   // si no, sigue el enlace normal al padre
     });
-    row.appendChild(a); row.appendChild(h);
+    var box = document.createElement('div'); box.id = 'mdj-back-box';
+    box.appendChild(a); box.appendChild(h); row.appendChild(box);
     main.insertBefore(row, main.firstChild);
+    // Posición: la que tendría en el flujo, pero nunca más arriba que «debajo del header» (el header puede cambiar de alto al hacer scroll).
+    var queued = false;
+    var place = function () {
+      queued = false;
+      var rr = row.getBoundingClientRect();
+      var hd = document.getElementById('mainHeader');
+      var hb = hd ? hd.getBoundingClientRect().bottom : 0;
+      var top = Math.max(8, Math.round(rr.top), hb > 0 ? Math.round(hb) + 8 : 0);
+      box.style.top = top + 'px';
+      box.style.left = Math.max(8, Math.round(rr.left)) + 'px';
+    };
+    var again = function () { if (!queued) { queued = true; window.requestAnimationFrame(place); } };
+    place();
+    window.addEventListener('scroll', again, { passive: true });
+    window.addEventListener('resize', again);
+    window.addEventListener('load', again);
+    [300, 900, 2000].forEach(function (ms) { setTimeout(again, ms); });
+    try { var hd0 = document.getElementById('mainHeader'); if (hd0 && window.ResizeObserver) new ResizeObserver(again).observe(hd0); } catch (x) { void x; }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();

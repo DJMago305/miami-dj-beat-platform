@@ -51,3 +51,9 @@ Las 4 confirmaron «Se ha solicitado la indexación» (cola de rastreo prioritar
 
 ## C. Otros pendientes anotados que siguen abiertos (no urgentes)
 3 stashes, 2 worktrees (dj-profile-engine-hardening con cambios; music-intel-serato-parser en pausa), 28 ramas locales sin fusionar, `certificate-template_LOCKED.html`; restos bilingües (módulo Event Cart compartido, `js/rentals.js` bloqueado, subcategorías de Jobs, banco de examen de certificación, documentos legales solo en inglés). Detalle en `docs/ESTADO_MAESTRO.md`.
+
+## D. Reindexar en Google tras el PR de bodas/entretenimiento (2026-10-08, en rama, SIN fusionar)
+- `weddings.html` («DJ para bodas») y `wedding-planning.html` («Planificación de bodas») se quedan como DOS páginas indexadas (se buscan de dos maneras). Ambas abren con las mismas dos secciones (botones «DJ para bodas» / «Planificación de bodas»). `wedding-planning.html` ya no tiene el papel blanco: video detrás, hero a pantalla completa y vidrio oscuro. Pedir reindexación de las dos en Search Console.
+- `event-entertainment-miami.html` cambia de hero (Playfair en mayúsculas, pantalla completa): pedir reindexación.
+- Pendiente del PO: archivo del **certificado real** de planificación de bodas. La insignia «CERTIFICADA» de la página vieja era un dibujo propio (CSS) y NO se llevó a la página nueva.
+- `mdj-hero-playlist.js` (precarga del siguiente clip del fondo en 16 páginas de servicio) solo precarga con conexión rápida; comprobado en local, no con los videos reales de producción (Supabase): el PO debe verlo en la página publicada.

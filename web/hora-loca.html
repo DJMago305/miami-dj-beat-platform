@@ -30,7 +30,7 @@
         { "@type": "Offer", "priceCurrency": "USD", "price": "650", "itemOffered": { "@type": "Service", "name": "Hora Loca Robot" } },
         { "@type": "Offer", "priceCurrency": "USD", "price": "850", "itemOffered": { "@type": "Service", "name": "Hora Loca Brasil" } },
         { "@type": "Offer", "priceCurrency": "USD", "price": "800", "itemOffered": { "@type": "Service", "name": "Hora Loca Cubana" } },
-        { "@type": "Offer", "priceCurrency": "USD", "price": "550", "itemOffered": { "@type": "Service", "name": "Hora Loca Character" } },
+        { "@type": "Offer", "priceCurrency": "USD", "price": "800", "itemOffered": { "@type": "Service", "name": "Hora Loca Character" } },
         { "@type": "Offer", "priceCurrency": "USD", "price": "750", "itemOffered": { "@type": "Service", "name": "Hora Loca Hadas" } }
       ]
     }
@@ -70,7 +70,7 @@
       "name": "How much does Hora Loca cost in Miami?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Hora Loca packages in Miami with Miami DJ Beat start at $550 for Character and go up to $850 for Brasil, depending on the number of performers and effects — Robot is $650, Cubana is $800, and Hadas is $750."
+        "text": "Hora Loca packages in Miami with Miami DJ Beat start at $650 for Robot and go up to $850 for Brasil, depending on the number of performers and effects — Character and Cubana are $800, and Hadas is $750."
       }
     },
     {
@@ -121,7 +121,7 @@
     <script defer src="/js/mdj-conversions.js?v=20261008-conv"></script>
     <meta name="google-site-verification" content="BMMzSc4HzEcFPH2SaRYWVi1ORPiIOF2ghKycMgeojn8" />
   <meta name="description"
-    content="Hora Loca show in Miami from $550-$850: LED robot, Brasil samba, Cubana, Character, and Hadas packages with costumed performers and live percussion. Get a quote from Miami DJ Beat LLC." />
+    content="Hora Loca show in Miami from $650-$850: LED robot, Brasil samba, Cubana, Character, and Hadas packages with costumed performers and live percussion. Get a quote from Miami DJ Beat LLC." />
   <meta property="og:type" content="website" />
   <meta property="og:title" content="Hora Loca Show Miami | LED Robots, Samba & Character Performers | Miami DJ Beat" />
   <meta property="og:description" content="Five Hora Loca packages — Robot, Brasil, Cubana, Character, and Hadas — with costumed performers, LED effects, and live percussion for Miami weddings and events." />
@@ -450,7 +450,7 @@
       <details>
         <summary>
           <span class="horaloca-pkg-name" data-i18n="horaloca-pkg-character-name">Hora Loca Character</span>
-          <span class="horaloca-pkg-price" data-i18n="horaloca-pkg-character-price">From $550</span>
+          <span class="horaloca-pkg-price" data-i18n="horaloca-pkg-character-price">From $800</span>
         </summary>
         <p data-i18n="horaloca-pkg-character-desc">An à la carte themed show (2 people: 2 premium costumed characters/stilt walkers, in a La Máscara / Celia Cruz style, etc.).</p>
         <ul class="horaloca-pkg-extras">
@@ -502,7 +502,7 @@
 
       <details class="horaloca-faq-item">
         <summary data-i18n="horaloca-faq-q4">How much does Hora Loca cost in Miami?</summary>
-        <p data-i18n="horaloca-faq-a4">Hora Loca packages start at $550 for Character and go up to $850 for Brasil, depending on the number of performers and effects: Robot is $650, Cubana is $800, and Hadas is $750.</p>
+        <p data-i18n="horaloca-faq-a4">Hora Loca packages start at $650 for Robot and go up to $850 for Brasil, depending on the number of performers and effects: Character and Cubana are $800, and Hadas is $750.</p>
       </details>
 
       <details class="horaloca-faq-item">
@@ -591,7 +591,11 @@
                     var idx = 0;
                     v.loop = false;   // con loop el evento «ended» nunca llega y solo salía el primer video
                     v.addEventListener('error', function () { v.dispatchEvent(new Event('ended')); });   // un clip roto se salta
+                    // PO 2026-10-08: al cambiar de clip el navegador volvía a pintar el póster (una FOTO) mientras cargaba el siguiente video: salía un destello
+                    // entre los videos. El póster solo sirve para el primer pintado; se quita en cuanto el primer video empieza y siempre antes de cambiar de clip.
+                    v.addEventListener('playing', function () { v.removeAttribute('poster'); });
                     v.addEventListener('ended', function () {
+                        v.removeAttribute('poster');
                         idx = (idx + 1) % playlist.length;
                         var next = playlist[idx];
                         var resolved = typeof window.resolveMdAssetPublicUrl === 'function' ? window.resolveMdAssetPublicUrl(next) : next;
@@ -622,7 +626,8 @@
   <script src="./js/mdj-footer-legal.js?v=20260926-legal-franja5"></script>
   <script defer src="./js/mdj-cart-pill.js?v=20260616-pill-5"></script>
   <script src="./mdj-mobile-header-fix.js?v=20260916-purga-a"></script>
-  <script defer src="./js/mdj-back-button.js?v=20260921-2"></script>
+  <script defer src="./js/mdj-back-button.js?v=20261008-flotante"></script>
+  <script defer src="./js/mdj-hero-playlist.js?v=20261008-precarga-rapida"></script>
 </body>
 
 </html>

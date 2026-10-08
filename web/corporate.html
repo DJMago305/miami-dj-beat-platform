@@ -431,7 +431,10 @@
                 var playlist = playlistAttr.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
                 if (playlist.length > 1) {
                     var idx = 0;
+                    // PO 2026-10-08: al cambiar de clip el navegador volvía a pintar el póster (una FOTO) y salía un destello entre los videos; el póster solo sirve para el primer pintado.
+                    v.addEventListener('playing', function () { v.removeAttribute('poster'); });
                     v.addEventListener('ended', function () {
+                        v.removeAttribute('poster');
                         idx = (idx + 1) % playlist.length;
                         var next = playlist[idx];
                         var resolved = typeof window.resolveMdAssetPublicUrl === 'function' ? window.resolveMdAssetPublicUrl(next) : next;
@@ -459,7 +462,8 @@
     <script src="./mdj-social-bar.js?v=20260819-social-contact-only"></script>
     <script src="./js/mdj-footer-legal.js?v=20260926-legal-franja5"></script>
     <script src="./mdj-mobile-header-fix.js?v=20260916-purga-a"></script>
-  <script defer src="./js/mdj-back-button.js?v=20260921-2"></script>
+  <script defer src="./js/mdj-back-button.js?v=20261008-flotante"></script>
+  <script defer src="./js/mdj-hero-playlist.js?v=20261008-precarga-rapida"></script>
 </body>
 
 </html>

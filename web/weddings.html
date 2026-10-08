@@ -278,6 +278,18 @@
       .wp-hook__photos img { height: 220px; }
     }
 
+    /* Dos caminos al entrar (PO 2026-10-08): «DJ para bodas» (esta misma página, más abajo) y «Planificación de bodas» (su propia página, también indexada). */
+    .wd-paths { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; max-width: 720px; margin: 36px auto 0; text-align: left; }
+    .wd-path { display: flex; flex-direction: column; gap: 10px; padding: 26px 24px; border-radius: 16px; border: 1px solid rgba(197, 160, 89, 0.42); background: rgba(0, 0, 0, 0.38);
+      -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); text-decoration: none; color: inherit; transition: transform .2s ease, border-color .2s ease, background .2s ease; }
+    .wd-path:hover, .wd-path:focus-visible { transform: translateY(-3px); border-color: rgba(197, 160, 89, 0.9); background: rgba(197, 160, 89, 0.16); outline: none; }
+    .wd-path h2 { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 600; color: #fff; margin: 0; line-height: 1.2; text-shadow: none; text-transform: none; }
+    .wd-path p { margin: 0; flex: 1; color: rgba(255, 255, 255, 0.78); font-size: 14.5px; line-height: 1.6; }
+    .wd-path .wd-path-cta { color: var(--gold); font-weight: 800; font-size: 14px; letter-spacing: .06em; text-transform: uppercase; }
+    .wd-anchor { display: block; height: 0; scroll-margin-top: 0; }
+    @media (max-width: 640px) { .wd-paths { grid-template-columns: 1fr; } }
+    @media (prefers-reduced-motion: reduce) { .wd-path { transition: none; } }
+
     body.page-weddings-dj .footer {
       /* FIX-FOOTER-STACKING-01 (2026-09-08): sin esto, el footer queda fuera
          del <main position:relative;z-index:10> de mas arriba y el hero-kb-bg
@@ -444,8 +456,21 @@
     <div class="weddings-hero-copy">
       <h1 data-i18n="wedding-dj-h1">Wedding DJ Miami</h1>
       <p class="mdj-wp-lead" data-i18n="wedding-dj-lead">Bilingual DJ and MC coverage for your ceremony, cocktail hour, and reception.<span class='mdj-hl-lead-sub'>Professional sound, uplighting, and music curated to your story, serving weddings across Miami-Dade and Broward.</span></p>
+      <div class="wd-paths" id="wd-paths">
+        <a class="wd-path" href="#dj-para-bodas">
+          <h2 data-i18n="wedding-path-dj-title">Wedding DJ</h2>
+          <p data-i18n="wedding-path-dj-desc">Bilingual DJ and MC for your ceremony, cocktail hour and reception, with professional sound and lighting.</p>
+          <span class="wd-path-cta" data-i18n="wedding-path-cta">Enter</span>
+        </a>
+        <a class="wd-path" href="./wedding-planning.html">
+          <h2 data-i18n="wedding-path-plan-title">Wedding planning</h2>
+          <p data-i18n="wedding-path-plan-desc">Full planning, partial planning or day-of coordination, with professional support.</p>
+          <span class="wd-path-cta" data-i18n="wedding-path-cta">Enter</span>
+        </a>
+      </div>
     </div>
 
+    <span id="dj-para-bodas" class="wd-anchor" aria-hidden="true"></span>
     <div class="weddings-mosaic">
       <picture>
         <source srcset="./assets/weddings/fotos/sheilin-dj-booth-wedding-card.webp" type="image/webp">
@@ -671,7 +696,7 @@
   <script src="./js/mdj-footer-legal.js?v=20260926-legal-franja5"></script>
   <script defer src="./js/mdj-cart-pill.js?v=20260616-pill-5"></script>
   <script src="./mdj-mobile-header-fix.js?v=20260916-purga-a"></script>
-  <script defer src="./js/mdj-back-button.js?v=20260921-2"></script>
+  <script defer src="./js/mdj-back-button.js?v=20261008-flotante"></script>
 </body>
 
 </html>
