@@ -291,6 +291,13 @@ Estas son TODAS las herramientas que tienes. No hay ninguna otra:
 13. confirmar_envio_mensaje — despacha o cancela un SMS/email ya encolado.
    Solo la llamas cuando el usuario respondio "si" o "cancelar" a tu
    pregunta de confirmacion, nunca antes.
+13b. consultar_plantillas_mensajes — lee el texto EXACTO de las plantillas de las
+   Campanas (resenas de Google, clientes, artistas). Cuando pidan "mandale la
+   plantilla de resenas" o similar: buscas al cliente (buscar_cliente), lees la
+   plantilla del idioma y canal correctos, cambias SOLO {nombre} y la pasas
+   TAL CUAL a enviar_sms/enviar_email (que solo ENCOLAN; luego pides el "si").
+   NO redactes tu propia version ni cambies el enlace. Si trae
+   listo_para_enviar=false, no la mandes. Respeta las "reglas" que devuelve.
 14. consultar_efemerides — cumpleanos reales de clientes/staff y aniversarios
    de boda, SOLO si estan guardados en la ficha. Si no hay nadie ese mes,
    dilo asi -- no inventes un nombre para "completar" la respuesta.
@@ -1742,6 +1749,38 @@ serve(async (req: Request) => {
         },
     };
 
+    const TEMPLATES_TOOL = {
+        name: "consultar_plantillas_mensajes",
+        description:
+            "Lee las PLANTILLAS de mensajes de las Campanas del negocio (Campana resenas de Google, Campana clientes, " +
+            "Campana artistas), tal como estan guardadas en Mensajes del Sistema. SOLO LECTURA: no envia nada. " +
+            "Usala cuando te pidan mandar una campana o \"la plantilla de ...\" (por ejemplo, pedir una resena de Google " +
+            "despues de un evento): devuelve el texto EXACTO de cada plantilla para que lo uses TAL CUAL con enviar_sms / " +
+            "enviar_email, cambiando SOLO la variable {nombre} por el nombre real del cliente. NO redactes tu propia version " +
+            "ni cambies el enlace. Si una plantilla viene con listo_para_enviar=false, NO la mandes. Devuelve tambien las reglas " +
+            "que debes cumplir al usarla.",
+        input_schema: {
+            type: "object",
+            properties: {
+                campana: {
+                    type: "string",
+                    enum: ["resenas", "clientes", "artistas", "todas"],
+                    description: "Cual campana quieres. Default 'todas'.",
+                },
+                canal: {
+                    type: "string",
+                    enum: ["sms", "email", "todos"],
+                    description: "Solo SMS o solo correo. Default 'todos'.",
+                },
+                idioma: {
+                    type: "string",
+                    enum: ["es", "en", "todos"],
+                    description: "Idioma de la plantilla (las de resenas existen en espanol e ingles). Default 'todos'.",
+                },
+            },
+        },
+    };
+
     const SMS_QUEUE_TOOL = {
         name: "enviar_sms",
         description:
@@ -1845,6 +1884,7 @@ serve(async (req: Request) => {
             || toolName === "consultar_tarifa_artista"
             || toolName === "buscar_cliente"
             || toolName === "consultar_red_contactos"
+            || toolName === "consultar_plantillas_mensajes"
             || toolName === "consultar_musica"
             || toolName === "consultar_efemerides"
             || toolName === "consultar_historial_bitacora"
@@ -2954,6 +2994,85 @@ serve(async (req: Request) => {
        clientes y no salen de aqui. */
     const herramientasUsadas: Array<{ nombre: string; ok: boolean }> = [];
 
+    /* Texto con marcadores sin resolver: el SMS/correo NO se encola. Cubre el marcador de enlace pendiente de las plantillas
+       ("[PEGAR ENLACE DE RESENAS DE GOOGLE]") y variables de plantilla que ELIXIS olvido reemplazar ({nombre}). Es un candado del servidor:
+       no depende de que el modelo se acuerde. */
+    const MARCADOR_SIN_RESOLVER_RE = /\[\s*PEGAR[^\]]*\]|\{\s*(nombre|name|cliente|apellido)\s*\}/i;
+    function marcadorSinResolver(...textos: string[]): string | null {
+        for (const t of textos) {
+            const m = String(t ?? "").match(MARCADOR_SIN_RESOLVER_RE);
+            if (m) return m[0];
+        }
+        return null;
+    }
+
+    /* consultar_plantillas_mensajes: SOLO LECTURA de system_messages_templates, limitada a las Campanas (ocasion "Campana ...").
+       Devuelve el texto exacto para usarlo con enviar_sms/enviar_email (esas siguen ENCOLANDO y esperando el "si" del usuario). */
+    async function runTemplatesTool(input: Record<string, unknown>): Promise<string> {
+        const campana = String(input?.campana ?? "todas").trim().toLowerCase();
+        const canal = String(input?.canal ?? "todos").trim().toLowerCase();
+        const idioma = String(input?.idioma ?? "todos").trim().toLowerCase();
+        const { data, error } = await ADMIN
+            .from("system_messages_templates")
+            .select("id, nombre, cuerpo, ocasion, link_url")
+            .ilike("ocasion", "Campa%")
+            .order("ocasion", { ascending: true })
+            .order("nombre", { ascending: true })
+            .limit(40);
+        if (error) return JSON.stringify({ error: `system_messages_templates: ${error.message}` });
+
+        const fold = (t: string) => t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const filas = (data ?? []).map((r) => {
+            const nombre = String(r.nombre ?? "");
+            const ocasion = String(r.ocasion ?? "");
+            const cuerpoCrudo = String(r.cuerpo ?? "");
+            const esCorreo = /\(\s*correo/i.test(nombre) || /^\s*(asunto|subject)\s*:/i.test(cuerpoCrudo);
+            const mAsunto = cuerpoCrudo.match(/^\s*(?:asunto|subject)\s*:\s*(.+)\r?\n/i);
+            const asunto = esCorreo && mAsunto ? mAsunto[1].trim() : null;
+            const cuerpo = esCorreo && mAsunto ? cuerpoCrudo.slice(mAsunto[0].length).trim() : cuerpoCrudo.trim();
+            const sinResolver = marcadorSinResolver(cuerpoCrudo);
+            const marcadorEnlace = /\[\s*PEGAR[^\]]*\]/i.test(cuerpoCrudo);
+            const vars = Array.from(new Set((cuerpoCrudo.match(/\{[a-z_]+\}/gi) ?? [])));
+            const en = /english|\bsubject\s*:/i.test(nombre + " " + cuerpoCrudo.slice(0, 40)) || /^\s*(hi|hello)\b/i.test(cuerpoCrudo);
+            return {
+                id: String(r.id),
+                nombre,
+                campana: fold(ocasion).replace(/^campana\s*/, "") || ocasion,
+                ocasion,
+                canal: esCorreo ? "email" : "sms",
+                idioma: en ? "en" : "es",
+                ...(asunto ? { asunto } : {}),
+                cuerpo,
+                link_url: r.link_url ?? null,
+                variables_a_reemplazar: vars,
+                listo_para_enviar: !marcadorEnlace,
+                ...(marcadorEnlace ? { motivo_no_listo: "Trae el marcador de enlace pendiente: NO la envies hasta que el staff pegue el enlace real." } : {}),
+                _sinResolver: sinResolver,
+            };
+        }).filter((r) => {
+            if (campana !== "todas" && !fold(r.campana).startsWith(campana.replace("resenas", "resena").slice(0, 6))) return false;
+            if (canal !== "todos" && r.canal !== canal) return false;
+            if (idioma !== "todos" && r.idioma !== idioma) return false;
+            return true;
+        }).map(({ _sinResolver, ...rest }) => rest);
+
+        await recordActionLog("consultar_plantillas_mensajes", `${campana}/${canal}/${idioma}`, `n=${filas.length}`);
+        return JSON.stringify({
+            ok: true,
+            count: filas.length,
+            plantillas: filas,
+            reglas: [
+                "Usa el texto TAL CUAL; reemplaza SOLO {nombre} por el nombre real del cliente (de buscar_cliente). No cambies el enlace ni el resto.",
+                "En los SMS conserva la frase de baja ('Responda STOP...') sin tocarla.",
+                "Escoge la plantilla del idioma del cliente (es/en) y del canal (sms/email).",
+                "Resenas de Google: se piden a clientes REALES despues de su evento, a TODOS (sin escoger solo a los contentos), SIN regalos ni descuentos a cambio. Un solo recordatorio como maximo; no insistas.",
+                "Se envia de a UNO: enviar_sms/enviar_email solo ENCOLAN y despues pides el 'si' del usuario. El envio masivo es manual desde Mensajes del Sistema; no lo simules.",
+                "Cuando el SMS salga, di 'aceptado por Twilio', nunca 'entregado' ni 'le llego'.",
+                "Si listo_para_enviar=false, no la uses; avisa al usuario que falta pegar el enlace real.",
+            ],
+        });
+    }
+
     async function runSmsQueueTool(input: Record<string, unknown>): Promise<string> {
         const clienteId = String(input?.cliente_id ?? "").trim();
         const contactoId = String(input?.contacto_id ?? "").trim();
@@ -2972,6 +3091,16 @@ serve(async (req: Request) => {
         }
         if (mensaje.length < 2) return JSON.stringify({ error: "mensaje_vacio" });
         if (mensaje.length > 1500) return JSON.stringify({ error: "mensaje_demasiado_largo" });
+        {
+            const sinResolver = marcadorSinResolver(mensaje);
+            if (sinResolver) {
+                return JSON.stringify({
+                    error: "mensaje_con_marcador_sin_resolver",
+                    marcador: sinResolver,
+                    detalle: "El texto todavia trae un marcador de plantilla (" + sinResolver + "). No se encola: reemplaza {nombre} por el nombre real; si es el marcador del enlace, avisa que falta pegar el enlace real.",
+                });
+            }
+        }
 
         /* El telefono sale de la BASE, nunca de lo que se dijo en voz alta. */
         let cli: { user_id: string; full_name: string | null; phone: string | null } | null = null;
@@ -3052,6 +3181,16 @@ serve(async (req: Request) => {
         }
         if (asunto.length < 1 || asunto.length > 200) return JSON.stringify({ error: "asunto_invalido" });
         if (cuerpo.length < 2 || cuerpo.length > 4000) return JSON.stringify({ error: "cuerpo_invalido" });
+        {
+            const sinResolver = marcadorSinResolver(asunto, cuerpo);
+            if (sinResolver) {
+                return JSON.stringify({
+                    error: "mensaje_con_marcador_sin_resolver",
+                    marcador: sinResolver,
+                    detalle: "El correo todavia trae un marcador de plantilla (" + sinResolver + "). No se encola: reemplaza {nombre} por el nombre real; si es el marcador del enlace, avisa que falta pegar el enlace real.",
+                });
+            }
+        }
 
         /* El correo sale de la BASE, nunca de lo que se dijo en la conversacion. */
         const { data: cli, error: e1 } = await ADMIN
@@ -3466,7 +3605,7 @@ serve(async (req: Request) => {
                     // extended thinking (abajo) tampoco lo acepta junto.
                     ...thinkingParam,
                     system: systemContent,
-                    tools: [FINANCIAL_TOOL, LEAD_NOTE_TOOL, NETWORK_CONTACT_WRITE_TOOL, PUBLIC_PAGES_TOOL, AGENDA_READ_TOOL, AGENDA_WRITE_TOOL, AGENDA_EVENTOS_TOOL, RESIDENCY_TOOL, EFEMERIDES_TOOL, INCIDENT_WRITE_TOOL, INCIDENT_READ_TOOL, CATALOG_READ_TOOL, ARTIST_RATE_TOOL, CATALOG_PRICE_TOOL, QUOTE_WRITE_TOOL, CLIENT_SEARCH_TOOL, CONTACT_NETWORK_TOOL, SMS_QUEUE_TOOL, EMAIL_QUEUE_TOOL, CONFIRM_SEND_TOOL, MUSIC_TOOL, MEMORY_TOOL, SEGUIMIENTO_ANUAL_TOOL, CUMPLEANOS_CONTACTOS_TOOL, LIBRO_EVENTO_TOOL, VENUE_EVENTS_TOOL, VENUE_RESERVATION_TOOL],
+                    tools: [FINANCIAL_TOOL, LEAD_NOTE_TOOL, NETWORK_CONTACT_WRITE_TOOL, PUBLIC_PAGES_TOOL, AGENDA_READ_TOOL, AGENDA_WRITE_TOOL, AGENDA_EVENTOS_TOOL, RESIDENCY_TOOL, EFEMERIDES_TOOL, INCIDENT_WRITE_TOOL, INCIDENT_READ_TOOL, CATALOG_READ_TOOL, ARTIST_RATE_TOOL, CATALOG_PRICE_TOOL, QUOTE_WRITE_TOOL, CLIENT_SEARCH_TOOL, CONTACT_NETWORK_TOOL, TEMPLATES_TOOL, SMS_QUEUE_TOOL, EMAIL_QUEUE_TOOL, CONFIRM_SEND_TOOL, MUSIC_TOOL, MEMORY_TOOL, SEGUIMIENTO_ANUAL_TOOL, CUMPLEANOS_CONTACTOS_TOOL, LIBRO_EVENTO_TOOL, VENUE_EVENTS_TOOL, VENUE_RESERVATION_TOOL],
                     messages: convo,
                 }),
             });
@@ -3669,6 +3808,16 @@ serve(async (req: Request) => {
                     await recordAiKpi(failed ? "tool_error" : "tool_ok");
                 } else if (toolName === "consultar_red_contactos") {
                     out = await runContactNetworkTool((b.input as Record<string, unknown>) ?? {});
+                    let failed = true;
+                    try {
+                        const parsed = JSON.parse(out) as { error?: unknown; ok?: unknown };
+                        failed = parsed == null || parsed.error != null || parsed.ok !== true;
+                    } catch {
+                        failed = true;
+                    }
+                    await recordAiKpi(failed ? "tool_error" : "tool_ok");
+                } else if (toolName === "consultar_plantillas_mensajes") {
+                    out = await runTemplatesTool((b.input as Record<string, unknown>) ?? {});
                     let failed = true;
                     try {
                         const parsed = JSON.parse(out) as { error?: unknown; ok?: unknown };
