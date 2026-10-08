@@ -7667,7 +7667,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 if (!t) return;
                 let texto = t.cuerpo || '';
                 // Los correos traen «Asunto: …» en la primera línea: se puede copiar aparte.
-                const m = /^Asunto:\s*(.*?)\r?\n+([\s\S]*)$/.exec(texto);
+                const m = /^(?:Asunto|Subject):\s*(.*?)\r?\n+([\s\S]*)$/i.exec(texto);
                 if (m && modo === 'asunto') texto = m[1].trim();
                 else if (m && modo === 'cuerpo') texto = m[2].trim();
                 let ok = false;
@@ -7680,6 +7680,16 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         ok = document.execCommand('copy');
                         document.body.removeChild(ta);
                     } catch (e) { void e; }
+                }
+                if (btn.hasAttribute('data-icono')) {
+                    // Botón de ícono (copiar plantilla completa): cambia a ✓ un instante y vuelve al ícono.
+                    if (!btn._icoPrev) btn._icoPrev = btn.innerHTML;
+                    btn.innerHTML = ok
+                        ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>'
+                        : '<span style="font-size:11px;font-weight:800;">!</span>';
+                    btn.title = ok ? 'Copiado' : 'No se pudo copiar';
+                    setTimeout(() => { btn.innerHTML = btn._icoPrev; btn.title = 'Copiar plantilla completa'; }, 1500);
+                    return;
                 }
                 const prev = btn.getAttribute('data-label') || btn.textContent;
                 btn.setAttribute('data-label', prev);
@@ -7700,7 +7710,10 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     rows.forEach(t => { (porGrupo[t.ocasion || 'Campaña'] = porGrupo[t.ocasion || 'Campaña'] || []).push(t); });
                     body = Object.keys(porGrupo).map(g => {
                         const cards = porGrupo[g].map(t => {
-                            const esCorreo = /\(CORREO\)/i.test(t.nombre || '');
+                            const _tipoM = /\((SMS|CORREO)(?:\s*,\s*([^)]*))?\)\s*$/i.exec(String(t.nombre || ''));
+                            const esCorreo = !!_tipoM && /^CORREO$/i.test(_tipoM[1]);
+                            const _tituloLimpio = String(t.nombre || '').replace(/\s*\((SMS|CORREO)(?:\s*,\s*[^)]*)?\)\s*$/i, '') + (_tipoM && _tipoM[2] ? ' · ' + _tipoM[2].trim() : '');
+                            const _icoCopiar = '<button type="button" data-id="' + _netEsc(t.id) + '" data-modo="todo" data-icono="1" onclick="window.networkCopyCampana(this)" title="Copiar plantilla completa" aria-label="Copiar plantilla completa" style="margin-left:auto; display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; background:var(--net-surface-2); border:1px solid var(--net-line-soft); border-radius:6px; color:var(--net-text); cursor:pointer; padding:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>';
                             const btnStyle = 'background:var(--net-surface-2); border:1px solid var(--net-line-soft); border-radius:6px; color:var(--net-text); font:inherit; font-size:12px; font-weight:700; padding:6px 12px; cursor:pointer;';
                             const botones = esCorreo
                                 ? '<button type="button" data-id="' + _netEsc(t.id) + '" data-modo="asunto" onclick="window.networkCopyCampana(this)" style="' + btnStyle + '">Copiar asunto</button>'
@@ -7712,7 +7725,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                             return '<div style="border:1px solid var(--net-line-soft); border-radius:10px; padding:14px 16px; display:flex; flex-direction:column; gap:10px; background:var(--net-surface-2);">'
                                 + '<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">'
                                 + '<span style="font-size:10px; font-weight:800; letter-spacing:.08em; padding:3px 8px; border-radius:999px; background:var(--net-tab-active-bg); color:var(--gold);">' + (esCorreo ? 'CORREO' : 'SMS') + '</span>'
-                                + '<strong style="font-size:14px;">' + _netEsc(String(t.nombre || '').replace(/\s*\((SMS|CORREO)\)\s*$/i, '')) + '</strong></div>'
+                                + '<strong style="font-size:14px;">' + _netEsc(_tituloLimpio) + '</strong>' + _icoCopiar + '</div>'
                                 + '<div style="white-space:pre-wrap; font-size:13px; line-height:1.5; color:var(--net-text-dim); user-select:text;">' + _netEsc(t.cuerpo) + '</div>'
                                 + '<div style="display:flex; gap:8px; flex-wrap:wrap;">' + botones + enlace + '</div></div>';
                         }).join('');
