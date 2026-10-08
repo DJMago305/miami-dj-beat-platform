@@ -250,6 +250,25 @@
       margin: 10px 0 0;
     }
 
+    /* Paquete de aire libre: subtítulo y lista de condiciones dentro del desplegable */
+    .paudio-package-item .paudio-pkg-subtitle {
+      color: var(--gold);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      margin-top: 16px;
+    }
+
+    .paudio-pkg-list {
+      margin: 8px 0 0;
+      padding-left: 20px;
+      color: rgba(255, 255, 255, 0.75);
+      line-height: 1.65;
+    }
+
+    .paudio-pkg-list li {
+      margin-bottom: 6px;
+    }
+
     .paudio-cta-wrap {
       margin-top: 40px;
       display: flex;
@@ -460,6 +479,25 @@
           <span class="paudio-pkg-price paudio-add-to-cart" data-sku="pa_large" data-price="1800" data-i18n="paudio-pkg-large-price">$1,800</span>
         </summary>
         <p data-i18n="paudio-pkg-large-desc">High-performance line array for concerts or large-format weddings. Flawless acoustic coverage.</p>
+      </details>
+    </div>
+
+    <div class="paudio-package-item">
+      <details>
+        <summary>
+          <span class="paudio-pkg-name" data-i18n="paudio-pkg-outdoor-name">Outdoor Large Event Sound Package (400 to 1,000 Guests)</span>
+          <span class="paudio-pkg-price paudio-add-to-cart" data-sku="pa_outdoor_400" data-price="3000" data-i18n="paudio-pkg-outdoor-price">$3,000</span>
+        </summary>
+        <p data-i18n="paudio-pkg-outdoor-desc">Complete sound for outdoor events of 400 to 1,000 guests (depending on the space): 8-box line array system, 4 subwoofers, 4 microphones, professional mixer and a dedicated sound operator for the whole event, with setup and teardown. General liability insurance included.</p>
+        <p data-i18n="paudio-pkg-outdoor-diff">Unlike the Large Event Sound System (equipment rental), this is a full-service package: subwoofers, microphones, operator and setup are already included.</p>
+        <p class="paudio-pkg-subtitle" data-i18n="paudio-pkg-outdoor-req-title">Requirements and conditions</p>
+        <ul class="paudio-pkg-list">
+          <li data-i18n="paudio-pkg-outdoor-req1">Requires 40 amps of dedicated power. If the venue cannot provide it, we can bring a generator for an additional $500.</li>
+          <li data-i18n="paudio-pkg-outdoor-req2">Insurance certificate naming the venue for that date: additional cost, quoted separately.</li>
+          <li data-i18n="paudio-pkg-outdoor-req3">If the area has no roof, the equipment and the DJ need rain cover, and the price increases.</li>
+          <li data-i18n="paudio-pkg-outdoor-req4">Quoted separately: decorative uplighting, tents, bartender and an elevated DJ stage.</li>
+          <li data-i18n="paudio-pkg-outdoor-req5">A DJ with a professional mixer and booth is a separate service (reference: $1,500 with setup and teardown).</li>
+        </ul>
       </details>
     </div>
 
@@ -743,7 +781,7 @@
         });
     })();
     </script>
-  <script src="./translations.js?v=20261003-mi-perfil-unico"></script>
+  <script src="./translations.js?v=20261008-audio-aire-libre-2"></script>
   <script src="./i18n.js?v=20260420-index-experience-rutas"></script>
   <script src="./header-smart-search.js?v=20260927-bilingue-hint"></script>
   <script src="./mdj-identity.js?v=20261003-identidad-unica"></script>
