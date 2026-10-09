@@ -141,7 +141,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&display=optional"
         rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css?v=20260921-hub-scrollbar-fuera" />
+    <link rel="stylesheet" href="./styles.css?v=20261009-cinta-reels" />
     <link rel="stylesheet" href="./header-unified.css?v=20261008-sin-brinco" />
     <link rel="stylesheet" href="./profile.css?v=20260820-ancho-total" />
     <style>
@@ -357,60 +357,55 @@
         <!-- Pila: (1) reels verticales (2) residencias semanales (3) hero fotos — ver LEEME en eventos-venues-patrocinadores/ -->
         <div class="mdj-experience-stack">
           <div class="mdj-experience-cards-zone">
-            <h3 class="mdj-experience-zone-title" data-i18n="exp-section-venues-reels">Venues on video</h3>
+            <!-- Cinta de reels 9:16: 3 tarjetas visibles a todo el ancho (2 en tablet, 1 en teléfono). Con más de 3 <div class="mdj-venues-slide"> la cinta se desliza sola y salen las flechas; con 3 queda fija. js/venues-showcase.js -->
             <div class="mdj-venues-video-stage" id="mdjVenuesVideoStage" aria-label="Venues showcase">
               <button type="button" class="mdj-venues-nav mdj-venues-nav--prev" id="mdjVenuesNavPrev"
-            data-i18n-aria="venues-nav-prev" aria-label="Previous venue batch">‹</button>
-          <button type="button" class="mdj-venues-nav mdj-venues-nav--next" id="mdjVenuesNavNext"
-            data-i18n-aria="venues-nav-next" aria-label="Next venue batch">›</button>
-          <div class="mdj-venues-video-card mdj-venues-reel" data-venue="0" data-slot="0" style="left:0%">
-            <div class="mdj-venues-video-frame">
-              <video data-mdj-reel="Mojitos_calle_8.mp4"
-                data-mdj-reel-fallback="./assets/eventos-venues-patrocinadores/reels/El_Valle_Restaurante.mp4" muted playsinline loop
-                preload="none"></video>
-              <div class="mdj-venues-video-meta">
-                <div class="mdj-venues-video-venue" data-i18n="exp-venue-title-mojitos">Mojitos Calle 8</div>
-                <div class="mdj-venues-video-type" data-i18n="exp-type-latin">Latin Luxury Nightlife</div>
-                <p class="mdj-venues-video-quote" data-i18n="exp-quote-mojitos">"El corazón de la Calle 8…"</p>
+                data-i18n-aria="venues-nav-prev" aria-label="Previous venue batch"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+              <button type="button" class="mdj-venues-nav mdj-venues-nav--next" id="mdjVenuesNavNext"
+                data-i18n-aria="venues-nav-next" aria-label="Next venue batch"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
+              <div class="mdj-venues-viewport">
+                <div class="mdj-venues-track" id="mdjVenuesTrack">
+            <div class="mdj-venues-slide">
+              <div class="mdj-venues-video-card mdj-venues-reel" data-venue="0">
+                <div class="mdj-venues-video-frame">
+                  <video data-mdj-reel="Mojitos_calle_8.mp4"
+                    data-mdj-reel-fallback="./assets/eventos-venues-patrocinadores/reels/El_Valle_Restaurante.mp4" muted playsinline loop
+                    preload="none"></video>
+                  <div class="mdj-venues-video-meta">
+                    <div class="mdj-venues-video-venue" data-i18n="exp-venue-title-mojitos">Mojitos Calle 8</div>
+                    <div class="mdj-venues-video-type" data-i18n="exp-type-latin">Latin Luxury Nightlife</div>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-          <div class="mdj-venues-video-card mdj-venues-reel" data-venue="1" data-slot="1" style="left:27%">
-            <div class="mdj-venues-video-frame">
-              <video data-mdj-reel="El_Valle_Restaurante.mp4"
-                data-mdj-reel-fallback="./assets/eventos-venues-patrocinadores/reels/Mojitos_calle_8.mp4" muted playsinline loop
-                preload="none"></video>
-              <div class="mdj-venues-video-meta">
-                <div class="mdj-venues-video-venue" data-i18n="exp-venue-title-valle">El Valle Restaurant</div>
-                <div class="mdj-venues-video-type" data-i18n="exp-type-dining">Sophisticated Dining</div>
-                <p class="mdj-venues-video-quote" data-i18n="exp-quote-valle">"Alta gastronomía…"</p>
+            <div class="mdj-venues-slide">
+              <div class="mdj-venues-video-card mdj-venues-reel" data-venue="1">
+                <div class="mdj-venues-video-frame">
+                  <video data-mdj-reel="El_Valle_Restaurante.mp4"
+                    data-mdj-reel-fallback="./assets/eventos-venues-patrocinadores/reels/Mojitos_calle_8.mp4" muted playsinline loop
+                    preload="none"></video>
+                  <div class="mdj-venues-video-meta">
+                    <div class="mdj-venues-video-venue" data-i18n="exp-venue-title-valle">El Valle Restaurant</div>
+                    <div class="mdj-venues-video-type" data-i18n="exp-type-dining">Sophisticated Dining</div>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-          <div class="mdj-venues-video-card mdj-venues-reel is-center" data-venue="2" data-slot="2" style="left:54%">
-            <div class="mdj-venues-video-frame">
-              <video data-mdj-reel="Sundowners_Key_Largo.mp4"
-                data-mdj-reel-fallback="./assets/eventos-venues-patrocinadores/reels/El_Valle_Restaurante.mp4" muted playsinline loop
-                preload="none"></video>
-              <div class="mdj-venues-video-meta">
-                <div class="mdj-venues-video-venue" data-i18n="exp-venue-title-sundowners">Sundowners, Key Largo</div>
-                <div class="mdj-venues-video-type" data-i18n="exp-type-waterfront">Brunch Fri–Sun · Dinner Thursdays</div>
-                <p class="mdj-venues-video-quote" data-i18n="exp-quote-sundowners">"Oceanfront brunch on weekends and dinner every Thursday."</p>
+            <div class="mdj-venues-slide">
+              <div class="mdj-venues-video-card mdj-venues-reel" data-venue="2">
+                <div class="mdj-venues-video-frame">
+                  <video data-mdj-reel="Sundowners_Key_Largo.mp4"
+                    data-mdj-reel-fallback="./assets/eventos-venues-patrocinadores/reels/El_Valle_Restaurante.mp4" muted playsinline loop
+                    preload="none"></video>
+                  <div class="mdj-venues-video-meta">
+                    <div class="mdj-venues-video-venue" data-i18n="exp-venue-title-sundowners">Sundowners, Key Largo</div>
+                    <div class="mdj-venues-video-type" data-i18n="exp-type-waterfront">Brunch Fri–Sun · Dinner Thursdays</div>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-          <div class="mdj-venues-video-card mdj-venues-reel" data-venue="3" data-slot="3" style="left:81%">
-            <div class="mdj-venues-video-frame">
-              <video data-mdj-reel="Baila_Con_Micho.mp4"
-                data-mdj-reel-fallback="./assets/eventos-venues-patrocinadores/reels/Mojitos_calle_8.mp4" muted playsinline loop
-                preload="none"></video>
-              <div class="mdj-venues-video-meta">
-                <div class="mdj-venues-video-venue" data-i18n="exp-venue-title-baila">Baila Con Micho</div>
-                <div class="mdj-venues-video-type" data-i18n="exp-type-baila">Escuela de baile</div>
-                <p class="mdj-venues-video-quote" data-i18n="exp-quote-baila">"Classes, rhythm, and community on the dance floor."</p>
+                </div>
               </div>
-            </div>
-          </div>
             </div>
           </div>
           <div class="mdj-experience-residencies-zone">
@@ -647,7 +642,7 @@
         }
     </script>
     <script defer src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
-    <script src="./js/venues-showcase.js?v=20260423-baila-reel-aliases" defer></script>
+    <script src="./js/venues-showcase.js?v=20261009-cinta-reels" defer></script>
     <script src="./js/venue-photo-gallery.js?v=20260423-manifest-json-parse-guard" defer></script>
     <script src="./js/residencies-carousel.js?v=20260425-residencies-arrows-always" defer></script>
     <script defer src="./mdj-identity.js?v=20261003-identidad-unica"></script>

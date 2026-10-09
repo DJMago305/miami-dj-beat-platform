@@ -1,6 +1,6 @@
 EVENTOS / VENUES / PATROCINADORES (sección home #experience)
 
-En la página: arriba las 4 tarjetas de reels; debajo un solo hero horizontal (slideshow de fotos desde galeria/ + gallery-manifest.json).
+En la página: arriba la cinta de reels (3 tarjetas visibles a la vez); debajo un solo hero horizontal (slideshow de fotos desde galeria/ + gallery-manifest.json).
 
 Estructura de archivos:
 - galeria/          Todas las imágenes: slideshow (#experience), mismas rutas usadas en rentals (venues destacados), etc. Añade aquí JPG/PNG/WebP.
@@ -20,8 +20,7 @@ Los .mp4 bajo web/assets/ suelen ignorarse en Git; los definitivos viven en Stor
 
 Vista previa local: con http://localhost o 127.0.0.1 el sitio usa los archivos de web/assets/.../reels/ sin pasar por Storage. Si abres por otra IP (p. ej. en red), en consola: window.MDJ_VENUE_REELS_FORCE_LOCAL = true y recarga.
 
-Escalado (más venues sin más columnas)
-- La vista usa 4 huecos fijos: 4× .mdj-venues-video-card en #mdjVenuesVideoStage. No añadir una quinta tarjeta ni “un hero por venue nuevo”.
-- Nuevos venues/vídeos: sube el .mp4 a reels/, añade otro lote en web/js/venues-showcase.js (BATCHES: subarray de 4 filas, una por hueco) y las claves en translations.js. El barajado y el barrido automático muestran esos contenidos dentro de los mismos 4 heroes.
-- GAP: `GAP_PCT` en JS y `--mdj-venues-gap-pct` en CSS deben coincidir; `--mdj-venues-slots: 4` en CSS.
-- Si hace falta cambiar el “lote inicial” visible al cargar, edita las 4 tarjetas en web/index.html para que coincidan con BATCHES[0].
+Escalado (más venues)
+- La cinta de events.html (#mdjVenuesVideoStage) muestra 3 tarjetas a la vez (2 en tablet, 1 en teléfono). Hoy tiene 3 slides: Mojitos Calle 8, El Valle, Sundowners; con 3 queda fija y sin flechas.
+- Para añadir un venue: sube el .mp4 a reels/, copia un <div class="mdj-venues-slide"> en events.html (mismo molde: data-mdj-reel, data-mdj-reel-fallback, data-i18n de título y subtítulo) y añade las claves en translations.js. Con 4 o más slides se activan solas las flechas y el avance automático (cada 6 s).
+- Solo se cargan los videos visibles y el siguiente (el siguiente, solo con conexión rápida). Diseño: sección «Presential classes» de bailaconmicho.com, sin capa oscura sobre el video (PO 2026-10-09).
