@@ -21,6 +21,6 @@ Los .mp4 bajo web/assets/ suelen ignorarse en Git; los definitivos viven en Stor
 Vista previa local: con http://localhost o 127.0.0.1 el sitio usa los archivos de web/assets/.../reels/ sin pasar por Storage. Si abres por otra IP (p. ej. en red), en consola: window.MDJ_VENUE_REELS_FORCE_LOCAL = true y recarga.
 
 Escalado (más venues)
-- La cinta de events.html (#mdjVenuesVideoStage) muestra 3 tarjetas a la vez (2 en tablet, 1 en teléfono). Hoy tiene 3 slides: Mojitos Calle 8, El Valle, Sundowners; con 3 queda fija y sin flechas.
+- La cinta de events.html (#mdjVenuesVideoStage) muestra 3 tarjetas a la vez (2 en tablet, 1 en teléfono). Hoy tiene 7 slides, todos testimonios: Mojitos Calle 8, El Valle, Sundowners, Revelación Gia (Revelacion_Gia_v2.mp4), Ebenezer, Baila Con Micho y Fashion Show (Fashion_Show_v5.mp4, versión sin el tramo negro, con la proporción corregida (el original es vertical alto con píxeles no cuadrados) y llenando el cuadro vertical, sin franjas laterales). Con 3 o menos la cinta queda fija y sin flechas.
 - Para añadir un venue: sube el .mp4 a reels/, copia un <div class="mdj-venues-slide"> en events.html (mismo molde: data-mdj-reel, data-mdj-reel-fallback, data-i18n de título y subtítulo) y añade las claves en translations.js. Con 4 o más slides se activan solas las flechas y el avance automático (cada 6 s).
 - Solo se cargan los videos visibles y el siguiente (el siguiente, solo con conexión rápida). Diseño: sección «Presential classes» de bailaconmicho.com, sin capa oscura sobre el video (PO 2026-10-09).
