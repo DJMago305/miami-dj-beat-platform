@@ -1,128 +1,46 @@
 /**
- * Galería de venues (#experience): reels 9:16 en fila.
- * - Barajado: permuta qué tarjeta va en cada hueco (efecto tipo casino).
- * - Barrido: pasa al siguiente lote de venues (BATCHES[b], BATCHES[b+1]…); mismo layout, nuevos reels/textos.
+ * Cinta de reels de venues/testimonios (#experience, events.html): 3 tarjetas 9:16 visibles a todo el ancho (2 en tablet, 1 en teléfono).
+ * Diseño tomado de bailaconmicho.com (PO 2026-10-09): la cinta se desliza 1 s (ease-in-out) y entran los videos siguientes.
  *
- * Cap fijo: el DOM tiene exactamente 4 .mdj-venues-video-card (no añadir más columnas). No es “un hero por venue nuevo”:
- * los nuevos venues entran por rotación automática dentro de estos huecos (más entradas en BATCHES, más .mp4 en reels/, i18n).
- * Añadir lotes: empuja otro subarray con 4 objetos (mismo orden de slots que index.html inicial).
- * Cada fila debe usar solo venueI18n/typeI18n/quoteI18n del partner cuyo .mp4 es `reel` (nunca placeholders genéricos).
+ * LISTA DE VIDEOS = reels-manifest.json (carpeta reels/ del Storage `assets`; copia base en el repo). Cada testimonio nuevo es UNA entrada
+ * {file, title:{es,en}, subtitle:{es,en}, active?}; el orden del archivo es el orden de la cinta. Sin tocar la página ni hacer PR.
+ * Orden de lectura: lista del Storage → copia del repo → las tarjetas escritas a mano en events.html (respaldo si todo falla).
+ * Para preparar un video crudo y generar su entrada: node web/scripts/preparar-reel.mjs (ver LEEME.txt de la carpeta).
+ *
+ * - Con 3 o menos videos la cinta queda fija y sin flechas; con 4 o más se activan las flechas y el avance automático.
+ * - Solo se cargan los videos visibles y el siguiente (y el siguiente solo con conexión rápida); los que salen de pantalla se pausan, así que
+ *   la lista puede crecer sin que la página pese más.
+ * - Sin `gap`/`aspect-ratio`/`inset` en el CSS asociado y sin sintaxis nueva aquí (respaldo Safari 13).
+ * Esta página es la única que tiene #mdjVenuesVideoStage; las demás cargan el script y salen sin hacer nada.
  */
 (function () {
   var stage = document.getElementById('mdjVenuesVideoStage');
   if (!stage) return;
 
-  var cards = Array.prototype.slice.call(stage.querySelectorAll('.mdj-venues-video-card'));
-  var NUM_SLOTS = cards.length;
-  /* Mismo valor que --mdj-venues-gap-pct en styles.css (carril tipo referencia: menos hueco entre columnas). */
-  var GAP_PCT = 8;
+  var track = stage.querySelector('.mdj-venues-track');
+  var slides = Array.prototype.slice.call(stage.querySelectorAll('.mdj-venues-slide'));
+  var navPrev = document.getElementById('mdjVenuesNavPrev');
+  var navNext = document.getElementById('mdjVenuesNavNext');
+  if (!track || !slides.length) return;
 
-  /**
-   * Lotes: siempre 4 entradas (= tarjetas DOM). Lote 0 refleja el estado inicial de index.html.
-   * Sin poster en <video>: se ve el vídeo directo (primer frame / negro breve mientras carga).
-   */
-  var BATCHES = [
-    [
-      {
-        reel: 'Mojitos_calle_8.mp4',
-        fallback: './assets/eventos-venues-patrocinadores/reels/El_Valle_Restaurante.mp4',
-        venueI18n: 'exp-venue-title-mojitos',
-        typeI18n: 'exp-type-latin',
-        quoteI18n: 'exp-quote-mojitos'
-      },
-      {
-        reel: 'El_Valle_Restaurante.mp4',
-        fallback: './assets/eventos-venues-patrocinadores/reels/Mojitos_calle_8.mp4',
-        venueI18n: 'exp-venue-title-valle',
-        typeI18n: 'exp-type-dining',
-        quoteI18n: 'exp-quote-valle'
-      },
-      {
-        reel: 'Sundowners_Key_Largo.mp4',
-        fallback: './assets/eventos-venues-patrocinadores/reels/El_Valle_Restaurante.mp4',
-        venueI18n: 'exp-venue-title-sundowners',
-        typeI18n: 'exp-type-waterfront',
-        quoteI18n: 'exp-quote-sundowners'
-      },
-      {
-        reel: 'Baila_Con_Micho.mp4',
-        fallback: './assets/eventos-venues-patrocinadores/reels/Mojitos_calle_8.mp4',
-        venueI18n: 'exp-venue-title-baila',
-        typeI18n: 'exp-type-baila',
-        quoteI18n: 'exp-quote-baila'
-      }
-    ],
-    [
-      /* Mismo criterio que el lote 0: cada reel solo con textos i18n del partner real (nada genérico / placeholder). */
-      {
-        reel: 'Sundowners_Key_Largo.mp4',
-        fallback: './assets/eventos-venues-patrocinadores/reels/Mojitos_calle_8.mp4',
-        venueI18n: 'exp-venue-title-sundowners',
-        typeI18n: 'exp-type-waterfront',
-        quoteI18n: 'exp-quote-sundowners'
-      },
-      {
-        reel: 'Mojitos_calle_8.mp4',
-        fallback: './assets/eventos-venues-patrocinadores/reels/El_Valle_Restaurante.mp4',
-        venueI18n: 'exp-venue-title-mojitos',
-        typeI18n: 'exp-type-latin',
-        quoteI18n: 'exp-quote-mojitos'
-      },
-      {
-        reel: 'El_Valle_Restaurante.mp4',
-        fallback: './assets/eventos-venues-patrocinadores/reels/Mojitos_calle_8.mp4',
-        venueI18n: 'exp-venue-title-valle',
-        typeI18n: 'exp-type-dining',
-        quoteI18n: 'exp-quote-valle'
-      },
-      {
-        reel: 'Ebenezer_Family_Farm.mp4',
-        fallback: './assets/eventos-venues-patrocinadores/reels/Sundowners_Key_Largo.mp4',
-        venueI18n: 'exp-venue-title-ebenezer',
-        typeI18n: 'exp-type-ebenezer',
-        quoteI18n: 'exp-quote-ebenezer'
-      }
-    ]
-  ];
-
-  var batchIndex = 0;
-  var shuffleTick = 0;
-  var SWEEP_EVERY = 7;
-
-  function buildSlotLeftPct(numSlots, gapPct) {
-    var w = (100 - (numSlots - 1) * gapPct) / numSlots;
-    var out = [];
-    for (var s = 0; s < numSlots; s++) {
-      out.push(Math.round(s * (w + gapPct) * 1000) / 1000);
-    }
-    return out;
-  }
-
-  var SLOT_LEFT_PCT = buildSlotLeftPct(NUM_SLOTS, GAP_PCT);
-
-  var slotToVenue = [];
-  for (var j = 0; j < NUM_SLOTS; j++) {
-    slotToVenue[j] = j;
-  }
-  cards.forEach(function (card) {
-    var s = parseInt(card.getAttribute('data-slot'), 10);
-    var v = parseInt(card.getAttribute('data-venue'), 10);
-    if (!isNaN(s) && s >= 0 && s < NUM_SLOTS && !isNaN(v)) {
-      slotToVenue[s] = v;
-    }
-  });
-
-  stage.style.setProperty('--mdj-venues-slots', String(NUM_SLOTS));
-
+  var AUTO_MS = 6000;          // pausa entre desplazamientos automáticos
+  var PAUSE_AFTER_USER_MS = 15000;
+  var index = 0;
+  var visible = 3;
   var timer = null;
+  var inView = false;
+  var userUntil = 0;
 
-  /** Si el .mp4 en Storage tiene otro casing/nombre, probar aquí antes del fallback genérico. */
-  var REEL_FILENAME_ALIASES = {
-    'Baila_Con_Micho.mp4': ['bailaconmicho.mp4', 'Baila_con_Micho.mp4', 'baila_con_micho.mp4']
-  };
+  /** Si el .mp4 en Storage tiene otro casing/nombre, probar aquí antes del fallback. */
+  var REEL_FILENAME_ALIASES = {};
+
+  var REEL_DIR = './assets/eventos-venues-patrocinadores/reels/';
+  var MANIFEST_PATH = REEL_DIR + 'reels-manifest.json';
+  var FILE_OK = /^[A-Za-z0-9][A-Za-z0-9._-]*\.mp4$/;   // solo nombres simples: nada de rutas ni caracteres raros
+  var manifestEntries = null;                          // null = se usan las tarjetas escritas en events.html
 
   /**
-   * URL absoluta del bucket `assets` en producción (Vercel no incluye .mp4 locales si usas .vercelignore).
+   * URL absoluta del bucket `assets` en producción (los .mp4 locales no viajan a Vercel).
    * En localhost devuelve la ruta relativa salvo MDJ_VENUE_REELS_FORCE_STORAGE.
    */
   function absoluteReelUrl(localPath) {
@@ -148,13 +66,14 @@
   }
 
   function hydrateVideo(vid) {
-    if (!vid) return;
+    if (!vid || vid.getAttribute('data-hydrated') === '1') return;
     var reel = vid.getAttribute('data-mdj-reel');
     var fb = vid.getAttribute('data-mdj-reel-fallback');
-    if (!fb || !reel) return;
+    if (!reel) return;
+    vid.setAttribute('data-hydrated', '1');
     var names = [reel].concat(REEL_FILENAME_ALIASES[reel] || []);
     var attempt = 0;
-    var fallbackAbs = absoluteReelUrl(fb);
+    var fallbackAbs = fb ? absoluteReelUrl(fb) : '';
     function tryNext() {
       if (attempt < names.length) {
         var localReelPath = './assets/eventos-venues-patrocinadores/reels/' + names[attempt];
@@ -166,256 +85,276 @@
         return;
       }
       vid.onerror = null;
-      if (vid.getAttribute('src') !== String(fallbackAbs)) vid.src = String(fallbackAbs);
+      if (fallbackAbs && vid.getAttribute('src') !== String(fallbackAbs)) vid.src = String(fallbackAbs);
     }
+    vid.preload = 'auto';
     tryNext();
   }
 
-  function applyReelSources() {
-    stage.querySelectorAll('video[data-mdj-reel-fallback]').forEach(hydrateVideo);
+  function fastConnection() {
+    var c = navigator.connection;
+    if (!c) return true;
+    if (c.saveData) return false;
+    if (c.effectiveType && c.effectiveType !== '4g') return false;
+    return !(typeof c.downlink === 'number' && c.downlink > 0 && c.downlink < 5);
   }
 
-  function applyBatch(index) {
-    var batch = BATCHES[index];
-    if (!batch || batch.length !== NUM_SLOTS) return;
-    cards.forEach(function (card, i) {
-      var row = batch[i];
-      if (!row) return;
-      var vid = card.querySelector('video');
-      if (vid) {
-        if (row.poster) {
-          vid.setAttribute('poster', row.poster);
-        } else {
-          vid.removeAttribute('poster');
-        }
-        vid.setAttribute('data-mdj-reel', row.reel);
-        vid.setAttribute('data-mdj-reel-fallback', row.fallback);
+  function reduced() {
+    return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+
+  function visibleCount() {
+    if (!window.matchMedia) return 3;
+    if (window.matchMedia('(max-width: 639px)').matches) return 1;
+    if (window.matchMedia('(max-width: 1023px)').matches) return 2;
+    return 3;
+  }
+
+  function maxIndex() {
+    return Math.max(0, slides.length - visible);
+  }
+
+  function quiet(p) {
+    if (p && typeof p.catch === 'function') p.catch(function () { /* autoplay policy: se reintenta al volver a la vista */ });
+  }
+
+  /** Carga y reproduce los visibles (+ el siguiente si hay buena conexión); pausa el resto. */
+  function syncVideos() {
+    var next = index + visible;
+    slides.forEach(function (slide, i) {
+      var vid = slide.querySelector('video');
+      var on = i >= index && i < index + visible;
+      slide.classList.toggle('is-visible', on);
+      if (!vid) return;
+      if (on) {
         hydrateVideo(vid);
-      }
-      var metaVenue = card.querySelector('.mdj-venues-video-venue');
-      var metaType = card.querySelector('.mdj-venues-video-type');
-      var metaQuote = card.querySelector('.mdj-venues-video-quote');
-      if (metaVenue) metaVenue.setAttribute('data-i18n', row.venueI18n);
-      if (metaType) metaType.setAttribute('data-i18n', row.typeI18n);
-      if (metaQuote) metaQuote.setAttribute('data-i18n', row.quoteI18n);
-    });
-    if (window.i18n && typeof window.i18n.updateUI === 'function') {
-      window.i18n.updateUI();
-    }
-  }
-
-  function prefersReduce() {
-    return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  }
-
-  function isNarrow() {
-    return window.matchMedia && window.matchMedia('(max-width: 720px)').matches;
-  }
-
-  function venueToSlot(venueId) {
-    for (var s = 0; s < NUM_SLOTS; s++) {
-      if (slotToVenue[s] === venueId) return s;
-    }
-    return Math.min(1, NUM_SLOTS - 1);
-  }
-
-  /** Las tarjetas son position:absolute → el stage no crece solo; reservamos altura para no montar #residencies / marketplace encima. */
-  var STAGE_TOP_PAD = 10;
-  var STAGE_BOTTOM_PAD = 20;
-
-  function syncStageHeight() {
-    if (!stage) return;
-    if (isNarrow()) {
-      stage.style.minHeight = '';
-      return;
-    }
-    var maxH = 0;
-    cards.forEach(function (card) {
-      var h = card.getBoundingClientRect().height;
-      if (h > maxH) maxH = h;
-    });
-    if (maxH > 0) {
-      stage.style.minHeight = Math.ceil(STAGE_TOP_PAD + maxH + STAGE_BOTTOM_PAD) + 'px';
-    }
-  }
-
-  function requestSyncStageHeight() {
-    window.requestAnimationFrame(function () {
-      window.requestAnimationFrame(syncStageHeight);
-    });
-  }
-
-  function applyLayout() {
-    if (isNarrow()) return;
-    cards.forEach(function (card) {
-      var v = parseInt(card.getAttribute('data-venue'), 10);
-      var s = venueToSlot(v);
-      card.style.left = SLOT_LEFT_PCT[s] + '%';
-      card.setAttribute('data-slot', String(s));
-      card.classList.toggle('is-center', NUM_SLOTS >= 2 && s === Math.floor(NUM_SLOTS / 2));
-    });
-    requestSyncStageHeight();
-  }
-
-  function rotateLeft(arr) {
-    var a = arr.slice();
-    a.push(a.shift());
-    return a;
-  }
-
-  function rotateRight(arr) {
-    var a = arr.slice();
-    a.unshift(a.pop());
-    return a;
-  }
-
-  function randomMove() {
-    if (isNarrow() || prefersReduce()) return;
-    if (NUM_SLOTS < 2) return;
-    var r = Math.random();
-    if (r < 0.42) {
-      var a = Math.floor(Math.random() * NUM_SLOTS);
-      var b = (a + 1 + Math.floor(Math.random() * (NUM_SLOTS - 1))) % NUM_SLOTS;
-      var t = slotToVenue[a];
-      slotToVenue[a] = slotToVenue[b];
-      slotToVenue[b] = t;
-    } else if (r < 0.71) {
-      slotToVenue = rotateLeft(slotToVenue);
-    } else {
-      slotToVenue = rotateRight(slotToVenue);
-    }
-    applyLayout();
-  }
-
-  /** Cambia de lote (3+3): delta +1 siguiente, -1 anterior — flechas del carril estilo referencia. */
-  function goBatchStep(delta) {
-    if (BATCHES.length < 2) return;
-    batchIndex = (batchIndex + delta + BATCHES.length) % BATCHES.length;
-    stage.classList.add('mdj-venues-sweeping');
-    window.setTimeout(function () {
-      applyBatch(batchIndex);
-      for (var j = 0; j < NUM_SLOTS; j++) {
-        slotToVenue[j] = j;
-      }
-      applyLayout();
-      playVideos();
-      requestSyncStageHeight();
-      window.requestAnimationFrame(function () {
-        stage.classList.remove('mdj-venues-sweeping');
-        syncStageHeight();
-      });
-    }, 160);
-  }
-
-  function sweepNextBatch() {
-    goBatchStep(1);
-  }
-
-  function scheduleNext() {
-    clearTimeout(timer);
-    if (isNarrow() || prefersReduce()) return;
-    timer = window.setTimeout(function () {
-      shuffleTick++;
-      if (BATCHES.length > 1 && shuffleTick >= SWEEP_EVERY) {
-        shuffleTick = 0;
-        sweepNextBatch();
+        if (inView) quiet(vid.play());
       } else {
-        randomMove();
+        if (i === next && fastConnection()) hydrateVideo(vid);
+        try { vid.pause(); } catch (e) { void e; }
       }
-      scheduleNext();
-    }, 2800 + Math.random() * 4200);
-  }
-
-  function bootMotion() {
-    if (isNarrow() || prefersReduce()) {
-      stage.style.minHeight = '';
-      cards.forEach(function (c) {
-        c.style.left = '';
-        c.classList.remove('is-center');
-      });
-      return;
-    }
-    applyLayout();
-    requestSyncStageHeight();
-    scheduleNext();
-  }
-
-  function playVideos() {
-    stage.querySelectorAll('video').forEach(function (v) {
-      var p = v.play && v.play();
-      if (p && typeof p.catch === 'function') p.catch(function () { /* autoplay policy */ });
     });
   }
 
-  applyReelSources();
-  bootMotion();
+  function render() {
+    stage.style.setProperty('--mdj-venues-visible', String(visible));
+    track.style.transform = 'translateX(' + (-index * 100 / visible) + '%)';
+    track.style.webkitTransform = track.style.transform;
+    var more = maxIndex() > 0;
+    if (navPrev) navPrev.hidden = !more;
+    if (navNext) navNext.hidden = !more;
+    syncVideos();
+  }
 
-  (function wireVenueNav() {
-    var navPrev = document.getElementById('mdjVenuesNavPrev');
-    var navNext = document.getElementById('mdjVenuesNavNext');
-    if (BATCHES.length < 2) {
-      if (navPrev) navPrev.hidden = true;
-      if (navNext) navNext.hidden = true;
-      return;
-    }
-    if (navPrev) {
-      navPrev.addEventListener('click', function (e) {
-        e.preventDefault();
-        goBatchStep(-1);
-      });
-    }
-    if (navNext) {
-      navNext.addEventListener('click', function (e) {
-        e.preventDefault();
-        goBatchStep(1);
-      });
-    }
-  })();
+  function goTo(i) {
+    var m = maxIndex();
+    index = i > m ? 0 : (i < 0 ? m : i);   // al llegar al final vuelve al principio, y al revés
+    render();
+  }
 
-  window.addEventListener(
-    'load',
-    function () {
-      requestSyncStageHeight();
-    },
-    { once: true }
-  );
+  function schedule() {
+    clearTimeout(timer);
+    if (maxIndex() === 0 || reduced() || !inView || document.hidden) return;
+    timer = window.setTimeout(function () {
+      if (Date.now() < userUntil) { schedule(); return; }
+      goTo(index + 1);
+      schedule();
+    }, AUTO_MS);
+  }
 
-  document.addEventListener('languageChanged', function () {
-    applyBatch(batchIndex);
-    applyLayout();
-    requestSyncStageHeight();
+  function userMoved(delta) {
+    userUntil = Date.now() + PAUSE_AFTER_USER_MS;
+    goTo(index + delta);
+    schedule();
+  }
+
+  if (navPrev) navPrev.addEventListener('click', function (e) { e.preventDefault(); userMoved(-1); });
+  if (navNext) navNext.addEventListener('click', function (e) { e.preventDefault(); userMoved(1); });
+
+  // Deslizar con el dedo (teléfono / tablet)
+  var touchX = null;
+  stage.addEventListener('touchstart', function (e) {
+    touchX = e.touches && e.touches.length === 1 ? e.touches[0].clientX : null;
+  }, { passive: true });
+  stage.addEventListener('touchend', function (e) {
+    if (touchX === null || !e.changedTouches || !e.changedTouches.length) return;
+    var dx = e.changedTouches[0].clientX - touchX;
+    touchX = null;
+    if (Math.abs(dx) > 40) userMoved(dx < 0 ? 1 : -1);
+  }, { passive: true });
+
+  window.addEventListener('resize', function () {
+    var v = visibleCount();
+    if (v === visible) return;
+    visible = v;
+    if (index > maxIndex()) index = maxIndex();
+    render();
+    schedule();
+  }, { passive: true });
+
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) { clearTimeout(timer); return; }
+    syncVideos();
+    schedule();
   });
 
-  if ('IntersectionObserver' in window) {
-    var io = new IntersectionObserver(
-      function (ents) {
-        ents.forEach(function (e) {
-          if (e.isIntersecting) playVideos();
-        });
-      },
-      { threshold: 0.1 }
-    );
-    io.observe(stage);
-  } else {
-    playVideos();
+  function currentLang() {
+    var l = (window.i18n && window.i18n.currentLang) || document.documentElement.lang || 'en';
+    return String(l).slice(0, 2) === 'es' ? 'es' : 'en';
   }
 
-  window.addEventListener(
-    'resize',
-    function () {
-      clearTimeout(timer);
-      if (isNarrow() || prefersReduce()) {
-        stage.style.minHeight = '';
-        cards.forEach(function (c) {
-          c.style.left = '';
-          c.classList.remove('is-center');
-        });
-        return;
+  function pickText(o) {
+    if (!o) return '';
+    if (typeof o === 'string') return o;
+    return o[currentLang()] || o.es || o.en || '';
+  }
+
+  function cleanEntries(list) {
+    var out = [];
+    (Array.isArray(list) ? list : []).forEach(function (e) {
+      if (!e || e.active === false || typeof e.file !== 'string' || !FILE_OK.test(e.file)) return;
+      out.push({ file: e.file, title: e.title, subtitle: e.subtitle });
+    });
+    return out;
+  }
+
+  /** Pone título y subtítulo (en el idioma activo) a las tarjetas que salen de la lista. */
+  function applyTexts() {
+    if (!manifestEntries) return;
+    slides.forEach(function (slide, i) {
+      var e = manifestEntries[i];
+      if (!e) return;
+      var t = slide.querySelector('.mdj-venues-video-venue');
+      var st = slide.querySelector('.mdj-venues-video-type');
+      if (t) t.textContent = pickText(e.title);
+      if (st) st.textContent = pickText(e.subtitle);
+    });
+  }
+
+  function makeSlide(e, i, entries) {
+    var other = entries[(i + 1) % entries.length];
+    var slide = document.createElement('div');
+    slide.className = 'mdj-venues-slide';
+    var card = document.createElement('div');
+    card.className = 'mdj-venues-video-card mdj-venues-reel';
+    card.setAttribute('data-venue', String(i));
+    var frame = document.createElement('div');
+    frame.className = 'mdj-venues-video-frame';
+    var vid = document.createElement('video');
+    vid.setAttribute('data-mdj-reel', e.file);
+    if (other && other.file !== e.file) vid.setAttribute('data-mdj-reel-fallback', REEL_DIR + other.file);
+    vid.muted = true;
+    vid.defaultMuted = true;
+    vid.loop = true;
+    vid.preload = 'none';
+    vid.setAttribute('muted', '');
+    vid.setAttribute('playsinline', '');
+    var meta = document.createElement('div');
+    meta.className = 'mdj-venues-video-meta';
+    var t = document.createElement('div');
+    t.className = 'mdj-venues-video-venue';
+    var st = document.createElement('div');
+    st.className = 'mdj-venues-video-type';
+    meta.appendChild(t);
+    meta.appendChild(st);
+    frame.appendChild(vid);
+    frame.appendChild(meta);
+    card.appendChild(frame);
+    slide.appendChild(card);
+    return slide;
+  }
+
+  /** Apaga el video de una tarjeta que ya no se usa. Sin esto, el error que dispara al vaciarle el src haría que se recargara solo. */
+  function retire(slide) {
+    var v = slide.querySelector('video');
+    if (!v) return;
+    v.onerror = null;
+    try { v.pause(); } catch (e) { void e; }
+    v.removeAttribute('src');
+    try { v.load(); } catch (e2) { void e2; }
+  }
+
+  /**
+   * Pone en la cinta las tarjetas de la lista. Las que ya existen (mismo archivo) se REUTILIZAN con su video ya cargado o reproduciéndose;
+   * solo se crean las nuevas y solo se apagan las que sobran. Así agregar un testimonio no recarga ni deja en negro a los demás.
+   */
+  function useManifest(entries) {
+    manifestEntries = entries;
+    var pool = {};
+    slides.forEach(function (slide) {
+      var v = slide.querySelector('video');
+      var f = v && v.getAttribute('data-mdj-reel');
+      if (!f) return;
+      (pool[f] = pool[f] || []).push(slide);
+    });
+    var next = entries.map(function (e, i) {
+      var reuse = pool[e.file] && pool[e.file].shift();
+      return reuse || makeSlide(e, i, entries);
+    });
+    var same = next.length === slides.length && next.every(function (s2, i) { return s2 === slides[i]; });
+    if (!same) {
+      Object.keys(pool).forEach(function (f) { pool[f].forEach(retire); });
+      while (track.firstChild) track.removeChild(track.firstChild);
+      next.forEach(function (slide, i) {
+        slide.querySelector('.mdj-venues-video-card').setAttribute('data-venue', String(i));
+        track.appendChild(slide);
+      });
+      slides = next;
+      if (index > maxIndex()) index = maxIndex();
+    }
+    applyTexts();
+    render();
+    schedule();
+  }
+
+  function fetchManifest(urls, done) {
+    var i = 0;
+    (function next() {
+      if (i >= urls.length) { done(null); return; }
+      var url = urls[i++];
+      var failed = function () { next(); };
+      try {
+        fetch(url, { cache: 'no-cache' })
+          .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+          .then(function (j) {
+            var list = cleanEntries(j && j.reels);
+            if (list.length) done(list); else failed();
+          })
+          .catch(function (err) {
+            if (window.console && console.warn) console.warn('[venues-showcase] lista de reels no válida en ' + url + ':', err && err.message);
+            failed();
+          });
+      } catch (e) {
+        failed();
       }
-      applyLayout();
-      requestSyncStageHeight();
-      scheduleNext();
-    },
-    { passive: true }
-  );
+    })();
+  }
+
+  function loadManifest() {
+    if (typeof fetch !== 'function') return;
+    var urls = [String(absoluteReelUrl(MANIFEST_PATH)), MANIFEST_PATH];
+    if (urls[0] === urls[1]) urls.pop();
+    fetchManifest(urls, function (list) { if (list) useManifest(list); });
+  }
+
+  document.addEventListener('languageChanged', applyTexts);
+
+  visible = visibleCount();
+  render();
+  loadManifest();
+
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (ents) {
+      ents.forEach(function (e) {
+        inView = e.isIntersecting;
+        syncVideos();
+        schedule();
+      });
+    }, { threshold: 0.1 });
+    io.observe(stage);
+  } else {
+    inView = true;
+    syncVideos();
+    schedule();
+  }
 })();
