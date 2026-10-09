@@ -451,6 +451,13 @@
         var p = document.getElementById('tab-' + t);
         if (p && getComputedStyle(p).display !== 'none') visible = t;
       });
+      /* 2026-10-08, «MI PERFIL se brinca»: al abrir ?tab=flow o ?tab=sft el panel visible nace en «public» y unos cientos de ms después la página conmuta;
+         la marca pasaba por MI PERFIL antes de caer en Cash Flow / SoundForTips (medido: [] → MI PERFIL → Cash Flow). Mientras nadie haya conmutado todavía
+         (switchProfileTab sin ejecutar), manda la pestaña que PIDE la dirección; en cuanto se conmuta, manda el panel que está a la vista, como siempre. */
+      try {
+        var pedida = String(new URLSearchParams(window.location.search).get('tab') || '').toLowerCase();
+        if (!window.__mdjPerfilConmutado && (pedida === 'flow' || pedida === 'sft')) visible = pedida;
+      } catch (ePed) { /* sin URLSearchParams: manda el panel visible */ }
       if (!visible) return;
       var puestos = nav.querySelectorAll('[data-mdj-slot]');
       for (var i = 0; i < puestos.length; i++) {
@@ -493,6 +500,7 @@
               window.scrollTo(0, 0);
             }
           } catch (eScroll) { void eScroll; }
+          window.__mdjPerfilConmutado = true;                      // desde aquí manda el panel visible, no la dirección
           var r = original.apply(this, arguments);
           setTimeout(mdjMarcarPuestoActivo, 0);
           return r;
@@ -735,7 +743,9 @@
        invitado sigue yendo a login. Sin mdj-identity.js (3 páginas), queda la tabla anterior. */
     var _bh = typeof window.mdjBuildingHomeForRole === 'function' ? window.mdjBuildingHomeForRole : null;
     if (esStaff) return _bh ? _bh('staff') : './staff.html?vista=miperfil';
-    if (esArtista) return _bh ? _bh('artist') : (uid ? './dj-profile.html?id=' + encodeURIComponent(uid) : './dj-profile.html');
+    /* 2026-10-08, regresión del PO («MI PERFIL dispara Agenda»): la tabla canónica manda al artista a su ESTACIÓN (dj-dashboard.html, que abre en Agenda) al iniciar sesión,
+       pero MI PERFIL del artista es su PERFIL (dj-profile.html?id=<uid>), no la estación. Con ?id= el guard del perfil no vuelve a pedir sesión. */
+    if (esArtista) return uid ? './dj-profile.html?id=' + encodeURIComponent(uid) : './dj-profile.html';
     if (uid) return _bh ? _bh('client') : './client-portal.html';
     /* CORTINA REAL 2026-09-02 (mismo pedido del PO que Config: "si se entro
        por mi perfil, esa entrada es dentro de mi perfil despues de login").
@@ -812,7 +822,8 @@
     /* H3c: misma tabla canónica que el slot (mdjBuildingHomeForRole). Staff → su ficha; cualquier otro rol con perfil = artista → su estación; sin fila = cliente. */
     if (typeof window.mdjBuildingHomeForRole === 'function') {
       if (!uid) return './login.html';
-      return window.mdjBuildingHomeForRole(rol ? (/^(owner|admin|manager|management|seller)$/.test(rol) ? 'staff' : 'artist') : 'client');
+      if (rol && !/^(owner|admin|manager|management|seller)$/.test(rol)) return uid ? './dj-profile.html?id=' + encodeURIComponent(uid) : './dj-profile.html?view=public';   // artista: su PERFIL, no su estación (Agenda)
+      return window.mdjBuildingHomeForRole(rol ? 'staff' : 'client');
     }
     if (rol === 'owner' || rol === 'admin' || rol === 'manager' || rol === 'management' || rol === 'seller') {
       return './staff.html?vista=miperfil';
@@ -2146,6 +2157,7 @@
     /* El sol pasa a ser el ÚLTIMO hijo del riel, no un absoluto sobre él: así la
        rejilla le da su propia columna y no puede solaparse con MRM IA. */
     if (navEl && b.parentNode !== navEl) navEl.appendChild(b);
+    if (navEl) navEl.classList.add('mdj-dn-ready');          // el marcador de CSS que reservaba su hueco se retira: el botón ocupa ese mismo lugar (sin brinco)
     var guardado = '';
     try { guardado = localStorage.getItem('mdjStaffTheme') || ''; } catch (e) {}
     mdjApplyTheme(mdjNormalizeThemeValue(guardado) === 'light' ? 'day' : 'night');
@@ -5047,6 +5059,8 @@
     if (b === 'booth' || b === 'ai-booth' || b === 'ai_booth' || b === 'cabina') return 'booth';
     if (b === 'dj-tools' || b === 'djtools' || b === 'djs-tools' || b === 'dj_tools') return 'tools';
     if (b === 'jobs' || b === 'trabajos' || b === 'empleos') return 'jobs';
+    /* 2026-10-08, «no se sostiene»: AGENTE.IA nacía marcada y, al activarse el modo cabecera del artista (~0,5 s), esta pasada le quitaba la marca por no tener llave. */
+    if (b === 'agente-ia') return 'agente-ia';
     /* PO 2026-09-21: dentro de Servicios (el hub y TODA página de servicio) queda marcada la pestaña SERVICIOS. Lista explícita de archivos. */
     if (b === 'rentals' || b === 'services' || b === 'servicios' || MDJ_PAGINAS_SERVICIOS.indexOf(b) !== -1) return 'services';
     if (b === 'eventos' || b === 'events' || b === 'experiencias') return 'venues';

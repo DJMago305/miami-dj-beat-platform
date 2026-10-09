@@ -332,7 +332,7 @@
             var isClient = rl ? esRolCliente(rl) : (jwtRole ? esRolCliente(jwtRole) : true);
             /* H3c: «mi panel» y «mi perfil» van a la tabla canónica de mdj-identity.js (staff → su ficha, artista → su estación, cliente → su portal);
                antes un staff caía en las páginas del artista. «Configuración» sigue como estaba. Sin mdj-identity.js queda la tabla anterior. */
-            if ((kind === 'dash' || kind === 'profile') && typeof window.mdjBuildingHomeForRole === 'function') {
+            if ((kind === 'dash' || (kind === 'profile' && (isClient || /^(owner|admin|manager|management|seller)$/.test(String(rl || jwtRole || ''))))) && typeof window.mdjBuildingHomeForRole === 'function') {   // 2026-10-08: «mi perfil» del ARTISTA es su perfil (abajo), no su estación
               return window.mdjBuildingHomeForRole(isClient ? 'client' : (rl || jwtRole || 'artist'));
             }
             if (kind === 'dash') return isClient ? './client-portal.html' : './dj-dashboard.html';
