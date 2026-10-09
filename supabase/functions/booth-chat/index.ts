@@ -363,6 +363,43 @@ interface RequestBody {
     context?: string;
 }
 
+// ─── ESPECIALISTAS EN VENTAS (2026-10-09, orden del PO) ─────────────────────
+// Una sola fuente de verdad: tabla public.sales_specialists (lectura pública, solo filas activas).
+// Margi sugiere a una persona real con su teléfono y correo cuando alguien quiere comprar y no sabe
+// con quién hablar, o pregunta por un vendedor. Caché de 5 min, igual que el roster PRO.
+let _salesCache: string | null = null;
+let _salesCacheAt = 0;
+
+async function fetchSalesSpecialists(): Promise<string> {
+    const now = Date.now();
+    if (_salesCache !== null && now - _salesCacheAt < ROSTER_TTL_MS) return _salesCache;
+    try {
+        const supabaseUrl = (Deno.env.get("SUPABASE_URL") ?? "").replace(/\/$/, "");
+        const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? "";
+        if (!supabaseUrl || !anonKey) return "";
+        const url = supabaseUrl + "/rest/v1/sales_specialists?select=nombre,titulo_es,telefono,email,idiomas&activo=eq.true&order=orden.asc&limit=5";
+        const res = await fetch(url, { headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}` } });
+        if (!res.ok) { console.error("[booth-chat] sales fetch failed:", res.status); _salesCache = ""; _salesCacheAt = now; return ""; }
+        const data = await res.json() as Array<Record<string, unknown>>;
+        if (!Array.isArray(data) || data.length === 0) { _salesCache = ""; _salesCacheAt = now; return ""; }
+        const lines = data.map((r) => {
+            const langs = Array.isArray(r.idiomas) ? ` | Idiomas: ${(r.idiomas as string[]).join(", ")}` : "";
+            return `• **${String(r.nombre).trim()}** — ${String(r.titulo_es).trim()} | Tel: ${String(r.telefono).trim()} | Correo: ${String(r.email).trim()}${langs}`;
+        });
+        _salesCache =
+            "\n\n### Especialistas en ventas (contacto humano REAL)\n" +
+            "Cuando alguien quiera comprar o contratar y no sepa con quién hablar, o pregunte por un vendedor/asesor, " +
+            "sugiere a esta persona con su teléfono y correo EXACTAMENTE como aparecen. No inventes otros vendedores ni números. " +
+            "No uses pronombres para la persona: di su nombre.\n" + lines.join("\n");
+        _salesCacheAt = now;
+        return _salesCache;
+    } catch (err) {
+        console.error("[booth-chat] sales fetch error:", err);
+        _salesCache = ""; _salesCacheAt = now;
+        return "";
+    }
+}
+
 // ─── HANDLER ─────────────────────────────────────────────────────────────────
 
 serve(async (req: Request) => {
@@ -432,10 +469,12 @@ serve(async (req: Request) => {
 
     // Roster PRO/ELITE en tiempo real (cached 5 min)
     const rosterContext = await fetchProRoster();
+    const salesContext = await fetchSalesSpecialists();
 
     const systemContent =
         SYSTEM_PROMPT +
         rosterContext +
+        salesContext +
         (sessionContext ? `\n\n### Contexto de sesión actual:\n${sessionContext}` : "");
 
     // Anthropic no acepta un mensaje con role "system" dentro de `messages` -- el

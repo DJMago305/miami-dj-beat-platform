@@ -2035,7 +2035,7 @@
           <button type="button" class="side3-link side3-link-standalone" data-sec="admin" data-nav="crm" data-standalone="1" title="Network"><span class="side3-ic">🌐</span><span class="side3-tx">Network</span></button>
 
           <!-- Mensajes del Sistema (2026-09-23): SMS reales, entrada y salida -->
-          <button type="button" class="side3-link side3-link-standalone" data-sec="msg" title="Mensajes del Sistema"><span class="side3-ic">💬</span><span class="side3-tx">Mensajes del Sistema</span></button>
+          <button type="button" class="side3-link side3-link-standalone" data-sec="msg" title="Mensajes del Sistema" data-i18n-title="side3-mensajes-sistema"><span class="side3-ic">💬</span><span class="side3-tx" data-i18n="side3-mensajes-sistema">Mensajes del Sistema</span></button>
 
           <!-- Mis Comisiones (2026-09-30): sacada del grupo EQUIPO a propósito.
                EQUIPO se oculta entero para seller (orden explícita del PO,
@@ -2043,7 +2043,10 @@
                Comisiones" se hubiera quedado adentro, el vendedor habría
                perdido su propia vista real junto con todo lo demás. Standalone,
                mismo patrón que Network/Mensajes del Sistema arriba. -->
-          <button type="button" class="side3-link side3-link-standalone" data-sec="admin" data-nav="mis-comisiones" title="Mis Comisiones"><span class="side3-ic">💰</span><span class="side3-tx">Mis Comisiones</span></button>
+          <button type="button" class="side3-link side3-link-standalone" data-sec="admin" data-nav="mis-comisiones" title="Mis Comisiones" data-i18n-title="side3-mis-comisiones"><span class="side3-ic">💰</span><span class="side3-tx" data-i18n="side3-mis-comisiones">Mis Comisiones</span></button>
+
+          <!-- Lista de precios (2026-10-09, orden del PO): costo del proveedor, piso de negociación y techo de mercado. Solo staff (el vendedor la consulta; edita management). Standalone como Mis Comisiones: EQUIPO se oculta para seller. -->
+          <button type="button" class="side3-link side3-link-standalone" data-sec="admin" data-nav="lista-precios" title="Lista de precios" data-i18n-title="side3-lista-precios"><span class="side3-ic">💲</span><span class="side3-tx" data-i18n="side3-lista-precios">Lista de precios</span></button>
 
 
           <!-- Grupo EQUIPO -->
@@ -2108,8 +2111,8 @@
           </div>
 
           <!-- Grupo PEDIDOS (Shopping Miami DJ Beat) — espacio propio, no anidado en Operaciones -->
-          <button type="button" class="side3-group" data-group="pedidos" aria-label="Pedidos">
-            <span class="side3-ic">🛍️</span><span class="side3-tx">Pedidos</span><span class="side3-car">▾</span>
+          <button type="button" class="side3-group" data-group="pedidos" aria-label="Pedidos" data-i18n-aria="side3-pedidos">
+            <span class="side3-ic">🛍️</span><span class="side3-tx" data-i18n="side3-pedidos">Pedidos</span><span class="side3-car">▾</span>
           </button>
           <div class="side3-items" data-items="pedidos">
             <button type="button" class="side3-link" data-merch-filter="paid_pending_fulfillment" title="Pendientes"><span class="side3-ic">🟡</span><span class="side3-tx">Pendientes</span></button>
@@ -4834,7 +4837,7 @@
         showPanel('admin');
         enterFullPage();
         if(loading){ loading.classList.remove('hidden'); if(loadTx) loadTx.textContent = 'Cargando Network…'; }
-        var ADMIN_V = '20261008-campanas-copiar';
+        var ADMIN_V = '20261009-lista-precios';
         iframe.onload = function(){ iframe.__loaded = true; if(loading) loading.classList.add('hidden'); };
         iframe.setAttribute('src', './staff-admin.html?v=' + ADMIN_V + '&msmPick=1#crm');
         setTimeout(function(){ if(loading) loading.classList.add('hidden'); }, 9000);
@@ -4872,7 +4875,7 @@
           // los iframes de este archivo (ver staff-merch-orders.html/contracts-engine.html
           // más arriba) -- el PO estuvo probando una copia vieja cacheada del panel de
           // Network sin darse cuenta. Bump este sufijo cada vez que se edite el archivo.
-          var ADMIN_V = '20261008-campanas-copiar';
+          var ADMIN_V = '20261009-lista-precios';
           var url='./staff-admin.html?v='+ADMIN_V;
           if(opt.go) url='./staff-admin.html?v='+ADMIN_V+'&go='+opt.go+(opt.hash?('#'+opt.hash):'');
           else if(opt.hash) url='./staff-admin.html?v='+ADMIN_V+'#'+opt.hash;
@@ -5166,7 +5169,7 @@
        header-smart-search.js se deja: sigue enganchado al #header-smart-search
        de .staff-flota (oculto, no removido). -->
   <script src="./header-smart-search.js?v=20261008-mi-perfil-es-perfil"></script>
-  <script src="./translations.js?v=20261005-vendor-boveda"></script>
+  <script src="./translations.js?v=20261009-wendy-staff-admin"></script>
   <script src="./i18n.js?v=20260427-lang-default"></script>
 </body>
 </html>
