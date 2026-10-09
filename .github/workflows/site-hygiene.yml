@@ -2,6 +2,7 @@
 # - check-hygiene.mjs: una página con redirección 301 en vercel.json no puede seguir existiendo ni estar enlazada / en el sitemap;
 #   toda página debe alcanzarse desde el menú, el sitemap o los portales (o declararse en la lista ALLOW con su razón).
 # - check-i18n.mjs: claves de traducción faltantes/duplicadas, idioma mal declarado, script de arranque de idioma ausente.
+# - verificar-contenedores.mjs: cruces entre contenedores (artista/staff/cliente), destinos de MI PERFIL por rol y sello de versión (C1-C13).
 name: Site hygiene
 
 on:
@@ -25,3 +26,8 @@ jobs:
 
       - name: Bilingüismo estructural
         run: node web/scripts/check-i18n.mjs
+
+      # Cableado de contenedores y del menú (PO 2026-10-08, tras la regresión «MI PERFIL abre Agenda» que pasó con todo en verde porque este verificador solo se corría a mano).
+      # C9 (qué lista de categorías manda) espera decisión del PO: se ignora solo por nombre y se lista aparte; quitar IGNORAR_GRAVES al decidirlo.
+      - name: Cableado de contenedores y menú
+        run: IGNORAR_GRAVES=C9 node scripts/verificar-contenedores.mjs
