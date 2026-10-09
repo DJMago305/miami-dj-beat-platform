@@ -1,9 +1,15 @@
 /**
- * Cinta de reels de venues (#experience, events.html): 3 tarjetas 9:16 visibles a todo el ancho (2 en tablet, 1 en teléfono).
+ * Cinta de reels de venues/testimonios (#experience, events.html): 3 tarjetas 9:16 visibles a todo el ancho (2 en tablet, 1 en teléfono).
  * Diseño tomado de bailaconmicho.com (PO 2026-10-09): la cinta se desliza 1 s (ease-in-out) y entran los videos siguientes.
- * - Para añadir un venue: otro <div class="mdj-venues-slide"> en events.html (mismo molde) + el .mp4 en reels/ + las claves en translations.js.
- *   Con 3 slides la cinta queda fija y sin flechas; con 4 o más se activan el avance automático y las flechas.
- * - Solo se cargan los videos visibles y el siguiente (y el siguiente solo con conexión rápida); los que salen de pantalla se pausan.
+ *
+ * LISTA DE VIDEOS = reels-manifest.json (carpeta reels/ del Storage `assets`; copia base en el repo). Cada testimonio nuevo es UNA entrada
+ * {file, title:{es,en}, subtitle:{es,en}, active?}; el orden del archivo es el orden de la cinta. Sin tocar la página ni hacer PR.
+ * Orden de lectura: lista del Storage → copia del repo → las tarjetas escritas a mano en events.html (respaldo si todo falla).
+ * Para preparar un video crudo y generar su entrada: node web/scripts/preparar-reel.mjs (ver LEEME.txt de la carpeta).
+ *
+ * - Con 3 o menos videos la cinta queda fija y sin flechas; con 4 o más se activan las flechas y el avance automático.
+ * - Solo se cargan los videos visibles y el siguiente (y el siguiente solo con conexión rápida); los que salen de pantalla se pausan, así que
+ *   la lista puede crecer sin que la página pese más.
  * - Sin `gap`/`aspect-ratio`/`inset` en el CSS asociado y sin sintaxis nueva aquí (respaldo Safari 13).
  * Esta página es la única que tiene #mdjVenuesVideoStage; las demás cargan el script y salen sin hacer nada.
  */
@@ -27,6 +33,11 @@
 
   /** Si el .mp4 en Storage tiene otro casing/nombre, probar aquí antes del fallback. */
   var REEL_FILENAME_ALIASES = {};
+
+  var REEL_DIR = './assets/eventos-venues-patrocinadores/reels/';
+  var MANIFEST_PATH = REEL_DIR + 'reels-manifest.json';
+  var FILE_OK = /^[A-Za-z0-9][A-Za-z0-9._-]*\.mp4$/;   // solo nombres simples: nada de rutas ni caracteres raros
+  var manifestEntries = null;                          // null = se usan las tarjetas escritas en events.html
 
   /**
    * URL absoluta del bucket `assets` en producción (los .mp4 locales no viajan a Vercel).
@@ -187,8 +198,150 @@
     schedule();
   });
 
+  function currentLang() {
+    var l = (window.i18n && window.i18n.currentLang) || document.documentElement.lang || 'en';
+    return String(l).slice(0, 2) === 'es' ? 'es' : 'en';
+  }
+
+  function pickText(o) {
+    if (!o) return '';
+    if (typeof o === 'string') return o;
+    return o[currentLang()] || o.es || o.en || '';
+  }
+
+  function cleanEntries(list) {
+    var out = [];
+    (Array.isArray(list) ? list : []).forEach(function (e) {
+      if (!e || e.active === false || typeof e.file !== 'string' || !FILE_OK.test(e.file)) return;
+      out.push({ file: e.file, title: e.title, subtitle: e.subtitle });
+    });
+    return out;
+  }
+
+  /** Pone título y subtítulo (en el idioma activo) a las tarjetas que salen de la lista. */
+  function applyTexts() {
+    if (!manifestEntries) return;
+    slides.forEach(function (slide, i) {
+      var e = manifestEntries[i];
+      if (!e) return;
+      var t = slide.querySelector('.mdj-venues-video-venue');
+      var st = slide.querySelector('.mdj-venues-video-type');
+      if (t) t.textContent = pickText(e.title);
+      if (st) st.textContent = pickText(e.subtitle);
+    });
+  }
+
+  function makeSlide(e, i, entries) {
+    var other = entries[(i + 1) % entries.length];
+    var slide = document.createElement('div');
+    slide.className = 'mdj-venues-slide';
+    var card = document.createElement('div');
+    card.className = 'mdj-venues-video-card mdj-venues-reel';
+    card.setAttribute('data-venue', String(i));
+    var frame = document.createElement('div');
+    frame.className = 'mdj-venues-video-frame';
+    var vid = document.createElement('video');
+    vid.setAttribute('data-mdj-reel', e.file);
+    if (other && other.file !== e.file) vid.setAttribute('data-mdj-reel-fallback', REEL_DIR + other.file);
+    vid.muted = true;
+    vid.defaultMuted = true;
+    vid.loop = true;
+    vid.preload = 'none';
+    vid.setAttribute('muted', '');
+    vid.setAttribute('playsinline', '');
+    var meta = document.createElement('div');
+    meta.className = 'mdj-venues-video-meta';
+    var t = document.createElement('div');
+    t.className = 'mdj-venues-video-venue';
+    var st = document.createElement('div');
+    st.className = 'mdj-venues-video-type';
+    meta.appendChild(t);
+    meta.appendChild(st);
+    frame.appendChild(vid);
+    frame.appendChild(meta);
+    card.appendChild(frame);
+    slide.appendChild(card);
+    return slide;
+  }
+
+  /** Apaga el video de una tarjeta que ya no se usa. Sin esto, el error que dispara al vaciarle el src haría que se recargara solo. */
+  function retire(slide) {
+    var v = slide.querySelector('video');
+    if (!v) return;
+    v.onerror = null;
+    try { v.pause(); } catch (e) { void e; }
+    v.removeAttribute('src');
+    try { v.load(); } catch (e2) { void e2; }
+  }
+
+  /**
+   * Pone en la cinta las tarjetas de la lista. Las que ya existen (mismo archivo) se REUTILIZAN con su video ya cargado o reproduciéndose;
+   * solo se crean las nuevas y solo se apagan las que sobran. Así agregar un testimonio no recarga ni deja en negro a los demás.
+   */
+  function useManifest(entries) {
+    manifestEntries = entries;
+    var pool = {};
+    slides.forEach(function (slide) {
+      var v = slide.querySelector('video');
+      var f = v && v.getAttribute('data-mdj-reel');
+      if (!f) return;
+      (pool[f] = pool[f] || []).push(slide);
+    });
+    var next = entries.map(function (e, i) {
+      var reuse = pool[e.file] && pool[e.file].shift();
+      return reuse || makeSlide(e, i, entries);
+    });
+    var same = next.length === slides.length && next.every(function (s2, i) { return s2 === slides[i]; });
+    if (!same) {
+      Object.keys(pool).forEach(function (f) { pool[f].forEach(retire); });
+      while (track.firstChild) track.removeChild(track.firstChild);
+      next.forEach(function (slide, i) {
+        slide.querySelector('.mdj-venues-video-card').setAttribute('data-venue', String(i));
+        track.appendChild(slide);
+      });
+      slides = next;
+      if (index > maxIndex()) index = maxIndex();
+    }
+    applyTexts();
+    render();
+    schedule();
+  }
+
+  function fetchManifest(urls, done) {
+    var i = 0;
+    (function next() {
+      if (i >= urls.length) { done(null); return; }
+      var url = urls[i++];
+      var failed = function () { next(); };
+      try {
+        fetch(url, { cache: 'no-cache' })
+          .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+          .then(function (j) {
+            var list = cleanEntries(j && j.reels);
+            if (list.length) done(list); else failed();
+          })
+          .catch(function (err) {
+            if (window.console && console.warn) console.warn('[venues-showcase] lista de reels no válida en ' + url + ':', err && err.message);
+            failed();
+          });
+      } catch (e) {
+        failed();
+      }
+    })();
+  }
+
+  function loadManifest() {
+    if (typeof fetch !== 'function') return;
+    var urls = [String(absoluteReelUrl(MANIFEST_PATH)), MANIFEST_PATH];
+    if (urls[0] === urls[1]) urls.pop();
+    fetchManifest(urls, function (list) { if (list) useManifest(list); });
+  }
+
+  document.addEventListener('languageChanged', applyTexts);
+
   visible = visibleCount();
   render();
+  loadManifest();
 
   if ('IntersectionObserver' in window) {
     var io = new IntersectionObserver(function (ents) {
