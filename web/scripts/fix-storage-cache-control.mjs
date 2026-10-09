@@ -87,7 +87,7 @@ const PATHS = [
   "mdj-payasos/circo.mp4", "mdj-payasos/pallasos-gif.mp4", "mdj-payasos/Santaclous_Para_christmas.mp4", "mdj-payasos/show-de-pallasos.mp4",
   "mdj-staff-videos/Bartender.mp4", "mdj-staff-videos/Cheff.mp4", "mdj-staff-videos/Meseros.mp4",
   "private-family-dj/videos/family-events-hero.mp4", "private-family-dj/videos/private-parties-hero.mp4",
-  "quinceanera/videos/quince-vals-clip-respaldo-vertical-blurpad.mp4", "quinceanera/videos/quince-vals-clip.mp4", "quinceanera/videos/quinceanera-hero.mp4",
+  "quinceanera/videos/quinceanera-hero.mp4",
   "seasonal-parties/halloween/halloween-hero.mp4", "seasonal-parties/halloween/halloween-party-full.mp4", "seasonal-parties/seasonal-specials-rooftop.mp4",
   "Special_Effects/Bubble_Haze.mp4", "Special_Effects/CO2.mp4", "Special_Effects/Dancin_Cloud.mp4", "Special_Effects/Smoke_Machine.mp4", "Special_Effects/SNOW_MACHINE.mp4", "Special_Effects/SPARKULAR.mp4", "Special_Effects/Stadium_Confetti_Blowers.mp4",
   "lighting/Moving_Head_Lights.mp4", "lighting/Iluminacion.mp4",
