@@ -4583,6 +4583,22 @@ html body #mainHeader#mainHeader.header.mdj-header-unified
   transform: none !important;
 }
 
+/* SIN BRINCO AL CARGAR (2026-10-08, pedido del PO: «la pestaña de MI PERFIL no se sostiene, se brinca»). El botón sol/luna lo monta mdjb-shared-header.js unos
+   ~130 ms DESPUÉS del primer pintado y, como es un miembro más del riel (ancho 30 + margen 8 + el hueco entre pestañas) y el riel está centrado
+   («safe center»), al aparecer corría TODAS las pestañas ~24 px a la izquierda (medido en vivo en index.html: MI PERFIL 1153 → 1129).
+   Ahora el riel reserva ese mismo hueco con un marcador invisible desde el primer pintado; en cuanto el botón existe, el JS pone `mdj-dn-ready` en el riel,
+   el marcador desaparece y el botón ocupa EXACTAMENTE su lugar: las pestañas no se mueven. */
+html body #mainHeader#mainHeader.header.mdj-header-unified
+  #mainNav#mainNav.mdj-mainnav-flex.nav.top-nav:not(.mdj-dn-ready)::after {
+  content: '';
+  order: 999;
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  margin-left: 8px;
+  visibility: hidden;
+}
+
 /* Cada puesto ocupa lo que mide su propio texto -- nunca se estira ni se
    encoge para llenar espacio sobrante, y nunca se parte en dos lineas. */
 html body #mainHeader#mainHeader.header.mdj-header-unified

@@ -76,7 +76,11 @@ for (const [arch, re, msg] of exigeGuarda) {
 // C5 (GRAVE): el portal del cliente expulsa también al ARTISTA.
 {
   const cp = leer('web/client-portal.js') || '';
-  if (!/_cpRole === 'artist'/.test(cp)) fallos.push("C5 client-portal.js: falta expulsar al rol artista/dj/talent del portal del cliente");
+  // Desde la tabla canónica de edificios (mdj-identity.js, 2026-10-06) el artista se expulsa por el resolvedor único: mdjPortalBuildingExit() manda
+  // kind 'artist' (artist/dj/talent) a su estación, y la guarda de 3 edificios la llama al cargar el portal. Antes el marcador era `_cpRole === 'artist'`.
+  const expulsaPorResolvedor = /function mdjPortalBuildingExit[\s\S]{0,900}acc\.kind === 'artist'\)\s*return '\.\/dj-dashboard\.html/.test(cp)
+    && /mdjPortalBuildingExit\(await mdjPortalAccessKind\(/.test(cp);
+  if (!/_cpRole === 'artist'/.test(cp) && !expulsaPorResolvedor) fallos.push("C5 client-portal.js: falta expulsar al rol artista/dj/talent del portal del cliente");
 }
 
 
@@ -92,7 +96,9 @@ for (const [arch, re, msg] of exigeGuarda) {
   const archivos = [...readdirSync('web').filter((f) => /\.(js|html)$/.test(f)).map((f) => 'web/' + f),
                     ...readdirSync('supabase/functions').map((d) => `supabase/functions/${d}/index.ts`)];
   for (const arch of archivos) {
-    const txt = leer(arch); if (txt === null) continue;
+    const crudo = leer(arch); if (crudo === null) continue;
+    // Los comentarios de BLOQUE (/* … */ y <!-- … -->) que ocupan varias líneas no se miran: el texto de un comentario no decide ningún permiso. Se conserva el número de líneas.
+    const txt = crudo.replace(/\/\*[\s\S]*?\*\/|<!--[\s\S]*?-->/g, (m) => m.replace(/[^\n]/g, ' '));
     txt.split('\n').forEach((linea, i) => {
       const l = quitarComentarios(linea);
       if (!LECTURA.test(l) && !/user_metadata\?\.user_type/.test(l)) return;

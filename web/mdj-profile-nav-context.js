@@ -86,7 +86,7 @@
         var hrefProfile = isStaffCtx
             ? (_bh ? _bh('staff') : './staff.html#miperfil')
             : (uid
-                ? (_bh ? withProfileNav(_bh('artist')) : './dj-profile.html?id=' + encodeURIComponent(uid) + '&' + PARAM + '=' + VALUE)
+                ? ('./dj-profile.html?id=' + encodeURIComponent(uid) + '&' + PARAM + '=' + VALUE)     /* 2026-10-08: MI PERFIL del artista = su PERFIL; la estación (Agenda) ya tiene su propia pestaña */
                 : './dj-profile.html?' + PARAM + '=' + VALUE);
         var hrefAgenda = isStaffCtx ? './staff.html#agenda' : withProfileNav('./dj-dashboard.html');
         var hrefFlow = isStaffCtx ? './staff.html#cashflow' : withProfileNav('./dj-dashboard.html?tab=flow');
