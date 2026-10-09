@@ -674,13 +674,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 const leadName = blueprintData['client_name'] || blueprintData['couple_names'] || `Referencia DJ ${Math.floor(Math.random() * 1000)}`;
                 const leadDate = blueprintData['event_date'] || new Date().toISOString(); // Fallback to now if not provided
                 
+                // leads NO tiene columnas lat/lon (verificado en producción 2026-10-09): mandarlas hacía fallar
+                // el UPDATE entero y el blueprint no se guardaba. coords queda calculado para cuando existan.
                 const { error: updateError } = await window.getSupabaseClient()
                     .from('leads')
                     .update({
                         notes: JSON.stringify(blueprintData),
                         status: 'PLANNING_COMPLETE',
-                        lat: coords.lat,
-                        lon: coords.lon,
                         name: leadName,
                         location: inputCity,
                         event_date: leadDate

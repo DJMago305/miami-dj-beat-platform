@@ -206,10 +206,14 @@ serve(async (req) => {
     }
 
     /** RPC accept_* / deny_* ya actualizó fila: seguimos para SMS sin segundo UPDATE (Cash Flow ya coherente). */
-    if (row.status !== "pending") {
+    /* 2026-10-09: ciclo de estados vigente (migración 20260430370000): pendiente = paid_pending_acceptance | manual_pending_verification (y "pending" de filas muy viejas);
+       resuelto = accepted | rejected ("denied" era el nombre anterior de rejected). Antes solo se reconocía "pending"/"denied", así que al RECHAZAR la fila ya venía
+       "rejected", la función respondía already_resolved y NO mandaba el SMS ni cancelaba la autorización de la tarjeta. */
+    const PENDIENTES = ["pending", "paid_pending_acceptance", "manual_pending_verification"];
+    if (!PENDIENTES.includes(String(row.status))) {
       if (kind === "accept" && row.status === "accepted") {
         skipStatusUpdate = true;
-      } else if (kind === "deny" && row.status === "denied") {
+      } else if (kind === "deny" && (row.status === "rejected" || row.status === "denied")) {
         skipStatusUpdate = true;
       } else {
         return new Response(JSON.stringify({ ok: true, skipped: true, reason: "already_resolved" }), {
@@ -263,7 +267,7 @@ serve(async (req) => {
     }
   }
 
-  const newStatus = kind === "accept" ? "accepted" : "denied";
+  const newStatus = kind === "accept" ? "accepted" : "rejected";   // "denied" ya no es un estado válido (restricción soundfortips_fan_requests_status_check)
 
   const SITE_URL = (Deno.env.get("SITE_URL") || "https://miamidjbeat.com").replace(/\/$/, "");
   // FIX-SFT-LIVE-SESSION-GATING (2026-09-16, orden del PO): este link invita al

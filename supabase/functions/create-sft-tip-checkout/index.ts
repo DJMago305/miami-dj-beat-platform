@@ -174,7 +174,8 @@ serve(async (req) => {
       poster_url: body.poster_url != null ? String(body.poster_url).slice(0, 4000) : null,
       client_phone: phoneInsert,
       client_email: emailInsert,
-      status: "awaiting_payment",
+      /* 2026-10-09: "awaiting_payment" ya no existe (migración 20260430370000 lo convirtió en pending_payment y la restricción soundfortips_fan_requests_status_check no lo admite): con él la base rechazaba el insert y el pago con tarjeta nunca arrancaba. */
+      status: "pending_payment",
       payment_channel: "stripe",
     })
     .select("id")

@@ -223,7 +223,7 @@
                 .from('certificates')
                 .select('*')
                 .eq('graduated', true)
-                .order('student_name', { ascending: true });
+                .order('dj_name', { ascending: true });
 
             if (certs && certs.length > 0) {
                 list.innerHTML = certs.map(c => `
