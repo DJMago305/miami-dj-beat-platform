@@ -1503,8 +1503,9 @@ window.MDJ_Assistant = {
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;');
         // Links markdown [texto](url) → <a>
-        s = s.replace(/\[([^\]]+)\]\((\/[^\)]*|https?:\/\/[^\)]*)\)/g, function (_, label, url) {
-            var isInternal = url.startsWith('/');
+        s = s.replace(/\[([^\]]+)\]\((\/[^\)]*|https?:\/\/[^\)]*|mailto:[^\)]*|tel:[^\)]*)\)/g, function (_, label, url) {
+            url = url.replace(/"/g, '%22');
+            var isInternal = url.startsWith('/') || url.startsWith('tel:') || url.startsWith('mailto:');
             var target = isInternal ? '_self' : '_blank';
             var rel = isInternal ? '' : ' rel="noopener noreferrer"';
             return '<a href="' + url + '" target="' + target + '"' + rel + ' style="color:#c9a84c;text-decoration:underline;">' + label + '</a>';
@@ -1596,6 +1597,36 @@ window.MDJ_Assistant = {
         }
     },
 
+    /* 2026-10-09 (PO): cuando alguien pide un vendedor / no sabe con quién hablar, Margi sugiere a la(s) especialista(s) de ventas
+       con teléfono y correo. UNA sola fuente de verdad: tabla public.sales_specialists (lectura pública, solo filas activas).
+       Si la tabla no responde, devuelve null y el flujo normal (LLM / guion) sigue como antes. */
+    _salesAskRe: /vendedor(a|es|as)?\b|asesor(a|es)?\b|representante de ventas|agente de ventas|especialista en ventas|persona de ventas|equipo de ventas|hablar con (alguien|una persona|un humano|una persona real|un agente)|con qui[eé]n (puedo )?(hablar|comprar|contratar)|sales ?(rep|representative|person|agent|specialist|team)|salesperson|(talk|speak) (to|with) (a |an )?(someone|person|human|real person|agent|seller|salesperson)|who (can|do) i (talk|speak) (to|with)|a seller\b/i,
+    salesSpecialistReply: async function (userInput, isSpanish) {
+        try {
+            if (!this._salesAskRe.test(userInput || '')) return null;
+            var sb = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : null;
+            if (!sb) return null;
+            var res = await sb.from('sales_specialists').select('nombre,titulo_es,titulo_en,telefono,email,idiomas,orden').eq('activo', true).order('orden', { ascending: true }).limit(3);
+            var rows = (res && res.data) || [];
+            if (!rows.length) return null;
+            var lines = rows.map(function (r) {
+                var digits = String(r.telefono || '').replace(/\D/g, '');
+                var tel = digits.length === 10 ? '+1' + digits : (digits ? '+' + digits : '');
+                var title = isSpanish ? r.titulo_es : r.titulo_en;
+                return '**' + r.nombre + '** — ' + title +
+                    (r.telefono ? '\n📞 ' + (tel ? '[' + r.telefono + '](tel:' + tel + ')' : r.telefono) : '') +
+                    (r.email ? '\n✉️ [' + r.email + '](mailto:' + r.email + ')' : '');
+            });
+            var head = isSpanish
+                ? 'Claro, te conecto con una persona real de nuestro equipo de ventas:'
+                : 'Of course — here is a real person on our sales team:';
+            var tail = isSpanish
+                ? 'Puedes llamar o escribir directamente. Si prefieres, te ayudo aquí mismo con una cotización.'
+                : 'You can call or write directly. If you prefer, I can also help you right here with a quote.';
+            return head + '\n\n' + lines.join('\n\n') + '\n\n' + tail;
+        } catch (_e) { return null; }
+    },
+
     processAIResponse: async function (userInput) {
         const input = userInput.toLowerCase();
 
@@ -1618,6 +1649,12 @@ window.MDJ_Assistant = {
         var navGuard = this.boothRoleNavGuardReply(userInput, isSpanish);
         if (navGuard) {
             this.addMessage("assistant", navGuard);
+            return;
+        }
+
+        var salesReply = await this.salesSpecialistReply(userInput, isSpanish);
+        if (salesReply) {
+            this.addMessage("assistant", salesReply);
             return;
         }
 

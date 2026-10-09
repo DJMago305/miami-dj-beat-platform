@@ -27,8 +27,19 @@
   <link rel="stylesheet" href="./header-unified.css?v=20261008-sin-brinco" />
     <link rel="stylesheet" href="./mdj-assistant.css?v=20260306-1" />
     <!-- Idioma: mismos scripts que el resto del sitio (sin esto, ES/EN no reciben listeners). -->
-    <script src="./translations.js?v=20261003-mi-perfil-unico"></script>
+    <script src="./translations.js?v=20261009-wendy-staff-admin"></script>
     <script src="./i18n.js?v=20260420-index-experience-rutas"></script>
+    <script>
+    /* 2026-10-09 (PO: traducción de Wendy): texto que se arma en JavaScript. Con el idioma EN activo devuelve el inglés de translations.js;
+       en ES devuelve el español original que se le pasa. Si falta la clave, nunca queda vacío. */
+    function saT(key, es) {
+        try {
+            var lang = (window.i18n && window.i18n.currentLang) || 'en';
+            if (lang !== 'es' && typeof translations !== 'undefined' && translations.en && translations.en[key]) return translations.en[key];
+        } catch (e) { /* noop */ }
+        return es;
+    }
+    </script>
     <style>
         :root {
             --admin-accent: #00ff88;
@@ -184,6 +195,34 @@
             border: 1px solid var(--line);
             margin-bottom: 16px;
         }
+
+        /* ── Lista de precios (#lista-precios), 2026-10-09 ── solo staff; buscador pegajoso arriba */
+        #lista-precios .pg-bar { position: sticky; top: 0; z-index: 5; background: var(--panel); padding: 10px 0 12px; display: flex; flex-direction: column; gap: 10px; }
+        #lista-precios .pg-search { width: 100%; box-sizing: border-box; padding: 11px 14px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255,255,255,0.04); color: inherit; font-size: 14px; }
+        #lista-precios .pg-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+        #lista-precios .pg-chip { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+        #lista-precios .pg-chip.active { background: var(--gold); border-color: var(--gold); color: #111; }
+        #lista-precios .pg-wrap { overflow-x: auto; }
+        #lista-precios table.pg-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 860px; }
+        #lista-precios .pg-table th { text-align: left; padding: 8px 10px; color: var(--gold); font-size: 11px; letter-spacing: .05em; text-transform: uppercase; white-space: nowrap; border-bottom: 1px solid var(--line); }
+        #lista-precios .pg-table td { padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+        #lista-precios .pg-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        #lista-precios .pg-name { font-weight: 700; }
+        #lista-precios .pg-sku { font-size: 11px; opacity: .55; }
+        #lista-precios .pg-small { font-size: 11px; opacity: .65; }
+        #lista-precios .pg-range { position: relative; width: 130px; height: 8px; border-radius: 4px; background: rgba(255,255,255,0.10); }
+        #lista-precios .pg-dot { position: absolute; top: -3px; width: 4px; height: 14px; border-radius: 2px; transform: translateX(-2px); }
+        #lista-precios .pg-dot.floor { background: #e07070; } #lista-precios .pg-dot.price { background: var(--gold); width: 6px; transform: translateX(-3px); } #lista-precios .pg-dot.ceiling { background: #4caf89; } #lista-precios .pg-dot.sold { background: #5aa9ff; width: 3px; }
+        #lista-precios .pg-chip-st { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 800; white-space: nowrap; }
+        #lista-precios .pg-chip-st.ok { background: rgba(76,175,137,0.18); color: #4caf89; } #lista-precios .pg-chip-st.warn { background: rgba(224,112,112,0.18); color: #e07070; }
+        #lista-precios .pg-chip-st.hi { background: rgba(247,201,72,0.18); color: #d9a400; } #lista-precios .pg-chip-st.none { background: rgba(160,160,160,0.18); color: #999; }
+        #lista-precios .pg-edit-row td { background: rgba(255,255,255,0.03); }
+        #lista-precios .pg-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; align-items: end; }
+        #lista-precios .pg-form label { display: flex; flex-direction: column; gap: 4px; font-size: 11px; }
+        #lista-precios .pg-form input { padding: 8px 10px; border-radius: 6px; border: 1px solid var(--line); background: rgba(255,255,255,0.05); color: inherit; }
+        body[data-mode="light"] #lista-precios .pg-search, body[data-mode="light"] #lista-precios .pg-form input { background: #fff; color: #1b1f27; }
+        body[data-mode="light"] #lista-precios .pg-range { background: rgba(14,18,28,0.12); }
+        body[data-mode="light"] #lista-precios .pg-chip.active { color: #fff; }
 
         /* ── Network (#crm) día/noche (2026-09-18) ──────────────────────────
            El shell de staff.html ya difunde data-mode="light"/"dark" a este
@@ -2370,6 +2409,10 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                   <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                   Mis Comisiones
                 </a>
+                <a href="#lista-precios" class="side-link" onclick="loadPriceGuide()" style="display:flex;align-items:center;gap:9px;">
+                  <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                  Lista de precios
+                </a>
                 <!-- Owner-only: Tarifas de Comisiones (igual que #content, el gestor de precios) -->
                 <a href="#commission-rules" id="sidebar-commission-rules" class="side-link" onclick="loadCommissionRules()"
                    style="display:none;align-items:center;gap:9px;color:#c5a059;border-left:2px solid rgba(197,160,89,0.35);">
@@ -2423,51 +2466,51 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
 
                 <!-- Leads Section -->
                 <div id="leads" style="display:none;">
-                    <h3 style="color:var(--gold);font-size:16px;font-weight:700;letter-spacing:.04em;margin:0 0 14px 0;text-transform:uppercase;">Solicitudes de Clientes</h3>
+                    <h3 style="color:var(--gold);font-size:16px;font-weight:700;letter-spacing:.04em;margin:0 0 14px 0;text-transform:uppercase;" data-i18n="sa-leads-title">Solicitudes de Clientes</h3>
                     <div id="leads-container">
-                        <div class="loading-spinner">Cargando leads...</div>
+                        <div class="loading-spinner" data-i18n="sa-leads-loading">Cargando leads...</div>
                     </div>
                 </div>
 
                 <!-- Owner Operations Feed — TICKET-V1-OWNER-OPS-FEED-MVP-001 -->
                 <div class="admin-card" id="actividad" style="display:none;">
                     <div class="owner-ops-feed-toolbar">
-                        <h3 style="color:var(--gold);">Actividad operativa</h3>
+                        <h3 style="color:var(--gold);" data-i18n="sa-ops-title">Actividad operativa</h3>
                         <div class="owner-ops-feed-toolbar-actions">
                             <span id="owner-ops-feed-meta" class="owner-ops-feed-meta"></span>
-                            <button type="button" class="btn secondary small" onclick="loadOwnerOpsFeed()"><svg width="13" height="13" fill="none" stroke="#3b82f6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="vertical-align:-2px; margin-right:4px;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Actualizar</button>
+                            <button type="button" class="btn secondary small" onclick="loadOwnerOpsFeed()"><svg width="13" height="13" fill="none" stroke="#3b82f6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="vertical-align:-2px; margin-right:4px;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg><span data-i18n="sa-refresh">Actualizar</span></button>
                         </div>
                     </div>
                     <div class="owner-ops-controls">
                     <div class="owner-ops-feed-filters" role="toolbar" aria-label="Filtrar actividad">
-                        <button type="button" class="owner-ops-feed-filter-btn active" data-ops-filter="all" onclick="setOwnerOpsFeedFilter('all', this)">Todos</button>
+                        <button type="button" class="owner-ops-feed-filter-btn active" data-ops-filter="all" onclick="setOwnerOpsFeedFilter('all', this)" data-i18n="sa-all">Todos</button>
                         <button type="button" class="owner-ops-feed-filter-btn" data-ops-filter="leads" onclick="setOwnerOpsFeedFilter('leads', this)">Leads</button>
-                        <button type="button" class="owner-ops-feed-filter-btn" data-ops-filter="registro" onclick="setOwnerOpsFeedFilter('registro', this)">Registros</button>
-                        <button type="button" class="owner-ops-feed-filter-btn" data-ops-filter="mensajes" onclick="setOwnerOpsFeedFilter('mensajes', this)">Mensajes / Tickets</button>
-                        <button type="button" class="owner-ops-feed-filter-btn" data-ops-filter="pagos" onclick="setOwnerOpsFeedFilter('pagos', this)">Pagos / MDJPRO</button>
+                        <button type="button" class="owner-ops-feed-filter-btn" data-ops-filter="registro" onclick="setOwnerOpsFeedFilter('registro', this)" data-i18n="sa-ops-f-reg">Registros</button>
+                        <button type="button" class="owner-ops-feed-filter-btn" data-ops-filter="mensajes" onclick="setOwnerOpsFeedFilter('mensajes', this)" data-i18n="sa-ops-f-msgs">Mensajes / Tickets</button>
+                        <button type="button" class="owner-ops-feed-filter-btn" data-ops-filter="pagos" onclick="setOwnerOpsFeedFilter('pagos', this)" data-i18n="sa-ops-f-pay">Pagos / MDJPRO</button>
                         <div class="owner-ops-search-wrap">
                             <svg class="owner-ops-search-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
                             <input type="search" id="owner-ops-grid-search" class="owner-ops-search-input" placeholder="Search" aria-label="Search" oninput="setOwnerOpsGridSearch(this.value)">
                         </div>
                     </div>
-                    <div class="owner-ops-secondary-filters" role="group" aria-label="Filtros secundarios">
-                        <select id="owner-ops-grid-date" aria-label="Filtrar por fecha" onchange="setOwnerOpsGridDate(this.value)">
-                            <option value="all">Todas las fechas</option>
-                            <option value="today">Hoy</option>
-                            <option value="7d">7 días</option>
-                            <option value="30d">30 días</option>
+                    <div class="owner-ops-secondary-filters" role="group" aria-label="Filtros secundarios" data-i18n-aria="sa-ops-aria-sec">
+                        <select id="owner-ops-grid-date" aria-label="Filtrar por fecha" onchange="setOwnerOpsGridDate(this.value)" data-i18n-aria="sa-ops-aria-date">
+                            <option value="all" data-i18n="sa-ops-d-all">Todas las fechas</option>
+                            <option value="today" data-i18n="sa-ops-d-today">Hoy</option>
+                            <option value="7d" data-i18n="sa-ops-d-7">7 días</option>
+                            <option value="30d" data-i18n="sa-ops-d-30">30 días</option>
                         </select>
-                        <select id="owner-ops-grid-status" aria-label="Filtrar por estado" onchange="setOwnerOpsGridStatus(this.value)">
-                            <option value="all">Estado</option>
-                            <option value="pendiente">Pendiente</option>
-                            <option value="leido">Leído</option>
-                            <option value="pagado">Pagado</option>
-                            <option value="parcial">Parcial</option>
+                        <select id="owner-ops-grid-status" aria-label="Filtrar por estado" onchange="setOwnerOpsGridStatus(this.value)" data-i18n-aria="sa-ops-aria-status">
+                            <option value="all" data-i18n="sa-th-status">Estado</option>
+                            <option value="pendiente" data-i18n="sa-st-pending">Pendiente</option>
+                            <option value="leido" data-i18n="sa-st-read">Leído</option>
+                            <option value="pagado" data-i18n="sa-pay-paid">Pagado</option>
+                            <option value="parcial" data-i18n="sa-pay-partial">Parcial</option>
                         </select>
-                        <select id="owner-ops-grid-type" aria-label="Filtrar por tipo" onchange="setOwnerOpsGridType(this.value)">
-                            <option value="all">Tipo</option>
-                            <option value="lead">Lead</option>
-                            <option value="registro">Registro</option>
+                        <select id="owner-ops-grid-type" aria-label="Filtrar por tipo" onchange="setOwnerOpsGridType(this.value)" data-i18n-aria="sa-ops-aria-type">
+                            <option value="all" data-i18n="sa-th-type">Tipo</option>
+                            <option value="lead" data-i18n="sa-type-lead">Lead</option>
+                            <option value="registro" data-i18n="sa-type-signup">Registro</option>
                             <option value="mensaje">Mensaje</option>
                             <option value="ticket">Ticket</option>
                             <option value="pago">Pago</option>
@@ -2484,22 +2527,22 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                 <div class="admin-card" id="eb-orders" style="display:none;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
                         <div>
-                            <h3 style="margin:0; color:var(--gold);">📋 Órdenes — Event Builder</h3>
-                            <p class="fineprint">Carritos guardados por clientes · Fuente: event_builder_orders</p>
+                            <h3 style="margin:0; color:var(--gold);" data-i18n="sa-eb-title">📋 Órdenes — Event Builder</h3>
+                            <p class="fineprint" data-i18n="sa-eb-sub">Carritos guardados por clientes · Fuente: event_builder_orders</p>
                         </div>
                         <div style="display:flex;gap:8px;flex-wrap:wrap;">
                             <select id="ebo-status-filter" style="background:#1a1a2e;color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:6px;padding:6px 10px;font-size:13px;" onchange="loadEbOrders()">
-                                <option value="">Todos los estados</option>
-                                <option value="pending">Pendiente</option>
-                                <option value="in_review">En revisión</option>
-                                <option value="confirmed">Confirmado</option>
-                                <option value="cancelled">Cancelado</option>
+                                <option value="" data-i18n="sa-eb-all-status">Todos los estados</option>
+                                <option value="pending" data-i18n="sa-st-pending">Pendiente</option>
+                                <option value="in_review" data-i18n="sa-st-in-review">En revisión</option>
+                                <option value="confirmed" data-i18n="sa-st-confirmed">Confirmado</option>
+                                <option value="cancelled" data-i18n="sa-st-cancelled">Cancelado</option>
                             </select>
-                            <button class="btn secondary small" onclick="loadEbOrders()"><svg width="13" height="13" fill="none" stroke="#3b82f6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="vertical-align:-2px; margin-right:4px;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Actualizar</button>
+                            <button class="btn secondary small" onclick="loadEbOrders()"><svg width="13" height="13" fill="none" stroke="#3b82f6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="vertical-align:-2px; margin-right:4px;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg><span data-i18n="sa-refresh">Actualizar</span></button>
                         </div>
                     </div>
                     <div id="eb-orders-container">
-                        <div class="loading-spinner">Cargando órdenes…</div>
+                        <div class="loading-spinner" data-i18n="sa-eb-loading">Cargando órdenes…</div>
                     </div>
                 </div>
 
@@ -2530,7 +2573,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                                 <h4 style="margin:0; color: var(--gold);">📡 Actividad Reciente de la Plataforma</h4>
                                 <p class="fineprint">Nuevos usuarios, suscripciones y eventos del sistema</p>
                             </div>
-                            <button class="btn secondary small" onclick="loadStaffActivity()"><svg width="13" height="13" fill="none" stroke="#3b82f6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="vertical-align:-2px; margin-right:4px;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Actualizar</button>
+                            <button class="btn secondary small" onclick="loadStaffActivity()"><svg width="13" height="13" fill="none" stroke="#3b82f6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="vertical-align:-2px; margin-right:4px;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg><span data-i18n="sa-refresh">Actualizar</span></button>
                         </div>
                         <div id="staff-activity-feed">
                             <div class="loading-spinner">Esperando datos de actividad...</div>
@@ -2683,7 +2726,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                                  editable, pendiente aparte) -- por ahora "Editar" y las opciones
                                  del "+" avisan honestamente que están pendientes de construir, en
                                  vez de simular un guardado que no existe. -->
-                            <button class="btn secondary small" onclick="window.networkEditStub && window.networkEditStub()" style="border-radius:999px; padding:7px 16px; font-size:13px; font-weight:700; color:#3b82f6; border:1px solid var(--net-line); background:var(--net-hover);">Editar</button>
+                            <button class="btn secondary small" onclick="window.networkEditStub && window.networkEditStub()" style="border-radius:999px; padding:7px 16px; font-size:13px; font-weight:700; color:#3b82f6; border:1px solid var(--net-line); background:var(--net-hover);" data-i18n="sa-edit">Editar</button>
                             <div style="position:relative;">
                                 <button id="network-add-btn" class="btn secondary small" onclick="window.toggleNetworkAddMenu(event)" title="Agregar" aria-label="Agregar" style="width:36px; height:36px; padding:0; line-height:1; font-size:20px; font-weight:800; color:#3b82f6; border:1px solid var(--net-glass-border); background:var(--net-glass-bg); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border-radius:50%; display:flex; align-items:center; justify-content:center;">+</button>
                                 <div id="network-add-menu" style="display:none; position:absolute; top:calc(100% + 6px); left:0; z-index:200; min-width:220px; background:var(--net-card-bg); border:1px solid var(--net-line); border-radius:10px; box-shadow:0 12px 32px rgba(0,0,0,0.4); padding:6px; font-size:13px;">
@@ -2786,7 +2829,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                 <div class="admin-card" id="analytics" style="display:none;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
                         <h3>📊 Analytics del Negocio</h3>
-                        <button class="btn secondary small" onclick="loadAnalytics()"><svg width="13" height="13" fill="none" stroke="#3b82f6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="vertical-align:-2px; margin-right:4px;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Actualizar</button>
+                        <button class="btn secondary small" onclick="loadAnalytics()"><svg width="13" height="13" fill="none" stroke="#3b82f6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="vertical-align:-2px; margin-right:4px;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg><span data-i18n="sa-refresh">Actualizar</span></button>
                     </div>
 
                     <!-- KPI Cards -->
@@ -2823,7 +2866,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                     <div class="tile" id="mdj-reviews-moderation-tile" style="display:none; margin-top:20px; border:1px solid var(--line);">
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:10px;">
                             <h4 style="margin:0;color:var(--gold);">⭐ Moderación de opiniones (gestión)</h4>
-                            <button type="button" class="btn secondary small" onclick="loadMdReviewsModeration()"><svg width="13" height="13" fill="none" stroke="#3b82f6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="vertical-align:-2px; margin-right:4px;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Actualizar</button>
+                            <button type="button" class="btn secondary small" onclick="loadMdReviewsModeration()"><svg width="13" height="13" fill="none" stroke="#3b82f6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="vertical-align:-2px; margin-right:4px;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg><span data-i18n="sa-refresh">Actualizar</span></button>
                         </div>
                         <p class="fineprint" style="margin:0 0 14px;line-height:1.5;opacity:0.88;">
                             Una opinión por cuenta de cliente. Solo gestión puede ocultar reseñas fraudulentas (contacta al autor primero). No se borran; quedan ocultas.
@@ -3036,18 +3079,31 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                 <!-- Visible a todo staff -- filtra por vendedor_id = usuario actual, no por rol -->
                 <div class="admin-card" id="mis-comisiones" style="display:none;">
                     <h3 style="margin-top:0;">💵 Mis Comisiones</h3>
-                    <p class="fineprint">Tu comisión como vendedor por ventas que cerraste. Cada quien ve solo lo suyo -- si nunca cerraste una venta a tu nombre, esto sale vacío.</p>
+                    <p class="fineprint" data-i18n="sa-mc-intro">Tu comisión como vendedor por ventas que cerraste. Cada quien ve solo lo suyo -- si nunca cerraste una venta a tu nombre, esto sale vacío.</p>
                     <div style="display:flex;gap:20px;flex-wrap:wrap;margin:14px 0 20px;">
                         <div class="mdj-venue-card" style="flex:1;min-width:180px;padding:16px 18px;">
-                            <div class="fineprint" style="margin:0 0 4px;">Total ganado</div>
+                            <div class="fineprint" style="margin:0 0 4px;" data-i18n="sa-mc-total">Total ganado</div>
                             <div id="mis-comisiones-total" style="font-size:22px;font-weight:800;color:#c5a059;">$0.00</div>
                         </div>
                         <div class="mdj-venue-card" style="flex:1;min-width:180px;padding:16px 18px;">
-                            <div class="fineprint" style="margin:0 0 4px;">Ventas contadas</div>
+                            <div class="fineprint" style="margin:0 0 4px;" data-i18n="sa-mc-count">Ventas contadas</div>
                             <div id="mis-comisiones-count" style="font-size:22px;font-weight:800;">0</div>
                         </div>
                     </div>
                     <div id="mis-comisiones-list">Cargando…</div>
+                </div>
+
+                <!-- Lista de precios (2026-10-09, orden del PO): solo staff (owner/admin/manager/seller). Lectura para todos; edita solo management. Datos por price_guide_list()/price_guide_save(). -->
+                <div class="admin-card" id="lista-precios" style="display:none;">
+                    <h3 style="margin-top:0;" data-i18n="pg-title">💲 Lista de precios</h3>
+                    <p class="fineprint" data-i18n="pg-sub">Solo staff. Precio al cliente, lo que cobra el proveedor, el piso para negociar y el techo del mercado. Úsala cuando hables con un cliente.</p>
+                    <div class="pg-bar">
+                        <input type="search" id="pg-search" class="pg-search" placeholder="Buscar producto o categoría…" data-i18n-hold="pg-search" aria-label="Buscar producto o categoría…" data-i18n-aria="pg-search" autocomplete="off">
+                        <div id="pg-chips" class="pg-chips"></div>
+                    </div>
+                    <div id="pg-msg" class="fineprint" style="min-height:18px;"></div>
+                    <div class="pg-wrap"><table class="pg-table"><thead id="pg-head"></thead><tbody id="pg-body"></tbody></table></div>
+                    <p class="fineprint" style="margin-top:12px;" data-i18n="pg-legend">Piso = costo ÷ (1 − margen mínimo). Techo = lo más alto que aguanta la competencia. «Vendido antes» = a cuánto se ha vendido antes este producto (marca azul). «—» = todavía sin dato.</p>
                 </div>
 
                 <!-- Contribuciones (solo Staff de gestión): aquí SE REGISTRAN las horas que aportan el owner y DJMago305 (contribuyentes sin salario por ahora). El Cash Flow solo las MIDE: ahí nadie escribe. -->
@@ -4072,13 +4128,13 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                         return 'leads-status--done';
                     }
                     function statusLabel(s) {
-                        const map = { NEW:'Pendiente', MATCHED:'Vinculado', CONFIRMED:'Confirmado', CANCELLED:'Cancelado', COMPLETED:'Completado', CONTACTED:'Contactado' };
+                        const map = { NEW:saT('sa-st-pending','Pendiente'), MATCHED:saT('sa-st-matched','Vinculado'), CONFIRMED:saT('sa-st-confirmed','Confirmado'), CANCELLED:saT('sa-st-cancelled','Cancelado'), COMPLETED:saT('sa-st-completed','Completado'), CONTACTED:saT('sa-st-contacted','Contactado') };
                         return map[(s||'').toUpperCase()] || (s || '—');
                     }
                     function tableHead() {
                         return `<thead><tr>
-                            <th></th><th># Orden</th><th>Cliente</th><th>Evento</th>
-                            <th>Contacto</th><th>Teléfono</th><th>Fecha</th><th>Estado</th><th>Detalles</th>
+                            <th></th><th>${saT('sa-th-order','# Orden')}</th><th>${saT('sa-th-client','Cliente')}</th><th>${saT('sa-th-event','Evento')}</th>
+                            <th>${saT('sa-th-contact','Contacto')}</th><th>${saT('sa-th-phone','Teléfono')}</th><th>${saT('sa-th-date','Fecha')}</th><th>${saT('sa-th-status','Estado')}</th><th>${saT('sa-th-details','Detalles')}</th>
                         </tr></thead>`;
                     }
                     function buildRows(list, rowClass) {
@@ -4092,19 +4148,19 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                                 <td style="color:rgba(255,255,255,0.6);">${fmtPhone(l.phone)}</td>
                                 <td style="font-variant-numeric:tabular-nums;">${l.event_date || '—'}</td>
                                 <td><span class="leads-status ${statusClass(l.status)}">${statusLabel(l.status)}</span></td>
-                                <td><a class="leads-link" href="./staff-order.html?lead=${l.id}" target="_blank">Ver orden</a></td>
+                                <td><a class="leads-link" href="./staff-order.html?lead=${l.id}" target="_blank">${saT('sa-view-order','Ver orden')}</a></td>
                             </tr>`).join('');
                     }
 
                     leadsContainer.innerHTML = `
-                    <p class="leads-table-label">🔴 Pendientes (${pending.length})</p>
+                    <p class="leads-table-label">🔴 ${saT('sa-pending','Pendientes')} (${pending.length})</p>
                     <div class="leads-table-wrap">
                         <table>${tableHead()}<tbody>${buildRows(pending, 'leads-pending-row')}</tbody></table>
                     </div>
 
-                    <p class="leads-table-label" style="margin-top:28px;">✅ Completadas (${completed.length})</p>
+                    <p class="leads-table-label" style="margin-top:28px;">✅ ${saT('sa-completed','Completadas')} (${completed.length})</p>
                     <div class="leads-table-wrap">
-                        <table>${tableHead()}<tbody>${completed.length ? buildRows(completed, 'leads-completed-row') : '<tr><td colspan="9" style="color:rgba(255,255,255,0.3);padding:14px 10px;font-size:13px;">Sin órdenes completadas aún.</td></tr>'}</tbody></table>
+                        <table>${tableHead()}<tbody>${completed.length ? buildRows(completed, 'leads-completed-row') : '<tr><td colspan="9" style="color:rgba(255,255,255,0.3);padding:14px 10px;font-size:13px;">' + saT('sa-no-completed','Sin órdenes completadas aún.') + '</td></tr>'}</tbody></table>
                     </div>
                     `;
                 } else {
@@ -4314,21 +4370,21 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                 // EVENT BUILDER ORDERS — loadEbOrders, updateEboStatus
                 // ─────────────────────────────────────────────────────────────
                 const EBO_STATUS_LABELS = {
-                    pending:    { label: 'Pendiente',    color: '#aaa' },
-                    in_review:  { label: 'En revisión',  color: '#f7c948' },
-                    confirmed:  { label: 'Confirmado',   color: '#4caf89' },
-                    cancelled:  { label: 'Cancelado',    color: '#e07070' }
+                    pending:    { label: saT('sa-st-pending','Pendiente'),    color: '#aaa' },
+                    in_review:  { label: saT('sa-st-in-review','En revisión'),  color: '#f7c948' },
+                    confirmed:  { label: saT('sa-st-confirmed','Confirmado'),   color: '#4caf89' },
+                    cancelled:  { label: saT('sa-st-cancelled','Cancelado'),    color: '#e07070' }
                 };
                 const EBO_PAYMENT_LABELS = {
-                    unpaid:        { label: 'Sin pago',        color: '#e07070' },
-                    deposit_paid:  { label: 'Depósito pagado', color: '#f7c948' },
-                    paid_full:     { label: 'Pagado',          color: '#4caf89' }
+                    unpaid:        { label: saT('sa-pay-unpaid','Sin pago'),        color: '#e07070' },
+                    deposit_paid:  { label: saT('sa-pay-deposit','Depósito pagado'), color: '#f7c948' },
+                    paid_full:     { label: saT('sa-pay-paid','Pagado'),          color: '#4caf89' }
                 };
 
                 window.loadEbOrders = async () => {
                     const container = document.getElementById('eb-orders-container');
                     if (!container) return;
-                    container.innerHTML = '<div class="loading-spinner">Cargando órdenes…</div>';
+                    container.innerHTML = '<div class="loading-spinner">' + saT('sa-eb-loading','Cargando órdenes…') + '</div>';
                     const db = window.getSupabaseClient ? window.getSupabaseClient() : null;
                     if (!db) { container.innerHTML = '<p class="fineprint">Supabase no disponible.</p>'; return; }
 
@@ -4347,7 +4403,7 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                         return;
                     }
                     if (!orders || orders.length === 0) {
-                        container.innerHTML = '<p class="fineprint" style="text-align:center;padding:40px;">No hay órdenes todavía.</p>';
+                        container.innerHTML = '<p class="fineprint" style="text-align:center;padding:40px;">' + saT('sa-eb-none','No hay órdenes todavía.') + '</p>';
                         return;
                     }
 
@@ -4366,16 +4422,16 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                     <table style="width:100%;border-collapse:collapse;font-size:13px;">
                       <thead>
                         <tr style="border-bottom:1px solid rgba(255,255,255,0.15);">
-                          <th style="text-align:left;padding:8px 10px;color:var(--gold);white-space:nowrap;">ORDEN #</th>
-                          <th style="text-align:left;padding:8px 10px;color:var(--gold);">Cliente</th>
-                          <th style="text-align:left;padding:8px 10px;color:var(--gold);">Evento</th>
-                          <th style="text-align:right;padding:8px 10px;color:var(--gold);">Total</th>
-                          <th style="text-align:right;padding:8px 10px;color:var(--gold);">Depósito</th>
-                          <th style="text-align:left;padding:8px 10px;color:var(--gold);">Estado</th>
-                          <th style="text-align:left;padding:8px 10px;color:var(--gold);">Pago</th>
-                          <th style="text-align:left;padding:8px 10px;color:var(--gold);">Líneas</th>
-                          <th style="text-align:left;padding:8px 10px;color:var(--gold);">Actualizado</th>
-                          <th style="text-align:left;padding:8px 10px;color:var(--gold);">Acción</th>
+                          <th style="text-align:left;padding:8px 10px;color:var(--gold);white-space:nowrap;">${saT('sa-eb-th-order','ORDEN #')}</th>
+                          <th style="text-align:left;padding:8px 10px;color:var(--gold);">${saT('sa-th-client','Cliente')}</th>
+                          <th style="text-align:left;padding:8px 10px;color:var(--gold);">${saT('sa-th-event','Evento')}</th>
+                          <th style="text-align:right;padding:8px 10px;color:var(--gold);">${saT('sa-th-total','Total')}</th>
+                          <th style="text-align:right;padding:8px 10px;color:var(--gold);">${saT('sa-th-deposit','Depósito')}</th>
+                          <th style="text-align:left;padding:8px 10px;color:var(--gold);">${saT('sa-th-status','Estado')}</th>
+                          <th style="text-align:left;padding:8px 10px;color:var(--gold);">${saT('sa-th-payment','Pago')}</th>
+                          <th style="text-align:left;padding:8px 10px;color:var(--gold);">${saT('sa-th-lines','Líneas')}</th>
+                          <th style="text-align:left;padding:8px 10px;color:var(--gold);">${saT('sa-th-updated','Actualizado')}</th>
+                          <th style="text-align:left;padding:8px 10px;color:var(--gold);">${saT('sa-th-action','Acción')}</th>
                         </tr>
                       </thead>
                       <tbody>`;
@@ -4411,14 +4467,14 @@ if (window.self === window.top) { window.location.replace('./staff.html'); }</sc
                           <td style="padding:8px 10px;white-space:nowrap;color:rgba(255,255,255,0.45);font-size:12px;">${fmtDate(ord.updated_at)}</td>
                           <td style="padding:8px 10px;white-space:nowrap;">
                             <button class="btn-pill" style="font-size:11px;border-color:var(--gold);color:var(--gold);"
-                              onclick="showEboDetail('${ord.id}')">Ver detalle</button>
+                              onclick="showEboDetail('${ord.id}')">${saT('sa-eb-view-detail','Ver detalle')}</button>
                             ${ord.lead_id ? `<a class="btn-pill" style="font-size:11px;margin-left:4px;border-color:#7eb8f7;color:#7eb8f7;text-decoration:none;" href="./client-portal.html?lead=${ord.lead_id}" target="_blank">Lead</a>` : ''}
                           </td>
                         </tr>`;
                     });
 
                     html += `</tbody></table></div>
-                    <p class="fineprint" style="margin-top:14px;">${orders.length} orden${orders.length !== 1 ? 'es' : ''} · Balance pendiente global: ${fmt(orders.reduce((s,o) => s + (o.total_usd != null && o.amount_paid_usd != null ? Number(o.total_usd) - Number(o.amount_paid_usd) : 0), 0))}</p>`;
+                    <p class="fineprint" style="margin-top:14px;">${orders.length} ${orders.length !== 1 ? saT('sa-eb-orders-n','órdenes') : saT('sa-eb-order-1','orden')} · ${saT('sa-eb-balance','Balance pendiente global')}: ${fmt(orders.reduce((s,o) => s + (o.total_usd != null && o.amount_paid_usd != null ? Number(o.total_usd) - Number(o.amount_paid_usd) : 0), 0))}</p>`;
 
                     container.innerHTML = html;
                     // Store orders locally for detail modal
@@ -5487,7 +5543,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     document.body.classList.toggle('adm-leads-view', target === 'leads');   /* modo día acotado a «Solicitudes» (ver CSS .adm-leads-view) */
                     document.body.classList.toggle('adm-actividad-view', target === 'actividad');   /* ídem «Actividad operativa» */
                     // Show target section, hide others — with anti-CLS fade
-                    const sections = ['leads', 'actividad', 'eb-orders', 'crm', 'djs', 'staff', 'registry-section', 'analytics', 'content', 'mdjpro-downloads-panel', 'site-media', 'apps', 'production', 'venues', 'wedding-plan', 'create-profiles', 'event-blueprint', 'fashion-show-panel', 'commission-rules', 'mis-comisiones', 'contribuciones'];
+                    const sections = ['leads', 'actividad', 'eb-orders', 'crm', 'djs', 'staff', 'registry-section', 'analytics', 'content', 'mdjpro-downloads-panel', 'site-media', 'apps', 'production', 'venues', 'wedding-plan', 'create-profiles', 'event-blueprint', 'fashion-show-panel', 'commission-rules', 'mis-comisiones', 'lista-precios', 'contribuciones'];
                     const eventPanels = ['event-blueprint', 'fashion-show-panel'];
                     sections.forEach(id => {
                         const el = document.getElementById(id);
@@ -6153,10 +6209,10 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
             function _ownerOpsKindLabel(kind) {
                 var map = {
                     lead: 'Lead',
-                    registro: 'Registro',
-                    mensaje: 'Mensaje',
+                    registro: saT('sa-type-signup','Registro'),
+                    mensaje: saT('sa-type-message','Mensaje'),
                     ticket: 'Ticket',
-                    pago: 'Pago',
+                    pago: saT('sa-type-payment','Pago'),
                     mdjpro: 'MDJPRO'
                 };
                 return map[kind] || kind || '—';
@@ -6172,12 +6228,12 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
 
             function _ownerOpsLeadStatusLabel(status) {
                 var map = {
-                    NEW: 'Pendiente',
-                    MATCHED: 'Vinculado',
-                    CONFIRMED: 'Confirmado',
-                    CANCELLED: 'Cancelado',
-                    COMPLETED: 'Completado',
-                    CONTACTED: 'Contactado'
+                    NEW: saT('sa-st-pending','Pendiente'),
+                    MATCHED: saT('sa-st-matched','Vinculado'),
+                    CONFIRMED: saT('sa-st-confirmed','Confirmado'),
+                    CANCELLED: saT('sa-st-cancelled','Cancelado'),
+                    COMPLETED: saT('sa-st-completed','Completado'),
+                    CONTACTED: saT('sa-st-contacted','Contactado')
                 };
                 return map[(status || '').toUpperCase()] || (status || '—');
             }
@@ -6374,10 +6430,10 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
 
                 if (metaEl) {
                     var metaParts = [];
-                    if (state.lastUpdated) metaParts.push('Última actualización: ' + _ownerOpsFmtDate(state.lastUpdated));
-                    metaParts.push(filtered.length + ' fila' + (filtered.length === 1 ? '' : 's'));
+                    if (state.lastUpdated) metaParts.push(saT('sa-ops-updated','Última actualización') + ': ' + _ownerOpsFmtDate(state.lastUpdated));
+                    metaParts.push(filtered.length + ' ' + (filtered.length === 1 ? saT('sa-ops-row','fila') : saT('sa-ops-rows','filas')));
                     if ((state.items || []).length !== filtered.length) {
-                        metaParts.push('de ' + (state.items || []).length + ' total');
+                        metaParts.push(saT('sa-ops-of','de') + ' ' + (state.items || []).length + ' ' + saT('sa-ops-total','total'));
                     }
                     metaEl.textContent = metaParts.join(' · ');
                 }
@@ -6387,8 +6443,8 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     var allSourcesFailed = allFailed && Object.keys(state.sourceErrors || {}).length >= 2;
                     container.innerHTML = '<p class="fineprint" style="padding:16px 4px;">' +
                         (allSourcesFailed
-                            ? 'No se pudo cargar ninguna fuente de actividad. Revisa la consola o pulsa Actualizar.'
-                            : 'No hay actividad reciente para este filtro.') +
+                            ? saT('sa-ops-failed','No se pudo cargar ninguna fuente de actividad. Revisa la consola o pulsa Actualizar.')
+                            : saT('sa-ops-empty','No hay actividad reciente para este filtro.')) +
                         '</p>';
                     return;
                 }
@@ -6404,7 +6460,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     var typeClass = 'owner-ops-type-pill--' + (item.kind || 'lead');
                     var selectedClass = state.selectedIndex === globalIdx ? ' owner-ops-row--selected' : '';
                     var actions = '<div class="owner-ops-grid-actions" onclick="event.stopPropagation()">' +
-                        '<button type="button" class="btn secondary small" onclick="openOwnerOpsDetail(' + globalIdx + ')">Detalle</button>';
+                        '<button type="button" class="btn secondary small" onclick="openOwnerOpsDetail(' + globalIdx + ')">' + saT('sa-detail','Detalle') + '</button>';
                     if (item.entityType === 'lead' && item.entityId) {
                         actions += '<button type="button" class="btn secondary small" onclick="ownerOpsNavLead(\'' + item.entityId + '\')">Lead</button>';
                     }
@@ -6439,24 +6495,24 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
 
                 container.innerHTML =
                     '<div class="owner-ops-grid-wrap">' +
-                    '<table class="owner-ops-grid" role="grid" aria-label="Actividad operativa">' +
+                    '<table class="owner-ops-grid" role="grid" aria-label="Actividad operativa" data-i18n-aria="sa-ops-title">' +
                     '<colgroup>' +
                     '<col style="width:9%;"><col style="width:7%;"><col style="width:11%;"><col style="width:13%;">' +
                     '<col style="width:8%;"><col style="width:9%;"><col style="width:9%;"><col style="width:9%;">' +
                     '<col style="width:9%;"><col style="width:7%;"><col style="width:9%;">' +
                     '</colgroup>' +
                     '<thead><tr>' +
-                    '<th class="owner-ops-sortable" onclick="setOwnerOpsGridSort(\'date\')">Fecha' + sortInd('date') + '</th>' +
-                    '<th class="owner-ops-sortable" onclick="setOwnerOpsGridSort(\'type\')">Tipo' + sortInd('type') + '</th>' +
-                    '<th class="owner-ops-sortable" onclick="setOwnerOpsGridSort(\'client\')">Cliente' + sortInd('client') + '</th>' +
-                    '<th>Evento / Producto</th>' +
-                    '<th class="owner-ops-sortable" onclick="setOwnerOpsGridSort(\'status\')">Estado' + sortInd('status') + '</th>' +
-                    '<th class="owner-ops-sortable" onclick="setOwnerOpsGridSort(\'payment\')">Pago' + sortInd('payment') + '</th>' +
-                    '<th class="owner-ops-sortable" onclick="setOwnerOpsGridSort(\'responsible\')">Responsable' + sortInd('responsible') + '</th>' +
-                    '<th>Origen</th>' +
-                    '<th class="owner-ops-sortable" onclick="setOwnerOpsGridSort(\'updated\')">Última act.' + sortInd('updated') + '</th>' +
-                    '<th>Ref</th>' +
-                    '<th>Acciones</th>' +
+                    '<th class="owner-ops-sortable" onclick="setOwnerOpsGridSort(\'date\')">' + saT('sa-th-date','Fecha') + sortInd('date') + '</th>' +
+                    '<th class="owner-ops-sortable" onclick="setOwnerOpsGridSort(\'type\')">' + saT('sa-th-type','Tipo') + sortInd('type') + '</th>' +
+                    '<th class="owner-ops-sortable" onclick="setOwnerOpsGridSort(\'client\')">' + saT('sa-th-client','Cliente') + sortInd('client') + '</th>' +
+                    '<th>' + saT('sa-th-event-product','Evento / Producto') + '</th>' +
+                    '<th class="owner-ops-sortable" onclick="setOwnerOpsGridSort(\'status\')">' + saT('sa-th-status','Estado') + sortInd('status') + '</th>' +
+                    '<th class="owner-ops-sortable" onclick="setOwnerOpsGridSort(\'payment\')">' + saT('sa-th-payment','Pago') + sortInd('payment') + '</th>' +
+                    '<th class="owner-ops-sortable" onclick="setOwnerOpsGridSort(\'responsible\')">' + saT('sa-th-owner','Responsable') + sortInd('responsible') + '</th>' +
+                    '<th>' + saT('sa-th-source','Origen') + '</th>' +
+                    '<th class="owner-ops-sortable" onclick="setOwnerOpsGridSort(\'updated\')">' + saT('sa-th-lastact','Última act.') + sortInd('updated') + '</th>' +
+                    '<th>' + saT('sa-th-ref','Ref') + '</th>' +
+                    '<th>' + saT('sa-th-actions','Acciones') + '</th>' +
                     '</tr></thead><tbody>' + rowsHtml + '</tbody></table></div>';
             };
 
@@ -6638,8 +6694,8 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                             source: 'client_profiles',
                             date: new Date(c.created_at),
                             colClient: c.full_name || c.email || '—',
-                            colProduct: 'Alta cliente',
-                            colStatus: 'Registrado',
+                            colProduct: saT('sa-ops-new-client','Alta cliente'),
+                            colStatus: saT('sa-st-registered','Registrado'),
                             colPayment: '—',
                             colResponsible: '—',
                             colUpdated: new Date(c.created_at),
@@ -6678,8 +6734,8 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                             source: 'dj_profiles',
                             date: new Date(d.created_at),
                             colClient: d.stage_name || d.full_name || '—',
-                            colProduct: 'Alta artista',
-                            colStatus: 'Registrado',
+                            colProduct: saT('sa-ops-new-artist','Alta artista'),
+                            colStatus: saT('sa-st-registered','Registrado'),
                             colPayment: '—',
                             colResponsible: '—',
                             colUpdated: new Date(d.created_at),
@@ -6706,13 +6762,13 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                             icon: '💬',
                             title: 'Nuevo mensaje · Portal',
                             desc: direction + ' · Conversación pendiente de seguimiento',
-                            detail: m.is_read ? 'Leído' : 'Sin leer',
+                            detail: m.is_read ? saT('sa-st-read','Leído') : saT('sa-st-unread','Sin leer'),
                             ref: m.lead_id ? String(m.lead_id).slice(0, 8).toUpperCase() : '—',
                             source: 'portal_messages',
                             date: new Date(m.created_at),
                             colClient: '—',
                             colProduct: 'Portal mensaje',
-                            colStatus: m.is_read ? 'Leído' : 'Sin leer',
+                            colStatus: m.is_read ? saT('sa-st-read','Leído') : saT('sa-st-unread','Sin leer'),
                             colPayment: '—',
                             colResponsible: m.sender_role || '—',
                             colUpdated: new Date(m.created_at),
@@ -7822,7 +7878,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                     const todosCount = _networkDedupeByContact(visibleProfiles).length;
                     tabsContainer.innerHTML =
                         `<div class="net-tab-label" style="display:flex; align-items:center; justify-content:space-between; font-size:10px; font-weight:800; letter-spacing:.08em; color:var(--muted); text-transform:uppercase; padding:6px 2px 8px;">
-                            <span>Categorías</span>
+                            <span>${saT('sa-net-categories','Categorías')}</span>
                             <button type="button" onclick="window.networkStartCreateCategory()" title="Crear categoría" aria-label="Crear categoría" style="background:transparent; border:none; color:#3b82f6; cursor:pointer; font-size:22px; font-weight:800; line-height:1; padding:0 2px;">+</button>
                         </div>` +
                         `<button type="button" class="net-tab-btn" onclick="window.switchNetworkTab('todos')" title="Todos" style="
@@ -7835,7 +7891,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                         " onmouseover="if(this.style.background==='transparent')this.style.background='var(--net-hover)'" onmouseout="this.style.background='${todosActive ? 'var(--net-tab-active-bg)' : 'transparent'}'">
                             <span style="flex:none; font-size:12px; letter-spacing:-3px; color:var(--gold);">${NETWORK_ALL_ICON}</span>
                             <span class="net-tab-label" style="flex:1; display:flex; align-items:center; justify-content:space-between; gap:8px; overflow:hidden;">
-                                <span style="overflow:hidden; text-overflow:ellipsis;">Todos</span>
+                                <span style="overflow:hidden; text-overflow:ellipsis;">${saT('sa-all','Todos')}</span>
                                 <span style="font-size:11px; color:var(--muted); flex:none;">${todosCount}</span>
                             </span>
                         </button>` +
@@ -7877,7 +7933,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                             " onmouseover="if(this.style.background==='transparent')this.style.background='var(--net-hover)'" onmouseout="this.style.background='${active ? activeBg : 'transparent'}'">
                                 <span style="flex:none; color:var(--gold);">📣</span>
                                 <span class="net-tab-label" style="flex:1; display:flex; align-items:center; justify-content:space-between; gap:8px; overflow:hidden;">
-                                    <span style="overflow:hidden; text-overflow:ellipsis;">Campañas</span>
+                                    <span style="overflow:hidden; text-overflow:ellipsis;">${saT('sa-net-campaigns','Campañas')}</span>
                                     <span style="font-size:11px; color:var(--muted); flex:none;">${n}</span>
                                 </span>
                             </button>`;
@@ -8022,13 +8078,13 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                                 <table style="width: 100%; min-width: 600px; border-collapse: collapse; border: 1px solid var(--net-line);">
                                     <thead>
                                         <tr style="background: var(--net-surface);">
-                                            <th style="text-align:left; padding:10px; border: 1px solid var(--net-line);">Nombre / Entidad</th>
+                                            <th style="text-align:left; padding:10px; border: 1px solid var(--net-line);">${saT('sa-net-th-name','Nombre / Entidad')}</th>
                                             <th style="text-align:left; padding:10px; border: 1px solid var(--net-line);">Email</th>
-                                            <th style="text-align:left; padding:10px; border: 1px solid var(--net-line);">Teléfono</th>
+                                            <th style="text-align:left; padding:10px; border: 1px solid var(--net-line);">${saT('sa-th-phone','Teléfono')}</th>
                                             <th style="text-align:center; padding:10px; border: 1px solid var(--net-line);">PRO / Nivel</th>
-                                            <th style="text-align:center; padding:10px; border: 1px solid var(--net-line);">Fecha Suscripción</th>
+                                            <th style="text-align:center; padding:10px; border: 1px solid var(--net-line);">${saT('sa-net-th-signup','Fecha Suscripción')}</th>
                                             ${isClient ? '<th style="text-align:center; padding:10px; border: 1px solid var(--net-line);">Eventos</th><th style="text-align:right; padding:10px; border: 1px solid var(--net-line);">Gasto</th>' : ''}
-                                            <th style="text-align:left; padding:10px; border: 1px solid var(--net-line);">Fuente</th>
+                                            <th style="text-align:left; padding:10px; border: 1px solid var(--net-line);">${saT('sa-net-th-source','Fuente')}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -9465,6 +9521,111 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 return '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             }
 
+            /* ── Lista de precios (2026-10-09). Todo el texto va con textContent (nada de innerHTML con datos). ── */
+            (function () {
+                var PG = { rows: [], cat: 'all', q: '', openSku: null };
+                function money(n) { return (n === null || n === undefined || n === '') ? '—' : '$' + Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 }); }
+                function catLabel(c) { return saT('pg-cat-' + c, c); }
+                function canEdit() { return ['ADMIN', 'MANAGER', 'SUPER_ADMIN'].indexOf(window.userRole) >= 0; }
+                function el(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt !== undefined && txt !== null) e.textContent = txt; return e; }
+                function status(r) {
+                    var p = r.precio_cliente_usd, f = r.piso_usd, c = r.techo_mercado_usd;
+                    if (p === null || p === undefined) return ['none', saT('pg-quote', 'Cotizar')];
+                    if (f !== null && f !== undefined && Number(p) < Number(f)) return ['warn', saT('pg-below', 'Debajo del piso')];
+                    if (c !== null && c !== undefined && Number(p) > Number(c)) return ['hi', saT('pg-above', 'Sobre el mercado')];
+                    if (f !== null && f !== undefined && c !== null && c !== undefined) return ['ok', saT('pg-inrange', 'En rango')];
+                    if (f !== null && f !== undefined) return ['ok', saT('pg-abovefloor', 'Sobre el piso')];
+                    return ['none', saT('pg-nodata', 'Sin datos')];
+                }
+                function rangeBar(r) {
+                    var vals = [r.piso_usd, r.precio_cliente_usd, r.techo_mercado_usd, r.vendido_antes_usd].filter(function (v) { return v !== null && v !== undefined; }).map(Number);
+                    var wrap = el('div', 'pg-range');
+                    if (vals.length < 2) return wrap;
+                    var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals), span = (hi - lo) || 1;
+                    function dot(kind, v, label) { if (v === null || v === undefined) return; var d = el('div', 'pg-dot ' + kind); d.style.left = (((Number(v) - lo) / span) * 100) + '%'; d.title = label + ': ' + money(v); wrap.appendChild(d); }
+                    dot('floor', r.piso_usd, saT('pg-th-floor', 'Piso')); dot('price', r.precio_cliente_usd, saT('pg-th-price', 'Nuestro precio')); dot('ceiling', r.techo_mercado_usd, saT('pg-th-ceiling', 'Techo mercado')); dot('sold', r.vendido_antes_usd, saT('pg-th-sold', 'Vendido antes'));
+                    return wrap;
+                }
+                function matches(r) {
+                    if (PG.cat !== 'all' && r.categoria !== PG.cat) return false;
+                    if (!PG.q) return true;
+                    var hay = [r.nombre, r.sku, catLabel(r.categoria), r.proveedor, r.nota, r.fuente_mercado].join(' ').toLowerCase();
+                    return PG.q.toLowerCase().split(/\s+/).filter(Boolean).every(function (w) { return hay.indexOf(w) >= 0; });
+                }
+                function head() {
+                    var h = document.getElementById('pg-head'); h.textContent = '';
+                    var tr = el('tr');
+                    [['pg-th-product', 'Producto'], ['pg-th-price', 'Nuestro precio'], ['pg-th-cost', 'Costo proveedor'], ['pg-th-floor', 'Piso'], ['pg-th-ceiling', 'Techo mercado'], ['pg-th-range', 'Rango'], ['pg-th-sold', 'Vendido antes'], ['pg-th-status', 'Estado'], ['pg-th-notes', 'Nota / fuente']].forEach(function (c) { tr.appendChild(el('th', '', saT(c[0], c[1]))); });
+                    if (canEdit()) tr.appendChild(el('th', '', ''));
+                    h.appendChild(tr);
+                }
+                function chips() {
+                    var box = document.getElementById('pg-chips'); box.textContent = '';
+                    var cats = []; PG.rows.forEach(function (r) { if (cats.indexOf(r.categoria) < 0) cats.push(r.categoria); });
+                    function chip(key, label) { var b = el('button', 'pg-chip' + (PG.cat === key ? ' active' : ''), label); b.type = 'button'; b.onclick = function () { PG.cat = key; render(); }; box.appendChild(b); }
+                    chip('all', saT('pg-all', 'Todas'));
+                    cats.forEach(function (c) { chip(c, catLabel(c)); });
+                }
+                function editRow(r, cols) {
+                    var tr = el('tr', 'pg-edit-row'); var td = el('td'); td.colSpan = cols; var f = el('div', 'pg-form');
+                    function field(key, label, val, type) { var l = el('label', '', label); var i = el('input'); i.type = type || 'number'; if (type !== 'text') i.step = '0.01'; i.value = (val === null || val === undefined) ? '' : val; i.id = 'pg-f-' + key; l.appendChild(i); f.appendChild(l); }
+                    field('cost', saT('pg-f-cost', 'Costo proveedor (USD)'), r.costo_origen === 'guia' ? r.costo_usd : '');
+                    field('supplier', saT('pg-f-supplier', 'Proveedor'), r.proveedor, 'text');
+                    field('margin', saT('pg-f-margin', 'Margen mínimo (%)'), r.margen_minimo_pct);
+                    field('floor', saT('pg-f-floor', 'Piso manual (vacío = automático)'), r.piso_calculado ? '' : r.piso_usd);
+                    field('ceiling', saT('pg-f-ceiling', 'Techo de mercado (USD)'), r.techo_mercado_usd);
+                    field('source', saT('pg-f-source', 'Fuente del dato de mercado'), r.fuente_mercado, 'text');
+                    field('note', saT('pg-f-note', 'Nota'), r.nota, 'text');
+                    field('sold', saT('pg-f-sold', 'Precio al que se vendió antes (USD)'), r.vendido_antes_usd);
+                    field('soldnote', saT('pg-f-sold-note', 'Dónde / cuándo se vendió'), r.vendido_antes_nota, 'text');
+                    var act = el('div'); var sv = el('button', 'btn small', saT('pg-save', 'Guardar')); sv.type = 'button'; var cn = el('button', 'btn secondary small', saT('pg-cancel', 'Cancelar')); cn.type = 'button'; cn.style.marginLeft = '6px';
+                    cn.onclick = function () { PG.openSku = null; render(); };
+                    sv.onclick = function () { save(r); };
+                    act.appendChild(sv); act.appendChild(cn); f.appendChild(act); td.appendChild(f); tr.appendChild(td); return tr;
+                }
+                function num(id) { var v = document.getElementById(id).value; return v === '' ? null : Number(v); }
+                async function save(r) {
+                    var db = window.getSupabaseClient(); if (!db) return;
+                    var msg = document.getElementById('pg-msg');
+                    var res = await db.rpc('price_guide_save', { p_sku: r.sku, p_costo: num('pg-f-cost'), p_proveedor: document.getElementById('pg-f-supplier').value, p_margen: num('pg-f-margin'), p_piso: num('pg-f-floor'), p_techo: num('pg-f-ceiling'), p_fuente: document.getElementById('pg-f-source').value, p_nota: document.getElementById('pg-f-note').value, p_vendido: num('pg-f-sold'), p_vendido_nota: document.getElementById('pg-f-soldnote').value });
+                    if (res.error) { msg.textContent = saT('pg-save-error', 'No se pudo guardar') + ': ' + res.error.message; return; }
+                    PG.openSku = null; await window.loadPriceGuide(); document.getElementById('pg-msg').textContent = saT('pg-saved', 'Guardado.');
+                }
+                function render() {
+                    head(); chips();
+                    var body = document.getElementById('pg-body'); body.textContent = '';
+                    var list = PG.rows.filter(matches); var cols = canEdit() ? 10 : 9;
+                    if (!list.length) { var tr0 = el('tr'); var td0 = el('td', 'fineprint', saT('pg-empty', 'No hay productos con ese filtro.')); td0.colSpan = cols; tr0.appendChild(td0); body.appendChild(tr0); return; }
+                    var lastCat = null;
+                    list.forEach(function (r) {
+                        if (PG.cat === 'all' && r.categoria !== lastCat) { lastCat = r.categoria; var th = el('tr'); var tc = el('td', 'pg-name', catLabel(r.categoria)); tc.colSpan = cols; tc.style.cssText = 'color:var(--gold);font-size:12px;letter-spacing:.06em;text-transform:uppercase;padding-top:16px;'; th.appendChild(tc); body.appendChild(th); }
+                        var tr = el('tr'); var st = status(r);
+                        var c1 = el('td'); c1.appendChild(el('div', 'pg-name', r.nombre)); var sk = el('div', 'pg-sku', r.sku + (r.hora_extra_usd ? ' · ' + saT('pg-extra-hour', 'hora extra') + ' ' + money(r.hora_extra_usd) : '')); c1.appendChild(sk); tr.appendChild(c1);
+                        tr.appendChild(el('td', 'pg-num', r.precio_cliente_usd === null ? '—' : money(r.precio_cliente_usd)));
+                        var c3 = el('td', 'pg-num', money(r.costo_usd)); if (r.costo_origen === 'catalogo') c3.appendChild(el('div', 'pg-small', saT('pg-from-catalog', 'del catálogo'))); else if (r.proveedor) c3.appendChild(el('div', 'pg-small', r.proveedor)); tr.appendChild(c3);
+                        var c4 = el('td', 'pg-num', money(r.piso_usd)); if (r.piso_usd !== null && r.piso_calculado) c4.appendChild(el('div', 'pg-small', saT('pg-auto', 'calculado'))); if (r.piso_usd !== null && r.precio_cliente_usd !== null) c4.appendChild(el('div', 'pg-small', saT('pg-room', 'Para negociar') + ': ' + money(Number(r.precio_cliente_usd) - Number(r.piso_usd)))); tr.appendChild(c4);
+                        tr.appendChild(el('td', 'pg-num', money(r.techo_mercado_usd)));
+                        var c6 = el('td'); c6.appendChild(rangeBar(r)); tr.appendChild(c6);
+                        var c6b = el('td', 'pg-num', money(r.vendido_antes_usd)); if (r.vendido_antes_nota) c6b.appendChild(el('div', 'pg-small', r.vendido_antes_nota)); tr.appendChild(c6b);
+                        var c7 = el('td'); c7.appendChild(el('span', 'pg-chip-st ' + st[0], st[1])); tr.appendChild(c7);
+                        var c8 = el('td', 'pg-small', [r.nota, r.fuente_mercado].filter(Boolean).join(' · ')); tr.appendChild(c8);
+                        if (canEdit()) { var c9 = el('td'); var eb = el('button', 'btn secondary small', saT('pg-edit', 'Editar')); eb.type = 'button'; eb.onclick = function () { PG.openSku = (PG.openSku === r.sku ? null : r.sku); render(); }; c9.appendChild(eb); tr.appendChild(c9); }
+                        body.appendChild(tr);
+                        if (PG.openSku === r.sku) body.appendChild(editRow(r, cols));
+                    });
+                }
+                window.loadPriceGuide = async function () {
+                    var db = window.getSupabaseClient(); if (!db) return;
+                    var msg = document.getElementById('pg-msg'); msg.textContent = saT('pg-loading', 'Cargando lista de precios…');
+                    var res = await db.rpc('price_guide_list');
+                    if (res.error) { msg.textContent = saT('pg-error', 'No se pudo cargar la lista') + ': ' + res.error.message; return; }
+                    PG.rows = res.data || []; msg.textContent = '';
+                    var inp = document.getElementById('pg-search');
+                    if (inp && !inp.__pgBound) { inp.__pgBound = true; inp.addEventListener('input', function () { PG.q = inp.value.trim(); if (PG.q) PG.cat = 'all'; render(); }); }
+                    render();
+                };
+            })();
+
             /* Contribuciones (Staff de gestión): todo por funciones de la base que exigen owner/admin/manager; el texto va con textContent. */
             window.loadContribuciones = async function() {
                 const db = window.getSupabaseClient();
@@ -9543,7 +9704,7 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
 
                 if (error) { listEl.textContent = 'Error: ' + error.message; return; }
                 if (!data || !data.length) {
-                    listEl.innerHTML = '<p class="fineprint">Todavía no tienes comisiones registradas -- aparecen aquí cuando cierres una venta y el total quede aprobado.</p>';
+                    listEl.innerHTML = '<p class="fineprint">' + saT('sa-mc-empty','Todavía no tienes comisiones registradas -- aparecen aquí cuando cierres una venta y el total quede aprobado.') + '</p>';
                     totalEl.textContent = mdjComisionMoney(0);
                     countEl.textContent = '0';
                     return;
@@ -9557,15 +9718,15 @@ Tienes un nuevo evento asignado en la plataforma. Por favor entra a tu Portal DJ
                 countEl.textContent = String(data.length);
 
                 listEl.innerHTML = '<div style="overflow-x:auto;"><table><thead><tr>' +
-                    '<th>Fecha</th><th>Origen</th><th>Tier</th><th>Comisión</th><th>Estado</th>' +
+                    '<th>' + saT('sa-th-date','Fecha') + '</th><th>' + saT('sa-th-source','Origen') + '</th><th>Tier</th><th>' + saT('sa-mc-th-comm','Comisión') + '</th><th>' + saT('sa-th-status','Estado') + '</th>' +
                     '</tr></thead><tbody>' +
                     data.map(function(r) {
-                        const d = r.calculado_en ? new Date(r.calculado_en).toLocaleDateString('es-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
-                        const origen = r.client_origin === 'dj_referral' ? 'Cliente de un DJ' : 'Tu propio cliente';
+                        const d = r.calculado_en ? new Date(r.calculado_en).toLocaleDateString(saT('sa-locale', 'es-US'), { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
+                        const origen = r.client_origin === 'dj_referral' ? saT('sa-mc-from-dj','Cliente de un DJ') : saT('sa-mc-own','Tu propio cliente');
                         const monto = (Number(r.comision_vendedor_usd) || 0) + (Number(r.addon_comision_vendedor_usd) || 0);
                         return '<tr>' +
                             '<td>' + d + '</td>' +
-                            '<td>' + origen + (r.is_first_event ? ' · 1er evento' : '') + '</td>' +
+                            '<td>' + origen + (r.is_first_event ? ' · ' + saT('sa-mc-first','1er evento') : '') + '</td>' +
                             '<td>' + (r.tier_key || '—') + '</td>' +
                             '<td style="font-weight:700;color:#00ff88;">' + mdjComisionMoney(monto) + '</td>' +
                             '<td>' + (r.status || 'pending') + '</td>' +
