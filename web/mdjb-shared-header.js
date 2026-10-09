@@ -1503,6 +1503,11 @@
                  public→tab-public. No se reimplementa nada: se usa el conmutador
                  que la pagina ya tiene, con sus propios candados de plan dentro. */
               if (typeof window.switchProfileTab !== 'function') return;  // el href manda
+              /* SoundForTips: SIEMPRE entra directo a la cabina (consola), nunca a la pantalla intermedia de la pestaña.
+                 El conmutador de arriba solo cambiaba de panel; quien además abre la cabina es mdjSftTabClick (dj-profile.html),
+                 que quedó sin llamar desde que este gancho reemplazó al botón del riel muerto (2026-08-22, dd7bbcc3).
+                 Con candados propios: solo abre la cabina si es el dueño y su plan lo permite; si no, cae al panel como antes. */
+              if (def.tab === 'sft' && typeof window.mdjSftTabClick === 'function') { window.mdjSftTabClick(ev); return; }
               ev.preventDefault();
               ev.stopPropagation();
               window.switchProfileTab(def.tab);
@@ -1986,7 +1991,7 @@
      la abrió. Cada despliegue lleva /version.json con su número de versión (build); este archivo lleva el MISMO número en MDJ_BUILD (lo vigila scripts/verificar-contenedores.mjs, C11).
      Cuando la pestaña vuelve a estar a la vista (y cada 10 min mientras lo está) se compara; si la versión de la pestaña es vieja, se recarga UNA vez por versión nueva, y solo si
      el usuario no tiene texto sin guardar en un campo. El sello también queda visible: <html data-mdj-build="…"> y window.MDJ_BUILD (consola / soporte). */
-  var MDJ_BUILD = '20261008-cierre';
+  var MDJ_BUILD = '20261009-sft-cabina';
   window.MDJ_BUILD = MDJ_BUILD;
   try { document.documentElement.setAttribute('data-mdj-build', MDJ_BUILD); } catch (eBuild) { /* sin sello */ }
   function mdjHayTextoSinGuardar() {
