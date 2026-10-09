@@ -122,7 +122,7 @@
   <meta property="og:title" content="Quinceañera DJ Miami | Bilingual DJ &amp; MC, Vals &amp; Sorpresas | Miami DJ Beat" />
   <meta property="og:description" content="Bilingual quinceañera DJ and MC in Miami-Dade and Broward: vals, court presentation, surprise dances, and reception coverage with custom music, professional sound, wireless microphones, and uplighting." />
   <meta property="og:url" content="https://www.miamidjbeat.com/quinceanera.html" />
-  <meta property="og:image" content="https://hkuvuqupbxwkiykxvqdr.supabase.co/storage/v1/object/public/assets/quinceanera/fotos/amira-vals-micho-headroom-card.webp" />
+  <meta property="og:image" content="https://www.miamidjbeat.com/assets/quinceanera/fotos/amira-vals-micho-headroom-card.jpg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -396,22 +396,14 @@
        TODA la pagina (position:fixed;inset:0), el contenido se desplaza
        encima en tarjetas flotantes -- se retira la tarjeta blanca "papel
        editorial" de la version anterior por completo.
-       Cuando exista el video real del vals/ambientacion: reemplazar el
-       <picture> por el <video> ya preparado (comentado abajo) -- mismo id,
-       mismas clases, el CSS no cambia. -->
-  <!--
+       2026-10-09 (PO): ya existe el video real del vals (quinceanera-hero.mp4);
+       el <video> reemplaza a la foto fija. Su poster es el primer cuadro del
+       propio video, para que no haya salto entre imagen y video. -->
   <video id="quinceanera-hero-kb-bg" class="hero-shell-video hero-kb-bg" autoplay muted loop playsinline preload="metadata"
-      poster="./assets/quinceanera/fotos/quinceanera-hero-court.jpg"
+      poster="./assets/quinceanera/fotos/quinceanera-hero-poster.jpg"
       style="position: fixed; inset: 0; z-index: 1; pointer-events: none; width: 100%; height: 100%; object-fit: cover; opacity: 1; filter: brightness(0.65);">
       <source data-src="./assets/quinceanera/videos/quinceanera-hero.mp4" type="video/mp4">
   </video>
-  -->
-  <picture>
-    <source srcset="./assets/quinceanera/fotos/quinceanera-hero-court.webp" type="image/webp">
-    <img id="quinceanera-hero-kb-bg" class="hero-kb-bg" src="./assets/quinceanera/fotos/quinceanera-hero-court.jpg"
-      alt=""
-      style="position: fixed; inset: 0; z-index: 1; pointer-events: none; width: 100%; height: 100%; object-fit: cover; opacity: 1; filter: brightness(0.65);">
-  </picture>
   <div class="hero-video-overlay"
       style="position: fixed; inset: 0; z-index: 3; pointer-events: none; background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.8) 100%);"></div>
 
@@ -566,6 +558,25 @@
   <script src="./mdj-identity.js?v=20261003-identidad-unica"></script>
   <script src="./auth.js?v=20260930-login-timeout-guard"></script>
   <script src="./mdjb-shared-header.js?v=20261009-sft-cabina"></script>
+  <script>
+  (function () {
+    function kick() {
+      var v = document.getElementById('quinceanera-hero-kb-bg');
+      if (!v) return;
+      function attemptPlay() {
+        var p = v.play();
+        if (p && p.catch) { p.catch(function () { setTimeout(function () { v.play().catch(function () {}); }, 250); }); }
+      }
+      if (typeof window.mdjEnsureVideoResolved === 'function') window.mdjEnsureVideoResolved(v);
+      try { v.load(); attemptPlay(); } catch (e) { /* noop */ }
+      var retries = 0;
+      v.addEventListener('pause', function () { if (!document.hidden && document.hasFocus() && retries < 3) { retries++; attemptPlay(); } });
+      document.addEventListener('visibilitychange', function () { if (!document.hidden) { retries = 0; attemptPlay(); } });
+      window.addEventListener('focus', function () { retries = 0; attemptPlay(); });
+    }
+    if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', kick); } else { kick(); }
+  })();
+  </script>
   <script src="./mdj-carousel-scroll-tick.js?v=20260422-tick-resume"></script>
   <script src="./mdj-mainnav-infinite.js?v=20260818-nav-canonico"></script>
   <script src="./mdj-assistant.js?v=20260411-booth-policy"></script>
