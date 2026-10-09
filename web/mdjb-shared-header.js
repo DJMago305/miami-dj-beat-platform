@@ -1980,6 +1980,44 @@
     }).catch(function () { /* sin red: se queda lo que haya */ }).then(function () { _mdjSalasBusy = false; });
   }
   window.mdjSalasScope = mdjSalasScope;                       // lectura para las páginas (la pestaña SALAS lee el ámbito de aquí)
+
+  /* ══ SELLO DE VERSIÓN + PESTAÑAS VIEJAS (2026-10-08, reclamo del PO: «los cambios no entran en las cuentas de otros DJ; todos deben ver lo mismo») ══════════════
+     Producción ya sirve siempre lo último (el HTML y los .js/.css se revalidan en cada carga), pero un DJ que deja la pestaña abierta días sigue corriendo el JS con el que
+     la abrió. Cada despliegue lleva /version.json con su número de versión (build); este archivo lleva el MISMO número en MDJ_BUILD (lo vigila scripts/verificar-contenedores.mjs, C11).
+     Cuando la pestaña vuelve a estar a la vista (y cada 10 min mientras lo está) se compara; si la versión de la pestaña es vieja, se recarga UNA vez por versión nueva, y solo si
+     el usuario no tiene texto sin guardar en un campo. El sello también queda visible: <html data-mdj-build="…"> y window.MDJ_BUILD (consola / soporte). */
+  var MDJ_BUILD = '20261008-cierre';
+  window.MDJ_BUILD = MDJ_BUILD;
+  try { document.documentElement.setAttribute('data-mdj-build', MDJ_BUILD); } catch (eBuild) { /* sin sello */ }
+  function mdjHayTextoSinGuardar() {
+    try {
+      var campos = document.querySelectorAll('input, textarea');
+      for (var i = 0; i < campos.length; i++) {
+        var c = campos[i], t = String(c.type || '').toLowerCase();
+        if (t === 'hidden' || t === 'button' || t === 'submit' || t === 'reset' || t === 'checkbox' || t === 'radio' || t === 'file' || t === 'range' || t === 'color') continue;
+        if (String(c.value || '') !== String(c.defaultValue || '')) return true;      // hay algo escrito: no se recarga (se reintenta al volver a la pestaña)
+      }
+      var ed = document.activeElement;
+      if (ed && ed.isContentEditable) return true;
+    } catch (eTxt) { return true; }
+    return false;
+  }
+  function mdjRevisarVersion() {
+    try {
+      if (typeof window.fetch !== 'function') return;
+      window.fetch('/version.json?_=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r && r.ok ? r.json() : null; }).then(function (j) {
+        if (!j || !j.build || j.build === MDJ_BUILD) return;
+        var clave = 'mdj-build-recargado', previo = '';
+        try { previo = sessionStorage.getItem(clave) || ''; } catch (eS) { previo = ''; }
+        if (previo === j.build) return;                      // ya se intentó con esta versión: nunca en bucle
+        if (mdjHayTextoSinGuardar()) return;
+        try { sessionStorage.setItem(clave, j.build); } catch (eS2) { /* sigue */ }
+        window.location.reload();
+      }).catch(function () { /* sin red: se queda como está */ });
+    } catch (eRev) { /* noop */ }
+  }
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) mdjRevisarVersion(); });
+  setInterval(function () { if (!document.hidden) mdjRevisarVersion(); }, 10 * 60 * 1000);
   window.mdjResolverSalas = mdjResolverSalas;
 
   /* Marca del puesto activo en la vista SALAS (la raya de abajo, igual que en las demás pestañas): SALAS mientras se trabaja en Resumen/Mesas/Boletos/…,
@@ -2552,8 +2590,10 @@
       if (_nav && (_nav.getAttribute('data-mdj-compact-nav') === '1' || _nav.getAttribute('data-mdj-portal-in-nav') === '1')) {
         return;
       }
+      /* 2026-10-08, «MI PERFIL se brinca»: el riel #mainNav YA NO se toca aquí. La tabla canónica de 8 puestos incluye Eventos (puesto 3); esta pasada lo quitaba y otra lo
+         reponía ~140 ms después, así que en las páginas de servicio (hora-loca, pro-audio-dj…) MI PERFIL saltaba 74 px al cargar. El estado final del riel era siempre CON
+         Eventos (medido en 10 páginas), de modo que dejar de quitarlo no cambia lo que se ve: solo quita el parpadeo. Los menús móviles conservan el comportamiento de siempre. */
       var sel =
-        '#mainNav a[data-mdj-nav="venues"], ' +
         '.mobile-nav a[data-mdj-nav="venues"], ' +
         '#mobileMenu a[data-mdj-nav="venues"]';
       document.querySelectorAll(sel).forEach(function (el) {

@@ -84,6 +84,30 @@ for (const [arch, re, msg] of exigeGuarda) {
 }
 
 
+// C10 (GRAVE): MI PERFIL del ARTISTA es su PERFIL, no su estación (regresión del 2026-10-06, #696: MI PERFIL abría Agenda, el mismo destino que la pestaña Agenda).
+// La tabla canónica de edificios (mdjBuildingHomeForRole) sirve para el INICIO DE SESIÓN y las guardas; el slot MI PERFIL y sus resolvedores NO deben usarla para el artista.
+{
+  const h = leer('web/mdjb-shared-header.js') || '';
+  const ctx = leer('web/mdj-profile-nav-context.js') || '';
+  const hs2 = leer('web/header-smart-search.js') || '';
+  if (/if \(esArtista\) return _bh \?/.test(h)) fallos.push("C10 mdjb-shared-header.js: MI PERFIL del artista usa la tabla de edificios (_bh('artist')) → abre su estación/Agenda en vez de su perfil");
+  if (!/if \(esArtista\) return uid \? '\.\/dj-profile\.html\?id='/.test(h)) fallos.push('C10 mdjb-shared-header.js: mdjResolveMiPerfilHref no manda al artista a dj-profile.html?id=<uid>');
+  if (/withProfileNav\(_bh\('artist'\)\)/.test(ctx)) fallos.push("C10 mdj-profile-nav-context.js: «Mi Perfil» de la tira del artista usa la estación (_bh('artist'))");
+  if (!/kind === 'profile' && \(isClient/.test(hs2)) fallos.push("C10 header-smart-search.js: el kind 'profile' del artista vuelve a mandarlo a su estación");
+}
+
+// C11 (GRAVE): el sello de versión del encabezado (MDJ_BUILD) y web/version.json deben decir LO MISMO; si no, cada pestaña abierta se recargaría una vez por nada
+// (o, al revés, las pestañas viejas nunca sabrían que hay versión nueva). Cada PR que toque el encabezado compartido sube las dos juntas.
+{
+  const h = leer('web/mdjb-shared-header.js') || '';
+  const vj = leer('web/version.json') || '';
+  const mb = h.match(/var MDJ_BUILD = '([^']+)'/);
+  let vb = null; try { vb = JSON.parse(vj).build; } catch (e) { vb = null; }
+  if (!mb) fallos.push('C11 mdjb-shared-header.js: falta el sello MDJ_BUILD');
+  else if (!vb) fallos.push('C11 web/version.json: falta o no es JSON válido con {"build": "…"}');
+  else if (mb[1] !== vb) fallos.push(`C11 la versión del encabezado (${mb[1]}) y web/version.json (${vb}) no coinciden: súbelas juntas`);
+}
+
 // C6 (GRAVE): user_type lo escribe el propio usuario → NUNCA decide permisos. Solo se lee vía mdjUserTypeLegacy (auth.js)
 // o como respaldo explícito en las pocas líneas de la lista blanca. Edge functions: prohibido leerlo para permisos.
 {
