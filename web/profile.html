@@ -15,12 +15,15 @@
        impresos o compartidos apuntan a esta URL — deben seguir funcionando. -->
   <script id="pf-redirect">
     (function () {
+      /* 2026-10-09 (QR de cabina de SoundForTips): esta página reenviaba SIEMPRE a ?view=public y descartaba el resto, así que el QR de la consola
+         (…/profile.html?id=…&mode=live) caía en el perfil comercial y no en el modo kiosco donde el fan pide canciones. Ahora ?mode=live se conserva
+         (y entonces NO se manda view=public) y también se reenvían los demás parámetros (ref, rcode…). */
       var params = new URLSearchParams(window.location.search || '');
-      var id = params.get('id') || '';
-      var ref = params.get('ref') || '';
-      var target = './dj-profile.html?id=' + encodeURIComponent(id) + '&view=public';
-      if (ref) target += '&ref=' + encodeURIComponent(ref);
-      window.location.replace(target);
+      var out = new URLSearchParams();
+      out.set('id', params.get('id') || '');
+      if (params.get('mode') === 'live') out.set('mode', 'live'); else out.set('view', 'public');
+      params.forEach(function (v, k) { if (k !== 'id' && k !== 'mode' && k !== 'view' && v !== '') out.set(k, v); });
+      window.location.replace('./dj-profile.html?' + out.toString());
     })();
   </script>
 </head>
@@ -31,11 +34,11 @@
     (function () {
       try {
         var params = new URLSearchParams(window.location.search || '');
-        var id = params.get('id') || '';
-        var ref = params.get('ref') || '';
-        var target = './dj-profile.html?id=' + encodeURIComponent(id) + '&view=public';
-        if (ref) target += '&ref=' + encodeURIComponent(ref);
-        document.getElementById('pf-fallback-link').href = target;
+        var out = new URLSearchParams();
+        out.set('id', params.get('id') || '');
+        if (params.get('mode') === 'live') out.set('mode', 'live'); else out.set('view', 'public');
+        params.forEach(function (v, k) { if (k !== 'id' && k !== 'mode' && k !== 'view' && v !== '') out.set(k, v); });
+        document.getElementById('pf-fallback-link').href = './dj-profile.html?' + out.toString();
       } catch (e) {}
     })();
   </script>

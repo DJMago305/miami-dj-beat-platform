@@ -5072,10 +5072,10 @@
         window.mdjBuildLiveKioskUrl = function (userId) {
             if (!userId) return '';
             var base = mdbPublicProfileQrBase();
-            var path = window.MDB_QR_PROFILE_PATH || '/dj-profile.html';
-            if (path.charAt(0) !== '/') path = '/' + path;
+            /* 2026-10-09: SIEMPRE directo a /dj-profile.html. Antes usaba MDB_QR_PROFILE_PATH ('/profile.html', la página que reenvía al perfil público y descartaba mode=live),
+               así que el QR de la cabina llevaba al perfil del artista y no a pedir canciones. */
             var id = encodeURIComponent(userId);
-            return base + path + '?id=' + id + '&mode=live';
+            return base + '/dj-profile.html?id=' + id + '&mode=live';
         };
 
         /** Miami DJ Beat marca en QR (13% del lado; alinear con .mdj-qr-brand) + corrección H si existe */

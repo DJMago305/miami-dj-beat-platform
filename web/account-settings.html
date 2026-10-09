@@ -5577,13 +5577,19 @@
           /* Leer perfil: role + tier + wallet para estado PRO y balance */
           var { data: djRow } = await sb
             .from('dj_profiles')
-            .select('role, mdj_artist_commercial_tier, is_premium, plan, wallet_balance, rewards_balance, referral_credits')
+            .select('role, is_premium, plan, wallet_balance, rewards_balance, referral_credits')
             .eq('user_id', uid)
             .maybeSingle();
 
+          /* El nivel comercial y el código MDJB NO son columnas de dj_profiles ni de
+             mdjb_account_ids: salen de mdj_access_snapshot() (una sola llamada, también
+             genera el código si aún no existe). Antes se pedían como columnas inexistentes
+             y la consulta entera fallaba: no se pintaba el saldo ni el nivel PRO. */
+          var _snap = null;
+          try { var _snapRes = await sb.rpc('mdj_access_snapshot'); _snap = _snapRes && _snapRes.data; } catch (eSnap) { _snap = null; }
+
           var _role = (djRow && djRow.role) ? String(djRow.role).toLowerCase() : '';
-          var _tier = (djRow && djRow.mdj_artist_commercial_tier != null)
-            ? Number(djRow.mdj_artist_commercial_tier) : 0;
+          var _tier = (_snap && _snap.artist_tier != null) ? Number(_snap.artist_tier) : 0;
           var _isPremium = !!(djRow && (djRow.is_premium || djRow.plan === 'pro' || djRow.plan === 'elite'));
 
           /* Pintar saldo acumulado · Wallet — misma fuente que Cash Flow */
@@ -5609,17 +5615,11 @@
             proBtn.onclick = function(e) { e.preventDefault(); };
           }
 
-          /* Leer código MDJB del usuario desde mdjb_account_ids */
-          var { data: mdjbRow, error: mdjbErr } = await sb
-            .from('mdjb_account_ids')
-            .select('mdjb_id')
-            .eq('user_id', uid)
-            .maybeSingle();
+          /* Código MDJB del usuario: viene de mdj_access_snapshot() (arriba) */
+          var mdjbCode = (_snap && _snap.mdjb_id) ? _snap.mdjb_id : null;
 
-          var mdjbCode = (mdjbRow && mdjbRow.mdjb_id) ? mdjbRow.mdjb_id : null;
-
-          /* Si no existe el código, intentar generarlo con mdjb_ensure_mine() */
-          if (!mdjbCode && !mdjbErr) {
+          /* Si el snapshot no lo trajo, intentar generarlo con mdjb_ensure_mine() */
+          if (!mdjbCode) {
             var { data: ensured } = await sb.rpc('mdjb_ensure_mine');
             if (ensured) mdjbCode = ensured;
           }
@@ -5939,7 +5939,8 @@
         try {
           var _sbId = window.getSupabaseClient ? window.getSupabaseClient() : null;
           if (_sbId && p.user_id) {
-            _sbId.from('mdjb_account_ids').select('mdjb_id').eq('user_id', p.user_id).maybeSingle()
+            /* mdjb_account_ids no tiene columna mdjb_id (solo stem/class): el código sale de mdj_access_snapshot() */
+            Promise.resolve(_sbId.rpc('mdj_access_snapshot'))
               .then(function (r) { _cfgTexto('[data-cfg-mdjbid]', (r && r.data && r.data.mdjb_id) || null); })
               .catch(function () {});
           }
@@ -7612,9 +7613,20 @@
         try {
           var sb = window._supabase || window._supabaseClient;
           if (!sb) throw new Error('No Supabase client');
-          var { data, error } = await sb.functions.invoke('retry-sft-fee-settlement', {});
-          if (error) throw error;
-          alert((data && data.message) ? data.message : 'Liquidación procesada ✓');
+          var res = await sb.functions.invoke('settle-sft-manual-platform-fee', { body: {} });
+          if (res.error) throw res.error;
+          var d = res.data || {};
+          if (d.blocked === true) {
+            alert('No se pudo cobrar la comisión. Revisa la tarjeta en Suscripción y pagos.');
+          } else if (d.charged === true && d.fee_cents != null) {
+            alert('Comisión liquidada: $' + (Number(d.fee_cents) / 100).toFixed(2) + ' USD.');
+          } else if (d.reason === 'below_minimum' && d.accumulated_cents != null) {
+            alert('Aún no alcanza el mínimo de cargo (~$0.50). Acumulado: $' + (Number(d.accumulated_cents) / 100).toFixed(2));
+          } else if (d.needs_payment_method === true || d.needs_stripe_customer === true) {
+            alert('Necesitas una tarjeta en la cuenta (Suscripción y pagos / Stripe).');
+          } else {
+            alert(d.message ? String(d.message) : 'Liquidación procesada ✓');
+          }
         } catch (err) {
           alert('Error: ' + (err.message || err));
         } finally {

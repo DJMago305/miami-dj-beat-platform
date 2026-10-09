@@ -170,7 +170,10 @@ serve(async (req) => {
       poster_url: body.poster_url != null ? String(body.poster_url).slice(0, 4000) : null,
       client_phone: phoneInsert,
       client_email: emailInsert,
-      status: "pending",
+      /* 2026-10-09: "pending" ya no existe (la restricción soundfortips_fan_requests_status_check, migración 20260430370000, solo admite pending_payment | paid_pending_acceptance |
+         manual_pending_verification | accepted | rejected): con "pending" la base rechazaba CADA petición y la consola nunca recibía nada. Registro manual = manual_pending_verification, que es lo que
+         lee get_my_soundfortips_pending_requests (la consola). */
+      status: "manual_pending_verification",
       /** Zelle/Venmo/PayPal manual rails: no inbound bank webhook here — reconciliation uses fan-entered handle + amount (ops / dashboard). */
       payment_channel: "manual",
     })
